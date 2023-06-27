@@ -159,14 +159,21 @@ namespace Navigation
           return os;
         }
       };
-      
-      
+
+      struct Info
+      {
+        Point point;
+        double distance;
+      };
+
+      std::queue<Info> m_points;
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
+        bind<IMC::Distance>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -206,20 +213,22 @@ namespace Navigation
       }
 
       void
-      getInterception(const Point& p1, double distance1, const Point& p2, double distance2)
+      getInterception(const Info& data_1, const Info& data_2)
       {
-        Point vector_x = p2-p1;
+        Point vector_x = data_1.point - data_2.point;
         double length = vector_x.normalize()/2;
-        if (length > distance1+distance2)
+
+        if (length > data_1.distance + data_2.distance)
           throw Error("Interception impossible");
-        
-        double delta_x = length + (distance1-distance2)/2;
-        double delta_y = sqrt(pow(distance1,2) - pow(delta_x,2));
+
+        double delta_x = length + (data_1.distance-data_2.distance)/2;
+        double delta_y = sqrt(pow(data_1.distance,2) - pow(delta_x,2));
 
         Point vector_y = vector_x.getPerpendicular();
-        Point result_1 = p1+vector_x*delta_x + vector_y*delta_y;
-        Point result_2 = p1+vector_x*delta_x - vector_y*delta_y;
+        Point result_1 = data_1.point+vector_x*delta_x + vector_y*delta_y;
+        Point result_2 = data_1.point+vector_x*delta_x - vector_y*delta_y;
 
+#ifdef DEBUG
         {
           std::stringstream str;
           str << "Interception 1: " << result_1;
@@ -228,19 +237,29 @@ namespace Navigation
         std::stringstream str;
         str << "Interception 2: " << result_2;
         inf(str.str().c_str());
+#endif
+      }
+
+      void
+      consume(const IMC::Distance* msg)
+      {
+        if (msg->validity == IMC::Distance::DV_INVALID)
+          return;
+
+        if (m_points.size() == 3)
+          m_points.pop();
+
+        auto iter = msg->location.end();
+        m_points.emplace((*iter)->x, (*iter)->y, msg->value);
       }
 
       //! Main loop.
       void
       onMain(void)
       {
-        Point referential;
         while (!stopping())
         {
           waitForMessages(3.0);
-
-          Point p1(0,0), p2(6,0);
-          getInterception(p1, 5, p2, 5);
         }
       }
     };
