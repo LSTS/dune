@@ -50,13 +50,13 @@ namespace Navigation
         /* data */
       };
 
-      class Error: public std::exception
+      class ErrorInterception: public std::exception
       {
       public:
-        Error(const char* str): m_error(str)
+        ErrorInterception(const char* str): m_error("Interception impossible: " + String::str(str))
         {}
 
-        ~Error()
+        ~ErrorInterception()
         {}
 
         const char* what() const noexcept override
@@ -66,6 +66,21 @@ namespace Navigation
 
       private:
         std::string m_error;
+      };
+
+      class TwoSolutions: public std::exception
+      {
+      public:
+        TwoSolutions()
+        {}
+
+        ~TwoSolutions()
+        {}
+
+        const char* what() const noexcept override
+        {
+          return "Two possible solutions";
+        }
       };
 
       struct Point
@@ -79,17 +94,19 @@ namespace Navigation
         Point(double _x, double _y): x(_x), y(_y)
         {}
 
-        Point(const Point& val): x(val.x), y(val.y)
-        {}
-
         double norm(const Point& point)
         {
           return sqrt(pow(x-point.x, 2) + pow(y-point.y, 2));
         }
 
-        double norm()
+        double norm() const
         {
           return sqrt(pow(x, 2) + pow(y, 2));
+        }
+
+        static double norm(const Point& p1, const Point& p2)
+        {
+          return sqrt(pow(p1.x-p2.x, 2) + pow(p1.y-p2.y, 2));
         }
 
         double normalize()
@@ -100,7 +117,21 @@ namespace Navigation
           return dst;
         }
 
-        Point getPerpendicular()
+        double angle() const
+        {
+          double angle = atan2(y, x);
+          return (angle < 0 ) ? angle+2*M_PI: angle;
+        }
+
+        bool isParallel(const Point& vec) const
+        {
+          if ((x == 0 && vec.x == 0) || (y == 0 && vec.y == 0))
+            return true;
+          
+          return (vec.x/x == vec.y/y);
+        }
+
+        Point getPerpendicular() const
         {
           return Point(-y, x);
         }
@@ -146,6 +177,11 @@ namespace Navigation
           return Point(x*ratio, y*ratio);
         }
 
+        friend Point operator*(double value, const Point& pt)
+        {
+          return Point(pt.x*value, pt.y*value);
+        }
+
         Point& operator*=(double ratio)
         {
           x *= ratio;
@@ -155,7 +191,8 @@ namespace Navigation
 
         friend std::ostream& operator<<(std::ostream& os, const Point& to_print)
         {
-          os << '(' << to_print.x << ',' << to_print.y << ')';
+          os << std::fixed << std::setprecision(5);
+          os << "( " << to_print.x << " , " << to_print.y << " )";
           return os;
         }
       };
@@ -180,11 +217,12 @@ namespace Navigation
       };
 
       std::array<Info, 3> m_data;
+      int m_data_size;
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx), m_data_size(0)
       {
         bind<IMC::Distance>(this);
       }
@@ -226,32 +264,119 @@ namespace Navigation
       }
 
       void
-      getInterception(const Info& data_1, const Info& data_2)
+      getInterception(const Info& data_1, const Info& data_2, Point& out_1, Point& out_2)
       {
-        Point vector_x = data_1.point - data_2.point;
-        double length = vector_x.normalize()/2;
+        Point vector_x = data_2.point - data_1.point;
 
-        if (2*length > data_1.distance + data_2.distance)
-          throw Error("Interception impossible");
+        double length = vector_x.normalize();
 
-        double delta_x = length + (pow(data_1.distance,2) - pow(data_2.distance,2) )/(4*length);
-        double delta_y = sqrt(pow(data_1.distance,2) - pow(delta_x,2));
+        if (length > data_1.distance + data_2.distance)
+          throw ErrorInterception("Points to far apart");
+        if (length < abs(data_2.distance - data_1.distance))
+          throw ErrorInterception("Circle contains circle");
 
-        Point vector_y = vector_x.getPerpendicular();
-        Point result_1 = data_1.point+vector_x*delta_x + vector_y*delta_y;
-        Point result_2 = data_1.point+vector_x*delta_x - vector_y*delta_y;
+        const double delta_x = length/2.0f + (pow(data_1.distance,2) - pow(data_2.distance,2) )/(2*length);
+        const double delta_y = sqrt(pow(data_1.distance,2) - pow(delta_x,2));
+        const Point vector_y = vector_x.getPerpendicular();
 
+        out_1 = data_1.point + vector_x*delta_x + vector_y*delta_y;
+        out_2 = data_1.point + vector_x*delta_x - vector_y*delta_y;
 #ifdef DEBUG
-        {
-          std::stringstream str;
-          str << "Interception 1: " << result_1;
-          inf(str.str().c_str());
-        }
-        std::stringstream str;
-        str << "Interception 2: " << result_2;
-        inf(str.str().c_str());
+        debugPoint("Interception: 1", out_1);
+        debugPoint("Interception: 2", out_2);
 #endif
       }
+
+      int min_pos(double* init, double* end)
+      {
+        int pos = -1, curr_pos = 0;
+        double min = DBL_MAX;
+
+        while (init <= end)
+        {
+          if (*init < min)
+          {
+            min = *init;
+            pos = curr_pos;
+          }
+          init++;
+          curr_pos++;
+        }
+        return pos;
+      }
+
+      bool isLine()
+      {
+        Point vec_A = m_data[0].point - m_data[1].point;
+        Point vec_B = m_data[1].point - m_data[2].point;
+
+        return vec_A.isParallel(vec_B);
+      }
+
+      void
+      getArea()
+      {
+        if(isLine())
+          throw TwoSolutions();
+
+        Point a1, a2, b1, b2, c1, c2;
+        getInterception(m_data[0], m_data[1], a1, a2);
+        getInterception(m_data[0], m_data[2], b1, b2);
+        getInterception(m_data[1], m_data[2], c1, c2);
+
+        double distances[4];
+        distances[0] = Point::norm(a1, b1);
+        distances[1] = Point::norm(a1, b2);
+
+        distances[2] = Point::norm(a2, b1);
+        distances[3] = Point::norm(a2, b2);
+
+        Point triangle[3];
+        switch (min_pos(&distances[0], &distances[3]))
+        {
+        case 0:
+          triangle[0] = a1;
+          triangle[1] = b1;
+          break;
+        
+        case 1:
+          triangle[0] = a1;
+          triangle[1] = b2;
+          break;
+        
+        case 2:
+          triangle[0] = a2;
+          triangle[1] = b1;
+          break;
+        
+        case 3:
+          triangle[0] = a2;
+          triangle[1] = b2;
+          break;
+        
+        default:
+          throw std::runtime_error("Invalid min_pos() return value");
+        }
+
+        if (Point::norm(triangle[0], c1) < Point::norm(triangle[0], c2))
+          triangle[2] = c1;
+        else
+          triangle[2] = c2;
+#ifdef DEBUG
+        debugPoint("triangle: ", triangle[0]);
+        debugPoint("triangle: ", triangle[1]);
+        debugPoint("triangle: ", triangle[2]);
+#endif
+      }
+
+#ifdef DEBUG
+      void debugPoint(const char* string, const Point& pt)
+      {
+        std::stringstream str;
+        str << string << pt;
+        inf(DTR("%s"),str.str().c_str());
+      }
+#endif
 
       void
       updatePoints(double x_pos, double y_pos, double new_distance)
@@ -260,12 +385,7 @@ namespace Navigation
         m_data[1] = m_data[2];
         m_data[2].setPoint(x_pos, y_pos);
         m_data[2].distance = new_distance;
-      }
-
-      void
-      getArea()
-      {
-        
+        m_data_size++;
       }
 
       void
@@ -275,18 +395,45 @@ namespace Navigation
           return;
 
         auto var = msg->location.end();
+        var--;
         updatePoints((*var)->x, (*var)->y, msg->value);
-        getArea();
+        if (m_data_size < 3)
+          return;
+        
+        try
+        {
+          getArea();
+          m_data_size = 0;
+        }
+        catch(const TwoSolutions& e)
+        {
+          war(DTR("%s"), e.what());
+        }
+        catch(const std::exception& e)
+        {
+          err(DTR("%s"), e.what());
+        }
       }
 
       //! Main loop.
       void
       onMain(void)
       {
-        while (!stopping())
+        m_data[0].point = Point(0,0);
+        m_data[0].distance = 10;
+
+        m_data[1].point = Point(10,0);
+        m_data[1].distance = 10;
+
+        m_data[2].point = Point(3,0);
+        m_data[2].distance = 10;
+
+        getArea();
+        exit(1);
+        /* while (!stopping())
         {
           waitForMessages(3.0);
-        }
+        } */
       }
     };
   }
