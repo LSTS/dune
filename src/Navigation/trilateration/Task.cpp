@@ -24,13 +24,18 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: João Bogas                                                      *
+// Author: João Bogas                                                       *
 //***************************************************************************
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// ISO C++ headers.
 #include <cmath>
+
+// local headers
+#include "Point.hpp"
+#include "Error.hpp"
 
 namespace Navigation
 {
@@ -45,158 +50,9 @@ namespace Navigation
     struct Task: public DUNE::Tasks::Task
     {
       //! Task Arguments
-      struct Arguments
-      {
-        /* data */
-      };
+      struct Arguments {};
 
-      class ErrorInterception: public std::exception
-      {
-      public:
-        ErrorInterception(const char* str): m_error("Interception impossible: " + String::str(str))
-        {}
-
-        ~ErrorInterception()
-        {}
-
-        const char* what() const noexcept override
-        {
-          return m_error.c_str();
-        }
-
-      private:
-        std::string m_error;
-      };
-
-      class TwoSolutions: public std::exception
-      {
-      public:
-        TwoSolutions()
-        {}
-
-        ~TwoSolutions()
-        {}
-
-        const char* what() const noexcept override
-        {
-          return "Two possible solutions";
-        }
-      };
-
-      struct Point
-      {
-        double x;
-        double y;
-
-        Point(): x(0), y(0)
-        {}
-
-        Point(double _x, double _y): x(_x), y(_y)
-        {}
-
-        double norm(const Point& point)
-        {
-          return sqrt(pow(x-point.x, 2) + pow(y-point.y, 2));
-        }
-
-        double norm() const
-        {
-          return sqrt(pow(x, 2) + pow(y, 2));
-        }
-
-        static double norm(const Point& p1, const Point& p2)
-        {
-          return sqrt(pow(p1.x-p2.x, 2) + pow(p1.y-p2.y, 2));
-        }
-
-        double normalize()
-        {
-          double dst = norm();
-          x /= dst;
-          y /= dst;
-          return dst;
-        }
-
-        double angle() const
-        {
-          double angle = atan2(y, x);
-          return (angle < 0 ) ? angle+2*M_PI: angle;
-        }
-
-        bool isParallel(const Point& vec) const
-        {
-          if ((x == 0 && vec.x == 0) || (y == 0 && vec.y == 0))
-            return true;
-          
-          return (vec.x/x == vec.y/y);
-        }
-
-        Point getPerpendicular() const
-        {
-          return Point(-y, x);
-        }
-
-        Point operator+(const Point& to_add) const
-        {
-          return Point(x+to_add.x, y+to_add.y);
-        }
-
-        Point operator-(const Point& to_add) const
-        {
-          return Point(x-to_add.x, y-to_add.y);
-        }
-
-        Point& operator+=(const Point& to_add)
-        {
-          x += to_add.x;
-          y += to_add.y;
-          return *this;
-        }
-
-        Point& operator-=(const Point& to_add)
-        {
-          x -= to_add.x;
-          y -= to_add.y;
-          return *this;
-        }
-
-        Point operator/(double ratio) const
-        {
-          return Point(x/ratio, y/ratio);
-        }
-
-        Point& operator/=(double ratio)
-        {
-          x /= ratio;
-          y /= ratio;
-          return *this;
-        }
-
-        Point operator*(double ratio) const
-        {
-          return Point(x*ratio, y*ratio);
-        }
-
-        friend Point operator*(double value, const Point& pt)
-        {
-          return Point(pt.x*value, pt.y*value);
-        }
-
-        Point& operator*=(double ratio)
-        {
-          x *= ratio;
-          y *= ratio;
-          return *this;
-        }
-
-        friend std::ostream& operator<<(std::ostream& os, const Point& to_print)
-        {
-          os << std::fixed << std::setprecision(5);
-          os << "( " << to_print.x << " , " << to_print.y << " )";
-          return os;
-        }
-      };
-
+      typedef Point2d Point;
       struct Info
       {
         Point point;
@@ -216,8 +72,13 @@ namespace Navigation
         }
       };
 
+      //! Last 3 valid points
       std::array<Info, 3> m_data;
+      //! Current size of m_data
       int m_data_size;
+      //! Current point calculated
+      Point m_res;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -367,6 +228,7 @@ namespace Navigation
         debugPoint("triangle: ", triangle[1]);
         debugPoint("triangle: ", triangle[2]);
 #endif
+        m_res = (triangle[0]+triangle[1]+triangle[2])/3;
       }
 
 #ifdef DEBUG
@@ -419,21 +281,10 @@ namespace Navigation
       void
       onMain(void)
       {
-        m_data[0].point = Point(0,0);
-        m_data[0].distance = 10;
-
-        m_data[1].point = Point(10,0);
-        m_data[1].distance = 10;
-
-        m_data[2].point = Point(3,0);
-        m_data[2].distance = 10;
-
-        getArea();
-        exit(1);
-        /* while (!stopping())
+        while (!stopping())
         {
           waitForMessages(3.0);
-        } */
+        }
       }
     };
   }
