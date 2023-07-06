@@ -253,37 +253,6 @@ namespace Navigation
 #endif
       }
 
-      //! Return the postion with the minimum value
-      //! @param[in] init ptr to initial element of vector
-      //! @param[in] end ptr to final element of vector
-      int 
-      min_pos(double* init, double* end)
-      {
-        int pos = -1, curr_pos = 0;
-        double min = DBL_MAX;
-
-        while (init <= end)
-        {
-          if (*init < min)
-          {
-            min = *init;
-            pos = curr_pos;
-          }
-          init++;
-          curr_pos++;
-        }
-        return pos;
-      }
-
-      bool 
-      isLine()
-      {
-        Point vec_A = m_data[0].point - m_data[1].point;
-        Point vec_B = m_data[1].point - m_data[2].point;
-
-        return vec_A.isParallel(vec_B);
-      }
-
       void
       getArea()
       {
