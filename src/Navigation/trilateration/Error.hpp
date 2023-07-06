@@ -37,13 +37,13 @@ namespace Navigation
 {
   namespace trilateration
   {
-    class ErrorInterception: public std::exception
+    class NoInterception: public std::exception
     {
     public:
-      ErrorInterception(const char* str): m_error("Interception impossible: " + DUNE::Utils::String::str(str))
+      NoInterception(const char* str): m_error("Interception impossible: " + DUNE::Utils::String::str(str))
       {}
 
-      ~ErrorInterception()
+      ~NoInterception()
       {}
 
       const char* what() const noexcept override
@@ -69,6 +69,22 @@ namespace Navigation
         return "Two possible solutions";
       }
     };
+
+    class SinglePoint : public std::exception
+    {
+    public:
+      SinglePoint()
+      {}
+
+      ~SinglePoint()
+      {}
+
+      const char* what() const noexcept override
+      {
+        return "Circumferences only intercept on one point";
+      }
+    };
+    
   }
 }
 
