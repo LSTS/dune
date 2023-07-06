@@ -279,7 +279,7 @@ namespace Navigation
 
       Point3d operator|(const Point3d& pt) const
       {
-        return Point3d(y*pt.z-z*pt.y, x*pt.z-z*pt.x, x*pt.y-y*pt.x);
+        return Point3d(y*pt.z-z*pt.y, z*pt.x-x*pt.z, x*pt.y-y*pt.x);
       }
 
       Point3d& operator|=(const Point3d& pt)
@@ -309,7 +309,7 @@ namespace Navigation
         if (var != 0)
           return false;
         
-        return x|y|z; 
+        return (x || y || z);
       }
 
       bool operator==(const Point3d& pt)
