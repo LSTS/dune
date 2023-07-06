@@ -47,6 +47,8 @@ namespace Navigation
   {
     using DUNE_NAMESPACES;
 
+    static double ZERO = 1e-9;
+
     struct Task: public DUNE::Tasks::Task
     {
       //! Task Arguments
@@ -87,6 +89,20 @@ namespace Navigation
       {
         Point pt;
         Point vec; // normal to the plane
+
+        Plane()
+        {}
+
+        Plane(const Point3d& p1, const Point3d& p2, const Point3d& p3)
+        {
+          vec = Point::getPerpendicular(p1-p2, p1-p3);
+          pt = p1;
+        }
+
+        Plane(const Point& _pt, const Point& _vec)
+          : pt(_pt),
+            vec(_vec)
+        {}
       };
 
       struct Line
@@ -148,7 +164,7 @@ namespace Navigation
       }
 
       void
-      getInterception(const Sphere& data_1, const Sphere& data_2, Circle& out)
+      getIntersection(const Sphere& data_1, const Sphere& data_2, Circle& out)
       {
         Point vector = data_2.point - data_1.point;
         double dst = vector.normalize();
@@ -175,11 +191,11 @@ namespace Navigation
       }
 
       void 
-      getInterception(const Circle& data_1, const Circle& data_2, Point& out1)
+      getIntersection(const Circle& data_1, const Circle& data_2, Point& out1)
       {
         Point vec_prod = data_1.vector_n|data_2.vector_n;
         double dot_prod = (data_1.center-data_2.center)*data_1.vector_i;
-        if (vec_prod == 0)
+        if (vec_prod == ZERO)
         {
           if (dot_prod)
             throw NoInterception("Circles planes are parallel");
@@ -191,7 +207,7 @@ namespace Navigation
       }
 
       void
-      getInterception(const Sphere& data_1, const Sphere& data_2, Plane& ln)
+      getIntersection(const Sphere& data_1, const Sphere& data_2, Plane& ln)
       {
         Point vector_n = data_2.point - data_1.point;
         double dst = vector_n.normalize();
@@ -211,21 +227,30 @@ namespace Navigation
       }
 
       void
-      getInterception(const Plane& plane_1, const Plane& plane_2, Line& out)
+      getIntersection(const Plane& plane_1, const Plane& plane_2, Line& out)
       {
         out.vec = Point::getPerpendicular(plane_1.vec, plane_2.vec);
-        double det = out.vec.norm();
-        
-        double d1 = plane_1.vec*plane_1.pt;
-        double d2 = plane_2.vec*plane_2.pt;
-        out.pt = ((out.vec|plane_2.vec)*d1 + (plane_1.vec|out.vec)*d2)/det ;
+        double det = out.vec.normalize();
 
+        double d1 = -1*(plane_1.vec*plane_1.pt);
+        double d2 = -1*(plane_2.vec*plane_2.pt);
+        out.pt = ((out.vec|plane_2.vec)*d1 + (plane_1.vec|out.vec)*d2)/det ;
+#ifdef DEBUG
+        debug("Line: ", out);
+#endif
       }
 
       void
-      getInterception(const Line& line, const Plane& plane, Point& out)
+      getIntersection(const Line& line, const Plane& plane, Point& out)
       {
+        if (plane.vec*line.vec == 0)
+          throw NoInterception("Line is parallel to plane");
 
+        float delta_x = (plane.vec*plane.pt - plane.vec*line.pt)/(plane.vec*line.vec);
+        out = line.pt + line.vec*delta_x;
+#ifdef DEBUG
+        debug("Line-Plane: ", out);
+#endif
       }
 
       //! Return the postion with the minimum value
@@ -272,14 +297,14 @@ namespace Navigation
         Plane pl_1, pl_2, pl_3, centers;
         centers.vec = Point::getPerpendicular(m_data[0].point - m_data[1].point, m_data[0].point - m_data[2].point);
 
-        getInterception(data1, data2, pl_1);
-        getInterception(data2, data3, pl_2);
-        getInterception(data1, data3, pl_3);
+        getIntersection(data1, data2, pl_1);
+        getIntersection(data2, data3, pl_2);
+        getIntersection(data1, data3, pl_3);
 
         Line line;
-        getInterception(pl_1, pl_2, line);
+        getIntersection(pl_1, pl_2, line);
         Point origin;
-        getInterception(centers, line, origin);
+        getIntersection(line, centers, origin);
 
       }
 
@@ -315,6 +340,14 @@ namespace Navigation
       {
         std::stringstream str;
         str << string << pt.pt << " and normal vector " << pt.vec;
+        inf(DTR("%s"),str.str().c_str());
+      }
+
+      void 
+      debug(const char* string, const Line& ln)
+      {
+        std::stringstream str;
+        str << string << "with Point " << ln.pt << " and normal vector " << ln.vec;
         inf(DTR("%s"),str.str().c_str());
       }
 #endif
@@ -360,7 +393,24 @@ namespace Navigation
       void
       onMain(void)
       {
-        getArea();
+        Point center1(2,1,2), center2(3,2,1), center3(0,0,0);
+        //getArea();
+        Plane pl;
+        pl.pt   = center1;
+        pl.vec  = Point(5,2,1);
+        std::cout << "D1 = " << pl.pt*pl.vec << "\n";
+
+
+        Plane pl2;
+        pl2.pt  = center2;
+        pl2.vec = Point(1,3,4);
+        std::cout << "D2 = " << pl2.pt*pl2.vec << "\n";
+        Line ln;
+        getIntersection(pl, pl2, ln);
+
+        Plane centers = Plane(center1, center2, center3);
+        Point res;
+        getIntersection(ln, centers, res);
         exit(1);
         /* while (!stopping())
         {
