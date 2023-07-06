@@ -164,6 +164,13 @@ namespace Navigation
       Point3d(double _x, double _y, double _z): x(_x), y(_y), z(_z)
       {}
 
+      void set(double _x, double _y, double _z)
+      {
+        x = _x;
+        y = _y;
+        z = _z;
+      }
+
       double norm(const Point3d& point)
       {
         return sqrt(pow(x-point.x, 2) + pow(y-point.y, 2) + pow(z-point.z, 2));
@@ -209,7 +216,15 @@ namespace Navigation
       //TODO:
       Point3d getPerpendicular() const
       {
-        throw NotImplemented("Point3d::getPerpendicular()");
+        throw DUNE::NotImplemented("Point3d::getPerpendicular()");
+      }
+
+      static Point3d getPerpendicular(const Point3d& p1, const Point3d& p2)
+      {
+        if (p1.isParallel(p2))
+          throw std::runtime_error("getPerpendicular() param invalid\nVectors are parallel");
+
+        return p1|p2;
       }
 
       Point3d operator+(const Point3d& to_add) const
@@ -256,6 +271,25 @@ namespace Navigation
         return Point3d(x*ratio, y*ratio, z*ratio);
       }
 
+      //! Dot product
+      double operator*(const Point3d& pt) const
+      {
+        return x*pt.x + y*pt.y + z*pt.z;
+      }
+
+      Point3d operator|(const Point3d& pt) const
+      {
+        return Point3d(y*pt.z-z*pt.y, x*pt.z-z*pt.x, x*pt.y-y*pt.x);
+      }
+
+      Point3d& operator|=(const Point3d& pt)
+      {
+        x = y*pt.z-z*pt.y;
+        y = x*pt.z-z*pt.x;
+        z = x*pt.y-y*pt.x;
+        return *this;
+      }
+  
       friend Point3d operator*(double value, const Point3d& pt)
       {
         return Point3d(pt.x*value, pt.y*value, pt.z*value);
@@ -269,6 +303,20 @@ namespace Navigation
         return *this;
       }
 
+      template<typename T>
+      bool operator==(T var) const
+      {
+        if (var != 0)
+          return false;
+        
+        return x|y|z; 
+      }
+
+      bool operator==(const Point3d& pt)
+      {
+        return (x==pt.x)&&(y==pt.y)&&(z==pt.z);
+      }
+
       friend std::ostream& operator<<(std::ostream& os, const Point3d& to_print)
       {
         os << std::fixed << std::setprecision(5);
@@ -276,7 +324,62 @@ namespace Navigation
         return os;
       }
     };
-  } 
+
+    //3x3 Matrix
+    struct Matrix
+    {
+      Point3d x;
+      Point3d y;
+      Point3d z;
+
+      Matrix()
+      {}
+
+      void setRow(int index, double _1, double _2, double _3)
+      {
+        switch (index)
+        {
+        case 1:
+          x.set(_1, _2, _3);
+          return;
+
+        case 2:
+          y.set(_1, _2, _3);
+          return;
+
+        case 3:
+          z.set(_1, _2, _3);
+          return;
+
+        default:
+          throw std::runtime_error("Invalid index");
+        }
+      }
+
+      void set(const Point3d& vec_n, double theta)
+      {
+        double c_theta = cos(theta);
+        double s_theta = sin(theta);
+
+        x.x = c_theta + pow(vec_n.x,2)*(1-c_theta);
+        x.y = vec_n.x*vec_n.y*(1-c_theta) - vec_n.z*s_theta;
+        x.z = vec_n.x*vec_n.z*(1-c_theta) + vec_n.y*s_theta;
+
+        y.x = vec_n.x*vec_n.y*(1-c_theta) + vec_n.z*s_theta;
+        y.y = c_theta + pow(vec_n.y, 2)*(1-c_theta);
+        y.z = vec_n.y*vec_n.z*(1-c_theta) - vec_n.x*s_theta;
+
+        z.x = vec_n.x*vec_n.z*(1-c_theta) - vec_n.y*s_theta;
+        z.y = vec_n.y*vec_n.z*(1-c_theta) + vec_n.x*s_theta;
+        z.z = c_theta + pow(vec_n.z,2)*(1-c_theta);
+      }
+
+      Point3d operator*(const Point3d& vec) const
+      {
+        return Point3d(x*vec, y*vec, z*vec);
+      }
+    };
+  }
 }
 
 #endif

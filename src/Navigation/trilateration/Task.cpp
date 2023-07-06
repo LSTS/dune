@@ -52,28 +52,51 @@ namespace Navigation
       //! Task Arguments
       struct Arguments {};
 
-      typedef Point2d Point;
-      struct Info
+      typedef Point3d Point;
+
+      //! Sphere
+      struct Sphere
       {
         Point point;
         double distance;
 
-        Info(): point(), distance(0)
+        Sphere(): point(), distance(0)
         {}
 
-        Info(double _x, double _y, double _dst): point(_x, _y), distance(_dst)
+        Sphere(double _x, double _y, double _z, double _dst): point(_x, _y, _z), distance(_dst)
         {}
 
         void
-        setPoint(double _x, double _y)
+        setPoint(double _x, double _y, double _z)
         {
           point.x = _x;
           point.y = _y;
+          point.z = _z;
         }
       };
 
+      struct Circle
+      {
+        Point center;
+        double radius;
+        Point vector_n; // vector normal to the circle plan
+        Point vector_i; // vector perpendicular to normal
+      };
+
+      struct Plane
+      {
+        Point pt;
+        Point vec; // normal to the plane
+      };
+
+      struct Line
+      {
+        Point pt;
+        Point vec;
+      };
+
       //! Last 3 valid points
-      std::array<Info, 3> m_data;
+      std::array<Sphere, 3> m_data;
       //! Current size of m_data
       int m_data_size;
       //! Current point calculated
@@ -125,30 +148,91 @@ namespace Navigation
       }
 
       void
-      getInterception(const Info& data_1, const Info& data_2, Point& out_1, Point& out_2)
+      getInterception(const Sphere& data_1, const Sphere& data_2, Circle& out)
       {
-        Point vector_x = data_2.point - data_1.point;
+        Point vector = data_2.point - data_1.point;
+        double dst = vector.normalize();
 
-        double length = vector_x.normalize();
+        if (data_1.distance+data_2.distance < dst)
+          throw NoInterception("Points too far apart");
 
-        if (length > data_1.distance + data_2.distance)
-          throw ErrorInterception("Points to far apart");
-        if (length < abs(data_2.distance - data_1.distance))
-          throw ErrorInterception("Circle contains circle");
+        if (data_1.distance+data_2.distance == dst)
+        {
+          // Calculate single point interception and save in out_1
+          throw SinglePoint();
+        }
 
-        const double delta_x = length/2.0f + (pow(data_1.distance,2) - pow(data_2.distance,2) )/(2*length);
-        const double delta_y = sqrt(pow(data_1.distance,2) - pow(delta_x,2));
-        const Point vector_y = vector_x.getPerpendicular();
+        if (dst < abs(data_1.distance-data_2.distance))
+          throw NoInterception("Sphere contains Sphere");
 
-        out_1 = data_1.point + vector_x*delta_x + vector_y*delta_y;
-        out_2 = data_1.point + vector_x*delta_x - vector_y*delta_y;
+        double delta_x = dst/2.0f + (pow(data_1.distance,2) - pow(data_2.distance,2))/(2*dst);
+        out.center = data_1.point + delta_x*vector;
+        out.radius = sqrt(pow(data_1.distance,2) - pow(delta_x,2));
+        out.vector_n = vector;
 #ifdef DEBUG
-        debugPoint("Interception: 1", out_1);
-        debugPoint("Interception: 2", out_2);
+        debug("Circle interception: ", out);
 #endif
       }
 
-      int min_pos(double* init, double* end)
+      void 
+      getInterception(const Circle& data_1, const Circle& data_2, Point& out1)
+      {
+        Point vec_prod = data_1.vector_n|data_2.vector_n;
+        double dot_prod = (data_1.center-data_2.center)*data_1.vector_i;
+        if (vec_prod == 0)
+        {
+          if (dot_prod)
+            throw NoInterception("Circles planes are parallel");
+          
+          // Calculate circle interception in same plane
+        }
+
+        
+      }
+
+      void
+      getInterception(const Sphere& data_1, const Sphere& data_2, Plane& ln)
+      {
+        Point vector_n = data_2.point - data_1.point;
+        double dst = vector_n.normalize();
+
+        if (data_1.distance+data_2.distance < dst)
+          throw NoInterception("Centers too far apart");
+
+        if (dst < abs(data_1.distance-data_2.distance))
+          throw NoInterception("Sphere contains Sphere");
+
+        double delta_x = dst/2.0f + (pow(data_1.distance,2) - pow(data_2.distance,2))/(2*dst);
+        ln.pt = data_1.point + delta_x*vector_n;
+        ln.vec = vector_n;
+#ifdef DEBUG
+        debug("Plane interception: ", ln);
+#endif
+      }
+
+      void
+      getInterception(const Plane& plane_1, const Plane& plane_2, Line& out)
+      {
+        out.vec = Point::getPerpendicular(plane_1.vec, plane_2.vec);
+        double det = out.vec.norm();
+        
+        double d1 = plane_1.vec*plane_1.pt;
+        double d2 = plane_2.vec*plane_2.pt;
+        out.pt = ((out.vec|plane_2.vec)*d1 + (plane_1.vec|out.vec)*d2)/det ;
+
+      }
+
+      void
+      getInterception(const Line& line, const Plane& plane, Point& out)
+      {
+
+      }
+
+      //! Return the postion with the minimum value
+      //! @param[in] init ptr to initial element of vector
+      //! @param[in] end ptr to final element of vector
+      int 
+      min_pos(double* init, double* end)
       {
         int pos = -1, curr_pos = 0;
         double min = DBL_MAX;
@@ -166,7 +250,8 @@ namespace Navigation
         return pos;
       }
 
-      bool isLine()
+      bool 
+      isLine()
       {
         Point vec_A = m_data[0].point - m_data[1].point;
         Point vec_B = m_data[1].point - m_data[2].point;
@@ -177,75 +262,69 @@ namespace Navigation
       void
       getArea()
       {
-        if(isLine())
-          throw TwoSolutions();
+        Sphere data1(2, 0, 0, 2);
+        Sphere data2(0, 2, 0, 2);
+        Sphere data3(0, 0, 2, 2);
+        m_data[0] = data1;
+        m_data[1] = data2;
+        m_data[2] = data3;
 
-        Point a1, a2, b1, b2, c1, c2;
-        getInterception(m_data[0], m_data[1], a1, a2);
-        getInterception(m_data[0], m_data[2], b1, b2);
-        getInterception(m_data[1], m_data[2], c1, c2);
+        Plane pl_1, pl_2, pl_3, centers;
+        centers.vec = Point::getPerpendicular(m_data[0].point - m_data[1].point, m_data[0].point - m_data[2].point);
 
-        double distances[4];
-        distances[0] = Point::norm(a1, b1);
-        distances[1] = Point::norm(a1, b2);
+        getInterception(data1, data2, pl_1);
+        getInterception(data2, data3, pl_2);
+        getInterception(data1, data3, pl_3);
 
-        distances[2] = Point::norm(a2, b1);
-        distances[3] = Point::norm(a2, b2);
+        Line line;
+        getInterception(pl_1, pl_2, line);
+        Point origin;
+        getInterception(centers, line, origin);
 
-        Point triangle[3];
-        switch (min_pos(&distances[0], &distances[3]))
-        {
-        case 0:
-          triangle[0] = a1;
-          triangle[1] = b1;
-          break;
-        
-        case 1:
-          triangle[0] = a1;
-          triangle[1] = b2;
-          break;
-        
-        case 2:
-          triangle[0] = a2;
-          triangle[1] = b1;
-          break;
-        
-        case 3:
-          triangle[0] = a2;
-          triangle[1] = b2;
-          break;
-        
-        default:
-          throw std::runtime_error("Invalid min_pos() return value");
-        }
-
-        if (Point::norm(triangle[0], c1) < Point::norm(triangle[0], c2))
-          triangle[2] = c1;
-        else
-          triangle[2] = c2;
-#ifdef DEBUG
-        debugPoint("triangle: ", triangle[0]);
-        debugPoint("triangle: ", triangle[1]);
-        debugPoint("triangle: ", triangle[2]);
-#endif
-        m_res = (triangle[0]+triangle[1]+triangle[2])/3;
       }
 
 #ifdef DEBUG
-      void debugPoint(const char* string, const Point& pt)
+      void 
+      debug(const char* string, const Point& pt)
       {
         std::stringstream str;
         str << string << pt;
         inf(DTR("%s"),str.str().c_str());
       }
+
+      void 
+      debug(const char* string, const Circle& cl)
+      {
+        std::stringstream str;
+        str << string ;
+        str << "Center " << cl.center << " and radius " << cl.radius;
+        str << " n^: " << cl.vector_n;
+        inf(DTR("%s"), str.str().c_str());
+      }
+
+      void 
+      debug(const char* string, const Sphere& pt)
+      {
+        std::stringstream str;
+        str << string << pt.point << " and distance " << pt.distance;
+        inf(DTR("%s"),str.str().c_str());
+      }
+
+      void 
+      debug(const char* string, const Plane& pt)
+      {
+        std::stringstream str;
+        str << string << pt.pt << " and normal vector " << pt.vec;
+        inf(DTR("%s"),str.str().c_str());
+      }
 #endif
 
       void
-      updatePoints(double x_pos, double y_pos, double new_distance)
+      updatePoints(double x_pos, double y_pos, double z_pos, double new_distance)
       {
         m_data[0] = m_data[1];
         m_data[1] = m_data[2];
-        m_data[2].setPoint(x_pos, y_pos);
+        m_data[2].setPoint(x_pos, y_pos, z_pos);
         m_data[2].distance = new_distance;
         m_data_size++;
       }
@@ -258,10 +337,10 @@ namespace Navigation
 
         auto var = msg->location.end();
         var--;
-        updatePoints((*var)->x, (*var)->y, msg->value);
+        updatePoints((*var)->x, (*var)->y, (*var)->z, msg->value);
         if (m_data_size < 3)
           return;
-        
+
         try
         {
           getArea();
@@ -281,10 +360,12 @@ namespace Navigation
       void
       onMain(void)
       {
-        while (!stopping())
+        getArea();
+        exit(1);
+        /* while (!stopping())
         {
           waitForMessages(3.0);
-        }
+        } */
       }
     };
   }
