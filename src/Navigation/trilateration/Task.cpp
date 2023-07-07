@@ -52,7 +52,11 @@ namespace Navigation
     struct Task: public DUNE::Tasks::Task
     {
       //! Task Arguments
-      struct Arguments {};
+      struct Arguments 
+      {
+        bool active;
+        bool setPoint;
+      };
 
       typedef Point3d Point;
 
@@ -111,19 +115,36 @@ namespace Navigation
         Point vec;
       };
 
+      //! Task arguments
+      Arguments m_args;
       //! Last 3 valid points
       std::array<Sphere, 3> m_data;
       //! Current size of m_data
       int m_data_size;
-      //! Current point calculated
-      Point m_res;
+      //! Solution
+      Point m_sol;
+      //! RE get current point as solution
+      bool m_getSol;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx), m_data_size(0)
+        DUNE::Tasks::Task(name, ctx), m_data_size(0), m_getSol(false)
       {
+        param("Active", m_args.active)
+        .defaultValue("false")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .description("Task activation");
+
+        param("Get solution", m_args.setPoint)
+        .defaultValue("false")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .description("Get current device position as solution");
+
+        bind<IMC::EstimatedState>(this);
         bind<IMC::Distance>(this);
       }
 
@@ -131,6 +152,10 @@ namespace Navigation
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.active))
+          m_data_size = 0;
+        if (paramChanged(m_args.setPoint))
+          m_getSol = true;
       }
 
       //! Reserve entity identifiers.
@@ -186,28 +211,12 @@ namespace Navigation
         out.radius = sqrt(pow(data_1.distance,2) - pow(delta_x,2));
         out.vector_n = vector;
 #ifdef DEBUG
-        debug("Circle interception: ", out);
+        debug("Sphere-Sphere: ", out);
 #endif
       }
 
-      void 
-      getIntersection(const Circle& data_1, const Circle& data_2, Point& out1)
-      {
-        Point vec_prod = data_1.vector_n|data_2.vector_n;
-        double dot_prod = (data_1.center-data_2.center)*data_1.vector_i;
-        if (vec_prod == ZERO)
-        {
-          if (dot_prod)
-            throw NoInterception("Circles planes are parallel");
-          
-          // Calculate circle interception in same plane
-        }
-
-        
-      }
-
       void
-      getIntersection(const Sphere& data_1, const Sphere& data_2, Plane& ln)
+      getIntersection(const Sphere& data_1, const Sphere& data_2, Plane& pln)
       {
         Point vector_n = data_2.point - data_1.point;
         double dst = vector_n.normalize();
@@ -219,10 +228,10 @@ namespace Navigation
           throw NoInterception("Sphere contains Sphere");
 
         double delta_x = dst/2.0f + (pow(data_1.distance,2) - pow(data_2.distance,2))/(2*dst);
-        ln.pt = data_1.point + delta_x*vector_n;
-        ln.vec = vector_n;
+        pln.pt = data_1.point + delta_x*vector_n;
+        pln.vec = vector_n;
 #ifdef DEBUG
-        debug("Plane interception: ", ln);
+        debug("Sphere-Sphere: ", pln);
 #endif
       }
 
@@ -236,7 +245,7 @@ namespace Navigation
         double d2 = -1*(plane_2.vec*plane_2.pt);
         out.pt = ((out.vec|plane_2.vec)*d1 + (plane_1.vec|out.vec)*d2)/det ;
 #ifdef DEBUG
-        debug("Line: ", out);
+        debug("Plane-Plane: ", out);
 #endif
       }
 
@@ -256,25 +265,27 @@ namespace Navigation
       void
       getArea()
       {
-        Sphere data1(2, 0, 0, 2);
-        Sphere data2(0, 2, 0, 2);
-        Sphere data3(0, 0, 2, 2);
-        m_data[0] = data1;
-        m_data[1] = data2;
-        m_data[2] = data3;
+        Plane pl_12, pl_23;
+        getIntersection(m_data[0], m_data[1], pl_12);
+        getIntersection(m_data[1], m_data[2], pl_23);
 
-        Plane pl_1, pl_2, pl_3, centers;
-        centers.vec = Point::getPerpendicular(m_data[0].point - m_data[1].point, m_data[0].point - m_data[2].point);
+        Line ln;
+        getIntersection(pl_12, pl_23, ln);
 
-        getIntersection(data1, data2, pl_1);
-        getIntersection(data2, data3, pl_2);
-        getIntersection(data1, data3, pl_3);
-
-        Line line;
-        getIntersection(pl_1, pl_2, line);
+        Plane centers = Plane(m_data[0].point, m_data[1].point, m_data[2].point);
         Point origin;
-        getIntersection(line, centers, origin);
+        getIntersection(ln, centers, origin);
+        double delta = sqrt(pow(m_data[0].distance,2) - pow(Point::norm(origin,m_data[0].point),2));
 
+        Point sol1, sol2;
+        sol1 = origin + delta*ln.vec;
+        sol2 = origin - delta*ln.vec;        
+#ifdef DEBUG
+        if (sol1.z < 0)
+          debug("Solution 1 ", sol1);
+        if(sol2.z < 0)
+          debug("Solution 2 ", sol2);
+#endif
       }
 
 #ifdef DEBUG
@@ -282,7 +293,7 @@ namespace Navigation
       debug(const char* string, const Point& pt)
       {
         std::stringstream str;
-        str << string << pt;
+        str << string << "Point " << pt;
         inf(DTR("%s"),str.str().c_str());
       }
 
@@ -291,8 +302,8 @@ namespace Navigation
       {
         std::stringstream str;
         str << string ;
-        str << "Center " << cl.center << " and radius " << cl.radius;
-        str << " n^: " << cl.vector_n;
+        str << "Circle with center " << cl.center << " and radius " << cl.radius;
+        str << " and n^: " << cl.vector_n;
         inf(DTR("%s"), str.str().c_str());
       }
 
@@ -300,7 +311,7 @@ namespace Navigation
       debug(const char* string, const Sphere& pt)
       {
         std::stringstream str;
-        str << string << pt.point << " and distance " << pt.distance;
+        str << string << "Sphere with center " << pt.point << " and distance " << pt.distance;
         inf(DTR("%s"),str.str().c_str());
       }
 
@@ -308,7 +319,7 @@ namespace Navigation
       debug(const char* string, const Plane& pt)
       {
         std::stringstream str;
-        str << string << pt.pt << " and normal vector " << pt.vec;
+        str << string << "Plane with point " << pt.pt << " and normal vector " << pt.vec;
         inf(DTR("%s"),str.str().c_str());
       }
 
@@ -316,7 +327,7 @@ namespace Navigation
       debug(const char* string, const Line& ln)
       {
         std::stringstream str;
-        str << string << "with Point " << ln.pt << " and normal vector " << ln.vec;
+        str << string << "Line with point " << ln.pt << " and normal vector " << ln.vec;
         inf(DTR("%s"),str.str().c_str());
       }
 #endif
@@ -334,6 +345,9 @@ namespace Navigation
       void
       consume(const IMC::Distance* msg)
       {
+        if (!m_args.active)
+          return;
+
         if (msg->validity == IMC::Distance::DV_INVALID)
           return;
 
@@ -346,7 +360,6 @@ namespace Navigation
         try
         {
           getArea();
-          m_data_size = 0;
         }
         catch(const TwoSolutions& e)
         {
@@ -358,33 +371,39 @@ namespace Navigation
         }
       }
 
+      void
+      consume(const IMC::EstimatedState* msg)
+      {
+        if (m_args.active)
+        {
+          IMC::DeviceState state;
+          state.x = msg->x;
+          state.y = msg->y;
+          state.z = msg->z;
+
+          IMC::Distance data;
+          data.validity = true;
+          data.value = m_sol.norm();
+          data.location.push_back(state);
+
+          dispatch(data, DF_LOOP_BACK);
+        }
+        else if(m_getSol)
+        {
+          m_sol.set(msg->x, msg->y, msg->z);
+          m_getSol = false;
+        }
+      }
+
       //! Main loop.
       void
       onMain(void)
       {
-        Point center1(2,1,2), center2(3,2,1), center3(0,0,0);
-        //getArea();
-        Plane pl;
-        pl.pt   = center1;
-        pl.vec  = Point(5,2,1);
-        std::cout << "D1 = " << pl.pt*pl.vec << "\n";
-
-
-        Plane pl2;
-        pl2.pt  = center2;
-        pl2.vec = Point(1,3,4);
-        std::cout << "D2 = " << pl2.pt*pl2.vec << "\n";
-        Line ln;
-        getIntersection(pl, pl2, ln);
-
-        Plane centers = Plane(center1, center2, center3);
-        Point res;
-        getIntersection(ln, centers, res);
-        exit(1);
-        /* while (!stopping())
+        // in x time send <IMC::distance> com loopback
+        while (!stopping())
         {
           waitForMessages(3.0);
-        } */
+        }
       }
     };
   }

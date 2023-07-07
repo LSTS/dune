@@ -186,6 +186,11 @@ namespace Navigation
         return sqrt(pow(p1.x-p2.x, 2) + pow(p1.y-p2.y, 2) + pow(p1.z-p2.z, 2));
       }
 
+      double norm(double _x, double _y, double _z)
+      {
+        return sqrt(pow(x-_x, 2) + pow(y-_y, 2) + pow(z-_z, 2));
+      }
+      
       double normalize()
       {
         double dst = norm();
