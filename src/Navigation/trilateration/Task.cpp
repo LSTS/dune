@@ -123,29 +123,46 @@ namespace Navigation
       int m_data_size;
       //! Solution
       Point m_sol;
-      //! RE get current point as solution
+      //! Results
+      Point m_res1, m_res2;
+      //! FE get current point as solution
       bool m_getSol;
+      //! Watchdog
+      Counter<double> m_wdog;
+      //! Get new point
+      bool m_nPoint;
+      //! Filter iteration
+      unsigned m_iter;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx), m_data_size(0), m_getSol(false)
+        DUNE::Tasks::Task(name, ctx), 
+        m_data_size(0), 
+        m_getSol(false),
+        m_iter(0)
       {
-        param("Active", m_args.active)
+        m_res1.setNaN();
+        m_res2.setNaN();
+
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER);
+
+        param("Start", m_args.active)
         .defaultValue("false")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        //.scope(Tasks::Parameter::SCOPE_GLOBAL)
         .description("Task activation");
 
         param("Get solution", m_args.setPoint)
         .defaultValue("false")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        //.scope(Tasks::Parameter::SCOPE_GLOBAL)
         .description("Get current device position as solution");
 
-        bind<IMC::EstimatedState>(this);
-        bind<IMC::Distance>(this);
+        bind<IMC::SimulatedState>(this);
+        //bind<IMC::Distance>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -153,9 +170,19 @@ namespace Navigation
       onUpdateParameters(void)
       {
         if (paramChanged(m_args.active))
+        {
+          war("Task set to %s", m_args.active ? "active" : "deactivate" );
           m_data_size = 0;
+          m_res1.setNaN();
+          m_res2.setNaN();
+          m_wdog.reset();
+        }
         if (paramChanged(m_args.setPoint))
-          m_getSol = true;
+        {
+          war("SetPoint set to %s", m_args.setPoint ? "true" : "false" );
+          if (m_args.setPoint)
+            m_getSol = true;
+        }
       }
 
       //! Reserve entity identifiers.
@@ -180,6 +207,7 @@ namespace Navigation
       void
       onResourceInitialization(void)
       {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::Code::CODE_ACTIVATING);
       }
 
       //! Release resources.
@@ -210,9 +238,7 @@ namespace Navigation
         out.center = data_1.point + delta_x*vector;
         out.radius = sqrt(pow(data_1.distance,2) - pow(delta_x,2));
         out.vector_n = vector;
-#ifdef DEBUG
         debug("Sphere-Sphere: ", out);
-#endif
       }
 
       void
@@ -230,9 +256,7 @@ namespace Navigation
         double delta_x = dst/2.0f + (pow(data_1.distance,2) - pow(data_2.distance,2))/(2*dst);
         pln.pt = data_1.point + delta_x*vector_n;
         pln.vec = vector_n;
-#ifdef DEBUG
         debug("Sphere-Sphere: ", pln);
-#endif
       }
 
       void
@@ -244,9 +268,7 @@ namespace Navigation
         double d1 = -1*(plane_1.vec*plane_1.pt);
         double d2 = -1*(plane_2.vec*plane_2.pt);
         out.pt = ((out.vec|plane_2.vec)*d1 + (plane_1.vec|out.vec)*d2)/det ;
-#ifdef DEBUG
         debug("Plane-Plane: ", out);
-#endif
       }
 
       void
@@ -257,9 +279,7 @@ namespace Navigation
 
         float delta_x = (plane.vec*plane.pt - plane.vec*line.pt)/(plane.vec*line.vec);
         out = line.pt + line.vec*delta_x;
-#ifdef DEBUG
         debug("Line-Plane: ", out);
-#endif
       }
 
       void
@@ -276,61 +296,97 @@ namespace Navigation
         Point origin;
         getIntersection(ln, centers, origin);
         double delta = sqrt(pow(m_data[0].distance,2) - pow(Point::norm(origin,m_data[0].point),2));
-
+        if (isnan(delta))
+          throw NoInterception("");
+        
         Point sol1, sol2;
         sol1 = origin + delta*ln.vec;
-        sol2 = origin - delta*ln.vec;        
-#ifdef DEBUG
-        if (sol1.z < 0)
-          debug("Solution 1 ", sol1);
-        if(sol2.z < 0)
-          debug("Solution 2 ", sol2);
-#endif
+        sol2 = origin - delta*ln.vec;
+        debug("Result ", sol1);
+        debug("Result ", sol2);
+        // they should only be NaN before first filter
+        if (m_res1.isNaN() && m_res2.isNaN())
+        {
+          m_res1 = sol1;
+          m_res2 = sol2;
+          m_iter++;
+          inf("Iter %d", m_iter);
+          return;
+        }
+        if (m_res1.norm(sol2) < m_res1.norm(sol1))
+          sol1.exchange(sol2);
+
+        if (m_res1.norm(sol1) < m_res2.norm(sol2)+2)
+        {
+          m_res1 = (m_res1*m_iter + sol1 )/ (m_iter+1);
+          m_iter++;
+          debug("Result filtered ", m_res1, &Task::war);
+          m_res2.setInf();
+          return;
+        }
+        if (m_res2.norm(sol2) < m_res1.norm(sol1)+2)
+        {
+          m_res1.exchange(m_res2);
+          m_res1 = (m_res1*m_iter + sol2 )/ (m_iter+1);
+          m_iter++;
+          debug("Result filtered ", m_res1, &Task::war);
+          m_res2.setInf();
+          return;
+        }
+
+        m_res1 = (m_res1*m_iter + sol1 )/ (m_iter+1);
+        m_res2 = (m_res2*m_iter + sol2 )/ (m_iter+1);
+        m_iter++;
+        debug("Result 1 ", m_res1, &Task::war);
+        debug("Result 2 ", m_res2, &Task::war);
       }
 
-#ifdef DEBUG
+      typedef void (Task::*Print)(const char*, ...);
+
+#define FUNC_CALL(func, str) \
+      (this->*(func))("%s", str)
+
       void 
-      debug(const char* string, const Point& pt)
+      debug(const char* string, const Point& pt, Print callable = &Task::inf)
       {
         std::stringstream str;
         str << string << "Point " << pt;
-        inf(DTR("%s"),str.str().c_str());
+        FUNC_CALL(callable, str.str().c_str());
       }
 
       void 
-      debug(const char* string, const Circle& cl)
+      debug(const char* string, const Circle& cl, Print callable = &Task::inf)
       {
         std::stringstream str;
         str << string ;
         str << "Circle with center " << cl.center << " and radius " << cl.radius;
         str << " and n^: " << cl.vector_n;
-        inf(DTR("%s"), str.str().c_str());
+        FUNC_CALL(callable, str.str().c_str());
       }
 
       void 
-      debug(const char* string, const Sphere& pt)
+      debug(const char* string, const Sphere& pt, Print callable = &Task::inf)
       {
         std::stringstream str;
         str << string << "Sphere with center " << pt.point << " and distance " << pt.distance;
-        inf(DTR("%s"),str.str().c_str());
+        FUNC_CALL(callable, str.str().c_str());
       }
 
       void 
-      debug(const char* string, const Plane& pt)
+      debug(const char* string, const Plane& pt, Print callable = &Task::inf)
       {
         std::stringstream str;
         str << string << "Plane with point " << pt.pt << " and normal vector " << pt.vec;
-        inf(DTR("%s"),str.str().c_str());
+        FUNC_CALL(callable, str.str().c_str());
       }
 
       void 
-      debug(const char* string, const Line& ln)
+      debug(const char* string, const Line& ln, Print callable = &Task::inf)
       {
         std::stringstream str;
         str << string << "Line with point " << ln.pt << " and normal vector " << ln.vec;
-        inf(DTR("%s"),str.str().c_str());
+        FUNC_CALL(callable, str.str().c_str());
       }
-#endif
 
       void
       updatePoints(double x_pos, double y_pos, double z_pos, double new_distance)
@@ -340,6 +396,7 @@ namespace Navigation
         m_data[2].setPoint(x_pos, y_pos, z_pos);
         m_data[2].distance = new_distance;
         m_data_size++;
+        debug("New Point: ", Point(x_pos, y_pos, z_pos));
       }
 
       void
@@ -350,9 +407,8 @@ namespace Navigation
 
         if (msg->validity == IMC::Distance::DV_INVALID)
           return;
-
-        auto var = msg->location.end();
-        var--;
+        
+        auto var = std::prev(msg->location.end());
         updatePoints((*var)->x, (*var)->y, (*var)->z, msg->value);
         if (m_data_size < 3)
           return;
@@ -360,6 +416,7 @@ namespace Navigation
         try
         {
           getArea();
+          debug("Solution was ", m_sol, &Task::war);
         }
         catch(const TwoSolutions& e)
         {
@@ -372,10 +429,11 @@ namespace Navigation
       }
 
       void
-      consume(const IMC::EstimatedState* msg)
+      consume(const IMC::SimulatedState* msg)
       {
-        if (m_args.active)
+        if (m_args.active && m_nPoint)
         {
+          m_nPoint = false;
           IMC::DeviceState state;
           state.x = msg->x;
           state.y = msg->y;
@@ -383,14 +441,17 @@ namespace Navigation
 
           IMC::Distance data;
           data.validity = true;
-          data.value = m_sol.norm();
+          data.value = m_sol.norm(Point3d(msg->x, msg->y, msg->z));
           data.location.push_back(state);
 
-          dispatch(data, DF_LOOP_BACK);
+          data.setDestinationEntity(this->getEntityId());
+          //dispatch(data, DF_LOOP_BACK);
+          consume(&data);
         }
         else if(m_getSol)
         {
           m_sol.set(msg->x, msg->y, msg->z);
+          debug("Solution ", m_sol, &Task::war);
           m_getSol = false;
         }
       }
@@ -399,10 +460,16 @@ namespace Navigation
       void
       onMain(void)
       {
-        // in x time send <IMC::distance> com loopback
+        m_wdog.setTop(5);
+        m_nPoint = false;
         while (!stopping())
         {
-          waitForMessages(3.0);
+          waitForMessages(0.1);
+          if (m_wdog.overflow())
+          {
+            m_nPoint = true;
+            m_wdog.reset();
+          }
         }
       }
     };

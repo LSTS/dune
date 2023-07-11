@@ -171,8 +171,43 @@ namespace Navigation
         z = _z;
       }
 
+      void exchange(Point3d& pt)
+      {
+        Point3d aux = *this;
+        *this = pt;
+        pt = aux;
+      }
+
+      void setNaN()
+      {
+        // gcc makes this a compile time const NaN
+        x = __builtin_nan("");
+        y = __builtin_nan("");
+        z = __builtin_nan("");
+      }
+
+      void setInf()
+      {
+        x = __builtin_inf();
+        y = __builtin_inf();
+        z = __builtin_inf();
+      }
+
+      bool isNaN() const
+      {
+        return isnan(x) || isnan(y) || isnan(z);
+      }
+
+      bool isInf() const
+      {
+        return isinf(x) || isinf(y) || isinf(z);
+      }
+
       double norm(const Point3d& point)
       {
+        if (isInf() || point.isInf())
+          return __builtin_inf();
+        
         return sqrt(pow(x-point.x, 2) + pow(y-point.y, 2) + pow(z-point.z, 2));
       }
 
@@ -227,7 +262,7 @@ namespace Navigation
       static Point3d getPerpendicular(const Point3d& p1, const Point3d& p2)
       {
         if (p1.isParallel(p2))
-          throw std::runtime_error("getPerpendicular() param invalid\nVectors are parallel");
+          throw std::runtime_error("getPerpendicular() param invalid Vectors are parallel");
 
         return p1|p2;
       }
