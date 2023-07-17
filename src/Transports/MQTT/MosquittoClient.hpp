@@ -52,6 +52,9 @@ namespace Transports
     // const uint32_t c_max_payload = 268435455; // 255 MB
     const uint32_t c_max_payload = 1048576; // 1 MB
 
+
+    static void* mosq_user_data = NULL;
+    static std::string mosq_pw = "";
     class MosquittoClient: public Concurrency::Thread
     {
     public:
@@ -70,11 +73,18 @@ namespace Transports
         int keepalive;
         //! Message retain flag
         bool retain;
-
+        //! Select authentication mode
+        bool auth_mode;
         //! User. For user + password authetication
         std::string usr;
         //! Password. For user + password authetication
         std::string pw;
+        //! Certificate authority path
+        std::string ca_path;
+        //! Certificate path
+        std::string cert_path;
+        //! Private key path
+        std::string key_path;
       };
 
       //! Constructor.
@@ -214,11 +224,32 @@ namespace Transports
       void
       setAuthentication()
       {
-        // TODO: Certificate authentication, as default
-        // User + password login
-        const char* user = m_args->usr.empty() ? NULL : m_args->usr.c_str();
-        const char* password = m_args->pw.empty() ? NULL : m_args->pw.c_str();
-        checkRC(mosquitto_username_pw_set(m_mosq, user, password));
+        if(!m_args->auth_mode)// TODO: Certificate authentication, as default
+        {  
+          // User + password login
+          const char* user = m_args->usr.empty() ? NULL : m_args->usr.c_str();
+          const char* password = m_args->pw.empty() ? NULL : m_args->pw.c_str();
+          checkRC(mosquitto_username_pw_set(m_mosq, user, password));
+          return;
+        }
+        FileSystem::Path cert_auth(m_args->ca_path), cert(m_args->cert_path), key(m_args->key_path);
+
+        const char* cafile = cert_auth.isFile() ? cert_auth.c_str() : NULL;
+        const char* capath = cert_auth.exists() ? cert_auth.c_str() : NULL;
+        if (cafile == NULL && capath == NULL)
+          std::runtime_error("[task param] - Certificate authority path invalid");
+
+        const char* certfile = cert.isFile() ? cert.c_str() : NULL;
+        const char* keyfile = key.isFile() ? key.c_str() : NULL;
+        if ((certfile == NULL) ^ (keyfile == NULL))
+          std::runtime_error("[task param] - Certificate authority path invalid");
+
+        mosq_user_data = mosquitto_userdata(m_mosq);
+        m_task->inf(DTR("%s"), cafile);
+        m_task->inf(DTR("%s"), certfile);
+        m_task->inf(DTR("%s"), keyfile);
+        checkRC(mosquitto_tls_set(m_mosq, cafile, capath, certfile, keyfile, NULL));
+        checkRC(mosquitto_tls_opts_set(m_mosq, 0, NULL, NULL));
       }
 
       void
@@ -307,6 +338,24 @@ namespace Transports
 
         (void) msg_id;
         self->m_task->inf("Unsubscribed from topic");
+      }
+
+      //? Requires password
+      //! TLS callback for key files decryption
+      //! Must write the password into *buf with size bytes long
+      //! Must return password length
+      static int
+      on_tls(char* buf, int size, int rwflag, void* userdata)
+      {
+        buf   = mosq_pw.empty() ? NULL : const_cast<char*>(mosq_pw.c_str());
+        size  = (buf == NULL) ? 0    : mosq_pw.size();
+        //? if (mosq_user_data == NULL); // Do something if NULL ?
+        //? userdata = mosq_user_data;
+        (void)buf;
+        (void)size;
+        (void)rwflag;
+        (void)userdata;
+        return size;
       }
 
       void

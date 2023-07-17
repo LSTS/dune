@@ -113,14 +113,32 @@ namespace Transports
         .description("List of topics the task should subscribe to."
                      "Use \'*\' instead of \'#\'.");
 
-        param("Authetication -- User", m_client_args.usr)
-        .defaultValue("admin")
-        .description("User for broker authetication.");
+        param("Authentication Mode", m_client_args.auth_mode)
+        .defaultValue("false")
+        .description("Select authentication mode."
+                     "If left blank use user+password."
+                     "If true use SSL/TLS.");
 
-        param("Authetication -- Password", m_client_args.pw)
+        param("Authentication -- User", m_client_args.usr)
+        .defaultValue("admin")
+        .description("User for broker authentication.");
+
+        param("Authentication -- Password", m_client_args.pw)
         .defaultValue("")
-        .description("Password for broker authetication."
+        .description("Password for broker authentication."
                      "If left blank only user is sent.");
+
+        param("Certificate authority path", m_client_args.ca_path)
+        .defaultValue("")
+        .description("Path to a file/directory containing the trusted CA certificate files.");
+
+        param("Certificate path", m_client_args.cert_path)
+        .defaultValue("")
+        .description("Path to a file containing the certificate file for this client.");
+
+        param("Private key path", m_client_args.key_path)
+        .defaultValue("")
+        .description("Path to a file containing the private key for this client.");
 
         param("Transports", m_args.messages)
         .defaultValue("")
