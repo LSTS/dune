@@ -197,7 +197,7 @@ namespace Navigation
         getIntersection(ln, centers, origin);
         double delta = sqrt(pow(m_data[0].distance,2) - pow(Point::norm(origin,m_data[0].point),2));
         if (isnan(delta))
-          throw NoInterception("Between Sphere and line-origin");
+          throw Retry();
 
         Point sol1, sol2;
         sol1 = origin + delta*ln.vec;
@@ -241,6 +241,25 @@ namespace Navigation
       }
 
       void
+      method_2()
+      {
+        //! Move referential so that 
+        //! p1 is at (0,0,0)
+        //! p2 is at (d,0,0)
+        //! p3 is at (x,x,x)
+        Point p1(0, 0, 0);
+
+        double d = Point::norm(m_data[1].point, m_data[0].point);
+        Point p2(d, 0, 0);
+
+        Point x_vec = m_data[1].point - m_data[0].point;
+        x_vec.normalize();
+
+        Point p3;
+
+      }
+
+      void
       updatePoints(double x_pos, double y_pos, double z_pos, double new_distance)
       {
         m_data[0] = m_data[1];
@@ -271,7 +290,7 @@ namespace Navigation
             err("Invalid UamRxRange");
             return;
           }
-          
+          inf("Received new distance %lf", msg->value);
           m_lastDst = msg->value;
           m_newDistance = false;
         }
@@ -280,8 +299,11 @@ namespace Navigation
       void
       consume(const IMC::EstimatedState* msg)
       {
-        if (m_newPoint)
+        if (m_newPoint && !m_newDistance)
         {
+          inf("Pinging %s", m_args.acos_name.c_str());
+          ping();
+          m_newDistance = true;
           m_lastPoint = msg->clone();
           m_newPoint = false;
         }
@@ -302,34 +324,44 @@ namespace Navigation
       void
       onMain(void)
       {
-        m_wdog.setTop(1);
+        m_wdog.setTop(4);
         m_newPoint = false;
         m_newDistance = false;
         while (!stopping())
         {
           //? If timeout occurs and it still has msgs ?
           waitForMessages(0.1);
-          if (m_wdog.overflow())
+          if (m_wdog.overflow() && m_args.active)
           {
             m_newPoint = true;
-            m_newDistance = true;
-            ping();
+            m_newDistance = false;
+            Memory::clear(m_lastPoint);
+            m_lastDst = -1;
             m_wdog.reset();
           }
+
           if ((m_lastPoint != nullptr) && (m_lastDst != -1))
           {
             updatePoints(m_lastPoint, m_lastDst);
+            Memory::clear(m_lastPoint);
+            m_lastDst = -1;
             try
             {
               getArea();
             }
+            catch(const Retry& e)
+            {
+              war("%s", e.what());
+              //method_2();
+              
+            }
             catch(const TwoSolutions& e)
             {
-              war(DTR("%s"), e.what());
+              war("%s", e.what());
             }
             catch(const std::exception& e)
             {
-              err(DTR("%s"), e.what());
+              err("%s", e.what());
             }
           }
         }

@@ -55,6 +55,21 @@ namespace Navigation
       std::string m_error;
     };
 
+    class Retry: public std::exception
+    {
+    public:
+      Retry()
+      {}
+
+      ~Retry()
+      {}
+
+      const char* what() const noexcept override
+      {
+        return "Try with method 2";
+      }
+    };
+
     class TwoSolutions: public std::exception
     {
     public:
