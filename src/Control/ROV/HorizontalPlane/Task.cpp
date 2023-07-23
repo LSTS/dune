@@ -224,6 +224,9 @@ namespace Control
           if (paramChanged(m_args.max_hrate))
             m_args.max_hrate = Angles::radians(m_args.max_hrate);
 
+          if (paramChanged(m_args.yaw_max))
+            m_args.yaw_max = Angles::radians(m_args.yaw_max);
+
           float output_limits[LP_MAX_LOOPS];
           output_limits[LP_HRATE] = m_args.max_thrust;
           output_limits[LP_HEADING] = m_args.max_hrate;
