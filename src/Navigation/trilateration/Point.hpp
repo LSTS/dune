@@ -540,7 +540,7 @@ namespace Navigation
 
     template<typename T>
     void 
-    debug(const char* string, const Circle& cl, Bind<T>&& tmp)
+    debug_Point(const char* string, const Circle& cl, Bind<T>&& tmp)
     {
       std::stringstream str;
       str << string ;
@@ -551,7 +551,7 @@ namespace Navigation
 
     template<typename T>
     void 
-    debug(const char* string, const Sphere& pt, Bind<T>&& tmp)
+    debug_Point(const char* string, const Sphere& pt, Bind<T>&& tmp)
     {
       std::stringstream str;
       str << string << "Sphere with center " << pt.point << " and distance " << pt.distance;
@@ -560,7 +560,7 @@ namespace Navigation
 
     template<typename T>
     void 
-    debug(const char* string, const Plane& pt, Bind<T>&& tmp)
+    debug_Point(const char* string, const Plane& pt, Bind<T>&& tmp)
     {
       std::stringstream str;
       str << string << "Plane with point " << pt.pt << " and normal vector " << pt.vec;
@@ -569,16 +569,30 @@ namespace Navigation
 
     template<typename T>
     void 
-    debug(const char* string, const Line& ln, Bind<T>&& tmp)
+    debug_Point(const char* string, const Line& ln, Bind<T>&& tmp)
     {
       std::stringstream str;
       str << string << "Line with point " << ln.pt << " and normal vector " << ln.vec;
       tmp("%s", str.str().c_str());
     }
 
+
+    bool checkIntersection(const Sphere& data_1, const Sphere& data_2)
+    {
+      double dst = Point::norm(data_1.point, data_2.point);
+
+      if (data_1.distance+data_2.distance < dst)
+        return false;
+
+      if (dst < abs(data_1.distance-data_2.distance))
+        return false;
+
+      return true;
+    }
+
     void
     getIntersection(const Sphere& data_1, const Sphere& data_2, Circle& out)
-    {
+    {   
       Point vector = data_2.point - data_1.point;
       double dst = vector.normalize();
 
@@ -586,10 +600,7 @@ namespace Navigation
         throw NoInterception("Points too far apart");
 
       if (data_1.distance+data_2.distance == dst)
-      {
-        // Calculate single point interception and save in out_1
         throw SinglePoint();
-      }
 
       if (dst < abs(data_1.distance-data_2.distance))
         throw NoInterception("Sphere contains Sphere");

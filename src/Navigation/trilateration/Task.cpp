@@ -66,9 +66,7 @@ namespace Navigation
       //! Task arguments
       Arguments m_args;
       //! Last 3 valid points
-      std::array<Sphere, 3> m_data;
-      //! Current size of m_data
-      unsigned m_data_size;
+      std::vector<Sphere> m_data;
       //! Solution
       Point m_sol;
       //! Estimated State
@@ -92,8 +90,7 @@ namespace Navigation
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx), 
-        m_data_size(0), 
+        DUNE::Tasks::Task(name, ctx),  
         m_lastPoint(nullptr),
         m_lastDst(-1),
         m_getSol(false),
@@ -131,17 +128,18 @@ namespace Navigation
         if (paramChanged(m_args.active))
         {
           war("Task set to %s", m_args.active ? "active" : "deactivate" );
-          m_data_size = 0;
+          m_data.clear();
+          reset_data();
           m_res1.setNaN();
           m_res2.setNaN();
           m_wdog.reset();
         }
-        if (paramChanged(m_args.setPoint))
+        /* if (paramChanged(m_args.setPoint))
         {
           war("SetPoint set to %s", m_args.setPoint ? "true" : "false" );
           if (m_args.setPoint)
             m_getSol = true;
-        }
+        } */
       }
 
       //! Reserve entity identifiers.
@@ -173,7 +171,8 @@ namespace Navigation
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_lastPoint);
+        reset_data();
+        m_data.clear();
       }
 
       void
@@ -182,7 +181,7 @@ namespace Navigation
         if (!m_args.active)
           return;
 
-        if(m_data_size < 3)
+        if(m_data.size() < 3)
           return;
 
         Plane pl_12, pl_23; // plane that contains a circle of interception between two spheres
@@ -244,40 +243,71 @@ namespace Navigation
       method_2()
       {
         //! Move referential so that 
-        //! p1 is at (0,0,0)
-        //! p2 is at (d,0,0)
-        //! p3 is at (x,x,x)
-        Point p1(0, 0, 0);
+        //! p0 is at (0,0,0)
+        //! p1 is at (d,0,0)
+        //! p2 is at (x,y,0)
+        Point p0(0, 0, 0);
 
         double d = Point::norm(m_data[1].point, m_data[0].point);
-        Point p2(d, 0, 0);
+        Point p1(d, 0, 0);
 
         Point x_vec = m_data[1].point - m_data[0].point;
         x_vec.normalize();
 
-        Point p3;
-
+        Point p2_a = m_data[2].point - m_data[0].point;
+        double x = p2_a*x_vec;
+        double dst_p3 = Point::norm(m_data[0].point, m_data[2].point);
+        double y = sqrt(dst_p3*dst_p3 - x*x);
+        Point p2_b(x,y,0);
       }
 
-      void
+      bool
       updatePoints(double x_pos, double y_pos, double z_pos, double new_distance)
       {
-        m_data[0] = m_data[1];
-        m_data[1] = m_data[2];
-        m_data[2].setPoint(x_pos, y_pos, z_pos);
-        m_data[2].distance = new_distance;
-        m_data_size++;
+        Sphere n_data(x_pos, y_pos, z_pos, new_distance);
+        if (!checkIntersection(n_data, m_data[0]) || !checkIntersection(n_data, m_data[1]))
+        {
+          inf("Not adding point");
+          return false;
+        }
+        m_data.pop_back();
+        m_data.insert(m_data.begin(), n_data);
 
-        m_lastPoint = nullptr;
-        m_lastDst = -1;
-        debug_Point("New Point: ", m_data[2].point, Bind<Printable>(*this, &Task::inf));
-        inf("With distance %lf", new_distance);
+        debug_Point("Insert new: ", n_data, Bind<Printable>(*this, &Task::war));
+        return true;
       }
 
-      void
+      bool
       updatePoints(const EstimatedState* pt, double new_distance)
       {
-        updatePoints(pt->x, pt->y, pt->z, new_distance);
+        if (m_data.size() >= 3)
+        {
+          reset_data();
+          return updatePoints(pt->x, pt->y, pt->z, new_distance);
+        }
+        else if (m_data.empty())
+        {
+          m_data.emplace_back(pt->x, pt->y, pt->z, new_distance);
+          debug_Point("Insert new: ", m_data[0], Bind<Printable>(*this, &Task::war));
+        }
+        else
+        {
+          Sphere n_data(pt->x, pt->y, pt->z, new_distance);
+          for (size_t i = 0; i < m_data.size(); i++)
+          {
+            if(!checkIntersection(n_data, m_data[i]))
+            {
+              reset_data();
+              return false;
+            }
+          }
+
+          m_data.insert(m_data.begin(), n_data);
+          debug_Point("Insert new: ", n_data, Bind<Printable>(*this, &Task::war));
+        }
+
+        reset_data();
+        return true;
       }
 
       void
@@ -320,6 +350,13 @@ namespace Navigation
         dispatch(tx);
       }
 
+      void
+      reset_data()
+      {
+        Memory::clear(m_lastPoint);
+        m_lastDst = -1;
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -335,16 +372,15 @@ namespace Navigation
           {
             m_newPoint = true;
             m_newDistance = false;
-            Memory::clear(m_lastPoint);
-            m_lastDst = -1;
+            reset_data();
             m_wdog.reset();
           }
 
           if ((m_lastPoint != nullptr) && (m_lastDst != -1))
           {
-            updatePoints(m_lastPoint, m_lastDst);
-            Memory::clear(m_lastPoint);
-            m_lastDst = -1;
+            if(!updatePoints(m_lastPoint, m_lastDst))
+              continue;
+
             try
             {
               getArea();
@@ -353,7 +389,6 @@ namespace Navigation
             {
               war("%s", e.what());
               //method_2();
-              
             }
             catch(const TwoSolutions& e)
             {
