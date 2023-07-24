@@ -48,7 +48,7 @@ namespace Navigation
   {
     using DUNE_NAMESPACES;
 
-    static double ZERO = 1e-9;
+    //static double ZERO = 1e-9;
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -209,6 +209,8 @@ namespace Navigation
           m_res2 = sol2;
           m_iter++;
           inf("Iter %d", m_iter);
+          debug_Point("Result 1 ", m_res1, Bind<Printable>(*this, &Task::war));
+          debug_Point("Result 2 ", m_res2, Bind<Printable>(*this, &Task::war));
           return;
         }
         if (m_res1.norm(sol2) < m_res1.norm(sol1))
@@ -239,6 +241,24 @@ namespace Navigation
         debug_Point("Result 2 ", m_res2, Bind<Printable>(*this, &Task::war));
       }
 
+      int min_pos(double* init, double* end)
+      {
+        int pos = -1, curr_pos = 0;
+        double min = DBL_MAX;
+
+        while (init <= end)
+        {
+          if (*init < min)
+          {
+            min = *init;
+            pos = curr_pos;
+          }
+          init++;
+          curr_pos++;
+        }
+        return pos;
+      }
+
       void
       method_2()
       {
@@ -246,19 +266,85 @@ namespace Navigation
         //! p0 is at (0,0,0)
         //! p1 is at (d,0,0)
         //! p2 is at (x,y,0)
-        Point p0(0, 0, 0);
 
         double d = Point::norm(m_data[1].point, m_data[0].point);
-        Point p1(d, 0, 0);
 
-        Point x_vec = m_data[1].point - m_data[0].point;
-        x_vec.normalize();
+        Point vec_x = m_data[1].point - m_data[0].point;
+        vec_x.normalize();
 
         Point p2_a = m_data[2].point - m_data[0].point;
-        double x = p2_a*x_vec;
+        double x_2 = p2_a*vec_x;
         double dst_p3 = Point::norm(m_data[0].point, m_data[2].point);
-        double y = sqrt(dst_p3*dst_p3 - x*x);
-        Point p2_b(x,y,0);
+        double y_2 = sqrt(sqr(dst_p3) - sqr(x_2)); //? is y positive or negative
+
+        // c3 = c1 + vec_x * x_2 + vec_y * y_2
+        Point vec_y = ((m_data[2].point - m_data[0].point) - vec_x*x_2)/y_2;
+
+
+        const Circle2d center_0(0, 0, m_data[0].distance);
+        const Circle2d center_1(d, 0, m_data[1].distance);
+        const Circle2d center_2(x_2, y_2, m_data[2].distance);
+
+        Point2d a1, a2, b1, b2, c1, c2;
+        getIntersection(center_0, center_1, a1, a2);
+        getIntersection(center_0, center_2, b1, b2);
+        getIntersection(center_1, center_2, c1, c2);
+
+        double distances[4];
+        distances[0] = Point2d::norm(a1, b1);
+        distances[1] = Point2d::norm(a1, b2);
+
+        distances[2] = Point2d::norm(a2, b1);
+        distances[3] = Point2d::norm(a2, b2);
+
+        Point2d triangle[3];
+        switch (min_pos(&distances[0], &distances[3]))
+        {
+        case 0:
+          triangle[0] = a1;
+          triangle[1] = b1;
+          break;
+        
+        case 1:
+          triangle[0] = a1;
+          triangle[1] = b2;
+          break;
+        
+        case 2:
+          triangle[0] = a2;
+          triangle[1] = b1;
+          break;
+        
+        case 3:
+          triangle[0] = a2;
+          triangle[1] = b2;
+          break;
+        
+        default:
+          throw std::runtime_error("Invalid min_pos() return value");
+        }
+
+        if (Point2d::norm(triangle[0], c1) < Point2d::norm(triangle[0], c2))
+          triangle[2] = c1;
+        else
+          triangle[2] = c2;
+
+        debug_Point("triangle: ", triangle[0], Bind<Printable>(*this, &Task::war)); // Intersection circle 0 and 1
+        debug_Point("triangle: ", triangle[1], Bind<Printable>(*this, &Task::war)); // Intersection circle 0 and 2
+        debug_Point("triangle: ", triangle[2], Bind<Printable>(*this, &Task::war)); // Intersection circle 1 and 2+
+
+        double sol_x = (sqr(center_0.radius) - sqr(center_1.radius) + sqr(d))/(2*sqr(d));
+        double sol_y = (sqr(center_0.radius) - sqr(center_2.radius) + sqr(x_2) + sqr(y_2) - 2*x_2*sol_x)/(2*y_2);
+        double sol_z = sqrt(sqr(center_0.radius) - sqr(sol_x) - sqr(sol_y));
+
+
+        Point vec_z = Point::getPerpendicular(vec_x, vec_y);
+        Point sol = m_data[0].point + sol_x*vec_x + sol_y*vec_y + sol_z*vec_z;
+        debug_Point("Solution: ", sol, Bind<Printable>(*this, &Task::war));
+
+        Point _vec_z = Point::getPerpendicular(vec_x, -1*vec_y);
+        Point sol2 = m_data[0].point + sol_x*vec_x + sol_y*vec_y + sol_z*_vec_z;
+        debug_Point("Solution: ", sol2, Bind<Printable>(*this, &Task::war));
       }
 
       bool
@@ -361,7 +447,7 @@ namespace Navigation
       void
       onMain(void)
       {
-        m_wdog.setTop(4);
+        /* m_wdog.setTop(4);
         m_newPoint = false;
         m_newDistance = false;
         while (!stopping())
@@ -399,7 +485,21 @@ namespace Navigation
               err("%s", e.what());
             }
           }
-        }
+        } */
+      
+        Sphere s1(0,  3,  0,  5);
+        Sphere s2(0,  2,  0,  5);
+        Sphere s3(1,  4,  2,  4);
+
+        m_data.push_back(s1);
+        m_data.push_back(s2);
+        m_data.push_back(s3);
+        
+        getArea();
+
+        method_2();
+
+        exit(1);
       }
     };
   }

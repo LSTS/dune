@@ -37,11 +37,15 @@
 
 #include "Error.hpp"
 
-
 namespace Navigation
 {
   namespace trilateration
   {
+    double sqr(double _x)
+    {
+      return pow(_x,2);
+    }
+
     struct Point2d
     {
       double x;
@@ -448,6 +452,17 @@ namespace Navigation
       }
     };
 
+    struct Circle2d
+    {
+      Point2d center;
+      double radius;
+
+      Circle2d(double x_pos, double y_pos, double _dst) 
+        : center(x_pos, y_pos),
+          radius(_dst)
+      { }
+    };
+    
     struct Circle
     {
       Point center;
@@ -529,12 +544,22 @@ namespace Navigation
     //   return new Bind<func>(obj, func);
     // }
 
+    
     template<typename T>
     void 
     debug_Point(const char* string, const Point& pt, Bind<T>&& tmp)
     {
       std::stringstream str;
       str << string << "Point " << pt;
+      tmp.call("%s", str.str().c_str());
+    }
+
+    template<typename T>
+    void 
+    debug_Point(const char* string, const Point2d& pt, Bind<T>&& tmp)
+    {
+      std::stringstream str;
+      str << string << "Point2d " << pt;
       tmp.call("%s", str.str().c_str());
     }
 
@@ -588,6 +613,27 @@ namespace Navigation
         return false;
 
       return true;
+    }
+
+    void
+    getIntersection(const Circle2d& circle1, const Circle2d& circle2, Point2d& out1, Point2d& out2)
+    {
+      Point2d vector = circle1.center - circle2.center;
+      double dst = vector.normalize();
+
+      if (circle1.radius+circle2.radius < dst)
+        throw NoInterception("Points too far apart");
+
+      if (dst < abs(circle1.radius-circle2.radius))
+        throw NoInterception("Circle contains Circle");
+
+      double delta_x = dst/2.0f + (sqr(circle1.radius) - sqr(circle2.radius))/(2*dst);
+      double delta_y = sqrt(sqr(circle1.radius) - sqr(delta_x));
+      
+      Point2d vector_y = vector.getPerpendicular();
+      
+      out1 = circle1.center + delta_x*vector + vector_y*delta_y;
+      out2 = circle1.center + delta_x*vector + vector_y*delta_y;
     }
 
     void
