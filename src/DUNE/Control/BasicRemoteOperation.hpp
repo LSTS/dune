@@ -80,6 +80,18 @@ namespace DUNE
       }
 
       void
+      addActionSlider(const std::string& action)
+      {
+        addRemoteAction(action, "Slider");
+      }
+
+      void
+      addActionHalfSlider(const std::string& action)
+      {
+        addRemoteAction(action, "HalfSlider");
+      }
+
+      void
       setConnectionTimeout(const float tout)
       {
         m_connection_timeout = tout;
