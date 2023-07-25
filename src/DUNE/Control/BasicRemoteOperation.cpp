@@ -164,6 +164,14 @@ namespace DUNE
         {
           addActionAxis(action_name);
         }
+        else if (!it->second.compare("Slider"))
+        {
+          addActionSlider(action_name);
+        }
+        else if (!it->second.compare("HalfSlider"))
+        {
+          addActionHalfSlider(action_name);
+        }
       }
 
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
