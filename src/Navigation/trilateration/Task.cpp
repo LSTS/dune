@@ -269,6 +269,7 @@ namespace Navigation
 
         double d = Point::norm(m_data[1].point, m_data[0].point);
 
+        // x unit vector of new referential
         Point vec_x = m_data[1].point - m_data[0].point;
         vec_x.normalize();
 
@@ -277,6 +278,7 @@ namespace Navigation
         double dst_p3 = Point::norm(m_data[0].point, m_data[2].point);
         double y_2 = sqrt(sqr(dst_p3) - sqr(x_2)); //? is y positive or negative
 
+        // y unit vector of new referential
         // c3 = c1 + vec_x * x_2 + vec_y * y_2
         Point vec_y = ((m_data[2].point - m_data[0].point) - vec_x*x_2)/y_2;
 
@@ -331,20 +333,25 @@ namespace Navigation
 
         debug_Point("triangle: ", triangle[0], Bind<Printable>(*this, &Task::war)); // Intersection circle 0 and 1
         debug_Point("triangle: ", triangle[1], Bind<Printable>(*this, &Task::war)); // Intersection circle 0 and 2
-        debug_Point("triangle: ", triangle[2], Bind<Printable>(*this, &Task::war)); // Intersection circle 1 and 2+
+        debug_Point("triangle: ", triangle[2], Bind<Printable>(*this, &Task::war)); // Intersection circle 1 and 2
 
-        double sol_x = (sqr(center_0.radius) - sqr(center_1.radius) + sqr(d))/(2*sqr(d));
-        double sol_y = (sqr(center_0.radius) - sqr(center_2.radius) + sqr(x_2) + sqr(y_2) - 2*x_2*sol_x)/(2*y_2);
-        double sol_z = sqrt(sqr(center_0.radius) - sqr(sol_x) - sqr(sol_y));
+        Point2d avg = (triangle[0]+triangle[1]+triangle[2])/3;
+        double dst[3];
+        dst[0] = avg.norm(triangle[0]);
+        dst[1] = avg.norm(triangle[1]);
+        dst[2] = avg.norm(triangle[2]);
+        double max = MAX(MAX(dst[0], dst[1]), dst[2]);
 
+        Point3d center = m_data[0].point + avg.x*vec_x + avg.y*vec_y;
+        Sphere sol;
+        sol.point = center;
+        sol.distance = max;
+      }
 
-        Point vec_z = Point::getPerpendicular(vec_x, vec_y);
-        Point sol = m_data[0].point + sol_x*vec_x + sol_y*vec_y + sol_z*vec_z;
-        debug_Point("Solution: ", sol, Bind<Printable>(*this, &Task::war));
-
-        Point _vec_z = Point::getPerpendicular(vec_x, -1*vec_y);
-        Point sol2 = m_data[0].point + sol_x*vec_x + sol_y*vec_y + sol_z*_vec_z;
-        debug_Point("Solution: ", sol2, Bind<Printable>(*this, &Task::war));
+      Point3d
+      transform(const Point2d& pt, const Point3d& x_vector, const Point3d& y_vector)
+      {
+        return pt.x*x_vector + pt.y*y_vector;
       }
 
       bool
@@ -447,7 +454,7 @@ namespace Navigation
       void
       onMain(void)
       {
-        /* m_wdog.setTop(4);
+        m_wdog.setTop(4);
         m_newPoint = false;
         m_newDistance = false;
         while (!stopping())
@@ -474,7 +481,7 @@ namespace Navigation
             catch(const Retry& e)
             {
               war("%s", e.what());
-              //method_2();
+              method_2();
             }
             catch(const TwoSolutions& e)
             {
@@ -485,21 +492,7 @@ namespace Navigation
               err("%s", e.what());
             }
           }
-        } */
-      
-        Sphere s1(0,  3,  0,  5);
-        Sphere s2(0,  2,  0,  5);
-        Sphere s3(1,  4,  2,  4);
-
-        m_data.push_back(s1);
-        m_data.push_back(s2);
-        m_data.push_back(s3);
-        
-        getArea();
-
-        method_2();
-
-        exit(1);
+        }
       }
     };
   }

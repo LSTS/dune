@@ -37,6 +37,10 @@
 
 #include "Error.hpp"
 
+#ifndef MAX
+# define MAX(x,y) ((x)>(y)?(x):(y))
+#endif
+
 namespace Navigation
 {
   namespace trilateration
