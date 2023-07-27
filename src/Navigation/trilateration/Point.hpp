@@ -622,7 +622,7 @@ namespace Navigation
     void
     getIntersection(const Circle2d& circle1, const Circle2d& circle2, Point2d& out1, Point2d& out2)
     {
-      Point2d vector = circle1.center - circle2.center;
+      Point2d vector = circle2.center - circle1.center;
       double dst = vector.normalize();
 
       if (circle1.radius+circle2.radius < dst)
@@ -637,7 +637,7 @@ namespace Navigation
       Point2d vector_y = vector.getPerpendicular();
       
       out1 = circle1.center + delta_x*vector + vector_y*delta_y;
-      out2 = circle1.center + delta_x*vector + vector_y*delta_y;
+      out2 = circle1.center + delta_x*vector - vector_y*delta_y;
     }
 
     void
@@ -655,9 +655,9 @@ namespace Navigation
       if (dst < abs(data_1.distance-data_2.distance))
         throw NoInterception("Sphere contains Sphere");
 
-      double delta_x = dst/2.0f + (pow(data_1.distance,2) - pow(data_2.distance,2))/(2*dst);
+      double delta_x = dst/2.0f + (sqr(data_1.distance) - sqr(data_2.distance))/(2*dst);
       out.center = data_1.point + delta_x*vector;
-      out.radius = sqrt(pow(data_1.distance,2) - pow(delta_x,2));
+      out.radius = sqrt(sqr(data_1.distance) - sqr(delta_x));
       out.vector_n = vector;
     }
 

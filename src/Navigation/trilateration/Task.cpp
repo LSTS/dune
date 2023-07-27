@@ -282,7 +282,6 @@ namespace Navigation
         // c3 = c1 + vec_x * x_2 + vec_y * y_2
         Point vec_y = ((m_data[2].point - m_data[0].point) - vec_x*x_2)/y_2;
 
-
         const Circle2d center_0(0, 0, m_data[0].distance);
         const Circle2d center_1(d, 0, m_data[1].distance);
         const Circle2d center_2(x_2, y_2, m_data[2].distance);
@@ -331,9 +330,18 @@ namespace Navigation
         else
           triangle[2] = c2;
 
-        debug_Point("triangle: ", triangle[0], Bind<Printable>(*this, &Task::war)); // Intersection circle 0 and 1
-        debug_Point("triangle: ", triangle[1], Bind<Printable>(*this, &Task::war)); // Intersection circle 0 and 2
-        debug_Point("triangle: ", triangle[2], Bind<Printable>(*this, &Task::war)); // Intersection circle 1 and 2
+        Point3d vert[3];
+        vert[0] = transform(triangle[0], vec_x, vec_y, m_data[0].point);
+        vert[1] = transform(triangle[1], vec_x, vec_y, m_data[0].point);
+        vert[2] = transform(triangle[2], vec_x, vec_y, m_data[0].point);
+
+        debug_Point("triangle: ", vert[0], Bind<Printable>(*this, &Task::war)); // Intersection circle 0 and 1
+        debug_Point("triangle: ", vert[1], Bind<Printable>(*this, &Task::war)); // Intersection circle 0 and 2
+        debug_Point("triangle: ", vert[2], Bind<Printable>(*this, &Task::war)); // Intersection circle 1 and 2
+
+        // debug_Point("triangle: ", triangle[0], Bind<Printable>(*this, &Task::war)); // Intersection circle 0 and 1
+        // debug_Point("triangle: ", triangle[1], Bind<Printable>(*this, &Task::war)); // Intersection circle 0 and 2
+        // debug_Point("triangle: ", triangle[2], Bind<Printable>(*this, &Task::war)); // Intersection circle 1 and 2
 
         Point2d avg = (triangle[0]+triangle[1]+triangle[2])/3;
         double dst[3];
@@ -342,16 +350,17 @@ namespace Navigation
         dst[2] = avg.norm(triangle[2]);
         double max = MAX(MAX(dst[0], dst[1]), dst[2]);
 
-        Point3d center = m_data[0].point + avg.x*vec_x + avg.y*vec_y;
+        Point3d center = transform(avg, vec_x, vec_y, m_data[0].point);
         Sphere sol;
         sol.point = center;
         sol.distance = max;
+        debug_Point("Approximated ", sol, Bind<Printable>(*this, &Task::war));
       }
 
       Point3d
-      transform(const Point2d& pt, const Point3d& x_vector, const Point3d& y_vector)
+      transform(const Point2d& pt, const Point3d& x_vector, const Point3d& y_vector, const Point3d& offset)
       {
-        return pt.x*x_vector + pt.y*y_vector;
+        return pt.x*x_vector + pt.y*y_vector + offset;
       }
 
       bool
@@ -454,7 +463,7 @@ namespace Navigation
       void
       onMain(void)
       {
-        m_wdog.setTop(4);
+        /* m_wdog.setTop(4);
         m_newPoint = false;
         m_newDistance = false;
         while (!stopping())
@@ -492,7 +501,20 @@ namespace Navigation
               err("%s", e.what());
             }
           }
-        }
+        }*/
+        Sphere s1 = Sphere( 1,  2,  0,  2.22);
+        Sphere s2 = Sphere(-3,  1,  0,  3.13);
+        Sphere s3 = Sphere(-2, -2,  0,  2.8);
+        m_data.push_back(s1);
+        m_data.push_back(s2);
+        m_data.push_back(s3);
+        method_2();
+        exit(1);
+        /*
+        Sol:
+          1-2 -> (0.83, 3.26, 0)
+          1-2 -> (0.02, 0.03, 0)
+        */
       }
     };
   }
