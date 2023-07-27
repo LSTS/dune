@@ -61,6 +61,8 @@ namespace DUNE
       static const std::string c_valid_system_type = "STM32";
       //! Frame ACK
       static const std::string c_ack_frame = "$,FRAME,OK,#,";
+      //! Minimum of char's in string
+      static const int c_min_char_in_string = 4;
 
       Interface::Interface(IO::Handle* handle, std::string ibin):
         m_handle(handle),
@@ -146,7 +148,7 @@ namespace DUNE
       void
       Interface::checkSystemVersion(void)
       {
-        title(" Checking System Firmware Version");
+        title(" Checking Boot Firmware Version");
         sendCommand(c_system_version_cmd);
         if(readReply(c_timeout_reply))
         {
@@ -166,11 +168,11 @@ namespace DUNE
 
               last = next + 1;
             }
-            printf(" > Firmware Version: %s\n", m_system_type.c_str());
+            printf(" > Boot Firmware Version: %s\n", m_system_type.c_str());
           }
           else
           {
-            printf(" > Firmware Version FAIL\n");
+            printf(" > Boot Firmware Version FAIL\n");
           }
         }
         else
@@ -224,6 +226,7 @@ namespace DUNE
       void
       Interface::sendCommand(const char* cmd)
       {
+        //std::printf("Send command: %s\n", cmd);
         size_t size_cmd = std::strlen(cmd);
         m_handle->write(cmd, size_cmd);
         uint8_t csum[2];
@@ -247,7 +250,7 @@ namespace DUNE
             {
               for (size_t i = 0; i < rv; ++i)
               {
-                if(m_buffer_rx[i] == '\n')
+                if(m_buffer_rx[i] == '\n' && m_frame_rx_count > c_min_char_in_string)
                 {
                   m_frame_rx[m_frame_rx_count] = '\0';
                   new_data_string = true;
