@@ -37,6 +37,7 @@
 // local headers
 #include "Point.hpp"
 #include "Error.hpp"
+#include "Approx.hpp"
 
 namespace Navigation
 {
@@ -85,6 +86,8 @@ namespace Navigation
       bool m_newDistance;
       //! Filter iteration
       unsigned m_iter;
+      //! Gradient Descent algorithm
+      Approx* m_approx;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -94,7 +97,8 @@ namespace Navigation
         m_lastPoint(nullptr),
         m_lastDst(-1),
         m_getSol(false),
-        m_iter(0)
+        m_iter(0),
+        m_approx(NULL)
       {
         m_res1.setNaN();
         m_res2.setNaN();
@@ -165,6 +169,7 @@ namespace Navigation
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::Code::CODE_ACTIVATING);
+        m_approx = new Approx();
       }
 
       //! Release resources.
@@ -173,6 +178,7 @@ namespace Navigation
       {
         reset_data();
         m_data.clear();
+        Memory::clear(m_approx);
       }
 
       void
@@ -382,6 +388,8 @@ namespace Navigation
       bool
       updatePoints(const EstimatedState* pt, double new_distance)
       {
+        m_approx->set_start(pt->x-new_distance, pt->y, pt->z);
+        m_approx->emplace_back(pt->x, pt->y, pt->z, new_distance);
         if (m_data.size() >= 3)
         {
           reset_data();
@@ -463,7 +471,7 @@ namespace Navigation
       void
       onMain(void)
       {
-        /* m_wdog.setTop(4);
+        m_wdog.setTop(4);
         m_newPoint = false;
         m_newDistance = false;
         while (!stopping())
@@ -483,6 +491,7 @@ namespace Navigation
             if(!updatePoints(m_lastPoint, m_lastDst))
               continue;
 
+            debug_Point("Gradient descent", m_approx->run(20), Bind<Printable>(*this, &Task::war));
             try
             {
               getArea();
@@ -501,20 +510,7 @@ namespace Navigation
               err("%s", e.what());
             }
           }
-        }*/
-        Sphere s1 = Sphere( 1,  2,  0,  2.22);
-        Sphere s2 = Sphere(-3,  1,  0,  3.13);
-        Sphere s3 = Sphere(-2, -2,  0,  2.8);
-        m_data.push_back(s1);
-        m_data.push_back(s2);
-        m_data.push_back(s3);
-        method_2();
-        exit(1);
-        /*
-        Sol:
-          1-2 -> (0.83, 3.26, 0)
-          1-2 -> (0.02, 0.03, 0)
-        */
+        }
       }
     };
   }
