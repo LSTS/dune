@@ -216,7 +216,7 @@ namespace Navigation
         return isinf(x) || isinf(y) || isinf(z);
       }
 
-      double norm(const Point3d& point)
+      double norm(const Point3d& point) const
       {
         if (isInf() || point.isInf())
           return __builtin_inf();

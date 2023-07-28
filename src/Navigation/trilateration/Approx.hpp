@@ -58,14 +58,13 @@ public:
   Point3d 
   run(unsigned iter)
   {
-    gamma = 0.5;
+    gamma = 0.1;
     double curr_loss, old_loss;
     Point3d new_sol = solution;
     while (iter--)
     {
       old_loss = loss(solution);
       Point3d grad = gradient();
-
       new_sol = solution - gamma*grad;
       curr_loss = loss(new_sol);
 
@@ -127,7 +126,7 @@ private:
     for (size_t i = 0; i < points.size(); i++)
     {
       double B_ki = solution.norm(points[i].point);
-      g_k += 2*(B_ki-points[i].distance) * (points[i].point - solution)/B_ki;
+      g_k += 2*(B_ki-points[i].distance) * (solution - points[i].point)/B_ki;
     }
     return g_k;
   }
