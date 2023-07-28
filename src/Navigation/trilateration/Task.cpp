@@ -510,6 +510,35 @@ namespace Navigation
               err("%s", e.what());
             }
           }
+          /*
+          m_approx->emplace_back(77.8, 68.9, 52.12, 81.31);
+          m_approx->emplace_back(74.2, 24.2, 58.00, 63.80);
+          m_approx->emplace_back(4.76, 19.5, 85.67, 16.90);
+          m_approx->emplace_back(29.2, 7.34, 29.03, 45.36);
+          m_approx->emplace_back(61.5, 76.4, 9.413, 96.86);
+          m_approx->emplace_back(54.0, 98.3, 64.50, 85.03);
+
+          m_approx->set_start(0, 0, 0);
+          std::cout << "gradient " << m_approx->run(20) << "\n";
+          exit(1);
+          
+          Sol is (12.534564602258625, 21.996457106222522, 69.74353681928338)
+          Reference Points:
+          Reference Point 1 (x, y): (77.80952848910074, 68.9418699448524, 52.12408537942485)
+          Reference Point 2 (x, y): (74.16715379478255, 24.213515365685424, 58.02496842932662)
+          Reference Point 3 (x, y): (4.761325980857256, 19.526807505913713, 85.66643796734579)
+          Reference Point 4 (x, y): (29.191322007936126, 7.339507027415393, 29.029514858221063)
+          Reference Point 5 (x, y): (61.49788736228995, 76.41672460010938, 9.413356166404052)
+          Reference Point 6 (x, y): (54.03720501970767, 98.31649245661175, 64.47963739186943)
+
+          Distances from Object O:
+          Distance from Object O to Reference Point 1: 82.31122503072999
+          Distance from Object O to Reference Point 2: 62.77592088540289
+          Distance from Object O to Reference Point 3: 17.890254016768978
+          Distance from Object O to Reference Point 4: 46.36707169026421
+          Distance from Object O to Reference Point 5: 94.86149475639868
+          Distance from Object O to Reference Point 6: 87.03404847923981
+          */
         }
       }
     };
