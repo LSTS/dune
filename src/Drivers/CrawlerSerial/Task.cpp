@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -24,80 +24,117 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: João Bogas                                                       *
+// Author: Ricardo Martins (GPS driver)                                     *
+// Author: Luis Venancio (BasicDeviceDriver compatibility)                  *
+// Author: João Bogas (adaptation to Devices/CrawlerSerial)                 *
+// Author: Bernardo Gabriel (adaptation to Devices/CrawlerSerial)           *
 //***************************************************************************
+
+// ISO C++ 98 headers.
+#include <algorithm>
+#include <cstddef>
+#include <cstring>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Local headers
-#include "Driver.hpp"
+// Local headers.
+#include "Reader.hpp"
 
 namespace Drivers
 {
-  //! Insert short task description here.
+  //! The task will receive Pressure data and request a PWM signal.
   //!
-  //! Insert explanation on task behaviour here.
+  //! The task will communicate with a Raspberry Pi Pico via SerialPort.
   //! @author João Bogas
+  //! @author Bernardo Gabriel
   namespace CrawlerSerial
   {
     using DUNE_NAMESPACES;
 
+    //! Maximum number of initialization commands.
+    static const unsigned c_max_init_cmds = 5;
+    //! Timeout for waitReply() function.
+    static const float c_wait_reply_tout = 4.0;
+
     struct Arguments
     {
-      //! Serial port device.
-      std::string uart_dev;
-      //! Serial port baud rate.
-      unsigned uart_baud;
-      //! Input timeout.
-      double input_timeout;
-      //! Number of attempts before error
-      int number_attempts;
+      //! IO device (URI).
+      std::string io_dev;
+      //! Input timeout in seconds.
+      float inp_tout;
+      //! Initialization commands.
+      std::string init_cmds[c_max_init_cmds];
+      //! Initialization replies.
+      std::string init_rpls[c_max_init_cmds];
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task : public Hardware::BasicDeviceDriver
     {
-      //! Serial port handle
-      SerialPort *m_uart;
-      //! I/O Multiplexer
-      Poll m_poll;
-      //! Task arguments
+      //! Serial port handle.
+      IO::Handle *m_handle;
+      //! Task arguments.
       Arguments m_args;
-      //! Driver for CrawlerSerial
-      DriverCrawlerSerial *m_driver;
-      //! Timer
-      Counter<double> m_wdog;
+      //! Input watchdog.
+      Time::Counter<float> m_wdog;
+      //! Reader thread.
+      Reader *m_reader;
       //! IMC msg
       IMC::Pressure m_press;
-      //! Read timestamp.
-      double m_tstamp;
-      //! Count for attempts
-      int m_count_attempts;
-      //! Flag to control reset of board
-      bool m_is_first_reset;
+      //! Buffer forEntityState
+      char m_bufer_entity[64];
+      //! Last line while waiting for reply.
+      std::string m_reply_line;
+      //! Wait for reply
+      bool m_wait_reply = false;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
-      Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+      Task(const std::string &name, Tasks::Context &ctx) : Hardware::BasicDeviceDriver(name, ctx),
+                                                           m_handle(NULL),
+                                                           m_reader(NULL)
       {
-        param("Serial Port - Device", m_args.uart_dev)
-            .defaultValue("")
-            .description("Serial port device");
+        // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER,
+                    true);
 
-        param("Serial Port - Baud Rate", m_args.uart_baud)
+        param("IO Port - Device", m_args.io_dev)
             .defaultValue("")
-            .description("Serial port baud rate");
+            .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
 
-        param("Input Timeout", m_args.input_timeout)
-            .defaultValue("3.0")
-            .minimumValue("2.0")
-            .maximumValue("4.0")
+        param("Input Timeout", m_args.inp_tout)
             .units(Units::Second)
-            .description("Amount of seconds to wait for data before reporting an error");
+            .defaultValue("4.0")
+            .minimumValue("0.0")
+            .description("Input timeout");
 
+        for (unsigned i = 0; i < c_max_init_cmds; ++i)
+        {
+          std::string cmd_label = String::str("Initialization String %u - Command", i);
+          param(cmd_label, m_args.init_cmds[i])
+              .defaultValue("");
+
+          std::string rpl_label = String::str("Initialization String %u - Reply", i);
+          param(rpl_label, m_args.init_rpls[i])
+              .defaultValue("");
+        }
+
+        // Use wait for messages
+        setWaitForMessages(1.0);
+
+        // Initialize messages.
+        clearMessages();
+
+        bind<IMC::DevDataText>(this);
+        bind<IMC::IoEvent>(this);
         bind<IMC::RemoteActions>(this);
+      }
+
+      ~Task() override
+      {
+        onDisconnect();
       }
 
       //! Update internal state with new parameter values.
@@ -106,81 +143,143 @@ namespace Drivers
       {
       }
 
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
       {
-      }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      {
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_uart->setCanonicalInput(true);
-          m_uart->flush();
-          m_poll.add(*m_uart);
-          m_driver = new DriverCrawlerSerial(this, m_uart, m_poll);
+          m_handle = openDeviceHandle(m_args.io_dev);
+          m_reader = new Reader(this, m_handle);
+          m_reader->start();
+          setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
+          return true;
         }
-        catch (const std::runtime_error &e)
+        catch (...)
         {
-          throw RestartNeeded(e.what(), 10);
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+
+        return false;
       }
 
-      //! Initialize resources.
+      //! Disconnect from device.
       void
-      onResourceInitialization(void)
+      onDisconnect() override
       {
-        m_driver->stopAcquisition();
-        m_uart->flush();
-        Delay::wait(1.0f);
-        initBoard();
-        m_wdog.setTop(m_args.input_timeout);
-        m_wdog.reset();
+        if (m_reader != NULL)
+        {
+          m_reader->stopAndJoin();
+          Memory::clear(m_reader);
+        }
+
+        Memory::clear(m_handle);
       }
 
-      //! Release resources.
+      //! Initialize device.
       void
-      onResourceRelease(void)
+      onInitializeDevice() override
       {
-        if (m_uart != nullptr)
+        for (unsigned i = 0; i < c_max_init_cmds; ++i)
         {
-          m_poll.remove(*m_uart);
-          Memory::clear(m_driver);
-          Memory::clear(m_uart);
+          if (m_args.init_cmds[i].empty())
+            continue;
+
+          if (m_args.init_rpls[i].empty())
+            sendCommand(m_args.init_cmds[i].c_str());
+          else if (!sendCommand(String::unescape(m_args.init_cmds[i]).c_str(), String::unescape(m_args.init_rpls[i]).c_str()))
+          {
+            err("%s: %s", DTR("no reply to command"), String::unescape(m_args.init_cmds[i]).c_str());
+            throw std::runtime_error(DTR("failed to setup device"));
+          }
         }
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+        // m_wdog.setTop(m_args.inp_tout);
       }
 
       void
-      initBoard()
+      clearMessages(void)
       {
-        m_driver->stopAcquisition();
+        m_press.clear();
+      }
 
-        if (!m_driver->getVersionFirmware())
+      //! Wait reply to command.
+      //! @param[in] stn string to compare.
+      //! @return true on successful match, false otherwise.
+      bool
+      waitReply(const std::string &stn)
+      {
+        Counter<float> counter(c_wait_reply_tout);
+        while (!stopping() && !counter.overflow())
         {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR("trying connecting to board")));
-          war(DTR("failed to get firmware version"));
+          waitForMessages(counter.getRemaining());
+
+          if (m_reply_line == stn)
+          {
+            m_reply_line.clear();
+            m_wait_reply = false;
+            return true;
+          }
         }
 
-        if (!m_driver->startAcquisition())
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR("trying connecting to board")));
-          war(DTR("failed to start"));
-        }
+        return false;
+      }
 
-        debug("Init OK");
-        m_wdog.setTop(m_args.input_timeout);
-        m_wdog.reset();
+      void
+      consume(const IMC::DevDataText *msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
+
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        trace("%s", sanitize(msg->value).c_str());
+
+        if (m_wait_reply)
+          m_reply_line = msg->value;
+        else
+          processSentence(msg->value);
+      }
+
+      void
+      consume(const IMC::IoEvent *msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
+
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
+          throw RestartNeeded(msg->error, 5);
+      }
+
+      //! Send a command via Serial Port.
+      //! @param cmd command to send.
+      void
+      sendCommand(const char *cmd)
+      {
+        char cmdText[32];
+        // std::sprintf(cmdText, "%s%c\n", cmd, (Algorithms::XORChecksum::compute((uint8_t *)cmd, strlen(cmd) - 1) | 0x80));
+        std::sprintf(cmdText, "%s", cmd);
+        inf("Command: %s", String::unescape(cmdText).c_str());
+        m_handle->writeString(cmdText);
+      }
+
+      //! Send a command via Serial Port and wait for a specific reply.
+      //! @param cmd command to send.
+      //! @param reply message to wait for.
+      //! @return true if succes, false otherwise
+      bool
+      sendCommand(const char *cmd, const char *reply)
+      {
+        sendCommand(cmd);
+        m_wait_reply = true;
+        return waitReply(reply);
       }
 
       void
@@ -197,49 +296,91 @@ namespace Drivers
           set_light.id = 0;
           set_light.value = ((light_val - (-127.0)) / (127.0 - (-127.0)) * (100));
 
-          std::string send = String::str("@PWM,%d,*", (int) set_light.value);
-          m_driver->sendCommandNoRsp(send.c_str());
+          std::string send = String::str("@PWM,%d,*", (int)set_light.value);
+          sendCommand(send.c_str());
         }
       }
 
+      //! Process sentence.
+      //! @param[in] line line.
       void
-      dispatchData()
+      processSentence(const std::string &line)
       {
-        m_tstamp = Clock::getSinceEpoch();
-
-        m_press.setTimeStamp(m_tstamp);
-        m_press.value = m_driver->m_crawlerData.pressure;
-        dispatch(m_press, DF_KEEP_TIME);
-      }
-
-      //! Main loop.
-      void
-      onMain(void)
-      {
-        while (!stopping())
+        // Discard leading noise.
+        size_t sidx = 0;
+        for (sidx = 0; sidx < line.size(); ++sidx)
         {
-          waitForMessages(1.0);
-
-          if (m_wdog.overflow())
-          {
-            inf("Timer overflow");
-            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 10);
-            initBoard();
-          }
-
-          if (!Poll::poll(*m_uart, m_args.input_timeout))
-            continue;
-
-          if (m_driver->haveNewData())
-          {
-            dispatchData();
-            m_wdog.reset();
-          }
-
-          m_uart->flush();
+          if (line[sidx] == '$')
+            break;
         }
 
-        m_driver->stopAcquisition();
+        // Discard trailing noise.
+        size_t eidx = 0;
+        for (eidx = line.size() - 1; eidx > sidx; --eidx)
+        {
+          if (line[eidx] == '*')
+            break;
+        }
+
+        if (sidx >= eidx)
+          return;
+
+        // // Compute checksum.
+        // uint8_t ccsum = 0;
+        // for (size_t i = sidx + 1; i < eidx; ++i)
+        //   ccsum ^= line[i];
+
+        // // Validate checksum.
+        // unsigned rcsum = 0;
+        // if (std::sscanf(&line[0] + eidx + 1, "%02X", &rcsum) != 1)
+        // {
+        //   trace("No checksum found, will not parse sentence.");
+        //   return;
+        // }
+
+        // if (ccsum != rcsum)
+        // {
+        //   trace("Checksum field does not match computed checksum, will not "
+        //         "parse sentence.");
+        //   return;
+        // }
+
+        // Split sentence
+        std::vector<std::string> parts;
+        String::split(line.substr(sidx + 1, eidx - sidx - 1), ",", parts);
+
+        interpretSentence(parts);
+      }
+
+      //! Interpret given sentence.
+      //! @param[in] parts vector of strings from sentence.
+      void
+      interpretSentence(std::vector<std::string> &parts)
+      {
+        if (parts[0] == "$PWM")
+        {
+          clearMessages();
+          m_press.setTimeStamp();
+          m_press.value = atof(parts[1].c_str());
+          dispatch(m_press, DF_KEEP_TIME);
+        }
+
+        m_wdog.reset();
+      }
+
+      //! Check for input timeout.
+      //! Data is read in the DevDataText consume.
+      //! @return true.
+      bool
+      onReadData() override
+      {
+        // if (m_wdog.overflow())
+        // {
+        //   setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+        //   throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        // }
+
+        return true;
       }
     };
   }
