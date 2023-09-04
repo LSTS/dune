@@ -168,6 +168,8 @@ namespace Drivers
       void
       onDisconnect() override
       {
+        sendCommand("@STOP,*");
+
         if (m_reader != NULL)
         {
           m_reader->stopAndJoin();
@@ -197,7 +199,7 @@ namespace Drivers
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
-        // m_wdog.setTop(m_args.inp_tout);
+        m_wdog.setTop(m_args.inp_tout);
       }
 
       void
@@ -217,7 +219,17 @@ namespace Drivers
         {
           waitForMessages(counter.getRemaining());
 
-          if (m_reply_line == stn)
+          std::string line = m_reply_line;
+          unsigned line_len = line.length();
+
+          //!
+          if (line_len < 2)
+            continue;
+
+          //! Remove Checksum and '\n' characters
+          line.erase(line.length() - 2);
+
+          if (line == stn)
           {
             m_reply_line.clear();
             m_wait_reply = false;
@@ -264,9 +276,9 @@ namespace Drivers
       sendCommand(const char *cmd)
       {
         char cmdText[32];
-        // std::sprintf(cmdText, "%s%c\n", cmd, (Algorithms::XORChecksum::compute((uint8_t *)cmd, strlen(cmd) - 1) | 0x80));
-        std::sprintf(cmdText, "%s", cmd);
-        inf("Command: %s", String::unescape(cmdText).c_str());
+        std::sprintf(cmdText, "%s%c\n", cmd, (Algorithms::XORChecksum::compute((uint8_t *)cmd, strlen(cmd) - 1) | 0x80));
+        // std::sprintf(cmdText, "%s\n", cmd);
+        trace("Command: %s", sanitize(cmdText).c_str());
         m_handle->writeString(cmdText);
       }
 
@@ -325,25 +337,26 @@ namespace Drivers
         if (sidx >= eidx)
           return;
 
-        // // Compute checksum.
-        // uint8_t ccsum = 0;
-        // for (size_t i = sidx + 1; i < eidx; ++i)
-        //   ccsum ^= line[i];
+        unsigned line_len = line.length();
+        if (line_len < 3)
+        {
+          trace("No checksum found, will not parse sentence.");
+          return;
+        }
 
-        // // Validate checksum.
-        // unsigned rcsum = 0;
-        // if (std::sscanf(&line[0] + eidx + 1, "%02X", &rcsum) != 1)
-        // {
-        //   trace("No checksum found, will not parse sentence.");
-        //   return;
-        // }
+        // Compute checksum.
+        unsigned ccsum = Algorithms::XORChecksum::compute((uint8_t *)&line[0], line_len - 3) | 0x80;
 
-        // if (ccsum != rcsum)
-        // {
-        //   trace("Checksum field does not match computed checksum, will not "
-        //         "parse sentence.");
-        //   return;
-        // }
+        // Validate checksum.
+        unsigned rcsum = 0;
+        rcsum = (uint8_t) line[line_len-2];
+
+        if (ccsum != rcsum)
+        {
+          trace("Checksum field does not match computed checksum, will not "
+                "parse sentence.");
+          return;
+        }
 
         // Split sentence
         std::vector<std::string> parts;
@@ -374,11 +387,11 @@ namespace Drivers
       bool
       onReadData() override
       {
-        // if (m_wdog.overflow())
-        // {
-        //   setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-        //   throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-        // }
+        if (m_wdog.overflow())
+        {
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
 
         return true;
       }
