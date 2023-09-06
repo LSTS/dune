@@ -95,12 +95,13 @@ log()
 
 modem_probe()
 {
-    nr="$(cat /proc/tty/driver/usbserial 2> /dev/null | grep GSM | head -n 1 | cut -f1 -d:)"
-    if [ -z "$nr" ]; then
-        echo ""
-    else
-        echo "/dev/ttyUSB$nr"
-    fi
+    #nr="$(cat /proc/tty/driver/usbserial 2> /dev/null | grep GSM | head -n 1 | cut -f1 -d:)"
+    #if [ -z "$nr" ]; then
+    #    echo ""
+    #else
+    #    echo "/dev/ttyUSB$nr"
+    #fi
+    echo "/dev/ttyACM1"
 }
 
 # Update DynDNS IPv4 address.
@@ -133,6 +134,7 @@ ppp_start()
     log info "ppp: removing default route"
 
     /sbin/route del default dev eth0 > /dev/null 2>&1
+    /sbin/route del default dev wlan0 > /dev/null 2>&1
 
     log info "ppp: starting"
 
@@ -160,6 +162,9 @@ ppp_start()
     if [ $? -ne 0 ]; then
         log err "ppp: failed to establish a connection"
         exit 1
+    else
+        log info "route: add default route to ppp0"
+        /sbin/route add default ppp0 > /dev/null 2>&1
     fi
 }
 
