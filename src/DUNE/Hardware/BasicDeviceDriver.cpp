@@ -68,6 +68,24 @@ namespace DUNE
     BasicDeviceDriver::onResourceRelease(void)
     {
       requestDeactivation();
+
+      if (!stopping())
+        return;
+      
+      while(getCurrentState() >= SM_DEACT_BEGIN &&
+            getCurrentState() <= SM_DEACT_DONE)
+      {
+        try
+        {
+          step();
+        }
+        catch (std::runtime_error &e)
+        {
+          war("%s", e.what());
+          setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
+          return;
+        }
+      }
     }
 
     void
