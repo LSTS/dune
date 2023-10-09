@@ -660,6 +660,19 @@ namespace Control
             }
             Memory::clear(msgV2CustomImu);
             break;
+          case ProtocolMessages::PIONEER_MSG_VERSION_2_CUSTOM_DISTANCE_BEARING_CODE:
+            ProtocolMessages::DataVersion2CustomDistanteBearing* msgV2CustomDistBear;
+            msgV2CustomDistBear = new ProtocolMessages::DataVersion2CustomDistanteBearing();
+            rb = ProtocolPack::Pack::unpack<ProtocolMessages::DataVersion2CustomDistanteBearing>(
+                this, buf, startIndex, length, msgV2CustomDistBear);
+            if (rb > 0)
+            {
+              // Store received data.
+              dispatchAsDevDataBinary(&buf[startIndex], rb);
+              handlePioneerV2CustomDistanceBearing(*msgV2CustomDistBear);
+            }
+            Memory::clear(msgV2CustomDistBear);
+            break;
           default:
             // war("skip msg");
             break;
@@ -881,6 +894,13 @@ namespace Control
       {
         // TODO something with msg
         trace("progress_thruster %u",msg.progress_thruster);
+      }
+
+      //! This will handle parsing Pioneer V2 Custom IMU message
+      void
+      handlePioneerV2CustomDistanceBearing(ProtocolMessages::DataVersion2CustomDistanteBearing msg)
+      {
+        trace("Multibeam distance and bearing: %f, %f", msg.distance, Angles::degrees(msg.bearing));
       }
 
       //! This will handle parsing Pioneer V2 Custom IMU message

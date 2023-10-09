@@ -60,7 +60,8 @@ namespace Control
         PIONEER_MSG_VERSION_2_TELEMETRY = 1,
         PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION  = 2,
         PIONEER_MSG_VERSION_2_THICKNESS_GAUGE = 3,
-        PIONEER_MSG_VERSION_2_CUSTOM_IMU  = 9, // This is our custom message to receive IMU data
+        PIONEER_MSG_VERSION_2_CUSTOM_IMU = 9, // This is our custom message to receive IMU data
+        PIONEER_MSG_VERSION_2_CUSTOM_DISTANCE_BEARING = 10, // This is our custom message to receive IMU data
       };
 
       enum Pioneer_Msg_Version_Plus_Msg_Code
@@ -70,6 +71,7 @@ namespace Control
         PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION_CODE =  (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_COMPASS_CALIBRATION,
         PIONEER_MSG_VERSION_2_THICKNESS_GAUGE_CODE =  (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_THICKNESS_GAUGE,
         PIONEER_MSG_VERSION_2_CUSTOM_IMU_CODE =  (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_CUSTOM_IMU,
+        PIONEER_MSG_VERSION_2_CUSTOM_DISTANCE_BEARING_CODE =  (PIONEER_MSG_VERSION_2 << 8) + PIONEER_MSG_VERSION_2_CUSTOM_DISTANCE_BEARING,
       };
 
       //! "dtype": "uint8_t"
@@ -361,6 +363,15 @@ namespace Control
         double compass_y;
         double compass_z;
         double temperature;
+      };
+
+      struct __attribute__((__packed__)) DataVersion2CustomDistanteBearing
+      {
+        uint8_t version = 2; // Protocol version []
+        uint8_t command_type = 10; // Command type []
+        double rt_clock; // Real-time clock [s]
+        double distance;
+        double bearing;
       };
     }
   }
