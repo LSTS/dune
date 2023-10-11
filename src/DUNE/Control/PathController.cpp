@@ -1088,12 +1088,14 @@ namespace DUNE
     {
       if (unit == IMC::Z_HEIGHT)
         return m_estate.height;
-      
+
       if (unit == IMC::Z_ALTITUDE)
         return m_estate.alt;
-        
+
       if (unit == IMC::Z_DEPTH)
         return m_estate.depth;
+
+      return 0;
     }
 
     void
