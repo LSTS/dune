@@ -173,7 +173,6 @@ namespace DUNE
       buffer += DUNE::IMC::deserialize(destination, buffer, length);
       buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
       buffer += DUNE::IMC::deserialize(command, buffer, length);
-
       return buffer - start;
     }
 
