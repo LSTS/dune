@@ -103,6 +103,10 @@ namespace Control
       bool suppress_x;
       bool suppress_y;
       bool suppress_n;
+      //! Label for multibeam distance 
+      std::string mb_dist_label;
+      //! Label for multibeam angle 
+      std::string mb_angle_label;
     };
 
     enum LoggerEnum
@@ -143,6 +147,10 @@ namespace Control
 
       //! Battery time remaining in minutes
       uint16_t m_time_remaining;
+
+      // Multibeam messages
+      IMC::Distance m_mb_distance;
+      IMC::EulerAngles m_mb_angle;
 
 
       //! Pioneer command watchdog message
@@ -272,6 +280,16 @@ namespace Control
         .defaultValue("false")
         .description("Lock rotation for debug purposes.");
 
+        param("Entity Label - Multibeam Distance", m_args.mb_dist_label)
+        .defaultValue("Oculus Distance")
+        .description("Entity label of 'Distance' messages triggered by "
+                     "the multibeam");
+        
+        param("Entity Label - Multibeam Angle", m_args.mb_angle_label)
+        .defaultValue("Oculus Angle")
+        .description("Entity label of 'Distance' messages triggered by "
+                     "the multibeam");
+
         // Setup processing of IMC messages
         bind<IMC::Abort>(this);
         bind<IMC::EstimatedState>(this);
@@ -358,6 +376,9 @@ namespace Control
       {
         if (getDebugLevel() >= DebugLevel::DEBUG_LEVEL_DEBUG)
           m_control_ref.setSourceEntity(reserveEntity(String::str(getEntityLabel()) + " - Control Reference"));
+
+        m_mb_distance.setSourceEntity(reserveEntity(m_args.mb_dist_label));
+        m_mb_angle.setSourceEntity(reserveEntity(m_args.mb_angle_label));
       }
 
       //! Resolve entity names.
@@ -901,6 +922,12 @@ namespace Control
       handlePioneerV2CustomDistanceBearing(ProtocolMessages::DataVersion2CustomDistanteBearing msg)
       {
         trace("Multibeam distance and bearing: %f, %f", msg.distance, Angles::degrees(msg.bearing));
+
+        m_mb_distance.value = msg.distance;
+        dispatch(m_mb_distance);
+
+        m_mb_angle.psi = msg.bearing;
+        dispatch(m_mb_angle);
       }
 
       //! This will handle parsing Pioneer V2 Custom IMU message
