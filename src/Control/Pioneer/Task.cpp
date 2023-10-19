@@ -152,6 +152,13 @@ namespace Control
       IMC::Distance m_mb_distance;
       IMC::EulerAngles m_mb_angle;
 
+      // IMU integration
+      bool m_has_compass_data;
+      bool m_started_imu_integration;
+      IMC::EulerAngles m_ahrs_angles;
+      IMC::EulerAngles m_integrated_imu;
+      Time::Delta m_last_integration_delta;
+
 
       //! Pioneer command watchdog message
       ProtocolCommands::CmdVersion2Watchdog m_watchdog_msg;
@@ -177,7 +184,9 @@ namespace Control
         m_UDP_comm(NULL),
         m_start_time(Time::Clock::getSinceEpoch()),
         m_error_missing(false),
-        m_last_set_time(0.0)
+        m_last_set_time(0.0),
+        m_has_compass_data(false),
+        m_started_imu_integration(false)
       {
         param("Communications Timeout", m_args.comm_timeout)
         .minimumValue("1")
@@ -863,13 +872,13 @@ namespace Control
           depth.value = 0.0;
         dispatch(depth);
 
-        IMC::EulerAngles euler;
-        euler.time = (fp64_t) msg.rt_clock; // device time (s)
-        euler.phi = Angles::radians((fp64_t) msg.roll);
-        euler.theta = Angles::radians((fp64_t) msg.pitch);
-        euler.psi = Angles::radians((fp64_t) msg.yaw);
-        euler.psi_magnetic = Angles::radians((fp64_t) msg.yaw); //TBC if magnetic heading is not available
-        dispatch(euler);
+        m_ahrs_angles.time = (fp64_t) msg.rt_clock; // device time (s)
+        m_ahrs_angles.phi = Angles::radians((fp64_t) msg.roll);
+        m_ahrs_angles.theta = Angles::radians((fp64_t) msg.pitch);
+        m_ahrs_angles.psi = Angles::radians((fp64_t) msg.yaw);
+        m_ahrs_angles.psi_magnetic = Angles::radians((fp64_t) msg.yaw); //TBC if magnetic heading is not available
+        m_has_compass_data = true;
+        // dispatch(m_ahrs_angles);
 
         IMC::Temperature temp;
         temp.value = (fp64_t) msg.temp_water / 10; // 0.1 ºC
@@ -939,12 +948,22 @@ namespace Control
           return;
 
         // Dispatching IMU data to IMC bus
-        IMC::AngularVelocity angvel;
-        angvel.time = (fp64_t) msg.rt_clock; // device time
-        angvel.x = msg.gyro_x; // rad/s
-        angvel.y = msg.gyro_y; // rad/s
-        angvel.z = msg.gyro_z; // rad/s
-        dispatch(angvel);
+        // Integrate angular velocity
+        if (!m_started_imu_integration && m_has_compass_data)
+        {
+          m_integrated_imu = m_ahrs_angles;
+          m_last_integration_delta.reset();
+          m_started_imu_integration = true;
+          return;
+        }
+
+        double delta = m_last_integration_delta.getDelta();
+        m_integrated_imu.time = (fp64_t) msg.rt_clock;
+        m_integrated_imu.phi += msg.gyro_x * delta;   // rad/s * s
+        m_integrated_imu.theta += msg.gyro_y * delta; // rad/s * s
+        m_integrated_imu.psi += msg.gyro_z * delta;   // rad/s * s
+        m_integrated_imu.psi_magnetic = m_integrated_imu.psi;
+        dispatch(m_integrated_imu);
 
         IMC::Acceleration accel;
         accel.time = (fp64_t) msg.rt_clock;
