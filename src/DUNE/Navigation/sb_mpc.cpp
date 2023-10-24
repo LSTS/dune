@@ -156,7 +156,7 @@ namespace DUNE
 					psi_os_best = 0;
 				}
 			}
-			std::cout << "HEYOOO " << Angles::degrees(Chi_ca_[i]) << " : " << cost_i << std::endl;
+			//std::cout << "Costs: " << Angles::degrees(Chi_ca_[i]) << " : " << cost_i << std::endl;
 		}
 		for (int k=0; k<n_obst; k++)
 		{
@@ -225,18 +225,17 @@ namespace DUNE
 				los = d/dist;
 				los_inv = -d/dist;
 
-				
 				// Calculating d_safe: bug fix: *DEG2RAD applied where missing!
 				d_safe_i = d_safe + obst_vect[k]->getL()/2; // obstacle size determines init d_safe
 				if(phi < PHI_AH_*DEG2RAD)
 				{ // obst ahead
-					d_safe_i = d_safe + asv->getL()/2;
+					d_safe_i = d_safe+10; //d_safe + asv->getL()/2;
 				}else if(phi > PHI_OT_*DEG2RAD)
 				{ // obst behind
-					d_safe_i = 0.5*d_safe + asv->getL()/2;
+					d_safe_i = d_safe; //0.5*d_safe + asv->getL()/2;
 				}else
 				{
-					d_safe_i = d_safe + asv->getW()/2;
+					d_safe_i = d_safe+2; //d_safe + asv->getW()/2;
 				}
 				
 				phi_o = atan2(-d(1),-d(0)) - obst_vect[k]->psi_;
@@ -244,19 +243,19 @@ namespace DUNE
 
 				if(phi_o < PHI_AH_*DEG2RAD)
 				{ // ship ahead
-					d_safe_i += d_safe + obst_vect[k]->getL()/2; // d_safe +
+					d_safe_i += d_safe+10; //d_safe + obst_vect[k]->getL()/2; // d_safe +
 				}else if(phi_o > PHI_OT_*DEG2RAD)
 				{ // ship behind
-					d_safe_i += 0.5*d_safe + obst_vect[k]->getL()/2; // 0.5*d_safe +
+					d_safe_i += d_safe; //0.5*d_safe + obst_vect[k]->getL()/2; // 0.5*d_safe +
 				}else
 				{
-					d_safe_i += d_safe + obst_vect[k]->getW()/2; //d_safe +
+					d_safe_i += d_safe+2; //d_safe + obst_vect[k]->getW()/2; //d_safe +
 				}
 
-				if(v_s.dot(v_o) > cos(PHI_OT_*DEG2RAD)*v_s.norm()*v_o.norm() && v_s.norm() > v_o.norm())
+				/*if(v_s.dot(v_o) > cos(PHI_OT_*DEG2RAD)*v_s.norm()*v_o.norm() && v_s.norm() > v_o.norm())
 				{
 					d_safe_i = d_safe + asv->getL()/2 + obst_vect[k]->getL()/2;
-				}
+				}*/
 				
 
 

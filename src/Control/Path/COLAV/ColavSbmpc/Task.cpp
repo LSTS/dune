@@ -339,16 +339,21 @@ namespace Control
           {
             m_des_heading = msg->value;
             int utc_time = ((uint32_t)Clock::getSinceEpoch()); // % 86400;
-            if(utc_time%5==0)
+
+            if(utc_time%10==0)
             {
               sb_mpc.getBestControlOffset(u_os, psi_os, m_asv_state[3], m_des_heading, m_asv_state, m_dyn_obst_state);
             }
+            
             double m_des_heading_ = Angles::normalizeRadian(m_des_heading + psi_os);
-            //IMC::DesiredHeading des_heading;
             des_heading.value = m_des_heading_;
             des_heading.off = Angles::degrees(psi_os);
             dispatch(des_heading);
-            spew("Psi off: %.0f U off: %.0f, Psi_los: %f, Psi_d: %f", Angles::degrees(psi_os), u_os, Angles::degrees(m_des_heading), Angles::degrees(des_heading.value));
+
+            if(utc_time%10==0)
+            {
+              spew("Psi off: %.0f U off: %.0f, Psi_los: %f, Psi_d: %f", Angles::degrees(psi_os), u_os, Angles::degrees(m_des_heading), Angles::degrees(des_heading.value));
+            }
           }
           
 
@@ -368,10 +373,10 @@ namespace Control
                 m_dyn_obst_state(n, 2) = (*i)->course;
                 m_dyn_obst_state(n, 3) = (*i)->speed;
                 m_dyn_obst_state(n, 4) = 0.0;
-                m_dyn_obst_state(n, 5) = (*i)->length/2; //a = cas.length - b
-                m_dyn_obst_state(n, 6) = (*i)->length/2; //b = cas.length - a
-                m_dyn_obst_state(n, 7) = (*i)->width/2; //c = cas.width - d
-                m_dyn_obst_state(n, 8) = (*i)->width/2; //d = cas.width - c
+                m_dyn_obst_state(n, 5) = 10; //(*i)->length/2; //a = cas.length - b
+                m_dyn_obst_state(n, 6) = 10; //(*i)->length/2; //b = cas.length - a
+                m_dyn_obst_state(n, 7) = 2; //(*i)->width/2; //c = cas.width - d
+                m_dyn_obst_state(n, 8) = 2; //(*i)->width/2; //d = cas.width - c
                 // Convert MMSI from string to int for CAS.
                 std::stringstream geek((*i)->mmsi); //contains int MMSI.
                 int mmsi = 0; 
