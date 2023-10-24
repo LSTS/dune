@@ -44,5 +44,8 @@ namespace DUNE
 #include <DUNE/Navigation/Ranging.hpp>
 #include <DUNE/Navigation/StreamEstimator.hpp>
 #include <DUNE/Navigation/UsblTools.hpp>
+#include <DUNE/Navigation/autonaut.hpp>
+#include <DUNE/Navigation/obstacle.hpp>
+#include <DUNE/Navigation/Kalman.hpp>
 
 #endif

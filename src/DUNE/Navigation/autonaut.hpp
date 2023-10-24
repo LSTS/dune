@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -24,38 +24,90 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
-//***************************************************************************
-// Automatically generated.                                                 *
-//***************************************************************************
-// IMC XML MD5: 9bcf4ad79d246ffa0ed6d19987c53590                            *
+// Author: Alberto Dallolio                                                 *
 //***************************************************************************
 
-#ifndef DUNE_IMC_SUPERTYPES_HPP_INCLUDED_
-#define DUNE_IMC_SUPERTYPES_HPP_INCLUDED_
+#ifndef DUNE_NAVIGATION_AUTONAUT_HPP_INCLUDED_
+#define DUNE_NAVIGATION_AUTONAUT_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/IMC/Message.hpp>
+#include <DUNE/DUNE.hpp>
+#include <DUNE/Tasks/Task.hpp>
+#include <Eigen/Dense>
 
 namespace DUNE
 {
-  namespace IMC
+  namespace Navigation
   {
-    //! Super type Maneuver.
-    class Maneuver: public Message
-    {
-    };
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM autonaut;
 
-    //! Super type Control Command.
-    class ControlCommand: public Message
+    class autonaut
     {
-    };
+      public:
 
-    //! Super type RemoteData.
-    class RemoteData: public Message
-    {
-    };
-  }
-}
+      /// Constructor
+      autonaut(double T, double dt);
 
-#endif
+      /// Destructor
+      ~autonaut();
+
+      void linearPredictionInger(const std::vector<double>& state, double u_d, double psi_d);
+
+      Eigen::VectorXd getX();
+      Eigen::VectorXd getY();
+      Eigen::VectorXd getPsi();
+      Eigen::VectorXd getU();
+      Eigen::VectorXd getV();
+      Eigen::VectorXd getR();
+
+      double getA();
+      double getB();
+      double getC();
+      double getD();
+
+      double getL();
+      double getW();
+
+      double getT();
+      double getDT();
+      double getNsamp();
+
+      void setT(double T);
+      void setDT(double DT);
+      void setNsamp(int n_samp);
+
+      void setA(double A);
+      void setB(double B);
+      void setC(double C);
+      void setD(double D);
+
+      Eigen::VectorXd m_x;
+      Eigen::VectorXd m_y;
+      Eigen::VectorXd m_psi;
+      Eigen::VectorXd m_u;
+      Eigen::VectorXd m_v;
+      Eigen::VectorXd m_r;
+
+      double m_A, m_B, m_C, m_D, m_l, m_w;
+      double m_os_x, m_os_y;
+
+      private:
+
+      // Calculates the offsets according to the position of the GPS receiver
+      void calculate_position_offsets();
+
+      // Assures that angle is between [-PI, PI)
+      double normalize_angle(double angle);
+
+      // Simulation parameters
+      double m_DT;
+      double m_T;
+      //const int n_samp_;
+      int m_n_samp; // possibility to set from sb_mpc
+                
+    };
+  }  
+}  
+  
+#endif /* AUTONAUT_HPP_ */
