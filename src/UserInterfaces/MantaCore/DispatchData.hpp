@@ -138,7 +138,7 @@ namespace UserInterfaces
       m_task(task)
       {
         m_driver = driver;
-        m_util = new MantaUtils(NULL, NULL);
+        m_util = new MantaUtils(m_task);
       }
 
       ~DispatchData(void) {}

@@ -46,7 +46,6 @@ namespace UserInterfaces
   namespace MantaCore
   {
     using DUNE_NAMESPACES;
-    static const float c_timeout_data_in = 1.0;
 
     class MantaUtils
     {
@@ -73,75 +72,11 @@ namespace UserInterfaces
         }
       };
 
-      MantaUtils(DUNE::Tasks::Task *task, DriverMantaCore* driver) :
+      MantaUtils(DUNE::Tasks::Task *task) :
       m_task(task)
-      {
-        m_driver = driver;
-        m_wdog.setTop(c_timeout_data_in);
-        m_modem_number = 0;
-      }
+      {}
 
       ~MantaUtils(void) {}
-
-      void
-      simulatedDataUpdate(void)
-      {
-        if(m_wdog.overflow())
-        {
-          m_wdog.reset();
-          dispatchGpsSimulatedData();
-        }
-      }
-
-      bool
-      setPowerChannelData(uint8_t channel_id, std::string power_channel_name, uint8_t power_channel_state)
-      {
-        struct DriverMantaCore::PowerChannelData m_data;
-        m_data.label = power_channel_name;
-        if(power_channel_state == true)
-          m_data.is_on = IMC::PowerChannelState::PCS_ON;
-        else
-          m_data.is_on = IMC::PowerChannelState::PCS_OFF;
-
-        m_task->inf("Power Channel %s|%s", m_data.label.c_str(), m_data.is_on ? "ON" : "OFF");
-        return m_driver->setPowerChannelState(channel_id, m_data.is_on);
-      }
-
-      uint8_t
-      getIdOfPowerChannel(std::string power_channel_name)
-      {
-        struct DriverMantaCore::PowerChannelData data_power;
-        for(uint8_t i = 0; i < MantaCore::c_max_power_channels; i++)
-        {
-          data_power = m_driver->getPowerChannelData(i);
-          m_task->debug("%s | %s", data_power.label.c_str(), power_channel_name.c_str());
-          if(data_power.label == power_channel_name)
-            return i;
-        }
-
-        return 255;
-      }
-
-      void
-      addModemNameToList(std::string modem_name)
-      {
-        m_task->debug("Modem: %s|%d", modem_name.c_str(), m_modem_number);
-        m_driver->addModemNameDevice(modem_name, m_modem_number);
-        m_modem_names.push_back(modem_name);
-        m_modem_number++;
-      }
-
-      uint8_t
-      getSizeOfListNameModems(void)
-      {
-        return m_modem_names.size();
-      }
-
-      std::string
-      getNameOfModemAt(uint8_t id)
-      {
-        return m_modem_names[id];
-      }
 
       std::string
       getIOName(const std::string &name_io)
@@ -153,23 +88,45 @@ namespace UserInterfaces
           return name_io;
       }
 
+      bool
+      getInterfaceIP(const std::string &interfaceName, std::string &ipAddress)
+      {
+        char command[100];
+        std::snprintf(command, sizeof(command), "ifconfig %s 2>/dev/null", interfaceName.c_str());
+        FILE *fp = popen(command, "r");
+        if (fp == nullptr)
+        {
+          m_task->inf("Failed to execute ifconfig.");
+          return false;
+        }
+
+        char line[256];
+        bool found = false;
+        while (fgets(line, sizeof(line), fp) != nullptr)
+        {
+          if (std::strstr(line, "inet ") != nullptr)
+          {
+            char *token = strtok(line, " ");
+            while (token != nullptr)
+            {
+              if (strstr(token, "inet") != nullptr)
+              {
+                token = strtok(NULL, " ");
+                ipAddress = token;
+                found = true;
+                break;
+              }
+              token = strtok(NULL, " ");
+            }
+          }
+        }
+        pclose(fp);
+        return found;
+      }
+
     private:
       //! Parent task.
       DUNE::Tasks::Task *m_task;
-      //! Driver of MantaCore
-      DriverMantaCore* m_driver;
-      //! Input watchdog.
-      Time::Counter<float> m_wdog;
-      //! Array of system modems names
-      std::vector<std::string> m_modem_names;
-      //! Counter of number of modems
-      uint8_t m_modem_number;
-
-      void
-      dispatchGpsSimulatedData(void)
-      {
-        m_driver->setNumberSat(12);
-      }
     };
   }
 }

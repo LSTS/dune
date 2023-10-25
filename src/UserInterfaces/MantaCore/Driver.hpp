@@ -38,18 +38,22 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "MantaUtils.hpp"
+
 namespace UserInterfaces
 {
   namespace MantaCore
   {
     using DUNE_NAMESPACES;
     static const int c_max_power_channels = 8;
+    static const float c_timeout_data_in = 1.0;
 
     class DriverMantaCore
     {
     public:
       #define TIME_TO_RX_DATA       (2)
-      #define MAX_LINE_FREE_TEXT    (2)
+      #define MAX_LINE_FREE_TEXT    (4)
       #define MAX_BQ_INPUT_DATA     (16)
       #define MAX_PAC_INPUT_DATA    (3)
       #define BYTE_PREAMBLE         '$'
@@ -158,7 +162,7 @@ namespace UserInterfaces
         bool is_on;
       };
 
-      DriverMantaCore(DUNE::Tasks::Task *task, SerialPort *uart, int numberCell, std::string system_ip, std::string system_name) :
+      DriverMantaCore(DUNE::Tasks::Task *task, SerialPort *uart, int numberCell, std::string system_name) :
       m_task(task)
       {
         m_uart = uart;
@@ -169,13 +173,16 @@ namespace UserInterfaces
         m_cnt_rx = 0;
         m_wdog.setTop(TIME_TO_RX_DATA);
         m_send_cmd_state = CMD_IDLE;
-        m_sys_ip = system_ip;
         m_task->inf("System Internal IP:%s", m_sys_ip.c_str());
         m_sys_name = system_name;
         m_task->inf("System Name:%s", m_sys_name.c_str());
         m_free_text_state = 0;
         m_com_error = false;
         m_is_to_turn_off_cpu = false;
+        m_mutil = new MantaUtils(m_task);
+        m_wdog_data_simulated.setTop(c_timeout_data_in);
+        m_modem_number = 0;
+        std::sprintf(m_free_text, "Manta Core");
       }
 
       ~DriverMantaCore(void) {}
@@ -336,20 +343,74 @@ namespace UserInterfaces
         {
           case 0:
             std::sprintf(m_free_text, "System: %s%c", m_sys_name.c_str(), '\0');
-            sendFreeText(m_free_text);
             break;
 
           case 1:
-            std::sprintf(m_free_text, "Int IP: %s%c", m_sys_ip.c_str(), '\0');
-            sendFreeText(m_free_text);
+            if(m_mutil->getInterfaceIP("eth0", m_sys_ip))
+              std::sprintf(m_free_text, "Int IP: %s%c", m_sys_ip.c_str(), '\0');
+            else
+              std::sprintf(m_free_text, "Int IP: Fail%c", '\0');
+            break;
+
+          case 2:
+            if(m_mutil->getInterfaceIP("ztcfw4jwt3", m_sys_ip))
+              std::sprintf(m_free_text, "Zero IP: %s%c", m_sys_ip.c_str(), '\0');
+            else
+              std::sprintf(m_free_text, "Zero IP: Fail%c", '\0');
+            break;
+
+          case 3:
+            if(m_mutil->getInterfaceIP("wwan0", m_sys_ip))
+              std::sprintf(m_free_text, "GPRS IP: %s%c", m_sys_ip.c_str(), '\0');
+            else
+              std::sprintf(m_free_text, "GPRS IP: Fail%c", '\0');
             break;
 
           default:
             break;
         }
+        sendFreeText(m_free_text);
         m_free_text_state++;
         if(m_free_text_state >= MAX_LINE_FREE_TEXT)
           m_free_text_state = 0;
+      }
+
+      bool
+      setPowerChannelData(uint8_t channel_id, std::string power_channel_name, uint8_t power_channel_state)
+      {
+        struct DriverMantaCore::PowerChannelData m_data;
+        m_data.label = power_channel_name;
+        if(power_channel_state == true)
+          m_data.is_on = IMC::PowerChannelState::PCS_ON;
+        else
+          m_data.is_on = IMC::PowerChannelState::PCS_OFF;
+
+        m_task->inf("Power Channel %s|%s", m_data.label.c_str(), m_data.is_on ? "ON" : "OFF");
+        return setPowerChannelState(channel_id, m_data.is_on);
+      }
+
+      uint8_t
+      getIdOfPowerChannel(std::string power_channel_name)
+      {
+        struct DriverMantaCore::PowerChannelData data_power;
+        for(uint8_t i = 0; i < MantaCore::c_max_power_channels; i++)
+        {
+          data_power =getPowerChannelData(i);
+          m_task->debug("%s | %s", data_power.label.c_str(), power_channel_name.c_str());
+          if(data_power.label == power_channel_name)
+            return i;
+        }
+
+        return 255;
+      }
+
+      void
+      addModemNameToList(std::string modem_name)
+      {
+        m_task->debug("Modem: %s|%d", modem_name.c_str(), m_modem_number);
+        addModemNameDevice(modem_name, m_modem_number);
+        m_modem_names.push_back(modem_name);
+        m_modem_number++;
       }
 
       std::string
@@ -440,6 +501,28 @@ namespace UserInterfaces
         return m_is_to_turn_off_cpu;
       }
 
+      void
+      simulatedDataUpdate(void)
+      {
+        if(m_wdog_data_simulated.overflow())
+        {
+          m_wdog_data_simulated.reset();
+          dispatchGpsSimulatedData();
+        }
+      }
+
+      uint8_t
+      getSizeOfListNameModems(void)
+      {
+        return m_modem_names.size();
+      }
+
+      std::string
+      getNameOfModemAt(uint8_t id)
+      {
+        return m_modem_names[id];
+      }
+
       BQData m_bqData;
       LTCData m_ltcData;
       PACData m_pacData;
@@ -463,6 +546,8 @@ namespace UserInterfaces
 
       //! Parent task.
       DUNE::Tasks::Task *m_task;
+      //! Manta Utils
+      MantaUtils* m_mutil;
       //! number of cell to read
       int m_number_cells;
       //! Serial port handle.
@@ -489,6 +574,8 @@ namespace UserInterfaces
       uint8_t m_csum_rx;
       //! Input watchdog.
       Time::Counter<float> m_wdog;
+      //! Data Simulated watchdog.
+      Time::Counter<float> m_wdog_data_simulated;
       //! String command
       char cmd_text[64];
       //! Firmware version
@@ -501,6 +588,10 @@ namespace UserInterfaces
       bool m_com_error;
       //! flag to control poweroff of cpu
       bool m_is_to_turn_off_cpu;
+      //! Array of system modems names
+      std::vector<std::string> m_modem_names;
+      //! Counter of number of modems
+      uint8_t m_modem_number;
 
       uint8_t
       calcCRC8(char *data_in)
@@ -765,6 +856,11 @@ namespace UserInterfaces
         }
       }
 
+      void
+      dispatchGpsSimulatedData(void)
+      {
+        setNumberSat(12);
+      }
     };
   }
 }

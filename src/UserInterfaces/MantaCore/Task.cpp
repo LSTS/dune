@@ -112,10 +112,6 @@ namespace UserInterfaces
         .defaultValue("false")
         .description("Simulate Data Input");
 
-        param("System IP", m_args.int_ip)
-        .defaultValue("0.0.0.0")
-        .description("Internal system IP");
-
         param("Number of cells", m_args.number_cell)
         .defaultValue("7")
         .minimumValue("1")
@@ -222,10 +218,10 @@ namespace UserInterfaces
       {
         inf("Initializing board");
         m_is_powero_off = false;
-        m_driver = new DriverMantaCore(this, m_uart, m_args.number_cell, m_args.int_ip, getSystemName());
+        m_driver = new DriverMantaCore(this, m_uart, m_args.number_cell, getSystemName());
         m_dispatch = new DispatchData(this, m_driver);
         m_dispatch->cloneStructs(m_args, m_imc);
-        m_manta_util = new MantaUtils(this, m_driver);
+        m_manta_util = new MantaUtils(this);
         m_driver->setupBoard();
         inf("Firmware Version:%s", m_driver->firmwareVersion().c_str());
         inf("Initializing board: done");
@@ -238,14 +234,14 @@ namespace UserInterfaces
         for (unsigned i = 0; i < MantaCore::c_max_power_channels; ++i)
         {
           m_driver->setPowerChannelName(i, m_args.power_channel_label[i]);
-          if(m_manta_util->setPowerChannelData(i, m_args.power_channel_label[i], m_args.power_channel_turn_on[i]))
+          if(m_driver->setPowerChannelData(i, m_args.power_channel_label[i], m_args.power_channel_turn_on[i]))
           {
             m_pwr_chs[m_args.power_channel_label[i]]->state.state = m_args.power_channel_turn_on[i];
           }
         }
 
         for(uint8_t i = 0; i < m_sys.size(); i++)
-          m_manta_util->addModemNameToList(*m_sys_itr++);
+          m_driver->addModemNameToList(*m_sys_itr++);
       }
 
       //! Reserve entity identifiers.
@@ -334,9 +330,9 @@ namespace UserInterfaces
         if (itr == m_pwr_chs.end())
           return;
 
-        uint8_t power_id = m_manta_util->getIdOfPowerChannel(msg->name);
+        uint8_t power_id = m_driver->getIdOfPowerChannel(msg->name);
         debug("%s|%d|%f|%d", msg->name.c_str(), msg->op, msg->sched_time, power_id);
-        if(m_manta_util->setPowerChannelData(power_id, msg->name, msg->op))
+        if(m_driver->setPowerChannelData(power_id, msg->name, msg->op))
           m_pwr_chs[msg->name]->state.state = msg->op;
       }
 
@@ -402,7 +398,7 @@ namespace UserInterfaces
         else
         {
           if(m_args.simulated_data)
-            m_manta_util->simulatedDataUpdate();
+            m_driver->simulatedDataUpdate();
         }
 
         m_driver->pollData();
