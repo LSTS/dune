@@ -156,19 +156,25 @@ namespace DUNE
       for (it = actions_map.begin(); it != actions_map.end(); ++it)
       {
         std::string action_name = it->first.c_str();
-        if (!it->second.compare("Button"))
+        action_name = Utils::String::ltrim(action_name);
+        action_name = Utils::String::rtrim(action_name);
+        std::string type_lowercase = it->second.c_str();
+        type_lowercase = Utils::String::ltrim(type_lowercase);
+        type_lowercase = Utils::String::rtrim(type_lowercase);
+        Utils::String::toLowerCase(type_lowercase);
+        if (!type_lowercase.compare("button"))
         {
           addActionButton(action_name);
         }
-        else if (!it->second.compare("Axis"))
+        else if (!type_lowercase.compare("axis"))
         {
           addActionAxis(action_name);
         }
-        else if (!it->second.compare("Slider"))
+        else if (!type_lowercase.compare("slider"))
         {
           addActionSlider(action_name);
         }
-        else if (!it->second.compare("HalfSlider"))
+        else if (!type_lowercase.compare("halfslider"))
         {
           addActionHalfSlider(action_name);
         }
