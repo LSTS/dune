@@ -150,18 +150,23 @@ namespace DUNE
     void
     BasicRemoteOperation::onResourceInitialization(void)
     {
-      Utils::TupleList actions_tuples(m_additional_actions, "=", ",");
-      std::map<std::string, std::string> actions_map = actions_tuples.getMapReversed();
-      std::map<std::string, std::string>::iterator it;
-      for (it = actions_map.begin(); it != actions_map.end(); ++it)
+      std::vector<std::vector<std::string>> lst;
+      Utils::String::splitMulti(m_additional_actions, ",", "=", lst);
+      std::vector<std::vector<std::string>>::iterator it;
+      for (it = lst.begin(); it != lst.end(); ++it)
       {
-        std::string action_name = it->first.c_str();
+        if (it->size() != 2) continue;
+
+        std::string action_name = it->at(0);
         action_name = Utils::String::ltrim(action_name);
         action_name = Utils::String::rtrim(action_name);
-        std::string type_lowercase = it->second.c_str();
+        if (action_name.empty()) continue;
+
+        std::string type_lowercase = it->at(1);
         type_lowercase = Utils::String::ltrim(type_lowercase);
         type_lowercase = Utils::String::rtrim(type_lowercase);
         Utils::String::toLowerCase(type_lowercase);
+
         if (!type_lowercase.compare("button"))
         {
           addActionButton(action_name);
