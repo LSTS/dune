@@ -101,7 +101,7 @@ namespace DUNE
 
       //! Consumer for DesiredSpeed message.
       //! @param dspeed message to consume.
-      void
+      virtual void
       consume(const IMC::DesiredSpeed* dspeed);
 
       //! Handler for parameter updates.
