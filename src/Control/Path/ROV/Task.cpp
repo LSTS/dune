@@ -144,7 +144,7 @@ namespace Control
         bool
         hasSpecificSpeedControl(void) const
         {
-          return true;
+          return false;
         }
 
         //! Execute a path control step
