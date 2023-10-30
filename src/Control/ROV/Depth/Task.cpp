@@ -165,6 +165,9 @@ namespace Control
         void
         onEstimatedState(const double timestep, const IMC::EstimatedState* msg)
         {
+          if (timestep > 1.0)
+            return;
+            
           m_thrust.id = m_args.vmotor_id; // CHANGE TO VERTICAL MOTOR ID
           m_thrust.value = depthControl(timestep, msg);
 
