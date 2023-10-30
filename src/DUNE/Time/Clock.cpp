@@ -57,7 +57,7 @@ namespace DUNE
   {
     uint64_t Clock::s_starttime_epoch = getSinceEpochNsecRT();
     uint64_t Clock::s_starttime_mono = getNsecRT();
-    double Clock::s_time_multiplier = 5.0;
+    double Clock::s_time_multiplier = 10.0;
 
     uint64_t
     Clock::getNsec(void)

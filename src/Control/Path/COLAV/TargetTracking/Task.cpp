@@ -69,17 +69,17 @@ namespace Control
           std::vector<double> m_asv_state = std::vector<double>(6,0.0);
           //! Vector of obstacles
           std::vector<IMC::AisInfo> m_dyn_obst_vec;
-          //! AutoNaut latitude
+          //! Ownship latitude
           double m_lat_asv;
-          //! AutoNaut longitude
+          //! Ownship longitude
           double m_lon_asv;
           //! Obstacle latitude
           double m_lat_obst;
           //! Obstacle longitude
           double m_lon_obst;
-          //! Timestamp - new (from Autonaut)
+          //! Timestamp - new 
           double m_timestamp_new;
-          //! Timestamp - old (from Autonaut)
+          //! Timestamp - old 
           double m_timestamp_prev;
           //! Timestamp from obstacle
           double m_timestamp_obst;
@@ -191,7 +191,7 @@ namespace Control
   
             if(true)//(m_enable_cas)
             {
-              // Check if AutoNaut is Simulator is booting before you compute displacement.
+              // Check if Ownship is Simulator is booting before you compute displacement.
               if(m_lat_asv == 0.0 && m_lon_asv == 0.0)
                 return;
   
@@ -336,7 +336,7 @@ namespace Control
                 {
                   IMC::CollisionAvoidance cas;
 
-                  // Distance between ASV - Obstacle
+                  // Distance between Ownship - Obstacle
                   double dist_x = 0.0;
                   double dist_y = 0.0;
                   WGS84::displacement(m_lat_asv, m_lon_asv, 0, m_dyn_obst_vec[i].lat, m_dyn_obst_vec[i].lon, 0, &dist_x, &dist_y);
@@ -370,7 +370,7 @@ namespace Control
                   geek >> mmsi;
                   m_dyn_obst_state(i, 9) = mmsi;
     
-                  // Distance between ASV and Obstacle.
+                  // Distance between Ownship and Obstacle.
                   double distance = WGS84::distance(m_lat_asv, m_lon_asv, 0, m_dyn_obst_vec[i].lat, m_dyn_obst_vec[i].lon, 0);
                   
                   trace("x in NED = %0.1f, y in NED = %0.1f, Distance = %0.1f", dist_x, dist_y, distance);

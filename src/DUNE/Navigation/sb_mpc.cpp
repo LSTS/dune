@@ -252,10 +252,10 @@ namespace DUNE
 					d_safe_i += d_safe+2; //d_safe + obst_vect[k]->getW()/2; //d_safe +
 				}
 
-				/*if(v_s.dot(v_o) > cos(PHI_OT_*DEG2RAD)*v_s.norm()*v_o.norm() && v_s.norm() > v_o.norm())
-				{
-					d_safe_i = d_safe + asv->getL()/2 + obst_vect[k]->getL()/2;
-				}*/
+				//if(v_s.dot(v_o) > cos(PHI_OT_*DEG2RAD)*v_s.norm()*v_o.norm() && v_s.norm() > v_o.norm())
+				//{
+				//	d_safe_i = d_safe + 10 + 10; //asv->getL()/2 + obst_vect[k]->getL()/2;
+				//}
 				
 
 
@@ -267,8 +267,8 @@ namespace DUNE
 				}
 
 				// Overtaken by obstacle
-				OT = v_s.dot(v_o) > cos(PHI_OT_*DEG2RAD)*v_s.norm()*v_o.norm()
-						&& v_s.norm() < v_o.norm();
+				OT = v_s.dot(v_o) > cos(PHI_OT_*DEG2RAD)*v_s.norm()*v_o.norm();
+						//&& v_s.norm() < v_o.norm();
 
 				// Obstacle on starboard side
 				SB = phi > 0; // ENU: < 0, NED (MR): >= 0
@@ -281,13 +281,13 @@ namespace DUNE
 				// Crossing situation
 				CR = v_s.dot(v_o) < cos(PHI_CR_*DEG2RAD)*v_s.norm()*v_o.norm()
 						&& ((SB && psi_rel < 0)); // (ENU: > 0, NED: < 0)
-				// Crossing from AutoNaut
-				//CR = v_o.norm() > 0.25 //0.05?
-				//		&& v_s.dot(v_o) < cos(PHI_CR_*DEG2RAD)*v_s.norm()*v_o.norm()
-				//		&& v_s.dot(los) > cos(112.5*DEG2RAD)*v_s.norm();
-				//		//&& ( psi_rel > 0 ); // (ENU: > 0, NED: < 0) CR off when asv has right of way + fix for SB/P switches
 
 				mu = ( SB && HO ) || ( CR && !OT);
+
+				//if(i == 0)
+				//{
+				//	std::cout<< "OT:" << OT << " SB:" << SB << " HO:" << HO << " CR:" << CR << std::endl;
+				//}
 
 			}
 
@@ -305,8 +305,6 @@ namespace DUNE
 		if (dist < d_close)
 		{
 			H2 = K_P_*(1-P_ca) + K_CHI_*pow(Chi_ca,2) + deltaP(P_ca) + deltaChi(Chi_ca, k_dchi_p, k_dchi_sb);
-			// From AutoNaut:
-			//H2 = K_P_*pow(1-P_ca,2) + sqrChi(Chi_ca, k_chi_p, k_chi_sb) + deltaP(P_ca) + deltaChi(Chi_ca, k_dchi_p, k_dchi_sb);
 			cost = H1 + H2;
 		}
 		

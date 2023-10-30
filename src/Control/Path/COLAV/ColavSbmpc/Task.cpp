@@ -64,20 +64,26 @@ namespace Control
           Math::Matrix m_dyn_obst_state;
           //! Desired heading message
           IMC::DesiredHeading des_heading;
-          //! AutoNaut latitude
+          //! Desired speed message
+          IMC::DesiredSpeed des_speed;
+          //! Ownship latitude
           double m_lat_asv;
-          //! AutoNaut longitude
+          //! Ownship longitude
           double m_lon_asv;
           //! Obstacle latitude
           double m_lat_obst;
           //! Obstacle longitude
           double m_lon_obst;
-          //! Timestamp - new (from Autonaut)
+          //! Timestamp - new 
           double m_timestamp_new;
-          //! Timestamp - old (from Autonaut)
+          //! Timestamp - old 
           double m_timestamp_prev;
           //! Desired heading message.
           double m_des_heading;
+          //! Desired speed message.
+          double m_des_speed;
+          //! Desired speed units.
+          uint8_t m_des_speed_units;
           //! Cost <Output from CAS>
           double cost;
 
@@ -91,7 +97,7 @@ namespace Control
 
           Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
-          u_os(0.0),
+          u_os(1.0),
           psi_os(0.0),
           m_lat_asv(0.0),
           m_lon_asv(0.0),
@@ -224,10 +230,10 @@ namespace Control
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
             // Register handler routines.
-            //bind<IMC::AisInfo>(this);
             bind<IMC::GpsFix>(this);
             bind<IMC::DynObsVec>(this);
             bind<IMC::DesiredHeading>(this);
+            bind<IMC::DesiredSpeed>(this);
           }
 
 
@@ -281,22 +287,19 @@ namespace Control
           //! Reserve entity identifiers.
           void
           onEntityReservation(void)
-          {
-          }
+          {}
 
 
           //! Resolve entity names.
           void
           onEntityResolution(void)
-          {
-          }
+          {}
 
 
           //! Acquire resources.
           void
           onResourceAcquisition(void)
-          {
-          }
+          {}
 
 
           //! Initialize resources.
@@ -334,6 +337,30 @@ namespace Control
           }
 
 
+          void
+          consume(const IMC::DesiredHeading* msg)
+          {
+            //if (!isActive())
+            //  return;
+            m_des_heading = msg->value;
+            std::cout<< "HEADING DESIRED: " << Angles::degrees(m_des_heading) << std::endl;
+          }
+  
+
+          // COULDN'T PRINT OUT DESIRED SPEED. IS THERE A PLACE TO ACTIVATE THIS MESSAGE?
+          void
+          consume(const IMC::DesiredSpeed* msg)
+          {
+            //if (!isActive())
+            //  return;
+            m_des_speed = msg->value;
+            m_des_speed_units = msg->speed_units;
+            std::cout<< "SPEED DESIRED: " << m_des_speed << std::endl;
+          }
+
+
+          /*
+          // COLAV WITH ONLY COURSE CHANGE
           void 
           consume(const IMC::DesiredHeading* msg)
           {
@@ -354,8 +381,44 @@ namespace Control
             {
               spew("Psi off: %.0f U off: %.0f, Psi_los: %f, Psi_d: %f", Angles::degrees(psi_os), u_os, Angles::degrees(m_des_heading), Angles::degrees(des_heading.value));
             }
-          }
+          }*/
+
           
+
+          /*
+          // TRIAL TO ADD DESIRED SPEED
+          // CONSUME FUNCTION DOES NOT ALLOW TWO PARAMETERS!
+          void
+          consume(const IMC::DesiredHeading* msg1, const IMC::DesiredSpeed* msg2)
+          {
+            m_des_heading = msg1->value;
+            m_des_speed = msg2->value;
+
+            int utc_time = ((uint32_t)Clock::getSinceEpoch()); // % 86400;
+             
+            if(utc_time%10==0)
+            {
+              sb_mpc.getBestControlOffset(u_os, psi_os, m_des_speed, m_des_heading, m_asv_state, m_dyn_obst_state);
+            }
+            
+            double m_des_heading_ = Angles::normalizeRadian(m_des_heading + psi_os);
+            double m_des_speed_ = m_des_speed * u_os;
+            
+            des_heading.value = m_des_heading_;
+            des_heading.off = Angles::degrees(psi_os);
+            dispatch(des_heading);
+
+            des_speed.value = m_des_speed_;
+            dispatch(des_speed);
+            
+            if(utc_time%10==0)
+            {
+              spew("Psi off: %.0f U off: %.0f, Psi_los: %f, Psi_d: %f", Angles::degrees(psi_os), u_os, Angles::degrees(m_des_heading), Angles::degrees(des_heading.value));
+            }
+          }
+          */
+          
+
 
           void
           consume(const IMC::DynObsVec* msg)
