@@ -279,7 +279,7 @@ namespace Control
           float yaw_err = Angles::normalizeRadian(getYawRef() - msg->psi);
           if (isAligned(yaw_err))
           {
-            X = surgeControl(timestep, msg);;
+            X = surgeControl(timestep, msg);
             Y = swayControl(timestep, msg);
           }
 
