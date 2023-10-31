@@ -962,6 +962,10 @@ namespace Control
         m_integrated_imu.phi += msg.gyro_x * delta;   // rad/s * s
         m_integrated_imu.theta += msg.gyro_y * delta; // rad/s * s
         m_integrated_imu.psi += msg.gyro_z * delta;   // rad/s * s
+
+        m_integrated_imu.phi = Angles::normalizeRadian(m_integrated_imu.phi);
+        m_integrated_imu.theta = Angles::normalizeRadian(m_integrated_imu.theta);
+        m_integrated_imu.psi = Angles::normalizeRadian(m_integrated_imu.psi);
         m_integrated_imu.psi_magnetic = m_integrated_imu.psi;
         dispatch(m_integrated_imu);
 
