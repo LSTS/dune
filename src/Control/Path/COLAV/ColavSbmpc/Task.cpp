@@ -335,19 +335,8 @@ namespace Control
             m_asv_state[5] = 0.0; //! Assume zero.
             m_timestamp_new = msg->getTimeStamp();
           }
-
-
-          void
-          consume(const IMC::DesiredHeading* msg)
-          {
-            //if (!isActive())
-            //  return;
-            m_des_heading = msg->value;
-            std::cout<< "HEADING DESIRED: " << Angles::degrees(m_des_heading) << std::endl;
-          }
   
 
-          // COULDN'T PRINT OUT DESIRED SPEED. IS THERE A PLACE TO ACTIVATE THIS MESSAGE?
           void
           consume(const IMC::DesiredSpeed* msg)
           {
@@ -355,45 +344,16 @@ namespace Control
             //  return;
             m_des_speed = msg->value;
             m_des_speed_units = msg->speed_units;
-            std::cout<< "SPEED DESIRED: " << m_des_speed << std::endl;
+            //des_speed.value = msg->value;
+            //std::cout<< "SPEED DESIRED: " << des_speed.value << std::endl;
           }
 
 
-          /*
-          // COLAV WITH ONLY COURSE CHANGE
-          void 
-          consume(const IMC::DesiredHeading* msg)
-          {
-            m_des_heading = msg->value;
-            int utc_time = ((uint32_t)Clock::getSinceEpoch()); // % 86400;
-
-            if(utc_time%10==0)
-            {
-              sb_mpc.getBestControlOffset(u_os, psi_os, m_asv_state[3], m_des_heading, m_asv_state, m_dyn_obst_state);
-            }
-            
-            double m_des_heading_ = Angles::normalizeRadian(m_des_heading + psi_os);
-            des_heading.value = m_des_heading_;
-            des_heading.off = Angles::degrees(psi_os);
-            dispatch(des_heading);
-
-            if(utc_time%10==0)
-            {
-              spew("Psi off: %.0f U off: %.0f, Psi_los: %f, Psi_d: %f", Angles::degrees(psi_os), u_os, Angles::degrees(m_des_heading), Angles::degrees(des_heading.value));
-            }
-          }*/
-
-          
-
-          /*
-          // TRIAL TO ADD DESIRED SPEED
-          // CONSUME FUNCTION DOES NOT ALLOW TWO PARAMETERS!
           void
-          consume(const IMC::DesiredHeading* msg1, const IMC::DesiredSpeed* msg2)
+          consume(const IMC::DesiredHeading* msg1)
           {
             m_des_heading = msg1->value;
-            m_des_speed = msg2->value;
-
+            
             int utc_time = ((uint32_t)Clock::getSinceEpoch()); // % 86400;
              
             if(utc_time%10==0)
@@ -413,13 +373,12 @@ namespace Control
             
             if(utc_time%10==0)
             {
-              spew("Psi off: %.0f U off: %.0f, Psi_los: %f, Psi_d: %f", Angles::degrees(psi_os), u_os, Angles::degrees(m_des_heading), Angles::degrees(des_heading.value));
+              spew("Psi off: %.0f U off: %.2f, Psi_los: %f, Psi_d: %f", Angles::degrees(psi_os), u_os, Angles::degrees(m_des_heading), Angles::degrees(des_heading.value));
+              spew("Psi: , %.0f, U: , %.2f", Angles::degrees(m_asv_state[2]), m_asv_state[3]);
             }
           }
-          */
           
-
-
+          
           void
           consume(const IMC::DynObsVec* msg)
           {
@@ -450,8 +409,7 @@ namespace Control
             //spew("Matrix size: %d %d", m_dyn_obst_state.rows(), m_dyn_obst_state.columns());
           }
 
-
-
+          
           //! Main loop.
           void
           onMain(void)
