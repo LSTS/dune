@@ -225,6 +225,7 @@ namespace DUNE
 				los = d/dist;
 				los_inv = -d/dist;
 
+				/*
 				// Calculating d_safe: bug fix: *DEG2RAD applied where missing!
 				d_safe_i = d_safe + obst_vect[k]->getL()/2; // obstacle size determines init d_safe
 				if(phi < PHI_AH_*DEG2RAD)
@@ -256,7 +257,8 @@ namespace DUNE
 				//{
 				//	d_safe_i = d_safe + 10 + 10; //asv->getL()/2 + obst_vect[k]->getL()/2;
 				//}
-				
+				*/
+				d_safe_i = d_safe;
 
 
 				if (dist < d_safe_i)
@@ -271,7 +273,7 @@ namespace DUNE
 						//&& v_s.norm() < v_o.norm();
 
 				// Obstacle on starboard side
-				SB = phi > 0; // ENU: < 0, NED (MR): >= 0
+				SB = phi >= 0; // ENU: < 0, NED (MR): >= 0
 
 				// Obstacle Head-on
 				HO = v_o.norm() > 0.05 //0.05?
