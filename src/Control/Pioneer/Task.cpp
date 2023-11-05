@@ -948,6 +948,13 @@ namespace Control
           return;
 
         // Dispatching IMU data to IMC bus
+        IMC::AngularVelocity angvel;
+        angvel.time = (fp64_t) msg.rt_clock;
+        angvel.x = msg.gyro_x;
+        angvel.y = msg.gyro_y;
+        angvel.z = msg.gyro_z;
+        dispatch(angvel);
+
         // Integrate angular velocity
         if (!m_started_imu_integration && m_has_compass_data)
         {
