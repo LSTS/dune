@@ -1289,14 +1289,12 @@ main(int argc, char** argv)
     int list_size = msg_list->size();
     for(unsigned int i=0; i < (unsigned int)list_size; i++)
     {
-
       if(delay>0){
         int dl = rand() % delay_copy + 1;
-        sleep(dl);
+        Sleep(dl);
       }
       else{
-        sleep(-delay);
-
+        Sleep(-delay);
       }
 
       aux=msg_list->front();
