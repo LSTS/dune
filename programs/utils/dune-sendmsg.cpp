@@ -1291,10 +1291,18 @@ main(int argc, char** argv)
     {
       if(delay>0){
         int dl = rand() % delay_copy + 1;
+#ifdef _MSC_VER
         Sleep(dl);
+#else
+        sleep(dl);
+#endif
       }
       else{
+#ifdef _MSC_VER
         Sleep(-delay);
+#else
+        sleep(-delay);
+#endif
       }
 
       aux=msg_list->front();
