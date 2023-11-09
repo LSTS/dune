@@ -43,12 +43,14 @@
 
 namespace Drivers
 {
+  //! Driver for CLP - Crawler's Light control and Pressure sensor.
+  //!
   //! The task will receive Pressure data and request a PWM signal.
   //!
   //! The task will communicate with a Raspberry Pi Pico via SerialPort.
   //! @author João Bogas
   //! @author Bernardo Gabriel
-  namespace CrawlerSerial
+  namespace CLP
   {
     using DUNE_NAMESPACES;
 
@@ -370,7 +372,7 @@ namespace Drivers
       void
       interpretSentence(std::vector<std::string> &parts)
       {
-        if (parts[0] == "$PWM")
+        if (parts[0] == "PRESS")
         {
           clearMessages();
           m_press.setTimeStamp();

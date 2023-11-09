@@ -27,15 +27,15 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DRIVERS_CRAWLERSERIAL_READER_HPP_INCLUDED_
-#define DRIVERS_CRAWLERSERIAL_READER_HPP_INCLUDED_
+#ifndef DRIVERS_CLP_READER_HPP_INCLUDED_
+#define DRIVERS_CLP_READER_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
 namespace Drivers
 {
-  namespace CrawlerSerial
+  namespace CLP
   {
     using DUNE_NAMESPACES;
 
