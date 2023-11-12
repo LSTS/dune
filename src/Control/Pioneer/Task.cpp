@@ -291,12 +291,12 @@ namespace Control
 
         param("Entity Label - Multibeam Distance", m_args.mb_dist_label)
         .defaultValue("Oculus Distance")
-        .description("Entity label of 'Distance' messages triggered by "
+        .description("Entity label of \'Distance\' messages triggered by "
                      "the multibeam");
         
         param("Entity Label - Multibeam Angle", m_args.mb_angle_label)
         .defaultValue("Oculus Angle")
-        .description("Entity label of 'Distance' messages triggered by "
+        .description("Entity label of \'Angle\' messages triggered by "
                      "the multibeam");
 
         // Setup processing of IMC messages
@@ -935,7 +935,7 @@ namespace Control
         m_mb_distance.value = msg.distance;
         dispatch(m_mb_distance);
 
-        m_mb_angle.psi = msg.bearing;
+        m_mb_angle.psi = Angles::normalizeRadian(msg.bearing);
         dispatch(m_mb_angle);
       }
 
