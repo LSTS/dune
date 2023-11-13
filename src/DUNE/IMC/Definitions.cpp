@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 9bcf4ad79d246ffa0ed6d19987c53590                            *
+// IMC XML MD5: 86c7ceace2a6f6239ea89a0e5bc64a3f                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -31311,6 +31311,80 @@ namespace DUNE
     DynObsVec::setDestinationEntityNested(uint8_t value__)
     {
       obstacles.setDestinationEntity(value__);
+    }
+
+    NegotiationData::NegotiationData(void)
+    {
+      m_header.mgid = 1010;
+      clear();
+    }
+
+    void
+    NegotiationData::clear(void)
+    {
+      mmsi.clear();
+      cog_int = 0;
+      sog_int = 0;
+      state.clear();
+    }
+
+    bool
+    NegotiationData::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::NegotiationData& other__ = static_cast<const NegotiationData&>(msg__);
+      if (mmsi != other__.mmsi) return false;
+      if (cog_int != other__.cog_int) return false;
+      if (sog_int != other__.sog_int) return false;
+      if (state != other__.state) return false;
+      return true;
+    }
+
+    int
+    NegotiationData::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    NegotiationData::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(mmsi, ptr__);
+      ptr__ += IMC::serialize(cog_int, ptr__);
+      ptr__ += IMC::serialize(sog_int, ptr__);
+      ptr__ += IMC::serialize(state, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    NegotiationData::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(mmsi, bfr__, size__);
+      bfr__ += IMC::deserialize(cog_int, bfr__, size__);
+      bfr__ += IMC::deserialize(sog_int, bfr__, size__);
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    NegotiationData::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(mmsi, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(cog_int, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(sog_int, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    NegotiationData::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "mmsi", mmsi, nindent__);
+      IMC::toJSON(os__, "cog_int", cog_int, nindent__);
+      IMC::toJSON(os__, "sog_int", sog_int, nindent__);
+      IMC::toJSON(os__, "state", state, nindent__);
     }
   }
 }

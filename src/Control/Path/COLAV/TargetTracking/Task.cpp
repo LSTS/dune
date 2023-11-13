@@ -127,7 +127,7 @@ namespace Control
             // Register handler routines.
             bind<IMC::AisInfo>(this);
             bind<IMC::GpsFix>(this);
-
+            
           }
   
           //! Update internal state with new parameter values.

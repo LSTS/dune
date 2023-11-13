@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 9bcf4ad79d246ffa0ed6d19987c53590                            *
+// IMC XML MD5: 86c7ceace2a6f6239ea89a0e5bc64a3f                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -29335,6 +29335,79 @@ namespace DUNE
 
       void
       setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Negotiation data.
+    class NegotiationData: public Message
+    {
+    public:
+      //! MMSI.
+      std::string mmsi;
+      //! Intended Course.
+      fp32_t cog_int;
+      //! Intended Speed.
+      fp32_t sog_int;
+      //! Negotiation state.
+      std::string state;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 1010;
+      }
+
+      NegotiationData(void);
+
+      NegotiationData*
+      clone(void) const
+      {
+        return new NegotiationData(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return NegotiationData::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "NegotiationData";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 8;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(mmsi) + IMC::getSerializationSize(state);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
   }
 }

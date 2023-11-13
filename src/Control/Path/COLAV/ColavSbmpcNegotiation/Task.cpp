@@ -33,7 +33,9 @@
 #include <DUNE/Navigation/sb_mpc.hpp>
 #include <Eigen/Dense>
 
-
+// ISO C++ 98 headers.
+#include <iomanip>
+#include <cmath>
 
 namespace Control
 {
@@ -41,33 +43,51 @@ namespace Control
   {
     namespace COLAV
     {
-      namespace ColavSbmpc
+      namespace ColavSbmpcNegotiation
       {
         using DUNE_NAMESPACES;
-        
-        struct Sample
-        {
-        };
 
         struct Arguments
         {
-          // Simulation Parameters
+          // ILOs parameters
+          double corridor;
+          double entry_angle;
+          double lookahead;
+          double int_gain;
+          double int_init;
+          bool out_vec;
+          bool out_los;
+
+          // Sbmpc parameters
           double T, DT, P, Q, D_CLOSE, D_SAFE, K_COLL, 
           KAPPA, PHI_AH, PHI_OT, PHI_HO, PHI_CR, K_P, K_DP,
           K_CHI, K_DCHI_SB, K_DCHI_P, K_CHI_SB, K_CHI_P;
+
+          std::string mmsi;
         };
 
-        struct Task: public DUNE::Tasks::Task
+        struct Task: public DUNE::Control::PathController
         {
+          //! ILOS m_integrator
+          double m_integrator;
+          //! Time of last path controller step
+          Delta m_last_step;
+          //! Loiter controller gain.
+          double m_gain;
+          //! Outgoing desired heading message.
+          IMC::DesiredHeading m_heading;
+
           //! sb_mpc object.
           simulationBasedMpc sb_mpc;
           //! List of asv states
           std::vector<double> m_asv_state = std::vector<double>(6,0.0);
           Math::Matrix m_dyn_obst_state;
-          //! Desired heading message
-          IMC::DesiredHeading des_heading;
           //! Desired speed message
           IMC::DesiredSpeed des_speed;
+          //! Negotiation data to send
+          IMC::NegotiationData intention_to_send;
+          //! Ownship mmsi
+          std::string m_mmsi;
           //! Ownship latitude
           double m_lat_asv;
           //! Ownship longitude
@@ -88,7 +108,6 @@ namespace Control
           uint8_t m_des_speed_units;
           //! Cost <Output from CAS>
           double cost;
-
           //! Speed offset <Output from CAS>
           double u_os;
           //! Heading offset <Output from CAS>
@@ -98,7 +117,7 @@ namespace Control
           Arguments m_args;
 
           Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Tasks::Task(name, ctx),
+          DUNE::Control::PathController(name, ctx),
           u_os(1.0),
           psi_os(0.0),
           m_lat_asv(0.0),
@@ -109,6 +128,50 @@ namespace Control
           m_timestamp_prev(0.0),
           cost(0.0)
           {
+            param("MMSI",  m_args.mmsi)
+            .description("Vessel MMSI");
+
+            param("Corridor -- Width", m_args.corridor)
+            .minimumValue("1.0")
+            .maximumValue("50.0")
+            .defaultValue("5.0")
+            .units(Units::Meter)
+            .description("Width of corridor for attack entry angle");
+  
+            param("Corridor -- Entry Angle", m_args.entry_angle)
+            .minimumValue("2")
+            .maximumValue("45")
+            .defaultValue("15")
+            .units(Units::Degree)
+            .description("Attack angle when lateral track error equals corridor width");
+  
+            param("Corridor -- Out Vector Field", m_args.out_vec)
+            .defaultValue("false")
+            .description("Out of corridor guidance law: vector field");
+  
+            param("Corridor -- Out LOS", m_args.out_los)
+            .defaultValue("false")
+            .description("Out of corridor guidance law: LOS");
+  
+            param("ILOS Lookahead Distance", m_args.lookahead)
+            .minimumValue("1.0")
+            .maximumValue("50.0")
+            .defaultValue("10.0")
+            .units(Units::Meter)
+            .description("Integral Line-of-Sight look ahead distance");
+  
+            param("ILOS Integrator Gain", m_args.int_gain)
+            .minimumValue("0")
+            .maximumValue("4")
+            .defaultValue("0")
+            .description("Integral Line-of-Sight integral gain");
+  
+            param("ILOS Integrator Initial Value", m_args.int_init)
+            .minimumValue("0")
+            .maximumValue("10")
+            .defaultValue("0")
+            .description("M_Integrator inital value");
+
             param("Prediction Horizon - Simulation Time", m_args.T)
             .units(Units::Second)
             .minimumValue("0.0")
@@ -228,14 +291,15 @@ namespace Control
             .maximumValue("11.0")
             .defaultValue("1.2")
             .description("Cost of Selecting Turn to Port.");
-
+  
+            // Everything is ok so set task entity state at normal with 'Active' message.
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
             // Register handler routines.
             bind<IMC::GpsFix>(this);
             bind<IMC::DynObsVec>(this);
-            bind<IMC::DesiredHeading>(this);
             bind<IMC::DesiredSpeed>(this);
+            bind<IMC::NegotiationData>(this);
           }
 
 
@@ -243,6 +307,15 @@ namespace Control
           void
           onUpdateParameters(void)
           {
+            // Initialize ILOS m_integrator
+            m_integrator = m_args.int_init;
+            PathController::onUpdateParameters();
+  
+            if (paramChanged(m_args.entry_angle))
+              m_args.entry_angle = Angles::radians(m_args.entry_angle);
+  
+            m_gain = std::tan(m_args.entry_angle) / m_args.corridor;
+
             // T and DT cannot be changed online. If changed, re-create the object.
             if(paramChanged(m_args.T) || paramChanged(m_args.DT))
                 sb_mpc.create(m_args.T, m_args.DT, m_args.P, m_args.Q, m_args.D_CLOSE,
@@ -283,25 +356,24 @@ namespace Control
                 sb_mpc.setKChiSB(m_args.K_CHI_SB);
             if(paramChanged(m_args.K_CHI_P))
                 sb_mpc.setKChiP(m_args.K_CHI_P);
+            if(paramChanged(m_args.mmsi))
+                m_mmsi = m_args.mmsi;
           }
 
 
-          //! Reserve entity identifiers.
           void
           onEntityReservation(void)
-          {}
+          {
+            PathController::onEntityReservation();
+          }
+  
 
-
-          //! Resolve entity names.
           void
-          onEntityResolution(void)
-          {}
-
-
-          //! Acquire resources.
-          void
-          onResourceAcquisition(void)
-          {}
+          onPathActivation(void)
+          {
+            // Activate heading cotroller.
+            enableControlLoops(IMC::CL_YAW);
+          }
 
 
           //! Initialize resources.
@@ -312,13 +384,15 @@ namespace Control
                         m_args.D_SAFE, m_args.K_COLL, m_args.PHI_AH, m_args.PHI_OT, m_args.PHI_HO, m_args.PHI_CR,
                         m_args.KAPPA, m_args.K_P, m_args.K_CHI, m_args.K_DP, m_args.K_DCHI_SB,
                         m_args.K_DCHI_P, m_args.K_CHI_SB, m_args.K_CHI_P);
+            m_mmsi = m_args.mmsi;
           }
+  
 
-
-          //! Release resources.
           void
-          onResourceRelease(void)
-          {}
+          reset(void)
+          {
+            m_integrator = 0.0;
+          }
 
 
           //! From GPS Task
@@ -347,49 +421,17 @@ namespace Control
             m_des_speed = msg->value;
             m_des_speed_units = msg->speed_units;
             //des_speed.value = msg->value;
-            //std::cout<< "SPEED DESIRED: " << des_speed.value << std::endl;
+            std::cout<< "SPEED DESIRED: " << des_speed.value << std::endl;
           }
 
 
-          void
-          consume(const IMC::DesiredHeading* msg1)
-          {
-            m_des_heading = msg1->value;
-            std::cout << "BEFORE: " <<Angles::degrees(m_des_heading) << std::endl;
-            
-            int utc_time = ((uint32_t)Clock::getSinceEpoch()); // % 86400;
-             
-            if(utc_time%5==0)
-            {
-              sb_mpc.getBestControlOffset(u_os, psi_os, m_des_speed, m_des_heading, m_asv_state, m_dyn_obst_state);
-            }
-            double m_des_heading_ = Angles::normalizeRadian(m_des_heading + psi_os);
-            double m_des_speed_ = m_des_speed * u_os;
-            
-            des_heading.value = m_des_heading_;
-            des_heading.off = Angles::degrees(psi_os);
-            dispatch(des_heading);
-
-            std::cout << "AFTER: " << Angles::degrees(des_heading.value) << std::endl;
-
-            des_speed.value = m_des_speed_;
-            dispatch(des_speed);
-            
-            if(utc_time%5==0)
-            {
-              spew("Psi off: %.0f U off: %.2f, Psi_los: %f, Psi_d: %f", Angles::degrees(psi_os), u_os, Angles::degrees(m_des_heading), Angles::degrees(des_heading.value));
-              //spew("Psi: , %.0f, U: , %.2f", Angles::degrees(m_asv_state[2]), m_asv_state[3]);
-            }
-          }
-          
-          
           void
           consume(const IMC::DynObsVec* msg)
           {
             IMC::MessageList<IMC::CollisionAvoidance> ml;
             ml = msg -> obstacles;
             int row_num = ml.size();
-            m_dyn_obst_state.resize(row_num, 10);
+            m_dyn_obst_state.resize(row_num, 13);
             for(auto i = ml.begin(); i!=ml.end();++i)
             {
               for(unsigned int n=0; n<row_num; ++n)
@@ -413,8 +455,151 @@ namespace Control
             //spew("Matrix size: %d %d", m_dyn_obst_state.rows(), m_dyn_obst_state.columns());
           }
 
-          
-          //! Main loop.
+
+          void 
+          publish_negotiation_data(double ref, double psi_os, double u_os)
+          {
+            intention_to_send.mmsi = m_mmsi;
+            intention_to_send.cog_int = Angles::normalizeRadian(ref + psi_os);
+            intention_to_send.sog_int = m_des_speed * u_os;
+            intention_to_send.state = 0.0;
+            dispatch(intention_to_send);
+            //std::cout << intention_to_send.mmsi << " " << intention_to_send.cog_int << " " << intention_to_send.sog_int << " " << intention_to_send.state << " end " << std::endl;
+            std::cout << "HEYOOOO SENDING NEGOTIATION DATA!" << std::endl;
+          }
+
+
+          void
+          consume(const IMC::NegotiationData* msg)
+          {
+            //for(unsigned int n=0; n<m_dyn_obst_state.rows(); ++n)
+            //{
+            //    if(m_dyn_obst_state(n, 9) == std::stoi(msg->mmsi))
+            //    {
+            //        std::cout << m_dyn_obst_state(n, 9) << msg->mmsi << std::endl;
+            //    }
+            //}
+            //m_dyn_obst_mmsi = msg->mmsi;
+            //m_dyn_obst_cog_int = msg->cog_int;
+            //m_dyn_obst_sog_int = msg->sog_int;
+            //m_dyn_obst_state = msg->state;
+            std::cout << "HEYOOOO RECEIVED NEGOTIATION DATA" << msg->mmsi << std::endl;
+          }
+
+
+          inline double
+          computeK(double l1, double l2, double ts_y, double factor)
+          {
+            return l1 / (std::pow(ts_y + m_args.int_gain * (m_integrator + factor), 2) + l2);
+          }
+
+
+          //! Execute a path control step
+          //! From base class PathController
+          void
+          step(const IMC::EstimatedState& state, const TrackingState& ts)
+          {
+            // Note:
+            // cross-track position (lateral error) = ts.track_pos.y
+            // and along-track position = ts.track_pos.x
+            double ref;
+            double k1;
+            double k2;
+            double k3;
+            double k4;
+            double loc_1 = m_args.lookahead * ts.track_pos.y;
+            double loc_2 = std::pow(m_args.lookahead, 2);
+            double timestep = m_last_step.getDelta();
+            double kcorr = ts.track_pos.y / m_args.corridor;
+            double akcorr = std::fabs(kcorr);
+  
+            if (akcorr > 1)
+            {
+              // Outside corridor, m_integrator OFF
+              m_integrator = 0.0;
+            }
+            else
+            {
+              // Inside corridor, m_integrator ON
+              // RK4 integration
+              k1 = computeK(loc_1, loc_2, ts.track_pos.y, 0.0);
+              k2 = computeK(loc_1, loc_2, ts.track_pos.y, k1/2);
+              k3 = computeK(loc_1, loc_2, ts.track_pos.y, k2/2);
+              k4 = computeK(loc_1, loc_2, ts.track_pos.y, k3);
+  
+              m_integrator += timestep * (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+            }
+  
+            // ILOS guidance
+            if (ts.track_pos.x > ts.track_length)
+            {
+              // Past the track goal: this should never happen but ...
+              ref = getBearing(state, ts.end);
+            }
+            else if (akcorr > 1 && m_args.out_vec && !m_args.out_los)
+            {
+              // Outside corridor, m_integrator OFF, vector field guidance
+              ref = ts.track_bearing - std::atan(m_gain * ts.track_pos.y);
+            }
+            else if (akcorr > 1 && !m_args.out_vec && m_args.out_los)
+            {
+              // Outside corridor, m_integrator OFF, LOS guidance
+              ref = ts.track_bearing - std::atan(ts.track_pos.y / m_args.lookahead);
+            }
+            else
+            {
+              // Inside corridor, m_integrator ON, ILOS guidance
+              ref = ts.track_bearing - std::atan((ts.track_pos.y + m_args.int_gain * m_integrator) / m_args.lookahead);
+            }
+
+
+            int utc_time = ((uint32_t)Clock::getSinceEpoch()); // % 86400;
+            if(utc_time%5==0)
+            {
+              sb_mpc.getBestControlOffset(u_os, psi_os, m_des_speed, ref, m_asv_state, m_dyn_obst_state);
+              publish_negotiation_data(ref, psi_os, u_os);
+              spew("Psi off: %.0f U off: %.2f", Angles::degrees(psi_os), u_os);
+            }
+            
+            double m_des_speed_ = m_des_speed * u_os;
+            des_speed.value = m_des_speed_;
+            dispatch(des_speed);
+
+            // Dispatch heading reference
+            m_heading.value = Angles::normalizeRadian(ref + psi_os);
+            m_heading.off = Angles::degrees(psi_os);
+            dispatch(m_heading);
+
+            //intention_to_send.mmsi = m_mmsi;
+            //intention_to_send.cog_int = m_heading.value;
+            //intention_to_send.sog_int = des_speed.value;
+            //intention_to_send.state = "0";
+            //dispatch(intention_to_send);
+            //std::cout << intention_to_send.mmsi << " " << intention_to_send.cog_int << " " << intention_to_send.sog_int << " " << intention_to_send.state << " end " << std::endl;
+          }
+
+
+          //! Execute a loiter control step
+          //! From base class PathController & VectorField guidance law
+          void
+          loiter(const IMC::EstimatedState& state, const TrackingState& ts)
+          {
+            double ref = DUNE::Math::c_half_pi + std::atan(2 * m_gain * (ts.range - ts.loiter.radius));
+  
+            if (!ts.loiter.clockwise)
+              ref = -ref;
+  
+            ref += DUNE::Math::c_pi + ts.los_angle;
+  
+            if (ts.cc)
+              ref += state.psi - ts.course;  // course control
+  
+            // Dispatch heading reference
+            m_heading.value = Angles::normalizeRadian(ref);
+            dispatch(m_heading);
+          }
+
+
           void
           onMain(void)
           {

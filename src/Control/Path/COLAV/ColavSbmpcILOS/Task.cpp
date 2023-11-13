@@ -442,6 +442,7 @@ namespace Control
             return l1 / (std::pow(ts_y + m_args.int_gain * (m_integrator + factor), 2) + l2);
           }
 
+
           //! Execute a path control step
           //! From base class PathController
           void
