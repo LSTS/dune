@@ -55,6 +55,16 @@ namespace Control
         //! Vehicle max speed in x, y directions.
         //! Specified as: x_min_mps x_max_mps y_min_mps y_max_mps
         std::vector<double> speed_limits;
+        //! Label for multibeam distance 
+        std::string mb_dist_label;
+        //! Label for multibeam angle 
+        std::string mb_angle_label;
+        //! Maximum wall distance threshold;
+        double max_wall_dist;
+        //! Moving average window size for distance to wall
+        unsigned wdist_mav_size;
+        //! Moving average window size for angle to wall
+        unsigned wangle_mav_size;
       };
 
       struct Task: public DUNE::Control::PathController
@@ -69,9 +79,26 @@ namespace Control
         IMC::DesiredSpeed m_speed;
         //! Task arguments.
         Arguments m_args;
+        //! Wall distance entity
+        unsigned m_wdist_ent;
+        //! Wall angle entity
+        unsigned m_wangle_ent;
+        //! Moving average for the distance to wall
+        MovingAverage<float>* m_wdist_mav;
+        //! Moving average for the angle to wall
+        MovingAverage<float>* m_wangle_mav;
+        //! Filtered distance to wall
+        float m_filt_wdist;
+        //! Filtered angle to wall
+        float m_filt_wangle;
+        //! In wall range
+        float m_in_range;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Control::PathController(name, ctx)
+          DUNE::Control::PathController(name, ctx),
+          m_filt_wdist(0),
+          m_filt_wangle(0),
+          m_in_range(true)
         {
           param("Fixed Heading", m_args.fixed_heading)
           .scope(Tasks::Parameter::SCOPE_MANEUVER)
@@ -95,6 +122,33 @@ namespace Control
           .description("Limit velocity vector inside 2D range."
                        "Defined as: x_min, x_max, y_min, y_max."
                        "Default is empty (no trimming).");
+
+          param("Entity Label - Multibeam Distance", m_args.mb_dist_label)
+          .defaultValue("Oculus Distance")
+          .description("Entity label of \'Distance\' messages triggered by "
+                      "the multibeam");
+          
+          param("Entity Label - Multibeam Angle", m_args.mb_angle_label)
+          .defaultValue("Oculus Angle")
+          .description("Entity label of \'Angle\' messages triggered by "
+                      "the multibeam");
+
+          param("Wall Tracking -- Wall Distance Threshold", m_args.max_wall_dist)
+          .defaultValue("5")
+          .description("Wall distance threshold");
+
+          param("Wall Tracking -- Average Distance Window", m_args.wdist_mav_size)
+          .defaultValue("5")
+          .description("Wall distance moving average window size");
+
+          param("Wall Tracking -- Average Angle Window", m_args.wangle_mav_size)
+          .defaultValue("5")
+          .description("Wall angle moving average window size");
+
+          
+          // Bind IMC messages
+          bind<IMC::Distance>(this);
+          bind<IMC::EulerAngles>(this);
         }
 
         void
@@ -121,11 +175,60 @@ namespace Control
         }
 
         void
+        onEntityResolution(void)
+        {
+          m_wdist_ent = resolveEntity(m_args.mb_dist_label);
+          m_wangle_ent = resolveEntity(m_args.mb_angle_label);
+        }
+
+        void
+        onResourceAcquisition(void)
+        {
+          m_wdist_mav = new MovingAverage<float>(m_args.wdist_mav_size);
+          m_wangle_mav = new MovingAverage<float>(m_args.wangle_mav_size);
+        }
+
+        void
+        onResourceRelease(void)
+        {
+          Memory::clear(m_wdist_mav);
+          Memory::clear(m_wangle_mav);
+        }
+
+        void
         consume(const IMC::DesiredSpeed* msg)
         {
           PathController::consume(msg);
 
           m_speed = *msg;
+        }
+
+        void
+        consume(const IMC::Distance* msg)
+        {
+          if (msg->getSourceEntity() != m_wdist_ent)
+            return;
+
+          if (msg->value > m_args.max_wall_dist)
+          {
+            m_in_range = false;
+            return;
+          }
+
+          m_filt_wdist = m_wdist_mav->update(msg->value);
+          m_in_range = true;
+        }
+
+        void
+        consume(const IMC::EulerAngles* msg)
+        {
+          if (msg->getSourceEntity() != m_wangle_ent)
+            return;
+
+          if (!m_in_range)
+            return;
+
+          m_filt_wangle = m_wangle_mav->update(msg->psi);
         }
 
         void
