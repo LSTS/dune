@@ -55,6 +55,8 @@ namespace Control
         //! Vehicle max speed in x, y directions.
         //! Specified as: x_min_mps x_max_mps y_min_mps y_max_mps
         std::vector<double> speed_limits;
+        //! Wall traking active
+        bool wallt_active;
         //! Label for multibeam distance 
         std::string mb_dist_label;
         //! Label for multibeam angle 
@@ -122,6 +124,10 @@ namespace Control
           .description("Limit velocity vector inside 2D range."
                        "Defined as: x_min, x_max, y_min, y_max."
                        "Default is empty (no trimming).");
+
+          param("Wall Tracking -- Active", m_args.wallt_active)
+          .defaultValue("false")
+          .description("Wall tracking active");
 
           param("Entity Label - Multibeam Distance", m_args.mb_dist_label)
           .defaultValue("Oculus Distance")
@@ -261,12 +267,11 @@ namespace Control
           // Dispatch velocity reference
           dispatch(m_velocity);
 
-          // Fixed heading reference
-          m_heading.value = m_args.fixed_heading;
-
-          // Direct heading ignores fixed heading value and aligns with end point 
-          if (m_args.direct_heading)
+          // Heading
+          if (m_args.direct_heading) // Direct heading aligns with end point 
             m_heading.value = Angles::normalizeRadian(ts.los_angle);
+          else                            // Fixed heading reference
+            m_heading.value = m_args.fixed_heading;
           
           dispatch(m_heading);
         }
