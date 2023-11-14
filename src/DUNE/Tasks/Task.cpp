@@ -255,6 +255,7 @@ namespace DUNE
         {
           if (paramChanged(m_args.active))
           {
+            war("due to params active change, requesting %s", m_args.active ? "activation" : "deactivation");
             if (m_args.active)
               requestActivation();
             else
