@@ -103,6 +103,9 @@ namespace DUNE
         (void)message;
       }
 
+      void
+      setupAdditionalActions(const std::vector<std::string>& additional_actions);
+
       virtual void
       onConnectionTimeout(void)
       { }
@@ -159,7 +162,7 @@ namespace DUNE
       //! Control loops last reference
       uint32_t m_scope_ref;
       //! Additional Remote Operation Actions
-      std::string m_additional_actions;
+      std::vector<std::string> m_additional_actions;
 
       //! IMC ID of the teleoperation source
       uint16_t m_teleop_src;

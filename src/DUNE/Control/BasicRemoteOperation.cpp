@@ -66,7 +66,7 @@ namespace DUNE
 
       param("Additional Actions", m_additional_actions)
           .defaultValue("")
-          .description("Actions to be added to Remote Actions List");
+          .description("Actions to be added to remote actions list (comma separated in the form Action:Type)");
 
       m_actions.op = IMC::RemoteActionsRequest::OP_REPORT;
 
@@ -148,21 +148,24 @@ namespace DUNE
     }
 
     void
-    BasicRemoteOperation::onResourceInitialization(void)
+    BasicRemoteOperation::setupAdditionalActions(const std::vector<std::string>& additional_actions)
     {
-      std::vector<std::vector<std::string>> lst;
-      Utils::String::splitMulti(m_additional_actions, ",", "=", lst);
-      std::vector<std::vector<std::string>>::iterator it;
-      for (it = lst.begin(); it != lst.end(); ++it)
+      for (unsigned int i = 0; i < additional_actions.size(); ++i)
       {
-        if (it->size() != 2) continue;
+        if (Utils::String::ltrim(additional_actions[i]).size() < 3)
+          continue;
 
-        std::string action_name = it->at(0);
+        std::vector<std::string> parts;
+        Utils::String::split(additional_actions[i], ":", parts);
+
+        if (parts.size() != 2) continue;
+
+        std::string action_name = parts[0];
         action_name = Utils::String::ltrim(action_name);
         action_name = Utils::String::rtrim(action_name);
         if (action_name.empty()) continue;
 
-        std::string type_lowercase = it->at(1);
+        std::string type_lowercase = parts[1];
         type_lowercase = Utils::String::ltrim(type_lowercase);
         type_lowercase = Utils::String::rtrim(type_lowercase);
         Utils::String::toLowerCase(type_lowercase);
@@ -184,7 +187,12 @@ namespace DUNE
           addActionHalfSlider(action_name);
         }
       }
+    }
 
+    void
+    BasicRemoteOperation::onResourceInitialization(void)
+    {
+      setupAdditionalActions(m_additional_actions);
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
     }
 
