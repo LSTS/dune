@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -62,10 +62,10 @@ namespace Sensors
 
     struct Arguments
     {
-      // IPv4 address.
-      Address addr;
-      // TCP port.
-      unsigned port;
+      //! IO device.
+      std::string io_dev;
+      //! Read frequency.
+      double read_frequency;
       // Data gain.
       unsigned dat_gain;
       // Balance gain.
@@ -99,7 +99,7 @@ namespace Sensors
     // Return data footer size.
     static const int c_rdata_ftr_size = 1;
 
-    struct Task: public Tasks::Periodic
+    struct Task: public Hardware::BasicDeviceDriver
     {
       // TCP socket.
       TCPSocket* m_sock;
@@ -115,22 +115,22 @@ namespace Sensors
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_sock(NULL)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
-        param("IPv4 Address", m_args.addr)
-        .defaultValue("192.168.0.5")
-        .description("IP address of the sonar");
-
-        param("TCP Port", m_args.port)
-        .defaultValue("4040")
-        .minimumValue("0")
-        .maximumValue("65535")
-        .description("TCP port");
+        // Define configuration parameters.
+        param("IO Port - Device", m_args.io_dev)
+        .defaultValue("tcp://192.168.0.5:4040")
+        .description("IO device URI in the form \"tcp://HOST:PORT\"");
+        
+        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
+        .units(Units::Hertz)
+        .defaultValue("1.0")
+        .description(DTR("Frequency at which task reads data"));
 
         param("Data Gain", m_args.dat_gain)
         .defaultValue("40")
@@ -184,52 +184,58 @@ namespace Sensors
         setDataGain(m_args.dat_gain);
         setBalanceGain(m_args.bal_gain);
 
-        if (paramChanged(m_args.addr) && m_sock != NULL)
-          throw RestartNeeded(DTR("restarting to change IPv4 address"), 1);
+        if (paramChanged(m_args.io_dev) && m_sock != NULL)
+          throw RestartNeeded(DTR("restarting to change URI"), 1);
 
-        if (paramChanged(m_args.port) && m_sock != NULL)
-          throw RestartNeeded(DTR("restarting to change TCP port"), 1);
+        if (paramChanged(m_args.read_frequency))
+          setReadFrequency(m_args.read_frequency);
       }
 
-      void
-      onResourceAcquisition(void)
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
       {
-        m_sock = new TCPSocket();
-        m_sock->setNoDelay(true);
+        try
+        {
+          m_sock = static_cast<TCPSocket*>(openSocketTCP(m_args.io_dev));
+          return true;
+        }
+        catch (...)
+        {
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+
+        return false;
       }
 
+      //! Disconnect from device.
       void
-      onResourceRelease(void)
+      onDisconnect() override
       {
         Memory::clear(m_sock);
       }
 
-      void
-      onResourceInitialization(void)
+      //! Synchronize with device.
+      bool
+      onSynchronize() override
       {
         try
         {
-          m_sock->connect(m_args.addr, m_args.port);
           pingBoth();
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
         catch (std::runtime_error& e)
         {
           throw RestartNeeded(e.what(), 10.0, false);
         }
+
+        return true;
       }
 
+      //! Device may be initialized.
       void
-      onActivation(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-      }
-
-      void
-      onDeactivation(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
+      onInitializeDevice() override
+      { }
 
       unsigned
       getIndex(unsigned value, const unsigned* table, unsigned table_size)
@@ -264,7 +270,7 @@ namespace Sensors
         m_sdata[SD_RANGE] = (uint8_t)c_ranges[idx];
         m_ping.min_range = 0;
         m_ping.max_range = c_ranges[idx];
-        Periodic::setFrequency(1.0 / (c_range_rates[idx] / 1000.0));
+        setReadFrequency(1.0 / (c_range_rates[idx] / 1000.0));
       }
 
       void
@@ -315,15 +321,13 @@ namespace Sensors
       {
         ping(SIDE_PORT);
         ping(SIDE_STARBOARD);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
-      void
-      task(void)
+      //! Get data from device.
+      //! @return true if data was received, false otherwise.
+      bool
+      onReadData() override
       {
-        if (!isActive())
-          return;
-
         try
         {
           pingBoth();
@@ -335,6 +339,8 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+        
+        return true;
       }
     };
   }

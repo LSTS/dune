@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -255,6 +255,7 @@ namespace DUNE
         {
           if (paramChanged(m_args.active))
           {
+            war("due to params active change, requesting %s", m_args.active ? "activation" : "deactivation");
             if (m_args.active)
               requestActivation();
             else
@@ -298,14 +299,20 @@ namespace DUNE
 
       m_entity->succeedActivation();
       if (m_entity->hasPendingDeactivation())
+      {
+        spew("has pending deactivation");
         requestDeactivation();
+      }
     }
 
     void
     Task::activationFailed(const std::string& reason)
     {
       spew("activation failed: %s", reason.c_str());
-      m_args.active = false;
+      
+      if (m_honours_active)
+        m_params.set("Active", "false");
+
       m_entity->failActivation(reason);
     }
 
@@ -337,7 +344,10 @@ namespace DUNE
 
       m_entity->succeedDeactivation();
       if (m_entity->hasPendingActivation())
+      {
+        spew("has pending activation");
         requestActivation();
+      }
     }
 
     void

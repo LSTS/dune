@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -68,8 +68,8 @@ namespace Sensors
     //! %Task arguments.
     struct Arguments
     {
-      //! Serial port device.
-      std::string uart_dev;
+      //! IO device (URI).
+      std::string io_dev;
       //! Output frequency.
       unsigned output_frq;
       //! Raw data output.
@@ -89,7 +89,7 @@ namespace Sensors
       std::string calib_time;
     };
 
-    struct Task: public Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! Angular velocity.
       IMC::AngularVelocity m_ang_vel;
@@ -137,7 +137,7 @@ namespace Sensors
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_uart(NULL),
         m_ctl(NULL),
         m_state_timer(1.0),
@@ -146,9 +146,14 @@ namespace Sensors
         m_timeout_count(0)
       {
         // Define configuration parameters.
-        param("Serial Port - Device", m_args.uart_dev)
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+                    
+        param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
+        .description("IO device URI in the form \"uart://DEVICE\"." 
+                     "This device has only one baud rate.");
 
         param("Power Channel - Name", m_args.pwr_name)
         .defaultValue("")
@@ -198,6 +203,9 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.io_dev))
+          m_args.io_dev += String::str(":%u", c_baud_rate);
+
         m_rotation.fill(c_axes_count, c_axes_count, &m_args.rotation_mx[0]);
 
         // Rotate calibration parameters.
@@ -216,51 +224,69 @@ namespace Sensors
 
         if (paramChanged(m_args.output_frq) || paramChanged(m_args.raw_data))
           setOutputFrequency(m_args.output_frq);
+
+        if (paramChanged(m_args.pwr_name))
+        {
+          clearPowerChannelNames();
+          addPowerChannelName(m_args.pwr_name);
+        }
+        setPostPowerOnDelay(c_power_up_delay);
       }
 
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
       {
-        if (!m_args.pwr_name.empty())
-        {
-          IMC::PowerChannelControl pcc;
-          pcc.name = m_args.pwr_name;
-          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
-          dispatch(pcc);
-          Delay::wait(c_power_up_delay);
-        }
-
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev, c_baud_rate);
+          m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
           m_ctl = new UCTK::Interface(m_uart);
+          return true;
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(DTR(e.what()), 5.0);
+        }
+
+        return false;
+      }
+
+      //! Disconnect from device.
+      void
+      onDisconnect() override
+      {
+        Memory::clear(m_ctl);
+        Memory::clear(m_uart);
+      }
+
+      //! Synchronize with device.
+      bool
+      onSynchronize() override
+      {
+        try
+        {
           UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
           if (info.isDevelopment())
             war(DTR("device is using unstable firmware"));
           else
             inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
+
+          return true;
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(DTR(e.what()), 5.0, false);
+          throw RestartNeeded(DTR(e.what()), 5.0);
         }
+        
+        return false;
       }
 
-      //! Release resources.
+      //! Initialize device.
       void
-      onResourceRelease(void)
+      onInitializeDevice() override
       {
-        Memory::clear(m_ctl);
-        Memory::clear(m_uart);
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         setHardIronFactors();
         setOutputFrequency(m_args.output_frq);
       }
@@ -573,20 +599,22 @@ namespace Sensors
         m_sample_count = 0;
       }
 
-      void
-      onMain(void)
+      //! Read data.
+      //! @return true.
+      bool
+      onReadData() override
       {
-        while (!stopping())
+        bool got_data = false;
+        if (Poll::poll(*m_uart, 1.0))
         {
-          consumeMessages();
-
-          if (Poll::poll(*m_uart, 1.0))
-            readInput();
-          else
-            m_timeout_count++;
-
-          reportEntityState();
+          readInput();
+          got_data = true;
         }
+        else
+          m_timeout_count++;
+
+        reportEntityState();
+        return got_data;
       }
     };
   }

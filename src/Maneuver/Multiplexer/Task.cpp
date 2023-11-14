@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -333,6 +333,7 @@ namespace Maneuver
         bind<IMC::GpsFix>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::Throttle>(this);
+        bind<IMC::ManeuverDone>(this);
       }
 
       void
@@ -492,6 +493,12 @@ namespace Maneuver
       consume(const IMC::Throttle* msg)
       {
         m_maneuvers[m_type]->onThrottle(msg);
+      }
+
+      void
+      consume(const IMC::ManeuverDone* msg)
+      {
+        m_maneuvers[m_type]->onManeuverDone(msg);
       }
 
       void

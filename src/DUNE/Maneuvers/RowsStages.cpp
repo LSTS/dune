@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -266,7 +266,12 @@ namespace DUNE
 
       if (std::fabs(ady) > c_y_margin)
       {
-        if (std::abs(m_sabs.y) > m_width)
+        double tmp_x = m_sabs.x;
+        double tmp_y = m_sabs.y;
+        if (m_cross_angle != 0.0)
+          Angles::rotate(-m_cross_angle, curveLeft(), tmp_x, tmp_y);
+
+        if (std::abs(tmp_y) > m_width)
           return true;
       }
 

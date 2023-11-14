@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -120,10 +120,8 @@ namespace Sensors
     //! %Task arguments.
     struct Arguments
     {
-      //! IPv4 address.
-      Address addr;
-      //! TCP port.
-      unsigned port;
+      //! Device address.
+      std::string io_dev;
       //! Start gain.
       unsigned start_gain;
       //! Absorption.
@@ -188,7 +186,7 @@ namespace Sensors
     static const float c_min_alt = 0.3;
 
     //! %Task.
-    struct Task: public Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! TCP socket.
       TCPSocket* m_tcp;
@@ -214,10 +212,6 @@ namespace Sensors
       std::ofstream m_log_file;
       //! Log filename
       Path m_log_path;
-      //! Power channel control.
-      IMC::PowerChannelControl m_power_channel_control;
-      //! Activation/deactivation timer.
-      Counter<double> m_countdown;
       //! Range adaptive modifier counter.
       Counter<double> m_range_counter;
       //! Watchdog.
@@ -227,7 +221,7 @@ namespace Sensors
 
       //! Constructor.
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_tcp(NULL),
         m_udp(NULL),
         m_frame837(NULL),
@@ -239,15 +233,9 @@ namespace Sensors
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
-        param("IPv4 Address", m_args.addr)
-        .defaultValue("192.168.0.2")
-        .description("IP address of the sonar");
-
-        param("TCP Port", m_args.port)
-        .defaultValue("4040")
-        .minimumValue("0")
-        .maximumValue("65535")
-        .description("TCP port");
+        param("IO Port - Device", m_args.io_dev)
+        .defaultValue("")
+        .description("IO device URI in the form \"tcp://ADDRESS:PORT\".");
 
         param("Start Gain", m_args.start_gain)
         .defaultValue("3")
@@ -333,7 +321,7 @@ namespace Sensors
         .description("837/83P file name");
 
         param("Power Channel", m_args.power_channel)
-        .defaultValue("Multibeam")
+        .defaultValue("")
         .description("Power channel that controls the power of the device");
 
         param("Adaptive Range Modifier", m_args.mod)
@@ -376,11 +364,6 @@ namespace Sensors
         m_sdata[20] = 0x08;
         m_sdata[26] = 0xfd;
         m_sdata[SD_FREQUENCY] = (uint8_t)86;
-
-        // Register consumers.
-        bind<IMC::EstimatedState>(this);
-        bind<IMC::LoggingControl>(this);
-        bind<IMC::SoundSpeed>(this);
       }
 
       //! Update task parameters.
@@ -389,11 +372,8 @@ namespace Sensors
       {
         if (isActive())
         {
-          if (paramChanged(m_args.addr))
-            throw RestartNeeded(DTR("restarting to change IPv4 address"), 1);
-
-          if (paramChanged(m_args.port))
-            throw RestartNeeded(DTR("restarting to change TCP port"), 1);
+          if (paramChanged(m_args.io_dev))
+            throw RestartNeeded(DTR("restarting to change TCP address"), 1);
         }
 
         if (paramChanged(m_args.data_points))
@@ -483,9 +463,11 @@ namespace Sensors
           setAutoMode(false);
         }
 
-        m_power_channel_control.name = m_args.power_channel;
-
-        m_countdown.setTop(getActivationTime());
+        if (paramChanged(m_args.power_channel))
+        {
+          clearPowerChannelNames();
+          addPowerChannelName(m_args.power_channel);
+        }
 
         if (paramChanged(m_args.mod_timer))
           m_range_counter.setTop(m_args.mod_timer);
@@ -516,111 +498,106 @@ namespace Sensors
         m_data->data.resize(data_size);
       }
 
-      void
-      onResourceInitialization(void)
+
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
       {
-        requestDeactivation();
-        closeLog();
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
-
-      void
-      onResourceRelease(void)
-      {
-        Memory::clear(m_frame837);
-        Memory::clear(m_frame83P);
-        Memory::clear(m_data);
-        Memory::clear(m_ec);
-        requestDeactivation();
-      }
-
-      void
-      onRequestActivation(void)
-      {
-        m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
-        dispatch(m_power_channel_control);
-
-        m_countdown.reset();
-      }
-
-      void
-      onActivation(void)
-      {
-        inf("%s", DTR(Status::getString(Status::CODE_ACTIVE)));
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
-        IMC::LoggingControl lc;
-        lc.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
-        dispatch(lc);
-
-        m_wdog.reset();
-      }
-
-      void
-      onDeactivation(void)
-      {
-        closeLog();
-
-        Memory::clear(m_tcp);
-        Memory::clear(m_udp);
-
-        inf("%s", DTR(Status::getString(Status::CODE_IDLE)));
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-
-        m_power_channel_control.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-        dispatch(m_power_channel_control);
-      }
-
-      void
-      checkActivationProgress(void)
-      {
-        if (m_countdown.overflow())
-        {
-          activationFailed(DTR("failed to contact device"));
-          return;
-        }
+        onUpdateParameters();
 
         try
         {
           if (m_ec == NULL)
           {
-            m_tcp = new TCPSocket;
-            m_tcp->setNoDelay(true);
-            m_tcp->connect(m_args.addr, m_args.port);
+            m_tcp = static_cast<TCPSocket*>(openSocketTCP(m_args.io_dev));
           }
           else
           {
+            char addr[128] = {0};
+            unsigned port = 0;
+
+            if (std::sscanf(m_args.io_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+            
             m_udp = new UDPSocket;
-            m_udp->bind(m_args.port, Address::Any, false);
+            m_udp->bind(port, Address::Any, false);
           }
 
-          activate();
-          debug("activation took %0.2f s", getActivationTime() -
-                m_countdown.getRemaining());
+          return m_tcp || m_udp;
         }
-        catch (...)
-        { }
+        catch (std::runtime_error& e)
+        {
+          spew("%s", e.what());
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+
+        return false;
+      }
+
+      //! Disconnect from device.
+      void
+      onDisconnect() override
+      {
+        Memory::clear(m_frame837);
+        Memory::clear(m_frame83P);
+        Memory::clear(m_data);
+        Memory::clear(m_ec);
+
+        Memory::clear(m_tcp);
+        Memory::clear(m_udp);
+      }
+
+      //! Initialize device.
+      void
+      onInitializeDevice() override
+      {
+        m_wdog.reset();
+      }
+
+      //! Enable log control.
+      bool
+      enableLogControl(void)
+      {
+        return true;
+      }
+
+      //! Test if the logging control message should be discarded.
+      //! @param[in] msg logging control message.
+      //! @return true to discard message, false otherwise.
+      bool
+      discardLoggingControl(const IMC::LoggingControl* msg) override
+      {
+        return msg->getSource() != getSystemId();
       }
 
       //! Open a log file to hold 837 or 83P files.
-      //! @param[in] path desired log path.
+      //! @param[in] path path to log file.
       void
-      openLog(const Path& path)
+      onOpenLog(const DUNE::FileSystem::Path& path) override
       {
-        if (path == m_log_path)
+        BasicDeviceDriver::onOpenLog(path);
+
+        if (m_frame837 == NULL && m_frame83P == NULL)
           return;
 
-        closeLog();
+        if (m_frame83P != NULL)
+          m_log_path = m_ctx.dir_log / path / String::str("%s.83P", m_args.file_name.c_str());
 
-        m_log_path = path;
+        if (m_frame837 != NULL)
+          m_log_path = m_ctx.dir_log / path / String::str("%s.837", m_args.file_name.c_str());
+
         m_log_file.open(m_log_path.c_str(), std::ofstream::app | std::ios::binary);
         debug("opening %s", m_log_path.c_str());
       }
 
-      //! Close current log file.
+
+      //! Close log file.
       void
-      closeLog(void)
+      onCloseLog() override
       {
+        BasicDeviceDriver::onCloseLog();
+
         if (m_log_file.is_open())
         {
           m_log_file.close();
@@ -635,55 +612,22 @@ namespace Sensors
       }
 
       void
-      consume(const IMC::EstimatedState* msg)
+      onEstimatedState(const IMC::EstimatedState& msg)
       {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        m_estate = *msg;
+        m_estate = msg;
       }
 
       void
-      consume(const IMC::LoggingControl* msg)
+      onSoundSpeed(double value) override
       {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        if (m_frame837 == NULL && m_frame83P == NULL)
-          return;
-
-        switch (msg->op)
-        {
-          case IMC::LoggingControl::COP_STARTED:
-          case IMC::LoggingControl::COP_CURRENT_NAME:
-            if (m_frame83P != NULL)
-              openLog(m_ctx.dir_log / msg->name / String::str("%s.83P", m_args.file_name.c_str()));
-
-            if (m_frame837 != NULL)
-              openLog(m_ctx.dir_log / msg->name / String::str("%s.837", m_args.file_name.c_str()));
-            break;
-
-          case IMC::LoggingControl::COP_STOPPED:
-            closeLog();
-            break;
-        }
-      }
-
-      void
-      consume(const IMC::SoundSpeed* msg)
-      {
-        // Do not use invalid readings.
-        if (msg->value < 0)
-          return;
-
         if (m_frame837 != NULL)
-          m_frame837->setSoundVelocity(msg->value);
+          m_frame837->setSoundVelocity(value);
 
         if (m_frame83P != NULL)
-          m_frame83P->setSoundVelocity(msg->value);
+          m_frame83P->setSoundVelocity(value);
 
         if (m_ec != NULL)
-          m_ec->setSoundVelocity(msg->value);
+          m_ec->setSoundVelocity(value);
       }
 
       //! Get index from table according with given value.
@@ -1049,33 +993,27 @@ namespace Sensors
         }
       }
 
-      void
-      onMain(void)
+      //! Get data from device.
+      //! @return true if data was received, false otherwise.
+      bool
+      onReadData() override
       {
-        while (!stopping())
+        if (m_tcp != NULL || m_udp != NULL)
         {
-          consumeMessages();
+          if (request())
+            process();
+          checkRange();
 
-          if (isActive() && (m_tcp != NULL || m_udp != NULL))
+          if (m_wdog.overflow())
           {
-            if (request())
-              process();
-            checkRange();
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          }
 
-            if (m_wdog.overflow())
-            {
-              err("%s", DTR(Status::getString(CODE_COM_ERROR)));
-              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-            }
-          }
-          else
-          {
-            waitForMessages(1.0);
-            if (isActivating())
-              checkActivationProgress();
-          }
+          return true;
         }
+
+        return false;
       }
     };
   }

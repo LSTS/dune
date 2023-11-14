@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -188,10 +188,17 @@ namespace DUNE
       return devs;
     }
 
-    SerialPort::SerialPort(const std::string& device, int baudrate, Parity parity, StopBits stopbits, DataBits databits, bool block)
+    SerialPort::SerialPort(const std::string& device, int baudrate, Parity parity, StopBits stopbits, DataBits databits, bool block, bool readonly)
     {
 #if defined(DUNE_OS_POSIX)
-      m_handle = open(device.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+      if(readonly)
+      {
+        m_handle = open(device.c_str(), O_RDONLY | O_NOCTTY | O_NONBLOCK);
+      }
+      else
+      {
+        m_handle = open(device.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+      }
 
       if (m_handle == -1)
       {

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -25,6 +25,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Author: Luis Venancio (BasicDeviceDriver compatibility)                  *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -70,10 +71,8 @@ namespace Sensors
 
     struct Arguments
     {
-      //! Serial port device.
-      std::string uart_dev;
-      //! Serial port baud rate.
-      unsigned uart_baud;
+      //! IO device (URI).
+      std::string io_dev;
       //! Order of sentences.
       std::vector<std::string> stn_order;
       //! Input timeout in seconds.
@@ -84,11 +83,13 @@ namespace Sensors
       std::string init_rpls[c_max_init_cmds];
       //! Power channels.
       std::vector<std::string> pwr_channels;
+      //! Power on delay
+      double post_pwr_on_delay;
       //! Enable novatel sbas mode.
       bool novatelSbas;
     };
 
-    struct Task: public Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! Serial port handle.
       IO::Handle* m_handle;
@@ -114,20 +115,20 @@ namespace Sensors
       char m_bufer_entity[64];
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_handle(NULL),
         m_has_agvel(false),
         m_has_euler(false),
         m_reader(NULL)
       {
         // Define configuration parameters.
-        param("Serial Port - Device", m_args.uart_dev)
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+                    
+        param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
-
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("4800")
-        .description("Serial port baud rate");
+        .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
 
         param("Input Timeout", m_args.inp_tout)
         .units(Units::Second)
@@ -138,6 +139,10 @@ namespace Sensors
         param("Power Channel - Names", m_args.pwr_channels)
         .defaultValue("")
         .description("Device's power channels");
+
+        param("Post Power On Delay", m_args.post_pwr_on_delay)
+        .defaultValue("0.0")
+        .description("Delay on power on before attempts to connect");
 
         param("Sentence Order", m_args.stn_order)
         .defaultValue("")
@@ -158,6 +163,9 @@ namespace Sensors
         .defaultValue("false")
         .description("Enable novatel sbas mode");
 
+        // Use wait for messages
+        setWaitForMessages(1.0);
+
         // Initialize messages.
         clearMessages();
 
@@ -166,67 +174,57 @@ namespace Sensors
       }
 
       void
-      onResourceAcquisition(void)
+      onUpdateParameters(void)
       {
-        if (m_args.pwr_channels.size() > 0)
+        if (paramChanged(m_args.pwr_channels))
         {
-          IMC::PowerChannelControl pcc;
-          pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
-          for (size_t i = 0; i < m_args.pwr_channels.size(); ++i)
-          {
-            pcc.name = m_args.pwr_channels[i];
-            dispatch(pcc);
-          }
+          clearPowerChannelNames();
+          for (std::string pc : m_args.pwr_channels)
+            addPowerChannelName(pc);
         }
 
-        Counter<double> timer(c_pwr_on_delay);
-        while (!stopping() && !timer.overflow())
-          waitForMessages(timer.getRemaining());
+        if (paramChanged(m_args.post_pwr_on_delay))
+        {
+          setPostPowerOnDelay(m_args.post_pwr_on_delay);
+        }
+      }
 
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
+      {
         try
         {
-          if (!openSocket())
-            m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-
+          m_handle = openDeviceHandle(m_args.io_dev);
           m_reader = new Reader(this, m_handle);
           m_reader->start();
+          return true;
         }
         catch (...)
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+
+        return false;
       }
 
-      bool
-      openSocket(void)
-      {
-        char addr[128] = {0};
-        unsigned port = 0;
-
-        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
-          return false;
-
-        TCPSocket* sock = new TCPSocket;
-        sock->connect(addr, port);
-        m_handle = sock;
-        return true;
-      }
-
+      //! Disconnect from device.
       void
-      onResourceRelease(void)
+      onDisconnect() override
       {
         if (m_reader != NULL)
         {
           m_reader->stopAndJoin();
-          delete m_reader;
-          m_reader = NULL;
+          Memory::clear(m_reader);
         }
 
         Memory::clear(m_handle);
       }
 
+      //! Initialize device.
       void
-      onResourceInitialization(void)
+      onInitializeDevice() override
       {
         if (m_args.novatelSbas)
         {
@@ -255,7 +253,6 @@ namespace Sensors
           }
         }
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_wdog.setTop(m_args.inp_tout);
       }
 
@@ -795,19 +792,19 @@ namespace Sensors
         }
       }
 
-      void
-      onMain(void)
+      //! Check for input timeout.
+      //! Data is read in the DevDataText consume.
+      //! @return true.
+      bool
+      onReadData() override
       {
-        while (!stopping())
+        if (m_wdog.overflow())
         {
-          waitForMessages(1.0);
-
-          if (m_wdog.overflow())
-          {
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-          }
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+
+        return true;
       }
     };
   }

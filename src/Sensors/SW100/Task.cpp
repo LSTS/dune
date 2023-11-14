@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -42,10 +42,10 @@ namespace Sensors
 
     struct Arguments
     {
-      //! UART device.
-      std::string uart_dev;
-      //! UART baud rate.
-      unsigned uart_baud;
+      //! IO device (URI).
+      std::string io_dev;
+      //! Read frequency.
+      double read_frequency;
       //! Depth calibration parameters.
       std::vector<double> depth_cal;
       //! Input timeout.
@@ -60,7 +60,7 @@ namespace Sensors
       CS_ABLE
     };
 
-    struct Task: public DUNE::Tasks::Periodic
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! Device driver.
       Driver* m_driver;
@@ -90,7 +90,7 @@ namespace Sensors
       Counter<double> m_wdog;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Periodic(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_driver(NULL),
         m_uart(NULL),
         m_depth_avg(10),
@@ -99,13 +99,18 @@ namespace Sensors
         m_cs(CS_UNABLE)
       {
         // Define configuration parameters.
-        param("Serial Port - Device", m_args.uart_dev)
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+                    
+        param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
-
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("9600")
-        .description("Serial port baud rate");
+        .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
+        
+        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
+        .units(Units::Hertz)
+        .defaultValue("1.0")
+        .description(DTR("Frequency at which task reads data"));
 
         param("Depth Calibration", m_args.depth_cal)
         .defaultValue("1.0, 0.0")
@@ -124,23 +129,44 @@ namespace Sensors
       }
 
       void
-      onResourceAcquisition(void)
+      onUpdateParameters(void)
       {
-        m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-        m_driver = new Driver(this, *m_uart);
+        if (paramChanged(m_args.read_frequency))
+          setReadFrequency(m_args.read_frequency);
       }
 
-      void
-      onResourceInitialization(void)
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
       {
-        m_wdog.setTop(m_args.data_timeout);
+        try
+        {
+          m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
+          m_driver = new Driver(this, *m_uart);
+          return true;
+        }
+        catch (...)
+        {
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+
+        return false;
       }
 
+      //! Disconnect from device.
       void
-      onResourceRelease(void)
+      onDisconnect() override
       {
         Memory::clear(m_uart);
         Memory::clear(m_driver);
+      }
+
+      //! Device may be initialized.
+      void
+      onInitializeDevice() override
+      {
+        m_wdog.setTop(m_args.data_timeout);
       }
 
       void
@@ -161,8 +187,10 @@ namespace Sensors
         return (m_at_surface && !m_maneuvering);
       }
 
-      void
-      task(void)
+      //! Get data from device.
+      //! @return true if data was received, false otherwise.
+      bool
+      onReadData() override
       {
         if (m_wdog.overflow())
         {
@@ -175,7 +203,7 @@ namespace Sensors
           else
           {
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            return;
+            return false;
           }
         }
 
@@ -222,6 +250,8 @@ namespace Sensors
           if (m_cs == CS_ABLE)
             m_depth_offset.value = m_depth_avg.update(m_depth.value);
         }
+
+        return true;
       }
     };
   }

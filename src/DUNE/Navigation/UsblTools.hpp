@@ -25,6 +25,7 @@
 //***************************************************************************
 // Author: José Braga                                                       *
 // Author: Raúl Sáez                                                        *
+// Author: Luis Venancio                                                    *
 //***************************************************************************
 
 #ifndef DUNE_NAVIGATION_USBL_TOOLS_HPP_INCLUDED_
@@ -35,6 +36,8 @@
 #include <vector>
 
 // DUNE headers.
+#include <DUNE/Tasks/Task.hpp>
+#include <DUNE/Time/Counter.hpp>
 #include <DUNE/Coordinates.hpp>
 #include <DUNE/IMC/Definitions.hpp>
 
@@ -49,23 +52,23 @@ namespace DUNE
     {
     public:
       //! Request frame: start/stop mask.
-      static const uint8_t c_mask_start = 0x10;
+      static constexpr uint8_t c_mask_start = 0x10;
       //! Request frame: absolute fix mask.
-      static const uint8_t c_mask_fix = 0x01;
+      static constexpr uint8_t c_mask_fix = 0x01;
       //! Request frame: inverted mode.
-      static const uint8_t c_mask_inverted = 0x02;
+      static constexpr uint8_t c_mask_inverted = 0x02;
       //! Request frame: size of frame.Size of frame: request.
-      static const uint8_t c_fsize_req = 5;
+      static constexpr uint8_t c_fsize_req = 5;
       //! Node or modem destination identifier mask.
-      static const uint8_t c_target_mask = 0x80;
+      static constexpr uint8_t c_target_mask = 0x80;
       //! Code placement in received frame messages.
-      static const uint8_t c_code = 2;
+      static constexpr uint8_t c_code = 2;
       //! Minimum time interval between consecutive requests from node.
-      static const uint16_t c_requests_interval = 30;
+      static constexpr uint16_t c_requests_interval = 30;
       //! Number of communication timeouts before considering that a system has failed.
-      static const uint8_t c_max_comm_timeout = 5;
+      static constexpr uint8_t c_max_comm_timeout = 5;
       //! Origin validity timeout.
-      static const uint8_t c_origin_timeout = 5;
+      static constexpr uint8_t c_origin_timeout = 5;
 
       enum Codes
       {
@@ -358,7 +361,7 @@ namespace DUNE
       class Node
       {
       public:
-        //! Target arguments.
+        //! Node arguments.
         struct Arguments
         {
           //! True to enable target request.
@@ -374,16 +377,15 @@ namespace DUNE
         };
 
         //! Constructor.
-        Node(Tasks::Task* task, const Arguments* args):
+        Node(Tasks::Task* const task, const Arguments* args):
+          m_args(args),
           m_usbl_alive(false),
           m_wait_reply(false),
-          m_args(args),
+          m_fix(m_args->fix),
+          m_inverted(m_args->inverted),
+          m_period(m_args->period),
           m_task(task)
         {
-          m_period = m_args->period;
-          m_fix = m_args->fix;
-          m_inverted = m_args->inverted;
-
           // in quick mode, we actively ping the modem
           if (m_args->no_range)
           {
@@ -436,8 +438,8 @@ namespace DUNE
         }
 
         //! Parse incoming frame.
-        //! @param[in] msg received acoustic frame.
         //! @param[in] imc_src IMC id of message source.
+        //! @param[in] msg received acoustic frame.
         //! @param[out] data frame to be send.
         //! @return true if there's data to be sent, false otherwise.
         bool
@@ -462,8 +464,6 @@ namespace DUNE
                 {
                   m_usbl_alive = false;
                 }
-
-                m_usbl_name = msg->sys_src;
               }
               break;
 
@@ -613,18 +613,17 @@ namespace DUNE
         //! @param[in] pos the position stored into a UsblPositionExtended.
         //! @return true if the fix has been dispatched, false otherwise.
         bool
-        getFix(std::string modem, const IMC::UsblPositionExtended& pos)
+        getFix(const std::string& modem, const IMC::UsblPositionExtended& pos)
         {
-          IMC::MessageList<IMC::UsblModem>::const_iterator itr = m_config.modems.begin();
-          for (; itr < m_config.modems.end(); ++itr)
+          for (const auto& itr : m_config.modems)
           {
-            if ((*itr) == NULL)
+            if (itr == nullptr)
               continue;
 
-            if ((*itr)->name == modem)
+            if (itr->name == modem)
             {
-              IMC::UsblFixExtended fix = toFix(pos, (*itr)->lat, (*itr)->lon, (*itr)->z,
-                                               (IMC::ZUnits)(*itr)->z_units);
+              IMC::UsblFixExtended fix = toFix(pos, itr->lat, itr->lon, itr->z,
+                                               static_cast<IMC::ZUnits>(itr->z_units));
               m_task->dispatch(fix);
               return true;
             }
@@ -633,12 +632,12 @@ namespace DUNE
           return false;
         }
 
+        //! Class arguments.
+        const Arguments* m_args;
         //! True if USBL is on.
         bool m_usbl_alive;
         //! True if waiting reply.
         bool m_wait_reply;
-        //! USBL system.
-        std::string m_usbl_name;
         //! Absolute fix or request relative position.
         bool m_fix;
         //! Inverted mode flag.
@@ -651,10 +650,8 @@ namespace DUNE
         Time::Counter<double> m_node_timer;
         //! Communication timeout timer.
         Time::Counter<double> m_comm_timeout_timer;
-        //! Class arguments.
-        const Arguments* m_args;
         //! Pointer to task.
-        Tasks::Task* m_task;
+        Tasks::Task* const m_task;
         //! Local position
         IMC::GpsFix m_origin;
       };
@@ -668,19 +665,19 @@ namespace DUNE
         //! @param[in] fix absolute fix or relative positioning
         //! @param[in] period target's desired periodicity.
         Target(std::string name, bool fix, bool inverted, uint16_t period):
+          m_name(std::move(name)),
+          m_fix(fix),
+          m_inverted(inverted),
+          m_period(period),
           m_comm_errors(0)
         {
-          m_name = name;
-          m_fix = fix;
-          m_inverted = inverted;
-          m_period = period;
           m_target_timer.setTop(m_period);
         }
 
         //! Time to track target.
         //! @return true, if timer has overflown.
         bool
-        trigger(void)
+        trigger()
         {
           if (m_target_timer.overflow())
           {
@@ -695,16 +692,14 @@ namespace DUNE
         //! @param[in] name name of target.
         //! @return true if target's name is matched.
         bool
-        compare(std::string name)
+        compare(const std::string& name) const
         {
-          if (m_name == name)
-            return true;
-
-          return false;
+          return m_name == name;
         }
 
         //! Reset variables of target.
-        //! @param[in] return absolute fixes or relative position.
+        //! @param[in] fix return absolute fixes or relative position.
+        //! @param[in] inverted inverted mode flag.
         //! @param[in] period desired periodicity.
         void
         reset(bool fix, bool inverted, uint16_t period)
@@ -719,7 +714,7 @@ namespace DUNE
         //! Get target's name.
         //! @return target's name.
         std::string
-        getName(void)
+        getName() const
         {
           return m_name;
         }
@@ -728,7 +723,7 @@ namespace DUNE
         //! @return true if target's wants absolute fix,
         //! false otherwise.
         bool
-        wantsFix(void)
+        wantsFix() const
         {
           return m_fix;
         }
@@ -737,7 +732,7 @@ namespace DUNE
         //! @return true if target is set as inverted,
         //! false otherwise.
         bool
-        isInverted(void)
+        isInverted() const
         {
           return m_inverted;
         }
@@ -745,17 +740,14 @@ namespace DUNE
         //! Check if the target node has failed.
         //! @return true if target has reached threshold, false otherwise.
         bool
-        hasFailed(void)
+        hasFailed()
         {
-          if (++m_comm_errors >= c_max_comm_timeout)
-            return true;
-
-          return false;
+          return ++m_comm_errors >= c_max_comm_timeout;
         }
 
         //! Reset count of errors.
         void
-        resetErrors(void)
+        resetErrors()
         {
           m_comm_errors = 0;
         }
@@ -832,7 +824,7 @@ namespace DUNE
       {
       public:
         //! Constructor.
-        Modem(Tasks::Task* task):
+        Modem(Tasks::Task* const task):
           m_task(task)
         { }
 
@@ -840,15 +832,9 @@ namespace DUNE
         //! @param[in] name name of the target.
         //! @return true if we are waiting, false otherwise.
         bool
-        waitingForSystem(std::string name)
+        waitingForSystem(const std::string& name) const
         {
-          if (m_system.empty())
-            return false;
-
-          if (name == m_system)
-            return true;
-
-          return false;
+          return !m_system.empty() && name == m_system;
         }
 
         //! Trigger through all targets.
@@ -871,14 +857,13 @@ namespace DUNE
           }
 
           // Iterate and call triggers.
-          std::vector<Target>::iterator itr = m_list.begin();
-          for (; itr != m_list.end(); ++itr)
+          for (auto& target : m_list)
           {
-            if (itr->trigger())
+            if (target.trigger())
             {
               // we'll track this system
-              m_system = itr->getName();
-              name = itr->getName();
+              m_system = target.getName();
+              name = target.getName();
 
               // reset timer.
               m_modem_wdog.setTop(time);
@@ -893,15 +878,13 @@ namespace DUNE
         //! @return true if target wants an absolute fix,
         //! false if it wants a relative position.
         bool
-        wantsFix(std::string name)
+        wantsFix(const std::string& name) const
         {
-          // Iterate through list and add if necessary.
-          std::vector<Target>::iterator itr = m_list.begin();
-          for (; itr != m_list.end(); ++itr)
+          for (const auto& target : m_list)
           {
             // Same target
-            if (itr->compare(name))
-              return itr->wantsFix();
+            if (target.compare(name))
+              return target.wantsFix();
           }
 
           // default is relative positioning to be
@@ -913,14 +896,13 @@ namespace DUNE
         //! @return true if target wants an absolute fix,
         //! false if it wants a relative position.
         bool
-        isInverted(std::string name, std::vector<uint8_t>& data)
+        isInverted(const std::string& name, std::vector<uint8_t>& data) const
         {
           // Iterate through list.
-          std::vector<Target>::iterator itr = m_list.begin();
-          for (; itr != m_list.end(); ++itr)
+          for (const auto& target : m_list)
           {
             // Same target
-            if (itr->compare(name) && itr->isInverted())
+            if (target.compare(name) && target.isInverted())
             {
               data.push_back(CODE_INV);
               return true;
@@ -1005,14 +987,13 @@ namespace DUNE
         bool
         consume(const IMC::UsblPositionExtended* msg)
         {
-          // Iterate through list and add if necessary.
-          std::vector<Target>::iterator itr = m_list.begin();
-          for (; itr != m_list.end(); ++itr)
+          // Iterate through list and set relative position if required.
+          for (auto& target : m_list)
           {
             // Same target
-            if (itr->compare(msg->target))
+            if (target.compare(msg->target))
             {
-              itr->setRelativePosition(msg);
+              target.setRelativePosition(msg);
               return true;
             }
           }
@@ -1026,14 +1007,13 @@ namespace DUNE
         bool
         consume(const IMC::GpsFix* msg)
         {
-          // Iterate through list and add if necessary.
-          std::vector<Target>::iterator itr = m_list.begin();
-          for (; itr != m_list.end(); ++itr)
+          // Iterate through list and set origin if required.
+          for (auto& target : m_list)
           {
             // Same target
-            if (itr->compare(m_system))
+            if (target.compare(m_system))
             {
-              itr->setOrigin(msg);
+              target.setOrigin(msg);
               return true;
             }
           }
@@ -1042,24 +1022,23 @@ namespace DUNE
         }
         
         //! Compute absolute fix of system from absolute and relative positions of target
-        //! @param[in] target Target's name.
+        //! @param[in] name Target's name.
         //! @param[out] fix self fix message.
         //! @return true if able to compute fix and fill message, false otherwise.
         bool
-        invertedFix(std::string target, IMC::UsblFixExtended& fix)
+        invertedFix(const std::string& name, IMC::UsblFixExtended& fix)
         {
-          // Iterate through list and add if necessary.
-          std::vector<Target>::iterator itr = m_list.begin();
-          for (; itr != m_list.end(); ++itr)
+          // Iterate through list and compute absolute fix
+          for (auto& target : m_list)
           {
             // Same target
-            if (itr->compare(target))
+            if (target.compare(name))
             {
               IMC::GpsFix gps;
               IMC::UsblPositionExtended rpos;
 
               //! Check timeout
-              if (!itr->getOrigin(gps) || !itr->getRelativePosition(rpos))
+              if (!target.getOrigin(gps) || !target.getRelativePosition(rpos))
                 return false;
 
               fix = UsblTools::toFix(rpos, gps, true);
@@ -1118,10 +1097,10 @@ namespace DUNE
           pos.n = msg->n;
           pos.e = msg->e;
           pos.d = msg->d;
-         if (msg->accuracy > 255)
+          if (msg->accuracy > 255)
             pos.accuracy = 255;
           else
-          pos.accuracy = (uint8_t) msg->accuracy;
+            pos.accuracy = (uint8_t) msg->accuracy;
 
           Position::encode(pos, data);
           targetReplied(m_system);
@@ -1163,30 +1142,29 @@ namespace DUNE
         //! @param[in] fix absolute fix or relative positioning
         //! @param[in] period target's desired periodicity.
         void
-        add(std::string name, bool fix, bool inverted, uint16_t period)
+        add(const std::string& name, bool fix, bool inverted, uint16_t period)
         {
           // Iterate through list and add if necessary.
-          std::vector<Target>::iterator itr = m_list.begin();
-          for (; itr != m_list.end(); ++itr)
+          for (auto& target : m_list)
           {
             // Same target
-            if (itr->compare(name))
+            if (target.compare(name))
             {
-              itr->reset(fix, inverted, period);
+              target.reset(fix, inverted, period);
               return;
             }
           }
 
-          m_list.push_back(Target(name, fix, inverted, period));
+          m_list.emplace_back(name, fix, inverted, period);
         }
 
         //! Remove target.
         //! @param[in] target target's name.
         void
-        remove(std::string name)
+        remove(const std::string& name)
         {
           // Iterate through list and remove target.
-          std::vector<Target>::iterator itr = m_list.begin();
+          auto itr = m_list.begin();
           for (; itr != m_list.end(); ++itr)
           {
             // Erase target from list.
@@ -1200,7 +1178,7 @@ namespace DUNE
 
         //! Clear current list of targets.
         void
-        clear(void)
+        clear()
         {
           m_list.clear();
         }
@@ -1208,16 +1186,15 @@ namespace DUNE
         //! Target is alive and replying.
         //! @param[in] name target's name.
         void
-        targetReplied(std::string name)
+        targetReplied(const std::string& name)
         {
-          // Iterate through list and remove if necessary.
-          std::vector<Target>::iterator itr = m_list.begin();
-          for (; itr != m_list.end(); ++itr)
+          // Iterate through list and reset any errors.
+          for (auto& target : m_list)
           {
             // Same target
-            if (itr->compare(name))
+            if (target.compare(name))
             {
-              itr->resetErrors();
+              target.resetErrors();
               return;
             }
           }
@@ -1226,10 +1203,10 @@ namespace DUNE
         //! Target failed to reply.
         //! @param[in] name target's name.
         void
-        targetFailed(std::string name)
+        targetFailed(const std::string& name)
         {
           // Iterate through list and remove if necessary.
-          std::vector<Target>::iterator itr = m_list.begin();
+          auto itr = m_list.begin();
           for (; itr != m_list.end(); ++itr)
           {
             // Same target
@@ -1252,7 +1229,7 @@ namespace DUNE
         //! Maximum amount of time waiting for system's reply.
         Time::Counter<double> m_modem_wdog;
         //! Pointer to task.
-        Tasks::Task* m_task;
+        Tasks::Task* const m_task;
       };
 
       //! USBL position filter.
@@ -1261,17 +1238,9 @@ namespace DUNE
       public:
         //! Constructor.
         Filter(unsigned avg_samples, double k_std):
-          m_avg_samples(avg_samples),
+          m_avg_range(avg_samples),
           m_k_std(k_std)
-        {
-          m_avg_range = new Math::MovingAverage<double>(m_avg_samples);
-        }
-
-        //! Destructor
-        ~Filter()
-        {
-          Memory::clear(m_avg_range);
-        }
+        { }
 
         //! Set last received state
         void
@@ -1292,22 +1261,17 @@ namespace DUNE
                                                   msg->lat, msg->lon,
                                                   &range, &bearing);
 
-          double mean_range = m_avg_range->update(range);
-          double std_range = m_avg_range->stdev();
+          double mean_range = m_avg_range.update(range);
+          double std_range = m_avg_range.stdev();
 
           double diff_to_mean = std::abs(range - mean_range);
 
-          if (diff_to_mean > m_k_std * std_range)
-            return false;
-          
-          return true;
+          return diff_to_mean <= m_k_std * std_range;
         }
 
       private:
         //! Moving average of distance between estimated state and USBL Fix
-        Math::MovingAverage<double>* m_avg_range;
-        //! Number of samples to average ranges
-        unsigned m_avg_samples;
+        Math::MovingAverage<double> m_avg_range;
         //! Standard deviation multiplication factor to issue error.
         double m_k_std;
         //! Last received estimated state

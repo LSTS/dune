@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -80,6 +80,18 @@ namespace DUNE
       }
 
       void
+      addActionSlider(const std::string& action)
+      {
+        addRemoteAction(action, "Slider");
+      }
+
+      void
+      addActionHalfSlider(const std::string& action)
+      {
+        addRemoteAction(action, "HalfSlider");
+      }
+
+      void
       setConnectionTimeout(const float tout)
       {
         m_connection_timeout = tout;
@@ -90,6 +102,9 @@ namespace DUNE
       {
         (void)message;
       }
+
+      void
+      setupAdditionalActions(const std::vector<std::string>& additional_actions);
 
       virtual void
       onConnectionTimeout(void)
@@ -146,6 +161,8 @@ namespace DUNE
       IMC::RemoteActionsRequest m_actions;
       //! Control loops last reference
       uint32_t m_scope_ref;
+      //! Additional Remote Operation Actions
+      std::vector<std::string> m_additional_actions;
 
       //! IMC ID of the teleoperation source
       uint16_t m_teleop_src;
