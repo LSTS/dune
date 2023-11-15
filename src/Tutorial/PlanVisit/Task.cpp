@@ -44,17 +44,32 @@ namespace Tutorial
       std::vector<double> POI;
     };
 
+    struct TSP{
+      std::vector<unsigned int> path;
+      double totalDistance;
+      Math::Matrix dp;
+    };
+
     struct Task: public DUNE::Tasks::Task
     {
       Arguments m_args;
-      std::vector<double> m_points;   
+      std::vector<double> m_points; 
+
       double vehicle_lat;
       double vehicle_lon; 
+
       IMC::PlanSpecification m_plan_to_run;
       Math::Random::Generator* m_gen;
       Time::Counter<double> m_mbox_check_timer;
+
       bool positionReady = false;
       bool inService = false;
+      bool planReady = false;
+      bool planHasStarted = false;
+      bool errorPresent = false;
+      int allVisited;
+
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -71,7 +86,6 @@ namespace Tutorial
         bind<IMC::EstimatedState>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::PlanControlState>(this);
-        debug("Task constructor");
       }
 
       void
@@ -79,7 +93,6 @@ namespace Tutorial
       {
         m_mbox_check_timer.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        debug("Task is now active :)");
       }
 
       void
@@ -93,8 +106,10 @@ namespace Tutorial
       onUpdateParameters(void)
       {
         if(m_args.POI.size() % 2 != 0){
-          // Not a even number in input POI
+          // Not an even number in input POI
           // deactivate task
+          err("Input Error: There are not an even number of Points of Interest");
+          errorPresent = true;
           onDeactivation();
         }
       }
@@ -132,58 +147,117 @@ namespace Tutorial
       void
       consume(const IMC::EstimatedState* msg)
       {
-        debug("Message of EstimatedState received");
         Coordinates::toWGS84(*msg, vehicle_lat, vehicle_lon);
-        // debug("Vehicle lat is %d", vehicle_lat);
-        // debug("Vehicle lon is %d", vehicle_lon);
-        // debug("Vehicle x is %d north", msg->x);
-        // debug("Vehicle y is %d east", msg->y);
-        vehicle_lat = vehicle_lat + msg->x;
-        vehicle_lon = vehicle_lat + msg->y;
         positionReady = true;
       }
 
       void
       consume(const IMC::VehicleState* msg)
       {
-        debug("Message of VehicleState received");
-        // debug("VehicleState is %d", msg->op_mode);
-        // debug("VehicleState VS_SERVICE is %d", IMC::VehicleState::VS_SERVICE);
-        // debug("VehicleState VS_ERROR is %d", IMC::VehicleState::VS_ERROR);
         if(msg->op_mode == IMC::VehicleState::VS_SERVICE)
         {
           inService = true;
+        }
+        else
+        {
+          inService = false;
         }
       }     
 
       void
       consume(const IMC::PlanControlState* msg)
       {
-        debug("Message of PlanControlState received");
-        if (msg->last_outcome == PlanControlState::LPO_SUCCESS)
+        if (msg->plan_id == m_plan_to_run.plan_id && msg->last_outcome == PlanControlState::LPO_SUCCESS)
         {
           requestDeactivation();
         }
       }
 
-      void 
+      TSP
+      tsp(int bitMask, int currLocation, TSP tsp_args)
+      {
+        if (bitMask == allVisited)
+        {
+          TSP tsp;
+          tsp.totalDistance = Coordinates::WGS84::distance(m_points[2*currLocation], 
+                                                           m_points[2*currLocation + 1], 
+                                                           0, 
+                                                           m_points[0], 
+                                                           m_points[1], 
+                                                           0);                                                 
+          return tsp;
+        }
+
+        // if we arrive at a state which is already been computed
+        if(tsp_args.dp(bitMask, currLocation) != -1) {
+          return tsp_args;
+        }
+
+        for(unsigned int i = 0; i < m_points.size()/2; i = i + 1)
+        {
+          if ((bitMask & (1<<i)) == 0)
+          {
+            // this means current city has not been visited
+            //changing the city as visited
+            int bitMaskNew = bitMask | (1<<i);
+            
+            //storing the distance of current city to the city and then fetching remaining distance from recursive call.
+            double dist = Coordinates::WGS84::distance(m_points[2*currLocation], 
+                                                       m_points[2*currLocation + 1], 
+                                                       0, 
+                                                       m_points[2*i], 
+                                                       m_points[2*i + 1], 
+                                                       0);
+            TSP tsp_rec = tsp(bitMaskNew, i, tsp_args);
+            double distAns = dist + tsp_rec.totalDistance;
+            
+            //storing the shortest distance
+            if (distAns < tsp_args.totalDistance)
+            {
+              tsp_args.totalDistance = distAns;
+              tsp_args.path = tsp_rec.path;
+              tsp_args.path.push_back(i);
+              tsp_args.dp(bitMaskNew, currLocation) = distAns;
+            }
+          }
+        }
+        return tsp_args;
+      }
+
+      std::vector<unsigned int>
       TSPalgorithm()
       {
+        m_points.push_back(Angles::degrees(vehicle_lat));
+        m_points.push_back(Angles::degrees(vehicle_lon));
+
         for(unsigned int i = 0; i < m_args.POI.size(); i = i + 1)
         {
           m_points.push_back(m_args.POI[i]);
         }
-        m_points.push_back(vehicle_lat);
-        m_points.push_back(vehicle_lon);
+        allVisited = (1<<(m_points.size()/2)) - 1;
+
+        TSP tsp_args;
+        tsp_args.totalDistance = 200000.0;
+        tsp_args.dp = Matrix(pow(2, m_points.size()/2), m_points.size()/2);
+        tsp_args.dp.fill(-1.0);
+        TSP tspResult = tsp(1, 0, tsp_args);
+        tspResult.path.push_back(0);
+        debug("The total distance is %.2f", tspResult.totalDistance);
+        debug("Order to visit locations:");
+        for(unsigned int i = 0; i < tspResult.path.size(); i = i + 1)
+        {
+          debug("%d", tspResult.path[i]);
+        }
+        return tspResult.path;
       }
 
       void
-      createPlan()
+      createPlan(std::vector<unsigned int> order)
       {
-        for(unsigned int i = 0; i < m_points.size(); i = i + 2)
+        for(unsigned int i = 0; i < m_points.size()/2; i = i + 1)
         {
-          double lat_deg = m_points[i];
-          double lon_deg = m_points[i + 1];
+          double lat_deg = m_points[2*order[i]];
+          double lon_deg = m_points[2*order[i] + 1];
           IMC::Goto goto_maneuver;
           goto_maneuver.lat = Angles::radians(lat_deg);
           goto_maneuver.lon = Angles::radians(lon_deg);
@@ -196,11 +270,11 @@ namespace Tutorial
           // Set Plan Maneuver
           IMC::PlanManeuver pman;
           std::stringstream man_name;
-          man_name << "Goto" << (i/2);
+          man_name << "Goto" << (i);
           pman.maneuver_id = man_name.str();
           pman.data.set(goto_maneuver);
           m_plan_to_run.maneuvers.push_back(pman);
-          if (i/2 == 0)
+          if (i == 0)
           {
             m_plan_to_run.start_man_id = pman.maneuver_id;
           }
@@ -209,7 +283,7 @@ namespace Tutorial
             // Set Plan Transition
             IMC::PlanTransition ptrans;
             std::stringstream prev_man_name;
-            prev_man_name << "Goto" << (i/2) - 1;
+            prev_man_name << "Goto" << (i) - 1;
             ptrans.source_man = prev_man_name.str();
             ptrans.dest_man = man_name.str();
             ptrans.conditions = "ManeuverIsDone";
@@ -227,25 +301,31 @@ namespace Tutorial
         while (!stopping())
         {
           waitForMessages(1.0);
-          if (positionReady)
+          if (positionReady && !planReady && !errorPresent)
           {
-            TSPalgorithm();
-            createPlan();
-            while(!inService){
+            debug("using TSP and creating plan");
+            std::vector<unsigned int> order = TSPalgorithm();
+            createPlan(order);
+            positionReady = false;
+            planReady = true;
+          }
 
-            }
+          if (inService && planReady && !planHasStarted && !errorPresent){
+            debug("start execution of plan");
             m_gen = Math::Random::Factory::create(Math::Random::Factory::c_default);
             IMC::PlanControl plan_control;
             plan_control.type = IMC::PlanControl::PC_REQUEST;
             plan_control.op = IMC::PlanControl::PC_START;
             plan_control.request_id = m_gen->random() & 0xFFFF;
+            debug("Plan_control request ID is %d", plan_control.request_id);
             plan_control.plan_id = m_plan_to_run.plan_id;
+            debug("Plan_control plan ID is %s", m_plan_to_run.plan_id.c_str());
             plan_control.arg.set(m_plan_to_run);
             plan_control.setDestination(getSystemId());
 
             dispatch (plan_control, DF_LOOP_BACK);
+            planHasStarted = true;
           }
-
         }
       }
     };
