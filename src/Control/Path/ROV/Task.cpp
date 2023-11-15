@@ -30,6 +30,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "DistanceTracking.hpp"
+
 using DUNE_NAMESPACES;
 
 namespace Control
@@ -67,6 +70,10 @@ namespace Control
         unsigned wdist_mav_size;
         //! Moving average window size for angle to wall
         unsigned wangle_mav_size;
+        //! Distance tracking algorithm arguments
+        DTArguments dt;
+        //! Desired wall distance
+        double wall_dist;
       };
 
       struct Task: public DUNE::Control::PathController
@@ -94,7 +101,11 @@ namespace Control
         //! Filtered angle to wall
         float m_filt_wangle;
         //! In wall range
-        float m_in_range;
+        bool m_in_range;
+        //! Distance tracking algorithm
+        DistanceTracking* m_dt;
+        //! Distance command output (desired velocity)
+        float m_wt_cmd;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx),
@@ -151,6 +162,31 @@ namespace Control
           .defaultValue("5")
           .description("Wall angle moving average window size");
 
+          param("Wall Tracking -- Gains", m_args.dt.gains)
+          .defaultValue("")
+          .size(3)
+          .description("Distance PID controller gains");
+
+          param("Wall Tracking -- Maximum Speed", m_args.dt.max_speed)
+          .defaultValue("0.5")
+          .units(Units::MeterPerSecond)
+          .description("Maximum speed output from PID");
+
+          param("Wall Tracking -- Integral Limit", m_args.dt.int_limit)
+          .defaultValue("0.2")
+          .units(Units::MeterPerSecond)
+          .description("PID Integral limit");
+
+          param("Wall Tracking -- Absolute Maximum Error", m_args.dt.abs_max_dist)
+          .defaultValue("1.0")
+          .units(Units::Meter)
+          .description("Absolute value of maximum error in distance");
+
+          param("Wall Tracking -- Desired Wall Distance", m_args.wall_dist)
+          .defaultValue("1.0")
+          .units(Units::Meter)
+          .description("Desired distance to wall during maneuver");
+
           
           // Bind IMC messages
           bind<IMC::Distance>(this);
@@ -172,6 +208,18 @@ namespace Control
             m_quadrant_limits[2] = atan2(m_args.speed_limits[LM_MIN_Y], m_args.speed_limits[LM_MIN_X]);
             m_quadrant_limits[3] = atan2(m_args.speed_limits[LM_MIN_Y], m_args.speed_limits[LM_MAX_X]);
           }
+
+          // Wall Tracking
+          if (paramChanged(m_args.wallt_active))
+          {
+            if (m_args.wallt_active)
+              activateWallTracking();
+            else
+              deactivateWallTracking();
+          }
+
+          if (paramChanged(m_args.wall_dist) && m_dt)
+            m_dt->setDesiredDistance(m_args.wall_dist);
         }
 
         void
@@ -199,6 +247,7 @@ namespace Control
         {
           Memory::clear(m_wdist_mav);
           Memory::clear(m_wangle_mav);
+          Memory::clear(m_dt);
         }
 
         void
@@ -221,8 +270,11 @@ namespace Control
             return;
           }
 
-          m_filt_wdist = m_wdist_mav->update(msg->value);
           m_in_range = true;
+          m_filt_wdist = m_wdist_mav->update(msg->value);
+
+          if (m_args.wallt_active && m_dt)
+            m_wt_cmd = m_dt->update(m_filt_wdist);
         }
 
         void
@@ -235,6 +287,20 @@ namespace Control
             return;
 
           m_filt_wangle = m_wangle_mav->update(msg->psi);
+        }
+
+        void
+        activateWallTracking()
+        {
+          Memory::clear(m_dt);
+          m_dt = new DistanceTracking(&m_args.dt);
+          m_dt->setDesiredDistance(m_args.wall_dist);
+        }
+
+        void
+        deactivateWallTracking()
+        {
+          Memory::clear(m_dt);
         }
 
         void
@@ -261,19 +327,23 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          // Velocity controller.
-          m_velocity = getVelocity(state.psi, ts.los_angle);
-
-          // Dispatch velocity reference
-          dispatch(m_velocity);
-
           // Heading
-          if (m_args.direct_heading) // Direct heading aligns with end point 
+          if (m_args.wallt_active)
+            m_heading.value = Angles::normalizeRadian(state.psi - m_filt_wangle);
+          else if (m_args.direct_heading) // Direct heading aligns with end point 
             m_heading.value = Angles::normalizeRadian(ts.los_angle);
           else                            // Fixed heading reference
             m_heading.value = m_args.fixed_heading;
           
+          // Velocity controller
+          m_velocity = getVelocity(state.psi, ts.los_angle);
+          
+          if (m_args.wallt_active)
+            m_velocity.x = m_wt_cmd;
+
+          // Dispatch references
           dispatch(m_heading);
+          dispatch(m_velocity);
         }
 
         //! Execute a loiter control step
