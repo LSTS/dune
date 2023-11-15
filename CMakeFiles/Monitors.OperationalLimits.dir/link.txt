@@ -1,0 +1,2 @@
+/usr/bin/ar qc libMonitors.OperationalLimits.a  CMakeFiles/Monitors.OperationalLimits.dir/src/Monitors/OperationalLimits/Task.cpp.o
+/usr/bin/ranlib libMonitors.OperationalLimits.a

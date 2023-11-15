@@ -1,0 +1,2 @@
+/usr/bin/ar qc libVision.FrameGrabber.a  CMakeFiles/Vision.FrameGrabber.dir/src/Vision/FrameGrabber/Task.cpp.o
+/usr/bin/ranlib libVision.FrameGrabber.a

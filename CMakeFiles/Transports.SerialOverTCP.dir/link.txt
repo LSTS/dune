@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.SerialOverTCP.a  CMakeFiles/Transports.SerialOverTCP.dir/src/Transports/SerialOverTCP/Task.cpp.o
+/usr/bin/ranlib libTransports.SerialOverTCP.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.GPS.a  CMakeFiles/Sensors.GPS.dir/src/Sensors/GPS/Task.cpp.o
+/usr/bin/ranlib libSensors.GPS.a

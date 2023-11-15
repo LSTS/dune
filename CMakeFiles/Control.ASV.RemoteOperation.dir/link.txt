@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.ASV.RemoteOperation.a  CMakeFiles/Control.ASV.RemoteOperation.dir/src/Control/ASV/RemoteOperation/Task.cpp.o
+/usr/bin/ranlib libControl.ASV.RemoteOperation.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.UDP.a  CMakeFiles/Transports.UDP.dir/src/Transports/UDP/Task.cpp.o
+/usr/bin/ranlib libTransports.UDP.a

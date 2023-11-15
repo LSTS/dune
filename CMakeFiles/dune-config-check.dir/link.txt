@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-config-check.dir/programs/utils/dune-config-check.cpp.o  -o dune-config-check libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

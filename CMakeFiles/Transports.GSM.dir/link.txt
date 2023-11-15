@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.GSM.a  CMakeFiles/Transports.GSM.dir/src/Transports/GSM/Task.cpp.o
+/usr/bin/ranlib libTransports.GSM.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libMonitors.Servos.a  CMakeFiles/Monitors.Servos.dir/src/Monitors/Servos/Task.cpp.o
+/usr/bin/ranlib libMonitors.Servos.a

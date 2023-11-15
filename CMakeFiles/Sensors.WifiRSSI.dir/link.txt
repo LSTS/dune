@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.WifiRSSI.a  CMakeFiles/Sensors.WifiRSSI.dir/src/Sensors/WifiRSSI/Task.cpp.o
+/usr/bin/ranlib libSensors.WifiRSSI.a

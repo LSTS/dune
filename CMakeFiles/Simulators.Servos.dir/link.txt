@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.Servos.a  CMakeFiles/Simulators.Servos.dir/src/Simulators/Servos/Task.cpp.o
+/usr/bin/ranlib libSimulators.Servos.a

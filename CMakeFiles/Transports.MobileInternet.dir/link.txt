@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.MobileInternet.a  CMakeFiles/Transports.MobileInternet.dir/src/Transports/MobileInternet/Task.cpp.o
+/usr/bin/ranlib libTransports.MobileInternet.a

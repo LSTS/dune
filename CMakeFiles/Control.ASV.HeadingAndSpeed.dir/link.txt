@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.ASV.HeadingAndSpeed.a  CMakeFiles/Control.ASV.HeadingAndSpeed.dir/src/Control/ASV/HeadingAndSpeed/Task.cpp.o
+/usr/bin/ranlib libControl.ASV.HeadingAndSpeed.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.ROV.RemoteOperation.a  CMakeFiles/Control.ROV.RemoteOperation.dir/src/Control/ROV/RemoteOperation/Task.cpp.o
+/usr/bin/ranlib libControl.ROV.RemoteOperation.a

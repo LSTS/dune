@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.Discovery.a  CMakeFiles/Transports.Discovery.dir/src/Transports/Discovery/Task.cpp.o
+/usr/bin/ranlib libTransports.Discovery.a

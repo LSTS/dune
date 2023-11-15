@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.AntennaTracker.a  CMakeFiles/Control.AntennaTracker.dir/src/Control/AntennaTracker/Task.cpp.o
+/usr/bin/ranlib libControl.AntennaTracker.a

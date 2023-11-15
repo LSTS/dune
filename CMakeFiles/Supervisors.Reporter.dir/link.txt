@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSupervisors.Reporter.a  CMakeFiles/Supervisors.Reporter.dir/src/Supervisors/Reporter/Task.cpp.o
+/usr/bin/ranlib libSupervisors.Reporter.a

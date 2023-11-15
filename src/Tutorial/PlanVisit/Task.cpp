@@ -67,7 +67,10 @@ namespace Tutorial
       bool planReady = false;
       bool planHasStarted = false;
       bool errorPresent = false;
+      bool planHasBeenStopped = false;
+      bool planFinished = false;
       int allVisited;
+      unsigned int count = 0;
 
 
       //! Constructor.
@@ -111,6 +114,19 @@ namespace Tutorial
           err("Input Error: There are not an even number of Points of Interest");
           errorPresent = true;
           onDeactivation();
+        }
+        for(unsigned int i = 0; i < m_args.POI.size(); i = i + 2)
+        {
+          if(m_args.POI[i] < -90 || m_args.POI[i] > 90)
+          {
+            err("Input Error: Latitude out of range -90 deg to 90 deg");
+            errorPresent = true;
+          }
+          if(m_args.POI[i + 1] < -180 || m_args.POI[i + 1] > 190)
+          {
+            err("Input Error: Longitude out of range -180 deg to 180 deg");
+            errorPresent = true;
+          }
         }
       }
 
@@ -161,15 +177,25 @@ namespace Tutorial
         else
         {
           inService = false;
+          planHasStarted = false;
         }
       }     
 
       void
       consume(const IMC::PlanControlState* msg)
       {
-        if (msg->plan_id == m_plan_to_run.plan_id && msg->last_outcome == PlanControlState::LPO_SUCCESS)
+        if (msg->plan_id == m_plan_to_run.plan_id && 
+            msg->last_outcome == PlanControlState::LPO_SUCCESS &&
+            !planFinished)
         {
           requestDeactivation();
+          planFinished = true;
+        }
+        std::string result = "Goto" + std::to_string(count);
+        if ((std::strcmp(msg->man_id.c_str(), result.c_str()) == 0))
+        {
+          count = count + 1;
+          result = "Goto" + std::to_string(count);
         }
       }
 
@@ -254,10 +280,30 @@ namespace Tutorial
       void
       createPlan(std::vector<unsigned int> order)
       {
+        debug("Creating plan with count is %d", count);
+        unsigned int start;
+        if (count == 0)
+        {
+          start = count;
+        }
+        else
+        {
+          start = count - 1;
+        }
+        
         for(unsigned int i = 0; i < m_points.size()/2; i = i + 1)
         {
-          double lat_deg = m_points[2*order[i]];
-          double lon_deg = m_points[2*order[i] + 1];
+          unsigned int index;
+          if (i + start > m_points.size()/2)
+          {
+            index = m_points.size()/2 - 1;
+          }
+          else
+          {
+            index = i;
+          }
+          double lat_deg = m_points[2*order[index]];
+          double lon_deg = m_points[2*order[index] + 1];
           IMC::Goto goto_maneuver;
           goto_maneuver.lat = Angles::radians(lat_deg);
           goto_maneuver.lon = Angles::radians(lon_deg);
@@ -274,7 +320,7 @@ namespace Tutorial
           pman.maneuver_id = man_name.str();
           pman.data.set(goto_maneuver);
           m_plan_to_run.maneuvers.push_back(pman);
-          if (i == 0)
+          if (i == start)
           {
             m_plan_to_run.start_man_id = pman.maneuver_id;
           }
@@ -292,38 +338,44 @@ namespace Tutorial
         }
       }
 
+      void 
+      requestPlan()
+      {
+        debug("Start execution of plan");
+        m_gen = Math::Random::Factory::create(Math::Random::Factory::c_default);
+        IMC::PlanControl plan_control;
+        plan_control.type = IMC::PlanControl::PC_REQUEST;
+        plan_control.op = IMC::PlanControl::PC_START;
+        plan_control.request_id = m_gen->random() & 0xFFFF;
+        plan_control.plan_id = m_plan_to_run.plan_id;
+        plan_control.arg.set(m_plan_to_run);
+        plan_control.setDestination(getSystemId());
+
+        dispatch (plan_control, DF_LOOP_BACK);
+      }
+
 
 
       //! Main loop.
       void
       onMain(void)
       {
+        std::vector<unsigned int> order;
         while (!stopping())
         {
           waitForMessages(1.0);
           if (positionReady && !planReady && !errorPresent)
           {
             debug("using TSP and creating plan");
-            std::vector<unsigned int> order = TSPalgorithm();
-            createPlan(order);
+            order = TSPalgorithm();
+            
             positionReady = false;
             planReady = true;
           }
 
-          if (inService && planReady && !planHasStarted && !errorPresent){
-            debug("start execution of plan");
-            m_gen = Math::Random::Factory::create(Math::Random::Factory::c_default);
-            IMC::PlanControl plan_control;
-            plan_control.type = IMC::PlanControl::PC_REQUEST;
-            plan_control.op = IMC::PlanControl::PC_START;
-            plan_control.request_id = m_gen->random() & 0xFFFF;
-            debug("Plan_control request ID is %d", plan_control.request_id);
-            plan_control.plan_id = m_plan_to_run.plan_id;
-            debug("Plan_control plan ID is %s", m_plan_to_run.plan_id.c_str());
-            plan_control.arg.set(m_plan_to_run);
-            plan_control.setDestination(getSystemId());
-
-            dispatch (plan_control, DF_LOOP_BACK);
+          if (inService && planReady && !planHasStarted && !errorPresent && !planFinished){
+            createPlan(order);
+            requestPlan();
             planHasStarted = true;
           }
         }

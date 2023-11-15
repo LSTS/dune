@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.DataStore.a  CMakeFiles/Transports.DataStore.dir/src/Transports/DataStore/Task.cpp.o
+/usr/bin/ranlib libTransports.DataStore.a

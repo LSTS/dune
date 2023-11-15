@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.LoggingDigest.a  CMakeFiles/Transports.LoggingDigest.dir/src/Transports/LoggingDigest/Task.cpp.o
+/usr/bin/ranlib libTransports.LoggingDigest.a

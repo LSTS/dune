@@ -1,0 +1,2 @@
+/usr/bin/ar qc libActuators.Torqeedo.a  CMakeFiles/Actuators.Torqeedo.dir/src/Actuators/Torqeedo/Task.cpp.o
+/usr/bin/ranlib libActuators.Torqeedo.a

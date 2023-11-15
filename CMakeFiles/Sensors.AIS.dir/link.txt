@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.AIS.a  CMakeFiles/Sensors.AIS.dir/src/Sensors/AIS/ShipTypeCode.cpp.o CMakeFiles/Sensors.AIS.dir/src/Sensors/AIS/Task.cpp.o
+/usr/bin/ranlib libSensors.AIS.a

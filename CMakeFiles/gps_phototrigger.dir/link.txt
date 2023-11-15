@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/gps_phototrigger.dir/programs/gps_phototrigger.cpp.o  -o gps_phototrigger libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

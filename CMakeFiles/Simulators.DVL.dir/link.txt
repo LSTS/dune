@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.DVL.a  CMakeFiles/Simulators.DVL.dir/src/Simulators/DVL/Task.cpp.o
+/usr/bin/ranlib libSimulators.DVL.a

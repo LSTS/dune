@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.Fragments.a  CMakeFiles/Transports.Fragments.dir/src/Transports/Fragments/Task.cpp.o
+/usr/bin/ranlib libTransports.Fragments.a

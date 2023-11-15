@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.Seatrac.a  CMakeFiles/Transports.Seatrac.dir/src/Transports/Seatrac/Task.cpp.o
+/usr/bin/ranlib libTransports.Seatrac.a

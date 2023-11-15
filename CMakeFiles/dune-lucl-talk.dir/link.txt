@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-lucl-talk.dir/programs/utils/dune-lucl-talk.cpp.o  -o dune-lucl-talk libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

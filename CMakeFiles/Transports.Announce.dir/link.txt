@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.Announce.a  CMakeFiles/Transports.Announce.dir/src/Transports/Announce/Task.cpp.o
+/usr/bin/ranlib libTransports.Announce.a

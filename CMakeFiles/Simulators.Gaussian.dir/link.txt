@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.Gaussian.a  CMakeFiles/Simulators.Gaussian.dir/src/Simulators/Gaussian/Task.cpp.o
+/usr/bin/ranlib libSimulators.Gaussian.a

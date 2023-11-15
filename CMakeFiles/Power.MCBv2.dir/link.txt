@@ -1,0 +1,2 @@
+/usr/bin/ar qc libPower.MCBv2.a  CMakeFiles/Power.MCBv2.dir/src/Power/MCBv2/Task.cpp.o
+/usr/bin/ranlib libPower.MCBv2.a

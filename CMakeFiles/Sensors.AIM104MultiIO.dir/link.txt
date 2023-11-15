@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.AIM104MultiIO.a  CMakeFiles/Sensors.AIM104MultiIO.dir/src/Sensors/AIM104MultiIO/Driver.cpp.o CMakeFiles/Sensors.AIM104MultiIO.dir/src/Sensors/AIM104MultiIO/Task.cpp.o
+/usr/bin/ranlib libSensors.AIM104MultiIO.a

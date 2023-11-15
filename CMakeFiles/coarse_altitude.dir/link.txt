@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/coarse_altitude.dir/programs/coarse_altitude.cpp.o  -o coarse_altitude libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

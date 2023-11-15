@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.UAVAutopilot.a  CMakeFiles/Simulators.UAVAutopilot.dir/src/Simulators/UAVAutopilot/Task.cpp.o
+/usr/bin/ranlib libSimulators.UAVAutopilot.a

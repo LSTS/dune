@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.MiniSVS.a  CMakeFiles/Sensors.MiniSVS.dir/src/Sensors/MiniSVS/Task.cpp.o
+/usr/bin/ranlib libSensors.MiniSVS.a

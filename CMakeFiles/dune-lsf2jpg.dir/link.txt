@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-lsf2jpg.dir/programs/utils/dune-lsf2jpg.cpp.o  -o dune-lsf2jpg libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

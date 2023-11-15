@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.LogBook.a  CMakeFiles/Transports.LogBook.dir/src/Transports/LogBook/Task.cpp.o
+/usr/bin/ranlib libTransports.LogBook.a
