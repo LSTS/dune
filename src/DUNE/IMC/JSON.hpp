@@ -34,6 +34,8 @@
 #include <ostream>
 #include <vector>
 #include <string>
+#include <iterator>
+#include <type_traits>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -49,6 +51,111 @@ namespace DUNE
     const char*
     indentJSON(unsigned count);
 
+    template <typename T>
+    inline void
+    toJSON_impl(std::ostream& os, const T& value)
+    {
+      os << '"' << value << '"';
+    }
+
+    //! Convert an 8 bit signed integer type to a JSON string.
+    //! @param[in] os output stream.
+    //! @param[in] label label.
+    //! @param[in] value value.
+    //! @param[in] nindent number of indentation spaces.
+    //! @param[in] prefix prefix character.
+    template <>
+    inline void
+    toJSON_impl(std::ostream& os, const int8_t& value)
+    {
+      os << '"' << (int)value << '"';
+    }
+
+    //! Convert an 8 bit unsigned integer type to a JSON string.
+    //! @param[in] os output stream.
+    //! @param[in] label label.
+    //! @param[in] value value.
+    //! @param[in] nindent number of indentation spaces.
+    //! @param[in] prefix prefix character.
+    template <>
+    inline void
+    toJSON_impl(std::ostream& os, const uint8_t& value)
+    {
+      os << '"' << (unsigned)value << '"';
+    }
+
+    //! Convert a string to a JSON string.
+    //! @param[in] os output stream.
+    //! @param[in] label label.
+    //! @param[in] value value.
+    //! @param[in] nindent number of indentation spaces.
+    //! @param[in] prefix prefix character.
+    template <>
+    inline void
+    toJSON_impl(std::ostream& os, const std::string& value)
+    {
+      std::string val = DUNE::Utils::String::replace(value, '"', "\\\"");
+      val = Utils::String::escape(val);
+      os << '"' << val << '"';
+    }
+
+    //! Convert a vector of numbers to a JSON string.
+    //! @param[in] os output stream.
+    //! @param[in] label label.
+    //! @param[in] value value.
+    //! @param[in] nindent number of indentation spaces.
+    //! @param[in] prefix prefix character.
+    template <typename Type, typename = typename std::enable_if<std::is_arithmetic<Type>::value, Type>::type>
+    inline void
+    toJSON_impl(std::ostream& os, const std::vector<Type>& value)
+    {
+      os << '[';
+      if(!value.empty()) {
+        std::copy(value.begin(), value.end()-1, std::ostream_iterator<Type>(os, ", "));
+        os << value.back();  // Avoid trailing comma
+      }
+      os << ']';
+    }
+
+    //! Specialization for vector<uint8_t>
+    template <>
+    inline void
+    toJSON_impl(std::ostream& os, const std::vector<uint8_t>& value)
+    {
+      os << '[';
+      if(!value.empty()) {
+        std::copy(value.begin(), value.end()-1, std::ostream_iterator<unsigned>(os, ", "));
+        os << static_cast<unsigned>(value.back());  // Avoid trailing comma
+      }
+      os << ']';
+    }
+
+    //! Specialization for vector<int8_t>
+    template <>
+    inline void
+    toJSON_impl(std::ostream& os, const std::vector<int8_t>& value)
+    {
+      os << '[';
+      if(!value.empty()) {
+        std::copy(value.begin(), value.end()-1, std::ostream_iterator<int>(os, ", "));
+        os << static_cast<int>(value.back());  // Avoid trailing comma
+      }
+      os << ']';
+    }
+
+    //! Convert a character vector type to a JSON string.
+    //! @param[in] os output stream.
+    //! @param[in] label label.
+    //! @param[in] value value.
+    //! @param[in] nindent number of indentation spaces.
+    //! @param[in] prefix prefix character.
+    template <>
+    inline void
+    toJSON_impl(std::ostream& os, const std::vector<char>& value)
+    {
+      os << '"' << Utils::String::toHex(value) << '"';
+    }
+
     //! Convert a generic type to a JSON string.
     //! @param[in] os output stream.
     //! @param[in] label label.
@@ -60,65 +167,8 @@ namespace DUNE
     toJSON(std::ostream& os, const char* label, const Type& value, unsigned nindent, char prefix = ',')
     {
       const char* indent = indentJSON(nindent);
-      os << prefix << '\n' << indent << '"' << label << "\": \"" << value << '"';
-    }
-
-    //! Convert an 8 bit signed integer type to a JSON string.
-    //! @param[in] os output stream.
-    //! @param[in] label label.
-    //! @param[in] value value.
-    //! @param[in] nindent number of indentation spaces.
-    //! @param[in] prefix prefix character.
-    template <>
-    inline void
-    toJSON(std::ostream& os, const char* label, const int8_t& value, unsigned nindent, char prefix)
-    {
-      const char* indent = indentJSON(nindent);
-      os << prefix << '\n' << indent << '"' << label << "\": \"" << (int)value << '"';
-    }
-
-    //! Convert an 8 bit unsigned integer type to a JSON string.
-    //! @param[in] os output stream.
-    //! @param[in] label label.
-    //! @param[in] value value.
-    //! @param[in] nindent number of indentation spaces.
-    //! @param[in] prefix prefix character.
-    template <>
-    inline void
-    toJSON(std::ostream& os, const char* label, const uint8_t& value, unsigned nindent, char prefix)
-    {
-      const char* indent = indentJSON(nindent);
-      os << prefix << '\n' << indent << '"' << label << "\": \"" << (unsigned)value << '"';
-    }
-
-    //! Convert a string to a JSON string.
-    //! @param[in] os output stream.
-    //! @param[in] label label.
-    //! @param[in] value value.
-    //! @param[in] nindent number of indentation spaces.
-    //! @param[in] prefix prefix character.
-    template <>
-    inline void
-    toJSON(std::ostream& os, const char* label, const std::string& value, unsigned nindent, char prefix)
-    {
-      const char* indent = indentJSON(nindent);
-      std::string val = DUNE::Utils::String::replace(value, '"', "\\\"");
-      val = Utils::String::escape(val);
-      os << prefix << '\n' << indent << '"' << label << "\": \"" << val << '"';
-    }
-
-    //! Convert a character vector type to a JSON string.
-    //! @param[in] os output stream.
-    //! @param[in] label label.
-    //! @param[in] value value.
-    //! @param[in] nindent number of indentation spaces.
-    //! @param[in] prefix prefix character.
-    template <>
-    inline void
-    toJSON(std::ostream& os, const char* label, const std::vector<char>& value, unsigned nindent, char prefix)
-    {
-      const char* indent = indentJSON(nindent);
-      os << prefix << '\n' << indent << '"' << label << "\": \"" << Utils::String::toHex(value) << '"';
+      os << prefix << '\n' << indent << '"' << label << "\": ";
+      toJSON_impl(os, value);
     }
   }
 }
