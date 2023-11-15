@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSupervisors.StratoPIWatchdog.a  CMakeFiles/Supervisors.StratoPIWatchdog.dir/src/Supervisors/StratoPIWatchdog/Task.cpp.o
+/usr/bin/ranlib libSupervisors.StratoPIWatchdog.a

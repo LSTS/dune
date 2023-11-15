@@ -1,0 +1,2 @@
+/usr/bin/ar qc libVision.UAVCamera.a  CMakeFiles/Vision.UAVCamera.dir/src/Vision/UAVCamera/Task.cpp.o
+/usr/bin/ranlib libVision.UAVCamera.a

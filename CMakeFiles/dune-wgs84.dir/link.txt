@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-wgs84.dir/programs/utils/dune-wgs84.cpp.o  -o dune-wgs84 libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

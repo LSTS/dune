@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.SCH311X.a  CMakeFiles/Sensors.SCH311X.dir/src/Sensors/SCH311X/Task.cpp.o
+/usr/bin/ranlib libSensors.SCH311X.a

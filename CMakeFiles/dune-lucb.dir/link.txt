@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-lucb.dir/programs/utils/dune-lucb.cpp.o  -o dune-lucb libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

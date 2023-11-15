@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.OS4000.a  CMakeFiles/Sensors.OS4000.dir/src/Sensors/OS4000/Task.cpp.o
+/usr/bin/ranlib libSensors.OS4000.a

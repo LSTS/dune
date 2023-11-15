@@ -1,0 +1,2 @@
+/usr/bin/ar qc libManeuver.CoverArea.a  CMakeFiles/Maneuver.CoverArea.dir/src/Maneuver/CoverArea/Task.cpp.o
+/usr/bin/ranlib libManeuver.CoverArea.a
