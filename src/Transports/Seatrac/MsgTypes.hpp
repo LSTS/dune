@@ -2,6 +2,8 @@
 // Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
+// Copyright 2023 OceanScan - Marine Systems & Technology, Lda.             *
+//***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
 // Commercial Licence Usage                                                 *
@@ -26,6 +28,7 @@
 //***************************************************************************
 // Author: João Teixeira                                                    *
 // Author: Raúl Sáez                                                        *
+// Author: Maria Costa (small refactor and fix for iUSBL implementation)    *
 //***************************************************************************
 
 #ifndef TRANSPORTS_SEATRAC_MSG_TYPES_HPP_INCLUDED_
@@ -40,7 +43,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers
-#include "DataTypes.hpp"
+#include "Constants.hpp"
 
 namespace Transports
 {
@@ -66,7 +69,7 @@ namespace Transports
       // Mag cal.
       uint8_t mag_cal_buf;
       bool    mag_cal_valid;
-      int32_t mag_cal_age;
+      uint32_t mag_cal_age;
       uint8_t mag_cal_fit;
       // Acc cal.
       int16_t acc_lim_min_x;
@@ -107,7 +110,6 @@ namespace Transports
         outputflags_list[4] = (AHRS_RAW_DATA_FLAG & output_flags);
         outputflags_list[5] = (AHRS_COMP_DATA_FLAG & output_flags);
       }
-
     };
 
     struct CidPingRespMsg
@@ -148,7 +150,7 @@ namespace Transports
       uint8_t status;
     };
 
-    struct  CidPingErrorMsg
+    struct CidPingErrorMsg
     {
       CST_E status;
       uint8_t beacon_id;
@@ -297,15 +299,15 @@ namespace Transports
       int
       packetDataBuild(std::vector<char> msg, int dest_id_t)
       {
-        int erro_code = 1;
+        int error_code = 1;
         if (msg.size() % 2 != 0)
-          return erro_code = 3;
+          return error_code = 3;
 
         if (msg_timer.overflow())
         {
           msg_timer.reset();
           lock_flag = 0;
-          erro_code = 2;
+          error_code = 2;
         }
 
         if (lock_flag == 0)
@@ -337,7 +339,7 @@ namespace Transports
           }
           return 0;
         }
-        return erro_code;
+        return error_code;
       }
 
       //! Builds the next msg package
@@ -436,7 +438,7 @@ namespace Transports
 
     struct CidXcvrFixMsg
     {
-      Acofix_t  aco_fix;
+      Acofix_t aco_fix;
     };
 
     struct CidSysRebootMsg
@@ -451,9 +453,9 @@ namespace Transports
       uint8_t status;
     };
 
-    struct CidNavQuerryRespMsg
+    struct CidNavQueryRespMsg
     {
-      Acofix_t  aco_fix;
+      Acofix_t aco_fix;
       uint8_t query_flags;
       int32_t remote_depth;
       int16_t remote_supply;

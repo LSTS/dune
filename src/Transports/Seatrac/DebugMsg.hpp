@@ -2,6 +2,8 @@
 // Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
+// Copyright 2023 OceanScan - Marine Systems & Technology, Lda.             *
+//***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
 // Commercial Licence Usage                                                 *
@@ -26,6 +28,7 @@
 //***************************************************************************
 // Author: João Teixeira                                                    *
 // Author: Raúl Sáez                                                        *
+// Author: Maria Costa (small refactor and fix for iUSBL implementation)    *
 //***************************************************************************
 
 #ifndef TRANSPORTS_SEATRAC_DEBUG_MSG_HPP_INCLUDED_
@@ -39,7 +42,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers
-#include "MsgTypes.hpp"
+#include "Parser.hpp"
 
 namespace Transports
 {
@@ -62,28 +65,28 @@ namespace Transports
                   msg_name.c_str(), aco_fix->flags);
       task->debug("data_Beacon.%s.aco_fix.amsgtype_e     %d ",
                   msg_name.c_str(), aco_fix->amsgtype_e);
-      task->debug("data_Beacon.%s.aco_fix.attitude_yaw   %d ",
-                  msg_name.c_str(), aco_fix->attitude_yaw);
-      task->debug("data_Beacon.%s.aco_fix.attitude_pitch %d ",
-                  msg_name.c_str(), aco_fix->attitude_pitch);
-      task->debug("data_Beacon.%s.aco_fix.attitude_roll  %d ",
-                  msg_name.c_str(), aco_fix->attitude_roll);
-      task->debug("data_Beacon.%s.aco_fix.depth_local    %d ",
-                  msg_name.c_str(), aco_fix->depth_local);
-      task->debug("data_Beacon.%s.aco_fix.vos            %d ",
-                  msg_name.c_str(), aco_fix->vos);
-      task->debug("data_Beacon.%s.aco_fix.rssi           %d ",
-                  msg_name.c_str(), aco_fix->rssi);
+      task->debug("data_Beacon.%s.aco_fix.attitude_yaw/10   %d \u00B0 ",
+                  msg_name.c_str(), aco_fix->attitude_yaw/10);
+      task->debug("data_Beacon.%s.aco_fix.attitude_pitch/10 %d \u00B0 ",
+                  msg_name.c_str(), aco_fix->attitude_pitch/10);
+      task->debug("data_Beacon.%s.aco_fix.attitude_roll/10  %d \u00B0 ",
+                  msg_name.c_str(), aco_fix->attitude_roll/10);
+      task->debug("data_Beacon.%s.aco_fix.depth_local/10    %d m ",
+                  msg_name.c_str(), aco_fix->depth_local/10);
+      task->debug("data_Beacon.%s.aco_fix.vos/10            %d m/s ",
+                  msg_name.c_str(), aco_fix->vos/10);
+      task->debug("data_Beacon.%s.aco_fix.rssi/10           %d dB",
+                  msg_name.c_str(), aco_fix->rssi/10);
 
       // Range fields.
       if (aco_fix->outputflags_list[0])
       {
         task->debug("data_Beacon.%s.aco_fix.range_count  %d ",
                     msg_name.c_str(), aco_fix->range_count);
-        task->debug("data_Beacon.%s.aco_fix.range_time   %d ",
-                    msg_name.c_str(), aco_fix->range_time);
-        task->debug("data_Beacon.%s.aco_fix.range_dist   %d ",
-                    msg_name.c_str(), aco_fix->range_dist);
+        task->debug("data_Beacon.%s.aco_fix.range_time/10000000   %d s ",
+                    msg_name.c_str(), aco_fix->range_time/10000000);
+        task->debug("data_Beacon.%s.aco_fix.range_dist/10   %d m ",
+                    msg_name.c_str(), aco_fix->range_dist/10);
       }
 
       // USBL fields.
@@ -93,26 +96,26 @@ namespace Transports
                     msg_name.c_str(), aco_fix->usbl_channels);
 
         for (int i = 0; i < aco_fix->usbl_channels; i++)
-          task->debug("data_Beacon.%s.aco_fix.usbl_rssi[i]  %d",
-                      msg_name.c_str(), aco_fix->usbl_rssi[i]);
+          task->debug("data_Beacon.%s.aco_fix.usbl_rssi[i]/10  %d dB",
+                      msg_name.c_str(), aco_fix->usbl_rssi[i]/10);
 
-        task->debug("data_Beacon.%s.aco_fix.usbl_azimuth    %d",
-                    msg_name.c_str(), aco_fix->usbl_azimuth);
-        task->debug("data_Beacon.%s.aco_fix.usbl_elevation  %d",
-                    msg_name.c_str(), aco_fix->usbl_elevation);
-        task->debug("data_Beacon.%s.aco_fix.usbl_fit_error  %d",
-                    msg_name.c_str(), aco_fix->usbl_fit_error);
+        task->debug("data_Beacon.%s.aco_fix.usbl_azimuth/10    %d \u00B0 ",
+                    msg_name.c_str(), aco_fix->usbl_azimuth/10);
+        task->debug("data_Beacon.%s.aco_fix.usbl_elevation/10  %d \u00B0 ",
+                    msg_name.c_str(), aco_fix->usbl_elevation/10);
+        task->debug("data_Beacon.%s.aco_fix.usbl_fit_error/100  %d ",
+                    msg_name.c_str(), aco_fix->usbl_fit_error/100);
       }
 
       // Position fields.
       if (aco_fix->outputflags_list[2])
       {
-        task->debug("data_Beacon.%s.aco_fix.position_easting  %ld",
-                    msg_name.c_str(), (long int) aco_fix->position_easting);
-        task->debug("data_Beacon.%s.aco_fix.position_northing %ld",
-                    msg_name.c_str(), (long int) aco_fix->position_northing);
-        task->debug("data_Beacon.%s.aco_fix.position_depth    %ld",
-                    msg_name.c_str(), (long int) aco_fix->position_depth);
+        task->debug("data_Beacon.%s.aco_fix.position_easting/10  %ld m",
+                    msg_name.c_str(), (long int) aco_fix->position_easting/10);
+        task->debug("data_Beacon.%s.aco_fix.position_northing/10 %ld m",
+                    msg_name.c_str(), (long int) aco_fix->position_northing/10);
+        task->debug("data_Beacon.%s.aco_fix.position_depth/10    %ld m",
+                    msg_name.c_str(), (long int) aco_fix->position_depth/10);
       }
     }
 
@@ -136,8 +139,8 @@ namespace Transports
           // Environment.
           if (data_Beacon.cid_status_msg.outputflags_list[0])
           {
-            task->spew("data_Beacon.cid_status_msg.environment_supply %d",
-                       data_Beacon.cid_status_msg.environment_supply);
+            task->spew("data_Beacon.cid_status_msg.environment_supply/1000 %f V",
+                       data_Beacon.cid_status_msg.environment_supply / 1000.0);
             task->spew("data_Beacon.cid_status_msg.environment_temperature/10 %f \u00B0C",
                        data_Beacon.cid_status_msg.environment_temperature / 10.0);
             task->spew("data_Beacon.cid_status_msg.environment_pressure %d mbar",
@@ -286,7 +289,6 @@ namespace Transports
                       (int)data_Beacon.cid_dat_send_msg.beacon_id);
           break;
         case CID_DAT_RECEIVE: //8.3. DAT Protocol Messages
-
           task->debug("MESSAGE  CID_DAT_RECEIVE ");
           printAcoFixData("cid_dat_receive_msg",
                           &data_Beacon.cid_dat_receive_msg.aco_fix, task);
@@ -418,8 +420,8 @@ namespace Transports
           break;
 
         case CID_SETTINGS_SET:
-          task->debug("MESSAGE  CID_SETTINGS_SET");
-          task->debug("data_Beacon.cid_sys_settings_set_msg.status 0x%02X",
+          task->trace("MESSAGE  CID_SETTINGS_SET");
+          task->trace("data_Beacon.cid_sys_settings_set_msg.status 0x%02X",
                       (unsigned)data_Beacon.cid_sys_settings_set_msg.status);
           break;
 
@@ -437,30 +439,30 @@ namespace Transports
 
         case CID_NAV_QUERY_RESP:
           task->debug("MESSAGE  CID_NAV_QUERY_RESP");
-          printAcoFixData("cid_nav_querry_resp_msg",
-                          &data_Beacon.cid_nav_querry_resp_msg.aco_fix, task);
-          task->debug("data_Beacon.cid_nav_querry_resp_msg.query_flags %d ",
-                      data_Beacon.cid_nav_querry_resp_msg.query_flags);
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[0])
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_depth %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_depth);
+          printAcoFixData("cid_nav_query_resp_msg",
+                          &data_Beacon.cid_nav_query_resp_msg.aco_fix, task);
+          task->debug("data_Beacon.cid_nav_query_resp_msg.query_flags %d ",
+                      data_Beacon.cid_nav_query_resp_msg.query_flags);
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[0])
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_depth %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_depth);
 
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[1])
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_supply %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_supply);
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[1])
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_supply %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_supply);
 
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[2])
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_temp %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_temp);
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[2])
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_temp %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_temp);
 
-          if (data_Beacon.cid_nav_querry_resp_msg.query_flags_list[3])
+          if (data_Beacon.cid_nav_query_resp_msg.query_flags_list[3])
           {
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_yaw %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_yaw);
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_pitch %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_pitch);
-            task->debug("data_Beacon.cid_nav_querry_resp_msg.remote_roll %d",
-                        data_Beacon.cid_nav_querry_resp_msg.remote_roll);
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_yaw %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_yaw);
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_pitch %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_pitch);
+            task->debug("data_Beacon.cid_nav_query_resp_msg.remote_roll %d",
+                        data_Beacon.cid_nav_query_resp_msg.remote_roll);
           }
           break;
 

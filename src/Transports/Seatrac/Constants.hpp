@@ -2,6 +2,8 @@
 // Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
+// Copyright 2023 OceanScan - Marine Systems & Technology, Lda.             *
+//***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
 //                                                                          *
 // Commercial Licence Usage                                                 *
@@ -26,10 +28,11 @@
 //***************************************************************************
 // Author: João Teixeira                                                    *
 // Author: Raúl Sáez                                                        *
+// Author: Maria Costa (small refactor and fix for iUSBL implementation)    *
 //***************************************************************************
 
-#ifndef TRANSPORTS_SEATRAC_DATA_TYPES_HPP_INCLUDED_
-#define TRANSPORTS_SEATRAC_DATA_TYPES_HPP_INCLUDED_
+#ifndef TRANSPORTS_SEATRAC_CONSTANTS_HPP_INCLUDED_
+#define TRANSPORTS_SEATRAC_CONSTANTS_HPP_INCLUDED_
 
 #define MESSAGE_NUMBER (0x77 +0x1)
 #define MAX_MESSAGE_ERRORS 5
@@ -39,20 +42,46 @@
 //! Defines the minimum message length without preamble nor postamble
 #define MIN_MESSAGE_LENGTH 6
 
+// ISO C++ 98 headers.
+#include <string>
+#include <vector>
+
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+
 namespace Transports
 {
   namespace Seatrac
   {
     using DUNE_NAMESPACES;
 
+    //! Hard Iron calibration parameter name.
+    static const std::string c_hard_iron_param = "Hard-Iron Calibration";
+    //! Number of axis.
+    static const uint8_t c_number_axis = 3;
+    //! Acknowledged timeout time multiplier
+    static const uint8_t c_ack_timeout_multiplier = 6;
     //! Input Timeout (s).
-    static const double c_input_tout =  5;
+    static const double c_input_tout = 5;
     //! The bitrate of acoustic communication (bits/second).
-    static const double c_acoustic_bitrate =  100;
+    static const double c_acoustic_bitrate = 100;
     //! Message preamble
     static const char c_preamble = '$';
     //! Maximum buffer size.
     static const int c_bfr_size = 256;
+    //! Sound speed update window (m/s).
+    static const uint16_t c_sspeed_window = 1;
+
+    //! Entity states.
+    enum EntityStates
+    {
+      STA_BOOT,
+      STA_IDLE,
+      STA_ACTIVE,
+      STA_ERR_COM,
+      STA_ERR_STP,
+      STA_MAX
+    };
 
     //! States of the internal SM.
     enum ParserStates
@@ -137,7 +166,6 @@ namespace Transports
       BT_X150 = 0x31B
     };
 
-
     // Status Output Mode
     enum StatusMode_E
     {
@@ -174,7 +202,8 @@ namespace Transports
     };
 
     // Control XCVR flags
-    enum ControlXcvrFlags_E {
+    enum ControlXcvrFlags_E
+    {
       USBL_USE_AHRS_FLAG = 0x1,
       XCVR_POSFLT_ENABLE_FLAG = 0x2,
       XCVR_USBL_MSGS_FLAG = 0x20,
@@ -338,7 +367,7 @@ namespace Transports
       int16_t position_easting;
       int16_t position_northing;
       int16_t position_depth;
-      uint8_t outputflags_list[4];
+      uint8_t outputflags_list[5];
 
       void
       outputFlagsComp(void)
@@ -347,6 +376,7 @@ namespace Transports
         outputflags_list[1] = (0x02 & flags);
         outputflags_list[2] = (0x04 & flags);
         outputflags_list[3] = (0x08 & flags);
+        outputflags_list[4] = (0x10 & flags);
       }
     };
   }
