@@ -370,8 +370,8 @@ namespace Control
         uint8_t version = 2; // Protocol version []
         uint8_t command_type = 10; // Command type []
         double rt_clock; // Real-time clock [s]
-        double distance;
         double bearing;
+        double distance;
       };
     }
   }
