@@ -106,6 +106,8 @@ namespace Control
         DistanceTracking* m_dt;
         //! Distance command output (desired velocity)
         float m_wt_cmd;
+        //! Filtered distance to wall
+        IMC::Distance m_filt_dist_msg;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx),
@@ -226,6 +228,8 @@ namespace Control
         onEntityReservation(void)
         {
           PathController::onEntityReservation();
+
+          m_filt_dist_msg.setSourceEntity(reserveEntity(String::str("%s - Filtered Wall Distance", getEntityLabel())));
         }
 
         void
@@ -272,6 +276,10 @@ namespace Control
 
           m_in_range = true;
           m_filt_wdist = m_wdist_mav->update(msg->value);
+
+          // Debug
+          m_filt_dist_msg.value = m_filt_wdist;
+          dispatch(m_filt_dist_msg);
 
           if (m_args.wallt_active && m_dt)
             m_wt_cmd = m_dt->update(m_filt_wdist);
