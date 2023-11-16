@@ -339,7 +339,7 @@ namespace Control
           m_velocity = getVelocity(state.psi, ts.los_angle);
           
           if (m_args.wallt_active)
-            m_velocity.x = m_wt_cmd;
+            m_velocity.u = m_wt_cmd;
 
           // Dispatch references
           dispatch(m_heading);
