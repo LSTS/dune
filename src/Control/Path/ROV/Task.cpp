@@ -139,6 +139,8 @@ namespace Control
                        "Default is empty (no trimming).");
 
           param("Wall Tracking -- Active", m_args.wallt_active)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("false")
           .description("Wall tracking active");
 
