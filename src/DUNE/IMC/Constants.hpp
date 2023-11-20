@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0f425402b735f36a64d579da7bb4baf3                            *
+// IMC XML MD5: 4056d6f4ac57c75cbaa27da48b4b7c3c                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
@@ -37,9 +37,9 @@
 //! IMC version string.
 #define DUNE_IMC_CONST_VERSION "5.4.30"
 //! Git repository information.
-#define DUNE_IMC_CONST_GIT_INFO "2022-03-14 ada9492  (HEAD -> master, origin/master, origin/HEAD)"
+#define DUNE_IMC_CONST_GIT_INFO "2023-11-20 82631f1  (HEAD -> project/wavynos, origin/project/wavynos)"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "0f425402b735f36a64d579da7bb4baf3"
+#define DUNE_IMC_CONST_MD5 "4056d6f4ac57c75cbaa27da48b4b7c3c"
 //! Synchronization number.
 #define DUNE_IMC_CONST_SYNC 0xFE54
 //! Reversed synchronization number.
