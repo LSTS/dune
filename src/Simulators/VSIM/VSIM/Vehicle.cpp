@@ -26,6 +26,7 @@
 //***************************************************************************
 // Author: Bruno Terra                                                      *
 // Author: José Braga                                                       *
+// Author: João Costa                                                       *
 //***************************************************************************
 
 // VSIM headers.
@@ -49,15 +50,21 @@ namespace Simulators
     }
 
     void
+    Vehicle::addForce(Force* f)
+    {
+      m_vehicle_forces.push_back(f);
+    }
+
+    void
     Vehicle::addEngine(Engine* f)
     {
       addForce(f);
     }
 
     void
-    Vehicle::addForce(Force* f)
+    Vehicle::addFin(Fin* f)
     {
-      m_vehicle_forces.push_back(f);
+      addForce(f);
     }
 
     void
@@ -109,6 +116,13 @@ namespace Simulators
     Vehicle::updateEngine(unsigned int id, double act)
     {
       id = Engine::encodeId(id);
+      updateact(id, act);
+    }
+
+    void
+    Vehicle::updateFin(unsigned int id, double act)
+    {
+      id = Fin::encodeId(id);
       updateact(id, act);
     }
 
