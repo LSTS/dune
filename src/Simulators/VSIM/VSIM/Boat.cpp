@@ -24,29 +24,49 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Bruno Terra                                                      *
-// Author: José Braga                                                       *
+// Author: João Costa                                                       *
 //***************************************************************************
 
-#ifndef SIMULATORS_VSIM_VSIM_VSIM_HPP_INCLUDED_
-#define SIMULATORS_VSIM_VSIM_VSIM_HPP_INCLUDED_
+// ISO C++ 98 headers.
+#include <cstring>
+#include <iostream>
+#include <cstdio>
+#include <cmath>
+
+// VSIM headers.
+#include <VSIM/Boat.hpp>
+
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
 
 namespace Simulators
 {
-  //! Multiple vehicle simulator routines and classes.
   namespace VSIM
-  { }
+  {
+    Boat::Boat(void):
+      m_volume(NULL)
+    { }
+
+    Boat::Boat(double dimensions[3])
+    {
+      double x = 0;
+      double y = 0;
+      double z = 0;
+
+      x = dimensions[0] <= 0 ? 1 : dimensions[0];
+      y = dimensions[1] <= 0 ? 1 : dimensions[1];
+      z = dimensions[2] <= 0 ? 1 : dimensions[2];
+
+      m_volume = new Volume(x, y, z);
+    }
+
+    Boat::~Boat(void)
+    {
+      if (m_volume != NULL)
+      {
+        delete m_volume;
+        m_volume = NULL;
+      }
+    }
+  }
 }
-
-#include <VSIM/ASV.hpp>
-#include <VSIM/Boat.hpp>
-#include <VSIM/Engine.hpp>
-#include <VSIM/Fin.hpp>
-#include <VSIM/Force.hpp>
-#include <VSIM/Object.hpp>
-#include <VSIM/UUV.hpp>
-#include <VSIM/Vehicle.hpp>
-#include <VSIM/Volume.hpp>
-#include <VSIM/World.hpp>
-
-#endif

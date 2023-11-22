@@ -24,29 +24,44 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Bruno Terra                                                      *
-// Author: José Braga                                                       *
+// Author: João Costa                                                       *
 //***************************************************************************
 
-#ifndef SIMULATORS_VSIM_VSIM_VSIM_HPP_INCLUDED_
-#define SIMULATORS_VSIM_VSIM_VSIM_HPP_INCLUDED_
+#ifndef SIMULATORS_VSIM_VSIM_BOAT_HPP_INCLUDED_
+#define SIMULATORS_VSIM_VSIM_BOAT_HPP_INCLUDED_
+
+// VSIM headers.
+#include <VSIM/Vehicle.hpp>
+#include <VSIM/Fin.hpp>
+#include <VSIM/Volume.hpp>
 
 namespace Simulators
 {
-  //! Multiple vehicle simulator routines and classes.
   namespace VSIM
-  { }
-}
+  {
+    //! Boat class - ASV-like vehicle but with a thruster and a rudder,
+    //! instead of differential thrust.
+    class Boat: public Vehicle
+    {
+    public:
+      //! Default Constructor.
+      Boat(void);
 
-#include <VSIM/ASV.hpp>
-#include <VSIM/Boat.hpp>
-#include <VSIM/Engine.hpp>
-#include <VSIM/Fin.hpp>
-#include <VSIM/Force.hpp>
-#include <VSIM/Object.hpp>
-#include <VSIM/UUV.hpp>
-#include <VSIM/Vehicle.hpp>
-#include <VSIM/Volume.hpp>
-#include <VSIM/World.hpp>
+      //! Constructor.
+      //! @param[in] dimensions volume dimensions.
+      Boat(double dimensions[3]);
+
+      //! Copy Constructor.
+      Boat(const Boat*);
+
+      //! Destructor.
+      ~Boat(void);
+
+    private:
+      //! Vehicle's volume.
+      Volume* m_volume;
+    };
+  }
+}
 
 #endif
