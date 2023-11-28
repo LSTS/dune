@@ -39,11 +39,8 @@
 #include <DUNE/Algorithms.hpp>
 #include <DUNE/Compression.hpp>
 #include <DUNE/Exceptions.hpp>
-#include <DUNE/Control.hpp>
-#include <DUNE/Maneuvers.hpp>
 #include <DUNE/Math.hpp>
 #include <DUNE/IMC.hpp>
-#include <DUNE/Monitors.hpp>
 #include <DUNE/Network.hpp>
 #include <DUNE/Streams.hpp>
 #include <DUNE/System.hpp>
@@ -56,8 +53,6 @@
 #include <DUNE/Coordinates.hpp>
 #include <DUNE/Media.hpp>
 #include <DUNE/Parsers.hpp>
-#include <DUNE/Plans.hpp>
-#include <DUNE/Power.hpp>
 #include <DUNE/Time.hpp>
 #include <DUNE/Database.hpp>
 #include <DUNE/Daemon.hpp>
@@ -76,14 +71,12 @@ namespace DUNE
   namespace DUNE;                               \
   using namespace DUNE::Algorithms;             \
   using namespace DUNE::Compression;            \
-  using namespace DUNE::Control;                \
   using namespace DUNE::Coordinates;            \
   using namespace DUNE::Concurrency;            \
   using namespace DUNE::FileSystem;             \
   using namespace DUNE::Hardware;               \
   using namespace DUNE::Math;                   \
   using namespace DUNE::IMC;                    \
-  using namespace DUNE::Monitors;               \
   using namespace DUNE::Network;                \
   using namespace DUNE::Status;                 \
   using namespace DUNE::Streams;                \
@@ -91,8 +84,6 @@ namespace DUNE
   using namespace DUNE::Tasks;                  \
   using namespace DUNE::Media;                  \
   using namespace DUNE::Parsers;                \
-  using namespace DUNE::Plans;                  \
-  using namespace DUNE::Power;                  \
   using namespace DUNE::Time;                   \
   using namespace DUNE::Utils;                  \
   using namespace DUNE::Navigation;             \
