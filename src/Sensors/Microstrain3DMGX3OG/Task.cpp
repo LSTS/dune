@@ -276,6 +276,9 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
         }
 
+        // Need to reset monitor watchdog
+        m_wdog.reset();
+
         // Calibrate sensor.
         runCalibration();
 
