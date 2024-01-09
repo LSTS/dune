@@ -108,7 +108,7 @@ namespace Drivers
       char cmdText[32];
       std::sprintf(cmdText, "%s%c\n", cmd, (Algorithms::XORChecksum::compute((uint8_t *)cmd, strlen(cmd) - 1) | 0x80));
       // std::sprintf(cmdText, "%s\n", cmd);
-      m_task->inf("Command (no rsp): %s", cmdText);
+      m_task->debug("Command (no rsp): %s", cmdText);
       m_uart->writeString(cmdText);
     }
 
@@ -122,14 +122,14 @@ namespace Drivers
       /* std::sprintf(cmdText, "%s\n", send);
       std::sprintf(cmdReplyText, "%s\n", reply); */
       char bfrUart[128];
-      m_task->inf("Command: %s", cmdText);
+      m_task->debug("Command: %s", cmdText);
 
       m_uart->writeString(cmdText);
 
       if (Poll::poll(*m_uart, m_timeout_uart))
       {
         m_uart->readString(bfrUart, sizeof(bfrUart));
-        m_task->inf("Reply: %s", bfrUart);
+        m_task->debug("Reply: %s", bfrUart);
         if (std::strcmp(bfrUart, cmdReplyText) == 0)
         {
           return true;
