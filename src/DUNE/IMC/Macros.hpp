@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6c1a70a8b3383d6342fe5d5e3fa7e994                            *
+// IMC XML MD5: 300c92f76c47d1d9e32d8421679e98eb                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -676,12 +676,18 @@
 #define DUNE_IMC_ABSOLUTEWIND 911
 //! AisInfo identification number.
 #define DUNE_IMC_AISINFO 912
+//! ENCAwareness identification number.
+#define DUNE_IMC_ENCAWARENESS 913
+//! Displacement identification number.
+#define DUNE_IMC_DISPLACEMENT 915
 //! CurrentProfile identification number.
 #define DUNE_IMC_CURRENTPROFILE 1014
 //! CurrentProfileCell identification number.
 #define DUNE_IMC_CURRENTPROFILECELL 1015
 //! ADCPBeam identification number.
 #define DUNE_IMC_ADCPBEAM 1016
+//! Frequency identification number.
+#define DUNE_IMC_FREQUENCY 1017
 //! GpioState identification number.
 #define DUNE_IMC_GPIOSTATE 2000
 //! GpioStateGet identification number.

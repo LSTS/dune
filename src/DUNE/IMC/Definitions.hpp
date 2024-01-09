@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6c1a70a8b3383d6342fe5d5e3fa7e994                            *
+// IMC XML MD5: 300c92f76c47d1d9e32d8421679e98eb                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -26055,6 +26055,142 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! ENC Awareness.
+    class ENCAwareness: public Message
+    {
+    public:
+      //! Depth at location.
+      std::string depth_at_loc;
+      //! Danger.
+      std::string danger;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 913;
+      }
+
+      ENCAwareness(void);
+
+      ENCAwareness*
+      clone(void) const
+      {
+        return new ENCAwareness(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return ENCAwareness::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ENCAwareness";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(depth_at_loc) + IMC::getSerializationSize(danger);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Position Displacement.
+    class Displacement: public Message
+    {
+    public:
+      //! Device Time.
+      fp64_t time;
+      //! X.
+      fp64_t x;
+      //! Y.
+      fp64_t y;
+      //! Z.
+      fp64_t z;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 915;
+      }
+
+      Displacement(void);
+
+      Displacement*
+      clone(void) const
+      {
+        return new Displacement(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Displacement::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Displacement";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 32;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! ADCP Beam Measurements.
     class ADCPBeam: public Message
     {
@@ -26303,6 +26439,73 @@ namespace DUNE
 
       void
       setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Frequency.
+    class Frequency: public Message
+    {
+    public:
+      //! Value.
+      fp32_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 1017;
+      }
+
+      Frequency(void);
+
+      Frequency*
+      clone(void) const
+      {
+        return new Frequency(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Frequency::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Frequency";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! GPIO State.
