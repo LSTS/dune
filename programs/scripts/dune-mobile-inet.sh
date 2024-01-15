@@ -119,6 +119,7 @@ dyndns_update()
 
 ppp_start()
 {
+    ppp_stop
     modem="$(modem_probe)"
 
     if [ -z "$modem" ]; then
