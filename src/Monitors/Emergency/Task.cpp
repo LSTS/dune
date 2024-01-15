@@ -54,6 +54,8 @@ namespace Monitors
       std::string recipient;
       //! Transmission interface.
       std::string interface;
+      //! Always send state periodically.
+      bool always_send;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -120,6 +122,10 @@ namespace Monitors
         .defaultValue("30.0")
         .minimumValue("0.0")
         .description("Expiration time of lost communications SMS");
+
+        param("Always send state periodically", m_args.always_send)
+        .defaultValue("false")
+        .description("Always send state periodically");
 
         bind<IMC::Abort>(this);
         bind<IMC::FuelLevel>(this);
@@ -258,7 +264,7 @@ namespace Monitors
           return;
 
         // CCU's mask.
-        if (IMC::AddressResolver::isCCU(msg->getSource()))
+        if (!m_args.always_send && IMC::AddressResolver::isCCU(msg->getSource()))
           m_lost_coms_timer.reset();
       }
 
@@ -418,11 +424,17 @@ namespace Monitors
       {
         if (m_lost_coms_timer.overflow())
         {
+          debug("lost communications timeout expired");
           m_lost_coms_timer.reset();
 
-          if ((isActive() && !m_hand.isUnderwater()) ||
-              (m_hand.isWaterSurface() && !m_in_mission))
-            sendSMS("T", m_args.sms_lost_coms_ttl);
+          if ((isActive()))
+              {
+                if (m_args.always_send)
+                  sendSMS("R", m_args.sms_lost_coms_ttl);
+                else
+                  sendSMS("T", m_args.sms_lost_coms_ttl);
+              }
+            
         }
       }
 
