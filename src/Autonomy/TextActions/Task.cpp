@@ -411,6 +411,10 @@ namespace Autonomy
     	  std::stringstream ss;
     	  if(args.empty())
     		  newNum = origin;
+        else if(args == "off")
+        {
+          newNum = "";
+        }
     	  else {
     		  splitCommand(args,newNum,foo); //retrieves the first arg
     		  newNum = sanitize(newNum);
@@ -422,14 +426,24 @@ namespace Autonomy
     			  return; //Not a valid phone number
     		  }
     	  }
-    		  IMC::EntityParameter parmeter;
-    		  parmeter.name = "SMS Recipient Number";
-    		  parmeter.value = newNum;
     		  IMC::SetEntityParameters params;
     		  params.name = "Emergency Monitor";
-    		  params.params.push_back(parmeter);
+
+    		  IMC::EntityParameter recNumber;
+    		  recNumber.name = "SMS Recipient Number";
+    		  recNumber.value = newNum;
+    		  params.params.push_back(recNumber);
+
+          IMC::EntityParameter active;
+          active.name = "Active";
+          active.value = newNum.empty() ? "false" : "true";
+          params.params.push_back(active);
+          
+          if (newNum.empty())
+            ss << "Disabling emergency number.";
+          else
+            ss << "Changing emergency number to " << newNum << ".";            
     		  dispatch(params, DF_LOOP_BACK);
-    		  ss << "Changed emergency number " << " to " << newNum;
     		  reply(origin,ss.str());
       }
 
