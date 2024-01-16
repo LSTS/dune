@@ -170,7 +170,8 @@ namespace Drivers
       void
       onDisconnect() override
       {
-        sendCommand("@STOP,*");
+        if (m_handle != nullptr)
+          sendCommand("@STOP,*");
 
         if (m_reader != NULL)
         {
