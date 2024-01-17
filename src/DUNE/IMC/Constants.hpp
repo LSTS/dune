@@ -37,7 +37,7 @@
 //! IMC version string.
 #define DUNE_IMC_CONST_VERSION "5.4.30"
 //! Git repository information.
-#define DUNE_IMC_CONST_GIT_INFO "2024-01-17 b0e01e9  (HEAD -> project/wavynos, origin/project/wavynos)"
+#define DUNE_IMC_CONST_GIT_INFO "2024-01-17 2b4899a  (HEAD -> project/wavynos, origin/project/wavynos)"
 //! MD5 sum of XML specification file.
 #define DUNE_IMC_CONST_MD5 "054f482636bfa96a42ed8b9f615992ee"
 //! Synchronization number.
