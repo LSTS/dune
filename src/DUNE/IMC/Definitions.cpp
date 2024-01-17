@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4056d6f4ac57c75cbaa27da48b4b7c3c                            *
+// IMC XML MD5: 054f482636bfa96a42ed8b9f615992ee                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -27669,18 +27669,26 @@ namespace DUNE
     void
     HTTPRequest::clear(void)
     {
-      destination.clear();
-      path_executive.clear();
-      data.clear();
+      rid = 0;
+      host.clear();
+      path.clear();
+      query.clear();
+      body.clear();
+      type = 0;
+      file_data.clear();
     }
 
     bool
     HTTPRequest::fieldsEqual(const Message& msg__) const
     {
       const IMC::HTTPRequest& other__ = static_cast<const HTTPRequest&>(msg__);
-      if (destination != other__.destination) return false;
-      if (path_executive != other__.path_executive) return false;
-      if (data != other__.data) return false;
+      if (rid != other__.rid) return false;
+      if (host != other__.host) return false;
+      if (path != other__.path) return false;
+      if (query != other__.query) return false;
+      if (body != other__.body) return false;
+      if (type != other__.type) return false;
+      if (file_data != other__.file_data) return false;
       return true;
     }
 
@@ -27694,9 +27702,13 @@ namespace DUNE
     HTTPRequest::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(destination, ptr__);
-      ptr__ += IMC::serialize(path_executive, ptr__);
-      ptr__ += IMC::serialize(data, ptr__);
+      ptr__ += IMC::serialize(rid, ptr__);
+      ptr__ += IMC::serialize(host, ptr__);
+      ptr__ += IMC::serialize(path, ptr__);
+      ptr__ += IMC::serialize(query, ptr__);
+      ptr__ += IMC::serialize(body, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(file_data, ptr__);
       return ptr__;
     }
 
@@ -27704,9 +27716,13 @@ namespace DUNE
     HTTPRequest::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(destination, bfr__, size__);
-      bfr__ += IMC::deserialize(path_executive, bfr__, size__);
-      bfr__ += IMC::deserialize(data, bfr__, size__);
+      bfr__ += IMC::deserialize(rid, bfr__, size__);
+      bfr__ += IMC::deserialize(host, bfr__, size__);
+      bfr__ += IMC::deserialize(path, bfr__, size__);
+      bfr__ += IMC::deserialize(query, bfr__, size__);
+      bfr__ += IMC::deserialize(body, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(file_data, bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -27714,18 +27730,26 @@ namespace DUNE
     HTTPRequest::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(destination, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(path_executive, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rid, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(host, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(path, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(query, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(body, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(file_data, bfr__, size__);
       return bfr__ - start__;
     }
 
     void
     HTTPRequest::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      IMC::toJSON(os__, "destination", destination, nindent__);
-      IMC::toJSON(os__, "path_executive", path_executive, nindent__);
-      IMC::toJSON(os__, "data", data, nindent__);
+      IMC::toJSON(os__, "rid", rid, nindent__);
+      IMC::toJSON(os__, "host", host, nindent__);
+      IMC::toJSON(os__, "path", path, nindent__);
+      IMC::toJSON(os__, "query", query, nindent__);
+      IMC::toJSON(os__, "body", body, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "file_data", file_data, nindent__);
     }
 
     HTTPStatus::HTTPStatus(void)
@@ -27737,7 +27761,7 @@ namespace DUNE
     void
     HTTPStatus::clear(void)
     {
-      destination.clear();
+      rid = 0;
       response.clear();
       status = 0;
     }
@@ -27746,7 +27770,7 @@ namespace DUNE
     HTTPStatus::fieldsEqual(const Message& msg__) const
     {
       const IMC::HTTPStatus& other__ = static_cast<const HTTPStatus&>(msg__);
-      if (destination != other__.destination) return false;
+      if (rid != other__.rid) return false;
       if (response != other__.response) return false;
       if (status != other__.status) return false;
       return true;
@@ -27762,7 +27786,7 @@ namespace DUNE
     HTTPStatus::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(destination, ptr__);
+      ptr__ += IMC::serialize(rid, ptr__);
       ptr__ += IMC::serialize(response, ptr__);
       ptr__ += IMC::serialize(status, ptr__);
       return ptr__;
@@ -27772,7 +27796,7 @@ namespace DUNE
     HTTPStatus::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(destination, bfr__, size__);
+      bfr__ += IMC::deserialize(rid, bfr__, size__);
       bfr__ += IMC::deserialize(response, bfr__, size__);
       bfr__ += IMC::deserialize(status, bfr__, size__);
       return bfr__ - start__;
@@ -27782,18 +27806,80 @@ namespace DUNE
     HTTPStatus::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(destination, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(rid, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(response, bfr__, size__);
-      bfr__ += IMC::deserialize(status, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(status, bfr__, size__);
       return bfr__ - start__;
     }
 
     void
     HTTPStatus::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      IMC::toJSON(os__, "destination", destination, nindent__);
+      IMC::toJSON(os__, "rid", rid, nindent__);
       IMC::toJSON(os__, "response", response, nindent__);
       IMC::toJSON(os__, "status", status, nindent__);
+    }
+
+    FileSampleEvent::FileSampleEvent(void)
+    {
+      m_header.mgid = 1102;
+      clear();
+    }
+
+    void
+    FileSampleEvent::clear(void)
+    {
+      fstype = 0;
+      filename.clear();
+    }
+
+    bool
+    FileSampleEvent::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FileSampleEvent& other__ = static_cast<const FileSampleEvent&>(msg__);
+      if (fstype != other__.fstype) return false;
+      if (filename != other__.filename) return false;
+      return true;
+    }
+
+    int
+    FileSampleEvent::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    FileSampleEvent::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(fstype, ptr__);
+      ptr__ += IMC::serialize(filename, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FileSampleEvent::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(fstype, bfr__, size__);
+      bfr__ += IMC::deserialize(filename, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FileSampleEvent::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(fstype, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(filename, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FileSampleEvent::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "fstype", fstype, nindent__);
+      IMC::toJSON(os__, "filename", filename, nindent__);
     }
 
     GpioState::GpioState(void)

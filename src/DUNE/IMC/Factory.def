@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4056d6f4ac57c75cbaa27da48b4b7c3c                            *
+// IMC XML MD5: 054f482636bfa96a42ed8b9f615992ee                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -355,6 +355,7 @@ MESSAGE(1015, CurrentProfileCell)
 MESSAGE(1016, ADCPBeam)
 MESSAGE(1100, HTTPRequest)
 MESSAGE(1101, HTTPStatus)
+MESSAGE(1102, FileSampleEvent)
 MESSAGE(2000, GpioState)
 MESSAGE(2001, GpioStateGet)
 MESSAGE(2002, GpioStateSet)

@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4056d6f4ac57c75cbaa27da48b4b7c3c                            *
+// IMC XML MD5: 054f482636bfa96a42ed8b9f615992ee                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -682,6 +682,8 @@
 #define DUNE_IMC_HTTPREQUEST 1100
 //! HTTPStatus identification number.
 #define DUNE_IMC_HTTPSTATUS 1101
+//! FileSampleEvent identification number.
+#define DUNE_IMC_FILESAMPLEEVENT 1102
 //! GpioState identification number.
 #define DUNE_IMC_GPIOSTATE 2000
 //! GpioStateGet identification number.

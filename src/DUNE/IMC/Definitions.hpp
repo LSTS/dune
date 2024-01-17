@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 4056d6f4ac57c75cbaa27da48b4b7c3c                            *
+// IMC XML MD5: 054f482636bfa96a42ed8b9f615992ee                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -26145,12 +26145,33 @@ namespace DUNE
     class HTTPRequest: public Message
     {
     public:
-      //! Destination.
-      std::string destination;
-      //! Path of executive.
-      std::string path_executive;
-      //! Data Text.
-      std::string data;
+      //! Request Type.
+      enum RequestTypeEnum
+      {
+        //! GET.
+        HTTPREQ_GET = 0,
+        //! POST.
+        HTTPREQ_POST = 1,
+        //! PUT.
+        HTTPREQ_PUT = 2,
+        //! DELETE.
+        HTTPREQ_DELETE = 3
+      };
+
+      //! Request Id.
+      uint16_t rid;
+      //! Hostname.
+      std::string host;
+      //! Path.
+      std::string path;
+      //! Request Query.
+      std::string query;
+      //! Request Body.
+      std::vector<char> body;
+      //! Request Type.
+      uint8_t type;
+      //! Continuation Data On Disk.
+      std::string file_data;
 
       static uint16_t
       getIdStatic(void)
@@ -26199,13 +26220,13 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 3;
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(destination) + IMC::getSerializationSize(path_executive) + IMC::getSerializationSize(data);
+        return IMC::getSerializationSize(host) + IMC::getSerializationSize(path) + IMC::getSerializationSize(query) + IMC::getSerializationSize(body) + IMC::getSerializationSize(file_data);
       }
 
       void
@@ -26219,18 +26240,66 @@ namespace DUNE
       //! Status.
       enum StatusEnum
       {
-        //! Fail.
-        HTTPSTAT_ERROR = 0,
-        //! Sent.
-        HTTPSTAT_SENT = 1
+        //! Continue.
+        HTTPSTAT_CONTINUE = 100,
+        //! Switching Protocols.
+        HTTPSTAT_SWITCHING_PROTOCOLS = 101,
+        //! OK.
+        HTTPSTAT_OK = 200,
+        //! Bad Request.
+        HTTPSTAT_BAD_REQUEST = 400,
+        //! Unauthorized.
+        HTTPSTAT_UNAUTHORIZED = 401,
+        //! Forbidden.
+        HTTPSTAT_FORBIDDEN = 403,
+        //! Not Found.
+        HTTPSTAT_NOT_FOUND = 404,
+        //! Method Not Allowed.
+        HTTPSTAT_METHOD_NOT_ALLOWED = 405,
+        //! Not Acceptable.
+        HTTPSTAT_NOT_ACCEPTABLE = 406,
+        //! Proxy Authentication Required.
+        HTTPSTAT_PROXY_AUTHENTICATION_REQUIRED = 407,
+        //! Request Timeout.
+        HTTPSTAT_REQUEST_TIMEOUT = 408,
+        //! Conflict.
+        HTTPSTAT_CONFLICT = 409,
+        //! Gone.
+        HTTPSTAT_GONE = 410,
+        //! Length Required.
+        HTTPSTAT_LENGTH_REQUIRED = 411,
+        //! Precondition Failed.
+        HTTPSTAT_PRECONDITION_FAILED = 412,
+        //! Request Entity Too Large.
+        HTTPSTAT_REQUEST_ENTITY_TOO_LARGE = 413,
+        //! Request-URI Too Long.
+        HTTPSTAT_REQUEST_URI_TOO_LONG = 414,
+        //! Unsupported Media Type.
+        HTTPSTAT_UNSUPPORTED_MEDIA_TYPE = 415,
+        //! Requested Range Not Satisfiable.
+        HTTPSTAT_REQUESTED_RANGE_NOT_SATISFIABLE = 416,
+        //! Expectation Failed.
+        HTTPSTAT_EXPECTATION_FAILED = 417,
+        //! Internal Error.
+        HTTPSTAT_ERROR = 500,
+        //! Not Implemented.
+        HTTPSTAT_NOT_IMPLEMENTED = 501,
+        //! Bad Gateway.
+        HTTPSTAT_BAD_GATEWAY = 502,
+        //! Service Unavailable.
+        HTTPSTAT_SERVICE_UNAVAILABLE = 503,
+        //! Gateway Timeout.
+        HTTPSTAT_GATEWAY_TIMEOUT = 504,
+        //! HTTP Version Not Supported.
+        HTTPSTAT_HTTP_VERSION_NOT_SUPPORTED = 505
       };
 
-      //! Destination.
-      std::string destination;
+      //! Request Id.
+      uint16_t rid;
       //! Response.
       std::string response;
       //! Status.
-      uint8_t status;
+      uint16_t status;
 
       static uint16_t
       getIdStatic(void)
@@ -26279,13 +26348,95 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
+        return 4;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(response);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! File Sample Event.
+    class FileSampleEvent: public Message
+    {
+    public:
+      //! File Type.
+      enum FileTypeEnum
+      {
+        //! Image.
+        FSTYPE_IMAGE = 0,
+        //! Audio.
+        FSTYPE_AUDIO = 1,
+        //! Sonar.
+        FSTYPE_SONAR = 2,
+        //! Other.
+        FSTYPE_OTHER = 255
+      };
+
+      //! File Type.
+      uint8_t fstype;
+      //! File name.
+      std::string filename;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 1102;
+      }
+
+      FileSampleEvent(void);
+
+      FileSampleEvent*
+      clone(void) const
+      {
+        return new FileSampleEvent(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FileSampleEvent::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FileSampleEvent";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
         return 1;
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(destination) + IMC::getSerializationSize(response);
+        return IMC::getSerializationSize(filename);
       }
 
       void
