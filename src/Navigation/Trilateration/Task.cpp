@@ -250,6 +250,10 @@ namespace Navigation
 
             Point3d sol = m_approx->run(20);
             war("Gradient descent %s", sol.print());
+
+            IMC::DevDataText msg;
+            msg.value = sol.print();
+            dispatch(msg);
           }
         }
       }
