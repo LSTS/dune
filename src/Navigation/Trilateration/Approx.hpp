@@ -49,6 +49,14 @@ namespace Navigation
       ~Approx()
       { }
 
+      //! Clears data points.
+      void
+      clear(void)
+      {
+        m_solution = Point3d();
+        m_points.clear();
+      }
+
       //! Set the starting point
       void
       setStart(double _x = 0, double _y = 0, double _z = 0)
