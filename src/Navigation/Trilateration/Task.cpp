@@ -50,30 +50,30 @@ namespace Navigation
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! Task Arguments
+      //! Task Arguments.
       struct Arguments 
       {
-        //! Name of acoustic system to ping
+        //! Name of acoustic system to ping.
         std::string acos_name;
-        //! Start acostic pings
+        //! Start acostic pings.
         bool active;
-        //! Ping interval
+        //! Ping interval.
         double interval;
       };
 
-      //! Task arguments
+      //! Task arguments.
       Arguments m_args;
-      //! Watchdog
+      //! Watchdog.
       Counter<double> m_wdog;
-      //! Last Estimated State
+      //! Last Estimated State.
       IMC::EstimatedState* m_lastPoint;
-      //! Distance associated with last Estimated State
+      //! Distance associated with last Estimated State.
       double m_lastDst;
-      //! Gradient Descent algorithm
+      //! Gradient Descent algorithm.
       Approx* m_approx;
-      //! Get new point
+      //! Flag to get new point.
       bool m_newPoint;
-      //! Get new distance
+      //! Flag to get new distance.
       bool m_newDistance;
 
       //! Constructor.
@@ -117,7 +117,19 @@ namespace Navigation
           else
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::Code::CODE_IDLE);
 
-          reset_data();
+          if (m_approx)
+            m_approx->clear();
+
+          reset_ping();
+          m_wdog.reset();
+        }
+
+        if (paramChanged(m_args.acos_name))
+        {
+          if (m_approx)
+            m_approx->clear();
+
+          reset_ping();
           m_wdog.reset();
         }
       }
@@ -153,7 +165,7 @@ namespace Navigation
       void
       onResourceRelease(void)
       {
-        reset_data();
+        reset_ping();
         Memory::clear(m_approx);
       }
 
@@ -186,19 +198,19 @@ namespace Navigation
         }
       }
 
-      //! Insert points in approximation
+      //! Insert points in approximation.
       bool
       updatePoints(const EstimatedState* pt, double new_distance)
       {
         m_approx->emplace(pt->x, pt->y, pt->z, new_distance);
         war("Insert new: %s", Sphere::print(pt->x, pt->y, pt->z, new_distance));
-        reset_data();
+        reset_ping();
         return (m_approx->size() >= 5);
       }
 
-      //! Ping system
+      //! Ping system.
       void
-      ping()
+      ping(void)
       {
         IMC::UamTxFrame tx;
         tx.setDestination(getSystemId());
@@ -208,9 +220,9 @@ namespace Navigation
         dispatch(tx);
       }
 
-      //! Reset ping data
+      //! Reset ping data.
       void
-      reset_data()
+      reset_ping(void)
       {
         Memory::clear(m_lastPoint);
         m_lastDst = -1;
@@ -227,7 +239,7 @@ namespace Navigation
           {
             m_newPoint = true;
             m_newDistance = false;
-            reset_data();
+            reset_ping();
             m_wdog.reset();
           }
 
