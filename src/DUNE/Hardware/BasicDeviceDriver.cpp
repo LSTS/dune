@@ -685,7 +685,15 @@ namespace DUNE
 
           // Deactivation is complete.
         case SM_DEACT_DONE:
-          deactivate();
+          try
+          {
+            deactivate();
+          }
+          catch (const std::runtime_error& e)
+          {
+            err("failed deactivation: %s", e.what());
+          }
+
           if (m_restart)
             restart();
           else

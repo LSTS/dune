@@ -59,10 +59,14 @@ namespace DUNE
                   false);
 
       param("Connection Timeout", m_connection_timeout)
-      .defaultValue("1.0")
-      .units(Units::Second);
+          .defaultValue("1.0")
+          .units(Units::Second);
 
       addActionButton("Exit");
+
+      param("Additional Actions", m_additional_actions)
+          .defaultValue("")
+          .description("Actions to be added to remote actions list (comma separated in the form Action:Type)");
 
       m_actions.op = IMC::RemoteActionsRequest::OP_REPORT;
 
@@ -144,8 +148,51 @@ namespace DUNE
     }
 
     void
+    BasicRemoteOperation::setupAdditionalActions(const std::vector<std::string>& additional_actions)
+    {
+      for (unsigned int i = 0; i < additional_actions.size(); ++i)
+      {
+        if (Utils::String::ltrim(additional_actions[i]).size() < 3)
+          continue;
+
+        std::vector<std::string> parts;
+        Utils::String::split(additional_actions[i], ":", parts);
+
+        if (parts.size() != 2) continue;
+
+        std::string action_name = parts[0];
+        action_name = Utils::String::ltrim(action_name);
+        action_name = Utils::String::rtrim(action_name);
+        if (action_name.empty()) continue;
+
+        std::string type_lowercase = parts[1];
+        type_lowercase = Utils::String::ltrim(type_lowercase);
+        type_lowercase = Utils::String::rtrim(type_lowercase);
+        Utils::String::toLowerCase(type_lowercase);
+
+        if (!type_lowercase.compare("button"))
+        {
+          addActionButton(action_name);
+        }
+        else if (!type_lowercase.compare("axis"))
+        {
+          addActionAxis(action_name);
+        }
+        else if (!type_lowercase.compare("slider"))
+        {
+          addActionSlider(action_name);
+        }
+        else if (!type_lowercase.compare("halfslider"))
+        {
+          addActionHalfSlider(action_name);
+        }
+      }
+    }
+
+    void
     BasicRemoteOperation::onResourceInitialization(void)
     {
+      setupAdditionalActions(m_additional_actions);
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
     }
 

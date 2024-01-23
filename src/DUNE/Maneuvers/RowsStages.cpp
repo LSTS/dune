@@ -266,7 +266,12 @@ namespace DUNE
 
       if (std::fabs(ady) > c_y_margin)
       {
-        if (std::abs(m_sabs.y) > m_width)
+        double tmp_x = m_sabs.x;
+        double tmp_y = m_sabs.y;
+        if (m_cross_angle != 0.0)
+          Angles::rotate(-m_cross_angle, curveLeft(), tmp_x, tmp_y);
+
+        if (std::abs(tmp_y) > m_width)
           return true;
       }
 

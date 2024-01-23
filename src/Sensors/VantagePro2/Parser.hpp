@@ -98,7 +98,11 @@ namespace Sensors
       float m_console_version;
 
       //! Definition of Davis LOOP data packet
+#ifdef __GNUC__
       struct __attribute__((__packed__)) LOOPData
+#elif defined(_MSC_VER)
+      __pragma(pack(push, 1)) struct LOOPData __pragma(pack(pop))
+#endif
       {
         uint8_t Ack;          // Acknowledge char
         char L;               // "L"
