@@ -31,7 +31,7 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
 if(COMMAND CMAKE_POLICY)
-  cmake_policy(SET CMP0003 NEW)
+  cmake_policy(SET CMP0075 NEW)
 endif(COMMAND CMAKE_POLICY)
 
 # Required C++ Standard.
