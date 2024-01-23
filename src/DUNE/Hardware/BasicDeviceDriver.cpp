@@ -72,8 +72,7 @@ namespace DUNE
       if (!stopping())
         return;
       
-      while(getCurrentState() >= SM_DEACT_BEGIN &&
-            getCurrentState() <= SM_DEACT_DONE)
+      do
       {
         try
         {
@@ -86,6 +85,8 @@ namespace DUNE
           return;
         }
       }
+      while(getCurrentState() >= SM_DEACT_BEGIN &&
+            getCurrentState() <= SM_DEACT_DONE);
     }
 
     void
