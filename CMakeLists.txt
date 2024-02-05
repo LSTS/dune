@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -48,7 +48,7 @@ project("DUNE")
 set(PROJECT_NAME "DUNE: Unified Navigation Environment")
 set(PROJECT_SHORT_NAME "DUNE")
 set(PROJECT_VENDOR "Universidade do Porto - LSTS")
-set(PROJECT_COPYRIGHT "Copyright (C) 2007-2023 - ${PROJECT_VENDOR}")
+set(PROJECT_COPYRIGHT "Copyright (C) 2007-2024 - ${PROJECT_VENDOR}")
 set(PROJECT_CONTACT "DUNE <dune@lsts.pt>")
 set(PROJECT_VERSION_YEAR  "2023")
 set(PROJECT_VERSION_MONTH "07")
