@@ -74,6 +74,10 @@ namespace DUNE
       void
       stop(const std::string& name);
 
+      //! Reload entities for all tasks.
+      void
+      reloadEntities();
+      
       void
       join(const std::string& name);
 
