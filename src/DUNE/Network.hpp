@@ -46,5 +46,7 @@ namespace DUNE
 #include <DUNE/Network/Interface.hpp>
 #include <DUNE/Network/TDMA.hpp>
 #include <DUNE/Network/UpstreamTCPServer.hpp>
+#include <DUNE/Network/TCPClient.hpp>
+#include <DUNE/Network/TCPServer.hpp>
 
 #endif
