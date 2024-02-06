@@ -53,6 +53,9 @@ namespace DUNE
     struct BackLogEntry;
     class TransportBindings;
 
+    // Sink message identifier (receive all messages)
+    const uint16_t c_sink_id = 65535;
+
     // Export DLL Symbol.
     class DUNE_DLL_SYM Bus;
 
@@ -70,20 +73,30 @@ namespace DUNE
       //! @param task task object.
       //! @param id message identification number.
       void
-      registerRecipient(Tasks::AbstractTask* task, uint16_t id);
+      registerRecipient(Tasks::AbstractTask *task, uint16_t id);
 
       //! Unregister a task as a recipient of a given message
       //! identification number.
       //! @param task task object.
       //! @param id message identification number.
       void
-      unregisterRecipient(Tasks::AbstractTask* task, uint16_t id);
+      unregisterRecipient(Tasks::AbstractTask *task, uint16_t id);
+
+      //! Register a task as recipient of ALL messages.
+      //! @param task task object.
+      void
+      registerSink(Tasks::AbstractTask *task);
+
+      //! Unregister a task as recipient of ALL messages.
+      //! @param task task object.
+      void
+      unregisterSink(Tasks::AbstractTask *task);
 
       //! Dispatches a message to registered listeners.
       //! @param msg message to dispatch.
       //! @param task do not deliver message to this task.
       void
-      dispatch(const Message* msg, Tasks::AbstractTask* task = NULL);
+      dispatch(const Message *msg, Tasks::AbstractTask *task = NULL);
 
       inline void
       pause(void)
@@ -95,11 +108,11 @@ namespace DUNE
       void
       resume(void);
 
-      const std::vector<TransportBindings*>
+      const std::vector<TransportBindings *>
       getBindings(void);
 
     private:
-      typedef std::list<Tasks::AbstractTask*> TransportList;
+      typedef std::list<Tasks::AbstractTask *> TransportList;
       //! Table of recipients.
       std::map<uint16_t, TransportList> m_recipients;
       //! Internal list lock.
@@ -109,16 +122,16 @@ namespace DUNE
       //! Pause lock.
       Concurrency::Mutex m_paused_lock;
       //! List containing all generated TransportBindings for future logging/reference.
-      std::vector<TransportBindings*> m_bind_msgs;
+      std::vector<TransportBindings *> m_bind_msgs;
       //! Back log queue. Saves messages when Bus is paused.
-      Concurrency::TSQueue<BackLogEntry*> m_back_log;
+      Concurrency::TSQueue<BackLogEntry *> m_back_log;
 
       //! Non - copyable.
-      Bus(Bus const&);
+      Bus(Bus const &);
 
       //! Non - assignable.
-      Bus&
-      operator=(Bus const&);
+      Bus &
+      operator=(Bus const &);
     };
   }
 }
