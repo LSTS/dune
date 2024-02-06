@@ -109,6 +109,8 @@ namespace DUNE
           uint32_t id = msg->getId();
           for (size_t j = 0; j < m_cbacks[id].size(); ++j)
             m_cbacks[id][j]->consume(msg);
+          for (size_t j = 0; j < m_cbacks[c_sink_id].size(); ++j)
+            m_cbacks[c_sink_id][j]->consume(msg);
           delete msg;
         }
       }
