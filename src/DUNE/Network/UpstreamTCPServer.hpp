@@ -34,6 +34,7 @@
 #include <DUNE/Tasks/Task.hpp>
 #include <DUNE/Memory.hpp>
 #include <DUNE/Network/TCPSocket.hpp>
+#include <DUNE/Time/Delay.hpp>
 
 namespace DUNE
 {
@@ -93,7 +94,10 @@ namespace DUNE
             m_client = client;
           }
           catch (...)
-          { }
+          {
+            m_parent->spew("error creating socket: %s", strerror(errno));
+            Time::Delay::wait(1.0);
+          }
         }
       }
 

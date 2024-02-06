@@ -197,7 +197,7 @@ namespace DUNE
       socklen_t size = sizeof(addr);
       int rv = ::accept(m_handle, (sockaddr*)&addr, &size);
 
-      if (rv == 0)
+      if (rv == -1)
         throw NetworkError(DTR("failed to accept connection"), getLastErrorMessage());
 
       if (a)
