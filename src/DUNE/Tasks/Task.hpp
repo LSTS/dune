@@ -612,11 +612,23 @@ namespace DUNE
       //! @param[in] message_id message identifier.
       //! @param[in] consumer consumer object.
       void
-      bind(unsigned int message_id, AbstractConsumer* consumer)
+      bind(unsigned int message_id, AbstractConsumer *consumer)
       {
-        spew("registering consumer for '%s'",
-             IMC::Factory::getAbbrevFromId(message_id).c_str());
+        if (message_id == c_sink_id)
+          spew("registering sink");
+        else
+          spew("registering consumer for '%s'",
+               IMC::Factory::getAbbrevFromId(message_id).c_str());
         m_recipient->bind(message_id, consumer);
+      }
+
+      template <typename T>
+      void
+      bindAll(T *task_obj)
+      {
+        spew("registering as sink");
+        void (T::*func)(const IMC::Message *) = &T::consume;
+        bind(c_sink_id, new Consumer<T, IMC::Message>(*task_obj, func));
       }
 
       //! Request task to start/resume normal execution.
