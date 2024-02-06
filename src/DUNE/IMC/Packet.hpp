@@ -93,6 +93,9 @@ namespace DUNE
 
       static Message*
       deserializePayload(const Header& hdr, const uint8_t* bfr, uint16_t bfr_len, Message* msg);
+
+      static uint16_t
+      deserializeAllMessages(const uint8_t *bfr, uint16_t bfr_len, std::vector<IMC::Message *> &result);
     };
   }
 }

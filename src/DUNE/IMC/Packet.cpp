@@ -273,5 +273,35 @@ namespace DUNE
 
       return msg;
     }
+
+    uint16_t
+    Packet::deserializeAllMessages(const uint8_t *bfr, uint16_t bfr_len, std::vector<IMC::Message *> &result)
+    {
+      uint16_t offset = 0;
+
+      while (offset < bfr_len)
+      {
+        try
+        {
+          IMC::Message *msg = IMC::Packet::deserialize(bfr + offset, bfr_len - offset);
+          if (msg != nullptr)
+          {
+            result.push_back(msg);
+            offset += msg->getSerializationSize();
+          }
+          else
+          {
+            // std::cerr << "Error deserializing message" << std::endl;
+            break;
+          }
+        }
+        catch (std::exception &e)
+        {
+          // std::cerr << "Error deserializing message: " << e.what() << std::endl;
+          break;
+        }
+      }
+      return offset;
+    }
   }
 }
