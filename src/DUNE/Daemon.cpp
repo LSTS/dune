@@ -230,6 +230,12 @@ namespace DUNE
   {
     if (msg->op != IMC::EntityList::OP_QUERY)
       return;
+     if (msg->op == IMC::EntityList::OP_RELOAD)
+     {
+       m_tman->reloadEntities();
+       war("Loading remote entities");
+       return;
+     }
 
     std::vector<DUNE::Entities::EntityDataBase::Entity*> devs;
     m_ctx.entities.contents(devs);
