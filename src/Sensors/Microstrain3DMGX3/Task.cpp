@@ -287,6 +287,9 @@ namespace Sensors
       void
       onInitializeDevice() override
       {
+        // Need to reset monitor watchdog
+        m_wdog.reset();
+
         // Calibrate sensor.
         runCalibration();
 

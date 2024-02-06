@@ -59,10 +59,6 @@ namespace DUNE
         m_last_fault = Time::Clock::get() - c_fault_cooldown;
       }
 
-      //! Destructor
-      ~ServoCurrentMonitor(void)
-      { }
-
       //! Update function
       //! @param value current measurement to be used in the detection
       //! @return value of the exceeded current (if <= 0 then no fault was detected)
