@@ -92,6 +92,15 @@ namespace DUNE
         if (ctx.profiles.isSelected(profiles))
           createTask(vec[i]);
       }
+
+      // Sort task by boot priority
+      auto comparator = [this](const std::string& str1, const std::string& str2)
+      {
+        return std::atoi(m_ctx.config.get(str1, "Boot Priority").c_str()) > 
+               std::atoi(m_ctx.config.get(str2, "Boot Priority").c_str());
+      };
+
+      std::sort(m_list.begin(), m_list.end(), comparator);
     }
 
     void

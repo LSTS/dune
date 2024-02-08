@@ -125,7 +125,7 @@ namespace DUNE
         }
       };
 
-      //! Task list.
+      //! Task list, priority ordered.
       std::vector<std::string> m_list;
       //! Running tasks.
       std::map<std::string, Task*> m_tasks;
