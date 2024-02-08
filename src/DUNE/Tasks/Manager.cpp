@@ -180,10 +180,13 @@ namespace DUNE
     void
     Manager::start(void)
     {
-      std::map<std::string, Task*>::iterator itr;
-
-      for (itr = m_tasks.begin(); itr != m_tasks.end(); ++itr)
-        start(itr->first);
+      // Request all tasks to start.
+      for (unsigned int i = 0; i < m_list.size(); ++i)
+      {
+        if (m_tasks.find(m_list[i]) == m_tasks.end())
+          continue;
+        start(m_list[i]);
+      }
     }
 
     void
