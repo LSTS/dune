@@ -135,7 +135,7 @@ namespace DUNE
     Manager::~Manager(void)
     {
       // Request all tasks to stop.
-      for (unsigned int i = 0; i < m_list.size(); ++i)
+      for (int i = m_list.size() - 1; i >= 0; --i)
       {
         if (m_tasks.find(m_list[i]) == m_tasks.end())
           continue;
@@ -143,7 +143,7 @@ namespace DUNE
       }
 
       // ... and join.
-      for (unsigned int i = 0; i < m_list.size(); ++i)
+      for (int i = m_list.size() - 1; i >= 0; --i)
       {
         if (m_tasks.find(m_list[i]) == m_tasks.end())
           continue;
