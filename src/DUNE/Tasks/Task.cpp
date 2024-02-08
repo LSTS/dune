@@ -74,6 +74,12 @@ namespace DUNE
       .defaultValue("")
       .description(DTR("Main entity label"));
 
+      param(DTR_RT("Boot Priority"), m_args.boot_priority)
+      .defaultValue("0")
+      .minimumValue("0")
+      .maximumValue("10")
+      .description(DTR("Priority to sort start and stop of tasks"));
+
       param(DTR_RT("Execution Priority"), m_args.priority)
       .defaultValue("10")
       .description(DTR("Execution priority"));
