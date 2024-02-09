@@ -1088,12 +1088,13 @@ namespace DUNE
     {
       if (unit == IMC::Z_HEIGHT)
         return m_estate.height;
-      
-      if (unit == IMC::Z_ALTITUDE)
+      else if (unit == IMC::Z_ALTITUDE)
         return m_estate.alt;
-        
-      if (unit == IMC::Z_DEPTH)
+      else if (unit == IMC::Z_DEPTH)
         return m_estate.depth;
+        
+      throw std::runtime_error(DTR("Invalid Z unit"));
+      return 0;
     }
 
     void
