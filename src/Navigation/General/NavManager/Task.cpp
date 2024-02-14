@@ -33,7 +33,8 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-using DUNE_NAMESPACES;
+// Local headers.
+#include "GpsState.hpp"
 
 namespace Navigation
 {
@@ -44,6 +45,8 @@ namespace Navigation
     //! @author Alberto Dallolio
     namespace NavManager
     {
+      using DUNE_NAMESPACES;
+
       struct Arguments
       {
         //! Euler Angles source entity label.
@@ -68,59 +71,30 @@ namespace Navigation
         float m_offset;
         //! Offset flag.
         bool m_offset_flag;
-        //! Estimated state.
-        IMC::EstimatedState m_estate;
         //! Euler Angles entity eid.
         unsigned int m_euler_eid;
         //! Angular velocity entity eid.
         unsigned int m_ang_eid;
-        //! Main GPS entity eid.
-        int m_main_unit_eid;
-        //! Secondary GPS entity eid.
-        int m_secondary_unit_eid;
-        //! Third GPS entity eid.
-        int m_third_unit_eid;
-        //! Time without main GPS.
-        Counter<double> m_time_without_main_unit;
-        //! Time without secondary GPS.
-        Counter<double> m_time_without_secondary_unit;
-        //! Time without third GPS.
-        Counter<double> m_time_without_third_unit;
-        //! GPS fix rejection.
-        IMC::GpsFixRejection m_rej;
-        //! True if preferred GPS is not working.
-        bool main_unit_lost;
-        //! True if secondary GPS is not working.
-        bool secondary_unit_lost;
-        //! True if third GPS is not working.
-        bool third_unit_lost;
-        //! Iridium warning for main GPS.
-        bool main_unit_ir_sent;
-        //! Iridium warning for secondary GPS.
-        bool secondary_unit_ir_sent;
-        //! Iridium warning for third GPS.
-        bool third_unit_ir_sent;
         //! Transmission request id
         int m_reqid;
-        //! Fix validity.
-        bool m_main_valid, m_secondary_valid, m_third_valid;
+        //! Estimated state.
+        IMC::EstimatedState m_estate;
         //! Main system GpsFix message.
         // IMC::GpsFix m_sys_fix;  // Limited scope not needed
+        //! GPS fix rejection.
+        IMC::GpsFixRejection m_rej;
+        //! Gps State for main unit.
+        GpsState m_main;
+        //! Gps State for secondary unit.
+        GpsState m_second;
+        //! Gps State for third unit.
+        GpsState m_third;
         //! Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
-          main_unit_lost(false),
-          secondary_unit_lost(false),
-          third_unit_lost(false),
-          main_unit_ir_sent(false),
-          secondary_unit_ir_sent(false),
-          third_unit_ir_sent(false),
-          m_reqid(0),
-          m_main_valid(true),
-          m_secondary_valid(true),
-          m_third_valid(true)
+          m_reqid(0)
         {
           // Define configuration parameters.
           param("Entity Label - Euler Angles", m_args.euler_label)
@@ -175,9 +149,9 @@ namespace Navigation
           m_ang_eid = getEid(m_args.ang_label);
 
           // Gps entities
-          m_main_unit_eid = getEid(m_args.main_unit);
-          m_secondary_unit_eid = getEid(m_args.secondary_unit);
-          m_third_unit_eid = getEid(m_args.third_unit);
+          m_main.id = getEid(m_args.main_unit);
+          m_second.id = getEid(m_args.secondary_unit);
+          m_third.id = getEid(m_args.third_unit);
         }
 
         //! Get entity id of label
@@ -203,9 +177,9 @@ namespace Navigation
         onResourceAcquisition(void)
         {
           // Navigation enters error mode without valid GPS data.
-          m_time_without_main_unit.setTop(m_args.inp_tout);
-          m_time_without_secondary_unit.setTop(m_args.inp_tout);
-          m_time_without_third_unit.setTop(m_args.inp_tout);
+          m_main.setTop(m_args.inp_tout);
+          m_second.setTop(m_args.inp_tout);
+          m_third.setTop(m_args.inp_tout);
         }
 
         void
@@ -235,36 +209,37 @@ namespace Navigation
         consume(const IMC::GpsFix* msg)
         {
           debug("GPS FIX FROM: %u", msg->getSourceEntity());
-          if (msg->getSourceEntity() == m_main_unit_eid)
+          if (msg->getSourceEntity() == m_main.id)
           {
-            m_time_without_main_unit.reset();
-            main_unit_lost = false;
+            m_main.reset();
 
             if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
             {
               debug("Got INVALID fix from main unit");
-              m_main_valid = false;
-              m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
 
-              // Just to separate Entity rejection
+              m_main.setValid(false);
+
+              m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
               m_rej.setDestinationEntity(msg->getSourceEntity());
               dispatch(m_rej);
             }
             else
             {
               trace("Got VALID fix from main unit");
-              m_main_valid = true;
+              m_main.setValid(true);
+
+              sendFix(msg);
             }
           }
-          else if (msg->getSourceEntity() == m_secondary_unit_eid)
+          else if (msg->getSourceEntity() == m_second.id)
           {
-            m_time_without_secondary_unit.reset();
-            secondary_unit_lost = false;
+            m_second.reset();
 
             if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
             {
               debug("Got INVALID fix from secondary unit");
-              m_secondary_valid = false;
+              m_second.setValid(false);
+
               m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
               m_rej.setDestinationEntity(msg->getSourceEntity());
               dispatch(m_rej);
@@ -272,18 +247,21 @@ namespace Navigation
             else
             {
               trace("Got VALID fix from secondary unit");
-              m_secondary_valid = true;
+              m_second.setValid(true);
+
+              if (m_main.isInvalid())
+                sendFix(msg);
             }
           }
-          else if (msg->getSourceEntity() == m_third_unit_eid)
+          else if (msg->getSourceEntity() == m_third.id)
           {
-            m_time_without_third_unit.reset();
-            third_unit_lost = false;
+            m_third.reset();
 
             if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
             {
               debug("Got INVALID fix from third unit");
-              m_third_valid = false;
+              m_third.setValid(false);
+
               m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
               m_rej.setDestinationEntity(msg->getSourceEntity());
               dispatch(m_rej);
@@ -291,32 +269,12 @@ namespace Navigation
             else
             {
               trace("Got VALID fix from third unit");
-              m_third_valid = true;
+              m_third.setValid(true);
+
+              if (m_main.isInvalid() && m_second.isInvalid())
+                sendFix(msg);
             }
-          }
-
-          //! Logic for unit choice.
-          if ((msg->getSourceEntity() == m_main_unit_eid) && m_main_valid)
-          {
-            debug("Using GpsFix from main unit");
-            sendFix(msg);
-            return;
-          }
-
-          if (msg->getSourceEntity() == m_secondary_unit_eid && m_secondary_valid
-              && (main_unit_lost || !m_main_valid))  // m_time_without_main_unit.overflow()
-          {
-            debug("Using GpsFix from secondary unit");
-            sendFix(msg);
-            return;
-          }
-
-          if ((msg->getSourceEntity() == m_third_unit_eid) && m_third_valid
-              && (main_unit_lost || !m_main_valid) && (secondary_unit_lost || !m_secondary_valid))
-          {
-            debug("Using GpsFix from third unit");
-            sendFix(msg);
-          }
+            }
         }
 
         void
@@ -373,52 +331,41 @@ namespace Navigation
           {
             waitForMessages(1.0);
 
-            if (m_time_without_main_unit.overflow() && !main_unit_lost)
-            {
+            if (m_main.update())
               debug("Main Gps disappeared");
-              main_unit_lost = true;
-            }
 
-            if (m_time_without_secondary_unit.overflow() && !secondary_unit_lost)
-            {
+            if (m_second.update())
               debug("Secondary Gps disappeared");
-              secondary_unit_lost = true;
-            }
 
-            if (m_time_without_third_unit.overflow() && !third_unit_lost)
-            {
+            if (m_third.update())
               debug("Third Gps disappeared");
-              third_unit_lost = true;
-            }
 
             // Raise ERROR MODE if all GPSs are out of service.
-            if ((m_time_without_main_unit.overflow() && m_time_without_secondary_unit.overflow()
-                 && m_time_without_third_unit.overflow())
-                || (!m_main_valid && !m_secondary_valid && !m_third_valid))
+            if (m_main.isInvalid() && m_second.isInvalid() && m_third.isInvalid())
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_WAIT_GPS_FIX);
-            else if ((main_unit_lost || !m_main_valid) && !main_unit_ir_sent)
+            else if (m_main.sendIridium())
             {
               debug("Main GPS not working!");
 
               // Send iridium message.
               sendIridium("Main GPS not working!");
-              main_unit_ir_sent = true;
+              m_main.send_ir = true;
             }
-            else if ((secondary_unit_lost || !m_secondary_valid) && !secondary_unit_ir_sent)
+            else if (m_second.sendIridium())
             {
               debug("Secondary GPS not working!");
 
               // Send iridium message.
               sendIridium("Secondary GPS not working!");
-              secondary_unit_ir_sent = true;
+              m_second.send_ir = true;
             }
-            else if ((third_unit_lost || !m_third_valid) && !third_unit_ir_sent)
+            else if (m_third.sendIridium())
             {
               debug("Third GPS not working!");
 
               // Send iridium message.
               sendIridium("Third GPS not working!");
-              third_unit_ir_sent = true;
+              m_third.send_ir = true;
             }
           }
         }
