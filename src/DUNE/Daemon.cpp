@@ -146,8 +146,8 @@ namespace DUNE
 
   Daemon::~Daemon(void)
   {
-    m_ctx.mbus.pause();
     delete m_tman;
+    m_ctx.mbus.pause();
     delete m_cpu_avg;
     inf(DTR("clean shutdown"));
   }
