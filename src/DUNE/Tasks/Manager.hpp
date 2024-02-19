@@ -77,6 +77,9 @@ namespace DUNE
       void
       join(const std::string& name);
 
+      bool
+      precedentsStopped(const std::string& section);
+
       //! Retrieve the task name from a configuration section.
       //! @param str configuration section string.
       //! @return task name.

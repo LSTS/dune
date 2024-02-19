@@ -93,14 +93,14 @@ namespace DUNE
           createTask(vec[i]);
       }
 
-      // Sort task by boot priority
-      auto comparator = [this](const std::string& str1, const std::string& str2)
-      {
-        return std::atoi(m_ctx.config.get(str1, "Boot Priority").c_str()) > 
-               std::atoi(m_ctx.config.get(str2, "Boot Priority").c_str());
-      };
+      // // Sort task by boot priority
+      // auto comparator = [this](const std::string& str1, const std::string& str2)
+      // {
+      //   return std::atoi(m_ctx.config.get(str1, "Boot Priority").c_str()) > 
+      //          std::atoi(m_ctx.config.get(str2, "Boot Priority").c_str());
+      // };
 
-      std::sort(m_list.begin(), m_list.end(), comparator);
+      // std::sort(m_list.begin(), m_list.end(), comparator);
     }
 
     void
@@ -135,11 +135,23 @@ namespace DUNE
     Manager::~Manager(void)
     {
       // Request all tasks to stop.
-      for (int i = m_list.size() - 1; i >= 0; --i)
+      bool all_stopped = false;
+      while(!all_stopped)
       {
-        if (m_tasks.find(m_list[i]) == m_tasks.end())
-          continue;
-        stop(m_list[i]);
+        all_stopped = true;
+        for (unsigned int i = 0; i < m_list.size(); ++i)
+        {
+          if (m_tasks.find(m_list[i]) == m_tasks.end())
+            continue;
+
+          if (m_tasks[m_list[i]]->isStopping() || m_tasks[m_list[i]]->isDead())
+            continue;
+
+          if (precedentsStopped(m_list[i]))  
+            stop(m_list[i]);
+          else
+            all_stopped = false;
+        }
       }
 
       // ... and join.
@@ -211,6 +223,31 @@ namespace DUNE
       {
         task->err(DTR("unknown exception"));
       }
+    }
+
+    bool
+    Manager::precedentsStopped(const std::string& section)
+    {
+      if (m_tasks.find(section) == m_tasks.end())
+        throw InvalidTaskName(section);
+
+      // FIXME: Should search for Entity Name, not section 
+      std::vector<std::string> precedents;
+      m_ctx.config.get(section, "Task Precedents", "", precedents);
+
+      if (precedents.empty())
+        return true;
+      
+      for (auto p : precedents)
+      {
+        if (m_tasks.find(p) == m_tasks.end())
+          throw InvalidTaskName(p);
+
+        if (!m_tasks[p]->isDead())
+          return false;
+      }
+
+      return true;
     }
 
     std::string
