@@ -777,8 +777,8 @@ namespace DUNE
         uint16_t act_time;
         //! Deactivation time.
         uint16_t deact_time;
-        //! Boot priority.
-        uint8_t boot_priority;
+        //! Task precedents.
+        std::vector<std::string> precedents;
         //! Scheduling priority.
         unsigned int priority;
         //! True if task is active.
