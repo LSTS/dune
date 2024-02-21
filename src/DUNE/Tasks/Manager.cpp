@@ -134,25 +134,48 @@ namespace DUNE
 
     Manager::~Manager(void)
     {
-      // Request all tasks to stop.
-      bool all_stopped = false;
-      while(!all_stopped)
+      //FIXME: Save task relationships
+      // if tasks has precedents (slave) with master as precedent task
+      // only stop master after slave has been joined
+      // probably in some sort of tree
+
+      // Get tasks precedents in queue.
+      std::vector<std::string> precedents;
+      std::queue<Task*> stop_later;
+      for (unsigned int i = 0; i < m_list.size(); ++i)
       {
-        all_stopped = true;
-        for (unsigned int i = 0; i < m_list.size(); ++i)
+        if (m_tasks.find(m_list[i]) == m_tasks.end())
+          continue;
+        
+        m_ctx.config.get(m_list[i], "Task Precedents", "", precedents);
+        if (precedents.empty())
+          continue;
+
+        std::string task_name = m_list[i];
+        for (unsigned int j = 0; j < precedents.size(); ++j)
         {
-          if (m_tasks.find(m_list[i]) == m_tasks.end())
+          auto it = m_tasks.find(precedents[j]);
+          if (it == m_tasks.end())
             continue;
 
-          if (m_tasks[m_list[i]]->isStopping() || m_tasks[m_list[i]]->isDead())
-            continue;
-
-          if (precedentsStopped(m_list[i]))  
-            stop(m_list[i]);
-          else
-            all_stopped = false;
+          stop_later.push(it->second);
+          // Remove tasks from list
+          m_tasks.erase(it);
         }
       }
+
+      for (unsigned int i = 0; i < m_list.size(); ++i)
+      {
+        if (m_tasks.find(m_list[i]) == m_tasks.end())
+          continue;
+
+        if (m_tasks[m_list[i]]->isStopping() || m_tasks[m_list[i]]->isDead())
+          continue;
+
+        stop(m_list[i]);
+      }
+
+      DUNE_WRN("Manager", DTR("stopped tasks without dependencies"));
 
       // ... and join.
       for (int i = m_list.size() - 1; i >= 0; --i)
@@ -164,6 +187,19 @@ namespace DUNE
           join(m_list[i]);
         delete m_tasks[m_list[i]];
         m_tasks[m_list[i]] = NULL;
+      }
+
+      while (!stop_later.empty())
+      {
+        Task* task = stop_later.front();
+        stop_later.pop();
+
+        // Throw might happen here ?
+        task->inf(DTR("stopping"));
+        task->stop();
+        task->join();
+        task->inf(DTR("stopped"));
+        delete task;
       }
     }
 
