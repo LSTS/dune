@@ -138,6 +138,12 @@ namespace DUNE
         return *this;
       }
 
+      const std::vector<ValuesIf*>&
+      valuesIf()
+      {
+        return m_values_if;
+      }
+
       Parameter&
       valuesIf(const std::string& if_param, const std::string& if_value, const std::string& a_values)
       {
@@ -175,12 +181,24 @@ namespace DUNE
         return *this;
       }
 
+      std::string
+      minimumValue(void)
+      {
+        return m_min_value;
+      }
+
       Parameter&
       minimumValue(const std::string& min_value)
       {
         m_min_value = min_value;
         m_reader->minimumValue(min_value);
         return *this;
+      }
+
+      std::string
+      maximumValue(void)
+      {
+        return m_max_value;
       }
 
       Parameter&
@@ -199,6 +217,12 @@ namespace DUNE
         return *this;
       }
 
+      unsigned
+      minimumSize(void)
+      {
+        return m_min_size;
+      }
+
       Parameter&
       minimumSize(unsigned min_size)
       {
@@ -207,12 +231,24 @@ namespace DUNE
         return *this;
       }
 
+      unsigned
+      maximumSize(void)
+      {
+        return m_max_size;
+      }
+
       Parameter&
       maximumSize(unsigned max_size)
       {
         m_max_size = max_size;
         m_reader->maximumSize(max_size);
         return *this;
+      }
+
+      std::string
+      values(void)
+      {
+        return m_values;
       }
 
       Parameter&
@@ -283,6 +319,12 @@ namespace DUNE
       getScope(void) const
       {
         return m_scope;
+      }
+
+      std::string
+      getType(void)
+      {
+        return m_type_name;
       }
 
     protected:
