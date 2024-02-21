@@ -161,7 +161,7 @@ namespace DUNE
       std::string
       getTypeName(void)
       {
-        T tmp;
+        T tmp = {};
         return std::string("list:") + ParameterTypeName::get(tmp);
       }
 
