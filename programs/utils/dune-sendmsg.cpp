@@ -159,7 +159,7 @@ main(int argc, char** argv)
       fprintf(stdout, "  [O]: OperationalLimits\n");
       fprintf(stdout, "  [P]: PlanControl, PlanGeneration, PopEntityParameters, PowerChannelControl,\n");
       fprintf(stdout, "       PowerChannelState, PushEntityParameters\n");
-      fprintf(stdout, "  [Q]: QueryEntityInfo, QueryEntityParameters\n");
+      fprintf(stdout, "  [Q]: QueryEntityInfo, QueryEntityParameters, QueryTypedEntityParameters\n");
       fprintf(stdout, "  [R]: RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, ReportControl,\n");
       fprintf(stdout, "       RestartSystem\n");
       fprintf(stdout, "  [S]: SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition,\n");
@@ -699,6 +699,17 @@ main(int argc, char** argv)
     IMC::QueryEntityParameters* tmsg = new IMC::QueryEntityParameters;
     msg = tmsg;
     tmsg->name = argv[4];
+  }
+
+  if (strcmp(argv[3], "QueryTypedEntityParameters") == 0)
+  {
+    IMC::QueryTypedEntityParameters* tmsg = new IMC::QueryTypedEntityParameters;
+    msg = tmsg;
+    tmsg->op = std::atoi(argv[4]);
+    tmsg->request_id = std::atoi(argv[5]);
+
+    if (argc >= 7)
+      tmsg->entity_name = argv[6];
   }
 
   if (strcmp(argv[3], "RegisterManeuver") == 0)
