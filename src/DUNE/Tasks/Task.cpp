@@ -31,6 +31,7 @@
 // ISO C++ 98 headers.
 #include <sstream>
 #include <cstddef>
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/IMC/Constants.hpp>
@@ -603,11 +604,16 @@ namespace DUNE
         param.units = Units::getAbbrev(p->units());
         param.description = p->description();
         param.values_list = p->values();
-        if (!p->minimumValue().empty())
-          param.min_value = std::stof(p->minimumValue());
-        if (!p->maximumValue().empty())
-          param.max_value = std::stof(p->maximumValue());
-        param.list_min_size = p->minimumSize();
+
+        param.min_value = p->minimumValue().empty() ?
+                          -std::numeric_limits<float>::max() :
+                          std::stof(p->minimumValue());
+        param.max_value = p->maximumValue().empty() ?
+                          std::numeric_limits<float>::max() :
+                          std::stof(p->maximumValue());
+
+        param.list_min_size = p->minimumSize() == UINT_MAX ? 
+                              0 : p->minimumSize();
         param.list_max_size = p->maximumSize();
         param.visibility = p->getVisibility();
         param.scope = p->getScope();
