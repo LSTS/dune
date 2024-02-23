@@ -51,30 +51,29 @@ namespace Transports
     {
 
     public:
-      Router(Task* task)
-      {
-        m_parent = task;
-        m_medium = 4;
-        m_gsm_entity_id = -1;
-        m_iridium_entity_id = -1;
-        m_reqid = 0;
-        c_wifi_timeout = 15;
-      }
+      explicit Router(Task* const task):
+        m_parent(task),
+        m_medium(4),
+        m_gsm_entity_id(-1),
+        m_iridium_entity_id(-1),
+        m_reqid(0),
+        c_wifi_timeout(15)
+      { }
 
       void
-      process(IMC::VehicleMedium* msg)
+      process(const IMC::VehicleMedium* msg)
       {
         m_medium = msg->medium;
       }
 
       void
-      process(IMC::RSSI* msg)
+      process(const IMC::RSSI* msg)
       {
         m_rssi_msg_map[msg->getSourceEntity()] = msg->value;
       }
 
       void
-      process(IMC::Announce* msg)
+      process(const IMC::Announce* msg)
       {
         std::vector<std::string> list;
         String::split(msg->services, ";", list);
@@ -172,19 +171,18 @@ namespace Transports
       void
       clearTimeouts()
       {
-        std::map<uint16_t, IMC::TransmissionRequest*>::iterator it;
         double time = Time::Clock::getSinceEpoch();
-        it = m_transmission_requests.begin();
+        auto it = m_transmission_requests.begin();
 
         while (it != m_transmission_requests.end())
         {
           if (it->second->deadline <= time)
           {
-           m_parent->inf("Transmission Request %d is expired by %f seconds", it->second->req_id, it->second->deadline - time);
+            m_parent->inf("Transmission Request %d is expired by %f seconds", it->second->req_id, it->second->deadline - time);
             answer(it->second, "Transmission timed out.",
                    IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
             Memory::clear(it->second);
-            m_transmission_requests.erase(it++);
+            m_transmission_requests.erase(it);
           }
           else
             ++it;
@@ -199,10 +197,7 @@ namespace Transports
 
         AcousticRequest tx;
 
-        if (msg->destination == "")
-          tx.destination = "broadcast";
-        else
-          tx.destination = msg->destination.c_str();
+        tx.destination = msg->destination.empty() ? "broadcast" : msg->destination;
 
         tx.setDestination(m_parent->getSystemId());
         tx.setDestinationEntity(m_parent->getEntityId());
@@ -214,7 +209,7 @@ namespace Transports
           case IMC::TransmissionRequest::DMODE_INLINEMSG:
             {
               tx.type = IMC::AcousticRequest::TYPE_MSG;
-              tx.msg.set(msg->msg_data.get()->clone());
+              tx.msg.set(*msg->msg_data.get());
 
               break;
             }
@@ -291,10 +286,9 @@ namespace Transports
           case IMC::TransmissionRequest::DMODE_INLINEMSG:
             {
               IMC::ImcIridiumMessage m;
-              const IMC::Message * inlinemsg = msg->msg_data.get();
               m.destination = 0xFFFF;
               m.source = m_parent->getSystemId();
-              m.msg = inlinemsg->clone();
+              m.msg = msg->msg_data.get()->clone();
               uint8_t buffer[65535];
               int len = m.serialize(buffer);
               tx.data.assign(buffer, buffer + len);
@@ -306,8 +300,7 @@ namespace Transports
             {
               if(plain_text)
               {
-                const char* txt = msg->txt_data.c_str();
-                tx.data.assign(txt, txt + msg->txt_data.length());
+                tx.data.assign(msg->txt_data.begin(), msg->txt_data.end());
               }
               else
               {
@@ -578,9 +571,9 @@ namespace Transports
           {
             uint16_t newId = createInternalId();
             m_transmission_requests[newId] = msg->clone();
-            IMC::TransmissionRequest* msg2 = msg->clone();
-            msg2->req_id = newId;
-            answerTCPStatus(msg2, "Didn't find TCP server on destination host",
+            IMC::TransmissionRequest msg2 = *msg;
+            msg2.req_id = newId;
+            answerTCPStatus(&msg2, "Didn't find TCP server on destination host",
                             IMC::TCPStatus::TCPSTAT_HOST_UNKNOWN);
             return;
           }
@@ -592,7 +585,7 @@ namespace Transports
         {
           case IMC::TransmissionRequest::DMODE_INLINEMSG:
             {
-              send.msg_data.set(msg->msg_data.get()->clone());
+              send.msg_data.set(*msg->msg_data.get());
               break;
             }
           default:
@@ -747,18 +740,20 @@ namespace Transports
         m_iridium_entity_id = id;
       }
 
-      std::map<uint16_t, IMC::TransmissionRequest*>*
+      std::map<uint16_t, IMC::TransmissionRequest*>&
       getList()
       {
-        return &m_transmission_requests;
+        return m_transmission_requests;
       }
 
       ~Router()
       {
+        for (auto& pair : m_transmission_requests)
+          Memory::clear(pair.second);
       }
 
     private:
-      Task* m_parent;
+      Task* const m_parent;
       uint8_t m_medium;
 
       int m_gsm_entity_id;
@@ -809,9 +804,7 @@ namespace Transports
         if (system.empty())
           return false;
 
-        std::map<std::string, TCPAnnounce>::iterator it;
-
-        it = m_wifi_map.find(system);
+        auto it = m_wifi_map.find(system);
         if (it == m_wifi_map.end())
           return false;
 
@@ -828,8 +821,7 @@ namespace Transports
         if (system.empty())
           return false;
 
-        std::map<std::string, std::string>::iterator it;
-        it = m_gsm_announce_map.find(system);
+        auto it = m_gsm_announce_map.find(system);
         if (it != m_gsm_announce_map.end())
         {
           std = it->second;
@@ -855,8 +847,8 @@ namespace Transports
             {
               if (m_gsm_entity_id == -1)
                 return false;
-              std::map<uint8_t, fp32_t>::iterator it;
-              it = m_rssi_msg_map.find(m_gsm_entity_id);
+
+              auto it = m_rssi_msg_map.find(m_gsm_entity_id);
               if (it == m_rssi_msg_map.end())
                 return false;
               if (it->second > 0)
@@ -869,8 +861,8 @@ namespace Transports
             {
               if (m_iridium_entity_id == -1)
                 return false;
-              std::map<uint8_t, fp32_t>::iterator it;
-              it = m_rssi_msg_map.find(m_iridium_entity_id);
+
+              auto it = m_rssi_msg_map.find(m_iridium_entity_id);
               if (it == m_rssi_msg_map.end())
                 return false;
               if (it->second >= 20)
