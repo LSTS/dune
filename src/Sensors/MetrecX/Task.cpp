@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -113,10 +113,8 @@ namespace Sensors
     //! %Task arguments.
     struct Arguments
     {
-      //! Serial port device.
-      std::string uart_dev;
-      //! Serial port baud rate.
-      unsigned uart_baud;
+      //! IO device (URI).
+      std::string io_dev;
       //! Input timeout.
       double input_timeout;
       //! Geopotential Anomaly.
@@ -137,7 +135,7 @@ namespace Sensors
       std::string elabel_temp;
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! Serial port handle.
       SerialPort* m_uart;
@@ -165,21 +163,26 @@ namespace Sensors
       float m_temp;
       //! Probes.
       Probes m_probes;
+      //! Input buffer
+      char m_bfr[255];
+      //! Sensor values
+      double m_values[c_total];
+
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_uart(NULL)
       {
-        param("Serial Port - Device", m_args.uart_dev)
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+                    
+        param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
-
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("38400")
-        .description("Serial port baud rate");
+        .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
 
         param("Input Timeout", m_args.input_timeout)
         .defaultValue("4.0")
@@ -263,49 +266,6 @@ namespace Sensors
         bind<IMC::Temperature>(this);
       }
 
-      ~Task(void)
-      {
-        // To clear uart if an exception is thrown.
-        onResourceRelease();
-
-        for (unsigned i = 0; i < c_total; ++i)
-          Memory::clear(m_msgs[i]);
-      }
-
-      void
-      onEntityResolution(void)
-      {
-        try
-        {
-          m_temp_eid = resolveEntity(m_args.elabel_temp);
-        }
-        catch (...)
-        {
-          m_temp_eid = UINT_MAX;
-        }
-      }
-
-      void
-      consume(const IMC::EstimatedState* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        m_lat = msg->lat;
-      }
-
-      void
-      consume(const IMC::Temperature* msg)
-      {
-        if (msg->getSourceEntity() != m_temp_eid)
-          return;
-
-        if (!m_temp_wdog.overflow())
-          return;
-
-        m_temp = msg->value;
-      }
-
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
@@ -361,6 +321,87 @@ namespace Sensors
         }
       }
 
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
+      {
+        try
+        {
+          m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
+          m_uart->setCanonicalInput(true);
+          return true;
+        }
+        catch (...)
+        {
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+
+        return true;
+      }
+
+      //! Disconnect from device.
+      void
+      onDisconnect() override
+      {
+        stopMonitoring();
+        disableInChannels();
+
+        Memory::clear(m_uart);
+        for (unsigned i = 0; i < c_total; ++i)
+          Memory::clear(m_msgs[i]);
+      }
+
+      //! Device may be initialized.
+      void
+      onInitializeDevice() override
+      {
+        onUpdateParameters();
+
+        m_uart->writeString("\r");
+        Delay::wait(1.0);
+        m_uart->flush();
+
+        if (!sendCommand(""))
+          throw RestartNeeded(DTR("failed to enter command mode"), 5, false);
+
+        setup();
+      }
+
+      void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_temp_eid = resolveEntity(m_args.elabel_temp);
+        }
+        catch (...)
+        {
+          m_temp_eid = UINT_MAX;
+        }
+      }
+
+      void
+      consume(const IMC::EstimatedState* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        m_lat = msg->lat;
+      }
+
+      void
+      consume(const IMC::Temperature* msg)
+      {
+        if (msg->getSourceEntity() != m_temp_eid)
+          return;
+
+        if (!m_temp_wdog.overflow())
+          return;
+
+        m_temp = msg->value;
+      }
+
       //! Reserve entities.
       void
       onEntityReservation(void)
@@ -390,45 +431,6 @@ namespace Sensors
             reserveEntity(m_args.labels[i]);
           }
         }
-
-        onUpdateParameters();
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-        try
-        {
-          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_uart->setCanonicalInput(true);
-          m_uart->flush();
-        }
-        catch (std::runtime_error& e)
-        {
-          throw RestartNeeded(e.what(), 30);
-        }
-      }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
-        Memory::clear(m_uart);
-      }
-
-      void
-      onResourceInitialization(void)
-      {
-        m_uart->writeString("\r");
-        Delay::wait(1.0);
-        m_uart->flush();
-
-        if (!sendCommand(""))
-          throw RestartNeeded(DTR("failed to enter command mode"), 5, false);
-
-        setup();
       }
 
       //! Setup device.
@@ -724,86 +726,78 @@ namespace Sensors
         return active;
       }
 
-      //! Main loop.
-      void
-      onMain(void)
+      //! Get data from device.
+      //! @return true if data was received, false otherwise.
+      bool
+      onReadData() override
       {
-        char bfr[255];
-        double values[c_total];
-
-        while (!stopping())
+        if (m_need_setup)
         {
-          consumeMessages();
-
-          if (m_need_setup)
-          {
-            stopMonitoring();
-            setup();
-          }
-
-          if (m_wdog.overflow())
-          {
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-          }
-
-          if (!Poll::poll(*m_uart, 1.0))
-            continue;
-
-          size_t rv = m_uart->readString(bfr, sizeof(bfr));
-          double tstamp = Clock::getSinceEpoch();
-
-          if (rv == 0)
-            throw RestartNeeded(DTR("I/O error"), 5);
-
-          char* ptr = bfr;
-          unsigned ix_read = 0;
-          int pos = 0;
-
-          double value;
-          unsigned chn_active = getChannels();
-          while (std::sscanf(ptr, "%lf%n", &value, &pos) == 1)
-          {
-            ptr += pos;
-
-            // Save to temporary buffer.
-            if (ix_read < chn_active)
-              values[ix_read] = value;
-            ix_read++;
-          }
-
-          // Check if there is some mismatch between the configuration file
-          // and sensor output. If true, doesn't dispatch any message.
-          if (ix_read != chn_active)
-            throw RestartNeeded(DTR("mismatch between output and configuration"), 30, true);
-
-          // Dispatch data.
-          unsigned index = 0;
-          for (unsigned i = 0; i < c_total; i++)
-          {
-            if (m_slots[i])
-            {
-              if (i < c_channels)
-              {
-                // dispatch raw voltage (analog).
-                if (i >= c_di_count)
-                  dispatchValue(m_msgs[i], values[index++], m_args.factors[i], tstamp, true, i - c_di_count);
-                else
-                  dispatchValue(m_msgs[i], values[index++], m_args.factors[i], tstamp, false, i);
-              }
-              else
-              {
-                dispatchValue(m_msgs[i], values[index++], tstamp);
-              }
-            }
-          }
-
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          m_wdog.reset();
+          stopMonitoring();
+          setup();
         }
 
-        stopMonitoring();
-        disableInChannels();
+        if (m_wdog.overflow())
+        {
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+
+        if (!Poll::poll(*m_uart, 1.0))
+          return false;
+
+        size_t rv = m_uart->readString(m_bfr, sizeof(m_bfr));
+        double tstamp = Clock::getSinceEpoch();
+
+        if (rv == 0)
+          throw RestartNeeded(DTR("I/O error"), 5);
+
+        char* ptr = m_bfr;
+        unsigned ix_read = 0;
+        int pos = 0;
+
+        double value;
+        unsigned chn_active = getChannels();
+        while (std::sscanf(ptr, "%lf%n", &value, &pos) == 1)
+        {
+          ptr += pos;
+
+          // Save to temporary buffer.
+          if (ix_read < chn_active)
+            m_values[ix_read] = value;
+          ix_read++;
+        }
+
+        // Check if there is some mismatch between the configuration file
+        // and sensor output. If true, doesn't dispatch any message.
+        if (ix_read != chn_active)
+          throw RestartNeeded(DTR("mismatch between output and configuration"), 30, true);
+
+        // Dispatch data.
+        unsigned index = 0;
+        for (unsigned i = 0; i < c_total; i++)
+        {
+          if (m_slots[i])
+          {
+            if (i < c_channels)
+            {
+              // dispatch raw voltage (analog).
+              if (i >= c_di_count)
+                dispatchValue(m_msgs[i], m_values[index++], m_args.factors[i], tstamp, true, i - c_di_count);
+              else
+                dispatchValue(m_msgs[i], m_values[index++], m_args.factors[i], tstamp, false, i);
+            }
+            else
+            {
+              dispatchValue(m_msgs[i], m_values[index++], tstamp);
+            }
+          }
+        }
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_wdog.reset();
+
+        return true;
       }
 
     };

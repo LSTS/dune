@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -58,10 +58,6 @@ namespace DUNE
         m_lower_faults = 0;
         m_last_fault = Time::Clock::get() - c_fault_cooldown;
       }
-
-      //! Destructor
-      ~ServoCurrentMonitor(void)
-      { }
 
       //! Update function
       //! @param value current measurement to be used in the detection

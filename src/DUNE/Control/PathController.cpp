@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -154,12 +154,14 @@ namespace DUNE
       param("Bottom Track -- Safe Pitch", m_btd.args.safe_pitch)
       .defaultValue("15.0")
       .units(Units::Degree)
-      .description("Safe pitch angle to perform bottom tracking");
+      .description("Safe pitch angle to perform bottom tracking. "
+                   "Reboot BottomTracker to update.");
 
       param("Bottom Track -- Slope Hysteresis", m_btd.args.slope_hyst)
       .defaultValue("1.5")
       .units(Units::Degree)
-      .description("Slope hysteresis when recovering from avoidance");
+      .description("Slope hysteresis when recovering from avoidance. "
+                   "Reboot BottomTracker to update.");
 
       param("Bottom Track -- Minimum Range", m_btd.args.min_range)
       .defaultValue("4.0")
@@ -173,7 +175,8 @@ namespace DUNE
       param("Bottom Track -- Execution Frequency", m_btd.args.control_period)
       .defaultValue("5")
       .units(Units::Hertz)
-      .description("Bottom tracker's execution frequency");
+      .description("Bottom tracker's execution frequency. "
+                   "Reboot BottomTracker to update.");
 
       param("Bottom Track -- Depth Avoidance", m_btd.args.depth_avoid)
       .defaultValue("true")
@@ -194,7 +197,7 @@ namespace DUNE
       param("Maximum Track Length", m_max_track_length)
       .defaultValue("25000")
       .units(Units::Meter)
-      .description("Maximum adimissible track length");
+      .description("Maximum admissible track length");
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
@@ -401,17 +404,8 @@ namespace DUNE
 
         Coordinates::toWGS84(m_estate, m_pcs.start_lat, m_pcs.start_lon);
 
-        if (dpath->start_z_units == IMC::Z_NONE)
-        {
-          m_pcs.start_z = m_estate.depth >= 0 ? m_estate.depth : m_estate.height;
-          m_pcs.start_z_units = m_estate.depth >= 0 ? IMC::Z_DEPTH : IMC::Z_HEIGHT;
-          inf("Start Z units not defined. Switching to %s units", m_estate.depth >= 0 ? "Depth" : "Height");
-        }
-        else
-        {
-          m_pcs.start_z = getZ(static_cast<IMC::ZUnits>(dpath->start_z_units));
-          m_pcs.start_z_units = dpath->start_z_units;
-        }
+        m_pcs.start_z = m_estate.height - m_estate.z;
+        m_pcs.start_z_units = dpath->start_z_units;
 
         return true;
       }
@@ -427,8 +421,11 @@ namespace DUNE
     void
     PathController::setEndPoint(const IMC::DesiredPath* dpath)
     {
-      setTrackingCoord(m_ts.start, m_pcs.start_lat, m_pcs.start_lon,
-                        m_pcs.start_z, static_cast<IMC::ZUnits>(m_pcs.start_z_units));
+      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
+                          m_pcs.start_lat, m_pcs.start_lon, 0,
+                          &m_ts.start.x, &m_ts.start.y);
+      m_ts.start.z = m_pcs.start_z;
+      m_ts.start.z_units = m_pcs.start_z_units;
 
       if ((dpath->flags & IMC::DesiredPath::FL_LOITER_CURR) != 0 &&
           dpath->lradius > 0)
@@ -448,8 +445,11 @@ namespace DUNE
         m_pcs.end_z_units = dpath->end_z_units;
       }
 
-      setTrackingCoord(m_ts.end, m_pcs.end_lat, m_pcs.end_lon,
-                        m_pcs.end_z, static_cast<IMC::ZUnits>(m_pcs.end_z_units));
+      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
+                          m_pcs.end_lat, m_pcs.end_lon, 0,
+                          &m_ts.end.x, &m_ts.end.y);
+      m_ts.end.z = m_pcs.end_z;
+      m_ts.end.z_units = m_pcs.end_z_units;
     }
 
     void
@@ -745,10 +745,13 @@ namespace DUNE
       // Ground course and speed
       m_ts.course = m_ts.cc ? std::atan2(m_estate.vy, m_estate.vx) : m_estate.psi;
       m_ts.speed = m_ts.cc ? Math::norm(m_estate.vx, m_estate.vy) : m_estate.u;
+      m_ts.vertical_speed = m_estate.vz;
 
       if (!m_ts.loitering)
       {
         getTrackPosition(m_estate, &m_ts.track_pos.x, &m_ts.track_pos.y);
+        // vertical-track
+        m_ts.track_pos.z = m_ts.end.z - getZ(static_cast<IMC::ZUnits>(m_ts.end.z_units));
         m_ts.course_error = Angles::normalizeRadian(m_ts.course - m_ts.track_bearing);
 
         m_ts.eta = getEta(m_ts);
@@ -769,6 +772,7 @@ namespace DUNE
       {
         m_ts.track_pos.x = 0;
         m_ts.track_pos.y = m_ts.range - m_ts.loiter.radius;
+        m_ts.track_pos.z = m_ts.end.z - getZ(static_cast<IMC::ZUnits>(m_ts.end.z_units));
 
         if (m_ts.loiter.clockwise)
           m_ts.track_pos.y = -m_ts.track_pos.y;
@@ -782,7 +786,6 @@ namespace DUNE
         m_ts.nearby = false;
       }
 
-      m_ts.track_pos.z = m_estate.z - m_ts.start.z; // vertical-track
       m_ts.track_vel.x = m_ts.speed * std::cos(m_ts.course_error); // along-track
       m_ts.track_vel.y = m_ts.speed * std::sin(m_ts.course_error); // cross-track
       m_ts.track_vel.z = std::sin(m_estate.theta) * m_estate.vz; // vertical-track
@@ -1078,98 +1081,20 @@ namespace DUNE
 
       return std::min(65535.0, eta - time_factor);
     }
-    
+
+
     double
-    PathController::getZ(IMC::ZUnits z_unit) const
+    PathController::getZ(IMC::ZUnits unit)
     {
-      if (z_unit == IMC::Z_DEPTH)
-        return m_estate.depth;
-      else if (z_unit == IMC::Z_ALTITUDE)
-        return m_estate.alt;
-      else if (z_unit == IMC::Z_HEIGHT)
+      if (unit == IMC::Z_HEIGHT)
         return m_estate.height;
-
-      // Z_NONE returns invalid
-      return -1;
-    }
-
-    void
-    PathController::setTrackingCoord(TrackingState::Coord& coord, 
-                      double lat, double lon,
-                      double z, IMC::ZUnits z_unit)
-    {
-      // Height is converted directly
-      if (z_unit == IMC::Z_HEIGHT)
-      {
-        WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height,
-                            lat, lon, z,
-                            &coord.x, &coord.y, &coord.z);
-        return;
-      }
-
-      // Depth and Altitude are converted separately
-      WGS84::displacement(m_estate.lat, m_estate.lon, 0,
-                            lat, lon, 0,
-                            &coord.x, &coord.y);
-
-      if (z_unit == IMC::Z_DEPTH)
-      {
-        if (!depthToLocal(z, coord.z))
-        {
-          war("Could not convert depth coordinate. TrackingState Z set to DEPTH.");
-          coord.z = z;
-          return;
-        }
-      }
-
-      if (z_unit == IMC::Z_ALTITUDE)
-      {
-        if (!altitudeToLocal(z, coord.z))
-        {
-          war("Could not convert altitude coordinate. TrackingState Z set to ALTITUDE.");
-          coord.z = z;
-          return;
-        }
-      }
-
-      // Z_NONE sets to itself
-      coord.z = z;
-    }
-
-    bool
-    PathController::depthToLocal(double depth_ref, double& z)
-    {
-      // Valid depth
-      if (m_estate.depth >= 0)
-      {
-        double last_z = m_estate.z - m_estate.depth; // last_z reference, as calculated in BasicNavigation
-        z = last_z + depth_ref;
-        return true;
-      }
-
-      return false;
-    }
-
-    bool
-    PathController::altitudeToLocal(double alt_ref, double& z)
-    {
-      // Valid altitude
-      if (m_estate.alt >= 0)
-      {
-        // Valid depth -> UUV
-        if (m_estate.depth >= 0)
-        {
-          double last_z = m_estate.z - m_estate.depth; // last_z reference, as calculated in BasicNavigation
-          double depth_ref = m_estate.depth + m_estate.alt - alt_ref; // Convert altitude to depth
-          z = last_z + depth_ref;
-          return true;
-        }
-
-        // No depth -> UAV
-        z = alt_ref;
-      }
-
-      return false;
+      else if (unit == IMC::Z_ALTITUDE)
+        return m_estate.alt;
+      else if (unit == IMC::Z_DEPTH)
+        return m_estate.depth;
+        
+      throw std::runtime_error(DTR("Invalid Z unit"));
+      return 0;
     }
 
     void
