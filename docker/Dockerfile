@@ -16,7 +16,6 @@ RUN set -eux; \
 		git \
 		build-essential \
         cmake \
-        cmake-gui \
         valgrind \
         libxml2-utils \
         python3 \
