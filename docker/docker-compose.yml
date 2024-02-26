@@ -1,7 +1,6 @@
 version: "3.3"
 services:
     dune:
-        #env_file: ./env
         build: .
         image: dune
         volumes:
@@ -10,5 +9,4 @@ services:
         restart: unless-stopped
         container_name: dune_lsts
         tty: true
-#        user: "${UID}:${GID}"
            
