@@ -175,7 +175,7 @@ namespace Monitors
           if (m_cpu_check.overflow())
           {
             m_cpu_check.reset();
-            std::sprintf(m_bufer_entity, "active | %s | %s", getCpuScalingGovernor().c_str(), readCPUFreq().c_str());
+            std::sprintf(m_bufer_entity, "active | %s %s", getCpuScalingGovernor().c_str(), readCPUFreq().c_str());
             setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
           }
         }
