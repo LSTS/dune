@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 ENV DUNE_PATH /dune
 ENV PATH $DUNE_PATH/build:$PATH
