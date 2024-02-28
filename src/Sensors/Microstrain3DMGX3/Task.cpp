@@ -107,6 +107,8 @@ namespace Sensors
       double timeout_failure;
       //! Calibration time stamp
       std::string calib_time;
+      //! Flag not to limit minimum read
+      bool min_read_flag;
     };
 
     //! %Microstrain3DMGX3 software driver.
@@ -208,6 +210,10 @@ namespace Sensors
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("N/A");
 
+        param("Set minimum read - Flag", m_args.min_read_flag)
+        .description("Flag to limit IO read. Set to false on newer linux versions")
+        .defaultValue("true");
+
         m_timer.setTop(c_reset_tout);
 
         // Magnetic calibration addresses.
@@ -294,7 +300,9 @@ namespace Sensors
         runCalibration();
 
         // Prepare to read data frame.
-        m_uart->setMinimumRead(CMD_DATA_SIZE);
+        // since 64 seems to be the struct termio VMIN limit
+        int max_data = m_args.min_read_flag ? CMD_DATA_SIZE : 63;
+        m_uart->setMinimumRead(max_data);
       }
 
       void
