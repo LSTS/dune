@@ -120,6 +120,8 @@ namespace Sensors
       static const unsigned c_num_addr = 6;
       //! Magnetic calibration initial address.
       static const uint16_t c_mag_addr = 0x0400;
+      //! Minimum Read Bytes
+      unsigned m_min_read;
       //! Rotation Matrix to correct mounting position.
       Math::Matrix m_rotation;
       //! Rotated calibration parameters.
@@ -157,6 +159,7 @@ namespace Sensors
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
+        m_min_read(0),
         m_uart(NULL),
         m_tstamp(0),
         m_state_timer(1.0),
@@ -301,7 +304,7 @@ namespace Sensors
 
         // Prepare to read data frame.
         // since 64 seems to be the struct termio VMIN limit
-        int max_data = m_args.min_read_flag ? CMD_DATA_SIZE : 63;
+        int max_data = m_args.min_read_flag ? CMD_DATA_SIZE : 0;
         m_uart->setMinimumRead(max_data);
       }
 
@@ -352,6 +355,8 @@ namespace Sensors
         if (m_uart == NULL)
           return false;
 
+        m_min_read = cmd_size;
+
         // Request data.
         switch (cmd)
         {
@@ -396,6 +401,17 @@ namespace Sensors
         // Read response.
         size_t rv = m_uart->read(m_bfr, c_bfr_size);
         m_tstamp = Clock::getSinceEpoch();
+
+        Counter<double> timer;
+        timer.setTop(0.25);
+        while (rv < m_min_read)
+        {
+          rv += m_uart->read(m_bfr + rv, c_bfr_size - rv);
+          if (timer.overflow()) {
+            spew("timeout read!");
+            return false;
+          }
+        }
 
         if (rv == 0)
         {
