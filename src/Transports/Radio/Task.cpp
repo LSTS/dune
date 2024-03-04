@@ -587,6 +587,7 @@ namespace Transports
               }
               break;
             }
+            /* Falls through */
 
           case SM_ACT_CONNECT:
             m_radio->connectToDevice();
