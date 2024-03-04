@@ -36,6 +36,7 @@
 
 // DUNE headers.
 #include <DUNE/System/Error.hpp>
+#include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Hardware/SocketCAN.hpp>
 
 #if defined(DUNE_OS_LINUX)
@@ -116,7 +117,7 @@ namespace DUNE
     {
 #if defined(DUNE_OS_LINUX)
       if (::close(m_can_socket) == -1)
-        throw Error("Could not close CAN port", System::Error::getLastMessage()); //TODO: Check
+        DUNE_WRN("Could not close CAN port %s", System::Error::getLastMessage().c_str());
 #endif
     }
     
