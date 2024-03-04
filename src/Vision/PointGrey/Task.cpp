@@ -653,10 +653,10 @@ namespace Vision
           }
           catch (...)
           {
-            std::fclose(pipe);
+            pclose(pipe);
             throw;
           }
-          std::fclose(pipe);
+          pclose(pipe);
           std::sscanf(buffer, "%s", governor);
           if( std::strcmp(governor, "ondemand") == 0)
           {
