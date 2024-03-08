@@ -108,6 +108,9 @@ namespace Control
         float m_wt_cmd;
         //! Filtered distance to wall
         IMC::Distance m_filt_dist_msg;
+        //! Estimated state
+        IMC::EstimatedState m_estate;
+        float m_desired_wall_angle;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx),
@@ -159,7 +162,7 @@ namespace Control
           .description("Wall distance threshold");
 
           param("Wall Tracking -- Average Distance Window", m_args.wdist_mav_size)
-          .defaultValue("5")
+          .defaultValue("3")
           .description("Wall distance moving average window size");
 
           param("Wall Tracking -- Average Angle Window", m_args.wangle_mav_size)
@@ -187,7 +190,7 @@ namespace Control
           .description("Absolute value of maximum error in distance");
 
           param("Wall Tracking -- Desired Wall Distance", m_args.wall_dist)
-          .defaultValue("1.0")
+          .defaultValue("2.0")
           .units(Units::Meter)
           .description("Desired distance to wall during maneuver");
 
@@ -297,6 +300,9 @@ namespace Control
             return;
 
           m_filt_wangle = m_wangle_mav->update(msg->psi);
+          
+          // m_filt_wangle = m_wangle_mav->update(msg->psi)
+          m_desired_wall_angle = Angles::normalizeRadian(m_estate.psi - msg->psi);
         }
 
         void
@@ -337,9 +343,12 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
+          // Save estimated state
+          m_estate = state;
+
           // Heading
           if (m_args.wallt_active)
-            m_heading.value = Angles::normalizeRadian(state.psi - m_filt_wangle);
+            m_heading.value = m_desired_wall_angle;
           else if (m_args.direct_heading) // Direct heading aligns with end point 
             m_heading.value = Angles::normalizeRadian(ts.los_angle);
           else                            // Fixed heading reference
