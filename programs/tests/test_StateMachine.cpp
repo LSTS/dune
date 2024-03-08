@@ -113,6 +113,7 @@ public:
         break;
       case 'S':
         data.output = true;
+        /* Falls through */
       default:
         next = &Mock::initial;
     }
