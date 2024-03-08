@@ -144,5 +144,5 @@ main(void)
     test.boolean("Path::suffix()", a.suffix(b) == "dir2");
   }
 
-  return 0;
+  return test.getReturnValue();
 }

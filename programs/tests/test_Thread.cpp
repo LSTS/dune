@@ -77,21 +77,5 @@ main(void)
     }
   }
 
-
-  // {
-  //   try
-  //   {
-  //     ThreadA thread;
-  //     thread.start();
-  //     DUNE::Time::Delay::wait(4.0);
-  //     thread.stopAndJoin();
-  //     test.boolean("start()/stopAndJoin()", thread.m_counter > 2);
-  //   }
-  //   catch (std::exception& e)
-  //   {
-  //     test.failed(DUNE::Utils::String::str("run: %s", e.what()).c_str());
-  //   }
-  // }
-
-  return 0;
+  return test.getReturnValue();
 }

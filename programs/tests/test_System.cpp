@@ -61,5 +61,5 @@ main(int argc, char** argv)
     test.boolean("Get (template)", (rv && (value == 123)));
   }
 
-  return 0;
+  return test.getReturnValue();
 }

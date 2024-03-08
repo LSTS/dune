@@ -161,5 +161,5 @@ main(int argc, char** argv)
   {
     test.boolean(testcases[i].string, o.count(testcases[i].string) == testcases[i].count);
   }
-  return 0;
+  return test.getReturnValue();
 }

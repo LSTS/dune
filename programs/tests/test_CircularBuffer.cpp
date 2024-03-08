@@ -110,5 +110,5 @@ main(int argc, char** argv)
       break;
   test.boolean("setCapacity()", i == cb.getSize() && cb.getSize() == n / 2 && cb.getCapacity() == n / 2);
 
-  return 0;
+  return test.getReturnValue();
 }

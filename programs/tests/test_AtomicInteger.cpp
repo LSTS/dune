@@ -29,6 +29,7 @@
 
 // ISO C++ 98 headers.
 #include <iostream>
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/Concurrency.hpp>
@@ -38,62 +39,53 @@
 
 using namespace DUNE::Concurrency;
 
+class TestIncrement: public Thread
+{
+private:
+  AtomicInteger* m_aint;
+  long m_target;
+public:
+  TestIncrement(AtomicInteger* aint, long target):
+  m_aint(aint),
+  m_target(target)
+  {}
+
+  void
+  run(void)
+  {
+    for (long i = 0; i < m_target; i++)
+      m_aint->increment();
+  }
+};
+
 int
 main(void)
 {
   Test test("Concurrency::AtomicInteger");
 
-  //  AtomicInteger aint(10);
+  AtomicInteger aint(0);
+  long target = 10000;
+  int thread_num = 10;
 
-  AtomicInteger aint2 = 0;
-
-  for (int i = 0; i < 10; ++i)
+  TestIncrement* tests[thread_num];
+  for (int i = 0; i <  thread_num; i++)
   {
-    std::cerr << aint2.increment() << std::endl;
+    tests[i] = new TestIncrement(&aint, target);
+    tests[i]->start();
   }
 
-  // {
-  //   Address a = Address::Any;
-  //   test.boolean("Static address (Any)", a.str() == "0.0.0.0");
-  // }
+  bool done = false;
+  while (!done)
+  { 
+    done = tests[0]->isDead();
+    for (int i = 1; i <  thread_num; i++)
+      done &= tests[i]->isDead();
+  }
 
-  // {
-  //   Address a = Address::Loopback;
-  //   test.boolean("Static address (Loopback)", a.str() == "127.0.0.1");
-  // }
+  for (int i = 0; i <  thread_num; i++)
+    tests[i]->join();
 
-  // {
-  //   Address a = Address::Broadcast;
-  //   test.boolean("Static address (Broadcast)", a.str() == "255.255.255.255");
-  // }
+  test.boolean("Multi-threaded increment", aint.value() == target * thread_num);
 
-  // {
-  //   Address a = "140.130.23.1";
-  //   Address b = a;
-  //   test.boolean("Assignment operator (Address)", a == b);
-  // }
-
-  // {
-  //   Address a = "140.130.23.1";
-  //   Address b = a.toNativeInteger();
-  //   test.boolean("Assignment operator (uint32_t)", a == b);
-  // }
-
-  // {
-  //   Address a = "whale.fe.up.pt";
-  //   a.resolve();
-  //   test.boolean("Hostname resolution (valid)", a.str() == "193.136.28.163");
-  // }
-
-  // {
-  //   Address a = "xxxwwwxxxx.com";
-  //   test.boolean("Hostname resolution (invalid)", !a.resolve());
-  // }
-
-  // {
-  //   Address a = "192.168.106.1";
-  //   test.boolean("IP address resolution", a.resolve());
-  // }
-
-  return 0;
+  return test.getReturnValue();
 }

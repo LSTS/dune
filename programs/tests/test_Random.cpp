@@ -71,6 +71,8 @@ main(int argc, char** argv)
   test_MT19937();
   // ** FOR KernelDevice: we merely check for sanity if /dev/urandom is available **
   test_KernelDevice();
+
+  return test.getReturnValue();
 }
 
 // Sample seeds obtained from /dev/urandom

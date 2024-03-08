@@ -106,5 +106,5 @@ main(int argc, char** argv)
     testname = "No data reflection, " + std::string(input_strings[i]);
     test.boolean(testname.c_str(), crc == results_no_reflect_data[i]);
   }
-  return 0;
+  return test.getReturnValue();
 }

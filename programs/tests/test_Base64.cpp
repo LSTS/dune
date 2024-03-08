@@ -89,5 +89,5 @@ main(void)
   test.boolean("encode(Hello World!) == 'SGVsbG8gV29ybGQh'", Base64::encode(str) == "SGVsbG8gV29ybGQh");
   test.boolean("decode(SGVsbG8gV29ybGQh) == 'Hello World!'", Base64::decode(Base64::encode(str)) == "Hello World!")
 ;
-  return 0;
+  return test.getReturnValue();
 }

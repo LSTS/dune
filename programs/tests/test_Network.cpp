@@ -73,7 +73,7 @@ main(void)
   {
     Address a = "whale.fe.up.pt";
     a.resolve();
-    test.boolean("Hostname resolution (valid)", a.str() == "193.136.28.163" || a.str() == "192.168.106.32");
+    test.boolean("Hostname resolution (valid)", a.str() == "10.227.246.40" || a.str() == "193.136.38.184");
   }
 
   {
@@ -86,5 +86,5 @@ main(void)
     test.boolean("IP address resolution", a.resolve());
   }
 
-  return 0;
+  return test.getReturnValue();
 }

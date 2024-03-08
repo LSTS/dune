@@ -51,5 +51,5 @@ main(void)
     test.boolean("wait()", ((end - start) - 1.0) < 0.1);
   }
 
-  return 0;
+  return test.getReturnValue();
 }

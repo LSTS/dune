@@ -54,5 +54,5 @@ main(void)
     test.boolean("wait()", delta > 0 && delta < 0.1);
   }
 
-  return 0;
+  return test.getReturnValue();
 }

@@ -73,5 +73,5 @@ main(int argc, char** argv)
     test.boolean("filterDuplicates 4", res == "/");
   }
 
-  return 0;
+  return test.getReturnValue();
 }

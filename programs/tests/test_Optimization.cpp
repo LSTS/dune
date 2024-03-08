@@ -110,5 +110,5 @@ main(int argc, char** argv)
     test.boolean("maximize()", r == Optimization::OPT_CONVERGED && std::fabs(min - tst->m) < tol);
   }
 
-  return 0;
+  return test.getReturnValue();
 }

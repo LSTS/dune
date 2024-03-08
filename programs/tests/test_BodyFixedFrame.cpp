@@ -70,5 +70,5 @@ main(void)
               //     << u << ' ' << v << ' ' << w << " | " << d << '\n';
             }
   test.boolean("BFF", success);
-  return 0;
+  return test.getReturnValue();
 }

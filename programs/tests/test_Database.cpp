@@ -287,5 +287,5 @@ main(int argc, char** argv)
 
   test.boolean("Connection -- Row count", passed);
 
-  return 0;
+  return test.getReturnValue();
 }
