@@ -58,7 +58,10 @@ namespace Control
           IMC::SetServoPosition m_servo;
           //! Task Arguments.
           Arguments m_args;
-
+          //! Current Log name.
+          std::string m_log_name;
+          //! Log state
+          uint8_t m_log_state;
           //! True if using the analog thrust
           bool m_analog_thrust;
 
@@ -66,12 +69,14 @@ namespace Control
             DUNE::Control::BasicRemoteOperation(name, ctx)
           {
             param("Thrust Scale", m_args.scale)
-            .defaultValue("1.0");
+              .defaultValue("1.0");
 
             // Add remote actions.
             addActionButton("Accelerate");
             addActionButton("Decelerate");
             addActionButton("Stop");
+            addActionButton("PowerOff");
+            addActionButton("Restart Log");
             addActionAxis("Heading");
             addActionAxis("Thrust");
 
@@ -79,6 +84,9 @@ namespace Control
             m_thruster.id = 0;
             m_thruster.value = m_servo.value = 0;
             m_analog_thrust = true;
+
+            bind<IMC::LoggingControl>(this);
+            bind<IMC::RemoteActions>(this, &Task::onAdditionalActions);
           }
 
           void
@@ -112,13 +120,34 @@ namespace Control
           }
 
           void
+          consume(const IMC::LoggingControl* msg)
+          {
+            // save current log.
+            m_log_name = msg->name;
+            m_log_state = msg->op;
+          }
+
+          void
+          onAdditionalActions(const IMC::RemoteActions* msg)
+          {
+            TupleList tuples(msg->actions);
+            war("received %s", msg->actions.c_str());
+
+            if (tuples.get("PowerOff", 0))
+              sendPowerOff();
+
+            else if (tuples.get("Restart Log", 0))
+              restartLog();
+          }
+
+          void
           onRemoteActions(const IMC::RemoteActions* msg)
           {
             TupleList tuples(msg->actions);
 
             if (tuples.get("Stop", 0))
               m_thruster.value = 0;
-            
+
             if (tuples.get("Decelerate", 0))
             {
               m_analog_thrust = false;
@@ -133,7 +162,7 @@ namespace Control
               if (m_thruster.value > 1)
                 m_thruster.value = 1;
             }
-            
+
             int thrust = tuples.get("Thrust", 0);
             if (thrust != 0)
             {
@@ -145,7 +174,7 @@ namespace Control
               if (m_analog_thrust)
                 m_thruster.value = 0;
             }
-            
+
             int hdng = tuples.get("Heading", 0) * -1;
             float val = hdng / 127.0;
             m_servo.value = val * Math::c_pi / 4;
@@ -155,9 +184,42 @@ namespace Control
           }
 
           void
+          sendPowerOff(void)
+          {
+            IMC::LoggingControl log;
+            log.op = LoggingControl::COP_REQUEST_STOP;
+            dispatch(log);
+
+            Counter<double> timer(3);
+            while (!stopping())
+            {
+              if (timer.overflow())
+                break;
+
+              if (m_log_state == LoggingControl::COP_STOPPED)
+                break;
+
+              waitForMessages(0.1);
+            }
+
+            war("PowerOff CPU");
+            system("poweroff");
+          }
+
+          void
+          restartLog(void)
+          {
+            IMC::LoggingControl log;
+            log.name = m_log_name;
+            log.op = LoggingControl::COP_REQUEST_START;
+            dispatch(log);
+          }
+
+          void
           actuate(void)
           {
-            trace("Analog Thrust Enabled: %d | Thruster: %0.2f | Servo: %0.2f", m_analog_thrust, m_thruster.value, m_servo.value);
+            trace("Analog Thrust Enabled: %d | Thruster: %0.2f | Servo: %0.2f", m_analog_thrust,
+                  m_thruster.value, m_servo.value);
 
             dispatch(m_thruster);
             dispatch(m_servo);
