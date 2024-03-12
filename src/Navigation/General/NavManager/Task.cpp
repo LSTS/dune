@@ -180,6 +180,8 @@ namespace Navigation
           m_main.setTop(m_args.inp_tout);
           m_second.setTop(m_args.inp_tout);
           m_third.setTop(m_args.inp_tout);
+
+          setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
         }
 
         void
@@ -210,71 +212,39 @@ namespace Navigation
         {
           debug("GPS FIX FROM: %u", msg->getSourceEntity());
           if (msg->getSourceEntity() == m_main.id)
-          {
-            m_main.reset();
-
-            if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
-            {
-              debug("Got INVALID fix from main unit");
-
-              m_main.setValid(false);
-
-              m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
-              m_rej.setDestinationEntity(msg->getSourceEntity());
-              dispatch(m_rej);
-            }
-            else
-            {
-              trace("Got VALID fix from main unit");
-              m_main.setValid(true);
-
-              sendFix(msg);
-            }
-          }
+            updateGpsState(m_main, msg);
           else if (msg->getSourceEntity() == m_second.id)
-          {
-            m_second.reset();
-
-            if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
-            {
-              debug("Got INVALID fix from secondary unit");
-              m_second.setValid(false);
-
-              m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
-              m_rej.setDestinationEntity(msg->getSourceEntity());
-              dispatch(m_rej);
-            }
-            else
-            {
-              trace("Got VALID fix from secondary unit");
-              m_second.setValid(true);
-
-              if (m_main.isInvalid())
-                sendFix(msg);
-            }
-          }
+            updateGpsState(m_second, msg);
           else if (msg->getSourceEntity() == m_third.id)
+            updateGpsState(m_third, msg);
+        }
+
+        //! Update Gps State with GpsFix message
+        //! @param gps GpsState object to update
+        //! @param msg GpsFix message
+        void
+        updateGpsState(GpsState& gps, const IMC::GpsFix* msg)
+        {
+          gps.reset();
+
+          if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
           {
-            m_third.reset();
+            debug("Got INVALID fix");
 
-            if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
-            {
-              debug("Got INVALID fix from third unit");
-              m_third.setValid(false);
+            gps.setValid(false);
 
-              m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
-              m_rej.setDestinationEntity(msg->getSourceEntity());
-              dispatch(m_rej);
-            }
-            else
-            {
-              trace("Got VALID fix from third unit");
-              m_third.setValid(true);
+            // Dispatch Rejection to Invalid source Entity
+            m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
+            m_rej.setDestinationEntity(msg->getSourceEntity());
+            dispatch(m_rej);
 
-              if (m_main.isInvalid() && m_second.isInvalid())
-                sendFix(msg);
-            }
-            }
+            return;
+          }
+
+          trace("Got VALID fix");
+          gps.setValid(true);
+
+          sendFix(msg);
         }
 
         void
