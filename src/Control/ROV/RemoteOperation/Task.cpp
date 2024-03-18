@@ -222,6 +222,9 @@ namespace Control
           addActionButton("Z+");
           addActionButton("Z-");
           addActionButton("WallTracker");
+          addActionButton("Slow");
+          addActionButton("Normal");
+          addActionButton("Fast");
 
           bind<IMC::EstimatedState>(this);
           bind<IMC::Distance>(this);
@@ -268,7 +271,7 @@ namespace Control
 
           if (m_args.dh_control)
           {
-            enableControlLoops(IMC::CL_SPEED | IMC::CL_DEPTH | IMC::CL_YAW);
+            enableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW);
             m_depth = m_start_depth;
 
             if (m_args.heading_control)
@@ -286,7 +289,7 @@ namespace Control
         onDeactivation(void)
         {
           if (m_args.dh_control)
-            disableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW | IMC::CL_SPEED);
+            disableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW);
 
           m_thruster.fill(0);
 
@@ -444,6 +447,27 @@ namespace Control
             m_forces(2, 0) = tuples.get("Up", 0) / 127.0;      // Z
             m_forces(5, 0) = tuples.get("Rotate", 0) / 127.0;    // N
           }
+
+          if (tuples.get("Slow", 0) || tuples.get("Normal", 0) || tuples.get("Fast", 0))
+            setInputSpeed(tuples);
+        }
+
+        void
+        setInputSpeed(TupleList tuples)
+        {
+          IMC::EntityParameter parm;
+          parm.name = "Motion Input Speed";
+          if (tuples.get("Slow", 0))
+            parm.value = "0";
+          else if (tuples.get("Normal", 0))
+            parm.value = "1";
+          else if (tuples.get("Fast", 0))
+            parm.value = "2";
+
+          IMC::SetEntityParameters eparm;
+          eparm.name = "Pioneer Control";
+          eparm.params.push_back(parm);
+          dispatch(eparm);
         }
 
         void
@@ -454,6 +478,25 @@ namespace Control
           if (m_args.dh_control)
           {
             disableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW);
+            m_depth = m_start_depth;
+
+            if (m_args.heading_control)
+              m_h_ref = m_start_heading;
+            else
+              m_h_ref = 0.0;
+          }
+
+          actuate();
+        }
+
+        void
+        onConnectionResumed(void)
+        {
+          m_thruster.fill(0);
+
+          if (m_args.dh_control)
+          {
+            enableControlLoops(IMC::CL_DEPTH | IMC::CL_YAW);
             m_depth = m_start_depth;
 
             if (m_args.heading_control)
@@ -507,7 +550,7 @@ namespace Control
           {
             m_thruster = m_args.actuat * m_forces;
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < m_thruster.rows(); i++)
               actuateThruster(i);
           }
         }
