@@ -300,9 +300,7 @@ namespace Control
             return;
 
           m_filt_wangle = m_wangle_mav->update(msg->psi);
-          
-          // m_filt_wangle = m_wangle_mav->update(msg->psi)
-          m_desired_wall_angle = Angles::normalizeRadian(m_estate.psi - msg->psi);
+          m_desired_wall_angle = Angles::normalizeRadian(m_estate.psi - m_filt_wangle);
         }
 
         void
