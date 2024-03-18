@@ -621,7 +621,7 @@ namespace Control
         {
           ProtocolCommands::CmdVersion2SetSystemTime set_system_time;
           set_system_time.unix_timestamp = (int32_t)Time::Clock::getSinceEpoch();
-          inf(DTR("Setting time for vehicle"));
+          debug(DTR("Setting time for vehicle"));
           if (sendCommand(&set_system_time) > 0)
             m_last_set_time = Time::Clock::getSinceEpoch();
         }
@@ -878,7 +878,7 @@ namespace Control
         m_ahrs_angles.psi = Angles::radians((fp64_t) msg.yaw);
         m_ahrs_angles.psi_magnetic = Angles::radians((fp64_t) msg.yaw); //TBC if magnetic heading is not available
         m_has_compass_data = true;
-        // dispatch(m_ahrs_angles);
+        dispatch(m_ahrs_angles);
 
         IMC::Temperature temp;
         temp.value = (fp64_t) msg.temp_water / 10; // 0.1 ºC
@@ -956,25 +956,25 @@ namespace Control
         dispatch(angvel);
 
         // Integrate angular velocity
-        if (!m_started_imu_integration && m_has_compass_data)
-        {
-          m_integrated_imu = m_ahrs_angles;
-          m_last_integration_delta.reset();
-          m_started_imu_integration = true;
-          return;
-        }
+        // if (!m_started_imu_integration && m_has_compass_data)
+        // {
+        //   m_integrated_imu = m_ahrs_angles;
+        //   m_last_integration_delta.reset();
+        //   m_started_imu_integration = true;
+        //   return;
+        // }
 
-        double delta = m_last_integration_delta.getDelta();
-        m_integrated_imu.time = (fp64_t) msg.rt_clock;
-        m_integrated_imu.phi += msg.gyro_x * delta;   // rad/s * s
-        m_integrated_imu.theta += msg.gyro_y * delta; // rad/s * s
-        m_integrated_imu.psi += msg.gyro_z * delta;   // rad/s * s
+        // double delta = m_last_integration_delta.getDelta();
+        // m_integrated_imu.time = (fp64_t) msg.rt_clock;
+        // m_integrated_imu.phi += msg.gyro_x * delta;   // rad/s * s
+        // m_integrated_imu.theta += msg.gyro_y * delta; // rad/s * s
+        // m_integrated_imu.psi += msg.gyro_z * delta;   // rad/s * s
 
-        m_integrated_imu.phi = Angles::normalizeRadian(m_integrated_imu.phi);
-        m_integrated_imu.theta = Angles::normalizeRadian(m_integrated_imu.theta);
-        m_integrated_imu.psi = Angles::normalizeRadian(m_integrated_imu.psi);
-        m_integrated_imu.psi_magnetic = m_integrated_imu.psi;
-        dispatch(m_integrated_imu);
+        // m_integrated_imu.phi = Angles::normalizeRadian(m_integrated_imu.phi);
+        // m_integrated_imu.theta = Angles::normalizeRadian(m_integrated_imu.theta);
+        // m_integrated_imu.psi = Angles::normalizeRadian(m_integrated_imu.psi);
+        // m_integrated_imu.psi_magnetic = m_integrated_imu.psi;
+        // dispatch(m_integrated_imu);
 
         IMC::Acceleration accel;
         accel.time = (fp64_t) msg.rt_clock;
