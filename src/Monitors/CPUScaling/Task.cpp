@@ -56,6 +56,10 @@ namespace Monitors
     {
       //! Set CPU In Mode
       std::string set_cpu_mode;
+      //! Use Linux Liquorix
+      bool use_liquorix;
+      //! Set Maximum CPU Frequency
+      int set_max_freq;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -74,8 +78,16 @@ namespace Monitors
         DUNE::Tasks::Task(name, ctx)
       {
         param("Set CPU In Mode", m_args.set_cpu_mode)
-        .defaultValue("powersave")
+        .defaultValue("ondemand")
         .description("Set CPU In Mode.");
+
+        param("Use Linux Liquorix", m_args.use_liquorix)
+        .defaultValue("false")
+        .description("Use Linux Liquorix.");
+
+        param("Set Maximum CPU Frequency in MHz", m_args.set_max_freq)
+        .defaultValue("1000")
+        .description("Set Maximum CPU Frequency in MHz.");
 
       }
 
@@ -90,18 +102,37 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        std::string governor_string_command = "sh -c 'for governor in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo \""
-                                              + m_args.set_cpu_mode + "\" > $governor; done'";
-        if(std::system(governor_string_command.c_str()) != 0)
+        if(m_args.use_liquorix)
         {
-          war("Error setting CPU governor to %s", m_args.set_cpu_mode.c_str());
+          std::string cpu_freq_string_command = "cpufreq-set -u " + std::to_string(m_args.set_max_freq) + "MHz";
+
+          if(std::system(cpu_freq_string_command.c_str()) != 0)
+          {
+            war("Error setting CPU frequency to %dMHz", m_args.set_max_freq);
+            setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_INTERNAL_ERROR);
+          }
+          else
+          {
+            inf("CPU frequency set to %dMHz", m_args.set_max_freq);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          }
         }
         else
         {
-          inf("CPU governor set to %s", m_args.set_cpu_mode.c_str());
+          std::string governor_string_command = "sh -c 'for governor in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do echo \""
+                                                + m_args.set_cpu_mode + "\" > $governor; done'";
+          if(std::system(governor_string_command.c_str()) != 0)
+          {
+            war("Error setting CPU governor to %s", m_args.set_cpu_mode.c_str());
+            setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_INTERNAL_ERROR);
+          }
+          else
+          {
+            inf("CPU governor set to %s", m_args.set_cpu_mode.c_str());
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          }
+          m_cpu_check.setTop(c_time_between_reads);
         }
-        m_cpu_check.setTop(c_time_between_reads);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Release resources.
@@ -119,6 +150,11 @@ namespace Monitors
         {
           std::getline(file, m_governor);
           file.close();
+        }
+
+        if(m_args.use_liquorix)
+        {
+          m_governor = m_governor + " (Liquorix)";
         }
         return m_governor;
       }
