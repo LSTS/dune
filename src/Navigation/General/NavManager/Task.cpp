@@ -212,11 +212,23 @@ namespace Navigation
         {
           debug("GPS FIX FROM: %u", msg->getSourceEntity());
           if (msg->getSourceEntity() == m_main.id)
+          {
             updateGpsState(m_main, msg);
+            if (!m_main.isInvalid())
+              sendFix(msg);
+          }
           else if (msg->getSourceEntity() == m_second.id)
+          {
             updateGpsState(m_second, msg);
+            if (m_main.isInvalid() && !m_second.isInvalid())
+              sendFix(msg);
+          }
           else if (msg->getSourceEntity() == m_third.id)
+          {
             updateGpsState(m_third, msg);
+            if (m_main.isInvalid() && m_second.isInvalid() && !m_third.isInvalid())
+              sendFix(msg);
+          }
         }
 
         //! Update Gps State with GpsFix message
@@ -243,8 +255,6 @@ namespace Navigation
 
           trace("Got VALID fix");
           gps.setValid(true);
-
-          sendFix(msg);
         }
 
         void
@@ -254,7 +264,7 @@ namespace Navigation
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
           // Dispatch IMC::GpsFix with this task source id.
-          // dispatch(msg);
+          dispatch(const_cast<IMC::GpsFix*>(msg));
 
           // Fill out IMC::EstimatedState as well.
           m_estate.lat = msg->lat;
