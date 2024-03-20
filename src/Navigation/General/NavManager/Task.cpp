@@ -312,7 +312,7 @@ namespace Navigation
 
             // Raise ERROR MODE if all GPSs are out of service.
             if (m_main.isInvalid() && m_second.isInvalid() && m_third.isInvalid())
-              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_WAIT_GPS_FIX);
+              setEntityState(IMC::EntityState::ESTA_ERROR, "All Gps sources are out of service.");
             else if (m_main.sendIridium())
             {
               debug("Main GPS not working!");
