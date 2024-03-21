@@ -44,7 +44,7 @@ namespace Navigation
       {
         GpsState(void):
           is_lost(false),
-          val(false),
+          val(true),
           send_ir(false),
           id(UINT16_MAX)
         { }
@@ -76,14 +76,17 @@ namespace Navigation
         }
 
         //! Update Gps State.
-        //! Return true if Gps fix is lost.
+        //! Return true if Gps fix was lost since last call.
         bool
         update(void)
         {
-          if (interval.overflow())
+          if(interval.overflow() && !is_lost)
+          {
             is_lost = true;
+            return true;
+          }
 
-          return is_lost;
+          return false;
         }
 
         //! Set state of last Gps fix.

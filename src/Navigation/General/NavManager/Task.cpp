@@ -79,8 +79,6 @@ namespace Navigation
         int m_reqid;
         //! Estimated state.
         IMC::EstimatedState m_estate;
-        //! Main system GpsFix message.
-        // IMC::GpsFix m_sys_fix;  // Limited scope not needed
         //! GPS fix rejection.
         IMC::GpsFixRejection m_rej;
         //! Gps State for main unit.
@@ -264,7 +262,9 @@ namespace Navigation
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
           // Dispatch IMC::GpsFix with this task source id.
-          dispatch(const_cast<IMC::GpsFix*>(msg));
+          IMC::GpsFix nav = *msg;
+          nav.setSourceEntity(getEntityId());
+          dispatch(nav);
 
           // Fill out IMC::EstimatedState as well.
           m_estate.lat = msg->lat;
