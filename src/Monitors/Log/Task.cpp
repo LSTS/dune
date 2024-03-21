@@ -112,6 +112,8 @@ namespace Monitors
         unsigned minutes = match[3].matched ? std::stoi(match[3].str()) : 0;
 
         debug("Set time to %u Days, %u Hours and %u Minutes", days, hours, minutes);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
         return ((((days * 24) + hours) * 60) + minutes) * 60;
       }
 
@@ -127,18 +129,17 @@ namespace Monitors
         {
           spew("matching string time %s", str.c_str());
           if (!std::regex_match(str, match, pattern))
-          {
-            err("Invalid format %s", str.c_str());
-            return false;
-          }
+            throw std::runtime_error("Invalid format " + str);
+
+          return true;
         }
         catch (const std::exception& e)
         {
           err("Error parsing time: %s", e.what());
-          return false;
         }
 
-        return true;
+        setEntityState(IMC::EntityState::ESTA_ERROR, "Failed to parse time parameter");
+        return false;
       }
 
       void
