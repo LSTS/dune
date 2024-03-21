@@ -131,7 +131,7 @@ namespace Control
           onAdditionalActions(const IMC::RemoteActions* msg)
           {
             TupleList tuples(msg->actions);
-            war("received %s", msg->actions.c_str());
+            spew("received %s", msg->actions.c_str());
 
             if (tuples.get("PowerOff", 0))
               sendPowerOff();
