@@ -105,6 +105,8 @@ namespace Control
         double pitch_rate;
         //! Vehicle rolling rate limit.
         double roll_rate;
+        //! Enable speed controller
+        bool speed_control;
       };
 
       struct Gamma
@@ -139,7 +141,7 @@ namespace Control
         fp64_t dir;
       };
 
-      struct Task : public Tasks::Task
+      struct Task: public Tasks::Task
       {
         //! Navigation entity eid.
         int m_nav_eid;
@@ -214,7 +216,8 @@ namespace Control
         //! Average gamma value.
         double m_gamma_avg_adcp, m_gamma_avg_adcp_old, m_gamma_avg_sog, m_gamma_avg_sog_old;
         //! Average last gamma value.
-        double m_gamma_avg_adcp_last, m_gamma_avg_adcp_old_last, m_gamma_avg_sog_last, m_gamma_avg_sog_old_last;
+        double m_gamma_avg_adcp_last, m_gamma_avg_adcp_old_last, m_gamma_avg_sog_last,
+          m_gamma_avg_sog_old_last;
         //! Average factor.
         int m_avg_adcp, m_avg_adcp_old, m_avg_sog, m_avg_sog_old;
 
@@ -231,7 +234,12 @@ namespace Control
         //! Task arguments.
         Arguments m_args;
 
-        Task(const std::string &name, Tasks::Context &ctx): 
+        //! For speed controller
+        double m_act_speed = 0;
+        //! Is in teleoperation
+        bool m_teleop;
+
+        Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
           m_scope_ref(0),
           m_wave_freq(0.0),
@@ -252,152 +260,155 @@ namespace Control
           m_avg_one(0)
         {
           param("Enable Gain Scheduling", m_args.en_gain_sch)
-              .defaultValue("true")
-              .description("Enable gain scheduling during turn");
+            .defaultValue("true")
+            .description("Enable gain scheduling during turn");
 
           param("Preferred scheduling", m_args.sch_source)
-              .defaultValue("false")
-              .description("Preferred information for computing gamma.");
+            .defaultValue("false")
+            .description("Preferred information for computing gamma.");
 
           param("Gain Scheduling Interval", m_args.gain_sch_t)
-              .defaultValue("60")
-              .minimumValue("30")
-              .description("Interval for recomputing PID gains.");
+            .defaultValue("60")
+            .minimumValue("30")
+            .description("Interval for recomputing PID gains.");
 
           param("Use new gains", m_args.use_new_gains)
-              .defaultValue("false")
-              .description("Enable gain scheduling based on gamma");
+            .defaultValue("false")
+            .description("Enable gain scheduling based on gamma");
 
           param("Enable Thrust Assistance", m_args.en_thrust)
-              .defaultValue("true")
-              .description("Assist navigation with thruster");
+            .defaultValue("true")
+            .description("Assist navigation with thruster");
 
           param("Enable Thrust During Turn", m_args.en_thrust_turn)
-              .defaultValue("true")
-              .description("Assist the turn using the thruster");
+            .defaultValue("true")
+            .description("Assist the turn using the thruster");
 
           param("Thrust Assistance", m_args.thrust_assist)
-              .defaultValue("0.75")
-              .description("Percentage of thrust assistance");
+            .defaultValue("0.75")
+            .description("Percentage of thrust assistance");
 
           param("Maximum Thrust Actuation", m_args.max_thrust)
-              .defaultValue("1.0")
-              .description("Maximum Motor Command");
+            .defaultValue("1.0")
+            .description("Maximum Motor Command");
 
           param("Minimum Speed for Thrust", m_args.min_sog)
-              .defaultValue("0.3")
-              .description("Speed [m/s] below which thruster is used");
+            .defaultValue("0.3")
+            .description("Speed [m/s] below which thruster is used");
 
           param("Maximum Rudder Actuation", m_args.act_max)
-              .defaultValue("1.0")
-              .description("Maximum Rudder Command");
+            .defaultValue("1.0")
+            .description("Maximum Rudder Command");
 
           param("Course PID Gains Transect", m_args.course_gains_trans)
-              .defaultValue("")
-              .size(3)
-              .description("PID gains for Course controller during straight line");
+            .defaultValue("")
+            .size(3)
+            .description("PID gains for Course controller during straight line");
 
           param("Course PID Gains Turning", m_args.course_gains_turn)
-              .defaultValue("")
-              .size(3)
-              .description("PID gains for Course controller during turn");
+            .defaultValue("")
+            .size(3)
+            .description("PID gains for Course controller during turn");
 
           param("Ramp Actuation Limit", m_args.act_ramp)
-              .defaultValue("0.0")
-              .description("Ramp actuation limit when the value is rising in actuation per second");
+            .defaultValue("0.0")
+            .description("Ramp actuation limit when the value is rising in actuation per second");
 
           param("Log PID Parcels", m_args.log_parcels)
-              .defaultValue("false")
-              .description("Log the size of each PID parcel");
+            .defaultValue("false")
+            .description("Log the size of each PID parcel");
 
           param("Entity Label - Navigation", m_args.elabel_nav)
-              .description("Entity label of 'GpsFix' message");
+            .description("Entity label of 'GpsFix' message");
 
           param("Activate LP Filtering", m_args.lp_filtering)
-              .defaultValue("false")
-              .description("Activate Low-pass filtering of computed rudder angle");
+            .defaultValue("false")
+            .description("Activate Low-pass filtering of computed rudder angle");
 
           param("Activate N Filtering", m_args.n_filtering)
-              .defaultValue("false")
-              .description("Activate Notch filtering of computed rudder angle");
+            .defaultValue("false")
+            .description("Activate Notch filtering of computed rudder angle");
 
           param("Activate BS Filtering", m_args.bs_filtering)
-              .defaultValue("false")
-              .description("Activate Band-stop filtering of computed rudder angle");
+            .defaultValue("false")
+            .description("Activate Band-stop filtering of computed rudder angle");
 
           param("Activate External Filtering", m_args.ext_filtering)
-              .defaultValue("false")
-              .description("Activate external user-defined filtering of computed rudder angle");
+            .defaultValue("false")
+            .description("Activate external user-defined filtering of computed rudder angle");
 
           param("External Filter Type", m_args.ext_filter_type)
-              .defaultValue("LPF")
-              .description("External user-defined filter type");
+            .defaultValue("LPF")
+            .description("External user-defined filter type");
 
           param("Activate Desired Course Filtering", m_args.course_des_filtering)
-              .defaultValue("false")
-              .description("Activate desired user-defined course filtering");
+            .defaultValue("false")
+            .description("Activate desired user-defined course filtering");
 
           param("LP taps", m_args.lpf_taps)
-              .defaultValue("10.0")
-              .minimumValue("1.0")
-              .description("Low-pass filter number of taps");
+            .defaultValue("10.0")
+            .minimumValue("1.0")
+            .description("Low-pass filter number of taps");
 
           param("LPF scaling", m_args.lpf_scaling)
-              .defaultValue("1.2")
-              .minimumValue("1.0")
-              .description("Low-pass filter gain to remove HF components");
+            .defaultValue("1.2")
+            .minimumValue("1.0")
+            .description("Low-pass filter gain to remove HF components");
 
           param("NF taps", m_args.nf_taps)
-              .defaultValue("10.0")
-              .minimumValue("1.0")
-              .description("Notch filter number of taps");
+            .defaultValue("10.0")
+            .minimumValue("1.0")
+            .description("Notch filter number of taps");
 
           param("BSF taps", m_args.bsf_taps)
-              .defaultValue("10.0")
-              .minimumValue("1.0")
-              .description("Band-stop filter(s) number of taps");
+            .defaultValue("10.0")
+            .minimumValue("1.0")
+            .description("Band-stop filter(s) number of taps");
 
           param("BSF scaling", m_args.bsf_scaling)
-              .defaultValue("20")
-              .minimumValue("1")
-              .description("BSF scaling percentage around cut-off estimated frequency");
+            .defaultValue("20")
+            .minimumValue("1")
+            .description("BSF scaling percentage around cut-off estimated frequency");
 
           param("External Filter Frequency", m_args.ext_filter_freq)
-              .units(Units::Hertz)
-              .defaultValue("1.0")
-              .description("Frequency for external user-defined filter.");
+            .units(Units::Hertz)
+            .defaultValue("1.0")
+            .description("Frequency for external user-defined filter.");
 
           param("Desired Course Percentage Increase", m_args.chop)
-              .defaultValue("30")
-              .description("Incremental portioning during desired course change.");
+            .defaultValue("30")
+            .description("Incremental portioning during desired course change.");
 
           param("Heading Control", m_args.heading_ctrl)
-              .defaultValue("false")
-              .description("Switch to heading control.");
+            .defaultValue("false")
+            .description("Switch to heading control.");
 
           param("SOG threshold - Heading Control", m_args.speed_threshold)
-              .defaultValue("0.1")
-              .minimumValue("0.001")
-              .description("SOG threshold above which switch to heading control.");
-          
+            .defaultValue("0.1")
+            .minimumValue("0.001")
+            .description("SOG threshold above which switch to heading control.");
+
           param("Correlation Limit", m_args.corr_lim)
-              .defaultValue("50")
-              .maximumValue("100")
-              .minimumValue("0")
-              .description("Correlation above which measurement is discarded.");
+            .defaultValue("50")
+            .maximumValue("100")
+            .minimumValue("0")
+            .description("Correlation above which measurement is discarded.");
 
           param("Amplitude Limit", m_args.ampl_lim)
-              .defaultValue("0")
-              .units(Units::Decibel)
-              .description("Amplitude above which measurement is discarded.");
-          
+            .defaultValue("0")
+            .units(Units::Decibel)
+            .description("Amplitude above which measurement is discarded.");
+
           param("Vehicle Pitch Rate Limit", m_args.pitch_rate)
-              .defaultValue("0")
-              .description("Pitching rate above which measurement is discarded.");
+            .defaultValue("0")
+            .description("Pitching rate above which measurement is discarded.");
 
           param("Vehicle Roll Rate Limit", m_args.roll_rate)
-              .defaultValue("0")
-              .description("Roll rate above which measurement is discarded.");
+            .defaultValue("0")
+            .description("Roll rate above which measurement is discarded.");
+
+          param("Enable speed controller", m_args.speed_control)
+            .defaultValue("false");
 
           // Register handler routines.
           bind<IMC::Abort>(this);
@@ -411,7 +422,11 @@ namespace Control
           bind<IMC::CurrentProfile>(this);
           bind<IMC::PathControlState>(this);
           bind<IMC::DevDataText>(this);
-          
+
+          // For speed controller
+          bind<IMC::DesiredSpeed>(this);
+          bind<IMC::Teleoperation>(this);
+
           // Initialize entity state.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
@@ -419,8 +434,7 @@ namespace Control
         void
         onUpdateParameters(void)
         {
-          if (paramChanged(m_args.course_gains_trans) ||
-              paramChanged(m_args.log_parcels))
+          if (paramChanged(m_args.course_gains_trans) || paramChanged(m_args.log_parcels))
           {
             reset();
             setup(m_args.course_gains_trans);
@@ -444,7 +458,7 @@ namespace Control
           if (paramChanged(m_args.gain_sch_t))
           {
             m_gs_interval = m_args.gain_sch_t;
-            m_timer_gs.setTop(m_gs_interval); // 60.
+            m_timer_gs.setTop(m_gs_interval);  // 60.
           }
 
           if (paramChanged(m_args.course_des_filtering))
@@ -466,16 +480,11 @@ namespace Control
             }
           }
 
-          if (paramChanged(m_args.lp_filtering) ||
-              paramChanged(m_args.n_filtering) ||
-              paramChanged(m_args.bs_filtering) ||
-              paramChanged(m_args.ext_filtering) ||
-              paramChanged(m_args.lpf_taps) ||
-              paramChanged(m_args.nf_taps) ||
-              paramChanged(m_args.lpf_scaling) ||
-              paramChanged(m_args.bsf_taps) ||
-              paramChanged(m_args.bsf_scaling) ||
-              paramChanged(m_args.ext_filter_freq))
+          if (paramChanged(m_args.lp_filtering) || paramChanged(m_args.n_filtering)
+              || paramChanged(m_args.bs_filtering) || paramChanged(m_args.ext_filtering)
+              || paramChanged(m_args.lpf_taps) || paramChanged(m_args.nf_taps)
+              || paramChanged(m_args.lpf_scaling) || paramChanged(m_args.bsf_taps)
+              || paramChanged(m_args.bsf_scaling) || paramChanged(m_args.ext_filter_freq))
             buildFilters();
         }
 
@@ -488,6 +497,7 @@ namespace Control
           }
           catch (...)
           {
+            err("Failed resolving entity! Configuration error!");
             m_nav_eid = 0;
           }
         }
@@ -524,9 +534,58 @@ namespace Control
         }
 
         void
-        consume(const IMC::DevDataText *msg)
+        consume(const IMC::Teleoperation* msg)
         {
-          if (std::strcmp(resolveEntity(msg->getSourceEntity()).c_str(), "Text Actions") == 0 && msg->getDestinationEntity() == resolveEntity("Autopilot"))
+          (void)msg;
+          m_teleop = true;
+        }
+
+        void
+        consume(const IMC::TeleoperationDone* msg)
+        {
+          (void)msg;
+          m_teleop = false;
+        }
+
+        void
+        consume(const IMC::DesiredSpeed* msg)
+        {
+          if (!m_args.speed_control)
+            return;
+
+          double speed = 0;
+
+          switch (msg->speed_units)
+          {
+            case IMC::SUNITS_METERS_PS:
+              speed = msg->value / 2;
+              break;
+
+            case IMC::SUNITS_RPM:
+              speed = msg->value / 3600;
+              break;
+
+            case IMC::SUNITS_PERCENTAGE:
+              speed = msg->value;
+              break;
+
+            default:
+              break;
+          }
+
+          m_act_speed = trimValue(speed, -m_args.max_thrust, m_args.max_thrust);
+
+          inf("onDesiredSpeed %f", m_act_speed);
+          // IMC::SetThrusterActuation act;
+          // act.value = m_act_speed;
+          // dispatch(act);
+        }
+
+        void
+        consume(const IMC::DevDataText* msg)
+        {
+          if (std::strcmp(resolveEntity(msg->getSourceEntity()).c_str(), "Text Actions") == 0
+              && msg->getDestinationEntity() == resolveEntity("Autopilot"))
           {
             debug("Gains arrived from Iridium.");
             std::string m_cmd = msg->value;
@@ -550,14 +609,12 @@ namespace Control
         }
 
         void
-        consume(const IMC::PathControlState *pcs)
+        consume(const IMC::PathControlState* pcs)
         {
           m_lat_next_wp = pcs->end_lat;
           m_lon_next_wp = pcs->end_lon;
           double dist_x, dist_y;
-          WGS84::displacement(m_lat, m_lon, 0,
-                              m_lat_next_wp, m_lon_next_wp, 0,
-                              &dist_x, &dist_y);
+          WGS84::displacement(m_lat, m_lon, 0, m_lat_next_wp, m_lon_next_wp, 0, &dist_x, &dist_y);
           m_dist_to_wp = std::sqrt(std::pow(dist_x, 2) + std::pow(dist_y, 2));
         }
 
@@ -580,7 +637,7 @@ namespace Control
         setup(std::vector<float> gains)
         {
           m_course_pid.setGains(gains);
-          m_course_pid.setOutputLimits(-m_args.act_max, m_args.act_max); // Anti-windup
+          m_course_pid.setOutputLimits(-m_args.act_max, m_args.act_max);  // Anti-windup
 
           debug("SETTING GAINS: %0.3f, %0.3f, %0.3f", gains[0], gains[1], gains[2]);
 
@@ -604,24 +661,25 @@ namespace Control
         }
 
         void
-        consume(const IMC::VehicleState *msg)
+        consume(const IMC::VehicleState* msg)
         {
           if (msg->getSource() != getSystemId())
             return;
-          if (msg->op_mode == IMC::VehicleState::VS_SERVICE)
-          {
-            m_service = true;
-            m_maneuver = false;
-          }
+
           if (msg->op_mode == IMC::VehicleState::VS_MANEUVER)
           {
             m_maneuver = true;
             m_service = false;
           }
+          else
+          {
+            m_service = true;
+            m_maneuver = false;
+          }
         }
 
         void
-        consume(const IMC::Abort *msg)
+        consume(const IMC::Abort* msg)
         {
           if (msg->getSource() != getSystemId())
             return;
@@ -632,21 +690,25 @@ namespace Control
         }
 
         void
-        consume(const IMC::EstimatedState *msg)
+        consume(const IMC::EstimatedState* msg)
         {
           if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_nav_eid)
             return;
 
           m_estate = *msg;
-          spew("BODY frame speeds: u = %.3f, v = %.3f - HEADING %.3f", m_estate.u, m_estate.v, Angles::degrees(m_estate.psi));
+          spew("BODY frame speeds: u = %.3f, v = %.3f - HEADING %.3f", m_estate.u, m_estate.v,
+               Angles::degrees(m_estate.psi));
         }
 
         void
-        consume(const IMC::GpsFix *msg)
+        consume(const IMC::GpsFix* msg)
         {
           IMC::DevDataText gamma_msg;
 
           if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_nav_eid)
+            return;
+
+          if (m_teleop)
             return;
 
           // Compute Time Delta.
@@ -664,6 +726,8 @@ namespace Control
             return;
           }
 
+          inf("onGPSFix %f", m_tstep);
+
           // Check if we have a valid time delta.
           if (m_tstep < 0.0)
             return;
@@ -674,21 +738,28 @@ namespace Control
           if (m_args.heading_ctrl || (!m_args.heading_ctrl && msg->sog < m_args.speed_threshold))
           {
             error = Angles::normalizeRadian(m_desired_course - m_estate.psi);
-            debug("Heading Control - COG %0.3f, Heading %0.3f, DHeading %0.3f, Error: %0.3f, SOG %0.3f, dist to wp: %0.3f", Angles::degrees(msg->cog), Angles::degrees(m_estate.psi), Angles::degrees(m_desired_course), Angles::degrees(error), m_sog, m_dist_to_wp);
+            debug("Heading Control - COG %0.3f, Heading %0.3f, DHeading %0.3f, Error: %0.3f, SOG "
+                  "%0.3f, dist to wp: %0.3f",
+                  Angles::degrees(msg->cog), Angles::degrees(m_estate.psi),
+                  Angles::degrees(m_desired_course), Angles::degrees(error), m_sog, m_dist_to_wp);
           }
           else if (!m_args.heading_ctrl && msg->sog > m_args.speed_threshold)
           {
             error = Angles::normalizeRadian(m_desired_course - msg->cog);
-            debug("Course Control - HEAD: %.3f, COG %0.3f, DCOG %0.3f, Error: %0.3f, SOG %0.3f, dist to wp: %0.3f", Angles::degrees(m_estate.psi), Angles::degrees(msg->cog), Angles::degrees(m_desired_course), Angles::degrees(error), m_sog, m_dist_to_wp);
+            debug("Course Control - HEAD: %.3f, COG %0.3f, DCOG %0.3f, Error: %0.3f, SOG %0.3f, "
+                  "dist to wp: %0.3f",
+                  Angles::degrees(m_estate.psi), Angles::degrees(msg->cog),
+                  Angles::degrees(m_desired_course), Angles::degrees(error), m_sog, m_dist_to_wp);
           }
 
           // Derivative Error.
-          //float error_der = m_args.desired_course_der - m_angvel.z; //m_angvel.z may need to be filtered?
+          // float error_der = m_args.desired_course_der - m_angvel.z; //m_angvel.z may need to be
+          // filtered?
 
           // Course Controller (PID controller)
-          float rudder_cmd = m_course_pid.step(m_tstep, error, 0); // error_der
-          m_act.value = -rudder_cmd; //TODO: Check if its the same in reality.
-          
+          float rudder_cmd = m_course_pid.step(m_tstep, error, 0);  // error_der
+          m_act.value = -rudder_cmd;  // TODO: Check if its the same in reality.
+
           // Dispatch servo command.
           dispatchRudder(m_act.value, m_tstep);
 
@@ -696,7 +767,7 @@ namespace Control
           dispatchThrust();
 
           // Compute gamma.
-          double k = 0.6; // k=(m+A11)/(m+a22) hard-coded.
+          double k = 0.6;  // k=(m+A11)/(m+a22) hard-coded.
           Gamma m_gamma_adcp, m_gamma_adcp_old, m_gamma_sog, m_gamma_sog_old;
           m_gamma_adcp.source = "adcp";
           m_gamma_adcp_old.source = "adcp_old";
@@ -718,8 +789,10 @@ namespace Control
           m_gamma_adcp_old.depth = m_shallowest_current_cell.depth;
           m_gamma_sog_old.depth = m_shallowest_current_cell.depth;
 
-          double u_c_body = m_shallowest_current_cell.vel * std::cos(m_shallowest_current_cell.dir - m_estate.psi);
-          double v_c_body = m_shallowest_current_cell.vel * std::sin(m_shallowest_current_cell.dir - m_estate.psi);
+          double u_c_body =
+            m_shallowest_current_cell.vel * std::cos(m_shallowest_current_cell.dir - m_estate.psi);
+          double v_c_body =
+            m_shallowest_current_cell.vel * std::sin(m_shallowest_current_cell.dir - m_estate.psi);
           spew("u_c_body %f - v_c_body %f", u_c_body, v_c_body);
           m_gamma_adcp.uc = u_c_body;
           m_gamma_adcp_old.uc = u_c_body;
@@ -727,77 +800,86 @@ namespace Control
           m_v_r = m_estate.v - v_c_body;
           m_U_r = std::sqrt(std::pow(m_u_r, 2) + std::pow(m_v_r, 2));
 
-          m_gamma_adcp.value = m_u_r * m_U_r * (1.0 - (m_estate.u * u_c_body) / std::pow(m_sog, 2) - (k * m_estate.u * m_u_r) / std::pow(m_sog, 2));
-          m_gamma_adcp_old.value = 1.0 - (m_estate.u * u_c_body) / std::pow(m_sog, 2) - (k * m_estate.u * m_u_r) / std::pow(m_sog, 2);
+          m_gamma_adcp.value = m_u_r * m_U_r
+                               * (1.0 - (m_estate.u * u_c_body) / std::pow(m_sog, 2)
+                                  - (k * m_estate.u * m_u_r) / std::pow(m_sog, 2));
+          m_gamma_adcp_old.value = 1.0 - (m_estate.u * u_c_body) / std::pow(m_sog, 2)
+                                   - (k * m_estate.u * m_u_r) / std::pow(m_sog, 2);
 
-
-          gamma_msg.value = String::str("Gamma ADCP - source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
-                                    m_gamma_adcp.source,  m_gamma_adcp.lat,
-                                    m_gamma_adcp.lon,     m_gamma_adcp.sog,
-                                    m_gamma_adcp.uc,      m_gamma_adcp.depth, 
-                                    m_gamma_adcp.value);
+          gamma_msg.value = String::str(
+            "Gamma ADCP - source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
+            m_gamma_adcp.source, m_gamma_adcp.lat, m_gamma_adcp.lon, m_gamma_adcp.sog,
+            m_gamma_adcp.uc, m_gamma_adcp.depth, m_gamma_adcp.value);
           dispatch(gamma_msg);
 
-          gamma_msg.value = String::str("Gamma ADCP old- source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
-                                    m_gamma_adcp_old.source,  m_gamma_adcp_old.lat,
-                                    m_gamma_adcp_old.lon,     m_gamma_adcp_old.sog,
-                                    m_gamma_adcp_old.uc,      m_gamma_adcp_old.depth, 
-                                    m_gamma_adcp_old.value);
+          gamma_msg.value = String::str(
+            "Gamma ADCP old- source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
+            m_gamma_adcp_old.source, m_gamma_adcp_old.lat, m_gamma_adcp_old.lon,
+            m_gamma_adcp_old.sog, m_gamma_adcp_old.uc, m_gamma_adcp_old.depth,
+            m_gamma_adcp_old.value);
           dispatch(gamma_msg);
 
           m_gamma_sog.uc = 0;
           m_gamma_sog_old.uc = 0;
 
-          m_gamma_sog.value = m_estate.u * m_sog * (1.0 - (k * std::pow(m_estate.u, 2)) / std::pow(m_sog, 2));
+          m_gamma_sog.value =
+            m_estate.u * m_sog * (1.0 - (k * std::pow(m_estate.u, 2)) / std::pow(m_sog, 2));
           m_gamma_sog_old.value = 1.0 - (k * std::pow(m_estate.u, 2)) / std::pow(m_sog, 2);
 
-          gamma_msg.value = String::str("Gamma SOG - source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
-                                    m_gamma_sog.source,  m_gamma_sog.lat,
-                                    m_gamma_sog.lon,     m_gamma_sog.sog,
-                                    m_gamma_sog.uc,      m_gamma_sog.depth, 
-                                    m_gamma_sog.value);
+          gamma_msg.value = String::str(
+            "Gamma SOG - source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
+            m_gamma_sog.source, m_gamma_sog.lat, m_gamma_sog.lon, m_gamma_sog.sog, m_gamma_sog.uc,
+            m_gamma_sog.depth, m_gamma_sog.value);
           dispatch(gamma_msg);
 
-          gamma_msg.value = String::str("Gamma SOG old source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
-                                    m_gamma_sog_old.source,  m_gamma_sog_old.lat,
-                                    m_gamma_sog_old.lon,     m_gamma_sog_old.sog,
-                                    m_gamma_sog_old.uc,      m_gamma_sog_old.depth, 
-                                    m_gamma_sog_old.value);
+          gamma_msg.value = String::str(
+            "Gamma SOG old source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
+            m_gamma_sog_old.source, m_gamma_sog_old.lat, m_gamma_sog_old.lon, m_gamma_sog_old.sog,
+            m_gamma_sog_old.uc, m_gamma_sog_old.depth, m_gamma_sog_old.value);
           dispatch(gamma_msg);
 
-          spew("SPEEDS - u: %.3f, v: %.3f, u_c_body: %.3f, v_c_body: %.3f, u_r: %.3f, v_r: %.3f, U: %.3f, U_r: %.3f", m_estate.u, m_estate.v, u_c_body, v_c_body, m_u_r, m_v_r, m_sog, m_U_r);
-          spew("GAMMAS - ADCP: %f, ADCP (OLD): %f, SOG: %f, SOG (OLD): %f", m_gamma_adcp.value, m_gamma_adcp_old.value, m_gamma_sog.value, m_gamma_sog_old.value);
+          spew("SPEEDS - u: %.3f, v: %.3f, u_c_body: %.3f, v_c_body: %.3f, u_r: %.3f, v_r: %.3f, "
+               "U: %.3f, U_r: %.3f",
+               m_estate.u, m_estate.v, u_c_body, v_c_body, m_u_r, m_v_r, m_sog, m_U_r);
+          spew("GAMMAS - ADCP: %f, ADCP (OLD): %f, SOG: %f, SOG (OLD): %f", m_gamma_adcp.value,
+               m_gamma_adcp_old.value, m_gamma_sog.value, m_gamma_sog_old.value);
 
           //! Compute gamma average.
           if (m_avg_adcp == 0)
             m_gamma_avg_adcp = m_gamma_adcp.value;
           else
-            m_gamma_avg_adcp = ((m_gamma_avg_adcp_last * m_avg_adcp + m_gamma_adcp.value) / (m_avg_adcp + 1));
+            m_gamma_avg_adcp =
+              ((m_gamma_avg_adcp_last * m_avg_adcp + m_gamma_adcp.value) / (m_avg_adcp + 1));
           m_avg_adcp++;
           m_gamma_avg_adcp_last = m_gamma_avg_adcp;
 
           if (m_avg_adcp_old == 0)
             m_gamma_avg_adcp_old = m_gamma_adcp_old.value;
           else
-            m_gamma_avg_adcp_old = ((m_gamma_avg_adcp_old_last * m_avg_adcp_old + m_gamma_adcp_old.value) / (m_avg_adcp_old + 1));
+            m_gamma_avg_adcp_old =
+              ((m_gamma_avg_adcp_old_last * m_avg_adcp_old + m_gamma_adcp_old.value)
+               / (m_avg_adcp_old + 1));
           m_avg_adcp_old++;
           m_gamma_avg_adcp_old_last = m_gamma_avg_adcp_old;
 
           if (m_avg_sog == 0)
             m_gamma_avg_sog = m_gamma_sog.value;
           else
-            m_gamma_avg_sog = ((m_gamma_avg_sog_last * m_avg_sog + m_gamma_sog.value) / (m_avg_sog + 1));
+            m_gamma_avg_sog =
+              ((m_gamma_avg_sog_last * m_avg_sog + m_gamma_sog.value) / (m_avg_sog + 1));
           m_avg_sog++;
           m_gamma_avg_sog_last = m_gamma_avg_sog;
 
           if (m_avg_sog_old == 0)
             m_gamma_avg_sog_old = m_gamma_sog_old.value;
           else
-            m_gamma_avg_sog_old = ((m_gamma_avg_sog_old_last * m_avg_sog_old + m_gamma_sog_old.value) / (m_avg_sog_old + 1));
+            m_gamma_avg_sog_old =
+              ((m_gamma_avg_sog_old_last * m_avg_sog_old + m_gamma_sog_old.value)
+               / (m_avg_sog_old + 1));
           m_avg_sog_old++;
           m_gamma_avg_sog_old_last = m_gamma_avg_sog_old;
         }
-        
+
         //! Dispatch to bus ServoPosition message
         //! @param[in] value set rudder actuation value
         //! @param[in] timestep amount of time since last control step
@@ -807,8 +889,9 @@ namespace Control
           // Activated if act_ramp parameter is set > 0.0
           if ((value > m_last_act.value) && (m_args.act_ramp > 0.0))
           {
-            value = m_last_act.value + trimValue((value - m_last_act.value) / timestep,
-                                                       0.0, m_args.act_ramp * timestep);
+            value =
+              m_last_act.value
+              + trimValue((value - m_last_act.value) / timestep, 0.0, m_args.act_ramp * timestep);
           }
 
           m_act.value = trimValue(value, -m_args.act_max, m_args.act_max);
@@ -817,28 +900,33 @@ namespace Control
             dispatch(m_act);
           else
           {
-            if (m_args.ext_filtering == true && m_args.lp_filtering == false && m_args.n_filtering == false && m_args.bs_filtering == false)
+            if (m_args.ext_filtering == true && m_args.lp_filtering == false
+                && m_args.n_filtering == false && m_args.bs_filtering == false)
             {
               // Apply external filter coefficients.
               m_act.value = ext.step(m_act.value);
               dispatch(m_act);
-              trace("Applying a %s filter with %0.3f cut-off frequency.", m_ext_filter_type.c_str(), m_args.ext_filter_freq);
+              trace("Applying a %s filter with %0.3f cut-off frequency.", m_ext_filter_type.c_str(),
+                    m_args.ext_filter_freq);
             }
-            else if (m_args.lp_filtering == true && m_args.n_filtering == false && m_args.bs_filtering == false)
+            else if (m_args.lp_filtering == true && m_args.n_filtering == false
+                     && m_args.bs_filtering == false)
             {
               // Apply LPF coefficients.
               m_act.value = lpf.step(m_act.value);
               dispatch(m_act);
               trace("LPF Filtering.");
             }
-            else if (m_args.lp_filtering == false && m_args.n_filtering == true && m_args.bs_filtering == false)
+            else if (m_args.lp_filtering == false && m_args.n_filtering == true
+                     && m_args.bs_filtering == false)
             {
               // Apply NF coefficients.
               m_act.value = nf.step(m_act.value);
               dispatch(m_act);
               trace("NF Filtering.");
             }
-            else if (m_args.lp_filtering == true && m_args.n_filtering == true && m_args.bs_filtering == false)
+            else if (m_args.lp_filtering == true && m_args.n_filtering == true
+                     && m_args.bs_filtering == false)
             {
               // Apply NF+LPF coefficients.
               m_act.value = nf.step(m_act.value);
@@ -846,7 +934,8 @@ namespace Control
               dispatch(m_act);
               trace("NF + LP Filtering.");
             }
-            else if (m_args.lp_filtering == true && m_args.n_filtering == false && m_args.bs_filtering == true)
+            else if (m_args.lp_filtering == true && m_args.n_filtering == false
+                     && m_args.bs_filtering == true)
             {
               // Apply BS+LPF coefficients.
               m_act.value = bs.step(m_act.value);
@@ -860,33 +949,47 @@ namespace Control
               trace("NO WAVE FILTERING");
             }
           }
+
+          inf("Set Servo %f", m_act.value);
           m_last_act.value = m_act.value;
         }
-        
+
         //! Dispatch to bus SetThrusterActuation message
         void
-        dispatchThrust()
+        dispatchThrust(void)
         {
           double value;
-          // Use thruster if thruster is enabled, turning assistance is enabled and vessel is actually turning.
+          // Use thruster if thruster is enabled, turning assistance is enabled and vessel is
+          // actually turning.
           if (m_args.en_thrust_turn && (m_turning_filt || m_turning))
           {
             value = m_thrust_assistance;
           }
-          else if (m_args.en_thrust && !m_turning && m_sog < m_args.min_sog) // or if thruster is enabled, vessel is not turning, but speed is very low.
+          else if (m_args.en_thrust && !m_turning
+                   && m_sog < m_args.min_sog)  // or if thruster is enabled, vessel is not turning,
+                                               // but speed is very low.
           {
             value = m_thrust_assistance;
           }
           else
             value = 0.0;
 
-          m_act_thrust.value = trimValue(value, -m_args.max_thrust, m_args.max_thrust);
+          double turning_thrust = trimValue(value, -m_args.max_thrust, m_args.max_thrust);
+          if (turning_thrust + m_act_speed > m_args.max_thrust)
+          {
+            war("Using max thrust");
+            m_act_thrust.value = 1;
+          }
+          else
+            m_act_thrust.value = turning_thrust + m_act_speed;
+
+          inf("setThrust %f", m_act_thrust.value);
           dispatch(m_act_thrust);
         }
-       
+
         //! IMC::DesiredHeading contains a desired course over ground.
         void
-        consume(const IMC::DesiredHeading *msg)
+        consume(const IMC::DesiredHeading* msg)
         {
           if (!isActive())
             return;
@@ -898,35 +1001,37 @@ namespace Control
         }
 
         void
-        consume(const IMC::CurrentProfile *msg)
+        consume(const IMC::CurrentProfile* msg)
         {
           Math::Matrix profile_average = Math::Matrix(3, msg->ncells, 0.0);
           Math::Matrix ncells_averaged = Math::Matrix(1, msg->ncells, 0.0);
           Math::Matrix single_profile = Math::Matrix(3, msg->ncells, 0.0);
 
           // Set this limit high enough based on LOGS.
-          if(m_estate.p < m_args.roll_rate && m_estate.q < m_args.pitch_rate)
+          if (m_estate.p < m_args.roll_rate && m_estate.q < m_args.pitch_rate)
           {
             double cell_beam_amplitude;
             double cell_beam_correlation;
 
-            for(const auto cell:msg->profile)
+            for (const auto cell : msg->profile)
             {
               // Construct velocities vector from cells.
               bool cell_is_good = true;
 
               std::vector<double> beam_velocities;
 
-              for(auto beam:cell->beams)
+              for (auto beam : cell->beams)
               {
                 cell_beam_amplitude = beam->amp;
                 cell_beam_correlation = beam->cor;
 
-                if(cell_beam_amplitude > m_args.ampl_lim && cell_beam_correlation > m_args.corr_lim)
+                if (cell_beam_amplitude > m_args.ampl_lim
+                    && cell_beam_correlation > m_args.corr_lim)
                 {
                   // Measurements in this Cell and Beam are good.
                   beam_velocities.push_back(beam->vel);
-                } else
+                }
+                else
                 {
                   // Measurements in this Cell and Beam are not good.
                   cell_is_good = false;
@@ -935,7 +1040,7 @@ namespace Control
                 }
               }
 
-              if(cell_is_good)
+              if (cell_is_good)
               {
                 m_shallowest_current_cell.lat = m_estate.lat;
                 m_shallowest_current_cell.lon = m_estate.lon;
@@ -943,48 +1048,63 @@ namespace Control
                 spew("Cell at depth %0.3f is good.", m_shallowest_current_cell.depth);
 
                 // Rotate of 45deg about z, as the sensor is rotated with respect to the vessel.
-                if(m_avg_zero==0)
+                if (m_avg_zero == 0)
                   m_beam_velocity_zero_avg = beam_velocities[0];
                 else
-                  m_beam_velocity_zero_avg = ((m_beam_velocity_zero_avg_last * m_avg_zero + beam_velocities[0]) / (m_avg_zero + 1));
+                  m_beam_velocity_zero_avg =
+                    ((m_beam_velocity_zero_avg_last * m_avg_zero + beam_velocities[0])
+                     / (m_avg_zero + 1));
                 m_avg_zero++;
                 m_beam_velocity_zero_avg_last = m_beam_velocity_zero_avg;
 
-                if(m_avg_one==0)
+                if (m_avg_one == 0)
                   m_beam_velocity_one_avg = beam_velocities[1];
                 else
-                  m_beam_velocity_one_avg = ((m_beam_velocity_one_avg_last * m_avg_one + beam_velocities[1]) / (m_avg_one + 1));
+                  m_beam_velocity_one_avg =
+                    ((m_beam_velocity_one_avg_last * m_avg_one + beam_velocities[1])
+                     / (m_avg_one + 1));
                 m_avg_zero++;
                 m_beam_velocity_one_avg_last = m_beam_velocity_one_avg;
 
-                
-                double u_body = m_beam_velocity_zero_avg*std::cos(Angles::radians(45))-m_beam_velocity_one_avg*std::sin(Angles::radians(45));
-                double v_body = m_beam_velocity_zero_avg*std::sin(Angles::radians(45))+m_beam_velocity_one_avg*std::cos(Angles::radians(45));
+                double u_body = m_beam_velocity_zero_avg * std::cos(Angles::radians(45))
+                                - m_beam_velocity_one_avg * std::sin(Angles::radians(45));
+                double v_body = m_beam_velocity_zero_avg * std::sin(Angles::radians(45))
+                                + m_beam_velocity_one_avg * std::cos(Angles::radians(45));
 
-                debug("ADCP TASK: relative u %.3f, relative v %.3f",u_body,v_body);
+                debug("ADCP TASK: relative u %.3f, relative v %.3f", u_body, v_body);
 
                 // Add velocity/sog.
                 double u = m_estate.u - u_body;
                 double v = m_estate.v - v_body;
-                double w = m_estate.w - (beam_velocities[2]+beam_velocities[3])/2;              
+                double w = m_estate.w - (beam_velocities[2] + beam_velocities[3]) / 2;
 
                 // Transform speed vectors from body to inertial frame.
                 // Option 1 - João Costa
                 double u_c_ned, v_c_ned, w_c_ned;
-                Coordinates::BodyFixedFrame::toInertialFrame(m_estate.phi, m_estate.theta, m_estate.psi, u, v, w, &u_c_ned, &v_c_ned, &w_c_ned);
+                Coordinates::BodyFixedFrame::toInertialFrame(m_estate.phi, m_estate.theta,
+                                                             m_estate.psi, u, v, w, &u_c_ned,
+                                                             &v_c_ned, &w_c_ned);
                 // Option 2 - Alberto Dallolio
-                //double u_c_ned = u*std::cos(m_estate.psi)*std::cos(m_estate.theta) + v*(std::cos(m_estate.psi)*std::sin(m_estate.theta)*std::sin(m_estate.phi) - std::sin(m_estate.psi)*std::cos(m_estate.phi)) + w*(std::sin(m_estate.psi)*std::sin(m_estate.phi) + std::cos(m_estate.psi)*std::cos(m_estate.phi)*std::sin(m_estate.theta));
-                //double v_c_ned = u*std::sin(m_estate.psi)*std::cos(m_estate.theta) + v*(std::cos(m_estate.psi)*std::cos(m_estate.phi) + std::sin(m_estate.psi)*std::sin(m_estate.theta)*std::sin(m_estate.phi)) + w*(std::sin(m_estate.theta)*std::sin(m_estate.psi)*std::cos(m_estate.phi) - std::cos(m_estate.psi)*std::sin(m_estate.phi));
-                //double w_c_ned = -u*std::sin(m_estate.theta) + v*std::cos(m_estate.theta)*std::sin(m_estate.phi) + w*std::cos(m_estate.theta)*std::cos(m_estate.phi);
+                // double u_c_ned = u*std::cos(m_estate.psi)*std::cos(m_estate.theta) +
+                // v*(std::cos(m_estate.psi)*std::sin(m_estate.theta)*std::sin(m_estate.phi) -
+                // std::sin(m_estate.psi)*std::cos(m_estate.phi)) +
+                // w*(std::sin(m_estate.psi)*std::sin(m_estate.phi) +
+                // std::cos(m_estate.psi)*std::cos(m_estate.phi)*std::sin(m_estate.theta)); double
+                // v_c_ned = u*std::sin(m_estate.psi)*std::cos(m_estate.theta) +
+                // v*(std::cos(m_estate.psi)*std::cos(m_estate.phi) +
+                // std::sin(m_estate.psi)*std::sin(m_estate.theta)*std::sin(m_estate.phi)) +
+                // w*(std::sin(m_estate.theta)*std::sin(m_estate.psi)*std::cos(m_estate.phi) -
+                // std::cos(m_estate.psi)*std::sin(m_estate.phi)); double w_c_ned =
+                // -u*std::sin(m_estate.theta) + v*std::cos(m_estate.theta)*std::sin(m_estate.phi) +
+                // w*std::cos(m_estate.theta)*std::cos(m_estate.phi);
 
                 // Compute 2D direction of current as atan(vy/vx), for the current cell.
-                double curr_direction = std::atan(v_c_ned/u_c_ned);
+                double curr_direction = std::atan(v_c_ned / u_c_ned);
                 m_shallowest_current_cell.dir = curr_direction;
 
                 // Compute velocity magnitude in 2D inertial frame, for the current cell.
-                double curr_velocity = std::sqrt(std::pow(v_c_ned,2) + std::pow(u_c_ned,2));
+                double curr_velocity = std::sqrt(std::pow(v_c_ned, 2) + std::pow(u_c_ned, 2));
                 m_shallowest_current_cell.vel = curr_velocity;
-
               }
             }
           }
@@ -996,10 +1116,12 @@ namespace Control
           if (!isActive())
             return;
 
-          //TODO: CHECK THE ENTITY!!!!!
+          // TODO: CHECK THE ENTITY!!!!!
           m_wave_freq = msg->value;
 
-          if (m_wave_freq != 0 && (m_args.lp_filtering == true || m_args.n_filtering == true || m_args.bs_filtering == true))
+          if (m_wave_freq != 0
+              && (m_args.lp_filtering == true || m_args.n_filtering == true
+                  || m_args.bs_filtering == true))
             buildFilters();
 
           spew("Consumed Wave Frequency: %f", m_wave_freq);
@@ -1011,23 +1133,37 @@ namespace Control
           if (m_args.ext_filtering == true)
           {
             if (m_ext_filter_type.compare("LPF") == 0)
-              ext.build("LPF", m_args.lpf_taps, 1 / m_tstep, pow(2 * M_PI / (m_args.ext_filter_freq), -1)); // Assuming delta is in seconds.
+              ext.build(
+                "LPF", m_args.lpf_taps, 1 / m_tstep,
+                pow(2 * M_PI / (m_args.ext_filter_freq), -1));  // Assuming delta is in seconds.
             else if (m_ext_filter_type.compare("NF") == 0)
-              ext.build("NF", m_args.nf_taps, 1 / m_tstep, pow(2 * M_PI / m_args.ext_filter_freq, -1));
+              ext.build("NF", m_args.nf_taps, 1 / m_tstep,
+                        pow(2 * M_PI / m_args.ext_filter_freq, -1));
             else if (m_ext_filter_type.compare("BSF") == 0)
-              ext.build("BSF", m_args.nf_taps, 1 / m_tstep, pow(2 * M_PI / m_args.ext_filter_freq, -1) - pow(2 * M_PI / m_args.ext_filter_freq, -1) * (m_args.bsf_scaling / 100), pow(2 * M_PI / m_args.ext_filter_freq, -1) + pow(2 * M_PI / m_args.ext_filter_freq, -1) * (m_args.bsf_scaling / 100));
+              ext.build("BSF", m_args.nf_taps, 1 / m_tstep,
+                        pow(2 * M_PI / m_args.ext_filter_freq, -1)
+                          - pow(2 * M_PI / m_args.ext_filter_freq, -1) * (m_args.bsf_scaling / 100),
+                        pow(2 * M_PI / m_args.ext_filter_freq, -1)
+                          + pow(2 * M_PI / m_args.ext_filter_freq, -1)
+                              * (m_args.bsf_scaling / 100));
           }
 
           if (m_args.lp_filtering == true)
-            lpf.build("LPF", m_args.lpf_taps, 1 / m_tstep, pow(2 * M_PI / (m_args.lpf_scaling * m_wave_freq), -1)); // Assuming delta is in seconds.
+            lpf.build("LPF", m_args.lpf_taps, 1 / m_tstep,
+                      pow(2 * M_PI / (m_args.lpf_scaling * m_wave_freq),
+                          -1));  // Assuming delta is in seconds.
           if (m_args.n_filtering == true)
             nf.build("NF", m_args.nf_taps, 1 / m_tstep, pow(2 * M_PI / m_wave_freq, -1));
           if (m_args.bs_filtering == true)
-            bs.build("BSF", m_args.nf_taps, 1 / m_tstep, pow(2 * M_PI / m_wave_freq, -1) - pow(2 * M_PI / m_wave_freq, -1) * (m_args.bsf_scaling / 100), pow(2 * M_PI / m_wave_freq, -1) + pow(2 * M_PI / m_wave_freq, -1) * (m_args.bsf_scaling / 100));
+            bs.build("BSF", m_args.nf_taps, 1 / m_tstep,
+                     pow(2 * M_PI / m_wave_freq, -1)
+                       - pow(2 * M_PI / m_wave_freq, -1) * (m_args.bsf_scaling / 100),
+                     pow(2 * M_PI / m_wave_freq, -1)
+                       + pow(2 * M_PI / m_wave_freq, -1) * (m_args.bsf_scaling / 100));
         }
 
         void
-        consume(const IMC::ControlLoops *msg)
+        consume(const IMC::ControlLoops* msg)
         {
           // Check if its in teleoperation mode
           // if (msg->mask & (IMC::CL_TELEOPERATION))
@@ -1044,7 +1180,8 @@ namespace Control
 
           m_scope_ref = msg->scope_ref;
 
-          // Activate/Deactivate task as requested by the Control Loop message. Skip if its already as required.
+          // Activate/Deactivate task as requested by the Control Loop message. Skip if its already
+          // as required.
           if (msg->enable == isActive())
             return;
 
@@ -1069,6 +1206,7 @@ namespace Control
           while (!stopping())
           {
             waitForMessages(0.01);
+            // consumeMessages();
 
             // If in maneuver and its time to update gains
             if (m_timer_gs.overflow() && !m_service && m_gain_sch)
@@ -1080,25 +1218,29 @@ namespace Control
 
               if (m_sch_source.compare("adcp") == 0 && m_gamma_avg_adcp != 0)
               {
-                trace("Gamma with ADCP value %f averaged over %.3f seconds.", m_gamma_avg_adcp, m_gs_interval);
+                trace("Gamma with ADCP value %f averaged over %.3f seconds.", m_gamma_avg_adcp,
+                      m_gs_interval);
                 Kp = (0.4 / m_gamma_avg_adcp) * m_args.course_gains_trans[0];
                 Ki = (0.4 / m_gamma_avg_adcp) * m_args.course_gains_trans[1];
               }
               else if (m_sch_source.compare("adcp_old") == 0 && m_gamma_avg_adcp_old != 0)
               {
-                trace("Gamma with ADCP (OLD) value %f averaged over %.3f seconds.", m_gamma_avg_adcp_old, m_gs_interval);
+                trace("Gamma with ADCP (OLD) value %f averaged over %.3f seconds.",
+                      m_gamma_avg_adcp_old, m_gs_interval);
                 Kp = (0.4 / m_gamma_avg_adcp_old) * m_args.course_gains_trans[0];
                 Ki = (0.4 / m_gamma_avg_adcp_old) * m_args.course_gains_trans[1];
               }
               else if (m_sch_source.compare("sog") == 0 && m_gamma_avg_sog != 0)
               {
-                trace("Gamma with SOG value %f averaged over %.3f seconds.", m_gamma_avg_sog, m_gs_interval);
+                trace("Gamma with SOG value %f averaged over %.3f seconds.", m_gamma_avg_sog,
+                      m_gs_interval);
                 Kp = (0.4 / m_gamma_avg_sog) * m_args.course_gains_trans[0];
                 Ki = (0.4 / m_gamma_avg_sog) * m_args.course_gains_trans[1];
               }
               else if (m_sch_source.compare("sog_old") == 0 && m_gamma_avg_sog_old != 0)
               {
-                trace("Gamma with SOG (OLD) value %f averaged over %.3f seconds.", m_gamma_avg_sog_old, m_gs_interval);
+                trace("Gamma with SOG (OLD) value %f averaged over %.3f seconds.",
+                      m_gamma_avg_sog_old, m_gs_interval);
                 Kp = (0.4 / m_gamma_avg_sog_old) * m_args.course_gains_trans[0];
                 Ki = (0.4 / m_gamma_avg_sog_old) * m_args.course_gains_trans[1];
               }
@@ -1113,7 +1255,7 @@ namespace Control
               if (m_args.use_new_gains)
               {
                 trace("Using gain-scheduled gains!");
-                std::vector<float> gains{Kp, Ki, 0.0};
+                std::vector<float> gains{ Kp, Ki, 0.0 };
                 //! Reset Course Controller.
                 reset();
                 //! Re-configure PID with new gains.
