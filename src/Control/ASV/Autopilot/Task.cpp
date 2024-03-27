@@ -257,7 +257,8 @@ namespace Control
           m_avg_sog(0),
           m_avg_sog_old(0),
           m_avg_zero(0),
-          m_avg_one(0)
+          m_avg_one(0),
+          m_teleop(false)
         {
           param("Enable Gain Scheduling", m_args.en_gain_sch)
             .defaultValue("true")
@@ -426,6 +427,7 @@ namespace Control
           // For speed controller
           bind<IMC::DesiredSpeed>(this);
           bind<IMC::Teleoperation>(this);
+          bind<IMC::TeleoperationDone>(this);
 
           // Initialize entity state.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -538,6 +540,7 @@ namespace Control
         {
           (void)msg;
           m_teleop = true;
+          debug("Teleoperation mode activated.");
         }
 
         void
@@ -545,6 +548,7 @@ namespace Control
         {
           (void)msg;
           m_teleop = false;
+          debug("Teleoperation mode deactivated.");
         }
 
         void
@@ -709,7 +713,10 @@ namespace Control
             return;
 
           if (m_teleop)
+          {
+            debug("Teleoperation mode active - no control allowed.");
             return;
+          }
 
           // Compute Time Delta.
           m_tstep = m_delta.getDelta();
@@ -720,7 +727,7 @@ namespace Control
           // If in service mode, center rudder.
           if (m_service)
           {
-            debug("Dispatching a 0 rudder angle");
+            debug("On Service -Dispatching a 0 rudder angle");
             dispatchRudder(0, m_tstep);
             reset();
             return;
@@ -950,7 +957,6 @@ namespace Control
             }
           }
 
-          inf("Set Servo %f", m_act.value);
           m_last_act.value = m_act.value;
         }
 
