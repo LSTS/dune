@@ -64,6 +64,8 @@ namespace Transports
       bool use_9523;
       //! Serial port baud rate fot 9523N Module.
       unsigned uart_baud_9523;
+      //! Name of the section with modem addresses.
+      std::string addr_section;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -125,6 +127,10 @@ namespace Transports
         param("Serial Port 9523 - Baud Rate", m_args.uart_baud_9523)
         .defaultValue("115200")
         .description("Serial port baud rate for 9523N Module");
+
+        param("Address Section", m_args.addr_section)
+        .defaultValue("Iridium Addresses")
+        .description("Name of the configuration section with modem addresses");
 
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
@@ -232,6 +238,28 @@ namespace Transports
         Memory::clear(m_uart);
       }
 
+      unsigned
+      getIridiumSerial(const std::string& destination)
+      {
+        unsigned serial = 0;
+        m_ctx.config.get(m_args.addr_section, destination, "0", serial);
+        return serial;
+      }
+
+      void
+      stripIridiumSerial(const uint8_t* bfr, size_t bfr_size, std::vector<uint8_t>& stripped)
+      {
+        size_t offs = 0;
+
+        if (bfr_size >= 5)
+        {
+          if (bfr[0] == 'R' && bfr[1] == 'B')
+            offs = 5;
+        }
+
+        stripped.assign(bfr + offs, bfr + bfr_size);
+      }
+
       void
       consume(const IMC::IoEvent* msg)
       {
@@ -255,7 +283,9 @@ namespace Transports
         unsigned src_adr = msg->getSource();
         unsigned src_eid = msg->getSourceEntity();
         TxRequest* request = new TxRequest(src_adr, src_eid, msg->req_id,
-                                           msg->ttl, msg->data);
+                                           msg->ttl, 
+                                           getIridiumSerial(msg->destination),
+                                           msg->data);
 
         enqueueTxRequest(request);
         sendTxRequestStatus(request, IMC::IridiumTxStatus::TXSTATUS_QUEUED);
@@ -331,16 +361,22 @@ namespace Transports
       {
         uint8_t bfr[340];
         unsigned rv = m_driver->readBufferMT(bfr, sizeof(bfr));
-        if (rv > 0)
+
+        if (rv == 0)
+        {
+          err(DTR("invalid SBD message"));
+          return;
+        }
+
+        std::vector<uint8_t> stripped;
+        stripIridiumSerial(bfr, rv, stripped);
+
+        if (stripped.size() > 0)
         {
           IMC::IridiumMsgRx sbd;
           sbd.setDestination(getSystemId());
-          sbd.data.assign(bfr, bfr + rv);
+          sbd.data.assign(stripped.begin(), stripped.end());
           dispatch(sbd, DF_KEEP_SRC_EID);
-        }
-        else
-        {
-          err(DTR("invalid SBD message of size %u"), rv);
         }
       }
 
@@ -421,7 +457,7 @@ namespace Transports
             unsigned src_adr = getSystemId();
             unsigned src_eid = getEntityId();
             const std::vector<char> data(1);
-            TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF, 0, data);
+            TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF, 0, 0, data);
             sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
             debug(DTR("No message to be received or sent."));
           }

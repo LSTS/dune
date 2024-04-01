@@ -48,13 +48,22 @@ namespace Transports
       //! @param[in] ttl time-to-live (s).
       //! @param[in] data to transmit.
       TxRequest(uint16_t src_adr, uint8_t src_eid, uint16_t req_id,
-                unsigned ttl, const std::vector<char>& data):
+                unsigned ttl, unsigned iridium_serial, const std::vector<char>& data):
         m_src_adr(src_adr),
         m_src_eid(src_eid),
         m_req_id(req_id),
         m_msn(-1)
       {
         m_expiration = DUNE::Time::Clock::get() + ttl;
+
+        if (iridium_serial)
+        {
+          m_data.push_back('R');
+          m_data.push_back('B');
+          m_data.push_back((uint8_t)(iridium_serial >> 16));
+          m_data.push_back((uint8_t)(iridium_serial >> 8));
+          m_data.push_back((uint8_t)(iridium_serial >> 0));
+        }
         m_data.insert(m_data.end(), data.begin(), data.end());
       }
 
