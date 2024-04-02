@@ -613,53 +613,35 @@ namespace Control
         {
           if (m_ctx.profiles.isSelected("Simulation"))
           {
-            try
-            {
-              m_nav_eid = resolveEntity(m_args.elabel_nav_sim);
-            }
-            catch (...)
-            {
-              m_nav_eid = 0;
-            }
+            m_nav_eid = getEid(m_args.elabel_nav_sim);
           }
           else if (m_ctx.profiles.isSelected("Hardware"))
           {
-            try
-            {
-              m_nav_eid = resolveEntity(m_args.elabel_nav_hw);
-            }
-            catch (...)
-            {
-              m_nav_eid = 0;
-            }
+            m_nav_eid = getEid(m_args.elabel_nav_hw);
           }
 
+          m_ws_eid = getEid(m_args.elabel_ws);
+          m_gnss_eid = getEid(m_args.elabel_gnss);
+          m_es_eid = getEid(m_args.elabel_es);
+        }
+
+        //! Get entity id of label
+        //! Returns UINT16_MAX in case of missing label
+        unsigned int
+        getEid(const std::string& label)
+        {
+          unsigned int id = UINT16_MAX;
           try
           {
-            m_ws_eid = resolveEntity(m_args.elabel_ws);
+            id = resolveEntity(label);
           }
-          catch (...)
+          catch (const std::exception& e)
           {
-            m_ws_eid = 0;
+            err(DTR("can not resolve %s (%s), is there a task failure or a configuration error?"),
+                label.c_str(), e.what());
           }
 
-          try
-          {
-            m_gnss_eid = resolveEntity(m_args.elabel_gnss);
-          }
-          catch (...)
-          {
-            m_gnss_eid = 0;
-          }
-
-          try
-          {
-            m_es_eid = resolveEntity(m_args.elabel_es);
-          }
-          catch (...)
-          {
-            m_es_eid = 0;
-          }
+          return id;
         }
 
         void
