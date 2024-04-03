@@ -66,6 +66,28 @@ namespace DUNE
       void
       consume(const IMC::PowerChannelState* msg);
 
+      void
+      stopImpl(void) override
+      {
+        war("stopping task stopImpl() called.");
+        requestDeactivation();
+        Thread::stopImpl();
+      }
+
+      bool
+      keepRunning(void)
+      {
+        // If the task is running, it should keep running.
+        if (isRunning())
+          return true;
+
+        // If task is deactivating, wait for it do end.
+        if (isDeactivating())
+          return true;
+
+        return false;
+      }
+
     protected:
       //! Create an I/O handle given an URI.
       //!
@@ -135,6 +157,14 @@ namespace DUNE
       {
         if (!name.empty())
           m_power_channels.insert(std::make_pair(name, false));
+      }
+
+      void
+      queryPowerChannel(void)
+      {
+        spew("query power channel ...");
+        IMC::QueryPowerChannelState msg;
+        dispatch(msg);
       }
 
       virtual void
