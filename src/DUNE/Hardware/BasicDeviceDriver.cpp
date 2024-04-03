@@ -66,28 +66,7 @@ namespace DUNE
 
     void
     BasicDeviceDriver::onResourceRelease(void)
-    {
-      requestDeactivation();
-
-      if (!stopping())
-        return;
-      
-      do
-      {
-        try
-        {
-          step();
-        }
-        catch (std::runtime_error &e)
-        {
-          war("%s", e.what());
-          setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
-          return;
-        }
-      }
-      while(getCurrentState() >= SM_DEACT_BEGIN &&
-            getCurrentState() <= SM_DEACT_DONE);
-    }
+    { }
 
     void
     BasicDeviceDriver::onResourceInitialization(void)
@@ -494,7 +473,7 @@ namespace DUNE
 
     bool
     BasicDeviceDriver::isPowered(bool state)
-    {
+    {      
       std::map<std::string, bool>::iterator itr = m_power_channels.begin();
       for (; itr != m_power_channels.end(); ++itr)
       {
@@ -692,12 +671,14 @@ namespace DUNE
           if (m_power_off_timer.overflow() || m_wdog.overflow())
           {
             turnPowerOff();
+            queryPowerChannel();
             queueState(SM_DEACT_POWER_WAIT);
           }
           break;
 
           // Wait for power to be turned off.
         case SM_DEACT_POWER_WAIT:
+          consumeMessages();
           if (isPowered(false))
             queueState(SM_DEACT_DONE);
           break;
@@ -783,7 +764,7 @@ namespace DUNE
     void
     BasicDeviceDriver::onMain()
     {
-      while (!stopping())
+      while (keepRunning())
       {
         try
         {
