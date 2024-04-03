@@ -74,9 +74,9 @@ namespace DUNE
       .defaultValue("")
       .description(DTR("Main entity label"));
 
-      param(DTR_RT("Task Precedents"), m_args.precedents)
-      .defaultValue("")
-      .description(DTR("List of tasks that should stop after this task"));
+      param(DTR_RT("Task Shutdown"), m_args.shutdwn_prio)
+      .defaultValue("2")
+      .description(DTR("Task shutdown priority"));
 
       param(DTR_RT("Execution Priority"), m_args.priority)
       .defaultValue("10")
