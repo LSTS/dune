@@ -245,6 +245,12 @@ namespace DUNE
         return m_args.priority;
       }
 
+      unsigned int
+      getShutdownPriority(void) const
+      {
+        return m_args.shutdwn_prio;
+      }
+
       //! Send an human-readable informational message to all
       //! configured output channels and files.
       //! @param format string format (similar to printf(3)).
@@ -779,6 +785,8 @@ namespace DUNE
         uint16_t deact_time;
         //! Task precedents.
         std::vector<std::string> precedents;
+        //! Shutdown priority.
+        unsigned int shutdwn_prio;
         //! Scheduling priority.
         unsigned int priority;
         //! True if task is active.
