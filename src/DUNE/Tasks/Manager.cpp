@@ -93,14 +93,12 @@ namespace DUNE
           createTask(vec[i]);
       }
 
-      // // Sort task by boot priority
-      // auto comparator = [this](const std::string& str1, const std::string& str2)
-      // {
-      //   return std::atoi(m_ctx.config.get(str1, "Boot Priority").c_str()) > 
-      //          std::atoi(m_ctx.config.get(str2, "Boot Priority").c_str());
-      // };
+      // Sort task by shutdown priority.
+      auto comparator = [this](const std::string& str1, const std::string& str2) {
+        return m_tasks[str1]->getShutdownPriority() > m_tasks[str2]->getShutdownPriority();
+      };
 
-      // std::sort(m_list.begin(), m_list.end(), comparator);
+      std::sort(m_list.begin(), m_list.end(), comparator);
     }
 
     void
@@ -132,96 +130,67 @@ namespace DUNE
       }
     }
 
+    void
+    Manager::waitShutdown(std::queue<Task*>& queue)
+    {
+      while (!queue.empty())
+      {
+        Task* task = queue.front();
+        queue.pop();
+        join(task);
+      }
+    }
+
     Manager::~Manager(void)
     {
-      //FIXME: Save task relationships
-      // if tasks has precedents (slave) with master as precedent task
-      // only stop master after slave has been joined
-      // probably in some sort of tree
+      // Get maximum shutdown priority.
+      unsigned int shutdown_prio = m_tasks[m_list[0]]->getShutdownPriority();
+      std::queue<Task*> shutdown_queue;
 
-      // Get tasks precedents in queue.
-      std::vector<std::string> precedents;
-      std::queue<Task*> stop_later;
-      for (unsigned int i = 0; i < m_list.size(); ++i)
+      DUNE_DBG("Manager", DTR("stopping tasks with priority ") << shutdown_prio);
+
+      for (const std::string& task_name : m_list)
       {
-        if (m_tasks.find(m_list[i]) == m_tasks.end())
-          continue;
-        
-        m_ctx.config.get(m_list[i], "Task Precedents", "", precedents);
-        if (precedents.empty())
+        if (m_tasks.find(task_name) == m_tasks.end())
           continue;
 
-        std::string task_name = m_list[i];
-        for (unsigned int j = 0; j < precedents.size(); ++j)
+        Task* task = m_tasks[task_name];
+        m_tasks.erase(task_name);
+
+        if (task->getShutdownPriority() != shutdown_prio)
         {
-          auto it = m_tasks.find(precedents[j]);
-          if (it == m_tasks.end())
-            continue;
-
-          stop_later.push(it->second);
-          // Remove tasks from list
-          m_tasks.erase(it);
+          waitShutdown(shutdown_queue);
+          shutdown_prio = task->getShutdownPriority();
+          DUNE_DBG("Manager", DTR("stopping tasks with priority ") << shutdown_prio);
         }
+
+        stop(task);
+        shutdown_queue.push(task);
       }
+    }
 
-      for (unsigned int i = 0; i < m_list.size(); ++i)
+    void
+    Manager::stop(Task* task)
+    {
+      if (task->isRunning())
       {
-        if (m_tasks.find(m_list[i]) == m_tasks.end())
-          continue;
-
-        if (m_tasks[m_list[i]]->isStopping() || m_tasks[m_list[i]]->isDead())
-          continue;
-
-        stop(m_list[i]);
-      }
-
-      DUNE_WRN("Manager", DTR("stopped tasks without dependencies"));
-
-      // ... and join.
-      for (int i = m_list.size() - 1; i >= 0; --i)
-      {
-        if (m_tasks.find(m_list[i]) == m_tasks.end())
-          continue;
-
-        if (m_tasks[m_list[i]]->isCreated())
-          join(m_list[i]);
-        delete m_tasks[m_list[i]];
-        m_tasks[m_list[i]] = NULL;
-      }
-
-      while (!stop_later.empty())
-      {
-        Task* task = stop_later.front();
-        stop_later.pop();
-
-        // Throw might happen here ?
         task->inf(DTR("stopping"));
         task->stop();
-        task->join();
-        task->inf(DTR("stopped"));
-        delete task;
       }
     }
 
     void
-    Manager::stop(const std::string& section)
-    {
-      if (m_tasks[section]->isRunning())
-        m_tasks[section]->stop();
-    }
-
-    void
-    Manager::join(const std::string& section)
+    Manager::join(Task* task)
     {
       try
       {
-        m_tasks[section]->inf(DTR("stopping"));
-        m_tasks[section]->join();
-        m_tasks[section]->inf(DTR("stopped"));
+        DUNE_DBG("Manager", DTR("join task ") << task->getName());
+        task->join();
+        task->inf(DTR("stopped"));
       }
       catch (...)
       {
-        m_tasks[section]->err(DTR("failed to join task %s"), section.c_str());
+        DUNE_WRN("Manager", DTR("failed to join task ") << task->getName());
       }
     }
 
@@ -259,31 +228,6 @@ namespace DUNE
       {
         task->err(DTR("unknown exception"));
       }
-    }
-
-    bool
-    Manager::precedentsStopped(const std::string& section)
-    {
-      if (m_tasks.find(section) == m_tasks.end())
-        throw InvalidTaskName(section);
-
-      // FIXME: Should search for Entity Name, not section 
-      std::vector<std::string> precedents;
-      m_ctx.config.get(section, "Task Precedents", "", precedents);
-
-      if (precedents.empty())
-        return true;
-      
-      for (auto p : precedents)
-      {
-        if (m_tasks.find(p) == m_tasks.end())
-          throw InvalidTaskName(p);
-
-        if (!m_tasks[p]->isDead())
-          return false;
-      }
-
-      return true;
     }
 
     std::string

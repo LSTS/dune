@@ -68,17 +68,21 @@ namespace DUNE
       void
       start(const std::string& name);
 
-      //! Stop a task with a given name.
-      //! @param name task name.
-      //! @return true if task was stopped, false otherwise.
+      //! Request task to stop.
+      //! @param task Task to stop.
       void
-      stop(const std::string& name);
+      stop(Task* task);
 
+      //! Attempt to join a task.
+      //! @param task Task to join.
+      //! @note If task join timeout is reached, task is forcefully stopped.
       void
-      join(const std::string& name);
+      join(Task* task);
 
-      bool
-      precedentsStopped(const std::string& section);
+      //! Join all tasks from the queue.
+      //! @param shutdown_queue queue with tasks to join.
+      void
+      waitShutdown(std::queue<Task*>& shutdown_queue);
 
       //! Retrieve the task name from a configuration section.
       //! @param str configuration section string.
