@@ -100,6 +100,12 @@ namespace Control
         double pitch_rate;
         //! Vehicle rolling rate limit.
         double roll_rate;
+
+        //! Vector field parameters for loiter
+        //! Corridor width
+        double corridor;
+        //! Entry angle
+        double entry_angle;
       };
 
       struct SingleCurrentCell
@@ -481,6 +487,21 @@ namespace Control
           param("Vehicle Roll Rate Limit", m_args.roll_rate)
               .defaultValue("0")
               .description("Roll rate above which measurement is discarded.");
+
+          
+          param("Corridor -- Width", m_args.corridor)
+          .minimumValue("1.0")
+          .maximumValue("50.0")
+          .defaultValue("5.0")
+          .units(Units::Meter)
+          .description("Width of corridor for attack entry angle");
+
+          param("Corridor -- Entry Angle", m_args.entry_angle)
+          .minimumValue("2")
+          .maximumValue("45")
+          .defaultValue("15")
+          .units(Units::Degree)
+          .description("Attack angle when lateral track error equals corridor width");
 
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
@@ -1350,6 +1371,26 @@ namespace Control
             dispatch(m_des_heading);
             m_timestamp_prev = m_timestamp_new;
           }
+        }
+
+        //! Execute a loiter control step
+        //! From base class PathController
+        void
+        loiter(const IMC::EstimatedState& state, const TrackingState& ts)
+        {
+          (void) state;
+          
+          double gain = std::tan(Angles::radians(m_args.entry_angle)) / m_args.corridor;
+          double ref = DUNE::Math::c_half_pi + std::atan(2 * gain * (ts.range - ts.loiter.radius));
+
+          if (!ts.loiter.clockwise)
+            ref = -ref;
+
+          ref += DUNE::Math::c_pi + ts.los_angle;
+
+          // Dispatch heading reference
+          m_des_heading.value = Angles::normalizeRadian(ref);
+          dispatch(m_des_heading);
         }
       };
     }
