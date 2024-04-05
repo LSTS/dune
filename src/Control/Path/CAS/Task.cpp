@@ -502,6 +502,8 @@ namespace Control
         void
         onUpdateParameters(void)
         {
+          PathController::onUpdateParameters();
+
           if (m_sb_mpc == NULL)
             return;
 
