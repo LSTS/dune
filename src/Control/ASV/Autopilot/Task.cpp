@@ -107,6 +107,9 @@ namespace Control
         double roll_rate;
         //! Enable speed controller
         bool speed_control;
+
+        //! Minimum heading error to consider vessel is turning
+        double turn_min_error;
       };
 
       struct Gamma
@@ -177,8 +180,6 @@ namespace Control
         double m_tstep;
         //! Chopping boolean.
         bool m_chopping;
-        //! Turning for filtering.
-        bool m_turning_filt;
         //! A turn is happening.
         bool m_turning;
         //! Desired Heading is arrived.
@@ -245,7 +246,6 @@ namespace Control
           m_wave_freq(0.0),
           m_tstep(0.0),
           m_chopping(false),
-          m_turning_filt(false),
           m_turning(false),
           m_des_head_arrived(false),
           m_gain_sch(false),
@@ -411,6 +411,11 @@ namespace Control
           param("Enable speed controller", m_args.speed_control)
             .defaultValue("false");
 
+          param("Minimum Turning Error", m_args.turn_min_error)
+            .defaultValue("25")
+            .units(Units::Degree)
+            .description("Minimum heading error to consider vessel is turning (in degrees).");
+
           // Register handler routines.
           bind<IMC::Abort>(this);
           bind<IMC::EstimatedState>(this);
@@ -488,6 +493,9 @@ namespace Control
               || paramChanged(m_args.lpf_scaling) || paramChanged(m_args.bsf_taps)
               || paramChanged(m_args.bsf_scaling) || paramChanged(m_args.ext_filter_freq))
             buildFilters();
+
+          if (paramChanged(m_args.turn_min_error))
+            m_args.turn_min_error = Angles::radians(m_args.turn_min_error);
         }
 
         void
@@ -759,6 +767,9 @@ namespace Control
                   Angles::degrees(m_desired_course), Angles::degrees(error), m_sog, m_dist_to_wp);
           }
 
+          // Check if turning
+          m_turning = std::abs(error) > Angles::radians(m_args.turn_min_error);
+
           // Derivative Error.
           // float error_der = m_args.desired_course_der - m_angvel.z; //m_angvel.z may need to be
           // filtered?
@@ -967,16 +978,14 @@ namespace Control
           double value;
           // Use thruster if thruster is enabled, turning assistance is enabled and vessel is
           // actually turning.
-          if (m_args.en_thrust_turn && (m_turning_filt || m_turning))
-          {
+          if (m_args.en_thrust_turn && m_turning)
             value = m_thrust_assistance;
-          }
-          else if (m_args.en_thrust && !m_turning
-                   && m_sog < m_args.min_sog)  // or if thruster is enabled, vessel is not turning,
-                                               // but speed is very low.
-          {
+          // or if thruster is enabled, vessel is not turning,
+          // but speed is very low.
+          else if (m_args.en_thrust && !m_turning && m_sog < m_args.min_sog)                                            
             value = m_thrust_assistance;
-          }
+          else if (m_args.en_thrust)
+            value = m_thrust_assistance;
           else
             value = 0.0;
 
