@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 054f482636bfa96a42ed8b9f615992ee                            *
+// IMC XML MD5: 4c9dbd0e8271e97464c858f9d536d3f5                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -27880,6 +27880,143 @@ namespace DUNE
     {
       IMC::toJSON(os__, "fstype", fstype, nindent__);
       IMC::toJSON(os__, "filename", filename, nindent__);
+    }
+
+    QueryGsmCredit::QueryGsmCredit(void)
+    {
+      m_header.mgid = 1103;
+      clear();
+    }
+
+    void
+    QueryGsmCredit::clear(void)
+    {
+      req_id = 0;
+    }
+
+    bool
+    QueryGsmCredit::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::QueryGsmCredit& other__ = static_cast<const QueryGsmCredit&>(msg__);
+      if (req_id != other__.req_id) return false;
+      return true;
+    }
+
+    int
+    QueryGsmCredit::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    QueryGsmCredit::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(req_id, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    QueryGsmCredit::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(req_id, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    QueryGsmCredit::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(req_id, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    QueryGsmCredit::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "req_id", req_id, nindent__);
+    }
+
+    FileClassification::FileClassification(void)
+    {
+      m_header.mgid = 1104;
+      clear();
+    }
+
+    void
+    FileClassification::clear(void)
+    {
+      original_filepath.clear();
+      resized_filepath.clear();
+      class_prediction.clear();
+      confidence = 0;
+      fstype = 0;
+    }
+
+    bool
+    FileClassification::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FileClassification& other__ = static_cast<const FileClassification&>(msg__);
+      if (original_filepath != other__.original_filepath) return false;
+      if (resized_filepath != other__.resized_filepath) return false;
+      if (class_prediction != other__.class_prediction) return false;
+      if (confidence != other__.confidence) return false;
+      if (fstype != other__.fstype) return false;
+      return true;
+    }
+
+    int
+    FileClassification::validate(void) const
+    {
+      if (confidence > 100) return false;
+      return true;
+    }
+
+    uint8_t*
+    FileClassification::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(original_filepath, ptr__);
+      ptr__ += IMC::serialize(resized_filepath, ptr__);
+      ptr__ += IMC::serialize(class_prediction, ptr__);
+      ptr__ += IMC::serialize(confidence, ptr__);
+      ptr__ += IMC::serialize(fstype, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FileClassification::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(original_filepath, bfr__, size__);
+      bfr__ += IMC::deserialize(resized_filepath, bfr__, size__);
+      bfr__ += IMC::deserialize(class_prediction, bfr__, size__);
+      bfr__ += IMC::deserialize(confidence, bfr__, size__);
+      bfr__ += IMC::deserialize(fstype, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FileClassification::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(original_filepath, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(resized_filepath, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(class_prediction, bfr__, size__);
+      bfr__ += IMC::deserialize(confidence, bfr__, size__);
+      bfr__ += IMC::deserialize(fstype, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FileClassification::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "original_filepath", original_filepath, nindent__);
+      IMC::toJSON(os__, "resized_filepath", resized_filepath, nindent__);
+      IMC::toJSON(os__, "class_prediction", class_prediction, nindent__);
+      IMC::toJSON(os__, "confidence", confidence, nindent__);
+      IMC::toJSON(os__, "fstype", fstype, nindent__);
     }
 
     GpioState::GpioState(void)

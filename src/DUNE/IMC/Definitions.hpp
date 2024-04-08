@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 054f482636bfa96a42ed8b9f615992ee                            *
+// IMC XML MD5: 4c9dbd0e8271e97464c858f9d536d3f5                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -357,7 +357,9 @@ namespace DUNE
         //! Report.
         OP_REPORT = 0,
         //! Query.
-        OP_QUERY = 1
+        OP_QUERY = 1,
+        //! Reload.
+        OP_RELOAD = 2
       };
 
       //! operation.
@@ -26437,6 +26439,155 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(filename);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Query GSM Credit.
+    class QueryGsmCredit: public Message
+    {
+    public:
+      //! Request ID.
+      uint16_t req_id;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 1103;
+      }
+
+      QueryGsmCredit(void);
+
+      QueryGsmCredit*
+      clone(void) const
+      {
+        return new QueryGsmCredit(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return QueryGsmCredit::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "QueryGsmCredit";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 2;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! File Classification Event.
+    class FileClassification: public Message
+    {
+    public:
+      //! File Type.
+      enum FileTypeEnum
+      {
+        //! Image.
+        FSTYPE_IMAGE = 0,
+        //! Audio.
+        FSTYPE_AUDIO = 1,
+        //! Sonar.
+        FSTYPE_SONAR = 2,
+        //! Other.
+        FSTYPE_OTHER = 255
+      };
+
+      //! Original Filepath.
+      std::string original_filepath;
+      //! Resized Filepath.
+      std::string resized_filepath;
+      //! Classification Prediction.
+      std::string class_prediction;
+      //! Confidence Value.
+      uint8_t confidence;
+      //! File Type.
+      uint8_t fstype;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 1104;
+      }
+
+      FileClassification(void);
+
+      FileClassification*
+      clone(void) const
+      {
+        return new FileClassification(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FileClassification::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FileClassification";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 2;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(original_filepath) + IMC::getSerializationSize(resized_filepath) + IMC::getSerializationSize(class_prediction);
       }
 
       void
