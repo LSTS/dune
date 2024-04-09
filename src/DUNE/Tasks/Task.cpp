@@ -255,6 +255,7 @@ namespace DUNE
         {
           if (paramChanged(m_args.active))
           {
+            war("due to params active change, requesting %s", m_args.active ? "activation" : "deactivation");
             if (m_args.active)
               requestActivation();
             else
@@ -298,7 +299,10 @@ namespace DUNE
 
       m_entity->succeedActivation();
       if (m_entity->hasPendingDeactivation())
+      {
+        spew("has pending deactivation");
         requestDeactivation();
+      }
     }
 
     void
@@ -340,7 +344,10 @@ namespace DUNE
 
       m_entity->succeedDeactivation();
       if (m_entity->hasPendingActivation())
+      {
+        spew("has pending activation");
         requestActivation();
+      }
     }
 
     void

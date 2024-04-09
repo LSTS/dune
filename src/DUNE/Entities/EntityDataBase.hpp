@@ -153,6 +153,28 @@ namespace DUNE
         return id;
       }
 
+      unsigned int
+      unreserve(const std::string &label)
+      {
+        if (label.size() == 0)
+          throw InvalidLabel();
+
+        Concurrency::ScopedMutex l(m_lock);
+        EntitiesByLabel::iterator itr = m_by_label.find(label);
+        if (itr == m_by_label.end())
+          return -1;
+
+        int id = itr->second->id;
+        m_by_id.erase(id);
+        m_by_label.erase(label);
+
+        while (m_by_id.find(m_next_id) == m_by_id.end())
+          m_next_id--;
+        m_next_id++;
+
+        return id;
+      }
+
       //! Get the numeric id for the entity identified by the given label
       //! The NonexistentLabel exception is thrown if there is no matching entity in the database.
       //! @return numerical entity id.

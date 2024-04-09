@@ -101,6 +101,18 @@ namespace DUNE
     }
 
     void
+    Bus::registerSink(Tasks::AbstractTask *task)
+    {
+      registerRecipient(task, c_sink_id);
+    }
+
+    void
+    Bus::unregisterSink(Tasks::AbstractTask *task)
+    {
+      unregisterRecipient(task, c_sink_id);
+    }
+
+    void
     Bus::dispatch(const Message* msg, Tasks::AbstractTask* task)
     {
       {
@@ -109,6 +121,15 @@ namespace DUNE
         {
           m_back_log.push(new BackLogEntry(msg, task));
           return;
+        }
+        // also dispatch to all sinks
+        TransportList &dsink(m_recipients[c_sink_id]);
+        for (TransportList::iterator itr = dsink.begin(); itr != dsink.end(); ++itr)
+        {
+          if (*itr != task)
+          {
+            (*itr)->receive(msg);
+          }
         }
       }
 

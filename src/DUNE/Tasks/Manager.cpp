@@ -154,6 +154,14 @@ namespace DUNE
     }
 
     void
+    Manager::reloadEntities()
+    {
+      std::map<std::string, Task *>::iterator itr;
+      for (itr = m_tasks.begin(); itr != m_tasks.end(); ++itr)
+        itr->second->resolveEntities();
+    }
+
+    void
     Manager::join(const std::string& section)
     {
       try

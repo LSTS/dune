@@ -93,6 +93,24 @@ namespace DUNE
         return t;
       }
 
+      std::vector<std::string>
+      entries()
+      {
+        std::vector<std::string> result;
+        for (auto entry = m_data.begin(); entry != m_data.end(); entry++)
+        {
+          result.push_back(entry->first);
+        }
+        return result;
+      }
+
+      std::map<std::string, std::string>
+      get()
+      {
+        std::map<std::string, std::string> result(m_data);
+        return result;
+      }
+
       TupleList&
       operator<<(const std::string str);
 

@@ -49,6 +49,9 @@ namespace DUNE
     // Export DLL Symbol.
     class DUNE_DLL_SYM Recipient;
 
+    // Sink message identifier (receive all messages)
+    const uint16_t c_sink_id = 65535;
+
     class Recipient
     {
     public:

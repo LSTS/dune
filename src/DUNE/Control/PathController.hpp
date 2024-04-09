@@ -156,6 +156,7 @@ namespace DUNE
           double x;
           double y;
           double z;
+          uint8_t z_units;
         } start, end;
 
         //! bearing from start to end.
@@ -171,6 +172,8 @@ namespace DUNE
         //! current ground speed if course control enabled,
         //! body-fixed frame u speed otherwise.
         double speed;
+        //! Vertical speed.
+        double vertical_speed;
         //! course error in relation to track bearing.
         double course_error;
 
@@ -262,38 +265,6 @@ namespace DUNE
       {
         return m_time_factor;
       }
-
-      //! Get EstimatedState value from z units
-      //! @param[in] z_unit Unit selection
-      //! @return EstimatedState depth, altitude or height, according to z_unit. 
-      //! -1 otherwise
-      double
-      getZ(IMC::ZUnits z_unit) const;
-
-      //! Set TrackingState start/end coordinates in NED frame
-      //! @param[out] coord TrackingState start/end coordinates reference.
-      //! @param[in] lat Latitude in WGS84.
-      //! @param[in] lon Longitude in WGS84.
-      //! @param[in] z value, according to z_unit.
-      //! @param[in] z_unit unit of z value.
-      void
-      setTrackingCoord(TrackingState::Coord& coord, 
-                        double lat, double lon,
-                        double z, IMC::ZUnits z_unit);
-
-      //! Convert depth reference to NED frame z axis.
-      //! @param[in] depth_ref Depth value.
-      //! @param[out] z z in NED frame.
-      //! @return true if conversion successful. false otherwise.
-      bool
-      depthToLocal(double depth_ref, double& z);
-
-      //! Convert altitude reference to NED frame z axis.
-      //! @param[in] alt_ref Altitude value.
-      //! @param[out] z z in NED frame.
-      //! @return true if conversion successful. false otherwise.
-      bool
-      altitudeToLocal(double alt_ref, double& z);
 
       //! Signal an error.
       //! This method should be used by subclasses to signal an error condition.
@@ -406,6 +377,12 @@ namespace DUNE
       {
         Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
       }
+
+      //! Get EstimatedState vertical position, based on ZUnits 
+      //! @param unit Coordenate unit
+      //! @return EstimatedSate vertical position
+      double
+      getZ(IMC::ZUnits unit);
 
       //! Deactivate bottom tracker
       void
