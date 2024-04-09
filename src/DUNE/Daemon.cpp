@@ -227,9 +227,7 @@ namespace DUNE
 
   void
   Daemon::consume(const IMC::EntityList* msg)
-  {
-    if (msg->op != IMC::EntityList::OP_QUERY)
-      return;
+  {   
      if (msg->op == IMC::EntityList::OP_RELOAD)
      {
        m_tman->reloadEntities();
