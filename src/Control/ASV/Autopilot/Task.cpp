@@ -741,8 +741,6 @@ namespace Control
             return;
           }
 
-          inf("onGPSFix %f", m_tstep);
-
           // Check if we have a valid time delta.
           if (m_tstep < 0.0)
             return;
@@ -998,7 +996,6 @@ namespace Control
           else
             m_act_thrust.value = turning_thrust + m_act_speed;
 
-          inf("setThrust %f", m_act_thrust.value);
           dispatch(m_act_thrust);
         }
 
