@@ -123,7 +123,7 @@ namespace Control
           consume(const IMC::LoggingControl* msg)
           {
             // save current log.
-            m_log_name = msg->name;
+            m_log_name = getLogName(msg->name);
             m_log_state = msg->op;
           }
 
@@ -204,6 +204,17 @@ namespace Control
 
             war("PowerOff CPU");
             system("poweroff");
+          }
+
+          //! Get log name.
+          std::string
+          getLogName(const std::string& name)
+          {
+            size_t pos = name.find('_');
+            if (pos == std::string::npos)
+              return {};  // return empty string
+
+            return name.substr(pos + 1);
           }
 
           void
