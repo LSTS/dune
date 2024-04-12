@@ -115,10 +115,10 @@ namespace DUNE
     }
 
     void
-    BottomTracker::onDistance(const IMC::Distance* msg)
+    BottomTracker::onDistance(const IMC::Distance* msg, unsigned int fls_entity)
     {
       // Use control parcel for debug
-      if (m_sdata->onDistance(msg, m_estate, m_cparcel))
+      if (m_sdata->onDistance(msg, m_estate, m_cparcel, fls_entity))
         m_slope = true;
     }
 

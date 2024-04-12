@@ -78,6 +78,8 @@ namespace DUNE
         float adm_alt;
         //! Entity for bottom tracker
         Entities::BasicEntity* entity;
+       //! Forward Looking Sonar Entity Label
+        std::string fls_elabel;
       };
 
       //! Constructor.
@@ -101,8 +103,9 @@ namespace DUNE
 
       //! On consume message Distance.
       //! @param[in] msg message being consumed.
+      //! @param[in] fls_entity entity of the FLS.
       void
-      onDistance(const DUNE::IMC::Distance* msg);
+      onDistance(const DUNE::IMC::Distance* msg, unsigned int fls_entity);
 
       //! On new desired z reference message (sent or received).
       //! @param[in] msg message being consumed or sent.

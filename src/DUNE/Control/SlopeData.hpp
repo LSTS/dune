@@ -103,18 +103,22 @@ namespace DUNE
       //! @param[in] msg sonar distance message
       //! @param[in] state estimatedstate message
       //! @param[in] cparcel control parcel message
+      //! @param[in] fls_entity entity of the FLS.
       //! @return true if slope was estimated, false otherwise.
       bool
-      onDistance(const IMC::Distance* msg, const IMC::EstimatedState& state, IMC::ControlParcel& cparcel)
+      onDistance(const IMC::Distance* msg, const IMC::EstimatedState& state, IMC::ControlParcel& cparcel, unsigned int fls_entity)
       {
         if (!m_sonar_conf && msg->location.size())
         {
           // check if it is an echo sounder and pointing forward
-          // checking first in the list only
           if ((std::fabs((*msg->location.begin())->psi) < 0.1) &&
               (std::fabs((*msg->location.begin())->theta) < 0.1) &&
               msg->beam_config.size())
           {
+            // Check if entity source matches FLS entity label
+            if (msg->getSourceEntity() != fls_entity)
+              return false;
+
             m_beam_width = (*msg->beam_config.begin())->beam_width;
             m_sonar_conf = true;
             m_sonar_entity = msg->getSourceEntity();

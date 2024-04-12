@@ -64,6 +64,10 @@ namespace DUNE
       void
       onEntityReservation(void);
 
+      //! Entity resolution callback.
+      void
+      onEntityResolution(void);
+
       //! Consumer for Brake message.
       //! @param brake message to consume.
       void
@@ -503,6 +507,8 @@ namespace DUNE
       uint32_t m_scope_ref;
       //! Maximum admitted track length
       double m_max_track_length;
+      //! Echo Sounder Entity
+      unsigned int m_fls_entity;
     };
   }
 }
