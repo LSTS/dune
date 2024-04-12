@@ -27,6 +27,9 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <limits>
+
 // DUNE headers.
 #include <DUNE/Control/PathController.hpp>
 #include <DUNE/Math/General.hpp>
