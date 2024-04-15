@@ -44,7 +44,7 @@ namespace Monitors
     using DUNE_NAMESPACES;
 
     static const float c_time_between_reads = 2.0f;
-    static const int c_max_cpu = 4;
+    static const int c_max_cpu = 32;
 
     typedef struct CPUData
     {
@@ -76,6 +76,8 @@ namespace Monitors
       Time::Counter<float> m_cpu_check;
       //! Read timestamp.
       double m_tstamp;
+      //! Number of CPUs
+      int m_num_cpus;
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -83,13 +85,14 @@ namespace Monitors
         DUNE::Tasks::Task(name, ctx),
         m_tstamp(0)
       {
+        m_num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
       }
 
       //! Reserve entity identifiers.
       void
       onEntityReservation(void)
       {
-        for(uint8_t i = 1 ; i <= c_max_cpu; i++)
+        for(uint8_t i = 1 ; i <= m_num_cpus; i++)
         {
           std::string cpu_label = String::str("CPU%u", i);
           m_cpu_eid[i - 1] = getEid(cpu_label);
@@ -166,7 +169,7 @@ namespace Monitors
               entry.cpu = STR_TOT;
 
             // read times
-            for (int i = 0; i < c_max_cpu; ++i)
+            for (int i = 0; i < m_num_cpus; ++i)
               ss >> entry.times[i];
           }
         }
@@ -195,7 +198,7 @@ namespace Monitors
       dispatchStatus(const std::vector<CPUData> &entries1, const std::vector<CPUData> &entries2)
       {
         const size_t NUM_ENTRIES = entries1.size();
-        uint8_t cpu_usage[c_max_cpu];
+        std::vector<uint8_t> cpu_usage(m_num_cpus);
         for (size_t i = 1; i < NUM_ENTRIES; ++i)
         {
           const CPUData &e1 = entries1[i];
@@ -205,12 +208,11 @@ namespace Monitors
           const float TOTAL_TIME = ACTIVE_TIME + IDLE_TIME;
           cpu_usage[i-1] = (100.f * ACTIVE_TIME / TOTAL_TIME);
         }
-        debug("CPU0: %03d%% | CPU1: %03d%% | CPU2: %03d%% | CPU3: %03d%%", cpu_usage[0], cpu_usage[1], cpu_usage[2], cpu_usage[3]);
-        
-        for(uint8_t id = 0; id < c_max_cpu; id++)
+        for(uint8_t id = 0; id < m_num_cpus; id++)
         {
           m_cpu[id].setTimeStamp(m_tstamp);
           m_cpu[id].value = cpu_usage[id];
+          debug("CPU%u: %d%%", id + 1, cpu_usage[id]);
           dispatch(m_cpu[id], DF_KEEP_TIME | DF_LOOP_BACK);
         }
       }
