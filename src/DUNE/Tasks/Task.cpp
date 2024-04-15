@@ -88,6 +88,11 @@ namespace DUNE
       .defaultValue("None")
       .values("None, Debug, Trace, Spew");
 
+      param(DTR_RT("Loopback Internal Messages"), m_args.loopback)
+      .defaultValue("false")
+      .description("Loopback internal messages, such as EntityState"
+                   " and EntityParameters");
+
       m_recipient = new Recipient(this, ctx);
       m_entity = new Entities::StatefulEntity(this, m_ctx);
       m_entities.push_back(m_entity);
@@ -228,6 +233,7 @@ namespace DUNE
       if (m_args.elabel != m_entity->getLabel())
         m_params.set(DTR_RT("Entity Label"), m_entity->getLabel());
       m_entity->setActTimes(m_args.act_time, m_args.deact_time);
+      m_entity->setLoopback(m_args.loopback);
       m_entity->reportInfo();
 
       if (m_debug_level_string == "Debug")
@@ -470,7 +476,7 @@ namespace DUNE
         params.params.push_back(p);
       }
 
-      dispatchReply(*msg, params);
+      dispatchReply(*msg, params, !m_args.loopback ? 0 : DF_LOOP_BACK);
     }
 
     void
