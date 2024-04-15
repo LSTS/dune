@@ -28,7 +28,7 @@
 body
 {
   font-family: Arial, Helvetica, sans;
-  color: #666;
+  color: var(--c-color-text);
 }
 
 a
@@ -92,8 +92,9 @@ input
 
 #Sensors th
 {
-  background-color: #777;
-  color: white;
+  /*Sensors title*/
+  background-color: var(--c-background-h-l);
+  color: var(--c-color-text-h-l);
 }
 
 #Sensors td
@@ -105,7 +106,8 @@ input
 
 #Sensors td:first-child
 {
-  background-color: #ddd;
+  /**/
+  background-color: var(--c-color-entity-sensor-background);
   font-weight: bold;
   width: 150px;
   text-align: left;
@@ -113,7 +115,7 @@ input
 
 #Sensors tr , #Sensors td, #Sensors th
 {
-  border: solid black thin;
+  border: solid var(--c-color-text) thin;
   border-collapse: collapse;
 }
 
@@ -168,7 +170,7 @@ td.entryRight
 h1
 {
   font-size: 14px;
-  color: #666;
+  color: var(--c-color-text);
   text-align: left;
 }
 
@@ -234,7 +236,8 @@ p.DEBUG
   height: 31px;
   display: inline;
   z-index: 10;
-  background: url(../images/menu/bg_navi_sublist.gif) -5000px 0 no-repeat;
+  /* background: url(../images/menu/bg_navi_sublist.gif) -5000px 0 no-repeat; */
+  background: var(--c-background);
 }
 
 #Menu ul
@@ -337,7 +340,7 @@ p.DEBUG
 
 #MainTaskTableDiv
 {
-  width: 80%;
+  width: 90%;
   margin-left: auto;
   margin-right: auto;
 }
@@ -349,7 +352,7 @@ p.DEBUG
 
 #MainTaskTable tr
 {
-  border-bottom: solid #999 thin;
+  border-bottom: solid var(--c-color-line-split-tasks) thin;
 }
 
 #MainTaskTable tr:last-child
@@ -370,8 +373,8 @@ p.DEBUG
 
 #Power th
 {
-  background-color: #777;
-  color: white;
+  background-color: var(--c-background-h-l);
+  color: var(--c-color-text-h-l);
 }
 
 #Power table tr td
@@ -405,4 +408,24 @@ p.DEBUG
 #Power table form *
 {
   margin: 5px;
+}
+
+#systemName
+{
+  font-size: 24px;
+  text-align: center;
+  color: red; /* Cor do texto vermelho */
+  background-color:#e2cb80; /* Fundo azul */
+}
+
+.connected
+{
+  background-color: green; /* Cor de fundo para estado conectado */
+  color: white; /* Cor do texto para estado conectado */
+}
+
+.disconnected
+{
+  background-color: red; /* Cor de fundo para estado desconectado */
+  color: white; /* Cor do texto para estado desconectado */
 }
