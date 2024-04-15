@@ -48,7 +48,7 @@ namespace DUNE
       m_entity_state_code = code;
 
       if (new_state && (getId() != DUNE_IMC_CONST_UNK_EID))
-        dispatch(m_entity_state);
+        dispatch(m_entity_state, !m_loopback ? 0 : DF_LOOP_BACK);
     }
 
     void
@@ -62,13 +62,13 @@ namespace DUNE
       m_entity_state_code = -1;
 
       if (new_state && (getId() != DUNE_IMC_CONST_UNK_EID))
-        dispatch(m_entity_state);
+        dispatch(m_entity_state, !m_loopback ? 0 : DF_LOOP_BACK);
     }
 
     void
     StatefulEntity::reportState(void)
     {
-      dispatch(m_entity_state);
+      dispatch(m_entity_state, !m_loopback ? 0 : DF_LOOP_BACK);
     }
 
     void

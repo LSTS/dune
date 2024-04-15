@@ -83,6 +83,12 @@ namespace DUNE
       setState(IMC::EntityState::StateEnum state,
                      const std::string& message);
 
+      void
+      setLoopback(bool loopback)
+      {
+        m_loopback = loopback;
+      }
+
       //! Retrieve the current entity state.
       //! @return entity state.
       IMC::EntityState::StateEnum
@@ -216,6 +222,8 @@ namespace DUNE
       IMC::EntityActivationState m_act_state;
       //! Next activation state.
       NextActivationState m_next_act_state;
+      //! Set loopback flag for EntityState report
+      bool m_loopback;
     };
   }
 }
