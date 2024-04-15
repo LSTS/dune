@@ -130,7 +130,10 @@ namespace Transports
             m_contacts.update(msg->getSource(), addr);
             m_contacts_lock.unlock();
 
-            m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+            if (msg->getId() == DUNE_IMC_QUERYENTITYPARAMETERS)
+              m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID | DF_LOOP_BACK);
+            else
+              m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
             if (m_trace)
               msg->toText(std::cerr);
