@@ -54,11 +54,15 @@
     body.theme-dark {
       --c-background: #131212;
       --c-color-text: #ffffff;
-      --c-background-h-l: #c0baa7;
-      --c-color-text-h-l: #20201e;
+      --c-background-h-l: #707070;
+      --c-color-text-h-l: #ffffff;
       --c-color-line-split-tasks: #918d8d;
-      --c-color-entity-sensor-background: #443a3a;
+      --c-color-entity-sensor-background: #443c3a;
       /* Adicione outros estilos específicos para o tema escuro aqui */
+    }
+
+    body.theme-dark form input:disabled {
+      color: #cccccc;
     }
   </style>
 </head>
@@ -74,7 +78,7 @@
             <!-- <li id="Logs"><a href="javascript:show('Logs')">Logs</a></li> -->
             <!-- <li id="Services"><a href="#">Services</a></li> -->
             <li id="Power"><a href="javascript:show('Power')">Power</a></li>
-            <li id="LogBook"><a href="javascript:show('Logbook')">Logbook</a></li>
+            <li id="Logbook"><a href="javascript:show('Logbook')">Logbook</a></li>
             <!-- <li id="Help"><a href="#">Help</a></li> -->
             <li class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected"
                   alt="Connected" /></a></li>
@@ -85,7 +89,7 @@
       </td>
     </tr>
     <tr>
-      <td style="background-color: var(--c-background); padding: 0em; border: solid var(--c-color-text) thin">
+      <td class="infoTable" style="background-color: var(--c-background); padding: 0em; border: solid var(--c-color-text) thin;">
         <div id="x-container">
         </div>
       </td>
