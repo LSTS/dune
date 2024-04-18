@@ -43,10 +43,9 @@ input
 
 #x-body-table
 {
-  width: 900px;
+  width: 75%;
   margin-left: auto;
   margin-right: auto;
-  border-collapse: collapse
 }
 
 #x-copyright
@@ -58,6 +57,10 @@ input
 #x-container
 {
   padding: 1em;
+}
+
+.infoTable {
+  border-radius: 8px !important;
 }
 
 #Logs
@@ -236,8 +239,7 @@ p.DEBUG
   height: 31px;
   display: inline;
   z-index: 10;
-  /* background: url(../images/menu/bg_navi_sublist.gif) -5000px 0 no-repeat; */
-  background: var(--c-background);
+  margin-bottom: -1px;
 }
 
 #Menu ul
@@ -253,9 +255,12 @@ p.DEBUG
   float: left;
   position: relative;
   margin: 0;
+  margin-right: 1px;
   padding: 0;
   list-style: none;
-  background: url(../images/menu/btn_navi_right.gif) 100% 0 no-repeat;
+  background-image: linear-gradient(to top,#2b2b2b, #555555);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 #Menu li a
@@ -267,12 +272,13 @@ p.DEBUG
   font-weight: bold;
   text-decoration: none;
   padding: 6px 13px 0 13px;
-  background: url(../images/menu/btn_navi_left.gif) 0 0 no-repeat;
 }
 
-#Menu li.First a, #Menu li.FirstSelected a
+#Menu li.FirstSelected a
 {
-  background: url(../images/menu/btn_navi_left_first.gif) 0 0 no-repeat;
+  background-image: linear-gradient(to top,#ffffff, #707070);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 #Menu li ul
@@ -284,7 +290,7 @@ p.DEBUG
   width: 200px;
   display: none;
   text-align: left;
-  background: url(../images/menu/bg_navi_sublist.gif) 0 100% no-repeat;
+  background-image: linear-gradient(to top,#2b2b2b, #555555);
   padding: 0 0 10px 0;
   z-index: 10;
 }
@@ -294,7 +300,7 @@ p.DEBUG
   clear: both;
   color: white;
   text-align: left;
-  background-image: none;
+  /* background-image: none; */
   font-size: 15px;
 }
 
@@ -311,14 +317,13 @@ p.DEBUG
 
 #Menu li:hover, #Menu li.Selected, #Menu li.FirstSelected
 {
-  background-position: 100% -100px;
+  background-image: linear-gradient(to top,#ffffff, #707070);
 }
 
 #Menu li:hover a, #Menu li.Selected a, #Menu li.FirstSelected a
 {
-  background-position: 0 -100px;
   color: #394852;
-  border-bottom: solid #f6f6f6 thin;
+  border-bottom: solid #fff thin;
 }
 
 #Menu li.Static
