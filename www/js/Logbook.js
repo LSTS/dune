@@ -23,6 +23,8 @@ Logbook.prototype.update = function () {
         logbookStr;
     }
   }
+  this.m_base.style.height = "85vh";
+  this.m_base.style.overflowY = "scroll"; 
   this.m_base.innerHTML = logbookStr;
 }
 
