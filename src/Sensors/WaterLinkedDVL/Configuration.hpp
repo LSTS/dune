@@ -13,18 +13,21 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Sensors::WaterLinkedDVL
+namespace Sensors
 {
-  using DUNE_NAMESPACES;
-  //! Device configuration.
-  struct Configuration
+  namespace WaterLinkedDVL
   {
-    double speed_of_sound;
-    bool acoustic_enabled;
-    bool dark_mode_enabled;
-    double mounting_rotation_offset;
-    std::string range_mode;
-  };
+    using DUNE_NAMESPACES;
+    //! Device configuration.
+    struct Configuration
+    {
+      double speed_of_sound;
+      bool acoustic_enabled;
+      bool dark_mode_enabled;
+      double mounting_rotation_offset;
+      std::string range_mode;
+    };
+  }
 }
 
 #endif
