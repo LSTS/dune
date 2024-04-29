@@ -63,6 +63,8 @@ namespace Navigation
         std::string third_unit;
         //! Number of seconds without data before reporting an error.
         double inp_tout;
+        //! Reference change distance
+        double ref_distance;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -79,6 +81,8 @@ namespace Navigation
         int m_reqid;
         //! Estimated state.
         IMC::EstimatedState m_estate;
+        //! Origin reference.
+        IMC::GpsFix* m_origin;
         //! GPS fix rejection.
         IMC::GpsFixRejection m_rej;
         //! Gps State for main unit.
@@ -92,7 +96,8 @@ namespace Navigation
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
-          m_reqid(0)
+          m_reqid(0),
+          m_origin(nullptr)
         {
           // Define configuration parameters.
           param("Entity Label - Euler Angles", m_args.euler_label)
@@ -119,6 +124,11 @@ namespace Navigation
             .defaultValue("30.0")
             .minimumValue("0.0")
             .description("Input timeout before error is thrown.");
+
+          param("Reference Change Distance", m_args.ref_distance)
+            .units(Units::Meter)
+            .defaultValue("20000.0")
+            .description("Distance needed for reference change.");
 
           m_estate.clear();
           m_offset = 0.0f;
@@ -258,6 +268,12 @@ namespace Navigation
         void
         sendFix(const IMC::GpsFix* msg)
         {
+          if (!originIsSet())
+            setOrigin(msg);
+
+          if (originIsFar(msg))
+            setOrigin(msg);
+
           // Received valid GPS data.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
@@ -267,17 +283,20 @@ namespace Navigation
           dispatch(nav);
 
           // Fill out IMC::EstimatedState as well.
-          m_estate.lat = msg->lat;
-          m_estate.lon = msg->lon;
+          m_estate.lat = m_origin->lat;
+          m_estate.lon = m_origin->lon;
+          m_estate.height = m_origin->height;
 
           if (m_args.convert_msl && !m_offset_flag)
           {
             m_offset_flag = true;
             Coordinates::WMM wmm(m_ctx.dir_cfg);
-            m_offset = wmm.height(m_estate.lat, m_estate.lon);
+            m_offset = wmm.height(msg->lat, msg->lon);
           }
 
-          m_estate.height = msg->height - m_offset;
+          WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height,
+                              msg->lat, msg->lon, msg->height - m_offset,
+                              &m_estate.x, &m_estate.y, &m_estate.z);
 
           // Decompose velocity vector.
           m_estate.vx = std::cos(msg->cog) * msg->sog;
@@ -302,6 +321,27 @@ namespace Navigation
           req.destination = "";
           inf("Sending via Iridium: '%s'", req.txt_data.c_str());
           dispatch(req);
+        }
+        
+        bool
+        originIsSet()
+        {
+          return m_origin != nullptr;
+        }
+
+        void
+        setOrigin(const IMC::GpsFix* msg)
+        {
+          Memory::replace(m_origin, new IMC::GpsFix(*msg));
+        }
+
+        bool
+        originIsFar(const IMC::GpsFix* msg)
+        {
+          double distance = WGS84::distance(m_origin->lat, m_origin->lon, m_origin->height,
+                                                msg->lat, msg->lon, msg->height);
+
+          return distance > m_args.ref_distance;
         }
 
         void
