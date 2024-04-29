@@ -199,16 +199,6 @@ namespace DUNE
       .units(Units::Meter)
       .description("Maximum admissible track length");
 
-      param("WGS84 Control", m_wgs84_control)
-      .defaultValue("false")
-      .description("Use this flag to ignore NED displacement and"
-                   "instead use EstimatedStats' absolute coordinates");
-
-      param("WGS84 Control - Reference Change Distance", m_ref_change_distance)
-      .defaultValue("20000")
-      .units(Units::Meter)
-      .description("Distance needed for reference change in WGS84 control");
-
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
 
@@ -615,30 +605,11 @@ namespace DUNE
         updateEntityState();
       }
 
-      // Change initial reference when using absolute coordinates
-      if (m_wgs84_control)
-      {
-        double ref_distance = WGS84::distance(m_wgs84_ref.lat, m_wgs84_ref.lon, m_wgs84_ref.height,
-                                              es->lat, es->lon, es->height);
-        if (ref_distance > m_ref_change_distance)
-          m_wgs84_ref = *es;
-      }
-
       // Save previous EstimatedState values
       IMC::EstimatedState prev_estate = m_estate;
 
       // Save new EstimatedState values
-      if (m_wgs84_control)
-      {
-        m_estate.lat = m_wgs84_ref.lat;
-        m_estate.lon = m_wgs84_ref.lon;
-        m_estate.height = m_wgs84_ref.height;
-        WGS84::displacement(m_wgs84_ref.lat, m_wgs84_ref.lon, m_wgs84_ref.height,
-                            es->lat, es->lon, es->height,
-                            &m_estate.x, &m_estate.y, &m_estate.z);
-      }
-      else
-        m_estate = *es;
+      m_estate = *es;
 
       if (!isActive() || m_error || !m_tracking)
         return;

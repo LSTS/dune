@@ -503,8 +503,6 @@ namespace DUNE
       IMC::ControlLoops m_cloops;
       //! EstimatedState message
       IMC::EstimatedState m_estate;
-      // Reference for WGS84 control
-      IMC::EstimatedState m_wgs84_ref;
       //! DesiredZ reference
       IMC::DesiredZ m_zref;
       //! DesiredSpeed reference
@@ -515,10 +513,6 @@ namespace DUNE
       uint32_t m_scope_ref;
       //! Maximum admitted track length
       double m_max_track_length;
-      // WGS84 Control
-      bool m_wgs84_control;
-      // Distance for reference change in WGS84 control
-      double m_ref_change_distance;
     };
   }
 }
