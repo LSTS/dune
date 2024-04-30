@@ -1054,8 +1054,7 @@ namespace Control
 
               if (cell_is_good)
               {
-                m_shallowest_current_cell.lat = m_estate.lat;
-                m_shallowest_current_cell.lon = m_estate.lon;
+                toWGS84(m_estate, m_shallowest_current_cell.lat, m_shallowest_current_cell.lon);
                 m_shallowest_current_cell.depth = cell->cell_position;
                 spew("Cell at depth %0.3f is good.", m_shallowest_current_cell.depth);
 
