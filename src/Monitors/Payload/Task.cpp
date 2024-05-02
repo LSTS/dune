@@ -373,7 +373,7 @@ namespace Monitors
           ir_tx.data.push_back(fragment_id++);
           ir_tx.data.insert(ir_tx.data.end(), chunk.begin(), chunk.end());
 
-          // dispatchRequest(ir_tx, ir_tx.req_id);
+          dispatchRequest(ir_tx, ir_tx.req_id);
           {
             IMC::IridiumMsgRx rx;
             rx.data = ir_tx.data;
@@ -440,10 +440,8 @@ namespace Monitors
       void
       dispatchRequest(IMC::Message& msg, uint16_t id)
       {
-        // m_ack_map[id] = msg.clone();
-        // dispatch(msg);
-        (void)msg;
-        (void)id;
+        m_ack_map[id] = msg.clone();
+        dispatch(msg);
       }
 
       //! Main loop.
