@@ -30,6 +30,8 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+namespace Monitors
+{
 namespace Producer
 {
   //! Insert short task description here.
@@ -136,5 +138,5 @@ namespace Producer
     }
   };
 }
-
+}
 DUNE_TASK

@@ -89,7 +89,7 @@ namespace Monitors
           .defaultValue("259")
           .description("Maximum size of iridium payload messages in bytes.");
 
-        bind<IMC::IridiumTxStatus>(this);
+        bind<IMC::TransmissionStatus>(this);
         bind<IMC::IridiumMsgRx>(this);
       }
 
@@ -143,11 +143,24 @@ namespace Monitors
       }
 
       void
-      consume(const IMC::IridiumTxStatus* msg)
+      consume(const IMC::TransmissionStatus* msg)
       {
         if (m_ack_map.find(msg->req_id) == m_ack_map.end())
           return;
 
+        if (msg->status == TransmissionStatus::TSTAT_DELIVERED)
+        {
+          debug("Received ack for message %d", msg->req_id);
+          const Message*& sent = m_ack_map[msg->req_id];
+
+          Memory::clear(sent);
+          m_ack_map.erase(msg->req_id);
+        }
+        
+        // If timeout ?
+        // If error ? 
+          
+        
         debug("Received ack for message %d", msg->req_id);
         const Message*& sent = m_ack_map[msg->req_id];
 
