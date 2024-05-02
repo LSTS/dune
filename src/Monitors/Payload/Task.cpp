@@ -373,6 +373,7 @@ namespace Monitors
           ir_tx.data.push_back(fragment_id++);
           ir_tx.data.insert(ir_tx.data.end(), chunk.begin(), chunk.end());
 
+          trace("sending frament %d", fragment_id-1);
           dispatchRequest(ir_tx, ir_tx.req_id);
           {
             IMC::IridiumMsgRx rx;
