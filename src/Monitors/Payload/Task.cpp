@@ -344,6 +344,7 @@ namespace Monitors
         //! Checksum is calculated by IridiumSDB.
         //! Do not send in data.
         IMC::IridiumMsgTx ir_tx;
+        ir_tx.setDestination(getSystemId());
         ir_tx.destination = "lauv-noptilus-2";
         ir_tx.data.reserve(11 + m_args.max_payload);
 
