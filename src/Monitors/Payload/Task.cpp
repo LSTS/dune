@@ -161,8 +161,8 @@ namespace Monitors
         {
           for (auto i : m_ack_map[msg->req_id])
           {
-            IMC::Message* msg = (IMC::Message*)(i);
-            dispatch(msg);
+            IMC::Message* retry = (IMC::Message*)(i);
+            dispatch(retry);
           }
 
           debug("Resend ack for messages %d", msg->req_id);
