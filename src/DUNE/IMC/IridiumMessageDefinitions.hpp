@@ -49,6 +49,7 @@ namespace DUNE
     static const uint16_t ID_IRIDIUMCMD = 2005;
     static const uint16_t ID_IMCMESSAGE = 2010;
     static const uint16_t ID_EXTDEVUPDATE = 2011;
+    static const uint16_t ID_IRIDIUMFRAGMENT = 2012;
 
     typedef struct {
       uint16_t id;
