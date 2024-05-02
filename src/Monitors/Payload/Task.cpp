@@ -97,7 +97,7 @@ namespace Monitors
       void
       onUpdateParameters(void)
       {
-        m_send_wdog.setTop(m_args.timeout /*  * 60 */);
+        m_send_wdog.setTop(m_args.timeout * 60);
       }
 
       //! Reserve entity identifiers.
@@ -122,7 +122,7 @@ namespace Monitors
         // Register normal messages.
         bind(this, m_args.msgs);
 
-        m_send_wdog.setTop(m_args.timeout /*  * 60 */);
+        m_send_wdog.setTop(m_args.timeout * 60);
       }
 
       //! Initialize resources.
@@ -331,6 +331,7 @@ namespace Monitors
         //! Checksum is calculated by IridiumSDB.
         //! Do not send in data.
         IMC::IridiumMsgTx ir_tx;
+        ir_tx.destination = "lauv-noptilus-2";
         ir_tx.data.reserve(11 + m_args.max_payload);
 
         // Iridium Header
