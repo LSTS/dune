@@ -66,7 +66,7 @@ namespace Monitors
       //! Transmission fragment id.
       uint8_t m_transmission_id;
       //! Map with messages waiting for send ack.
-      std::map<uint16_t, const IMC::Message*> m_ack_map;
+      std::map<uint16_t, std::vector<const IMC::Message*>> m_ack_map;
       //! Iridium fragment message map.
       std::map<uint16_t, IridiumFragment> m_ir_map;
 
@@ -151,21 +151,22 @@ namespace Monitors
         if (msg->status == TransmissionStatus::TSTAT_DELIVERED)
         {
           debug("Received ack for message %d", msg->req_id);
-          const Message*& sent = m_ack_map[msg->req_id];
+          //TODO Messge deletion
+          // const Message*& sent = m_ack_map[msg->req_id];
 
-          Memory::clear(sent);
+          // Memory::clear(sent);
           m_ack_map.erase(msg->req_id);
         }
-        
-        // If timeout ?
-        // If error ? 
-          
-        
-        debug("Received ack for message %d", msg->req_id);
-        const Message*& sent = m_ack_map[msg->req_id];
+        else 
+        {
+          for (auto i : m_ack_map[msg->req_id])
+          {
+            IMC::Message* msg = (IMC::Message*)(i);
+            dispatch(msg);
+          }
 
-        Memory::clear(sent);
-        m_ack_map.erase(msg->req_id);
+          debug("Resend ack for messages %d", msg->req_id);
+        }
       }
 
       //! Split buffer into chunks.
@@ -344,6 +345,7 @@ namespace Monitors
         //! Checksum is calculated by IridiumSDB.
         //! Do not send in data.
         IMC::IridiumMsgTx ir_tx;
+        ir_tx.ttl = 60; 
         ir_tx.setDestination(getSystemId());
         ir_tx.destination = "lauv-noptilus-2";
         ir_tx.data.reserve(11 + m_args.max_payload);
@@ -441,7 +443,7 @@ namespace Monitors
       void
       dispatchRequest(IMC::Message& msg, uint16_t id)
       {
-        m_ack_map[id] = msg.clone();
+        m_ack_map[id].push_back(msg.clone());
         dispatch(msg);
       }
 
