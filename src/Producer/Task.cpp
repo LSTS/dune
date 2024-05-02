@@ -49,7 +49,8 @@ namespace Producer
     Task(const std::string& name, Tasks::Context& ctx):
       DUNE::Tasks::Task(name, ctx)
     {
-      param("Send period", m_period).defaultValue("60");
+      param("Send period", m_period)
+        .defaultValue("60");
     }
 
     //! Update internal state with new parameter values.
@@ -114,12 +115,14 @@ namespace Producer
       }
 
       dispatch(msg);
+      inf("dispatched %s", msg.getName());
     }
 
     //! Main loop.
     void
     onMain(void)
     {
+      inf("Payload starting ...");
       dog.setTop(0);
       while (!stopping())
       {
