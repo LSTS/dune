@@ -31,6 +31,7 @@
 #include <DUNE/Tasks/SimpleTransport.hpp>
 #include <DUNE/Time/Clock.hpp>
 #include <DUNE/Utils/String.hpp>
+#include <DUNE/IMC/Macros.hpp>
 
 namespace DUNE
 {
@@ -115,7 +116,14 @@ namespace DUNE
 
         if (m)
         {
-          dispatch(m, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+            if (m->getId() == DUNE_IMC_QUERYENTITYPARAMETERS ||
+                m->getId() == DUNE_IMC_QUERYENTITYSTATE ||
+                m->getId() == DUNE_IMC_SETENTITYPARAMETERS ||
+                m->getId() == DUNE_IMC_PUSHENTITYPARAMETERS ||
+                m->getId() == DUNE_IMC_POPENTITYPARAMETERS)
+              dispatch(m, DF_KEEP_TIME | DF_KEEP_SRC_EID | DF_LOOP_BACK);
+            else
+              dispatch(m, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
           if (m_gargs.trace_in)
             inf(DTR("incoming: %s"), m->getName());
