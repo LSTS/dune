@@ -130,7 +130,11 @@ namespace Transports
             m_contacts.update(msg->getSource(), addr);
             m_contacts_lock.unlock();
 
-            if (msg->getId() == DUNE_IMC_QUERYENTITYPARAMETERS)
+            if (msg->getId() == DUNE_IMC_QUERYENTITYPARAMETERS ||
+                msg->getId() == DUNE_IMC_QUERYENTITYSTATE ||
+                msg->getId() == DUNE_IMC_SETENTITYPARAMETERS ||
+                msg->getId() == DUNE_IMC_PUSHENTITYPARAMETERS ||
+                msg->getId() == DUNE_IMC_POPENTITYPARAMETERS)
               m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID | DF_LOOP_BACK);
             else
               m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
