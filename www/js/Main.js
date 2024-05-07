@@ -42,7 +42,7 @@ Main.prototype.m_fields = [
   {
     "label": "System:",
     "data_function": getSystemInfo,
-    "side": "left",
+    "side": "center",
   },
   {
     "label": "Version:",
@@ -102,10 +102,19 @@ Main.prototype.m_fields = [
 ];
 
 Main.prototype.createTable = function () {
+
+  this.sys_name_div = document.createElement('div');
+  this.sys_name_div.id = 'systemName';
+  this.m_base.appendChild(this.sys_name_div)
+
   this.m_table = document.createElement('table');
   this.m_table.style.width = '100%';
   this.m_base.appendChild(this.m_table);
+
   var tr = document.createElement('tr');
+  var tdc = document.createElement('td');
+  tdc.style.verticalAlign = 'top';
+  
   var tdl = document.createElement('td');
   tdl.style.verticalAlign = 'top';
   tdl.style.width = '70%';
@@ -126,10 +135,12 @@ Main.prototype.createTable = function () {
   tdr.appendChild(this.m_table_right);
 
   for (i in this.m_fields) {
-    if (this.m_fields[i].side == 'left') {
+    if (this.m_fields[i].side == 'center') {
+      console.log(this.m_fields[i])
+      this.createTableHeader(i, this.sys_name_div);
+    } else if (this.m_fields[i].side == 'left') {
       this.createTableEntry(i, this.m_table_left);
-    }
-    else {
+    } else {
       this.createTableEntry(i, this.m_table_right);
     }
   }
@@ -145,6 +156,14 @@ Main.prototype.createTableTasks = function () {
   div.appendChild(this.m_tbl_task);
 
   this.m_base.appendChild(div);
+};
+
+Main.prototype.createTableHeader = function (idx, tbl) {
+  var field = this.m_fields[idx];
+  
+  if (!("widget" in field))
+    field.widget = new TextLabel();
+  field.widget.create(tbl);
 };
 
 Main.prototype.createTableEntry = function (idx, tbl) {
