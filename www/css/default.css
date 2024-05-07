@@ -82,6 +82,11 @@ input
   padding-left: 5px;
 }
 
+div#Sensors {
+  max-height: 85vh;
+  overflow-y: scroll;
+}
+
 #Sensors table
 {
   border-collapse: collapse;
@@ -343,8 +348,11 @@ p.DEBUG
   display: block;
 }
 
+
 #MainTaskTableDiv
 {
+  max-height: 60vh;
+  overflow-y: scroll;
   width: 90%;
   margin-left: auto;
   margin-right: auto;
@@ -352,6 +360,7 @@ p.DEBUG
 
 #MainTaskTable
 {
+  overflow-y: scroll;
   border-collapse: collapse;
 }
 
@@ -376,10 +385,19 @@ p.DEBUG
   width: 150px;
 }
 
+#Power div{
+  max-height: 85vh;
+  overflow-y: scroll;
+}
+
 #Power th
 {
   background-color: var(--c-background-h-l);
   color: var(--c-color-text-h-l);
+}
+
+#Power td form {
+  text-align: center;
 }
 
 #Power table tr td
@@ -415,12 +433,12 @@ p.DEBUG
   margin: 5px;
 }
 
-#systemName
-{
-  font-size: 24px;
+#systemName {
+  width: 100%;
+  font-size: 1.75em;
   text-align: center;
-  color: red; /* Cor do texto vermelho */
-  background-color:#e2cb80; /* Fundo azul */
+  font-weight: bold;
+  margin: 0.5em;
 }
 
 .connected
