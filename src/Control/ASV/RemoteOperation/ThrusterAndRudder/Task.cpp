@@ -77,6 +77,8 @@ namespace Control
             addActionButton("Stop");
             addActionButton("PowerOff");
             addActionButton("Restart Log");
+            addActionButton("Arm");
+            addActionButton("Disarm");
             addActionAxis("Heading");
             addActionAxis("Thrust");
 
@@ -138,6 +140,19 @@ namespace Control
 
             else if (tuples.get("Restart Log", 0))
               restartLog();
+
+            else if (tuples.get("Arm", 0))
+            {
+              IMC::ArmingState as;
+              as.state = ArmingState::StateEnum::MOTORS_ARMED;
+              dispatch(as);
+            }
+            else if (tuples.get("Disarm", 0))
+            {
+              IMC::ArmingState as;
+              as.state = ArmingState::StateEnum::MOTORS_DISARMED;
+              dispatch(as);
+            }
           }
 
           void
