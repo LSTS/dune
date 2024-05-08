@@ -67,6 +67,12 @@ namespace Supervisors
       bool ext_control;
       //! Timeout for starting or stopping a maneuver
       double handle_timeout;
+      //! Flag for vehicle to loiter when in service
+      bool loiter_on_service;
+      //! Radius for loiter on service
+      float loiter_on_service_radius;
+      //! Speed for loiter on service
+      float loiter_on_service_speed;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -85,6 +91,8 @@ namespace Supervisors
       IMC::StopManeuver m_stop;
       //! Idle maneuver message.
       IMC::IdleManeuver m_idle;
+      //! Current position.
+      IMC::EstimatedState m_estate;
       //! Control loops last reference
       uint32_t m_scope_ref;
       //! Vector of labels from entities in error
@@ -99,6 +107,8 @@ namespace Supervisors
       ManeuverSupervisor* m_man_sup;
       //! A timeout for calibration state
       float m_calib_timeout;
+      //! Flag for vehicle armed
+      bool m_armed; 
       //! Task arguments.
       Arguments m_args;
 
@@ -107,7 +117,8 @@ namespace Supervisors
         m_switch_time(-1.0),
         m_ignore_errors(false),
         m_scope_ref(0),
-        m_man_sup(NULL)
+        m_man_sup(NULL),
+        m_armed(false)
       {
         param("Vital Entities", m_args.vital_ents)
         .defaultValue("")
@@ -122,12 +133,28 @@ namespace Supervisors
         .defaultValue("1.0")
         .description("Timeout for starting or stopping a maneuver");
 
+        param("Loiter On Service", m_args.loiter_on_service)
+        .defaultValue("false")
+        .description("Start a loiter maneuver when in service, and system is armed");
+
+        param("Loiter On Service -- Radius", m_args.loiter_on_service_radius)
+        .defaultValue("30.0")
+        .minimumValue("5.0")
+        .description("Radius for loiter on service option");
+
+        param("Loiter On Service -- Speed", m_args.loiter_on_service_speed)
+        .defaultValue("0.5")
+        .minimumValue("0.1")
+        .description("Speed for loiter on service option");
+
         bind<IMC::Abort>(this);
         bind<IMC::ControlLoops>(this);
         bind<IMC::EntityMonitoringState>(this);
         bind<IMC::ManeuverControlState>(this);
         bind<IMC::VehicleCommand>(this);
         bind<IMC::PlanControl>(this);
+        bind<IMC::EstimatedState>(this);
+        bind<IMC::ArmingState>(this);
       }
 
       void
@@ -467,6 +494,19 @@ namespace Supervisors
       }
 
       void
+      consume(const IMC::EstimatedState* msg)
+      {
+        m_estate = *msg;
+      }
+
+      void
+      consume(const IMC::ArmingState* msg)
+      {
+        m_armed = (msg->state == ArmingState::StateEnum::MOTORS_ARMED);
+      }
+
+
+      void
       answer(const IMC::VehicleCommand* cmd, IMC::VehicleCommand::TypeEnum type,
              const std::string& desc)
       {
@@ -640,6 +680,9 @@ namespace Supervisors
       {
         dispatch(m_vs);
 
+        if (m_args.loiter_on_service)
+          loiterOnService();
+
         if (serviceMode() && m_vs.control_loops && m_loops_timer.overflow())
           changeMode(IMC::VehicleState::VS_EXTERNAL);
 
@@ -709,6 +752,44 @@ namespace Supervisors
         }
 
         return false;
+      }
+
+      void
+      loiterOnService()
+      {
+        if (!(m_armed && serviceMode()))
+          return;
+
+        war("Vehicle in SERVICE -> Starting Loiter plan...");
+        IMC::PlanControl startPlan;
+        startPlan.type = IMC::PlanControl::PC_REQUEST;
+        startPlan.op = IMC::PlanControl::PC_START;
+        startPlan.plan_id = "service_loiter";
+
+        IMC::Loiter man;
+        man.timeout = 0;
+        toWGS84(m_estate, man.lat, man.lon);
+        man.z = 0;
+        man.z_units = ZUnits::Z_DEPTH;
+        man.speed = m_args.loiter_on_service_speed;
+        man.speed_units = SpeedUnits::SUNITS_METERS_PS;
+        man.type = Loiter::LoiterTypeEnum::LT_DEFAULT;
+        man.radius = m_args.loiter_on_service_radius;
+
+        IMC::PlanSpecification spec;
+
+        spec.plan_id = "service_loiter";
+        spec.start_man_id = "service_loiter";
+
+        IMC::PlanManeuver pm;
+        pm.data.set(man);
+        pm.maneuver_id = "service_loiter";
+        spec.maneuvers.push_back(pm);
+        startPlan.arg.set(spec);
+        startPlan.request_id = 0;
+        startPlan.flags = 0;
+        startPlan.setDestination(m_ctx.resolver.id());
+        dispatch(startPlan, DF_LOOP_BACK);
       }
 
       inline bool
