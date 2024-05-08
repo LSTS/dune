@@ -203,7 +203,13 @@ namespace Control
             }
 
             war("PowerOff CPU");
-            system("poweroff");
+            int result = std::system("/usr/sbin/poweroff");
+            while (result == -1)
+            {
+              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
+              err(DTR("failed to execute poweroff command"));
+              result = std::system("/usr/sbin/poweroff");
+            }
           }
 
           //! Get log name.
