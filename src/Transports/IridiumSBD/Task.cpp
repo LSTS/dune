@@ -66,6 +66,8 @@ namespace Transports
       unsigned uart_baud_9523;
       //! Name of the section with modem addresses.
       std::string addr_section;
+      //! Name of the section with modem addresses.
+      std::string pwr_channel_name;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -131,6 +133,11 @@ namespace Transports
         param("Address Section", m_args.addr_section)
         .defaultValue("Iridium Addresses")
         .description("Name of the configuration section with modem addresses");
+
+        param("Power Channel Name", m_args.pwr_channel_name)
+        .defaultValue("")
+        .description("Power channel of iridium modem. If not empty the driver "
+                     "will send a message to restart");
 
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
@@ -201,6 +208,17 @@ namespace Transports
       void
       onActivation(void)
       {
+        if (!m_args.pwr_channel_name.empty())
+        {
+          IMC::PowerChannelControl pcc;
+          pcc.name = m_args.pwr_channel_name;
+          pcc.op = PowerChannelControl::PCC_OP_TURN_OFF;
+          dispatch(pcc);
+          Delay::wait(0.5);
+          pcc.op = PowerChannelControl::PCC_OP_TURN_ON;
+          dispatch(pcc);
+        }
+
         m_mbox_check_timer.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
