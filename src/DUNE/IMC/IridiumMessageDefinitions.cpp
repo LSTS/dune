@@ -37,52 +37,51 @@ namespace DUNE
 {
   namespace IMC
   {
-
-    IridiumMessage *
-    IridiumMessage::deserialize(const DUNE::IMC::IridiumMsgRx * msg)
+    IridiumMessage*
+    IridiumMessage::deserialize(const DUNE::IMC::IridiumMsgRx* msg)
     {
-      //msg->toText(std::cerr);
+      // msg->toText(std::cerr);
 
       uint8_t* ptr = (uint8_t*)&msg->data[0];
-      IridiumMessage * ret = NULL;
+      IridiumMessage* ret = NULL;
       uint16_t msg_id;
-      std::memcpy(&msg_id, ptr+4, sizeof(msg_id));
+      std::memcpy(&msg_id, ptr + 4, sizeof(msg_id));
 
-      switch(msg_id) {
+      switch (msg_id)
+      {
         case (ID_ACTIVATESUB):
-            ret = (IridiumMessage *) new ActivateSpotSubscription();
-            ret->deserialize(ptr, msg->data.size());
-            return ret;
+          ret = (IridiumMessage*)new ActivateSpotSubscription();
+          ret->deserialize(ptr, msg->data.size());
+          return ret;
 
         case (ID_DEACTIVATESUB):
-            ret = (IridiumMessage *) new DeactivateSpotSubscription();
-            ret->deserialize(ptr, msg->data.size());
-            return ret;
+          ret = (IridiumMessage*)new DeactivateSpotSubscription();
+          ret->deserialize(ptr, msg->data.size());
+          return ret;
 
         case (ID_DEVICEUPDATE):
-            ret = (IridiumMessage *) new DeviceUpdate();
-            ret->deserialize(ptr, msg->data.size());
-            return ret;
+          ret = (IridiumMessage*)new DeviceUpdate();
+          ret->deserialize(ptr, msg->data.size());
+          return ret;
 
         case (ID_IRIDIUMCMD):
-            ret = (IridiumMessage *) new IridiumCommand();
-            ret->deserialize(ptr, msg->data.size());
-            return ret;
+          ret = (IridiumMessage*)new IridiumCommand();
+          ret->deserialize(ptr, msg->data.size());
+          return ret;
 
         case (ID_IMCMESSAGE):
-            ret = (ImcIridiumMessage *) new ImcIridiumMessage();
-            ret->deserialize(ptr, msg->data.size());
-            return ret;
+          ret = (ImcIridiumMessage*)new ImcIridiumMessage();
+          ret->deserialize(ptr, msg->data.size());
+          return ret;
 
-        case(ID_EXTDEVUPDATE):
-            ret = (ExtendedDeviceUpdate *) new ExtendedDeviceUpdate();
-            ret->deserialize(ptr, msg->data.size());
-            return ret;
+        case (ID_EXTDEVUPDATE):
+          ret = (ExtendedDeviceUpdate*)new ExtendedDeviceUpdate();
+          ret->deserialize(ptr, msg->data.size());
+          return ret;
 
         default:
-          std::cerr << "Ignoring unrecognized Iridium message (" << msg_id
-              << ")" << std::endl;
-            return NULL;
+          std::cerr << "Ignoring unrecognized Iridium message (" << msg_id << ")" << std::endl;
+          return NULL;
       }
     }
 
@@ -92,7 +91,7 @@ namespace DUNE
       msg_id = ID_IMCMESSAGE;
     }
 
-    ImcIridiumMessage::ImcIridiumMessage(DUNE::IMC::Message * m)
+    ImcIridiumMessage::ImcIridiumMessage(DUNE::IMC::Message* m)
     {
       msg = m;
       msg_id = ID_IMCMESSAGE;
@@ -105,11 +104,11 @@ namespace DUNE
     }
 
     int
-    ImcIridiumMessage::serialize(uint8_t * buffer)
+    ImcIridiumMessage::serialize(uint8_t* buffer)
     {
-      uint8_t * start;
+      uint8_t* start;
       start = buffer;
-      uint32_t timestamp = (unsigned int) msg->getTimeStamp();
+      uint32_t timestamp = (unsigned int)msg->getTimeStamp();
 
       buffer += DUNE::IMC::serialize(source, buffer);
       buffer += DUNE::IMC::serialize(destination, buffer);
@@ -120,9 +119,10 @@ namespace DUNE
       return buffer - start;
     }
 
-    int ImcIridiumMessage::deserialize(uint8_t * buffer, uint16_t length)
+    int
+    ImcIridiumMessage::deserialize(uint8_t* buffer, uint16_t length)
     {
-      uint8_t * start;
+      uint8_t* start;
       uint16_t mgid;
       uint32_t timestamp;
 
@@ -152,7 +152,7 @@ namespace DUNE
     }
 
     int
-    IridiumCommand::serialize(uint8_t * buffer)
+    IridiumCommand::serialize(uint8_t* buffer)
     {
       uint8_t* start = buffer;
       buffer += DUNE::IMC::serialize(source, buffer);
@@ -164,10 +164,10 @@ namespace DUNE
     }
 
     int
-    IridiumCommand::deserialize(uint8_t * buffer, uint16_t length)
+    IridiumCommand::deserialize(uint8_t* buffer, uint16_t length)
     {
 
-      uint8_t * start;
+      uint8_t* start;
       start = buffer;
       buffer += DUNE::IMC::deserialize(source, buffer, length);
       buffer += DUNE::IMC::deserialize(destination, buffer, length);
@@ -183,7 +183,7 @@ namespace DUNE
     }
 
     int
-    DeviceUpdate::serialize(uint8_t * buffer)
+    DeviceUpdate::serialize(uint8_t* buffer)
     {
       uint8_t* start = buffer;
       buffer += DUNE::IMC::serialize(source, buffer);
@@ -196,9 +196,9 @@ namespace DUNE
 
       for (it = positions.begin(); it != positions.end(); it++)
       {
-        _time = (uint32_t) DUNE::Math::round(it->time);
-        _lat = (int32_t) DUNE::Math::round(DUNE::Math::Angles::degrees(it->lat) * 1000000.0);
-        _lon = (int32_t) DUNE::Math::round(DUNE::Math::Angles::degrees(it->lon) * 1000000.0);
+        _time = (uint32_t)DUNE::Math::round(it->time);
+        _lat = (int32_t)DUNE::Math::round(DUNE::Math::Angles::degrees(it->lat) * 1000000.0);
+        _lon = (int32_t)DUNE::Math::round(DUNE::Math::Angles::degrees(it->lon) * 1000000.0);
         buffer += DUNE::IMC::serialize(it->id, buffer);
         buffer += DUNE::IMC::serialize(_time, buffer);
         buffer += DUNE::IMC::serialize(_lat, buffer);
@@ -209,9 +209,9 @@ namespace DUNE
     }
 
     int
-    DeviceUpdate::deserialize(uint8_t * buffer, uint16_t length)
+    DeviceUpdate::deserialize(uint8_t* buffer, uint16_t length)
     {
-      uint8_t * start;
+      uint8_t* start;
       uint32_t _time;
       int32_t _lat, _lon;
 
@@ -220,7 +220,8 @@ namespace DUNE
       buffer += DUNE::IMC::deserialize(destination, buffer, length);
       buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
 
-      while (length >= 14) { // id (2) + time (4) + lat(4) + lon(4)
+      while (length >= 14)
+      {  // id (2) + time (4) + lat(4) + lon(4)
         DevicePosition pos;
         buffer += DUNE::IMC::deserialize(pos.id, buffer, length);
         buffer += DUNE::IMC::deserialize(_time, buffer, length);
@@ -243,7 +244,7 @@ namespace DUNE
     }
 
     int
-    ExtendedDeviceUpdate::serialize(uint8_t * buffer)
+    ExtendedDeviceUpdate::serialize(uint8_t* buffer)
     {
       uint8_t* start = buffer;
       buffer += DUNE::IMC::serialize(source, buffer);
@@ -256,9 +257,9 @@ namespace DUNE
 
       for (it = positions.begin(); it != positions.end(); it++)
       {
-        _time = (uint32_t) DUNE::Math::round(it->time);
-        _lat = (int32_t) DUNE::Math::round(DUNE::Math::Angles::degrees(it->lat) * 1000000.0);
-        _lon = (int32_t) DUNE::Math::round(DUNE::Math::Angles::degrees(it->lon) * 1000000.0);
+        _time = (uint32_t)DUNE::Math::round(it->time);
+        _lat = (int32_t)DUNE::Math::round(DUNE::Math::Angles::degrees(it->lat) * 1000000.0);
+        _lon = (int32_t)DUNE::Math::round(DUNE::Math::Angles::degrees(it->lon) * 1000000.0);
 
         buffer += DUNE::IMC::serialize(it->id, buffer);
         buffer += DUNE::IMC::serialize(_time, buffer);
@@ -271,9 +272,9 @@ namespace DUNE
     }
 
     int
-    ExtendedDeviceUpdate::deserialize(uint8_t * buffer, uint16_t length)
+    ExtendedDeviceUpdate::deserialize(uint8_t* buffer, uint16_t length)
     {
-      uint8_t * start;
+      uint8_t* start;
       uint32_t _time;
       int32_t _lat, _lon;
 
@@ -282,7 +283,8 @@ namespace DUNE
       buffer += DUNE::IMC::deserialize(destination, buffer, length);
       buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
 
-      while (length >= 15) { // id (2) + time (4) + lat(4) + lon(4) + pos_class (1)
+      while (length >= 15)
+      {  // id (2) + time (4) + lat(4) + lon(4) + pos_class (1)
         DevicePosition pos;
         buffer += DUNE::IMC::deserialize(pos.id, buffer, length);
         buffer += DUNE::IMC::deserialize(_time, buffer, length);
@@ -306,7 +308,7 @@ namespace DUNE
     }
 
     int
-    ActivateSpotSubscription::serialize(uint8_t * buffer)
+    ActivateSpotSubscription::serialize(uint8_t* buffer)
     {
       uint8_t* start = buffer;
       buffer += DUNE::IMC::serialize(source, buffer);
@@ -317,7 +319,7 @@ namespace DUNE
     }
 
     int
-    ActivateSpotSubscription::deserialize(uint8_t * buffer, uint16_t length)
+    ActivateSpotSubscription::deserialize(uint8_t* buffer, uint16_t length)
     {
       uint8_t* start = buffer;
       buffer += DUNE::IMC::deserialize(source, buffer, length);
@@ -333,7 +335,7 @@ namespace DUNE
     }
 
     int
-    DeactivateSpotSubscription::serialize(uint8_t * buffer)
+    DeactivateSpotSubscription::serialize(uint8_t* buffer)
     {
       uint8_t* start = buffer;
       buffer += DUNE::IMC::serialize(source, buffer);
@@ -344,7 +346,7 @@ namespace DUNE
     }
 
     int
-    DeactivateSpotSubscription::deserialize(uint8_t * buffer, uint16_t length)
+    DeactivateSpotSubscription::deserialize(uint8_t* buffer, uint16_t length)
     {
       uint8_t* start = buffer;
       buffer += DUNE::IMC::deserialize(source, buffer, length);
