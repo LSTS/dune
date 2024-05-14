@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0f425402b735f36a64d579da7bb4baf3                            *
+// IMC XML MD5: 7e8454d7cfd2fc7a4dc00c27f5d132cb                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -98,6 +98,7 @@ MESSAGE(213, AcousticSystems)
 MESSAGE(214, AcousticLink)
 MESSAGE(215, AcousticRequest)
 MESSAGE(216, AcousticStatus)
+MESSAGE(217, AcousticRelease)
 MESSAGE(250, Rpm)
 MESSAGE(251, Voltage)
 MESSAGE(252, Current)
@@ -266,6 +267,9 @@ MESSAGE(519, VtolState)
 MESSAGE(520, ArmingState)
 MESSAGE(521, TCPRequest)
 MESSAGE(522, TCPStatus)
+MESSAGE(523, SatelliteRequest)
+MESSAGE(524, SatelliteStatus)
+MESSAGE(525, AssetReport)
 MESSAGE(550, Abort)
 MESSAGE(551, PlanSpecification)
 MESSAGE(552, PlanManeuver)
@@ -348,5 +352,14 @@ MESSAGE(906, ApmStatus)
 MESSAGE(907, SadcReadings)
 MESSAGE(908, DmsDetection)
 MESSAGE(909, HomePosition)
+MESSAGE(1014, CurrentProfile)
+MESSAGE(1015, CurrentProfileCell)
+MESSAGE(1016, ADCPBeam)
+MESSAGE(2000, GpioState)
+MESSAGE(2001, GpioStateGet)
+MESSAGE(2002, GpioStateSet)
+MESSAGE(2003, ColoredDissolvedOrganicMatter)
+MESSAGE(2004, FluorescentDissolvedOrganicMatter)
 MESSAGE(2006, TotalMagIntensity)
+MESSAGE(2010, CommRestriction)
 #undef MESSAGE
