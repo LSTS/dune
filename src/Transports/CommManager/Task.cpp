@@ -129,7 +129,7 @@ namespace Transports
         bind<IMC::Announce>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
-        bind<IMC::IridiumTxStatus>(this);
+        bind<IMC::SatelliteStatus>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::PlanSpecification>(this);
         bind<IMC::RSSI>(this);
@@ -289,7 +289,7 @@ namespace Transports
       }
 
       void
-      consume(const IMC::IridiumTxStatus* msg)
+      consume(const IMC::SatelliteStatus* msg)
       {
         if (msg->getSource() != getSystemId())
           return;
@@ -309,22 +309,22 @@ namespace Transports
 
           switch (msg->status)
           {
-            case (IMC::IridiumTxStatus::TXSTATUS_QUEUED):
+            case (IMC::SatelliteStatus::TXSTATUS_QUEUED):
               m_router.answer(
                   req, "Message has been queued for Satellite transmission.",
                   IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
               break;
-            case (IMC::IridiumTxStatus::TXSTATUS_TRANSMIT):
+            case (IMC::SatelliteStatus::TXSTATUS_TRANSMIT):
               m_router.answer(req, "Message is being transmitted.",
                               IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
               break;
-            case (IMC::IridiumTxStatus::TXSTATUS_OK):
-              m_router.answer(req, "Message has been sent via Iridium.",
+            case (IMC::SatelliteStatus::TXSTATUS_OK):
+              m_router.answer(req, "Message has been sent via Satellite.",
                               IMC::TransmissionStatus::TSTAT_SENT);
               Memory::clear(req);
               tr_list->erase(msg->req_id);
               break;
-            case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
+            case (IMC::SatelliteStatus::TXSTATUS_ERROR):
               m_router.answer(req, "Error while trying to transmit message.",
                               IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
               tr_list->erase(msg->req_id);

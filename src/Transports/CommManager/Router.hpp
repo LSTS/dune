@@ -273,7 +273,7 @@ namespace Transports
       {
         m_parent->inf("Request to send data over satellite (%d)", msg->req_id);
 
-        IridiumMsgTx tx;
+        SatelliteRequest tx;
 
         tx.destination = msg->destination;
         tx.ttl = msg->deadline - Time::Clock::getSinceEpoch();
