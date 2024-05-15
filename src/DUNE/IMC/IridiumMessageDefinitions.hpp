@@ -44,12 +44,13 @@ namespace DUNE
   {
     enum IridiumMessageIds
     {
-      ID_DEVICEUPDATE   = 2001,
-      ID_ACTIVATESUB    = 2003,
-      ID_DEACTIVATESUB  = 2004,
-      ID_IRIDIUMCMD     = 2005,
-      ID_IMCMESSAGE     = 2010,
-      ID_EXTDEVUPDATE   = 2011
+      ID_DEVICEUPDATE  = 2001,
+      ID_ACTIVATESUB   = 2003,
+      ID_DEACTIVATESUB = 2004,
+      ID_IRIDIUMCMD    = 2005,
+      ID_IMCMESSAGE    = 2010,
+      ID_EXTDEVUPDATE  = 2011,
+      ID_FRAGMENT      = 2012
     };
 
     typedef struct
@@ -75,15 +76,32 @@ namespace DUNE
       static IridiumMessage*
       deserialize(const DUNE::IMC::IridiumMsgRx* msg);
 
+      int
+      serializeHeader(uint8_t* buffer);
+
+      static int
+      deserializeHeader(uint8_t* data, uint16_t& len, IridiumMessage*& msg);
+
       //! Serialize this message into a data buffer (to be sent via Iridium)
       virtual int
-      serialize(uint8_t* buffer) = 0;
+      serialize(uint8_t* buffer)
+      {
+        (void)buffer;
+
+        return 0;
+      }
 
       //! Deserialize an Iridium data buffer
       virtual int
-      deserialize(uint8_t* data, uint16_t len) = 0;
+      deserialize(uint8_t* data, uint16_t len)
+      {
+        (void)data;
+        (void)len;
 
-      virtual ~IridiumMessage()
+        return 0;
+      }
+
+      virtual ~IridiumMessage(void)
       { }
     };
 
@@ -91,9 +109,9 @@ namespace DUNE
     class ImcIridiumMessage: public IridiumMessage
     {
     public:
-      ImcIridiumMessage();
+      ImcIridiumMessage(void);
 
-      ~ImcIridiumMessage();
+      ~ImcIridiumMessage(void);
 
       ImcIridiumMessage(DUNE::IMC::Message* msg);
 
@@ -110,9 +128,10 @@ namespace DUNE
     class DeviceUpdate: public IridiumMessage
     {
     public:
-      DeviceUpdate();
+      DeviceUpdate(void)
+      { }
 
-      ~DeviceUpdate()
+      ~DeviceUpdate(void)
       { }
 
       int
@@ -129,9 +148,10 @@ namespace DUNE
     class ExtendedDeviceUpdate: public IridiumMessage
     {
     public:
-      ExtendedDeviceUpdate();
+      ExtendedDeviceUpdate(void)
+      { }
 
-      ~ExtendedDeviceUpdate()
+      ~ExtendedDeviceUpdate(void)
       { }
 
       int
@@ -147,32 +167,22 @@ namespace DUNE
     class ActivateSpotSubscription: public IridiumMessage
     {
     public:
-      ActivateSpotSubscription();
-
-      ~ActivateSpotSubscription()
+      ActivateSpotSubscription(void)
       { }
 
-      int
-      serialize(uint8_t* buffer);
-
-      int
-      deserialize(uint8_t* data, uint16_t len);
+      ~ActivateSpotSubscription(void)
+      { }
     };
 
     //! Extension to the IMC protocol used to stop receiving device position updates
     class DeactivateSpotSubscription: public IridiumMessage
     {
     public:
-      DeactivateSpotSubscription();
-
-      ~DeactivateSpotSubscription()
+      DeactivateSpotSubscription(void)
       { }
 
-      int
-      serialize(uint8_t* buffer);
-
-      int
-      deserialize(uint8_t* data, uint16_t len);
+      ~DeactivateSpotSubscription(void)
+      { }
     };
 
     //! Extension to the IMC protocol used to send text commands to DUNE vehicles
@@ -180,9 +190,10 @@ namespace DUNE
     class IridiumCommand: public IridiumMessage
     {
     public:
-      IridiumCommand();
+      IridiumCommand(void)
+      { }
 
-      ~IridiumCommand()
+      ~IridiumCommand(void)
       { }
 
       int
