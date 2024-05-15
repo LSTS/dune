@@ -38,6 +38,8 @@
 #include <DUNE/Math.hpp>
 #include <DUNE/Math/Angles.hpp>
 
+#include <list>
+
 namespace DUNE
 {
   namespace IMC
@@ -203,6 +205,83 @@ namespace DUNE
       deserialize(uint8_t* data, uint16_t len);
 
       std::string command;
+    };
+
+    class IridiumFragment: public IridiumMessage
+    {
+    public:
+      IridiumFragment(void);
+
+      ~IridiumFragment(void)
+      { }
+
+      //! Serialize an IMC message into a list of Iridium fragments
+      //! @param[in] msg the IMC message to serialize
+      //! @param[in] trans_id the request id of the message
+      //! @param[in] size the size of each fragment
+      //! @return a list of fragments
+      std::list<std::vector<char>>
+      serialize(IMC::Message* msg, uint8_t trans_id, size_t frame_size);
+
+      uint16_t
+      serializeMessage(IMC::Message* msg, uint8_t* buffer);
+
+      int
+      deserialize(uint8_t* data, uint16_t len);
+
+      IMC::Message*
+      merge(IridiumFragment* msg);
+
+      //! Fragment header.
+      struct FragmentHeader
+      {
+        //! Transmission ID.
+        uint8_t trans_id;
+        //! Total number of fragments.
+        uint8_t num_frags;
+        //! Fragment number.
+        uint8_t frag_id;
+
+        //! Deserialize the fragment header.
+        //! @param[in] buffer buffer to deserialize from.
+        //! @param[in] len length of the buffer.
+        //! @return number of bytes read from the buffer.
+        uint16_t
+        deserialize(uint8_t* buffer, uint16_t& len)
+        {
+          if (len < 3)
+            throw BufferTooShort();
+
+          uint8_t* ptr = buffer;
+          ptr += IMC::deserialize(trans_id, ptr, len);
+          ptr += IMC::deserialize(num_frags, ptr, len);
+          ptr += IMC::deserialize(frag_id, ptr, len);
+
+          uint16_t rv = ptr - buffer;
+          len -= rv;
+          return rv;
+        }
+
+        //! Serialize the fragment header.
+        //! @param[in] buffer buffer to serialize to.
+        //! @return number of bytes written to the buffer.
+        uint16_t
+        serialize(uint8_t* buffer)
+        {
+          uint8_t* ptr = buffer;
+          ptr += IMC::serialize(trans_id, ptr);
+          ptr += IMC::serialize(num_frags, ptr);
+
+          return ptr - buffer;
+        }
+      };
+
+      //! Fragment header.
+      FragmentHeader hdr;
+      //! Message ID.
+      uint16_t imc_id;
+      //! Fragments data.
+      std::map<uint8_t, std::vector<uint8_t>> frag_map;
     };
   } /* namespace IMC */
 } /* namespace DUNE */

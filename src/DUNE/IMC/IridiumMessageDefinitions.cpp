@@ -306,5 +306,111 @@ namespace DUNE
 
       return buffer - start;
     }
+
+    IridiumFragment::IridiumFragment()
+    {
+      msg_id = ID_FRAGMENT;
+      imc_id = DUNE_IMC_CONST_NULL_ID;
+    }
+
+    std::list<std::vector<char>>
+    IridiumFragment::serialize(IMC::Message* msg, uint8_t trans_id, size_t frame_size)
+    {
+      // Serialize message data
+      uint16_t bfr_len = msg->getPayloadSerializationSize() + 2;
+      uint8_t* msg_bfr = new uint8_t[bfr_len];
+      uint8_t* data_ptr = msg_bfr;
+
+      serializeMessage(msg, msg_bfr);
+
+      std::list<std::vector<char>> fragments;
+      hdr.trans_id = trans_id;
+      hdr.num_frags = std::ceil(bfr_len / (frame_size - 9));
+
+      uint8_t* frag_bfr = new uint8_t[frame_size];
+      uint8_t* frag_ptr = frag_bfr;
+      frag_ptr += serializeHeader(frag_ptr);
+      frag_ptr += hdr.serialize(frag_ptr);
+
+      for (uint8_t i = 0; i < hdr.num_frags; i++)
+      {
+        uint8_t* end_ptr = frag_ptr;
+        // Insert fragment number
+        end_ptr += IMC::serialize(i, end_ptr);
+
+        uint16_t data_size = std::min(bfr_len, (uint16_t)(frame_size - 9));
+        std::memcpy(end_ptr, data_ptr, data_size);
+
+        fragments.emplace_back(frag_bfr, end_ptr + data_size);
+
+        // Update buffer pointer and remaining length
+        data_ptr += data_size;
+        bfr_len -= data_size;
+      }
+
+      delete[] frag_bfr;
+      delete[] msg_bfr;
+
+      return fragments;
+    }
+
+    uint16_t
+    IridiumFragment::serializeMessage(IMC::Message* msg, uint8_t* buffer)
+    {
+      uint8_t* ptr = buffer;
+      ptr += IMC::serialize(msg->getId(), ptr);
+      ptr = msg->serializeFields(ptr);
+
+      return buffer - ptr;
+    }
+
+    int
+    IridiumFragment::deserialize(uint8_t* buffer, uint16_t length)
+    {
+      // Deserialize fragment header
+      uint8_t* ptr = buffer;
+      ptr += hdr.deserialize(ptr, length);
+
+      if (hdr.frag_id == 0)
+      {
+        ptr += IMC::deserialize(imc_id, ptr, length);
+        std::cout << "Deserialized IMC ID: " << imc_id << std::endl;
+      }
+
+      std::vector<uint8_t>& data = frag_map[hdr.frag_id];
+      data.insert(data.end(), ptr, ptr + length);
+
+      return length;
+    }
+
+    IMC::Message*
+    IridiumFragment::merge(IridiumFragment* msg)
+    {
+      if (imc_id == DUNE_IMC_CONST_NULL_ID)
+        imc_id = msg->imc_id;
+
+      for (auto& [id, vec] : msg->frag_map)
+      {
+        if (frag_map.find(id) != frag_map.end())
+          continue;  // Already have this fragment
+
+        frag_map[id] = vec;
+      }
+
+      // Check if we have all fragments
+      if (frag_map.size() != hdr.num_frags)
+        return nullptr;
+
+      // Reconstruct message
+      std::vector<uint8_t> data(DUNE_IMC_CONST_MAX_SIZE);
+
+      for (auto& [_, vec] : frag_map)
+        data.insert(data.end(), vec.begin(), vec.end());
+
+      IMC::Message* imc_msg = IMC::Factory::produce(imc_id);
+      imc_msg->deserializeFields(&data[0], data.size());
+
+      return imc_msg;
+    }
   } /* namespace IMC */
 } /* namespace DUNE */
