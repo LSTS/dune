@@ -279,28 +279,25 @@ namespace Transports
         {
           case IMC::TransmissionRequest::DMODE_RAW:
             {
-              tx.data.assign(msg->raw_data.begin(), msg->raw_data.end());
-
+              IMC::DevDataBinary bin;
+              bin.value.assign(msg->raw_data.begin(), msg->raw_data.end());
+              tx.type = IMC::SatelliteRequest::TYPE_RAW;
+              tx.msg.set(bin);
               break;
             }
           case IMC::TransmissionRequest::DMODE_INLINEMSG:
-            {
-              IMC::ImcIridiumMessage m;
-              m.destination = 0xFFFF;
-              m.source = m_parent->getSystemId();
-              m.msg = msg->msg_data.get()->clone();
-              uint8_t buffer[65535];
-              int len = m.serialize(buffer);
-              tx.data.assign(buffer, buffer + len);
-              Memory::clear(m.msg);
-
+              tx.type = IMC::SatelliteRequest::TYPE_INLINEMSG;
+              tx.msg.set(*msg);
               break;
-            }
+
           case IMC::TransmissionRequest::DMODE_TEXT:
             {
               if(plain_text)
               {
-                tx.data.assign(msg->txt_data.begin(), msg->txt_data.end());
+                IMC::DevDataText txt;
+                txt.value.assign(msg->txt_data.begin(), msg->txt_data.end());
+                tx.type = IMC::SatelliteRequest::TYPE_TEXT;
+                tx.msg.set(txt);
               }
               else
               {
@@ -310,7 +307,11 @@ namespace Transports
                 m.command = msg->txt_data;
                 uint8_t buffer[65535];
                 int len = m.serialize(buffer);
-                tx.data.assign(buffer, buffer + len);
+
+                IMC::DevDataBinary txt;
+                txt.value.assign(buffer, buffer + len);
+                tx.type = IMC::SatelliteRequest::TYPE_RAW;
+                tx.msg.set(txt);
               }
 
               break;
