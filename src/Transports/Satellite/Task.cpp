@@ -45,8 +45,12 @@ namespace Transports
 
     struct Arguments
     {
+      //! Maximum size of a frame to be sent.
+      uint16_t max_frame_size;
       //! Maximum age of received messages.
       double max_age_secs;
+      //! Delay between announce messages.
+      double delay_between_announces;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -55,42 +59,58 @@ namespace Transports
       std::unordered_map<uint8_t, IridiumFragment*> m_ir_frags;
       //! Task arguments.
       Arguments m_args;
+      //! Last announce messages received.
+      std::unordered_map<std::string, IMC::Announce> m_last_announces;
+      //! Last plan state received.
+      IMC::PlanControlState m_plan_state;
+      //! Last fuel state received.
+      IMC::FuelLevel m_fuel_state;
+      //! Last vehicle state received.
+      IMC::VehicleState m_vehicle_state;
+      //! Flag to indicate if the last announce message was queued.
+      bool m_ann_queued;
+      //! Announce watchdog.
+      Counter<double> m_ann_wdog;
+      //! Request ID for Iridium messages.
+      uint16_t m_req_id;
+      //! Request ID for announce messages.
+      uint16_t m_ann_req_id;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx),
+        m_ann_queued(false),
+        m_req_id(0)
       {
+        // clang-format off
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER);
+        // clang-format on
+
+        param("Maximum Frame Size", m_args.max_frame_size)
+          .defaultValue("268")
+          .description("Maximum size of a frame to be sent.");
+
         param("Maximum age", m_args.max_age_secs)
           .units(Units::Second)
           .defaultValue("1200")
           .description("Age, in seconds, after which received IMC messages are discarded.");
 
-        bind<IMC::SatelliteRequest>(this);
+        param("Announce Periodicity", m_args.delay_between_announces)
+          .units(Units::Second)
+          .defaultValue("0")
+          .description("Delay between announce messages being sent. 0 for no updates being sent.");
+
+        bind<IMC::Announce>(this);
+        bind<IMC::FuelLevel>(this);
         bind<IMC::IridiumTxStatus>(this);
         bind<IMC::IridiumMsgRx>(this);
+        bind<IMC::PlanControlState>(this);
+        bind<IMC::SatelliteRequest>(this);
+        bind<IMC::VehicleState>(this);
       }
-
-      //! Update internal state with new parameter values.
-      void
-      onUpdateParameters(void)
-      { }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      { }
-
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      { }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      { }
 
       //! Initialize resources.
       void
@@ -100,34 +120,20 @@ namespace Transports
         announce.service = std::string("imc+any://iridium");
         dispatch(announce);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-      }
 
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      { }
-
-      void
-      consume(const IMC::SatelliteRequest* msg)
-      {
-        IMC::IridiumMsgTx ir_msg;
-        ir_msg.req_id      = msg->req_id;
-        ir_msg.ttl         = msg->ttl;
-        ir_msg.destination = msg->destination;
-        ir_msg.data        = msg->data;
-
-        dispatch(ir_msg);
+        m_ann_wdog.setTop(m_args.delay_between_announces);
       }
 
       void
-      consume(const IMC::IridiumTxStatus* msg)
+      onActivation(void)
       {
-        IMC::SatelliteStatus sat_status;
-        sat_status.req_id = msg->req_id;
-        sat_status.status = msg->status;
-        sat_status.info   = msg->text;
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
 
-        dispatch(sat_status);
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -138,7 +144,7 @@ namespace Transports
         tm.origin = "iridium";
         tm.setSource(cmd->source);
 
-        spew("dispatching text message: %s", tm.text.c_str());
+        trace("dispatching text message: %s", tm.text.c_str());
         dispatch(tm);
       }
 
@@ -218,7 +224,7 @@ namespace Transports
 
         inf("received IMC message of type %s via Iridium from %d.", msg->getName(), ir_msg->source);
         msg->setSource(ir_msg->source);
-        dispatch(msg);
+        dispatch(msg, DF_LOOP_BACK);
       }
 
       void
@@ -242,6 +248,121 @@ namespace Transports
       }
 
       void
+      sendAnnounce(void)
+      {
+        if (m_ann_queued)
+        {
+          debug("won't send announce message while previous one is still queued.");
+          return;
+        }
+
+        debug("queuing announce");
+
+        if (m_last_announces.find(getSystemName()) == m_last_announces.end())
+          return;
+
+        IMC::Announce* ann = &m_last_announces[getSystemName()];
+
+        std::stringstream ss;
+        if (m_plan_state.state == IMC::PlanControlState::PCS_EXECUTING)
+          ss << "P:" << m_plan_state.plan_id << " ";
+        else
+          ss << "P:n/a ";
+        ss << "F:" << (int)m_fuel_state.value << "% ";
+        if (m_vehicle_state.error_count > 0)
+          ss << "E:" << m_vehicle_state.last_error;
+
+        ann->services = ss.str();
+
+        m_ann_req_id = m_req_id;
+        sendIridiumMsg(ann);
+        m_ann_queued = true;
+      }
+
+      void
+      sendSatelitteMsg(DeviceUpdate* msg)
+      {
+        IridiumMsgTx tx;
+        tx.ttl    = 60;
+        tx.req_id = 0;
+
+        uint8_t buffer[1024];
+        size_t size = msg->serialize(buffer);
+        tx.data.assign(buffer, buffer + size);
+
+        dispatch(tx);
+      }
+
+      void
+      sendIridiumMsg(IMC::Message* msg)
+      {
+        if (msg->getPayloadSerializationSize() > m_args.max_frame_size)
+          return;  // Send as fragments
+
+        uint8_t buffer[m_args.max_frame_size];
+
+        ImcIridiumMessage ir_msg;
+        ir_msg.source = getSystemId();
+        ir_msg.msg    = msg;
+        int len       = ir_msg.serialize(buffer);
+
+        IridiumMsgTx tx;
+        tx.ttl    = 60;
+        tx.req_id = m_req_id++;
+        tx.data.assign(buffer, buffer + len);
+
+        dispatch(tx);
+
+        spew("sent message %s - %s", msg->getName(), (char*)buffer);
+      }
+
+      void
+      consume(const IMC::Announce* msg)
+      {
+        if (msg->lat == 0 && msg->lon == 0)
+          return;
+
+        m_last_announces[msg->sys_name] = *msg;
+      }
+
+      void
+      consume(const IMC::FuelLevel* msg)
+      {
+        m_fuel_state = *msg;
+      }
+
+      void
+      consume(const IMC::IridiumTxStatus* msg)
+      {
+        // Respond to the original sender
+        if (msg->getDestinationEntity() != getEntityId())
+        {
+          IMC::SatelliteStatus sat_status;
+          sat_status.setDestinationEntity(msg->getDestinationEntity());
+          sat_status.req_id = msg->req_id;
+          sat_status.status = msg->status;
+          sat_status.info   = msg->text;
+
+          dispatch(sat_status);
+          return;
+        }
+
+        // Filter Device Updates
+        if (msg->req_id == m_ann_req_id)
+        {
+          if (msg->status == IridiumTxStatus::TXSTATUS_OK)
+          {
+            m_ann_wdog.setTop(m_args.delay_between_announces);
+            debug("announce sent successfully");
+          }
+
+          // If message was expired or send, clear the flag
+          m_ann_queued = !(msg->status == IridiumTxStatus::TXSTATUS_OK
+                           || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED);
+        }
+      }
+
+      void
       consume(const IMC::IridiumMsgRx* msg)
       {
         IridiumMessage* ir_msg = nullptr;
@@ -259,7 +380,7 @@ namespace Transports
           tm.origin = "iridium";
           std::stringstream ss;
           tm.toText(ss);
-          spew("sending this message to bus: %s", ss.str().c_str());
+          trace("sending this message to bus: %s", ss.str().c_str());
           dispatch(tm);
           return;
         }
@@ -293,6 +414,33 @@ namespace Transports
         Memory::clear(ir_msg);
       }
 
+      void
+      consume(const IMC::PlanControlState* msg)
+      {
+        m_plan_state = *msg;
+      }
+
+      void
+      consume(const IMC::SatelliteRequest* msg)
+      {
+        IridiumMsgTx tx;
+        tx.setSource(msg->getSource());
+        tx.setSourceEntity(msg->getSourceEntity());
+
+        tx.req_id      = msg->req_id;
+        tx.destination = msg->destination;
+        tx.ttl         = msg->ttl;
+        tx.data        = msg->data;
+
+        dispatch(tx);
+      }
+
+      void
+      consume(const IMC::VehicleState* msg)
+      {
+        m_vehicle_state = *msg;
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -300,6 +448,12 @@ namespace Transports
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          if (!isActive())
+            continue;
+
+          if (m_ann_wdog.overflow() && m_ann_wdog.getTop() != 0)
+            sendAnnounce();
         }
       }
     };
