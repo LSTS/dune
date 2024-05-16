@@ -247,7 +247,7 @@ namespace Monitors
         IridiumHeader header;
         size_t offset = deserializeHeader(bfr, bfr_size, header);
 
-        if (header.iridium_id != ID_IRIDIUMFRAGMENT)
+        if (header.iridium_id != 2012 /* ID_IRIDIUMFRAGMENT */)
         {
           spew("not iridium fragment %d", header.iridium_id);
           return;
