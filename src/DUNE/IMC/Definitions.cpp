@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 7e8454d7cfd2fc7a4dc00c27f5d132cb                            *
+// IMC XML MD5: 41f8f44f0c06349333beaee983a7e0ae                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -20174,6 +20174,7 @@ namespace DUNE
     {
       m_header.mgid = 523;
       clear();
+      msg.setParent(this);
     }
 
     void
@@ -20182,7 +20183,8 @@ namespace DUNE
       req_id = 0;
       destination.clear();
       ttl = 0;
-      data.clear();
+      type = 0;
+      msg.clear();
     }
 
     bool
@@ -20192,7 +20194,8 @@ namespace DUNE
       if (req_id != other__.req_id) return false;
       if (destination != other__.destination) return false;
       if (ttl != other__.ttl) return false;
-      if (data != other__.data) return false;
+      if (type != other__.type) return false;
+      if (msg != other__.msg) return false;
       return true;
     }
 
@@ -20209,7 +20212,8 @@ namespace DUNE
       ptr__ += IMC::serialize(req_id, ptr__);
       ptr__ += IMC::serialize(destination, ptr__);
       ptr__ += IMC::serialize(ttl, ptr__);
-      ptr__ += IMC::serialize(data, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += msg.serialize(ptr__);
       return ptr__;
     }
 
@@ -20220,7 +20224,8 @@ namespace DUNE
       bfr__ += IMC::deserialize(req_id, bfr__, size__);
       bfr__ += IMC::deserialize(destination, bfr__, size__);
       bfr__ += IMC::deserialize(ttl, bfr__, size__);
-      bfr__ += IMC::deserialize(data, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += msg.deserialize(bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -20231,7 +20236,8 @@ namespace DUNE
       bfr__ += IMC::reverseDeserialize(req_id, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(destination, bfr__, size__);
       bfr__ += IMC::reverseDeserialize(ttl, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += msg.reverseDeserialize(bfr__, size__);
       return bfr__ - start__;
     }
 
@@ -20241,7 +20247,53 @@ namespace DUNE
       IMC::toJSON(os__, "req_id", req_id, nindent__);
       IMC::toJSON(os__, "destination", destination, nindent__);
       IMC::toJSON(os__, "ttl", ttl, nindent__);
-      IMC::toJSON(os__, "data", data, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
+      msg.toJSON(os__, "msg", nindent__);
+    }
+
+    void
+    SatelliteRequest::setTimeStampNested(double value__)
+    {
+      if (!msg.isNull())
+      {
+        msg.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    SatelliteRequest::setSourceNested(uint16_t value__)
+    {
+      if (!msg.isNull())
+      {
+        msg.get()->setSource(value__);
+      }
+    }
+
+    void
+    SatelliteRequest::setSourceEntityNested(uint8_t value__)
+    {
+      if (!msg.isNull())
+      {
+        msg.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    SatelliteRequest::setDestinationNested(uint16_t value__)
+    {
+      if (!msg.isNull())
+      {
+        msg.get()->setDestination(value__);
+      }
+    }
+
+    void
+    SatelliteRequest::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!msg.isNull())
+      {
+        msg.get()->setDestinationEntity(value__);
+      }
     }
 
     SatelliteStatus::SatelliteStatus(void)

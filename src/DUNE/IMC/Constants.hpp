@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 7e8454d7cfd2fc7a4dc00c27f5d132cb                            *
+// IMC XML MD5: 41f8f44f0c06349333beaee983a7e0ae                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
@@ -37,9 +37,9 @@
 //! IMC version string.
 #define DUNE_IMC_CONST_VERSION "5.4.30"
 //! Git repository information.
-#define DUNE_IMC_CONST_GIT_INFO "2023-10-19 867be70  (HEAD -> feature/transports_iridium, origin/master, origin/HEAD, myFork/master, myFork/feature/transports_iridium, master)"
+#define DUNE_IMC_CONST_GIT_INFO "2024-05-16 644edb4  (HEAD -> feature/transports_iridium, myFork/feature/transports_iridium)"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "7e8454d7cfd2fc7a4dc00c27f5d132cb"
+#define DUNE_IMC_CONST_MD5 "41f8f44f0c06349333beaee983a7e0ae"
 //! Synchronization number.
 #define DUNE_IMC_CONST_SYNC 0xFE54
 //! Reversed synchronization number.

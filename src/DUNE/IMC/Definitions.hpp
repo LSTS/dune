@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 7e8454d7cfd2fc7a4dc00c27f5d132cb                            *
+// IMC XML MD5: 41f8f44f0c06349333beaee983a7e0ae                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -19054,14 +19054,27 @@ namespace DUNE
     class SatelliteRequest: public Message
     {
     public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Inline Message.
+        TYPE_INLINEMSG = 0,
+        //! Text.
+        TYPE_TEXT = 1,
+        //! Raw Data.
+        TYPE_RAW = 2
+      };
+
       //! Request Identifier.
       uint16_t req_id;
       //! Destination.
       std::string destination;
       //! Time to live.
       uint16_t ttl;
-      //! Message Data.
-      std::vector<char> data;
+      //! Type.
+      uint8_t type;
+      //! Message To Send.
+      InlineMessage<Message> msg;
 
       static uint16_t
       getIdStatic(void)
@@ -19110,17 +19123,33 @@ namespace DUNE
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 4;
+        return 5;
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(destination) + IMC::getSerializationSize(data);
+        return IMC::getSerializationSize(destination) + msg.getSerializationSize();
       }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
     };
 
     //! Satellite Transmission Status.
