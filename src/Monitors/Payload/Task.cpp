@@ -167,7 +167,7 @@ namespace Monitors
             Memory::clear(sent);
             m_ack_map.erase(msg->req_id);
           }
-            break;
+          break;
 
           case IMC::IridiumTxStatus::TXSTATUS_EXPIRED:
           {
@@ -175,7 +175,7 @@ namespace Monitors
             Message* sent = const_cast<Message*>(m_ack_map[msg->req_id]);
             dispatch(sent);
           }
-            break;
+          break;
 
           default:
             break;
@@ -269,6 +269,8 @@ namespace Monitors
           new_frag = frag;
         }
 
+        trace("received %d/%d", fg->fragment_id, new_frag.n_fragments);
+
         if (new_frag.isFull())
         {
           IMC::Message* imc_msg = produce(&new_frag);
@@ -352,7 +354,7 @@ namespace Monitors
           ir_tx.data.push_back(fragment_id++);
           ir_tx.data.insert(ir_tx.data.end(), chunk.begin(), chunk.end());
 
-          spew("sending fragment %d", fragment_id-1);
+          spew("sending fragment %d", fragment_id - 1);
           dispatchRequest(ir_tx, ir_tx.req_id);
 
           ir_tx.data.clear();
