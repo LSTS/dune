@@ -276,7 +276,7 @@ namespace Monitors
             return;
 
           m_ir_map.erase(new_frag.msg_id);
-          inf("created message %s", imc_msg->getName());
+          war("created message %s", imc_msg->getName());
 
           dispatch(imc_msg);
         }
@@ -322,7 +322,7 @@ namespace Monitors
         IMC::IridiumMsgTx ir_tx;
         ir_tx.setDestination(getSystemId());
         ir_tx.destination = m_args.destination;
-        ir_tx.ttl = 60;
+        ir_tx.ttl = 10;
 
         ir_tx.data.reserve(11 + m_args.max_payload);
 
@@ -352,7 +352,7 @@ namespace Monitors
           ir_tx.data.push_back(fragment_id++);
           ir_tx.data.insert(ir_tx.data.end(), chunk.begin(), chunk.end());
 
-          spew("sending frament %d", fragment_id-1);
+          spew("sending fragment %d", fragment_id-1);
           dispatchRequest(ir_tx, ir_tx.req_id);
 
           ir_tx.data.clear();
