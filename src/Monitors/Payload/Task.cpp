@@ -144,7 +144,7 @@ namespace Monitors
       void
       consume(const IMC::Message* msg)
       {
-        inf("pushing message %s", msg->getName());
+        debug("pushing message %s", msg->getName());
         m_msgs.push_back(msg->clone());
       }
 
@@ -161,7 +161,7 @@ namespace Monitors
         {
           case IMC::IridiumTxStatus::TXSTATUS_OK:
           {
-            debug("Received ack for message %d", msg->req_id);
+            spew("Received ack for message %d", msg->req_id);
             const Message*& sent = m_ack_map[msg->req_id];
 
             Memory::clear(sent);
@@ -171,7 +171,7 @@ namespace Monitors
 
           case IMC::IridiumTxStatus::TXSTATUS_EXPIRED:
           {
-            debug("received expired ack for message %d", msg->req_id);
+            spew("received expired ack for message %d", msg->req_id);
             Message* sent = const_cast<Message*>(m_ack_map[msg->req_id]);
             dispatch(sent);
           }
@@ -208,7 +208,7 @@ namespace Monitors
         IrFragment* ir_msg = nullptr;
         try
         {
-          uint8_t* bfr     = (uint8_t*)msg->data.data();
+          uint8_t* bfr = (uint8_t*)msg->data.data();
           uint16_t bfr_len = msg->data.size();
 
           debug("received message with %d bytes", bfr_len);
@@ -221,6 +221,8 @@ namespace Monitors
         }
 
         debug("Received fragment %d/%d", ir_msg->hdr.frag_id, ir_msg->hdr.num_frags);
+        if (ir_msg->hdr.frag_id == 0)
+          debug("imc id %d", ir_msg->imc_id);
 
         if (m_ir_map.find(ir_msg->hdr.trans_id) == m_ir_map.end())
         {
@@ -230,12 +232,19 @@ namespace Monitors
         }
 
         IMC::Message* imc_msg = m_ir_map[ir_msg->hdr.trans_id]->merge(ir_msg);
-        if (imc_msg != nullptr)
+        if (imc_msg == nullptr)
         {
-          inf("received message as fragments %s", imc_msg->getName());
-          dispatch(imc_msg);
-          Memory::clear(imc_msg);
+          IrFragment* data = m_ir_map[ir_msg->hdr.trans_id];
+          for (auto& iter : data->frag_map)
+            debug("message has fragment %d", iter.first);
+
+          return;
         }
+
+        inf("received message as fragments %s", imc_msg->getName());
+        dispatch(imc_msg);
+        Memory::clear(imc_msg);
+        m_ir_map.erase(ir_msg->hdr.trans_id);
       }
 
       /**
