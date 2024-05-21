@@ -70,7 +70,7 @@ namespace Monitors
       //! Map with messages waiting for send ack.
       std::map<uint16_t, const IMC::Message*> m_ack_map;
       //! Iridium fragment message map.
-      std::map<uint16_t, IridiumFragment> m_ir_map;
+      std::map<uint16_t, IrFragment*> m_ir_map;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -200,40 +200,6 @@ namespace Monitors
 
           chunks.push_back(chunk);
         }
-      }
-
-      IMC::Message*
-      produce(IridiumFragment* msg)
-      {
-        if (msg->n_fragments != msg->fragments.size())
-        {
-          debug("Missing fragments %ld", msg->n_fragments - msg->fragments.size());
-          return nullptr;
-        }
-
-        IMC::Message* imc_msg = IMC::Factory::produce(msg->msg_id);
-        if (imc_msg == 0)
-          return nullptr;
-
-        debug("produced msg %s", imc_msg->getName());
-        std::vector<uint8_t> bfr;
-        for (Fragment* vec : msg->fragments)
-        {
-          bfr.insert(bfr.end(), vec->data.begin(), vec->data.end());
-          delete vec;
-        }
-
-        try
-        {
-          imc_msg->deserializeFields(bfr.data(), bfr.size());
-        }
-        catch (const std::exception& e)
-        {
-          err("Failed deserialization: %s", e.what());
-          delete imc_msg;
-        }
-
-        return imc_msg;
       }
 
       void
