@@ -51,7 +51,7 @@ namespace Monitors
       std::vector<std::string> msgs;
       //! Maximum iridium message size.
       size_t max_payload;
-      //! Iridium messages destiantion.
+      //! Iridium messages destination.
       std::string destination;
     };
 
@@ -70,7 +70,7 @@ namespace Monitors
       //! Map with messages waiting for send ack.
       std::map<uint16_t, const IMC::Message*> m_ack_map;
       //! Iridium fragment message map.
-      std::map<uint16_t, IridiumFragment> m_ir_map;
+      std::map<uint16_t, IrFragment*> m_ir_map;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -144,7 +144,7 @@ namespace Monitors
       void
       consume(const IMC::Message* msg)
       {
-        inf("pushing message %s", msg->getName());
+        debug("pushing message %s", msg->getName());
         m_msgs.push_back(msg->clone());
       }
 
@@ -161,21 +161,21 @@ namespace Monitors
         {
           case IMC::IridiumTxStatus::TXSTATUS_OK:
           {
-            debug("Received ack for message %d", msg->req_id);
+            spew("Received ack for message %d", msg->req_id);
             const Message*& sent = m_ack_map[msg->req_id];
 
             Memory::clear(sent);
             m_ack_map.erase(msg->req_id);
           }
-            break;
+          break;
 
           case IMC::IridiumTxStatus::TXSTATUS_EXPIRED:
           {
-            debug("received expired ack for message %d", msg->req_id);
+            spew("received expired ack for message %d", msg->req_id);
             Message* sent = const_cast<Message*>(m_ack_map[msg->req_id]);
             dispatch(sent);
           }
-            break;
+          break;
 
           default:
             break;
@@ -202,84 +202,49 @@ namespace Monitors
         }
       }
 
-      IMC::Message*
-      produce(IridiumFragment* msg)
-      {
-        if (msg->n_fragments != msg->fragments.size())
-        {
-          debug("Missing fragments %ld", msg->n_fragments - msg->fragments.size());
-          return nullptr;
-        }
-
-        IMC::Message* imc_msg = IMC::Factory::produce(msg->msg_id);
-        if (imc_msg == 0)
-          return nullptr;
-
-        debug("produced msg %s", imc_msg->getName());
-        std::vector<uint8_t> bfr;
-        for (Fragment* vec : msg->fragments)
-        {
-          bfr.insert(bfr.end(), vec->data.begin(), vec->data.end());
-          delete vec;
-        }
-
-        try
-        {
-          imc_msg->deserializeFields(bfr.data(), bfr.size());
-        }
-        catch (const std::exception& e)
-        {
-          err("Failed deserialization: %s", e.what());
-          delete imc_msg;
-        }
-
-        return imc_msg;
-      }
-
       void
       consume(const IMC::IridiumMsgRx* msg)
       {
-        const uint8_t* bfr = (const uint8_t*)msg->data.data();
-        size_t bfr_size = msg->data.size();
-
-        spew("Received iridium %ld bytes", bfr_size);
-
-        IridiumHeader header;
-        size_t offset = deserializeHeader(bfr, bfr_size, header);
-
-        if (header.iridium_id != 2012 /* ID_IRIDIUMFRAGMENT */)
+        IrFragment* ir_msg = nullptr;
+        try
         {
-          spew("not iridium fragment %d", header.iridium_id);
+          uint8_t* bfr = (uint8_t*)msg->data.data();
+          uint16_t bfr_len = msg->data.size();
+
+          debug("received message with %d bytes", bfr_len);
+          ir_msg = deserializeFragment(bfr, bfr_len);
+        }
+        catch (const std::exception& e)
+        {
+          err("%s", e.what());
           return;
         }
 
-        IridiumFragment new_frag;
-        Fragment* fg = deserializeIridiumFragment(bfr + offset, bfr_size, new_frag);
+        debug("Received fragment %d/%d", ir_msg->hdr.frag_id, ir_msg->hdr.num_frags);
+        if (ir_msg->hdr.frag_id == 0)
+          debug("imc id %d", ir_msg->imc_id);
 
-        if (m_ir_map.find(new_frag.msg_id) == m_ir_map.end())
+        if (m_ir_map.find(ir_msg->hdr.trans_id) == m_ir_map.end())
         {
-          new_frag.header = header;
-          m_ir_map.insert(std::make_pair(new_frag.msg_id, new_frag));
-        }
-        else
-        {
-          IridiumFragment& frag = m_ir_map[new_frag.msg_id];
-          frag.fragments.push_back(fg);
-
-          new_frag = frag;
+          m_ir_map[ir_msg->hdr.trans_id] = ir_msg;
+          debug("new msg for transmission %d", ir_msg->hdr.trans_id);
+          return;
         }
 
-        if (new_frag.isFull())
+        IMC::Message* imc_msg = m_ir_map[ir_msg->hdr.trans_id]->merge(ir_msg);
+        if (imc_msg == nullptr)
         {
-          IMC::Message* imc_msg = produce(&new_frag);
-          if (imc_msg == nullptr)
-            return;
+          IrFragment* data = m_ir_map[ir_msg->hdr.trans_id];
+          for (auto& iter : data->frag_map)
+            debug("message has fragment %d", iter.first);
 
-          m_ir_map.erase(new_frag.msg_id);
-          inf("created message %s", imc_msg->getName());
-
-          dispatch(imc_msg);
+          return;
         }
+
+        inf("received message as fragments %s", imc_msg->getName());
+        dispatch(imc_msg);
+        Memory::clear(imc_msg);
+        m_ir_map.erase(ir_msg->hdr.trans_id);
       }
 
       /**
@@ -303,7 +268,7 @@ namespace Monitors
       {
         uint16_t src_id = 1234;
         uint16_t dst_id = 4567;
-        uint16_t iridium_id = 2012;  //? New iridium message id.
+        uint16_t iridium_id = ID_FRAGMENT;  //? New iridium message id.
 
         //* Serialize IMC message
         uint16_t msg_id = msg->getId();
@@ -352,7 +317,7 @@ namespace Monitors
           ir_tx.data.push_back(fragment_id++);
           ir_tx.data.insert(ir_tx.data.end(), chunk.begin(), chunk.end());
 
-          spew("sending frament %d", fragment_id-1);
+          spew("sending fragment %d", fragment_id - 1);
           dispatchRequest(ir_tx, ir_tx.req_id);
 
           ir_tx.data.clear();
