@@ -41,76 +41,136 @@ namespace Monitors
     // Import namespaces.
     using DUNE_NAMESPACES;
 
-    struct IridiumHeader
+    struct IrMessage
     {
-      uint16_t src_id;
-      uint16_t dst_id;
-      uint16_t iridium_id;
-    };
-
-    struct Fragment
-    {
-      uint8_t fragment_id;
-      std::vector<uint8_t> data;
-    };
-
-    struct IridiumFragment
-    {
-      IridiumHeader header;
-      uint8_t transmission_id;
-      uint8_t n_fragments;
+      uint16_t source;
+      uint16_t destination;
       uint16_t msg_id;
-      std::list<Fragment*> fragments;
 
-      bool
-      isFull(void)
+      virtual int
+      deserialize(uint8_t* buffer, uint16_t length) = 0;
+    };
+
+    struct IrFragmentHeader
+    {
+      uint8_t trans_id;
+      uint8_t num_frags;
+      uint8_t frag_id;
+
+      uint16_t
+      deserialize(uint8_t* buffer, uint16_t& len)
       {
-        return fragments.size() == n_fragments;
+        if (len < 3)
+          throw IMC::BufferTooShort();
+
+        uint8_t* ptr = buffer;
+        ptr += IMC::deserialize(trans_id, ptr, len);
+        ptr += IMC::deserialize(num_frags, ptr, len);
+        ptr += IMC::deserialize(frag_id, ptr, len);
+
+        uint16_t rv = ptr - buffer;
+        len -= rv;
+        return rv;
       }
     };
 
-    uint16_t
-    deserializeHeader(const uint8_t* bfr, size_t& bfr_size, IridiumHeader& header)
+    struct IrFragment: public IrMessage
     {
-      if (bfr_size < 3 * sizeof(uint16_t))
-        throw std::runtime_error("Buffer too short");
+      //! Fragment header.
+      IrFragmentHeader hdr;
+      //! Message ID.
+      uint16_t imc_id;
+      //! Fragments data.
+      std::map<uint8_t, std::vector<uint8_t>> frag_map;
 
-      uint16_t offset = ByteCopy::copy(header.src_id, bfr);
-      offset += ByteCopy::copy(header.dst_id, bfr + offset);
-      offset += ByteCopy::copy(header.iridium_id, bfr + offset);
+      IrFragment(void):
+        imc_id(DUNE_IMC_CONST_NULL_ID)
+      { }
 
-      bfr_size -= offset;
-      return offset;
+      int
+      deserialize(uint8_t* buffer, uint16_t length)
+      {
+        // Deserialize fragment header
+        uint8_t* ptr = buffer;
+        ptr += hdr.deserialize(ptr, length);
+
+        if (hdr.frag_id == 0)
+          ptr += IMC::deserialize(imc_id, ptr, length);
+
+        std::vector<uint8_t>& data = frag_map[hdr.frag_id];
+        data.insert(data.end(), ptr, ptr + length);
+
+        return length;
+      }
+
+      IMC::Message*
+      merge(IrFragment* msg)
+      {
+        if (imc_id == DUNE_IMC_CONST_NULL_ID)
+          imc_id = msg->imc_id;
+
+        for (auto& [id, vec] : msg->frag_map)
+        {
+          if (frag_map.find(id) != frag_map.end())
+            continue;  // Already have this fragment
+
+          frag_map[id] = vec;
+        }
+
+        // Check if we have all fragments
+        if (frag_map.size() != hdr.num_frags)
+          return nullptr;
+
+        // Reconstruct message
+        std::vector<uint8_t> data(DUNE_IMC_CONST_MAX_SIZE);
+
+        for (auto& [_, vec] : frag_map)
+          data.insert(data.end(), vec.begin(), vec.end());
+
+        IMC::Message* imc_msg = IMC::Factory::produce(imc_id);
+        imc_msg->deserializeFields(&data[0], data.size());
+
+        return imc_msg;
+      }
+    };
+
+    int
+    deserializeHeader(uint8_t* data, uint16_t& len, IrMessage*& msg)
+    {
+      if (len < 6)
+        throw IMC::BufferTooShort();
+
+      uint16_t msg_id;
+      uint16_t source;
+      uint16_t dst;
+
+      uint8_t* ptr = data;
+      ptr += IMC::deserialize(source, ptr, len);
+      ptr += IMC::deserialize(dst, ptr, len);
+      ptr += IMC::deserialize(msg_id, ptr, len);
+
+      if (msg_id != 2012)
+        throw IMC::InvalidMessageId(msg_id);
+
+      msg = new IrFragment();
+      // if new () fails it will throw an exception (std::bad_alloc)
+
+      msg->source      = source;
+      msg->destination = dst;
+      msg->msg_id      = msg_id;
+
+      return ptr - data;
     }
 
-    Fragment*
-    deserializeFragment(const uint8_t* bfr, size_t& bfr_size, IridiumFragment& msg)
+    IrFragment*
+    deserializeFragment(uint8_t* bfr, uint16_t& bfr_len)
     {
-      Fragment* frag = new Fragment();
-      uint16_t offset = ByteCopy::copy(frag->fragment_id, bfr);
+      IrMessage* ret = nullptr;
 
-      if (frag->fragment_id == 0)
-        offset += ByteCopy::copy(msg.msg_id, bfr + offset);
+      bfr += deserializeHeader(bfr, bfr_len, ret);
+      ret->deserialize(bfr, bfr_len);
 
-      frag->data.assign(bfr + offset, bfr + bfr_size);
-
-      msg.fragments.push_back(frag);
-
-      return frag;
-    }
-
-    Fragment*
-    deserializeIridiumFragment(const uint8_t* bfr, size_t& bfr_size, IridiumFragment& msg)
-    {
-      if (bfr_size < 3)
-        throw std::runtime_error("Buffer too short");
-
-      uint16_t offset = ByteCopy::copy(msg.transmission_id, bfr);
-      offset += ByteCopy::copy(msg.n_fragments, bfr + offset);
-
-      bfr_size -= offset;
-
-      return deserializeFragment(bfr + offset, bfr_size, msg);
+      return static_cast<IrFragment*>(ret);
     }
   }
 }

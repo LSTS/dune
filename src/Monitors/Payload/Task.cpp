@@ -239,48 +239,36 @@ namespace Monitors
       void
       consume(const IMC::IridiumMsgRx* msg)
       {
-        const uint8_t* bfr = (const uint8_t*)msg->data.data();
-        size_t bfr_size = msg->data.size();
-
-        spew("Received iridium %ld bytes", bfr_size);
-
-        IridiumHeader header;
-        size_t offset = deserializeHeader(bfr, bfr_size, header);
-
-        if (header.iridium_id != 2012 /* ID_IRIDIUMFRAGMENT */)
+        IrFragment* ir_msg = nullptr;
+        try
         {
-          spew("not iridium fragment %d", header.iridium_id);
+          uint8_t* bfr     = (uint8_t*)msg->data.data();
+          uint16_t bfr_len = msg->data.size();
+
+          debug("received message with %d bytes", bfr_len);
+          ir_msg = deserializeFragment(bfr, bfr_len);
+        }
+        catch (const std::exception& e)
+        {
+          err("%s", e.what());
           return;
         }
 
-        IridiumFragment new_frag;
-        Fragment* fg = deserializeIridiumFragment(bfr + offset, bfr_size, new_frag);
+        debug("Received fragment %d/%d", ir_msg->hdr.frag_id, ir_msg->hdr.num_frags);
 
-        if (m_ir_map.find(new_frag.msg_id) == m_ir_map.end())
+        if (m_ir_map.find(ir_msg->hdr.trans_id) == m_ir_map.end())
         {
-          new_frag.header = header;
-          m_ir_map.insert(std::make_pair(new_frag.msg_id, new_frag));
-        }
-        else
-        {
-          IridiumFragment& frag = m_ir_map[new_frag.msg_id];
-          frag.fragments.push_back(fg);
-
-          new_frag = frag;
+          m_ir_map[ir_msg->hdr.trans_id] = ir_msg;
+          debug("new msg for transmission %d", ir_msg->hdr.trans_id);
+          return;
         }
 
-        trace("received %d/%d", fg->fragment_id, new_frag.n_fragments);
-
-        if (new_frag.isFull())
+        IMC::Message* imc_msg = m_ir_map[ir_msg->hdr.trans_id]->merge(ir_msg);
+        if (imc_msg != nullptr)
         {
-          IMC::Message* imc_msg = produce(&new_frag);
-          if (imc_msg == nullptr)
-            return;
-
-          m_ir_map.erase(new_frag.msg_id);
-          war("created message %s", imc_msg->getName());
-
+          inf("received message as fragments %s", imc_msg->getName());
           dispatch(imc_msg);
+          Memory::clear(imc_msg);
         }
       }
 
