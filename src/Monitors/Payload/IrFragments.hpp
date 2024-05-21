@@ -109,6 +109,7 @@ namespace Monitors
         if (imc_id == DUNE_IMC_CONST_NULL_ID)
           imc_id = msg->imc_id;
 
+#if __cplusplus >= 201703L
         for (auto& [id, vec] : msg->frag_map)
         {
           if (frag_map.find(id) != frag_map.end())
@@ -116,7 +117,18 @@ namespace Monitors
 
           frag_map[id] = vec;
         }
+#else
+        for (auto& iter : msg->frag_map)
+        {
+          auto& id = iter.first;
+          auto& vec = iter.second;
 
+          if (frag_map.find(id) != frag_map.end())
+            continue;  // Already have this fragment
+
+          frag_map[id] = vec;
+        }
+#endif
         // Check if we have all fragments
         if (frag_map.size() != hdr.num_frags)
           return nullptr;
@@ -124,8 +136,16 @@ namespace Monitors
         // Reconstruct message
         std::vector<uint8_t> data(DUNE_IMC_CONST_MAX_SIZE);
 
+#if __cplusplus >= 201703L
         for (auto& [_, vec] : frag_map)
           data.insert(data.end(), vec.begin(), vec.end());
+#else
+        for (auto& pair : frag_map)
+        {
+          auto& vec = pair.second;
+          data.insert(data.end(), vec.begin(), vec.end());
+        }
+#endif
 
         IMC::Message* imc_msg = IMC::Factory::produce(imc_id);
         imc_msg->deserializeFields(&data[0], data.size());
@@ -155,9 +175,9 @@ namespace Monitors
       msg = new IrFragment();
       // if new () fails it will throw an exception (std::bad_alloc)
 
-      msg->source      = source;
+      msg->source = source;
       msg->destination = dst;
-      msg->msg_id      = msg_id;
+      msg->msg_id = msg_id;
 
       return ptr - data;
     }
