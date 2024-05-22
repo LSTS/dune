@@ -57,6 +57,8 @@ namespace Transports
     {
       //! Map of received iridium fragments.
       std::unordered_map<uint8_t, IridiumFragment*> m_ir_frags;
+      //! Map of outgoing iridium fragments.
+      std::unordered_map<uint8_t, IridiumMsgTx*> m_ir_out_frags;
       //! Task arguments.
       Arguments m_args;
       //! Last announce messages received.
@@ -73,6 +75,8 @@ namespace Transports
       Counter<double> m_ann_wdog;
       //! Request ID for Iridium messages.
       uint16_t m_req_id;
+      //! Fragments transmission ID.
+      uint8_t m_frag_id;
       //! Request ID for announce messages.
       uint16_t m_ann_req_id;
 
@@ -82,7 +86,8 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_ann_queued(false),
-        m_req_id(0)
+        m_req_id(0),
+        m_frag_id(0)
       {
         // clang-format off
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -140,7 +145,7 @@ namespace Transports
       handleIridiumCmd(IridiumCommand* cmd)
       {
         IMC::TextMessage tm;
-        tm.text   = cmd->command;
+        tm.text = cmd->command;
         tm.origin = "iridium";
         tm.setSource(cmd->source);
 
@@ -156,12 +161,12 @@ namespace Transports
         for (auto itr = positions.begin(); itr != positions.end(); itr++)
         {
           DevicePosition& pos = *itr;
-          int selector        = (pos.id & 0x0F);
+          int selector = (pos.id & 0x0F);
 
           IMC::RemoteSensorInfo rsi;
-          rsi.alt     = -1;
-          rsi.lat     = pos.lat;
-          rsi.lon     = pos.lon;
+          rsi.alt = -1;
+          rsi.lat = pos.lat;
+          rsi.lon = pos.lon;
           rsi.heading = 0;
 
           war("System %X is at (%.5f, %.5f).", pos.id, Angles::degrees(pos.lat),
@@ -283,7 +288,7 @@ namespace Transports
       sendSatelitteMsg(DeviceUpdate* msg)
       {
         IridiumMsgTx tx;
-        tx.ttl    = 60;
+        tx.ttl = 60;
         tx.req_id = 0;
 
         uint8_t buffer[1024];
@@ -294,20 +299,47 @@ namespace Transports
       }
 
       void
+      sendFragmented(IMC::Message* msg)
+      {
+        spew("sending %s (%d) as fragments", msg->getName(), m_frag_id);
+
+        IridiumFragment frags;
+
+        std::list<std::vector<char>> frag_lst =
+          frags.serialize(msg, m_frag_id++, m_args.max_frame_size);
+
+        for (auto& itr : frag_lst)
+        {
+          IridiumMsgTx* tx = new IridiumMsgTx();
+          m_ir_out_frags[m_frag_id] = tx;
+
+          tx->ttl = 60;
+          tx->req_id = m_req_id++;
+          tx->data.assign(itr.begin(), itr.end());
+
+          dispatch(tx);
+        }
+      }
+
+      void
       sendIridiumMsg(IMC::Message* msg)
       {
-        if (msg->getPayloadSerializationSize() > m_args.max_frame_size)
+        // 10 bytes is the ImcIridiumMessage header size
+        if (msg->getPayloadSerializationSize() + 10 > m_args.max_frame_size)
+        {
+          sendFragmented(msg);
           return;  // Send as fragments
+        }
 
         uint8_t buffer[m_args.max_frame_size];
 
         ImcIridiumMessage ir_msg;
         ir_msg.source = getSystemId();
-        ir_msg.msg    = msg;
-        int len       = ir_msg.serialize(buffer);
+        ir_msg.msg = msg;
+        int len = ir_msg.serialize(buffer);
 
         IridiumMsgTx tx;
-        tx.ttl    = 60;
+        tx.ttl = 60;
         tx.req_id = m_req_id++;
         tx.data.assign(buffer, buffer + len);
 
@@ -341,7 +373,7 @@ namespace Transports
           sat_status.setDestinationEntity(msg->getDestinationEntity());
           sat_status.req_id = msg->req_id;
           sat_status.status = msg->status;
-          sat_status.info   = msg->text;
+          sat_status.info = msg->text;
 
           dispatch(sat_status);
           return;
@@ -359,6 +391,36 @@ namespace Transports
           // If message was expired or send, clear the flag
           m_ann_queued = !(msg->status == IridiumTxStatus::TXSTATUS_OK
                            || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED);
+
+          return;
+        }
+
+        // Test if message fragments were sent successfully
+        if (m_ir_out_frags.find(msg->req_id) == m_ir_out_frags.end())
+          return;
+
+        switch (msg->status)
+        {
+          case IMC::IridiumTxStatus::TXSTATUS_OK:
+          {
+            spew("Received ack for message %d", msg->req_id);
+            Message* sent = m_ir_out_frags[msg->req_id];
+
+            Memory::clear(sent);
+            m_ir_out_frags.erase(msg->req_id);
+          }
+          break;
+
+          case IMC::IridiumTxStatus::TXSTATUS_EXPIRED:
+          {
+            spew("received expired ack for message %d", msg->req_id);
+            Message* sent = m_ir_out_frags[msg->req_id];
+            dispatch(sent);
+          }
+          break;
+
+          default:
+            break;
         }
       }
 
@@ -376,7 +438,7 @@ namespace Transports
           war(DTR("Parsing unrecognized iridium message as text"));
           std::string text(msg->data.begin(), msg->data.end());
           IMC::TextMessage tm;
-          tm.text   = text;
+          tm.text = text;
           tm.origin = "iridium";
           std::stringstream ss;
           tm.toText(ss);
@@ -427,11 +489,31 @@ namespace Transports
         tx.setSource(msg->getSource());
         tx.setSourceEntity(msg->getSourceEntity());
 
-        tx.req_id      = msg->req_id;
+        tx.req_id = msg->req_id;
         tx.destination = msg->destination;
-        tx.ttl         = msg->ttl;
-        tx.data        = msg->data;
+        tx.ttl = msg->ttl;
 
+        IMC::Message* imsg = const_cast<IMC::Message*>(msg->msg.get());
+        switch (msg->type)
+        {
+          case SatelliteRequest::TYPE_INLINEMSG:
+            trace("sending inline message %s", imsg->getName());
+            sendIridiumMsg(imsg);
+            break;
+
+          case SatelliteRequest::TYPE_TEXT:
+            trace("sending text message %s", imsg->getName());
+            // Send as text message
+            break;
+
+          case SatelliteRequest::TYPE_RAW:
+            trace("sending raw message %s", imsg->getName());
+            // Send as raw data
+            break;
+
+          default:
+            break;
+        }
         dispatch(tx);
       }
 
