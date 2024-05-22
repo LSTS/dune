@@ -389,8 +389,11 @@ namespace DUNE
       if (imc_id == DUNE_IMC_CONST_NULL_ID)
         imc_id = msg->imc_id;
 
-      for (auto& [id, vec] : msg->frag_map)
+      for (auto& iter : msg->frag_map)
       {
+        uint8_t id = iter.first;
+        std::vector<uint8_t>& vec = iter.second;
+
         if (frag_map.find(id) != frag_map.end())
           continue;  // Already have this fragment
 
@@ -404,8 +407,11 @@ namespace DUNE
       // Reconstruct message
       std::vector<uint8_t> data(DUNE_IMC_CONST_MAX_SIZE);
 
-      for (auto& [_, vec] : frag_map)
+      for (auto& iter : frag_map)
+      {
+        std::vector<uint8_t>& vec = iter.second;
         data.insert(data.end(), vec.begin(), vec.end());
+      }
 
       IMC::Message* imc_msg = IMC::Factory::produce(imc_id);
       imc_msg->deserializeFields(&data[0], data.size());
