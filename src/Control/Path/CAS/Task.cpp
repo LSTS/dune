@@ -1298,7 +1298,8 @@ namespace Control
 
               // Distance between ASV and Obstacle.
               double distance = WGS84::distance(m_lat_asv, m_lon_asv, 0, m_dyn_obst_vec[i].lat, m_dyn_obst_vec[i].lon, 0);
-
+              (void)distance;
+              (void)state;
               // //! Fill in CAS message.
               // cas.mmsi = m_dyn_obst_vec[i].mmsi;
               // cas.lat = m_dyn_obst_vec[i].lat;
