@@ -914,7 +914,7 @@ namespace Control
           int offset = 5;
           Math::Matrix course_off_ranges(m_offsets.size(),2);
 
-          for(int f=0; f<m_offsets.size(); f++)
+          for (size_t f = 0; f < m_offsets.size(); f++)
           {
             debug("Desired Heading %f",Angles::degrees(m_des_heading.value));
             course_off_ranges(f,0) = m_des_heading.value + Angles::radians(m_offsets[f] - offset);
@@ -969,7 +969,7 @@ namespace Control
               if(bearing > m_des_heading.value + Angles::radians(m_offsets.back()) && bearing < m_des_heading.value + Angles::radians(m_offsets[0]))
               {
                 //! Static object can be a threat.
-                for(int j=1; j<m_offsets.size(); j++)
+                for (size_t j = 1; j < m_offsets.size(); j++)
                 {
                   std::vector<double> offset_neighbors;
                   offset_neighbors.push_back(m_des_heading.value + Angles::radians(m_offsets[j]));
@@ -977,7 +977,7 @@ namespace Control
                   if(bearing>offset_neighbors[0] && bearing<offset_neighbors[1])
                   {
                     std::vector<double> dsts,lats2,lons2;
-                    for(int k=0; k<offset_neighbors.size();k++)
+                    for (size_t k = 0; k < offset_neighbors.size(); k++)
                     {
                       //! Check if the static objec is a threat.
                       //! Find location (lat2,lon2) given a course and range applied to location (lat1,lon1).
@@ -1006,7 +1006,7 @@ namespace Control
                           debug("Replacing depth contour threat with static threat for COG offset %.0f!",m_offsets[j]);
                         }
 
-                        if(k==1 && j!=m_static_obst_state.rows())
+                        if(k==1 && j != (size_t)m_static_obst_state.rows())
                         {
                           if(m_static_obst_state(j-1,1) == 10000.0)
                           {
@@ -1157,7 +1157,7 @@ namespace Control
 
           double psi_path = atan2(m_waypoints(1,1) - m_waypoints(0,1), m_waypoints(1,0) - m_waypoints(0,0));
 
-          for(int i=0; i<m_static_obst_state.rows(); i++)
+          for(int i=0; i < m_static_obst_state.rows(); i++)
           {
             double bath_m_cost = m_args.K_ENV[0]*std::pow(bathymetry,2);
             double heave_m_cost = m_args.K_ENV[1]*std::pow(m_heave,2);
@@ -1323,7 +1323,7 @@ namespace Control
             m_static_obst_state.resizeAndFill(m_offsets.size(),3,10000.0); //! Large values: initial m_cost is high.
             buildENCforCAS();
             groundingCost();
-            for(unsigned int i=0; i<m_static_obst_state.rows(); i++)
+            for(int i = 0; i < m_static_obst_state.rows(); i++)
               debug("m_static_obst_state rows to m_sb_mpc: %.0f %.3f %.0f",Angles::degrees(m_static_obst_state(i,0)),m_static_obst_state(i,1),m_static_obst_state(i,2));
           }
 

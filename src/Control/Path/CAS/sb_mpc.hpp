@@ -233,9 +233,9 @@ namespace Control
 						double Chi_ca_i = 0.0;
 						int i_return_to_path = 0, ik_return_to_path = 0, i_return_to_path_best = n_samp; // iter at which ASV can return to path
 						int cp = 0, n_cp = 1;																														 // course-offset iterator and change points
-						for (int j = 0; j < P_ca_.size(); j++)
+						for (auto j = 0; j < P_ca_.size(); j++)
 						{ // iterates through speed 'offsets', only 1 speed
-							for (int i = 0; i < Chi_ca_.size(); i++)
+							for (auto i = 0; i < Chi_ca_.size(); i++)
 							{ // iterates through course offsets
 								// std::cout << "CHI_CA LOOP" << std::endl;
 								for (int cp_ = 0; cp_ < n_cp; cp_++)
@@ -374,7 +374,7 @@ namespace Control
 						{
 							bool obst_exists = false;
 							// iterate through old obstacle list
-							for (int j = 0; j < oldObstacles_.size(); j++)
+							for (size_t j = 0; j < oldObstacles_.size(); j++)
 							{
 
 								// does obstacle exist in old obstacle list?
@@ -410,7 +410,7 @@ namespace Control
 
 						if (OBST_FILTER_ON_)
 						{
-							for (int j = 0; j < oldObstacles_.size(); j++)
+							for (size_t j = 0; j < oldObstacles_.size(); j++)
 							{
 
 								// update duration lost
@@ -710,9 +710,9 @@ namespace Control
 						double Chi_ca_i = 0.0;
 						int i_return_to_path = 0, ik_return_to_path = 0, i_return_to_path_best = n_samp; // iter at which ASV can return to path
 						int cp = 0, n_cp = 3;																														 // course-offset iterator and change points
-						for (int j = 0; j < P_ca_.size(); j++)
+						for (auto j = 0; j < P_ca_.size(); j++)
 						{ // iterates through speed 'offsets', only 1 speed
-							for (int i = 0; i < Chi_ca_.size(); i++)
+							for (auto i = 0; i < Chi_ca_.size(); i++)
 							{ // iterates through course offsets
 								for (int cp_ = 0; cp_ < n_cp; cp_++)
 								{
