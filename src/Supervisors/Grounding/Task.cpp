@@ -418,7 +418,7 @@ namespace Supervisors
         bool features = false;
 
         //! Iterate through desired features.
-        for(int j=0; j<m_features.size(); j++)
+        for (size_t j = 0; j < m_features.size(); j++)
         {
           ENCManager::DepthSoundingVector static_threats = m_enc->getCorridor(lat_start, lon_start, lat_end, lon_end, 50.0, 500.0, m_features[j]);
           if(!static_threats.empty())
