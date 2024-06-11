@@ -32,6 +32,7 @@
 
 // Local headers.
 #include "IrFragments.hpp"
+#include "Storage.hpp"
 
 namespace Monitors
 {
@@ -61,8 +62,6 @@ namespace Monitors
       Arguments m_args;
       //! Watchdog for sending payload messages.
       Counter<double> m_send_wdog;
-      //! List of messages to send.
-      std::list<const IMC::Message*> m_msgs;
       //! Request identifier.
       uint16_t m_req_id;
       //! Transmission fragment id.
@@ -72,12 +71,15 @@ namespace Monitors
       //! Iridium fragment message map.
       std::map<uint16_t, IrFragment*> m_ir_map;
 
+      Storage m_storage;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_req_id(0)
+        m_req_id(0),
+        m_storage(this)
       {
         param("Payload timeout", m_args.timeout)
           .defaultValue("60.0")
@@ -116,19 +118,53 @@ namespace Monitors
       onEntityResolution(void)
       { }
 
+      unsigned
+      tryResolveEntity(const std::string& name)
+      {
+        try
+        {
+          return resolveEntity(name);
+        }
+        catch (...)
+        {
+          err("Entity %s not found", name.c_str());
+        }
+
+        return 0;
+      }
+
       //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
+        void (Task::*func)(const IMC::Message*) = &Task::consumePayload;
         for (auto&& i : m_args.msgs)
         {
-          debug("Registering message %s", i.c_str());
+          spew("Splitting %s", i.c_str());
+          std::vector<std::string> param;
+          String::split(i, ":", param);
+          if (param.size() != 2)
+          {
+            err("invalid message format %s", i.c_str());
+            continue;
+          }
+
+          inf("Add message %s from %s to payload", param[0].c_str(), param[1].c_str());
+          unsigned msg_id = IMC::Factory::getIdFromAbbrev(param[0]);
+          unsigned eid = tryResolveEntity(param[1]);
+          m_storage.addToPayload(msg_id, eid);
+
+          // Bind message to consumer.
+          bind(IMC::Factory::getIdFromAbbrev(param[0]), new Consumer<Task, IMC::Message>(*this, func));
         }
 
-        // Register normal messages.
-        bind(this, m_args.msgs);
-
         m_send_wdog.setTop(m_args.timeout);
+      }
+
+      void
+      consumePayload(const IMC::Message* msg)
+      {
+        m_storage.store(msg);
       }
 
       //! Initialize resources.
@@ -140,13 +176,6 @@ namespace Monitors
       void
       onResourceRelease(void)
       { }
-
-      void
-      consume(const IMC::Message* msg)
-      {
-        debug("pushing message %s", msg->getName());
-        m_msgs.push_back(msg->clone());
-      }
 
       void
       consume(const IMC::IridiumTxStatus* msg)
@@ -347,23 +376,22 @@ namespace Monitors
       bool
       sendPayloadMessages(void)
       {
-        if (m_msgs.empty())
+        std::list<const IMC::Message*> lst;
+        if(!m_storage.getPayload(lst))
           return false;
 
-        debug("Sending payload messages %lu", m_msgs.size());
-
-        for (const Message* msg : m_msgs)
+        for (auto it = lst.begin(); it != lst.end(); ++it)
         {
-          // Check if message needs to be fragmented.
+          const IMC::Message* msg = *it;
+          debug("Sending message %s", msg->getName());
+
           if (msg->getPayloadSerializationSize() > m_args.max_payload)
             sendFragments(msg);
           else
             sendInline(msg);
-
-          Memory::clear(msg);
         }
 
-        m_msgs.clear();
+        m_storage.clear();
         return true;
       }
 
@@ -379,7 +407,6 @@ namespace Monitors
       void
       onMain(void)
       {
-        debug("Starting payload task %d", getEntityId());
         while (!stopping())
         {
           waitForMessages(1.0);
