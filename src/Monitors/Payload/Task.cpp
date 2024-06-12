@@ -29,6 +29,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Network/Fragments.hpp>
 
 // Local headers.
 #include "IrFragments.hpp"
@@ -48,12 +49,18 @@ namespace Monitors
     {
       //! Payload timeout.
       double timeout;
-      //! List of messages to send.
-      std::vector<std::string> msgs;
       //! Maximum iridium message size.
       size_t max_payload;
       //! Iridium messages destination.
       std::string destination;
+      //! Rate limiters.
+      std::vector<std::string> rate_lims;
+      //! Filtered entities.
+      std::vector<std::string> entities_flt;
+      //! List of messages to send.
+      std::vector<std::string> msgs;
+      //! Flag to use IMC fragments.
+      bool use_fragments;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -70,24 +77,19 @@ namespace Monitors
       std::map<uint16_t, const IMC::Message*> m_ack_map;
       //! Iridium fragment message map.
       std::map<uint16_t, IrFragment*> m_ir_map;
-
-      Storage m_storage;
+      //! Message filter.
+      MessageFilter m_filter;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_req_id(0),
-        m_storage(this)
+        m_req_id(0)
       {
         param("Payload timeout", m_args.timeout)
           .defaultValue("60.0")
           .description("Payload timeout in seconds.");
-
-        param("Messages list", m_args.msgs)
-          .defaultValue("")
-          .description("List of messages to send using Iridium.");
 
         param("Maximum iridium payload size", m_args.max_payload)
           .defaultValue("259")
@@ -97,8 +99,24 @@ namespace Monitors
           .defaultValue("caravel")
           .description("Destination for iridium messages.");
 
+        param("Rate Limiters", m_args.rate_lims)
+          .description("List of <Message>:<Frequency> to send messages at a specific rate.");
+
+        param("Filtered Entities", m_args.entities_flt)
+          .description("List of <Message>:<Entity>+<Entity> that define the source entities "
+                       "allowed to pass message of a specific message type.");
+
+        param("Transport", m_args.msgs)
+          .defaultValue("")
+          .description("List of messages to transport");
+
+        param("Use IMC Fragments", m_args.use_fragments)
+          .defaultValue("true")
+          .description("Use IMC fragments to send messages.");
+
         bind<IMC::IridiumTxStatus>(this);
         bind<IMC::IridiumMsgRx>(this);
+        bind<IMC::EntityState>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -106,76 +124,33 @@ namespace Monitors
       onUpdateParameters(void)
       {
         m_send_wdog.setTop(m_args.timeout);
-      }
 
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
-      { }
+        // Process rate limiters.
+        if (paramChanged(m_args.rate_lims))
+          m_filter.setupRates(m_args.rate_lims);
 
-      //! Resolve entity names.
-      void
-      onEntityResolution(void)
-      { }
-
-      unsigned
-      tryResolveEntity(const std::string& name)
-      {
-        try
-        {
-          return resolveEntity(name);
-        }
-        catch (...)
-        {
-          err("Entity %s not found", name.c_str());
-        }
-
-        return 0;
+        // Process filtered entities.
+        if (paramChanged(m_args.entities_flt))
+          m_filter.setupEntities(m_args.entities_flt, this);
       }
 
       //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
-        void (Task::*func)(const IMC::Message*) = &Task::consumePayload;
-        for (auto&& i : m_args.msgs)
-        {
-          spew("Splitting %s", i.c_str());
-          std::vector<std::string> param;
-          String::split(i, ":", param);
-          if (param.size() != 2)
-          {
-            err("invalid message format %s", i.c_str());
-            continue;
-          }
-
-          inf("Add message %s from %s to payload", param[0].c_str(), param[1].c_str());
-          unsigned msg_id = IMC::Factory::getIdFromAbbrev(param[0]);
-          unsigned eid = tryResolveEntity(param[1]);
-          m_storage.addToPayload(msg_id, eid);
-
-          // Bind message to consumer.
-          bind(IMC::Factory::getIdFromAbbrev(param[0]), new Consumer<Task, IMC::Message>(*this, func));
-        }
-
-        m_send_wdog.setTop(m_args.timeout);
+        bind(this, m_args.msgs);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
+      //! Consume for on request messages
       void
-      consumePayload(const IMC::Message* msg)
+      consume(const IMC::Message* msg)
       {
-        m_storage.store(msg);
+        if (m_filter.filter(msg))
+          return;
+
+        sendIridiumMsg(msg);
       }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      { }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      { }
 
       void
       consume(const IMC::IridiumTxStatus* msg)
@@ -209,6 +184,18 @@ namespace Monitors
           default:
             break;
         }
+      }
+
+      void
+      consume(const IMC::EntityState* msg)
+      {
+        if (msg->state != IMC::EntityState::ESTA_NORMAL)
+          return;
+
+        // if (msg->state != IMC::EntityState::ESTA_BOOT)
+        //   return;
+
+        sendIridiumMsg(msg);
       }
 
       //! Split buffer into chunks.
@@ -293,7 +280,7 @@ namespace Monitors
        */
       //! Send message as fragments.
       void
-      sendFragments(const IMC::Message* msg)
+      sendIridiumFragments(const IMC::Message* msg)
       {
         uint16_t src_id = 1234;
         uint16_t dst_id = 4567;
@@ -354,6 +341,18 @@ namespace Monitors
         }
       }
 
+      void
+      sendIMCFragments(const IMC::Message* msg)
+      {
+        Network::Fragments frags(const_cast<IMC::Message*>(msg), m_args.max_payload);
+
+        for (size_t i = 0; i < frags.getNumberOfFragments(); i++)
+        {
+          IMC::MessagePart* msg = frags.getFragment(i);
+          sendInline(msg);
+        }
+      }
+
       //! Send message as inline request.
       void
       sendInline(const IMC::Message* msg)
@@ -371,28 +370,13 @@ namespace Monitors
         debug("Sent message %s", msg->getName());
       }
 
-      //! Send payload messages in buffer.
-      //! @return true if messages were sent, false otherwise.
-      bool
-      sendPayloadMessages(void)
+      void
+      sendIridiumMsg(const IMC::Message* msg)
       {
-        std::list<const IMC::Message*> lst;
-        if(!m_storage.getPayload(lst))
-          return false;
-
-        for (auto it = lst.begin(); it != lst.end(); ++it)
-        {
-          const IMC::Message* msg = *it;
-          debug("Sending message %s", msg->getName());
-
-          if (msg->getPayloadSerializationSize() > m_args.max_payload)
-            sendFragments(msg);
-          else
-            sendInline(msg);
-        }
-
-        m_storage.clear();
-        return true;
+        if (msg->getPayloadSerializationSize() > m_args.max_payload)
+          m_args.use_fragments ? sendIMCFragments(msg) : sendIridiumFragments(msg);
+        else
+          sendInline(msg);
       }
 
       void
@@ -410,12 +394,6 @@ namespace Monitors
         while (!stopping())
         {
           waitForMessages(1.0);
-          if (m_send_wdog.overflow())
-          {
-            // Reset watchdog if at least one message was sent.
-            if (sendPayloadMessages())
-              m_send_wdog.reset();
-          }
         }
       }
     };
