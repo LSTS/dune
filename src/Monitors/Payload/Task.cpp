@@ -67,7 +67,6 @@ namespace Monitors
     {
       //! Task arguments.
       Arguments m_args;
-      //! Watchdog for sending payload messages.
       Counter<double> m_send_wdog;
       //! Request identifier.
       uint16_t m_req_id;
@@ -96,7 +95,7 @@ namespace Monitors
           .description("Maximum size of iridium payload messages in bytes.");
 
         param("Destination", m_args.destination)
-          .defaultValue("caravel")
+          .defaultValue("")
           .description("Destination for iridium messages.");
 
         param("Rate Limiters", m_args.rate_lims)
@@ -139,6 +138,7 @@ namespace Monitors
       onResourceAcquisition(void)
       {
         bind(this, m_args.msgs);
+
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -148,6 +148,8 @@ namespace Monitors
       {
         if (m_filter.filter(msg))
           return;
+        
+        trace("sending %s ", msg->getName());
 
         sendIridiumMsg(msg);
       }
@@ -189,11 +191,11 @@ namespace Monitors
       void
       consume(const IMC::EntityState* msg)
       {
-        if (msg->state != IMC::EntityState::ESTA_NORMAL)
+        if (msg->state == IMC::EntityState::ESTA_NORMAL)
           return;
 
-        // if (msg->state != IMC::EntityState::ESTA_BOOT)
-        //   return;
+        if (msg->state == IMC::EntityState::ESTA_BOOT)
+          return;
 
         sendIridiumMsg(msg);
       }
@@ -229,6 +231,11 @@ namespace Monitors
 
           debug("received message with %d bytes", bfr_len);
           ir_msg = deserializeFragment(bfr, bfr_len);
+        }
+        catch (const InvalidMessageId& e)
+        {
+          debug("%s", e.what());
+          return;
         }
         catch (const std::exception& e)
         {
@@ -346,10 +353,10 @@ namespace Monitors
       {
         Network::Fragments frags(const_cast<IMC::Message*>(msg), m_args.max_payload);
 
-        for (size_t i = 0; i < frags.getNumberOfFragments(); i++)
+        for (int i = 0; i < frags.getNumberOfFragments(); i++)
         {
-          IMC::MessagePart* msg = frags.getFragment(i);
-          sendInline(msg);
+          IMC::MessagePart* msg_frag = frags.getFragment(i);
+          sendInline(msg_frag);
         }
       }
 
