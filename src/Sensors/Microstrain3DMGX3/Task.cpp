@@ -56,6 +56,15 @@ namespace Sensors
     //! Number of axis.
     static const uint8_t c_number_axis = 3;
 
+    //! Timeout exception.
+    class Timeout: public std::runtime_error
+    {
+    public:
+      Timeout(const std::string& msg):
+        std::runtime_error(msg)
+      { }
+    };
+
     //! Commands to device.
     enum Commands
     {
@@ -120,8 +129,6 @@ namespace Sensors
       static const unsigned c_num_addr = 6;
       //! Magnetic calibration initial address.
       static const uint16_t c_mag_addr = 0x0400;
-      //! Minimum Read Bytes
-      unsigned m_min_read;
       //! Rotation Matrix to correct mounting position.
       Math::Matrix m_rotation;
       //! Rotated calibration parameters.
@@ -159,7 +166,6 @@ namespace Sensors
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
-        m_min_read(0),
         m_uart(NULL),
         m_tstamp(0),
         m_state_timer(1.0),
@@ -232,7 +238,7 @@ namespace Sensors
       {
         if (paramChanged(m_args.read_frequency))
           setReadFrequency(m_args.read_frequency);
-        
+
         m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
 
         // Rotate calibration parameters.
@@ -355,8 +361,6 @@ namespace Sensors
         if (m_uart == NULL)
           return false;
 
-        m_min_read = cmd_size;
-
         // Request data.
         switch (cmd)
         {
@@ -381,6 +385,104 @@ namespace Sensors
         return listen(cmd, cmd_size);
       }
 
+      //! Read bytes from device.
+      //! @param[in] bfr buffer to store data.
+      //! @param[in] len number of bytes to read.
+      //! @param[in] timeout time to wait for data.
+      //! @throw Timeout if timeout is reached.
+      //! @throw SerialPort::Error if error reading data.
+      void
+      readBytes(uint8_t* bfr, size_t len, double timeout = 1.0)
+      {
+        uint8_t* ptr = bfr;
+        Counter<double> timer;
+        timer.setTop(timeout);
+
+        size_t read = 0;
+        while (isRunning())
+        {
+          // Make sure a positive value is passed to Poll::poll
+          double remaining = timer.getRemaining();
+          if (remaining <= 0.0 || !Poll::poll(*m_uart, remaining))
+            throw Timeout("timeout reading data");
+
+          size_t rv = m_uart->read(ptr, 1);
+          m_tstamp = Clock::getSinceEpoch();
+          if (rv == 0)  // Error reading
+            break;
+
+          ptr++;
+          read += rv;
+
+          if (rv == len)  // Success
+            return;
+        }
+
+        throw SerialPort::Error("reading data from device", System::Error::getLastMessage());
+      }
+
+      //! Read bytes from device.
+      //! @param[in] bfr buffer to store data.
+      //! @param[in] len number of bytes to read.
+      //! @param[in] timeout time to wait for data.
+      //! @return true if communication successful, false otherwise.
+      bool
+      forceReadBytes(uint8_t* bfr, size_t read_size, double timeout = 1.0)
+      {
+        try
+        {
+          readBytes(m_bfr, read_size, 1.0);
+        }
+        catch (const Timeout& e)
+        {
+          m_timeout_count++;
+          inf("%s", e.what());
+          return false;
+        }
+        catch (const SerialPort::Error& e)
+        {
+          m_faults_count++;
+          err("%s", e.what());
+          return false;
+        }
+        catch (const std::exception& e)
+        {
+          err("unknown error: %s", e.what());
+          m_faults_count++;
+          return false;
+        }
+      }
+
+      //! Read bytes from device.
+      //! @param[in] cmd_size expected frame response size.
+      //! @return true if communication successful, false otherwise.
+      //! @note Compatability funtion for versions working with setMinRead().
+      bool
+      doMinRead(Sizes cmd_size)
+      {
+        if (!Poll::poll(*m_uart, 1.0))
+        {
+          m_timeout_count++;
+          return false;
+        }
+
+        // Read response.
+        size_t rv = m_uart->read(m_bfr, c_bfr_size);
+        m_tstamp = Clock::getSinceEpoch();
+
+        if (rv == 0)
+        {
+          m_faults_count++;
+          return false;
+        }
+
+        if (rv != (size_t)cmd_size)
+        {
+          m_faults_count++;
+          return false;
+        }
+      }
+
       //! Listen for responses.
       //! @param[in] cmd command char.
       //! @param[in] cmd_size expected frame response size.
@@ -392,42 +494,19 @@ namespace Sensors
         if (!cmd_size)
           return true;
 
-        if (!Poll::poll(*m_uart, 1.0))
-        {
-          m_timeout_count++;
+        bool status = false;
+        if (m_args.min_read_flag)
+          status = forceReadBytes(m_bfr, cmd_size, 1.0);
+        else
+          status = doMinRead(cmd_size);
+
+        // Read failed.
+        if (!status)
           return false;
-        }
-
-        // Read response.
-        size_t rv = m_uart->read(m_bfr, c_bfr_size);
-        m_tstamp = Clock::getSinceEpoch();
-
-        Counter<double> timer;
-        timer.setTop(0.25);
-        while (rv < m_min_read)
-        {
-          rv += m_uart->read(m_bfr + rv, c_bfr_size - rv);
-          if (timer.overflow()) {
-            spew("timeout read!");
-            return false;
-          }
-        }
-
-        if (rv == 0)
-        {
-          m_faults_count++;
-          return false;
-        }
 
         // Check if we have a response to our query.
         if (m_bfr[0] != cmd)
           return false;
-
-        if (rv != (size_t)cmd_size)
-        {
-          m_faults_count++;
-          return false;
-        }
 
         // Validate checksum.
         if (!validateChecksum(m_bfr, cmd_size))
