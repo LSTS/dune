@@ -181,8 +181,18 @@ namespace Monitors
           case IMC::IridiumTxStatus::TXSTATUS_EXPIRED:
           {
             spew("received expired ack for message %d", msg->req_id);
-            Message* sent = const_cast<Message*>(m_ack_map[msg->req_id]);
-            dispatch(sent);
+            const Message*& sent = (m_ack_map[msg->req_id]);
+            if (sent->getId() == TransmissionRequest::getIdStatic())
+            {
+              TransmissionRequest* ptr = (TransmissionRequest*)sent;
+              Message* inline_msg = ptr->msg_data.get();
+              spew("discarding %s", inline_msg->getName());
+            }
+            else
+              spew("discarding %s", sent->getName());
+
+            Memory::clear(sent);
+            m_ack_map.erase(msg->req_id);
           }
           break;
 
@@ -194,11 +204,22 @@ namespace Monitors
       void
       consume(const IMC::EntityState* msg)
       {
+        static std::map<uint32_t, IMC::EntityState::StateEnum> entity_map;
         if (msg->state == IMC::EntityState::ESTA_NORMAL)
           return;
 
         if (msg->state == IMC::EntityState::ESTA_BOOT)
           return;
+
+        if (entity_map.find(msg->getSourceEntity()) != entity_map.end())
+        {
+          IMC::EntityState::StateEnum& state = entity_map[msg->getSourceEntity()];
+          if (state == msg->state) // Same state, ignore.
+            return;
+        }
+
+        IMC::EntityState::StateEnum& state = entity_map[msg->getSourceEntity()];
+        state = (IMC::EntityState::StateEnum)msg->state;
 
         sendIridiumMsg(msg);
       }
@@ -313,7 +334,7 @@ namespace Monitors
         IMC::IridiumMsgTx ir_tx;
         ir_tx.setDestination(getSystemId());
         ir_tx.destination = m_args.destination;
-        ir_tx.ttl = 60;
+        ir_tx.ttl = 30;
 
         ir_tx.data.reserve(11 + m_args.max_payload);
 
@@ -373,16 +394,17 @@ namespace Monitors
         tr.req_id = m_req_id++;
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
         tr.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
-        tr.deadline = Clock::getSinceEpoch() + m_args.timeout * 60;
+        tr.deadline = Clock::getSinceEpoch() + 30; // m_args.timeout * 60
         tr.msg_data.set(*msg);
 
         dispatchRequest(tr, tr.req_id);
-        debug("Sent message %s", msg->getName());
+        debug("Sent message %s as inline", msg->getName());
       }
 
       void
       sendIridiumMsg(const IMC::Message* msg)
       {
+        debug("send ir msg %s", msg->getName());
         if (msg->getPayloadSerializationSize() > m_args.max_payload)
           m_args.use_fragments ? sendIMCFragments(msg) : sendIridiumFragments(msg);
         else
