@@ -146,9 +146,12 @@ namespace Monitors
       void
       consume(const IMC::Message* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         if (m_filter.filter(msg))
           return;
-        
+
         trace("sending %s ", msg->getName());
 
         sendIridiumMsg(msg);
