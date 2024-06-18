@@ -49,6 +49,8 @@ namespace Monitors
     {
       //! Payload timeout.
       double timeout;
+      //! List of messages to send.
+      std::vector<std::string> pay_msgs;
       //! Maximum iridium message size.
       size_t max_payload;
       //! Iridium messages destination.
@@ -59,6 +61,8 @@ namespace Monitors
       std::vector<std::string> entities_flt;
       //! List of messages to send.
       std::vector<std::string> msgs;
+      //! Message time to live.
+      uint16_t ttl;
       //! Flag to use IMC fragments.
       bool use_fragments;
     };
@@ -78,17 +82,24 @@ namespace Monitors
       std::map<uint16_t, IrFragment*> m_ir_map;
       //! Message filter.
       MessageFilter m_filter;
+      //! Payload storage.
+      Storage m_storage;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_req_id(0)
+        m_req_id(0),
+        m_storage(this)
       {
         param("Payload timeout", m_args.timeout)
           .defaultValue("60.0")
           .description("Payload timeout in seconds.");
+
+        param("Payload Messages", m_args.pay_msgs)
+          .defaultValue("")
+          .description("List of messages <Message>:<Entity> to send using Iridium.");
 
         param("Maximum iridium payload size", m_args.max_payload)
           .defaultValue("259")
@@ -108,6 +119,10 @@ namespace Monitors
         param("Transport", m_args.msgs)
           .defaultValue("")
           .description("List of messages to transport");
+
+        param("Message TTL", m_args.ttl)
+          .defaultValue("30")
+          .description("Time to live for iridium messages.");
 
         param("Use IMC Fragments", m_args.use_fragments)
           .defaultValue("true")
@@ -133,13 +148,55 @@ namespace Monitors
           m_filter.setupEntities(m_args.entities_flt, this);
       }
 
+      unsigned
+      tryResolveEntity(const std::string& name)
+      {
+        try
+        {
+          return resolveEntity(name);
+        }
+        catch (...)
+        {
+          err("Entity %s not found", name.c_str());
+        }
+
+        return 0;
+      }
+
       //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
+        for (auto&& i : m_args.msgs)
+        {
+          spew("Splitting %s", i.c_str());
+          std::vector<std::string> param;
+          String::split(i, ":", param);
+          if (param.size() != 2)
+          {
+            err("invalid message format %s", i.c_str());
+            continue;
+          }
+
+          inf("Add message %s from %s to payload", param[0].c_str(), param[1].c_str());
+          unsigned msg_id = IMC::Factory::getIdFromAbbrev(param[0]);
+          unsigned eid = tryResolveEntity(param[1]);
+          m_storage.addToPayload(msg_id, eid);
+
+          // Bind message to consumer.
+          bind(IMC::Factory::getIdFromAbbrev(param[0]),
+               new Consumer<Task, IMC::Message>(*this, &Task::consumePayload));
+        }
         bind(this, m_args.msgs);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_send_wdog.setTop(m_args.timeout);
+      }
+
+      void
+      consumePayload(const IMC::Message* msg)
+      {
+        m_storage.store(msg);
       }
 
       //! Consume for on request messages
@@ -152,7 +209,7 @@ namespace Monitors
         if (m_filter.filter(msg))
           return;
 
-        trace("sending %s ", msg->getName());
+        debug("sending %s ", msg->getName());
 
         sendIridiumMsg(msg);
       }
@@ -214,7 +271,7 @@ namespace Monitors
         if (entity_map.find(msg->getSourceEntity()) != entity_map.end())
         {
           IMC::EntityState::StateEnum& state = entity_map[msg->getSourceEntity()];
-          if (state == msg->state) // Same state, ignore.
+          if (state == msg->state)  // Same state, ignore.
             return;
         }
 
@@ -334,7 +391,7 @@ namespace Monitors
         IMC::IridiumMsgTx ir_tx;
         ir_tx.setDestination(getSystemId());
         ir_tx.destination = m_args.destination;
-        ir_tx.ttl = 30;
+        ir_tx.ttl = m_args.ttl;
 
         ir_tx.data.reserve(11 + m_args.max_payload);
 
@@ -394,11 +451,11 @@ namespace Monitors
         tr.req_id = m_req_id++;
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
         tr.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
-        tr.deadline = Clock::getSinceEpoch() + 30; // m_args.timeout * 60
+        tr.deadline = Clock::getSinceEpoch() + m_args.ttl;
         tr.msg_data.set(*msg);
 
         dispatchRequest(tr, tr.req_id);
-        debug("Sent message %s as inline", msg->getName());
+        trace("Sent message (%d) %s as inline", tr.req_id, msg->getName());
       }
 
       void
@@ -419,6 +476,30 @@ namespace Monitors
         dispatch(msg);
       }
 
+      //! Send payload messages in buffer.
+      //! @return true if messages were sent, false otherwise.
+      bool
+      sendPayloadMessages(void)
+      {
+        std::list<const IMC::Message*> lst;
+        if (!m_storage.getPayload(lst))
+          return false;
+
+        for (auto it = lst.begin(); it != lst.end(); ++it)
+        {
+          const IMC::Message* msg = *it;
+          debug("[%f] message %s", msg->getTimeStamp(), msg->getName());
+
+          if (msg->getPayloadSerializationSize() > m_args.max_payload)
+            m_args.use_fragments ? sendIMCFragments(msg) : sendIridiumFragments(msg);
+          else
+            sendInline(msg);
+        }
+
+        m_storage.clear();
+        return true;
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -426,6 +507,11 @@ namespace Monitors
         while (!stopping())
         {
           waitForMessages(1.0);
+          if (m_send_wdog.overflow())
+          {
+            if (!sendPayloadMessages())
+              m_send_wdog.reset();
+          }
         }
       }
     };

@@ -118,6 +118,12 @@ namespace Monitors
       void
       store(const IMC::Message* msg)
       {
+        if (m_msg_count == m_max_msg)
+        {
+          m_task->trace("Payload is full");
+          return;
+        }
+
         unsigned eid = msg->getSourceEntity();
         if (m_payload.find(eid) == m_payload.end())
         {
@@ -150,9 +156,10 @@ namespace Monitors
       {
         for (auto it = m_payload.begin(); it != m_payload.end(); ++it)
           it->second.clear();
-        
+
         m_msg_count = 0;
       }
+
     private:
       Task* m_task;
       //! Number of total messages
