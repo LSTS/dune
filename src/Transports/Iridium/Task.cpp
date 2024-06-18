@@ -267,6 +267,7 @@ namespace Transports
               inf("received IMC message of type %s via Iridium from %d.", irMsg->msg->getName(), irMsg->source);
               IMC::Message* m2 = irMsg->msg;
               m2->setSource(irMsg->source);
+              m2->setDestination(irMsg->destination);
               dispatch(m2);
             }
             else
