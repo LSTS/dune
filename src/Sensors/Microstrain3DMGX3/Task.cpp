@@ -291,7 +291,9 @@ namespace Sensors
       {
         // Read firmware version in order to assess if we can communicate
         // with the device.
-        m_uart->setMinimumRead(CMD_FWARE_VERSION_SIZE);
+        if (m_args.min_read_flag)
+          m_uart->setMinimumRead(CMD_FWARE_VERSION_SIZE);
+
         if (poll(CMD_FWARE_VERSION, CMD_FWARE_VERSION_SIZE, 0, 0))
           return true;
 
