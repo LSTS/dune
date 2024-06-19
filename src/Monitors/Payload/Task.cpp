@@ -131,6 +131,7 @@ namespace Monitors
         bind<IMC::IridiumTxStatus>(this);
         bind<IMC::IridiumMsgRx>(this);
         bind<IMC::EntityState>(this);
+        bind<IMC::PlanDB>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -167,7 +168,7 @@ namespace Monitors
       void
       onResourceAcquisition(void)
       {
-        for (auto&& i : m_args.msgs)
+        for (auto&& i : m_args.pay_msgs)
         {
           spew("Splitting %s", i.c_str());
           std::vector<std::string> param;
@@ -181,7 +182,7 @@ namespace Monitors
           inf("Add message %s from %s to payload", param[0].c_str(), param[1].c_str());
           unsigned msg_id = IMC::Factory::getIdFromAbbrev(param[0]);
           unsigned eid = tryResolveEntity(param[1]);
-          m_storage.addToPayload(msg_id, eid);
+          m_storage.addToPayload(eid, msg_id);
 
           // Bind message to consumer.
           bind(IMC::Factory::getIdFromAbbrev(param[0]),
@@ -279,6 +280,21 @@ namespace Monitors
         state = (IMC::EntityState::StateEnum)msg->state;
 
         sendIridiumMsg(msg);
+      }
+
+      void
+      consume(const IMC::PlanDB* msg)
+      {
+        if (msg->op == IMC::PlanDB::DBT_REQUEST)
+          return;
+
+        // if (msg->getDestination() == )
+        // {
+        //   /* code */
+        // }
+        
+
+        //sendIridiumMsg(msg);
       }
 
       //! Split buffer into chunks.
@@ -504,12 +520,18 @@ namespace Monitors
       void
       onMain(void)
       {
+        Counter<double> wdog(1.0);
         while (!stopping())
         {
           waitForMessages(1.0);
           if (m_send_wdog.overflow())
           {
-            if (!sendPayloadMessages())
+            if(wdog.overflow())
+            {
+              spew("Sending payload messages %d of %d", m_storage.m_msg_count, m_storage.m_max_msg);
+              wdog.reset();
+            }
+            if (sendPayloadMessages())
               m_send_wdog.reset();
           }
         }

@@ -60,7 +60,11 @@ namespace Monitors
           return false;
 
         if (m_payload[msg->getId()] != nullptr)
+        {
+          Memory::clear(m_payload[msg->getId()]);
+          m_payload[msg->getId()] = msg;
           return false;
+        }
 
         m_payload[msg->getId()] = msg;
         return true;
@@ -119,21 +123,18 @@ namespace Monitors
       store(const IMC::Message* msg)
       {
         if (m_msg_count == m_max_msg)
-        {
-          m_task->trace("Payload is full");
           return;
-        }
 
         unsigned eid = msg->getSourceEntity();
         if (m_payload.find(eid) == m_payload.end())
         {
-          m_task->debug("Entity %d not found in payload", eid);
+          //m_task->spew("Entity %d not found in payload", eid);
           return;
         }
 
         if (m_payload[eid].store(msg->clone()))
         {
-          m_task->debug("Message %s stored", msg->getName());
+          m_task->war("Message %s stored", msg->getName());
           m_msg_count++;
         }
       }
@@ -160,12 +161,14 @@ namespace Monitors
         m_msg_count = 0;
       }
 
-    private:
-      Task* m_task;
       //! Number of total messages
       unsigned m_max_msg;
       //! Number of messages received
       unsigned m_msg_count;
+
+    private:
+      Task* m_task;
+
       //! Map for Payload
       std::map<unsigned, EntityPayload> m_payload;
     };
