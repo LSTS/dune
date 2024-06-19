@@ -52,13 +52,13 @@ namespace Supervisors
     struct Task: public DUNE::Tasks::Periodic
     {
       //! Current Plan control state
-      IMC::PlanControlState m_pcs; 
+      IMC::PlanControlState m_pcs;
       //! Vehicle state
       IMC::VehicleState m_vs;
       //! Current position.
       IMC::EstimatedState m_estate;
       //! Flag for vehicle armed
-      bool m_armed; 
+      bool m_armed;
       //! Task arguments.
       Arguments m_args;
 
@@ -67,14 +67,14 @@ namespace Supervisors
         m_armed(false)
       {
         param("Loiter On Service -- Radius", m_args.loiter_on_service_radius)
-        .defaultValue("30.0")
-        .minimumValue("5.0")
-        .description("Radius for loiter on service option");
+          .defaultValue("30.0")
+          .minimumValue("5.0")
+          .description("Radius for loiter on service option");
 
         param("Loiter On Service -- Speed", m_args.loiter_on_service_speed)
-        .defaultValue("0.5")
-        .minimumValue("0.1")
-        .description("Speed for loiter on service option");
+          .defaultValue("0.5")
+          .minimumValue("0.1")
+          .description("Speed for loiter on service option");
 
         bind<IMC::PlanControlState>(this);
         bind<IMC::VehicleState>(this);
@@ -84,27 +84,19 @@ namespace Supervisors
 
       void
       onUpdateParameters(void)
-      {
-
-      }
+      { }
 
       void
       onResourceAcquisition(void)
-      {
-
-      }
+      { }
 
       void
       onResourceRelease(void)
-      {
-
-      }
+      { }
 
       void
       onResourceInitialization(void)
-      {
-        
-      }
+      { }
 
       void
       consume(const IMC::PlanControlState* msg)
@@ -130,9 +122,20 @@ namespace Supervisors
         m_armed = (msg->state == ArmingState::StateEnum::MOTORS_ARMED);
       }
 
+      std::string
+      getMessage(Status::Code code)
+      {
+        std::stringstream ss;
+        std::string armed_str = m_armed ? "ARMED" : "DISARMED";
+        ss << getString(code) << " - " << armed_str;
+        return ss.str();
+      }
+
       void
       task(void)
       {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
+
         if (m_armed)
           loiterOnService();
         else
