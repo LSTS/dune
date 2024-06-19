@@ -352,5 +352,36 @@ namespace DUNE
 
       return buffer - start;
     }
+
+    IridiumOperation::IridiumOperation(void)
+    {
+      msg_id = ID_UPDATE_OP;
+    }
+
+    int
+    IridiumOperation::serialize(uint8_t * buffer)
+    {
+      uint8_t* start = buffer;
+      buffer += DUNE::IMC::serialize(source, buffer);
+      buffer += DUNE::IMC::serialize(destination, buffer);
+      buffer += DUNE::IMC::serialize(msg_id, buffer);
+      buffer += DUNE::IMC::serialize(type, buffer);
+      buffer += DUNE::IMC::serialize(ts, buffer);
+      return 0;
+    }
+
+    int
+    IridiumOperation::deserialize(uint8_t* data, uint16_t len)
+    {
+      uint8_t* buffer = data;
+      buffer += DUNE::IMC::deserialize(source, buffer, len);
+      buffer += DUNE::IMC::deserialize(destination, buffer, len);
+      buffer += DUNE::IMC::deserialize(msg_id, buffer, len);
+      buffer += DUNE::IMC::deserialize(type, buffer, len);
+      buffer += DUNE::IMC::deserialize(ts, buffer, len);
+
+      return buffer - data;
+    }
+
   } /* namespace IMC */
 } /* namespace DUNE */

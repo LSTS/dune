@@ -49,6 +49,7 @@ namespace DUNE
     static const uint16_t ID_IRIDIUMCMD = 2005;
     static const uint16_t ID_IMCMESSAGE = 2010;
     static const uint16_t ID_EXTDEVUPDATE = 2011;
+    static const uint16_t ID_UPDATE_OP = 2012;
 
     typedef struct {
       uint16_t id;
@@ -143,6 +144,30 @@ namespace DUNE
       int deserialize(uint8_t* data, uint16_t len);
       std::string command;
       ~IridiumCommand(){};
+    };
+
+    class IridiumOperation : public IridiumMessage
+    {
+    public:
+      enum OperationType
+      {
+        OP_DEACTIVATE = 0,
+        OP_ACTIVATE = 1
+      };
+
+      double ts;
+      uint8_t type;
+
+      IridiumOperation(void);
+
+      ~IridiumOperation(void)
+      { }
+
+      int serialize(uint8_t * buffer);
+
+      int deserialize(uint8_t* data, uint16_t len);
+
+      
     };
 
   } /* namespace IMC */
