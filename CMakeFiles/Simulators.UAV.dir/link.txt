@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.UAV.a  CMakeFiles/Simulators.UAV.dir/src/Simulators/UAV/Task.cpp.o
+/usr/bin/ranlib libSimulators.UAV.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libAutonomy.OnEvent.a  CMakeFiles/Autonomy.OnEvent.dir/src/Autonomy/OnEvent/Task.cpp.o
+/usr/bin/ranlib libAutonomy.OnEvent.a

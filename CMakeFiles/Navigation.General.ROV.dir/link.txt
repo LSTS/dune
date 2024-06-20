@@ -1,0 +1,2 @@
+/usr/bin/ar qc libNavigation.General.ROV.a  CMakeFiles/Navigation.General.ROV.dir/src/Navigation/General/ROV/Task.cpp.o
+/usr/bin/ranlib libNavigation.General.ROV.a

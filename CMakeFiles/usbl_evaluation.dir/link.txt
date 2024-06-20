@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/usbl_evaluation.dir/programs/usbl_evaluation.cpp.o  -o usbl_evaluation libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

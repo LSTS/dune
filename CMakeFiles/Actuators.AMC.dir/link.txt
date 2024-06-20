@@ -1,0 +1,2 @@
+/usr/bin/ar qc libActuators.AMC.a  CMakeFiles/Actuators.AMC.dir/src/Actuators/AMC/Task.cpp.o
+/usr/bin/ranlib libActuators.AMC.a

@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/test_rows.dir/programs/test_rows.cpp.o  -o test_rows libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 
