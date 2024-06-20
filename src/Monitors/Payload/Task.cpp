@@ -84,6 +84,8 @@ namespace Monitors
       MessageFilter m_filter;
       //! Payload storage.
       Storage m_storage;
+      //! List of iridium subscribers.
+      std::list<unsigned> m_iri_subs;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -262,22 +264,25 @@ namespace Monitors
       void
       consume(const IMC::EntityState* msg)
       {
-        static std::map<uint32_t, IMC::EntityState::StateEnum> entity_map;
-        if (msg->state == IMC::EntityState::ESTA_NORMAL)
-          return;
-
-        if (msg->state == IMC::EntityState::ESTA_BOOT)
-          return;
-
-        if (entity_map.find(msg->getSourceEntity()) != entity_map.end())
+        static std::map<uint32_t, uint8_t> entity_map;
+        if (entity_map.find(msg->getSourceEntity()) == entity_map.end())
         {
-          IMC::EntityState::StateEnum& state = entity_map[msg->getSourceEntity()];
-          if (state == msg->state)  // Same state, ignore.
-            return;
+          // First state message.
+          uint8_t& state = entity_map[msg->getSourceEntity()];
+          state = msg->state;
+          return;
         }
 
-        IMC::EntityState::StateEnum& state = entity_map[msg->getSourceEntity()];
-        state = (IMC::EntityState::StateEnum)msg->state;
+        uint8_t& state = entity_map[msg->getSourceEntity()];
+        if (state == msg->state)  // Same state, ignore.
+          return;
+
+        // If entity updated from boot to normal, ignore.
+        if (state == EntityState::ESTA_BOOT && msg->state == EntityState::ESTA_NORMAL)
+        {
+          state = msg->state;
+          return;
+        }
 
         sendIridiumMsg(msg);
       }
@@ -288,13 +293,11 @@ namespace Monitors
         if (msg->op == IMC::PlanDB::DBT_REQUEST)
           return;
 
-        // if (msg->getDestination() == )
-        // {
-        //   /* code */
-        // }
-        
+        auto it = std::find(m_iri_subs.begin(), m_iri_subs.end(), msg->getDestination());
+        if (it == m_iri_subs.end())
+          return;
 
-        //sendIridiumMsg(msg);
+        sendIridiumMsg(msg);
       }
 
       //! Split buffer into chunks.
@@ -320,51 +323,48 @@ namespace Monitors
       void
       consume(const IMC::IridiumMsgRx* msg)
       {
-        IrFragment* ir_msg = nullptr;
-        try
-        {
-          uint8_t* bfr = (uint8_t*)msg->data.data();
-          uint16_t bfr_len = msg->data.size();
-
-          debug("received message with %d bytes", bfr_len);
-          ir_msg = deserializeFragment(bfr, bfr_len);
-        }
-        catch (const InvalidMessageId& e)
-        {
-          debug("%s", e.what());
+        IridiumMessage* ir_msg = nullptr;
+        ir_msg = IridiumMessage::deserialize(msg);
+        if (ir_msg == nullptr)
           return;
-        }
-        catch (const std::exception& e)
+
+        if (ir_msg->msg_id != ID_UPDATE_OP)
+          return;
+
+        IridiumOperation* op = (IridiumOperation*)ir_msg;
+        double elapsed = Clock::getSinceEpoch() - op->ts;
+        if (elapsed > 180.0)
         {
-          err("%s", e.what());
+          inf("expired operation from %d (-%f seconds)", op->source, elapsed);
           return;
         }
 
-        debug("Received fragment %d/%d", ir_msg->hdr.frag_id, ir_msg->hdr.num_frags);
-        if (ir_msg->hdr.frag_id == 0)
-          debug("imc id %d", ir_msg->imc_id);
-
-        if (m_ir_map.find(ir_msg->hdr.trans_id) == m_ir_map.end())
+        switch (op->type)
         {
-          m_ir_map[ir_msg->hdr.trans_id] = ir_msg;
-          debug("new msg for transmission %d", ir_msg->hdr.trans_id);
-          return;
+          case IridiumOperation::OP_DEACTIVATE:
+          {
+            auto it = std::find(m_iri_subs.begin(), m_iri_subs.end(), op->source);
+            if (it == m_iri_subs.end())
+              return;
+
+            if (m_iri_subs.size() > 1)
+              m_iri_subs.erase(it);
+          }
+          break;
+
+          case IridiumOperation::OP_ACTIVATE:
+          {
+            auto it = std::find(m_iri_subs.begin(), m_iri_subs.end(), op->source);
+            if (it != m_iri_subs.end())
+              return;
+
+            m_iri_subs.push_back(op->source);
+          }
+
+          default:
+            inf("invalid operation type %d", op->type);
+            break;
         }
-
-        IMC::Message* imc_msg = m_ir_map[ir_msg->hdr.trans_id]->merge(ir_msg);
-        if (imc_msg == nullptr)
-        {
-          IrFragment* data = m_ir_map[ir_msg->hdr.trans_id];
-          for (auto& iter : data->frag_map)
-            debug("message has fragment %d", iter.first);
-
-          return;
-        }
-
-        inf("received message as fragments %s", imc_msg->getName());
-        dispatch(imc_msg);
-        Memory::clear(imc_msg);
-        m_ir_map.erase(ir_msg->hdr.trans_id);
       }
 
       /**
@@ -526,7 +526,7 @@ namespace Monitors
           waitForMessages(1.0);
           if (m_send_wdog.overflow())
           {
-            if(wdog.overflow())
+            if (wdog.overflow())
             {
               spew("Sending payload messages %d of %d", m_storage.m_msg_count, m_storage.m_max_msg);
               wdog.reset();
