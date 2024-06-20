@@ -78,6 +78,11 @@ namespace DUNE
             ret = (ExtendedDeviceUpdate *) new ExtendedDeviceUpdate();
             ret->deserialize(ptr, msg->data.size());
             return ret;
+          
+        case(ID_UPDATE_OP):
+            ret = (IridiumOperation *) new IridiumOperation();
+            ret->deserialize(ptr, msg->data.size());
+            return ret;
 
         default:
           std::cerr << "Ignoring unrecognized Iridium message (" << msg_id
