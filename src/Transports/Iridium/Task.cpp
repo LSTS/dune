@@ -257,6 +257,9 @@ namespace Transports
           case (ID_EXTDEVUPDATE):
             handleUpdates(static_cast<ExtendedDeviceUpdate *>(m)->positions);
             break;
+          case (ID_UPDATE_OP):
+            inf("received update operation via Iridium (ignoring).");
+            break;
           default:
             DUNE::IMC::ImcIridiumMessage * irMsg =
             static_cast<DUNE::IMC::ImcIridiumMessage *>(m);
