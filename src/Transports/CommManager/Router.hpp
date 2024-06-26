@@ -182,7 +182,7 @@ namespace Transports
             answer(it->second, "Transmission timed out.",
                    IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
             Memory::clear(it->second);
-            m_transmission_requests.erase(it);
+            m_transmission_requests.erase(it++);
           }
           else
             ++it;
