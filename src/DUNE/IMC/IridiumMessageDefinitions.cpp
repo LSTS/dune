@@ -370,9 +370,9 @@ namespace DUNE
       buffer += DUNE::IMC::serialize(source, buffer);
       buffer += DUNE::IMC::serialize(destination, buffer);
       buffer += DUNE::IMC::serialize(msg_id, buffer);
-      buffer += DUNE::IMC::serialize(type, buffer);
       buffer += DUNE::IMC::serialize(ts, buffer);
-      return 0;
+      buffer += DUNE::IMC::serialize(type, buffer);
+      return buffer - start;
     }
 
     int
@@ -382,8 +382,8 @@ namespace DUNE
       buffer += DUNE::IMC::deserialize(source, buffer, len);
       buffer += DUNE::IMC::deserialize(destination, buffer, len);
       buffer += DUNE::IMC::deserialize(msg_id, buffer, len);
-      buffer += DUNE::IMC::deserialize(type, buffer, len);
       buffer += DUNE::IMC::deserialize(ts, buffer, len);
+      buffer += DUNE::IMC::deserialize(type, buffer, len);
 
       return buffer - data;
     }
