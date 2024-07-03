@@ -290,7 +290,7 @@ namespace Monitors
       void
       consume(const IMC::PlanDB* msg)
       {
-        if (msg->op == IMC::PlanDB::DBT_REQUEST)
+        if (msg->type != IMC::PlanDB::DBT_SUCCESS && msg->op != IMC::PlanDB::DBOP_GET_INFO)
           return;
 
         auto it = std::find(m_iri_subs.begin(), m_iri_subs.end(), msg->getDestination());
