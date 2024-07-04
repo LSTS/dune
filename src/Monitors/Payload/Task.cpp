@@ -71,6 +71,7 @@ namespace Monitors
     {
       //! Task arguments.
       Arguments m_args;
+      //! Send watchdog.
       Counter<double> m_send_wdog;
       //! Request identifier.
       uint16_t m_req_id;
@@ -170,6 +171,7 @@ namespace Monitors
       void
       onResourceAcquisition(void)
       {
+        // Create bindings for payload messages.
         for (auto&& i : m_args.pay_msgs)
         {
           spew("Splitting %s", i.c_str());
@@ -388,7 +390,7 @@ namespace Monitors
       {
         uint16_t src_id = 1234;
         uint16_t dst_id = 4567;
-        uint16_t iridium_id = ID_FRAGMENT;  //? New iridium message id.
+        uint16_t iridium_id = ID_FRAGMENT;
 
         //* Serialize IMC message
         uint16_t msg_id = msg->getId();
@@ -497,14 +499,15 @@ namespace Monitors
       bool
       sendPayloadMessages(void)
       {
+        spew("Sending payload messages %d of %d", m_storage.m_msg_count, m_storage.m_max_msg);
+
         std::list<const IMC::Message*> lst;
-        if (!m_storage.getPayload(lst))
-          return false;
+        m_storage.getPayload(lst);
 
         for (auto it = lst.begin(); it != lst.end(); ++it)
         {
           const IMC::Message* msg = *it;
-          debug("[%f] message %s", msg->getTimeStamp(), msg->getName());
+          debug("Sending message [%0.3f s] - %s", msg->getTimeStamp(), msg->getName());
 
           if (msg->getPayloadSerializationSize() > m_args.max_payload)
             m_args.use_fragments ? sendIMCFragments(msg) : sendIridiumFragments(msg);
@@ -520,17 +523,11 @@ namespace Monitors
       void
       onMain(void)
       {
-        Counter<double> wdog(1.0);
         while (!stopping())
         {
           waitForMessages(1.0);
           if (m_send_wdog.overflow())
           {
-            if (wdog.overflow())
-            {
-              spew("Sending payload messages %d of %d", m_storage.m_msg_count, m_storage.m_max_msg);
-              wdog.reset();
-            }
             if (sendPayloadMessages())
               m_send_wdog.reset();
           }

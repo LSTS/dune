@@ -142,10 +142,6 @@ namespace Monitors
       bool
       getPayload(std::list<const IMC::Message*>& lst)
       {
-        // Not full yet
-        if (m_max_msg > m_msg_count)
-          return false;
-
         for (auto it = m_payload.begin(); it != m_payload.end(); ++it)
           it->second.getMessages(lst);
 
