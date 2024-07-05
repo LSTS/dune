@@ -308,7 +308,7 @@ namespace Monitors
       //! @param[in] chunk_size size of each chunk.
       //! @param[out] chunks vector of chunks.
       void
-      sliptBuffer(const uint8_t* bfr, size_t bfr_size, size_t chunk_size,
+      splitBuffer(const uint8_t* bfr, size_t bfr_size, size_t chunk_size,
                   std::vector<std::vector<char>>& chunks)
       {
         for (size_t offset = 0; offset < bfr_size; offset += chunk_size)
@@ -362,6 +362,7 @@ namespace Monitors
 
             m_iri_subs.push_back(op->source);
           }
+          break;
 
           default:
             inf("invalid operation type %d", op->type);
@@ -401,7 +402,7 @@ namespace Monitors
         unsigned size = msg->getPayloadSerializationSize();
         std::vector<std::vector<char>> chunks;
 
-        sliptBuffer(bfr, size + 2, m_args.max_payload, chunks);
+        splitBuffer(bfr, size + 2, m_args.max_payload, chunks);
         uint8_t n_fragments = chunks.size();
 
         //! Checksum is calculated by IridiumSDB.
@@ -508,11 +509,7 @@ namespace Monitors
         {
           const IMC::Message* msg = *it;
           debug("Sending message [%0.3f s] - %s", msg->getTimeStamp(), msg->getName());
-
-          if (msg->getPayloadSerializationSize() > m_args.max_payload)
-            m_args.use_fragments ? sendIMCFragments(msg) : sendIridiumFragments(msg);
-          else
-            sendInline(msg);
+          sendIridiumMsg(msg);
         }
 
         m_storage.clear();
