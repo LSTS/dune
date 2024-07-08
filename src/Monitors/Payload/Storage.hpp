@@ -82,7 +82,7 @@ namespace Monitors
         for (auto it = m_payload.begin(); it != m_payload.end(); ++it)
         {
           if (it->second == nullptr)
-            throw std::runtime_error("Payload was not full (" + std::to_string(it->first) + ")");
+            continue;
 
           lst.push_back(it->second);
         }
