@@ -47,6 +47,16 @@ namespace Transports
     //! Power on delay.
     static const double c_pwr_on_delay = 5.0;
 
+    enum TxRxPriority
+    {
+      //! No priority.
+      None,
+      //! Prioritize Transmission.
+      Tx,
+      //! Prioritize Reception.
+      Rx
+    };
+
     //! %Task arguments.
     struct Arguments
     {
@@ -66,6 +76,10 @@ namespace Transports
       unsigned uart_baud_9523;
       //! Name of the section with modem addresses.
       std::string addr_section;
+      //! Transmission priority window period.
+      double tx_window;
+      //! Reception priority window period.
+      double rx_window;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -84,6 +98,12 @@ namespace Transports
       Arguments m_args;
       //! Active transmission request.
       TxRequest* m_tx_request;
+      //! Transmission and Reception Priority.
+      TxRxPriority m_prio;
+      //! Transmission Window.
+      Counter<double> m_tx_window;
+      //! Reception Window.
+      Counter<double> m_rx_window;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -92,7 +112,8 @@ namespace Transports
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_driver(NULL),
-        m_tx_request(NULL)
+        m_tx_request(NULL),
+        m_prio(TxRxPriority::None)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -132,6 +153,20 @@ namespace Transports
         .defaultValue("Iridium Addresses")
         .description("Name of the configuration section with modem addresses");
 
+        param("Transmission Window", m_args.tx_window)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("100")
+        .minimumValue("5")
+        .description("Window to prioritize Transmission over Reception");
+
+        param("Reception Window", m_args.rx_window)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("100")
+        .minimumValue("5")
+        .description("Window to prioritize Reception over Transmission");
+
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
         m_queued_mt = 0;
@@ -158,6 +193,18 @@ namespace Transports
       {
         if (paramChanged(m_args.mbox_check_per))
           m_mbox_check_timer.setTop(m_args.mbox_check_per);
+
+        if (paramChanged(m_args.tx_window))
+        {
+          if (m_tx_window.getRemaining() > m_args.tx_window && m_prio == TxRxPriority::Tx)
+            m_tx_window.setTop(m_args.tx_window);
+        }
+
+        if (paramChanged(m_args.rx_window))
+        {
+          if (m_rx_window.getRemaining() > m_args.rx_window && m_prio == TxRxPriority::Rx)
+            m_rx_window.setTop(m_args.rx_window);
+        }
 
         if (m_driver != NULL)
           m_driver->setTxRateMax(m_args.max_tx_rate);
@@ -420,6 +467,48 @@ namespace Transports
         }
       }
 
+      bool
+      receptionSequence()
+      {
+        if (m_driver->hasRingAlert())
+          m_driver->checkMailBoxAlert();
+        else if (m_driver->getQueuedMT() > 0 || m_mbox_check_timer.overflow())
+          m_driver->checkMailBox();
+        else if(m_driver->getQueuedMT() == 0 && m_tx_request == NULL) //No messages to be received or sent
+        {
+          unsigned src_adr = getSystemId();
+          unsigned src_eid = getEntityId();
+          const std::vector<char> data(1);
+          TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF, 0, 0, data);
+          sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
+          debug(DTR("No message to be received or sent."));
+
+          return false;
+        }
+        
+        return true;
+      }
+
+      bool
+      transmissionSequence()
+      {
+        if (m_tx_request != NULL)
+        {
+          unsigned msn = m_driver->getMOMSN();
+          m_tx_request->setMSN(msn);
+          m_driver->sendSBD(m_tx_request->getData());
+        }
+        else if (!m_tx_requests.empty())
+        {
+          m_tx_request = m_tx_requests.front();
+          m_tx_requests.pop_front();
+        }
+        else
+          return false;
+
+        return true;
+      }
+
       void
       processQueue(void)
       {
@@ -432,7 +521,10 @@ namespace Transports
           handleSessionResult();
 
         if (m_driver->getRSSI() <= 0.1)
+        {
+          m_prio = TxRxPriority::None;
           return;
+        }
 
         if (m_driver->isCooling())
           return;
@@ -440,32 +532,35 @@ namespace Transports
         if (!isActive())
           m_mbox_check_timer.reset();
 
-        if (m_tx_request != NULL)
+        switch (m_prio)
         {
-          unsigned msn = m_driver->getMOMSN();
-          m_tx_request->setMSN(msn);
-          m_driver->sendSBD(m_tx_request->getData());
-        }
-        else if (m_tx_requests.empty())
-        {
-          if (m_driver->hasRingAlert())
-            m_driver->checkMailBoxAlert();
-          else if (m_driver->getQueuedMT() > 0 || m_mbox_check_timer.overflow())
-            m_driver->checkMailBox();
-          else if(m_driver->getQueuedMT() == 0) //No messages to be received or sent
+        case TxRxPriority::Tx:
+          if (!transmissionSequence())
+            receptionSequence();
+          
+          if (m_tx_window.overflow())
           {
-            unsigned src_adr = getSystemId();
-            unsigned src_eid = getEntityId();
-            const std::vector<char> data(1);
-            TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF, 0, 0, data);
-            sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
-            debug(DTR("No message to be received or sent."));
+            m_prio = TxRxPriority::Rx;
+            m_rx_window.setTop(m_args.rx_window);
           }
-        }
-        else
-        {
-          m_tx_request = m_tx_requests.front();
-          m_tx_requests.pop_front();
+
+          break;
+
+        case TxRxPriority::Rx:
+          if (!receptionSequence())
+            transmissionSequence();
+          
+          if (m_rx_window.overflow())
+          {
+            m_prio = TxRxPriority::Tx;
+            m_tx_window.setTop(m_args.tx_window);
+          }
+          
+          break;
+        
+        default:
+          m_prio = TxRxPriority::Tx;
+          m_tx_window.setTop(m_args.tx_window);
         }
       }
 
