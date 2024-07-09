@@ -460,6 +460,7 @@ namespace Vision
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         inf(DTR("activated"));
         m_cooldown_timer.setTop(10.0);
+        // FIXME Turn on the power channel m_args.pwr_chn dispatch IMC::PowerChannelControl
       }
 
       void
@@ -492,6 +493,8 @@ namespace Vision
           return;
         }
         m_slave_entities->onEntityActivationState(msg);
+        if(msg->getSource() != getSystemId())
+          debug("EntityActivationState %d", msg->state);
       }
 
       void
