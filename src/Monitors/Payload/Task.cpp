@@ -45,6 +45,16 @@ namespace Monitors
   {
     using DUNE_NAMESPACES;
 
+    //! Database types string representation.
+    static const char* c_db_types[] = {
+      "Request", "Success", "Failure", "In Progress", "Unknown",
+    };
+
+    //! Database operation string representation.
+    static const char* c_db_op[] = {
+      "Set", "Delete", "Get", "Get Info", "Clear", "Get State", "Get DB State", "Boot", "Unknown",
+    };
+
     struct Arguments
     {
       //! Payload timeout.
@@ -94,6 +104,9 @@ namespace Monitors
         m_req_id(0),
         m_storage(this)
       {
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER);
+
         param("Payload timeout", m_args.timeout)
           .defaultValue("60.0")
           .description("Payload timeout in seconds.");
@@ -186,12 +199,25 @@ namespace Monitors
           bind(IMC::Factory::getIdFromAbbrev(param[0]),
                new Consumer<Task, IMC::Message>(*this, &Task::consumePayload));
         }
-        bind(this, m_args.msgs);
 
+        bind(this, m_args.msgs);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      onActivation(void)
+      {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_send_wdog.setTop(m_args.timeout);
       }
 
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      //! Consume payload messages.
       void
       consumePayload(const IMC::Message* msg)
       {
@@ -284,6 +310,9 @@ namespace Monitors
       void
       consume(const IMC::PlanDB* msg)
       {
+        if (msg->getSource() == getSystemId())
+          inf("type %s op %s", c_db_types[msg->type], c_db_op[msg->op]);
+
         if (msg->type != IMC::PlanDB::DBT_SUCCESS && msg->op != IMC::PlanDB::DBOP_GET_INFO)
           return;
 
@@ -353,6 +382,7 @@ namespace Monitors
               return;
 
             m_iri_subs.push_back(op->source);
+            debug("activated to %d", op->source);
           }
           break;
 
@@ -365,6 +395,9 @@ namespace Monitors
       void
       sendIMCFragments(const IMC::Message* msg)
       {
+        if (!isActive())
+          return;
+
         Network::Fragments frags(const_cast<IMC::Message*>(msg), m_args.max_payload);
 
         for (int i = 0; i < frags.getNumberOfFragments(); i++)
@@ -378,6 +411,10 @@ namespace Monitors
       void
       sendInline(const IMC::Message* msg)
       {
+        // Discard messages if not active.
+        if (!isActive())
+          return;
+
         IMC::TransmissionRequest tr;
         tr.setDestination(getSystemId());
 
@@ -437,6 +474,10 @@ namespace Monitors
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          if (!isActive())
+            continue;
+
           if (m_send_wdog.overflow())
           {
             if (sendPayloadMessages())
