@@ -63,8 +63,6 @@ namespace Monitors
       std::vector<std::string> msgs;
       //! Message time to live.
       uint16_t ttl;
-      //! Flag to use IMC fragments.
-      bool use_fragments;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -126,10 +124,6 @@ namespace Monitors
         param("Message TTL", m_args.ttl)
           .defaultValue("30")
           .description("Time to live for iridium messages.");
-
-        param("Use IMC Fragments", m_args.use_fragments)
-          .defaultValue("true")
-          .description("Use IMC fragments to send messages.");
 
         bind<IMC::IridiumTxStatus>(this);
         bind<IMC::IridiumMsgRx>(this);
@@ -204,7 +198,7 @@ namespace Monitors
         m_storage.store(msg);
       }
 
-      //! Consume for on request messages
+      //! Consume for on request control messages
       void
       consume(const IMC::Message* msg)
       {
@@ -213,8 +207,6 @@ namespace Monitors
 
         if (m_filter.filter(msg))
           return;
-
-        debug("sending %s ", msg->getName());
 
         sendIridiumMsg(msg);
       }
@@ -370,84 +362,6 @@ namespace Monitors
         }
       }
 
-      /**
-       * Message layout
-       *
-       * *** Iridium Header ***
-       * src_id: 2 bytes
-       * dst_id: 2 bytes
-       * iridium_id: 2 bytes -> 2012
-       * *** Fragment Message ***
-       * transmission_id: 1 byte
-       * n_fragments: 1 byte
-       * fragment_id: 1 byte
-       * fragment_data: n bytes
-       * *In fragment data first two bytes are for msg_id: 2 bytes
-       * checksum: 2 byte (do not fill, calculated by IridiumSDB)
-       */
-      //! Send message as fragments.
-      void
-      sendIridiumFragments(const IMC::Message* msg)
-      {
-        uint16_t src_id = 1234;
-        uint16_t dst_id = 4567;
-        uint16_t iridium_id = ID_FRAGMENT;
-
-        //* Serialize IMC message
-        uint16_t msg_id = msg->getId();
-        uint8_t bfr[4096];
-        uint16_t offset = IMC::serialize(msg_id, bfr);
-
-        msg->serializeFields(bfr + offset);
-        unsigned size = msg->getPayloadSerializationSize();
-        std::vector<std::vector<char>> chunks;
-
-        splitBuffer(bfr, size + 2, m_args.max_payload, chunks);
-        uint8_t n_fragments = chunks.size();
-
-        //! Checksum is calculated by IridiumSDB.
-        //! Do not send in data.
-        IMC::IridiumMsgTx ir_tx;
-        ir_tx.setDestination(getSystemId());
-        ir_tx.destination = m_args.destination;
-        ir_tx.ttl = m_args.ttl;
-
-        ir_tx.data.reserve(11 + m_args.max_payload);
-
-        // Iridium Header
-        ir_tx.data.push_back(src_id);
-        ir_tx.data.push_back(src_id >> 8);
-
-        ir_tx.data.push_back(dst_id);
-        ir_tx.data.push_back(dst_id >> 8);
-
-        ir_tx.data.push_back(iridium_id);
-        ir_tx.data.push_back(iridium_id >> 8);
-
-        // Fragment message
-        ir_tx.data.push_back(m_transmission_id++);
-        ir_tx.data.push_back(n_fragments);
-
-        // Save common data
-        std::vector<char> header_data = ir_tx.data;
-        uint8_t fragment_id = 0;
-
-        debug("Sending message %s as %ld fragments", msg->getName(), chunks.size());
-        for (auto& chunk : chunks)
-        {
-          ir_tx.req_id = m_req_id++;
-
-          ir_tx.data.push_back(fragment_id++);
-          ir_tx.data.insert(ir_tx.data.end(), chunk.begin(), chunk.end());
-
-          spew("sending fragment %d", fragment_id - 1);
-          dispatchRequest(ir_tx, ir_tx.req_id);
-
-          ir_tx.data.clear();
-          ir_tx.data = header_data;
-        }
-      }
-
       void
       sendIMCFragments(const IMC::Message* msg)
       {
@@ -480,9 +394,9 @@ namespace Monitors
       void
       sendIridiumMsg(const IMC::Message* msg)
       {
-        debug("send ir msg %s", msg->getName());
+        debug("send msg %s", msg->getName());
         if (msg->getPayloadSerializationSize() > m_args.max_payload)
-          m_args.use_fragments ? sendIMCFragments(msg) : sendIridiumFragments(msg);
+          sendIMCFragments(msg);
         else
           sendInline(msg);
       }
