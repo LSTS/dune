@@ -240,6 +240,9 @@ namespace Control
         //! Is in teleoperation
         bool m_teleop;
 
+        // Flag to control PCS
+        uint8_t m_pcs_flag_sate;
+
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
           m_scope_ref(0),
@@ -493,9 +496,6 @@ namespace Control
               || paramChanged(m_args.lpf_scaling) || paramChanged(m_args.bsf_taps)
               || paramChanged(m_args.bsf_scaling) || paramChanged(m_args.ext_filter_freq))
             buildFilters();
-
-          if (paramChanged(m_args.turn_min_error))
-            m_args.turn_min_error = Angles::radians(m_args.turn_min_error);
         }
 
         void
@@ -628,6 +628,7 @@ namespace Control
           double dist_x, dist_y;
           WGS84::displacement(m_lat, m_lon, 0, m_lat_next_wp, m_lon_next_wp, 0, &dist_x, &dist_y);
           m_dist_to_wp = std::sqrt(std::pow(dist_x, 2) + std::pow(dist_y, 2));
+          m_pcs_flag_sate = pcs->flags;
         }
 
         //! Reset PIDs and actuation references.
@@ -735,8 +736,10 @@ namespace Control
           // If in service mode, center rudder.
           if (m_service)
           {
-            debug("On Service -Dispatching a 0 rudder angle");
+            debug("On Service -Dispatching a 0 rudder angle and 0 motor");
             dispatchRudder(0, m_tstep);
+            m_act_thrust.value = 0;
+            dispatch(m_act_thrust);
             reset();
             return;
           }
@@ -980,9 +983,9 @@ namespace Control
             value = m_thrust_assistance;
           // or if thruster is enabled, vessel is not turning,
           // but speed is very low.
-          else if (m_args.en_thrust && !m_turning && m_sog < m_args.min_sog)                                            
+          else if (m_args.en_thrust && !m_turning && m_sog < m_args.min_sog && m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
             value = m_thrust_assistance;
-          else if (m_args.en_thrust)
+          else if (m_args.en_thrust && m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
             value = m_thrust_assistance;
           else
             value = 0.0;
