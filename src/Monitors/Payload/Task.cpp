@@ -312,11 +312,13 @@ namespace Monitors
       void
       consume(const IMC::PlanDB* msg)
       {
-        if (msg->getSource() == getSystemId())
-          inf("type %s op %s", c_db_types[msg->type], c_db_op[msg->op]);
-
-        if (msg->op != IMC::PlanDB::DBOP_GET_INFO && msg->op != IMC::PlanDB::DBOP_GET_STATE && msg->op != IMC::PlanDB::DBOP_GET)
+        if (msg->getSource() != getSystemId())
           return;
+
+        if (msg->op != PlanDB::DBOP_GET_INFO && msg->op != PlanDB::DBOP_GET_STATE && msg->op != PlanDB::DBOP_GET)
+          return;
+
+        debug("type %s op %s - %s", c_db_types[msg->type], c_db_op[msg->op], msg->plan_id.c_str());
 
         auto it = std::find(m_iri_subs.begin(), m_iri_subs.end(), msg->getDestination());
         if (it == m_iri_subs.end())
@@ -428,6 +430,30 @@ namespace Monitors
 
         dispatchRequest(tr, tr.req_id);
         trace("Sent message (%d) %s as inline", tr.req_id, msg->getName());
+      }
+
+      void
+      sendRaw(const IMC::Message* msg)
+      {
+        // Discard messages if not active.
+        if (!isActive())
+          return;
+
+        IMC::TransmissionRequest tr;
+        tr.setDestination(getSystemId());
+
+        tr.req_id = m_req_id++;
+        tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
+        tr.data_mode = IMC::TransmissionRequest::DMODE_RAW;
+        tr.deadline = Clock::getSinceEpoch() + m_args.ttl;
+
+        uint8_t bfr[DUNE_IMC_CONST_MAX_SIZE];
+        uint16_t len = IMC::Packet::serialize(msg, bfr, sizeof(bfr));
+        tr.raw_data.assign(bfr, bfr + len);
+
+
+        dispatchRequest(tr, tr.req_id);
+        trace("Sent message (%d) %s as raw", tr.req_id, msg->getName());
       }
 
       void
