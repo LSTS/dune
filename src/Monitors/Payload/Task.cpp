@@ -304,6 +304,8 @@ namespace Monitors
           return;
         }
 
+        state = msg->state;
+
         sendIridiumMsg(msg);
       }
 
@@ -313,7 +315,7 @@ namespace Monitors
         if (msg->getSource() == getSystemId())
           inf("type %s op %s", c_db_types[msg->type], c_db_op[msg->op]);
 
-        if (msg->type != IMC::PlanDB::DBT_SUCCESS && msg->op != IMC::PlanDB::DBOP_GET_INFO)
+        if (msg->op != IMC::PlanDB::DBOP_GET_INFO && msg->op != IMC::PlanDB::DBOP_GET_STATE && msg->op != IMC::PlanDB::DBOP_GET)
           return;
 
         auto it = std::find(m_iri_subs.begin(), m_iri_subs.end(), msg->getDestination());
