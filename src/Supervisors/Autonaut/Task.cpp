@@ -64,7 +64,7 @@ namespace Supervisors
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
-        m_armed(false)
+        m_armed(true)
       {
         param("Loiter On Service -- Radius", m_args.loiter_on_service_radius)
           .defaultValue("30.0")
