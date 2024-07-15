@@ -51,6 +51,8 @@ namespace DUNE
       static const int c_timeout_reply = 20;
       //! Bootloader sync.
       static const char* c_jump_to_boot_cmd = "$,BOOT,*";
+      //! Bootloader update
+      static const char* c_boot_update_cmd = "$,BLOADERUP,*";
       //! System Type.
       static const char* c_type_cmd = "$,TYPE,*";
       //! Valid system type
@@ -198,10 +200,18 @@ namespace DUNE
       }
 
       bool
-      Interface::syncBoot(void)
+      Interface::syncBoot(bool boot_update)
       {
-        title(" Checking Bootloader Sync");
-        sendCommand(c_jump_to_boot_cmd);
+        if(boot_update)
+        {
+          title(" Checking Main app Sync for bootloader update");
+          sendCommand(c_boot_update_cmd);
+        }
+        else
+        {
+          title(" Checking Bootloader Sync");
+          sendCommand(c_jump_to_boot_cmd);
+        }
         if(readReply(c_timeout_reply))
         {
           uint8_t csum_rx = m_frame_rx[m_frame_rx_count - 1];

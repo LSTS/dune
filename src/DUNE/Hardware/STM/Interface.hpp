@@ -64,7 +64,7 @@ namespace DUNE
         computeCRC(void);
 
         bool
-        syncBoot(void);
+        syncBoot(bool boot_update);
 
         void
         sendCommand(const char* cmd);
