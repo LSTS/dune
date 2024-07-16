@@ -51,6 +51,8 @@ namespace Supervisors
 
     struct Task: public DUNE::Tasks::Periodic
     {
+      //! Watchdog to request loiter on service.
+      Counter<double> m_wdog;
       //! Current Plan control state
       IMC::PlanControlState m_pcs;
       //! Vehicle state
@@ -96,7 +98,10 @@ namespace Supervisors
 
       void
       onResourceInitialization(void)
-      { }
+      { 
+        m_vs.op_mode = IMC::VehicleState::VS_BOOT;
+        m_wdog.setTop(5.0);
+      }
 
       void
       consume(const IMC::PlanControlState* msg)
@@ -147,6 +152,9 @@ namespace Supervisors
       {
         if (m_vs.op_mode != IMC::VehicleState::VS_SERVICE)
           return;
+        
+        if (!m_wdog.overflow())
+          return;
 
         war("Vehicle in SERVICE -> Starting Loiter plan...");
         IMC::PlanControl startPlan;
@@ -178,6 +186,8 @@ namespace Supervisors
         startPlan.flags = 0;
         startPlan.setDestination(m_ctx.resolver.id());
         dispatch(startPlan);
+
+        m_wdog.reset();
       }
 
       void
