@@ -62,7 +62,7 @@ namespace Monitors
       //! List of messages to send.
       std::vector<std::string> pay_msgs;
       //! Maximum iridium message size.
-      size_t max_payload;
+      uint32_t max_payload;
       //! Iridium messages destination.
       std::string destination;
       //! Rate limiters.
@@ -73,6 +73,8 @@ namespace Monitors
       std::vector<std::string> msgs;
       //! Message time to live.
       uint16_t ttl;
+      //! Iridium operation timeout.
+      uint32_t ir_timeout;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -93,8 +95,14 @@ namespace Monitors
       MessageFilter m_filter;
       //! Payload storage.
       Storage m_storage;
-      //! List of iridium subscribers.
-      std::list<unsigned> m_iri_subs;
+      //! Plan Control state.
+      IMC::PlanControlState m_pcs;
+      //! Entity List.
+      IMC::EntityList m_elist;
+      //! Entity State map.
+      std::map<uint32_t, EntityState> m_entity_map;
+      //! List of iridium subscribers. <ID, Timestamp>.
+      std::map<unsigned, double> m_iri_subs;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -104,8 +112,7 @@ namespace Monitors
         m_req_id(0),
         m_storage(this)
       {
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER);
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER, Tasks::Parameter::VISIBILITY_DEVELOPER, true);
 
         param("Payload timeout", m_args.timeout)
           .defaultValue("60.0")
@@ -137,11 +144,17 @@ namespace Monitors
         param("Message TTL", m_args.ttl)
           .defaultValue("30")
           .description("Time to live for iridium messages.");
+        
+        param("Iridium Operation Timeout", m_args.ir_timeout)
+          .defaultValue("600")
+          .description("Iridium operation timeout in seconds.");
 
         bind<IMC::IridiumTxStatus>(this);
         bind<IMC::IridiumMsgRx>(this);
         bind<IMC::EntityState>(this);
         bind<IMC::PlanDB>(this);
+        bind<IMC::PlanControlState>(this);
+        bind<IMC::EntityList>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -284,29 +297,28 @@ namespace Monitors
       void
       consume(const IMC::EntityState* msg)
       {
-        static std::map<uint32_t, uint8_t> entity_map;
-        if (entity_map.find(msg->getSourceEntity()) == entity_map.end())
+        if (m_entity_map.find(msg->getSourceEntity()) == m_entity_map.end())
         {
           // First state message.
-          uint8_t& state = entity_map[msg->getSourceEntity()];
-          state = msg->state;
+          EntityState& ent_state = m_entity_map[msg->getSourceEntity()];
+          ent_state = *msg;
           return;
         }
 
-        uint8_t& state = entity_map[msg->getSourceEntity()];
-        if (state == msg->state)  // Same state, ignore.
+        EntityState& ent = m_entity_map[msg->getSourceEntity()];
+        if (ent.state == msg->state)  // Same state, ignore.
           return;
 
         // If entity updated from boot to normal, ignore.
-        if (state == EntityState::ESTA_BOOT && msg->state == EntityState::ESTA_NORMAL)
+        if (ent.state == EntityState::ESTA_BOOT && msg->state == EntityState::ESTA_NORMAL)
         {
-          state = msg->state;
+          ent = *msg;
           return;
         }
 
-        state = msg->state;
+        ent = *msg;
 
-        sendIridiumMsg(msg);
+        sendRaw(msg);
       }
 
       void
@@ -315,16 +327,43 @@ namespace Monitors
         if (msg->getSource() != getSystemId())
           return;
 
-        if (msg->op != PlanDB::DBOP_GET_INFO && msg->op != PlanDB::DBOP_GET_STATE && msg->op != PlanDB::DBOP_GET)
+        if (msg->op != PlanDB::DBOP_GET_INFO && msg->op != PlanDB::DBOP_GET_STATE
+            && msg->op != PlanDB::DBOP_GET)
           return;
 
         debug("type %s op %s - %s", c_db_types[msg->type], c_db_op[msg->op], msg->plan_id.c_str());
 
-        auto it = std::find(m_iri_subs.begin(), m_iri_subs.end(), msg->getDestination());
+        auto it = m_iri_subs.find(msg->getDestination());
         if (it == m_iri_subs.end())
           return;
 
         sendIridiumMsg(msg);
+      }
+
+      void
+      consume(const IMC::PlanControlState* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->state == m_pcs.state && msg->plan_id == m_pcs.plan_id
+            && msg->man_id == m_pcs.man_id)
+          return;
+
+        m_pcs = *msg;
+        sendIridiumMsg(msg);
+      }
+
+      void
+      consume(const IMC::EntityList* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->op != EntityList::OP_REPORT)
+          return;
+
+        m_elist = *msg;
       }
 
       //! Split buffer into chunks.
@@ -370,23 +409,31 @@ namespace Monitors
         {
           case IridiumOperation::OP_DEACTIVATE:
           {
-            auto it = std::find(m_iri_subs.begin(), m_iri_subs.end(), op->source);
+            auto it = m_iri_subs.find(op->source);
             if (it == m_iri_subs.end())
               return;
 
-            if (m_iri_subs.size() > 1)
-              m_iri_subs.erase(it);
+            m_iri_subs.erase(it);
+            if (m_iri_subs.empty())
+              requestDeactivation();
           }
           break;
 
           case IridiumOperation::OP_ACTIVATE:
           {
-            auto it = std::find(m_iri_subs.begin(), m_iri_subs.end(), op->source);
+            auto it = m_iri_subs.find(op->source);
             if (it != m_iri_subs.end())
+            {
+              it->second = Clock::getSinceEpoch();
               return;
+            }
 
-            m_iri_subs.push_back(op->source);
-            debug("activated to %d", op->source);
+            m_iri_subs[op->source] = Clock::getSinceEpoch();
+
+            if (!isActive())
+              requestActivation();
+
+            onIridiumActivation(op->source);
           }
           break;
 
@@ -394,6 +441,17 @@ namespace Monitors
             inf("invalid operation type %d", op->type);
             break;
         }
+      }
+
+      void
+      onIridiumActivation(unsigned id)
+      {
+        debug("Activating iridium for %d", id);
+
+        //? Send All EntityState messages?
+
+        sendIridiumMsg(&m_elist);
+        sendIridiumMsg(&m_pcs);
       }
 
       void
@@ -450,7 +508,6 @@ namespace Monitors
         uint8_t bfr[DUNE_IMC_CONST_MAX_SIZE];
         uint16_t len = IMC::Packet::serialize(msg, bfr, sizeof(bfr));
         tr.raw_data.assign(bfr, bfr + len);
-
 
         dispatchRequest(tr, tr.req_id);
         trace("Sent message (%d) %s as raw", tr.req_id, msg->getName());
@@ -510,6 +567,20 @@ namespace Monitors
           {
             if (sendPayloadMessages())
               m_send_wdog.reset();
+          }
+
+          if (m_iri_subs.empty())
+            continue;
+          
+          // Check if iridium subscriber is still active.
+          for (auto iter = m_iri_subs.begin() ; iter != m_iri_subs.end() ; iter++)
+          {
+            double elapsed = Clock::getSinceEpoch() - iter->second;
+            if (elapsed > m_args.ir_timeout)
+            {
+              inf("deactivating iridium for %d (-%f seconds)", iter->first, elapsed - m_args.ir_timeout);
+              m_iri_subs.erase(iter);
+            }
           }
         }
       }
