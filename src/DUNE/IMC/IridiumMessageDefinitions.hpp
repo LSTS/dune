@@ -50,6 +50,7 @@ namespace DUNE
     static const uint16_t ID_IMCMESSAGE = 2010;
     static const uint16_t ID_EXTDEVUPDATE = 2011;
     static const uint16_t ID_UPDATE_OP = 2012;
+    static const uint16_t ID_IMC_FULL_IRIDIUM = 2013;
 
     typedef struct {
       uint16_t id;
@@ -166,8 +167,24 @@ namespace DUNE
       int serialize(uint8_t * buffer);
 
       int deserialize(uint8_t* data, uint16_t len);
+    };
 
-      
+    class ImcFullIridium : public IridiumMessage
+    {
+    public:
+
+      ImcFullIridium(void);
+
+      ImcFullIridium(IMC::Message* msg);
+
+      ~ImcFullIridium(void);
+
+      int serialize(uint8_t * buffer);
+
+      int deserialize(uint8_t* data, uint16_t len);
+
+
+      DUNE::IMC::Message * msg;
     };
 
   } /* namespace IMC */

@@ -388,5 +388,49 @@ namespace DUNE
       return buffer - data;
     }
 
+
+    ImcFullIridium::ImcFullIridium(void)
+    {
+      msg_id = ID_IMC_FULL_IRIDIUM;
+      msg = NULL;
+    }
+
+    ImcFullIridium::ImcFullIridium(IMC::Message* imc_msg)
+    {
+      msg_id = ID_IMC_FULL_IRIDIUM;
+      msg = imc_msg;
+    }
+
+    ImcFullIridium::~ImcFullIridium(void)
+    {
+      if (msg != NULL)
+        delete msg;
+    }
+
+    int
+    ImcFullIridium::serialize(uint8_t * data)
+    {
+      uint8_t* buffer = data;
+      buffer += DUNE::IMC::serialize(source, buffer);
+      buffer += DUNE::IMC::serialize(destination, buffer);
+      buffer += DUNE::IMC::serialize(msg_id, buffer);
+
+      data += IMC::Packet::serialize(msg, buffer, msg->getSerializationSize());
+      return buffer - data;
+    }
+
+    int
+    ImcFullIridium::deserialize(uint8_t* data, uint16_t len)
+    {
+      uint8_t* buffer = data;
+      buffer += DUNE::IMC::deserialize(source, buffer, len);
+      buffer += DUNE::IMC::deserialize(destination, buffer, len);
+      buffer += DUNE::IMC::deserialize(msg_id, buffer, len);
+
+      msg = IMC::Packet::deserialize(buffer, len);
+
+      return msg->getSerializationSize() + (buffer - data);
+    }
+
   } /* namespace IMC */
 } /* namespace DUNE */
