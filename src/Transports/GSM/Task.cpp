@@ -326,13 +326,16 @@ namespace Transports
       void
       processQueue(void)
       {
+        char entity_state_text[128];
         if (m_queue.empty())
         {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_IDLE).c_str());
+          std::sprintf(entity_state_text, "active | %s:%d | queue empty", m_args.uart_dev.c_str(), m_args.uart_baud);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(entity_state_text)));
           return;
         }
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
+        std::sprintf(entity_state_text, "active | %s:%d | queue size %d", m_args.uart_dev.c_str(), m_args.uart_baud, (int)m_queue.size());
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(entity_state_text)));
 
         SmsRequest sms_req = m_queue.top();
         m_queue.pop();
