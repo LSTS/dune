@@ -144,7 +144,7 @@ namespace Monitors
         param("Message TTL", m_args.ttl)
           .defaultValue("30")
           .description("Time to live for iridium messages.");
-        
+
         param("Iridium Operation Timeout", m_args.ir_timeout)
           .defaultValue("600")
           .description("Iridium operation timeout in seconds.");
@@ -244,6 +244,9 @@ namespace Monitors
         if (msg->getSource() != getSystemId())
           return;
 
+        if (m_iri_subs.empty())
+          return;
+
         if (m_filter.filter(msg))
           return;
 
@@ -318,6 +321,9 @@ namespace Monitors
 
         ent = *msg;
 
+        if (m_iri_subs.empty())
+          return;
+
         sendRaw(msg);
       }
 
@@ -351,6 +357,10 @@ namespace Monitors
           return;
 
         m_pcs = *msg;
+
+        if (m_iri_subs.empty())
+          return;
+
         sendIridiumMsg(msg);
       }
 
@@ -414,8 +424,6 @@ namespace Monitors
               return;
 
             m_iri_subs.erase(it);
-            if (m_iri_subs.empty())
-              requestDeactivation();
           }
           break;
 
@@ -571,14 +579,15 @@ namespace Monitors
 
           if (m_iri_subs.empty())
             continue;
-          
+
           // Check if iridium subscriber is still active.
-          for (auto iter = m_iri_subs.begin() ; iter != m_iri_subs.end() ; iter++)
+          for (auto iter = m_iri_subs.begin(); iter != m_iri_subs.end(); iter++)
           {
             double elapsed = Clock::getSinceEpoch() - iter->second;
             if (elapsed > m_args.ir_timeout)
             {
-              inf("deactivating iridium for %d (-%f seconds)", iter->first, elapsed - m_args.ir_timeout);
+              inf("deactivating iridium for %d (-%f seconds)", iter->first,
+                  elapsed - m_args.ir_timeout);
               m_iri_subs.erase(iter);
             }
           }
