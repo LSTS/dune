@@ -514,7 +514,10 @@ namespace Monitors
         tr.deadline = Clock::getSinceEpoch() + m_args.ttl;
 
         uint8_t bfr[DUNE_IMC_CONST_MAX_SIZE];
-        uint16_t len = IMC::Packet::serialize(msg, bfr, sizeof(bfr));
+
+        ImcFullIridium ir_msg(const_cast<IMC::Message*>(msg));
+
+        uint16_t len = ir_msg.serialize(bfr);
         tr.raw_data.assign(bfr, bfr + len);
 
         dispatchRequest(tr, tr.req_id);
