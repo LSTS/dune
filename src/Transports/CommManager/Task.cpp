@@ -298,7 +298,7 @@ namespace Transports
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
-        auto tr_list = m_router.getList();
+        std::map<uint16_t, IMC::TransmissionRequest*>& tr_list = m_router.getList();
 
         if (tr_list.find(msg->req_id) != tr_list.end())
         {
@@ -349,7 +349,7 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
 
-        auto tr_list = m_router.getList();
+        std::map<uint16_t, IMC::TransmissionRequest*>& tr_list = m_router.getList();
 
         if (tr_list.find(msg->req_id) != tr_list.end())
         {
@@ -399,7 +399,7 @@ namespace Transports
           return;
         }
 
-        auto tr_list = m_router.getList();
+        std::map<uint16_t, IMC::TransmissionRequest*>& tr_list = m_router.getList();
 
         if (tr_list.find(msg->req_id) != tr_list.end())
         {
@@ -617,7 +617,7 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
 
-        auto tr_list = m_router.getList();
+        std::map<uint16_t, IMC::TransmissionRequest*>& tr_list = m_router.getList();
 
         if (tr_list.find(msg->req_id) != tr_list.end())
         {
