@@ -415,7 +415,7 @@ namespace DUNE
       buffer += DUNE::IMC::serialize(destination, buffer);
       buffer += DUNE::IMC::serialize(msg_id, buffer);
 
-      data += IMC::Packet::serialize(msg, buffer, msg->getSerializationSize());
+      buffer += IMC::Packet::serialize(msg, buffer, msg->getSerializationSize());
       return buffer - data;
     }
 
