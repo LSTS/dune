@@ -515,7 +515,7 @@ namespace Monitors
 
         uint8_t bfr[DUNE_IMC_CONST_MAX_SIZE];
 
-        ImcFullIridium ir_msg(const_cast<IMC::Message*>(msg));
+        ImcFullIridium ir_msg(msg->clone());
 
         uint16_t len = ir_msg.serialize(bfr);
         tr.raw_data.assign(bfr, bfr + len);
