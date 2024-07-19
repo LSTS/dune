@@ -32,7 +32,6 @@
 #include <DUNE/Network/Fragments.hpp>
 
 // Local headers.
-#include "IrFragments.hpp"
 #include "Storage.hpp"
 
 namespace Monitors
@@ -89,8 +88,6 @@ namespace Monitors
       uint8_t m_transmission_id;
       //! Map with messages waiting for send ack.
       std::map<uint16_t, const IMC::Message*> m_ack_map;
-      //! Iridium fragment message map.
-      std::map<uint16_t, IrFragment*> m_ir_map;
       //! Message filter.
       MessageFilter m_filter;
       //! Payload storage.
