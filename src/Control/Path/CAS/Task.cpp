@@ -503,8 +503,6 @@ namespace Control
           .units(Units::Degree)
           .description("Attack angle when lateral track error equals corridor width");
 
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
           // Register handler routines.
           bind<IMC::AisInfo>(this);
           bind<IMC::GpsFix>(this);
