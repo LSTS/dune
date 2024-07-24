@@ -345,8 +345,17 @@ namespace Transports
         if (header == "OK")
           return false;
 
+        if (String::startsWith(header, "+CMTI:"))
+        {
+          getTask()->spew("Ignoring unsolicited message notification (+CMTI)");
+          header = readLine();
+        }
+
         if (!String::startsWith(header, "+CMGL:"))
+        {
+          getTask()->spew("Fail: Data string to parse: %s",header.c_str());
           throw Hardware::UnexpectedReply();
+        }
 
         std::vector<std::string> parts;
         String::split(header, ",", parts);
