@@ -84,8 +84,6 @@ namespace Monitors
       Counter<double> m_send_wdog;
       //! Request identifier.
       uint16_t m_req_id;
-      //! Transmission fragment id.
-      uint8_t m_transmission_id;
       //! Map with messages waiting for send ack.
       std::map<uint16_t, const IMC::Message*> m_ack_map;
       //! Message filter.
@@ -107,6 +105,7 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_req_id(0),
+        m_filter(false),
         m_storage(this)
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER, Tasks::Parameter::VISIBILITY_DEVELOPER, true);
@@ -128,7 +127,7 @@ namespace Monitors
           .description("Destination for iridium messages.");
 
         param("Rate Limiters", m_args.rate_lims)
-          .description("List of <Message>:<Frequency> to send messages at a specific rate.");
+          .description("List of <Message>:<Period> to send messages at a specific period.");
 
         param("Filtered Entities", m_args.entities_flt)
           .description("List of <Message>:<Entity>+<Entity> that define the source entities "
