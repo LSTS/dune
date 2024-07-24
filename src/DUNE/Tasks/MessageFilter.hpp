@@ -45,7 +45,7 @@ namespace DUNE
     class MessageFilter
     {
     public:
-      MessageFilter(void);
+      MessageFilter(bool use_hz = true);
 
       ~MessageFilter(void);
 
@@ -59,6 +59,8 @@ namespace DUNE
       filter(const IMC::Message* msg);
 
     private:
+      bool m_use_hz;
+
       // Rate limiters.
       typedef std::map<uint32_t, double> RateMap;
       RateMap m_rates;

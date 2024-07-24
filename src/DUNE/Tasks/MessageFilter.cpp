@@ -40,7 +40,8 @@ namespace DUNE
 {
   namespace Tasks
   {
-    MessageFilter::MessageFilter(void)
+    MessageFilter::MessageFilter(bool use_hz):
+      m_use_hz(use_hz)
     { }
 
     MessageFilter::~MessageFilter(void)
@@ -109,7 +110,11 @@ namespace DUNE
           double rate = 0;
           if (std::sscanf(parts[1].c_str(), "%lf", &rate) && rate > 0)
           {
-            m_rates[id] = 1.0 / rate;
+            if (m_use_hz)
+              m_rates[id] = 1.0 / rate;
+            else
+              m_rates[id] = rate;
+
             continue;
           }
         }
