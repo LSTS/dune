@@ -80,6 +80,10 @@ namespace Navigation
         bool
         update(void)
         {
+          // Ignore if id is not set.
+          if(id == UINT16_MAX)
+            return false;
+
           if(interval.overflow() && !is_lost)
           {
             is_lost = true;

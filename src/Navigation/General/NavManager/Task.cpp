@@ -107,13 +107,13 @@ namespace Navigation
             .description("Entity label of 'EulerAngles' and 'AngularVelocity' messages");
 
           param("Main unit", m_args.main_unit)
-            .description("Name of preferred navigation unit.");
+            .description("Name of preferred GPS navigation unit.");
 
           param("Secondary unit", m_args.secondary_unit)
-            .description("Name of secondary preferred navigation unit.");
+            .description("Name of secondary preferred GPS navigation unit.");
 
           param("Third unit", m_args.third_unit)
-            .description("Name of third preferred navigation unit.");
+            .description("Name of third preferred GPS navigation unit.");
 
           param("Convert Height to Geoid Height", m_args.convert_msl)
             .defaultValue("false")
@@ -167,6 +167,12 @@ namespace Navigation
         unsigned int
         getEid(const std::string& label)
         {
+          if (label.empty())
+          {
+            war("Ignoring empty entity label");
+            return UINT16_MAX;
+          }
+
           unsigned int id = UINT16_MAX;
           try
           {
@@ -218,7 +224,7 @@ namespace Navigation
         void
         consume(const IMC::GpsFix* msg)
         {
-          debug("GPS FIX FROM: %u", msg->getSourceEntity());
+          spew("GPS FIX FROM: %u", msg->getSourceEntity());
           if (msg->getSourceEntity() == m_main.id)
           {
             updateGpsState(m_main, msg);
@@ -294,9 +300,8 @@ namespace Navigation
             m_offset = wmm.height(msg->lat, msg->lon);
           }
 
-          WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height,
-                              msg->lat, msg->lon, msg->height - m_offset,
-                              &m_estate.x, &m_estate.y, &m_estate.z);
+          WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height, msg->lat, msg->lon,
+                              msg->height - m_offset, &m_estate.x, &m_estate.y, &m_estate.z);
 
           // Decompose velocity vector.
           m_estate.vx = std::cos(msg->cog) * msg->sog;
@@ -322,7 +327,7 @@ namespace Navigation
           inf("Sending via Iridium: '%s'", req.txt_data.c_str());
           dispatch(req);
         }
-        
+
         bool
         originIsSet()
         {
@@ -339,7 +344,7 @@ namespace Navigation
         originIsFar(const IMC::GpsFix* msg)
         {
           double distance = WGS84::distance(m_origin->lat, m_origin->lon, m_origin->height,
-                                                msg->lat, msg->lon, msg->height);
+                                            msg->lat, msg->lon, msg->height);
 
           return distance > m_args.ref_distance;
         }
