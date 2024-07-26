@@ -44,6 +44,8 @@ namespace Simulators
   {
     using DUNE_NAMESPACES;
 
+    const uint16_t c_bfr_size = 256;
+
     struct Arguments
     {
       //! Ais Info.
@@ -56,7 +58,12 @@ namespace Simulators
       double ais5_freq;
       //! Ais123 Frequency.
       double ais123_freq_static, ais123_freq_moving;
-        
+      // Multicast UDP port.
+      unsigned port;
+      // Multicast Address.
+      std::string address;
+      // Send self AIS to bis
+      bool send_self;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -85,6 +92,9 @@ namespace Simulators
       double m_last_broadc_time_ais123s;
       //! Last Ais123 broadcast time - under way.
       double m_last_broadc_time_ais123m;
+
+      //! UDP Socket.
+      UDPSocket m_sock;
 
       //! Task arguments
       Arguments m_args;
@@ -147,6 +157,18 @@ namespace Simulators
         .units(Units::Meter)
         .description("Draught [m]");
 
+        param("Local Port", m_args.port)
+        .defaultValue("6102")
+        .description("UDP Port to send and receive AisInfo");
+
+        param("Multicast Address", m_args.address)
+        .defaultValue("225.0.2.2")
+        .description("Multicast address");
+
+        param("Send Self", m_args.send_self)
+        .defaultValue("false")
+        .description("Send self AisInfo message to bus");
+
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
         // Register handler routines. 
@@ -195,6 +217,15 @@ namespace Simulators
         m_c = m_args.size_c;
         m_d = m_args.size_d;
         m_draught = m_args.draught;
+      }
+
+      void
+      onResourceAcquisition(void)
+      {
+        m_sock.setMulticastTTL(1);
+        m_sock.setMulticastLoop(true);
+        m_sock.joinMulticastGroup(m_args.address.c_str());
+        m_sock.bind(m_args.port);
       }
 
       void
@@ -280,6 +311,30 @@ namespace Simulators
         }
       }
 
+      void
+      dispatch(IMC::AisInfo& msg)
+      {
+        msg.setSource(getSystemId());
+        msg.setTimeStamp(Time::Clock::getSinceEpoch());
+
+        if (m_args.send_self)
+          Tasks::Task::dispatch(msg);
+
+        uint8_t bfr[c_bfr_size];
+        uint16_t rv;
+        try
+        {
+          rv = IMC::Packet::serialize(&msg, bfr, c_bfr_size);
+        }
+        catch(const std::exception& e)
+        {
+          war(DTR("failed to serialize message %s to send to %u: %s"), msg.getName(), m_args.port, e.what());
+          return;
+        }
+
+        m_sock.write(bfr, rv, m_args.address.c_str(), m_args.port);
+      }
+
 
       void
       onMain(void)
@@ -288,7 +343,38 @@ namespace Simulators
         while (!stopping())
         {
           waitForMessages(1.0);
+          
 
+          if (!Poll::poll(m_sock, 1.0))
+            continue;
+
+          Address addr;
+          uint8_t bfr[c_bfr_size];
+
+          uint16_t rv = m_sock.read(bfr, c_bfr_size, &addr);
+          IMC::Message* msg;
+          try
+          {
+            msg = IMC::Packet::deserialize(bfr, rv);
+          }
+          catch(const std::exception& e)
+          {
+            war(DTR("failed to deserialize message: %s"), e.what());
+            continue;
+          }
+
+          if (msg == NULL)
+            continue;
+
+          if (msg->getId() != DUNE_IMC_AISINFO)
+            continue;
+
+          if (msg->getSource() == getSystemId())
+            continue;
+          
+          IMC::AisInfo* ais_msg = static_cast<IMC::AisInfo*>(msg);
+          debug("Received AisInfo from %s", ais_msg->name.c_str());
+          Tasks::Task::dispatch(ais_msg);
         }
       }
     };
