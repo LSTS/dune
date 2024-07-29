@@ -523,6 +523,13 @@ namespace Control
         {
           PathController::onUpdateParameters();
 
+          if (paramChanged(m_args.en_cas))
+            m_enable_cas = m_args.en_cas;
+          if (paramChanged(m_args.en_antiground))
+            m_enable_ag = m_args.en_antiground;
+          if (paramChanged(m_args.directions))
+            m_offsets = m_args.directions;
+
           if (m_sb_mpc == NULL)
             return;
 
@@ -587,12 +594,6 @@ namespace Control
             m_sb_mpc->setAngRange(m_args.COURSE_RANGE);
           if (paramChanged(m_args.GRANULARITY))
             m_sb_mpc->setGran(m_args.GRANULARITY);
-          if (paramChanged(m_args.en_cas))
-            m_enable_cas = m_args.en_cas;
-          if (paramChanged(m_args.en_antiground))
-            m_enable_ag = m_args.en_antiground;
-          if (paramChanged(m_args.directions))
-            m_offsets = m_args.directions;
         }
 
         void
