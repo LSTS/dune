@@ -48,6 +48,8 @@ namespace Control
         {
           //! Thrust scaling.
           double scale;
+          //! Entity label of CAS entity
+          std::string cas_label;
         };
 
         struct Task: public DUNE::Control::BasicRemoteOperation
@@ -71,6 +73,10 @@ namespace Control
             param("Thrust Scale", m_args.scale)
               .defaultValue("1.0");
 
+            param("CAS Label", m_args.cas_label)
+              .defaultValue("")
+              .description("Entity label of CAS entity");
+
             // Add remote actions.
             addActionButton("Accelerate");
             addActionButton("Decelerate");
@@ -79,6 +85,8 @@ namespace Control
             addActionButton("Restart Log");
             addActionButton("Arm");
             addActionButton("Disarm");
+            addActionButton("Enable CAS");
+            addActionButton("Disable CAS");
             addActionAxis("Heading");
             addActionAxis("Thrust");
 
@@ -153,6 +161,11 @@ namespace Control
               as.state = ArmingState::StateEnum::MOTORS_DISARMED;
               dispatch(as);
             }
+
+            else if (tuples.get("Enable CAS", 0))
+              enableCAS(true);
+            else if (tuples.get("Disable CAS", 0))
+              enableCAS(false);
           }
 
           void
@@ -255,6 +268,24 @@ namespace Control
 
             dispatch(m_thruster);
             dispatch(m_servo);
+          }
+
+          void
+          enableCAS(bool enable)
+          {
+            if (m_args.cas_label.empty())
+            {
+              war("CAS label not set");
+              return;
+            }
+
+            IMC::SetEntityParameters ep;
+            ep.name = m_args.cas_label;
+            IMC::EntityParameter ea;
+            ea.name = "Enable Collision Avoidance";
+            ea.value = enable ? "true" : "false";
+            ep.params.push_back(ea);
+            dispatch(ep);
           }
         };
       }
