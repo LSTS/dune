@@ -73,7 +73,7 @@ namespace Control
             param("Thrust Scale", m_args.scale)
               .defaultValue("1.0");
 
-            param("CAS Label", m_args.cas_label)
+            param("Entity Label - CAS", m_args.cas_label)
               .defaultValue("")
               .description("Entity label of CAS entity");
 
