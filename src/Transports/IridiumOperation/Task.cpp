@@ -179,8 +179,7 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
 
-        if (msg->op != PlanDB::DBOP_GET_INFO && msg->op != PlanDB::DBOP_GET_STATE
-            && msg->op != PlanDB::DBOP_GET)
+        if (msg->op != PlanDB::DBOP_GET_INFO && msg->op != PlanDB::DBOP_GET)
           return;
 
         debug("type %s op %s - %s", c_db_types[msg->type], c_db_op[msg->op], msg->plan_id.c_str());
@@ -387,7 +386,7 @@ namespace Transports
 
         //? Send All EntityState messages?
 
-        sendIridiumMsg(&m_elist);
+        sendIridiumMsg(&m_elist, true);
         sendIridiumMsg(&m_pcs);
       }
 
