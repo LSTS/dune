@@ -163,15 +163,17 @@ namespace Transports
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
-      //! Initialize resources.
       void
-      onResourceInitialization(void)
-      { }
+      onActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
 
-      //! Release resources.
       void
-      onResourceRelease(void)
-      { }
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
 
       void
       consume(const IMC::PlanDB* msg)
@@ -496,15 +498,18 @@ namespace Transports
       checkIridiumSubs(void)
       {
         // Check if iridium subscriber is still active.
-        for (auto iter = m_iri_subs.begin(); iter != m_iri_subs.end(); iter++)
+        for (auto iter = m_iri_subs.begin(); iter != m_iri_subs.end(); )
         {
           double elapsed = Clock::getSinceEpoch() - iter->second;
-          if (elapsed < m_args.ir_timeout)
+          if (elapsed < 60)
+          {
+            ++iter;
             continue;
+          }
 
           inf("deactivating iridium for %d (-%f seconds)", iter->first,
               elapsed - m_args.ir_timeout);
-          m_iri_subs.erase(iter);
+          iter = m_iri_subs.erase(iter);
         }
       }
 
