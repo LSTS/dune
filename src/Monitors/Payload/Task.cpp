@@ -75,7 +75,7 @@ namespace Monitors
         m_req_id(1000),
         m_storage(this)
       {
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER, Tasks::Parameter::VISIBILITY_DEVELOPER, true);
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER, Tasks::Parameter::VISIBILITY_USER, true);
 
         param("Payload timeout", m_args.timeout)
           .defaultValue("60.0")
@@ -236,9 +236,16 @@ namespace Monitors
       void
       onMain(void)
       {
+        Counter<double> wdog(3.0);
         while (!stopping())
         {
           waitForMessages(1.0);
+
+          if (wdog.overflow())
+          {
+            war("STATE - %s", isActive() ? "ACTIVE" : "IDLE");
+            wdog.reset();
+          }
 
           if (!isActive())
             continue;
