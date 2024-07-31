@@ -31,6 +31,7 @@
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Network/Fragments.hpp>
 
+#include "PersistentMessage.hpp"
 
 namespace Transports
 {
@@ -68,6 +69,9 @@ namespace Transports
       uint32_t ir_timeout;
     };
 
+    //! Shared pointer to PersistentMessage.
+    typedef std::shared_ptr<PersistentMessage> PersistentPtr;
+
     struct Task: public DUNE::Tasks::Task
     {
       //! Task arguments.
@@ -75,7 +79,7 @@ namespace Transports
       //! Request identifier.
       uint16_t m_req_id;
       //! Map with messages waiting for send ack.
-      std::map<uint16_t, const IMC::Message*> m_ack_map;
+      std::map<uint16_t, PersistentPtr> m_ack_map;
       //! Message filter.
       MessageFilter m_filter;
       //! Plan Control state.
@@ -248,7 +252,7 @@ namespace Transports
         m_elist = *msg;
       }
 
-      //! Consume for on request control messages
+      //! Consume for control messages
       void
       consume(const IMC::Message* msg)
       {
@@ -270,40 +274,53 @@ namespace Transports
         if (msg->getDestination() != getSystemId() && msg->getDestinationEntity() != getEntityId())
           return;
 
-        if (m_ack_map.find(msg->req_id) == m_ack_map.end())
+        auto it = m_ack_map.find(msg->req_id);
+        if (it == m_ack_map.end())
           return;
+
+        spew("new status (%d) for message %d", msg->status, msg->req_id);
 
         switch (msg->status)
         {
           case IMC::IridiumTxStatus::TXSTATUS_OK:
           {
-            spew("Received ack for message %d", msg->req_id);
-            const Message*& sent = m_ack_map[msg->req_id];
+            trace("message ack %d", msg->req_id);
+            PersistentPtr& pmsg = it->second;
+            if (!pmsg->onSuccess(msg->req_id))
+              return;
 
-            Memory::clear(sent);
-            m_ack_map.erase(msg->req_id);
+            spew("all messages sent for %d", msg->req_id);
+            // Remove message from map and all its IDs.
+            std::set<uint16_t> ids = pmsg->getIDs();
+            for (uint16_t id : ids)
+              m_ack_map.erase(id);
           }
           break;
 
           case IMC::IridiumTxStatus::TXSTATUS_EXPIRED:
           {
-            spew("received expired ack for message %d", msg->req_id);
-            const Message*& sent = (m_ack_map[msg->req_id]);
-            if (sent->getId() == TransmissionRequest::getIdStatic())
+            PersistentPtr& pmsg = it->second;
+            // Check if message should be resent.
+            const IMC::Message* retry = pmsg->onFailure(msg->req_id);
+            if (retry)
             {
-              TransmissionRequest* ptr = (TransmissionRequest*)sent;
-              Message* inline_msg = ptr->msg_data.get();
-              spew("discarding %s", inline_msg->getName());
+              trace("resending message (%d) %s", msg->req_id, retry->getName());
+              // Resend message.
+              dispatchRequest(retry, msg->req_id);
+              return;
             }
-            else
-              spew("discarding %s", sent->getName());
 
-            Memory::clear(sent);
-            m_ack_map.erase(msg->req_id);
+            spew("message failed %d - deleting ...", msg->req_id);
+
+            // Delete message from map and all its IDs.
+            std::set<uint16_t> ids = pmsg->getIDs();
+            for (uint16_t id : ids)
+              m_ack_map.erase(id);
           }
           break;
 
           default:
+            war("received %d ack for message %d", msg->status, msg->req_id);
             break;
         }
       }
@@ -396,62 +413,84 @@ namespace Transports
         uint16_t len = ir_msg.serialize(bfr);
         tr.raw_data.assign(bfr, bfr + len);
 
-        dispatchRequest(tr, tr.req_id);
+        dispatch(tr);
         trace("Sent message (%d) %s as raw", tr.req_id, msg->getName());
       }
 
       void
-      sendIridiumMsg(const IMC::Message* msg)
+      sendIridiumMsg(const IMC::Message* msg, bool persistent = false)
       {
         debug("send msg %s", msg->getName());
         if (msg->getPayloadSerializationSize() > m_args.max_payload)
-          sendIMCFragments(msg);
+          sendIMCFragments(msg, persistent);
         else
-          sendInline(msg);
+          sendInline(msg, persistent);
       }
 
       void
-      sendIMCFragments(const IMC::Message* msg)
+      sendIMCFragments(const IMC::Message* msg, bool persistent = false)
       {
         if (!isActive())
           return;
 
         Network::Fragments frags(const_cast<IMC::Message*>(msg), m_args.max_payload);
 
+        PersistentPtr pmsg;
+
+        if (persistent)
+          pmsg = std::make_shared<PersistentMessage>(msg);
+
         for (int i = 0; i < frags.getNumberOfFragments(); i++)
         {
           IMC::MessagePart* msg_frag = frags.getFragment(i);
-          sendInline(msg_frag);
+
+          uint16_t tid = m_req_id++;
+          dispatchRequest(msg_frag, tid);
+
+          if (!persistent)
+            continue;
+
+          pmsg->addMessage(tid, msg_frag);
+          m_ack_map[tid] = pmsg;
         }
       }
 
       //! Send message as inline request.
       void
-      sendInline(const IMC::Message* msg)
+      sendInline(const IMC::Message* msg, bool persistent = false)
       {
         // Discard messages if not active.
         if (!isActive())
           return;
 
+        uint16_t tid = m_req_id++;
+        dispatchRequest(msg, tid);
+
+        if (!persistent)
+          return;
+
+        PersistentPtr pmsg = std::make_shared<PersistentMessage>(msg);
+        pmsg->addMessage(tid, msg);
+        m_ack_map[tid] = pmsg;
+      }
+
+      //! Dispatch Transmission request message.
+      //! @param[in] msg message to send.
+      //! @param[in] id request id.
+      void
+      dispatchRequest(const IMC::Message* msg, uint16_t id)
+      {
         IMC::TransmissionRequest tr;
         tr.setDestination(getSystemId());
 
-        tr.req_id = m_req_id++;
+        tr.req_id = id;
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
         tr.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
         tr.deadline = Clock::getSinceEpoch() + m_args.ttl;
         tr.msg_data.set(*msg);
 
         dispatch(tr);
-        trace("Sent message (%d) %s as inline", tr.req_id, msg->getName());
-      }
-
-      void
-      dispatchRequest(IMC::Message& msg, uint16_t id)
-      {
-        msg.setDestination(getSystemId());
-        m_ack_map[id] = msg.clone();
-        dispatch(msg);
+        trace("request message (%d) %s as inline", id, msg->getName());
       }
 
       void
