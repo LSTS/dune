@@ -335,7 +335,15 @@ namespace Transports
           return;
 
         if (ir_msg->msg_id != ID_UPDATE_OP)
+        {
+          if (!isActive())
+            requestActivation();
+
+          m_iri_subs[ir_msg->source] = Clock::getSinceEpoch();
+          onIridiumActivation(ir_msg->source);
+          delete ir_msg;
           return;
+        }
 
         IMC::IridiumOperation* op = (IMC::IridiumOperation*)ir_msg;
         double elapsed = Clock::getSinceEpoch() - op->ts;
@@ -379,6 +387,8 @@ namespace Transports
             inf("invalid operation type %d", op->type);
             break;
         }
+
+        delete op;
       }
 
       void
