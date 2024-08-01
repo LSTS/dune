@@ -236,16 +236,9 @@ namespace Monitors
       void
       onMain(void)
       {
-        Counter<double> wdog(3.0);
         while (!stopping())
         {
           waitForMessages(1.0);
-
-          if (wdog.overflow())
-          {
-            war("STATE - %s", isActive() ? "ACTIVE" : "IDLE");
-            wdog.reset();
-          }
 
           if (!isActive())
             continue;
