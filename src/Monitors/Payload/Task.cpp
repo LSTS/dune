@@ -110,7 +110,7 @@ namespace Monitors
         }
         catch (...)
         {
-          err("Entity %s not found", name.c_str());
+          war("Entity %s not found", name.c_str());
         }
 
         return 0;
