@@ -213,6 +213,12 @@ namespace DUNE
       bind<IMC::Distance>(this);
       bind<IMC::DesiredZ>(this);
       bind<IMC::DesiredSpeed>(this);
+
+      // Initialize TrackingState
+      m_ts.loitering = false;
+      m_ts.nearby = false;
+      m_ts.end_time = Clock::get();
+      m_ts.z_control = false;
     }
 
     PathController::~PathController(void)
@@ -230,10 +236,6 @@ namespace DUNE
         m_speriod = 1.0 / m_speriod;
 
       m_ts.cc = m_course_ctl ? 1 : 0;
-      m_ts.loitering = false;
-      m_ts.nearby = false;
-      m_ts.end_time = Clock::get();
-      m_ts.z_control = false;
 
       if (m_ctm.enabled && m_ctm.nav_unc_factor > 0)
         bind<IMC::NavigationUncertainty>(this);
