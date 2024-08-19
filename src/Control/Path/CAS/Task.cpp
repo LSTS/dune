@@ -216,6 +216,8 @@ namespace Control
         m_timestamp_new(0.0),
         m_timestamp_prev(0.0),
         m_timestamp_obst(0.0),
+        m_enable_cas(false),
+        m_enable_ag(false),
         m_static_obst(false),
         m_wind_dir(0.0),
         m_wind_speed(0.0),
@@ -524,9 +526,27 @@ namespace Control
           PathController::onUpdateParameters();
 
           if (paramChanged(m_args.en_cas))
+          {
+            if (m_enable_cas)
+            {
+              spew("Clearing dynamic obstacles");
+              m_dyn_obst_vec.clear();
+            }
+
             m_enable_cas = m_args.en_cas;
+          }
+
           if (paramChanged(m_args.en_antiground))
+          {
+            if (m_enable_ag)
+            {
+              m_dangers.resize(0,0);
+              m_depths.resize(0,0);
+            }
+
             m_enable_ag = m_args.en_antiground;
+          }
+
           if (paramChanged(m_args.directions))
             m_offsets = m_args.directions;
 
