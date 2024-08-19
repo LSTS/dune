@@ -240,10 +240,12 @@ namespace Control
           .description("Entity label of 'Frequency' message");
 
           param("Enable Collision Avoidance", m_args.en_cas)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("true")
           .description("Enable collision avoidance algorithm");
 
           param("Enable Anti Grounding", m_args.en_antiground)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("true")
           .description("Enable anti-grounding algorithm");
           
