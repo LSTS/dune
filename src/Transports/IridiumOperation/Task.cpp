@@ -451,6 +451,9 @@ namespace Transports
         if (persistent)
           pmsg = std::make_shared<PersistentMessage>(msg);
 
+        IMC::MessagePart* frag = frags.getFragment(0);
+        inf("sending %d fragments of message %s (id:%d)", frags.getNumberOfFragments(), msg->getName(), frag->uid);
+
         for (int i = 0; i < frags.getNumberOfFragments(); i++)
         {
           IMC::MessagePart* msg_frag = frags.getFragment(i);
