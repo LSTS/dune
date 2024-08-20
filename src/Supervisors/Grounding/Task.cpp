@@ -55,12 +55,6 @@ namespace Supervisors
       std::string db_path;
       //! Path to debug folder
       std::string debug_path;
-      //! Map resolution.
-      double map_res;
-      //! Range around location of interest.
-      double range;
-      //! Grid size.
-      double grid_size;
       //! Surroundings check frequency.
       double surr_check;
       //! GPS entity label in Simulation mode.
@@ -85,10 +79,6 @@ namespace Supervisors
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! Possible land locations per transect.
-      std::vector<Math::Matrix> m_land;
-      //! Possible static threats locations per transect.
-      std::vector<Math::Matrix> m_threats;
       //! Current Lat and Lon of vehicle.
       double m_current_lat, m_current_lon;
       //! Timer.
@@ -97,16 +87,12 @@ namespace Supervisors
       int m_gps_eid;
       //! Static features list.
       std::vector<std::string> m_features;
-      // Task arguments
+      //! Task arguments
       Arguments m_args;
-      // ENC handle.
+      //! ENC handle.
       SituationalAwareness::ENCManager* m_enc;
       //! True if a transect contains shallow waters.
       bool m_transect_shallow;
-      //! Features coordinates.
-      std::vector<double> m_features_lat, m_features_lon;
-      //! Waypoint latitudes and logitudes (including current USV location).
-      std::vector<double> m_wp_latitudes,m_wp_longitudes;
       //! ENC tuples.
       std::string m_static_tuple, m_contours_tuple;
       
@@ -143,12 +129,7 @@ namespace Supervisors
 
         param("Debug Path", m_args.debug_path)
         .defaultValue("")
-        .description("Path to where debuging files are saved");
-
-        param("Digital Map Resolution", m_args.map_res)
-        .units(Units::Meter)
-        .defaultValue("")
-        .description("Digital Map resolution in meters");
+        .description("Path to where debugging files are saved");
 
         param("Safety depth threshold", m_args.depth_thr)
         .units(Units::Meter)
@@ -159,11 +140,6 @@ namespace Supervisors
         .units(Units::Meter)
         .defaultValue("50")
         .description("Corridor width to check for threats.");
-
-        param("Range Around Location", m_args.range)
-        .units(Units::Meter)
-        .defaultValue("")
-        .description("Radius [m] of circle containing queried locations, around location of interest");
 
         param("Surroundings Check Frequency", m_args.surr_check)
         .units(Units::Second)
@@ -181,7 +157,6 @@ namespace Supervisors
         .defaultValue("")
         .description("List of static ENC features");
 
-        bind<IMC::Abort>(this);
         bind<IMC::PlanSpecification>(this);
         bind<IMC::GpsFix>(this);
       }
@@ -274,16 +249,6 @@ namespace Supervisors
       }
 
       void
-      consume(const IMC::Abort* msg)
-      {
-        if(msg->getDestination() != getSystemId())
-          return;
-
-        if(isActive())
-          requestDeactivation();
-      }
-
-      void
       consume(const IMC::GpsFix* msg)
       {
         if(msg->getSource() != getSystemId() || msg->getSourceEntity() != m_gps_eid)
@@ -296,8 +261,8 @@ namespace Supervisors
       void
       consume(const IMC::PlanSpecification* msg)
       {
-        m_wp_latitudes.push_back(m_current_lat);
-        m_wp_longitudes.push_back(m_current_lon);
+        double lat = m_current_lat;
+        double lon = m_current_lon;
 
         //! Iterate through plan maneuvers.
         for(std::vector<IMC::PlanManeuver*>::const_iterator itr = msg->maneuvers.begin(); itr != msg->maneuvers.end(); ++itr)
@@ -307,19 +272,19 @@ namespace Supervisors
           //spew("LAT LON: %0.4f %0.4f", m->lat, m->lon);
 
           //! Check the depth of the commanded path transect.
-          if(m_enc != NULL && m_args.check_path_depth)
-            //checkTransectDepth(m_wp_latitudes.back(),m_wp_longitudes.back(),m->lat,m->lon);
+          if(m_args.check_path_depth)
+            //checkTransectDepth(lat, lon, m->lat, m->lon);
 
           //! Check if there are static object close to the commanded path.
-          if(m_enc != NULL && m_args.check_path_safety)
-            checkTransectSafety(m_wp_latitudes.back(),m_wp_longitudes.back(),m->lat,m->lon);
+          if(m_args.check_path_safety)
+            checkTransectSafety(lat, lon, m->lat, m->lon);
 
-          m_wp_latitudes.push_back(m->lat);
-          m_wp_longitudes.push_back(m->lon);
-
+          lat = m->lat;
+          lon = m->lon;
         }
+
         //! Check depth contours around USV.
-        if(m_enc != NULL && m_args.check_depth_contours)
+        if(m_args.check_depth_contours)
           checkDepthContours(m_current_lat,m_current_lon);
 
         //! Dispatch retrieved information.
