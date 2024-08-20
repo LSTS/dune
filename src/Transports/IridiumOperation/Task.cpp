@@ -84,8 +84,6 @@ namespace Transports
       MessageFilter m_filter;
       //! Plan Control state.
       IMC::PlanControlState m_pcs;
-      //! Entity List.
-      IMC::EntityList m_elist;
       //! Entity State map.
       std::map<uint32_t, EntityState> m_entity_map;
       //! List of iridium subscribers. <ID, Timestamp>.
@@ -250,7 +248,7 @@ namespace Transports
         if (msg->op != EntityList::OP_REPORT)
           return;
 
-        m_elist = *msg;
+        sendIridiumMsg(msg, true);
       }
 
       //! Consume for control messages
@@ -398,7 +396,6 @@ namespace Transports
 
         //? Send All EntityState messages?
 
-        sendIridiumMsg(&m_elist, true);
         sendIridiumMsg(&m_pcs);
       }
 
