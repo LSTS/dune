@@ -127,6 +127,14 @@ namespace Transports
       void
       answer(const IMC::TransmissionRequest* req, std::string info, int status, fp32_t range = 0.0)
       {
+        //get name of inline message
+        InlineMessage<Message> msg_data;
+        std::string message_name = "Unknown";
+        if (req->data_mode == IMC::TransmissionRequest::DMODE_INLINEMSG)
+        {
+          msg_data.set(req->msg_data.get()->clone());
+          message_name = msg_data.get()->getName();
+        }
         IMC::TransmissionStatus msg;
         msg.info = info;
         msg.req_id = req->req_id;
@@ -136,8 +144,8 @@ namespace Transports
         msg.setDestinationEntity(req->getSourceEntity());
         m_parent->dispatch(msg);
 
-        m_parent->inf("Status of transmission message (%d) changed to: %s",
-                      req->req_id, info.c_str());
+        m_parent->inf("Status of transmission message (%d | %s) changed to: %s",
+                      req->req_id, message_name.c_str(), info.c_str());
       }
 
       void
