@@ -205,12 +205,16 @@ namespace Supervisors
       void
       onResourceAcquisition(void)
       {
-        try {
+        try
+        {
           m_enc = new SituationalAwareness::ENCManager(m_args.db_path);
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        } catch(std::runtime_error& e) {
-          inf(DTR("Problem opening charts: %s"), e.what());
         }
+        catch(std::exception& e)
+        {
+          throw RestartNeeded(e.what(), 5);
+        }
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Initialize resources.
