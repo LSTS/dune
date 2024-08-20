@@ -265,6 +265,7 @@ namespace Supervisors
         err("%s", m_vs.last_error.c_str());
 
         stopManeuver(true);
+        dispatch(new Aborted());
       }
 
       void
