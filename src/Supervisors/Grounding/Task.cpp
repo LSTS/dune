@@ -28,12 +28,13 @@
 //***************************************************************************
 
 // ISO C++ 98 headers.
-#include <cstring>
 #include <cmath>
-#include <vector>
-#include <string>
+#include <cstring>
 #include <fstream>
 #include <sstream>
+#include <string>
+#include <vector>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -95,7 +96,7 @@ namespace Supervisors
       bool m_transect_shallow;
       //! ENC tuples.
       std::string m_static_tuple, m_contours_tuple;
-      
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -107,55 +108,55 @@ namespace Supervisors
         m_transect_shallow(false)
       {
         param("Digital Map Path", m_args.db_path)
-        .defaultValue("")
-        .description("Path to digital map DB file");
+          .defaultValue("")
+          .description("Path to digital map DB file");
 
         param("Check path depth", m_args.check_path_depth)
-        .defaultValue("true")
-        .description("Parse commanded path and check for shallow waters.");
+          .defaultValue("true")
+          .description("Parse commanded path and check for shallow waters.");
 
         param("Check path safety", m_args.check_path_safety)
-        .defaultValue("true")
-        .description("Parse commanded path and check for near static objects.");
+          .defaultValue("true")
+          .description("Parse commanded path and check for near static objects.");
 
         param("Check depth contours", m_args.check_depth_contours)
-        .defaultValue("true")
-        .description("Check depth contours around USV.");
+          .defaultValue("true")
+          .description("Check depth contours around USV.");
 
         param("Contours radius", m_args.contours_radius)
-        .units(Units::Meter)
-        .defaultValue("1000")
-        .description("Depth contours radius around USV.");
+          .units(Units::Meter)
+          .defaultValue("1000")
+          .description("Depth contours radius around USV.");
 
         param("Debug Path", m_args.debug_path)
-        .defaultValue("")
-        .description("Path to where debugging files are saved");
+          .defaultValue("")
+          .description("Path to where debugging files are saved");
 
         param("Safety depth threshold", m_args.depth_thr)
-        .units(Units::Meter)
-        .defaultValue("5")
-        .description("Safety depth threshold.");
+          .units(Units::Meter)
+          .defaultValue("5")
+          .description("Safety depth threshold.");
 
         param("Corridor width", m_args.corridor_width)
-        .units(Units::Meter)
-        .defaultValue("50")
-        .description("Corridor width to check for threats.");
+          .units(Units::Meter)
+          .defaultValue("50")
+          .description("Corridor width to check for threats.");
 
         param("Surroundings Check Frequency", m_args.surr_check)
-        .units(Units::Second)
-        .defaultValue("180.0")
-        .minimumValue("0.0")
-        .description("Frequency at which current vehicles surroundings are observed");
+          .units(Units::Second)
+          .defaultValue("180.0")
+          .minimumValue("0.0")
+          .description("Frequency at which current vehicles surroundings are observed");
 
         param("Entity Label - GPS simulation", m_args.elabel_gps_sim)
-        .description("Entity label of 'GpsFix' message in Simulation mode");
+          .description("Entity label of 'GpsFix' message in Simulation mode");
 
         param("Entity Label - GPS hardware", m_args.elabel_gps_hw)
-        .description("Entity label of 'GpsFix' message in Hardware mode");
+          .description("Entity label of 'GpsFix' message in Hardware mode");
 
         param("ENC Features", m_args.static_features)
-        .defaultValue("")
-        .description("List of static ENC features");
+          .defaultValue("")
+          .description("List of static ENC features");
 
         bind<IMC::PlanSpecification>(this);
         bind<IMC::GpsFix>(this);
@@ -165,15 +166,14 @@ namespace Supervisors
       void
       onUpdateParameters(void)
       {
-        if(paramChanged(m_args.surr_check))
+        if (paramChanged(m_args.surr_check))
           m_timer.setTop(m_args.surr_check);
       }
 
       //! Reserve entity identifiers.
       void
       onEntityReservation(void)
-      {
-      }
+      { }
 
       void
       onEntityResolution(void)
@@ -220,7 +220,7 @@ namespace Supervisors
         {
           m_enc = new SituationalAwareness::ENCManager(m_args.db_path);
         }
-        catch(std::exception& e)
+        catch (std::exception& e)
         {
           throw RestartNeeded(e.what(), 5);
         }
@@ -240,10 +240,11 @@ namespace Supervisors
         std::string delimiter = ",";
         size_t pos = 0;
         std::string token;
-        while((pos = s.find(delimiter)) != std::string::npos)
+
+        while ((pos = s.find(delimiter)) != std::string::npos)
         {
           token = s.substr(0, pos);
-          //std::cout << token << std::endl;
+          // std::cout << token << std::endl;
           m_features.push_back(token);
           s.erase(0, pos + delimiter.length());
         }
@@ -255,9 +256,9 @@ namespace Supervisors
       {
         try
         {
-         Memory::clear(m_enc);
+          Memory::clear(m_enc);
         }
-        catch(std::runtime_error& e)
+        catch (std::exception& e)
         {
           err(DTR("Could not clear Nautical charts class: %s"), e.what());
         }
@@ -266,7 +267,7 @@ namespace Supervisors
       void
       consume(const IMC::GpsFix* msg)
       {
-        if(msg->getSource() != getSystemId() || msg->getSourceEntity() != m_gps_eid)
+        if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_gps_eid)
           return;
 
         m_current_lat = msg->lat;
@@ -280,21 +281,24 @@ namespace Supervisors
         double lon = m_current_lon;
 
         //! Iterate through plan maneuvers.
-        for(std::vector<IMC::PlanManeuver*>::const_iterator itr = msg->maneuvers.begin(); itr != msg->maneuvers.end(); ++itr)
+        std::vector<IMC::PlanManeuver*>::const_iterator itr;
+        for (itr = msg->maneuvers.begin(); itr != msg->maneuvers.end(); ++itr)
         {
+          const IMC::Message* maneuver = (*itr)->data.get();
+
           // For now just to GoTos.
-          if ((*itr)->data.get()->getId() != IMC::Goto::getIdStatic())
+          if (maneuver->getId() != IMC::Goto::getIdStatic())
             continue;
 
-          const IMC::Goto* m = static_cast<const IMC::Goto*>((*itr)->data.get());
-          //spew("LAT LON: %0.4f %0.4f", m->lat, m->lon);
+          const IMC::Goto* m = static_cast<const IMC::Goto*>(maneuver);
+          // spew("LAT LON: %0.4f %0.4f", m->lat, m->lon);
 
           //! Check the depth of the commanded path transect.
-          if(m_args.check_path_depth)
-            //checkTransectDepth(lat, lon, m->lat, m->lon);
+          // if (m_args.check_path_depth)
+          // checkTransectDepth(lat, lon, m->lat, m->lon);
 
           //! Check if there are static object close to the commanded path.
-          if(m_args.check_path_safety)
+          if (m_args.check_path_safety)
             checkTransectSafety(lat, lon, m->lat, m->lon);
 
           lat = m->lat;
@@ -302,8 +306,8 @@ namespace Supervisors
         }
 
         //! Check depth contours around USV.
-        if(m_args.check_depth_contours)
-          checkDepthContours(m_current_lat,m_current_lon);
+        if (m_args.check_depth_contours)
+          checkDepthContours(m_current_lat, m_current_lon);
 
         //! Dispatch retrieved information.
         dispatchENC();
@@ -315,105 +319,138 @@ namespace Supervisors
         //! Start assuming there is no shallow waters.
         m_transect_shallow = false;
         //! Depthmap based grounding check.
-        debug("Transect check from (%0.4f, %0.4f) to (%0.4f, %0.4f)", Angles::degrees(lat_start), Angles::degrees(lon_start), Angles::degrees(lat_end), Angles::degrees(lon_end));
-        
-        //! Returns safe and hazard locations, respectively.
-        std::pair<ENCManager::DepthSoundingVector, ENCManager::DepthSoundingVector> transectcheck = m_enc->checkTransect(lat_start, lon_start, lat_end, lon_end, 50.0, "depthmapRad");
+        debug("Transect check from (%0.4f, %0.4f) to (%0.4f, %0.4f)", Angles::degrees(lat_start),
+              Angles::degrees(lon_start), Angles::degrees(lat_end), Angles::degrees(lon_end));
 
-        if(!transectcheck.second.empty())
+        //! Returns safe and hazard locations, respectively.
+        std::pair<ENCManager::DepthSoundingVector, ENCManager::DepthSoundingVector> transect_check =
+          m_enc->checkTransect(lat_start, lon_start, lat_end, lon_end, 50.0, "depthmapRad");
+
+        auto& [safe, hazards] = transect_check;
+
+        if (!hazards.empty())
         {
           war(DTR("Transect is NOT safe: out of known charts or ground locations!"));
-          debug("%lu potential path threats.", transectcheck.second.size());
-          std::string directory = m_args.debug_path + "hazard_transect_" + std::to_string(Angles::degrees(lat_end)) + ".csv";
-          m_enc->writeCSVfile(transectcheck.second, directory);
-          for(ENCManager::DepthSoundingVector::iterator itr = transectcheck.second.begin(); itr != transectcheck.second.end(); ++itr)
+          debug("%lu potential path threats.", hazards.size());
+
+          std::string directory = m_args.debug_path + "hazard_transect_"
+                                  + std::to_string(Angles::degrees(lat_end)) + ".csv";
+
+          m_enc->writeCSVfile(hazards, directory);
+
+          ENCManager::DepthSoundingVector::iterator itr;
+          for (itr = hazards.begin(); itr != hazards.end(); ++itr)
           {
-            debug("Dangerous location (%0.4f, %0.4f)",Angles::degrees(itr->Lat),Angles::degrees(itr->Lon));
+            debug("Dangerous location (%0.4f, %0.4f)", Angles::degrees(itr->Lat),
+                  Angles::degrees(itr->Lon));
           }
         }
 
-        if(!transectcheck.first.empty())
+        if (!safe.empty())
         {
           war(DTR("Commanded path contains shallow waters!"));
           ENCManager::DepthSoundingVector safe_locations;
-          for(ENCManager::DepthSoundingVector::iterator itr = transectcheck.first.begin(); itr != transectcheck.first.end(); ++itr)
+          ENCManager::DepthSoundingVector::iterator itr;
+          for (itr = safe.begin(); itr != safe.end(); ++itr)
           {
-            if(itr->Depth < m_args.depth_thr)
+            if (itr->Depth < m_args.depth_thr)
             {
               m_transect_shallow = true;
-              debug("Location (%0.4f, %0.4f) has depth %0.4f",Angles::degrees(itr->Lat),Angles::degrees(itr->Lon),itr->Depth);
-            } else
-              safe_locations.push_back(ENCManager::DepthSoundingContainer_t(itr->Lat, itr->Lon, itr->Depth));
-          }
-          //! If the path contains shallow waters, sample a corridor to understand depth profile around the commanded path.
-          if(m_transect_shallow)
-            checkTransectCorridor(lat_start,lon_start,lat_end,lon_end,m_args.corridor_width);
+              debug("Location (%0.4f, %0.4f) has depth %0.4f", Angles::degrees(itr->Lat),
+                    Angles::degrees(itr->Lon), itr->Depth);
 
-          if(!safe_locations.empty())
-          {
-            std::string directory = m_args.debug_path + "safe_transect_" + std::to_string(Angles::degrees(lat_end)) + ".csv";
-            m_enc->writeCSVfile(transectcheck.first, directory);
+              continue;
+            }
+
+            safe_locations.push_back(*itr);
           }
-          
-          if(!m_transect_shallow)
+
+          //! If the path contains shallow waters, sample a corridor to understand depth profile
+          //! around the commanded path.
+          if (m_transect_shallow)
+            checkTransectCorridor(lat_start, lon_start, lat_end, lon_end, m_args.corridor_width);
+
+          if (!safe_locations.empty())
+          {
+            std::string directory = m_args.debug_path + "safe_transect_"
+                                    + std::to_string(Angles::degrees(lat_end)) + ".csv";
+            m_enc->writeCSVfile(safe, directory);
+          }
+
+          if (!m_transect_shallow)
             debug("Transect is deep enough!");
         }
       }
 
       //! This function takes a path transect and inspects a corridor of locations around it.
       void
-      checkTransectCorridor(double lat_start, double lon_start, double lat_end, double lon_end, double corridorWidth)
+      checkTransectCorridor(double lat_start, double lon_start, double lat_end, double lon_end,
+                            double corridorWidth)
       {
-        std::string lats="lats=",lons="lons=",dpts="dpts=";
-        trace("Transect check from (%0.4f, %0.4f) to (%0.4f, %0.4f)", Angles::degrees(lat_start), Angles::degrees(lon_start), Angles::degrees(lat_end), Angles::degrees(lon_end));
-        ENCManager::DepthSoundingVector corridorcheck = m_enc->getCorridor(lat_start, lon_start, lat_end, lon_end, 50.0, corridorWidth, "depthmapRad");
-        debug("Evaluated corridor contains %lu samples.",corridorcheck.size());
+        std::string lats = "lats=", lons = "lons=", dpts = "dpts=";
+        trace("Transect check from (%0.4f, %0.4f) to (%0.4f, %0.4f)", Angles::degrees(lat_start),
+              Angles::degrees(lon_start), Angles::degrees(lat_end), Angles::degrees(lon_end));
+
+        ENCManager::DepthSoundingVector corridor = m_enc->getCorridor(
+          lat_start, lon_start, lat_end, lon_end, 50.0, corridorWidth, "depthmapRad");
+        debug("Evaluated corridor contains %lu samples.", corridor.size());
 
         ENCManager::DepthSoundingVector shallow_locations;
-        for(ENCManager::DepthSoundingVector::iterator itr = corridorcheck.begin(); itr != corridorcheck.end(); ++itr)
+        ENCManager::DepthSoundingVector::iterator itr;
+        for (itr = corridor.begin(); itr != corridor.end(); ++itr)
         {
-          //debug("CORRIDOR LAT %f LON %f DEPTH %f",itr->Lat,itr->Lon,itr->Depth);
-          if(itr->Depth < m_args.depth_thr)
+          // debug("CORRIDOR LAT %f LON %f DEPTH %f",itr->Lat,itr->Lon,itr->Depth);
+          if (itr->Depth < m_args.depth_thr)
           {
-            debug("Corridor shallow location (%0.4f, %0.4f) has depth %0.4f",Angles::degrees(itr->Lat),Angles::degrees(itr->Lon),itr->Depth);
-            shallow_locations.push_back(ENCManager::DepthSoundingContainer_t(itr->Lat, itr->Lon, itr->Depth));
+            debug("Corridor shallow location (%0.4f, %0.4f) has depth %0.4f",
+                  Angles::degrees(itr->Lat), Angles::degrees(itr->Lon), itr->Depth);
+            shallow_locations.push_back(*itr);
+
             // Example: "lat=63.46869;lon=10.37790;d=-10;"
             lats = lats + std::to_string(itr->Lat) + ";";
             lons = lons + std::to_string(itr->Lon) + ";";
             dpts = dpts + std::to_string(itr->Depth) + ";";
           }
         }
-        if(!shallow_locations.empty())
+
+        if (!shallow_locations.empty())
         {
-          std::string directory = m_args.debug_path + "shallow_transect_" + std::to_string(Angles::degrees(lat_end)) + ".csv";
+          std::string directory = m_args.debug_path + "shallow_transect_"
+                                  + std::to_string(Angles::degrees(lat_end)) + ".csv";
           m_enc->writeCSVfile(shallow_locations, directory);
         }
       }
 
-      
-      //! This function takes a path transect and inspects a rectangle of locations that contains it.
-      //! The function retrieves static threats from the ENC.
+      //! This function takes a path transect and inspects a rectangle of locations that contains
+      //! it. The function retrieves static threats from the ENC.
       void
       checkTransectSafety(double lat_start, double lon_start, double lat_end, double lon_end)
       {
         war("Retrieve static obstacles.");
-        std::string lats="lats=",lons="lons=";
+        std::string lats = "lats=", lons = "lons=";
         bool features = false;
 
         //! Iterate through desired features.
         for (size_t j = 0; j < m_features.size(); j++)
         {
-          ENCManager::DepthSoundingVector static_threats = m_enc->getCorridor(lat_start, lon_start, lat_end, lon_end, 50.0, 500.0, m_features[j]);
-          if(!static_threats.empty())
+          ENCManager::DepthSoundingVector static_threats =
+            m_enc->getCorridor(lat_start, lon_start, lat_end, lon_end, 50.0, 500.0, m_features[j]);
+          if (!static_threats.empty())
           {
             features = true;
 
-            for(ENCManager::DepthSoundingVector::iterator itr = static_threats.begin(); itr != static_threats.end(); ++itr)
+            ENCManager::DepthSoundingVector::iterator itr;
+            for (itr = static_threats.begin(); itr != static_threats.end(); ++itr)
             {
-              war("Static threat at LAT %f LON %f",Angles::degrees(itr->Lat),Angles::degrees(itr->Lon));
-              double ct_dxt,at_dxt;
-              Coordinates::WGS84::getCtAndAtDistance(itr->Lat,itr->Lon, lat_start, lon_start, lat_end, lon_end, &ct_dxt,&at_dxt);
-              debug("Static threat is %f m far from the path, after %f m into the transect.",ct_dxt,at_dxt);
+              war("Static threat at LAT %f LON %f", Angles::degrees(itr->Lat),
+                  Angles::degrees(itr->Lon));
+
+              double ct_dxt, at_dxt;
+              Coordinates::WGS84::getCtAndAtDistance(itr->Lat, itr->Lon, lat_start, lon_start,
+                                                     lat_end, lon_end, &ct_dxt, &at_dxt);
+
+              debug("Static threat is %f m far from the path, after %f m into the transect.",
+                    ct_dxt, at_dxt);
 
               // Example: "lat=63.46869;lon=10.37790;"
               lats = lats + std::to_string(itr->Lat) + ",";
@@ -421,7 +458,8 @@ namespace Supervisors
             }
           }
         }
-        if(features)
+
+        if (features)
         {
           lats.at(lats.size() - 1) = ';';
           lons.at(lons.size() - 1) = ';';
@@ -434,18 +472,22 @@ namespace Supervisors
       checkDepthContours(double usv_lat, double usv_lon)
       {
         war("Retrieve depth contours.");
-        ENCManager::DepthSoundingVector depth_contours = m_enc->getWithinRadius(usv_lat, usv_lon, m_args.contours_radius, m_args.depth_thr, "DEPARE");
-        std::string lats,lons;
-        if(!depth_contours.empty())
+        ENCManager::DepthSoundingVector depth_contours = m_enc->getWithinRadius(
+          usv_lat, usv_lon, m_args.contours_radius, m_args.depth_thr, "DEPARE");
+
+        std::string lats, lons;
+        if (!depth_contours.empty())
         {
-          lats="lats=";
-          lons="lons=";
-          for(ENCManager::DepthSoundingVector::iterator itr = depth_contours.begin(); itr != depth_contours.end(); ++itr)
+          lats = "lats=";
+          lons = "lons=";
+          ENCManager::DepthSoundingVector::iterator itr;
+          for (itr = depth_contours.begin(); itr != depth_contours.end(); ++itr)
           {
             // Example: "lat=63.46869;lon=10.37790;depth=-10;"
             lats = lats + std::to_string(itr->Lat) + ",";
             lons = lons + std::to_string(itr->Lon) + ",";
           }
+
           lats.at(lats.size() - 1) = ';';
           lons.at(lons.size() - 1) = ';';
           std::string depth = "depth=" + std::to_string(m_args.depth_thr) + ";";
@@ -456,40 +498,42 @@ namespace Supervisors
       void
       dispatchENC(void)
       {
+        //! No information was retrieved.
+        if (m_static_tuple.empty() && m_contours_tuple.empty())
+          return;
+
         //! If some information was retrieved, dispatch ENC msg.
-        if(!m_static_tuple.empty() || !m_contours_tuple.empty())
-        {
-          IMC::ENCAwareness ENCinfo;
-          ENCinfo.danger = m_static_tuple;
-          ENCinfo.depth_at_loc = m_contours_tuple;
-          dispatch(ENCinfo);
-          m_static_tuple = "";
-          m_contours_tuple = "";
-          debug("ENC DISPATCHED.");
-        }
+        IMC::ENCAwareness ENCinfo;
+        ENCinfo.danger = m_static_tuple;
+        ENCinfo.depth_at_loc = m_contours_tuple;
+        dispatch(ENCinfo);
+
+        m_static_tuple.clear();
+        m_contours_tuple.clear();
+        debug("ENC dispatched ...");
       }
 
       //! Main loop.
       void
       onMain(void)
       {
-        while(!stopping())
+        while (!stopping())
         {
           waitForMessages(1.0);
 
-          if(m_timer.overflow())
+          if (!m_timer.overflow())
+            continue;
+
+          //! Check depth contours around USV.
+          if (m_args.check_depth_contours)
           {
-            //! Check depth contours around USV.
-            if(m_enc != NULL && m_args.check_depth_contours)
-            {
-              war(DTR("Retrieving new surroundings."));
-              checkDepthContours(m_current_lat,m_current_lon);
-            }
-
-            dispatchENC();
-
-            m_timer.reset();
+            war(DTR("Retrieving new surroundings."));
+            checkDepthContours(m_current_lat, m_current_lon);
           }
+
+          dispatchENC();
+
+          m_timer.reset();
         }
       }
     };
