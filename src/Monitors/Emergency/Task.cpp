@@ -380,7 +380,8 @@ namespace Monitors
                     timeout, msg.destination.c_str(), msg.txt_data.c_str());
         }
 
-        if (gsm){
+        Utils::String::toLowerCase(msg.destination);
+        if (gsm && Utils::String::trim(msg.destination).compare("iridium") != 0){
           msg.comm_mean=IMC::TransmissionRequest::CMEAN_GSM;
           msg.req_id=m_req++;
           dispatch(msg);
@@ -388,8 +389,11 @@ namespace Monitors
           inf(DTR("sending SMS (t:%u) to %s: %s"),
                     timeout, msg.destination.c_str(), msg.txt_data.c_str());
         }
-
-
+        else
+        {
+          inf(DTR("SMS not sent to destination \"%s\": %s"),
+                    msg.destination.c_str(), msg.txt_data.c_str());
+        }
       }
 
       //! Send all scheduled reports.
