@@ -178,27 +178,38 @@ namespace Supervisors
       void
       onEntityResolution(void)
       {
-        if(m_ctx.profiles.isSelected("Simulation"))
+        if (m_ctx.profiles.isSelected("Simulation"))
         {
-          try
-          {
-            m_gps_eid = resolveEntity(m_args.elabel_gps_sim);
-          }
-          catch (...)
-          {
-            m_gps_eid = 0;
-          }
-        } else if(m_ctx.profiles.isSelected("Hardware"))
-        {
-          try
-          {
-            m_gps_eid = resolveEntity(m_args.elabel_gps_hw);
-          }
-          catch (...)
-          {
-            m_gps_eid = 0;
-          }
+          m_gps_eid = getEid(m_args.elabel_gps_sim);
+          return;
         }
+
+        m_gps_eid = getEid(m_args.elabel_gps_hw);
+      }
+
+      //! Get entity id of label
+      //! Returns UINT16_MAX in case of missing label
+      unsigned int
+      getEid(const std::string& label)
+      {
+        if (label.empty())
+        {
+          war("Ignoring empty entity label");
+          return UINT16_MAX;
+        }
+
+        unsigned int id = UINT16_MAX;
+        try
+        {
+          id = resolveEntity(label);
+        }
+        catch (const std::exception& e)
+        {
+          war(DTR("can not resolve %s (%s), is there a task failure or a configuration error?"),
+              label.c_str(), e.what());
+        }
+
+        return id;
       }
 
       //! Acquire resources.
