@@ -272,6 +272,9 @@ namespace Supervisors
         for(std::vector<IMC::PlanManeuver*>::const_iterator itr = msg->maneuvers.begin(); itr != msg->maneuvers.end(); ++itr)
         {
           // For now just to GoTos.
+          if ((*itr)->data.get()->getId() != IMC::Goto::getIdStatic())
+            continue;
+
           const IMC::Goto* m = static_cast<const IMC::Goto*>((*itr)->data.get());
           //spew("LAT LON: %0.4f %0.4f", m->lat, m->lon);
 
