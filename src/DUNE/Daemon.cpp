@@ -244,6 +244,7 @@ namespace DUNE
       stream << ";" << devs[i]->label << "=" << devs[i]->id;
 
     IMC::EntityList list;
+    list.setDestination(msg->getSource());
     list.op = IMC::EntityList::OP_REPORT;
     list.list = stream.str();
     dispatch(list);
