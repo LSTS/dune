@@ -248,6 +248,13 @@ namespace Transports
         if (msg->op != EntityList::OP_REPORT)
           return;
 
+        if (m_iri_subs.empty())
+          return;
+
+        auto it = m_iri_subs.find(msg->getDestination());
+        if (it == m_iri_subs.end())
+          return;
+
         sendIridiumMsg(msg, true);
       }
 
@@ -449,7 +456,8 @@ namespace Transports
           pmsg = std::make_shared<PersistentMessage>(msg);
 
         IMC::MessagePart* frag = frags.getFragment(0);
-        inf("sending %d fragments of message %s (id:%d)", frags.getNumberOfFragments(), msg->getName(), frag->uid);
+        inf("sending %d fragments of message %s (uid:%d) to destination %d",
+                  frags.getNumberOfFragments(), msg->getName(), frag->uid, msg->getDestination());
 
         for (int i = 0; i < frags.getNumberOfFragments(); i++)
         {
