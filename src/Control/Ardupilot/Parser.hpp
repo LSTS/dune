@@ -164,6 +164,21 @@ public:
     sendMessage(m_msg);
   }
 
+  //! Set target position.
+  //! @param[in] mask Position mask.
+  //! @param[in] fx Target x acceleration/force.
+  //! @param[in] fy Target y acceleration/force.
+  //! @param[in] fz Target z acceleration/force.
+  void
+  setTargetPosition(uint16_t mask, float fx, float fy, float fz)
+  {
+    mavlink_msg_set_position_target_local_ned_pack(m_sys_id, m_comp_id, &m_msg, Clock::getMsec(),
+                                                   m_tgt_sys_id, m_tgt_comp_id, MAV_FRAME_LOCAL_NED,
+                                                   mask, 0, 0, 0, 0, 0, 0, fx, fy, fz, 0, 0);
+
+    sendMessage(m_msg);
+  }
+
   //! Set message interval.
   //! @param[in] msg_id Message id.
   //! @param[in] us Interval in microseconds.
