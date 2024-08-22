@@ -45,6 +45,41 @@ namespace Control
   {
     using DUNE_NAMESPACES;
 
+    //! Seconds before reaching waypoint to consider reached.
+    static const float s_pre_wp_time = 1.0;
+    //! Minimum distance to consider waypoint reached.
+    static const float s_min_wp_dist = 1.0;
+
+    //! List of Arducopter Modes.
+    enum APM_copterModes
+    {
+      CP_MODE_STABILIZE,  // hold level position
+      CP_MODE_ACRO,       // rate control
+      CP_MODE_ALT_HOLD,   // AUTO control
+      CP_MODE_AUTO,       // AUTO control
+      CP_MODE_GUIDED,     // AUTO control
+      CP_MODE_LOITER,     // Hold a single location
+      CP_MODE_RTL,        // AUTO control
+      CP_MODE_CIRCLE,     // AUTO control
+      CP_MODE_POSITION,   // AUTO control
+      CP_MODE_LAND,       // AUTO control
+      CP_MODE_OF_LOITER,  // Hold a single location using optical flow sensor
+      CP_MODE_DRIFT,      // DRIFT mode (Note: 12 is no longer used)
+      CP_MODE_DUNE,       // DUNE mode
+      CP_MODE_SPORT       // earth frame rate control
+    };
+
+    //! APM Type specifier.
+    enum APM_Vehicle
+    {
+      //! Unkown vehicle type
+      VEHICLE_UNKNOWN,
+      //! Fixed wing types
+      VEHICLE_FIXEDWING,
+      //! Copter types (quad, hexa, etc)
+      VEHICLE_COPTER
+    };
+
     struct Arguments
     {
       //! TCP Port
@@ -61,6 +96,24 @@ namespace Control
 
     struct Task: public DUNE::Tasks::Task
     {
+      //! External control
+      bool m_external;
+      //! Vehicle type.
+      uint8_t m_vehicle_type;
+      //! Check if is in service
+      bool m_service;
+      //! Time since last waypoint was sent
+      float m_last_wp;
+      //! Operation Mode.
+      uint32_t m_mode;
+      //! Ground speed.
+      float m_gnd_speed;
+      //! Changing waypoint.
+      bool m_changing_wp;
+      //! Ground reference.
+      bool m_ground;
+      //! Home reference.
+      float m_href;
       //! Mavlink parser.
       MavParser<Task>* m_parser;
       //! Estimated state.
@@ -79,6 +132,12 @@ namespace Control
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
+        m_external(false),
+        m_vehicle_type(VEHICLE_UNKNOWN),
+        m_service(false),
+        m_last_wp(0),
+        m_mode(0),
+        m_ground(true),
         m_parser(nullptr)
       {
         param("TCP - Port", m_args.port)
@@ -102,6 +161,8 @@ namespace Control
           .units(Units::Meter)
           .description("Distance to consider loitering (radius + tolerance)");
 
+        bind<IMC::Takeoff>(this);
+        // bind<IMC::Land>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -148,12 +209,23 @@ namespace Control
       void
       onResourceInitialization(void)
       {
-        m_parser->bind(MAV_(TIMESYNC), &Task::onTimeSync);
-        // Add message handlers
-        addHandler(MAVLINK_MSG_ID_TIMESYNC, &Task::onTimeSync);
+        m_parser->bind(MAV_(HEARTBEAT), &Task::onHeartBeat);
+        m_parser->bind(MAV_(SYSTEM_TIME), &Task::handleSystemTime);
+        m_parser->bind(MAV_(GPS_RAW_INT), &Task::handleRawGps);
+        m_parser->bind(MAV_(ATTITUDE), &Task::onAttitude);
+        m_parser->bind(MAV_(GLOBAL_POSITION_INT), &Task::onGlobalPositionInt);
+        m_parser->bind(MAV_(NAV_CONTROLLER_OUTPUT), &Task::onNavControllerOutput);
 
-        // Enable all data streams
-        m_parser->setStreamData(MAV_DATA_STREAM_ALL, 4, true);
+        // m_parser->waitHeartbeat();
+        // inf("Received first heartbeat message");
+        // m_parser->sendHeartBeat();
+        // !m_parser->waitHeartbeat();
+
+        // Request parameters
+        // https://ardupilot.org/dev/docs/mavlink-get-set-params.html
+
+        // Enable Data Streams
+        setupStreamData(m_args.rates);
         war("Resource initialization complete");
       }
 
@@ -164,17 +236,338 @@ namespace Control
         Memory::clear(m_parser);
       }
 
-      //! @brief Add a message handler to the parser.
-      //! @param msg_id Message ID to handle.
-      //! @param fp Task member function pointer to handle the message.
       void
-      addHandler(uint8_t msg_id, void (Task::*fp)(const mavlink_message_t&))
+      setupStreamData(const std::vector<uint8_t>& rate)
       {
-        m_parser->registerHandler(msg_id, std::bind(fp, this, std::placeholders::_1));
+        static std::vector<uint8_t> steps = {
+          { MAV_DATA_STREAM_POSITION },
+          { MAV_DATA_STREAM_EXTRA1 },
+          { MAV_DATA_STREAM_EXTRA2 },
+          { MAV_DATA_STREAM_EXTRA3 },
+        };
+
+        for (unsigned idx = 0; idx < rate.size(); ++idx)
+          m_parser->setStreamData(steps[idx], rate[idx], true);
       }
 
       void
-      onTimeSync(const mavlink_message_t& msg)
+      onHeartBeat(const mavlink_message_t& msg)
+      {
+        mavlink_heartbeat_t hb;
+        mavlink_msg_heartbeat_decode(&msg, &hb);
+
+        if (hb.type == MAV_TYPE_GCS)
+          return;
+
+        if (hb.system_status == MAV_STATE_CRITICAL)
+          war("APM failsafe activated");
+
+        if (m_vehicle_type == VEHICLE_UNKNOWN)
+        {
+          m_vehicle_type = hb.type;
+          switch (hb.type)
+          {
+            case MAV_TYPE_FIXED_WING:
+              m_vehicle_type = VEHICLE_FIXEDWING;
+              inf(DTR("Controlling a fixed-wing vehicle."));
+              break;
+
+            case MAV_TYPE_QUADROTOR:
+            case MAV_TYPE_TRICOPTER:
+            case MAV_TYPE_HEXAROTOR:
+            case MAV_TYPE_OCTOROTOR:
+              m_vehicle_type = VEHICLE_COPTER;
+              inf(DTR("Controlling a multirotor."));
+              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+            default:
+              break;
+          }
+        }
+
+        if (m_mode != hb.custom_mode)
+          debug("Mode changed from %d to %d", m_mode, hb.custom_mode);
+
+        if (m_vehicle_type == VEHICLE_COPTER)
+          onCopterHB(hb.custom_mode);
+
+        spew("Received heartbeat message");
+        spew("type: %d", hb.type);
+        spew("autopilot: %d", hb.autopilot);
+        spew("base mode: %d", hb.base_mode);
+        spew("custom mode: %d", hb.custom_mode);
+        spew("system status: %d", hb.system_status);
+      }
+
+      void
+      handleSystemTime(const mavlink_message_t& msg)
+      {
+        mavlink_system_time_t time;
+        mavlink_msg_system_time_decode(&msg, &time);
+
+        time_t t = time.time_unix_usec / 1000000;
+        struct tm* tm = gmtime(&t);
+
+        m_fix.utc_time = tm->tm_hour * 3600 + tm->tm_min * 60 + tm->tm_sec;
+        m_fix.utc_year = tm->tm_year + 1900;
+        m_fix.utc_month = tm->tm_mon + 1;
+        m_fix.utc_day = tm->tm_mday;
+
+        m_fix.validity |= IMC::GpsFix::GFV_VALID_TIME | IMC::GpsFix::GFV_VALID_DATE;
+
+        dispatch(m_fix);
+      }
+
+      void
+      handleRawGps(const mavlink_message_t& msg)
+      {
+        mavlink_gps_raw_int_t gps;
+        mavlink_msg_gps_raw_int_decode(&msg, &gps);
+
+        m_fix.lat = Angles::radians(gps.lat * 1e-7);
+        m_fix.lon = Angles::radians(gps.lon * 1e-7);
+        m_fix.height = gps.alt * 1e-3;
+
+        m_fix.cog = Angles::radians(gps.cog * 1e-2);
+        m_fix.sog = gps.vel * 1e-2;
+
+        m_fix.satellites = gps.satellites_visible;
+        m_fix.hdop = gps.eph * 1e-2;
+        m_fix.vdop = gps.epv * 1e-2;
+
+        m_fix.validity = 0;
+
+        if (gps.fix_type <= GPS_FIX_TYPE_NO_FIX)
+        {
+          m_fix.type = IMC::GpsFix::GFT_DEAD_RECKONING;
+          return;
+        }
+
+        m_fix.validity |= IMC::GpsFix::GFV_VALID_POS;
+        m_fix.validity |= IMC::GpsFix::GFV_VALID_HDOP;
+
+        if (gps.fix_type > GPS_FIX_TYPE_3D_FIX)
+          m_fix.validity |= IMC::GpsFix::GFV_VALID_VDOP;
+      }
+
+      void
+      onNavControllerOutput(const mavlink_message_t& msg)
+      {
+        mavlink_nav_controller_output_t nav;
+        mavlink_msg_nav_controller_output_decode(&msg, &nav);
+
+        double ts = m_parser->getMessageTs();
+
+        trace("WP dist: %d", nav.wp_dist);
+
+        IMC::DesiredRoll dr;
+        IMC::DesiredPitch dp;
+        IMC::DesiredHeading dh;
+        IMC::DesiredZ dz;
+
+        dr.setTimeStamp(ts);
+        dp.setTimeStamp(ts);
+        dh.setTimeStamp(ts);
+        dz.setTimeStamp(ts);
+
+        float wp_dist = 0;
+
+        // on Copter
+        Matrix dst = Matrix(3, 1, 0.0);
+        Matrix pos = Matrix(3, 1, 0.0);
+
+        pos(0) = m_estate.x;
+        pos(1) = m_estate.y;
+
+        float alt = (m_dpath.end_z_units & IMC::Z_NONE) ? 0 : m_dpath.end_z;
+
+        WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height, m_dpath.end_lat,
+                            m_dpath.end_lon, alt, &dst(0), &dst(1), &dst(2));
+
+        wp_dist = (dst - pos).norm_2();
+
+        dr.value = Angles::radians(nav.nav_roll);
+        dp.value = Angles::radians(nav.nav_pitch);
+        dh.value = Angles::radians(nav.nav_bearing);
+        dz.value = m_estate.alt + nav.alt_error;
+
+        dispatch(dr);
+        dispatch(dp);
+        dispatch(dh);
+        dispatch(dz);
+
+        bool valid_mode = false;
+        bool is_near = false;
+        float since_last_wp = Clock::get() - m_last_wp;
+
+        if (m_vehicle_type != VEHICLE_COPTER)
+          return;
+        // TODO: Validate for remaining vehicle types
+
+        valid_mode = (m_mode == CP_MODE_AUTO || m_mode == CP_MODE_GUIDED);
+        if (valid_mode && wp_dist <= m_args.ltol)
+          m_pcs.flags |= IMC::PathControlState::FL_LOITERING;
+
+        is_near = !m_changing_wp
+                  && (wp_dist <= s_pre_wp_time * m_gnd_speed || wp_dist <= s_min_wp_dist)
+                  && valid_mode && since_last_wp > 1.0;
+
+        if (is_near)
+        {
+          trace("Near waypoint");
+          m_pcs.flags |= IMC::PathControlState::FL_NEAR;
+        }
+
+        if (m_gnd_speed)
+          m_pcs.x = nav.wp_dist / m_gnd_speed;
+        else
+          m_pcs.x = -1;
+
+        m_pcs.y = nav.xtrack_error;
+        dispatch(m_pcs);
+      }
+
+      void
+      onGlobalPositionInt(const mavlink_message_t& msg)
+      {
+        mavlink_global_position_int_t pos;
+        mavlink_msg_global_position_int_decode(&msg, &pos);
+
+        if (m_vehicle_type == VEHICLE_UNKNOWN)
+          return;
+
+        m_estate.lat = Angles::radians(pos.lat * 1e-7);
+        m_estate.lon = Angles::radians(pos.lon * 1e-7);
+
+        // TODO: Check if this is the correct height
+        Coordinates::WMM wmm(m_ctx.dir_cfg);
+        m_estate.height = (pos.alt * 1e-3) - wmm.height(m_fix.lat, m_fix.lon);
+
+        m_estate.x = 0;
+        m_estate.y = 0;
+        m_estate.z = 0;
+
+        m_estate.vx = pos.vx * 1e-2;
+        m_estate.vy = pos.vy * 1e-2;
+        m_estate.vz = pos.vz * 1e-2;
+
+        BodyFixedFrame::toBodyFrame(m_estate.phi, m_estate.theta, m_estate.psi, m_estate.vx,
+                                    m_estate.vy, m_estate.vz, &m_estate.u, &m_estate.v,
+                                    &m_estate.w);
+
+        m_estate.alt = pos.relative_alt * 1e-3;
+        m_estate.depth = -1;
+
+        if (m_ground)
+          m_href = m_estate.height;
+      }
+
+      void
+      onAttitude(const mavlink_message_t& msg)
+      {
+        mavlink_attitude_t att;
+        mavlink_msg_attitude_decode(&msg, &att);
+
+        double ts = m_parser->getMessageTs();
+
+        m_estate.setTimeStamp(ts);
+        m_estate.phi = att.roll;
+        m_estate.theta = att.pitch;
+        m_estate.psi = att.yaw;
+        m_estate.p = att.rollspeed;
+        m_estate.q = att.pitchspeed;
+        m_estate.r = att.yawspeed;
+
+        if (m_args.nav_external)
+        {
+          IMC::ExternalNavData ext_nav;
+          ext_nav.state.set(m_estate);
+          ext_nav.setTimeStamp(ts);
+          dispatch(ext_nav, DF_KEEP_TIME);
+          return;
+        }
+
+        dispatch(m_estate, DF_KEEP_TIME);
+
+        std::stringstream ss;
+        m_estate.toText(ss);
+
+        spew("Estimated state: %s", ss.str().c_str());
+      }
+
+      void
+      onCopterHB(int32_t op)
+      {
+        IMC::AutopilotMode mode;
+
+        switch (op)
+        {
+          case CP_MODE_STABILIZE:
+            mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+            mode.mode = "STABILIZE";
+            m_external = true;
+            break;
+          case CP_MODE_AUTO:
+            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+            mode.mode = "AUTO";
+            trace("Operation Mode: AUTO");
+            m_external = false;
+            break;
+          case CP_MODE_LOITER:
+            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+            mode.mode = "LOITER";
+            trace("Operation Mode: LOITER");
+            m_external = false;
+            break;
+          case CP_MODE_DUNE:
+            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+            mode.mode = "DUNE";
+            trace("Operation Mode: DUNE");
+            m_external = false;
+            break;
+          case CP_MODE_GUIDED:
+            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+            mode.mode = "GUIDED";
+            trace("Operation Mode: GUIDED");
+            m_external = false;
+            break;
+          case CP_MODE_LAND:
+            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+            mode.mode = "LAND";
+            trace("Operation Mode: LAND");
+            m_external = false;
+            break;
+          default:
+            mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+            mode.mode = "MANUAL";
+            m_external = true;
+            break;
+        }
+
+        m_mode = op;
+        dispatch(mode);
+      }
+
+      void
+      consume(const IMC::Takeoff* msg)
+      {
+        IMC::DesiredPath dpath;
+
+        dpath.start_lat = m_estate.lat;
+        dpath.start_lon = m_estate.lon;
+        dpath.start_z = m_estate.height;
+        dpath.start_z_units = IMC::Z_HEIGHT;
+
+        dpath.end_lat = msg->lat;
+        dpath.end_lon = msg->lon;
+        dpath.end_z = msg->z;
+        dpath.end_z_units = msg->z_units;
+
+        onTakeOff(dpath, msg->takeoff_pitch);
+      }
+
+      void
+      onTakeOff(const IMC::DesiredPath& dpath, float pitch)
       {
         mavlink_timesync_t ts;
         mavlink_msg_timesync_decode(&msg, &ts);
