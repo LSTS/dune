@@ -45,6 +45,7 @@
 
 using DUNE_NAMESPACES;
 
+static const uint64_t s_since_boot = Clock::getNsec();
 
 IO::Handle*
 createHandle(Address addr, uint16_t port)
@@ -82,6 +83,18 @@ public:
 
     setIDs(255, 0);
     setTargetIDs(1, 1);
+
+    bind(MAVLINK_MSG_ID_SYS_STATUS, &MavParser::handleSysStatus);
+    bind(MAVLINK_MSG_ID_RAW_IMU, &MavParser::handleRawIMU);
+    bind(MAVLINK_MSG_ID_ATTITUDE, &MavParser::handleAttitude);
+    bind(MAVLINK_MSG_ID_COMMAND_ACK, &MavParser::handleAck);
+    bind(MAVLINK_MSG_ID_TIMESYNC, &MavParser::handleTimeSync);
+    bind(MAVLINK_MSG_ID_STATUSTEXT, &MavParser::handleStatusText);
+  }
+
+  ~MavParser(void)
+  {
+    Memory::clear(m_sock);
   }
 
   //! Setup system and component id.
@@ -130,7 +143,17 @@ public:
     sendMessage(m_msg);
   }
 
+  //! Clear current mission.
   void
+  clearMission(uint8_t type)
+  {
+    mavlink_msg_mission_clear_all_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, m_tgt_comp_id,
+                                       type);
+
+    sendMessage(m_msg);
+  }
+
+  bool
   poll(double secs)
   {
     if (!Poll::poll(*m_sock, secs))
@@ -184,6 +207,150 @@ public:
     uint16_t len = mavlink_msg_to_send_buffer(m_buf, &msg);
     return m_sock->write(m_buf, len);
   }
+
+  //! Get last message timestamp.
+  double
+  getMessageTs(void)
+  {
+    return m_msg_ts;
+  }
+
+  bool
+
+protected:
+  //! Handle message SYS_STATUS (1)
+  void
+  handleSysStatus(const mavlink_message_t& msg)
+  {
+    mavlink_sys_status_t status;
+    mavlink_msg_sys_status_decode(&msg, &status);
+
+    // Valid voltage values
+    if (status.voltage_battery != UINT16_MAX)
+    {
+      IMC::Voltage voltage;
+      voltage.setTimeStamp(m_msg_ts);
+      voltage.value = 0.001 * (float)status.voltage_battery;
+      m_tsk.dispatch(voltage, DF_KEEP_TIME);
+    }
+
+    // Valid current values
+    if (status.current_battery != -1)
+    {
+      IMC::Current current;
+      current.setTimeStamp(m_msg_ts);
+      current.value = 0.01 * (float)status.current_battery;
+      m_tsk.dispatch(current, DF_KEEP_TIME);
+    }
+
+    // Valid reaming fuel values
+    if (status.battery_remaining != -1)
+    {
+      IMC::FuelLevel fuel;
+      fuel.setTimeStamp(m_msg_ts);
+      fuel.value = status.battery_remaining;
+      m_tsk.dispatch(fuel, DF_KEEP_TIME);
+    }
+
+    // TODO: Additional information can be provided
+    // errors_comm -> Communication errors (UART, I2C, SPI, CAN)
+    // load -> Load in percent (0-100)
+  }
+
+  //! Handle message RAW_IMU (27)
+  void
+  handleRawIMU(const mavlink_message_t& msg)
+  {
+    mavlink_raw_imu_t imu;
+    mavlink_msg_raw_imu_decode(&msg, &imu);
+
+    IMC::Acceleration acc;
+    acc.setTimeStamp(m_msg_ts);
+    acc.x = imu.xacc;
+    acc.y = imu.yacc;
+    acc.z = imu.zacc;
+    m_tsk.dispatch(acc, DF_KEEP_TIME);
+
+    IMC::AngularVelocity gyro;
+    gyro.setTimeStamp(m_msg_ts);
+    gyro.x = imu.xgyro;
+    gyro.y = imu.ygyro;
+    gyro.z = imu.zgyro;
+    m_tsk.dispatch(gyro, DF_KEEP_TIME);
+
+    IMC::MagneticField mag;
+    mag.setTimeStamp(m_msg_ts);
+    mag.x = imu.xmag;
+    mag.y = imu.ymag;
+    mag.z = imu.zmag;
+    m_tsk.dispatch(mag, DF_KEEP_TIME);
+  }
+
+  //! Handle message ATTITUDE (30)
+  void
+  handleAttitude(const mavlink_message_t& msg)
+  {
+    mavlink_attitude_t att;
+    mavlink_msg_attitude_decode(&msg, &att);
+
+    IMC::EulerAngles euler;
+    euler.setTimeStamp(m_msg_ts);
+    euler.time = att.time_boot_ms;
+    euler.phi = att.roll;
+    euler.theta = att.pitch;
+    euler.psi = att.yaw;
+    m_tsk.dispatch(euler, DF_KEEP_TIME);
+
+    IMC::AngularVelocity av;
+    av.setTimeStamp(m_msg_ts);
+    av.time = att.time_boot_ms;
+    av.x = att.rollspeed;
+    av.y = att.pitchspeed;
+    av.z = att.yawspeed;
+    m_tsk.dispatch(av, DF_KEEP_TIME);
+  }
+
+  //! Handle message COMMAND_ACK (77)
+  void
+  handleAck(const mavlink_message_t& msg)
+  {
+    mavlink_command_ack_t ack;
+    mavlink_msg_command_ack_decode(&msg, &ack);
+
+    m_tsk.inf("Received ack message");
+    m_tsk.inf("command: %d", ack.command);
+    m_tsk.inf("result: %d", ack.result);
+  }
+
+  //! Handle message TIMESYNC (111)
+  void
+  handleTimeSync(const mavlink_message_t& msg)
+  {
+    mavlink_timesync_t ts;
+    mavlink_msg_timesync_decode(&msg, &ts);
+
+    // Reply
+    if (ts.tc1 != 0)
+      return;
+
+    // Time sync request
+    ts.tc1 = Clock::getNsec() - s_since_boot;
+    ts.target_system = m_tgt_sys_id;
+    ts.target_component = m_tgt_comp_id;
+
+    // Time sync response
+    mavlink_msg_timesync_encode(m_sys_id, m_comp_id, &m_msg, &ts);
+    sendMessage(m_msg);
+  }
+
+  //! Handle message STATUSTEXT (253)
+  void
+  handleStatusText(const mavlink_message_t& msg)
+  {
+    mavlink_statustext_t text;
+    mavlink_msg_statustext_decode(&msg, &text);
+
+    m_tsk.war("Received status text message: %s (%d)", text.text, text.severity);
   }
 
 private:
@@ -232,6 +399,8 @@ private:
   uint8_t m_tgt_comp_id;
   //! Mavlink message.
   mavlink_message_t m_msg;
+  //! Message Timestamp.
+  double m_msg_ts;
   //! Buffer for incoming messages.
   uint8_t m_buf[MAVLINK_MAX_PACKET_LEN];
   //! Task owner.
