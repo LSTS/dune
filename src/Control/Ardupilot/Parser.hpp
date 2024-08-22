@@ -45,7 +45,26 @@
 
 using DUNE_NAMESPACES;
 
-class MavParser
+
+IO::Handle*
+createHandle(Address addr, uint16_t port)
+{
+  if (port == 14550 || port == 14551)
+  {
+    UDPSocket* udp = new UDPSocket;
+    udp->bind(port);
+    udp->connect(addr, port);
+    return udp;
+  }
+
+  TCPSocket* tcp = new TCPSocket;
+  tcp->connect(addr, port);
+  tcp->setNoDelay(true);
+
+  return tcp;
+}
+
+template <typename Task> class MavParser
 {
 public:
   typedef std::function<void(const mavlink_message_t&)> MavlinkHandler;
@@ -56,12 +75,10 @@ public:
   //! @param[in] port port to connect to.
   //! @throw NetworkError if connection fails.
   MavParser(Task& tsk, Address addr, uint16_t port):
-    m_tsk(tsk)
+    m_tsk(tsk),
+    m_sock(createHandle(addr, port))
   {
-    m_sock.connect(addr, port);
-    m_sock.setNoDelay(true);
-
-    m_tsk.spew("Connected to %s:%u", addr.c_str(), port);
+    m_tsk.inf("Connected to %s:%u", addr.c_str(), port);
 
     setIDs(255, 0);
     setTargetIDs(1, 1);
@@ -116,21 +133,46 @@ public:
   void
   poll(double secs)
   {
-    if (!Poll::poll(m_sock, secs))
-      return;
+    if (!Poll::poll(*m_sock, secs))
+      return false;
 
-    size_t rv = m_sock.read(m_buf, sizeof(m_buf));
-    if (parse(m_buf, rv, m_msg))
-      handleMsg(m_msg);
+    size_t rv = m_sock->read(m_buf, sizeof(m_buf));
+    m_msg_ts = Clock::getSinceEpoch();
+
+    mavlink_message_t new_msg;
+
+    if (parse(m_buf, rv, new_msg))
+      handleMsg(new_msg);
+
+    return true;
   }
 
   //! Register message handler.
   //! @param[in] msg_id Message id.
   //! @param[in] handler Handler function.
   void
-  registerHandler(uint8_t msg_id, MavlinkHandler handler)
+  bind(uint8_t msg_id, MavlinkHandler handler)
   {
     m_handlers[msg_id] = handler;
+  }
+
+  //! Register message handler.
+  //! @param[in] msg_id Message id.
+  //! @param[in] fp Task member function pointer.
+  void
+  bind(uint8_t msg_id, void (Task::*fp)(const mavlink_message_t&))
+  {
+    m_tsk.spew("Add consumer for mav id %d", msg_id);
+    m_handlers[msg_id] = std::bind(fp, &m_tsk, std::placeholders::_1);
+  }
+
+  //! Register message handler.
+  //! @param[in] msg_id Message id.
+  //! @param[in] fp Parser member function pointer.
+  void
+  bind(uint8_t msg_id, void (MavParser<Task>::*fp)(const mavlink_message_t&))
+  {
+    m_handlers[msg_id] = std::bind(fp, this, std::placeholders::_1);
   }
 
   //! Send message.
@@ -140,7 +182,8 @@ public:
   sendMessage(mavlink_message_t& msg)
   {
     uint16_t len = mavlink_msg_to_send_buffer(m_buf, &msg);
-    return m_sock.write(m_buf, len);
+    return m_sock->write(m_buf, len);
+  }
   }
 
 private:
@@ -156,7 +199,10 @@ private:
     for (unsigned i = 0; i < data_len; ++i)
     {
       if (mavlink_parse_char(MAVLINK_COMM_0, data[i], &msg, &status))
+      {
+        m_tgt_sys_id = msg.sysid;
         return true;
+      }
 
       if (status.packet_rx_drop_count)
         return false;
@@ -170,7 +216,7 @@ private:
   void
   handleMsg(mavlink_message_t& msg)
   {
-    m_tsk.spew("Received message %d", msg.msgid);
+    m_tsk.spew("Received message with id: %d", msg.msgid);
     auto it = m_handlers.find(msg.msgid);
     if (it != m_handlers.end())
       it->second(msg);
@@ -191,7 +237,7 @@ private:
   //! Task owner.
   Task& m_tsk;
   //! Connection socket.
-  TCPSocket m_sock;
+  IO::Handle* m_sock;
   //! Message handlers.
   std::unordered_map<uint8_t, MavlinkHandler> m_handlers;
 };

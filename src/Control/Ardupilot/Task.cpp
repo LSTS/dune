@@ -33,6 +33,8 @@
 // Local headers.
 #include "Parser.hpp"
 
+#define MAV_(X) MAVLINK_MSG_ID_##X
+
 namespace Control
 {
   //! Ardupilot interface using MAVLink v2.
@@ -109,11 +111,13 @@ namespace Control
       void
       onResourceInitialization(void)
       {
+        m_parser->bind(MAV_(TIMESYNC), &Task::onTimeSync);
         // Add message handlers
         addHandler(MAVLINK_MSG_ID_TIMESYNC, &Task::onTimeSync);
 
         // Enable all data streams
-        m_parser->setStreamData(MAV_DATA_STREAM_ALL, 1, true);
+        m_parser->setStreamData(MAV_DATA_STREAM_ALL, 4, true);
+        war("Resource initialization complete");
       }
 
       //! Release resources.
