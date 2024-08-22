@@ -217,11 +217,12 @@ namespace Control
       onResourceInitialization(void)
       {
         m_parser->bind(MAV_(HEARTBEAT), &Task::onHeartBeat);
-        m_parser->bind(MAV_(SYSTEM_TIME), &Task::handleSystemTime);
-        m_parser->bind(MAV_(GPS_RAW_INT), &Task::handleRawGps);
+        m_parser->bind(MAV_(SYSTEM_TIME), &Task::onSystemTime);
+        m_parser->bind(MAV_(GPS_RAW_INT), &Task::onRawGps);
         m_parser->bind(MAV_(ATTITUDE), &Task::onAttitude);
         m_parser->bind(MAV_(GLOBAL_POSITION_INT), &Task::onGlobalPositionInt);
         m_parser->bind(MAV_(NAV_CONTROLLER_OUTPUT), &Task::onNavControllerOutput);
+        m_parser->bind(MAV_(VFR_HUD), &Task::onVFRHud);
 
         // m_parser->waitHeartbeat();
         // inf("Received first heartbeat message");
@@ -247,9 +248,9 @@ namespace Control
       setupStreamData(const std::vector<uint8_t>& rate)
       {
         static std::vector<uint8_t> steps = {
-          { MAV_DATA_STREAM_POSITION },
           { MAV_DATA_STREAM_EXTRA1 },
           { MAV_DATA_STREAM_EXTRA2 },
+          { MAV_DATA_STREAM_POSITION },
           { MAV_DATA_STREAM_EXTRA3 },
         };
 
@@ -353,7 +354,7 @@ namespace Control
       }
 
       void
-      handleSystemTime(const mavlink_message_t& msg)
+      onSystemTime(const mavlink_message_t& msg)
       {
         mavlink_system_time_t time;
         mavlink_msg_system_time_decode(&msg, &time);
@@ -372,7 +373,7 @@ namespace Control
       }
 
       void
-      handleRawGps(const mavlink_message_t& msg)
+      onRawGps(const mavlink_message_t& msg)
       {
         mavlink_gps_raw_int_t gps;
         mavlink_msg_gps_raw_int_decode(&msg, &gps);
@@ -481,6 +482,31 @@ namespace Control
       }
 
       void
+      onVFRHud(const mavlink_message_t& msg)
+      {
+        mavlink_vfr_hud_t hud;
+        mavlink_msg_vfr_hud_decode(&msg, &hud);
+
+        IMC::IndicatedSpeed is;
+        IMC::TrueSpeed ts;
+        IMC::Throttle thr;
+
+        m_gnd_speed = hud.groundspeed;
+
+        is.value = hud.airspeed;
+        ts.value = hud.groundspeed;
+        thr.value = hud.throttle;
+
+        is.setTimeStamp(m_parser->getMessageTs());
+        ts.setTimeStamp(m_parser->getMessageTs());
+        thr.setTimeStamp(m_parser->getMessageTs());
+
+        dispatch(is, DF_KEEP_TIME);
+        dispatch(ts, DF_KEEP_TIME);
+        dispatch(thr, DF_KEEP_TIME);
+      }
+
+      void
       onGlobalPositionInt(const mavlink_message_t& msg)
       {
         mavlink_global_position_int_t pos;
@@ -489,10 +515,12 @@ namespace Control
         if (m_vehicle_type == VEHICLE_UNKNOWN)
           return;
 
+        // TODO: Check if Lat/Lon should keep changing
+        // or Keep initial values as reference
+
         m_estate.lat = Angles::radians(pos.lat * 1e-7);
         m_estate.lon = Angles::radians(pos.lon * 1e-7);
 
-        // TODO: Check if this is the correct height
         Coordinates::WMM wmm(m_ctx.dir_cfg);
         m_estate.height = (pos.alt * 1e-3) - wmm.height(m_fix.lat, m_fix.lon);
 
