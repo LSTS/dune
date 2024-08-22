@@ -112,10 +112,14 @@ namespace Control
       bool m_changing_wp;
       //! Ground reference.
       bool m_ground;
+      //! Landing flag.
+      bool m_landing;
       //! Home reference.
       float m_href;
       //! Mavlink parser.
       MavParser<Task>* m_parser;
+      //! Control loops state.
+      uint32_t m_cloops;
       //! Estimated state.
       IMC::EstimatedState m_estate;
       //! GpsFix message.
@@ -161,8 +165,11 @@ namespace Control
           .units(Units::Meter)
           .description("Distance to consider loitering (radius + tolerance)");
 
+        bind<IMC::ControlLoops>(this);
+        bind<IMC::DesiredControl>(this);
         bind<IMC::Takeoff>(this);
-        // bind<IMC::Land>(this);
+        bind<IMC::Land>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -269,7 +276,7 @@ namespace Control
           {
             case MAV_TYPE_FIXED_WING:
               m_vehicle_type = VEHICLE_FIXEDWING;
-              inf(DTR("Controlling a fixed-wing vehicle."));
+              err(DTR("Not implemented control for fixed-wing vehicle."));
               break;
 
             case MAV_TYPE_QUADROTOR:
@@ -288,8 +295,54 @@ namespace Control
         if (m_mode != hb.custom_mode)
           debug("Mode changed from %d to %d", m_mode, hb.custom_mode);
 
-        if (m_vehicle_type == VEHICLE_COPTER)
-          onCopterHB(hb.custom_mode);
+        IMC::AutopilotMode mode;
+
+        switch (hb.custom_mode)
+        {
+          case CP_MODE_STABILIZE:
+            mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+            mode.mode = "STABILIZE";
+            m_external = true;
+            break;
+          case CP_MODE_AUTO:
+            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+            mode.mode = "AUTO";
+            trace("Operation Mode: AUTO");
+            m_external = false;
+            break;
+          case CP_MODE_LOITER:
+            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+            mode.mode = "LOITER";
+            trace("Operation Mode: LOITER");
+            m_external = false;
+            break;
+          case CP_MODE_DUNE:
+            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+            mode.mode = "DUNE";
+            trace("Operation Mode: DUNE");
+            m_external = false;
+            break;
+          case CP_MODE_GUIDED:
+            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+            mode.mode = "GUIDED";
+            trace("Operation Mode: GUIDED");
+            m_external = false;
+            break;
+          case CP_MODE_LAND:
+            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
+            mode.mode = "LAND";
+            trace("Operation Mode: LAND");
+            m_external = false;
+            break;
+          default:
+            mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
+            mode.mode = "MANUAL";
+            m_external = true;
+            break;
+        }
+
+        m_mode = hb.custom_mode;
+        dispatch(mode);
 
         spew("Received heartbeat message");
         spew("type: %d", hb.type);
@@ -488,64 +541,61 @@ namespace Control
         }
 
         dispatch(m_estate, DF_KEEP_TIME);
+      }
 
-        std::stringstream ss;
-        m_estate.toText(ss);
+      //! Prints to terminal and log when control loops are activated and deactivated
+      void
+      info(uint32_t was, uint32_t is, uint32_t loop, const char* desc)
+      {
+        was &= loop;
+        is &= loop;
 
-        spew("Estimated state: %s", ss.str().c_str());
+        if (was && !is)
+          inf("%s - deactivating", desc);
+        else if (!was && is)
+          inf("%s - activating", desc);
       }
 
       void
-      onCopterHB(int32_t op)
+      consume(const IMC::ControlLoops* msg)
       {
-        IMC::AutopilotMode mode;
+        uint32_t prev = m_cloops;
+        m_cloops = msg->enable ? m_cloops | msg->mask : m_cloops & ~msg->mask;
 
-        switch (op)
+        if (m_external && msg->enable)
         {
-          case CP_MODE_STABILIZE:
-            mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
-            mode.mode = "STABILIZE";
-            m_external = true;
-            break;
-          case CP_MODE_AUTO:
-            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
-            mode.mode = "AUTO";
-            trace("Operation Mode: AUTO");
-            m_external = false;
-            break;
-          case CP_MODE_LOITER:
-            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
-            mode.mode = "LOITER";
-            trace("Operation Mode: LOITER");
-            m_external = false;
-            break;
-          case CP_MODE_DUNE:
-            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
-            mode.mode = "DUNE";
-            trace("Operation Mode: DUNE");
-            m_external = false;
-            break;
-          case CP_MODE_GUIDED:
-            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
-            mode.mode = "GUIDED";
-            trace("Operation Mode: GUIDED");
-            m_external = false;
-            break;
-          case CP_MODE_LAND:
-            mode.autonomy = IMC::AutopilotMode::AL_AUTO;
-            mode.mode = "LAND";
-            trace("Operation Mode: LAND");
-            m_external = false;
-            break;
-          default:
-            mode.autonomy = IMC::AutopilotMode::AL_MANUAL;
-            mode.mode = "MANUAL";
-            m_external = true;
-            break;
+          inf("ArduPilot is in manual mode, saving control loops ...");
+          return;
         }
 
-        m_mode = op;
-        dispatch(mode);
+        info(prev, m_cloops, IMC::CL_SPEED, "speed control");
+        info(prev, m_cloops, IMC::CL_ALTITUDE, "altitude control");
+        info(prev, m_cloops, IMC::CL_VERTICAL_RATE, "vertical rate control");
+        info(prev, m_cloops, IMC::CL_ROLL, "bank control");
+        info(prev, m_cloops, IMC::CL_YAW, "heading control");
+        info(prev, m_cloops, IMC::CL_PATH, "path control");
+      }
+
+      void
+      consume(const DesiredControl* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (m_external)
+        {
+          inf("ignoring DesiredControl message, ArduPilot is in manual mode");
+          return;
+        }
+
+        if (!(m_cloops & IMC::CL_FORCE))
+        {
+          war("Force (acc) not enabled");
+          return;
+        }
+
+        if (m_mode != CP_MODE_GUIDED)
+          m_parser->sendCommand(MAV_CMD_DO_SET_MODE, 1, CP_MODE_GUIDED);
       }
 
       void
@@ -569,7 +619,7 @@ namespace Control
         m_parser->clearMission(MAV_MISSION_TYPE_ALL);
 
         // Set mode to guided
-        m_parser->sendCommand(MAV_CMD_DO_SET_MODE, MAV_MODE_GUIDED_DISARMED);
+        m_parser->sendCommand(MAV_CMD_DO_SET_MODE, 1, CP_MODE_GUIDED);
 
         m_parser->sendCommand(MAV_CMD_NAV_TAKEOFF, Angles::degrees(msg->takeoff_pitch), 0, 0, 0, 0,
                               0, msg->z - m_href);
@@ -585,6 +635,35 @@ namespace Control
         m_pcs.end_z_units = msg->z_units;
 
         dispatch(m_pcs);
+      }
+
+      void
+      consume(const IMC::Land* msg)
+      {
+        if (!(m_dpath.flags & IMC::DesiredPath::FL_LAND))
+        {
+          debug("Invalid land command, desired path is not set to land");
+          return;
+        }
+
+        m_parser->sendCommand(MAV_CMD_DO_SET_MODE, 1, CP_MODE_LAND);
+
+        m_parser->sendCommand(MAV_CMD_NAV_LAND, msg->abort_z - m_href, 0, 0, 0,
+                              Angles::degrees(msg->lat), Angles::degrees(msg->lon));
+
+        m_landing = true;
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        m_ground = msg->medium == IMC::VehicleMedium::VM_GROUND;
+
+        if (!(m_ground && m_landing && m_external))
+          return;
+
+        m_parser->clearMission(MAV_MISSION_TYPE_ALL);
+        m_landing = false;
       }
 
       //! Main loop.
