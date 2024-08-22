@@ -51,12 +51,26 @@ namespace Control
       uint16_t port;
       //! TCP Address
       Address addr;
+      //! Use External Navigation Data
+      bool nav_external;
+      //! Telemetry Rates
+      std::vector<uint8_t> rates;
+      //! Loiter tolerance
+      float ltol;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
       //! Mavlink parser.
-      MavParser* m_parser;
+      MavParser<Task>* m_parser;
+      //! Estimated state.
+      IMC::EstimatedState m_estate;
+      //! GpsFix message.
+      IMC::GpsFix m_fix;
+      //! DesiredPath message.
+      IMC::DesiredPath m_dpath;
+      //! PathControlState message.
+      IMC::PathControlState m_pcs;
       //! Task arguments.
       Arguments m_args;
 
@@ -74,6 +88,20 @@ namespace Control
         param("TCP - Address", m_args.addr)
           .defaultValue("127.0.0.1")
           .description("Address for connection to Ardupilot");
+
+        param("Use External Nav Data", m_args.nav_external)
+          .defaultValue("false")
+          .description("Dispatch ExternalNavData instead of EstimatedState");
+
+        param("Telemetry Rate", m_args.rates)
+          .units(Units::Hertz)
+          .description("Telemetry output rate from Ardupilot");
+
+        param("Loiter Tolerance", m_args.ltol)
+          .defaultValue("10")
+          .units(Units::Meter)
+          .description("Distance to consider loitering (radius + tolerance)");
+
       }
 
       //! Update internal state with new parameter values.
@@ -97,11 +125,12 @@ namespace Control
       {
         try
         {
-          m_parser = new MavParser(*this, m_args.addr, m_args.port);
+          m_parser = new MavParser<Task>(*this, m_args.addr, m_args.port);
           spew("Ardupiloit interface initialized");
         }
         catch (const std::exception& e)
         {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_COM_ERROR);
           err("Ardupilot interface initialization failed");
           throw RestartNeeded(e.what(), 30);
         }
