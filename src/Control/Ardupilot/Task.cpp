@@ -134,6 +134,14 @@ namespace Control
           err("Ardupilot interface initialization failed");
           throw RestartNeeded(e.what(), 30);
         }
+
+        std::stringstream ss;
+        ss << "mavlink+tcp://" << m_args.addr << ":" << m_args.port << "/";
+
+        IMC::AnnounceService announce;
+        announce.service = ss.str();
+        announce.service_type = AnnounceService::SRV_TYPE_EXTERNAL;
+        dispatch(announce);
       }
 
       //! Initialize resources.
