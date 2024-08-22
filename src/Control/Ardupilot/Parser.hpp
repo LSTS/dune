@@ -124,8 +124,42 @@ public:
   void
   setStreamData(uint8_t stream_id, uint16_t hz, bool enable)
   {
+    std::map<uint8_t, std::string> stream_map = {
+      { MAV_DATA_STREAM_ALL, "All" },
+      { MAV_DATA_STREAM_RAW_SENSORS, "Raw Sensors" },
+      { MAV_DATA_STREAM_EXTENDED_STATUS, "Extended Status" },
+      { MAV_DATA_STREAM_RC_CHANNELS, "RC Channels" },
+      { MAV_DATA_STREAM_RAW_CONTROLLER, "Raw Controller" },
+      { MAV_DATA_STREAM_POSITION, "Position" },
+      { MAV_DATA_STREAM_EXTRA1, "Extra1" },
+      { MAV_DATA_STREAM_EXTRA2, "Extra2" },
+      { MAV_DATA_STREAM_EXTRA3, "Extra3" },
+    };
+
+    m_tsk.war("Setting stream %s to %s at %d Hz", stream_map[stream_id].c_str(),
+              enable ? "enabled" : "disabled", hz);
+
     mavlink_msg_request_data_stream_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, m_tgt_comp_id,
                                          stream_id, hz, enable);
+
+    sendMessage(m_msg);
+  }
+
+  void
+  sendHeartBeat(void)
+  {
+    mavlink_msg_heartbeat_pack(m_sys_id, m_comp_id, &m_msg, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID,
+                               MAV_MODE_PREFLIGHT, 0, 0);
+
+    sendMessage(m_msg);
+  }
+
+  void
+  sendCommand(uint8_t cmd, float p1 = 0, float p2 = 0, float p3 = 0, float p4 = 0, float p5 = 0,
+              float p6 = 0, float p7 = 0)
+  {
+    mavlink_msg_command_long_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, m_tgt_comp_id, cmd, 0,
+                                  p1, p2, p3, p4, p5, p6, p7);
 
     sendMessage(m_msg);
   }
@@ -134,11 +168,9 @@ public:
   //! @param[in] msg_id Message id.
   //! @param[in] us Interval in microseconds.
   void
-  setMessageInterval(uint8_t msg_id, float us)
+  setMessageInterval(uint8_t msg_id, int32_t us)
   {
-    // param 3-7 are unused
-    mavlink_msg_command_long_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, m_tgt_comp_id,
-                                  MAV_CMD_SET_MESSAGE_INTERVAL, 0, msg_id, us, 0, 0, 0, 0, 0);
+    mavlink_msg_message_interval_pack(m_sys_id, m_comp_id, &m_msg, msg_id, us);
 
     sendMessage(m_msg);
   }
@@ -216,6 +248,27 @@ public:
   }
 
   bool
+  waitHeartbeat(double seconds = 1.0)
+  {
+    Counter<double> timer(seconds);
+    while (!timer.overflow())
+    {
+      if (!Poll::poll(*m_sock, timer.getRemaining()))
+        return false;
+
+      size_t rv = m_sock->read(m_buf, sizeof(m_buf));
+      m_msg_ts = Clock::getSinceEpoch();
+
+      mavlink_message_t new_msg;
+      if (parse(m_buf, rv, new_msg))
+        handleMsg(new_msg);
+
+      if (new_msg.msgid == MAVLINK_MSG_ID_HEARTBEAT)
+        return true;
+    }
+
+    return false;
+  }
 
 protected:
   //! Handle message SYS_STATUS (1)
