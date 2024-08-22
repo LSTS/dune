@@ -551,33 +551,40 @@ namespace Control
       void
       consume(const IMC::Takeoff* msg)
       {
-        IMC::DesiredPath dpath;
+        if (m_external)
+        {
+          m_dpath.start_lat = m_estate.lat;
+          m_dpath.start_lon = m_estate.lon;
+          m_dpath.start_z = m_estate.height;
+          m_dpath.start_z_units = IMC::Z_HEIGHT;
 
-        dpath.start_lat = m_estate.lat;
-        dpath.start_lon = m_estate.lon;
-        dpath.start_z = m_estate.height;
-        dpath.start_z_units = IMC::Z_HEIGHT;
+          m_dpath.end_lat = msg->lat;
+          m_dpath.end_lon = msg->lon;
+          m_dpath.end_z = msg->z;
+          m_dpath.end_z_units = msg->z_units;
+          inf("ArduPilot is in manual mode ...");
+          return;
+        }
 
-        dpath.end_lat = msg->lat;
-        dpath.end_lon = msg->lon;
-        dpath.end_z = msg->z;
-        dpath.end_z_units = msg->z_units;
+        m_parser->clearMission(MAV_MISSION_TYPE_ALL);
 
-        onTakeOff(dpath, msg->takeoff_pitch);
-      }
+        // Set mode to guided
+        m_parser->sendCommand(MAV_CMD_DO_SET_MODE, MAV_MODE_GUIDED_DISARMED);
 
-      void
-      onTakeOff(const IMC::DesiredPath& dpath, float pitch)
-      {
-        mavlink_timesync_t ts;
-        mavlink_msg_timesync_decode(&msg, &ts);
+        m_parser->sendCommand(MAV_CMD_NAV_TAKEOFF, Angles::degrees(msg->takeoff_pitch), 0, 0, 0, 0,
+                              0, msg->z - m_href);
 
-        spew("Received sync message");
-        spew("tc1: %ld", ts.tc1);
-        spew("ts1: %ld", ts.ts1);
-        spew("sys - component: %d - %d", ts.target_system, ts.target_component);
+        m_pcs.start_lat = m_estate.lat;
+        m_pcs.start_lon = m_estate.lon;
+        m_pcs.start_z = m_estate.height;
+        m_pcs.start_z_units = IMC::Z_HEIGHT;
 
-        // Reply
+        m_pcs.end_lat = msg->lat;
+        m_pcs.end_lon = msg->lon;
+        m_pcs.end_z = msg->z;
+        m_pcs.end_z_units = msg->z_units;
+
+        dispatch(m_pcs);
       }
 
       //! Main loop.
