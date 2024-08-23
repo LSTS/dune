@@ -233,7 +233,15 @@ namespace Control
         void
         onEntityResolution(void)
         {
-          m_wdist_ent = resolveEntity(m_args.wdist_label);
+          m_wdist_ent = 0;
+          try
+          {
+            m_wdist_ent = resolveEntity(m_args.wdist_label);
+          }
+          catch(const Entities::EntityDataBase::NonexistentLabel& e)
+          {
+            war("%s. Wall tracking off", e.what());
+          } 
         }
 
         void
