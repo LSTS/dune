@@ -523,6 +523,10 @@ private:
   uint8_t m_tgt_sys_id;
   //! Target component id.
   uint8_t m_tgt_comp_id;
+  //! Number of parameters.
+  uint16_t m_param_count;
+  //! Current parameter index.
+  uint16_t m_param_index;
   //! Mavlink message.
   mavlink_message_t m_msg;
   //! Message Timestamp.
