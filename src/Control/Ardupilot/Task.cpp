@@ -82,10 +82,8 @@ namespace Control
 
     struct Arguments
     {
-      //! TCP Port
-      uint16_t port;
-      //! TCP Address
-      Address addr;
+      //! I/O handle for Ardupilot interface
+      std::string handle;
       //! Use External Navigation Data
       bool nav_external;
       //! Telemetry Rates
