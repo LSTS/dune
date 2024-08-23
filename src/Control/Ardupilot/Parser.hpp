@@ -47,24 +47,6 @@ using DUNE_NAMESPACES;
 
 static const uint64_t s_since_boot = Clock::getNsec();
 
-IO::Handle*
-createHandle(Address addr, uint16_t port)
-{
-  if (port == 14550 || port == 14551)
-  {
-    UDPSocket* udp = new UDPSocket;
-    udp->bind(port);
-    udp->connect(addr, port);
-    return udp;
-  }
-
-  TCPSocket* tcp = new TCPSocket;
-  tcp->connect(addr, port);
-  tcp->setNoDelay(true);
-
-  return tcp;
-}
-
 template <typename Task> class MavParser
 {
 public:
@@ -75,14 +57,14 @@ public:
   //! @param[in] addr address to connect to.
   //! @param[in] port port to connect to.
   //! @throw NetworkError if connection fails.
-  MavParser(Task& tsk, Address addr, uint16_t port):
+  MavParser(Task& tsk, const std::string& handle):
     m_tsk(tsk),
-    m_sock(createHandle(addr, port))
+    m_sock(createHandle(handle))
   {
-    m_tsk.inf("Connected to %s:%u", addr.c_str(), port);
+    m_tsk.inf("Connected to %s", handle.c_str());
 
     setIDs(255, 0);
-    setTargetIDs(1, 1);
+    setTargetIDs(1, 0);
 
     bind(MAVLINK_MSG_ID_SYS_STATUS, &MavParser::handleSysStatus);
     bind(MAVLINK_MSG_ID_RAW_IMU, &MavParser::handleRawIMU);
@@ -90,6 +72,28 @@ public:
     bind(MAVLINK_MSG_ID_COMMAND_ACK, &MavParser::handleAck);
     bind(MAVLINK_MSG_ID_TIMESYNC, &MavParser::handleTimeSync);
     bind(MAVLINK_MSG_ID_STATUSTEXT, &MavParser::handleStatusText);
+    bind(MAVLINK_MSG_ID_PARAM_VALUE, &MavParser::onParamValue);
+  }
+
+  void
+  onParamValue(const mavlink_message_t& msg)
+  {
+    mavlink_param_value_t param;
+    mavlink_msg_param_value_decode(&msg, &param);
+
+    std::string name(param.param_id);
+    m_tsk.spew("param_id: %s", name.c_str());
+
+    //? Store parameters
+
+    m_param_count = param.param_count;
+    m_param_index = param.param_index > m_param_index ? param.param_index : m_param_index;
+  }
+
+  bool
+  allParamsReceived(void)
+  {
+    return m_param_index == m_param_count;
   }
 
   ~MavParser(void)
@@ -139,8 +143,16 @@ public:
     m_tsk.war("Setting stream %s to %s at %d Hz", stream_map[stream_id].c_str(),
               enable ? "enabled" : "disabled", hz);
 
-    mavlink_msg_request_data_stream_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, m_tgt_comp_id,
+    mavlink_msg_request_data_stream_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, 1,
                                          stream_id, hz, enable);
+
+    sendMessage(m_msg);
+  }
+
+  void
+  requestParams(void)
+  {
+    mavlink_msg_param_request_list_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, m_tgt_comp_id);
 
     sendMessage(m_msg);
   }
@@ -148,14 +160,14 @@ public:
   void
   sendHeartBeat(void)
   {
-    mavlink_msg_heartbeat_pack(m_sys_id, m_comp_id, &m_msg, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID,
-                               MAV_MODE_PREFLIGHT, 0, 0);
+    mavlink_msg_heartbeat_pack(m_sys_id, m_comp_id, &m_msg, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, 0,
+                               0, 0);
 
     sendMessage(m_msg);
   }
 
   void
-  sendCommand(uint8_t cmd, float p1 = 0, float p2 = 0, float p3 = 0, float p4 = 0, float p5 = 0,
+  sendCommand(uint16_t cmd, float p1 = 0, float p2 = 0, float p3 = 0, float p4 = 0, float p5 = 0,
               float p6 = 0, float p7 = 0)
   {
     mavlink_msg_command_long_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, m_tgt_comp_id, cmd, 0,
@@ -418,10 +430,56 @@ protected:
     mavlink_statustext_t text;
     mavlink_msg_statustext_decode(&msg, &text);
 
-    m_tsk.war("Received status text message: %s (%d)", text.text, text.severity);
+    m_tsk.war("Status (%d): %s", text.severity, text.text);
   }
 
 private:
+  //! Parse connection handle.
+  //! @param[in] handle connection handle.
+  //! @return tuple with socket, address and port.
+  std::tuple<std::string, std::string, int>
+  parseHandle(const std::string& handle)
+  {
+    size_t pos1 = handle.find("://");
+    if (pos1 == std::string::npos)
+      throw std::invalid_argument("Invalid handle format: " + handle);
+
+    size_t pos2 = handle.find(":", pos1 + 3);
+    if (pos2 == std::string::npos)
+      throw std::invalid_argument("Invalid handle format: " + handle);
+
+    std::string socket = handle.substr(0, pos1);
+    std::string addr = handle.substr(pos1 + 3, pos2 - (pos1 + 3));
+    int port = std::stoi(handle.substr(pos2 + 1));
+
+    return { socket, addr, port };
+  }
+
+  //! Create connection handle.
+  //! @param[in] handle connection handle.
+  //! @return connection handle.
+  IO::Handle*
+  createHandle(const std::string& handle)
+  {
+    auto [sock, addr, port] = parseHandle(handle);
+
+    if (sock == "tcp")
+    {
+      TCPSocket* tcp = new TCPSocket;
+      tcp->connect(addr.c_str(), port);
+      tcp->setNoDelay(true);
+      return tcp;
+    }
+
+    else if (sock != "udp")
+      throw std::invalid_argument("Invalid socket type: " + sock);
+
+    UDPSocket* udp = new UDPSocket;
+    udp->bind(port);
+    udp->connect(addr.c_str(), port);
+    return udp;
+  }
+
   //! Process incoming packet.
   //! @param[in] data buffer with the packet.
   //! @param[in] data_len length of the packet.

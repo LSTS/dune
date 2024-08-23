@@ -144,13 +144,9 @@ namespace Control
         m_ground(true),
         m_parser(nullptr)
       {
-        param("TCP - Port", m_args.port)
-          .defaultValue("5760")
-          .description("Port for connection to Ardupilot");
-
-        param("TCP - Address", m_args.addr)
-          .defaultValue("127.0.0.1")
-          .description("Address for connection to Ardupilot");
+        param("IO Handle", m_args.handle)
+          .defaultValue("")
+          .description("I/O handle for Ardupilot interface in form socket://address:port");
 
         param("Use External Nav Data", m_args.nav_external)
           .defaultValue("false")
@@ -193,8 +189,8 @@ namespace Control
       {
         try
         {
-          m_parser = new MavParser<Task>(*this, m_args.addr, m_args.port);
-          spew("Ardupiloit interface initialized");
+          m_parser = new MavParser<Task>(*this, m_args.handle);
+          spew("Ardupiloit interface connected");
         }
         catch (const std::exception& e)
         {
@@ -204,7 +200,7 @@ namespace Control
         }
 
         std::stringstream ss;
-        ss << "mavlink+tcp://" << m_args.addr << ":" << m_args.port << "/";
+        ss << "mavlink+" << m_args.handle << "/";
 
         IMC::AnnounceService announce;
         announce.service = ss.str();
