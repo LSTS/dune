@@ -493,7 +493,8 @@ private:
     {
       if (mavlink_parse_char(MAVLINK_COMM_0, data[i], &msg, &status))
       {
-        m_tgt_sys_id = msg.sysid;
+        // m_tgt_sys_id = msg.sysid;
+        // m_tgt_comp_id = msg.compid;
         return true;
       }
 

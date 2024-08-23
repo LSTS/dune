@@ -50,6 +50,16 @@ namespace Control
     //! Minimum distance to consider waypoint reached.
     static const float s_min_wp_dist = 1.0;
 
+    struct Frequencies
+    {
+      int position;
+      int extra1;
+      int extra2;
+      int extra3;
+    };
+
+    static Frequencies s_freqs;
+
     //! List of Arducopter Modes.
     enum APM_copterModes
     {
@@ -218,16 +228,7 @@ namespace Control
         m_parser->bind(MAV_(NAV_CONTROLLER_OUTPUT), &Task::onNavControllerOutput);
         m_parser->bind(MAV_(VFR_HUD), &Task::onVFRHud);
 
-        // m_parser->waitHeartbeat();
-        // inf("Received first heartbeat message");
-        // m_parser->sendHeartBeat();
-        // !m_parser->waitHeartbeat();
-
-        // Request parameters
-        // https://ardupilot.org/dev/docs/mavlink-get-set-params.html
-
-        // Enable Data Streams
-        setupStreamData(m_args.rates);
+        // setupStreamData(m_args.rates);
         war("Resource initialization complete");
       }
 
@@ -249,7 +250,7 @@ namespace Control
         };
 
         for (unsigned idx = 0; idx < rate.size(); ++idx)
-          m_parser->setStreamData(steps[idx], rate[idx], true);
+          m_parser->setStreamData(steps[idx], rate[idx], rate[idx] > 0);
       }
 
       void
@@ -257,6 +258,16 @@ namespace Control
       {
         mavlink_heartbeat_t hb;
         mavlink_msg_heartbeat_decode(&msg, &hb);
+
+        // inf("System ID: %d", msg.sysid);
+        // inf("Componet ID: %d", msg.compid);
+        static bool wait_hb = true;
+        if (wait_hb)
+        {
+          wait_hb = false;
+          m_parser->setStreamData(MAV_DATA_STREAM_ALL, 4, true);
+          war("Setting stream rates again");
+        }
 
         if (hb.type == MAV_TYPE_GCS)
           return;
@@ -278,11 +289,11 @@ namespace Control
             case MAV_TYPE_TRICOPTER:
             case MAV_TYPE_HEXAROTOR:
             case MAV_TYPE_OCTOROTOR:
+            default:
               m_vehicle_type = VEHICLE_COPTER;
               inf(DTR("Controlling a multirotor."));
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
-            default:
               break;
           }
         }
@@ -350,6 +361,8 @@ namespace Control
       void
       onSystemTime(const mavlink_message_t& msg)
       {
+        s_freqs.extra3++;
+
         mavlink_system_time_t time;
         mavlink_msg_system_time_decode(&msg, &time);
 
@@ -478,6 +491,8 @@ namespace Control
       void
       onVFRHud(const mavlink_message_t& msg)
       {
+        s_freqs.extra2++;
+
         mavlink_vfr_hud_t hud;
         mavlink_msg_vfr_hud_decode(&msg, &hud);
 
@@ -503,6 +518,8 @@ namespace Control
       void
       onGlobalPositionInt(const mavlink_message_t& msg)
       {
+        s_freqs.position++;
+
         mavlink_global_position_int_t pos;
         mavlink_msg_global_position_int_decode(&msg, &pos);
 
@@ -540,6 +557,8 @@ namespace Control
       void
       onAttitude(const mavlink_message_t& msg)
       {
+        s_freqs.extra1++;
+
         mavlink_attitude_t att;
         mavlink_msg_attitude_decode(&msg, &att);
 
@@ -692,10 +711,31 @@ namespace Control
       void
       onMain(void)
       {
+        s_freqs = { 0, 0, 0, 0 };
+
+        std::array<Math::MovingAverage<double>, 4> avgs({ 7, 7, 7, 7 });
+        Counter<double> hb_counter(1);
+
         while (!stopping())
         {
+          if (hb_counter.overflow())
+          {
+            m_parser->sendHeartBeat();
+            hb_counter.reset();
+
+            avgs[0].update(s_freqs.position);
+            avgs[1].update(s_freqs.extra1);
+            avgs[2].update(s_freqs.extra2);
+            avgs[3].update(s_freqs.extra3);
+
+            debug("Pos: %0.1f Hz, Extra1: %0.1f Hz, Extra2: %0.1f Hz, Extra3: %0.1f Hz",
+                  avgs[0].mean(), avgs[1].mean(), avgs[2].mean(), avgs[3].mean());
+
+            s_freqs = { 0, 0, 0, 0 };
+          }
+
           consumeMessages();
-          m_parser->poll(1.0);
+          m_parser->poll(0.2);
         }
       }
     };
