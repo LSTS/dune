@@ -228,8 +228,7 @@ namespace Control
         m_parser->bind(MAV_(NAV_CONTROLLER_OUTPUT), &Task::onNavControllerOutput);
         m_parser->bind(MAV_(VFR_HUD), &Task::onVFRHud);
 
-        // setupStreamData(m_args.rates);
-        war("Resource initialization complete");
+        setupStreamData(m_args.rates);
       }
 
       //! Release resources.
@@ -243,9 +242,9 @@ namespace Control
       setupStreamData(const std::vector<uint8_t>& rate)
       {
         static std::vector<uint8_t> steps = {
+          { MAV_DATA_STREAM_POSITION },
           { MAV_DATA_STREAM_EXTRA1 },
           { MAV_DATA_STREAM_EXTRA2 },
-          { MAV_DATA_STREAM_POSITION },
           { MAV_DATA_STREAM_EXTRA3 },
         };
 
@@ -258,16 +257,6 @@ namespace Control
       {
         mavlink_heartbeat_t hb;
         mavlink_msg_heartbeat_decode(&msg, &hb);
-
-        // inf("System ID: %d", msg.sysid);
-        // inf("Componet ID: %d", msg.compid);
-        static bool wait_hb = true;
-        if (wait_hb)
-        {
-          wait_hb = false;
-          m_parser->setStreamData(MAV_DATA_STREAM_ALL, 4, true);
-          war("Setting stream rates again");
-        }
 
         if (hb.type == MAV_TYPE_GCS)
           return;
@@ -294,6 +283,7 @@ namespace Control
               inf(DTR("Controlling a multirotor."));
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
+            default:
               break;
           }
         }
@@ -636,7 +626,7 @@ namespace Control
         }
 
         if (m_mode != CP_MODE_GUIDED)
-          m_parser->sendCommand(MAV_CMD_DO_SET_MODE, 1, CP_MODE_GUIDED);
+          m_parser->sendCommand(MAV_CMD_DO_SET_MODE, ACK, CP_MODE_GUIDED);
       }
 
       void
@@ -714,21 +704,20 @@ namespace Control
         s_freqs = { 0, 0, 0, 0 };
 
         std::array<Math::MovingAverage<double>, 4> avgs({ 7, 7, 7, 7 });
-        Counter<double> hb_counter(1);
+        Counter<double> counter(1);
 
         while (!stopping())
         {
-          if (hb_counter.overflow())
+          if (counter.overflow())
           {
-            m_parser->sendHeartBeat();
-            hb_counter.reset();
+            counter.reset();
 
             avgs[0].update(s_freqs.position);
             avgs[1].update(s_freqs.extra1);
             avgs[2].update(s_freqs.extra2);
             avgs[3].update(s_freqs.extra3);
 
-            debug("Pos: %0.1f Hz, Extra1: %0.1f Hz, Extra2: %0.1f Hz, Extra3: %0.1f Hz",
+            trace("Pos: %0.1f Hz, Extra1: %0.1f Hz, Extra2: %0.1f Hz, Extra3: %0.1f Hz",
                   avgs[0].mean(), avgs[1].mean(), avgs[2].mean(), avgs[3].mean());
 
             s_freqs = { 0, 0, 0, 0 };

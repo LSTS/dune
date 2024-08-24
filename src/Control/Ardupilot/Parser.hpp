@@ -47,6 +47,14 @@ using DUNE_NAMESPACES;
 
 static const uint64_t s_since_boot = Clock::getNsec();
 
+enum CommandConfirmation
+{
+  //! No confirmation.
+  NACK = 0,
+  //! Confirmation.
+  ACK = 1,
+};
+
 template <typename Task> class MavParser
 {
 public:
@@ -58,11 +66,8 @@ public:
   //! @param[in] port port to connect to.
   //! @throw NetworkError if connection fails.
   MavParser(Task& tsk, const std::string& handle):
-    m_tsk(tsk),
-    m_sock(createHandle(handle))
+    m_tsk(tsk)
   {
-    m_tsk.inf("Connected to %s", handle.c_str());
-
     setIDs(255, 0);
     setTargetIDs(1, 0);
 
@@ -73,6 +78,8 @@ public:
     bind(MAVLINK_MSG_ID_TIMESYNC, &MavParser::handleTimeSync);
     bind(MAVLINK_MSG_ID_STATUSTEXT, &MavParser::handleStatusText);
     bind(MAVLINK_MSG_ID_PARAM_VALUE, &MavParser::onParamValue);
+
+    m_sock = createHandle(handle);
   }
 
   void
@@ -140,10 +147,10 @@ public:
       { MAV_DATA_STREAM_EXTRA3, "Extra3" },
     };
 
-    m_tsk.war("Setting stream %s to %s at %d Hz", stream_map[stream_id].c_str(),
+    m_tsk.inf("Setting stream %s to %s at %d Hz", stream_map[stream_id].c_str(),
               enable ? "enabled" : "disabled", hz);
 
-    mavlink_msg_request_data_stream_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, 1,
+    mavlink_msg_request_data_stream_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, m_tgt_comp_id,
                                          stream_id, hz, enable);
 
     sendMessage(m_msg);
@@ -160,18 +167,18 @@ public:
   void
   sendHeartBeat(void)
   {
-    mavlink_msg_heartbeat_pack(m_sys_id, m_comp_id, &m_msg, MAV_TYPE_GCS, MAV_AUTOPILOT_INVALID, 0,
-                               0, 0);
+    mavlink_msg_heartbeat_pack(m_sys_id, m_comp_id, &m_msg, MAV_TYPE_GCS, MAV_AUTOPILOT_GENERIC, 0,
+                               0, MAV_STATE_ACTIVE);
 
     sendMessage(m_msg);
   }
 
   void
-  sendCommand(uint16_t cmd, float p1 = 0, float p2 = 0, float p3 = 0, float p4 = 0, float p5 = 0,
-              float p6 = 0, float p7 = 0)
+  sendCommand(uint16_t cmd, uint8_t ack = 0, float p1 = 0, float p2 = 0, float p3 = 0, float p4 = 0,
+              float p5 = 0, float p6 = 0, float p7 = 0)
   {
-    mavlink_msg_command_long_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, m_tgt_comp_id, cmd, 0,
-                                  p1, p2, p3, p4, p5, p6, p7);
+    mavlink_msg_command_long_pack(m_sys_id, m_comp_id, &m_msg, m_tgt_sys_id, m_tgt_comp_id, cmd,
+                                  ack, p1, p2, p3, p4, p5, p6, p7);
 
     sendMessage(m_msg);
   }
@@ -463,21 +470,49 @@ private:
   {
     auto [sock, addr, port] = parseHandle(handle);
 
-    if (sock == "tcp")
-    {
-      TCPSocket* tcp = new TCPSocket;
-      tcp->connect(addr.c_str(), port);
-      tcp->setNoDelay(true);
-      return tcp;
-    }
-
-    else if (sock != "udp")
+    // if (sock == "tcp")
+    // {
+    //   TCPSocket* tcp = new TCPSocket;
+    //   tcp->connect(addr.c_str(), port);
+    //   tcp->setNoDelay(true);
+    //   return tcp;
+    // }
+    // else
+    if (sock != "udp")
       throw std::invalid_argument("Invalid socket type: " + sock);
 
     UDPSocket* udp = new UDPSocket;
-    udp->bind(port);
-    udp->connect(addr.c_str(), port);
-    return udp;
+    udp->bind(port, addr.c_str());
+
+    //! Get UDP remote address and port.
+    Counter<double> timer(5.0);
+    Address ip;
+    uint16_t r_port;
+
+    while (!timer.overflow())
+    {
+      if (!Poll::poll(*udp, timer.getRemaining()))
+        break;
+
+      size_t rv = udp->read(m_buf, sizeof(m_buf), &ip, &r_port);
+      m_msg_ts = Clock::getSinceEpoch();
+
+      if (!parse(m_buf, rv, m_msg))
+        continue;
+
+      if (m_msg.msgid != MAVLINK_MSG_ID_HEARTBEAT)
+        continue;
+
+      udp->connect(ip, r_port);
+      m_tsk.inf("Connected to %s:%d", ip.c_str(), r_port);
+
+      setTargetIDs(m_msg.sysid, m_msg.compid);
+      handleMsg(m_msg);
+
+      return udp;
+    }
+
+    throw std::runtime_error("Failed to connect to target");
   }
 
   //! Process incoming packet.
@@ -492,11 +527,7 @@ private:
     for (unsigned i = 0; i < data_len; ++i)
     {
       if (mavlink_parse_char(MAVLINK_COMM_0, data[i], &msg, &status))
-      {
-        // m_tgt_sys_id = msg.sysid;
-        // m_tgt_comp_id = msg.compid;
         return true;
-      }
 
       if (status.packet_rx_drop_count)
         return false;
