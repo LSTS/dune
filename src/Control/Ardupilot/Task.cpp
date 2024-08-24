@@ -278,7 +278,6 @@ namespace Control
             case MAV_TYPE_TRICOPTER:
             case MAV_TYPE_HEXAROTOR:
             case MAV_TYPE_OCTOROTOR:
-            default:
               m_vehicle_type = VEHICLE_COPTER;
               inf(DTR("Controlling a multirotor."));
               setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
