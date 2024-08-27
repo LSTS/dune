@@ -89,7 +89,10 @@ namespace Maneuver
       void
       onEstimatedState(const IMC::EstimatedState* msg)
       {
-        m_height = msg->height;
+        m_height = msg->height - msg->z;
+
+        if (m_ref_height == 0)
+          m_ref_height = m_height;
       }
 
       //! On message VehicleMedium
@@ -98,9 +101,25 @@ namespace Maneuver
       onVehicleMedium(const IMC::VehicleMedium* msg)
       {
         // Dispatch DesiredPath after launch
-        if(msg->medium == IMC::VehicleMedium::VM_AIR && !m_status)
+        if (msg->medium == IMC::VehicleMedium::VM_AIR && !m_status)
         {
-          if (m_height >= m_path.end_z)
+          float end_z;
+          switch (m_path.end_z_units)
+          {
+            case IMC::Z_ALTITUDE:
+              end_z = m_path.end_z;
+              break;
+
+            case IMC::Z_HEIGHT:
+              end_z = m_ref_height + m_path.end_z;
+              break;
+
+            default:
+              m_task->err("Invalid end_z_units");
+              break;
+          }
+
+          if (m_height >= end_z)
           {
             m_task->dispatch(m_path);
             m_task->debug("Takeoff: Launch Successful - DesiredPath sent.");
@@ -120,6 +139,8 @@ namespace Maneuver
       bool m_status;
       //! Current vehicle height
       float m_height;
+      //! Reference height
+      float m_ref_height = 0;
     };
   }
 }
