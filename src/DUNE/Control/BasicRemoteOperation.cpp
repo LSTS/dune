@@ -186,6 +186,10 @@ namespace DUNE
         {
           addActionHalfSlider(action_name);
         }
+        else if (!type_lowercase.compare("lock"))
+        {
+          addActionLock(action_name);
+        }
       }
     }
 

@@ -92,6 +92,12 @@ namespace DUNE
       }
 
       void
+      addActionLock(const std::string& action)
+      {
+        addRemoteAction(action, "Lock");
+      }
+      
+      void
       setConnectionTimeout(const float tout)
       {
         m_connection_timeout = tout;
