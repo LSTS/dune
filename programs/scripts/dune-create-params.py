@@ -35,6 +35,18 @@ import os
 import sys
 import glob
 import subprocess
+import argparse
+
+# Parser for command line
+parser = argparse.ArgumentParser(description="Process list of vehicle.ini files")
+
+# List of Vehicle files
+parser.add_argument('-v', '--vehicles', nargs='+',
+                      help="List of vehicles to be used for param creation (ex: -v adamastor caravel). If empty, all .ini files will be used")
+
+# Save the arguments
+args = parser.parse_args()
+vehicles = args.vehicles
 
 # Destination folder.
 for arg in sys.argv:
@@ -64,9 +76,16 @@ i18n_dir = os.path.abspath(os.path.join(top_dir, 'i18n'))
 # Find config files.
 list_ini = []
 inis = glob.glob(os.path.join(etc_dir, '*.ini'))
-for ini in inis:
-    f = os.path.splitext(os.path.basename(ini))[0]
-    list_ini.append(f)
+if vehicles:
+    for vehicle in vehicles:
+        for ini in inis: 
+            f = os.path.splitext(os.path.basename(ini))[0]
+            if vehicle in f: 
+                list_ini.append(f)
+else:
+    for ini in inis:
+        f = os.path.splitext(os.path.basename(ini))[0]
+        list_ini.append(f)
 
 # Find translations.
 i18n_set = set()
