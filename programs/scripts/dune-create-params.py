@@ -41,12 +41,12 @@ import argparse
 parser = argparse.ArgumentParser(description="Process list of vehicle.ini files")
 
 # List of Vehicle files
-parser.add_argument('-v', '--vehicles', nargs='+',
-                      help="List of vehicles to be used for param creation (ex: -v adamastor caravel). If empty, all .ini files will be used")
+parser.add_argument('-c', '--configs', nargs='+',
+                      help="List of vehicles to be used for param creation (ex: -c adamastor caravel). If empty, all .ini files will be used")
 
 # Save the arguments
 args = parser.parse_args()
-vehicles = args.vehicles
+configs = args.configs
 
 # Destination folder.
 for arg in sys.argv:
@@ -76,11 +76,11 @@ i18n_dir = os.path.abspath(os.path.join(top_dir, 'i18n'))
 # Find config files.
 list_ini = []
 inis = glob.glob(os.path.join(etc_dir, '*.ini'))
-if vehicles:
-    for vehicle in vehicles:
+if configs:
+    for config in configs:
         for ini in inis: 
             f = os.path.splitext(os.path.basename(ini))[0]
-            if vehicle == f: 
+            if config == f: 
                 list_ini.append(f)
 else:
     for ini in inis:
