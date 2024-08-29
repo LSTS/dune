@@ -568,10 +568,41 @@ namespace Transports
       void
       onMain(void)
       {
+        unsigned num_error = 0;
+        unsigned max_error = 3;
         while (!stopping())
         {
-          waitForMessages(1.0);
-          processQueue();
+          try
+          {
+            waitForMessages(1.0);
+            processQueue();
+          }
+          catch(const ReadTimeout& e)
+          {
+            num_error++;
+            war("ReadTimeout (%d/%d): %s", num_error, max_error, e.what());
+
+            if (num_error > max_error)
+            {
+              std::stringstream ss;
+              ss << "Max error count exceeded: "
+                 << e.what();
+              throw RestartNeeded(ss.str(), 5.0);
+            }
+          }
+          catch(const UnexpectedReply& e)
+          {
+            num_error++;
+            war("UnexpectedReply (%d/%d): %s", num_error, max_error, e.what());
+
+            if (num_error > max_error)
+            {
+              std::stringstream ss;
+              ss << "Max error count exceeded: "
+                 << e.what();
+              throw RestartNeeded(ss.str(), 5.0);
+            }
+          }
         }
       }
     };
