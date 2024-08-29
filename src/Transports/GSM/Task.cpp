@@ -374,8 +374,7 @@ namespace Transports
             m_rssi_timer.reset();
             m_rssi = m_driver->getRSSI();
           }
-
-          if (m_rsms_timer.overflow())
+          else if (m_rsms_timer.overflow())
           {
             m_rsms_timer.reset();
             m_driver->checkMessages();
