@@ -342,8 +342,18 @@ namespace Transports
       readSMS(std::string& location, std::string& origin, std::string& text, bool& text_mode)
       {
         std::string header = readLine();
+
+        // Print the received message
+        getTask()->trace("Received message: %s", header.c_str());
         if (header == "OK")
           return false;
+
+        // Check if header contains the string +CMTI, +CSQ
+        while(String::startsWith(header, "+CMTI:") || String::startsWith(header, "+CSQ:") || header == "OK")
+        {
+          getTask()->trace("Received CMTI/CSQ: %s", header.c_str());
+          header = readLine();
+        }
 
         if (!String::startsWith(header, "+CMGL:"))
           throw Hardware::UnexpectedReply();
@@ -357,7 +367,6 @@ namespace Transports
             location = parts[1];
             return true;
           }
-
           throw Hardware::UnexpectedReply();
         }
 
