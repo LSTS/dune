@@ -80,6 +80,10 @@ namespace Transports
       double tx_window;
       //! Reception priority window period.
       double rx_window;
+      //! Maximum number of errors to trigger restart
+      unsigned max_error;
+      //! Time to reset errors
+      double error_reset_period;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -104,6 +108,10 @@ namespace Transports
       Counter<double> m_tx_window;
       //! Reception Window.
       Counter<double> m_rx_window;
+      //! Number of errors issued by modem
+      unsigned m_error_count;
+      //! Errors are cleared at the end of this timer.
+      Counter<double> m_error_timer;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -113,7 +121,8 @@ namespace Transports
         m_uart(NULL),
         m_driver(NULL),
         m_tx_request(NULL),
-        m_prio(TxRxPriority::None)
+        m_prio(TxRxPriority::None),
+        m_error_count(0)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -167,6 +176,16 @@ namespace Transports
         .minimumValue("5")
         .description("Window to prioritize Reception over Transmission");
 
+        param("Maximum Errors", m_args.max_error)
+        .defaultValue("3")
+        .minimumValue("0")
+        .description("Maximum number of errors to trigger restart");
+
+        param("Error Reset Period", m_args.error_reset_period)
+        .defaultValue("300")
+        .minimumValue("60")
+        .description("Period to reset error count");
+
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
         m_queued_mt = 0;
@@ -204,6 +223,11 @@ namespace Transports
         {
           if (m_rx_window.getRemaining() > m_args.rx_window && m_prio == TxRxPriority::Rx)
             m_rx_window.setTop(m_args.rx_window);
+        }
+
+        if (paramChanged(m_args.error_reset_period))
+        {
+          m_error_timer.setTop(m_args.error_reset_period);
         }
 
         if (m_driver != NULL)
@@ -576,33 +600,42 @@ namespace Transports
           {
             waitForMessages(1.0);
             processQueue();
+            checkError();
           }
           catch(const ReadTimeout& e)
           {
-            num_error++;
-            war("ReadTimeout (%d/%d): %s", num_error, max_error, e.what());
-
-            if (num_error > max_error)
-            {
-              std::stringstream ss;
-              ss << "Max error count exceeded: "
-                 << e.what();
-              throw RestartNeeded(ss.str(), 5.0);
-            }
+            signalError("ReadTimeout", e.what());
           }
           catch(const UnexpectedReply& e)
           {
-            num_error++;
-            war("UnexpectedReply (%d/%d): %s", num_error, max_error, e.what());
-
-            if (num_error > max_error)
-            {
-              std::stringstream ss;
-              ss << "Max error count exceeded: "
-                 << e.what();
-              throw RestartNeeded(ss.str(), 5.0);
-            }
+            signalError("UnexpectedReply", e.what());
           }
+        }
+      }
+
+      void
+      signalError(std::string name, std::string err)
+      {
+        m_error_count++;
+        m_error_timer.reset();
+        debug("%s (%d/%d): %s", name.c_str(), m_error_count, m_args.max_error, err.c_str());
+
+        if (m_error_count >= m_args.max_error)
+        {
+          std::stringstream ss;
+          ss << "Max error count exceeded: "
+             << err.c_str();
+          throw RestartNeeded(ss.str(), 5.0);
+        }
+      }
+
+      void
+      checkError()
+      {
+        if (m_error_timer.overflow())
+        {
+          m_error_timer.reset();
+          m_error_count = 0;
         }
       }
     };
