@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -48,7 +48,7 @@ project("DUNE")
 set(PROJECT_NAME "DUNE: Unified Navigation Environment")
 set(PROJECT_SHORT_NAME "DUNE")
 set(PROJECT_VENDOR "Universidade do Porto - LSTS")
-set(PROJECT_COPYRIGHT "Copyright (C) 2007-2023 - ${PROJECT_VENDOR}")
+set(PROJECT_COPYRIGHT "Copyright (C) 2007-2024 - ${PROJECT_VENDOR}")
 set(PROJECT_CONTACT "DUNE <dune@lsts.pt>")
 set(PROJECT_VERSION_YEAR  "2022")
 set(PROJECT_VERSION_MONTH "04")
@@ -168,6 +168,10 @@ file(GLOB_RECURSE DUNE_CORE_HEADERS "${PROJECT_SOURCE_DIR}/src/DUNE/*.hpp"
 file(GLOB_RECURSE DUNE_CORE_DEFS    "${PROJECT_SOURCE_DIR}/src/DUNE/*.def")
 string(REPLACE ";" " " DUNE_CORE_HEADERS_STRING "${DUNE_CORE_HEADERS}")
 
+file(GLOB_RECURSE PRIVATE_CORE_SOURCES "${PROJECT_SOURCE_DIR}/private*/src/DUNE/Control/*.cpp")
+file(GLOB_RECURSE PRIVATE_CORE_HEADERS "${PROJECT_SOURCE_DIR}/private*/src/DUNE/Control/*.hpp")
+string(REPLACE ";" " " PRIVATE_CORE_HEADERS_STRING "${PRIVATE_CORE_HEADERS}")
+
 file(GLOB_RECURSE USER_CORE_SOURCES "${PROJECT_SOURCE_DIR}/user*/src/USER/*.cpp")
 file(GLOB_RECURSE USER_CORE_HEADERS "${PROJECT_SOURCE_DIR}/user*/src/USER/*.hpp")
 string(REPLACE ";" " " USER_CORE_HEADERS_STRING "${USER_CORE_HEADERS}")
@@ -180,7 +184,7 @@ install(FILES ${DUNE_GENERATED}/src/DUNE/Config.hpp
 
 include(${PROJECT_SOURCE_DIR}/cmake/Version.cmake)
 
-set_source_files_properties(${DUNE_CORE_SOURCES} ${USER_CORE_SOURCES}
+set_source_files_properties(${DUNE_CORE_SOURCES} ${USER_CORE_SOURCES} ${PRIVATE_CORE_SOURCES}
   PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS} ${DUNE_CXX_FLAGS_STRICT}")
 
 if(DUNE_OS_WINDOWS)
@@ -191,7 +195,7 @@ if(DUNE_OS_WINDOWS)
     ${DUNE_GENERATED}/src/DUNE/Version.rc)
 endif(DUNE_OS_WINDOWS)
 
-foreach(header ${DUNE_CORE_HEADERS} ${USER_CORE_HEADERS})
+foreach(header ${DUNE_CORE_HEADERS} ${USER_CORE_HEADERS} ${PRIVATE_CORE_HEADERS})
   string(REGEX REPLACE "${PROJECT_SOURCE_DIR}/" "" header ${header})
   string(REGEX REPLACE "src" "include" destination ${header})
   get_filename_component(destination ${destination} PATH)
@@ -217,19 +221,21 @@ foreach(extlib ${extlibs})
 endforeach(extlib ${extlibs})
 
 file(GLOB DUNE_SOURCE_USER ${PROJECT_SOURCE_DIR}/user*/src)
-include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${DUNE_SOURCE_USER} ${DUNE_VENDOR_INCS_DIR})
+file(GLOB DUNE_SOURCE_PRIVATE ${PROJECT_SOURCE_DIR}/private*/src)
+include_directories(${DUNE_GENERATED}/src ${PROJECT_SOURCE_DIR}/src ${DUNE_SOURCE_USER} ${DUNE_SOURCE_PRIVATE} ${DUNE_VENDOR_INCS_DIR})
 link_directories(${DUNE_VENDOR_LIBS_DIR})
 set(DUNE_CORE_FILES ${DUNE_CORE_SOURCES} ${DUNE_VENDOR_FILES})
 set(USER_CORE_FILES ${USER_CORE_SOURCES} ${USER_VENDOR_FILES})
+set(PRIVATE_CORE_FILES ${PRIVATE_CORE_SOURCES} ${PRIVATE_VENDOR_FILES})
 
 if(DUNE_SHARED)
   message(STATUS "Building shared library")
-  add_library(dune-core SHARED ${DUNE_CORE_FILES} ${USER_CORE_FILES} )
+  add_library(dune-core SHARED ${DUNE_CORE_FILES} ${USER_CORE_FILES} ${PRIVATE_CORE_FILES} )
   set_target_properties(dune-core PROPERTIES DEFINE_SYMBOL DUNE_DLL_EXPORT)
   target_link_libraries(dune-core ${DUNE_SYS_LIBS})
 else(DUNE_SHARED)
   message(STATUS "Building static library")
-  add_library(dune-core STATIC ${DUNE_CORE_FILES} ${USER_CORE_FILES} )
+  add_library(dune-core STATIC ${DUNE_CORE_FILES} ${USER_CORE_FILES} ${PRIVATE_CORE_FILES} )
   if(DUNE_CXX_MICROSOFT AND DUNE_CPU_X86)
     if(DUNE_CPU_32B)
       set_target_properties(dune-core PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x86")
@@ -437,3 +443,37 @@ endif(TESTS)
 #                                CDash                                   #
 ##########################################################################
 include(Dart)
+
+##########################################################################
+#                             CLANG-FORMAT                               #
+##########################################################################
+find_program(
+  CLANG_FORMAT_EXECUTABLE
+  NAMES "clang-format"
+  DOC "Path to clang-format executable"
+  )
+if(NOT CLANG_FORMAT_EXECUTABLE)
+  message(STATUS "clang-format not found.")
+else()
+  message(STATUS "clang-format found: ${CLANG_FORMAT_EXECUTABLE}")
+  set(DO_CLANG_FORMAT "${CLANG_FORMAT_EXECUTABLE}" -i -style=file)
+endif()
+
+if(CLANG_FORMAT_EXECUTABLE)
+  add_custom_target(
+    clang-format-core-sources
+    COMMAND "${CLANG_FORMAT_EXECUTABLE}" -i -style=file ${DUNE_CORE_HEADERS} ${DUNE_CORE_SOURCES}
+  )
+  add_custom_target(
+    clang-format-programs
+    COMMAND "${CLANG_FORMAT_EXECUTABLE}" -i -style=file ${programs}
+  )
+  add_custom_target(
+    clang-format-tests
+    COMMAND "${CLANG_FORMAT_EXECUTABLE}" -i -style=file ${DUNE_TESTS_SOURCES}
+  )
+  add_custom_target(
+    clang-format-tasks
+    COMMAND "${CLANG_FORMAT_EXECUTABLE}" -i -style=file ${ALL_TASK_SOURCES} ${ALL_TASK_HEADERS}
+  )
+endif()

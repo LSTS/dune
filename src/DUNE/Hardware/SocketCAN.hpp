@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -38,12 +38,9 @@
 #include <DUNE/IO/Handle.hpp>
 
 #if defined(DUNE_OS_LINUX)
-#include <linux/can.h>
-#include <net/if.h>
-#else
-      throw Error("Unimplemented feature", "DUNE::Hardware::SocketCAN");
+#  include <linux/can.h>
+#  include <net/if.h>
 #endif
-
 
 namespace DUNE
 {
@@ -63,12 +60,13 @@ namespace DUNE
           std::runtime_error("Socket CAN error (" + op + "): " + msg)
         { }
       };
-#if defined(DUNE_OS_LINUX)
+
       enum can_frame_t {
         CAN_BASIC_SFF = 0,
         CAN_BASIC_EFF = 1,
         CAN_FD = 2
       };
+
       //! SocketCAN constructor.
       SocketCAN(const std::string& can_dev, can_frame_t frame_type);
       
@@ -81,8 +79,10 @@ namespace DUNE
       //size_t writeHexString(const char* cstr);
     private:
       //! CAN connection variables.
+#if defined(DUNE_OS_LINUX)
       struct sockaddr_can m_addr;
       struct ifreq m_ifr;
+#endif
       int m_can_socket;
       can_frame_t can_frame_type;
       uint32_t cantxid = 0;
@@ -91,7 +91,11 @@ namespace DUNE
       IO::NativeHandle
       doGetNative(void) const
       {
+#if defined(DUNE_OS_LINUX)
         return m_can_socket; // Makes Poll::poll work
+#else
+        return nullptr;
+#endif
       }
 
       size_t
@@ -111,12 +115,8 @@ namespace DUNE
       //! Flush both input and output buffers.
       void
       doFlush(void);
-#else
-      throw Error("Unimplemented feature", "DUNE::Hardware::SocketCAN");
-#endif
     };
   }
 }
-
 
 #endif

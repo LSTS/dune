@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2021 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -98,7 +98,11 @@ namespace Sensors
       float m_console_version;
 
       //! Definition of Davis LOOP data packet
+#ifdef __GNUC__
       struct __attribute__((__packed__)) LOOPData
+#elif defined(_MSC_VER)
+      __pragma(pack(push, 1)) struct LOOPData __pragma(pack(pop))
+#endif
       {
         uint8_t Ack;          // Acknowledge char
         char L;               // "L"

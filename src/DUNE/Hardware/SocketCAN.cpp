@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2020 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -36,22 +36,21 @@
 
 // DUNE headers.
 #include <DUNE/System/Error.hpp>
+#include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Hardware/SocketCAN.hpp>
 
 #if defined(DUNE_OS_LINUX)
 // CAN interface haders.
-#include <linux/can.h>
-#include <linux/can/raw.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
+#  include <linux/can.h>
+#  include <linux/can/raw.h>
+#  include <net/if.h>
+#  include <sys/ioctl.h>
 
-#include <termios.h>
+#  include <termios.h>
 
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-#else
-      throw Error("unimplemented feature", "DUNE::Hardware::SocketCAN");
+#  include <sys/socket.h>
+#  include <sys/types.h>
+#  include <unistd.h>
 #endif
 
 #define CAN_SFF_MASK 0x000007FFU // standard frame format (SFF) 
@@ -61,9 +60,9 @@ namespace DUNE
 {
   namespace Hardware
   {
-#if defined(DUNE_OS_LINUX)
     SocketCAN::SocketCAN(const std::string& can_dev, can_frame_t frame_type)
     {
+#if defined(DUNE_OS_LINUX)
       can_frame_type = frame_type;
       m_can_socket = ::socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (m_can_socket < 0) {
@@ -107,19 +106,29 @@ namespace DUNE
 
       if (rc == -1)
         throw Error("Could not bind CAN socket", System::Error::getLastMessage()); //TODO: Check
-    }
+
+#else
+      throw Error("Could not bind CAN socket", "Unimplemented");
+#endif
+ }
 
     //! Serial port destructor.
     SocketCAN::~SocketCAN(void)
     {
+#if defined(DUNE_OS_LINUX)
       if (::close(m_can_socket) == -1)
-        throw Error("Could not close CAN port", System::Error::getLastMessage()); //TODO: Check
+        DUNE_WRN("Could not close CAN port %s", System::Error::getLastMessage().c_str());
+#endif
     }
     
     void SocketCAN::setTXID(uint32_t id) {
-        cantxid = id | CAN_EFF_FLAG; // TODO: Check if similar for SFF(CAN_SFF_FLAG does not exist)
+#if defined(DUNE_OS_LINUX)
+      cantxid = id | CAN_EFF_FLAG; // TODO: Check if similar for SFF(CAN_SFF_FLAG does not exist)
+#endif
     }
+
     uint32_t SocketCAN::getRXID() {
+#if defined(DUNE_OS_LINUX)
       switch(can_frame_type) {
         case CAN_BASIC_SFF:
           return canrxid & CAN_SFF_MASK; // TODO: Check for SFF
@@ -134,9 +143,13 @@ namespace DUNE
           throw Error("Frame type not recognized", System::Error::getLastMessage());
       }
       return 0;
+#else
+      throw Error("Could not complete", "Unimplemented");
+#endif
     }
     
     size_t SocketCAN::readHexString(char* bfr, size_t length) {
+#if defined(DUNE_OS_LINUX)
     	size_t readSize = readString(bfr, length);
         std::stringstream ss;
         ss << std::internal // fill between the prefix and the number
@@ -150,11 +163,14 @@ namespace DUNE
         strncpy(bfr, out.c_str(), out.length()+1); // +1 because of '\0 added in c_str'
 
       return out.length()+1;
+#else
+    throw Error("Could not complete", "Unimplemented");
+#endif
     }
 
     size_t
     SocketCAN::doWrite(const uint8_t* bfr, size_t size) { // TODO: Add exceptions
-      int writtenBytes;
+#if defined(DUNE_OS_LINUX)
       switch(can_frame_type) {
         case CAN_BASIC_SFF:
         case CAN_BASIC_EFF:
@@ -162,23 +178,27 @@ namespace DUNE
           frame.can_dlc = size;
           frame.can_id = cantxid;
           memcpy(frame.data, bfr, size);
-          writtenBytes = ::write(m_can_socket, &frame, CAN_MTU);
+          ::write(m_can_socket, &frame, CAN_MTU);
         break;
         case CAN_FD:
           struct canfd_frame fdframe;
           fdframe.len = size;
           fdframe.can_id = cantxid;
           memcpy(fdframe.data, bfr, size);
-          writtenBytes = ::write(m_can_socket, &fdframe, CANFD_MTU);
+          ::write(m_can_socket, &fdframe, CANFD_MTU);
         break;
         default:
           throw Error("Frame type not recognized", System::Error::getLastMessage());
       }
       return size;
+#else
+      throw Error("Could not complete", "Unimplemented");
+#endif
     }
 
     size_t
     SocketCAN::doRead(uint8_t* bfr, size_t size) { //TODO: Add timeout
+#if defined(DUNE_OS_LINUX)
       int numBytes;
       switch(can_frame_type) {
         case CAN_BASIC_EFF:
@@ -208,28 +228,40 @@ namespace DUNE
           throw Error("Frame type not recognized", System::Error::getLastMessage());
       }
       return 0; //Should never be reached
+#else
+      throw Error("Could not complete", "Unimplemented");
+#endif
     }
 
     //! Flush input buffer, discarding all of it's contents.
     void
     SocketCAN::doFlushInput(void) {
+#if defined(DUNE_OS_LINUX)
         tcflush(m_can_socket, TCIFLUSH); //Probably does not work, untested
+#else
+        throw Error("Could not complete", "Unimplemented");
+#endif
     }
 
     //! Flush output buffer, aborting output.
     void
     SocketCAN::doFlushOutput(void) {
+#if defined(DUNE_OS_LINUX)
         tcflush(m_can_socket, TCOFLUSH); //Probably does not work, untested
+#else
+        throw Error("Could not complete", "Unimplemented");
+#endif
     }
 
     //! Flush both input and output buffers.
     void
     SocketCAN::doFlush(void) {
+#if defined(DUNE_OS_LINUX)
         tcflush(m_can_socket, TCIOFLUSH); //Probably does not work, untested
-    }
 #else
-    throw Error("unimplemented feature", "DUNE::Hardware::SocketCAN");
+        throw Error("Could not complete", "Unimplemented");
 #endif
+    }
   }
 }
 

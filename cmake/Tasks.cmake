@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -26,6 +26,10 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
+
+set(ALL_TASK_SOURCES)
+set(ALL_TASK_HEADERS)
+
 
 macro(dune_add_task root_folder task)
   string(REPLACE "/Task.cmake" "" path ${task})
@@ -104,6 +108,9 @@ macro(dune_add_task root_folder task)
     if(NOT TASK_HEADERS)
       file(GLOB TASK_HEADERS ${root_folder}/${path}/*.hpp)
     endif(NOT TASK_HEADERS)
+
+    set(ALL_TASK_SOURCES ${ALL_TASK_SOURCES} ${TASK_SOURCES})
+    set(ALL_TASK_HEADERS ${ALL_TASK_HEADERS} ${TASK_HEADERS})
 
     if(TASK_PROGRAM)
       foreach(task_main_source ${TASK_PROGRAM})

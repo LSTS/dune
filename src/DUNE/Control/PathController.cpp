@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -26,6 +26,9 @@
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
+
+// ISO C++ 98 headers.
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/Control/PathController.hpp>
@@ -199,6 +202,10 @@ namespace DUNE
       .units(Units::Meter)
       .description("Maximum admissible track length");
 
+      param("Bottom Track -- FLS Entity Label", m_btd.args.fls_elabel)
+      .defaultValue("Echo Sounder")
+      .description("Entity label of the Forward Looking Sonar (FLS).");
+
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
 
@@ -285,6 +292,22 @@ namespace DUNE
     {
       m_bt_entity = reserveEntity<DUNE::Entities::BasicEntity>(Utils::String::str("%s - Bottom Track", getEntityLabel()));
       m_btd.args.entity = m_bt_entity;
+    }
+
+    void
+    PathController::onEntityResolution()
+    {
+      // Resolve FLS entity
+      m_fls_entity = std::numeric_limits<unsigned int>::max();
+      try
+      {
+        if (!m_btd.args.fls_elabel.empty())
+          m_fls_entity = resolveEntity(m_btd.args.fls_elabel);
+      }
+      catch(const std::runtime_error& e)
+      {
+        war("Failed to resolve FLS entity (%s).", m_btd.args.fls_elabel.c_str());
+      }
     }
 
     void
@@ -570,7 +593,7 @@ namespace DUNE
     PathController::consume(const IMC::Distance* dist)
     {
       if (isTrackingBottom())
-        m_btrack->onDistance(dist);
+        m_btrack->onDistance(dist, m_fls_entity);
     }
 
     void
@@ -1088,12 +1111,15 @@ namespace DUNE
     {
       if (unit == IMC::Z_HEIGHT)
         return m_estate.height;
-      
-      if (unit == IMC::Z_ALTITUDE)
+      else if (unit == IMC::Z_ALTITUDE)
         return m_estate.alt;
-        
-      if (unit == IMC::Z_DEPTH)
+      else if (unit == IMC::Z_DEPTH)
         return m_estate.depth;
+      else if (unit == IMC::Z_NONE)
+        return m_estate.z;
+        
+      throw std::runtime_error(DTR("Invalid Z unit"));
+      return 0;
     }
 
     void

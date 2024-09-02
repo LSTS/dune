@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -110,5 +110,5 @@ main(int argc, char** argv)
     test.boolean("maximize()", r == Optimization::OPT_CONVERGED && std::fabs(min - tst->m) < tol);
   }
 
-  return 0;
+  return test.getReturnValue();
 }

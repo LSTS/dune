@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -635,7 +635,12 @@ namespace Vision
         char governor[16];
         std::string result = "";
         FILE* pipe;
+
+#ifdef __GNUC__
         if ((pipe = popen("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r")) == NULL)
+#else
+        if (true)
+#endif
         {
           war("popen() failed - set_cpu_governor!");
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
@@ -653,10 +658,10 @@ namespace Vision
           }
           catch (...)
           {
-            std::fclose(pipe);
+            pclose(pipe);
             throw;
           }
-          std::fclose(pipe);
+          pclose(pipe);
           std::sscanf(buffer, "%s", governor);
           if( std::strcmp(governor, "ondemand") == 0)
           {

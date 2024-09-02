@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -75,5 +75,5 @@ main(int argc, char** argv)
     MD5::compute((const uint8_t*)input_strings[i], std::strlen(input_strings[i]), digest);
     test.boolean(input_strings[i], !std::memcmp(digest, results[i], sizeof(digest)));
   }
-  return 0;
+  return test.getReturnValue();
 }

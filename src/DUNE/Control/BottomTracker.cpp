@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -115,10 +115,10 @@ namespace DUNE
     }
 
     void
-    BottomTracker::onDistance(const IMC::Distance* msg)
+    BottomTracker::onDistance(const IMC::Distance* msg, unsigned int fls_entity)
     {
       // Use control parcel for debug
-      if (m_sdata->onDistance(msg, m_estate, m_cparcel))
+      if (m_sdata->onDistance(msg, m_estate, m_cparcel, fls_entity))
         m_slope = true;
     }
 
