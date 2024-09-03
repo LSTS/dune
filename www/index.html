@@ -1,63 +1,115 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
-          "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
-  <head>
-    <title>DUNE - Control Center</title>
-    <link rel="icon" type="image/vnd.microsoft.icon" href="images/dune.ico"/>
-    <link rel="stylesheet" type="text/css" href="css/default.css"/>
 
-    <script type="text/javascript" src="js/Icons.js"></script>
+<head>
+  <title>DUNE - Control Center</title>
+  <link rel="icon" type="image/vnd.microsoft.icon" href="images/dune.ico" />
+  <link rel="stylesheet" type="text/css" href="css/default.css" />
 
-    <script type="text/javascript" src="js/HTTP.js"></script>
-    <script type="text/javascript" src="js/Date.js"></script>
-    <script type="text/javascript" src="js/Gauge.js"></script>
-    <script type="text/javascript" src="js/TextLabel.js"></script>
-    <script type="text/javascript" src="js/AbbrevToLabel.js"></script>
-    <script type="text/javascript" src="js/Utils.js"></script>
-    <script type="text/javascript" src="js/Angles.js"></script>
+  <script type="text/javascript" src="js/Icons.js"></script>
 
-    <!-- Sections -->
-    <script type="text/javascript" src="js/Sections.js"></script>
-    <script type="text/javascript" src="js/BasicSection.js"></script>
-    <script type="text/javascript" src="js/Logs.js"></script>
-    <script type="text/javascript" src="js/Main.js"></script>
-    <script type="text/javascript" src="js/Power.js"></script>
-    <script type="text/javascript" src="js/Sensors.js"></script>
-    <script type="text/javascript" src="js/Logbook.js"></script>
-    <script type="text/javascript" src="index.js"></script>
-  </head>
+  <script type="text/javascript" src="js/HTTP.js"></script>
+  <script type="text/javascript" src="js/Date.js"></script>
+  <script type="text/javascript" src="js/ChartBar.js"></script>
+  <script type="text/javascript" src="js/Gauge.js"></script>
+  <script type="text/javascript" src="js/TextLabel.js"></script>
+  <script type="text/javascript" src="js/AbbrevToLabel.js"></script>
+  <script type="text/javascript" src="js/Utils.js"></script>
+  <script type="text/javascript" src="js/Angles.js"></script>
 
-  <body>
-    <table id="x-body-table">
-      <tr>
-        <td id="MenuBar">
-          <div id="Menu">
-            <ul>
-              <li id="Main" class="First"><a href="javascript:show('Main')">Main</a></li>
-              <li id="Sensors"><a href="javascript:show('Sensors')">Sensors</a></li>
-              <!-- <li id="Logs"><a href="javascript:show('Logs')">Logs</a></li> -->
-              <!-- <li id="Services"><a href="#">Services</a></li> -->
-              <li id="Power"><a href="javascript:show('Power')">Power</a></li>
-	          <li id="Logbook"><a href="javascript:show('Logbook')">Logbook</a></li>
-              <!-- <li id="Help"><a href="#">Help</a></li> -->
-              <li class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected" alt="Connected"/></a></li>
-            </ul>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <td style="background-color: #f6f6f6; padding: 0em; border: solid #aaa thin">
-          <div id="x-container">
-          </div>
-        </td>
-      </tr>
-    </table>
+  <!-- Sections -->
+  <script type="text/javascript" src="js/Sections.js"></script>
+  <script type="text/javascript" src="js/BasicSection.js"></script>
+  <script type="text/javascript" src="js/Logs.js"></script>
+  <script type="text/javascript" src="js/Main.js"></script>
+  <script type="text/javascript" src="js/Power.js"></script>
+  <script type="text/javascript" src="js/Sensors.js"></script>
+  <script type="text/javascript" src="js/Logbook.js"></script>
+  <script type="text/javascript" src="index.js"></script>
 
-    <div id="x-copyright">
-      <p>Copyright &copy; 2007-2024 - Universidade do Porto</p>
-    </div>
+  <style>
+    /* Estilos comuns */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--c-background);
+    }
 
-  </body>
+    /* Estilos para o tema claro */
+    body.theme-light {
+      --c-background: #ffffff;
+      --c-color-text: #131212;
+      --c-background-h-l: #dfd992;
+      --c-color-text-h-l: #2e2929;
+      --c-color-line-split-tasks: #726e6e;
+      --c-color-entity-sensor-background: #d4d1d1;
+      /* Adicione outros estilos específicos para o tema claro aqui */
+    }
+
+
+    /* Estilos para o tema escuro */
+    body.theme-dark {
+      --c-background: #131212;
+      --c-color-text: #ffffff;
+      --c-background-h-l: #c0baa7;
+      --c-color-text-h-l: #20201e;
+      --c-color-line-split-tasks: #918d8d;
+      --c-color-entity-sensor-background: #443a3a;
+      /* Adicione outros estilos específicos para o tema escuro aqui */
+    }
+  </style>
+</head>
+
+<body class="theme-light"> <!-- Tema padrão é claro -->
+  <table id="x-body-table">
+    <tr>
+      <td id="MenuBar">
+        <div id="Menu">
+          <ul>
+            <li id="Main" class="First"><a href="javascript:show('Main')">Main</a></li>
+            <li id="Sensors"><a href="javascript:show('Sensors')">Sensors</a></li>
+            <!-- <li id="Logs"><a href="javascript:show('Logs')">Logs</a></li> -->
+            <!-- <li id="Services"><a href="#">Services</a></li> -->
+            <li id="Power"><a href="javascript:show('Power')">Power</a></li>
+            <li id="LogBook"><a href="javascript:show('Logbook')">Logbook</a></li>
+            <!-- <li id="Help"><a href="#">Help</a></li> -->
+            <li class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected"
+                  alt="Connected" /></a></li>
+            <li class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/dark-switch.png"
+                  title="Theme Change" alt="Light" style="max-width: 16px; max-height: 16px;"></a></li>
+          </ul>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color: var(--c-background); padding: 0em; border: solid var(--c-color-text) thin">
+        <div id="x-container">
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <div id="x-copyright">
+    <p>Copyright &copy; 2007-2024 - Universidade do Porto</p>
+  </div>
+
+  <script>
+    function toggleTheme() {
+      var body = document.body;
+      if (body.classList.contains('theme-light')) {
+        body.classList.remove('theme-light');
+        body.classList.add('theme-dark');
+        document.getElementById('ThemeIcon').src = 'images/light-switch.png';
+      } else {
+        body.classList.remove('theme-dark');
+        body.classList.add('theme-light');
+        document.getElementById('ThemeIcon').src = 'images/dark-switch.png';
+      }
+    }
+  </script>
+</body>
+
 </html>
