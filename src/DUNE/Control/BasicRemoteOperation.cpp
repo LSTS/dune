@@ -62,13 +62,11 @@ namespace DUNE
           .defaultValue("1.0")
           .units(Units::Second);
 
-      addActionButton("Exit");
-
       param("Additional Actions", m_additional_actions)
           .defaultValue("")
           .description("Actions to be added to remote actions list (comma separated in the form Action:Type)");
 
-      m_actions.op = IMC::RemoteActionsRequest::OP_REPORT;
+      m_actions_request.op = IMC::RemoteActionsRequest::OP_REPORT;
 
       // Register handler routines.
       bind<IMC::Teleoperation>(this);
@@ -244,10 +242,10 @@ namespace DUNE
     {
       std::string tuple = action + "=" + type;
 
-      if (m_actions.actions.size() != 0)
-        m_actions.actions.append(";");
+      if (m_actions_request.actions.size() != 0)
+        m_actions_request.actions.append(";");
 
-      m_actions.actions.append(tuple);
+      m_actions_request.actions.append(tuple);
     }
 
     void
