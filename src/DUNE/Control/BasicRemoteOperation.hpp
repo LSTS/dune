@@ -120,6 +120,7 @@ namespace DUNE
       }
 
       void
+      saveActions(const std::vector<std::string> additional_actions, std::vector<Action>& verbs, const std::string seperator);
 
       void
       parseActionType(const std::string& statement, const std::string separator, std::string& action, std::string& type);

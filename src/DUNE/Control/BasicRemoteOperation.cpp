@@ -174,16 +174,57 @@ namespace DUNE
         Utils::String::toLowerCase(type);
          
     }
+    void
+    BasicRemoteOperation::saveActions(const std::vector<std::string> additional_actions,
+                                      std::vector<Action>& verbs, const std::string seperator)
+    {
+      std::vector<std::string> locks;      
+      for (unsigned int i = 0; i < additional_actions.size(); ++i)
+      {
+        std::string action_name;
+        std::string type_lowercase; 
+        Action action; 
+
+        parseActionType(additional_actions[i], seperator, action_name, type_lowercase);
+
+        //! If its not a lock or a range
+        if (type_lowercase.compare("lock") && action_name.compare("Ranges"))
         {
-          addActionSlider(action_name);
+          if (!type_lowercase.compare("button") || !type_lowercase.compare("axis") || !type_lowercase.compare("halfslider") || !type_lowercase.compare("slider"))
+          {
+          action.name = action_name;
+          action.type = type_lowercase;
+          verbs.push_back(action);
+          }
+          else war("Type %s is invalid. ILLEGAL", type_lowercase.c_str()); 
         }
-        else if (!type_lowercase.compare("halfslider"))
-        {
-          addActionHalfSlider(action_name);
-        }
+        //! If its a lock
         else if (!type_lowercase.compare("lock"))
         {
-          addActionLock(action_name);
+          locks.push_back(action_name);
+        }
+        else if (!action_name.compare("Ranges"))
+        {
+          //! If its not a lock
+          if (m_range.empty()) m_range = type_lowercase;
+          else war("Attempt to change the Range was made by Register. ILLEGAL");
+        }
+      }
+      //! Done to prevent a lock to be defined with no type associated with it
+      for (unsigned int i = 0; i < locks.size(); ++i)
+      {
+        bool lock_valid = false;
+        for (unsigned int j = 0; j < verbs.size(); ++j)
+        {
+          if(!locks[i].compare(verbs[j].name))
+          {
+           lock_valid = true;
+           verbs[j].lock = true;
+          }
+        }
+        if (!lock_valid)
+        {
+          war("Lock action for %s has no type associated with it. ILLEGAL", locks[i].c_str());
         }
       }
     }
