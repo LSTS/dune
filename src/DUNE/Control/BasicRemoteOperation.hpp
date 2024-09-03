@@ -42,6 +42,16 @@ namespace DUNE
 {
   namespace Control
   {
+
+    struct Action
+    {
+      public:
+        std::string name; 
+        std::string type;
+        bool lock = false;
+
+    };
+
     // Export DLL Symbol.
     class DUNE_DLL_SYM BasicRemoteOperation;
 
@@ -164,7 +174,13 @@ namespace DUNE
       //! Time of the last remote action message received from the CCU.
       fp64_t m_last_action;
       //! Remote actions reply message;
-      IMC::RemoteActionsRequest m_actions;
+      IMC::RemoteActionsRequest m_actions_request;
+      //! Storage of Remote Operations
+      std::vector<Action> m_actions;
+      //! Storage of initial remote operations
+      std::vector<Action> m_actions_ini; 
+      //! Storage of range of Remote Operations
+      std::string m_range;
       //! Control loops last reference
       uint32_t m_scope_ref;
       //! Additional Remote Operation Actions
