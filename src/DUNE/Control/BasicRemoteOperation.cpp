@@ -145,11 +145,75 @@ namespace DUNE
       }
     }
 
-    void
-    BasicRemoteOperation::setupAdditionalActions(const std::vector<std::string>& additional_actions)
+    void 
+    BasicRemoteOperation::compareActions(std::vector<Action>& actions, std::vector<Action> new_actions)
     {
-      for (unsigned int i = 0; i < additional_actions.size(); ++i)
+
+      std::vector<Action> action_adder;
+
+      //! Iterate through the list of actions and update old ones if necessary
+      for (unsigned int i = 0; i < new_actions.size(); i++)
       {
+        bool new_action = true;
+        inf("Action: %s Type: %s", new_actions[i].name.c_str(), new_actions[i].type.c_str());
+        for(unsigned int j = 0; j < actions.size(); j++)
+        {
+          //! Check if the action already exists
+          if (!actions[j].name.compare(new_actions[i].name))
+          { 
+            new_action = false;
+            war("Action %s already exists and can't be changed. ILLEGAL", actions[j].name.c_str());
+            //! If it's a lock type, update it 
+            if (!actions[j].lock && new_actions[i].lock)
+            {
+              war("Lock attempt on %s. ILLEGAL", actions[j].name.c_str());
+            }
+            //! If it isnt and the type is different, update it
+            else if (actions[j].type.compare(new_actions[i].type) && new_actions[i].type.compare("lock"))
+            {
+              war("Attempt to update action %s from %s to %s", actions[j].name.c_str(),
+                                                               actions[j].type.c_str(), new_actions[i].type.c_str());
+              //m_verbs[j].type = task_verbs[i].type;
+            } 
+          }
+        }
+        //! Action doesnt exist, so add it
+        if (new_action)
+        {
+          Action action;
+          action = new_actions[i];
+          action_adder.push_back(action);
+          inf("Added new action %s of type %s with lock: %d", new_actions[i].name.c_str(),
+                                                              new_actions[i].type.c_str(), new_actions[i].lock);
+        }
+      }
+      if (!action_adder.empty()){
+        for (unsigned int i = 0; i < action_adder.size(); i++)
+        {
+          actions.push_back(action_adder[i]);
+        }
+      }
+    }
+
+    void
+    BasicRemoteOperation::setupAdditionalActions()
+    {
+      addRemoteAction("Exit", "Button");
+      for (unsigned int i = 0; i < m_actions.size(); ++i)
+      {
+        //! Turn the first letter of "type" uppercase
+        m_actions[i].type[0] = std::toupper(static_cast<unsigned char> (m_actions[i].type[0]));
+
+        //! Add action and lock if it is required
+        addRemoteAction(m_actions[i].name, m_actions[i].type);
+        if (m_actions[i].lock) addRemoteAction(m_actions[i].name, "Lock");
+      }      
+
+      //! If a Range has been specified, send it
+      m_range[0] = std::toupper(static_cast<unsigned char> (m_range[0]));
+      if (!m_range.empty()) addRemoteAction("Ranges", m_range);
+    }
+
     void 
     BasicRemoteOperation::parseActionType(const std::string& statement, const std::string seperator,
                                           std::string& action, std::string& type)

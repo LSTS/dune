@@ -124,7 +124,10 @@ namespace DUNE
 
       void
       parseActionType(const std::string& statement, const std::string separator, std::string& action, std::string& type);
-
+      
+      void 
+      compareActions(std::vector<Action>& actions, std::vector<Action> new_actions);
+      
       virtual void
       onConnectionTimeout(void)
       { }
