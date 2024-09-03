@@ -106,10 +106,33 @@ namespace DUNE
     void
     BasicRemoteOperation::consume(const IMC::RemoteActionsRequest* msg)
     {
-      if (msg->op != IMC::RemoteActionsRequest::OP_QUERY)
+
+      if (msg->op == IMC::RemoteActionsRequest::OP_REPORT)
         return;
 
-      dispatch(m_actions);
+      else if (msg->op == IMC::RemoteActionsRequest::OP_QUERY)
+      {
+        //! Clear the previous message
+        m_actions_request.actions.clear();
+
+        setupAdditionalActions();
+        inf("Dispatched actions: %s", m_actions_request.actions.c_str());
+        dispatch(m_actions_request);
+      }
+
+      // In this case, save the new Additional Actions posted
+      else if (msg->op == IMC::RemoteActionsRequest::OP_REGISTER)
+      {
+        inf("Register request received");
+
+        //! Parse the received message FORMAT: (Verb=Type;Verb=Type)
+        std::vector<std::string> parts;
+        Utils::String::split(msg->actions, ";", parts);
+        std::vector<Action> task_verbs;
+
+        saveActions(parts, task_verbs, "=");
+        compareActions(m_actions, task_verbs);
+      }
     }
 
     void
