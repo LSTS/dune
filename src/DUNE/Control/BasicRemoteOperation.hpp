@@ -120,7 +120,9 @@ namespace DUNE
       }
 
       void
-      setupAdditionalActions(const std::vector<std::string>& additional_actions);
+
+      void
+      parseActionType(const std::string& statement, const std::string separator, std::string& action, std::string& type);
 
       virtual void
       onConnectionTimeout(void)

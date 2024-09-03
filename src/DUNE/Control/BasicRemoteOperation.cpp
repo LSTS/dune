@@ -150,33 +150,30 @@ namespace DUNE
     {
       for (unsigned int i = 0; i < additional_actions.size(); ++i)
       {
-        if (Utils::String::ltrim(additional_actions[i]).size() < 3)
-          continue;
+    void 
+    BasicRemoteOperation::parseActionType(const std::string& statement, const std::string seperator,
+                                          std::string& action, std::string& type)
+    {
+        if (Utils::String::ltrim(statement).size() < 3)
+          return;
 
         std::vector<std::string> parts;
-        Utils::String::split(additional_actions[i], ":", parts);
+        Utils::String::split(statement, seperator, parts);
 
-        if (parts.size() != 2) continue;
+        if (parts.size() != 2) return;
+        
+        action = parts[0];
+        action = Utils::String::ltrim(action);
+        action = Utils::String::rtrim(action);
+        
+        if (action.empty()) return;
 
-        std::string action_name = parts[0];
-        action_name = Utils::String::ltrim(action_name);
-        action_name = Utils::String::rtrim(action_name);
-        if (action_name.empty()) continue;
-
-        std::string type_lowercase = parts[1];
-        type_lowercase = Utils::String::ltrim(type_lowercase);
-        type_lowercase = Utils::String::rtrim(type_lowercase);
-        Utils::String::toLowerCase(type_lowercase);
-
-        if (!type_lowercase.compare("button"))
-        {
-          addActionButton(action_name);
-        }
-        else if (!type_lowercase.compare("axis"))
-        {
-          addActionAxis(action_name);
-        }
-        else if (!type_lowercase.compare("slider"))
+        type = parts[1];
+        type = Utils::String::ltrim(type);
+        type = Utils::String::rtrim(type);
+        Utils::String::toLowerCase(type);
+         
+    }
         {
           addActionSlider(action_name);
         }
