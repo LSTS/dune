@@ -128,6 +128,9 @@ namespace DUNE
       void 
       compareActions(std::vector<Action>& actions, std::vector<Action> new_actions);
       
+      void
+      setupAdditionalActions();
+
       virtual void
       onConnectionTimeout(void)
       { }

@@ -319,8 +319,31 @@ namespace DUNE
     void
     BasicRemoteOperation::onResourceInitialization(void)
     {
-      setupAdditionalActions(m_additional_actions);
+      //! Parent task will add actions manually so we need to parse them
+      std::vector<std::string> manual_actions;
+      Utils::String::split(m_actions_request.actions, ";", manual_actions);      
+      saveActions(manual_actions, m_actions, "=");
+
+      //! Parse additional actions from ini file and compare with manual ones
+      std::vector<Action> additional_actions;
+      saveActions(m_additional_actions, additional_actions, ":");
+
+      compareActions(m_actions, additional_actions);
+
+      if (m_range.empty())
+        {
+          inf("Preset range of [-127, 127] to be used");
+          m_range = "range127";
+        }
+
+      //! Set the actions to be published
+      setupAdditionalActions();
+     
+      //! Save the initial additional actions
+      m_actions_ini =  m_actions;
+    
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      dispatch(m_actions_request);
     }
 
     void
