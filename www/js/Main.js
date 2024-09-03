@@ -279,7 +279,7 @@ function getMessageValue(data, abbrev, defval) {
 
 function getMessageCpuSingleUsage(data, ent, defval) {
   try {
-    //console.log("aqui >>>>>>>> "+ent+" : "+defval);
+    //console.log("getMessageCpuSingleUsage >>>>>>>> "+ent+" : "+defval);
     for (m in data.dune_entities) {
       var eid = data.dune_entities[m].label;
       if (eid.localeCompare(ent) == 0) {
@@ -334,7 +334,6 @@ function getSystemInfo(data) {
 
 function getSystemType(data, value) {
   //console.log("Value: "+value);
-  // Mapeamento das abreviações para os tipos de sistema
   var abbreviationMap = {
     0: "CCU",
     1: "Human-portable Sensor",
@@ -347,11 +346,10 @@ function getSystemType(data, value) {
     8: "Wireless Sensor Network"
   };
 
-  // Verifica se o valor fornecido está presente nas abreviações
   if (value in abbreviationMap) {
     return abbreviationMap[value];
   } else {
-    return "Unknown"; // Se não encontrar correspondência
+    return "Unknown";
   }
 }
 
