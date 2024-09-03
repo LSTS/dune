@@ -65,31 +65,31 @@ Main.prototype.m_fields = [
         "side": "right"
     },
     {
-        "label": "Daemon CPU Usage:",
-        "data_function": function(data) { return getMessageValue(data, 'CpuUsage', 0); },
+        "label": "DUNE CPU Usage:",
+        "data_function": function(data) { return getMessageCpuSingleUsage(data, 'DUNECPU', 0); },
         "widget": new Gauge(1),
         "side": "right"
     },
     {
-        "label": "CPU1:",
+        "label": "CPU1 Usage:",
         "data_function": function(data) { return getMessageCpuSingleUsage(data, 'CPU1',  0); },
         "widget": new Gauge(0),
         "side": "right"
     },
     {
-        "label": "CPU2:",
+        "label": "CPU2 Usage:",
         "data_function": function(data) { return getMessageCpuSingleUsage(data, 'CPU2',  0); },
         "widget": new Gauge(0),
         "side": "right"
     },
     {
-        "label": "CPU3:",
+        "label": "CPU3 Usage:",
         "data_function": function(data) { return getMessageCpuSingleUsage(data, 'CPU3',  0); },
         "widget": new Gauge(0),
         "side": "right"
     },
     {
-        "label": "CPU4:",
+        "label": "CPU4 Usage:",
         "data_function": function(data) { return getMessageCpuSingleUsage(data, 'CPU4',  0); },
         "widget": new Gauge(0),
         "side": "right"
@@ -297,12 +297,12 @@ function getMessageCpuSingleUsage(data, ent, defval)
           var eid = data.dune_entities[m].label;
           if (eid.localeCompare(ent) == 0)
           {
-            console.log(">>>>>>> "+eid+" : "+data.dune_entities[m].value);
-            console.log(" ");
+            //console.log(">>>>>>> "+eid+" : "+data.dune_entities[m].value);
+            //console.log(" ");
             return data.dune_entities[m].value;
           }
       }
-      console.log(" ");
+      //console.log(" ");
       return defval;
     }
     catch (err)
