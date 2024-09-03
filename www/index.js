@@ -86,7 +86,6 @@ function setConnected(value)
     {
         icon.src = g_icons.path('normal');
         icon.title = 'Connected';
-
     }
     else
     {
@@ -140,6 +139,7 @@ function handleData(text)
     for (var i in data.dune_messages)
     {
         var msg = data.dune_messages[i];
+        //console.log(msg);
         if (msg.abbrev != 'EntityState' && msg.abbrev != 'CpuUsage')
             continue;
 
