@@ -205,7 +205,7 @@ namespace DUNE
         csum[0] = computeCRC(cmd_frame, cnt_frame);
         cmd_frame[cnt_frame] = csum[0];
         m_handle->write(cmd_frame, total_frame_size);
-        delete cmd_frame;
+        delete[] cmd_frame;
       }
 
       bool
