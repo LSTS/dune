@@ -322,7 +322,7 @@ function getMessageCpuSingleUsage(data, ent, defval)
 function getSystemInfo(data) {
   if (data && data.dune_messages) {
     for (var i in data.dune_messages) {
-      if (data.dune_messages[i].abbrev == 'Announce') {
+      if (data.dune_messages[i].abbrev == 'Announce' && data.dune_messages[i].sys_name == data.dune_system) {
         var msg = data.dune_messages[i];
         var systemType = getSystemType(data, msg.sys_type);
         return msg.sys_name + ' (' + systemType + ')';
