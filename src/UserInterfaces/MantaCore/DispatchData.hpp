@@ -69,7 +69,7 @@ namespace UserInterfaces
       std::string fcap_elabel;
       //! BQMonitor entity label
       std::string bq_elabel;
-      //! State to dispatch Feul level
+      //! State to dispatch Fuel level
       bool dispatch_fuel_level;
       //! Level of battery below which a warning will be thrown.
       float war_lvl;
@@ -189,7 +189,7 @@ namespace UserInterfaces
           }
           init_step_volt++;
         }
-        if(m_driver->newBqDataType(DriverMantaCore::POWER_REMAININ_CAP, -1) && m_driver->newBqDataType(DriverMantaCore::POWER_FULL_CAP, -1))
+        if(m_driver->newBqDataType(DriverMantaCore::POWER_REMAINING_CAP, -1) && m_driver->newBqDataType(DriverMantaCore::POWER_FULL_CAP, -1))
         {
           m_imc_d.m_fuel.setTimeStamp(m_tstamp);
           m_fuel_level = (int)((m_bqDataToDispatch.r_cap * 100) / m_bqDataToDispatch.f_cap);
@@ -197,9 +197,9 @@ namespace UserInterfaces
           m_imc_d.m_fuel.confidence = 100;
           m_task->dispatch(m_imc_d.m_fuel, DF_KEEP_TIME);
         }
-        if(m_driver->newBqDataType(DriverMantaCore::POWER_REMAININ_CAP, -1))
+        if(m_driver->newBqDataType(DriverMantaCore::POWER_REMAINING_CAP, -1))
         {
-          m_driver->setBqNewData(DriverMantaCore::POWER_REMAININ_CAP, false, -1);
+          m_driver->setBqNewData(DriverMantaCore::POWER_REMAINING_CAP, false, -1);
           m_imc_d.m_amp[IMC_TYPE_BQ_REM_CAP_AMP].setTimeStamp(m_tstamp);
           m_imc_d.m_amp[IMC_TYPE_BQ_REM_CAP_AMP].value = m_bqDataToDispatch.r_cap;
           m_task->dispatch(m_imc_d.m_amp[IMC_TYPE_BQ_REM_CAP_AMP], DF_KEEP_TIME);
@@ -249,24 +249,24 @@ namespace UserInterfaces
       struct EntityInfo
       updateEntityState(void)
       {
-        char m_bufer_entity[256];
+        char m_buffer_entity[256];
         m_bqDataToDispatch = m_driver->getBqDataPower();
         if (m_fuel_level < m_args_d.err_lvl && m_bqDataToDispatch.voltage < m_args_d.err_volt_lvl && m_bqDataToDispatch.voltage > 0)
         {
-          std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
+          std::memset(&m_buffer_entity, '\0', sizeof(m_buffer_entity));
           if (m_bqDataToDispatch.time_full > 0)
           {
-            std::sprintf(m_bufer_entity, "active | %s | fuel reserve - ETF: %s", m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_full).c_str());
+            std::sprintf(m_buffer_entity, "active | %s | fuel reserve - ETF: %s", m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_full).c_str());
             m_entityInfo.state = IMC::EntityState::ESTA_ERROR;
             m_entityInfo.code = Status::CODE_MISSING_DATA;
-            m_entityInfo.text = Utils::String::str(DTR(m_bufer_entity));
+            m_entityInfo.text = Utils::String::str(DTR(m_buffer_entity));
           }
           else if((m_bqDataToDispatch.time_empty > 0))
           {
-            std::sprintf(m_bufer_entity, "active | %s | fuel reserve - ETD: %s",  m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_empty).c_str());
+            std::sprintf(m_buffer_entity, "active | %s | fuel reserve - ETD: %s",  m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_empty).c_str());
             m_entityInfo.state = IMC::EntityState::ESTA_ERROR;
             m_entityInfo.code = Status::CODE_MISSING_DATA;
-            m_entityInfo.text = Utils::String::str(DTR(m_bufer_entity));
+            m_entityInfo.text = Utils::String::str(DTR(m_buffer_entity));
           }
           else
           {
@@ -276,20 +276,20 @@ namespace UserInterfaces
         }
         else if (m_fuel_level < m_args_d.err_lvl)
         {
-          std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
+          std::memset(&m_buffer_entity, '\0', sizeof(m_buffer_entity));
           if (m_bqDataToDispatch.time_full > 0)
           {
-            std::sprintf(m_bufer_entity, "active | %s | fuel warning - ETF: %s",  m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_full).c_str());
+            std::sprintf(m_buffer_entity, "active | %s | fuel warning - ETF: %s",  m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_full).c_str());
             m_entityInfo.state = IMC::EntityState::ESTA_NORMAL;
             m_entityInfo.code = Status::CODE_MISSING_DATA;
-            m_entityInfo.text = Utils::String::str(DTR(m_bufer_entity));
+            m_entityInfo.text = Utils::String::str(DTR(m_buffer_entity));
           }
           else if((m_bqDataToDispatch.time_empty > 0))
           {
-            std::sprintf(m_bufer_entity, "active | %s | fuel warning - ETD: %s",  m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_empty).c_str());
+            std::sprintf(m_buffer_entity, "active | %s | fuel warning - ETD: %s",  m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_empty).c_str());
             m_entityInfo.state = IMC::EntityState::ESTA_NORMAL;
             m_entityInfo.code = Status::CODE_MISSING_DATA;
-            m_entityInfo.text = Utils::String::str(DTR(m_bufer_entity));
+            m_entityInfo.text = Utils::String::str(DTR(m_buffer_entity));
           }
           else
           {
@@ -299,20 +299,20 @@ namespace UserInterfaces
         }
         else if (m_fuel_level < m_args_d.war_lvl)
         {
-          std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
+          std::memset(&m_buffer_entity, '\0', sizeof(m_buffer_entity));
           if (m_bqDataToDispatch.time_full > 0)
           {
-            std::sprintf(m_bufer_entity, "active | %s | fuel running low - ETF: %s",  m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_full).c_str());
+            std::sprintf(m_buffer_entity, "active | %s | fuel running low - ETF: %s",  m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_full).c_str());
             m_entityInfo.state = IMC::EntityState::ESTA_NORMAL;
             m_entityInfo.code = Status::CODE_MISSING_DATA;
-            m_entityInfo.text = Utils::String::str(DTR(m_bufer_entity));
+            m_entityInfo.text = Utils::String::str(DTR(m_buffer_entity));
           }
           else if ((m_bqDataToDispatch.time_empty > 0))
           {
-            std::sprintf(m_bufer_entity, "active | %s | fuel running low - ETD: %s",  m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_empty).c_str());
+            std::sprintf(m_buffer_entity, "active | %s | fuel running low - ETD: %s",  m_util->getIOName(m_args_d.io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_empty).c_str());
             m_entityInfo.state = IMC::EntityState::ESTA_NORMAL;
             m_entityInfo.code = Status::CODE_MISSING_DATA;
-            m_entityInfo.text = Utils::String::str(DTR(m_bufer_entity));
+            m_entityInfo.text = Utils::String::str(DTR(m_buffer_entity));
           }
           else
           {
@@ -323,23 +323,23 @@ namespace UserInterfaces
         else
         {
           if (m_bqDataToDispatch.time_full > 0 && m_bqDataToDispatch.time_full < 65535)
-            std::sprintf(m_bufer_entity,
+            std::sprintf(m_buffer_entity,
                          "active | %s | ETF:%s",
                          m_util->getIOName(m_args_d.io_dev).c_str(),
                          minutesToTime(m_bqDataToDispatch.time_full).c_str());
           else if (m_bqDataToDispatch.time_empty > 0 && m_bqDataToDispatch.time_empty < 65535)
-            std::sprintf(m_bufer_entity,
+            std::sprintf(m_buffer_entity,
                          "active | %s | ETD:%s",
                          m_util->getIOName(m_args_d.io_dev).c_str(),
                          minutesToTime(m_bqDataToDispatch.time_empty).c_str());
           else
-            std::sprintf(m_bufer_entity,
+            std::sprintf(m_buffer_entity,
                          "active | %s",
                          m_util->getIOName(m_args_d.io_dev).c_str());
 
           m_entityInfo.state = IMC::EntityState::ESTA_NORMAL;
           m_entityInfo.code = Status::CODE_MISSING_DATA;
-          m_entityInfo.text = Utils::String::str(DTR(m_bufer_entity));
+          m_entityInfo.text = Utils::String::str(DTR(m_buffer_entity));
         }
         return m_entityInfo;
       }

@@ -92,11 +92,11 @@ namespace UserInterfaces
         POWER_VOLTAGE = 0,
         POWER_CURRENT,
         POWER_TEMPERATURE,
-        POWER_REMAININ_CAP,
+        POWER_REMAINING_CAP,
         POWER_FULL_CAP,
         POWER_CELLS_INFO,
         POWER_TIME_FULL,
-        POWER_TIME_DICHARGE,
+        POWER_TIME_DISCHARGE,
       };
 
       enum POWER_CHANNEL {
@@ -249,7 +249,7 @@ namespace UserInterfaces
       {
         m_task->debug("request connection to board");
         sprintf(cmd_text, "%c,%c,%c%c",BYTE_PREAMBLE, BYTE_CPU, BYTE_CPU_OK, '\0');
-        sendComand(cmd_text);
+        sendCommand(cmd_text);
       }
 
       void
@@ -257,7 +257,7 @@ namespace UserInterfaces
       {
         m_task->debug("request firmware");
         sprintf(cmd_text, "%c,%c%c",BYTE_PREAMBLE, BYTE_FIRMWARE, '\0');
-        sendComand(cmd_text);
+        sendCommand(cmd_text);
       }
 
       void
@@ -265,7 +265,7 @@ namespace UserInterfaces
       {
         m_task->debug("set number cells");
         sprintf(cmd_text, "%c,%c,%d%c",BYTE_PREAMBLE, BYTE_CELL_NUMBER, m_number_cells, '\0');
-        sendComand(cmd_text);
+        sendCommand(cmd_text);
       }
 
       void
@@ -273,7 +273,7 @@ namespace UserInterfaces
       {
         m_task->debug("send sat number");
         sprintf(cmd_text, "%c,%c,%d%c",BYTE_PREAMBLE, BYTE_SAT, sat_number, '\0');
-        sendComand(cmd_text);
+        sendCommand(cmd_text);
         waitForFeedback();
         if(commandState() != CMD_ACK)
         {
@@ -295,7 +295,7 @@ namespace UserInterfaces
           sprintf(cmd_text, "%c,%c,%d,%c%c",BYTE_PREAMBLE, BYTE_CHANNEL_DATA, power_channel, BYTE_CHANNEL_ON, '\0');
         else
           sprintf(cmd_text, "%c,%c,%d,%c%c",BYTE_PREAMBLE, BYTE_CHANNEL_DATA, power_channel, BYTE_CHANNEL_OFF, '\0');
-        sendComand(cmd_text);
+        sendCommand(cmd_text);
         waitForFeedback();
         if(commandState() != CMD_ACK)
         {
@@ -318,7 +318,7 @@ namespace UserInterfaces
       {
         m_task->debug("request data power");
         sprintf(cmd_text, "%c,%c,%c%c",BYTE_PREAMBLE, BYTE_DATA_POWER, BYTE_SEND_DATA, '\0');
-        sendComand(cmd_text);
+        sendCommand(cmd_text);
       }
 
       bool
@@ -326,7 +326,7 @@ namespace UserInterfaces
       {
         m_task->debug("addModemNameDevice");
         sprintf(cmd_text, "%c,%c,%d,%s%c",BYTE_PREAMBLE, BYTE_AMODEM, id, modem_name.c_str(), '\0');
-        sendComand(cmd_text);
+        sendCommand(cmd_text);
         waitForFeedback();
         if(commandState() != CMD_ACK)
         {
@@ -529,7 +529,7 @@ namespace UserInterfaces
       PowerChannelData m_power_channel_data[c_max_power_channels];
 
     private:
-      #define MAX_SIZE_SERIAL_DARA  (256)
+      #define MAX_SIZE_SERIAL_DATA  (256)
 
       enum BYTE_IN_STATE {
           BYTE_IN_PREAMBLE = 0,
@@ -559,14 +559,14 @@ namespace UserInterfaces
       //! Buffer uart tx
       char m_bfr_tx[64];
       //! Buffer uart rx
-      char m_bfr_rx[MAX_SIZE_SERIAL_DARA];
+      char m_bfr_rx[MAX_SIZE_SERIAL_DATA];
       //! Buffer parser
-      char m_rx_buf_parser[MAX_SIZE_SERIAL_DARA];
-      //! Flag to control state of comand send.
+      char m_rx_buf_parser[MAX_SIZE_SERIAL_DATA];
+      //! Flag to control state of command send.
       uint8_t m_send_cmd_state;
       //! Byte in state
       uint8_t m_byte_in_state;
-      //! Flah to control new string input
+      //! Flag to control new string input
       bool m_new_rx_string;
       //! counter of data in
       uint16_t m_cnt_rx;
@@ -623,7 +623,7 @@ namespace UserInterfaces
             break;
 
           case BYTE_IN_DATA:
-            if(m_cnt_rx < MAX_SIZE_SERIAL_DARA)
+            if(m_cnt_rx < MAX_SIZE_SERIAL_DATA)
             {
               m_rx_buf_parser[m_cnt_rx++] = byte_in;
               m_rx_buf_parser[m_cnt_rx] = '\0';
@@ -746,7 +746,7 @@ namespace UserInterfaces
       }
 
       bool
-      sendComand(std::string text_cmd)
+      sendCommand(std::string text_cmd)
       {
         if(m_send_cmd_state != CMD_WAITING)
         {
@@ -801,7 +801,7 @@ namespace UserInterfaces
       {
         m_task->debug("sendFreeText:%s", free_text.c_str());
         sprintf(cmd_text, "%c,%c,%s%c",BYTE_PREAMBLE, BYTE_FREE_TEXT, free_text.c_str(), '\0');
-        sendComand(cmd_text);
+        sendCommand(cmd_text);
         waitForFeedback();
         if(commandState() != CMD_ACK)
         {
@@ -839,16 +839,16 @@ namespace UserInterfaces
         else if(bq_data_type == BQ_INFO)
         {
           std::sscanf(m_rx_buf_parser, "$,D,i,%f,%f,%f,%f,%*s", &data_values[POWER_TIME_FULL],
-                      &data_values[POWER_TIME_DICHARGE], &data_values[POWER_REMAININ_CAP],
+                      &data_values[POWER_TIME_DISCHARGE], &data_values[POWER_REMAINING_CAP],
                       &data_values[POWER_FULL_CAP]);
 
           m_bqData.time_full = data_values[POWER_TIME_FULL];
-          m_bqData.time_empty = data_values[POWER_TIME_DICHARGE];
-          m_bqData.r_cap = data_values[POWER_REMAININ_CAP];
+          m_bqData.time_empty = data_values[POWER_TIME_DISCHARGE];
+          m_bqData.r_cap = data_values[POWER_REMAINING_CAP];
           m_bqData.f_cap = data_values[POWER_FULL_CAP];
           setBqNewData(POWER_TIME_FULL, true, -1);
-          setBqNewData(POWER_TIME_DICHARGE, true, -1);
-          setBqNewData(POWER_REMAININ_CAP, true, -1);
+          setBqNewData(POWER_TIME_DISCHARGE, true, -1);
+          setBqNewData(POWER_REMAINING_CAP, true, -1);
           setBqNewData(POWER_FULL_CAP, true, -1);
           m_task->debug("BQ: TF:%.0f | TD:%.0f | RC:%.2fAh | FC:%.2fAh", m_bqData.time_full,
                         m_bqData.time_empty, m_bqData.r_cap, m_bqData.f_cap);

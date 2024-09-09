@@ -65,8 +65,6 @@ namespace UserInterfaces
       DriverMantaCore* m_driver;
       //! DispatchData of MantaCore
       DispatchData* m_dispatch;
-      //! Manta Utils
-      MantaUtils* m_manta_util;
       //! Serial port handle.
       SerialPort* m_uart;
       //! Convenience type definition for a table of power channels.
@@ -84,7 +82,7 @@ namespace UserInterfaces
       //! System names iterator.
       std::set<std::string>::const_iterator m_sys_itr;
       //! Flag to control poweroff by switch
-      bool m_is_powero_off;
+      bool m_is_power_off;
       //! Watchdog poweroff.
       Time::Counter<double> m_wdog_poff;
 
@@ -217,11 +215,10 @@ namespace UserInterfaces
       onInitializeDevice() override
       {
         inf("Initializing board");
-        m_is_powero_off = false;
+        m_is_power_off = false;
         m_driver = new DriverMantaCore(this, m_uart, m_args.number_cell, getSystemName());
         m_dispatch = new DispatchData(this, m_driver);
         m_dispatch->cloneStructs(m_args, m_imc);
-        m_manta_util = new MantaUtils(this);
         m_driver->setupBoard();
         inf("Firmware Version:%s", m_driver->firmwareVersion().c_str());
         inf("Initializing board: done");
@@ -404,17 +401,17 @@ namespace UserInterfaces
         m_driver->pollData();
         m_dispatch->dispatchPowerData();
         m_dispatch->updateEntityState();
-        if(m_driver->isToTurnOffCPU() && !m_is_powero_off)
+        if(m_driver->isToTurnOffCPU() && !m_is_power_off)
         {
           war("%s", DTR(Status::getString(Status::CODE_POWER_DOWN)));
           IMC::PowerOperation pop;
           pop.setDestination(getSystemId());
           pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
           dispatch(pop);
-          m_is_powero_off = true;
+          m_is_power_off = true;
           m_wdog_poff.setTop(5);
         }
-        else if (m_is_powero_off)
+        else if (m_is_power_off)
         {
           if (m_wdog_poff.overflow())
           {
