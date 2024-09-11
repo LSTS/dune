@@ -26,26 +26,21 @@
 ############################################################################
 
 if(POINTGREY)
-  CHECK_LIBRARY_EXISTS(flycapture-c GetInternal "" HAVE_LIB_FLYCAPTURE)
-
-  if(HAVE_LIB_FLYCAPTURE)
-    # FlyCapture Present
+  find_library(POINTGREY_LIBRARY NAMES flycapture PATHS /usr/lib)
+  if(${POINTGREY_LIBRARY} MATCHES "libflycapture.so")
+    message(STATUS "Found Pointgrey library: ${POINTGREY_LIBRARY}")
+    # Flycapture Present
     set(DUNE_SYS_HAS_FLYCAPTURE 1 CACHE INTERNAL "FlyCapture library")
     set(DUNE_USING_FLYCAPTURE 1 CACHE INTERNAL "FlyCapture library")
-
 
     dune_add_lib(flycapture)
     dune_add_lib(flycapture-c)
 
-    # Check Header
-    dune_test_header(flycapture/FlyCapture2.h)
-    dune_test_header(flycapture/FlyCapture2_C.h)
-
-  else(HAVE_LIB_FLYCAPTURE)
-    # FlyCapture not found on the system.
+  else()
+     # FlyCapture not found on the system.
     message(SEND_ERROR "FlyCapture was not found on the system.")
     set(DUNE_SYS_HAS_FLYCAPTURE 0 CACHE INTERNAL "FlyCapture library")
     set(DUNE_USING_FLYCAPTURE 0 CACHE INTERNAL "FlyCapture library")
-  endif(HAVE_LIB_FLYCAPTURE)
+  endif()
 
 endif(POINTGREY)
