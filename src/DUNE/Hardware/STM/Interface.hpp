@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2021 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -24,40 +24,81 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Pedro Gonçalves                                                  *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_HPP_INCLUDED_
-#define DUNE_HARDWARE_HPP_INCLUDED_
+#ifndef DUNE_HARDWARE_STM_INTERFACE_HPP_INCLUDED_
+#define DUNE_HARDWARE_STM_INTERFACE_HPP_INCLUDED_
+
+// DUNE headers.
+#include <DUNE/IO/Handle.hpp>
+#include <DUNE/Time/Counter.hpp>
 
 namespace DUNE
 {
-  //! Low level hardware drivers.
   namespace Hardware
-  { }
-}
+  {
+    namespace STM
+    {
+      class Interface
+      {
+      public:
+        Interface(IO::Handle* handle, std::string ibin);
 
-#include <DUNE/Hardware/SerialPort.hpp>
-#include <DUNE/Hardware/I2C.hpp>
-#include <DUNE/Hardware/IOPort.hpp>
-#include <DUNE/Hardware/GPIO.hpp>
-#include <DUNE/Hardware/Buttons.hpp>
-#include <DUNE/Hardware/ESCC.hpp>
-#include <DUNE/Hardware/IntelHEX.hpp>
-#include <DUNE/Hardware/BasicModem.hpp>
-#include <DUNE/Hardware/HayesModem.hpp>
-#include <DUNE/Hardware/BasicDeviceDriver.hpp>
-#include <DUNE/Hardware/Exceptions.hpp>
-#include <DUNE/Hardware/UCTK/Constants.hpp>
-#include <DUNE/Hardware/UCTK/Errors.hpp>
-#include <DUNE/Hardware/UCTK/Parser.hpp>
-#include <DUNE/Hardware/UCTK/Bootloader.hpp>
-#include <DUNE/Hardware/LUCL/Protocol.hpp>
-#include <DUNE/Hardware/LUCL/ProtocolParser.hpp>
-#include <DUNE/Hardware/LUCL/BootLoader.hpp>
-#include <DUNE/Hardware/STM/Interface.hpp>
-#include <DUNE/Hardware/STM/FirmwareUpdate.hpp>
-#include <DUNE/Hardware/PWM.hpp>
-#include <DUNE/Hardware/SocketCAN.hpp>
+        virtual
+        ~Interface(void);
+
+        void
+        startFirmwareUpdate(void);
+
+        bool
+        checkSystemType(void);
+
+        void
+        checkSystemVersion(void);
+
+        bool
+        checkFirmwareFile(void);
+
+        void
+        computeCRC(void);
+
+        bool
+        syncBoot(void);
+
+        void
+        sendCommand(const char* cmd);
+
+      private:
+        //! I/O handle.
+        IO::Handle* m_handle;
+        //! Firmware File path.
+        std::string m_ibin;
+        //! Buffer to save data received
+        uint8_t m_buffer_rx[128];
+        //! Buffer to save data string received
+        uint8_t m_frame_rx[128];
+        //! Storage bytes received
+        unsigned m_frame_rx_count;
+        //! System type
+        std::string m_system_type;
+        //! Buffer to storage frames blocks to send
+        uint8_t m_block_frame[512];
+
+        void
+        print(const char* format, ...);
+
+        void
+        title(const char* str);
+
+        uint8_t
+        computeCRC(uint8_t* data, size_t size);
+
+        bool
+        readReply(double timeout);
+      };
+    }
+  }
+}
 
 #endif
