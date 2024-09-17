@@ -158,7 +158,7 @@ namespace Supervisors
           .defaultValue("")
           .description("List of static ENC features");
 
-        bind<IMC::PlanSpecification>(this);
+        bind<IMC::DesiredPath>(this);
         bind<IMC::GpsFix>(this);
       }
 
@@ -275,35 +275,13 @@ namespace Supervisors
       }
 
       void
-      consume(const IMC::PlanSpecification* msg)
+      consume(const IMC::DesiredPath* msg)
       {
-        double lat = m_current_lat;
-        double lon = m_current_lon;
+        if (m_args.check_path_safety)
+          checkTransectSafety(m_current_lat, m_current_lon, msg->end_lat, msg->end_lon);
 
-        //! Iterate through plan maneuvers.
-        std::vector<IMC::PlanManeuver*>::const_iterator itr;
-        for (itr = msg->maneuvers.begin(); itr != msg->maneuvers.end(); ++itr)
-        {
-          const IMC::Message* maneuver = (*itr)->data.get();
-
-          // For now just to GoTos.
-          if (maneuver->getId() != IMC::Goto::getIdStatic())
-            continue;
-
-          const IMC::Goto* m = static_cast<const IMC::Goto*>(maneuver);
-          // spew("LAT LON: %0.4f %0.4f", m->lat, m->lon);
-
-          //! Check the depth of the commanded path transect.
-          // if (m_args.check_path_depth)
-          // checkTransectDepth(lat, lon, m->lat, m->lon);
-
-          //! Check if there are static object close to the commanded path.
-          if (m_args.check_path_safety)
-            checkTransectSafety(lat, lon, m->lat, m->lon);
-
-          lat = m->lat;
-          lon = m->lon;
-        }
+        if (m_args.check_path_depth)
+          checkTransectDepth(m_current_lat, m_current_lon, msg->end_lat, msg->end_lon);
 
         //! Check depth contours around USV.
         if (m_args.check_depth_contours)
