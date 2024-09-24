@@ -128,6 +128,13 @@ namespace DUNE
         return false;
       }
 
+      //! Reset the values
+      void
+      reset()
+      {
+        m_valid_last = false;
+      }
+
     private:
       //! DelayedTrigger object for position fault detection
       DelayedTrigger<T>* m_pos_trigger;
