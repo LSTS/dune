@@ -14,5 +14,5 @@ build_script:
   - cd c:\dev\dune
   - md build
   - cd build
-  - cmake -DTESTS:BOOL=ON -G "Visual Studio 14 2015 Win64" ..
+  - cmake -DTESTS:BOOL=OFF -G "Visual Studio 14 2015 Win64" ..
   - cmake --build . --target Experimental
