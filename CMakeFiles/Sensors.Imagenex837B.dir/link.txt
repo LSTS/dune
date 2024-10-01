@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.Imagenex837B.a  CMakeFiles/Sensors.Imagenex837B.dir/src/Sensors/Imagenex837B/Task.cpp.o
+/usr/bin/ranlib libSensors.Imagenex837B.a

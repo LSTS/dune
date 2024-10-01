@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.Environment.a  CMakeFiles/Simulators.Environment.dir/src/Simulators/Environment/QuadTree.cpp.o CMakeFiles/Simulators.Environment.dir/src/Simulators/Environment/Task.cpp.o
+/usr/bin/ranlib libSimulators.Environment.a

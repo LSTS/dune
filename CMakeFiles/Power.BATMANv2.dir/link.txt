@@ -1,0 +1,2 @@
+/usr/bin/ar qc libPower.BATMANv2.a  CMakeFiles/Power.BATMANv2.dir/src/Power/BATMANv2/Task.cpp.o
+/usr/bin/ranlib libPower.BATMANv2.a

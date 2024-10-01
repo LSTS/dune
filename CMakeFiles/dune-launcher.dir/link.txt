@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-launcher.dir/src/Main/Launcher.cpp.o  -o dune-launcher libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

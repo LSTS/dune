@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.Leaks.a  CMakeFiles/Simulators.Leaks.dir/src/Simulators/Leaks/Task.cpp.o
+/usr/bin/ranlib libSimulators.Leaks.a
