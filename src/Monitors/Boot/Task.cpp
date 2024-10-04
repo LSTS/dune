@@ -42,7 +42,7 @@ namespace Monitors
     {
       double delay;
       double ttl;
-      std::string recipient;
+      std::string default_recipient;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -72,7 +72,7 @@ namespace Monitors
         .minimumValue("60")
         .description("Boot message time-to-live, in seconds. Value can not be less than 60s.");
 
-        param("SMS Recipient Number", m_args.recipient)
+        param("Default SMS Recipient Number", m_args.default_recipient)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("")
         .description(DTR("Phone number of the SMS recipient"));
@@ -162,9 +162,6 @@ namespace Monitors
       void
       sendSMS()
       {
-        if (m_args.recipient.empty())
-          return;
-
         Time::BrokenDown bdt(Time::Clock::getSinceEpoch());
         std::string msg = "Boot: ";
         msg += String::str("%04u-%02u-%02u %02u:%02u:%02u", bdt.year, bdt.month,
@@ -176,7 +173,24 @@ namespace Monitors
         request.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
         request.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
         request.deadline = Time::Clock::getSinceEpoch() + m_args.ttl;
-        request.destination = m_args.recipient;
+        
+        // Attempt to grab recipient number from Monitors.Emergency
+        // If failure defaults to default_recipient 
+        try
+        {
+          request.destination = m_ctx.config.get("Monitors.Emergency", "SMS Recipient Number");
+          debug("Got recipient number from Monitors.Emergency: %s", request.destination.c_str());
+        }
+        catch(...)
+        {
+          request.destination = m_args.default_recipient;
+          debug("Failed to grab recipient number from Monitors.Emergency. "
+                "Using default number: %s", request.destination.c_str());
+        }
+        
+        if (request.destination.empty())
+          return;
+        
         request.txt_data = msg;
         request.req_id = 1;
 
