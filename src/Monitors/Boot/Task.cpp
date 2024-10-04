@@ -211,6 +211,8 @@ namespace Monitors
             setEntityState(IMC::EntityState::ESTA_NORMAL, "active - messages sent");
             m_msg_sent = true;
           }
+
+          Delay::wait(1.0);
         }
       }
     };
