@@ -679,7 +679,7 @@ namespace Control
           }
           catch (const std::exception& e)
           {
-            err(DTR("can not resolve %s (%s), is there a task failure or a configuration error?"),
+            war(DTR("can not resolve %s (%s), is there a task failure or a configuration error?"),
                 label.c_str(), e.what());
           }
 
@@ -929,7 +929,7 @@ namespace Control
         void
         buildENCforCAS()
         {
-          war("buildENCforCAS");
+          debug("buildENCforCAS");
           int offset = 5;
           Math::Matrix course_off_ranges(m_offsets.size(),2);
 
@@ -1168,7 +1168,7 @@ namespace Control
         void
         groundingCost()
         {
-          war("groundingCost");
+          debug("groundingCost");
           // Cost function with environmental factors.
           double bathymetry = 1;
           m_wind_dir = 60;
@@ -1190,7 +1190,7 @@ namespace Control
         void
         createWPs(const TrackingState& ts)
         {
-          war("createWPs");
+          debug("createWPs");
           // Create and fill waypoints matrix.
           double wp0_dx = 0.0; // displ between asv and wp0
           double wp0_dy = 0.0;
