@@ -1092,7 +1092,7 @@ namespace Control
                   m_dyn_obst_vec[i].lat = msg->lat;
                   m_dyn_obst_vec[i].course = msg->course;
                   m_dyn_obst_vec[i].nav_status = msg->nav_status;
-                  m_dyn_obst_vec[i].speed = msg->speed * 0.514;
+                  m_dyn_obst_vec[i].speed = msg->speed;
                   m_dyn_obst_vec[i].dist = distance;
 
                   m_last_update[i] = m_timestamp_obst;
