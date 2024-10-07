@@ -46,8 +46,9 @@ ChartWidget.prototype.create = function (container) {
 };
 
 ChartWidget.prototype.update = function (values) {
-  if (values && values.length === 8) {
+  if (values && values.length > 0) {
     this.chart.values = values;
+    this.chart.canvas.width = values.length * 25; // Increase the width according to the number of CPUs
     this.draw();
   }
 };
@@ -57,31 +58,32 @@ ChartWidget.prototype.draw = function () {
   var canvas = this.chart.canvas;
   var values = this.chart.values;
 
+  // Clean the canvas before drawing
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Define the width of each bar based on the number of CPUs
   var barWidth = canvas.width / values.length;
-  var barHeightRatio = canvas.height / 100;
+  var barHeightRatio = canvas.height / 100; // Assume the value is a percentage
 
-  for (var i = 0; i < values.length; i++) {
+  // Draw the bars for each available CPU
+  for (var i = 0; i < values.length; i++)
+  {
     var value = values[i];
     var gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, 'rgba(54, 162, 235, 0.2)'); // Lighter color
-    gradient.addColorStop(1, 'rgba(54, 162, 235, 1)');   // Darker color
+    gradient.addColorStop(0, 'rgba(54, 162, 235, 0.2)');
+    gradient.addColorStop(1, 'rgba(54, 162, 235, 1)');
     ctx.fillStyle = gradient;
     ctx.fillRect(i * barWidth, canvas.height - value * barHeightRatio, barWidth, value * barHeightRatio);
     ctx.strokeStyle = 'rgba(54, 162, 235, 1)';
     ctx.strokeRect(i * barWidth, canvas.height - value * barHeightRatio, barWidth, value * barHeightRatio);
 
-    // Desenha o valor no centro da barra
+    // Draw the value in the center of the bar
     ctx.fillStyle = 'black';
     ctx.font = '10px Arial';
     ctx.textAlign = 'center';
-
-    // Calcule a posição vertical para centralizar o texto na barra
     var text = value.toString();
-    var textWidth = ctx.measureText(text).width;
     var textX = i * barWidth + barWidth / 2;
-    var textY = canvas.height - value * barHeightRatio + 10; // Ajuste vertical
+    var textY = canvas.height - value * barHeightRatio + 10;
     ctx.fillText(text, textX, textY);
   }
 };

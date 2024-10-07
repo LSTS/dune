@@ -84,17 +84,23 @@ Main.prototype.m_fields = [
   },
   {
     "label": "CPUs:",
-    "data_function": function (data) {
-      return [
-        getMessageCpuSingleUsage(data, 'CPU1', 0),
-        getMessageCpuSingleUsage(data, 'CPU2', 0),
-        getMessageCpuSingleUsage(data, 'CPU3', 0),
-        getMessageCpuSingleUsage(data, 'CPU4', 0),
-        getMessageCpuSingleUsage(data, 'CPU5', 0),
-        getMessageCpuSingleUsage(data, 'CPU6', 0),
-        getMessageCpuSingleUsage(data, 'CPU7', 0),
-        getMessageCpuSingleUsage(data, 'CPU8', 0)
-      ];
+    "data_function": function (data)
+    {
+      const cpuValues = [];
+      let cpuIndex = 1;
+      while (true)
+      {
+        const cpuLabel = `CPU${cpuIndex}`;
+        const cpuValue = getMessageCpuSingleUsage(data, cpuLabel, null);
+        if (cpuValue === null)
+        {
+          break;// Stop adding CPUs when no more are found.
+        }
+        cpuValues.push(cpuValue);
+        cpuIndex++;
+      }
+
+      return cpuValues;
     },
     "widget": new ChartWidget(),
     "side": "right"
