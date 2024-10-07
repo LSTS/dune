@@ -128,7 +128,9 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        char m_buffer_entity[512];
+        std::sprintf(m_buffer_entity, "active | Cores Detected: %d", m_num_cpus);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_buffer_entity)));
         m_cpu_check.setTop(c_time_between_reads);
       }
 
@@ -232,7 +234,12 @@ namespace Monitors
           trace("Fail to execute command");
           return 0;
         }
-        fgets(buffer, sizeof(buffer) - 1, fp);
+        if (fgets(buffer, sizeof(buffer) - 1, fp) == NULL)
+        {
+          trace("Fail to read buffer");
+          pclose(fp);
+          return 0;
+        }
         sscanf(buffer, "cpu %llu %llu %llu %llu", &user1, &nice1, &system1, &idle1);
         pclose(fp);
 
@@ -245,7 +252,12 @@ namespace Monitors
           trace("Fail to execute command");
           return 0;
         }
-        fgets(buffer, sizeof(buffer) - 1, fp);
+        if (fgets(buffer, sizeof(buffer) - 1, fp) == NULL)
+        {
+          trace("Fail to read buffer");
+          pclose(fp);
+          return 0;
+        }
         sscanf(buffer, "cpu %llu %llu %llu %llu", &user2, &nice2, &system2, &idle2);
         pclose(fp);
 
