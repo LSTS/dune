@@ -134,7 +134,7 @@ namespace Monitors
 
         if (m_payload[eid].store(msg->clone()))
         {
-          m_task->war("Message %s stored", msg->getName());
+          m_task->debug("Message %s stored", msg->getName());
           m_msg_count++;
         }
       }
