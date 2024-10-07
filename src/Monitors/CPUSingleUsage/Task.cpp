@@ -217,6 +217,45 @@ namespace Monitors
         }
       }
 
+      double
+      getSingleCoreUsage(void)
+      {
+        char buffer[128];
+        FILE *fp;
+        unsigned long long user1, nice1, system1, idle1;
+        unsigned long long user2, nice2, system2, idle2;
+
+        // First snapshot
+        fp = popen("grep 'cpu ' /proc/stat", "r");
+        if (fp == NULL)
+        {
+          trace("Fail to execute command");
+          return 0;
+        }
+        fgets(buffer, sizeof(buffer) - 1, fp);
+        sscanf(buffer, "cpu %llu %llu %llu %llu", &user1, &nice1, &system1, &idle1);
+        pclose(fp);
+
+        Delay::waitMsec(1000);
+
+        // Second snapshot
+        fp = popen("grep 'cpu ' /proc/stat", "r");
+        if (fp == NULL)
+        {
+          trace("Fail to execute command");
+          return 0;
+        }
+        fgets(buffer, sizeof(buffer) - 1, fp);
+        sscanf(buffer, "cpu %llu %llu %llu %llu", &user2, &nice2, &system2, &idle2);
+        pclose(fp);
+
+        unsigned long long total1 = user1 + nice1 + system1 + idle1;
+        unsigned long long total2 = user2 + nice2 + system2 + idle2;
+        unsigned long long idle_diff = idle2 - idle1;
+        unsigned long long total_diff = total2 - total1;
+        return 100.0 * (total_diff - idle_diff) / total_diff;
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -227,13 +266,24 @@ namespace Monitors
           if (m_cpu_check.overflow())
           {
             m_cpu_check.reset();
-            std::vector<CPUData> entries1;
-	          std::vector<CPUData> entries2;
             m_tstamp = Clock::getSinceEpoch();
-            readStatsCPU(entries1);
-            Delay::waitMsec(100);
-            readStatsCPU(entries2);
-            dispatchStatus(entries1, entries2);
+            if(m_num_cpus > 1)
+            {
+              std::vector<CPUData> entries1;
+              std::vector<CPUData> entries2;
+              readStatsCPU(entries1);
+              Delay::waitMsec(100);
+              readStatsCPU(entries2);
+              dispatchStatus(entries1, entries2);
+            }
+            else
+            {
+              m_cpu[0].setTimeStamp(m_tstamp);
+              uint8_t usage = (uint8_t) getSingleCoreUsage();
+              m_cpu[0].value = usage;
+              debug("CPU0: %d%%", usage);
+              dispatch(m_cpu[0], DF_KEEP_TIME | DF_LOOP_BACK);
+            }
           }
         }
       }
