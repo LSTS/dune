@@ -48,7 +48,7 @@ ChartWidget.prototype.create = function (container) {
 ChartWidget.prototype.update = function (values) {
   if (values && values.length > 0) {
     this.chart.values = values;
-    this.chart.canvas.width = values.length * 25; // Increase the width according to the number of CPUs
+    this.chart.canvas.width = values.length * (this.chart.canvas.width/values.length); // Increase the width according to the number of CPUs
     this.draw();
   }
 };
