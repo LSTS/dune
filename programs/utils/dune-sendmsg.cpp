@@ -634,13 +634,15 @@ main(int argc, char** argv)
   {
     IMC::PlanControl* tmsg = new IMC::PlanControl;
     tmsg->type = IMC::PlanControl::PC_REQUEST;
-    tmsg->op = atoi(argv[4]);
-    tmsg->plan_id = argv[5];
-    if (argc >= 7)
-      tmsg->flags = atoi(argv[6]);
+    tmsg->op = IMC::PlanControl::PC_START;
+    tmsg->plan_id = "plan1";
+    tmsg->flags = IMC::PlanControl::FLG_CALIBRATE;
 
-    if (argc >= 8)
-      tmsg->arg.set(IMC::Factory::produce(argv[7]));
+    IMC::StartOnManeuver sman;
+    sman.man_id = "Goto2";
+    tmsg->arg.set(&sman);
+
+    tmsg->setDestination(0x001C);
 
     msg = tmsg;
   }
