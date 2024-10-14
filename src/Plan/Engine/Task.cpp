@@ -54,7 +54,8 @@ namespace Plan
     const double c_vs_timeout = 2.5;
     //! Plan Command operation descriptions
     const char* c_op_desc[] = {DTR_RT("Start Plan"), DTR_RT("Stop Plan"),
-                               DTR_RT("Load Plan"), DTR_RT("Get Plan")};
+                               DTR_RT("Load Plan"), DTR_RT("Get Plan"), 
+                               DTR_RT("Start Plan On Maneuver")};
     //! Plan state descriptions
     const char* c_state_desc[] = {DTR_RT("BLOCKED"), DTR_RT("READY"),
                                   DTR_RT("INITIALIZING"), DTR_RT("EXECUTING")};
@@ -598,10 +599,19 @@ namespace Plan
           return;
         }
 
+        std::string start_man = "";
+        if (pc->arg.get()->getId() == DUNE_IMC_STARTONMANEUVER)
+        {
+          const IMC::StartOnManeuver* sman = static_cast<const IMC::StartOnManeuver*>(pc->arg.get());
+          start_man = sman->man_id;
+        }
+
+        war("%s", start_man.c_str());
+
         switch (pc->op)
         {
           case IMC::PlanControl::PC_START:
-            if (!startPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get(), pc->flags))
+            if (!startPlan(pc->plan_id, pc->arg.isNull() ? 0 : pc->arg.get(), pc->flags, start_man))
               vehicleRequest(IMC::VehicleCommand::VC_STOP_MANEUVER);
             break;
           case IMC::PlanControl::PC_STOP:
@@ -626,7 +636,7 @@ namespace Plan
       //! @return true if plan is successfully loaded
       bool
       loadPlan(const std::string& plan_id, const IMC::Message* arg,
-               bool plan_startup = false)
+               bool plan_startup = false, std::string start_maneuver = "")
       {
         if ((initMode() && !plan_startup) || execMode())
         {
@@ -640,6 +650,15 @@ namespace Plan
           changeMode(IMC::PlanControlState::PCS_READY,
                      DTR("plan load failed: ") + info);
           return false;
+        }
+
+        if (!start_maneuver.empty())
+        {
+          if (!splitPlan(start_maneuver))
+          {
+            onFailure(DTR("Invalid maneuver id"));
+            return false;
+          }
         }
 
         IMC::PlanStatistics ps;
@@ -788,7 +807,7 @@ namespace Plan
       parseArg(const std::string& plan_id, const IMC::Message* arg,
                std::string& info)
       {
-        if (arg)
+        if (arg && arg->getId() != DUNE_IMC_STARTONMANEUVER)
         {
           if (arg->getId() == DUNE_IMC_PLANSPECIFICATION)
           {
@@ -841,14 +860,19 @@ namespace Plan
       //! @param[in] flags plan control flags
       //! @return false if previously executing maneuver was not stopped
       bool
-      startPlan(const std::string& plan_id, const IMC::Message* spec, uint16_t flags)
+      startPlan(const std::string& plan_id, const IMC::Message* spec, 
+                uint16_t flags, const std::string start_maneuver = "")
       {
         bool stopped = stopPlan(true);
 
-        changeMode(IMC::PlanControlState::PCS_INITIALIZING,
-                   DTR("plan initializing: ") + plan_id, TYPE_INF);
+        std::string mode_description = DTR("plan initializing: ") + plan_id;
+        if (!start_maneuver.empty())
+          mode_description += DTR(" on maneuver: ") + start_maneuver;
 
-        if (!loadPlan(plan_id, spec, true))
+        changeMode(IMC::PlanControlState::PCS_INITIALIZING,
+                   mode_description, TYPE_INF);
+
+        if (!loadPlan(plan_id, spec, true, start_maneuver))
           return stopped;
 
         changeLog(plan_id);
@@ -1165,6 +1189,60 @@ namespace Plan
         if (arg)
           m_vc.maneuver.clear();
         m_vc_reply_deadline = Clock::get() + c_vc_reply_timeout;
+      }
+
+      bool
+      splitPlan(const std::string& man_id)
+      {
+        std::map<std::string, IMC::PlanManeuver*> maneuvers;
+        std::map<std::string, IMC::PlanTransition*> transitions;
+
+        for (PlanManeuver *man : m_spec.maneuvers)
+        {
+          maneuvers[man->maneuver_id] = man;
+          war("Split Plan: %s", man->maneuver_id.c_str());
+        }
+
+        for (PlanTransition *pt : m_spec.transitions)
+        {
+          transitions[pt->source_man] = pt;
+        }
+
+        PlanSpecification newSpec;
+        newSpec.end_actions = m_spec.end_actions;
+        newSpec.start_actions = m_spec.start_actions;
+        newSpec.variables = m_spec.variables;
+        newSpec.vnamespace = m_spec.vnamespace;
+        newSpec.description = m_spec.description;
+        newSpec.plan_id = m_spec.plan_id + "-" + man_id;
+        newSpec.start_man_id = man_id;
+
+
+        std::string cur_man = man_id;
+        while(!cur_man.empty()) 
+        {
+          if (maneuvers.find(cur_man) == maneuvers.end())
+          {
+            return false;
+            // throw std::invalid_argument("Invalid maneuver id");
+          }
+
+          newSpec.maneuvers.push_back(maneuvers[cur_man]);
+          if (transitions.find(cur_man) == transitions.end())
+          {
+            cur_man = "";
+          }
+          else
+          {
+            PlanTransition *pt = transitions[cur_man];
+            newSpec.transitions.push_back(pt);
+            cur_man = pt->dest_man;
+          }
+        }
+
+        m_spec = newSpec;
+
+        return true;
       }
 
       inline bool
