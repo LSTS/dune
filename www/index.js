@@ -69,7 +69,7 @@ function requestLogs()
     options.timeout = 10000;
     options.timeoutHandler = timeoutHandler;
     options.errorHandler = errorHandler;
-    HTTP.get('dune/logs/list.js', handleLogs, options);
+    //HTTP.get('dune/logs/list.js', handleLogs, options);
 };
 
 function handleLogs(text)

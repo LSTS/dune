@@ -27,8 +27,52 @@
 
 body
 {
-  font-family: Arial, Helvetica, sans;
+  background-color: #f5f5f5;
+  font-family: 'Roboto', sans-serif;
   color: var(--c-color-text);
+}
+
+button {
+  background-color: #f5f3f8;
+  color: black;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px var(--c-color-text);
+  transition: background-color 0.3s;
+  font-size: 10px;
+  border-radius: 8px;
+}
+
+button:hover {
+  background-color: #b0a5ca;
+  color: #000000;
+}
+
+button.active {
+  background-color: rgb(133, 163, 133);
+  color: black;
+  cursor: grab;
+}
+
+button:disabled {
+  background-color: rgb(223, 217, 217);
+  color: rgb(167, 161, 161);
+  cursor: not-allowed;
+}
+
+input[type="text"], input[type="number"], textarea {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px;
+  width: 6%;
+  transition: border-color 0.3s;
+}
+
+input:focus {
+  border-color: #6200ea;
+  outline: none;
 }
 
 a
@@ -89,13 +133,13 @@ div#Sensors {
 
 #Sensors table
 {
-  border-collapse: collapse;
-  margin-bottom: 1em;
+  margin-bottom: 0.5em;
+  border-spacing: 0 4px;
 }
 
 #Sensors table:last-child
 {
-  margin-bottom: 0em;
+  margin-bottom: 0.5em;
 }
 
 #Sensors th
@@ -103,6 +147,9 @@ div#Sensors {
   /*Sensors title*/
   background-color: var(--c-background-h-l);
   color: var(--c-color-text-h-l);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  padding: 6px;
 }
 
 #Sensors td
@@ -110,6 +157,17 @@ div#Sensors {
   padding: 2px;
   padding-left: 5px;
   padding-right: 5px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+#Sensors tr
+{
+  border: solid var(--c-color-text) thin;
+  border-collapse: collapse;
+  border: none;
 }
 
 #Sensors td:first-child
@@ -118,13 +176,13 @@ div#Sensors {
   background-color: var(--c-color-entity-sensor-background);
   font-weight: bold;
   width: 150px;
-  text-align: left;
+  text-align: center;
+  color: var(--c-color-entity-sensor-color-label);
 }
 
-#Sensors tr , #Sensors td, #Sensors th
+#Sensors td:nth-child(3)
 {
-  border: solid var(--c-color-text) thin;
-  border-collapse: collapse;
+  text-align: center !important;
 }
 
 #Sensors table
@@ -136,7 +194,7 @@ div#Sensors {
 
 #Sensors td:last-child
 {
-  text-align: right;
+  text-align: center;
 }
 
 #ConnectionIcon
@@ -191,39 +249,55 @@ hr
 p.INFO
 {
     text-align: left;
-    color: #538b01;
+    color: var(--c-color-info);
 }
 
 p.WARNING
 {
     text-align: left;
-    color: #E5C100;
+    color: var(--c-color-warning);
 }
 
 p.ERROR
 {
     text-align: left;
-    color: #B22222;
+    color: var(--c-color-error);
 }
 
 p.CRITICAL
 {
     text-align: left;
     font-weight: bold;
-    color: #B22222;
+    color: var(--c-color-critical);
 }
 
 p.DEBUG
 {
     text-align: left;
     font-weight: bold;
+    color: var(--c-color-debug);
 }
 
-#MainOverviewLeft, #MainOverviewRight
+#MainOverviewLeft
+{
+  margin-left: 70px;
+  margin-right: auto;
+  width: 80%;
+  text-align: center;
+  padding: 10px 18px;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+}
+
+#MainOverviewRight
 {
   margin-left: auto;
-  margin-right: auto;
+  margin-right: 80px;
+  width: 20%;
   text-align: center;
+  padding: 10px 18px;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px var(--c-color-text);
 }
 
 #MenuBar
@@ -348,7 +422,6 @@ p.DEBUG
   display: block;
 }
 
-
 #MainTaskTableDiv
 {
   max-height: 60vh;
@@ -360,13 +433,15 @@ p.DEBUG
 
 #MainTaskTable
 {
-  overflow-y: scroll;
-  border-collapse: collapse;
+  overflow-y: auto;
 }
 
 #MainTaskTable tr
 {
-  border-bottom: solid var(--c-color-line-split-tasks) thin;
+  /*border-bottom: solid var(--c-color-line-split-tasks) thin;*/
+  padding: 10px 18px;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px var(--c-color-text);
 }
 
 #MainTaskTable tr:last-child
@@ -383,6 +458,7 @@ p.DEBUG
 #MainTaskTable th
 {
   width: 150px;
+  padding: 0px 18px;
 }
 
 #Power div{
@@ -434,21 +510,13 @@ p.DEBUG
 }
 
 #systemName {
-  width: 100%;
-  font-size: 1.75em;
-  text-align: center;
+  font-size: 1.5em;
   font-weight: bold;
-  margin: 0.5em;
-}
-
-.connected
-{
-  background-color: green; /* Cor de fundo para estado conectado */
-  color: white; /* Cor do texto para estado conectado */
-}
-
-.disconnected
-{
-  background-color: red; /* Cor de fundo para estado desconectado */
-  color: white; /* Cor do texto para estado desconectado */
+  padding: 10px 18px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px var(--c-color-text);
+  margin-bottom: 1px;
+  color: var(--c-color-text-system-name);
+  display: inline-block;
+  margin-bottom: 12px;
 }

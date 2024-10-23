@@ -142,7 +142,6 @@ Main.prototype.createTable = function () {
 
   for (i in this.m_fields) {
     if (this.m_fields[i].side == 'center') {
-      console.log(this.m_fields[i])
       this.createTableHeader(i, this.sys_name_div);
     } else if (this.m_fields[i].side == 'left') {
       this.createTableEntry(i, this.m_table_left);
@@ -201,7 +200,10 @@ Main.prototype.update = function () {
       value = field.data_function(g_data);
     }
     else if ("data_field" in field) {
-      value = g_data[field.data_field];
+      if(field.data_field === "dune_version")
+        value = g_data[field.data_field];
+      else
+        value = "N/A";
     }
 
     field.widget.update(value);
