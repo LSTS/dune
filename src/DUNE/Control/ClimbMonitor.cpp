@@ -64,7 +64,8 @@ namespace DUNE
     ClimbMonitor::ClimbMonitor(const Arguments* args):
       m_args(args),
       m_active(false),
-      m_error_deriv_avr(c_window_size)
+      m_error_deriv_avr(c_window_size),
+      m_got_error(false)
     {
       reset();
     }
@@ -79,6 +80,7 @@ namespace DUNE
       m_z_ref.clear();
       m_estate.clear();
       m_cstate = SM_IDLE;
+      resetClimb();
     }
 
     void
@@ -224,9 +226,25 @@ namespace DUNE
         return;
         
       double z_error = m_z_ref.value - m_z_ref.z_units == IMC::Z_ALTITUDE ? m_estate.alt : m_estate.depth;
-      double error_change_avr = m_error_deriv_avr.update(m_error_deriv.update(z_error));
 
-      // if error is decreasing on average -> reset climb timer
+      // If at desired z -> change state
+      double hyst = m_z_ref.z_units == IMC::Z_ALTITUDE ? c_alt_hyst : c_depth_hyst;
+      if  (std::abs(z_error) < hyst)
+      {
+        changeState(SM_AT_TARGET);
+        return;
+      }
+
+      double z_error_deriv = m_error_deriv.update(z_error);
+      if (!m_got_error)
+      {
+        m_got_error = true;
+        return;
+      }
+
+      double error_change_avr = m_error_deriv_avr.update(z_error_deriv);
+
+      // if error is decreasing, on average -> reset climb timer
       // if (error_change_avr < 0)
 
     }
@@ -234,6 +252,7 @@ namespace DUNE
     void
     ClimbMonitor::resetClimb()
     {
+      m_got_error = false;
       m_error_deriv_avr.clear();
       m_error_deriv.clear();
     }

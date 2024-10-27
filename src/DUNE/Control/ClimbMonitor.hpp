@@ -174,6 +174,8 @@ namespace DUNE
       DUNE::Math::Derivative<double> m_error_deriv;
       //! Average of climb error change
       DUNE::Math::MovingAverage<double> m_error_deriv_avr;
+      //! Flag for first error, for derivative calculation
+      bool m_got_error;
     };
   }
 }
