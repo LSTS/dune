@@ -44,7 +44,7 @@ namespace DUNE
   namespace Control
   {
     // Export DLL Symbol.
-    class DUNE_DLL_SYM ClimbMonitor;
+    // class DUNE_DLL_SYM ClimbMonitor;
 
     class ClimbMonitor
     {
@@ -91,11 +91,35 @@ namespace DUNE
       //! State machine states.
       enum ClimbStates
       {
+        //! Idle state.
+        SM_IDLE,
         //! Vehicle ascending.
         SM_ASCENDING,
         //! Vehicle descending.
-        SM_DESCENDING
+        SM_DESCENDING,
+        //! Vehicle stabilizing
+        SM_STABILIZE
       };
+
+      //! Idle state
+      void
+      onIdle();
+
+      //! Descending state
+      void
+      onDescend();
+      
+      //! Ascend state
+      void
+      onAscend();
+
+      //! Stabilize state
+      void
+      onStabilize();
+
+      //! Check the climb state according to DesiredZ reference
+      void
+      checkClimbState();
 
       //! Update bottom tracking state machine.
       void
@@ -128,8 +152,6 @@ namespace DUNE
       DUNE::IMC::EstimatedState m_estate;
       //! Last received DesiredZ message.
       DUNE::IMC::DesiredZ m_z_ref;
-      //! Last time main routine was ran
-      float m_last_run;
     };
   }
 }

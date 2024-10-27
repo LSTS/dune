@@ -29,7 +29,7 @@
 
 // ISO C++ 98 headers.
 // #include <limits>
-// #include <cmath>
+#include <cmath>
 
 // DUNE headers.
 #include <DUNE/Control/ClimbMonitor.hpp>
@@ -72,6 +72,7 @@ namespace DUNE
       m_z_ref.clear();
       m_estate.clear();
       m_got_data = false;
+      m_cstate = SM_IDLE;
     }
 
     void
@@ -97,6 +98,8 @@ namespace DUNE
         return;
       
       m_z_ref = *msg;
+
+      m_got_data = true;
     }
 
     void
@@ -106,6 +109,9 @@ namespace DUNE
         return;
 
       m_estate = *msg;
+
+      checkClimbState();
+      updateStateMachine();
     }
 
     void
@@ -114,24 +120,95 @@ namespace DUNE
       if (!m_active)
         return;
 
-      if (!m_got_data)
-      {
-        // Check data
-        return;
-      }
-
-      m_got_data = true;
+      // if (!m_got_data)
+      //   return;
 
       // Run state machine
       switch (m_cstate)
       {
-        case SM_DESCENDING:
+        case SM_IDLE:
           onIdle();
           break;
+        case SM_DESCENDING:
+          onDescend();
+          break;
         case SM_ASCENDING:
-          onTracking();
+          onAscend();
+          break;
+        case SM_STABILIZE:
+          onStabilize();
           break;
       }
+    }
+
+    void
+    ClimbMonitor::checkClimbState()
+    {
+      double z_error = 0;
+      if (m_z_ref.z_units == IMC::Z_ALTITUDE)
+        z_error = m_z_ref.value - m_estate.alt;
+      else if (m_z_ref.z_units == IMC::Z_DEPTH)
+        z_error = m_estate.depth - m_z_ref.value;
+      else
+      {
+        war("Not tracking climb");
+        // Not tracking climb
+        m_cstate = SM_IDLE;
+        return;
+      }
+
+      double hyst = m_z_ref.z_units == IMC::Z_ALTITUDE ? c_alt_hyst : c_depth_hyst;
+      if  (std::abs(z_error) < hyst)
+      {
+        war("At desired z");
+        // At desired z
+        m_cstate = SM_IDLE;
+        return;
+      }
+
+      if (z_error < 0)
+        m_cstate = SM_DESCENDING;
+      else
+        m_cstate = SM_ASCENDING;
+    }
+
+    void
+    ClimbMonitor::onIdle()
+    {
+      if (!m_active)
+        return;
+
+      war("IDLE");
+    }
+
+    //! Descending state
+    void
+    ClimbMonitor::onDescend()
+    {
+      if (!m_active)
+        return;
+
+      war("DESCEND");
+    }
+    
+    //! Ascend state
+    void
+    ClimbMonitor::onAscend()
+    {
+      if (!m_active)
+        return;
+
+      war("ASCEND");
+    }
+
+    //! Stabilize state
+    void
+    ClimbMonitor::onStabilize()
+    {
+      if (!m_active)
+        return;
+
+      war("STABILIZE");
     }
 
     void
