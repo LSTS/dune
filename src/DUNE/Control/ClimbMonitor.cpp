@@ -35,9 +35,10 @@
 #include <DUNE/Control/ClimbMonitor.hpp>
 // #include <DUNE/Math/Angles.hpp>
 // #include <DUNE/Memory.hpp>
-// #include <DUNE/Utils/String.hpp>
+#include <DUNE/Utils/String.hpp>
 // #include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Tasks/Task.hpp>
+using namespace DUNE::Utils;
 
 //! Depth hysteresis.
 static const float c_depth_hyst = 0.5;
@@ -45,11 +46,16 @@ static const float c_depth_hyst = 0.5;
 static const float c_alt_hyst = 0.2;
 
 //! State to string for debug messages
-static const std::string c_str_states[] = {DTR_RT("Ascending"),
-                                           DTR_RT("Descending")};
+static const std::string c_str_states[] = {DTR_RT("Idle"),
+                                           DTR_RT("Ascending"),
+                                           DTR_RT("Descending"),
+                                           DTR_RT("On Target"),
+                                           DTR_RT("Stabilizing")};
 
 //! Climb monitor name
 static const std::string c_cm_name = DTR_RT("ClimbMonitor");
+
+static const unsigned c_window_size = 10;
 
 namespace DUNE
 {
@@ -57,7 +63,8 @@ namespace DUNE
   {
     ClimbMonitor::ClimbMonitor(const Arguments* args):
       m_args(args),
-      m_active(false)
+      m_active(false),
+      m_error_deriv_avr(c_window_size)
     {
       reset();
     }
@@ -71,7 +78,6 @@ namespace DUNE
     {
       m_z_ref.clear();
       m_estate.clear();
-      m_got_data = false;
       m_cstate = SM_IDLE;
     }
 
@@ -99,7 +105,7 @@ namespace DUNE
       
       m_z_ref = *msg;
 
-      m_got_data = true;
+      updateClimbState();
     }
 
     void
@@ -110,7 +116,6 @@ namespace DUNE
 
       m_estate = *msg;
 
-      checkClimbState();
       updateStateMachine();
     }
 
@@ -120,9 +125,6 @@ namespace DUNE
       if (!m_active)
         return;
 
-      // if (!m_got_data)
-      //   return;
-
       // Run state machine
       switch (m_cstate)
       {
@@ -130,10 +132,11 @@ namespace DUNE
           onIdle();
           break;
         case SM_DESCENDING:
-          onDescend();
-          break;
         case SM_ASCENDING:
-          onAscend();
+          onClimb();
+          break;
+        case SM_AT_TARGET:
+          onTarget();
           break;
         case SM_STABILIZE:
           onStabilize();
@@ -142,7 +145,7 @@ namespace DUNE
     }
 
     void
-    ClimbMonitor::checkClimbState()
+    ClimbMonitor::updateClimbState()
     {
       double z_error = 0;
       if (m_z_ref.z_units == IMC::Z_ALTITUDE)
@@ -151,25 +154,28 @@ namespace DUNE
         z_error = m_estate.depth - m_z_ref.value;
       else
       {
-        war("Not tracking climb");
         // Not tracking climb
-        m_cstate = SM_IDLE;
+        war("Unsupported Z units. Not tracking climb");
+        changeState(SM_IDLE);
         return;
       }
 
       double hyst = m_z_ref.z_units == IMC::Z_ALTITUDE ? c_alt_hyst : c_depth_hyst;
       if  (std::abs(z_error) < hyst)
       {
-        war("At desired z");
-        // At desired z
-        m_cstate = SM_IDLE;
+        // At desired Z
+        changeState(SM_AT_TARGET);
         return;
       }
 
       if (z_error < 0)
-        m_cstate = SM_DESCENDING;
+      {
+        changeState(SM_DESCENDING);
+      }
       else
-        m_cstate = SM_ASCENDING;
+      {
+        changeState(SM_ASCENDING);
+      }
     }
 
     void
@@ -177,8 +183,6 @@ namespace DUNE
     {
       if (!m_active)
         return;
-
-      war("IDLE");
     }
 
     //! Descending state
@@ -187,8 +191,6 @@ namespace DUNE
     {
       if (!m_active)
         return;
-
-      war("DESCEND");
     }
     
     //! Ascend state
@@ -197,8 +199,14 @@ namespace DUNE
     {
       if (!m_active)
         return;
-
-      war("ASCEND");
+    }
+    
+    //! Ascend state
+    void
+    ClimbMonitor::onTarget()
+    {
+      if (!m_active)
+        return;
     }
 
     //! Stabilize state
@@ -207,8 +215,37 @@ namespace DUNE
     {
       if (!m_active)
         return;
+    }
 
-      war("STABILIZE");
+    void
+    ClimbMonitor::onClimb()
+    {
+      if (!m_active)
+        return;
+        
+      double z_error = m_z_ref.value - m_z_ref.z_units == IMC::Z_ALTITUDE ? m_estate.alt : m_estate.depth;
+      double error_change_avr = m_error_deriv_avr.update(m_error_deriv.update(z_error));
+
+      // if error is decreasing on average -> reset climb timer
+      // if (error_change_avr < 0)
+
+    }
+
+    void
+    ClimbMonitor::resetClimb()
+    {
+      m_error_deriv_avr.clear();
+      m_error_deriv.clear();
+    }
+
+    void
+    ClimbMonitor::changeState(ClimbStates state)
+    {
+      if (m_cstate == state)
+        return;
+
+      info(String::str("State change: %s", c_str_states[state].c_str()));
+      m_cstate = state;
     }
 
     void

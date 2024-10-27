@@ -38,13 +38,14 @@
 #include <DUNE/Tasks/Task.hpp>
 #include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Math/MovingAverage.hpp>
+#include <DUNE/Math/Derivative.hpp>
 
 namespace DUNE
 {
   namespace Control
   {
     // Export DLL Symbol.
-    // class DUNE_DLL_SYM ClimbMonitor;
+    class DUNE_DLL_SYM ClimbMonitor;
 
     class ClimbMonitor
     {
@@ -97,6 +98,8 @@ namespace DUNE
         SM_ASCENDING,
         //! Vehicle descending.
         SM_DESCENDING,
+        //! Vehicle at target z
+        SM_AT_TARGET,
         //! Vehicle stabilizing
         SM_STABILIZE
       };
@@ -113,17 +116,33 @@ namespace DUNE
       void
       onAscend();
 
+      //! On target state
+      void
+      onTarget();
+
       //! Stabilize state
       void
       onStabilize();
 
-      //! Check the climb state according to DesiredZ reference
+      //! Climb state
       void
-      checkClimbState();
+      onClimb();
 
-      //! Update bottom tracking state machine.
+      //! Reset climb state
+      void
+      resetClimb();
+
+      //! Update climb state according to DesiredZ reference
+      void
+      updateClimbState();
+
+      //! Update climb monitor state machine.
       void
       updateStateMachine(void);
+
+      //! Change state machine state
+      void
+      changeState(ClimbStates state);
 
       //! Function for info messages.
       //! @param[in] msg string message to output.
@@ -144,14 +163,17 @@ namespace DUNE
       const Arguments* m_args;
       //! Active or inactive.
       bool m_active;
-      //! Got necessary data to start state machine.
-      bool m_got_data;
       //! Current state in the state machine.
       ClimbStates m_cstate;
       //! Last EstimatedState message.
       DUNE::IMC::EstimatedState m_estate;
       //! Last received DesiredZ message.
       DUNE::IMC::DesiredZ m_z_ref;
+      //! Climb calculations
+      //! Climb error derivative
+      DUNE::Math::Derivative<double> m_error_deriv;
+      //! Average of climb error change
+      DUNE::Math::MovingAverage<double> m_error_deriv_avr;
     };
   }
 }
