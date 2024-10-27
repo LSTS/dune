@@ -206,6 +206,10 @@ namespace DUNE
       .defaultValue("Echo Sounder")
       .description("Entity label of the Forward Looking Sonar (FLS).");
 
+      param("Climb Monitor -- Enabled", m_cmd.enabled)
+      .defaultValue("true")
+      .description("Enable or disable climb monitor");
+
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
 
@@ -275,6 +279,23 @@ namespace DUNE
           Memory::clear(m_btrack);
         }
       }
+
+      if (paramChanged(m_cmd.enabled))
+      {
+        if (m_cmd.enabled)
+        {
+          if (m_climb_monitor == NULL)
+          {
+            m_cmd.args.task = this;
+            m_climb_monitor = new ClimbMonitor(&m_cmd.args);
+          }
+        }
+        else
+        {
+          deactivateClimbMonitor();
+          Memory::clear(m_climb_monitor);
+        }
+      }
     }
 
     void
@@ -292,6 +313,8 @@ namespace DUNE
     {
       m_bt_entity = reserveEntity<DUNE::Entities::BasicEntity>(Utils::String::str("%s - Bottom Track", getEntityLabel()));
       m_btd.args.entity = m_bt_entity;
+
+      m_cmd.args.entity = reserveEntity<DUNE::Entities::BasicEntity>(Utils::String::str("%s - Climb Monitor", getEntityLabel()));;
     }
 
     void
@@ -502,6 +525,9 @@ namespace DUNE
           m_btrack->onDesiredZ(&m_zref, true);
         else
           dispatch(m_zref);
+
+        if (isMonitoringClimb())
+          m_climb_monitor->onDesiredZ(&m_zref);
       }
       else
       {
@@ -601,6 +627,9 @@ namespace DUNE
     {
       if (isTrackingBottom())
         m_btrack->onDesiredZ(zref);
+
+      if (isMonitoringClimb())
+        m_climb_monitor->onDesiredZ(zref);
     }
 
     void
@@ -618,9 +647,10 @@ namespace DUNE
         return;
 
       if (isTrackingBottom())
-      {
         m_btrack->onEstimatedState(es);
-      }
+
+      if (isMonitoringClimb())
+        m_climb_monitor->onEstimatedState(es);
 
       if (m_setup)
       {
@@ -973,6 +1003,9 @@ namespace DUNE
 
       if (isTrackingBottom())
         m_btrack->activate();
+
+      if (isMonitoringClimb())
+        m_climb_monitor->activate();
     }
 
     void
@@ -989,6 +1022,9 @@ namespace DUNE
 
       if (isTrackingBottom())
         deactivateBottomTracker();
+
+      if (isMonitoringClimb())
+        deactivateClimbMonitor();
     }
 
     void
@@ -1139,6 +1175,15 @@ namespace DUNE
 
         m_braking = false;
       }
+    }
+
+    void
+    PathController::deactivateClimbMonitor(void)
+    {
+      if (m_climb_monitor == NULL)
+        return;
+
+      m_climb_monitor->deactivate();
     }
 
     void
