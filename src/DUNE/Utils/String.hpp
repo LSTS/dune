@@ -37,6 +37,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <set>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -141,6 +142,39 @@ namespace DUNE
           sin >> d;
 
           lst.push_back(d);
+
+          if (new_i == std::string::npos)
+            break;
+
+          old_i = new_i + 1;
+        }
+      }
+
+      //! Split a string into a vector of given type.
+      //! @param s string to split.
+      //! @param sep separator string.
+      //! @param lst set of Type.
+      template <typename Type>
+      static void
+      split(const std::string& s, const std::string& sep, std::set<Type>& lst)
+      {
+        size_t new_i = 0; // new index
+        size_t old_i = 0; // old index
+        Type d;
+
+        if (trim(s) == "")
+          return;
+
+        while (1)
+        {
+          // Find next separator character
+          new_i = s.find(sep, old_i);
+
+          std::stringstream sin(trim(s.substr(old_i, new_i - old_i)));
+
+          sin >> d;
+
+          lst.insert(d);
 
           if (new_i == std::string::npos)
             break;
