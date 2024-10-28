@@ -478,7 +478,9 @@ namespace Transports
         m_parent->inf("Request to send data over SMS to %s (%d)",
                       msg->destination.c_str(), msg->req_id);
 
-        SmsRequest sms;
+        IMC::SmsRequest sms;
+        sms.setDestination(m_parent->getSystemId());
+        sms.setDestinationEntity(m_gsm_entity_id);
 
         /*
          if (msg->destination == "broadcast" || msg->destination == "")
