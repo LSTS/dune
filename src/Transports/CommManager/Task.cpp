@@ -891,7 +891,7 @@ namespace Transports
           {
             while (!m_retransmission_list.empty())
             {
-              consume(m_retransmission_list.front());
+              receive(m_retransmission_list.front());
               delete m_retransmission_list.front();
               m_retransmission_list.pop_front();
             }
