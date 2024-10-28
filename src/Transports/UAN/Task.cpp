@@ -72,8 +72,10 @@ namespace Transports
       float usbl_max_wait;
       //! USBL Modem Announce service.
       bool usbl_announce;
-      //! Section where to read modem addresses
-      std::string addr_section;
+      //! Section where to read modem addresses.
+      std::vector<std::string> modems;
+      //! Modem addresses to ignore.
+      std::vector<std::string> addr_exclude;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -104,6 +106,12 @@ namespace Transports
       UsblTools::Modem* m_usbl_modem;
       //! Task arguments.
       Arguments m_args;
+//! Targetable systems.
+      std::map<std::string, std::set<std::string>> m_sys;
+      //! Message to answer an AcousticSystemsQuery.
+      IMC::AcousticSystems m_acsys;
+      //! Map of modems to activate.
+      std::map<std::string, IMC::SetEntityParameters*> m_activate_modems;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -188,11 +196,17 @@ namespace Transports
             " This value establishes the maximum amount of time that the modem"
             " waits for the target system's reply");
 
-        param("Address Section", m_args.addr_section)
+        param("Modems", m_args.modems)
         .defaultValue("")
-        .description("Name of the configuration section with modem addresses");
+        .description("Connected Modems.");
+
+        param("Excluded Addresses", m_args.addr_exclude)
+        .defaultValue("")
+        .description("Modem addresses to exclude");
 
         bind<IMC::AcousticRequest>(this);
+        bind<IMC::AcousticSystems>(this);
+        bind<IMC::AcousticSystemsQuery>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::GpsFix>(this);
@@ -204,14 +218,15 @@ namespace Transports
         bind<IMC::UsblPositionExtended>(this);
         bind<IMC::UsblAnglesExtended>(this);
         bind<IMC::UsblConfig>(this);
-        bind<IMC::AcousticSystemsQuery>(this);
 
         m_msg_send_timer.setTop(2);
       }
 
-      ~Task(void)
+      void
+      onUpdateParameters(void)
       {
-        onResourceRelease();
+        if (paramChanged(m_args.modems) && isActive())
+          activateModems();
       }
 
       void
@@ -235,6 +250,8 @@ namespace Transports
         if (m_args.usbl_announce)
           announceUSBL();
 
+        activateModems();
+
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -250,16 +267,10 @@ namespace Transports
       void
       consume(const IMC::AcousticSystemsQuery* msg)
       {
-        if (m_args.addr_section.empty())
-        {
-          war("Modem address section was not properly set.");
+        if (msg->getDestination() != getSystemId())
           return;
-        }
-        AcousticSystems reply;
-        std::vector<std::string> options = m_ctx.config.options(m_args.addr_section);
-        options.erase(std::remove(options.begin(), options.end(), m_ctx.resolver.name()), options.end());
-        reply.list = String::join(options.begin(), options.end(), ",");
-        dispatchReply(*msg, reply);
+
+        dispatchReply(*msg, m_acsys);
       }
 
       void
@@ -292,25 +303,70 @@ namespace Transports
         m_fuel_level = msg->value;
         m_fuel_conf = msg->confidence;
       }
+      
+      void
+      refreshAcousticSystems(void)
+      {
+        m_acsys.list.clear();
+        for (auto& modem: m_sys)
+          m_acsys.list += String::join(modem.second.begin(), modem.second.end(), ",");
+
+        dispatch(m_acsys);
+      }
+
+      void
+      consume(const IMC::AcousticSystems* msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
+
+        try
+        {
+          std::string modem = resolveEntity(msg->getSourceEntity());
+          std::set<std::string> list;
+          String::split(msg->list, ",", list);
+          for (auto& addr: m_args.addr_exclude)
+            list.erase(addr);
+          list.erase(getSystemName());
+          m_sys[modem] = list;
+        }
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
+        {
+          war("%s", e.what());
+          return;
+        }
+
+        refreshAcousticSystems();
+      }
 
       void
       consume(const IMC::AcousticRequest* msg)
       {
-        if (msg->getSource() != getSystemId()
-            || msg->getDestination() != getSystemId())
+        if (msg->getDestination() != getSystemId())
           return;
 
-        switch(msg->type){
-          case (IMC::AcousticRequest::TYPE_MSG):
+        switch(msg->type)
+        {
           case (IMC::AcousticRequest::TYPE_ABORT):
           case (IMC::AcousticRequest::TYPE_RANGE):
+          case (IMC::AcousticRequest::TYPE_REVERSE_RANGE):
+          case (IMC::AcousticRequest::TYPE_MSG):
           case (IMC::AcousticRequest::TYPE_RAW):
-          addToQueue((const IMC::AcousticRequest*)msg->clone());
+            for (auto& section: m_sys)
+            {
+              if (section.second.find(msg->destination) != section.second.end())
+              {
+                addToQueue(msg);
           processQueue();
+                return;
+              }
+            }
+
+            sendAcousticStatus(msg, IMC::AcousticStatus::STATUS_INV_ADDR, "Can't target " + msg->destination);
           break;
 
           default:
-            inf("Status of transmission %d changed: AcousticRequest->Type not implemented.", msg->req_id);
+            sendAcousticStatus(msg, IMC::AcousticStatus::STATUS_UNSUPPORTED, "Acoustic Message type not implemented");
             break;
         }
       }
@@ -573,6 +629,78 @@ namespace Transports
       }
 
       void
+      activateModems(void)
+      {
+        if (m_args.modems.size())
+        {
+          for (auto& name: m_args.modems)
+          {
+            if (m_activate_modems.find(name) == m_activate_modems.end())
+            {
+              try
+              {
+                uint8_t modem = resolveEntity(name);
+                m_activate_modems[name] = new IMC::SetEntityParameters;
+                m_activate_modems[name]->setDestination(getSystemId());
+                m_activate_modems[name]->setDestinationEntity(modem);
+                m_activate_modems[name]->name = name;
+                IMC::EntityParameter ep;
+                ep.setDestination(getSystemId());
+                ep.setDestinationEntity(modem);
+                ep.name = "Active";
+                ep.value = "true";
+                m_activate_modems[name]->params.push_back(ep);
+                dispatch(m_activate_modems[name]);
+              }
+              catch (Entities::EntityDataBase::NonexistentLabel& e)
+              {
+                war("%s", e.what());
+              }
+            }
+          }
+        }
+        else
+          war("connected modems section is empty.");
+
+        if (m_sys.empty())
+          return;
+
+        std::vector<std::string> deact_modems;
+        for (auto& modem: m_activate_modems)
+        {
+          if (std::find(m_args.modems.begin(), m_args.modems.end(), modem.first) == m_args.modems.end())
+            deact_modems.push_back(modem.first);
+        }
+
+        for (auto& modem: deact_modems)
+        {
+          try
+          {
+            m_activate_modems[modem]->params.clear();
+            IMC::EntityParameter ep;
+            ep.setDestination(getSystemId());
+            uint8_t mid = resolveEntity(modem);
+            ep.setDestinationEntity(mid);
+            ep.name = "Active";
+            ep.value = "false";
+            m_activate_modems[modem]->params.push_back(ep);
+            dispatch(m_activate_modems[modem]);
+            m_sys.erase(modem);
+            delete m_activate_modems[modem];
+            m_activate_modems.erase(modem);
+          }
+          catch (Entities::EntityDataBase::NonexistentLabel& e)
+          {
+            war("%s", e.what());
+          }
+        }
+
+        refreshAcousticSystems();
+
+        return;
+      }
+
+      void
       sendAcousticStatus(const AcousticRequest* acReq, IMC::AcousticStatus::StatusEnum status,
           const std::string& info = "", const fp32_t range = 0.0) {
         IMC::AcousticStatus acStat;
@@ -650,25 +778,42 @@ namespace Transports
         sendFrame("broadcast", createInternalId(), data, false);
       }
 
+      uint8_t
+      chooseModem(const std::string& sys)
+      {
+        try
+        {
+          for (auto& section: m_sys)
+          {
+            if (section.second.find(sys) != section.second.end())
+              return resolveEntity(section.first);
+          }
+        }
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
+        {
+          war(DTR("%s"), e.what());
+        }
+
+        return 255;        
+      }
+
       void
       sendFrame(const std::string& sys, const uint16_t id, const std::vector<uint8_t>& data, bool ack)
       {
-        Algorithms::CRC8 crc(c_poly);
-
         IMC::UamTxFrame frame;
-        frame.setSource(getSystemId());
-        frame.setSourceEntity(getEntityId());
         frame.setDestination(getSystemId());
+        frame.setDestinationEntity(chooseModem(sys));
         frame.sys_dst = sys;
         frame.seq = id;
         frame.flags = ack ? IMC::UamTxFrame::UTF_ACK : 0;
 
-        frame.data.push_back(c_sync);
-        crc.putByte(c_sync);
-        for (size_t i = 0; i < data.size(); ++i)
+        Algorithms::CRC8 crc(Acoustics::c_poly);
+        frame.data.push_back(Acoustics::c_sync);
+        crc.putByte(Acoustics::c_sync);
+        for (uint8_t c: data)
         {
-          frame.data.push_back(data[i]);
-          crc.putByte(data[i]);
+          frame.data.push_back(c);
+          crc.putByte(c);
         }
         frame.data.push_back(crc.get());
 
@@ -679,17 +824,14 @@ namespace Transports
       sendFrameRaw(const std::string& sys, const uint16_t id, const std::vector<uint8_t>& data, bool ack)
       {
         IMC::UamTxFrame frame;
-        frame.setSource(getSystemId());
-        frame.setSourceEntity(getEntityId());
         frame.setDestination(getSystemId());
+        frame.setDestinationEntity(chooseModem(sys));
         frame.sys_dst = sys;
         frame.seq = id;
         frame.flags = ack ? IMC::UamTxFrame::UTF_ACK : 0;
 
-        for (size_t i = 0; i < data.size(); ++i)
-        {
-          frame.data.push_back(data[i]);
-        }
+        for (auto& c: data)
+          frame.data.push_back(c);
 
         dispatch(frame);
       }
@@ -707,7 +849,16 @@ namespace Transports
       {
         spew("sending range to %s", sys.c_str());
         std::vector<uint8_t> data;
-        data.push_back(CODE_RANGE);
+        data.push_back(Acoustics::CODE_RANGE);
+        sendFrame(sys, id, data, true);
+      }
+
+      void
+      sendReverseRange(const std::string& sys, const uint16_t id)
+      {
+        spew("sending reverse range to %s", sys.c_str());
+        std::vector<uint8_t> data;
+        data.push_back(Acoustics::CODE_REV_RANGE);
         sendFrame(sys, id, data, true);
       }
 
@@ -818,6 +969,14 @@ namespace Transports
       }
 
       void
+      sendAck(const std::string& sys, const uint16_t id)
+      {
+        std::vector<uint8_t> data;
+        data.push_back(Acoustics::CODE_ACK);
+        sendFrame(sys, id, data, false);
+      }
+
+      void
       recvAbort(uint16_t imc_src, uint16_t imc_dst, const IMC::UamRxFrame* msg)
       {
         (void)msg;
@@ -830,6 +989,8 @@ namespace Transports
         }
 
         war(DTR("got abort request"));
+
+        sendAck(msg->sys_dst, createInternalId());
 
         IMC::Abort abort;
         abort.setSource(imc_src);
