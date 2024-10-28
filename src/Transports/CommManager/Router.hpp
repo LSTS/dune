@@ -25,8 +25,8 @@
 // Author: Pedro Seruca                                                    *
 //***************************************************************************
 
-#ifndef SRC_TRANSPORTS_COMMMANAGER_ROUTER_HPP_
-#define SRC_TRANSPORTS_COMMMANAGER_ROUTER_HPP_
+#ifndef TRANSPORTS_COMMMANAGER_ROUTER_HPP_
+#define TRANSPORTS_COMMMANAGER_ROUTER_HPP_
 
 // ISO C++ 98 headers.
 #include <string>
@@ -38,8 +38,9 @@ namespace Transports
 {
   namespace CommManager
   {
-
     using DUNE_NAMESPACES;
+
+    constexpr uint16_t c_wifi_timeout = 15;
 
     struct TCPAnnounce
     {
@@ -47,17 +48,23 @@ namespace Transports
       double timestamp;
     };
 
+    //! Type definition for simplification.
+    typedef std::map<uint16_t, IMC::TransmissionRequest*> MessagesQueued;
+    typedef std::map<std::string, TCPAnnounce> WifiMap;
+    typedef std::map<std::string, std::string> GsmAnnounceMap;
+    typedef std::map<std::string, std::string> GsmConfigMap;
+    typedef std::set<std::string> AcousticMap;
+
     class Router
     {
-
     public:
       explicit Router(Task* const task):
         m_parent(task),
-        m_medium(4),
+        m_medium(IMC::VehicleMedium::VM_UNKNOWN),
         m_gsm_entity_id(-1),
         m_iridium_entity_id(-1),
         m_uan_entity_id(-1),
-        c_wifi_timeout(15)
+        m_reqid(0)
       { }
 
       void
@@ -166,13 +173,10 @@ namespace Transports
       createInternalId()
       {
         if (m_reqid == 0xFFFF)
-        {
           m_reqid = 0;
-        }
         else
-        {
           m_reqid++;
-        }
+
         return m_reqid;
       }
 
@@ -276,7 +280,7 @@ namespace Transports
       {
         m_parent->inf("Request to send data over satellite (%d)", msg->req_id);
 
-        IridiumMsgTx tx;
+        IMC::IridiumMsgTx tx;
 
         tx.destination = msg->destination;
         tx.ttl = msg->deadline - Time::Clock::getSinceEpoch();
@@ -594,34 +598,25 @@ namespace Transports
         switch (msg->data_mode)
         {
           case IMC::TransmissionRequest::DMODE_INLINEMSG:
-            {
               send.msg_data.set(*msg->msg_data.get());
               break;
-            }
-          default:
-            {
-              answer(
-                  msg,
-                  "Communication mode not implemented for communication mean GSM",
-                  IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
-              return;
 
-              break;
-            }
+          default:
+            answer(msg, "Communication mode not implemented for communication mean GSM",
+                   IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
+            return;
         }
 
         uint16_t newId = createInternalId();
         send.req_id = newId;
         m_transmission_requests[newId] = msg->clone();
         m_parent->dispatch(send);
-
       }
 
       void
       sendViaAll(const IMC::TransmissionRequest* msg, bool plain_text)
       {
-
-        //restriction by medium
+        // restriction by medium
         if (m_medium == IMC::VehicleMedium::VM_UNDERWATER)
         {
           if (msg->data_mode != IMC::TransmissionRequest::DMODE_TEXT)
@@ -635,44 +630,37 @@ namespace Transports
           answerCommNotAvailable(msg);
           return;
         }
-        //end
 
-        //restriction by transmission mode
+        // restriction by transmission mode
         std::string dest;
         bool flag = false;
         switch (msg->data_mode)
         {
-          //unique for uan modems
+          // unique for uan modems
           case IMC::TransmissionRequest::DMODE_ABORT:
           case IMC::TransmissionRequest::DMODE_RANGE:
           case IMC::TransmissionRequest::DMODE_REVERSE_RANGE:
             if (m_medium == IMC::VehicleMedium::VM_WATER)
             {
               if (visibleOverAcoustic(msg->destination))
-              {
                 sendViaAcoustic(msg);
-                return;
-              }
             }
-            answerCommNotAvailable(msg);
-            return;
+            else
+              answerCommNotAvailable(msg);
+              
             break;
 
-            //unique for satellite modem
+          // unique for satellite modem
           case IMC::TransmissionRequest::DMODE_RAW:
             if (checkRSSISignal(IRIDIUM))
-            {
               sendViaSatellite(msg, plain_text);
-              return;
-            }
-            answerCommNotAvailable(msg);
-            return;
+            else
+              answerCommNotAvailable(msg);
             break;
 
-            //only for satellite modem or gsm
+          // only for satellite modem or gsm
           case IMC::TransmissionRequest::DMODE_TEXT:
-            if (visibleOverGSM(msg->destination, dest)
-                && checkGSMMessageSize(msg))
+            if (visibleOverGSM(msg->destination, dest) && checkGSMMessageSize(msg))
             {
               sendViaGSM(msg);
               flag = true;
@@ -685,7 +673,6 @@ namespace Transports
             if (!flag)
               answerCommNotAvailable(msg);
 
-            return;
             break;
 
           case IMC::TransmissionRequest::DMODE_INLINEMSG:
@@ -694,8 +681,7 @@ namespace Transports
               sendViaWifi(msg);
               flag = true;
             }
-            if (visibleOverGSM(msg->destination, dest)
-                && checkGSMMessageSize(msg))
+            if (visibleOverGSM(msg->destination, dest) && checkGSMMessageSize(msg))
             {
               sendViaGSM(msg);
               flag = true;
@@ -713,17 +699,12 @@ namespace Transports
             if (!flag)
               answerCommNotAvailable(msg);
 
-            return;
             break;
 
           default:
             answerCommNotAvailable(msg);
-            return;
             break;
         }
-        //end
-
-        return;
       }
 
       void
@@ -769,32 +750,30 @@ namespace Transports
       }
 
     private:
+      //! Parent task.
       Task* const m_parent;
+      //! Vehicle medium.
       uint8_t m_medium;
-
+      //! GSM Entity Id.
       int m_gsm_entity_id;
+      //! Iridium Entity Id.
       int m_iridium_entity_id;
       //! UAN Entity Id.
       int m_uan_entity_id;
+      //! RSSI map.
       std::map<uint8_t, fp32_t> m_rssi_msg_map;
+      //! Request Id.
       uint16_t m_reqid;
-
-      typedef std::map<uint16_t, IMC::TransmissionRequest*> MessagesQueued;
+      //! Transmission Requests map.
       MessagesQueued m_transmission_requests;
-
-      typedef std::map<std::string, TCPAnnounce> WifiMap;
+      //! WIFI map.
       WifiMap m_wifi_map;
-
-      typedef std::map<std::string, std::string> GsmAnnounceMap;
+      //! GSM Annouce map.
       GsmAnnounceMap m_gsm_announce_map;
-
-      typedef std::map<std::string, std::string> GsmConfigMap;
+      //! GSM config map.
       GsmConfigMap m_gsm_config_map;
-
-      typedef std::vector<std::string> AcousticMap;
+      //! Targetable acoustic systems.
       AcousticMap m_acoustic_map;
-
-      uint16_t c_wifi_timeout;
 
       enum RSSIType
       {
@@ -806,7 +785,7 @@ namespace Transports
       {
         if (system.empty())
           return false;
-
+        
         if (m_acoustic_map.empty())
         {
           IMC::AcousticSystemsQuery asq;
@@ -817,7 +796,7 @@ namespace Transports
         }
 
         if (m_acoustic_map.find(system) == m_acoustic_map.end())
-        return false;
+          return false;
 
         return true;
       }
@@ -929,9 +908,8 @@ namespace Transports
             }
         }
       }
-
     };
   }
 }
 
-#endif /* SRC_TRANSPORTS_COMMMANAGER_ROUTER_HPP_ */
+#endif /* TRANSPORTS_COMMMANAGER_ROUTER_HPP_ */

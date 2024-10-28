@@ -46,15 +46,15 @@ namespace Transports
 
     struct Arguments
     {
-      //! Period, in seconds, between state report transmissions over iridium
+      //! Period, in seconds, between state report transmissions over iridium.
       int iridium_period;
-      //! Enable CommManager to process and convert legacy message -> AcousticOperation
+      //! Enable CommManager to process and convert legacy message -> AcousticOperation.
       bool enable_acoustic;
-      //! Addresses Number - modem
+      //! GSM addresses section.
       std::string gsm_addr_section;
-      //! Entity label of Iridium modem
+      //! Entity label of Iridium modem.
       std::string iridium_label;
-      //! Entity label of GSM modem
+      //! Entity label of GSM modem.
       std::string gsm_label;
       //! Entity label of UAN.
       std::string uan_label;
@@ -69,21 +69,31 @@ namespace Transports
 
     struct Task: public DUNE::Tasks::Task
     {
-      // Task arguments.
+      //! Task arguments.
       Arguments m_args;
-
+      //! PlanControlState IMC message.
       IMC::PlanControlState* m_pstate;
+      //! FuelLevel IMC message.
       IMC::FuelLevel* m_fuel;
+      //! EstimatedState IMC message.
       IMC::EstimatedState* m_estate;
+      //! VehicleState IMC message.
       IMC::VehicleState* m_vstate;
+      //! VehicleMedium IMC message.
       IMC::VehicleMedium* m_vmedium;
+      //! Timer to send StateReport.
       Time::Counter<float> m_iridium_timer;
+      //! Timer to clear router timeouts.
       Time::Counter<float> m_clean_timer;
+      //! Timer for retransmissions.
       Time::Counter<float> m_retransmission_timer;
+      //! List of messages to retransmit.
       std::list<IMC::TransmissionRequest*> m_retransmission_list;
+      //! Plan checksum.
       int m_plan_chksum;
+      //! Router for Transmission Requests.
       Router m_router;
-
+      //! Map of AcousticOperation IMC messages to convert.
       std::map<uint16_t, IMC::AcousticOperation*> m_acoustic_requests;
       //! UAN Entity Id.
       uint8_t m_uan_id;
@@ -100,32 +110,32 @@ namespace Transports
         m_uan_id(255)
       {
         param("Iridium - Entity Label", m_args.iridium_label)
-            .defaultValue("GSM")
-            .description("Entity label of Iridium modem");
+        .defaultValue("Iridium Modem")
+        .description("Entity label of Iridium modem");
 
         param("GSM - Entity Label", m_args.gsm_label)
-            .defaultValue("Iridium Modem")
-            .description("Entity label of GSM modem");
+        .defaultValue("GSM Modem")
+        .description("Entity label of GSM modem");
 
         param("UAN - Entity Label", m_args.uan_label)
         .defaultValue("Acoustic Access Controller")
         .description("Entity label of UAN");
 
         param("GSM Address Section", m_args.gsm_addr_section)
-            .defaultValue("GSM Addresses")
-            .description("Name of the configuration section with gsm modem addresses");
+        .defaultValue("GSM Addresses")
+        .description("Name of the configuration section with gsm modem addresses");
 
         param("Iridium Reports Period", m_args.iridium_period)
-            .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
-            .defaultValue("300");
+        .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
+        .defaultValue("300");
 
         param("Process AcousticOperation Messages", m_args.enable_acoustic)
-            .description("Enable CommManager to process and convert legacy message -> AcousticOperation")
-            .defaultValue("true");
+        .description("Enable CommManager to process and convert legacy message -> AcousticOperation")
+        .defaultValue("true");
 
         param("Send Iridium plain texts", m_args.iridium_plain_texts)
-            .description("Send Iridium text messages as plain text (and not IMC)")
-            .defaultValue("1");
+        .description("Send Iridium text messages as plain text (and not IMC)")
+        .defaultValue("1");
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticStatus>(this);
@@ -187,17 +197,18 @@ namespace Transports
           uint8_t gsm_id = resolveEntity(m_args.gsm_label);
           m_router.setGsmLabel(gsm_id);
         }
-        catch (std::runtime_error& e)
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
         {
           war(DTR("ERROR Initializing CommManager. Couldn't resolve GSM label."));
           //throw RestartNeeded(e.what(), 5, false);
         }
+
         try
         {
           uint8_t iridium_id = resolveEntity(m_args.iridium_label);
           m_router.setIridiumLabel(iridium_id);
         }
-        catch (std::runtime_error& e)
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
         {
           war(DTR("ERROR Initializing CommManager. Couldn't resolve Iridium label."));
           //throw RestartNeeded(e.what(), 5, false);
@@ -219,7 +230,7 @@ namespace Transports
       onUpdateParameters(void)
       {
         if (paramChanged(m_args.iridium_period))
-        m_iridium_timer.setTop(m_args.iridium_period);
+          m_iridium_timer.setTop(m_args.iridium_period);
       }
 
       void
@@ -397,9 +408,7 @@ namespace Transports
       consume(const IMC::AcousticStatus* msg)
       {
         if (msg->getSource() != getSystemId())
-        {
           return;
-        }
 
         std::map<uint16_t, IMC::TransmissionRequest*>& tr_list = m_router.getList();
 
@@ -474,11 +483,10 @@ namespace Transports
           return;
         }
 
-        if (!m_args.enable_acoustic)
-        {
-          return;
-        }
         //old API
+        if (!m_args.enable_acoustic)
+          return;
+
         if (m_acoustic_requests.find(msg->req_id) != m_acoustic_requests.end())
         {
           IMC::AcousticOperation* req = m_acoustic_requests[msg->req_id];
@@ -760,9 +768,7 @@ namespace Transports
       consume(const IMC::AcousticOperation* msg)
       {
         if (!m_args.enable_acoustic)
-        {
           return;
-        }
 
         if (msg->getSource() != getSystemId() && msg->getDestination() != getSystemId())
           return;
