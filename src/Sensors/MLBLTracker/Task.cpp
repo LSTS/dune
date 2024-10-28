@@ -33,7 +33,8 @@
 // +----+----+----+----+----+----+----+----+----+----+----+----+----+
 // |                   Range                         | Beacon  |  1 |
 // +----+----+----+----+----+----+----+----+----+----+----+----+----+
-//
+
+//! TODO: adapt to use Acoustics::Ticket.
 
 // ISO C++ 98 headers.
 #include <vector>
@@ -62,12 +63,6 @@ namespace Sensors
     static const unsigned c_mask_qtrack_range = 0x03ff;
     // Maximum buffer size.
     static const int c_bfr_size = 256;
-    // Acoustic Report code.
-    static const uint8_t c_code_report = 0x1;
-    // Start plan code.
-    static const uint8_t c_code_plan = 0x2;
-    // Reverse range code.
-    static const uint8_t c_code_reverse_range = 0x3;
     // Binary message size.
     static const uint8_t c_binary_size = 32;
 
@@ -100,25 +95,23 @@ namespace Sensors
     // Task arguments.
     struct Arguments
     {
-      // UART device.
-      std::string uart_dev;
-      // UART baud rate.
-      unsigned uart_baud;
-      // Sound speed on water.
+      //! IO device.
+      std::string io_dev;
+      //! Sound speed on water.
       double sspeed;
-      // Narrow band ping timeout.
+      //! Narrow band ping timeout.
       unsigned tout_nbping;
-      // Micro-Modem ping timeout.
+      //! Micro-Modem ping timeout.
       double tout_mmping;
-      // Abort timeout.
+      //! Abort timeout.
       double tout_abort;
-      // Input timeout.
+      //! Input timeout.
       double tout_input;
-      // GPIO to detect if transducer is connected.
+      //! GPIO to detect if transducer is connected.
       int gpio_txd;
-      // Length of transmit pings.
+      //! Length of transmit pings.
       unsigned tx_length;
-      // Length of receive pings.
+      //! Length of receive pings.
       unsigned rx_length;
       //! Name of the section with modem addresses.
       std::string addr_section;
@@ -131,62 +124,63 @@ namespace Sensors
     typedef std::map<std::string, Transponder> NarrowBandMap;
     typedef std::map<std::string, unsigned> MicroModemMap;
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
-      // Serial port handle.
+      //! IO handle.
       IO::Handle* m_handle;
-      // Map of narrow band transponders.
+      //! Map of narrow band transponders.
       NarrowBandMap m_nbmap;
-      // Map of micro-modem addresses.
+      //! Map of micro-modem addresses.
       MicroModemMap m_ummap;
-      // Map of micro-modem to IMC addresses.
+      //! Map of micro-modem to IMC addresses.
       AddressMap m_mimap;
-      // Map of IMC to Micro-Modem addresses.
+      //! Map of IMC to Micro-Modem addresses.
       AddressMap m_immap;
-      // Task arguments.
+      //! Task arguments.
       Arguments m_args;
-      // Timestamp of last operation.
+      //! Timestamp of last operation.
       double m_op_deadline;
-      // Local modem-address.
+      //! Local modem-address.
       unsigned m_address;
-      // Last acoustic operation.
-      IMC::AcousticOperation m_acop;
-      // Outgoing acoustic operation.
-      IMC::AcousticOperation m_acop_out;
-      // Save modem commands.
+      //! Last acoustic operation.
+      IMC::UamTxFrame m_txframe;
+      //! Outgoing acoustic operation.
+      IMC::UamTxStatus m_txstatus;
+      //! Save modem commands.
       IMC::DevDataText m_dev_data;
-      // Saved Plan Control.
+      //! Saved Plan Control.
       IMC::PlanControl* m_pc;
-      // Current operation.
+      //! Current operation.
       Operation m_op;
-      // Transducer detection GPIO.
+      //! Transducer detection GPIO.
       GPIO* m_gpio_txd;
-      // Time of last sentence from modem.
+      //! Time of last sentence from modem.
       Counter<double> m_last_stn;
-      // Ignore GPIO;
+      //! Ignore GPIO.
       bool m_ignore_gpio;
       //! Current line.
       std::string m_line;
-      // System position
-      IMC::EstimatedState *m_estate;
+      //! System position.
+      IMC::EstimatedState* m_estate;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_handle(NULL),
         m_op_deadline(-1.0),
         m_pc(NULL),
         m_op(OP_NONE),
         m_gpio_txd(NULL),
+        m_ignore_gpio(true),
         m_estate(NULL)
       {
-        // Define configuration parameters.
-        param("Serial Port - Device", m_args.uart_dev)
-        .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
+        //! Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER,
+                    false);
 
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("19200")
-        .description("Serial port baud rate");
+        param("IO Port - Device", m_args.io_dev)
+        .defaultValue("")
+        .description("IO device URI in the form \"tcp://ADDRESS:PORT\" or \"uart://DEVICE:BAUD\"");
 
         param("Length of Transmit Pings", m_args.tx_length)
         .units(Units::Millisecond)
@@ -246,51 +240,70 @@ namespace Sensors
           m_nbmap.insert(std::make_pair(txponders[i], Transponder(freqs[0], freqs[1])));
         }
 
-        m_ignore_gpio = false;
+        //! Use wait for messages.
+        setWaitForMessages(1.0);
 
-        // Register message handlers.
-        bind<IMC::AcousticOperation>(this);
+        //! Register message handlers.
         bind<IMC::EstimatedState>(this);
-        bind<IMC::AcousticSystemsQuery>(this);
+        bind<IMC::UamTxFrame>(this);
       }
 
-      ~Task(void)
+      void
+      dispatchSystems(bool force = false)
       {
-        onResourceRelease();
+        if (!isActive() && !force)
+          return;
+
+        IMC::AcousticSystems acsys;
+        acsys.setDestination(getSystemId());
+        for (auto& name: m_ummap)
+          acsys.list.append(name.first).append(",");
+        acsys.list.pop_back(); // remove last ","
+        dispatch(acsys);
       }
 
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.io_dev) && isActive())
+          requestRestart();
+
         if ((m_gpio_txd != NULL) && paramChanged(m_args.gpio_txd) && !m_ignore_gpio)
-          throw RestartNeeded(DTR("restarting to change transducer detection GPIO"), 1);
+          throw RestartNeeded(DTR("restarting to change transducer detection GPIO"), 1, false);
 
-        // Process micro-modem addresses.
-        m_mimap.clear();
-        m_immap.clear();
-        m_ummap.clear();
-        std::string agent = getSystemName();
-        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
-        for (unsigned i = 0; i < addrs.size(); ++i)
+        if (paramChanged(m_args.addr_section))
         {
-          unsigned iid = resolveSystemName(addrs[i]);
-          unsigned mid = 0;
-          m_ctx.config.get(m_args.addr_section, addrs[i], "0", mid);
-          m_mimap[mid] = iid;
-          m_immap[iid] = mid;
-          m_ummap[addrs[i]] = mid;
+          // Process micro-modem addresses.
+          m_mimap.clear();
+          m_immap.clear();
+          m_ummap.clear();
+          std::string agent = getSystemName();
+          std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+          for (auto& name: addrs)
+          {
+            unsigned iid = resolveSystemName(name);
+            unsigned mid = 0;
+            m_ctx.config.get(m_args.addr_section, name, "0", mid);
+            m_mimap[mid] = iid;
+            m_immap[iid] = mid;
+            m_ummap[name] = mid;
 
-          if (addrs[i] == agent)
-            m_address = mid;
-        }
+            if (name == agent)
+              m_address = mid;
+          }
+
+          dispatchSystems();
+        } 
 
         // Input timeout.
         if (paramChanged(m_args.tout_input))
           m_last_stn.setTop(m_args.tout_input);
       }
 
-      void
-      onResourceAcquisition(void)
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
       {
         // Configure transducer GPIO (if any).
         if (m_args.gpio_txd > 0)
@@ -299,6 +312,7 @@ namespace Sensors
           {
             m_gpio_txd = new GPIO((unsigned)m_args.gpio_txd);
             m_gpio_txd->setDirection(GPIO::GPIO_DIR_INPUT);
+            m_ignore_gpio = false;
           }
           catch (...)
           {
@@ -308,19 +322,37 @@ namespace Sensors
 
         try
         {
-          if (!openSocket())
-          {
-             SerialPort* port = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-             port->setCanonicalInput(true);
-             port->flush();
-             m_handle = port;
-           }
+          m_handle = openDeviceHandle(m_args.io_dev, true);
         }
-        catch (std::runtime_error& e)
+        catch (...)
         {
-          throw RestartNeeded(e.what(), 30);
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
+        IMC::AnnounceService announce;
+        announce.service = std::string("imc+any://acoustic/operation/")
+                                        + URL::encode(getEntityLabel());
+        dispatch(announce);
+
+        return true;
+      }
+
+      //! Disconnect from device.
+      void
+      onDisconnect() override
+      {
+        if (m_pc != NULL)
+          Memory::clear(m_pc);
+        if (m_gpio_txd != NULL)
+          Memory::clear(m_gpio_txd);
+        if (m_handle != NULL)
+          Memory::clear(m_handle);
+      }
+
+      //! Initialize device.
+      void
+      onInitializeDevice() override
+      {
         // Set unit number.
         configureModem("CCCFG", "SRC", m_address);
         // Transmit stats messages.
@@ -330,58 +362,23 @@ namespace Sensors
         // Navigation turn around time.
         configureModem("CCCFG", "TAT", m_args.turn_around_time);
 
+        //! TODO: make sure configuration works
+        //! otherwise, task will run even if no modem is connected
+
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-      }
 
-      //! Check if we have a TCP socket as device input argument.
-      //! @return true if it is a TCP socket, false otherwise.
-      bool
-      openSocket(void)
-      {
-        char addr[128] = {0};
-        unsigned port = 0;
-
-        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
-          return false;
-
-        m_ignore_gpio = true;
-
-        TCPSocket* sock = new TCPSocket;
-        sock->connect(addr, port);
-        m_handle = sock;
-        return true;
+        dispatchSystems(true);
       }
 
       void
-      onResourceRelease(void)
+      sendTxStatus(IMC::UamTxStatus::ValueEnum status, const std::string& error = "")
       {
-        Memory::clear(m_pc);
-        Memory::clear(m_gpio_txd);
-        Memory::clear(m_handle);
-      }
-
-      void
-      onResourceInitialization(void)
-      {
-        IMC::AnnounceService announce;
-        announce.service = std::string("imc+any://acoustic/operation/")
-        + URL::encode(getEntityLabel());
-        dispatch(announce);
-      }
-
-      void
-      consume(const IMC::AcousticSystemsQuery* msg)
-      {
-        if (m_args.addr_section.empty())
-        {
-          war("Modem address section was not properly set.");
-          return;
-        }
-        AcousticSystems reply;
-        std::vector<std::string> options = m_ctx.config.options(m_args.addr_section);
-        options.erase(std::remove(options.begin(), options.end(), m_ctx.resolver.name()), options.end());
-        reply.list = String::join(options.begin(), options.end(), ",");
-        dispatchReply(*msg, reply);
+        m_txstatus.setDestination(m_txframe.getSource());
+        m_txstatus.setDestinationEntity(m_txframe.getSourceEntity());
+        m_txstatus.seq = m_txframe.seq;
+        m_txstatus.value = status;
+        m_txstatus.error = error;
+        dispatch(m_txstatus);
       }
 
       void
@@ -412,7 +409,7 @@ namespace Sensors
       void
       sendCommand(const std::string& cmd)
       {
-        inf("%s", sanitize(cmd).c_str());
+        debug("sending: %s", sanitize(cmd).c_str());
         m_handle->writeString(cmd.c_str());
         m_dev_data.value.assign(sanitize(cmd));
         dispatch(m_dev_data);
@@ -425,137 +422,71 @@ namespace Sensors
       }
 
       void
-      consume(const IMC::AcousticOperation* msg)
+      consume(const IMC::UamTxFrame* msg)
       {
+        if (!isActive())
+          return;
+
+        if (msg->getDestination() != getSystemId())
+          return;
+
+        if (msg->getDestinationEntity() != 255 && msg->getDestinationEntity() != getEntityId())
+          return;
+
+        m_txframe = *msg;
+
         if (m_op != OP_NONE)
         {
-          m_acop_out.op = IMC::AcousticOperation::AOP_BUSY;
-          dispatch(m_acop_out);
+          sendTxStatus(IMC::UamTxStatus::UTS_BUSY);
           return;
         }
-
-        m_acop = *msg;
 
         // check if we have a transducer connected.
         if (!hasTransducer())
         {
-          m_acop_out.op = IMC::AcousticOperation::AOP_NO_TXD;
-          m_acop_out.system = msg->system;
-          dispatch(m_acop_out);
+          sendTxStatus(IMC::UamTxStatus::UTS_FAILED, "No transducer connected.");
           return;
         }
 
-        // check desired operation.
-        switch (msg->op)
+        if ((uint8_t) msg->data[0] != Acoustics::c_sync)
         {
-          case IMC::AcousticOperation::AOP_ABORT:
-            abort(msg->system);
-            break;
-          case IMC::AcousticOperation::AOP_RANGE:
-            ping(msg->system);
-            break;
-          case IMC::AcousticOperation::AOP_MSG:
-            transmitMessage(msg->system, msg->msg);
-            break;
-          case IMC::AcousticOperation::AOP_REVERSE_RANGE:
-            reverseRange(msg->system);
-            break;
+          sendTxStatus(IMC::UamTxStatus::UTS_FAILED, "Incorrect sync number.");
+          return;
         }
-      }
+        
+        Algorithms::CRC8 crc(Acoustics::c_poly);
+        uint8_t res = crc.putArray((uint8_t*)&msg->data[0], msg->data.size() - 1);
 
-      //! Transmit message to modem.
-      //! @param[in] sys destination system.
-      //! @param[in] imsg message to be sent.
-      void
-      transmitMessage(const std::string& sys, const InlineMessage<IMC::Message>& imsg)
-      {
-        MicroModemMap::iterator itr = m_ummap.find(sys);
-        if (itr == m_ummap.end())
+        if (res != msg->data.back())
         {
-          m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
-          m_acop_out.system = sys;
-          dispatch(m_acop_out);
+          sendTxStatus(IMC::UamTxStatus::UTS_FAILED, "Incorrect crc8.");
           return;
         }
 
-        const IMC::Message* msg = NULL;
-        std::string command;
+        switch (msg->data[1])
+        {
+        case Acoustics::CODE_ABORT:
+          abort(msg->sys_dst);
+          break;
+        case Acoustics::CODE_RANGE:
+          ping(msg->sys_dst);
+          break;
+        case Acoustics::CODE_REV_RANGE:
+          reverseRange(msg->sys_dst);
+          break;
+        case Acoustics::CODE_REPORT:
+        case Acoustics::CODE_RESTART:
+        case Acoustics::CODE_RAW:
+        case Acoustics::CODE_USBL:
+          transmitMessage(msg);
+          break;
 
-        try
-        {
-          msg = imsg.get();
-        }
-        catch (...)
-        {
+        default:
+          sendTxStatus(IMC::UamTxStatus::UTS_UNSUPPORTED);
           return;
         }
 
-        if (msg->getId() == DUNE_IMC_PLANCONTROL)
-        {
-          const IMC::PlanControl* pc = static_cast<const IMC::PlanControl*>(msg);
-          Memory::replace(m_pc, new IMC::PlanControl(*pc));
-
-          if (pc->op == IMC::PlanControl::PC_START)
-          {
-            std::vector<char> pmsg(c_binary_size, 0);
-
-            if (pc->plan_id.size() > c_binary_size - 1)
-            {
-              err(DTR("unable to send plan %s"), pc->plan_id.c_str());
-              return;
-            }
-
-            // Make packet.
-            pmsg[0] = (char)c_code_plan;
-            std::memcpy(&pmsg[1], &pc->plan_id[0], std::min(c_binary_size - 1, (int)pc->plan_id.size()));
-
-            std::string hex = String::toHex(pmsg);
-            std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n",
-                                          m_address, itr->second, hex.c_str());
-            sendCommand(cmd);
-
-            std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_address, itr->second);
-            sendCommand(cyc);
-
-          }
-        }
-
-        if (command.empty())
-          return;
-
-        sendCommand(command);
-      }
-
-      void
-      reverseRange(const std::string& sys)
-      {
-        MicroModemMap::iterator itr = m_ummap.find(sys);
-        if (itr == m_ummap.end() || m_estate == NULL)
-        {
-          m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
-          m_acop_out.system = sys;
-          dispatch(m_acop_out);
-          return;
-        }
-
-        double lat = m_estate->lat, lon = m_estate->lon, depth = m_estate->depth;
-        WGS84::displace(m_estate->x, m_estate->y, &lat, &lon);
-        float slat = (float)lat, slon = (float) lon;
-        std::vector<char> pmsg(c_binary_size, 0);
-        int8_t sdep = (int8_t) depth;
-
-        // Make packet.
-        pmsg[0] = (char)c_code_reverse_range;
-        std::memcpy(&pmsg[1], &slat, 4);
-        std::memcpy(&pmsg[5], &slon, 4);
-        std::memcpy(&pmsg[9], &sdep, 1);
-
-        std::string hex = String::toHex(pmsg);
-        std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n", m_address, itr->second, hex.c_str());
-        sendCommand(cmd);
-
-        std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_address, itr->second);
-        sendCommand(cyc);
+        sendTxStatus(IMC::UamTxStatus::UTS_SENT);
       }
 
       //! Abort system.
@@ -564,20 +495,10 @@ namespace Sensors
       abort(const std::string& sys)
       {
         NarrowBandMap::iterator nitr = m_nbmap.find(sys);
-        if (nitr != m_nbmap.end())
-        {
-          m_acop_out.system = sys;
-          m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
-          dispatch(m_acop_out);
-          return;
-        }
-
         MicroModemMap::iterator itr = m_ummap.find(sys);
-        if (itr == m_ummap.end())
+        if (nitr != m_nbmap.end() || itr == m_ummap.end())
         {
-          m_acop_out.system = sys;
-          m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
-          dispatch(m_acop_out);
+          sendTxStatus(IMC::UamTxStatus::UTS_UNSUPPORTED);
           return;
         }
 
@@ -592,54 +513,42 @@ namespace Sensors
       void
       ping(const std::string& sys)
       {
-        {
-          MicroModemMap::iterator itr = m_ummap.find(sys);
-          if (itr != m_ummap.end())
-          {
-            pingMicroModem(sys);
-            return;
-          }
-        }
+        if (pingMicroModem(sys))
+          return;
 
-        {
-          NarrowBandMap::iterator itr = m_nbmap.find(sys);
-          if (itr != m_nbmap.end())
-          {
-            pingNarrowBand(sys);
-            return;
-          }
-        }
+        if (pingNarrowBand(sys))
+          return;
 
-        m_acop_out.op = IMC::AcousticOperation::AOP_UNSUPPORTED;
-        m_acop_out.system = sys;
-        dispatch(m_acop_out);
+        sendTxStatus(IMC::UamTxStatus::UTS_UNSUPPORTED);
       }
 
       //! Ping a modem address.
       //! @param[in] sys system to be pinged.
-      void
+      bool
       pingMicroModem(const std::string& sys)
       {
         MicroModemMap::iterator itr = m_ummap.find(sys);
 
         if (itr == m_ummap.end())
-          return;
+          return false;
 
         std::string cmd = String::str("$CCMPC,%u,%u\r\n", m_address, itr->second);
         sendCommand(cmd);
         m_op = OP_PING_MM;
         m_op_deadline = Clock::get() + m_args.tout_mmping;
+
+        return true;
       }
 
       //! Ping a narrow band frequency.
       //! @param[in] sys transducer to be pinged.
-      void
+      bool
       pingNarrowBand(const std::string& sys)
       {
         NarrowBandMap::iterator itr = m_nbmap.find(sys);
 
         if (itr == m_nbmap.end())
-          return;
+          return false;
 
         unsigned query = itr->second.query_freq;
         unsigned reply = itr->second.reply_freq;
@@ -650,6 +559,75 @@ namespace Sensors
         sendCommand(cmd);
         m_op = OP_PING_NB;
         m_op_deadline = Clock::get() + m_args.tout_nbping;
+
+        return true;
+      }
+
+      void
+      reverseRange(const std::string& sys)
+      {
+        if (m_estate == NULL)
+        {
+          sendTxStatus(IMC::UamTxStatus::UTS_FAILED, "No EstimatedState.");
+          return;
+        }
+
+        MicroModemMap::iterator itr = m_ummap.find(sys);
+        if (itr == m_ummap.end())
+        {
+          sendTxStatus(IMC::UamTxStatus::UTS_INV_ADDR, "Can't target " + sys + ".");
+          return;
+        }
+
+        double lat = m_estate->lat, lon = m_estate->lon, depth = m_estate->depth;
+        WGS84::displace(m_estate->x, m_estate->y, &lat, &lon);
+        float slat = (float)lat, slon = (float) lon;
+        std::vector<char> pmsg(c_binary_size, 0);
+        int8_t sdep = (int8_t) depth;
+
+        // Make packet.
+        pmsg[0] = (char)Acoustics::c_sync;
+        pmsg[1] = (char)Acoustics::CODE_REV_RANGE;
+        std::memcpy(&pmsg[2], &slat, 4);
+        std::memcpy(&pmsg[6], &slon, 4);
+        std::memcpy(&pmsg[10], &sdep, 1);
+
+        Algorithms::CRC8 crc(Acoustics::c_poly);
+        uint8_t res = crc.putArray((uint8_t*)&pmsg[0], pmsg.size() - 1);
+        pmsg[11] = (char)res;
+
+        std::string hex = String::toHex(pmsg);
+        std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n", m_address, itr->second, hex.c_str());
+        sendCommand(cmd);
+
+        std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_address, itr->second);
+        sendCommand(cyc);
+      }
+
+      //! Transmit message to modem.
+      //! @param[in] msg message to be sent.
+      void
+      transmitMessage(const IMC::UamTxFrame* msg)
+      {
+        if (msg->data.size() > c_binary_size)
+        {
+          sendTxStatus(IMC::UamTxStatus::UTS_INV_SIZE);
+          return;
+        }
+
+        MicroModemMap::iterator itr = m_ummap.find(msg->sys_dst);
+        if (itr == m_ummap.end())
+        {
+          sendTxStatus(IMC::UamTxStatus::UTS_INV_ADDR, "Can't target " + msg->sys_dst + ".");
+          return;
+        }
+
+        std::string hex = String::toHex(msg->data);
+        std::string cmd = String::str("$CCTXD,%u,%u,0,%s\r\n", m_address, itr->second, hex.c_str());
+        sendCommand(cmd);
+
+        std::string cyc = String::str("$CCCYC,0,%u,%u,0,0,1\r\n", m_address, itr->second);
+        sendCommand(cyc);
       }
 
       //! Handle received range from modem.
@@ -675,10 +653,12 @@ namespace Sensors
         if (ttime < 0)
           ttime = 0;
 
-        m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_RECVED;
-        m_acop_out.system = m_acop.system;
-        m_acop_out.range = ttime * m_args.sspeed;
-        dispatch(m_acop_out);
+        IMC::UamRxRange range;
+        range.setDestination(m_txframe.getSource());
+        range.setDestinationEntity(m_txframe.getSourceEntity());
+        range.sys = m_txframe.sys_dst;
+        range.value = ttime * m_args.sspeed;
+        dispatch(range);
         resetOp();
       }
 
@@ -701,11 +681,13 @@ namespace Sensors
 
         if (ttime < 0)
           ttime = 0;
-
-        m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_RECVED;
-        m_acop_out.system = m_acop.system;
-        m_acop_out.range = ttime * m_args.sspeed;
-        dispatch(m_acop_out);
+        
+        IMC::UamRxRange range;
+        range.setDestination(m_txframe.getSource());
+        range.setDestinationEntity(m_txframe.getSourceEntity());
+        range.sys = m_txframe.sys_dst;
+        range.value = ttime * m_args.sspeed;
+        dispatch(range);
         resetOp();
       }
 
@@ -719,36 +701,39 @@ namespace Sensors
         std::string val;
         *stn >> src >> dst >> val;
 
-        unsigned value = 0;
-        std::sscanf(val.c_str(), "%04X", &value);
+        std::vector<char> data(val.begin(), val.end());
 
-        if (value == c_code_abort_ack)
+        uint8_t code_pos = 1;
+
+        if ((uint8_t)data[0] == Acoustics::c_sync)
         {
-          m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_ACKED;
-          m_acop_out.system = m_acop.system;
-          dispatch(m_acop_out);
-          resetOp();
+          Algorithms::CRC8 crc(Acoustics::c_poly);
+          uint8_t res = crc.putArray((uint8_t*)&val[0], val.size() - 1);
+
+          if ((uint8_t)data.back() != res)
+          {
+            war("Received Acoustic Message with invalid crc8.");
+            return;
+          }
+
+          code_pos = 0;
         }
-        if (value == c_code_plan_ack)
+
+        if ((uint8_t)data[code_pos] == Acoustics::CODE_ACK)
         {
-          inf(DTR("plan started"));
-          m_pc->setSource(m_mimap[src]);
-          m_pc->type = IMC::PlanControl::PC_SUCCESS;
-          m_pc->flags = 0;
-          dispatchReply(*m_pc, *m_pc, DF_KEEP_SRC_EID);
+          sendTxStatus(IMC::UamTxStatus::UTS_DONE);
+          return;
         }
-        else if (value & c_mask_qtrack)
-        {
-          unsigned beacon = (value & c_mask_qtrack_beacon) >> 10;
-          unsigned range = (value & c_mask_qtrack_range);
-          IMC::LblRangeAcceptance msg;
-          msg.setSource(m_mimap[src]);
-          msg.id = beacon;
-          msg.range = range;
-          msg.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
-          dispatch(msg);
-          inf("%s %u: %u", DTR("range to"), beacon, range);
-        }
+
+        IMC::UamRxFrame rxframe;
+        rxframe.sys_src = src;
+        rxframe.sys_dst = dst;
+        rxframe.data = data;
+
+        if (dst != m_address)
+          rxframe.flags |= IMC::UamRxFrame::URF_PROMISCUOUS;
+
+        dispatch(rxframe);
       }
 
       //! A requested range is in progress.
@@ -757,9 +742,7 @@ namespace Sensors
       handleRangeInProgress(NMEAReader* const stn)
       {
         (void)stn;
-        m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_IP;
-        m_acop_out.system = m_acop.system;
-        dispatch(m_acop_out);
+        sendTxStatus(IMC::UamTxStatus::UTS_IP);
       }
 
       //! Requested mini-packet transmission is in progress.
@@ -767,20 +750,8 @@ namespace Sensors
       void
       handleMiniPacketEcho(NMEAReader* const stn)
       {
-        unsigned src = 0;
-        unsigned dst = 0;
-        std::string val;
-        *stn >> src >> dst >> val;
-
-        unsigned value = 0;
-        std::sscanf(val.c_str(), "%04X", &value);
-
-        if (value == c_code_abort)
-        {
-          m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_IP;
-          m_acop_out.system = m_acop.system;
-          dispatch(m_acop_out);
-        }
+        (void)stn;
+        sendTxStatus(IMC::UamTxStatus::UTS_IP);
       }
 
       //! Handle reception of binary message.
@@ -800,115 +771,15 @@ namespace Sensors
           return;
         }
 
-        if (dst != 0)
-          return;
+        IMC::UamRxFrame rxframe;
+        rxframe.sys_src = src;
+        rxframe.sys_dst = dst;
+        rxframe.data = std::vector<char>(hex.begin(), hex.end());
 
-        std::string msg = String::fromHex(hex);
-        const char* msg_raw = msg.data();
+        if (dst != m_address)
+          rxframe.flags |= IMC::UamRxFrame::URF_PROMISCUOUS;
 
-        uint8_t code = static_cast<uint8_t>(msg_raw[0]);
-
-        if (code == c_code_report)
-        {
-          float lat, lon;
-
-          int8_t progress;
-          uint8_t depth, fuel_level, fuel_conf;
-
-          int16_t yaw, alt;
-          uint16_t ranges[2];
-
-          std::memcpy(&lat, msg_raw + 1, 4);
-          std::memcpy(&lon, msg_raw + 5, 4);
-          std::memcpy(&depth, msg_raw + 9, 1);
-          std::memcpy(&yaw, msg_raw + 10, 2);
-          std::memcpy(&alt, msg_raw + 12, 2);
-          std::memcpy(&ranges[0], msg_raw + 14, 2);
-          std::memcpy(&ranges[1], msg_raw + 16, 2);
-          std::memcpy(&progress, msg_raw + 18, 1);
-          std::memcpy(&fuel_level, msg_raw + 19, 1);
-          std::memcpy(&fuel_conf, msg_raw + 20, 1);
-
-          for (int i = 0; i < 2; ++i)
-          {
-            if (ranges[i] == 0)
-              continue;
-
-            IMC::LblRangeAcceptance lmsg;
-            lmsg.setSource(m_mimap[src]);
-            lmsg.id = i;
-            lmsg.range = ranges[i];
-            lmsg.acceptance = IMC::LblRangeAcceptance::RR_ACCEPTED;
-            dispatch(lmsg);
-            inf("%s %u: %f", DTR("range to"), lmsg.id, lmsg.range);
-          }
-
-          IMC::EstimatedState es;
-          es.setSource(m_mimap[src]);
-          es.lat = lat;
-          es.lon = lon;
-          es.depth = (float)depth;
-          es.psi = (float)yaw / 100.0;
-
-          if (alt >= -10)
-            es.alt = (float)alt / 10.0;
-          dispatch(es);
-
-          if (alt < -10) {
-            IMC::Salinity sal;
-            sal.value = - ((float)alt / 10.0);
-            sal.setSource(m_mimap[src]);
-            dispatch(sal);
-          }
-
-          IMC::PlanControlState pcs;
-          pcs.setSource(m_mimap[src]);
-
-          int state = progress / 10;
-
-          switch (state)
-          {
-            case (-1):
-              pcs.state = PlanControlState::PCS_BLOCKED;
-              pcs.last_outcome = progress % 10;
-              break;
-            case (-2):
-              pcs.state = PlanControlState::PCS_READY;
-              pcs.last_outcome = progress % 10;
-              break;
-            case (-3):
-              pcs.state = PlanControlState::PCS_INITIALIZING;
-              pcs.last_outcome = progress % 10;
-              break;
-            default:
-              pcs.state = PlanControlState::PCS_EXECUTING;
-              pcs.plan_progress = (float)progress;
-              break;
-          }
-
-          dispatch(pcs);
-
-          // Inform if progress is valid.
-          if (pcs.plan_progress >= 0)
-            inf(DTR("plan progress is %f"), pcs.plan_progress);
-
-          IMC::FuelLevel fuel;
-          fuel.setSource(m_mimap[src]);
-          fuel.value = (float)fuel_level;
-          fuel.confidence = (float)fuel_conf;
-          dispatch(fuel);
-
-          trace("lat %f | lon %f | depth %f | alt %f | yaw %f", es.lat, es.lon, es.depth, es.alt, es.psi);
-          trace("fuel %f | conf %f | plan progress %f", fuel.value, fuel.confidence, pcs.plan_progress);
-        }
-        else if (code == c_code_plan)
-        {
-          debug("ignore start plan");
-        }
-        else
-        {
-          debug("wrong code id");
-        }
+        dispatch(rxframe);
       }
 
       //! Read sentence.
@@ -925,6 +796,7 @@ namespace Sensors
           {
             process(m_line);
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            m_last_stn.reset();
             m_line.clear();
           }
           else
@@ -939,6 +811,7 @@ namespace Sensors
       void
       process(const std::string msg)
       {
+        trace("received: %s", sanitize(msg).c_str());
         m_dev_data.value.assign(sanitize(msg));
         dispatch(m_dev_data);
 
@@ -979,14 +852,7 @@ namespace Sensors
 
         if (now > m_op_deadline)
         {
-          m_acop_out.system = m_acop.system;
-
-          if ((m_op == OP_PING_NB) || (m_op == OP_PING_MM))
-            m_acop_out.op = IMC::AcousticOperation::AOP_RANGE_TIMEOUT;
-          else if (m_op == OP_ABORT)
-            m_acop_out.op = IMC::AcousticOperation::AOP_ABORT_TIMEOUT;
-
-          dispatch(m_acop_out);
+          sendTxStatus(IMC::UamTxStatus::UTS_FAILED, "Exceeded deadline.");
           resetOp();
         }
       }
@@ -1007,25 +873,24 @@ namespace Sensors
         sendCommand(cmd);
       }
 
-      void
-      onMain(void)
+      //! Check for data.
+      //! Check for input timeout.
+      //! @return true.
+      bool
+      onReadData() override
       {
-        while (!stopping())
+        if (Poll::poll(*m_handle, 0.1))
         {
-          consumeMessages();
-
-          if (Poll::poll(*m_handle, 0.1))
-          {
-            readSentence();
-            m_last_stn.reset();
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          }
-
-          if (m_last_stn.overflow())
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-
-          checkTimeouts();
+          readSentence();
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
+
+        if (m_last_stn.overflow())
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+
+        checkTimeouts();
+
+        return true;
       }
     };
   }
