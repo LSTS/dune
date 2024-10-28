@@ -52,19 +52,6 @@ namespace Simulators
     //! Timeout time.
     static const double c_timeout = 5.0;
 
-    //! Transmission ticket structure.
-    struct Ticket
-    {
-      //! IMC source address.
-      uint16_t imc_sid;
-      //! IMC source entity.
-      uint8_t imc_eid;
-      //! Sequence number.
-      uint16_t seq;
-      //! Wait for ack.
-      bool ack;
-    };
-
     struct Arguments
     {
       //! Modem operation arguments.
@@ -76,7 +63,7 @@ namespace Simulators
       //! Task arguments.
       Arguments m_args;
       //! Current transmission ticket.
-      Ticket* m_ticket;
+      Acoustics::Ticket* m_ticket;
       //! Timeout counter.
       Time::Counter<double> m_timeout;
       //! Modem driver handler.
@@ -170,10 +157,10 @@ namespace Simulators
       //! @param[in] ticket ticket to replae current.
       //! @param[in] reason status to send.
       void
-      replaceTicket(const Ticket* ticket)
+      replaceTicket(const Acoustics::Ticket* ticket)
       {
         clearTicket(IMC::UamTxStatus::UTS_CANCELED);
-        m_ticket = new Ticket(*ticket);
+        m_ticket = new Acoustics::Ticket(*ticket);
         m_timeout.setTop(c_timeout);
       }
 
@@ -182,7 +169,7 @@ namespace Simulators
       //! @param[in] value status to send.
       //! @param[in] error error message, if available.
       void
-      sendTxStatus(const Ticket& ticket, IMC::UamTxStatus::ValueEnum value,
+      sendTxStatus(const Acoustics::Ticket& ticket, IMC::UamTxStatus::ValueEnum value,
                     const std::string& error = "")
       {
         IMC::UamTxStatus status;
@@ -204,7 +191,7 @@ namespace Simulators
           return;
 
         // Create and fill new ticket.
-        Ticket ticket;
+        Acoustics::Ticket ticket;
         ticket.imc_sid  = msg->getSource();
         ticket.imc_eid  = msg->getSourceEntity();
         ticket.seq      = msg->seq;
@@ -212,7 +199,7 @@ namespace Simulators
 
         if (msg->sys_dst == getSystemName())
         {
-          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
+          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR, "Can't target " + msg->sys_dst + ".");
           return;
         }
 
