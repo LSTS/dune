@@ -56,7 +56,7 @@ namespace Transports
         m_medium(4),
         m_gsm_entity_id(-1),
         m_iridium_entity_id(-1),
-        m_reqid(0),
+        m_uan_entity_id(-1),
         c_wifi_timeout(15)
       { }
 
@@ -208,7 +208,7 @@ namespace Transports
         tx.destination = msg->destination.empty() ? "broadcast" : msg->destination;
 
         tx.setDestination(m_parent->getSystemId());
-        tx.setDestinationEntity(m_parent->getEntityId());
+        tx.setDestinationEntity(m_uan_entity_id);
 
         tx.range = msg->range;
 
@@ -731,7 +731,7 @@ namespace Transports
       }
 
       void
-      setAcousticMap(std::vector<std::string> map)
+      setAcousticMap(std::set<std::string> map)
       {
         m_acoustic_map = map;
       }
@@ -746,6 +746,12 @@ namespace Transports
       setIridiumLabel(int id)
       {
         m_iridium_entity_id = id;
+      }
+
+      void
+      setUANLabel(int id)
+      {
+        m_uan_entity_id = id;
       }
 
       std::map<uint16_t, IMC::TransmissionRequest*>&
@@ -766,6 +772,8 @@ namespace Transports
 
       int m_gsm_entity_id;
       int m_iridium_entity_id;
+      //! UAN Entity Id.
+      int m_uan_entity_id;
       std::map<uint8_t, fp32_t> m_rssi_msg_map;
       uint16_t m_reqid;
 
@@ -797,13 +805,19 @@ namespace Transports
         if (system.empty())
           return false;
 
-        for (unsigned i = 0; i < m_acoustic_map.size(); i++)
+        if (m_acoustic_map.empty())
         {
-          if (m_acoustic_map[i] == system)
-            return true;
+          IMC::AcousticSystemsQuery asq;
+          asq.setDestination(m_parent->getSystemId());
+          asq.setDestinationEntity(m_uan_entity_id);
+          m_parent->dispatch(asq);
+          return false;
         }
 
+        if (m_acoustic_map.find(system) == m_acoustic_map.end())
         return false;
+
+        return true;
       }
 
       bool

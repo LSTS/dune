@@ -56,9 +56,9 @@ namespace Transports
       std::string iridium_label;
       //! Entity label of GSM modem
       std::string gsm_label;
-      //! Name of the configuration section with acoustic modem addresses
-      std::string acoustic_addr_section;
-      //! Send Iridium text messages as plain text
+      //! Entity label of UAN.
+      std::string uan_label;
+      //! Send Iridium text messages as plain text.
       bool iridium_plain_texts;
     };
 
@@ -85,6 +85,8 @@ namespace Transports
       Router m_router;
 
       std::map<uint16_t, IMC::AcousticOperation*> m_acoustic_requests;
+      //! UAN Entity Id.
+      uint8_t m_uan_id;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -94,7 +96,8 @@ namespace Transports
         m_vstate(NULL),
         m_vmedium(NULL),
         m_plan_chksum(0),
-        m_router(this)
+        m_router(this),
+        m_uan_id(255)
       {
         param("Iridium - Entity Label", m_args.iridium_label)
             .defaultValue("GSM")
@@ -104,13 +107,13 @@ namespace Transports
             .defaultValue("Iridium Modem")
             .description("Entity label of GSM modem");
 
+        param("UAN - Entity Label", m_args.uan_label)
+        .defaultValue("Acoustic Access Controller")
+        .description("Entity label of UAN");
+
         param("GSM Address Section", m_args.gsm_addr_section)
             .defaultValue("GSM Addresses")
             .description("Name of the configuration section with gsm modem addresses");
-
-        param("Acoustic Address Section", m_args.acoustic_addr_section)
-            .defaultValue("Evologics Addresses")
-            .description("Name of the configuration section with acoustic modem addresses");
 
         param("Iridium Reports Period", m_args.iridium_period)
             .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
@@ -126,6 +129,7 @@ namespace Transports
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticStatus>(this);
+        bind<IMC::AcousticSystems>(this);
         bind<IMC::Announce>(this);
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
@@ -173,20 +177,6 @@ namespace Transports
           }
         }
         m_router.setGSMMap(mapName);
-
-        // verify modem local address value -> Acoustic
-        std::vector<std::string> acousticMap;
-        addrs = m_ctx.config.options(m_args.acoustic_addr_section);
-        for (unsigned i = 0; i < addrs.size(); ++i)
-        {
-          std::string addr;
-          m_ctx.config.get(m_args.acoustic_addr_section, addrs[i], "-1", addr);
-          if (addr != "-1")
-          {
-            acousticMap.push_back(addrs[i]);
-          }
-        }
-        m_router.setAcousticMap(acousticMap);
       }
 
       void
@@ -210,6 +200,17 @@ namespace Transports
         catch (std::runtime_error& e)
         {
           war(DTR("ERROR Initializing CommManager. Couldn't resolve Iridium label."));
+          //throw RestartNeeded(e.what(), 5, false);
+        }
+
+        try
+        {
+          m_uan_id = resolveEntity(m_args.uan_label);
+          m_router.setUANLabel(m_uan_id);
+        }
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
+        {
+          war(DTR("ERROR Initializing CommManager. Couldn't resolve UAN label."));
           //throw RestartNeeded(e.what(), 5, false);
         }
       }
@@ -609,6 +610,20 @@ namespace Transports
               break;
           }
         }
+      }
+
+      void
+      consume(const IMC::AcousticSystems* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+        
+        if (msg->getSourceEntity() != m_uan_id)
+          return;
+
+        std::set<std::string> map;
+        String::split(msg->list, ",", map);
+        m_router.setAcousticMap(map);
       }
 
       void
