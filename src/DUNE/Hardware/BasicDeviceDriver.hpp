@@ -93,7 +93,7 @@ namespace DUNE
       //!
       //! @return I/O handle.
       IO::Handle*
-      openDeviceHandle(const std::string& uri);
+      openDeviceHandle(const std::string& uri, bool canonicalInput = false);
 
       //! Create an I/O handle given a serial port URI.
       //!
@@ -101,7 +101,7 @@ namespace DUNE
       //!
       //! @return I/O handle.
       IO::Handle*
-      openUART(const std::string& uri);
+      openUART(const std::string& uri, bool canonicalInput = false);
 
       //! Create an I/O handle given a TCP port URI.
       //!

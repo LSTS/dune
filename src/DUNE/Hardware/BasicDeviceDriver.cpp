@@ -40,23 +40,23 @@ namespace DUNE
     using DUNE_NAMESPACES;
 
     //! Log file prefix.
-    static const char *c_log_prefix = "Data_";
+    static const char* c_log_prefix = "Data_";
 
-    BasicDeviceDriver::BasicDeviceDriver( const std::string &name, Tasks::Context &ctx ) :
-        Tasks::Task(name, ctx),
-        m_sm_state(SM_IDLE),
-        m_wait_msg_timeout(0.0),
-        m_log_opened(false),
-        m_log_name_pending(false),
-        m_post_power_on_delay(0.0),
-        m_power_on_delay(0.0),
-        m_power_off_delay(0.0),
-        m_fault_count(0),
-        m_timeout_count(0),
-        m_restart(false),
-        m_restart_delay(0.0),
-        m_read_period(0.0),
-        m_uri()
+    BasicDeviceDriver::BasicDeviceDriver( const std::string &name, Tasks::Context &ctx ):
+      Tasks::Task(name, ctx),
+      m_sm_state(SM_IDLE),
+      m_wait_msg_timeout(0.0),
+      m_log_opened(false),
+      m_log_name_pending(false),
+      m_post_power_on_delay(0.0),
+      m_power_on_delay(0.0),
+      m_power_off_delay(0.0),
+      m_fault_count(0),
+      m_timeout_count(0),
+      m_restart(false),
+      m_restart_delay(0.0),
+      m_read_period(0.0),
+      m_uri()
     {
       param("Power Channel - Names", m_bdd_args.pwr_channels)
       .defaultValue("")
@@ -125,12 +125,12 @@ namespace DUNE
         war("Activation Time set to 0.0! Please set a positive time.");
     }
 
-    IO::Handle *
-    BasicDeviceDriver::openDeviceHandle(const std::string &device)
+    IO::Handle*
+    BasicDeviceDriver::openDeviceHandle(const std::string &device, bool canonicalInput)
     {
       IO::Handle *handle = openSocketTCP(device);
       if (handle == nullptr)
-        handle = openUART(device);
+        handle = openUART(device, canonicalInput);
 
       if (handle != nullptr)
         handle->flush();
@@ -138,8 +138,8 @@ namespace DUNE
       return handle;
     }
 
-    IO::Handle *
-    BasicDeviceDriver::openUART(const std::string &device)
+    IO::Handle*
+    BasicDeviceDriver::openUART(const std::string &device, bool canonicalInput)
     {
       char uart[128] = {0};
       unsigned baud = 0;
@@ -151,7 +151,9 @@ namespace DUNE
       if (std::sscanf(device.c_str(), "uart://%[^:]:%u", uart, &baud) != 2)
         return nullptr;
 
-      return new SerialPort(uart, baud);
+      SerialPort* uri = new SerialPort(uart, baud);
+      uri->setCanonicalInput(canonicalInput);
+      return uri;
     }
 
     IO::Handle *
