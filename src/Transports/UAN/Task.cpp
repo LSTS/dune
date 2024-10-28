@@ -26,6 +26,10 @@
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
+//                          +------+--------+---------------------+------+  *
+// UAM message data format: | code | c_sync |         data        | crc8 |  *
+//                          +------+--------+---------------------+------+  *
+//***************************************************************************
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -36,21 +40,6 @@ namespace Transports
   namespace UAN
   {
     using DUNE_NAMESPACES;
-
-    // Synchronization byte.
-    static const uint8_t c_sync = 0xA1;
-    static const uint8_t c_poly = 0x07;
-
-    enum Codes
-    {
-      CODE_ABORT   = 0x00,
-      CODE_RANGE   = 0x01,
-      CODE_PLAN    = 0x02,
-      CODE_REPORT  = 0x03,
-      CODE_RESTART = 0x04,
-      CODE_RAW     = 0x05,
-      CODE_USBL    = 0x06
-    };
 
     struct Report
     {
@@ -90,11 +79,11 @@ namespace Transports
       float m_fuel_conf;
       //! Sequence number.
       uint16_t m_reqid;
-      //! Map of messages to send
+      //! Map of messages to send.
       std::map<uint16_t, IMC::AcousticRequest*> m_transmission_requests;
-      //! Timer for sending preceding message
+      //! Timer for sending preceding message.
       Counter<double> m_msg_send_timer;
-      //! When "false" processQueue must wait
+      //! When "false" processQueue must wait.
       bool m_can_send;
       //! Reporter API.
       Supervisors::Reporter::Client* m_reporter;
@@ -106,7 +95,7 @@ namespace Transports
       UsblTools::Modem* m_usbl_modem;
       //! Task arguments.
       Arguments m_args;
-//! Targetable systems.
+      //! Targetable systems.
       std::map<std::string, std::set<std::string>> m_sys;
       //! Message to answer an AcousticSystemsQuery.
       IMC::AcousticSystems m_acsys;
@@ -128,11 +117,11 @@ namespace Transports
         m_usbl_modem(NULL)
       {
         param("Enable Reports", m_args.report_enable)
-            .defaultValue("false")
-            .description("Enable system state acoustic reporting. When enabled, systems"
-                " shall acknowledge reception of requests to broadcast acoustic"
-                " messages containing the overall state of the system."
-                " When disabled, those requests shall be ignored");
+        .defaultValue("false")
+        .description("Enable system state acoustic reporting. When enabled, systems"
+            " shall acknowledge reception of requests to broadcast acoustic"
+            " messages containing the overall state of the system."
+            " When disabled, those requests shall be ignored");
 
         param("USBL Node -- Enabled", m_node_args.enabled)
         .defaultValue("false")
@@ -232,9 +221,7 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
-        m_reporter = new Supervisors::Reporter::Client(this, Supervisors::Reporter::IS_ACOUSTIC,
-            2.0, false);
-
+        m_reporter = new Supervisors::Reporter::Client(this, Supervisors::Reporter::IS_ACOUSTIC, 2.0, false);
         m_usbl_node = new UsblTools::Node(this, &m_node_args);
       }
 
@@ -357,13 +344,13 @@ namespace Transports
               if (section.second.find(msg->destination) != section.second.end())
               {
                 addToQueue(msg);
-          processQueue();
+                processQueue();
                 return;
               }
             }
 
             sendAcousticStatus(msg, IMC::AcousticStatus::STATUS_INV_ADDR, "Can't target " + msg->destination);
-          break;
+            break;
 
           default:
             sendAcousticStatus(msg, IMC::AcousticStatus::STATUS_UNSUPPORTED, "Acoustic Message type not implemented");
@@ -396,19 +383,19 @@ namespace Transports
         {
           imc_addr_dst = resolveSystemName(msg->sys_dst);
         }
-        catch (...)
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
         {
-          debug("unknown system name: %s", msg->sys_dst.c_str());
+          debug(DTR("%s"), e.what());
           return;
         }
 
-        if ((uint8_t)msg->data[0] != c_sync)
+        if ((uint8_t)msg->data[0] != Acoustics::c_sync)
         {
           debug("invalid synchronization number: %02X", msg->data[0]);
           return;
         }
 
-        Algorithms::CRC8 crc(c_poly);
+        Algorithms::CRC8 crc(Acoustics::c_poly);
         crc.putArray((uint8_t*)&msg->data[0], msg->data.size() - 1);
         if (crc.get() != (uint8_t)(msg->data[msg->data.size() - 1]))
         {
@@ -418,29 +405,29 @@ namespace Transports
 
         switch (msg->data[1])
         {
-          case CODE_REPORT:
+          case Acoustics::CODE_REPORT:
             recvReport(imc_addr_src, imc_addr_dst, msg);
             break;
 
-          case CODE_ABORT:
+          case Acoustics::CODE_ABORT:
             recvAbort(imc_addr_src, imc_addr_dst, msg);
             break;
 
-          case CODE_RANGE:
+          case Acoustics::CODE_RANGE:
             recvRange(imc_addr_src, imc_addr_dst, msg);
             break;
 
-          case CODE_PLAN:
+          case Acoustics::CODE_PLAN:
             recvPlanControl(imc_addr_src, imc_addr_dst, msg);
             break;
 
-          case CODE_RAW:
+          case Acoustics::CODE_RAW:
             recvMessage(imc_addr_src, imc_addr_dst, msg);
             break;
 
-          case CODE_USBL:
+          case Acoustics::CODE_USBL:
             std::vector<uint8_t> data;
-            data.push_back(CODE_USBL);
+            data.push_back(Acoustics::CODE_USBL);
             if (UsblTools::toNode(msg->data[2]))
             {
               if (m_usbl_node != NULL)
@@ -471,72 +458,57 @@ namespace Transports
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
-        if (m_transmission_requests.find(msg->seq)
-            == m_transmission_requests.end()) {
+        if (m_transmission_requests.find(msg->seq) == m_transmission_requests.end())
           return;
-        }
-        uint16_t idOfMsg = msg->seq;
 
-        if (m_transmission_requests.find(idOfMsg) == m_transmission_requests.end()) return;
+        const IMC::AcousticRequest* request = m_transmission_requests[msg->seq];
 
-        const IMC::AcousticRequest* request = m_transmission_requests[idOfMsg];
-
-        switch (msg->value) {
+        switch (msg->value)
+        {
           case IMC::UamTxStatus::UTS_BUSY:
-            sendAcousticStatus(request,IMC::AcousticStatus::STATUS_BUSY,msg->error);
+            sendAcousticStatus(request, IMC::AcousticStatus::STATUS_BUSY, msg->error);
             m_msg_send_timer.setTop(2);
             m_can_send = true;
             break;
-
           case IMC::UamTxStatus::UTS_INV_ADDR:
-            sendAcousticStatus(request,IMC::AcousticStatus::STATUS_UNSUPPORTED,msg->error);
-            removeFromQueue(idOfMsg);
-
+            sendAcousticStatus(request, IMC::AcousticStatus::STATUS_INV_ADDR, msg->error);
+            removeFromQueue(msg->seq);
             break;
-
           case IMC::UamTxStatus::UTS_DONE:
-            sendAcousticStatus(request,IMC::AcousticStatus::STATUS_SENT,msg->error);
+            sendAcousticStatus(request, IMC::AcousticStatus::STATUS_SENT, msg->error);
             if(request->type != IMC::AcousticRequest::TYPE_RANGE)
-              removeFromQueue(idOfMsg);
+              removeFromQueue(msg->seq);
             break;
-
           case IMC::UamTxStatus::UTS_IP:
-            sendAcousticStatus(request,IMC::AcousticStatus::STATUS_IN_PROGRESS,msg->error);
-
+            sendAcousticStatus(request, IMC::AcousticStatus::STATUS_IN_PROGRESS, msg->error);
             break;
-
           case IMC::UamTxStatus::UTS_FAILED:
-            sendAcousticStatus(request,IMC::AcousticStatus::STATUS_ERROR,msg->error);
-            removeFromQueue(idOfMsg);
-
+            sendAcousticStatus(request, IMC::AcousticStatus::STATUS_ERROR, msg->error);
+            removeFromQueue(msg->seq);
             break;
 
           default:
             break;
-
         }
       }
 
       void
       consume(const IMC::UamRxRange* msg)
       {
-        if (m_transmission_requests.find(msg->seq)
-            == m_transmission_requests.end()) {
+        if (m_transmission_requests.find(msg->seq) == m_transmission_requests.end())
           return;
-        }
+        
         uint16_t idOfMsg = msg->seq;
 
         const IMC::AcousticRequest* request = m_transmission_requests[idOfMsg];
 
-        if(request->type != IMC::AcousticRequest::TYPE_RANGE){
+        if(request->type != IMC::AcousticRequest::TYPE_RANGE)
           return;
-        }
-
-        if(request->destination != msg->sys){
+          
+        if(request->destination != msg->sys)
           return;
-        }
 
-        sendAcousticStatus(request,IMC::AcousticStatus::STATUS_RANGE_RECEIVED,"",msg->value);
+        sendAcousticStatus(request, IMC::AcousticStatus::STATUS_RANGE_RECEIVED, "", msg->value);
         removeFromQueue(idOfMsg);
       }
 
@@ -562,7 +534,7 @@ namespace Transports
           return;
 
         std::vector<uint8_t> data;
-        data.push_back(CODE_USBL);
+        data.push_back(Acoustics::CODE_USBL);
 
         // Inverted mode
         if(m_usbl_modem->isInverted(msg->target, data))
@@ -605,7 +577,7 @@ namespace Transports
           return;
 
         std::vector<uint8_t> data;
-        data.push_back(CODE_USBL);
+        data.push_back(Acoustics::CODE_USBL);
         
         if(m_usbl_modem->isInverted(msg->target, data))
           return;
@@ -702,7 +674,8 @@ namespace Transports
 
       void
       sendAcousticStatus(const AcousticRequest* acReq, IMC::AcousticStatus::StatusEnum status,
-          const std::string& info = "", const fp32_t range = 0.0) {
+                         const std::string& info = "", const fp32_t range = 0.0)
+      {
         IMC::AcousticStatus acStat;
 
         acStat.req_id    = acReq->req_id;
@@ -710,20 +683,18 @@ namespace Transports
         acStat.status    = status;
         acStat.range     = range;
         acStat.info      = info;
-        acStat.setDestination(acReq->getSource());
-        acStat.setDestinationEntity(acReq->getSourceEntity());
 
-        dispatch(acStat);
+        dispatchReply(*acReq, acStat);
       }
 
       uint16_t
-      createInternalId(){
-        if(m_reqid==0xFFFF){
+      createInternalId()
+      {
+        if (m_reqid==0xFFFF)
           m_reqid=0;
-        }
-        else{
+        else
           m_reqid++;
-        }
+
         return m_reqid;
       }
 
@@ -764,16 +735,15 @@ namespace Transports
         Report dat;
         dat.lat = lat;
         dat.lon = lon;
-        dat.depth = (uint8_t)m_estate.depth;
-        dat.yaw = (int16_t)(m_estate.psi * 100.0);
-        dat.alt = (int16_t)(m_estate.alt * 10.0);
-        dat.fuel_level = (uint8_t)m_fuel_level;
-        dat.fuel_conf = (uint8_t)m_fuel_conf;
-        dat.progress = (int8_t)m_progress;
+        dat.depth = (uint8_t) m_estate.depth;
+        dat.yaw = (int16_t) (m_estate.psi * 100.0);
+        dat.alt = (int16_t) (m_estate.alt * 10.0);
+        dat.fuel_level = (uint8_t) m_fuel_level;
+        dat.fuel_conf = (uint8_t) m_fuel_conf;
+        dat.progress = (int8_t) m_progress;
 
-        std::vector<uint8_t> data;
-        data.resize(sizeof(dat) + 1);
-        data[0] = CODE_REPORT;
+        std::vector<uint8_t> data(sizeof(dat) + 1);
+        data[0] = Acoustics::CODE_REPORT;
         std::memcpy(&data[1], &dat, sizeof(dat));
         sendFrame("broadcast", createInternalId(), data, false);
       }
@@ -840,7 +810,7 @@ namespace Transports
       sendAbort(const std::string& sys, const uint16_t id)
       {
         std::vector<uint8_t> data;
-        data.push_back(CODE_ABORT);
+        data.push_back(Acoustics::CODE_ABORT);
         sendFrame(sys, id, data, true);
       }
 
@@ -879,7 +849,7 @@ namespace Transports
         // Check if special command can be used...
         if (msg->getId() == IMC::PlanControl::getIdStatic())
         {
-          const IMC::PlanControl * pc = static_cast<const IMC::PlanControl*>(msg);
+          const IMC::PlanControl* pc = static_cast<const IMC::PlanControl*>(msg);
           if (pc->arg.isNull())
           {
             sendPlanControl(sys, id, static_cast<const IMC::PlanControl*>(msg));
@@ -892,19 +862,19 @@ namespace Transports
       }
 
       void
-      sendRawMessage(const std::string& sys, const uint16_t id, const IMC::Message * msg)
+      sendRawMessage(const std::string& sys, const uint16_t id, const IMC::Message* msg)
       {
         std::vector<uint8_t> data;
-        data.push_back(CODE_RAW);
+        data.push_back(Acoustics::CODE_RAW);
 
-        inf("Send message of type %s, with serialization size %d.", msg->getName(), msg->getSerializationSize());
+        spew("Send message of type %s, with serialization size %d.", msg->getName(), msg->getSerializationSize());
 
-        // leave 1 byte for CODE_RAW and another for CRC8
+        // leave a byte for Acoustics::CODE_RAW and another for CRC8
         uint8_t buf[2500];
 
         // start with message id
-        uint16_t id2 = msg->getId();
-        std::memcpy(&buf[0], &id2, sizeof(uint16_t));
+        uint16_t imc_id = msg->getId();
+        std::memcpy(&buf[0], &imc_id, sizeof(uint16_t));
 
         // followed by all message fields
         msg->serializeFields(&buf[2]);
@@ -933,22 +903,20 @@ namespace Transports
         // Check if is DevDataBinary...
         if (msg->getId() == IMC::DevDataBinary::getIdStatic())
         {
-          const IMC::DevDataBinary * ddb = static_cast<const IMC::DevDataBinary*>(msg);
+          const IMC::DevDataBinary* ddb = static_cast<const IMC::DevDataBinary*>(msg);
           if (ddb->value.size() > 0)
           {
             std::vector<uint8_t> data;
-            // no coding, send as is
-            for (size_t i = 0; i < ddb->value.size(); ++i)
-            {
-              data.push_back(ddb->value[i]);
-            }
-
+            data.push_back(Acoustics::CODE_RAW);
+            for (auto& c: ddb->value)
+              data.push_back((uint8_t) c);
             sendFrameRaw(sys, id, data, true);
             return;
           }
         }
 
-        sendAcousticStatus(&req, IMC::AcousticStatus::STATUS_UNSUPPORTED, "Unsupported type for raw send.");
+        sendAcousticStatus(&req, IMC::AcousticStatus::STATUS_UNSUPPORTED,
+                           "Unsupported IMC Message to send RAW Acoustic Message.");
         removeFromQueue(req.req_id);
       }
 
@@ -961,10 +929,12 @@ namespace Transports
         if (msg->op != IMC::PlanControl::PC_START)
           return;
 
+        spew("sending PlanControl to %s", sys.c_str());
+
         std::vector<uint8_t> data;
-        data.push_back(CODE_PLAN);
-        for (size_t i = 0; i < msg->plan_id.size(); ++i)
-          data.push_back((uint8_t)msg->plan_id[i]);
+        data.push_back(Acoustics::CODE_PLAN);
+        for (auto& c: msg->plan_id)
+          data.push_back((uint8_t) c);          
         sendFrame(sys, id, data, true);
       }
 
@@ -1015,7 +985,7 @@ namespace Transports
         {
           uint16_t msg_type;
           std::memcpy(&msg_type, &msg->data[2], sizeof(uint16_t));
-          Message *m = IMC::Factory::produce(msg_type);
+          IMC::Message* m = IMC::Factory::produce(msg_type);
           if (m == NULL)
           {
             err("Invalid message type received: %d", msg_type);
@@ -1025,15 +995,15 @@ namespace Transports
           m->setSource(imc_src);
           m->setDestination(imc_dst);
           m->setTimeStamp(msg->getTimeStamp());
-          m->deserializeFields((const unsigned char *)&msg->data[4], msg->data.size()-4);
+          m->deserializeFields((const unsigned char*)&msg->data[4], msg->data.size() - 4);
 
           // mark the message's origin as acoustic if it is an acoustic command
           if (m->getId() == IMC::TextMessage::getIdStatic())
           {
-        	IMC::TextMessage* txtmsg = static_cast<IMC::TextMessage*>(m);
-        	std::stringstream ss;
-        	ss << "acoustic/" << msg->sys_src;
-        	txtmsg->origin = ss.str();
+            IMC::TextMessage* txtmsg = static_cast<IMC::TextMessage*>(m);
+            std::stringstream ss;
+            ss << "acoustic/" << msg->sys_src;
+            txtmsg->origin = ss.str();
           }
 
           dispatch(m, DF_KEEP_TIME | DF_LOOP_BACK);
@@ -1065,8 +1035,8 @@ namespace Transports
         dispatch(pc);
 
         war(DTR("start plan detected with id: %s for 0x%02X"),
-            pc.plan_id.c_str(),
-            pc.getDestination() & 0xFFFF);
+                 pc.plan_id.c_str(),
+                 pc.getDestination() & 0xFFFF);
       }
 
       void
@@ -1107,11 +1077,11 @@ namespace Transports
         if (m_usbl_modem->run(sys, m_args.usbl_max_wait))
         {
           std::vector<uint8_t> data;
-          data.push_back(CODE_USBL);
+          data.push_back(Acoustics::CODE_USBL);
           if (m_usbl_modem->isInverted(sys, data))
             sendFrame(sys, createInternalId(), data, true);
           else
-            sendRange(sys,createInternalId());
+            sendRange(sys, createInternalId());
         }
       }
 
@@ -1120,7 +1090,7 @@ namespace Transports
       onUsblNode(void)
       {
         std::vector<uint8_t> data;
-        data.push_back(CODE_USBL);
+        data.push_back(Acoustics::CODE_USBL);
         if (m_usbl_node->run(data))
           sendFrame("broadcast", createInternalId(), data, false);
       }
@@ -1128,16 +1098,13 @@ namespace Transports
       void
       clearTimeouts()
       {
-        std::map<uint16_t, IMC::AcousticRequest*>::iterator it;
-        it = m_transmission_requests.begin();
-
-        while (it != m_transmission_requests.end())
+        for (auto it = m_transmission_requests.begin(); it != m_transmission_requests.end();)
         {
           if (it->second->getTimeStamp() + it->second->timeout <= Clock::getSinceEpoch())
           {
-            sendAcousticStatus(it->second,IMC::AcousticStatus::STATUS_INPUT_FAILURE,"Transmission timed out.");
+            sendAcousticStatus(it->second, IMC::AcousticStatus::STATUS_INPUT_FAILURE, "Transmission timed out.");
             Memory::clear(it->second);
-            m_transmission_requests.erase(it++);
+            it = m_transmission_requests.erase(it);
             m_can_send = true;
           }
           else
@@ -1151,23 +1118,23 @@ namespace Transports
         if (m_can_send && !m_transmission_requests.empty())
         {
           m_can_send = false;
-          const IMC::AcousticRequest* req = m_transmission_requests.begin()->second;
           uint16_t id = m_transmission_requests.begin()->first;
+          const IMC::AcousticRequest* req = m_transmission_requests.begin()->second;
 
           switch (req->type)
           {
             case (IMC::AcousticRequest::TYPE_ABORT):
-              sendAbort(req->destination,id);
+              sendAbort(req->destination, id);
               break;
-
             case (IMC::AcousticRequest::TYPE_RANGE):
-              sendRange(req->destination,id);
+              sendRange(req->destination, id);
               break;
-
+            case (IMC::AcousticRequest::TYPE_REVERSE_RANGE):
+              sendReverseRange(req->destination, id);
+              break;
             case (IMC::AcousticRequest::TYPE_MSG):
               sendMessage(req->destination, id, req->msg);
               break;
-
             case (IMC::AcousticRequest::TYPE_RAW):
               sendRaw(*req, req->destination, id, req->msg);
               break;
@@ -1186,13 +1153,20 @@ namespace Transports
         {
           waitForMessages(1.0);
 
-          if (m_usbl_modem != NULL) onUsblModem();
-          if (m_usbl_node != NULL) onUsblNode();
-          if (m_args.report_enable) {
+          if (m_usbl_modem != NULL)
+            onUsblModem();
+
+          if (m_usbl_node != NULL)
+            onUsblNode();
+
+          if (m_args.report_enable)
+          {
             if (m_reporter != NULL && m_reporter->trigger())
               sendReport();
           }
-          if(m_msg_send_timer.overflow()){
+          
+          if(m_msg_send_timer.overflow())
+          {
             clearTimeouts();
             processQueue();
           }
