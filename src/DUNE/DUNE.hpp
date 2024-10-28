@@ -36,6 +36,7 @@
 #include <DUNE/Casts.hpp>
 #include <DUNE/Units.hpp>
 #include <DUNE/Memory.hpp>
+#include <DUNE/Acoustics.hpp>
 #include <DUNE/Algorithms.hpp>
 #include <DUNE/Compression.hpp>
 #include <DUNE/Exceptions.hpp>
@@ -74,6 +75,7 @@ namespace DUNE
 //! into global scope. Use it like this: 'using DUNE_NAMESPACES;'
 #define DUNE_NAMESPACES                         \
   namespace DUNE;                               \
+  using namespace DUNE::Acoustics;             \
   using namespace DUNE::Algorithms;             \
   using namespace DUNE::Compression;            \
   using namespace DUNE::Control;                \
