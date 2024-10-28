@@ -35,7 +35,6 @@
 
 // Local headers.
 #include "Driver.hpp"
-#include "Ticket.hpp"
 
 namespace Transports
 {
@@ -50,10 +49,8 @@ namespace Transports
 
     struct Arguments
     {
-      //! IP address.
-      Address address;
-      //! TCP port.
-      uint16_t port;
+      //! IO device.
+      std::string io_dev;
       //! Low gain.
       bool low_gain;
       //! Source level.
@@ -97,14 +94,14 @@ namespace Transports
     typedef std::map<std::string, unsigned> MapName;
     typedef std::map<unsigned, std::string> MapAddr;
 
-    struct Task: public Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! Map of Evologics modems by name.
       MapName m_modem_names;
       //! Map of Evologics modems by address.
       MapAddr m_modem_addrs;
       //! TCP socket.
-      TCPSocket* m_sock;
+      IO::Handle* m_handle;
       //! Modem address.
       unsigned m_address;
       //! Driver.
@@ -116,7 +113,7 @@ namespace Transports
       //! Declination flag;
       bool m_declination;
       //! Current transmission ticket.
-      Ticket* m_ticket;
+      Acoustics::Ticket* m_ticket;
       //! Keep-alive counter.
       Counter<double> m_kalive_counter;
       //! Medium.
@@ -127,8 +124,8 @@ namespace Transports
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx),
-        m_sock(NULL),
+        Hardware::BasicDeviceDriver(name, ctx),
+        m_handle(NULL),
         m_address(0),
         m_driver(NULL),
         m_sound_speed(0),
@@ -136,13 +133,14 @@ namespace Transports
         m_declination(false),
         m_ticket(NULL)
       {
-        param("IPv4 Address", m_args.address)
-        .defaultValue("192.168.0.147")
-        .description("IPv4 address");
+        //! Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER,
+                    false);
 
-        param("TCP Port", m_args.port)
-        .defaultValue(std::to_string(c_default_port))
-        .description("TCP port");
+        param("IO Port - Device", m_args.io_dev)
+        .defaultValue("")
+        .description("IO device URI in the form \"tcp://ADDRESS:PORT\"");
 
         param("Low Gain", m_args.low_gain)
         .defaultValue("false")
@@ -236,6 +234,10 @@ namespace Transports
 
         m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
 
+        //! Use wait for messages.
+        setWaitForMessages(1.0f);
+
+        //! Register message handlers.
         bind<IMC::DevDataText>(this);
         bind<IMC::GpsFix>(this);
         bind<IMC::SoundSpeed>(this);
@@ -243,23 +245,125 @@ namespace Transports
         bind<IMC::VehicleMedium>(this);
       }
 
-      ~Task(void)
+      void
+      dispatchSystems(bool force = false)
       {
-        onResourceRelease();
+        if (!isActive() && !force)
+          return;
+
+        IMC::AcousticSystems acsys;
+        acsys.setDestination(getSystemId());
+        for (auto& name: m_modem_names)
+          acsys.list.append(name.first).append(",");
+        acsys.list.pop_back(); // remove last ","
+        dispatch(acsys);
+      }
+
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
+      {
+        // Change port for simulation purposes
+        if (m_simulating)
+        {
+          std::string addr = "127.0.0.1";
+          unsigned port = c_default_port + m_address;
+          m_args.io_dev = String::str("tcp://%s:%d", addr.c_str(), port);
+        }
+
+        try
+        {
+          {
+            char addr[128] = {0};
+            unsigned port = 0;
+
+            if (std::sscanf(m_args.io_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+              throw Network::InvalidAddress(m_args.io_dev);
+
+            TCPSocket atz;
+            atz.connect(addr, port);
+            atz.writeString("ATZ0\n");
+            Delay::wait(5.0);
+          }
+
+          m_handle = openDeviceHandle(m_args.io_dev);
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 5, false);
+        }
+
+        m_driver = new Driver(this, m_handle);
+        m_driver->setLineTermIn("\r\n");
+        m_driver->setLineTermOut("\n");
+        
+        return true;
+      }
+
+      //! Disconnect from device.
+      void
+      onDisconnect() override
+      {
+        if (m_driver)
+        {
+          m_driver->stopAndJoin();
+          delete m_driver;
+          m_driver = NULL;
+        }
+
+        Memory::clear(m_handle);
+        clearTicket(IMC::UamTxStatus::UTS_CANCELED);
+      }
+
+      //! Initialize device.
+      void
+      onInitializeDevice() override
+      {
+        try
+        {
+          m_driver->initialize();
+        }
+        catch (std::runtime_error &e)
+        {
+          war(DTR("Evologics Task desactivation: %s"), e.what());
+          requestDeactivation();
+          setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
+        }
+
+        if (m_simulating)
+          m_driver->setDriverTimeout(c_sim_timeout);
+
+        m_driver->setControl();
+        m_driver->setAddress(m_address);
+        m_driver->setSourceLevel(m_args.source_level);
+        m_driver->setLowGain(m_args.low_gain);
+        m_driver->setRetryCount(m_args.con_retry_count);
+        m_driver->setRetryTimeout(m_args.con_retry_tout);
+        m_driver->setRetryCountIM(m_args.im_retry_count);
+        m_driver->setIdleTimeout(m_args.con_idle_tout);
+        m_driver->setHighestAddress(m_args.highest_addr);
+        m_driver->setPositionDataOutput(true);
+        m_driver->setPromiscuous(true);
+        m_driver->setCarrierWaveformID(m_args.waveform_id);
+        m_driver->setExtendedNotifications(true);
+        m_kalive_counter.setTop(m_args.kalive_tout);
+
+        dispatchSystems(true);
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
       onEntityResolution(void)
       {
-        processEntityForSoundSpeed();
-
         // Check for Evologics simulator
         try
         {
           resolveEntity(m_args.simulator_elabel);
           m_simulating = m_ctx.profiles.isSelected("Simulation");
         }
-        catch(const std::exception& e)
+        catch (const std::exception& e)
         {
           m_simulating = false;
         }
@@ -293,107 +397,29 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.io_dev) && isActive())
+          requestRestart();
+
         m_sound_speed = m_args.sound_speed_def;
         processEntityForSoundSpeed();
-      }
 
-      void
-      onResourceAcquisition(void)
-      {
-        // Process modem addresses.
-        std::string system = getSystemName();
-        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
-        for (unsigned i = 0; i < addrs.size(); ++i)
+        if (paramChanged(m_args.addr_section))
         {
-          unsigned addr = 0;
-          m_ctx.config.get(m_args.addr_section, addrs[i], "0", addr);
-          m_modem_names[addrs[i]] = addr;
-          m_modem_addrs[addr] = addrs[i];
-
-          if (addrs[i] == system)
-            m_address = addr;
-        }
-
-        // Change port for simulation purposes
-        if (m_simulating)
-        {
-          m_args.port = c_default_port + m_address;
-          m_args.address = Address(Address::Loopback);
-        }
-
-        try
-        {
+          // Process modem addresses.
+          std::string system = getSystemName();
+          std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+          for (auto& name: addrs)
           {
-            TCPSocket atz;
-            atz.connect(m_args.address, m_args.port);
-            atz.writeString("ATZ0\n");
-            Delay::wait(5.0);
+            unsigned addr = 0;
+            m_ctx.config.get(m_args.addr_section, name, "0", addr);
+            m_modem_names[name] = addr;
+            m_modem_addrs[addr] = name;
+
+            if (name == system)
+              m_address = addr;
           }
 
-          m_sock = new TCPSocket;
-          m_sock->connect(m_args.address, m_args.port);
-        }
-        catch (std::runtime_error& e)
-        {
-          throw RestartNeeded(e.what(), 5, false);
-        }
-
-        m_driver = new Driver(this, m_sock);
-        m_driver->setLineTermIn("\r\n");
-        m_driver->setLineTermOut("\n");
-      }
-
-      void
-      onResourceRelease(void)
-      {
-        if (m_driver)
-        {
-          m_driver->stopAndJoin();
-          delete m_driver;
-          m_driver = NULL;
-        }
-
-        Memory::clear(m_sock);
-        clearTicket(IMC::UamTxStatus::UTS_CANCELED);
-      }
-
-      void
-      onResourceInitialization(void)
-      {
-        try
-        {
-          m_driver->initialize();
-        }
-        catch (std::runtime_error &e)
-        {
-          war(DTR("Evologics Task desactivation: %s"), e.what());
-          requestDeactivation();
-          setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
-        }
-
-        if (m_simulating)
-          m_driver->setDriverTimeout(c_sim_timeout);
-
-        if (!isActive())
-          requestActivation();
-
-        if(isActive())
-        {
-          m_driver->setControl();
-          m_driver->setAddress(m_address);
-          m_driver->setSourceLevel(m_args.source_level);
-          m_driver->setLowGain(m_args.low_gain);
-          m_driver->setRetryCount(m_args.con_retry_count);
-          m_driver->setRetryTimeout(m_args.con_retry_tout);
-          m_driver->setRetryCountIM(m_args.im_retry_count);
-          m_driver->setIdleTimeout(m_args.con_idle_tout);
-          m_driver->setHighestAddress(m_args.highest_addr);
-          m_driver->setPositionDataOutput(true);
-          m_driver->setPromiscuous(true);
-          m_driver->setCarrierWaveformID(m_args.waveform_id);
-          m_driver->setExtendedNotifications(true);
-          m_kalive_counter.setTop(m_args.kalive_tout);
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          dispatchSystems();
         }
       }
 
@@ -554,14 +580,14 @@ namespace Transports
       }
 
       void
-      replaceTicket(const Ticket& ticket)
+      replaceTicket(const Acoustics::Ticket& ticket)
       {
         clearTicket(IMC::UamTxStatus::UTS_CANCELED);
-        m_ticket = new Ticket(ticket);
+        m_ticket = new Acoustics::Ticket(ticket);
       }
 
       void
-      sendTxStatus(const Ticket& ticket, IMC::UamTxStatus::ValueEnum value,
+      sendTxStatus(const Acoustics::Ticket& ticket, IMC::UamTxStatus::ValueEnum value,
                    const std::string& error = "")
       {
         IMC::UamTxStatus status;
@@ -576,6 +602,9 @@ namespace Transports
       void
       consume(const IMC::UamTxFrame* msg)
       {
+        if (!isActive())
+          return;
+
         if (msg->getDestination() != getSystemId())
           return;
 
@@ -583,7 +612,7 @@ namespace Transports
           return;
 
         // Create and fill new ticket.
-        Ticket ticket;
+        Acoustics::Ticket ticket;
         ticket.imc_sid = msg->getSource();
         ticket.imc_eid = msg->getSourceEntity();
         ticket.seq = msg->seq;
@@ -592,7 +621,7 @@ namespace Transports
 
         if (msg->sys_dst == getSystemName())
         {
-          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
+          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR, msg->sys_dst);
           return;
         }
 
@@ -603,7 +632,7 @@ namespace Transports
         catch (...)
         {
           war(DTR("invalid system name %s"), msg->sys_dst.c_str());
-          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
+          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR, msg->sys_dst);
           return;
         }
 
@@ -816,17 +845,15 @@ namespace Transports
         }
       }
 
-      void
-      onMain(void)
+      //! Check for data.
+      //! Check for input timeout.
+      //! @return true.
+      bool
+      onReadData() override
       {
-        while (!stopping())
-        {
-          if(!isActive())
-            return;
+        keepAlive();
 
-          waitForMessages(1.0);
-          keepAlive();
-        }
+        return true;
       }
     };
   }
