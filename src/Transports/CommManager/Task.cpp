@@ -459,8 +459,15 @@ namespace Transports
               tr_list.erase(msg->req_id);
               break;
 
+            case (IMC::AcousticStatus::STATUS_INV_ADDR):
+              m_router.answer(req, msg->info,
+                              IMC::TransmissionStatus::TSTAT_INV_ADDR);
+              Memory::clear(req);
+              tr_list.erase(msg->req_id);
+              break;
+
             default:
-              inf("ERROR: AcousticStatus->status not implemented");
+              inf("ERROR: AcousticStatus->status not implemented %d", msg->status);
               break;
           }
           return;
@@ -604,6 +611,12 @@ namespace Transports
                 default:
                   break;
               }
+              break;
+
+            case (IMC::AcousticStatus::STATUS_INV_ADDR):
+              m_router.answer(req, IMC::AcousticOperation::AOP_UNSUPPORTED, req->system);
+              Memory::clear(req);
+              m_acoustic_requests.erase(msg->req_id);
               break;
 
             default:
