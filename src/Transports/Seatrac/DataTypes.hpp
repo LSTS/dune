@@ -239,20 +239,6 @@ namespace Transports
       CST_DEX_RESP_REMOTE_ERROR = 0x78
     };
 
-    struct Ticket
-    {
-      //! IMC source address.
-      uint16_t imc_sid;
-      //! IMC source entity.
-      uint8_t imc_eid;
-      //! Sequence number.
-      uint16_t seq;
-      //! Destination modem address.
-      uint16_t addr;
-      //! Wait for ack.
-      bool ack;
-    };
-
     struct MacAddr_T
     {
       union

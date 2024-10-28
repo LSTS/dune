@@ -73,10 +73,8 @@ namespace Transports
     //! Task arguments.
     struct Arguments
     {
-      //! Serial port device.
-      std::string uart_dev;
-      //! Serial port baud rate.
-      unsigned uart_baud;
+      //! IO device.
+      std::string io_dev;
       //! Transmit only underwater.
       bool only_underwater;
       //! Addresses Number - modem
@@ -110,9 +108,9 @@ namespace Transports
     //! Map of system's addresses.
     typedef std::map<unsigned, std::string> MapAddr;
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
-      //! Serial port handle.
+      //! IO handle.
       IO::Handle* m_handle;
       //! Task arguments.
       Arguments m_args;
@@ -136,7 +134,7 @@ namespace Transports
       std::string m_datahex;
       //! Seatrac data structures.
       DataSeatrac m_data_beacon;
-      //! Time of last serial port input.
+      //! Time of last input.
       double m_last_input;
       //! Read timestamp.
       double m_tstamp;
@@ -149,7 +147,7 @@ namespace Transports
       //! Map of seatrac modems by address.
       MapAddr m_modem_addrs;
       //! Current transmission ticket.
-      Ticket* m_ticket;
+      Acoustics::Ticket* m_ticket;
       // Save modem commands.
       IMC::DevDataText m_dev_data;
       //! Euler angles message.
@@ -175,7 +173,7 @@ namespace Transports
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx) :
-        DUNE::Tasks::Task(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_handle(NULL),
         m_config_status(false),
         m_pre_detected(false),
@@ -184,18 +182,14 @@ namespace Transports
         m_tstamp(0), 
         m_ticket(NULL)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
+        //! Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER,
+                    false);
 
-        param("Serial Port - Device", m_args.uart_dev)
+        param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description("Serial port device used to communicate with the sensor. "
-                     "For TCP connection use in the form of 'tcp://xxx.xxx.xxx.xxx:xxxx'.");
-
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("19200")
-        .description("Serial port baud rate");
+        .description("IO device URI in the form \"tcp://ADDRESS:PORT\" or \"uart://DEVICE:BAUD\"");
 
         param("Transmit Only Underwater", m_args.only_underwater)
         .defaultValue("false")
@@ -269,8 +263,211 @@ namespace Transports
         m_states[STA_ERR_STP].state = IMC::EntityState::ESTA_ERROR;
         m_states[STA_ERR_STP].description = DTR("failed to configure modem, possible serial port communication error");
 
+        //! Use wait for messages.
+        setWaitForMessages(1.0);
+
+        //! Register message handlers.
         bind<IMC::VehicleMedium>(this);
         bind<IMC::UamTxFrame>(this);
+      }
+
+      void
+      dispatchSystems(bool force = false)
+      {
+        if (!isActive() && !force)
+          return;
+
+        IMC::AcousticSystems acsys;
+        acsys.setDestination(getSystemId());
+        for (auto& name: m_modem_names)
+          acsys.list.append(name.first).append(",");
+        acsys.list.pop_back(); // remove last ","
+        dispatch(acsys);
+      }
+
+      //! Update parameters.
+      void
+      onUpdateParameters(void)
+      {
+        if (paramChanged(m_args.io_dev) && isActive())
+          requestRestart();
+
+        m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
+
+        // Rotate calibration parameters.
+        Math::Matrix data(3, 1);
+
+        for (unsigned i = 0; i < 3; i++)
+          data(i) = m_args.hard_iron[i];
+        data = transpose(m_rotation) * data;
+        for (unsigned i = 0; i < 3; i++)
+          m_hard_iron[i] = data(i);
+
+        if (m_handle != NULL)
+        {
+          if (paramChanged(m_args.hard_iron))
+            runCalibration();
+        }
+
+        if (paramChanged(m_args.addr_section))
+        {
+          std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+          // verify modem local address value.
+          for (auto& name: addrs)
+          {
+            unsigned addr = 0;
+            m_ctx.config.get(m_args.addr_section, name, "0", addr);
+            m_modem_names[name] = addr;
+            m_modem_addrs[addr] = name;
+          }
+
+          dispatchSystems();
+        }
+      }
+
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
+      {
+        setAndSendState(STA_BOOT);
+        try
+        {
+          if (m_args.only_underwater == true)
+            m_stop_comms = true;
+
+          m_handle = openDeviceHandle(m_args.io_dev, true);
+        }
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(e.what(), 30);
+        }
+
+        return true;
+      }
+
+      //! Disconnect from device.
+      void
+      onDisconnect() override
+      {
+        clearTicket(IMC::UamTxStatus::UTS_CANCELED);
+        if (m_handle != NULL)
+          Memory::clear(m_handle);
+      }
+
+      //! Initialize device.
+      void
+      onInitializeDevice() override
+      {
+        // Process modem addresses.
+        std::string agent = getSystemName();
+
+        m_ctx.config.get(m_args.addr_section, agent, "1024", m_addr);
+        if (m_addr < 1 || m_addr > 15)
+        {
+          throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"), agent.c_str()));
+        }
+
+        m_last_input = Clock::get();
+        processInput();
+
+        if (hasConnection())
+        {
+          do
+          {
+            sendCommand(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon));
+            processInput();
+          }
+          while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0 && !m_args.dummy_connection && !stopping());
+
+          sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, m_data_beacon), 1);
+
+          if (m_data_beacon.cid_sys_info.hardware.part_number == BT_X150)
+            m_usbl_receiver = true;
+
+          uint8_t output_flags = (ENVIRONMENT_FLAG | ATTITUDE_FLAG
+                                  | MAG_CAL_FLAG | ACC_CAL_FLAG
+                                  | AHRS_RAW_DATA_FLAG | AHRS_COMP_DATA_FLAG);
+
+          uint8_t xcvr_flags = XCVR_FIX_MSGS_FLAG | XCVR_POSFLT_ENABLE_FLAG;
+
+          if (m_usbl_receiver)
+            xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
+
+          StatusMode_E status_mode= STATUS_MODE_1HZ;
+          bool chage_IMU = true;
+          if (m_args.arhs_mode == true)
+          {
+            status_mode = STATUS_MODE_10HZ;
+            chage_IMU = isCalibrated();
+          }
+          if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
+                && (m_data_beacon.cid_settings_msg.status_flags == status_mode)
+                && (m_data_beacon.cid_settings_msg.status_output == output_flags)
+                && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)
+                && (m_data_beacon.cid_settings_msg.xcvr_range_tmo == m_args.max_range)
+                && chage_IMU == true))
+          {
+            m_data_beacon.cid_settings_msg.status_flags = status_mode;
+            m_data_beacon.cid_settings_msg.status_output = output_flags;
+            m_data_beacon.cid_settings_msg.xcvr_flags = xcvr_flags;
+            m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
+            m_data_beacon.cid_settings_msg.xcvr_range_tmo = m_args.max_range;
+            
+            if(chage_IMU == false)
+            {
+              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
+              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
+              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
+            }
+            
+            inf("asking to save settings to modem");
+            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
+            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);
+            inf("rebooting modem");
+            sendCommandAndWait(commandCreateSeatrac(CID_SYS_REBOOT, m_data_beacon), 6);
+            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon), 2);
+
+            if (m_data_beacon.cid_settings_msg.xcvr_beacon_id != m_addr)
+            {
+              setAndSendState(STA_ERR_STP);
+              war(DTR("failed to configure device"));
+            }
+
+            inf("ready");
+            setAndSendState(STA_IDLE);
+            m_config_status = true;
+          }
+          else
+          {
+            inf("ready (settings already set)");
+            setAndSendState(STA_IDLE);
+            m_config_status = true;
+          }
+
+          inf(DTR("Beacon id=%d | HW P#%d (rev#%d) serial#%d | FW P#%d v%d.%d.%d  | App P#%d v%d.%d.%d | %s USBL beacon"),
+              m_data_beacon.cid_settings_msg.xcvr_beacon_id,
+              m_data_beacon.cid_sys_info.hardware.part_number,
+              m_data_beacon.cid_sys_info.hardware.part_rev,
+              m_data_beacon.cid_sys_info.hardware.serial_number,
+              m_data_beacon.cid_sys_info.boot_firmware.part_number,
+              m_data_beacon.cid_sys_info.boot_firmware.version_maj,
+              m_data_beacon.cid_sys_info.boot_firmware.version_min,
+              m_data_beacon.cid_sys_info.boot_firmware.version_build,
+              m_data_beacon.cid_sys_info.main_firmware.part_number,
+              m_data_beacon.cid_sys_info.main_firmware.version_maj,
+              m_data_beacon.cid_sys_info.main_firmware.version_min,
+              m_data_beacon.cid_sys_info.main_firmware.version_build,
+              m_usbl_receiver ? "Is" : "Not");
+        }
+        else
+        {
+          err("%s", DTR(Status::getString(CODE_COM_ERROR)));
+          setAndSendState(STA_ERR_STP);
+          throw std::runtime_error(m_states[m_state_entity].description);
+        }
+
+        dispatchSystems(true);
       }
 
       //! Set entity state.
@@ -390,192 +587,6 @@ namespace Transports
         }
       }
 
-      //! Open TCP socket.
-      //! @return true if socket was opened, false otherwise.
-      bool
-      openSocket(void)
-      {
-        char socket_addr[128] = { 0 };
-        unsigned port = 0;
-
-        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", socket_addr, &port) != 2)
-          return false;
-
-        TCPSocket* sock = new TCPSocket;
-        sock->connect(socket_addr, port);
-        m_handle = sock;
-        return true;
-      }
-
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
-      {
-        setAndSendState(STA_BOOT);
-        try
-        {
-          if (m_args.only_underwater == true)
-            m_stop_comms = true;
-
-          if (openSocket())
-            return;
-
-          SerialPort* port = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          port->setCanonicalInput(true);
-          port->flush();
-          m_handle = port;
-        }
-        catch (std::runtime_error& e)
-        {
-          throw RestartNeeded(e.what(), 30);
-        }
-      }
-
-      //! Initialize resources and configure modem
-      void
-      onResourceInitialization(void)
-      {
-        // Process modem addresses.
-        std::string agent = getSystemName();
-        std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
-
-        // verify modem local address value.
-        for (unsigned i = 0; i < addrs.size(); ++i)
-        {
-          unsigned addr = 0;
-          m_ctx.config.get(m_args.addr_section, addrs[i], "0", addr);
-          m_modem_names[addrs[i]] = addr;
-          m_modem_addrs[addr] = addrs[i];
-        }
-
-        m_ctx.config.get(m_args.addr_section, agent, "1024", m_addr);
-        if (m_addr < 1 || m_addr > 15)
-        {
-          throw std::runtime_error(String::str(DTR("modem address for agent '%s' is invalid"), agent.c_str()));
-        }
-
-        m_last_input = Clock::get();
-        processInput();
-
-        if (hasConnection())
-        {
-          do
-          {
-            sendCommand(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon));
-            processInput();
-          }
-          while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0 && !m_args.dummy_connection);
-
-          sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, m_data_beacon), 1);
-
-          if (m_data_beacon.cid_sys_info.hardware.part_number == BT_X150)
-            m_usbl_receiver = true;
-
-          uint8_t output_flags = (ENVIRONMENT_FLAG | ATTITUDE_FLAG
-                                  | MAG_CAL_FLAG | ACC_CAL_FLAG
-                                  | AHRS_RAW_DATA_FLAG | AHRS_COMP_DATA_FLAG);
-
-          uint8_t xcvr_flags = XCVR_FIX_MSGS_FLAG | XCVR_POSFLT_ENABLE_FLAG;
-
-          if (m_usbl_receiver)
-            xcvr_flags |= USBL_USE_AHRS_FLAG | XCVR_USBL_MSGS_FLAG;
-
-          StatusMode_E status_mode= STATUS_MODE_1HZ;
-          bool chage_IMU = true;
-          if (m_args.arhs_mode == true)
-          {
-            status_mode = STATUS_MODE_10HZ;
-            chage_IMU = isCalibrated();
-          }
-          if (!((m_data_beacon.cid_settings_msg.xcvr_beacon_id == m_addr)
-                && (m_data_beacon.cid_settings_msg.status_flags == status_mode)
-                && (m_data_beacon.cid_settings_msg.status_output == output_flags)
-                && (m_data_beacon.cid_settings_msg.xcvr_flags == xcvr_flags)
-                && (m_data_beacon.cid_settings_msg.xcvr_range_tmo == m_args.max_range)
-                && chage_IMU == true))
-          {
-            m_data_beacon.cid_settings_msg.status_flags = status_mode;
-            m_data_beacon.cid_settings_msg.status_output = output_flags;
-            m_data_beacon.cid_settings_msg.xcvr_flags = xcvr_flags;
-            m_data_beacon.cid_settings_msg.xcvr_beacon_id = m_addr;
-            m_data_beacon.cid_settings_msg.xcvr_range_tmo = m_args.max_range;
-            
-            if(chage_IMU == false)
-            {
-              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_x = m_args.hard_iron[0];
-              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_y = m_args.hard_iron[1];
-              m_data_beacon.cid_settings_msg.ahrs_cal.mag_hard_z = m_args.hard_iron[2];
-            }
-            
-            inf("asking to save settings to modem");
-            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SET, m_data_beacon), 2);
-            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_SAVE, m_data_beacon), 2);
-            inf("rebooting modem");
-            sendCommandAndWait(commandCreateSeatrac(CID_SYS_REBOOT, m_data_beacon), 6);
-            sendCommandAndWait(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon), 2);
-
-            if (m_data_beacon.cid_settings_msg.xcvr_beacon_id != m_addr)
-            {
-              setAndSendState(STA_ERR_STP);
-              war(DTR("failed to configure device"));
-            }
-
-            inf("ready");
-            setAndSendState(STA_IDLE);
-            m_config_status = true;
-          }
-          else
-          {
-            inf("ready (settings already set)");
-            setAndSendState(STA_IDLE);
-            m_config_status = true;
-          }
-
-          inf(DTR("Beacon id=%d | HW P#%d (rev#%d) serial#%d | FW P#%d v%d.%d.%d  | App P#%d v%d.%d.%d | %s USBL beacon"),
-              m_data_beacon.cid_settings_msg.xcvr_beacon_id,
-              m_data_beacon.cid_sys_info.hardware.part_number,
-              m_data_beacon.cid_sys_info.hardware.part_rev,
-              m_data_beacon.cid_sys_info.hardware.serial_number,
-              m_data_beacon.cid_sys_info.boot_firmware.part_number,
-              m_data_beacon.cid_sys_info.boot_firmware.version_maj,
-              m_data_beacon.cid_sys_info.boot_firmware.version_min,
-              m_data_beacon.cid_sys_info.boot_firmware.version_build,
-              m_data_beacon.cid_sys_info.main_firmware.part_number,
-              m_data_beacon.cid_sys_info.main_firmware.version_maj,
-              m_data_beacon.cid_sys_info.main_firmware.version_min,
-              m_data_beacon.cid_sys_info.main_firmware.version_build,
-              m_usbl_receiver ? "Is" : "Not");
-        }
-        else
-        {
-          err("%s", DTR(Status::getString(CODE_COM_ERROR)));
-          setAndSendState(STA_ERR_STP);
-          throw std::runtime_error(m_states[m_state_entity].description);
-        }
-      }
-
-      //! Update parameters.
-      void
-      onUpdateParameters(void)
-      {
-        m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
-
-        // Rotate calibration parameters.
-        Math::Matrix data(3, 1);
-
-        for (unsigned i = 0; i < 3; i++)
-          data(i) = m_args.hard_iron[i];
-        data = transpose(m_rotation) * data;
-        for (unsigned i = 0; i < 3; i++)
-          m_hard_iron[i] = data(i);
-
-        if (m_handle != NULL)
-        {
-
-          if (paramChanged(m_args.hard_iron))
-            runCalibration();
-        }
-      }
       //! Routine to run calibration proceedings.
       void
       runCalibration(void)
@@ -665,13 +676,6 @@ namespace Transports
           return false;
 
         return true;
-      }
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
-        clearTicket(IMC::UamTxStatus::UTS_CANCELED);
-        Memory::clear(m_handle);
       }
 
       //! Send command and waits for response.
@@ -1052,6 +1056,9 @@ namespace Transports
       void
       consume(const IMC::UamTxFrame* msg)
       {
+        if (!isActive())
+          return;
+
         debug(DTR("Received UamTxFrame with dst=0x%04X. Msg for system '%s'"), msg->getDestination(), msg->sys_dst.c_str());
 
         std::string hex = String::toHex(msg->data);
@@ -1064,9 +1071,8 @@ namespace Transports
         if (msg->getDestinationEntity() != 255 && msg->getDestinationEntity() != getEntityId())
           return;
 
-
         // Create and fill new ticket.
-        Ticket ticket;
+        Acoustics::Ticket ticket;
         ticket.imc_sid = msg->getSource();
         ticket.imc_eid = msg->getSourceEntity();
         ticket.seq = msg->seq;
@@ -1076,7 +1082,7 @@ namespace Transports
 
         if (msg->sys_dst == getSystemName())
         {
-          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
+          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR, msg->sys_dst);
           debug(DTR("Sending UamTxStatus::UTS_INV_ADDR. Ticket %d died"), ticket.seq);
           return;
         }
@@ -1088,7 +1094,7 @@ namespace Transports
         catch (...)
         {
           war(DTR("invalid system name %s"), msg->sys_dst.c_str());
-          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
+          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR, msg->sys_dst);
           return;
         }
 
@@ -1163,7 +1169,7 @@ namespace Transports
       //! @param[in] value status index.
       //! @param[in] error error message.
       void
-      sendTxStatus(const Ticket& ticket, IMC::UamTxStatus::ValueEnum value,
+      sendTxStatus(const Acoustics::Ticket& ticket, IMC::UamTxStatus::ValueEnum value,
                    const std::string& error = "")
       {
         IMC::UamTxStatus status;
@@ -1193,10 +1199,10 @@ namespace Transports
       //! Replace ticket.
       //! @param[in] ticket new ticket to replace previous one.
       void
-      replaceTicket(const Ticket& ticket)
+      replaceTicket(const Acoustics::Ticket& ticket)
       {
         clearTicket(IMC::UamTxStatus::UTS_CANCELED);
-        m_ticket = new Ticket(ticket);
+        m_ticket = new Acoustics::Ticket(ticket);
       }
 
       //! Lookup system address.
@@ -1245,7 +1251,7 @@ namespace Transports
               setAndSendState(STA_IDLE);
           }
         }
-        while (Clock::get() <= deadline);
+        while (Clock::get() <= deadline && !stopping());
       }
 
       void
@@ -1334,19 +1340,19 @@ namespace Transports
           }
         }
       }
-
-      //! Main loop.
-      void
-      onMain(void)
+      
+      //! Check input.
+      //! @return true.
+      bool
+      onReadData() override
       {
-        while (!stopping())
-        {
-          // Modem.
-          processInput();
+        // Modem.
+        processInput();
 
-          if (Clock::get() >= (m_last_input + c_input_tout))
-            setAndSendState(STA_ERR_COM);
-        }
+        if (Clock::get() >= (m_last_input + c_input_tout))
+          setAndSendState(STA_ERR_COM);
+
+        return true;
       }
     };
   }
