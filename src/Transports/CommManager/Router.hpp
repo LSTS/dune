@@ -280,8 +280,8 @@ namespace Transports
 
         tx.destination = msg->destination;
         tx.ttl = msg->deadline - Time::Clock::getSinceEpoch();
-        tx.setDestination(msg->getDestination());
-        tx.setDestinationEntity(msg->getDestinationEntity());
+        tx.setDestination(m_parent->getSystemId());
+        tx.setDestinationEntity(m_iridium_entity_id);
 
         switch (msg->data_mode)
         {
