@@ -1,32 +1,109 @@
+//***************************************************************************
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+//***************************************************************************
+// This file is part of DUNE: Unified Navigation Environment.               *
+//                                                                          *
+// Commercial Licence Usage                                                 *
+// Licencees holding valid commercial DUNE licences may use this file in    *
+// accordance with the commercial licence agreement provided with the       *
+// Software or, alternatively, in accordance with the terms contained in a  *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
+//                                                                          *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
+// included in the packaging of this file. You may not use this work        *
+// except in compliance with the Licence. Unless required by applicable     *
+// law or agreed to in writing, software distributed under the Licence is   *
+// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
+// ANY KIND, either express or implied. See the Licence for the specific    *
+// language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
+//***************************************************************************
+
 function Logbook(root_id) {
   this.create('Logbook', root_id);
+  setupLogbookFilters();
+  this.update();
 };
 
 Logbook.prototype = new BasicSection;
 
+Logbook.prototype.getActiveFilters = function() {
+  if(document.getElementById("filter-info") == null) {
+    return null;
+  }
+  return {
+    INFO: document.getElementById("filter-info").checked,
+    WARNING: document.getElementById("filter-warning").checked,
+    ERROR: document.getElementById("filter-error").checked,
+    DEBUG: document.getElementById("filter-debug").checked
+  };
+};
+
+Logbook.prototype.updateFiltersState = function() {
+  const filtersState = {
+      INFO: document.getElementById("filter-info").checked,
+      WARNING: document.getElementById("filter-warning").checked,
+      ERROR: document.getElementById("filter-error").checked,
+      DEBUG: document.getElementById("filter-debug").checked
+  };
+
+  localStorage.setItem('logbookFilters', JSON.stringify(filtersState));
+};
+
+Logbook.prototype.initialize = function() {
+  this.m_base.innerHTML = "";
+  g_logbook.setupLogbookFilters();
+  this.restoreFiltersState();
+  this.update();
+};
+
 Logbook.prototype.update = function () {
+  console.log("Updating logbook...");
+  if (!document.getElementById("filter-info")) {
+    console.log("activeFilters is null");
+    location.reload();
+    return;
+  }
+  var entryCount = this.countEntries();
   var logbookStr = "";
+  var activeFilters = this.getActiveFilters();
+
   if (g_dune_logbook != null) {
-    for (i in g_dune_logbook.dune_logbook) {
+    for (var i = g_dune_logbook.dune_logbook.length - 1; i >= 0; i--) {
       var msg = g_dune_logbook.dune_logbook[i];
 
-      if (msg.abbrev != "LogBookEntry")
-        continue;
+      if (msg.abbrev != "LogBookEntry") continue;
 
       var msgType = typeAsString(msg.type);
-      logbookStr = "<p class=\"" + msgType + "\">" +
-        "[" + dateToString(msg.timestamp) + "] - "
-        + msgType +
-        " " + "[" + msg.context + "] >> " +
+
+      if (!activeFilters[msgType]) continue;
+
+      logbookStr += "<p class=\"" + msgType + "\">" +
+        "[" + dateToString(msg.timestamp) + "] - " +
+        msgType +
+        " [" + msg.context + "] >> " +
         msg.text +
-        "<\p>" +
-        logbookStr;
+        "</p>";
     }
   }
+  else {
+    logbookStr = "<p>Logbook is empty.</p>";
+  }
+
   this.m_base.style.height = "85vh";
-  this.m_base.style.overflowY = "scroll"; 
-  this.m_base.innerHTML = logbookStr;
-}
+  this.m_base.style.fontSize = "1.6vh";
+  this.m_base.style.overflowY = "scroll";
+  this.m_base.innerHTML = "";
+  //this.m_base.innerHTML += `<p>Number of LogBook Entries: ${entryCount}/p>`;
+  this.m_base.innerHTML += logbookStr;
+};
+
 
 // Returns the string format of a LogBookEntry's type
 function typeAsString(typeInt) {
@@ -39,10 +116,8 @@ function typeAsString(typeInt) {
       typeStr = "WARNING";
       break;
     case '2':
-      typeStr = "ERROR";
-      break;
     case '3':
-      typeStr = "CRITICAL";
+      typeStr = "ERROR";
       break;
     case '4':
       typeStr = "DEBUG";
@@ -50,3 +125,35 @@ function typeAsString(typeInt) {
   }
   return typeStr;
 }
+
+function setupLogbookFilters() {
+  const filters = [
+    "filter-info",
+    "filter-warning",
+    "filter-error",
+    "filter-debug"
+  ];
+
+  filters.forEach(filterId => {
+    const filterElement = document.getElementById(filterId);
+    if (filterElement) {
+      filterElement.addEventListener("change", () => {
+        if (g_logbook) {
+          g_logbook.updateFiltersState();
+          g_logbook.update();
+        } else {
+          console.log("g_logbook is not defined");
+        }
+      });
+    } else {
+      console.log(`Element with ID ${filterId} not found`);
+    }
+  });
+}
+
+Logbook.prototype.countEntries = function() {
+  if (g_dune_logbook != null) {
+      return g_dune_logbook.dune_logbook.filter(msg => msg.abbrev === "LogBookEntry").length;
+  }
+  return 0;
+};

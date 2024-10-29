@@ -52,6 +52,7 @@
       --c-color-error: #B22222;
       --c-color-critical: #B22222;
       --c-color-debug: #000000;
+      --c-color-checkbox-hover: #6885e2;
       /* Add other styles for white theme */
     }
 
@@ -71,6 +72,7 @@
       --c-color-error: #c74848;
       --c-color-critical: #c74848;
       --c-color-debug: #ffffff;
+      --c-color-checkbox-hover: #e2ba9a;
       /* Add other styles for dark theme */
     }
 
@@ -104,6 +106,12 @@
     <tr>
       <td class="infoTable" style="background-color: var(--c-background); padding: 0em; border: solid var(--c-color-text) thin;">
         <div id="x-container">
+          <div id="logbook-filters" style="display: none;">
+            <label><input type="checkbox" id="filter-info" checked><span class="custom-checkbox"></span> INFO</label>
+            <label><input type="checkbox" id="filter-warning" checked><span class="custom-checkbox"></span> WARNING</label>
+            <label><input type="checkbox" id="filter-error" checked><span class="custom-checkbox"></span> ERROR</label>
+            <label><input type="checkbox" id="filter-debug" checked><span class="custom-checkbox"></span> DEBUG</label>
+          </div>
         </div>
       </td>
     </tr>

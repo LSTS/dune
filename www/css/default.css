@@ -289,6 +289,10 @@ p.DEBUG
     color: var(--c-color-debug);
 }
 
+#logbook-filters {
+    display: none;
+}
+
 #MainOverviewLeft
 {
   margin-left: 70px;
@@ -481,6 +485,9 @@ p.DEBUG
 {
   background-color: var(--c-background-h-l);
   color: var(--c-color-text-h-l);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  padding: 6px;
 }
 
 #Power td form {
@@ -506,8 +513,8 @@ p.DEBUG
   width: 95%;
   margin-left: auto;
   margin-right: auto;
-  border-collapse: collapse;
-  margin-bottom: 1em;
+  margin-bottom: 0.5em;
+  border-spacing: 0 4px;
 }
 
 #Power table tr
@@ -530,4 +537,50 @@ p.DEBUG
   color: var(--c-color-text-system-name);
   display: inline-block;
   margin-bottom: 12px;
+}
+
+input[type="checkbox"] {
+  display: none;
+}
+
+label {
+  position: relative;
+  padding-left: 40px;
+  padding-top: 0px;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+}
+
+.custom-checkbox {
+  position: absolute;
+  left: 18px;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--c-color-text);
+  background-color: #fff;
+  border-radius: 4px;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+input[type="checkbox"]:checked + .custom-checkbox {
+  background-color: var(--c-color-checkbox-hover);
+  border-color: var(--c-color-checkbox-hover);
+}
+
+input[type="checkbox"]:checked + .custom-checkbox::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 4px;
+  height: 7px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+label:hover .custom-checkbox {
+  border-color: var(--c-color-info);
 }

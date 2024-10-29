@@ -31,7 +31,10 @@ function Sections()
 {
     this.m_sections = new Array();
     this.m_section = '';
+    this.logbookFiltersVisible = false;
 };
+
+var g_logbook = null;
 
 Sections.prototype.create = function()
 {
@@ -42,7 +45,9 @@ Sections.prototype.create = function()
     this.add(new Sensors('x-container'));
     this.add(new Logs('x-container'));
     this.add(new Power('x-container'));
-    this.add(new Logbook('x-container'));
+    var logbook = new Logbook('x-container');
+    g_logbook = logbook;
+    this.add(logbook);
 
     this.show(this.m_section);
 };
@@ -94,6 +99,21 @@ Sections.prototype.showSection = function(section)
 
     this.m_sections[section].element().className = '';
     this.m_sections[section].element().style.visibility = 'visible';
+
+    if (section === 'Logbook')
+      this.toggleLogbookFilters(true);
+    else
+      this.toggleLogbookFilters(false);
+};
+
+Sections.prototype.toggleLogbookFilters = function(visible)
+{
+  const filters = document.getElementById('logbook-filters');
+  if (visible) {
+      filters.style.display = 'block';
+  } else {
+      filters.style.display = 'none';
+  }
 };
 
 Sections.prototype.update = function(data)
