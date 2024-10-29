@@ -66,7 +66,7 @@ Logbook.prototype.initialize = function() {
 };
 
 Logbook.prototype.update = function () {
-  console.log("Updating logbook...");
+  //console.log("Updating logbook...");
   if (!document.getElementById("filter-info")) {
     console.log("activeFilters is null");
     location.reload();

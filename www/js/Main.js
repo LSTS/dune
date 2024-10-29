@@ -37,6 +37,7 @@ function Main(root_id) {
 };
 
 Main.prototype = new BasicSection;
+var system_mode = 6;
 
 Main.prototype.m_fields = [
   {
@@ -210,6 +211,7 @@ Main.prototype.update = function () {
   }
 
   this.updateTasks();
+  this.updateVehicleState();
 };
 
 Main.prototype.updateTasks = function () {
@@ -219,6 +221,17 @@ Main.prototype.updateTasks = function () {
     if (msg.abbrev == 'EntityState') {
       var name = g_data.dune_entities[msg.src_ent].label;
       this.insertTaskNode(msg.src_ent, name, msg.description, msg.state);
+    }
+  }
+};
+
+Main.prototype.updateVehicleState = function () {
+  for (i in g_data.dune_messages) {
+    var msg = g_data.dune_messages[i];
+    if (msg.abbrev == 'VehicleState') {
+      //console.log(msg);
+      //console.log(msg.op_mode);
+      system_mode = msg.op_mode;
     }
   }
 };
@@ -354,10 +367,32 @@ function getSystemType(data, value) {
     8: "Wireless Sensor Network"
   };
 
-  if (value in abbreviationMap) {
-    return abbreviationMap[value];
-  } else {
-    return "Unknown";
+  var modeMap = {
+    0: "SERVICE",
+    1: "CALIBRATION",
+    2: "ERROR",
+    3: "MANEUVER",
+    4: "EXTERNAL CONTROL",
+    5: "BOOT",
+    6: ""
+  };
+
+  changeBackgroundColor(system_mode);
+  if(system_mode == 6)
+  {
+    if (value in abbreviationMap) {
+      return abbreviationMap[value];
+    } else {
+      return "Unknown";
+    }
+  }
+  else
+  {
+    if (value in abbreviationMap) {
+      return abbreviationMap[value] + " - " + modeMap[system_mode];
+    } else {
+      return "Unknown";
+    }
   }
 }
 
@@ -417,4 +452,27 @@ function getUptime(data) {
     str += seconds + ' ' + ((seconds > 1) ? 'seconds' : 'second') + ' ';
   }
   return str;
+}
+
+function changeBackgroundColor(color_id) {
+  color = "#757575";
+  if(color_id == 0)
+    color = "#57B768";
+  else if(color_id == 1)
+    color = "#307191";
+  else if(color_id == 2)
+    color = "#A23F3E";
+  else if(color_id == 3)
+    color = "#D2DA4A";
+  else if(color_id == 4)
+    color = "#ff00ff";
+  else if(color_id == 5)
+    color = "#797EB5";
+  else if(color_id == 6)
+    color = "#757575";
+
+  const systemNameElement = document.getElementById('systemName');
+  if (systemNameElement) {
+    systemNameElement.style.backgroundColor = color;
+  }
 }
