@@ -56,7 +56,7 @@ function requestLogBookEntries() {
 function handleLogBookEntries(text)
 {
     if (g_logbook_timer == null)
-	g_logbook_timer = setInterval(requestLogBookEntries, 4000);
+	    g_logbook_timer = setInterval(requestLogBookEntries, 4000);
 
     eval(text);
     g_dune_logbook = logbook;

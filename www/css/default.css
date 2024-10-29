@@ -48,18 +48,29 @@ button {
 button:hover {
   background-color: #b0a5ca;
   color: #000000;
+  transform: scale(1.1);
 }
 
 button.active {
   background-color: rgb(158, 191, 201);
   color: black;
+  transition: transform 0.3s ease-in-out, background-color 0.3s ease;
+  transform: scale(1.1);
   cursor: grab;
 }
 
 button:disabled {
   background-color: rgb(223, 217, 217);
   color: rgb(167, 161, 161);
+  transition: transform 0.3s ease-in-out, background-color 0.3s ease;
+  transform: scale(1);
   cursor: not-allowed;
+}
+
+button.loading {
+  background-color: rgb(223, 217, 217);
+  color: rgb(167, 161, 161);
+  cursor: wait;
 }
 
 input[type="text"], input[type="number"], textarea {

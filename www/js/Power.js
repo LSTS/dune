@@ -149,6 +149,7 @@ Power.prototype.appendButton = function(root, channel, op, label)
     var btn = document.createElement('button');
     btn.onclick = function(event) { submitPowerForm(channel, op, root.id, event); };
     btn.textContent = label;
+    btn.setAttribute('data-op', op);
     root.appendChild(btn);
 };
 
@@ -193,6 +194,26 @@ function submitPowerForm(channel, op, id, event) {
       var m = document.getElementById(id + 'Minutes').value;
       var s = document.getElementById(id + 'Seconds').value;
       url += '/' + h + '/' + m + '/' + s;
+  }
+
+  var activeBtn = event.target;
+  activeBtn.classList.add('loading');
+  setTimeout(function() {
+      activeBtn.classList.remove('loading');
+  }, 500);
+
+  var btnOn = document.querySelector(`#${id} button[data-op="on"]`);
+  var btnOff = document.querySelector(`#${id} button[data-op="off"]`);
+  if (op === 'on') {
+      btnOn.classList.remove('active');
+      btnOn.disabled = true;
+      btnOff.classList.remove('active');
+      btnOff.disabled = true;
+  } else if (op === 'off') {
+      btnOn.classList.remove('active');
+      btnOn.disabled = true;
+      btnOff.classList.remove('active');
+      btnOff.disabled = true;
   }
 
   //print url
