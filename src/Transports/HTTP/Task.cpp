@@ -61,6 +61,8 @@ namespace Transports
       unsigned threads;
       //! List of messages to transport.
       std::vector<std::string> messages;
+      //! Number of maximum lines to send from logbook.
+      unsigned logbook_lines;
     };
 
     //! Buffer length.
@@ -100,6 +102,10 @@ namespace Transports
         .defaultValue("")
         .description("List of messages to transport");
 
+        param("Number Lines From LogBook to send", m_args.logbook_lines)
+        .defaultValue("100")
+        .description("List of messages to transport");
+
         m_cfg_dir = ctx.dir_cfg.str();
         m_agent = getSystemName();
 
@@ -109,6 +115,7 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
+        m_msg_mon.setLogEntry(m_args.logbook_lines);
         bind(this, m_args.messages);
 
         uint16_t last_port = m_args.port + c_max_port_tries;
