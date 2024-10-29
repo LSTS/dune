@@ -56,6 +56,7 @@ static const std::string c_str_states[] = {DTR_RT("Idle"),
 static const std::string c_cm_name = DTR_RT("ClimbMonitor");
 
 static const unsigned c_window_size = 10;
+static const unsigned c_climb_error_timeout = 20;
 
 namespace DUNE
 {
@@ -80,6 +81,7 @@ namespace DUNE
       m_z_ref.clear();
       m_estate.clear();
       m_cstate = SM_IDLE;
+      m_climb_error_timer.setTop(c_climb_error_timeout);
       resetClimb();
     }
 
@@ -170,6 +172,7 @@ namespace DUNE
         return;
       }
 
+      resetClimb();
       if (z_error < 0)
       {
         changeState(SM_DESCENDING);
@@ -225,11 +228,13 @@ namespace DUNE
       if (!m_active)
         return;
         
+      // Compute absolute error
       double z_error = m_z_ref.value - m_z_ref.z_units == IMC::Z_ALTITUDE ? m_estate.alt : m_estate.depth;
+      z_error = std::abs(z_error);
 
       // If at desired z -> change state
       double hyst = m_z_ref.z_units == IMC::Z_ALTITUDE ? c_alt_hyst : c_depth_hyst;
-      if  (std::abs(z_error) < hyst)
+      if  (z_error < hyst)
       {
         changeState(SM_AT_TARGET);
         return;
@@ -242,11 +247,15 @@ namespace DUNE
         return;
       }
 
+      // Check case of 0 derivative!!!
       double error_change_avr = m_error_deriv_avr.update(z_error_deriv);
 
       // if error is decreasing, on average -> reset climb timer
-      // if (error_change_avr < 0)
+      if (error_change_avr < 0)
+        m_climb_error_timer.reset();
 
+      if (m_climb_error_timer.overflow())
+        changeState(SM_STABILIZE);
     }
 
     void
@@ -255,6 +264,7 @@ namespace DUNE
       m_got_error = false;
       m_error_deriv_avr.clear();
       m_error_deriv.clear();
+      m_climb_error_timer.reset();
     }
 
     void

@@ -39,6 +39,7 @@
 #include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Math/MovingAverage.hpp>
 #include <DUNE/Math/Derivative.hpp>
+#include <DUNE/Time/Counter.hpp>
 
 namespace DUNE
 {
@@ -176,6 +177,8 @@ namespace DUNE
       DUNE::Math::MovingAverage<double> m_error_deriv_avr;
       //! Flag for first error, for derivative calculation
       bool m_got_error;
+      //! Climb error timer, resets if climb error decreases
+      DUNE::Time::Counter<double> m_climb_error_timer;
     };
   }
 }
