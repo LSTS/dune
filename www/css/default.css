@@ -584,3 +584,43 @@ input[type="checkbox"]:checked + .custom-checkbox::after {
 label:hover .custom-checkbox {
   border-color: var(--c-color-info);
 }
+
+.form-group {
+  display: flex;
+  align-items: center;
+  margin: 0.9rem 0;
+  background-color: var(--c-background-h-l);
+  color: var(--c-color-text-h-l);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  padding: 6px;
+}
+
+.material-label {
+  font-size: 16px;
+  margin-right: 0.75rem;
+  user-select: none;
+  color: var(--c-color-text);
+}
+
+.material-select {
+  flex: 0.3;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.material-select:focus {
+  border-color: #6200ea;
+}
+
+.material-select:valid + .material-label,
+.material-select:not(:placeholder-shown) + .material-label {
+  top: -0.75rem;
+  left: 0.75rem;
+  font-size: 0.25rem;
+  color: #6200ea;
+}

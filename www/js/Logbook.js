@@ -28,6 +28,8 @@
 function Logbook(root_id) {
   this.create('Logbook', root_id);
   setupLogbookFilters();
+  this.selectedContext = 'all';
+  this.uniqueContexts = new Set();
   this.update();
 };
 
@@ -70,9 +72,11 @@ Logbook.prototype.update = function () {
     location.reload();
     return;
   }
-  var entryCount = this.countEntries();
+
   var logbookStr = "";
   var activeFilters = this.getActiveFilters();
+  var selectedContext = this.selectedContext;
+  this.updateUniqueContexts();
 
   if (g_dune_logbook != null) {
     for (var i = g_dune_logbook.dune_logbook.length - 1; i >= 0; i--) {
@@ -82,6 +86,7 @@ Logbook.prototype.update = function () {
 
       var msgType = typeAsString(msg.type);
 
+      if (selectedContext !== "all" && msg.context !== selectedContext) continue;
       if (!activeFilters[msgType]) continue;
 
       logbookStr += "<p class=\"" + msgType + "\">" +
@@ -91,19 +96,16 @@ Logbook.prototype.update = function () {
         msg.text +
         "</p>";
     }
-  }
-  else {
+  } else {
     logbookStr = "<p>Logbook is empty.</p>";
   }
 
   this.m_base.style.height = "85vh";
-  this.m_base.style.fontSize = "1.6vh";
+  this.m_base.style.fontSize = "1.4vh";
   this.m_base.style.overflowY = "scroll";
   this.m_base.innerHTML = "";
-  //this.m_base.innerHTML += `<p>Number of LogBook Entries: ${entryCount}/p>`;
   this.m_base.innerHTML += logbookStr;
 };
-
 
 // Returns the string format of a LogBookEntry's type
 function typeAsString(typeInt) {
@@ -156,4 +158,36 @@ Logbook.prototype.countEntries = function() {
       return g_dune_logbook.dune_logbook.filter(msg => msg.abbrev === "LogBookEntry").length;
   }
   return 0;
+};
+
+Logbook.prototype.updateContextFilter = function () {
+  const selectElement = document.getElementById('context-filter');
+  selectElement.innerHTML = '<option value="all">Show All</option>';
+
+  this.uniqueContexts.forEach(context => {
+    const option = document.createElement('option');
+    option.value = context;
+    option.textContent = context;
+    selectElement.appendChild(option);
+  });
+
+  selectElement.value = this.selectedContext;
+};
+
+Logbook.prototype.updateUniqueContexts = function() {
+  this.uniqueContexts.clear();
+  if (g_dune_logbook != null) {
+    for (var i = 0; i < g_dune_logbook.dune_logbook.length; i++) {
+      var msg = g_dune_logbook.dune_logbook[i];
+      if (msg.abbrev === "LogBookEntry") {
+        this.uniqueContexts.add(msg.context);
+      }
+    }
+  }
+  this.updateContextFilter();
+};
+
+document.getElementById('context-filter').onchange = function() {
+  g_logbook.selectedContext = this.value;
+  g_logbook.update();
 };

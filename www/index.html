@@ -104,13 +104,21 @@
       </td>
     </tr>
     <tr>
-      <td class="infoTable" style="background-color: var(--c-background); padding: 0em; border: solid var(--c-color-text) thin;">
+      <td class="infoTable"
+        style="background-color: var(--c-background); padding: 0em; border: solid var(--c-color-text) thin;">
         <div id="x-container">
+          <div class="logbook-filter">
           <div id="logbook-filters" style="display: none;">
-            <label><input type="checkbox" id="filter-info" checked><span class="custom-checkbox"></span> INFO</label>
-            <label><input type="checkbox" id="filter-warning" checked><span class="custom-checkbox"></span> WARNING</label>
-            <label><input type="checkbox" id="filter-error" checked><span class="custom-checkbox"></span> ERROR</label>
-            <label><input type="checkbox" id="filter-debug" checked><span class="custom-checkbox"></span> DEBUG</label>
+            <div class="form-group">
+              <label for="context-filter" class="material-label">Filter by Entity:</label>
+              <select id="context-filter" class="material-select" onchange="g_logbook.selectedContext = this.value; g_logbook.update();">
+                  <option value="all">Show All</option>
+              </select>
+              <label><input type="checkbox" class="material-checkbox" id="filter-info" checked><span class="custom-checkbox"></span> INFO</label>
+              <label><input type="checkbox" class="material-checkbox" id="filter-warning" checked><span class="custom-checkbox"></span> WARNING</label>
+              <label><input type="checkbox" class="material-checkbox" id="filter-error" checked><span class="custom-checkbox"></span> ERROR</label>
+              <label><input type="checkbox" class="material-checkbox" id="filter-debug" checked><span class="custom-checkbox"></span> DEBUG</label>
+            </div>
           </div>
         </div>
       </td>
