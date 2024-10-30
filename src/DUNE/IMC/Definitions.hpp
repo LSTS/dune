@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 300c92f76c47d1d9e32d8421679e98eb                            *
+// IMC XML MD5: 807c1609684a0d5f35e9001a58fc3135                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -2450,7 +2450,9 @@ namespace DUNE
         //! Chlorophyll.
         PROF_CHLOROPHYLL = 5,
         //! Turbidity.
-        PROF_TURBIDITY = 6
+        PROF_TURBIDITY = 6,
+        //! Current Velocity.
+        PROF_CURRENT_VELOCITY = 7
       };
 
       //! Parameter.
@@ -26352,6 +26354,8 @@ namespace DUNE
         UTF_XYZ = 0x01,
         //! ned.
         UTF_NED = 0x02,
+        //! enu.
+        UTF_ENU = 0x03,
         //! beams.
         UTF_BEAMS = 0x04
       };
