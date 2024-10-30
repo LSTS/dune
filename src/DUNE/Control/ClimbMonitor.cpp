@@ -66,7 +66,8 @@ namespace DUNE
       m_args(args),
       m_active(false),
       m_error_deriv_avr(c_window_size),
-      m_got_error(false)
+      m_got_error(false),
+      m_stabilize_init(false)
     {
       reset();
     }
@@ -83,6 +84,7 @@ namespace DUNE
       m_cstate = SM_IDLE;
       m_climb_error_timer.setTop(c_climb_error_timeout);
       resetClimb();
+      resetStabilize();
     }
 
     void
@@ -174,13 +176,9 @@ namespace DUNE
 
       resetClimb();
       if (z_error < 0)
-      {
         changeState(SM_DESCENDING);
-      }
       else
-      {
         changeState(SM_ASCENDING);
-      }
     }
 
     void
@@ -212,6 +210,9 @@ namespace DUNE
     {
       if (!m_active)
         return;
+
+      // Check if still of target, otherwise change state
+      updateClimbState();
     }
 
     //! Stabilize state
@@ -220,6 +221,23 @@ namespace DUNE
     {
       if (!m_active)
         return;
+
+      if (!m_stabilize_init)
+      {
+        IMC::DesiredSpeed desired_speed;
+        desired_speed.value = 0;
+        desired_speed.speed_units = IMC::SUNITS_RPM;
+        dispatch(desired_speed);
+        
+        m_stabilize_init = true;
+        return;
+      }
+    }
+
+    void
+    ClimbMonitor::resetStabilize()
+    {
+      m_stabilize_init = false;
     }
 
     void
@@ -255,7 +273,10 @@ namespace DUNE
         m_climb_error_timer.reset();
 
       if (m_climb_error_timer.overflow())
+      {
+        resetStabilize();
         changeState(SM_STABILIZE);
+      }
     }
 
     void

@@ -125,6 +125,10 @@ namespace DUNE
       void
       onStabilize();
 
+      //! Reset stabilize state
+      void
+      resetStabilize()
+
       //! Climb state
       void
       onClimb();
@@ -170,7 +174,7 @@ namespace DUNE
       DUNE::IMC::EstimatedState m_estate;
       //! Last received DesiredZ message.
       DUNE::IMC::DesiredZ m_z_ref;
-      //! Climb calculations
+      //! Climb state
       //! Climb error derivative
       DUNE::Math::Derivative<double> m_error_deriv;
       //! Average of climb error change
@@ -179,6 +183,9 @@ namespace DUNE
       bool m_got_error;
       //! Climb error timer, resets if climb error decreases
       DUNE::Time::Counter<double> m_climb_error_timer;
+      //! Stabilize state
+      //! Flag for stabilize state initialized
+      bool m_stabilize_init;
     };
   }
 }
