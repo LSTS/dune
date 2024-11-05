@@ -136,6 +136,10 @@ namespace Transports
           msg_data.set(req->msg_data.get()->clone());
           message_name = msg_data.get()->getName();
         }
+        else
+        {
+          message_name = "TransmissionRequest | " + decodeTransmissionRequestInfo(req);
+        }
         IMC::TransmissionStatus msg;
         msg.info = info;
         msg.req_id = req->req_id;
@@ -145,8 +149,64 @@ namespace Transports
         msg.setDestinationEntity(req->getSourceEntity());
         m_parent->dispatch(msg);
 
-        m_parent->inf("Status of transmission message (%d | %s) changed to: %s",
+        m_parent->inf("Status of transmission message (req_id:%d | %s) changed to: %s",
                       req->req_id, message_name.c_str(), info.c_str());
+      }
+
+      std::string
+      decodeTransmissionRequestInfo(const IMC::TransmissionRequest* msg)
+      {
+        std::string mode = "";
+        switch (msg->data_mode)
+        {
+          case IMC::TransmissionRequest::DMODE_INLINEMSG:
+            mode = "Inline Message";
+            break;
+          case IMC::TransmissionRequest::DMODE_TEXT:
+            mode = "Text";
+            break;
+          case IMC::TransmissionRequest::DMODE_RAW:
+            mode = "Raw";
+            break;
+          case IMC::TransmissionRequest::DMODE_ABORT:
+            mode = "Abort";
+            break;
+          case IMC::TransmissionRequest::DMODE_RANGE:
+            mode = "Range";
+            break;
+          case IMC::TransmissionRequest::DMODE_REVERSE_RANGE:
+            mode = "Reverse Range";
+            break;
+          default:
+            mode = "Unknown";
+            break;
+        }
+        mode += " | ";
+        switch (msg->comm_mean)
+        {
+          case IMC::TransmissionRequest::CMEAN_WIFI:
+            mode += "WiFi";
+            break;
+          case IMC::TransmissionRequest::CMEAN_ACOUSTIC:
+            mode += "Acoustic";
+            break;
+          case IMC::TransmissionRequest::CMEAN_SATELLITE:
+            mode += "Satellite";
+            break;
+          case IMC::TransmissionRequest::CMEAN_GSM:
+            mode += "GSM";
+            break;
+          case IMC::TransmissionRequest::CMEAN_ANY:
+            mode += "Any";
+            break;
+          case IMC::TransmissionRequest::CMEAN_ALL:
+            mode += "All";
+            break;
+          default:
+            mode += "Unknown";
+            break;
+        }
+        return mode;
       }
 
       void
