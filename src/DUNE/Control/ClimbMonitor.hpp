@@ -105,6 +105,20 @@ namespace DUNE
         SM_STABILIZE
       };
 
+      //! Get z error depending on z units
+      double
+      getZError();
+
+      //! Check if vehicle is at target z
+      //! @return true if vehicle is on target, false otherwise
+      bool
+      isOnTarget(double z_error);
+
+      //! Check if vehicle is trying to descend
+      //! @return true if vehicle is trying to descend, false if ascending
+      bool
+      isDescending(double z_error);
+
       //! Idle state
       void
       onIdle();
@@ -127,7 +141,7 @@ namespace DUNE
 
       //! Reset stabilize state
       void
-      resetStabilize()
+      resetStabilize();
 
       //! Climb state
       void

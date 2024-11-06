@@ -110,7 +110,6 @@ namespace DUNE
         return;
       
       m_z_ref = *msg;
-
       updateClimbState();
     }
 
@@ -121,7 +120,6 @@ namespace DUNE
         return;
 
       m_estate = *msg;
-
       updateStateMachine();
     }
 
@@ -150,24 +148,47 @@ namespace DUNE
       }
     }
 
+    double
+    ClimbMonitor::getZError()
+    {
+      if (m_z_ref.z_units == IMC::Z_ALTITUDE)
+        return m_z_ref.value - m_estate.alt;
+      else if (m_z_ref.z_units == IMC::Z_DEPTH)
+        return m_estate.depth - m_z_ref.value;
+
+      throw std::runtime_error("Unsupported Z units. Not tracking climb");
+      return 0;
+    }
+
+    bool
+    ClimbMonitor::isOnTarget(double z_error)
+    {     
+      double hyst = m_z_ref.z_units == IMC::Z_ALTITUDE ? c_alt_hyst : c_depth_hyst;
+      return std::abs(z_error) < hyst;
+    }
+
+    bool
+    ClimbMonitor::isDescending(double z_error)
+    {
+      return z_error < 0;
+    }
+
     void
     ClimbMonitor::updateClimbState()
     {
       double z_error = 0;
-      if (m_z_ref.z_units == IMC::Z_ALTITUDE)
-        z_error = m_z_ref.value - m_estate.alt;
-      else if (m_z_ref.z_units == IMC::Z_DEPTH)
-        z_error = m_estate.depth - m_z_ref.value;
-      else
+      try
       {
-        // Not tracking climb
-        war("Unsupported Z units. Not tracking climb");
+        z_error = getZError();
+      }
+      catch(const std::exception& e)
+      {
+        war(e.what());
         changeState(SM_IDLE);
         return;
       }
 
-      double hyst = m_z_ref.z_units == IMC::Z_ALTITUDE ? c_alt_hyst : c_depth_hyst;
-      if  (std::abs(z_error) < hyst)
+      if  (isOnTarget(z_error))
       {
         // At desired Z
         changeState(SM_AT_TARGET);
@@ -175,7 +196,7 @@ namespace DUNE
       }
 
       resetClimb();
-      if (z_error < 0)
+      if (isDescending(z_error))
         changeState(SM_DESCENDING);
       else
         changeState(SM_ASCENDING);
@@ -222,16 +243,33 @@ namespace DUNE
       if (!m_active)
         return;
 
-      if (!m_stabilize_init)
+      // Compute absolute error
+      double z_error = getZError();
+
+      // If at desired z -> change state
+      if  (isOnTarget(z_error))
       {
-        IMC::DesiredSpeed desired_speed;
-        desired_speed.value = 0;
-        desired_speed.speed_units = IMC::SUNITS_RPM;
-        dispatch(desired_speed);
-        
-        m_stabilize_init = true;
+        changeState(SM_AT_TARGET);
         return;
       }
+
+      if (m_stabilize_init)
+        return;
+
+      if (isDescending(z_error))
+      {
+        war("INCREASE SPEED");
+      }
+      else
+      {
+        war("DECREASE SPEED");
+        // IMC::DesiredSpeed desired_speed;
+        // desired_speed.value = 0;
+        // desired_speed.speed_units = IMC::SUNITS_RPM;
+        // dispatch(desired_speed);
+      }
+
+      m_stabilize_init = true;
     }
 
     void
@@ -247,12 +285,11 @@ namespace DUNE
         return;
         
       // Compute absolute error
-      double z_error = m_z_ref.value - m_z_ref.z_units == IMC::Z_ALTITUDE ? m_estate.alt : m_estate.depth;
+      double z_error = getZError();
       z_error = std::abs(z_error);
 
       // If at desired z -> change state
-      double hyst = m_z_ref.z_units == IMC::Z_ALTITUDE ? c_alt_hyst : c_depth_hyst;
-      if  (z_error < hyst)
+      if  (isOnTarget(z_error))
       {
         changeState(SM_AT_TARGET);
         return;
@@ -265,12 +302,13 @@ namespace DUNE
         return;
       }
 
-      // Check case of 0 derivative!!!
-      double error_change_avr = m_error_deriv_avr.update(z_error_deriv);
-
       // if error is decreasing, on average -> reset climb timer
+      double error_change_avr = m_error_deriv_avr.update(z_error_deriv);
       if (error_change_avr < 0)
+      {
         m_climb_error_timer.reset();
+        return;
+      }
 
       if (m_climb_error_timer.overflow())
       {
