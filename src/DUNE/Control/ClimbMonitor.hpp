@@ -80,9 +80,13 @@ namespace DUNE
 
       //! On new desired z reference message (sent or received).
       //! @param[in] msg message being consumed or sent.
-      //! @param[in] outgoing true if message is supposed to go to the bus.
       void
       onDesiredZ(const DUNE::IMC::DesiredZ* msg);
+
+      //! On new desired speed reference message (sent or received).
+      //! @param[in] msg message being consumed or sent.
+      void
+      onDesiredSpeed(const DUNE::IMC::DesiredSpeed* msg);
 
       //! On new EstimatedState message.
       //! @param[in] msg message being consumed.
@@ -178,6 +182,11 @@ namespace DUNE
       void
       war(const std::string& msg) const;
 
+      //! Function for error messages.
+      //! @param[in] msg string message to output
+      void
+      err(const std::string& msg) const;
+
       //! Pointer to arguments.
       const Arguments* m_args;
       //! Active or inactive.
@@ -188,6 +197,8 @@ namespace DUNE
       DUNE::IMC::EstimatedState m_estate;
       //! Last received DesiredZ message.
       DUNE::IMC::DesiredZ m_z_ref;
+      //! Last received DesiredSpeed message.
+      DUNE::IMC::DesiredSpeed m_speed_ref;
       //! Climb state
       //! Climb error derivative
       DUNE::Math::Derivative<double> m_error_deriv;
@@ -200,6 +211,8 @@ namespace DUNE
       //! Stabilize state
       //! Flag for stabilize state initialized
       bool m_stabilize_init;
+      //! Stabilize error timer
+      DUNE::Time::Counter<double> m_stabilize_error_timer;
     };
   }
 }

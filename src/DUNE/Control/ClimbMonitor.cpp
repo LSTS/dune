@@ -55,8 +55,11 @@ static const std::string c_str_states[] = {DTR_RT("Idle"),
 //! Climb monitor name
 static const std::string c_cm_name = DTR_RT("ClimbMonitor");
 
+// This should be arguments
 static const unsigned c_window_size = 10;
 static const unsigned c_climb_error_timeout = 20;
+static const unsigned c_stabilize_error_timeout = 20;
+static const unsigned c_speed_boost_rpm = 1600;
 
 namespace DUNE
 {
@@ -83,6 +86,7 @@ namespace DUNE
       m_estate.clear();
       m_cstate = SM_IDLE;
       m_climb_error_timer.setTop(c_climb_error_timeout);
+      m_stabilize_error_timer.setTop(c_stabilize_error_timeout);
       resetClimb();
       resetStabilize();
     }
@@ -109,8 +113,24 @@ namespace DUNE
       if (!m_active)
         return;
       
+      if (msg->z_units != IMC::Z_ALTITUDE && msg->z_units != IMC::Z_ALTITUDE)
+      {
+        war("Unsupported Z units. Not tracking climb");
+        deactivate();
+        return;
+      }
+
       m_z_ref = *msg;
       updateClimbState();
+    }
+
+    void
+    ClimbMonitor::onDesiredSpeed(const IMC::DesiredSpeed* msg)
+    {
+      if (!m_active)
+        return;
+
+      m_speed_ref = *msg;
     }
 
     void
@@ -156,7 +176,8 @@ namespace DUNE
       else if (m_z_ref.z_units == IMC::Z_DEPTH)
         return m_estate.depth - m_z_ref.value;
 
-      throw std::runtime_error("Unsupported Z units. Not tracking climb");
+      war("Unsupported Z units. Not tracking climb");
+      deactivate();
       return 0;
     }
 
@@ -176,17 +197,7 @@ namespace DUNE
     void
     ClimbMonitor::updateClimbState()
     {
-      double z_error = 0;
-      try
-      {
-        z_error = getZError();
-      }
-      catch(const std::exception& e)
-      {
-        war(e.what());
-        changeState(SM_IDLE);
-        return;
-      }
+      double z_error = getZError();
 
       if  (isOnTarget(z_error))
       {
@@ -246,28 +257,39 @@ namespace DUNE
       // Compute absolute error
       double z_error = getZError();
 
-      // If at desired z -> change state
+      // If at desired z -> send original speed ref and change state
       if  (isOnTarget(z_error))
       {
+        m_args->entity->dispatch(m_speed_ref);
         changeState(SM_AT_TARGET);
         return;
       }
 
+      // If unable to stabilize in the allocated time -> ...
+      if (m_stabilize_error_timer.overflow())
+      {
+        err("Unable to stabilize vehicle depth");
+      }
+
+
+      // Attempt to stabilize using speed
       if (m_stabilize_init)
         return;
 
+      IMC::DesiredSpeed desired_speed;
+      desired_speed.speed_units = IMC::SUNITS_RPM;
       if (isDescending(z_error))
       {
-        war("INCREASE SPEED");
+        war("Stabilizing -> Increasing speed");
+        desired_speed.value = c_speed_boost_rpm;
       }
       else
       {
-        war("DECREASE SPEED");
-        // IMC::DesiredSpeed desired_speed;
-        // desired_speed.value = 0;
-        // desired_speed.speed_units = IMC::SUNITS_RPM;
-        // dispatch(desired_speed);
+        
+        war("Stabilizing -> Decreasing speed");
+        desired_speed.value = 0;
       }
+      m_args->entity->dispatch(desired_speed);
 
       m_stabilize_init = true;
     }
@@ -276,6 +298,7 @@ namespace DUNE
     ClimbMonitor::resetStabilize()
     {
       m_stabilize_init = false;
+      m_stabilize_error_timer.reset();
     }
 
     void
@@ -332,7 +355,7 @@ namespace DUNE
       if (m_cstate == state)
         return;
 
-      info(String::str("State change: %s", c_str_states[state].c_str()));
+      debug(String::str("State change: %s", c_str_states[state].c_str()));
       m_cstate = state;
     }
 
@@ -354,6 +377,13 @@ namespace DUNE
     ClimbMonitor::war(const std::string& msg) const
     {
       m_args->task->war("[%s.%s] >> %s", DTR(c_cm_name.c_str()),
+                        DTR(c_str_states[m_cstate].c_str()), msg.c_str());
+    }
+
+    void
+    ClimbMonitor::err(const std::string& msg) const
+    {
+      m_args->task->err("[%s.%s] >> %s", DTR(c_cm_name.c_str()),
                         DTR(c_str_states[m_cstate].c_str()), msg.c_str());
     }
   }
