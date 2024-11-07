@@ -637,6 +637,9 @@ namespace DUNE
     {
       if (isTrackingBottom())
         m_btrack->onDesiredSpeed(dspeed);
+
+      if (isMonitoringClimb())
+        m_climb_monitor->onDesiredSpeed(dspeed);
     }
 
     void
