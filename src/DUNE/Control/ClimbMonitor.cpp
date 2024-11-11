@@ -46,8 +46,7 @@ static const float c_depth_hyst = 0.5;
 static const float c_alt_hyst = 0.2;
 
 //! State to string for debug messages
-static const std::string c_str_states[] = {DTR_RT("Idle"),
-                                           DTR_RT("Ascending"),
+static const std::string c_str_states[] = {DTR_RT("Ascending"),
                                            DTR_RT("Descending"),
                                            DTR_RT("On Target"),
                                            DTR_RT("Stabilizing")};
@@ -68,6 +67,7 @@ namespace DUNE
     ClimbMonitor::ClimbMonitor(const Arguments* args):
       m_args(args),
       m_active(false),
+      m_got_data(false),
       m_error_deriv_avr(c_window_size),
       m_got_error(false),
       m_stabilize_init(false)
@@ -84,7 +84,8 @@ namespace DUNE
     {
       m_z_ref.clear();
       m_estate.clear();
-      m_cstate = SM_IDLE;
+      m_cstate = SM_AT_TARGET;
+      m_got_data = false;
       m_climb_error_timer.setTop(c_climb_error_timeout);
       m_stabilize_error_timer.setTop(c_stabilize_error_timeout);
       resetClimb();
@@ -121,6 +122,7 @@ namespace DUNE
       }
 
       m_z_ref = *msg;
+      m_got_data = true;
       updateClimbState();
     }
 
@@ -146,15 +148,12 @@ namespace DUNE
     void
     ClimbMonitor::updateStateMachine(void)
     {
-      if (!m_active)
+      if (!m_got_data)
         return;
 
       // Run state machine
       switch (m_cstate)
       {
-        case SM_IDLE:
-          onIdle();
-          break;
         case SM_DESCENDING:
         case SM_ASCENDING:
           onClimb();
@@ -197,6 +196,9 @@ namespace DUNE
     void
     ClimbMonitor::updateClimbState()
     {
+      if (!m_got_data)
+        return;
+      
       double z_error = getZError();
 
       if  (isOnTarget(z_error))
@@ -211,29 +213,6 @@ namespace DUNE
         changeState(SM_DESCENDING);
       else
         changeState(SM_ASCENDING);
-    }
-
-    void
-    ClimbMonitor::onIdle()
-    {
-      if (!m_active)
-        return;
-    }
-
-    //! Descending state
-    void
-    ClimbMonitor::onDescend()
-    {
-      if (!m_active)
-        return;
-    }
-    
-    //! Ascend state
-    void
-    ClimbMonitor::onAscend()
-    {
-      if (!m_active)
-        return;
     }
     
     //! Ascend state

@@ -97,8 +97,6 @@ namespace DUNE
       //! State machine states.
       enum ClimbStates
       {
-        //! Idle state.
-        SM_IDLE,
         //! Vehicle ascending.
         SM_ASCENDING,
         //! Vehicle descending.
@@ -110,30 +108,21 @@ namespace DUNE
       };
 
       //! Get z error depending on z units
+      //! @return z error, depending on z units
       double
       getZError();
 
       //! Check if vehicle is at target z
+      //! @param[in] z_error current z error
       //! @return true if vehicle is on target, false otherwise
       bool
       isOnTarget(double z_error);
 
       //! Check if vehicle is trying to descend
+      //! @param[in] z_error current z error
       //! @return true if vehicle is trying to descend, false if ascending
       bool
       isDescending(double z_error);
-
-      //! Idle state
-      void
-      onIdle();
-
-      //! Descending state
-      void
-      onDescend();
-      
-      //! Ascend state
-      void
-      onAscend();
 
       //! On target state
       void
@@ -164,6 +153,7 @@ namespace DUNE
       updateStateMachine(void);
 
       //! Change state machine state
+      //! @param[in] state new state 
       void
       changeState(ClimbStates state);
 
@@ -199,6 +189,8 @@ namespace DUNE
       DUNE::IMC::DesiredZ m_z_ref;
       //! Last received DesiredSpeed message.
       DUNE::IMC::DesiredSpeed m_speed_ref;
+      //! Flag first DesiredZ received
+      bool m_got_data;
       //! Climb state
       //! Climb error derivative
       DUNE::Math::Derivative<double> m_error_deriv;
