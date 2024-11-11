@@ -114,7 +114,7 @@ namespace DUNE
       if (!m_active)
         return;
       
-      if (msg->z_units != IMC::Z_ALTITUDE && msg->z_units != IMC::Z_ALTITUDE)
+      if (msg->z_units != IMC::Z_DEPTH && msg->z_units != IMC::Z_ALTITUDE)
       {
         war("Unsupported Z units. Not tracking climb");
         deactivate();
