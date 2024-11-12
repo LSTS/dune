@@ -25,6 +25,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Changes: Pedro Gonçalves                                                 *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -43,23 +44,12 @@ namespace Transports
   //! Device driver for ETSI GSM 07.07 compatible GSM modems.
   //!
   //! @author Ricardo Martins
-  namespace GSM
+  namespace SMS
   {
     using DUNE_NAMESPACES;
 
     //! Default timer - security (m)
     static const int m_balance_per_default = 5;
-
-    //! SMS struct.
-    struct SMS
-    {
-      // Recipient.
-      std::string recipient;
-      // Message to send.
-      std::string message;
-      // Delivery deadline.
-      double deadline;
-    };
 
     struct SmsRequest
     {
@@ -224,7 +214,7 @@ namespace Transports
           debug("manufacturer: %s", m_driver->getManufacturer().c_str());
           debug("model: %s", m_driver->getModel().c_str());
           debug("IMEI: %s", m_driver->getIMEI().c_str());
-          annouceNumber();
+          announceNumber();
         }
         catch (std::runtime_error& e)
         {
@@ -295,9 +285,9 @@ namespace Transports
         }
         if(sms_req.sms_text.length() > 160) //160 characters encoded in 8-bit alphabet per SMS message
         {
-        	sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"Can only send 160 characters over SMS.");
-        	inf("%s", DTR("Can only send 160 characters over SMS"));
-		    return;
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"Can only send 160 characters over SMS.");
+          inf("%s", DTR("Can only send 160 characters over SMS"));
+		      return;
         }
         sms_req.deadline = Clock::getSinceEpoch() + msg->timeout;
         m_queue.push(sms_req);
@@ -305,12 +295,11 @@ namespace Transports
       }
 
       void
-      annouceNumber(void)
+      announceNumber(void)
       {
         std::string number = m_driver->getOwnNumber();
         if (number != "")
         {
-
           std::stringstream os;
           os << "imc+gsm://" << number << "/";
 
@@ -319,7 +308,6 @@ namespace Transports
           announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
 
           dispatch(announce);
-
         }
       }
 
@@ -369,6 +357,9 @@ namespace Transports
       {
         try
         {
+          if(m_driver->isModemBusy())
+            return;
+
           if (m_rssi_timer.overflow())
           {
             m_rssi_timer.reset();
@@ -382,8 +373,7 @@ namespace Transports
         }
         catch (std::exception& e)
         {
-          throw RestartNeeded(String::str(DTR("failed to poll status: %s"),
-                                          e.what()), 5);
+          throw RestartNeeded(String::str(DTR("failed to poll status: %s"), e.what()), 5);
         }
       }
 
@@ -395,7 +385,6 @@ namespace Transports
             setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
 
           m_args.request_balance = false;
-
           IMC::SetEntityParameters msg;
           IMC::EntityParameter balance_param;
           balance_param.name = c_balance_request_param;
@@ -414,9 +403,7 @@ namespace Transports
           waitForMessages(1.0);
           pollStatus();
           processQueue();
-
           checkBalance();
-
         }
       }
 

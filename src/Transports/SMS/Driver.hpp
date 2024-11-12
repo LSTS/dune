@@ -25,10 +25,11 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Changes: Pedro Gonçalves                                                 *
 //***************************************************************************
 
-#ifndef TRANSPORTS_GSM_DRIVER_HPP_INCLUDED_
-#define TRANSPORTS_GSM_DRIVER_HPP_INCLUDED_
+#ifndef TRANSPORTS_SMS_DRIVER_HPP_INCLUDED_
+#define TRANSPORTS_SMS_DRIVER_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
 #include <cstring>
@@ -39,7 +40,7 @@
 
 namespace Transports
 {
-  namespace GSM
+  namespace SMS
   {
     using DUNE_NAMESPACES;
 
@@ -62,21 +63,28 @@ namespace Transports
         m_pin(pin)
       {
         setLineTrim(true);
+        m_busy = false;
       }
 
       //! Destructor.
       ~Driver(void)
       { }
 
+      bool
+      isModemBusy(void)
+      {
+        return m_busy;
+      }
+
       void
       checkMessages(void)
       {
+        m_busy = true;
         IMC::TextMessage sms;
         std::string location;
         unsigned read_count = 0;
         bool text_mode = true;
         sendAT("+CMGL=\"ALL\"");
-
         //! Read all messages.
         while (readSMS(location, sms.origin, sms.text,text_mode))
         {
@@ -84,7 +92,7 @@ namespace Transports
           {
             ++read_count;
             if(text_mode)
-            	getTask()->dispatch(sms);
+              getTask()->dispatch(sms);
           }
         }
 
@@ -94,11 +102,13 @@ namespace Transports
           sendAT("+CMGD=0,3");
           expectOK();
         }
+        m_busy = false;
       }
 
       std::string
       getOwnNumber(void)
       {
+        m_busy = true;
         try
         {
           sendAT("+CPBS=ON");
@@ -127,6 +137,7 @@ namespace Transports
                 {
 
                   getTask()->inf(DTR("SIM card number: %s"), n_number);
+                  m_busy = false;
                   return std::string(n_number);
                 }
               }
@@ -137,19 +148,19 @@ namespace Transports
         catch (...)
         {
           getTask()->inf("SIM card number: not found");
+          m_busy = false;
           return "";
         }
+        m_busy = false;
         return "";
-
       }
 
       void
       sendSMS(const std::string& number, const std::string& msg, double timeout)
       {
+        m_busy = true;
         uint8_t bfr[16];
-
         Time::Counter<double> timer(timeout);
-
         try
         {
           setReadMode(HayesModem::READ_MODE_RAW);
@@ -158,7 +169,10 @@ namespace Transports
           setReadMode(HayesModem::READ_MODE_LINE);
 
           if (std::memcmp(bfr, c_sms_prompt, c_sms_prompt_size) != 0)
+          {
+            m_busy = false;
             throw Hardware::UnexpectedReply();
+          }
 
           std::string data = msg;
           data.push_back(c_sms_term);
@@ -167,12 +181,14 @@ namespace Transports
         catch (...)
         {
           setReadMode(HayesModem::READ_MODE_LINE);
+          m_busy = false;
           throw;
         }
 
         std::string reply = readLine(timer);
         if (reply == "ERROR")
         {
+          m_busy = false;
           throw std::runtime_error(DTR("unknown error"));
         }
         else if (String::startsWith(reply, "+CMGS:"))
@@ -183,19 +199,23 @@ namespace Transports
         {
           int code = -1;
           std::sscanf(reply.c_str(), "+CMS ERROR: %d", &code);
+          m_busy = false;
           throw std::runtime_error(String::str(DTR("SMS transmission failed with error code %d"), code));
         }
         else
         {
+          m_busy = false;
           throw UnexpectedReply();
         }
 
         expectOK();
+        m_busy = false;
       }
 
       bool
       getBalance(unsigned ussd_code, std::string &balance)
       {
+        m_busy = true;
         char code[50];
         sprintf(code,"+CUSD=1,\"*#%d#\"",ussd_code);
         sendAT(code);
@@ -205,6 +225,7 @@ namespace Transports
         }
         catch(...) {
           getTask()->war("Can't read balance. Please check the USSD code or connection");
+          m_busy = false;
           return false;
         }
         std::string msg = readLine();
@@ -214,6 +235,7 @@ namespace Transports
 
         if(startPos == std::string::npos) {
           getTask()->war("Can't read balance");
+          m_busy = false;
           return false;
         }
 
@@ -225,17 +247,20 @@ namespace Transports
         std::stringstream ss;
         ss << " | " << String::str(balance) << "Eur ";
         balance = ss.str();
-
+        m_busy = false;
         return true;
       }
 
     private:
       //! PIN number if needed.
       std::string m_pin;
+      //! Flag to Control access to the modem.
+      bool m_busy;
 
       void
       queryRSSI(void)
       {
+        m_busy = true;
         sendAT("+CSQ");
         std::string line = readLine();
         int rssi = -1;
@@ -245,6 +270,7 @@ namespace Transports
           expectOK();
           setRSSI(convertRSSI(rssi));
         }
+        m_busy = false;
       }
 
       void
@@ -256,10 +282,12 @@ namespace Transports
       void
       sendInitialization(void)
       {
+        m_busy = true;
         setEcho(false);
         setErrorVerbosity(2);
         setPin(m_pin);
         setMessageFormat(1);
+        m_busy = false;
       }
 
       float
@@ -302,51 +330,65 @@ namespace Transports
         if (String::startsWith(str, "^RSSI"))
           return true;
         if(String::startsWith(str, "+CRING")) //incoming call
-        	return true;
+          return true;
         if(String::startsWith(str, "^CEND:")) //end of call
-                	return true;
+          return true;
         if(String::startsWith(str, "NO CARRIER")) //missed call
-        	return true;
+          return true;
         return false;
       }
 
       void
       setPin(const std::string& pin)
       {
+        if (pin.empty())
+          return;
+        m_busy = true;
         std::string bfr = readValue("+CPIN?");
         if (bfr == "+CPIN: READY")
+        {
+          m_busy = false;
           return;
+        }
 
         if (bfr == "+CPIN: SIM PIN")
         {
           sendAT(String::str("+CPIN=%s", pin.c_str()));
           expectOK();
         }
+        m_busy = false;
       }
 
       void
       setMessageFormat(unsigned value)
       {
+        m_busy = true;
         sendAT(String::str("+CMGF=%u", value));
         expectOK();
+        m_busy = false;
       }
 
       void
       setErrorVerbosity(unsigned value)
       {
+        m_busy = true;
         sendAT(String::str("+CMEE=%u", value));
         expectOK();
+        m_busy = false;
       }
 
       bool
       readSMS(std::string& location, std::string& origin, std::string& text, bool& text_mode)
       {
+        m_busy = true;
         std::string header = readLine();
-
         // Print the received message
         getTask()->trace("Received message: %s", header.c_str());
         if (header == "OK")
+        {
+          m_busy = false;
           return false;
+        }
 
         // Check if header contains the string +CMTI, +CSQ
         while(String::startsWith(header, "+CMTI:") || String::startsWith(header, "+CSQ:") || header == "OK")
@@ -356,7 +398,10 @@ namespace Transports
         }
 
         if (!String::startsWith(header, "+CMGL:"))
+        {
+          m_busy = false;
           throw Hardware::UnexpectedReply();
+        }
 
         std::vector<std::string> parts;
         String::split(header, ",", parts);
@@ -365,13 +410,18 @@ namespace Transports
           if (parts.size() >= 2)
           {
             location = parts[1];
+            m_busy = false;
             return true;
           }
+          m_busy = false;
           throw Hardware::UnexpectedReply();
         }
 
         if ((parts[2] != "\"\"") && (parts[2].size() <= 2))
+        {
+          m_busy = false;
           throw Hardware::UnexpectedReply();
+        }
 
         location = parts[1];
         origin = std::string(parts[2], 1, parts[2].size() - 2);
@@ -396,6 +446,7 @@ namespace Transports
             getTask()->war(DTR("Parsing unrecognized Base64 message as text"));
             text.assign(incoming_data);
             text_mode = true;
+            m_busy = false;
             return true;
           }
         }
@@ -404,6 +455,7 @@ namespace Transports
           text.assign(incoming_data);
           text_mode = true;
         }
+        m_busy = false;
         return true;
       }
     };
