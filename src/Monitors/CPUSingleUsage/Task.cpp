@@ -78,6 +78,8 @@ namespace Monitors
       double m_tstamp;
       //! Number of CPUs
       int m_num_cpus;
+      //! Buffer for entity state
+      std::string m_buffer_entity;
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -128,9 +130,7 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        char m_buffer_entity[512];
-        std::sprintf(m_buffer_entity, "active | Cores Detected: %d", m_num_cpus);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_buffer_entity)));
+        updateEntityState();
         m_cpu_check.setTop(c_time_between_reads);
       }
 
@@ -138,6 +138,57 @@ namespace Monitors
       void
       onResourceRelease(void)
       {
+      }
+
+      void
+      updateEntityState(void)
+      {
+        m_buffer_entity = String::str("active | Cores Detected: %d | %s", m_num_cpus, getMemoryUsage().c_str());
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_buffer_entity.c_str())));
+      }
+
+      std::string
+      getMemoryUsage()
+      {
+        long memTotal = 0, memFree = 0, swapTotal = 0, swapFree = 0;
+        std::ifstream meminfo("/proc/meminfo");
+        if (!meminfo)
+        {
+          return "";
+        }
+        std::string line;
+        while (std::getline(meminfo, line))
+        {
+          std::istringstream iss(line);
+          std::string key;
+          long value;
+          std::string unit;
+          iss >> key >> value >> unit;
+
+          if (key == "MemTotal:")
+            memTotal = value;
+          else if (key == "MemFree:")
+            memFree = value;
+          else if (key == "SwapTotal:")
+            swapTotal = value;
+          else if (key == "SwapFree:")
+            swapFree = value;
+        }
+
+        meminfo.close();
+        double memSpentGB = (memTotal - memFree) / 1024.0 / 1024.0;
+        double memTotalGB = memTotal / 1024.0 / 1024.0;
+        double swapSpentGB = (swapTotal - swapFree) / 1024.0 / 1024.0;
+        double swapTotalGB = swapTotal / 1024.0 / 1024.0;
+        int memAvailablePercent = static_cast<int>(100 * memFree / static_cast<double>(memTotal));
+        int swapAvailablePercent = swapTotal > 0 ? static_cast<int>(100 * swapFree / static_cast<double>(swapTotal)) : 0;
+
+        std::ostringstream oss;
+        oss << "R: " << memAvailablePercent << "% (" << std::fixed << std::setprecision(1) << memSpentGB
+            << "GB of " << memTotalGB << "GB) | S: " << swapAvailablePercent << "% (" << swapSpentGB
+            << "GB of " << swapTotalGB << "GB)";
+
+        return oss.str();
       }
 
       void
@@ -296,6 +347,7 @@ namespace Monitors
               debug("CPU0: %d%%", usage);
               dispatch(m_cpu[0], DF_KEEP_TIME | DF_LOOP_BACK);
             }
+            updateEntityState();
           }
         }
       }
