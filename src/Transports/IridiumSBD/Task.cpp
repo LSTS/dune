@@ -592,8 +592,6 @@ namespace Transports
       void
       onMain(void)
       {
-        unsigned num_error = 0;
-        unsigned max_error = 3;
         while (!stopping())
         {
           try
