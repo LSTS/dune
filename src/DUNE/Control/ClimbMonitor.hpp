@@ -104,7 +104,9 @@ namespace DUNE
         //! Vehicle at target z
         SM_AT_TARGET,
         //! Vehicle stabilizing
-        SM_STABILIZE
+        SM_STABILIZE,
+        //! Vehicle unable to stabilize
+        SM_EMERGENCY
       };
 
       //! Get z error depending on z units
@@ -123,6 +125,16 @@ namespace DUNE
       //! @return true if vehicle is trying to descend, false if ascending
       bool
       isDescending(double z_error);
+
+      //! Check if vehicle is at surface
+      //! @return true if vehicle is at surface, false ifotherwise
+      bool
+      isAtSurface();
+
+      //! Brake
+      //! @param[in] start true to start braking, false to stop
+      void
+      brake(bool start) const;
 
       //! On target state
       void
@@ -143,6 +155,10 @@ namespace DUNE
       //! Reset climb state
       void
       resetClimb();
+
+      //! Emergency state
+      void
+      onEmergency();
 
       //! Update climb state according to DesiredZ reference
       void

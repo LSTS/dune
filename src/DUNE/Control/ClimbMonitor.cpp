@@ -49,7 +49,8 @@ static const float c_alt_hyst = 0.2;
 static const std::string c_str_states[] = {DTR_RT("Ascending"),
                                            DTR_RT("Descending"),
                                            DTR_RT("On Target"),
-                                           DTR_RT("Stabilizing")};
+                                           DTR_RT("Stabilizing"),
+                                           DTR_RT("Emergency")};
 
 //! Climb monitor name
 static const std::string c_cm_name = DTR_RT("ClimbMonitor");
@@ -164,6 +165,9 @@ namespace DUNE
         case SM_STABILIZE:
           onStabilize();
           break;
+        case SM_EMERGENCY:
+          onEmergency();
+          break;
       }
     }
 
@@ -191,6 +195,25 @@ namespace DUNE
     ClimbMonitor::isDescending(double z_error)
     {
       return z_error < 0;
+    }
+
+    bool
+    ClimbMonitor::isAtSurface()
+    {
+      return m_estate.depth < c_depth_hyst;
+    }
+
+    void
+    ClimbMonitor::brake(bool start) const
+    {
+      IMC::Brake brk;
+      brk.op = start ? IMC::Brake::OP_START : IMC::Brake::OP_STOP;
+      m_args->entity->dispatch(brk, Tasks::DF_LOOP_BACK);
+
+      if (start)
+        info(DTR("Started braking"));
+      else
+        info(DTR("Stopped braking"));
     }
 
     void
@@ -239,7 +262,7 @@ namespace DUNE
       // If at desired z -> send original speed ref and change state
       if  (isOnTarget(z_error))
       {
-        m_args->entity->dispatch(m_speed_ref);
+        brake(false);
         changeState(SM_AT_TARGET);
         return;
       }
@@ -247,7 +270,10 @@ namespace DUNE
       // If unable to stabilize in the allocated time -> ...
       if (m_stabilize_error_timer.overflow())
       {
-        err("Unable to stabilize vehicle depth");
+        err("Unable to stabilize vehicle depth. Braking");
+        brake(true);
+        changeState(SM_EMERGENCY);
+        return;
       }
 
 
@@ -261,14 +287,14 @@ namespace DUNE
       {
         war("Stabilizing -> Increasing speed");
         desired_speed.value = c_speed_boost_rpm;
+        m_args->entity->dispatch(desired_speed);
       }
       else
       {
         
         war("Stabilizing -> Decreasing speed");
-        desired_speed.value = 0;
+        brake(true);
       }
-      m_args->entity->dispatch(desired_speed);
 
       m_stabilize_init = true;
     }
@@ -326,6 +352,32 @@ namespace DUNE
       m_error_deriv_avr.clear();
       m_error_deriv.clear();
       m_climb_error_timer.reset();
+    }
+
+    //! Stabilize state
+    void
+    ClimbMonitor::onEmergency()
+    {
+      if (!m_active)
+        return;
+
+      if (isAtSurface())
+      {
+        info("At surface");
+        brake(false);
+        updateClimbState();
+        return;
+      }
+      
+      // Compute absolute error
+      double z_error = getZError();
+      // If at desired z -> send original speed ref and change state
+      if  (isOnTarget(z_error))
+      {
+        brake(false);
+        changeState(SM_AT_TARGET);
+        return;
+      }
     }
 
     void
