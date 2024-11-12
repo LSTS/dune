@@ -57,6 +57,14 @@ namespace DUNE
         Tasks::Task* task;
         //! Entity for bottom tracker
         Entities::BasicEntity* entity;
+        //! Climb moving average window
+        unsigned window_size;
+        //! Climb error timeout.
+        unsigned climb_error_timeout;
+        //! Stabilize error timeout
+        unsigned stabilize_error_timeout;
+        //! Speed boost to use when stabilizing descent
+        unsigned speed_boost_rpm;
       };
 
       //! Constructor.
@@ -211,7 +219,7 @@ namespace DUNE
       //! Climb error derivative
       DUNE::Math::Derivative<double> m_error_deriv;
       //! Average of climb error change
-      DUNE::Math::MovingAverage<double> m_error_deriv_avr;
+      DUNE::Math::MovingAverage<double>* m_error_deriv_avr;
       //! Flag for first error, for derivative calculation
       bool m_got_error;
       //! Climb error timer, resets if climb error decreases

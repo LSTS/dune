@@ -55,12 +55,6 @@ static const std::string c_str_states[] = {DTR_RT("Ascending"),
 //! Climb monitor name
 static const std::string c_cm_name = DTR_RT("ClimbMonitor");
 
-// This should be arguments
-static const unsigned c_window_size = 10;
-static const unsigned c_climb_error_timeout = 20;
-static const unsigned c_stabilize_error_timeout = 20;
-static const unsigned c_speed_boost_rpm = 1600;
-
 namespace DUNE
 {
   namespace Control
@@ -69,15 +63,18 @@ namespace DUNE
       m_args(args),
       m_active(false),
       m_got_data(false),
-      m_error_deriv_avr(c_window_size),
+      m_error_deriv_avr(nullptr),
       m_got_error(false),
       m_stabilize_init(false)
     {
+      m_error_deriv_avr = new DUNE::Math::MovingAverage<double>(args->window_size);
       reset();
     }
 
     ClimbMonitor::~ClimbMonitor(void)
     {
+      if (m_error_deriv_avr != nullptr)
+        delete m_error_deriv_avr;
     }
 
     void
@@ -87,8 +84,8 @@ namespace DUNE
       m_estate.clear();
       m_cstate = SM_AT_TARGET;
       m_got_data = false;
-      m_climb_error_timer.setTop(c_climb_error_timeout);
-      m_stabilize_error_timer.setTop(c_stabilize_error_timeout);
+      m_climb_error_timer.setTop(m_args->climb_error_timeout);
+      m_stabilize_error_timer.setTop(m_args->stabilize_error_timeout);
       resetClimb();
       resetStabilize();
     }
@@ -286,7 +283,7 @@ namespace DUNE
       if (isDescending(z_error))
       {
         war("Stabilizing -> Increasing speed");
-        desired_speed.value = c_speed_boost_rpm;
+        desired_speed.value = m_args->speed_boost_rpm;
         m_args->entity->dispatch(desired_speed);
       }
       else
@@ -331,7 +328,7 @@ namespace DUNE
       }
 
       // if error is decreasing, on average -> reset climb timer
-      double error_change_avr = m_error_deriv_avr.update(z_error_deriv);
+      double error_change_avr = m_error_deriv_avr->update(z_error_deriv);
       if (error_change_avr < 0)
       {
         m_climb_error_timer.reset();
@@ -349,7 +346,7 @@ namespace DUNE
     ClimbMonitor::resetClimb()
     {
       m_got_error = false;
-      m_error_deriv_avr.clear();
+      m_error_deriv_avr->clear();
       m_error_deriv.clear();
       m_climb_error_timer.reset();
     }
@@ -368,7 +365,7 @@ namespace DUNE
         updateClimbState();
         return;
       }
-      
+
       // Compute absolute error
       double z_error = getZError();
       // If at desired z -> send original speed ref and change state
