@@ -199,9 +199,15 @@ namespace DUNE
         }
       } else {
         if (m_lines.size()) {
-          getTask()->err(
+          getTask()->war(
                          "There are %d lines in the queue. Convert to queue of bytes.",
                          m_lines.size());
+          while (m_lines.size() > 0) {
+            std::string line = m_lines.pop();
+            getTask()->war("line: %s", line.c_str());
+            for (size_t i = 0; i < line.size(); ++i)
+              m_bytes.push(line[i]);
+          }
         }
       }
     }
