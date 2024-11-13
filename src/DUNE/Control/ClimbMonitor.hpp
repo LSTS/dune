@@ -139,6 +139,14 @@ namespace DUNE
       bool
       isAtSurface();
 
+      //! Check if there is enough data to start tracking
+      //! @return true if there is sufficient data, false otherwise
+      bool
+      gotData()
+      {
+        return m_got_zref && m_got_estate;
+      }
+
       //! Brake
       //! @param[in] start true to start braking, false to stop
       void
@@ -214,7 +222,9 @@ namespace DUNE
       //! Last received DesiredSpeed message.
       DUNE::IMC::DesiredSpeed m_speed_ref;
       //! Flag first DesiredZ received
-      bool m_got_data;
+      bool m_got_zref;
+      //! Flag first EstimatedState received
+      bool m_got_estate;
       //! Climb state
       //! Climb error derivative
       DUNE::Math::Derivative<double> m_error_deriv;

@@ -62,7 +62,8 @@ namespace DUNE
     ClimbMonitor::ClimbMonitor(const Arguments* args):
       m_args(args),
       m_active(false),
-      m_got_data(false),
+      m_got_zref(false),
+      m_got_estate(false),
       m_error_deriv_avr(nullptr),
       m_got_error(false),
       m_stabilize_init(false)
@@ -83,7 +84,8 @@ namespace DUNE
       m_z_ref.clear();
       m_estate.clear();
       m_cstate = SM_AT_TARGET;
-      m_got_data = false;
+      m_got_zref = false;
+      m_got_estate = false;
       m_climb_error_timer.setTop(m_args->climb_error_timeout);
       m_stabilize_error_timer.setTop(m_args->stabilize_error_timeout);
       resetClimb();
@@ -120,7 +122,7 @@ namespace DUNE
       }
 
       m_z_ref = *msg;
-      m_got_data = true;
+      m_got_zref = true;
       updateClimbState();
     }
 
@@ -140,13 +142,14 @@ namespace DUNE
         return;
 
       m_estate = *msg;
+      m_got_estate = true;
       updateStateMachine();
     }
 
     void
     ClimbMonitor::updateStateMachine(void)
     {
-      if (!m_got_data)
+      if (!gotData())
         return;
 
       // Run state machine
@@ -216,7 +219,7 @@ namespace DUNE
     void
     ClimbMonitor::updateClimbState()
     {
-      if (!m_got_data)
+      if (!gotData())
         return;
       
       double z_error = getZError();
