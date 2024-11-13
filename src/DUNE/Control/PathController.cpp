@@ -554,6 +554,13 @@ namespace DUNE
       }
       else
       {
+        // climb monitor can not track progress without a z reference
+        if (isMonitoringClimb())
+        {
+          debug("NO_Z flag, disabling climb monitor");
+          m_climb_monitor->deactivate();
+        }
+        
         m_ts.z_control = false;
         m_pcs.flags |= IMC::PathControlState::FL_NO_Z;
       }
