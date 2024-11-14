@@ -38,6 +38,8 @@ function Main(root_id) {
 
 Main.prototype = new BasicSection;
 var system_mode = 6;
+var GPS_srcEntity_id = -1;
+var rpm_value = 0;
 
 Main.prototype.m_fields = [
   {
@@ -63,6 +65,11 @@ Main.prototype.m_fields = [
   {
     "label": "Position:",
     "data_function": getPosition,
+    "side": "left"
+  },
+  {
+    "label": "Speed:",
+    "data_function": getSpeed,
     "side": "left"
   },
   {
@@ -115,13 +122,24 @@ Main.prototype.createTable = function () {
   this.m_base.appendChild(this.sys_name_div)
 
   this.m_table = document.createElement('table');
-  this.m_table.style.width = '100%';
+  this.m_table.style.maxWidth = '90%';
+  this.m_table.style.overflow = 'hidden';
+  this.m_table.style.width = '90%';
+  this.m_table.style.marginLeft = '5%';
+  this.m_table.style.marginRight = '5%';
+  this.m_table.style.boxSizing = 'border-box';
+  this.m_table.style.margin = '0 auto';
+
   this.m_base.appendChild(this.m_table);
 
   var tr = document.createElement('tr');
   var tdc = document.createElement('td');
   tdc.style.verticalAlign = 'top';
-  
+
+  tr.style.boxShadow = "0 1px 2px var(--c-color-text)";
+  tr.style.padding = "10px 18px";
+  tr.style.borderRadius = "18px";
+
   var tdl = document.createElement('td');
   tdl.style.verticalAlign = 'top';
   tdl.style.width = '70%';
@@ -210,6 +228,20 @@ Main.prototype.update = function () {
     field.widget.update(value);
   }
 
+  //search in dune_messages for EntityInfo, then search for GPSFix and print src_ent.
+  for (i in g_data.dune_messages) {
+    var msg = g_data.dune_messages[i];
+    if (msg.abbrev == 'EntityInfo') {
+      var name = g_data.dune_entities[msg.src_ent].label;
+      if (name == 'GPS') {
+        GPS_srcEntity_id = msg.src_ent;
+      }
+    }
+    if (msg.abbrev == 'Rpm') {
+      rpm_value = msg.value;
+    }
+  }
+
   this.updateTasks();
   this.updateVehicleState();
 };
@@ -283,6 +315,17 @@ function findMessage(data, abbrev) {
     var msg = data.dune_messages[m];
 
     if (msg.abbrev == abbrev)
+      return msg;
+  }
+
+  return null;
+};
+
+function findMessageSRCID(data, abbrev, src_id) {
+  for (m in data.dune_messages) {
+    var msg = data.dune_messages[m];
+
+    if (msg.abbrev == abbrev && msg.src_ent == src_id)
       return msg;
   }
 
@@ -416,6 +459,19 @@ function getPosition(data, value) {
   var str = ((msg.lat > 0) ? 'N' : 'S') + lat[0] + ' ' + lat[1].toFixed(4);
   var lon = convertRadiansToDM(msg.lon);
   return str + ' / ' + ((msg.lon > 0) ? 'E' : 'W') + lon[0] + ' ' + lon[1].toFixed(4);
+}
+
+function getSpeed(data, value) {
+  var msg = findMessageSRCID(data, 'GpsFix', GPS_srcEntity_id);
+  if (msg == null)
+    return 'Unknown';
+
+  //get the speed in meters from message, need to convert the string msg.sog to value
+  var speed = parseFloat(msg.sog);
+  //convert to Knots
+  var speedKnots = speed * 1.9438444924406;
+  var text = speed.toFixed(2) + ' m/s | ' + speedKnots.toFixed(2) + ' kt | rpm: ' + rpm_value;
+  return text;
 }
 
 function getUptime(data) {
