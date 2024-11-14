@@ -151,6 +151,9 @@ namespace Transports
 
         m_parent->inf("Status of transmission message (req_id:%d | %s) changed to: %s",
                       req->req_id, message_name.c_str(), info.c_str());
+
+        if(req->data_mode == IMC::TransmissionRequest::DMODE_TEXT)
+          m_parent->inf("Text message to send: %s", req->txt_data.c_str());
       }
 
       std::string
