@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -30,15 +30,10 @@
 #ifndef USERINTERFACES_MANTACORE_DRIVER_HPP_INCLUDED_
 #define USERINTERFACES_MANTACORE_DRIVER_HPP_INCLUDED_
 
-// ISO C++ 98 headers.
-#include <cstring>
-#include <vector>
-#include <cstdlib>
-
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Local headers
+// Local headers.
 #include "MantaUtils.hpp"
 
 namespace UserInterfaces
@@ -46,294 +41,146 @@ namespace UserInterfaces
   namespace MantaCore
   {
     using DUNE_NAMESPACES;
-    static const int c_max_power_channels = 8;
-    static const float c_timeout_data_in = 1.0;
 
-    class DriverMantaCore
+    class Driver
     {
     public:
-      #define TIME_TO_RX_DATA       (2)
-      #define MAX_LINE_FREE_TEXT    (4)
-      #define MAX_BQ_INPUT_DATA     (16)
-      #define MAX_PAC_INPUT_DATA    (3)
-      #define BYTE_PREAMBLE         '$'
-      #define BYTE_CSUM             '*'
-      #define BYTE_MAG              'a'
-      #define BYTE_ACK              'A'
-      #define BYTE_BQ_DATA          'B'
-      #define BYTE_BQ_CELL          'c'
-      #define BYTE_CHANNEL_DATA     'C'
-      #define BYTE_SEND_DATA        'd'
-      #define BYTE_DATA_POWER       'D'
-      #define BYTE_FIRMWARE         'f'
-      #define BYTE_CHANNEL_OFF      'F'
-      #define BYTE_BQ_INFO          'i'
-      #define BYTE_LTC_DATA         'l'
-      #define BYTE_AMODEM           'm'
-      #define BYTE_CPU              'M'
-      #define BYTE_CELL_NUMBER      'n'
-      #define BYTE_NACK             'N'
-      #define BYTE_CPU_OFF          'o'
-      #define BYTE_CHANNEL_ON       'O'
-      #define BYTE_PAC_DATA         'p'
-      #define BYTE_STOP_DATA        's'
-      #define BYTE_SAT              'S'
-      #define BYTE_FREE_TEXT        'T'
-      #define BYTE_CPU_OK           'V'
+      //! BQ data.
+      BQData m_bqData;
+      //! LTC data.
+      LTCData m_ltcData;
+      //! PAC data.
+      PACData m_pacData;
+      //! Query systems.
+      bool m_query_systems;
 
-      enum PARSER_STATE {
-        CMD_WAITING = 0,
-        CMD_NACK,
-        CMD_ACK,
-        CMD_IDLE
-      };
-
-      enum DATA_POWER {
-        POWER_VOLTAGE = 0,
-        POWER_CURRENT,
-        POWER_TEMPERATURE,
-        POWER_REMAINING_CAP,
-        POWER_FULL_CAP,
-        POWER_CELLS_INFO,
-        POWER_TIME_FULL,
-        POWER_TIME_DISCHARGE,
-      };
-
-      enum POWER_CHANNEL {
-        POWER_CHANNEL_GSM = 0,
-        POWER_CHANNEL_IRIDIUM,
-        POWER_CHANNEL_GNSS,
-        POWER_CHANNEL_ETH,
-        POWER_CHANNEL_WIFI,
-        POWER_CHANNEL_AM1,
-        POWER_CHANNEL_AM2,
-        POWER_CHANNEL_SEATRAC
-      };
-
-      struct BQData
+      Driver(Tasks::Task* task, IO::Handle* handle, PowerChannelMantaCore* pwr_chs, int numberCell, std::string system_name):
+        m_query_systems(false),
+        m_task(task),
+        m_handle(handle),
+        m_pwr_chs(pwr_chs),
+        m_number_cells(numberCell),
+        m_sys_name(system_name),
+        m_send_cmd_state(CMD_IDLE),
+        m_parser_state(PARSER_PREAMBLE),
+        m_free_text_state(0),
+        m_free_text("Manta Core"),
+        m_treqid(0)
       {
-        //! Voltage
-        float voltage;
-        //! Current
-        float current;
-        //! Temperature
-        float temperature;
-        //! Remaining capacity
-        float r_cap;
-        //! Full Charge Capacity
-        float f_cap;
-        //! Cell Voltage
-        float cell_volt[MAX_BQ_INPUT_DATA];
-        //! State of new data received
-        bool state_new_data[MAX_BQ_INPUT_DATA];
-        //! State of new data received from cells
-        bool state_new_data_cells[MAX_BQ_INPUT_DATA];
-        //! Time, in min to full empty battery
-        float time_empty;
-        //! Time, in min, to full charge of battery
-        float time_full;
-      };
-
-      struct LTCData
-      {
-        //! Voltage
-        float voltage;
-        //! Current
-        float current;
-        //! Flag new ltc data
-        bool new_data_ltc;
-      };
-
-      struct PACData
-      {
-        //! Voltage
-        float voltage[MAX_PAC_INPUT_DATA];
-        //! Current
-        float current[MAX_PAC_INPUT_DATA];
-        //! Flag new pac data
-        bool new_data_pac[MAX_PAC_INPUT_DATA];
-      };
-
-      struct PowerChannelData
-      {
-        //! Channel Label
-        std::string label;
-        //! Channel state
-        bool is_on;
-      };
-
-      DriverMantaCore(DUNE::Tasks::Task *task, SerialPort *uart, int numberCell, std::string system_name) :
-      m_task(task)
-      {
-        m_uart = uart;
-        m_uart->flush();
-        m_number_cells = numberCell;
-        m_byte_in_state = BYTE_IN_PREAMBLE;
-        m_new_rx_string = false;
-        m_cnt_rx = 0;
-        m_wdog.setTop(TIME_TO_RX_DATA);
-        m_send_cmd_state = CMD_IDLE;
-        m_task->inf("System Internal IP:%s", m_sys_ip.c_str());
-        m_sys_name = system_name;
-        m_task->inf("System Name:%s", m_sys_name.c_str());
-        m_free_text_state = 0;
-        m_com_error = false;
-        m_is_to_turn_off_cpu = false;
-        m_mutil = new MantaUtils(m_task);
-        m_wdog_data_simulated.setTop(c_timeout_data_in);
-        m_modem_number = 0;
-        std::sprintf(m_free_text, "Manta Core");
+        querySystems(true);
+        m_handle->flush();
       }
 
-      ~DriverMantaCore(void) {}
-
-      bool
-      pollData(void)
+      uint16_t
+      getLastTreqId(void)
       {
-        if(m_send_cmd_state == CMD_WAITING && m_wdog.overflow())
-        {
-          m_send_cmd_state = CMD_IDLE;
-          m_task->war("Fail receiving feedback from board");
-          m_com_error = true;
-        }
-
-        if (!Poll::poll(*m_uart, 0.2))
-          return false;
-
-        size_t rv = m_uart->readString(m_bfr_rx, sizeof(m_bfr_rx));
-        if(rv > 0)
-        {
-          addBytes(m_bfr_rx, rv);
-          return true;
-        }
-        else
-        {
-          m_task->err("no data");
-          return false;
-        }
-      }
-
-      bool
-      majorError(void)
-      {
-        return m_com_error;
-      }
-
-      uint8_t
-      commandState(void)
-      {
-        return m_send_cmd_state;
+        return m_treqid;
       }
 
       void
-      setupBoard(void)
+      checkCommandQueue(void)
       {
-        requestConnectionToBoard();
-        waitForFeedback();
-        if(commandState() != CMD_ACK)
-          throw RestartNeeded(DTR("Fail requestConnectionToBoard"), 5);
+        switch (m_send_cmd_state)
+        {
+        case CMD_ACK:
+          if (!m_queue.empty())
+            m_queue.pop();
+          m_send_cmd_state = CMD_IDLE;
+          [[fallthrough]];
+        case CMD_WAITING:
+        case CMD_NACK:
+        case CMD_ERROR:
+          if (!m_queue.empty())
+          {
+            auto& cmd = m_queue.front();
+            sendCommand(cmd.first, cmd.second, true);
+          }
+          break;
+        case CMD_IDLE:        
+        default:
+          break;
+        }
+      }
 
-        requestFirmwareVersion();
-        waitForFeedback();
-        if(commandState() != CMD_ACK)
-          throw RestartNeeded(DTR("Fail requestFirmwareVersion"), 5);
-
-        setNumberCells();
-        waitForFeedback();
-        if(commandState() != CMD_ACK)
-          throw RestartNeeded(DTR("Fail requestFirmwareVersion"), 5);
+      bool
+      emptyQueue(void)
+      {
+        return m_queue.empty();
       }
 
       void
       requestConnectionToBoard(void)
       {
-        m_task->debug("request connection to board");
-        sprintf(cmd_text, "%c,%c,%c%c",BYTE_PREAMBLE, BYTE_CPU, BYTE_CPU_OK, '\0');
-        sendCommand(cmd_text);
+        m_task->spew("request connection to board");
+        sprintf(m_cmd_text, "%c,%c,%c%c", BYTE_PREAMBLE, BYTE_CPU, BYTE_CPU_OK, '\0');
+        sendCommand(m_cmd_text, true);
       }
+
+      void
+      notifyBoardAboutDisconnect(void)
+      {
+        m_task->inf("notify board about disconnect");
+        sprintf(m_cmd_text, "%c,%c,%c%c", BYTE_PREAMBLE, BYTE_CPU, BYTE_CPU_DISCONNECT, '\0');
+        sendCommand(m_cmd_text, false);
+      }
+
 
       void
       requestFirmwareVersion(void)
       {
-        m_task->debug("request firmware");
-        sprintf(cmd_text, "%c,%c%c",BYTE_PREAMBLE, BYTE_FIRMWARE, '\0');
-        sendCommand(cmd_text);
+        m_task->spew("request firmware");
+        sprintf(m_cmd_text, "%c,%c%c", BYTE_PREAMBLE, BYTE_FIRMWARE, '\0');
+        sendCommand(m_cmd_text, true);
       }
 
       void
       setNumberCells(void)
       {
-        m_task->debug("set number cells");
-        sprintf(cmd_text, "%c,%c,%d%c",BYTE_PREAMBLE, BYTE_CELL_NUMBER, m_number_cells, '\0');
-        sendCommand(cmd_text);
+        m_task->spew("set number cells");
+        sprintf(m_cmd_text, "%c,%c,%d%c", BYTE_PREAMBLE, BYTE_CELL_NUMBER, m_number_cells, '\0');
+        sendCommand(m_cmd_text, true);
       }
 
       void
       setNumberSat(uint8_t sat_number)
       {
-        m_task->debug("send sat number");
-        sprintf(cmd_text, "%c,%c,%d%c",BYTE_PREAMBLE, BYTE_SAT, sat_number, '\0');
-        sendCommand(cmd_text);
-        waitForFeedback();
-        if(commandState() != CMD_ACK)
-        {
-          m_task->war("Fail send sat number %d", sat_number);
-        }
+        m_task->spew("sending satellite number");
+        sprintf(m_cmd_text, "%c,%c,%d%c", BYTE_PREAMBLE, BYTE_SAT, sat_number, '\0');
+        sendCommand(m_cmd_text, false);
       }
 
       void
-      setPowerChannelName(uint8_t id, std::string name)
+      setPowerChannelState(std::string pwr_ch, uint8_t pin_state)
       {
-        m_power_channel_data[id].label = name;
-      }
-
-      bool
-      setPowerChannelState(uint8_t power_channel, uint8_t pin_state)
-      {
-        m_task->debug("set power channel state %d|%s", power_channel, pin_state ? "ON" : "OFF");
-        if(pin_state)
-          sprintf(cmd_text, "%c,%c,%d,%c%c",BYTE_PREAMBLE, BYTE_CHANNEL_DATA, power_channel, BYTE_CHANNEL_ON, '\0');
-        else
-          sprintf(cmd_text, "%c,%c,%d,%c%c",BYTE_PREAMBLE, BYTE_CHANNEL_DATA, power_channel, BYTE_CHANNEL_OFF, '\0');
-        sendCommand(cmd_text);
-        waitForFeedback();
-        if(commandState() != CMD_ACK)
-        {
-          m_task->war("Fail set state of power channel %d", power_channel + 1);
-          return false;
-        }
-        else
-        {
-          if(pin_state == BYTE_CHANNEL_ON)
-            m_power_channel_data[power_channel].is_on = true;
-          else
-            m_power_channel_data[power_channel].is_on = false;
-
-          return true;
-        }
+        PowerChannelMantaCore::iterator power_channel = m_pwr_chs->find(pwr_ch);
+        m_task->inf("power channel %s|%s", pwr_ch.c_str(), pin_state ? "ON" : "OFF");
+        sprintf(m_cmd_text, "%c,%c,%d,%c%c", BYTE_PREAMBLE,
+                                             BYTE_CHANNEL_DATA,
+                                             power_channel->second->id,
+                                             pin_state ? BYTE_CHANNEL_ON : BYTE_CHANNEL_OFF,
+                                             '\0');
+        sendCommand(m_cmd_text, true);
+        power_channel->second->state.state = pin_state ? BYTE_CHANNEL_ON : BYTE_CHANNEL_OFF;
       }
 
       void
-      requestDataPower(void)
+      requestDataPower(bool on)
       {
-        m_task->debug("request data power");
-        sprintf(cmd_text, "%c,%c,%c%c",BYTE_PREAMBLE, BYTE_DATA_POWER, BYTE_SEND_DATA, '\0');
-        sendCommand(cmd_text);
+        m_task->spew("request data power");
+        sprintf(m_cmd_text, "%c,%c,%c%c",
+                            BYTE_PREAMBLE,
+                            BYTE_DATA_POWER, on ? BYTE_SEND_DATA : BYTE_STOP_DATA,
+                            '\0');
+        sendCommand(m_cmd_text, true);
       }
 
-      bool
-      addModemNameDevice(std::string modem_name, uint8_t id)
+      void
+      sendStatus(char code, char type, std::string info)
       {
-        m_task->debug("addModemNameDevice");
-        sprintf(cmd_text, "%c,%c,%d,%s%c",BYTE_PREAMBLE, BYTE_AMODEM, id, modem_name.c_str(), '\0');
-        sendCommand(cmd_text);
-        waitForFeedback();
-        if(commandState() != CMD_ACK)
-        {
-          m_task->war("Fail to send modem name %s|%d", modem_name.c_str(), id);
-          return false;
-        }
-        return true;
+        m_task->debug("sending status");
+        char bfr[64];
+        sprintf(bfr, "%c,%c,%c,%s%c", BYTE_PREAMBLE, code, type, info.c_str(), '\0');
+        sendCommand(bfr, false);
       }
 
       void
@@ -346,21 +193,21 @@ namespace UserInterfaces
             break;
 
           case 1:
-            if(m_mutil->getInterfaceIP("eth0", m_sys_ip))
+            if(getInterfaceIP("eth0", m_sys_ip))
               std::sprintf(m_free_text, "Int IP: %s%c", m_sys_ip.c_str(), '\0');
             else
               std::sprintf(m_free_text, "Int IP: Fail%c", '\0');
             break;
 
           case 2:
-            if(m_mutil->getInterfaceIP("ztcfw4jwt3", m_sys_ip))
+            if(getInterfaceIP("ztcfw4jwt3", m_sys_ip))
               std::sprintf(m_free_text, "Zero IP: %s%c", m_sys_ip.c_str(), '\0');
             else
               std::sprintf(m_free_text, "Zero IP: Fail%c", '\0');
             break;
 
           case 3:
-            if(m_mutil->getInterfaceIP("wwan0", m_sys_ip))
+            if(getInterfaceIP("wwan0", m_sys_ip))
               std::sprintf(m_free_text, "GPRS IP: %s%c", m_sys_ip.c_str(), '\0');
             else
               std::sprintf(m_free_text, "GPRS IP: Fail%c", '\0');
@@ -375,58 +222,22 @@ namespace UserInterfaces
           m_free_text_state = 0;
       }
 
-      bool
-      setPowerChannelData(uint8_t channel_id, std::string power_channel_name, uint8_t power_channel_state)
-      {
-        struct DriverMantaCore::PowerChannelData m_data;
-        m_data.label = power_channel_name;
-        if(power_channel_state == true)
-          m_data.is_on = IMC::PowerChannelState::PCS_ON;
-        else
-          m_data.is_on = IMC::PowerChannelState::PCS_OFF;
-
-        m_task->inf("Power Channel %s|%s", m_data.label.c_str(), m_data.is_on ? "ON" : "OFF");
-        return setPowerChannelState(channel_id, m_data.is_on);
-      }
-
-      uint8_t
-      getIdOfPowerChannel(std::string power_channel_name)
-      {
-        struct DriverMantaCore::PowerChannelData data_power;
-        for(uint8_t i = 0; i < MantaCore::c_max_power_channels; i++)
-        {
-          data_power =getPowerChannelData(i);
-          m_task->debug("%s | %s", data_power.label.c_str(), power_channel_name.c_str());
-          if(data_power.label == power_channel_name)
-            return i;
-        }
-
-        return 255;
-      }
-
       void
-      addModemNameToList(std::string modem_name)
+      setTargetAddress(std::string name)
       {
-        m_task->debug("Modem: %s|%d", modem_name.c_str(), m_modem_number);
-        addModemNameDevice(modem_name, m_modem_number);
-        m_modem_names.push_back(modem_name);
-        m_modem_number++;
+        if (name == "reset")
+          m_task->spew("reseting known addresses");
+        else
+          m_task->spew("sending known address: %s", name.c_str());
+
+        sprintf(m_cmd_text, "%c,%c,%s%c", BYTE_PREAMBLE, BYTE_AMODEM, name.c_str(), '\0');
+        sendCommand(m_cmd_text, true);
       }
 
       std::string
       firmwareVersion(void)
       {
         return m_version;
-      }
-
-      void
-      resetStateNewData(void)
-      {
-        for (uint8_t t = 0; t < MAX_BQ_INPUT_DATA; t++)
-        {
-          m_bqData.state_new_data[t] = false;
-          m_bqData.state_new_data_cells[t] = false;
-        }
       }
 
       void
@@ -489,377 +300,299 @@ namespace UserInterfaces
         return m_pacData;
       }
 
-      struct PowerChannelData
-      getPowerChannelData(uint8_t channel)
-      {
-        return m_power_channel_data[channel];
-      }
-
       bool
-      isToTurnOffCPU(void)
+      boardBooted(void)
       {
-        return m_is_to_turn_off_cpu;
+        if (m_wdog_boot.getTop() == 0.0f || !m_wdog_boot.overflow())
+          return false;
+
+        m_wdog_boot.setTop(0.0f);
+        return true;
       }
 
-      void
-      simulatedDataUpdate(void)
-      {
-        if(m_wdog_data_simulated.overflow())
-        {
-          m_wdog_data_simulated.reset();
-          dispatchGpsSimulatedData();
-        }
-      }
-
-      uint8_t
-      getSizeOfListNameModems(void)
-      {
-        return m_modem_names.size();
-      }
-
-      std::string
-      getNameOfModemAt(uint8_t id)
-      {
-        return m_modem_names[id];
-      }
-
-      BQData m_bqData;
-      LTCData m_ltcData;
-      PACData m_pacData;
-      PowerChannelData m_power_channel_data[c_max_power_channels];
-
-    private:
-      #define MAX_SIZE_SERIAL_DATA  (256)
-
-      enum BYTE_IN_STATE {
-          BYTE_IN_PREAMBLE = 0,
-          BYTE_IN_DATA,
-          BYTE_IN_CSUM,
-          BYTE_IN_CHECK
-      };
-
-      enum BQ_DATA_TYPE {
-          BQ_GENERAL = 0,
-          BQ_CELL,
-          BQ_INFO,
-      };
-
-      //! Parent task.
-      DUNE::Tasks::Task *m_task;
-      //! Manta Utils
-      MantaUtils* m_mutil;
-      //! number of cell to read
-      int m_number_cells;
-      //! Serial port handle.
-      SerialPort *m_uart;
-      //! System name
-      std::string m_sys_name;
-      //! System ip
-      std::string m_sys_ip;
-      //! Buffer uart tx
-      char m_bfr_tx[64];
-      //! Buffer uart rx
-      char m_bfr_rx[MAX_SIZE_SERIAL_DATA];
-      //! Buffer parser
-      char m_rx_buf_parser[MAX_SIZE_SERIAL_DATA];
-      //! Flag to control state of command send.
-      uint8_t m_send_cmd_state;
-      //! Byte in state
-      uint8_t m_byte_in_state;
-      //! Flag to control new string input
-      bool m_new_rx_string;
-      //! counter of data in
-      uint16_t m_cnt_rx;
-      //! Csum rx
-      uint8_t m_csum_rx;
-      //! Input watchdog.
-      Time::Counter<float> m_wdog;
-      //! Data Simulated watchdog.
-      Time::Counter<float> m_wdog_data_simulated;
-      //! String command
-      char cmd_text[64];
-      //! Firmware version
-      std::string m_version;
-      //| Free text state
-      uint8_t m_free_text_state;
-      //! Free text to send
-      char m_free_text[128];
-      //! major error in communication
-      bool m_com_error;
-      //! flag to control poweroff of cpu
-      bool m_is_to_turn_off_cpu;
-      //! Array of system modems names
-      std::vector<std::string> m_modem_names;
-      //! Counter of number of modems
-      uint8_t m_modem_number;
-
-      uint8_t
-      calcCRC8(char *data_in)
-      {
-        uint8_t csum = 0x00;
-        uint16_t t = 0;
-        while (data_in[t] != BYTE_CSUM)
-        {
-          csum ^= data_in[t];
-          t++;
-        }
-        return (csum | 0x80);
-      }
-
-      void
-      parseDataIn(char byte_in)
-      {
-        switch (m_byte_in_state)
-        {
-          case BYTE_IN_PREAMBLE:
-            if(byte_in == BYTE_PREAMBLE)
-            {
-              m_cnt_rx = 1;
-              m_rx_buf_parser[0] = byte_in;
-              m_rx_buf_parser[m_cnt_rx] = '\0';
-              m_new_rx_string = false;
-              m_byte_in_state = BYTE_IN_DATA;
-            }
-            break;
-
-          case BYTE_IN_DATA:
-            if(m_cnt_rx < MAX_SIZE_SERIAL_DATA)
-            {
-              m_rx_buf_parser[m_cnt_rx++] = byte_in;
-              m_rx_buf_parser[m_cnt_rx] = '\0';
-              if(byte_in == BYTE_CSUM)
-                m_byte_in_state = BYTE_IN_CSUM;
-            }
-            else
-            {
-              m_cnt_rx = 0;
-              m_rx_buf_parser[0] = '\0';
-              m_new_rx_string = false;
-              m_byte_in_state = BYTE_IN_PREAMBLE;
-              m_task->war("[PARSER]:OVERFLOW BUF RX\n");
-            }
-            break;
-
-          case BYTE_IN_CSUM:
-            m_csum_rx = byte_in;
-            m_byte_in_state = BYTE_IN_CHECK;
-            break;
-
-          case BYTE_IN_CHECK:
-            checkDataIn();
-            m_cnt_rx = 0;
-            m_rx_buf_parser[0] = '\0';
-            m_byte_in_state = BYTE_IN_PREAMBLE;
-            break;
-
-          default:
-            m_cnt_rx = 0;
-            m_rx_buf_parser[0] = '\0';
-            m_new_rx_string = false;
-            m_byte_in_state = BYTE_IN_PREAMBLE;
-            break;
-        }
-      }
-
-      void
-      checkDataIn(void)
-      {
-        if(m_csum_rx == calcCRC8(m_rx_buf_parser))
-        {
-          char mode_info;
-          std::sscanf(m_rx_buf_parser, "$,%c,%*s", &mode_info);
-          switch (mode_info)
-          {
-            case BYTE_ACK:
-              m_send_cmd_state = CMD_ACK;
-              break;
-
-            case BYTE_NACK:
-              m_send_cmd_state = CMD_NACK;
-              break;
-
-            case BYTE_FIRMWARE:
-              m_version = getStringAt(m_rx_buf_parser, 2, ',');
-              break;
-
-            case BYTE_DATA_POWER:
-              char data_type;
-              std::sscanf(m_rx_buf_parser, "$,D,%c,%*s", &data_type);
-              switch (data_type)
-              {
-                case BYTE_BQ_DATA:
-                  decodeBqData(BQ_GENERAL);
-                  break;
-
-                case BYTE_BQ_CELL:
-                  decodeBqData(BQ_CELL);
-                  break;
-
-                case BYTE_BQ_INFO:
-                  decodeBqData(BQ_INFO);
-                  break;
-
-                case BYTE_LTC_DATA:
-                  std::sscanf(m_rx_buf_parser, "$,D,l,%f,%f,%*s", &m_ltcData.voltage, &m_ltcData.current);
-                  setLTCNewData(true);
-                  m_task->debug("LTC: volt:%.2fV | curr:%.2fA", m_ltcData.voltage, m_ltcData.current);
-                  break;
-
-                case BYTE_PAC_DATA:
-                  int id;
-                  float v, a;
-                  std::sscanf(m_rx_buf_parser, "$,D,p,%d,%f,%f,%*s", &id, &v, &a);
-                  m_pacData.voltage[id - 1] = v;
-                  m_pacData.current[id - 1] = a / 1000.0;
-                  setPACNewData(true, id - 1);
-                  m_task->debug("PAC%d: volt:%.2fV | curr:%.2fA", id, m_pacData.voltage[id - 1], m_pacData.current[id - 1]);
-                  break;
-
-                default:
-                  m_task->war("IN:%s", m_rx_buf_parser);
-                  break;
-                }
-              break;
-
-            case BYTE_CPU_OFF:
-              m_is_to_turn_off_cpu = true;
-              break;
-
-            default:
-              m_task->war("IN:%s", m_rx_buf_parser);
-              break;
-          }
-        }
-        else
-        {
-          m_task->inf("Wrong csum message");
-        }
-      }
-
-      void
-      addBytes(char *data_in, uint16_t size_data_in)
-      {
-        for(uint16_t i = 0; i < size_data_in; i++)
-        {
-          parseDataIn(data_in[i]);
-        }
-      }
-
+      //! TODO: if ((m_send_cmd_state == CMD_WAITING && m_wdog.overflow()), retransmit last -> after 5 attempts, com_error.
+      //! TODO: if (m_send_cmd_state == CMD_NACK), retransmit last -> after 5 attempts, com_error.
+      //! TODO: if command needs a response, make sure it makes sense
+      //! (ex: if DUNE asks for Firmware Version, make sure it receives the Firmware Version,
+      //! at this point, any message recognized message other than NACK is accepted as valid response).
       bool
-      sendCommand(std::string text_cmd)
+      checkDataIn(std::string line)
       {
-        if(m_send_cmd_state != CMD_WAITING)
+        m_task->spew("received: %s", sanitize(line).c_str());
+        uint8_t rcsum = line.size() > 2 ? line[line.size() - 2] : 0;
+        uint8_t ccsum = calcCRC8(line);
+        if(rcsum != ccsum)
         {
-          m_wdog.reset();
-          m_new_rx_string = false;
-          std::sprintf(m_bfr_tx, "%s,*%c", text_cmd.c_str(), '\0');
-          uint8_t csum = calcCRC8(m_bfr_tx);
-          std::sprintf(m_bfr_tx, "%s,*%c\n%c", text_cmd.c_str(), csum, '\0');
-          m_uart->writeString(m_bfr_tx);
-          m_task->debug("CMD:%s", m_bfr_tx);
-          m_send_cmd_state = CMD_WAITING;
+          m_task->debug("message with invalid csum | r: %hhu c: %hhu", rcsum, ccsum);
+          return false;
+        }
+
+        std::vector<std::string> lst;
+        String::split(line, ",", lst);
+        if (lst[1] == "BOOT")
+        {
+          if (lst[2] == "SYNC" && lst[3] == "#")
+            m_wdog_boot.setTop(2.0f);
           return true;
         }
 
-        m_task->inf("Fail send command to board %s", m_bfr_tx);
-        return false;
+        char mode_info = lst[1].front();
+        switch (mode_info)
+        {
+          case BYTE_ACK:
+            m_send_cmd_state = CMD_ACK;
+            break;
+
+          case BYTE_NACK:
+            m_send_cmd_state = CMD_NACK;
+            break;
+
+          case BYTE_FIRMWARE:
+          {
+            m_version = lst[2];
+            m_send_cmd_state = CMD_ACK;
+            break;
+          }
+
+          case BYTE_DATA_POWER:
+          {
+            char data_type = lst[2].front();
+            switch (data_type)
+            {
+              case BYTE_BQ_DATA:
+                decodeBqData(BQ_GENERAL, lst);
+                break;
+
+              case BYTE_BQ_CELL:
+                decodeBqData(BQ_CELL, lst);
+                break;
+
+              case BYTE_BQ_INFO:
+                decodeBqData(BQ_INFO, lst);
+                break;
+
+              case BYTE_LTC_DATA:
+              {
+                m_ltcData.voltage = std::stof(lst[3]);
+                m_ltcData.current = std::stof(lst[4]);
+                setLTCNewData(true);
+                m_task->spew("LTC: volt:%.2fV | curr:%.2fA",
+                             m_ltcData.voltage,
+                             m_ltcData.current);
+                break;
+              }
+
+              case BYTE_PAC_DATA:
+              {
+                int id = std::stof(lst[3]);
+                float v = std::stof(lst[4]);
+                float a = std::stoi(lst[5]);
+                m_pacData.voltage[id - 1] = v;
+                m_pacData.current[id - 1] = a / 1000.0;
+                setPACNewData(true, id - 1);
+                m_task->spew("PAC%d: volt:%.2fV | curr:%.2fA",
+                             id,
+                             m_pacData.voltage[id - 1],
+                             m_pacData.current[id - 1]);
+                break;
+              }
+
+              default:
+                m_task->debug("uncategorized message: %s",
+                              line.c_str());
+                return false;
+            }
+            //! TODO: fix this.
+
+            // m_dispatch->dispatchPowerData();
+            // EntityInfo ent_info = m_dispatch->updateEntityState();
+
+            // if (ent_info.code == Status::CODE_MISSING_DATA)
+            //   m_task->setEntityState(IMC::EntityState::ESTA_NORMAL,
+            //                          String::str(DTR(ent_info.text.c_str())));
+            // else
+            //   m_task->setEntityState(IMC::EntityState::ESTA_NORMAL,
+            //                          ent_info.code);
+            break;
+          }
+
+          case BYTE_CPU_OFF:
+          {
+            IMC::PowerOperation pop;
+            pop.setDestination(m_task->getSystemId());
+            pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+            m_task->dispatch(pop, DF_LOOP_BACK);
+            break;
+          }
+
+          case BYTE_RANGE:
+          case BYTE_ABORT:
+          {
+            IMC::TransmissionRequest m_treq;
+            m_treq.setDestination(m_task->getSystemId());
+            m_treq.comm_mean = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
+            m_treq.req_id = getInternalId();
+            m_treq.destination = lst[2];
+            m_treq.data_mode = BYTE_RANGE?
+                              IMC::TransmissionRequest::DMODE_RANGE:
+                              IMC::TransmissionRequest::DMODE_ABORT;
+            m_task->dispatch(m_treq);
+            break;
+          }
+
+          case BYTE_AMODEM:
+          {
+            if (lst[2] == "query")
+              querySystems(true);
+            break;
+          }
+
+
+
+          default:
+            m_task->debug("Uncategorized message: %s", line.c_str());
+            return false;
+        }
+
+        return true;
+      }
+
+    private:
+      //! Parent task.
+      DUNE::Tasks::Task* m_task;
+      //! Serial port handle.
+      IO::Handle* m_handle;
+      //! Power channels by name.
+      PowerChannelMantaCore* m_pwr_chs;
+      //! Number of cell to read.
+      int m_number_cells;
+      //! System name.
+      std::string m_sys_name;
+      //! System ip.
+      std::string m_sys_ip;
+      //! Send command state.
+      CMD_STATE m_send_cmd_state;
+      //! Parser state.
+      PARSER_STATE m_parser_state;
+      //! Received csum.
+      uint8_t m_csum_rx;
+      //! String command.
+      char m_cmd_text[64];
+      //! Firmware version.
+      std::string m_version;
+      //| Free text state.
+      uint8_t m_free_text_state;
+      //! Free text to send.
+      char m_free_text[128];
+      //! Queue of commands to send.
+      std::queue<std::pair<std::string, bool>> m_queue;
+      //! Id for TransmissionRequest IMC message.
+      uint16_t m_treqid;
+      //! Boot watchdog.
+      Time::Counter<float> m_wdog_boot;
+
+      uint16_t
+      getInternalId(void)
+      {
+        m_treqid = (m_treqid + 1) * (m_treqid != UINT16_MAX);
+
+        return m_treqid;
       }
 
       void
-      waitForFeedback(void)
+      resetStateNewData(void)
       {
-        while (commandState() != CMD_ACK)
+        for (uint8_t t = 0; t < MAX_BQ_INPUT_DATA; t++)
         {
-          pollData();
-          if (m_wdog.overflow())
-            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          m_bqData.state_new_data[t] = false;
+          m_bqData.state_new_data_cells[t] = false;
         }
       }
 
-      std::string
-      getStringAt(char* array, uint8_t frame_split, char delimiter)
+      bool
+      sendCommand(std::string text_cmd, bool wait_ack, bool retry = false)
       {
-        char *ptr = NULL;
-        char split[2];
-        split[0] = delimiter;
-        ptr = std::strtok(array, split);  // delimiter
-        uint8_t cnt = 0;
-        while (ptr != NULL)
-        {
-          if(cnt == frame_split)
-            return ptr;
+        if (!retry)
+          m_queue.push(std::make_pair(text_cmd, wait_ack));
 
-          cnt++;
-          ptr = std::strtok(NULL, ",");
-        }
+        if(m_send_cmd_state == CMD_WAITING)
+          return false;
 
-        return "null";
+        std::string bfr_tx;
+        bfr_tx = text_cmd + ",*";
+        bfr_tx += calcCRC8(bfr_tx.c_str());
+        bfr_tx += "\n";
+        m_handle->writeString(bfr_tx.c_str());
+        m_task->spew("sending command: %s%s", sanitize(bfr_tx).c_str(), wait_ack ? " (needs response)" : "");
+
+        if (wait_ack)
+          waitResponse();
+        else
+          m_send_cmd_state = CMD_IDLE;
+        
+        return true;
+      }
+
+      void
+      waitResponse(void)
+      {
+        m_send_cmd_state = CMD_WAITING;
+      }
+
+      void
+      querySystems(bool force = false)
+      {
+        if (m_query_systems && !force)
+          return;
+
+        m_query_systems = true;
+        IMC::AcousticSystemsQuery asq;
+        asq.setDestination(m_task->getSystemId());
+        m_task->dispatch(asq);
       }
 
       void
       sendFreeText(std::string free_text)
       {
-        m_task->debug("sendFreeText:%s", free_text.c_str());
-        sprintf(cmd_text, "%c,%c,%s%c",BYTE_PREAMBLE, BYTE_FREE_TEXT, free_text.c_str(), '\0');
-        sendCommand(cmd_text);
-        waitForFeedback();
-        if(commandState() != CMD_ACK)
-        {
-          m_task->war("Fail send free text %s", free_text.c_str());
-        }
+        m_task->spew("sending free text: %s", free_text.c_str());
+        sprintf(m_cmd_text, "%c,%c,%s%c",BYTE_PREAMBLE, BYTE_FREE_TEXT, free_text.c_str(), '\0');
+        sendCommand(m_cmd_text, false);
       }
 
       void
-      decodeBqData(uint8_t bq_data_type)
+      decodeBqData(uint8_t bq_data_type, std::vector<std::string> lst)
       {
-        float data_values[MAX_BQ_INPUT_DATA];
         if(bq_data_type == BQ_GENERAL)
         {
-          std::sscanf(m_rx_buf_parser, "$,D,B,%f,%f,%f,%*s", &data_values[POWER_VOLTAGE],
-                      &data_values[POWER_CURRENT], &data_values[POWER_TEMPERATURE]);
-          m_bqData.voltage = data_values[POWER_VOLTAGE];
-          m_bqData.current = data_values[POWER_CURRENT];
-          m_bqData.temperature = data_values[POWER_TEMPERATURE];
+          m_bqData.voltage = std::stof(lst[3]);
+          m_bqData.current = std::stof(lst[4]);
+          m_bqData.temperature = std::stof(lst[5]);
           setBqNewData(POWER_VOLTAGE, true, -1);
           setBqNewData(POWER_CURRENT, true, -1);
           setBqNewData(POWER_TEMPERATURE, true, -1);
-          m_task->debug("BQ: volt:%.2fV | curr:%.2fA | temp:%.2fC", m_bqData.voltage,
+          m_task->spew("BQ: volt:%.2fV | curr:%.2fA | temp:%.2fC", m_bqData.voltage,
                         m_bqData.current, m_bqData.temperature);
-
         }
         else if(bq_data_type == BQ_CELL)
         {
-          int cell_id;
-          std::sscanf(m_rx_buf_parser, "$,D,c,%d,%f,%*s", &cell_id, &data_values[POWER_CELLS_INFO]);
-
-          m_bqData.cell_volt[cell_id] = data_values[POWER_CELLS_INFO];
+          int cell_id = std::stoi(lst[3]);
+          m_bqData.cell_volt[cell_id] = std::stof(lst[4]);
           setBqNewData(POWER_CELLS_INFO, true, cell_id);
-          m_task->debug("BQ: cell:%d | volt:%.2fV", cell_id, m_bqData.cell_volt[cell_id]);
+          m_task->spew("BQ: cell:%d | volt:%.2fV", cell_id, m_bqData.cell_volt[cell_id]);
         }
         else if(bq_data_type == BQ_INFO)
         {
-          std::sscanf(m_rx_buf_parser, "$,D,i,%f,%f,%f,%f,%*s", &data_values[POWER_TIME_FULL],
-                      &data_values[POWER_TIME_DISCHARGE], &data_values[POWER_REMAINING_CAP],
-                      &data_values[POWER_FULL_CAP]);
-
-          m_bqData.time_full = data_values[POWER_TIME_FULL];
-          m_bqData.time_empty = data_values[POWER_TIME_DISCHARGE];
-          m_bqData.r_cap = data_values[POWER_REMAINING_CAP];
-          m_bqData.f_cap = data_values[POWER_FULL_CAP];
+          m_bqData.time_full = std::stof(lst[3]);
+          m_bqData.time_empty = std::stof(lst[4]);
+          m_bqData.r_cap = std::stof(lst[5]);
+          m_bqData.f_cap = std::stof(lst[6]);
           setBqNewData(POWER_TIME_FULL, true, -1);
           setBqNewData(POWER_TIME_DISCHARGE, true, -1);
           setBqNewData(POWER_REMAINING_CAP, true, -1);
           setBqNewData(POWER_FULL_CAP, true, -1);
-          m_task->debug("BQ: TF:%.0f | TD:%.0f | RC:%.2fAh | FC:%.2fAh", m_bqData.time_full,
+          m_task->spew("BQ: TF:%.0f | TD:%.0f | RC:%.2fAh | FC:%.2fAh", m_bqData.time_full,
                         m_bqData.time_empty, m_bqData.r_cap, m_bqData.f_cap);
-
         }
-      }
-
-      void
-      dispatchGpsSimulatedData(void)
-      {
-        setNumberSat(12);
       }
     };
   }

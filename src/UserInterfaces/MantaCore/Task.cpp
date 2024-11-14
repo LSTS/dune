@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -27,20 +27,12 @@
 // Author: Pedro Gonçalves                                                  *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <memory>
-#include <cstring>
-#include <algorithm>
-#include <cerrno>
-#include <cstdlib>
-#include <vector>
-#include <set>
-
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-// Local headers
+// Local headers.
 #include "Driver.hpp"
+#include "Reader.hpp"
 #include "DispatchData.hpp"
 #include "MantaUtils.hpp"
 
@@ -50,45 +42,49 @@ namespace UserInterfaces
   {
     using DUNE_NAMESPACES;
 
-    static const int c_delay_get_data = 1;
-    static const float c_delay_next_free_text_line = 4.5f;
-
     struct Task: public Hardware::BasicDeviceDriver
     {
       //! Task arguments.
-      struct MantaCore::Arguments m_args;
+      Arguments m_args;
       //! IMC Messages.
-      struct MantaCore::IMCData m_imc;
-      //! EntityState Message.
-      struct MantaCore::EntityInfo m_ent_info;
-      //! Driver of MantaCore
-      DriverMantaCore* m_driver;
-      //! DispatchData of MantaCore
+      IMCData m_imc;
+      //! Driver of MantaCore.
+      Driver* m_driver;
+      //! Reader thread.
+      Reader* m_reader;
+      //! DispatchData of MantaCore.
       DispatchData* m_dispatch;
       //! Serial port handle.
-      SerialPort* m_uart;
-      //! Convenience type definition for a table of power channels.
-      typedef std::map<std::string, MantaCore::MantaUtils::PowerChannel*> PowerChannelMantaCore;
+      IO::Handle* m_handle;
+      //! Input watchdog.
+      Time::Counter<float> m_wdog;
       //! Power channels by name.
       PowerChannelMantaCore m_pwr_chs;
-      //! Data get watchdog.
-      Time::Counter<float> m_wdog_get;
       //! Send free text watchdog.
       Time::Counter<float> m_wdog_free_text;
-      //! Supported system names.
+      //! Targetable system names.
       std::set<std::string> m_sys;
-      //! Supported umodem system names.
-      std::set<std::string> m_addrs_umodem;
-      //! System names iterator.
-      std::set<std::string>::const_iterator m_sys_itr;
-      //! Flag to control poweroff by switch
+      //! Poweroff request flag.
       bool m_is_power_off;
-      //! Watchdog poweroff.
-      Time::Counter<double> m_wdog_poff;
+      //! GPS sattelites in view.
+      uint8_t m_sat;
+      //! Targets set flag.
+      bool m_targets_set;
+      //! UAN Entity Id.
+      uint8_t m_uan_id;
+      //! Attempt to connect on Idle watchdog.
+      Time::Counter<float> m_wdog_con;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
-        m_uart(NULL)
+        m_driver(NULL),
+        m_reader(NULL),
+        m_handle(NULL),
+        m_wdog_free_text(c_delay_next_free_text_line),
+        m_is_power_off(false),
+        m_sat(0),
+        m_targets_set(false),
+        m_uan_id(255)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_DEVELOPER,
@@ -96,19 +92,21 @@ namespace UserInterfaces
 
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
+        .description("IO device URI in the form \"uart://DEVICE:BAUD\".");
 
-        param("Sections of System Addresses", m_args.sys_addr_sections)
-        .defaultValue("")
-        .description("List of table names");
+        param("Input Timeout", m_args.inp_tout)
+        .units(Units::Second)
+        .defaultValue("4.0")
+        .minimumValue("0.0")
+        .description("Input timeout");
 
-        param("Exclude System Names", m_args.sys_exclude)
-        .defaultValue("broadcast")
-        .description("List of excluded systems");
+        param("Firmware version", m_args.firm_version)
+        .defaultValue("master@495057d4")
+        .description("Compatible Firmware Version.");
 
-        param("Simulate Data Input", m_args.simulated_data)
-        .defaultValue("false")
-        .description("Simulate Data Input");
+        param("UAN - Entity Label", m_args.uan_elabel)
+        .defaultValue("Acoustic Access Controller")
+        .description("UAN entity label.");
 
         param("Number of cells", m_args.number_cell)
         .defaultValue("7")
@@ -118,7 +116,7 @@ namespace UserInterfaces
 
         param("BQ - Entity Label", m_args.bq_elabel)
         .defaultValue("BQ")
-        .description("BQMonitor label.");
+        .description("BQMonitor entity label.");
 
         // Extract cell entity label
         for (uint8_t i = 1; i <= c_max_number_pac_sensors; ++i)
@@ -126,10 +124,10 @@ namespace UserInterfaces
           std::string option = String::str("PAC%u - Entity Label", i);
           param(option, m_args.pac_elabels[i - 1])
           .defaultValue("")
-          .description("PAC Entity Label");
+          .description("PAC Entity Label.");
         }
 
-         param("Remaining Capacity - Entity Label", m_args.rcap_elabel)
+        param("Remaining Capacity - Entity Label", m_args.rcap_elabel)
         .defaultValue("1")
         .description("Remaining Capacity A/Ah.");
 
@@ -146,39 +144,66 @@ namespace UserInterfaces
         .minimumValue("20.0")
         .maximumValue("100.0")
         .units(Units::Percentage)
-        .description("Level of battery below which a warning will be thrown");
+        .description("Level of battery percentage below which a warning will be thrown.");
 
         param("Error Level", m_args.err_lvl)
         .defaultValue("20.0")
         .minimumValue("1.0")
         .maximumValue("20.0")
         .units(Units::Percentage)
-        .description("Level of battery below which an error will be thrown");
+        .description("Level of battery percentage below which an error will be thrown.");
 
         param("Error Voltage Value", m_args.err_volt_lvl)
         .defaultValue("22.0")
         .minimumValue("18.0")
         .maximumValue("30.0")
         .units(Units::Volt)
-        .description("Level of battery, in voltage, below which an error will be thrown");
-
-        // Extract power channels entity label
-        for (uint8_t i = 1; i <= MantaCore::c_max_power_channels; ++i)
+        .description("Level of battery voltage below which an error will be thrown.");
+        
+        for (uint8_t i = 0; i < MantaCore::c_max_power_channels; i++)
         {
-          std::string option = String::str("Power Channel %u Entity Label", i);
-          param(option, m_args.power_channel_label[i - 1])
+          std::string option = String::str("Power Channel %u - Name", i);
+          param(option, m_args.power_channels_names[i])
           .defaultValue("")
-          .description("Power Channel Entity Label");
+          .description("Power Channels Names.");
 
-          option = String::str("Power Channel %u Turn On", i);
-          param(option, m_args.power_channel_turn_on[i - 1])
+          option = String::str("Power Channel %u - State", i);
+          param(option, m_args.power_channels_states[i])
           .defaultValue("")
-          .description("Power Channel State");
+          .description("Power Channels States.");
         }
 
+        param("Get Data", m_args.get_data)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("true")
+        .description("Flag to activate data acquire from board.");
+
+        setWaitForMessages(1.0);
+
+        bind<IMC::AcousticSystems>(this);
+        bind<IMC::DevDataText>(this);
         bind<IMC::GpsFix>(this);
-        bind<IMC::QueryPowerChannelState>(this);
+        bind<IMC::IoEvent>(this);
         bind<IMC::PowerChannelControl>(this);
+        bind<IMC::PowerOperation>(this);
+        bind<IMC::QueryPowerChannelState>(this);
+        bind<IMC::TransmissionStatus>(this);
+      }
+
+      ~Task(void)
+      {
+        onDisconnect();
+      }
+
+      void
+      onIdle(void) override
+      {
+        if (m_wdog_con.overflow() && m_wdog_con.getTop() > 0.0f)
+        {
+          m_wdog_con.setTop(0.0f);
+          requestActivation();
+        }
       }
 
       //! Try to connect to the device.
@@ -188,13 +213,14 @@ namespace UserInterfaces
       {
         try
         {
-          m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
-          m_uart->setCanonicalInput(true);
-          return true;
+          m_handle = openDeviceHandle(m_args.io_dev, true);
+          m_reader = new Reader(this, m_handle);
+          m_reader->start();
         }
         catch (...)
         {
-          war("Fail connecting to device :%s [retrying]", m_args.io_dev.c_str());
+          war("Failed to connect to device: %s [retrying]", m_args.io_dev.c_str());
+          m_wdog_con.setTop(static_cast<float>(getActivationTime()));
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 1);
         }
         return true;
@@ -204,41 +230,70 @@ namespace UserInterfaces
       void
       onDisconnect() override
       {
+        if (m_reader != NULL)
+        {
+          m_reader->stopAndJoin();
+          Memory::clear(m_reader);
+        }
+
         if(m_driver != NULL)
+        {
+          //! TODO: fix notifyBoardAboutDisconnect. 
+          // m_driver->notifyBoardAboutDisconnect();
           Memory::clear(m_driver);
-        if(m_uart != NULL)
-          Memory::clear(m_uart);
+        }
+
+        if(m_handle != NULL)
+          Memory::clear(m_handle);
+
+        m_wdog_con.setTop(0.0f);
+      }
+
+      void
+      waitForReplies(void)
+      {
+        while(!m_driver->emptyQueue())
+        {
+          waitForMessages(1.0);
+          m_driver->checkCommandQueue();
+        }
+      }
+
+      void
+      setupBoard(void)
+      {
+        m_driver->requestConnectionToBoard();
+        m_driver->requestFirmwareVersion();
+        m_driver->setNumberCells();
+        m_driver->requestDataPower(m_args.get_data);
+
+        for (auto& pwr_ch: m_pwr_chs)
+          m_driver->setPowerChannelState(pwr_ch.second->state.name, pwr_ch.second->state.state);
+
+        waitForReplies();
       }
 
       //! Initialize device.
       void
       onInitializeDevice() override
       {
-        inf("Initializing board");
-        m_is_power_off = false;
-        m_driver = new DriverMantaCore(this, m_uart, m_args.number_cell, getSystemName());
-        m_dispatch = new DispatchData(this, m_driver);
-        m_dispatch->cloneStructs(m_args, m_imc);
-        m_driver->setupBoard();
-        inf("Firmware Version:%s", m_driver->firmwareVersion().c_str());
-        inf("Initializing board: done");
-        inf("Start acquiring data");
-        m_wdog_get.setTop(c_delay_get_data);
-        m_wdog_free_text.setTop(c_delay_next_free_text_line);
-        if(m_args.simulated_data)
-          war("Using simulated data input");
+        inf("initializing board");
+        m_driver = new Driver(this, m_handle, &m_pwr_chs, m_args.number_cell, getSystemName());
+        m_dispatch = new DispatchData(this, m_driver, &m_args, &m_imc);
+        setupBoard();
 
-        for (unsigned i = 0; i < MantaCore::c_max_power_channels; ++i)
-        {
-          m_driver->setPowerChannelName(i, m_args.power_channel_label[i]);
-          if(m_driver->setPowerChannelData(i, m_args.power_channel_label[i], m_args.power_channel_turn_on[i]))
-          {
-            m_pwr_chs[m_args.power_channel_label[i]]->state.state = m_args.power_channel_turn_on[i];
-          }
-        }
+        // if (m_args.firm_version != m_driver->firmwareVersion())
+        // {
+        //   err(DTR("incompatible firmware version"));
+        //   requestDeactivation();
+        //   return;
+        // }
 
-        for(uint8_t i = 0; i < m_sys.size(); i++)
-          m_driver->addModemNameToList(*m_sys_itr++);
+        inf("firmware version: %s", m_driver->firmwareVersion().c_str());
+        inf("initializing board: done");
+        inf("start acquiring data");
+        m_wdog_free_text.reset();
+        m_wdog.setTop(m_args.inp_tout);
       }
 
       //! Reserve entity identifiers.
@@ -246,27 +301,27 @@ namespace UserInterfaces
       onEntityReservation(void)
       {
         // ltc
-        m_imc.m_volt[DispatchData::IMC_TYPE_BAT_VOLT].setSourceEntity(getEid("Batteries"));
-        m_imc.m_amp[DispatchData::IMC_TYPE_BAT_AMP].setSourceEntity(getEid("Batteries"));
+        m_imc.m_volt[IMC_TYPE_BAT_VOLT].setSourceEntity(getEid("Batteries"));
+        m_imc.m_amp[IMC_TYPE_BAT_AMP].setSourceEntity(getEid("Batteries"));
 
         // bq
-        uint8_t init_step_volt = DispatchData::IMC_TYPE_BQ_CELL1_VOLT;
+        uint8_t init_step_volt = IMC_TYPE_BQ_CELL1_VOLT;
         for (uint8_t i = 1; i <= m_args.number_cell; ++i)
         {
           std::string option = String::str("CELL%u", i);
           m_imc.m_volt[init_step_volt].setSourceEntity(getEid(option));
           init_step_volt++;
         }
-        m_imc.m_volt[DispatchData::IMC_TYPE_BQ_VOLT].setSourceEntity(getEid(m_args.bq_elabel));
-        m_imc.m_amp[DispatchData::IMC_TYPE_BQ_AMP].setSourceEntity(getEid(m_args.bq_elabel));
+        m_imc.m_volt[IMC_TYPE_BQ_VOLT].setSourceEntity(getEid(m_args.bq_elabel));
+        m_imc.m_amp[IMC_TYPE_BQ_AMP].setSourceEntity(getEid(m_args.bq_elabel));
         m_imc.m_temp.setSourceEntity(getEid(m_args.bq_elabel));
         m_imc.m_fuel.setSourceEntity(getEid(m_args.bq_elabel));
-        m_imc.m_amp[DispatchData::IMC_TYPE_BQ_REM_CAP_AMP].setSourceEntity(getEid(m_args.rcap_elabel));
-        m_imc.m_amp[DispatchData::IMC_TYPE_BQ_FULL_CAP_AMP].setSourceEntity(getEid(m_args.fcap_elabel));
+        m_imc.m_amp[IMC_TYPE_BQ_REM_CAP_AMP].setSourceEntity(getEid(m_args.rcap_elabel));
+        m_imc.m_amp[IMC_TYPE_BQ_FULL_CAP_AMP].setSourceEntity(getEid(m_args.fcap_elabel));
 
         // pac
-        init_step_volt = DispatchData::IMC_TYPE_PAC1_VOLT;
-        uint8_t init_step_amp = DispatchData::IMC_TYPE_PAC1_AMP;
+        init_step_volt = IMC_TYPE_PAC1_VOLT;
+        uint8_t init_step_amp = IMC_TYPE_PAC1_AMP;
         for (uint8_t i = 0; i < c_max_number_pac_sensors; ++i)
         {
           if (m_args.pac_elabels[i].empty())
@@ -282,99 +337,220 @@ namespace UserInterfaces
       unsigned
       getEid(std::string label)
       {
-        unsigned eid = 0;
+        unsigned eid = 255;
+
         try
         {
           eid = resolveEntity(label);
         }
-        catch (Entities::EntityDataBase::NonexistentLabel& e)
+        catch (...)
         {
-          (void)e;
           eid = reserveEntity(label);
         }
+
         return eid;
+      }
+
+      void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_uan_id = resolveEntity(m_args.uan_elabel);
+        }
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
+        {
+          war(DTR("%s"), e.what());
+        }
+      }
+
+      void
+      setTargetableSystems(void)
+      {
+        if (m_driver == NULL)
+          return;
+
+        m_driver->setTargetAddress("reset");
+        if (m_sys.size() > 0)
+        {
+          for (auto& name: m_sys)
+            m_driver->setTargetAddress(name);
+        }
+        waitForReplies();
+
+        m_targets_set = true;
+      }
+
+      void
+      consume(const IMC::DevDataText* msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
+
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (m_driver == NULL)
+          return;
+
+        if (m_driver->checkDataIn(msg->value))
+          m_wdog.reset();
+      }
+
+      void
+      consume(const IMC::IoEvent* msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
+
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
+          err("%s", msg->error.c_str());
+      }
+
+      void
+      consume(const IMC::AcousticSystems* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getSourceEntity() != m_uan_id)
+          return;
+        
+        std::set<std::string> new_sys;
+        String::split(msg->list, ",", new_sys);
+        if (new_sys == m_sys)
+          return;
+
+        m_sys = new_sys;
+        m_targets_set = false;
+        if (m_driver != NULL)
+          m_driver->m_query_systems = false;
+      }
+
+      void
+      consume(const IMC::TransmissionStatus* msg)
+      {
+        if (!isActive())
+          return;
+
+        if (msg->getDestination() != getSystemId())
+          return;
+        
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (msg->req_id != m_driver->getLastTreqId())
+          return;
+
+        switch (msg->status)
+        {
+        case IMC::TransmissionStatus::TSTAT_DELIVERED:
+          m_driver->sendStatus(BYTE_STATUS, BYTE_LAST, "success");
+          break;
+        case IMC::TransmissionStatus::TSTAT_RANGE_RECEIVED:
+          m_driver->sendStatus(BYTE_STATUS, BYTE_RANGE, std::to_string(msg->range));
+          break;
+        case IMC::TransmissionStatus::TSTAT_MAYBE_DELIVERED:
+        case IMC::TransmissionStatus::TSTAT_INPUT_FAILURE:
+        case IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE:
+        case IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE:
+          m_driver->sendStatus(BYTE_STATUS, BYTE_LAST, "fail");
+          break;
+        case IMC::TransmissionStatus::TSTAT_IN_PROGRESS:
+        case IMC::TransmissionStatus::TSTAT_SENT:
+        default:
+          break;
+        }
       }
 
       void
       consume(const IMC::GpsFix* msg)
       {
-        if(m_args.simulated_data)
-          return;
-
         if (msg->type == IMC::GpsFix::GFT_MANUAL_INPUT)
           return;
 
         if (msg->getSourceEntity() == getEntityId())
           return;
 
-        m_driver->setNumberSat(msg->satellites);
-      }
-
-      void
-      consume(const IMC::QueryPowerChannelState* msg)
-      {
-        debug("QueryPowerChannelState");
-        (void)msg;
-        PowerChannelMantaCore::iterator itr = m_pwr_chs.begin();
-        for (; itr != m_pwr_chs.end(); ++itr)
-          dispatchReply(*msg, itr->second->state);
+        if (m_sat != msg->satellites)
+        {
+          m_driver->setNumberSat(m_sat);
+          m_sat = msg->satellites;
+        }
       }
 
       void
       consume(const IMC::PowerChannelControl* msg)
       {
+        if (!isActive())
+          return;
+
+        if (msg->getDestination() != getSystemId())
+          return;
+
         PowerChannelMantaCore::const_iterator itr = m_pwr_chs.find(msg->name);
         if (itr == m_pwr_chs.end())
           return;
+        
+        m_driver->setPowerChannelState(itr->second->state.name, msg->op);
+      }
 
-        uint8_t power_id = m_driver->getIdOfPowerChannel(msg->name);
-        debug("%s|%d|%f|%d", msg->name.c_str(), msg->op, msg->sched_time, power_id);
-        if(m_driver->setPowerChannelData(power_id, msg->name, msg->op))
-          m_pwr_chs[msg->name]->state.state = msg->op;
+      void
+      consume(const IMC::PowerOperation* msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
+
+        if (msg->op == IMC::PowerOperation::POP_PWR_DOWN_IP)
+          m_is_power_off = true;
+      }
+
+      void
+      consume(const IMC::QueryPowerChannelState* msg)
+      {
+        (void)msg; // to avoid compile warning
+        for (auto& pwr_ch: m_pwr_chs)
+          dispatchReply(*msg, pwr_ch.second->state);
       }
 
       //! Update parameters.
       void
       onUpdateParameters(void)
       {
-        clearPowerChannels();
         for (unsigned i = 0; i < MantaCore::c_max_power_channels; ++i)
         {
-          if (String::startsWith(m_args.power_channel_label[i], "N/C"))
+          if (String::startsWith(m_args.power_channels_names[i], "N/C"))
             continue;
 
-          MantaCore::MantaUtils::PowerChannel* pc = new MantaCore::MantaUtils::PowerChannel;
+          bool new_pc = m_pwr_chs.find(m_args.power_channels_names[i]) == m_pwr_chs.end();
+
+          PowerChannel* pc;
+          if (new_pc)
+            pc = new PowerChannel;
+          else
+            pc = m_pwr_chs[m_args.power_channels_names[i]];
+            
           pc->id = i;
-          pc->state.name = m_args.power_channel_label[i];
-          pc->state.state = m_args.power_channel_turn_on[i];
-          m_pwr_chs[m_args.power_channel_label[i]] = pc;
+
+          if (paramChanged(m_args.power_channels_names[i]) || new_pc)
+            pc->state.name = m_args.power_channels_names[i];
+
+          if (paramChanged(m_args.power_channels_states[i]) || new_pc)
+          {
+            pc->state.state = m_args.power_channels_states[i];
+            if (m_driver != NULL)
+              m_driver->setPowerChannelState(pc->state.name, m_args.power_channels_states[i]);
+          }
+
+          if (new_pc)
+            m_pwr_chs[pc->state.name] = pc;
         }
 
-        for (unsigned i = 0; i < m_args.sys_addr_sections.size(); ++i)
-        {
-          std::vector<std::string> addrs = m_ctx.config.options(m_args.sys_addr_sections[i]);
-          m_sys.insert(addrs.begin(), addrs.end());
-
-          if (!strcmp(m_args.sys_addr_sections[i].c_str(), "Micromodem Addresses") ||
-              !strcmp(m_args.sys_addr_sections[i].c_str(), "Micromodem Addresses - DMSMW"))
-            m_addrs_umodem.insert(addrs.begin(), addrs.end());
-        }
-        // Remove our name from the list.
-        m_sys.erase(getSystemName());
-        for (size_t i = 0; i < m_args.sys_exclude.size(); ++i)
-          m_sys.erase(m_args.sys_exclude[i]);
-
-        m_sys_itr = m_sys.begin();
-      }
-
-      void
-      clearPowerChannels(void)
-      {
-        PowerChannelMantaCore::iterator itr = m_pwr_chs.begin();
-        for (; itr != m_pwr_chs.end(); ++itr)
-          delete itr->second;
-
-        m_pwr_chs.clear();
+        if (m_driver != NULL && paramChanged(m_args.get_data))
+          m_driver->requestDataPower(m_args.get_data);
       }
 
       //! Get data from device.
@@ -382,66 +558,30 @@ namespace UserInterfaces
       bool
       onReadData() override
       {
-        if (m_wdog_get.overflow())
+        if (m_is_power_off)
+          return true;
+
+        if (m_driver->boardBooted() && isActive())
         {
-          m_wdog_get.reset();
-          m_driver->requestDataPower();
+          requestRestart();
+          return true;
         }
-        else if(m_wdog_free_text.overflow())
+        
+        if (m_wdog_free_text.overflow())
         {
           m_wdog_free_text.reset();
           m_driver->updateFreeText();
         }
-        else
-        {
-          if(m_args.simulated_data)
-            m_driver->simulatedDataUpdate();
-        }
 
-        m_driver->pollData();
-        m_dispatch->dispatchPowerData();
-        m_dispatch->updateEntityState();
-        if(m_driver->isToTurnOffCPU() && !m_is_power_off)
-        {
-          war("%s", DTR(Status::getString(Status::CODE_POWER_DOWN)));
-          IMC::PowerOperation pop;
-          pop.setDestination(getSystemId());
-          pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
-          dispatch(pop);
-          m_is_power_off = true;
-          m_wdog_poff.setTop(5);
-        }
-        else if (m_is_power_off)
-        {
-          if (m_wdog_poff.overflow())
-          {
-            war("Powering off CPU");
-            Time::Delay::wait(2);
-            if (std::system("poweroff") == -1)
-            {
-              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
-              err(DTR("failed to execute poweroff command"));
-              m_wdog_poff.setTop(1);
-            }
-            else
-            {
-              while (!stopping());
-            }
-          }
-        }
+        if (!m_targets_set)
+          setTargetableSystems();
 
-        m_ent_info = m_dispatch->updateEntityState();
+        m_driver->checkCommandQueue();
 
-        if(m_driver->majorError())
+        if (m_wdog.overflow())
         {
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-        }
-        else
-        {
-          if(m_ent_info.code != Status::CODE_MISSING_DATA)
-            setEntityState(IMC::EntityState::ESTA_NORMAL, m_ent_info.code);
-          else
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_ent_info.text.c_str())));
         }
 
         return true;
