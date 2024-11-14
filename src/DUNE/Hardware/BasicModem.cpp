@@ -274,7 +274,7 @@ namespace DUNE
         if (bytes_read == data_size)
           return;
       }
-
+      getTask()->war("timeout while reading %u bytes", data_size);
       throw ReadTimeout();
     }
 
@@ -361,7 +361,7 @@ namespace DUNE
         else
           return readLine(timer);
       }
-
+      getTask()->war("timeout while reading line");
       throw ReadTimeout();
     }
 
