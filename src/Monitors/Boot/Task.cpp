@@ -43,6 +43,8 @@ namespace Monitors
       double delay;
       double ttl;
       std::string default_recipient;
+      std::string task_sms_name;
+      std::string task_paramater_name;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -77,6 +79,15 @@ namespace Monitors
         .defaultValue("")
         .description(DTR("Phone number of the SMS recipient"));
 
+        param("Task Label for SMS Number", m_args.task_sms_name)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("Monitors.Emergency")
+        .description(DTR("Task Label for SMS Number"));
+
+        param("Task Parameter for SMS Number", m_args.task_paramater_name)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("SMS Recipient Number")
+        .description(DTR("Task Parameter for SMS Number"));
 
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
       }
@@ -173,24 +184,31 @@ namespace Monitors
         request.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
         request.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
         request.deadline = Time::Clock::getSinceEpoch() + m_args.ttl;
-        
+
         // Attempt to grab recipient number from Monitors.Emergency
         // If failure defaults to default_recipient 
         try
         {
-          request.destination = m_ctx.config.get("Monitors.Emergency", "SMS Recipient Number");
-          debug("Got recipient number from Monitors.Emergency: %s", request.destination.c_str());
+          if(m_args.default_recipient.empty())
+          {
+            request.destination = m_ctx.config.get(m_args.task_sms_name.c_str(), m_args.task_paramater_name.c_str());
+            debug("Got recipient number from %s: %s", m_args.task_sms_name.c_str(), request.destination.c_str());
+          }
+          else
+          {
+            request.destination = m_args.default_recipient;
+            debug("Using default recipient number: %s", request.destination.c_str());
+          }
         }
         catch(...)
         {
           request.destination = m_args.default_recipient;
-          debug("Failed to grab recipient number from Monitors.Emergency. "
-                "Using default number: %s", request.destination.c_str());
+          debug("Failed to grab recipient number from %s. Using default number: %s", m_args.task_sms_name.c_str(), request.destination.c_str());
         }
-        
+
         if (request.destination.empty())
           return;
-        
+
         request.txt_data = msg;
         request.req_id = 1;
 
