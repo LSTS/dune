@@ -117,8 +117,7 @@ namespace Transports
           std::string line = readLine();
           int n_registered_numbers = 0;
           int n_total_capacity = 0;
-          if (std::sscanf(line.c_str(), "+CPBS: \"ON\",%d,%d",
-                          &n_registered_numbers, &n_total_capacity) == 2)
+          if (std::sscanf(line.c_str(), "+CPBS: \"ON\",%d,%d", &n_registered_numbers, &n_total_capacity) == 2)
           {
             expectOK();
             if (n_registered_numbers > 0)
@@ -129,8 +128,7 @@ namespace Transports
               char n_number[20];
               int n_type;
               char n_name[20];
-              if (std::sscanf(line.c_str(), "+CPBR: %d,\"%[^\"]\",%d,\"%[^\"]", &n_index,
-                              n_number,&n_type,n_name) == 4)
+              if (std::sscanf(line.c_str(), "+CPBR: %d,\"%[^\"]\",%d,\"%[^\"]", &n_index, n_number,&n_type,n_name) == 4)
               {
                 expectOK();
                 if (n_index == 1)
@@ -171,6 +169,7 @@ namespace Transports
           if (std::memcmp(bfr, c_sms_prompt, c_sms_prompt_size) != 0)
           {
             m_busy = false;
+            getTask()->war("sendSMS:error 1:UnexpectedReply:%s", bfr);
             throw Hardware::UnexpectedReply();
           }
 
@@ -182,6 +181,7 @@ namespace Transports
         {
           setReadMode(HayesModem::READ_MODE_LINE);
           m_busy = false;
+          getTask()->war("sendSMS:error 2");
           throw;
         }
 
@@ -189,7 +189,7 @@ namespace Transports
         if (reply == "ERROR")
         {
           m_busy = false;
-          throw std::runtime_error(DTR("unknown error"));
+          throw std::runtime_error(DTR("sendSMS:error 3:unknown error"));
         }
         else if (String::startsWith(reply, "+CMGS:"))
         {
@@ -205,6 +205,7 @@ namespace Transports
         else
         {
           m_busy = false;
+          getTask()->war("sendSMS:error 4:UnexpectedReply:%s", reply.c_str());
           throw UnexpectedReply();
         }
 
@@ -400,6 +401,7 @@ namespace Transports
         if (!String::startsWith(header, "+CMGL:"))
         {
           m_busy = false;
+          getTask()->war("Unexpected SMS header (1): %s", header.c_str());
           throw Hardware::UnexpectedReply();
         }
 
@@ -414,13 +416,14 @@ namespace Transports
             return true;
           }
           m_busy = false;
+          getTask()->war("Unexpected SMS header (2): %s", header.c_str());
           throw Hardware::UnexpectedReply();
         }
 
         if ((parts[2] != "\"\"") && (parts[2].size() <= 2))
         {
           m_busy = false;
-          throw Hardware::UnexpectedReply();
+          getTask()->war("readSMS: Unexpected SMS header (3): %ld | %s", parts[2].size(), parts[2].c_str());
         }
 
         location = parts[1];
@@ -443,7 +446,7 @@ namespace Transports
           }
           catch(...) //InvalidSync || InvalidMessageId || InvalidCrc
           {
-            getTask()->war(DTR("Parsing unrecognized Base64 message as text"));
+            getTask()->trace(DTR("Parsing unrecognized Base64 message as text:%s|S:%ld"), incoming_data.c_str(), incoming_data.size());
             text.assign(incoming_data);
             text_mode = true;
             m_busy = false;

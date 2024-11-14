@@ -202,7 +202,6 @@ namespace Transports
         }
       }
 
-
       void
       onResourceAcquisition(void)
       {
@@ -218,7 +217,7 @@ namespace Transports
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(DTR(e.what()), 5);
+          throw RestartNeeded(String::str(DTR("onResourceAcquisition: %s"), e.what()), 5);
         }
       }
 
@@ -237,7 +236,6 @@ namespace Transports
           delete m_driver;
           m_driver = NULL;
         }
-
         Memory::clear(m_uart);
       }
 
@@ -251,7 +249,9 @@ namespace Transports
           return;
 
         if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
-          throw RestartNeeded(DTR("input error"), 5);
+        {
+          throw RestartNeeded(DTR("IoEvent:input error"), 5);
+        }
       }
 
       void
@@ -263,7 +263,6 @@ namespace Transports
         sms_status.req_id = sms_req->req_id;
         sms_status.info   = info;
         sms_status.status = status;
-
         dispatch(sms_status);
       }
 
@@ -306,7 +305,6 @@ namespace Transports
           IMC::AnnounceService announce;
           announce.service = os.str();
           announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
-
           dispatch(announce);
         }
       }
@@ -346,8 +344,7 @@ namespace Transports
         catch (...)
         {
           m_queue.push(sms_req);
-          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_ERROR,
-                        DTR("Error sending message over GSM modem"));
+          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_ERROR, DTR("Error sending message over GSM modem"));
           inf(DTR("Error sending SMS to recipient %s"),sms_req.destination.c_str());
         }
       }
