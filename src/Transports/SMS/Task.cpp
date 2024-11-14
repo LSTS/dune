@@ -365,7 +365,8 @@ namespace Transports
           else if (m_rsms_timer.overflow())
           {
             m_rsms_timer.reset();
-            m_driver->checkMessages();
+            if(m_rssi > 0)
+              m_driver->checkMessages();
           }
         }
         catch (std::exception& e)
