@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 71eb2792b561a939f1167a53fe7c5298                            *
+// IMC XML MD5: bb7e455e8ed7cd2a544c27d8b5b10bc5                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -702,5 +702,7 @@
 #define DUNE_IMC_TOTALMAGINTENSITY 2006
 //! CommRestriction identification number.
 #define DUNE_IMC_COMMRESTRICTION 2010
+//! VersionInfo identification number.
+#define DUNE_IMC_VERSIONINFO 2021
 
 #endif

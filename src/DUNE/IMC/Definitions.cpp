@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 71eb2792b561a939f1167a53fe7c5298                            *
+// IMC XML MD5: bb7e455e8ed7cd2a544c27d8b5b10bc5                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -28552,6 +28552,74 @@ namespace DUNE
     {
       IMC::toJSON(os__, "restriction", restriction, nindent__);
       IMC::toJSON(os__, "reason", reason, nindent__);
+    }
+
+    VersionInfo::VersionInfo(void)
+    {
+      m_header.mgid = 2021;
+      clear();
+    }
+
+    void
+    VersionInfo::clear(void)
+    {
+      op = 0;
+      version.clear();
+      description.clear();
+    }
+
+    bool
+    VersionInfo::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::VersionInfo& other__ = static_cast<const VersionInfo&>(msg__);
+      if (op != other__.op) return false;
+      if (version != other__.version) return false;
+      if (description != other__.description) return false;
+      return true;
+    }
+
+    int
+    VersionInfo::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    VersionInfo::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(version, ptr__);
+      ptr__ += IMC::serialize(description, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    VersionInfo::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(version, bfr__, size__);
+      bfr__ += IMC::deserialize(description, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    VersionInfo::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(version, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(description, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    VersionInfo::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "version", version, nindent__);
+      IMC::toJSON(os__, "description", description, nindent__);
     }
   }
 }

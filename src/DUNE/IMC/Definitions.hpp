@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 71eb2792b561a939f1167a53fe7c5298                            *
+// IMC XML MD5: bb7e455e8ed7cd2a544c27d8b5b10bc5                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -357,7 +357,9 @@ namespace DUNE
         //! Report.
         OP_REPORT = 0,
         //! Query.
-        OP_QUERY = 1
+        OP_QUERY = 1,
+        //! Reload.
+        OP_RELOAD = 2
       };
 
       //! operation.
@@ -5443,8 +5445,10 @@ namespace DUNE
         STATUS_INPUT_FAILURE = 101,
         //! Error trying to send acoustic text.
         STATUS_ERROR = 102,
+        //! Invalid address.
+        STATUS_INV_ADDR = 103,
         //! Message Type is not defined or is unsupported.
-        STATUS_UNSUPPORTED = 666
+        STATUS_UNSUPPORTED = 255
       };
 
       //! Request Identifier.
@@ -7607,7 +7611,9 @@ namespace DUNE
         //! Echo Sounder.
         ST_ECHOSOUNDER = 1,
         //! Multibeam.
-        ST_MULTIBEAM = 2
+        ST_MULTIBEAM = 2,
+        //! Pencil Beam.
+        ST_PENCILBEAM = 3
       };
 
       //! Type.
@@ -9631,7 +9637,9 @@ namespace DUNE
         //! Report.
         OP_REPORT = 0,
         //! Query.
-        OP_QUERY = 1
+        OP_QUERY = 1,
+        //! Register.
+        OP_REGISTER = 2
       };
 
       //! operation.
@@ -18500,7 +18508,9 @@ namespace DUNE
         //! Temporary Error.
         TSTAT_TEMPORARY_FAILURE = 102,
         //! Permanent Failure.
-        TSTAT_PERMANENT_FAILURE = 103
+        TSTAT_PERMANENT_FAILURE = 103,
+        //! Invalid Address.
+        TSTAT_INV_ADDR = 104
       };
 
       //! Request Identifier.
@@ -23244,7 +23254,9 @@ namespace DUNE
         //! Message has been sent.
         UTS_SENT = 8,
         //! Message has been acknowledged by the destination.
-        UTS_DELIVERED = 9
+        UTS_DELIVERED = 9,
+        //! No transducer.
+        UTS_NO_TRANSDUCER = 10
       };
 
       //! Sequence Id.
@@ -27006,6 +27018,86 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(reason);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Version Info.
+    class VersionInfo: public Message
+    {
+    public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Reply.
+        OP_REPLY = 0,
+        //! Query.
+        OP_QUERY = 1
+      };
+
+      //! Operation.
+      uint8_t op;
+      //! Version.
+      std::string version;
+      //! Description.
+      std::string description;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2021;
+      }
+
+      VersionInfo(void);
+
+      VersionInfo*
+      clone(void) const
+      {
+        return new VersionInfo(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return VersionInfo::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "VersionInfo";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(version) + IMC::getSerializationSize(description);
       }
 
       void
