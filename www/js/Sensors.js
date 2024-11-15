@@ -178,7 +178,6 @@ Sensors.prototype.createValue = function(msg)
 
 Sensors.prototype.updateField = function(root, msg)
 {
-  var state = this.getEntityStateState(msg);
 
   var date = new Date(msg.timestamp * 1000);
   var hours = date.getHours();
@@ -196,18 +195,13 @@ Sensors.prototype.updateField = function(root, msg)
   if (totalSeconds > 10.0) {
       root.childNodes[2].firstChild.data = 'INACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
       root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
-      if (!state)
-          state = 2;
+      state = 0;
   } else {
       root.childNodes[2].firstChild.data = 'ACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
-      if (!state)
-          state = 1;
+      state = 1;
   }
 
-  if (state) {
-      root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
-  }
-
+  root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
   root.childNodes[1].firstChild.data = Number(msg.value).toFixed(2);
 };
 
