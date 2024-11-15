@@ -50,6 +50,8 @@ namespace Transports
     static const char* c_sms_prompt = "\r\n> ";
     //! Size of SMS input prompt.
     static const unsigned c_sms_prompt_size = std::strlen(c_sms_prompt);
+    //! GSM modem timeout execution on seconds.
+    static const double c_timeout = 5.0;
 
     class Driver: public HayesModem
     {
@@ -114,6 +116,7 @@ namespace Transports
           sendAT("+CPBS=ON");
           expectOK();
           sendAT("+CPBS?");
+          setTimeout(c_timeout);
           std::string line = readLine();
           int n_registered_numbers = 0;
           int n_total_capacity = 0;
@@ -123,6 +126,7 @@ namespace Transports
             if (n_registered_numbers > 0)
             {
               sendAT("+CPBR=1");
+              setTimeout(c_timeout);
               line = readLine();
               int n_index;
               char n_number[20];
@@ -185,6 +189,7 @@ namespace Transports
           throw;
         }
 
+        setTimeout(c_timeout);
         std::string reply = readLine(timer);
         if (reply == "ERROR")
         {
@@ -229,6 +234,7 @@ namespace Transports
           m_busy = false;
           return false;
         }
+        setTimeout(c_timeout);
         std::string msg = readLine();
         Utils::String::toLowerCase(msg);
 
@@ -263,6 +269,7 @@ namespace Transports
       {
         m_busy = true;
         sendAT("+CSQ");
+        setTimeout(c_timeout);
         std::string line = readLine();
         int rssi = -1;
         int ber = 0;
@@ -382,6 +389,7 @@ namespace Transports
       readSMS(std::string& location, std::string& origin, std::string& text, bool& text_mode)
       {
         m_busy = true;
+        setTimeout(c_timeout);
         std::string header = readLine();
         // Print the received message
         getTask()->trace("Received message: %s", header.c_str());
@@ -395,6 +403,7 @@ namespace Transports
         while(String::startsWith(header, "+CMTI:") || String::startsWith(header, "+CSQ:") || header == "OK")
         {
           getTask()->trace("Received CMTI/CSQ: %s", header.c_str());
+          setTimeout(c_timeout);
           header = readLine();
         }
 
@@ -428,6 +437,7 @@ namespace Transports
 
         location = parts[1];
         origin = std::string(parts[2], 1, parts[2].size() - 2);
+        setTimeout(c_timeout);
         std::string incoming_data = readLine();
 
         if(Algorithms::Base64::validBase64(incoming_data))

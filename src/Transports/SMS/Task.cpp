@@ -50,6 +50,8 @@ namespace Transports
 
     //! Default timer - security (m)
     static const int m_balance_per_default = 5;
+    //! Number of sequence errors to ignore before restarting the modem.
+    static const unsigned c_seq_errors = 5;
 
     struct SmsRequest
     {
@@ -122,16 +124,18 @@ namespace Transports
       Time::Counter<int> m_balance_timer;
       //! Balance periodicity (s).
       int m_balance_per;
+      //! Number of sequence errors.
+      unsigned m_seq_errors;
 
       bool m_success_balance;
       int m_rssi;
-
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_uart(NULL),
         m_driver(NULL),
         m_req_id(1560),
+        m_seq_errors(0),
         m_success_balance(false),
         m_rssi(0)
       {
@@ -237,6 +241,7 @@ namespace Transports
           m_driver = NULL;
         }
         Memory::clear(m_uart);
+        m_seq_errors = 0;
       }
 
       void
@@ -361,17 +366,23 @@ namespace Transports
           {
             m_rssi_timer.reset();
             m_rssi = m_driver->getRSSI();
+            m_seq_errors = 0;
           }
           else if (m_rsms_timer.overflow())
           {
             m_rsms_timer.reset();
             if(m_rssi > 0)
               m_driver->checkMessages();
+
+            m_seq_errors = 0;
           }
         }
         catch (std::exception& e)
         {
-          throw RestartNeeded(String::str(DTR("failed to poll status: %s"), e.what()), 5);
+          if(++m_seq_errors >= c_seq_errors)
+            throw RestartNeeded(String::str(DTR("failed to poll status: %s"), e.what()), 5);
+          else
+            trace("failed to poll status (%d): %s", m_seq_errors, e.what());
         }
       }
 
