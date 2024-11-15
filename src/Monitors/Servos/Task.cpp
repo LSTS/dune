@@ -49,6 +49,8 @@ namespace Monitors
     static const unsigned c_servo_count = 4;
     //! Error timeout
     static const float c_error_timeout = 5.0;
+    //! Valid SetServoPosition timeout
+    static const float c_valid_set_servo_position_timeout = 0.01;
 
     enum FaultBits
     {
@@ -64,6 +66,16 @@ namespace Monitors
     {
       //! Monitor position faults
       bool pos_fault_detect;
+      //! Threshold for fault detection in the position error (command vs position)
+      float pos_error_threshold;
+      //! Factor in detection for comparing accumulated difference (command vs position)
+      float rate_factor;
+      //! Delay for the detection triggering using DelayedTrigger class
+      double pos_error_delay;
+      //! Number of samples for the moving average in the DelayedTrigger object
+      unsigned pos_error_samples;
+      //! Maximum rotation rate of the servos
+      double max_rotation_rate;
       //! Monitor electric current faults
       bool curr_fault_detect;
       //! Current lower threshold to consider abnormal behavior
@@ -104,6 +116,8 @@ namespace Monitors
       uint8_t m_on_fault[c_servo_count];
       //! Timer for error timeout
       Time::Counter<float> m_timer;
+      //! Timer for servo position fault detection timeout
+      Time::Counter<float> m_timer_set_servo;
       //! Queue for error reports.
       std::queue<double> m_queue[c_servo_count];
       //! Major failure in one of the servos.
@@ -120,6 +134,33 @@ namespace Monitors
         param("Position Fault Detection", m_args.pos_fault_detect)
         .defaultValue("false")
         .description("Enable position fault detection");
+
+        param("Position Error Threshold", m_args.pos_error_threshold)
+        .defaultValue("12.0")
+        .minimumValue("0.0")
+        .units(Units::Degree)
+        .description("Threshold for position error in fault detection");
+
+        param("Position Rate Factor", m_args.rate_factor)
+        .defaultValue("0.05")
+        .description("Factor in fault detection for comparison between accumulated "
+                     "differences");
+
+        param("Position Error Delay", m_args.pos_error_delay)
+        .defaultValue("5.0")
+        .units(Units::Second)
+        .description("Delay for the detection triggering using DelayedTrigger class");
+
+        param("Position Error Samples", m_args.pos_error_samples)
+        .defaultValue("5")
+        .minimumValue("1")
+        .description("Number of samples for the moving average in the "
+                     "DelayedTrigger object");
+
+        param("Maximum Rotation Rate", m_args.max_rotation_rate)
+        .defaultValue("333.3")
+        .units(Units::DegreePerSecond)
+        .description("Maximum rotation rate allowed by the servo");
 
         param("Current Fault Detection", m_args.curr_fault_detect)
         .defaultValue("false")
@@ -176,8 +217,8 @@ namespace Monitors
 
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
-          m_pos_monitor[i] = nullptr;
-          m_curr_monitor[i] = nullptr;
+          m_pos_monitor[i] = NULL;
+          m_curr_monitor[i] = NULL;
         }
 
         // Register handler routines.
@@ -187,14 +228,20 @@ namespace Monitors
       }
 
       void
-      onUpdateParameters() override
+      onUpdateParameters(void)
       {
+        if (paramChanged(m_args.max_rotation_rate))
+          m_args.max_rotation_rate = Angles::radians(m_args.max_rotation_rate);
+
+        if (paramChanged(m_args.pos_error_threshold))
+          m_args.pos_error_threshold = Angles::radians(m_args.pos_error_threshold);
+
         if (!m_args.pos_fault_detect && !m_args.curr_fault_detect)
           requestDeactivation();
       }
 
       void
-      onEntityResolution() override
+      onEntityResolution(void)
       {
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
@@ -210,7 +257,7 @@ namespace Monitors
       }
 
       void
-      onResourceRelease() override
+      onResourceRelease(void)
       {
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
@@ -220,7 +267,7 @@ namespace Monitors
       }
 
       void
-      onResourceAcquisition() override
+      onResourceAcquisition(void)
       {
         if (m_args.curr_fault_detect)
         {
@@ -237,13 +284,14 @@ namespace Monitors
       }
 
       void
-      onResourceInitialization() override
+      onResourceInitialization(void)
       {
         for (unsigned i = 0; i < c_servo_count; ++i)
         {
           m_set_servo[i] = 0.0;
           m_on_fault[i] = FT_NONE;
           m_timer.setTop(c_error_timeout);
+          m_timer_set_servo.setTop(c_valid_set_servo_position_timeout);
         }
 
         if (m_args.pos_fault_detect || m_args.curr_fault_detect)
@@ -258,6 +306,16 @@ namespace Monitors
 
         if (m_args.pos_fault_detect)
         {
+          if (m_timer_set_servo.overflow())
+          {
+            int id = msg->id;
+            if (m_pos_monitor[id] != NULL)
+            {
+              m_pos_monitor[id]->reset();
+            }
+            return;
+          }
+
           testPositionFaults(msg);
           m_timer.reset();
         }
@@ -270,6 +328,7 @@ namespace Monitors
           return;
 
         m_set_servo[msg->id] = msg->value;
+        m_timer_set_servo.reset();
       }
 
       void
@@ -299,9 +358,13 @@ namespace Monitors
       {
         unsigned i = msg->id;
 
-        if (m_pos_monitor[i] == nullptr)
+        if (m_pos_monitor[i] == NULL)
         {
-          m_pos_monitor[i] = new ServoPositionMonitor<float>();
+          m_pos_monitor[i] = new ServoPositionMonitor<float>(m_args.pos_error_threshold,
+                                                             m_args.rate_factor,
+                                                             m_args.pos_error_delay,
+                                                             m_args.pos_error_samples,
+                                                             m_args.max_rotation_rate);
         }
         else
         {
@@ -400,7 +463,7 @@ namespace Monitors
       }
 
       void
-      onMain() override
+      onMain(void)
       {
         while (!stopping())
         {

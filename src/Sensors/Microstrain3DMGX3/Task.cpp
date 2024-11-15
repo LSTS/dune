@@ -308,6 +308,13 @@ namespace Sensors
         m_uart->setMinimumRead(max_data);
       }
 
+      bool
+      resetUart()
+      {
+        delete(m_uart);
+        return onConnect();
+      }
+
       void
       consume(const IMC::MagneticField* msg)
       {
@@ -484,6 +491,7 @@ namespace Sensors
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
             inf(DTR("resetting device"));
             poll(CMD_DEVICE_RESET, CMD_DEVICE_RESET_SIZE, 0, 0);
+            resetUart();
           }
         }
       }
