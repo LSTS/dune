@@ -220,18 +220,22 @@ namespace DUNE
       .description("Climb progress failure timeout. If there is no progress"
                    "the vehicle attempts to stabilize after this interval.");
 
-      param("Climb Monitor -- Stabilize error timeout", m_cmd.args.stabilize_error_timeout)
+      param("Climb Monitor -- Recover error timeout", m_cmd.args.recover_error_timeout)
       .defaultValue("20")
       .units(Units::Second)
-      .description("Stabilize failure timeout. If the vehicle does not stabilize"
-                   " whitin this time then brake until the vehicle is at "
-                   "surface or recovers.");
+      .description("Recover failure timeout. If the vehicle does not recover"
+                   " whithin this time then....");
 
       param("Climb Monitor -- RPM Boost", m_cmd.args.speed_boost_rpm)
       .defaultValue("1900")
       .units(Units::RPM)
       .description("If attempting to stabilize descent increase RPM's to this "
                    "value.");
+
+      param("Climb Monitor -- Stable Pitch Angle Window", m_cmd.args.stable_angle_window)
+      .defaultValue("10")
+      .units(Units::Degree)
+      .description("Angle window to consider the vehicle pitch stable");
 
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
