@@ -61,10 +61,12 @@ namespace DUNE
         unsigned window_size;
         //! Climb error timeout.
         unsigned climb_error_timeout;
-        //! Stabilize error timeout
-        unsigned stabilize_error_timeout;
+        //! Recover error timeout
+        unsigned recover_error_timeout;
         //! Speed boost to use when stabilizing descent
         unsigned speed_boost_rpm;
+        //! Angle window to consider the vehicle pitch stable
+        double stable_angle_window;
       };
 
       //! Constructor.
@@ -113,6 +115,10 @@ namespace DUNE
         SM_AT_TARGET,
         //! Vehicle stabilizing
         SM_STABILIZE,
+        //! Vehicle recovering descent
+        SM_RECOVER_DESCENT,
+        //! Vehicle recovering ascent
+        SM_RECOVER_ASCENT,
         //! Vehicle unable to stabilize
         SM_EMERGENCY
       };
@@ -135,9 +141,14 @@ namespace DUNE
       isDescending(double z_error);
 
       //! Check if vehicle is at surface
-      //! @return true if vehicle is at surface, false ifotherwise
+      //! @return true if vehicle is at surface, false otherwise
       bool
       isAtSurface();
+
+      //! Check if vehicle is pitch stable
+      //! @return true if vehicle pitch is stable, false otherwise
+      bool
+      isPitchStable();
 
       //! Check if there is enough data to start tracking
       //! @return true if there is sufficient data, false otherwise
@@ -150,7 +161,7 @@ namespace DUNE
       //! Brake
       //! @param[in] start true to start braking, false to stop
       void
-      brake(bool start) const;
+      brake(bool start);
 
       //! On target state
       void
@@ -163,6 +174,22 @@ namespace DUNE
       //! Reset stabilize state
       void
       resetStabilize();
+
+      //! Reset recover descent state
+      void
+      resetRecoverDescent();
+
+      //! Recover descent state
+      void
+      onRecoverDescent();
+
+      //! Recover ascent state
+      void
+      onRecoverAscent();
+
+      //! Reset recover ascend state
+      void
+      resetRecoverAscent();
 
       //! Climb state
       void
@@ -187,7 +214,7 @@ namespace DUNE
       //! Change state machine state
       //! @param[in] state new state 
       void
-      changeState(ClimbStates state);
+      changeState(ClimbStates state, bool reset_state = true);
 
       //! Function for info messages.
       //! @param[in] msg string message to output.
@@ -209,6 +236,47 @@ namespace DUNE
       void
       err(const std::string& msg) const;
 
+      struct ChangeAverage
+      {
+        ChangeAverage(unsigned int window_size):
+          error_deriv_avr(DUNE::Math::MovingAverage<double>(window_size))
+        { }
+        //! Flag for first error, for derivative calculation
+        bool got_error;
+        //! Z error derivative
+        DUNE::Math::Derivative<double> error_deriv;
+        //! Average of climb error change
+        DUNE::Math::MovingAverage<double> error_deriv_avr;
+
+        void
+        reset()
+        {
+          got_error = false;
+          error_deriv.clear();
+          error_deriv_avr.clear();
+        }
+
+        void
+        update(double error)
+        {
+          error = std::abs(error);
+          double z_error_deriv = error_deriv.update(error);
+          if (!got_error)
+          {
+            got_error = true;
+            return;
+          }
+
+          error_deriv_avr.update(z_error_deriv);
+        }
+
+        double
+        get()
+        {
+          return error_deriv_avr.mean();
+        }
+
+      };
       //! Pointer to arguments.
       const Arguments* m_args;
       //! Active or inactive.
@@ -225,20 +293,24 @@ namespace DUNE
       bool m_got_zref;
       //! Flag first EstimatedState received
       bool m_got_estate;
+      //! Flag for braking
+      bool m_braking;
+      // Z error change average
+      ChangeAverage m_change_average;
       //! Climb state
-      //! Climb error derivative
-      DUNE::Math::Derivative<double> m_error_deriv;
-      //! Average of climb error change
-      DUNE::Math::MovingAverage<double>* m_error_deriv_avr;
-      //! Flag for first error, for derivative calculation
-      bool m_got_error;
       //! Climb error timer, resets if climb error decreases
       DUNE::Time::Counter<double> m_climb_error_timer;
       //! Stabilize state
       //! Flag for stabilize state initialized
       bool m_stabilize_init;
-      //! Stabilize error timer
-      DUNE::Time::Counter<double> m_stabilize_error_timer;
+      //! Recover Descent state
+      //! Flag for recover descent state initialized
+      bool m_rec_descent_init;
+      //! Recover Ascent state
+      //! Flag for recover ascent state initialized
+      bool m_rec_ascent_init;
+      //! Recover error timer
+      DUNE::Time::Counter<double> m_recover_error_timer;
     };
   }
 }

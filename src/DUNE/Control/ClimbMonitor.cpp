@@ -33,7 +33,7 @@
 
 // DUNE headers.
 #include <DUNE/Control/ClimbMonitor.hpp>
-// #include <DUNE/Math/Angles.hpp>
+#include <DUNE/Math/Angles.hpp>
 // #include <DUNE/Memory.hpp>
 #include <DUNE/Utils/String.hpp>
 // #include <DUNE/Streams/Terminal.hpp>
@@ -50,6 +50,8 @@ static const std::string c_str_states[] = {DTR_RT("Ascending"),
                                            DTR_RT("Descending"),
                                            DTR_RT("On Target"),
                                            DTR_RT("Stabilizing"),
+                                           DTR_RT("Recovering Descent"),
+                                           DTR_RT("Recovering Ascent"),
                                            DTR_RT("Emergency")};
 
 //! Climb monitor name
@@ -64,18 +66,17 @@ namespace DUNE
       m_active(false),
       m_got_zref(false),
       m_got_estate(false),
-      m_error_deriv_avr(nullptr),
-      m_got_error(false),
-      m_stabilize_init(false)
+      m_braking(false),
+      m_change_average(ChangeAverage(args->window_size)),
+      m_stabilize_init(false),
+      m_rec_descent_init(false)
     {
-      m_error_deriv_avr = new DUNE::Math::MovingAverage<double>(args->window_size);
       reset();
     }
 
     ClimbMonitor::~ClimbMonitor(void)
     {
-      if (m_error_deriv_avr != nullptr)
-        delete m_error_deriv_avr;
+
     }
 
     void
@@ -86,10 +87,13 @@ namespace DUNE
       m_cstate = SM_AT_TARGET;
       m_got_zref = false;
       m_got_estate = false;
+      m_braking = false;
       m_climb_error_timer.setTop(m_args->climb_error_timeout);
-      m_stabilize_error_timer.setTop(m_args->stabilize_error_timeout);
+      m_recover_error_timer.setTop(m_args->recover_error_timeout);
       resetClimb();
       resetStabilize();
+      resetRecoverDescent();
+      resetRecoverAscent();
     }
 
     void
@@ -165,6 +169,12 @@ namespace DUNE
         case SM_STABILIZE:
           onStabilize();
           break;
+        case SM_RECOVER_DESCENT:
+          onRecoverDescent();
+          break;
+        case SM_RECOVER_ASCENT:
+          onRecoverAscent();
+          break;
         case SM_EMERGENCY:
           onEmergency();
           break;
@@ -203,10 +213,19 @@ namespace DUNE
       return m_estate.depth < c_depth_hyst;
     }
 
+    bool
+    ClimbMonitor::isPitchStable()
+    {
+      double limit = DUNE::Math::Angles::radians(m_args->stable_angle_window);
+      limit = DUNE::Math::Angles::normalizeRadian(limit);
+      return m_estate.theta < limit && m_estate.theta > -limit;
+    }
+
     void
-    ClimbMonitor::brake(bool start) const
+    ClimbMonitor::brake(bool start)
     {
       IMC::Brake brk;
+      m_braking = start;
       brk.op = start ? IMC::Brake::OP_START : IMC::Brake::OP_STOP;
       m_args->entity->dispatch(brk, Tasks::DF_LOOP_BACK);
 
@@ -231,7 +250,6 @@ namespace DUNE
         return;
       }
 
-      resetClimb();
       if (isDescending(z_error))
         changeState(SM_DESCENDING);
       else
@@ -242,9 +260,6 @@ namespace DUNE
     void
     ClimbMonitor::onTarget()
     {
-      if (!m_active)
-        return;
-
       // Check if still of target, otherwise change state
       updateClimbState();
     }
@@ -258,99 +273,145 @@ namespace DUNE
 
       // Compute absolute error
       double z_error = getZError();
-
-      // If at desired z -> send original speed ref and change state
-      if  (isOnTarget(z_error))
-      {
-        brake(false);
-        changeState(SM_AT_TARGET);
-        return;
-      }
-
-      // If unable to stabilize in the allocated time -> ...
-      if (m_stabilize_error_timer.overflow())
-      {
-        err("Unable to stabilize vehicle depth. Braking");
-        brake(true);
-        changeState(SM_EMERGENCY);
-        return;
-      }
-
-
-      // Attempt to stabilize using speed
-      if (m_stabilize_init)
-        return;
-
-      IMC::DesiredSpeed desired_speed;
-      desired_speed.speed_units = IMC::SUNITS_RPM;
+      double pitch_limit = DUNE::Math::Angles::radians(m_args->stable_angle_window);
+      pitch_limit = DUNE::Math::Angles::normalizeRadian(pitch_limit);
       if (isDescending(z_error))
       {
-        war("Stabilizing -> Increasing speed");
-        desired_speed.value = m_args->speed_boost_rpm;
-        m_args->entity->dispatch(desired_speed);
+        if (m_estate.theta > pitch_limit)
+        {
+          if (!m_stabilize_init)
+          {
+            m_stabilize_init = true;
+            brake(true);
+          }
+        }
+        else
+        {
+          if (m_stabilize_init)
+            brake(false);
+          changeState(SM_RECOVER_DESCENT);  
+        }
       }
       else
       {
-        
-        war("Stabilizing -> Decreasing speed");
-        brake(true);
+        if (m_estate.theta < -pitch_limit)
+        {
+          if (!m_stabilize_init)
+          {
+            m_stabilize_init = true;
+            brake(true);
+          }
+        }
+        else
+        {
+          if (m_stabilize_init)
+            brake(false);
+          changeState(SM_RECOVER_ASCENT);  
+        }
       }
-
-      m_stabilize_init = true;
     }
 
     void
     ClimbMonitor::resetStabilize()
     {
       m_stabilize_init = false;
-      m_stabilize_error_timer.reset();
+    }
+
+    void
+    ClimbMonitor::onRecoverDescent()
+    {
+      if (!m_rec_descent_init)
+      {
+        IMC::DesiredSpeed desired_speed;
+        desired_speed.speed_units = IMC::SUNITS_RPM;
+        desired_speed.value = m_args->speed_boost_rpm;
+
+        war("Recovering descent -> Increasing speed");
+        m_args->entity->dispatch(desired_speed);
+        m_rec_descent_init = true;
+      }
+
+      double z_error = getZError();
+      m_change_average.update(z_error);
+      if (m_change_average.get() < 0) // Recovering
+      {
+        m_args->entity->dispatch(m_speed_ref);
+        updateClimbState();
+      }
+
+      if (m_recover_error_timer.overflow())
+        changeState(SM_EMERGENCY);
+    }
+
+    void
+    ClimbMonitor::resetRecoverDescent()
+    {
+      m_climb_error_timer.reset();
+      m_change_average.reset();
+      m_rec_descent_init = false;
+    }
+
+    void
+    ClimbMonitor::onRecoverAscent()
+    {
+      if (!m_rec_ascent_init)
+      {
+        if (!m_braking)
+          brake(true);
+
+        war("Recovering ascent -> Braking");
+        m_rec_ascent_init = true;
+      }
+
+      double z_error = getZError();
+      m_change_average.update(z_error);
+      if (m_change_average.get() < 0) // Recovering
+      {
+        brake(false);
+        updateClimbState();
+      }
+
+      if (m_recover_error_timer.overflow())
+        changeState(SM_EMERGENCY);
+    }
+
+    void
+    ClimbMonitor::resetRecoverAscent()
+    {
+      m_climb_error_timer.reset();
+      m_change_average.reset();
+      m_rec_ascent_init = false;
     }
 
     void
     ClimbMonitor::onClimb()
     {
-      if (!m_active)
-        return;
-        
       // Compute absolute error
       double z_error = getZError();
-      z_error = std::abs(z_error);
 
       // If at desired z -> change state
-      if  (isOnTarget(z_error))
+      if (isOnTarget(z_error))
       {
         changeState(SM_AT_TARGET);
         return;
       }
 
-      double z_error_deriv = m_error_deriv.update(z_error);
-      if (!m_got_error)
-      {
-        m_got_error = true;
-        return;
-      }
-
+      m_change_average.update(z_error);
       // if error is decreasing, on average -> reset climb timer
-      double error_change_avr = m_error_deriv_avr->update(z_error_deriv);
-      if (error_change_avr < 0)
+      if (m_change_average.get() < 0)
       {
         m_climb_error_timer.reset();
         return;
       }
 
       if (m_climb_error_timer.overflow())
-      {
-        resetStabilize();
         changeState(SM_STABILIZE);
-      }
     }
 
     void
     ClimbMonitor::resetClimb()
     {
-      m_got_error = false;
-      m_error_deriv_avr->clear();
-      m_error_deriv.clear();
+      m_change_average.reset();
       m_climb_error_timer.reset();
     }
 
@@ -358,33 +419,39 @@ namespace DUNE
     void
     ClimbMonitor::onEmergency()
     {
-      if (!m_active)
-        return;
-
-      if (isAtSurface())
-      {
-        info("At surface");
-        brake(false);
-        updateClimbState();
-        return;
-      }
-
-      // Compute absolute error
-      double z_error = getZError();
-      // If at desired z -> send original speed ref and change state
-      if  (isOnTarget(z_error))
-      {
-        brake(false);
-        changeState(SM_AT_TARGET);
-        return;
-      }
+      IMC::Abort abort;
+      m_args->entity->dispatch(abort);
+      deactivate();
     }
 
     void
-    ClimbMonitor::changeState(ClimbStates state)
+    ClimbMonitor::changeState(ClimbStates state, bool reset_state)
     {
       if (m_cstate == state)
         return;
+
+      // Reset state
+      if (reset_state)
+      {
+        switch (state)
+        {
+          case SM_DESCENDING:
+          case SM_ASCENDING:
+            resetClimb();
+            break;
+          case SM_STABILIZE:
+            resetStabilize();
+            break;
+          case SM_RECOVER_DESCENT:
+            resetRecoverDescent();
+            break;
+          case SM_RECOVER_ASCENT:
+            resetRecoverAscent();
+            break;
+          default:
+            break;
+        }
+      }
 
       debug(String::str("State change: %s", c_str_states[state].c_str()));
       m_cstate = state;
