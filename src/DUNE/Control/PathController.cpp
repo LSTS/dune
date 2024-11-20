@@ -210,33 +210,6 @@ namespace DUNE
       .defaultValue("true")
       .description("Enable or disable climb monitor");
 
-      param("Climb Monitor -- Climb Average Window Size", m_cmd.args.window_size)
-      .defaultValue("10")
-      .description("Climb monitor's moving average window size");
-
-      param("Climb Monitor -- Climb error timeout", m_cmd.args.climb_error_timeout)
-      .defaultValue("20")
-      .units(Units::Second)
-      .description("Climb progress failure timeout. If there is no progress"
-                   "the vehicle attempts to stabilize after this interval.");
-
-      param("Climb Monitor -- Recover error timeout", m_cmd.args.recover_error_timeout)
-      .defaultValue("20")
-      .units(Units::Second)
-      .description("Recover failure timeout. If the vehicle does not recover"
-                   " whithin this time then....");
-
-      param("Climb Monitor -- RPM Boost", m_cmd.args.speed_boost_rpm)
-      .defaultValue("1900")
-      .units(Units::RPM)
-      .description("If attempting to stabilize descent increase RPM's to this "
-                   "value.");
-
-      param("Climb Monitor -- Stable Pitch Angle Window", m_cmd.args.stable_angle_window)
-      .defaultValue("10")
-      .units(Units::Degree)
-      .description("Angle window to consider the vehicle pitch stable");
-
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
 
@@ -304,23 +277,6 @@ namespace DUNE
         {
           deactivateBottomTracker();
           Memory::clear(m_btrack);
-        }
-      }
-
-      if (paramChanged(m_cmd.enabled))
-      {
-        if (m_cmd.enabled)
-        {
-          if (m_climb_monitor == NULL)
-          {
-            m_cmd.args.task = this;
-            m_climb_monitor = new ClimbMonitor(&m_cmd.args);
-          }
-        }
-        else
-        {
-          deactivateClimbMonitor();
-          Memory::clear(m_climb_monitor);
         }
       }
     }
@@ -552,19 +508,9 @@ namespace DUNE
           m_btrack->onDesiredZ(&m_zref, true);
         else
           dispatch(m_zref);
-
-        if (isMonitoringClimb())
-          m_climb_monitor->onDesiredZ(&m_zref);
       }
       else
       {
-        // climb monitor can not track progress without a z reference
-        if (isMonitoringClimb())
-        {
-          debug("NO_Z flag, disabling climb monitor");
-          m_climb_monitor->deactivate();
-        }
-        
         m_ts.z_control = false;
         m_pcs.flags |= IMC::PathControlState::FL_NO_Z;
       }
@@ -661,9 +607,6 @@ namespace DUNE
     {
       if (isTrackingBottom())
         m_btrack->onDesiredZ(zref);
-
-      if (isMonitoringClimb())
-        m_climb_monitor->onDesiredZ(zref);
     }
 
     void
@@ -671,9 +614,6 @@ namespace DUNE
     {
       if (isTrackingBottom())
         m_btrack->onDesiredSpeed(dspeed);
-
-      if (isMonitoringClimb())
-        m_climb_monitor->onDesiredSpeed(dspeed);
     }
 
     void
@@ -685,9 +625,6 @@ namespace DUNE
 
       if (isTrackingBottom())
         m_btrack->onEstimatedState(es);
-
-      if (isMonitoringClimb())
-        m_climb_monitor->onEstimatedState(es);
 
       if (m_setup)
       {
@@ -1040,9 +977,6 @@ namespace DUNE
 
       if (isTrackingBottom())
         m_btrack->activate();
-
-      if (isMonitoringClimb())
-        m_climb_monitor->activate();
     }
 
     void
@@ -1059,9 +993,6 @@ namespace DUNE
 
       if (isTrackingBottom())
         deactivateBottomTracker();
-
-      if (isMonitoringClimb())
-        deactivateClimbMonitor();
     }
 
     void
@@ -1212,15 +1143,6 @@ namespace DUNE
 
         m_braking = false;
       }
-    }
-
-    void
-    PathController::deactivateClimbMonitor(void)
-    {
-      if (m_climb_monitor == NULL)
-        return;
-
-      m_climb_monitor->deactivate();
     }
 
     void

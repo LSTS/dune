@@ -405,14 +405,6 @@ namespace DUNE
         return m_btd.enabled && (m_btrack != NULL);
       }
 
-      //! Is the system performing climb monitoring ?
-      //! @return true if it is climb monitoring, false otherwise.
-      bool
-      isMonitoringClimb(void) const
-      {
-        return m_cmd.enabled && (m_climb_monitor != NULL);
-      }
-
       //! Data for along-track error monitoring.
       struct ATMData
       {
@@ -524,7 +516,6 @@ namespace DUNE
       IMC::DesiredSpeed m_speed;
       //! Pointer to bottom tracker object
       BottomTracker* m_btrack;
-      ClimbMonitor* m_climb_monitor;
       //! Control loops last reference
       uint32_t m_scope_ref;
       //! Maximum admitted track length
