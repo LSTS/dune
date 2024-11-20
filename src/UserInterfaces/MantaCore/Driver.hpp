@@ -544,7 +544,6 @@ namespace UserInterfaces
       {
         if (m_query_systems && !force)
           return;
-
         m_query_systems = true;
         IMC::AcousticSystemsQuery asq;
         asq.setDestination(m_task->getSystemId());
