@@ -252,7 +252,7 @@ namespace UserInterfaces
       void
       waitForReplies(void)
       {
-        while(!m_driver->emptyQueue())
+        while(!m_driver->emptyQueue() && !isStopping() && !m_wdog.overflow())
         {
           waitForMessages(1.0);
           m_driver->checkCommandQueue();
