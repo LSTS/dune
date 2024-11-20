@@ -480,7 +480,6 @@ namespace UserInterfaces
             break;
           }
 
-
           default:
             m_task->debug("Uncategorized message: %s", line.c_str());
             return false;
