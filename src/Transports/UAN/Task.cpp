@@ -214,7 +214,7 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.modems) && isActive())
+        if (paramChanged(m_args.modems))
           activateModems();
       }
 
