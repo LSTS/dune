@@ -380,9 +380,15 @@ namespace Transports
         catch (std::exception& e)
         {
           if(++m_seq_errors >= c_seq_errors)
+          {
             throw RestartNeeded(String::str(DTR("failed to poll status: %s"), e.what()), 5);
+          }
           else
+          {
             trace("failed to poll status (%d): %s", m_seq_errors, e.what());
+            m_driver->stopAndJoin();
+            m_driver->initialize();
+          }
         }
       }
 
