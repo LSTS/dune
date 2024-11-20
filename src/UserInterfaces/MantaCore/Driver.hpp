@@ -65,7 +65,8 @@ namespace UserInterfaces
         m_parser_state(PARSER_PREAMBLE),
         m_free_text_state(0),
         m_free_text("Manta Core"),
-        m_treqid(0)
+        m_treqid(0),
+        m_new_modems_config(false)
       {
         querySystems(true);
         m_handle->flush();
@@ -131,6 +132,19 @@ namespace UserInterfaces
         m_task->spew("request firmware");
         sprintf(m_cmd_text, "%c,%c%c", BYTE_PREAMBLE, BYTE_FIRMWARE, '\0');
         sendCommand(m_cmd_text, true);
+      }
+
+      void
+      setKnownModems(std::map<std::string, ModemInfo> modems)
+      {
+        m_task->spew("set known modems");        
+        for (auto& modem: modems)
+        {
+          std::string cmd = String::str("%c,%c", BYTE_PREAMBLE, BYTE_KWON_AMODEMS);
+          cmd += "," + modem.first + ",";
+          cmd += modem.second.state ? "1" : "0";
+          sendCommand(cmd, true);
+        }
       }
 
       void
@@ -310,6 +324,16 @@ namespace UserInterfaces
         return true;
       }
 
+      std::map<std::string, bool>
+      getModemsConfig(void)
+      {
+        if (!m_new_modems_config)
+          return {};
+        
+        m_new_modems_config = false;
+        return m_modems_config;
+      }
+
       //! TODO: if ((m_send_cmd_state == CMD_WAITING && m_wdog.overflow()), retransmit last -> after 5 attempts, com_error.
       //! TODO: if (m_send_cmd_state == CMD_NACK), retransmit last -> after 5 attempts, com_error.
       //! TODO: if command needs a response, make sure it makes sense
@@ -447,6 +471,14 @@ namespace UserInterfaces
             break;
           }
 
+          case BYTE_KWON_AMODEMS:
+          {
+            m_modems_config.clear();
+            m_new_modems_config = true;
+            for (size_t i = 2; i < lst.size() - 1; i += 2)
+              m_modems_config[lst[i]] = lst[i + 1] == "1";
+            break;
+          }
 
 
           default:
@@ -490,6 +522,10 @@ namespace UserInterfaces
       uint16_t m_treqid;
       //! Boot watchdog.
       Time::Counter<float> m_wdog_boot;
+      //! List of modems.
+      std::map<std::string, bool> m_modems_config;
+      //! Flag of new modems config.
+      bool m_new_modems_config;
 
       uint16_t
       getInternalId(void)
