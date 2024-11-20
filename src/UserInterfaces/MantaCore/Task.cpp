@@ -238,8 +238,7 @@ namespace UserInterfaces
 
         if(m_driver != NULL)
         {
-          //! TODO: fix notifyBoardAboutDisconnect. 
-          // m_driver->notifyBoardAboutDisconnect();
+          m_driver->notifyBoardAboutDisconnect();
           Memory::clear(m_driver);
         }
 
