@@ -237,8 +237,6 @@ namespace Transports
         if (m_args.usbl_announce)
           announceUSBL();
 
-        activateModems();
-
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
