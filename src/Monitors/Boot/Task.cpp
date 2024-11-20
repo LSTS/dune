@@ -230,7 +230,7 @@ namespace Monitors
             m_msg_sent = true;
           }
 
-          Delay::wait(1.0);
+          waitForMessages(1.0);
         }
       }
     };
