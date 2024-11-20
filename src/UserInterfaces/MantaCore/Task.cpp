@@ -221,7 +221,7 @@ namespace UserInterfaces
         {
           war("Failed to connect to device: %s [retrying]", m_args.io_dev.c_str());
           m_wdog_con.setTop(static_cast<float>(getActivationTime()));
-          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 1);
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
         return true;
       }
