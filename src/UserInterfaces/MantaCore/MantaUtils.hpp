@@ -73,6 +73,8 @@ namespace UserInterfaces
     constexpr char BYTE_DATA_POWER              = 'D';
     constexpr char BYTE_FIRMWARE                = 'f';
     constexpr char BYTE_BQ_INFO                 = 'i';
+    constexpr char BYTE_KWON_AMODEMS            = 'K';
+    constexpr char BYTE_STATUS                  = 'k';
     constexpr char BYTE_LAST                    = 'L';
     constexpr char BYTE_LTC_DATA                = 'l';
     constexpr char BYTE_AMODEM                  = 'm';
@@ -90,7 +92,6 @@ namespace UserInterfaces
     constexpr char BYTE_CPU_DISCONNECT          = 'v';
     constexpr char BYTE_RANGE                   = 'R';
     constexpr char BYTE_ABORT                   = 'X';
-    constexpr char BYTE_STATUS                  = 'k';
 
     enum BQ_DATA_TYPE
     {
@@ -189,6 +190,12 @@ namespace UserInterfaces
       bool power_channels_states[c_max_power_channels];
       //! Get data.
       bool get_data;
+    };
+
+    struct ModemInfo
+    {
+      std::string address;
+      bool state;
     };
 
     struct BQData
