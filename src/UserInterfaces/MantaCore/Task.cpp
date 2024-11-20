@@ -371,11 +371,8 @@ namespace UserInterfaces
           return;
 
         m_driver->setTargetAddress("reset");
-        if (m_sys.size() > 0)
-        {
-          for (auto& name: m_sys)
-            m_driver->setTargetAddress(name);
-        }
+        for (auto& name: m_sys)
+          m_driver->setTargetAddress(name);
         waitForReplies();
 
         m_targets_set = true;
