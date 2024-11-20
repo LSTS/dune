@@ -630,7 +630,7 @@ namespace Transports
           }
         }
         else
-          war("connected modems section is empty.");
+          inf("connected modems section is empty.");
 
         if (m_sys.empty())
           return;
