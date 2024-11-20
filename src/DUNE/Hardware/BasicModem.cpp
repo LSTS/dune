@@ -200,11 +200,11 @@ namespace DUNE
       } else {
         if (m_lines.size()) {
           getTask()->war(
-                         "There are %d lines in the queue. Convert to queue of bytes.",
+                         "[BasicModem]:There are %d lines in the queue. Convert to queue of bytes.",
                          m_lines.size());
           while (m_lines.size() > 0) {
             std::string line = m_lines.pop();
-            getTask()->war("line: %s", line.c_str());
+            getTask()->war("[BasicModem]:line: %s", line.c_str());
             for (size_t i = 0; i < line.size(); ++i)
               m_bytes.push(line[i]);
           }
@@ -274,7 +274,7 @@ namespace DUNE
         if (bytes_read == data_size)
           return;
       }
-      getTask()->war("timeout while reading %u bytes", data_size);
+      getTask()->war("[BasicModem]:timeout while reading %u bytes", data_size);
       throw ReadTimeout();
     }
 
@@ -361,7 +361,7 @@ namespace DUNE
         else
           return readLine(timer);
       }
-      getTask()->war("timeout while reading line");
+      getTask()->war("[BasicModem]:timeout while reading line");
       throw ReadTimeout();
     }
 
@@ -387,7 +387,7 @@ namespace DUNE
         {
           rv = m_handle->read(bfr, sizeof(bfr));
         } catch (std::runtime_error &e) {
-          m_task->war("%s: %s", Status::getString(Status::CODE_IO_ERROR), e.what());
+          m_task->war("[BasicModem]:%s: %s", Status::getString(Status::CODE_IO_ERROR), e.what());
           break;
         }
 
