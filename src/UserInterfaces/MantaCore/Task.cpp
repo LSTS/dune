@@ -393,7 +393,6 @@ namespace UserInterfaces
         m_driver->setTargetAddress("reset");
         for (auto& name: m_sys)
           m_driver->setTargetAddress(name);
-        waitForReplies();
 
         m_targets_set = true;
       }
