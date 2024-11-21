@@ -202,8 +202,10 @@ namespace Control
 				{
 					double cost = INFINITY;
 					double cost_k = 0, cost_i = 0, cost_o = 0; // cost_ac = 0;
-					int n_obst, n_wps, n_samp = T_ / DT_, n_samp_pred = n_samp / pred_step, n_psi_os_best;
+					int n_obst, n_wps, n_samp = T_ / DT_, n_samp_pred = n_samp / pred_step, n_psi_os_best = 0;
 					Eigen::Vector2d d, v_o, v_s, los_0, d_s_wp1, los_s_wp1, d_wp0_wp1, los_wp0_wp1;
+          //initialize los_s_wp1
+          los_s_wp1 << 0.0, 0.0;
 					double dist_k, dist = INFINITY;
 					static bool colav_active = false;
 					double phi_0, dist_0, CF_0;
@@ -1349,6 +1351,7 @@ namespace Control
 						C2 = 0;
 						C_ground = 0;
 						mu = 0;
+            mu_0 = 0;
 						gCost = 0;
 
 						t += DT_ * pred_step;
