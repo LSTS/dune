@@ -412,7 +412,15 @@ namespace UserInterfaces
             if (param->name == "Modems")
             {
               found = true;
-              String::split(param->value, ",", m_uan_config);
+              std::set<std::string> new_config;
+              String::split(param->value, ",", new_config);
+              for (auto& n: m_uan_config)
+                if (new_config.find(n) == new_config.end())
+                  for (auto& modem: m_modems)
+                    if (modem.first.find(n) != modem.first.npos)
+                      modem.second.state = false;
+              m_uan_config = new_config;
+              m_driver->setKnownModems(m_modems);
               break;
             }
           }
@@ -451,6 +459,9 @@ namespace UserInterfaces
                     
           if (io.find(m_modems[modem].address) != io.npos)
           {
+            for (auto& m: m_modems)
+              if (m.first.find(msg->name) != m.first.npos)
+                m.second.state = false;
             m_modems[modem].state = true;
             m_driver->setKnownModems(m_modems);
           }
