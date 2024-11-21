@@ -259,8 +259,14 @@ namespace UserInterfaces
       void
       waitForReplies(void)
       {
-        while(!m_driver->emptyQueue() && !isStopping() && !m_wdog.overflow())
+        while(!m_driver->emptyQueue() && !isStopping())
         {
+          if (m_wdog.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          }
+
           waitForMessages(1.0);
           m_driver->checkCommandQueue();
         }
@@ -288,6 +294,7 @@ namespace UserInterfaces
         inf("initializing board");
         m_driver = new Driver(this, m_handle, &m_pwr_chs, m_args.number_cell, getSystemName());
         m_dispatch = new DispatchData(this, m_driver, &m_args, &m_imc);
+        m_wdog.setTop(m_args.inp_tout);
         setupBoard();
 
         // if (m_args.firm_version != m_driver->firmwareVersion())
@@ -301,7 +308,6 @@ namespace UserInterfaces
         inf("initializing board: done");
         inf("start acquiring data");
         m_wdog_free_text.reset();
-        m_wdog.setTop(m_args.inp_tout);
 
         IMC::QueryEntityParameters qep;
         qep.setDestination(getSystemId());
