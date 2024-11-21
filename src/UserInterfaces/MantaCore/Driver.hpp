@@ -140,10 +140,22 @@ namespace UserInterfaces
         m_task->spew("set known modems");        
         for (auto& modem: modems)
         {
-          std::string cmd = String::str("%c,%c", BYTE_PREAMBLE, BYTE_KWON_AMODEMS);
-          cmd += "," + modem.first + ",";
-          cmd += modem.second.state ? "1" : "0";
-          sendCommand(cmd, true);
+          bool new_modem = false;
+          if (m_modems.find(modem.first) == m_modems.end())
+          {
+            new_modem = true;
+            m_modems.emplace(modem);
+          }
+
+          if (new_modem || m_modems[modem.first].state != modem.second.state)
+          {
+            std::string cmd = String::str("%c,%c", BYTE_PREAMBLE, BYTE_KWON_AMODEMS);
+            cmd += "," + modem.first + ",";
+            cmd += modem.second.state ? "1" : "0";
+            sendCommand(cmd, true);
+          }
+          
+          m_modems[modem.first].state = modem.second.state;
         }
       }
 
@@ -527,6 +539,8 @@ namespace UserInterfaces
       std::map<std::string, bool> m_modems_config;
       //! Flag of new modems config.
       bool m_new_modems_config;
+      //! List of modems.
+      std::map<std::string, ModemInfo> m_modems;
 
       uint16_t
       getInternalId(void)
