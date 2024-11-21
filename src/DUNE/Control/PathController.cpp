@@ -206,10 +206,6 @@ namespace DUNE
       .defaultValue("Echo Sounder")
       .description("Entity label of the Forward Looking Sonar (FLS).");
 
-      param("Climb Monitor -- Enabled", m_cmd.enabled)
-      .defaultValue("true")
-      .description("Enable or disable climb monitor");
-
       m_ctx.config.get("General", "Absolute Maximum Depth", "50.0", m_btd.args.depth_limit);
       m_btd.args.depth_limit -= c_depth_margin;
 
@@ -296,8 +292,6 @@ namespace DUNE
     {
       m_bt_entity = reserveEntity<DUNE::Entities::BasicEntity>(Utils::String::str("%s - Bottom Track", getEntityLabel()));
       m_btd.args.entity = m_bt_entity;
-
-      m_cmd.args.entity = reserveEntity<DUNE::Entities::BasicEntity>(Utils::String::str("%s - Climb Monitor", getEntityLabel()));;
     }
 
     void

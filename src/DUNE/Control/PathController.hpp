@@ -39,7 +39,6 @@
 #include <DUNE/IMC.hpp>
 #include <DUNE/Time.hpp>
 #include <DUNE/Control/BottomTracker.hpp>
-#include <DUNE/Control/ClimbMonitor.hpp>
 
 namespace DUNE
 {
@@ -393,10 +392,6 @@ namespace DUNE
       void
       deactivateBottomTracker(void);
 
-      //! Deactivate climb monitor
-      void
-      deactivateClimbMonitor(void);
-
       //! Is the system performing bottom tracking ?
       //! @return true if it is bottom tracking, false otherwise.
       bool
@@ -455,14 +450,6 @@ namespace DUNE
       } m_btd;
       //! Entity for the bottom tracker.
       Entities::BasicEntity* m_bt_entity;
-      //! Data for climb monitor.
-      struct CMData
-      {
-        //! Enabled or disabled
-        bool enabled;
-        //! Arguments for the climb monitor
-        ClimbMonitor::Arguments args;
-      } m_cmd;
 
       //! Running path monitors
       bool m_running_monitors;
