@@ -102,6 +102,8 @@ namespace Supervisors
       unsigned window_size;
       //! Climb error timeout.
       unsigned climb_error_timeout;
+      //! Recover timeout
+      unsigned recover_timeout;
       //! Recover error timeout
       unsigned recover_error_timeout;
       //! Speed boost to use when stabilizing descent
@@ -164,6 +166,8 @@ namespace Supervisors
       //! Recover Ascent state
       //! Flag for recover ascent state initialized
       bool m_rec_ascent_init;
+      //! Recover timer
+      DUNE::Time::Counter<double> m_recover_timer;
       //! Recover error timer
       DUNE::Time::Counter<double> m_recover_error_timer;
 
@@ -190,11 +194,17 @@ namespace Supervisors
         .description("Climb progress failure timeout. If there is no progress"
                     "the vehicle attempts to stabilize after this interval.");
 
+        param("Recover timeout", m_args.recover_timeout)
+        .defaultValue("20")
+        .units(Units::Second)
+        .description("Recover timeout. If vehicle is recovering, on average, "
+                     "for this time period then exit recovery.");
+
         param("Recover error timeout", m_args.recover_error_timeout)
         .defaultValue("20")
         .units(Units::Second)
         .description("Recover failure timeout. If the vehicle does not recover"
-                    " whithin this time then....");
+                    " whithin this time then enter emergency mode and abort.");
 
         param("RPM Boost", m_args.speed_boost_rpm)
         .defaultValue("1900")
@@ -387,6 +397,7 @@ namespace Supervisors
         m_braking = false;
         m_climb_error_timer.setTop(m_args.climb_error_timeout);
         m_recover_error_timer.setTop(m_args.recover_error_timeout);
+        m_recover_timer.setTop(m_args.recover_timeout);
         resetClimb();
         resetStabilize();
         resetRecoverDescent();
@@ -590,7 +601,13 @@ namespace Supervisors
 
         double z_error = getZError();
         m_change_average->update(z_error);
-        if (m_change_average->get() < 0) // Recovering
+
+        // If not recovering
+        if (m_change_average->get() > 0)
+          m_recover_timer.reset();
+
+        // If recovering
+        if (m_recover_timer.overflow())
         {
           dispatch(m_speed_ref);
           updateClimbState();
@@ -604,6 +621,7 @@ namespace Supervisors
       void
       resetRecoverDescent()
       {
+        m_recover_timer.reset();
         m_recover_error_timer.reset();
         m_change_average->reset();
         m_rec_descent_init = false;
@@ -624,7 +642,13 @@ namespace Supervisors
 
         double z_error = getZError();
         m_change_average->update(z_error);
-        if (m_change_average->get() < 0) // Recovering
+
+        // If not recovering
+        if (m_change_average->get() > 0)
+          m_recover_timer.reset();
+
+        // If recovering
+        if (m_recover_timer.overflow())
         {
           brake(false);
           updateClimbState();
@@ -638,6 +662,7 @@ namespace Supervisors
       void
       resetRecoverAscent()
       {
+        m_recover_timer.reset();
         m_recover_error_timer.reset();
         m_change_average->reset();
         m_rec_ascent_init = false;
