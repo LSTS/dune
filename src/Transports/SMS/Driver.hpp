@@ -163,8 +163,11 @@ namespace Transports
         m_busy = true;
         uint8_t bfr[16];
         Time::Counter<double> timer(timeout);
+        getTask()->trace("Sending SMS to %s | %s", number.c_str(), msg.c_str());
         try
         {
+          m_handle->flushInput();
+          m_handle->flushOutput();
           setReadMode(HayesModem::READ_MODE_RAW);
           sendAT(String::str("+CMGS=\"%s\"", number.c_str()));
           readRaw(timer, bfr, 4);
