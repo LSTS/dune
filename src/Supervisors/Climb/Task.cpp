@@ -334,6 +334,7 @@ namespace Supervisors
         updateStateMachine();
       }
 
+      //! Reset task's variables.
       void
       reset(void)
       {
@@ -351,6 +352,7 @@ namespace Supervisors
         resetRecoverAscent();
       }
 
+      //! Update climb monitor state machine.
       void
       updateStateMachine(void)
       {
@@ -382,6 +384,8 @@ namespace Supervisors
         }
       }
 
+      //! Get z error depending on z units
+      //! @return z error, depending on z units
       double
       getZError()
       {
@@ -395,6 +399,9 @@ namespace Supervisors
         return 0;
       }
 
+      //! Check if vehicle is at target z
+      //! @param[in] z_error current z error
+      //! @return true if vehicle is on target, false otherwise
       bool
       isOnTarget(double z_error)
       {     
@@ -402,12 +409,17 @@ namespace Supervisors
         return std::abs(z_error) < hyst;
       }
 
+      //! Check if vehicle is trying to descend
+      //! @param[in] z_error current z error
+      //! @return true if vehicle is trying to descend, false if ascending
       bool
       isDescending(double z_error)
       {
         return z_error < 0;
       }
 
+      //! Brake
+      //! @param[in] start true to start braking, false to stop
       void
       brake(bool start)
       {
@@ -422,13 +434,15 @@ namespace Supervisors
           inf(DTR("Stopped braking"));
       }      
       
+      //! Check if there is enough data to start tracking
+      //! @return true if there is sufficient data, false otherwise
       bool
       gotData()
       {
         return m_got_zref && m_got_estate;
       }
 
-
+      //! Update climb state according to DesiredZ reference
       void
       updateClimbState()
       {
@@ -450,7 +464,7 @@ namespace Supervisors
           changeState(SM_ASCENDING);
       }
       
-      //! Ascend state
+      //! On Target state
       void
       onTarget()
       {
@@ -501,12 +515,14 @@ namespace Supervisors
         }
       }
 
+      //! Reset stabilize state
       void
       resetStabilize()
       {
         m_stabilize_init = false;
       }
 
+      //! Recover descent state
       void
       onRecoverDescent()
       {
@@ -533,6 +549,7 @@ namespace Supervisors
           changeState(SM_EMERGENCY);
       }
 
+      //! Reset recover descent state
       void
       resetRecoverDescent()
       {
@@ -541,6 +558,7 @@ namespace Supervisors
         m_rec_descent_init = false;
       }
 
+      //! Recover ascent state
       void
       onRecoverAscent()
       {
@@ -565,6 +583,7 @@ namespace Supervisors
           changeState(SM_EMERGENCY);
       }
 
+      //! Reset recover ascend state
       void
       resetRecoverAscent()
       {
@@ -573,6 +592,7 @@ namespace Supervisors
         m_rec_ascent_init = false;
       }
 
+      //! Climb state
       void
       onClimb()
       {
@@ -598,6 +618,7 @@ namespace Supervisors
           changeState(SM_STABILIZE);
       }
 
+      //! Reset climb state
       void
       resetClimb()
       {
@@ -605,7 +626,7 @@ namespace Supervisors
         m_climb_error_timer.reset();
       }
 
-      //! Stabilize state
+      //! Emergency state
       void
       onEmergency()
       {
@@ -614,7 +635,10 @@ namespace Supervisors
         dispatch(abort);
         requestDeactivation();
       }
-
+      
+      //! Change state machine state
+      //! @param[in] state new state 
+      //! @param[in] reset_state true to reset state variables, false otherwise 
       void
       changeState(ClimbStates state, bool reset_state = true)
       {
