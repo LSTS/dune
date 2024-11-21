@@ -105,7 +105,7 @@ namespace UserInterfaces
         .description("Input timeout");
 
         param("Firmware version", m_args.firm_version)
-        .defaultValue("master@495057d4")
+        .defaultValue("")
         .description("Compatible Firmware Version.");
 
         param("UAN - Entity Label", m_args.uan_elabel)
