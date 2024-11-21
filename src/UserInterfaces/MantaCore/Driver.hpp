@@ -240,9 +240,9 @@ namespace UserInterfaces
       setTargetAddress(std::string name)
       {
         if (name == "reset")
-          m_task->spew("reseting known addresses");
+          m_task->debug("reseting known addresses");
         else
-          m_task->spew("sending known address: %s", name.c_str());
+          m_task->debug("sending known address: %s", name.c_str());
 
         sprintf(m_cmd_text, "%c,%c,%s%c", BYTE_PREAMBLE, BYTE_AMODEM, name.c_str(), '\0');
         sendCommand(m_cmd_text, true);
@@ -342,7 +342,7 @@ namespace UserInterfaces
       bool
       checkDataIn(std::string line)
       {
-        m_task->spew("received: %s", sanitize(line).c_str());
+        m_task->trace("received: %s", sanitize(line).c_str());
         uint8_t rcsum = line.size() > 2 ? line[line.size() - 2] : 0;
         uint8_t ccsum = calcCRC8(line);
         if(rcsum != ccsum)
@@ -558,7 +558,7 @@ namespace UserInterfaces
         bfr_tx += calcCRC8(bfr_tx.c_str());
         bfr_tx += "\n";
         m_handle->writeString(bfr_tx.c_str());
-        m_task->spew("sending command: %s%s", sanitize(bfr_tx).c_str(), wait_ack ? " (needs response)" : "");
+        m_task->trace("sending command: %s%s", sanitize(bfr_tx).c_str(), wait_ack ? " (needs response)" : "");
 
         if (wait_ack)
           waitResponse();
