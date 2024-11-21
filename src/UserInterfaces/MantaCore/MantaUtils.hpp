@@ -82,8 +82,6 @@ namespace UserInterfaces
     constexpr char BYTE_CELL_NUMBER             = 'n';
     constexpr char BYTE_NACK                    = 'N';
     constexpr char BYTE_CPU_OFF                 = 'o';
-    constexpr char BYTE_CHANNEL_OFF             = '0';
-    constexpr char BYTE_CHANNEL_ON              = '1';
     constexpr char BYTE_PAC_DATA                = 'p';
     constexpr char BYTE_STOP_DATA               = 's';
     constexpr char BYTE_SAT                     = 'S';
