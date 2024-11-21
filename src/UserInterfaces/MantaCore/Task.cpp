@@ -452,14 +452,17 @@ namespace UserInterfaces
           if (io.empty())
             return;
 
-          size_t pos_i = io.find_last_of('.');
-          size_t pos_f = io.find_last_of(':');
           std::string modem = msg->name;
-          modem += (pos_i != io.npos && pos_f != io.npos)?
-                    io.substr(pos_i + 1, pos_f - pos_i - 1):
-                    "";
-                    
-          if (io.find(m_modems[modem].address) != io.npos)
+          if (io.find("uart") == io.npos)
+          {
+            size_t pos_i = io.find_last_of('.');
+            size_t pos_f = io.find_last_of(':');
+            modem += (pos_i != io.npos && pos_f != io.npos)?
+                      io.substr(pos_i + 1, pos_f - pos_i - 1):
+                      "";
+          }
+
+          if (io == m_modems[modem].address)
           {
             for (auto& m: m_modems)
               if (m.first.find(msg->name) != m.first.npos)
