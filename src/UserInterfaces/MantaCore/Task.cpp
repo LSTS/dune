@@ -400,6 +400,9 @@ namespace UserInterfaces
       void
       consume(const IMC::EntityParameters* msg)
       {
+        if (m_driver == NULL)
+          return;
+
         if (msg->getSource() != getSystemId())
           return;
         
