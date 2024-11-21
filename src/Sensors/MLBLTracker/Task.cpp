@@ -263,10 +263,26 @@ namespace Sensors
       }
 
       void
+      dispatchURI(void)
+      {
+        IMC::EntityParameters params;
+        params.name = getEntityLabel();
+        IMC::EntityParameter p;
+        p.name = "IO Port - Device";
+        p.value = m_args.io_dev;
+        params.params.push_back(p);
+        dispatch(params);
+      }
+
+      void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.io_dev) && isActive())
-          requestRestart();
+        if (paramChanged(m_args.io_dev))
+        {
+          dispatchURI();
+          if (isActive())
+            requestRestart();
+        }
 
         if ((m_gpio_txd != NULL) && paramChanged(m_args.gpio_txd) && !m_ignore_gpio)
           throw RestartNeeded(DTR("restarting to change transducer detection GPIO"), 1, false);
