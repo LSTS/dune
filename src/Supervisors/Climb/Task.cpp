@@ -41,7 +41,8 @@ namespace Supervisors
     using DUNE_NAMESPACES;
 
     //! State to string for debug messages
-    const std::string c_str_states[] = {DTR_RT("Ascending"),
+    const std::string c_str_states[] = {DTR_RT("Idle"),
+                                        DTR_RT("Ascending"),
                                         DTR_RT("Descending"),
                                         DTR_RT("On Target"),
                                         DTR_RT("Stabilizing"),
@@ -114,6 +115,8 @@ namespace Supervisors
       //! State machine states.
       enum ClimbStates
       {
+        //! Idle state, doing nothing
+        SM_IDLE,
         //! Vehicle ascending.
         SM_ASCENDING,
         //! Vehicle descending.
@@ -143,8 +146,6 @@ namespace Supervisors
       DUNE::IMC::DesiredSpeed m_speed_ref;
       //! Flag first DesiredZ received
       bool m_got_zref;
-      //! Flag first EstimatedState received
-      bool m_got_estate;
       //! Flag for braking
       bool m_braking;
       // Z error change average
@@ -171,7 +172,6 @@ namespace Supervisors
         DUNE::Tasks::Task(name, ctx),
         m_scope_ref(0),
         m_got_zref(false),
-        m_got_estate(false),
         m_braking(false),
         m_change_average(nullptr),
         m_stabilize_init(false),
@@ -208,7 +208,7 @@ namespace Supervisors
         bind<IMC::DesiredZ>(this);
         bind<IMC::DesiredSpeed>(this);
         bind<IMC::EstimatedState>(this);
-        // bind<IMC::Brake>(this);
+        bind<IMC::Brake>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -326,12 +326,21 @@ namespace Supervisors
       void
       consume(const IMC::EstimatedState* msg)
       {
+        m_estate = *msg;
+        updateStateMachine();
+      }
+
+      void
+      consume(const IMC::Brake* msg)
+      {
         if (!isActive())
           return;
 
-        m_estate = *msg;
-        m_got_estate = true;
-        updateStateMachine();
+        // Disable tracking when braking
+        if (msg->op == IMC::Brake::OP_STOP)
+          updateClimbState();
+        else
+          changeState(SM_IDLE);
       }
 
       //! Reset task's variables.
@@ -340,9 +349,8 @@ namespace Supervisors
       {
         m_z_ref.clear();
         m_estate.clear();
-        m_cstate = SM_AT_TARGET;
+        m_cstate = SM_IDLE;
         m_got_zref = false;
-        m_got_estate = false;
         m_braking = false;
         m_climb_error_timer.setTop(m_args.climb_error_timeout);
         m_recover_error_timer.setTop(m_args.recover_error_timeout);
@@ -356,12 +364,18 @@ namespace Supervisors
       void
       updateStateMachine(void)
       {
+        if (!isActive())
+          return;
+
         if (!gotData())
           return;
 
         // Run state machine
         switch (m_cstate)
         {
+          case SM_IDLE:
+            onIdle();
+            break;
           case SM_DESCENDING:
           case SM_ASCENDING:
             onClimb();
@@ -395,7 +409,7 @@ namespace Supervisors
           return m_estate.depth - m_z_ref.value;
 
         war("Unsupported Z units. Not tracking climb");
-        deactivate();
+        requestDeactivation();
         return 0;
       }
 
@@ -439,7 +453,7 @@ namespace Supervisors
       bool
       gotData()
       {
-        return m_got_zref && m_got_estate;
+        return m_got_zref;
       }
 
       //! Update climb state according to DesiredZ reference
@@ -462,6 +476,13 @@ namespace Supervisors
           changeState(SM_DESCENDING);
         else
           changeState(SM_ASCENDING);
+      }
+
+      //! Idle state
+      void
+      onIdle()
+      {
+
       }
       
       //! On Target state
