@@ -285,12 +285,28 @@ namespace Transports
         dispatch(acsys);
       }
 
+      void
+      dispatchURI(void)
+      {
+        IMC::EntityParameters params;
+        params.name = getEntityLabel();
+        IMC::EntityParameter p;
+        p.name = "IO Port - Device";
+        p.value = m_args.io_dev;
+        params.params.push_back(p);
+        dispatch(params);
+      }
+
       //! Update parameters.
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.io_dev) && isActive())
-          requestRestart();
+        if (paramChanged(m_args.io_dev))
+        {
+          dispatchURI();
+          if (isActive())
+            requestRestart();
+        }
 
         m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
 
