@@ -282,7 +282,9 @@ namespace UserInterfaces
         m_driver->requestDataPower(m_args.get_data);
 
         for (auto& pwr_ch: m_pwr_chs)
-          m_driver->setPowerChannelState(pwr_ch.second->state.name, pwr_ch.second->state.state);
+          m_driver->setPowerChannelState(pwr_ch.second->state.name,
+                                         pwr_ch.second->state.state,
+                                         pwr_ch.second->id);
 
         waitForReplies();
       }
@@ -292,7 +294,7 @@ namespace UserInterfaces
       onInitializeDevice() override
       {
         inf("initializing board");
-        m_driver = new Driver(this, m_handle, &m_pwr_chs, m_args.number_cell, getSystemName());
+        m_driver = new Driver(this, m_handle, m_args.number_cell, getSystemName());
         m_dispatch = new DispatchData(this, m_driver, &m_args, &m_imc);
         m_wdog.setTop(m_args.inp_tout);
         setupBoard();
@@ -583,11 +585,11 @@ namespace UserInterfaces
         if (msg->getDestination() != getSystemId())
           return;
 
-        PowerChannelMantaCore::const_iterator itr = m_pwr_chs.find(msg->name);
-        if (itr == m_pwr_chs.end())
+        if (m_pwr_chs.find(msg->name) == m_pwr_chs.end())
           return;
         
-        m_driver->setPowerChannelState(itr->second->state.name, msg->op);
+        m_pwr_chs[msg->name]->state.state = msg->op;
+        m_driver->setPowerChannelState(msg->name, msg->op, m_pwr_chs[msg->name]->id);
       }
 
       void
@@ -632,9 +634,11 @@ namespace UserInterfaces
 
           if (paramChanged(m_args.power_channels_states[i]) || new_pc)
           {
-            pc->state.state = m_args.power_channels_states[i];
+            pc->state.state = m_args.power_channels_states[i]?
+                              IMC::PowerChannelState::PCS_ON:
+                              IMC::PowerChannelState::PCS_OFF;
             if (m_driver != NULL)
-              m_driver->setPowerChannelState(pc->state.name, m_args.power_channels_states[i]);
+              m_driver->setPowerChannelState(pc->state.name, pc->state.state, pc->id);
           }
 
           if (new_pc)

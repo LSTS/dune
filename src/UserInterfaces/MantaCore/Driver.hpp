@@ -54,11 +54,10 @@ namespace UserInterfaces
       //! Query systems.
       bool m_query_systems;
 
-      Driver(Tasks::Task* task, IO::Handle* handle, PowerChannelMantaCore* pwr_chs, int numberCell, std::string system_name):
+      Driver(Tasks::Task* task, IO::Handle* handle, int numberCell, std::string system_name):
         m_query_systems(false),
         m_task(task),
         m_handle(handle),
-        m_pwr_chs(pwr_chs),
         m_number_cells(numberCell),
         m_sys_name(system_name),
         m_send_cmd_state(CMD_IDLE),
@@ -178,17 +177,15 @@ namespace UserInterfaces
       }
 
       void
-      setPowerChannelState(std::string pwr_ch, uint8_t pin_state)
+      setPowerChannelState(std::string pwr_ch, uint8_t pin_state, unsigned id)
       {
-        PowerChannelMantaCore::iterator power_channel = m_pwr_chs->find(pwr_ch);
-        m_task->inf("power channel %s|%s", pwr_ch.c_str(), pin_state ? "ON" : "OFF");
+        m_task->inf("power channel %s | %s", pwr_ch.c_str(), pin_state ? "ON" : "OFF");
         sprintf(m_cmd_text, "%c,%c,%d,%c%c", BYTE_PREAMBLE,
                                              BYTE_CHANNEL_DATA,
-                                             power_channel->second->id,
-                                             pin_state ? BYTE_CHANNEL_ON : BYTE_CHANNEL_OFF,
+                                             id,
+                                             pin_state ? '1' : '0',
                                              '\0');
         sendCommand(m_cmd_text, true);
-        power_channel->second->state.state = pin_state ? BYTE_CHANNEL_ON : BYTE_CHANNEL_OFF;
       }
 
       void
@@ -509,8 +506,6 @@ namespace UserInterfaces
       DUNE::Tasks::Task* m_task;
       //! Serial port handle.
       IO::Handle* m_handle;
-      //! Power channels by name.
-      PowerChannelMantaCore* m_pwr_chs;
       //! Number of cell to read.
       int m_number_cells;
       //! System name.
