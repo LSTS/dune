@@ -544,14 +544,14 @@ namespace UserInterfaces
         }
       }
 
-      bool
+      void
       sendCommand(std::string text_cmd, bool wait_ack, bool retry = false)
       {
         if (!retry)
           m_queue.push(std::make_pair(text_cmd, wait_ack));
 
         if(m_send_cmd_state == CMD_WAITING)
-          return false;
+          return;
 
         std::string bfr_tx;
         bfr_tx = text_cmd + ",*";
@@ -560,18 +560,15 @@ namespace UserInterfaces
         m_handle->writeString(bfr_tx.c_str());
         m_task->trace("sending command: %s%s", sanitize(bfr_tx).c_str(), wait_ack ? " (needs response)" : "");
 
-        if (wait_ack)
-          waitResponse();
-        else
+        if (!wait_ack)
+        {
           m_send_cmd_state = CMD_IDLE;
+          m_queue.pop();
+        }
+        else
+          m_send_cmd_state = CMD_WAITING;
         
-        return true;
-      }
-
-      void
-      waitResponse(void)
-      {
-        m_send_cmd_state = CMD_WAITING;
+        return;
       }
 
       void
