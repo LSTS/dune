@@ -204,6 +204,8 @@ namespace Supervisors
         .units(Units::Degree)
         .description("Angle window to consider the vehicle pitch stable");
 
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
         bind<IMC::ControlLoops>(this);
         bind<IMC::DesiredZ>(this);
         bind<IMC::DesiredSpeed>(this);
@@ -226,6 +228,7 @@ namespace Supervisors
       onActivation(void)
       {
         reset();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         debug("enabling");
       }
 
@@ -234,6 +237,7 @@ namespace Supervisors
       {
         if (m_braking)
           brake(false);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         debug("disabling");
       }
 
@@ -321,11 +325,15 @@ namespace Supervisors
           return;
 
         m_speed_ref = *msg;
+        m_speed_ref.setSourceEntity(getEntityId());
       }
 
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (!isActive())
+          return;
+          
         m_estate = *msg;
         updateStateMachine();
       }
