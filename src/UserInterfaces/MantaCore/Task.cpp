@@ -431,7 +431,6 @@ namespace UserInterfaces
           if (!found)
             return;
 
-          std::vector<std::string> names;
           for (auto& n: m_uan_config)
           {
             IMC::QueryEntityParameters qep;
