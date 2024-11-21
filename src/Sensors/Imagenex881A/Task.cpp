@@ -168,12 +168,12 @@ namespace Sensors
     {
       //! Serial port handle.
       SerialPort* m_uart;
+      //! Profile message.
+      IMC::SonarData m_sonar;
       //! Response frame parser.
       Parser m_parser;
       //! Distance message.
       IMC::Distance m_distance;
-      //! Profile message.
-      IMC::SonarData m_sonar;
       //! Device State message.
       IMC::DeviceState m_device_state;
       // Output switch data.
@@ -195,6 +195,7 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
+        m_sonar{},
         m_parser(m_sonar.data),
         m_sound_speed(c_sound_speed)
       {
