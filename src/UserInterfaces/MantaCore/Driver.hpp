@@ -495,12 +495,6 @@ namespace UserInterfaces
               m_modems_config[lst[i]] = lst[i + 1] == "1";
             break;
           }
-
-          case 't':
-          {
-            m_task->war("test message: %s", lst[2].c_str());
-            break;
-          }
           
           default:
             m_task->debug("Uncategorized message: %s", line.c_str());
