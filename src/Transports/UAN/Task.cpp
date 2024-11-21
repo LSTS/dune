@@ -212,10 +212,25 @@ namespace Transports
       }
 
       void
+      dispatchModems(void)
+      {
+        IMC::EntityParameters params;
+        params.name = getEntityLabel();
+        IMC::EntityParameter p;
+        p.name = "Modems";
+        p.value = String::join(m_args.modems.begin(), m_args.modems.end(), ",");
+        params.params.push_back(p);
+        dispatch(params);
+      }
+
+      void
       onUpdateParameters(void)
       {
         if (paramChanged(m_args.modems))
+        {
+          dispatchModems();
           activateModems();
+        }
       }
 
       void
