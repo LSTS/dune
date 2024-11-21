@@ -215,8 +215,11 @@ namespace Supervisors
       void
       onUpdateParameters(void)
       {
-        if(!m_change_average)
+        if (paramChanged(m_args.window_size))
+        {
+          Memory::clear(m_change_average);
           m_change_average = new ChangeAverage(m_args.window_size);
+        }
       }
 
       void
@@ -256,6 +259,9 @@ namespace Supervisors
       void
       onResourceInitialization(void)
       {
+        if (!m_change_average)
+          m_change_average = new ChangeAverage(m_args.window_size);
+
         requestDeactivation();
         reset();
       }
@@ -604,6 +610,7 @@ namespace Supervisors
       onEmergency()
       {
         IMC::Abort abort;
+        abort.setDestination(getSystemId());
         dispatch(abort);
         requestDeactivation();
       }
