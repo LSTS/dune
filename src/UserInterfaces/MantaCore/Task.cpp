@@ -251,8 +251,7 @@ namespace UserInterfaces
           Memory::clear(m_driver);
         }
 
-        if(m_handle != NULL)
-          Memory::clear(m_handle);
+        Memory::clear(m_handle);
 
         m_wdog_con.setTop(0.0f);
       }
