@@ -146,6 +146,8 @@ namespace Supervisors
       DUNE::IMC::DesiredSpeed m_speed_ref;
       //! Flag first DesiredZ received
       bool m_got_zref;
+      //! Flag first valid EstimatedState received
+      bool m_got_estate;
       //! Flag for braking
       bool m_braking;
       // Z error change average
@@ -172,6 +174,7 @@ namespace Supervisors
         DUNE::Tasks::Task(name, ctx),
         m_scope_ref(0),
         m_got_zref(false),
+        m_got_estate(false),
         m_braking(false),
         m_change_average(nullptr),
         m_stabilize_init(false),
@@ -333,7 +336,28 @@ namespace Supervisors
       {
         if (!isActive())
           return;
-          
+
+        if (!m_got_estate && m_got_zref)
+        {
+          // Check if we have depth or altitude commands/measurements.
+          if (m_z_ref.z_units == IMC::Z_DEPTH)
+          {
+            if (msg->depth < 0.0)
+              return;
+          }
+          else if (m_z_ref.z_units == IMC::Z_ALTITUDE)
+          {
+            if (msg->alt < 0.0)
+              return;
+          }
+          else
+          {
+            return;
+          }
+
+          m_got_estate = true;
+        }
+        
         m_estate = *msg;
         updateStateMachine();
       }
@@ -357,8 +381,9 @@ namespace Supervisors
       {
         m_z_ref.clear();
         m_estate.clear();
-        m_cstate = SM_IDLE;
+        m_cstate = SM_AT_TARGET;
         m_got_zref = false;
+        m_got_estate = false;
         m_braking = false;
         m_climb_error_timer.setTop(m_args.climb_error_timeout);
         m_recover_error_timer.setTop(m_args.recover_error_timeout);
@@ -372,9 +397,6 @@ namespace Supervisors
       void
       updateStateMachine(void)
       {
-        if (!isActive())
-          return;
-
         if (!gotData())
           return;
 
@@ -461,7 +483,7 @@ namespace Supervisors
       bool
       gotData()
       {
-        return m_got_zref;
+        return m_got_zref && m_got_estate;
       }
 
       //! Update climb state according to DesiredZ reference
