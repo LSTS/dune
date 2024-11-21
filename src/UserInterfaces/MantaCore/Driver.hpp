@@ -359,6 +359,8 @@ namespace UserInterfaces
             m_wdog_boot.setTop(2.0f);
           return true;
         }
+        else if (lst[1] == "HB")
+          return true;
 
         char mode_info = lst[1].front();
         switch (mode_info)
