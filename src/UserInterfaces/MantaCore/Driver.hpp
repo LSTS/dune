@@ -157,6 +157,7 @@ namespace UserInterfaces
           }
           
           m_modems[modem.first].state = modem.second.state;
+          m_new_modems_config = true;
         }
       }
 
@@ -495,6 +496,12 @@ namespace UserInterfaces
             break;
           }
 
+          case 't':
+          {
+            m_task->war("test message: %s", lst[2].c_str());
+            break;
+          }
+          
           default:
             m_task->debug("Uncategorized message: %s", line.c_str());
             return false;
