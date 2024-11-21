@@ -178,14 +178,16 @@ namespace DUNE
           frame.can_dlc = size;
           frame.can_id = cantxid;
           memcpy(frame.data, bfr, size);
-          ::write(m_can_socket, &frame, CAN_MTU);
+          if(::write(m_can_socket, &frame, CAN_MTU) < 0)
+            throw Error("Failed to write CAN frame", System::Error::getLastMessage());
         break;
         case CAN_FD:
           struct canfd_frame fdframe;
           fdframe.len = size;
           fdframe.can_id = cantxid;
           memcpy(fdframe.data, bfr, size);
-          ::write(m_can_socket, &fdframe, CANFD_MTU);
+          if(::write(m_can_socket, &fdframe, CANFD_MTU) < 0)
+            throw Error("Failed to write CAN frame", System::Error::getLastMessage());
         break;
         default:
           throw Error("Frame type not recognized", System::Error::getLastMessage());
