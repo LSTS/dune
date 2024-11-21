@@ -646,6 +646,32 @@ namespace UserInterfaces
       }
 
       void
+      setIOPortDevice(std::string type, std::string io)
+      {
+        IMC::SetEntityParameters sep;
+        sep.setDestination(getSystemId());
+        sep.name = type;
+        IMC::EntityParameter ep;
+        ep.name = "IO Port - Device";
+        ep.value = io;
+        sep.params.push_back(ep);
+        dispatch(sep);
+      }
+
+      void
+      setConnectedModems(std::string modems)
+      {
+        IMC::SetEntityParameters sep;
+        sep.setDestination(getSystemId());
+        sep.name = m_args.uan_elabel;
+        IMC::EntityParameter ep;
+        ep.name = "Modems";
+        ep.value = modems;
+        sep.params.push_back(ep);
+        dispatch(sep);
+      }
+
+      void
       updateModemsConfig(std::map<std::string, bool> config)
       {
         if (config.empty())
@@ -666,16 +692,13 @@ namespace UserInterfaces
               m_uan_config.erase(type);
           }
           else if (m_uan_config.find(type) == m_uan_config.end())
+          {
             m_uan_config.insert(type);
+            setIOPortDevice(type, m_modems[it.first].address);
+          }
         }
-        IMC::SetEntityParameters sep;
-        sep.setDestination(getSystemId());
-        sep.name = m_args.uan_elabel;
-        IMC::EntityParameter ep;
-        ep.name = "Modems";
-        ep.value = String::join(m_uan_config.begin(), m_uan_config.end(), ",");
-        sep.params.push_back(ep);
-        dispatch(sep);
+
+        setConnectedModems(String::join(m_uan_config.begin(), m_uan_config.end(), ","));
       }
 
       //! Get data from device.
