@@ -86,9 +86,8 @@ namespace UserInterfaces
         case CMD_ACK:
           if (!m_queue.empty())
             m_queue.pop();
-          m_send_cmd_state = CMD_IDLE;
           [[fallthrough]];
-        case CMD_WAITING:
+        case CMD_IDLE:
         case CMD_NACK:
         case CMD_ERROR:
           if (!m_queue.empty())
@@ -96,8 +95,10 @@ namespace UserInterfaces
             auto& cmd = m_queue.front();
             sendCommand(cmd.first, cmd.second, true);
           }
+          else
+            m_send_cmd_state = CMD_IDLE;
           break;
-        case CMD_IDLE:        
+        case CMD_WAITING:
         default:
           break;
         }
