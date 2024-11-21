@@ -153,7 +153,7 @@ namespace Monitors
       sendSatelliteText()
       {
         Time::BrokenDown bdt(Time::Clock::getSinceEpoch());
-        std::string msg = "Boot: ";
+        std::string msg = "(" + std::string(getSystemName()) +") Boot: ";
         msg += String::str("%04u-%02u-%02u %02u:%02u:%02u", bdt.year, bdt.month,
                                                             bdt.day, bdt.hour, 
                                                             bdt.minutes, bdt.seconds);
@@ -174,7 +174,7 @@ namespace Monitors
       sendSMS()
       {
         Time::BrokenDown bdt(Time::Clock::getSinceEpoch());
-        std::string msg = "Boot: ";
+        std::string msg = "(" + std::string(getSystemName()) +") Boot: ";
         msg += String::str("%04u-%02u-%02u %02u:%02u:%02u", bdt.year, bdt.month,
                                                             bdt.day, bdt.hour, 
                                                             bdt.minutes, bdt.seconds);
