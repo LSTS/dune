@@ -259,7 +259,7 @@ namespace UserInterfaces
       void
       waitForReplies(void)
       {
-        while(!m_driver->emptyQueue() && !isStopping())
+        while(!m_driver->emptyQueue() && !stopping())
         {
           if (m_wdog.overflow())
           {
