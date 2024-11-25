@@ -63,21 +63,21 @@ namespace UserInterfaces
         m_tstamp = Clock::getSinceEpoch();
         // bq
         m_bqDataToDispatch = m_driver->getBqDataPower();
-        if(m_driver->newBqDataType(POWER_VOLTAGE, -1))
+        if (m_driver->newBqDataType(POWER_VOLTAGE, -1))
         {
           m_driver->setBqNewData(POWER_VOLTAGE, false, -1);
           m_imc->m_volt[IMC_TYPE_BQ_VOLT].setTimeStamp(m_tstamp);
           m_imc->m_volt[IMC_TYPE_BQ_VOLT].value = m_bqDataToDispatch.voltage;
           m_task->dispatch(m_imc->m_volt[IMC_TYPE_BQ_VOLT], DF_KEEP_TIME);
         }
-        if(m_driver->newBqDataType(POWER_CURRENT, -1))
+        if (m_driver->newBqDataType(POWER_CURRENT, -1))
         {
           m_driver->setBqNewData(POWER_CURRENT, false, -1);
           m_imc->m_amp[IMC_TYPE_BQ_AMP].setTimeStamp(m_tstamp);
           m_imc->m_amp[IMC_TYPE_BQ_AMP].value = m_bqDataToDispatch.current;
           m_task->dispatch(m_imc->m_amp[IMC_TYPE_BQ_AMP], DF_KEEP_TIME);
         }
-        if(m_driver->newBqDataType(POWER_TEMPERATURE, -1))
+        if (m_driver->newBqDataType(POWER_TEMPERATURE, -1))
         {
           m_driver->setBqNewData(POWER_TEMPERATURE, false, -1);
           m_imc->m_temp.setTimeStamp(m_tstamp);
@@ -85,9 +85,9 @@ namespace UserInterfaces
           m_task->dispatch(m_imc->m_temp, DF_KEEP_TIME);
         }
         uint8_t init_step_volt = IMC_TYPE_BQ_CELL1_VOLT;
-        for(uint8_t i = 1; i <= m_args->number_cell; i++)
+        for (uint8_t i = 1; i <= m_args->number_cell; i++)
         {
-          if(m_driver->newBqDataType(POWER_CELLS_INFO, i))
+          if (m_driver->newBqDataType(POWER_CELLS_INFO, i))
           {
             m_driver->setBqNewData(POWER_CELLS_INFO, false, i);
             m_imc->m_volt[init_step_volt].setTimeStamp(m_tstamp);
@@ -96,7 +96,7 @@ namespace UserInterfaces
           }
           init_step_volt++;
         }
-        if(m_driver->newBqDataType(POWER_REMAINING_CAP, -1) && m_driver->newBqDataType(POWER_FULL_CAP, -1))
+        if (m_driver->newBqDataType(POWER_REMAINING_CAP, -1) && m_driver->newBqDataType(POWER_FULL_CAP, -1))
         {
           m_imc->m_fuel.setTimeStamp(m_tstamp);
           m_fuel_level = (int)((m_bqDataToDispatch.r_cap * 100) / m_bqDataToDispatch.f_cap);
@@ -104,14 +104,14 @@ namespace UserInterfaces
           m_imc->m_fuel.confidence = 100;
           m_task->dispatch(m_imc->m_fuel, DF_KEEP_TIME);
         }
-        if(m_driver->newBqDataType(POWER_REMAINING_CAP, -1))
+        if (m_driver->newBqDataType(POWER_REMAINING_CAP, -1))
         {
           m_driver->setBqNewData(POWER_REMAINING_CAP, false, -1);
           m_imc->m_amp[IMC_TYPE_BQ_REM_CAP_AMP].setTimeStamp(m_tstamp);
           m_imc->m_amp[IMC_TYPE_BQ_REM_CAP_AMP].value = m_bqDataToDispatch.r_cap;
           m_task->dispatch(m_imc->m_amp[IMC_TYPE_BQ_REM_CAP_AMP], DF_KEEP_TIME);
         }
-        if(m_driver->newBqDataType(POWER_FULL_CAP, -1))
+        if (m_driver->newBqDataType(POWER_FULL_CAP, -1))
         {
           m_driver->setBqNewData(POWER_FULL_CAP, false, -1);
           m_imc->m_amp[IMC_TYPE_BQ_FULL_CAP_AMP].setTimeStamp(m_tstamp);
@@ -121,7 +121,7 @@ namespace UserInterfaces
 
         // ltc
         m_ltcDataToDispatch = m_driver->getLTCDataPower();
-        if(m_driver->newLTCDataType())
+        if (m_driver->newLTCDataType())
         {
           m_driver->setLTCNewData(false);
           m_imc->m_volt[IMC_TYPE_BAT_VOLT].setTimeStamp(m_tstamp);
@@ -136,9 +136,9 @@ namespace UserInterfaces
         m_pacDataToDispatch = m_driver->getPACDataPower();
         uint8_t init_step_a = IMC_TYPE_PAC1_AMP;
         uint8_t init_step_v = IMC_TYPE_PAC1_VOLT;
-        for(uint8_t i = 0; i < c_max_number_pac_sensors; i++)
+        for (uint8_t i = 0; i < c_max_number_pac_sensors; i++)
         {
-          if(m_driver->newPACDataType(i))
+          if (m_driver->newPACDataType(i))
           {
             m_driver->setPACNewData(false, i);
             m_imc->m_amp[init_step_a].setTimeStamp(m_tstamp);
@@ -168,7 +168,7 @@ namespace UserInterfaces
             m_entityInfo.code = Status::CODE_MISSING_DATA;
             m_entityInfo.text = Utils::String::str(DTR(m_buffer_entity));
           }
-          else if((m_bqDataToDispatch.time_empty > 0))
+          else if ((m_bqDataToDispatch.time_empty > 0))
           {
             std::sprintf(m_buffer_entity, "active | %s | fuel reserve - ETD: %s",  getIOName(m_args->io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_empty).c_str());
             m_entityInfo.state = IMC::EntityState::ESTA_ERROR;
@@ -191,7 +191,7 @@ namespace UserInterfaces
             m_entityInfo.code = Status::CODE_MISSING_DATA;
             m_entityInfo.text = Utils::String::str(DTR(m_buffer_entity));
           }
-          else if((m_bqDataToDispatch.time_empty > 0))
+          else if ((m_bqDataToDispatch.time_empty > 0))
           {
             std::sprintf(m_buffer_entity, "active | %s | fuel warning - ETD: %s",  getIOName(m_args->io_dev).c_str(), minutesToTime(m_bqDataToDispatch.time_empty).c_str());
             m_entityInfo.state = IMC::EntityState::ESTA_NORMAL;
