@@ -439,17 +439,7 @@ namespace UserInterfaces
                               line.c_str());
                 return false;
             }
-            //! TODO: fix this.
-
-            // m_dispatch->dispatchPowerData();
-            // EntityInfo ent_info = m_dispatch->updateEntityState();
-
-            // if (ent_info.code == Status::CODE_MISSING_DATA)
-            //   m_task->setEntityState(IMC::EntityState::ESTA_NORMAL,
-            //                          String::str(DTR(ent_info.text.c_str())));
-            // else
-            //   m_task->setEntityState(IMC::EntityState::ESTA_NORMAL,
-            //                          ent_info.code);
+            
             break;
           }
 

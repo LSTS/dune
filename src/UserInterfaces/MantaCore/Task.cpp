@@ -488,7 +488,16 @@ namespace UserInterfaces
           return;
 
         if (m_driver->checkDataIn(msg->value))
+        {
           m_wdog.reset();
+
+          m_dispatch->dispatchPowerData();
+          EntityInfo ent_info = m_dispatch->updateEntityState();
+          if (ent_info.code == Status::CODE_MISSING_DATA)
+            setEntityState(IMC::EntityState::ESTA_NORMAL, DTR(ent_info.text.c_str()));
+          else
+            setEntityState(IMC::EntityState::ESTA_NORMAL, ent_info.code);
+        }
       }
 
       void
