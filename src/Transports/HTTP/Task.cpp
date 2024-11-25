@@ -170,8 +170,16 @@ namespace Transports
       void
       consume(const IMC::Message* msg)
       {
-        if (msg->getSource() == getSystemId())
+        //check if msg name is Announce
+        if (msg->getId() == DUNE_IMC_ANNOUNCE)
+        {
           m_msg_mon.updateMessage(msg);
+        }
+        else
+        {
+          if (msg->getSource() == getSystemId())
+            m_msg_mon.updateMessage(msg);
+        }
       }
 
       void
