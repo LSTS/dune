@@ -582,9 +582,6 @@ namespace UserInterfaces
       void
       consume(const IMC::PowerChannelControl* msg)
       {
-        if (msg->getDestination() != getSystemId())
-          return;
-
         if (m_pwr_chs.find(msg->name) == m_pwr_chs.end())
           return;
 
