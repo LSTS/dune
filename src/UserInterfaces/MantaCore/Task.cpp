@@ -528,6 +528,9 @@ namespace UserInterfaces
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
+        if (m_driver == NULL)
+          return;
+
         if (msg->req_id != m_driver->getLastTreqId())
           return;
 
@@ -561,6 +564,9 @@ namespace UserInterfaces
         if (msg->getSourceEntity() == getEntityId())
           return;
 
+        if (m_driver == NULL)
+          return;
+
         if (m_sat != msg->satellites)
         {
           m_driver->setNumberSat(m_sat);
@@ -575,6 +581,9 @@ namespace UserInterfaces
           return;
 
         if (m_pwr_chs.find(msg->name) == m_pwr_chs.end())
+          return;
+
+        if (m_driver == NULL)
           return;
         
         m_pwr_chs[msg->name]->state.state = msg->op;
@@ -701,6 +710,12 @@ namespace UserInterfaces
       {
         if (m_is_power_off)
           return false;
+
+        if (m_driver == NULL)
+        {
+          requestDeactivation();
+          return false;
+        }
 
         if (m_driver->boardBooted())
         {
