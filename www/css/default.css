@@ -626,3 +626,90 @@ label:hover .custom-checkbox {
   font-size: 0.25rem;
   color: #6200ea;
 }
+
+.announces-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background-color: var(--c-background-h-l);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
+.announce-section {
+  background-color: var(--c-background);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.announce-title {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--c-color-text);
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 4px;
+  cursor: pointer;
+}
+
+.announce-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.announce-item {
+  font-size: 14px;
+  color: var(--c-color-text);
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0;
+  transition: color 0.3s, background-color 0.3s;
+}
+
+.announce-item:hover {
+  color: #2196f3;
+  background-color: #e3f2fd;
+}
+
+/* Style for collapsed sections */
+.announce-section .announce-list {
+  display: none; /* Hide the list when the section is collapsed */
+}
+
+.announce-section.open .announce-list {
+  display: block; /* Show the list when the section is open */
+}
+
+/* Tooltip (popup) style */
+.announce-tooltip {
+  display: none;  /* Hidden by default */
+  position: absolute;
+  background-color: var(--c-color-text);
+  color: var(--c-background);
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+/* Position the tooltip relative to the section title */
+.announce-title:hover + .announce-tooltip {
+  display: block; /* Show tooltip on hover */
+}
+
+/* Apply color to links in announce items */
+.announce-item a {
+  color: #4fa3f7;  /* Set link color */
+  text-decoration: underline;   /* Underline links */
+}
+
+/* Hover effect for links */
+.announce-item a:hover {
+  color: #ffcc00;  /* Set hover color */
+  background-color: #e3f2fd;  /* Background color on hover */
+}

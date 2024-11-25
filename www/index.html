@@ -22,7 +22,7 @@
   <!-- Sections -->
   <script type="text/javascript" src="js/Sections.js"></script>
   <script type="text/javascript" src="js/BasicSection.js"></script>
-  <script type="text/javascript" src="js/Logs.js"></script>
+  <script type="text/javascript" src="js/Announces.js"></script>
   <script type="text/javascript" src="js/Main.js"></script>
   <script type="text/javascript" src="js/Power.js"></script>
   <script type="text/javascript" src="js/Sensors.js"></script>
@@ -53,6 +53,7 @@
       --c-color-critical: #B22222;
       --c-color-debug: #000000;
       --c-color-checkbox-hover: #6885e2;
+      --c-color-disabled: #cccccc;
       /* Add other styles for white theme */
     }
 
@@ -73,6 +74,7 @@
       --c-color-critical: #c74848;
       --c-color-debug: #ffffff;
       --c-color-checkbox-hover: #e2ba9a;
+      --c-color-disabled: #666666;
       /* Add other styles for dark theme */
     }
 
@@ -90,10 +92,9 @@
           <ul>
             <li id="Main" class="First"><a href="javascript:show('Main')">Main</a></li>
             <li id="Sensors"><a href="javascript:show('Sensors')">Sensors</a></li>
-            <!-- <li id="Logs"><a href="javascript:show('Logs')">Logs</a></li> -->
-            <!-- <li id="Services"><a href="#">Services</a></li> -->
             <li id="Power"><a href="javascript:show('Power')">Power</a></li>
             <li id="Logbook"><a href="javascript:show('Logbook')">Logbook</a></li>
+            <li id="Announces"><a href="javascript:show('Announces')">Announces</a></li>
             <!-- <li id="Help"><a href="#">Help</a></li> -->
             <li class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected"
                   alt="Connected" /></a></li>
