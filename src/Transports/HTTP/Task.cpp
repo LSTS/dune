@@ -82,6 +82,12 @@ namespace Transports
       MessageMonitor m_msg_mon;
       //! Task arguments.
       Arguments m_args;
+      //! Flag to control refresh of values in the web interface.
+      bool m_is_to_refresh;
+      //! Servo position.
+      float m_servo_position;
+      //! Thruster actuation.
+      float m_thruster_actuation;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -108,8 +114,12 @@ namespace Transports
 
         m_cfg_dir = ctx.dir_cfg.str();
         m_agent = getSystemName();
+        m_is_to_refresh = false;
+        m_servo_position = 0;
+        m_thruster_actuation = 0;
 
         bind<IMC::LogBookEntry>(this);
+        bind<IMC::VehicleState>(this);
       }
 
       void
@@ -180,6 +190,12 @@ namespace Transports
         m_msg_mon.addLogEntry(msg);
       }
 
+      void
+      consume(const IMC::VehicleState* msg)
+      {
+        war("VehicleState: %d | %d", msg->op_mode, msg->maneuver_type);
+      }
+
       static bool
       isSpecialURI(const char* uri)
       {
@@ -217,6 +233,8 @@ namespace Transports
             handlePowerChannel(sock, headers, uri);
           else if (matchURL(uri, "/dune/state/logbook.js", true))
             showLogBook(sock, headers, uri);
+          else if (matchURL(uri, "/dune/actions/", true))
+            handleActions(sock, headers, uri);
           else
             sendResponse404(sock);
         }
@@ -456,13 +474,87 @@ namespace Transports
       }
 
       void
+      handleActions(TCPSocket* sock, TupleList& headers, const char* uri)
+      {
+        (void)headers;
+        war("handleActions: %s", uri);
+
+        std::string prefix = String::getRemaining("/dune/actions/", uri);
+        std::vector<std::string> parts;
+        String::split(prefix, "/", parts);
+
+        if (parts.size() > 2 && parts.size() < 1)
+        {
+          sendResponse500(sock);
+          return;
+        }
+
+        if(parts.size() == 1)
+        {
+          war("Button pressed: %s", parts[0].c_str());
+          IMC::RemoteActions ra;
+          ra.actions = parts[0] + "=1";
+          dispatch(ra, DF_LOOP_BACK);
+        }
+        else
+        {
+          if(parts[0] == "Thrust")
+          {
+            IMC::SetThrusterActuation sta;
+            sta.id = 0;
+            m_thruster_actuation = std::atof(parts[1].c_str());
+            sta.value = m_thruster_actuation;
+            m_is_to_refresh = true;
+            dispatch(sta);
+          }
+          else if(parts[0] == "Heading")
+          {
+            IMC::SetServoPosition scs;
+            scs.id = 0;
+            // need to convert scale of -1 to 1 to -radians to radians
+            m_servo_position = -1 * std::atof(parts[1].c_str()) * 1.5707963267948966;
+            scs.value = m_servo_position;
+            m_is_to_refresh = true;
+            dispatch(scs);
+          }
+        }
+        sendResponse200(sock);
+      }
+
+      void
       onMain(void)
       {
         while (!stopping())
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          m_server->poll(1.0);
+          m_server->poll(0.5);
           consumeMessages();
+          //check if system is in teleoperation mode
+
+          /*TODO: check if system is in teleoperation mode
+          if(m_ctx.entities.isTeleoperationMode())
+          {
+            //send thruster actuation and servo position to refresh
+            if(m_is_to_refresh)
+            {
+              IMC::SetThrusterActuation sta;
+              sta.id = 0;
+              sta.value = m_thruster_actuation;
+              m_is_to_refresh = true;
+              dispatch(sta);
+
+              IMC::SetServoPosition scs;
+              scs.id = 0;
+              scs.value = m_servo_position;
+              m_is_to_refresh = true;
+              dispatch(scs);
+            }
+          }
+          else
+          {
+            war("System is not in teleoperation mode");
+          }
+          */
         }
       }
     };
