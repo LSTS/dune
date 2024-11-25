@@ -100,6 +100,8 @@ namespace Supervisors
     {
       //! Climb moving average window
       unsigned window_size;
+      //! Assessment period.
+      unsigned read_period;
       //! Climb error timeout.
       unsigned climb_error_timeout;
       //! Recover timeout
@@ -155,6 +157,8 @@ namespace Supervisors
       // Z error change average
       ChangeAverage* m_change_average;
       //! Climb state
+      //! Read timer
+      DUNE::Time::Counter<double> m_read_timer;
       //! Climb error timer, resets if climb error decreases
       DUNE::Time::Counter<double> m_climb_error_timer;
       //! Stabilize state
@@ -188,20 +192,25 @@ namespace Supervisors
         .defaultValue("10")
         .description("Climb monitor's moving average window size");
 
+        param("Assessment Period", m_args.read_period)
+        .defaultValue("5")
+        .units(Units::Second)
+        .description("Monitor progress at this interval.");
+
         param("Climb error timeout", m_args.climb_error_timeout)
         .defaultValue("20")
         .units(Units::Second)
         .description("Climb progress failure timeout. If there is no progress"
-                    "the vehicle attempts to stabilize after this interval.");
+                     "the vehicle attempts to stabilize after this interval.");
 
         param("Recover timeout", m_args.recover_timeout)
-        .defaultValue("20")
+        .defaultValue("10")
         .units(Units::Second)
         .description("Recover timeout. If vehicle is recovering, on average, "
                      "for this time period then exit recovery.");
 
         param("Recover error timeout", m_args.recover_error_timeout)
-        .defaultValue("20")
+        .defaultValue("30")
         .units(Units::Second)
         .description("Recover failure timeout. If the vehicle does not recover"
                     " whithin this time then enter emergency mode and abort.");
@@ -395,6 +404,7 @@ namespace Supervisors
         m_got_zref = false;
         m_got_estate = false;
         m_braking = false;
+        m_read_timer.setTop(m_args.read_period);
         m_climb_error_timer.setTop(m_args.climb_error_timeout);
         m_recover_error_timer.setTop(m_args.recover_error_timeout);
         m_recover_timer.setTop(m_args.recover_timeout);
@@ -599,6 +609,9 @@ namespace Supervisors
           m_rec_descent_init = true;
         }
 
+        if (!m_read_timer.overflow())
+          return;
+
         double z_error = getZError();
         m_change_average->update(z_error);
 
@@ -615,12 +628,15 @@ namespace Supervisors
 
         if (m_recover_error_timer.overflow())
           changeState(SM_EMERGENCY);
+
+        m_read_timer.reset();
       }
 
       //! Reset recover descent state
       void
       resetRecoverDescent()
       {
+        m_read_timer.reset();
         m_recover_timer.reset();
         m_recover_error_timer.reset();
         m_change_average->reset();
@@ -640,6 +656,9 @@ namespace Supervisors
           m_rec_ascent_init = true;
         }
 
+        if (!m_read_timer.overflow())
+          return;
+
         double z_error = getZError();
         m_change_average->update(z_error);
 
@@ -656,12 +675,15 @@ namespace Supervisors
 
         if (m_recover_error_timer.overflow())
           changeState(SM_EMERGENCY);
+
+        m_read_timer.reset();
       }
 
       //! Reset recover ascend state
       void
       resetRecoverAscent()
       {
+        m_read_timer.reset();
         m_recover_timer.reset();
         m_recover_error_timer.reset();
         m_change_average->reset();
@@ -682,6 +704,9 @@ namespace Supervisors
           return;
         }
 
+        if (!m_read_timer.overflow())
+          return;
+
         m_change_average->update(z_error);
         // if error is decreasing, on average -> reset climb timer
         if (m_change_average->get() < 0)
@@ -692,6 +717,8 @@ namespace Supervisors
 
         if (m_climb_error_timer.overflow())
           changeState(SM_STABILIZE);
+
+        m_read_timer.reset();
       }
 
       //! Reset climb state
@@ -699,6 +726,7 @@ namespace Supervisors
       resetClimb()
       {
         m_change_average->reset();
+        m_read_timer.reset();
         m_climb_error_timer.reset();
       }
 
