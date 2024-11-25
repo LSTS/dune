@@ -231,7 +231,7 @@ Actions.prototype.createAxis = function (msg) {
     //console.log(`Axis "${msg.name}" valor: ${event.target.value}`);
     var url = 'dune/actions/' + msg.name + '/' + msg.type + '/' + event.target.value;
     //console.log(url);
-    submitPowerForm(msg.name + ":" + event.target.value, msg.type, 0, event);
+    submitPowerForm(msg.name + "/" + event.target.value, msg.type, 0, event);
   };
 
   sliderContainer.appendChild(slider);
@@ -268,6 +268,7 @@ Actions.prototype.update = function ()
 
     this.updateEntry(msg);
   }
+  //console.log("Actions updated");
 };
 
 function handlePower(text) {
@@ -278,7 +279,7 @@ function submitPowerForm(command, op, id, event) {
     event.preventDefault();
   }
 
-  var url = 'dune/actions/' + op + '/' + command;
+  var url = 'dune/actions/' + command;
 
   //print url
   console.log(url);
