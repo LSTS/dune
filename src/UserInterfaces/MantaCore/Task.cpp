@@ -700,12 +700,12 @@ namespace UserInterfaces
       onReadData() override
       {
         if (m_is_power_off)
-          return true;
+          return false;
 
         if (m_driver->boardBooted())
         {
           requestRestart();
-          return true;
+          return false;
         }
         
         if (m_wdog_free_text.overflow())
