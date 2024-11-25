@@ -90,10 +90,6 @@ namespace UserInterfaces
         m_targets_set(false),
         m_uan_id(255)
       {
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER,
-                    true);
-
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\".");
@@ -526,9 +522,6 @@ namespace UserInterfaces
       void
       consume(const IMC::TransmissionStatus* msg)
       {
-        if (!isActive())
-          return;
-
         if (msg->getDestination() != getSystemId())
           return;
         
@@ -578,9 +571,6 @@ namespace UserInterfaces
       void
       consume(const IMC::PowerChannelControl* msg)
       {
-        if (!isActive())
-          return;
-
         if (msg->getDestination() != getSystemId())
           return;
 
@@ -712,7 +702,7 @@ namespace UserInterfaces
         if (m_is_power_off)
           return true;
 
-        if (m_driver->boardBooted() && isActive())
+        if (m_driver->boardBooted())
         {
           requestRestart();
           return true;
