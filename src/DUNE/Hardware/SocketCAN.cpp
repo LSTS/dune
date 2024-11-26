@@ -85,7 +85,7 @@ namespace DUNE
           throw Error("Frame type not recognized", System::Error::getLastMessage());
       }
       
-      std::strncpy(m_ifr.ifr_name, can_dev.c_str(), IFNAMSIZ);
+      std::strncpy(m_ifr.ifr_name, can_dev.c_str(), IFNAMSIZ - 1);
 
 
       if(::ioctl(m_can_socket, SIOCGIFFLAGS, &m_ifr) < 0) {
@@ -171,7 +171,6 @@ namespace DUNE
     size_t
     SocketCAN::doWrite(const uint8_t* bfr, size_t size) { // TODO: Add exceptions
 #if defined(DUNE_OS_LINUX)
-      ssize_t bytes_written;
       switch(can_frame_type) {
         case CAN_BASIC_SFF:
         case CAN_BASIC_EFF:
@@ -179,14 +178,16 @@ namespace DUNE
           frame.can_dlc = size;
           frame.can_id = cantxid;
           memcpy(frame.data, bfr, size);
-          bytes_written = ::write(m_can_socket, &frame, CAN_MTU);
+          if (::write(m_can_socket, &frame, CAN_MTU) == -1)
+              throw Error("Write failed", System::Error::getLastMessage());
         break;
         case CAN_FD:
           struct canfd_frame fdframe;
           fdframe.len = size;
           fdframe.can_id = cantxid;
           memcpy(fdframe.data, bfr, size);
-          bytes_written = ::write(m_can_socket, &fdframe, CANFD_MTU);
+          if (::write(m_can_socket, &fdframe, CANFD_MTU) == -1)
+              throw Error("Write failed", System::Error::getLastMessage());
         break;
         default:
           throw Error("Frame type not recognized", System::Error::getLastMessage());

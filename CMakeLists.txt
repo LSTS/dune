@@ -184,6 +184,18 @@ install(FILES ${DUNE_GENERATED}/src/DUNE/Config.hpp
 
 include(${PROJECT_SOURCE_DIR}/cmake/Version.cmake)
 
+message(STATUS "")
+message(STATUS "******************************************")
+message(STATUS "***            Compiler Flags          ***")
+message(STATUS "******************************************")
+
+message(STATUS "Adding: -Wno-cpp")
+set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -Wno-cpp")
+set(DUNE_C_FLAGS "${DUNE_C_FLAGS} -Wno-cpp")
+
+message(STATUS "DUNE_CXX_FLAGS: ${DUNE_CXX_FLAGS}")
+message(STATUS "DUNE_C_FLAGS: ${DUNE_C_FLAGS}")
+
 set_source_files_properties(${DUNE_CORE_SOURCES} ${USER_CORE_SOURCES} ${PRIVATE_CORE_SOURCES}
   PROPERTIES COMPILE_FLAGS "${DUNE_CXX_FLAGS} ${DUNE_CXX_FLAGS_STRICT}")
 
