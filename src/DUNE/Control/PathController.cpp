@@ -1115,6 +1115,8 @@ namespace DUNE
         return m_estate.alt;
       else if (unit == IMC::Z_DEPTH)
         return m_estate.depth;
+      else if (unit == IMC::Z_NONE)
+        return m_estate.z;
         
       throw std::runtime_error(DTR("Invalid Z unit"));
       return 0;

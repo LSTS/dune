@@ -192,6 +192,7 @@ namespace DUNE
         default:
           throw Error("Frame type not recognized", System::Error::getLastMessage());
       }
+      (void)bytes_written;
       return size;
 #else
       throw Error("Could not complete", "Unimplemented");

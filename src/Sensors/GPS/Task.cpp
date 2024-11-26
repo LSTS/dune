@@ -675,6 +675,10 @@ namespace Sensors
         }
         else
         {
+          m_fix.lat = 0;
+          m_fix.lon = 0;
+          m_fix.height = 0;
+          m_fix.satellites = 0;
           m_fix.validity &= ~IMC::GpsFix::GFV_VALID_POS;
         }
 

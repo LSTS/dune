@@ -131,7 +131,10 @@ namespace Transports
           {
             readRaw(timer, data, length);
             data[length] = '\0';
-            getTask()->debug("data: %s", data);
+            //print the hexadecimal data
+            for(unsigned i = 0; i < length; i++)
+              getTask()->debug("data[%u]: %02x", i, data[i]);
+
             computeChecksum(data, length, ccsum);
             getTask()->debug("ccsum: %02x %02x", ccsum[0], ccsum[1]);
           }
@@ -506,12 +509,14 @@ namespace Transports
       //! This function guarantees that unsolicited messages
       //! are properly handled and the length is read correctly.
       unsigned
-      getBufferSizeMT(Counter<double>& timer)
+      getBufferSizeMT(Counter<double>& timer, bool unsolicited = false)
       {
         uint8_t bfr[2] = {0};
 
         // Read first byte.
         readRaw(timer, bfr, 1);
+        //print the first byte
+        getTask()->debug("bfr[0]: %02x", bfr[0]);
 
         // Handle start of unsolicited messages and ring alerts.
         if (bfr[0] == '+' || bfr[0] == 'S')
@@ -524,14 +529,14 @@ namespace Transports
             if (bfr[0] == '\n')
             {
               handleUnsolicited(String::trim(line));
-              return getBufferSizeMT(timer);
+              return getBufferSizeMT(timer, true);
             }
           }
 
           throw ReadTimeout();
         }
         // Handle padding of an unsolicited message
-        else if ((bfr[0] == '\r') || (bfr[0] == '\n'))
+        else if (((bfr[0] == '\r') || (bfr[0] == '\n')) && unsolicited)
         {
           return getBufferSizeMT(timer);
         }
@@ -545,7 +550,7 @@ namespace Transports
         {
           if(m_length_msg_9523 <= 255)
           {
-            getTask()->debug("size <255: %d ! %d", m_length_msg_9523, bfr[0]);
+            getTask()->debug("size <255: %d ! %d ! %02x", m_length_msg_9523, bfr[0], bfr[0]);
           }
           else
           {

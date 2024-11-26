@@ -464,7 +464,7 @@ namespace Transports
             sendCommand(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon));
             processInput();
           }
-          while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0 && !m_args.dummy_connection);
+          while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0 && !m_args.dummy_connection && !stopping());
 
           sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, m_data_beacon), 1);
 
@@ -1245,7 +1245,7 @@ namespace Transports
               setAndSendState(STA_IDLE);
           }
         }
-        while (Clock::get() <= deadline);
+        while (Clock::get() <= deadline && !stopping());
       }
 
       void
