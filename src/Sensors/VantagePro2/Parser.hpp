@@ -101,7 +101,7 @@ namespace Sensors
 #ifdef __GNUC__
       struct __attribute__((__packed__)) LOOPData
 #elif defined(_MSC_VER)
-      __pragma(pack(push, 1)) struct LOOPData __pragma(pack(pop))
+      __pragma(pack(push, 1)) struct LOOPData
 #endif
       {
         uint8_t Ack;          // Acknowledge char
@@ -151,6 +151,9 @@ namespace Sensors
         uint8_t CR;           // '\r' 0x0d
         uint16_t WCRC;        // CRC check bytes (CCITT-16 standard) 2bytes
       };
+#if defined(_MSC_VER)
+      __pragma(pack(pop))
+#endif
 
       //! DAVIS' LOOP data packet data.
       LOOPData m_LOOPData;

@@ -39,6 +39,8 @@
 
 using namespace DUNE::Concurrency;
 
+static constexpr int thread_num = 10;
+
 class TestIncrement: public Thread
 {
 private:
@@ -65,7 +67,6 @@ main(void)
 
   AtomicInteger aint(0);
   long target = 10000;
-  int thread_num = 10;
 
   TestIncrement* tests[thread_num];
   for (int i = 0; i <  thread_num; i++)
