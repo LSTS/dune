@@ -646,14 +646,34 @@ label:hover .custom-checkbox {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.announce-title {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--c-color-text);
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 4px;
+.announce-title-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   cursor: pointer;
+  padding: 10px;
+  border-bottom: 1px solid var(--c-color-border);
+  transition: background-color 0.3s ease;
+}
+
+.announce-title-container:hover {
+  background-color: var(--c-color-hover);
+}
+
+.announce-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.announce-arrow {
+  font-size: 18px;
+  color: var(--c-color-text-secondary);
+  transition: transform 0.3s ease;
+}
+
+.announce-section.open .announce-arrow {
+  transform: rotate(180deg);
 }
 
 .announce-list {
