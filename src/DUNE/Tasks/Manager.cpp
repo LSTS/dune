@@ -160,12 +160,21 @@ namespace DUNE
         if (task->getShutdownPriority() != shutdown_prio)
         {
           waitShutdown(shutdown_queue);
+          DUNE_DBG("Manager", DTR("stopped tasks with priority") << shutdown_prio);
+
           shutdown_prio = task->getShutdownPriority();
           DUNE_DBG("Manager", DTR("stopping tasks with priority ") << shutdown_prio);
         }
 
         stop(task);
         shutdown_queue.push(task);
+      }
+
+      // Wait for the last group of tasks to finish.
+      if (!shutdown_queue.empty()) 
+      {
+        waitShutdown(shutdown_queue);
+        DUNE_DBG("Manager", DTR("stopped tasks with priority") << shutdown_prio);
       }
     }
 
