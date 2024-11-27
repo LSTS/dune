@@ -532,6 +532,9 @@ namespace DUNE
 
           // Wait for power to be on.
         case SM_ACT_POWER_WAIT:
+          if (m_query_wdog.overflow())
+            queryPowerChannel();
+
           if (isPowered(true))
           {
             m_power_on_timer.setTop(m_post_power_on_delay);
@@ -671,13 +674,15 @@ namespace DUNE
           if (m_power_off_timer.overflow() || m_wdog.overflow())
           {
             turnPowerOff();
-            queryPowerChannel();
             queueState(SM_DEACT_POWER_WAIT);
           }
           break;
 
           // Wait for power to be turned off.
         case SM_DEACT_POWER_WAIT:
+          if (m_query_wdog.overflow())
+            queryPowerChannel();
+
           consumeMessages();
           if (isPowered(false))
             queueState(SM_DEACT_DONE);

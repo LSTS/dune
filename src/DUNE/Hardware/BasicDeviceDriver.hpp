@@ -165,6 +165,8 @@ namespace DUNE
         spew("query power channel ...");
         IMC::QueryPowerChannelState msg;
         dispatch(msg);
+
+        m_query_wdog.reset();
       }
 
       virtual void
@@ -320,6 +322,8 @@ namespace DUNE
         SM_RESTART_WAIT
       };
 
+      //! Power channel query watchdog timer.
+      DUNE::Time::Counter<double> m_query_wdog;
       //! Watchdog timer.
       DUNE::Time::Counter<double> m_wdog;
       //! Current state machine state.
