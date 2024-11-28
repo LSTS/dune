@@ -575,9 +575,6 @@ namespace UserInterfaces
         if (msg->type == IMC::GpsFix::GFT_MANUAL_INPUT)
           return;
 
-        if (msg->getSourceEntity() == getEntityId())
-          return;
-
         if (m_driver == NULL)
           return;
 
