@@ -677,22 +677,27 @@ label:hover .custom-checkbox {
 }
 
 .announce-list {
-  list-style-type: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Define 2 columns */
+  gap: 12px; /* Add spacing between items */
   padding: 0;
-  margin: 0;
+  margin: 16px 0 0; /* Add spacing at the top of the list */
 }
 
 .announce-item {
-  font-size: 14px;
-  color: var(--c-color-text);
-  padding: 4px 0;
-  border-bottom: 1px solid #f0f0f0;
-  transition: color 0.3s, background-color 0.3s;
+  display: flex;
+  flex-direction: column; /* Stack protocol, IP, and port */
+  padding: 8px;
+  /*background-color: var(--c-color-disabled);*/
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: justify; /* Justify the text */
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .announce-item:hover {
-  color: #2196f3;
-  background-color: #e3f2fd;
+  transform: translateY(-4px); /* Add a hover effect to "lift" the card */
+  box-shadow: 0 4px 8px rgba(125, 125, 245, 0.562);
 }
 
 /* Style for collapsed sections */
@@ -732,4 +737,38 @@ label:hover .custom-checkbox {
 .announce-item a:hover {
   color: #ffcc00;  /* Set hover color */
   background-color: #e3f2fd;  /* Background color on hover */
+}
+
+.announce-item span {
+  display: block; /* Ensure each part is on its own line */
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.announce-item .protocol {
+  color: var(--c-color-info);
+  font-weight: bold;
+}
+
+.announce-item .ip {
+  font-size: 13px;
+  color: var(--c-color-secondary-text);
+}
+
+.announce-item .port {
+  font-size: 12px;
+  color: var(--c-color-disabled);
+}
+
+/* Add a hover effect to clickable items */
+.announce-item:hover span.protocol {
+  color: #2196f3;
+  text-decoration: underline;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 600px) {
+  .announce-list {
+    grid-template-columns: 1fr; /* Single column on small screens */
+  }
 }

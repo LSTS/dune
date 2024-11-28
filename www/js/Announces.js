@@ -239,54 +239,76 @@ Announces.prototype.updateSection = function (section, msg, currentTime) {
 
 // Method to add all services with their type, IP, and ports to a list
 Announces.prototype.addIPsToSection = function (list, msg) {
+  // Split the services string into an array of individual services
   const services = msg.services.split(';');
-  const uniqueServices = new Set(); // Use a set to avoid duplicates
 
-  // Add already existing items to the set
-  list.querySelectorAll('.announce-item').forEach(item => {
-    uniqueServices.add(item.textContent);
-  });
+  // Create a new set to store services without duplicates
+  const newServicesSet = new Set();
 
-  // Regex to capture service type, IP, and port
+  // Regular expression to capture protocol, IP, and port
   const regex = /([\w+]+):\/\/([\d.]+):(\d+)/;
 
-  // Filter and add new services
+  // Iterate through each service in the list
   services.forEach(service => {
+    // Attempt to match the service with the regular expression
     const match = service.match(regex);
+
+    // If a valid match is found
     if (match) {
-      const protocol = match[1]; // e.g., http, ftp, imc+udp
-      const ip = match[2];       // e.g., 192.168.1.1
-      const port = match[3];     // e.g., 8080
+      const protocol = match[1]; // Extract protocol (e.g., http, ftp)
+      const ip = match[2];       // Extract IP address (e.g., 192.168.1.1)
+      const port = match[3];     // Extract port number (e.g., 8080)
+
+      // Create a string combining protocol, IP, and port
       const serviceString = `${protocol} - ${ip}:${port}`;
 
-      if (!uniqueServices.has(serviceString)) {
-        uniqueServices.add(serviceString); // Add to the set
-        const listItem = document.createElement('li');
-        listItem.textContent = serviceString;
-        listItem.classList.add('announce-item'); // Styling class for the item
-        list.appendChild(listItem);
+      // Add the service to the new set (avoids duplicates)
+      newServicesSet.add(serviceString);
+    }
+  });
 
-        // If the protocol is HTTP and port is in the range 8080-8089, add click listener
-        if (protocol === 'http' && port >= 8080 && port <= 8089) {
-          listItem.addEventListener('click', () => {
-            this.promptOpenPage(ip, port); // Prompt the user to open the page
-          });
+  // Remove items from the list that are no longer in the new set
+  const existingItems = list.querySelectorAll('.announce-item');
+  existingItems.forEach(item => {
+    // If the item is not in the new set, remove it
+    if (!newServicesSet.has(item.textContent)) {
+      list.removeChild(item);
+    }
+  });
 
-          // Change cursor to 'pointer' to indicate it's clickable
-          listItem.style.cursor = 'pointer';
+  // Add new services that are not already in the list
+  newServicesSet.forEach(serviceString => {
+    // Check if the service is already in the list
+    const existingItem = Array.from(existingItems).find(item => item.textContent === serviceString);
 
-          // Style to make it look like a link
-          listItem.style.color = "var(--c-color-info)";
-          listItem.style.textDecoration = 'underline';
+    // If the service is not in the list, add it
+    if (!existingItem) {
+      const listItem = document.createElement('li');
+      listItem.textContent = serviceString; // Set the text of the list item
+      listItem.classList.add('announce-item'); // Add the CSS class for styling
+      list.appendChild(listItem);
 
-          // Add hover effect for better user experience
-          listItem.addEventListener('mouseover', () => {
-            listItem.style.color = 'blue'; // Change color when hovering
-          });
-          listItem.addEventListener('mouseout', () => {
-            listItem.style.color = "var(--c-color-info)"; // Revert color when not hovering
-          });
-        }
+      // If the protocol is HTTP and the port is between 8080 and 8089, add a click handler
+      const [protocol, ipPort] = serviceString.split(' - ');
+      const [ip, port] = ipPort.split(':');
+      if (protocol === 'http' && port >= 8080 && port <= 8089) {
+        // When the item is clicked, prompt the user to open the page
+        listItem.addEventListener('click', () => {
+          this.promptOpenPage(ip, port);
+        });
+
+        // Set the item style to indicate it's clickable
+        listItem.style.cursor = 'pointer';
+        listItem.style.color = "var(--c-color-info)";
+        listItem.style.textDecoration = 'underline';
+
+        // Add hover effects to change the color
+        listItem.addEventListener('mouseover', () => {
+          listItem.style.color = "var(--c-color-link)"; // Change color on hover
+        });
+        listItem.addEventListener('mouseout', () => {
+          listItem.style.color = "var(--c-color-info)"; // Revert to original color
+        });
       }
     }
   });
@@ -311,7 +333,7 @@ Announces.prototype.formatTime = function (timeInMillis) {
   const seconds = Math.floor(timeInMillis / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
-  return `${hours}:${String(minutes % 60).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+  return `Last Update at ${hours}:${String(minutes % 60).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 };
 
 // Method to update tooltip position based on mouse movement
