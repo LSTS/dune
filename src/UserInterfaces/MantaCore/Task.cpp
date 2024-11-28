@@ -580,8 +580,8 @@ namespace UserInterfaces
 
         if (m_sat != msg->satellites)
         {
-          m_driver->setNumberSat(m_sat);
           m_sat = msg->satellites;
+          m_driver->setNumberSat(m_sat);
         }
       }
 
