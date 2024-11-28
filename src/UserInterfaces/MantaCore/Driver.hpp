@@ -171,7 +171,7 @@ namespace UserInterfaces
       void
       setNumberSat(uint8_t sat_number)
       {
-        m_task->spew("sending satellite number");
+        m_task->spew("sending satellite number: %u", sat_number);
         sprintf(m_cmd_text, "%c,%c,%d%c", BYTE_PREAMBLE, BYTE_SAT, sat_number, '\0');
         sendCommand(m_cmd_text, false);
       }
