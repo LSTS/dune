@@ -101,7 +101,7 @@ Logbook.prototype.update = function () {
   }
 
   this.m_base.style.height = "85vh";
-  this.m_base.style.fontSize = "1.4vh";
+  this.m_base.style.fontSize = "1rem";
   this.m_base.style.overflowY = "scroll";
   this.m_base.innerHTML = "";
   this.m_base.innerHTML += logbookStr;
