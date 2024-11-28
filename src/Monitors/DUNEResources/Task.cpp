@@ -54,6 +54,7 @@ namespace Monitors
     using DUNE_NAMESPACES;
 
     static const float c_time_between_reads = 1.0f;
+    static const float c_time_between_ram_cache_clean = 3600.0f; // 1 hour
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -61,6 +62,8 @@ namespace Monitors
       IMC::CpuUsage m_dune_usage;
       //! state time to check usage of dune
       Time::Counter<float> m_cpu_check;
+      //! state time to clean cache
+      Time::Counter<float> m_ram_cache_clean;
       //! Read timestamp.
       double m_tstamp;
       //! Save pid of the process
@@ -97,6 +100,8 @@ namespace Monitors
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_cpu_check.setTop(c_time_between_reads);
+        m_ram_cache_clean.setTop(c_time_between_ram_cache_clean);
+        cleanRamCache();
 #if defined(DUNE_OS_LINUX)
         m_pid = getpid();
 #elif defined(DUNE_OS_WINDOWS)
@@ -246,6 +251,25 @@ namespace Monitors
 #endif
       }
 
+      void
+      cleanRamCache(void)
+      {
+        inf("Cleaning RAM cache");
+#if defined(DUNE_OS_LINUX)
+        if(std::system("sync; echo 1 > /proc/sys/vm/drop_caches") != 0)
+        {
+          inf("Error cleanRamCache: Failed to clean cache");
+        }
+#elif defined(DUNE_OS_WINDOWS)
+        std::system("echo \"\" > C:\\Windows\\Temp\\clean_cache.bat");
+        std::system("echo \"@echo off\" >> C:\\Windows\\Temp\\clean_cache.bat");
+        std::system("echo \"echo Cleaning cache...\" >> C:\\Windows\\Temp\\clean_cache.bat");
+        std::system("echo \"ipconfig /flushdns\" >> C:\\Windows\\Temp\\clean_cache.bat");
+        std::system("echo \"del /f /s /q C:\\Windows\\Temp\\*.*\" >> C:\\Windows\\Temp\\clean_cache.bat");
+        std::system("start C:\\Windows\\Temp\\clean_cache.bat");
+#endif
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -267,6 +291,11 @@ namespace Monitors
             m_dune_usage.value = (uint8_t)percentage;
             m_dune_usage.setTimeStamp(m_tstamp);
             dispatch(m_dune_usage, DF_KEEP_TIME | DF_LOOP_BACK);
+          }
+          if (m_ram_cache_clean.overflow())
+          {
+            m_ram_cache_clean.reset();
+            cleanRamCache();
           }
         }
       }
