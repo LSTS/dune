@@ -456,6 +456,18 @@ namespace UserInterfaces
             break;
           }
 
+          case BYTE_HEADING:
+          {
+            IMC::EulerAngles euler;
+            euler.psi = std::stof(lst[2]);
+            euler.theta = std::stof(lst[3]);
+            euler.phi = std::stof(lst[4]);
+            euler.psi_magnetic = euler.psi;
+            m_task->dispatch(euler);
+            m_task->spew("HEADING: yaw: %.3f pitch: %.3f roll: %.3f", euler.psi, euler.theta, euler.phi);
+            break;
+          }
+
           case BYTE_CPU_OFF:
           {
             IMC::PowerOperation pop;
