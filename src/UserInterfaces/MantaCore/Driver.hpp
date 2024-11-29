@@ -191,10 +191,23 @@ namespace UserInterfaces
       void
       requestDataPower(bool on)
       {
-        m_task->spew("request data power");
-        sprintf(m_cmd_text, "%c,%c,%c%c",
-                            BYTE_PREAMBLE,
-                            BYTE_DATA_POWER, on ? BYTE_SEND_DATA : BYTE_STOP_DATA,
+        m_task->spew("request power data");
+        sprintf(m_cmd_text, "%c,%c,%s%c",
+                             BYTE_PREAMBLE,
+                             BYTE_DATA_POWER,
+                             on ? "on" : "off",
+                            '\0');
+        sendCommand(m_cmd_text, true);
+      }
+
+      void
+      requestDataHeading(bool on)
+      {
+        m_task->spew("request heading data");
+        sprintf(m_cmd_text, "%c,%c,%s%c",
+                             BYTE_PREAMBLE,
+                             BYTE_HEADING,
+                             on ? "on" : "off",
                             '\0');
         sendCommand(m_cmd_text, true);
       }

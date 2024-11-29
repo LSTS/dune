@@ -64,14 +64,13 @@ namespace UserInterfaces
 
     constexpr char BYTE_PREAMBLE                = '$';
     constexpr char BYTE_CSUM                    = '*';
-    constexpr char BYTE_MAG                     = 'a';
     constexpr char BYTE_ACK                     = 'A';
     constexpr char BYTE_BQ_DATA                 = 'B';
     constexpr char BYTE_BQ_CELL                 = 'c';
     constexpr char BYTE_CHANNEL_DATA            = 'C';
-    constexpr char BYTE_SEND_DATA               = 'd';
     constexpr char BYTE_DATA_POWER              = 'D';
     constexpr char BYTE_FIRMWARE                = 'f';
+    constexpr char BYTE_HEADING                 = 'h';
     constexpr char BYTE_BQ_INFO                 = 'i';
     constexpr char BYTE_KWON_AMODEMS            = 'K';
     constexpr char BYTE_STATUS                  = 'k';
@@ -83,7 +82,6 @@ namespace UserInterfaces
     constexpr char BYTE_NACK                    = 'N';
     constexpr char BYTE_CPU_OFF                 = 'o';
     constexpr char BYTE_PAC_DATA                = 'p';
-    constexpr char BYTE_STOP_DATA               = 's';
     constexpr char BYTE_SAT                     = 'S';
     constexpr char BYTE_FREE_TEXT               = 'T';
     constexpr char BYTE_CPU_OK                  = 'V';
