@@ -83,7 +83,7 @@ namespace DUNE
         {
           print(" > Waiting for the system to fully erase the flash\n");
           char send_text[32];
-          std::sprintf(send_text, "%s%ld,*", c_size_file_update, firmware.getFirmwareSize());
+          std::sprintf(send_text, "%s%ld,*", c_size_file_update, (unsigned long)firmware.getFirmwareSize());
           sendCommand(send_text);
           if(readReply(c_timeout_reply))
           {
