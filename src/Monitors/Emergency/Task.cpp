@@ -54,6 +54,8 @@ namespace Monitors
       std::string recipient;
       //! Transmission interface.
       std::string interface;
+      //! External information text.
+      std::string external_info_text;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -120,6 +122,11 @@ namespace Monitors
         .defaultValue("30.0")
         .minimumValue("0.0")
         .description("Expiration time of lost communications SMS");
+
+        param("External Info Text", m_args.external_info_text)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("")
+        .description(DTR("External information to be sent in the boot message"));
 
         bind<IMC::Abort>(this);
         bind<IMC::FuelLevel>(this);
@@ -196,9 +203,14 @@ namespace Monitors
           Angles::convertDecimalToDM(Angles::degrees(msg->lon), lon_deg, lon_min);
 
           Time::BrokenDown bdt;
+          std::string system_name;
+          if(m_args.external_info_text.empty())
+            system_name = getSystemName();
+          else
+            system_name = getSystemName() + String::str(" - ") +m_args.external_info_text;
 
           m_emsg = String::str("(%s) %02u:%02u:%02u / %d %f, %d %f / f:%d v:%d c:%d / s: %c",
-                               getSystemName(),
+                               system_name.c_str(),
                                bdt.hour, bdt.minutes, bdt.seconds,
                                lat_deg, lat_min, lon_deg, lon_min,
                                (int)m_fuel, (int) m_bat_voltage, (int)m_fuel_conf, vehicleStateChar(m_vstate));
@@ -352,8 +364,14 @@ namespace Monitors
         {
           std::string s;
           Time::BrokenDown bdt;
+          std::string system_name;
+          if(m_args.external_info_text.empty())
+            system_name = getSystemName();
+          else
+            system_name = getSystemName() + String::str(" - ") +m_args.external_info_text;
+
           s = String::str("(%s) %02u:%02u:%02u / Unknown Location / f:%d v:%d c:%d",
-                               getSystemName(),
+                               system_name.c_str(),
                                bdt.hour, bdt.minutes, bdt.seconds,
                             (int)m_fuel, (int)m_bat_voltage, (int)m_fuel_conf);
 
