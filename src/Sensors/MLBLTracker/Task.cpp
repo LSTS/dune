@@ -175,7 +175,7 @@ namespace Sensors
       {
         //! Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER,
+                    Tasks::Parameter::VISIBILITY_USER,
                     false);
 
         param("IO Port - Device", m_args.io_dev)
