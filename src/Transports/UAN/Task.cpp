@@ -62,7 +62,7 @@ namespace Transports
       //! USBL Modem Announce service.
       bool usbl_announce;
       //! Section where to read modem addresses.
-      std::vector<std::string> modems;
+      std::string modems;
       //! Modem addresses to ignore.
       std::vector<std::string> addr_exclude;
     };
@@ -218,7 +218,7 @@ namespace Transports
         params.name = getEntityLabel();
         IMC::EntityParameter p;
         p.name = "Modems";
-        p.value = String::join(m_args.modems.begin(), m_args.modems.end(), ",");
+        p.value = m_args.modems;
         params.params.push_back(p);
         dispatch(params);
       }
@@ -270,6 +270,7 @@ namespace Transports
         if (msg->getDestination() != getSystemId())
           return;
 
+        refreshAcousticSystems();
         dispatchReply(*msg, m_acsys);
       }
 
@@ -309,9 +310,9 @@ namespace Transports
       {
         std::unordered_set<std::string> targets;
         for (auto& modem: m_sys)
-          m_acsys.list += String::join(modem.second.begin(), modem.second.end(), ",");
-
-        dispatch(m_acsys);
+          targets.insert(modem.second.begin(), modem.second.end());
+        
+        m_acsys.list = String::join(targets.begin(), targets.end(), ",");
       }
 
       void
@@ -337,6 +338,7 @@ namespace Transports
         }
 
         refreshAcousticSystems();
+        dispatch(m_acsys);
       }
 
       void
@@ -616,9 +618,11 @@ namespace Transports
       void
       activateModems(void)
       {
-        if (m_args.modems.size())
+        if (m_args.modems.length())
         {
-          for (auto& name: m_args.modems)
+          std::unordered_set<std::string> modems;
+          String::split(m_args.modems, ",", modems);
+          for (const auto& name: modems)
           {
             if (m_activate_modems.find(name) == m_activate_modems.end())
             {
@@ -653,7 +657,7 @@ namespace Transports
         std::vector<std::string> deact_modems;
         for (auto& modem: m_activate_modems)
         {
-          if (std::find(m_args.modems.begin(), m_args.modems.end(), modem.first) == m_args.modems.end())
+          if (m_args.modems.find(modem.first) == m_args.modems.npos)
             deact_modems.push_back(modem.first);
         }
 
@@ -681,6 +685,7 @@ namespace Transports
         }
 
         refreshAcousticSystems();
+        dispatch(m_acsys);
 
         return;
       }
