@@ -396,7 +396,6 @@ namespace UserInterfaces
         if (m_driver == NULL)
           return;
 
-        m_driver->setTargetAddress("reset");
         for (auto& name: m_sys)
           m_driver->setTargetAddress(name);
 
@@ -477,10 +476,22 @@ namespace UserInterfaces
         if (new_sys == m_sys)
           return;
 
-        m_sys = new_sys;
-        m_targets_set = false;
         if (m_driver != NULL)
+        {
+          // remove untargetable systems
+          for (const auto& target: m_sys)
+          {
+            if (new_sys.find(target) == new_sys.end())
+              m_driver->setTargetAddress(target, true);
+          }
+
           m_driver->m_query_systems = false;
+        }
+        else
+          m_targets_set = false;
+
+        m_sys = new_sys;
+        setTargetableSystems();
       }
 
       void

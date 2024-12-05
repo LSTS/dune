@@ -262,14 +262,16 @@ namespace UserInterfaces
       }
 
       void
-      setTargetAddress(std::string name)
+      setTargetAddress(const std::string& name, bool remove = false)
       {
-        if (name == "reset")
-          m_task->debug("reseting known addresses");
-        else
-          m_task->debug("sending known address: %s", name.c_str());
+        m_task->debug("%s target: %s", remove ? "removing" : "adding", name.c_str());
 
-        sprintf(m_cmd_text, "%c,%c,%s%c", BYTE_PREAMBLE, BYTE_AMODEM, name.c_str(), '\0');
+        sprintf(m_cmd_text, "%c,%c,%s,%s%c",
+                             BYTE_PREAMBLE,
+                             BYTE_AMODEM,
+                             name.c_str(),
+                             remove ? "remove" : "add",
+                            '\0');
         sendCommand(m_cmd_text, true);
       }
 
