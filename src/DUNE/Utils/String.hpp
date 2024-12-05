@@ -150,7 +150,7 @@ namespace DUNE
         }
       }
 
-      //! Split a string into a vector of given type.
+      //! Split a string into a set of given type.
       //! @param s string to split.
       //! @param sep separator string.
       //! @param lst set of Type.
