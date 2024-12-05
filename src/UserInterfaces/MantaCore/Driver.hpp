@@ -63,7 +63,7 @@ namespace UserInterfaces
         m_send_cmd_state(CMD_IDLE),
         m_parser_state(PARSER_PREAMBLE),
         m_free_text_state(0),
-        m_free_text("Manta Core"),
+        m_free_text(task->getEntityLabel()),
         m_treqid(0),
         m_new_modems_config(false)
       {
@@ -227,28 +227,28 @@ namespace UserInterfaces
         switch (m_free_text_state)
         {
           case 0:
-            std::sprintf(m_free_text, "System: %s%c", m_sys_name.c_str(), '\0');
+            m_free_text = String::str("System: %s%c", m_sys_name.c_str(), '\0');
             break;
 
           case 1:
             if(getInterfaceIP("eth0", m_sys_ip))
-              std::sprintf(m_free_text, "Int IP: %s%c", m_sys_ip.c_str(), '\0');
+              m_free_text = String::str("Int IP: %s%c", m_sys_ip.c_str(), '\0');
             else
-              std::sprintf(m_free_text, "Int IP: Fail%c", '\0');
+              m_free_text = String::str("Int IP: Fail%c", '\0');
             break;
 
           case 2:
             if(getInterfaceIP("ztcfw4jwt3", m_sys_ip))
-              std::sprintf(m_free_text, "Zero IP: %s%c", m_sys_ip.c_str(), '\0');
+              m_free_text = String::str("Zero IP: %s%c", m_sys_ip.c_str(), '\0');
             else
-              std::sprintf(m_free_text, "Zero IP: Fail%c", '\0');
+              m_free_text = String::str("Zero IP: Fail%c", '\0');
             break;
 
           case 3:
             if(getInterfaceIP("wwan0", m_sys_ip))
-              std::sprintf(m_free_text, "GPRS IP: %s%c", m_sys_ip.c_str(), '\0');
+              m_free_text = String::str("GPRS IP: %s%c", m_sys_ip.c_str(), '\0');
             else
-              std::sprintf(m_free_text, "GPRS IP: Fail%c", '\0');
+              m_free_text = String::str("GPRS IP: Fail%c", '\0');
             break;
 
           default:
@@ -540,7 +540,7 @@ namespace UserInterfaces
       //| Free text state.
       uint8_t m_free_text_state;
       //! Free text to send.
-      char m_free_text[128];
+      std::string m_free_text;
       //! Queue of commands to send.
       std::queue<std::pair<std::string, bool>> m_queue;
       //! Id for TransmissionRequest IMC message.
