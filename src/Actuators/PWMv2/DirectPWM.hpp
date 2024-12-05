@@ -58,14 +58,13 @@ namespace Actuators
 
       ~DirectPWM(void)
       {
-        m_outputFile = fopen("/sys/class/pwm/pwmchip0/unexport", "ab");
+        char buff[2];
+        m_outputFile = fopen(m_path_enable.c_str(), "rb+");
         if (m_outputFile == NULL)
-        {
-          m_task->err("Failed to unexport PWM %d", m_channel);
-          return;
-        }
+          m_task->err("Failed disable pwm %s", m_path_enable.c_str());
 
-        fwrite(&m_channel, sizeof(int), 1, m_outputFile);
+        strcpy(buff, "0");
+        fwrite(&buff, sizeof(char), 1, m_outputFile);
         fclose(m_outputFile);
       }
 
