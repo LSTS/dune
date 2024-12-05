@@ -53,9 +53,12 @@ namespace UserInterfaces
       PACData m_pacData;
       //! Query systems.
       bool m_query_systems;
+      //! Acoustic modems config changed flag.
+      bool m_new_modems_config;
 
       Driver(Tasks::Task* task, IO::Handle* handle, int numberCell, std::string system_name):
         m_query_systems(false),
+        m_new_modems_config(false),
         m_task(task),
         m_handle(handle),
         m_number_cells(numberCell),
@@ -64,8 +67,7 @@ namespace UserInterfaces
         m_parser_state(PARSER_PREAMBLE),
         m_free_text_state(0),
         m_free_text(task->getEntityLabel()),
-        m_treqid(0),
-        m_new_modems_config(false)
+        m_treqid(0)
       {
         querySystems(true);
         m_handle->flush();
@@ -135,28 +137,27 @@ namespace UserInterfaces
       }
 
       void
-      setKnownModems(std::map<std::string, ModemInfo> modems)
+      setKnownModems(std::map<std::string, bool> modems)
       {
         m_task->spew("set known modems");        
         for (auto& modem: modems)
         {
           bool new_modem = false;
-          if (m_modems.find(modem.first) == m_modems.end())
+          if (m_amodems.find(modem.first) == m_amodems.end())
           {
             new_modem = true;
-            m_modems.emplace(modem);
+            m_amodems[modem.first] = modem.second;
           }
 
-          if (new_modem || m_modems[modem.first].state != modem.second.state)
+          if (new_modem || m_amodems[modem.first] != modem.second)
           {
-            std::string cmd = String::str("%c,%c", BYTE_PREAMBLE, BYTE_KWON_AMODEMS);
+            std::string cmd = String::str("%c,%c", BYTE_PREAMBLE, BYTE_KNOWN_AMODEMS);
             cmd += "," + modem.first + ",";
-            cmd += modem.second.state ? "1" : "0";
+            cmd += modem.second ? "on" : "off";
             sendCommand(cmd, true);
           }
           
-          m_modems[modem.first].state = modem.second.state;
-          m_new_modems_config = true;
+          m_amodems[modem.first] = modem.second;
         }
       }
 
@@ -351,11 +352,8 @@ namespace UserInterfaces
       std::map<std::string, bool>
       getModemsConfig(void)
       {
-        if (!m_new_modems_config)
-          return {};
-        
         m_new_modems_config = false;
-        return m_modems_config;
+        return m_amodems;
       }
 
       //! TODO: if ((m_send_cmd_state == CMD_WAITING && m_wdog.overflow()), retransmit last -> after 5 attempts, com_error.
@@ -501,10 +499,11 @@ namespace UserInterfaces
 
           case BYTE_KWON_AMODEMS:
           {
-            m_modems_config.clear();
-            m_new_modems_config = true;
             for (size_t i = 2; i < lst.size() - 1; i += 2)
-              m_modems_config[lst[i]] = lst[i + 1] == "1";
+            {
+              m_amodems[lst[i]] = lst[i + 1] == "on";
+              m_new_modems_config = true;
+            }
             break;
           }
           
@@ -548,11 +547,7 @@ namespace UserInterfaces
       //! Boot watchdog.
       Time::Counter<float> m_wdog_boot;
       //! List of modems.
-      std::map<std::string, bool> m_modems_config;
-      //! Flag of new modems config.
-      bool m_new_modems_config;
-      //! List of modems.
-      std::map<std::string, ModemInfo> m_modems;
+      std::map<std::string, bool> m_amodems;
 
       uint16_t
       getInternalId(void)

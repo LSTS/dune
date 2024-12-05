@@ -70,14 +70,18 @@ namespace UserInterfaces
       uint8_t m_sat;
       //! Targets set flag.
       bool m_targets_set;
+      //! Known acoustic modems set flag.
+      bool m_amodems_set;
       //! UAN Entity Id.
       uint8_t m_uan_id;
       //! Attempt to connect on Idle watchdog.
       Time::Counter<float> m_wdog_con;
-      //! List of modems.
-      std::map<std::string, ModemInfo> m_modems;
+      //! Map of acoustic modems.
+      std::map<std::string, bool> m_amodems;
       //! UAN modems configured.
       std::unordered_set<std::string> m_uan_config;
+      //! Set of known types of acoustic modems.
+      std::unordered_set<std::string> m_types;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
@@ -88,6 +92,7 @@ namespace UserInterfaces
         m_is_power_off(false),
         m_sat(0),
         m_targets_set(false),
+        m_amodems_set(false),
         m_uan_id(255)
       {
         // Define configuration parameters.
@@ -112,6 +117,14 @@ namespace UserInterfaces
         param("UAN - Entity Label", m_args.uan_elabel)
         .defaultValue("Acoustic Access Controller")
         .description("UAN entity label.");
+
+        param("AMS - Entity Label", m_args.ams_elabel)
+        .defaultValue("Acoustic Modems Selector")
+        .description("Acoustic Modems Selector entity label.");
+
+        param("Acoustic Modems List Label", m_args.am_list)
+        .defaultValue("Acoustic Modems")
+        .description("Label for the Acoustic Modems List");
 
         param("Number of cells", m_args.number_cell)
         .defaultValue("7")
@@ -183,10 +196,6 @@ namespace UserInterfaces
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("true")
         .description("Flag to activate data acquire from board.");
-
-        std::map<std::string, std::string> modems = m_ctx.config.getSection("Acoustic Modems");
-        for (auto& modem: modems)
-          m_modems[modem.first] = {modem.second, false};
 
         setWaitForMessages(1.0);
 
@@ -278,7 +287,6 @@ namespace UserInterfaces
       {
         m_driver->requestConnectionToBoard();
         m_driver->requestFirmwareVersion();
-        m_driver->setKnownModems(m_modems);
         m_driver->setNumberCells();
         m_driver->requestDataPower(m_args.get_data);
         m_driver->requestDataHeading(m_args.get_data);
@@ -312,12 +320,6 @@ namespace UserInterfaces
         inf("initializing board: done");
         inf("start acquiring data");
         m_wdog_free_text.reset();
-
-        IMC::QueryEntityParameters qep;
-        qep.setDestination(getSystemId());
-        qep.setDestinationEntity(m_uan_id);
-        qep.name = m_args.uan_elabel;
-        dispatch(qep);
       }
 
       //! Reserve entity identifiers.
@@ -404,75 +406,22 @@ namespace UserInterfaces
       void
       consume(const IMC::EntityParameters* msg)
       {
-        if (m_driver == NULL)
-          return;
-
         if (msg->getSource() != getSystemId())
           return;
         
-        if (msg->name == m_args.uan_elabel)
+        if (msg->name == m_args.ams_elabel)
         {
-          bool found = false;
-          for (auto& param: msg->params)
+          for (const auto& param: msg->params)
           {
-            if (param->name == "Modems")
-            {
-              found = true;
-              std::set<std::string> new_config;
-              String::split(param->value, ",", new_config);
-              for (auto& n: m_uan_config)
-                if (new_config.find(n) == new_config.end())
-                  for (auto& modem: m_modems)
-                    if (modem.first.find(n) != modem.first.npos)
-                      modem.second.state = false;
-              m_uan_config = new_config;
-              m_driver->setKnownModems(m_modems);
-              break;
-            }
-          }
-          if (!found)
-            return;
+            std::string type = getAcousticModemType(param->name);
+            if (m_types.find(type) == m_types.end())
+              continue;
 
-          for (auto& n: m_uan_config)
-          {
-            IMC::QueryEntityParameters qep;
-            qep.setDestination(getSystemId());
-            qep.name = n;
-            dispatch(qep);
-          }
-        }
-        else if (m_uan_config.find(msg->name) != m_uan_config.end())
-        {
-          std::string io;
-          for (auto& param: msg->params)
-          {
-            if (param->name == "IO Port - Device")
-            {
-              io = param->value;
-              break;
-            }
-          }
-          if (io.empty())
-            return;
-
-          std::string modem = msg->name;
-          if (io.find("uart") == io.npos)
-          {
-            size_t pos_i = io.find_last_of('.');
-            size_t pos_f = io.find_last_of(':');
-            modem += (pos_i != io.npos && pos_f != io.npos)?
-                      io.substr(pos_i + 1, pos_f - pos_i - 1):
-                      "";
+            m_amodems[param->name] = param->value == "true";
           }
 
-          if (io == m_modems[modem].address)
-          {
-            for (auto& m: m_modems)
-              if (m.first.find(msg->name) != m.first.npos)
-                m.second.state = false;
-            m_modems[modem].state = true;
-            m_driver->setKnownModems(m_modems);
-          }
+          if (m_amodems.size() > 0)
+            m_amodems_set = false;
         }
       }
 
@@ -621,6 +570,18 @@ namespace UserInterfaces
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.am_list))
+        {
+          std::map<std::string, std::string> modems = m_ctx.config.getSection(m_args.am_list);
+          for (auto& modem: modems)
+            m_types.insert(getAcousticModemType(modem.first));
+
+          IMC::QueryEntityParameters qep;
+          qep.setDestination(getSystemId());
+          qep.name = m_args.ams_elabel;
+          dispatch(qep);
+        }
+
         for (unsigned i = 0; i < MantaCore::c_max_power_channels; ++i)
         {
           if (String::startsWith(m_args.power_channels_names[i], "N/C"))
@@ -659,30 +620,14 @@ namespace UserInterfaces
         }
       }
 
-      void
-      setIOPortDevice(std::string type, std::string io)
+      //! Get acoustic modem type.
+      std::string
+      getAcousticModemType(const std::string& modem)
       {
-        IMC::SetEntityParameters sep;
-        sep.setDestination(getSystemId());
-        sep.name = type;
-        IMC::EntityParameter ep;
-        ep.name = "IO Port - Device";
-        ep.value = io;
-        sep.params.push_back(ep);
-        dispatch(sep);
-      }
-
-      void
-      setConnectedModems(std::string modems)
-      {
-        IMC::SetEntityParameters sep;
-        sep.setDestination(getSystemId());
-        sep.name = m_args.uan_elabel;
-        IMC::EntityParameter ep;
-        ep.name = "Modems";
-        ep.value = modems;
-        sep.params.push_back(ep);
-        dispatch(sep);
+        size_t pos = 0;
+        while (pos < modem.size() && !std::isdigit(modem[pos]))
+          ++pos;
+        return modem.substr(0, pos);
       }
 
       void
@@ -691,28 +636,22 @@ namespace UserInterfaces
         if (config.empty())
           return;
         
-        std::vector<std::string> types;
-        for (auto& it: config)
+        IMC::SetEntityParameters sep;
+        sep.setDestination(getSystemId());
+        sep.name = m_args.ams_elabel;
+        for (const auto& modem: config)
         {
-          m_modems[it.first].state = it.second;
-          size_t pos = 0;
-          while (pos < it.first.size() && !std::isdigit(it.first[pos]))
-            ++pos;
-          std::string type = it.first.substr(0, pos);
-          types.push_back(type);
-          if (!it.second)
-          {
-            if (m_uan_config.find(type) != m_uan_config.end())
-              m_uan_config.erase(type);
-          }
-          else if (m_uan_config.find(type) == m_uan_config.end())
-          {
-            m_uan_config.insert(type);
-            setIOPortDevice(type, m_modems[it.first].address);
-          }
-        }
+          if (m_amodems[modem.first] == modem.second)
+            continue;
 
-        setConnectedModems(String::join(m_uan_config.begin(), m_uan_config.end(), ","));
+          m_amodems[modem.first] = modem.second;
+
+          IMC::EntityParameter p;
+          p.name = modem.first;
+          p.value = modem.second ? "true" : "false";
+          sep.params.push_back(p);
+        }
+        dispatch(sep);
       }
 
       //! Get data from device.
@@ -744,7 +683,14 @@ namespace UserInterfaces
         if (!m_targets_set)
           setTargetableSystems();
 
-        updateModemsConfig(m_driver->getModemsConfig());
+        if (!m_amodems_set)
+        {
+          m_driver->setKnownModems(m_amodems);
+          m_amodems_set = true;
+        }
+
+        if (m_driver->m_new_modems_config)
+          updateModemsConfig(m_driver->getModemsConfig());
 
         m_driver->checkCommandQueue();
 

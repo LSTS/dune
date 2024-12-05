@@ -162,6 +162,10 @@ namespace UserInterfaces
       std::string firm_version;
       //! UAN entity label.
       std::string uan_elabel;
+      //! Acoustic Modems Selector entity label.
+      std::string ams_elabel;
+      //! Acoustic Modems list label.
+      std::string am_list;
       //! PAC entity labels.
       std::string pac_elabels[c_max_number_pac_sensors];
       //! Remaining Capacity entity label.
@@ -186,12 +190,6 @@ namespace UserInterfaces
       bool power_channels_states[c_max_power_channels];
       //! Get data.
       bool get_data;
-    };
-
-    struct ModemInfo
-    {
-      std::string address;
-      bool state;
     };
 
     struct BQData
