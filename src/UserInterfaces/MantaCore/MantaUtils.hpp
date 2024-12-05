@@ -72,7 +72,7 @@ namespace UserInterfaces
     constexpr char BYTE_FIRMWARE                = 'f';
     constexpr char BYTE_HEADING                 = 'h';
     constexpr char BYTE_BQ_INFO                 = 'i';
-    constexpr char BYTE_KWON_AMODEMS            = 'K';
+    constexpr char BYTE_KNOWN_AMODEMS           = 'K';
     constexpr char BYTE_STATUS                  = 'k';
     constexpr char BYTE_LAST                    = 'L';
     constexpr char BYTE_LTC_DATA                = 'l';

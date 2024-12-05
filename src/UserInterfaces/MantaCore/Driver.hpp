@@ -497,7 +497,7 @@ namespace UserInterfaces
             break;
           }
 
-          case BYTE_KWON_AMODEMS:
+          case BYTE_KNOWN_AMODEMS:
           {
             for (size_t i = 2; i < lst.size() - 1; i += 2)
             {
