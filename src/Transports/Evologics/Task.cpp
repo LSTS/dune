@@ -326,7 +326,7 @@ namespace Transports
         }
         catch (std::runtime_error &e)
         {
-          war(DTR("Evologics Task desactivation: %s"), e.what());
+          war(DTR("Evologics Task deactivation: %s"), e.what());
           requestDeactivation();
           setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
         }
