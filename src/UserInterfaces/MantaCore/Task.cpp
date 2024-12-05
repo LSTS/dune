@@ -63,7 +63,7 @@ namespace UserInterfaces
       //! Send free text watchdog.
       Time::Counter<float> m_wdog_free_text;
       //! Targetable system names.
-      std::set<std::string> m_sys;
+      std::unordered_set<std::string> m_sys;
       //! Poweroff request flag.
       bool m_is_power_off;
       //! GPS sattelites in view.
@@ -77,7 +77,7 @@ namespace UserInterfaces
       //! List of modems.
       std::map<std::string, ModemInfo> m_modems;
       //! UAN modems configured.
-      std::set<std::string> m_uan_config;
+      std::unordered_set<std::string> m_uan_config;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
@@ -523,7 +523,7 @@ namespace UserInterfaces
         if (msg->getSourceEntity() != m_uan_id)
           return;
         
-        std::set<std::string> new_sys;
+        std::unordered_set<std::string> new_sys;
         String::split(msg->list, ",", new_sys);
         if (new_sys == m_sys)
           return;
