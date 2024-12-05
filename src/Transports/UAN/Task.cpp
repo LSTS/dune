@@ -651,9 +651,6 @@ namespace Transports
         else
           inf("connected modems section is empty.");
 
-        if (m_sys.empty())
-          return;
-
         std::vector<std::string> deact_modems;
         for (auto& modem: m_activate_modems)
         {
