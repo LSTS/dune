@@ -37,114 +37,115 @@ namespace Actuators
 {
   //! Insert short task description here.
   //!
-  //! This task requires 
-  //! dtoverlay=pwm-2chan,pin=18,func=2,pin2=19,func2=2 in config.txt or equivalent
+  //! This task requires
+  //! dtoverlay=pwm-2chan,pin=18,func=2,pin2=19,func2=2 in /boot/config.txt or equivalent
   //! @author João Bogas
   namespace PWMv2
   {
     using DUNE_NAMESPACES;
 
+    struct Arguments
+    {
+      //! PWM Channels
+      std::vector<unsigned> channels;
+    };
+
     struct Task: public DUNE::Tasks::Task
     {
-      static const unsigned c_max_pwm  = 2;
-
-      struct Arguments
-      {
-        //! IO ports information
-        int servo_inf[c_max_pwm];
-
-        int pwm_inf[c_max_pwm];
-      };
-
       //! Task arguments
       Arguments m_args;
       //! PWM signals
-      std::array<DirectPWM*,2> m_channel;
+      std::map<unsigned, DirectPWM> m_channel;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx), m_channel{nullptr}
+        DUNE::Tasks::Task(name, ctx)
       {
-        for (unsigned int i = 0; i < c_max_pwm; i++)
-        {
-          std::string option = String::str("Servo %u", i);
-          param(option, m_args.servo_inf[i])
-          .defaultValue("-1")
-          .description("Servo information");
-        }
+        param("Channels", m_args.channels)
+          .defaultValue("0, 1")
+          .description("List of PWM channels active. Values separated by comma.");
 
-        for (unsigned int i = 0; i < c_max_pwm; i++)
-        {
-          std::string option = String::str("PWM %u", i);
-          param(option, m_args.pwm_inf[i])
-          .defaultValue("-1")
-          .description("PWM information");
-        }
-        
         bind<IMC::SetServoPosition>(this);
-        //bind<IMC::GpioStateSet>(this);
         bind<IMC::SetPWM>(this);
       }
 
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
-      {
-      }
+      { }
 
       //! Reserve entity identifiers.
       void
       onEntityReservation(void)
-      {
-      }
+      { }
 
       //! Resolve entity names.
       void
       onEntityResolution(void)
-      {
-      }
+      { }
 
       //! Acquire resources.
       void
       onResourceAcquisition(void)
-      {
-      }
+      { }
 
       //! Initialize resources.
       void
       onResourceInitialization(void)
       {
-        for (size_t i = 0; i < c_max_pwm; i++)
-        {
-          if (m_args.servo_inf[i] != -1)
-            m_channel[i] = new DirectPWM(this, i);
-          
+        for (size_t i = 0; i < m_args.channels.size(); i++)
+          createPWMChannel(m_args.channels[i]);
 
-          if(m_args.pwm_inf[i] != -1)
-          {
-            if (m_channel[i] != nullptr)
-            {
-              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_MISSING_DATA);
-              err("Error in config file! PWM and Servo competing for same pwm channel");
-            }
-            m_channel[i] = new DirectPWM(this, i);
-          }
+        if (m_channel.empty())
+        {
+          setEntityState(IMC::EntityState::ESTA_BOOT, "No PWM channels initialized");
+          return;
         }
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      createPWMChannel(int idx)
+      {
+        try
+        {
+          m_channel.emplace(idx, DirectPWM(this, idx));
+        }
+        catch (const std::exception& e)
+        {
+          err("Failed to initialize PWM channel %d: %s", idx, e.what());
+          setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
+          m_channel.erase(idx);
+          return;
+        }
+
+        inf("PWM channel %d initialized", idx);
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_channel[0]);
-        Memory::clear(m_channel[1]);
+        m_channel.clear();
       }
 
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        m_channel[msg->id]->setDutyCycle(radToDutycycle(msg->value));
+        debug("Setting Servo %d to %f - %d ", msg->id, msg->value, radToDutycycle(msg->value));
+
+        auto iter = m_channel.find(msg->id);
+        if (iter == m_channel.end())
+        {
+          debug("Channel %d not initialized", msg->id);
+          return;
+        }
+
+        DirectPWM& ref = iter->second;
+        ref.setDutyCycle(radToDutycycle(msg->value));
       }
 
       uint32_t
@@ -153,9 +154,9 @@ namespace Actuators
         float angle = Angles::degrees(rad);
         if (angle < -90)
           angle = -90;
-        else if( angle > 90)
+        else if (angle > 90)
           angle = 90;
-        
+
         return angle * 5.5 + 1495;
         // y = mx + b
         // m = (-90 - 90)/(1000 - 2000) ; b = 1000 - (-90*m)
@@ -163,9 +164,18 @@ namespace Actuators
       void
       consume(const IMC::SetPWM* msg)
       {
-        m_channel[msg->id]->setPeriod(msg->period);
-        m_channel[msg->id]->setDutyCycle(msg->duty_cycle);
-        
+        debug("Setting PWM %d to %u ms (%u)", msg->id, msg->duty_cycle, msg->period);
+
+        auto iter = m_channel.find(msg->id);
+        if (iter == m_channel.end())
+        {
+          debug("Channel %d not initialized", msg->id);
+          return;
+        }
+
+        DirectPWM& ref = iter->second;
+        ref.setPeriod(msg->period);
+        ref.setDutyCycle(msg->duty_cycle);
       }
 
       //! Main loop.
@@ -174,7 +184,7 @@ namespace Actuators
       {
         while (!isStopping())
         {
-          waitForMessages(1.0);
+          waitForMessages(0.5);
         }
       }
     };
