@@ -643,7 +643,7 @@ namespace Transports
         if (msg->getSourceEntity() != m_uan_id)
           return;
 
-        std::set<std::string> map;
+        std::unordered_set<std::string> map;
         String::split(msg->list, ",", map);
         m_router.setAcousticMap(map);
       }

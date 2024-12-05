@@ -53,7 +53,7 @@ namespace Transports
     typedef std::map<std::string, TCPAnnounce> WifiMap;
     typedef std::map<std::string, std::string> GsmAnnounceMap;
     typedef std::map<std::string, std::string> GsmConfigMap;
-    typedef std::set<std::string> AcousticMap;
+    typedef std::unordered_set<std::string> AcousticMap;
 
     class Router
     {
@@ -714,7 +714,7 @@ namespace Transports
       }
 
       void
-      setAcousticMap(std::set<std::string> map)
+      setAcousticMap(std::unordered_set<std::string> map)
       {
         m_acoustic_map = map;
       }
