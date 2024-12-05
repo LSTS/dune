@@ -96,7 +96,7 @@ namespace Transports
       //! Task arguments.
       Arguments m_args;
       //! Targetable systems.
-      std::map<std::string, std::set<std::string>> m_sys;
+      std::map<std::string, std::unordered_set<std::string>> m_sys;
       //! Message to answer an AcousticSystemsQuery.
       IMC::AcousticSystems m_acsys;
       //! Map of modems to activate.
@@ -307,7 +307,7 @@ namespace Transports
       void
       refreshAcousticSystems(void)
       {
-        m_acsys.list.clear();
+        std::unordered_set<std::string> targets;
         for (auto& modem: m_sys)
           m_acsys.list += String::join(modem.second.begin(), modem.second.end(), ",");
 
@@ -323,7 +323,7 @@ namespace Transports
         try
         {
           std::string modem = resolveEntity(msg->getSourceEntity());
-          std::set<std::string> list;
+          std::unordered_set<std::string> list;
           String::split(msg->list, ",", list);
           for (auto& addr: m_args.addr_exclude)
             list.erase(addr);
