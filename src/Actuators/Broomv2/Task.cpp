@@ -223,6 +223,20 @@ namespace Actuators
           err("%s", msg->error.c_str());
       }
 
+      void
+      sendCommand(const char& code, const std::string data)
+      {
+        char cmd[256];
+        std::sprintf(cmd, "%c,%c,%s,%c",
+                           c_line_init,
+                           code,
+                           data.c_str(),
+                           c_data_term);
+        std::sprintf(cmd, "%s%c%c", cmd, calcCRC8(cmd), c_line_term);
+        spew("sending: %s", sanitize(cmd).c_str());
+        m_handle->writeString(cmd);
+      }
+
       //! Get data from device.
       //! @return true if data was received, false otherwise.
       bool
