@@ -44,6 +44,8 @@ namespace Actuators
     {
       //! IO device (URI).
       std::string io_dev;
+      //! Input timeout in seconds.
+      float inp_tout;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
@@ -52,6 +54,8 @@ namespace Actuators
       Arguments m_args;
       //! Serial port handle.
       IO::Handle* m_handle;
+      //! Input watchdog.
+      Time::Counter<float> m_wdog;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -67,6 +71,12 @@ namespace Actuators
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\".");
+
+        param("Input Timeout", m_args.inp_tout)
+        .units(Units::Second)
+        .defaultValue("5.0f")
+        .minimumValue("0.0f")
+        .description("Input timeout");
 
         setWaitForMessages(1.0);
       }
@@ -105,6 +115,7 @@ namespace Actuators
       void
       onInitializeDevice() override
       {
+        m_wdog.setTop(m_args.inp_tout);
       }
 
       //! Update internal state with new parameter values.
@@ -148,6 +159,12 @@ namespace Actuators
       bool
       onReadData() override
       {
+        if (m_wdog.getTop() > 0.0f && m_wdog.overflow())
+        {
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+
         return false;
       }
     };
