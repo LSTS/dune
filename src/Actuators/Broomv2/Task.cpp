@@ -73,7 +73,7 @@ namespace Actuators
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
-        m_parser(name)
+        m_parser(this)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -201,11 +201,13 @@ namespace Actuators
 
         if (!m_parser.checkDataIn(msg->value))
         {
-          debug(DTR("message with invalid checksum"));
+          trace(DTR("message with invalid checksum"));
           return;
         }
 
         m_wdog.reset();
+
+        m_parser.interpretDataIn(msg->value);
       }
 
       void

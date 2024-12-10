@@ -47,9 +47,10 @@ namespace Actuators
     public:
       //! Constructor.
       //! @param[in] name task name.
-      Parser(const std::string& name):
-        m_name(name)
-      {}
+      Parser(Hardware::BasicDeviceDriver* task):
+        m_task(task)
+      {
+      }
       
       //! Check if data is valid.
       //! @return true if valid, false otherwise.
@@ -59,7 +60,7 @@ namespace Actuators
         size_t pos = line.find_last_of(c_data_term);
         if (pos == line.npos || line[pos + 1] == c_line_term)
         {
-          DUNE_DBG(m_name, DTR("message has no checksum"));
+          m_task->debug(DTR("message has no checksum"));
           return false;
         }
 
@@ -67,8 +68,26 @@ namespace Actuators
         return rcsum == calcCRC8(line);
       }
 
+      //! Interpret incoming data.
+      void
+      interpretDataIn(const std::string& line)
+      {
+        std::vector<std::string> data;
+        String::split(line, ",", data);
+        if (data.size() < 4)
+          return;
+
+        char code = data[1].front();
+        switch (code)
+        {        
+        default:
+          break;
+        }
+      }
+
     private:
-      std::string m_name;
+      //! Parent task.
+      Hardware::BasicDeviceDriver* m_task;
     };
   }
 }
