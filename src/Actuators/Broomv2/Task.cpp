@@ -30,6 +30,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Reader.hpp"
+
 namespace Actuators
 {
   namespace Broomv2
@@ -54,6 +57,8 @@ namespace Actuators
       Arguments m_args;
       //! Serial port handle.
       IO::Handle* m_handle;
+      //! Reader thread.
+      Reader* m_reader;
       //! Input watchdog.
       Time::Counter<float> m_wdog;
       //! Attempt to connect on Idle watchdog.
@@ -81,6 +86,9 @@ namespace Actuators
         .description("Input timeout");
 
         setWaitForMessages(1.0);
+
+        bind<IMC::DevDataBinary>(this);
+        bind<IMC::IoEvent>(this);
       }
 
       //! Destructor.
@@ -108,6 +116,8 @@ namespace Actuators
         try
         {
           m_handle = openDeviceHandle(m_args.io_dev);
+          m_reader = new Reader(this, m_handle);
+          m_reader->start();
         }
         catch (...)
         {
@@ -171,6 +181,29 @@ namespace Actuators
       void
       onResourceRelease(void)
       {
+      }
+
+      void
+      consume(const IMC::IoEvent* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+      
+        if (msg->getSourceEntity() != getEntityId())
+          return;
+
+        if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
+          err("%s", msg->error.c_str());
+      }
+
+      void
+      consume(const IMC::DevDataBinary* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+      
+        if (msg->getSourceEntity() != getEntityId())
+          return;
       }
 
       //! Get data from device.
