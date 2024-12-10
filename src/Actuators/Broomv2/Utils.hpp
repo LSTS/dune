@@ -45,6 +45,23 @@ namespace Actuators
     constexpr char c_line_init = '$';
     //! Line termination character.
     constexpr char c_line_term = '\n';
+    //! Line data termination character.
+    constexpr char c_data_term = '*';
+
+    uint8_t
+    calcCRC8(const std::string data)
+    {
+      uint8_t csum = 0x00;
+      size_t total = data.size();
+      for (unsigned i = 0; i < total - 1; i++)
+      {
+        char c = data[i];
+        if (c == c_data_term)
+          break;
+        csum ^= c;
+      }
+      return (csum | 0x80);
+    }
   }
 }
 
