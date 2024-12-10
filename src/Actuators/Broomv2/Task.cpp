@@ -138,6 +138,9 @@ namespace Actuators
       {
         if (paramChanged(m_args.io_dev) && isActive())
           requestRestart();
+
+        if (paramChanged(m_args.inp_tout))
+          m_wdog.setTop(m_args.inp_tout);
       }
 
       //! Reserve entity identifiers.
