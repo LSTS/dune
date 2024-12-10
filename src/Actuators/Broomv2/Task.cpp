@@ -42,12 +42,16 @@ namespace Actuators
 
     struct Arguments
     {
+      //! IO device (URI).
+      std::string io_dev;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
     {
       //! Task arguments.
       Arguments m_args;
+      //! Serial port handle.
+      IO::Handle* m_handle;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -59,6 +63,10 @@ namespace Actuators
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_DEVELOPER, 
                     true);
+
+        param("IO Port - Device", m_args.io_dev)
+        .defaultValue("")
+        .description("IO device URI in the form \"uart://DEVICE:BAUD\".");
 
         setWaitForMessages(1.0);
       }
@@ -74,7 +82,17 @@ namespace Actuators
       bool
       onConnect() override
       {
-        return false;
+        try
+        {
+          m_handle = openDeviceHandle(m_args.io_dev);
+        }
+        catch (...)
+        {
+          war("Failed to connect to device: %s [retrying]", m_args.io_dev.c_str());
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+
+        return true;
       }
 
       //! Disconnect from device.
