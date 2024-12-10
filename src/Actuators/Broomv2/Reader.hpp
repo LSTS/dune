@@ -41,6 +41,10 @@ namespace Actuators
 
     //! Read buffer size.
     constexpr size_t c_read_buffer_size = 1024;
+    //! Line initial character.
+    static const char c_line_init = '$';
+    //! Line termination character.
+    static const char c_line_term = '\n';
 
     class Reader: public Concurrency::Thread
     {
@@ -61,13 +65,15 @@ namespace Actuators
       IO::Handle* m_handle;
       //! Internal read buffer.
       std::array<char, c_read_buffer_size> m_buffer;
+      //! Current line.
+      std::string m_line;
 
       void
       dispatch(IMC::Message& msg)
       {
-        msg.setSource(m_task->getSystemId());
-        msg.setSourceEntity(m_task->getEntityId());
-        m_task->receive(msg.clone());
+        msg.setDestination(m_task->getSystemId());
+        msg.setDestinationEntity(m_task->getEntityId());
+        m_task->dispatch(msg.clone(), DF_LOOP_BACK);
       }
 
       void
@@ -80,9 +86,34 @@ namespace Actuators
         if (rv == 0)
           throw std::runtime_error(DTR("invalid read size"));
 
-        IMC::DevDataBinary data;
-        data.value = std::vector<char>(m_buffer.begin(), m_buffer.begin() + rv);
-        dispatch(data);
+        for (size_t i = 0; i < rv; ++i)
+        {
+          char in = m_buffer[i];
+          switch (in)
+          {
+          case c_line_init:
+            m_line.clear();
+            m_line.push_back(in);
+            break;
+          
+          case c_line_term:
+          {
+            m_line.push_back(in);
+            if (m_line.front() == c_line_init)
+            {
+              IMC::DevDataText line;
+              line.value = m_line;
+              dispatch(line);
+            }
+            m_line.clear();
+            break;
+          }
+          
+          default:
+            m_line.push_back(in);
+            break;
+          }
+        }
       }
 
       void

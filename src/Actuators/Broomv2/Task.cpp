@@ -87,7 +87,7 @@ namespace Actuators
 
         setWaitForMessages(1.0);
 
-        bind<IMC::DevDataBinary>(this);
+        bind<IMC::DevDataText>(this);
         bind<IMC::IoEvent>(this);
       }
 
@@ -184,6 +184,18 @@ namespace Actuators
       }
 
       void
+      consume(const IMC::DevDataText* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+      
+        if (msg->getSourceEntity() != getEntityId())
+          return;
+
+        spew("received: %s", sanitize(msg->value).c_str());
+      }
+
+      void
       consume(const IMC::IoEvent* msg)
       {
         if (msg->getSource() != getSystemId())
@@ -194,16 +206,6 @@ namespace Actuators
 
         if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
           err("%s", msg->error.c_str());
-      }
-
-      void
-      consume(const IMC::DevDataBinary* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-      
-        if (msg->getSourceEntity() != getEntityId())
-          return;
       }
 
       //! Get data from device.
