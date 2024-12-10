@@ -136,6 +136,8 @@ namespace Actuators
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.io_dev) && isActive())
+          requestRestart();
       }
 
       //! Reserve entity identifiers.
