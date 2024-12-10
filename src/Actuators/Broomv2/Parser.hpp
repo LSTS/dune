@@ -45,9 +45,30 @@ namespace Actuators
     class Parser
     {
     public:
+      //! Constructor.
+      //! @param[in] name task name.
+      Parser(const std::string& name):
+        m_name(name)
+      {}
+      
+      //! Check if data is valid.
+      //! @return true if valid, false otherwise.
+      bool
+      checkDataIn(const std::string& line)
+      {
+        size_t pos = line.find_last_of(c_data_term);
+        if (pos == line.npos || line[pos + 1] == c_line_term)
+        {
+          DUNE_DBG(m_name, DTR("message has no checksum"));
+          return false;
+        }
+
+        uint8_t rcsum = line[pos + 1];
+        return rcsum == calcCRC8(line);
+      }
 
     private:
-      
+      std::string m_name;
     };
   }
 }
