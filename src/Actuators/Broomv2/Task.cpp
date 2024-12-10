@@ -31,6 +31,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
+#include "Utils.hpp"
 #include "Reader.hpp"
 
 namespace Actuators
