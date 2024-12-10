@@ -56,6 +56,8 @@ namespace Actuators
       IO::Handle* m_handle;
       //! Input watchdog.
       Time::Counter<float> m_wdog;
+      //! Attempt to connect on Idle watchdog.
+      Time::Counter<uint16_t> m_wdog_con;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -87,6 +89,17 @@ namespace Actuators
         onDisconnect();
       }
 
+      //! Task is in idle.
+      void
+      onIdle(void) override
+      {
+        if (m_wdog_con.getTop() > 0 && m_wdog_con.overflow())
+        {
+          m_wdog_con.setTop(0);
+          requestActivation();
+        }
+      }
+
       //! Try to connect to the device.
       //! @return true if connection was established, false otherwise.
       bool
@@ -99,6 +112,7 @@ namespace Actuators
         catch (...)
         {
           war("Failed to connect to device: %s [retrying]", m_args.io_dev.c_str());
+          m_wdog_con.setTop(getActivationTime());
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
