@@ -33,6 +33,7 @@
 // Local headers.
 #include "Utils.hpp"
 #include "Reader.hpp"
+#include "Parser.hpp"
 
 namespace Actuators
 {
