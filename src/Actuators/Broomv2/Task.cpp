@@ -73,6 +73,7 @@ namespace Actuators
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
+        m_handle(NULL),
         m_parser(this)
       {
         // Define configuration parameters.
@@ -92,8 +93,11 @@ namespace Actuators
 
         setWaitForMessages(1.0);
 
+        bind<IMC::DesiredSpeed>(this);
         bind<IMC::DevDataText>(this);
         bind<IMC::IoEvent>(this);
+        bind<IMC::SetServoPosition>(this);
+        bind<IMC::SetThrusterActuation>(this);
       }
 
       //! Destructor.
@@ -189,6 +193,17 @@ namespace Actuators
       }
 
       void
+      consume(const IMC::DesiredSpeed* msg)
+      {
+        if (m_handle == NULL)
+          return;
+        
+        sendCommand(c_code_actuation, "speed," +
+                                      std::to_string(msg->speed_units) + "," +
+                                      std::to_string(msg->value));
+      }
+
+      void
       consume(const IMC::DevDataText* msg)
       {
         if (msg->getSource() != getSystemId())
@@ -221,6 +236,28 @@ namespace Actuators
 
         if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
           err("%s", msg->error.c_str());
+      }
+
+      void
+      consume(const IMC::SetServoPosition* msg)
+      {
+        if (m_handle == NULL)
+          return;
+        
+        sendCommand(c_code_actuation, "servo," +
+                                      std::to_string(msg->id) + "," +
+                                      std::to_string(msg->value));
+      }
+
+      void
+      consume(const IMC::SetThrusterActuation* msg)
+      {
+        if (m_handle == NULL)
+          return;
+        
+        sendCommand(c_code_actuation, "thruster," +
+                                      std::to_string(msg->id) + "," +
+                                      std::to_string(msg->value));
       }
 
       void

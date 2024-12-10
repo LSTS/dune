@@ -48,6 +48,9 @@ namespace Actuators
     //! Line data termination character.
     constexpr char c_data_term = '*';
 
+    //! Command code for actuation.
+    constexpr char c_code_actuation = 'a';
+
     uint8_t
     calcCRC8(const std::string data)
     {
