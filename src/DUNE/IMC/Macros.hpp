@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 0f425402b735f36a64d579da7bb4baf3                            *
+// IMC XML MD5: 3c15430a350255d75629fe352bdc3ac7                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -168,6 +168,8 @@
 #define DUNE_IMC_ACOUSTICREQUEST 215
 //! AcousticStatus identification number.
 #define DUNE_IMC_ACOUSTICSTATUS 216
+//! AcousticRelease identification number.
+#define DUNE_IMC_ACOUSTICRELEASE 217
 //! Rpm identification number.
 #define DUNE_IMC_RPM 250
 //! Voltage identification number.
@@ -504,6 +506,8 @@
 #define DUNE_IMC_TCPREQUEST 521
 //! TCPStatus identification number.
 #define DUNE_IMC_TCPSTATUS 522
+//! AssetReport identification number.
+#define DUNE_IMC_ASSETREPORT 525
 //! Abort identification number.
 #define DUNE_IMC_ABORT 550
 //! PlanSpecification identification number.
@@ -668,7 +672,29 @@
 #define DUNE_IMC_DMSDETECTION 908
 //! HomePosition identification number.
 #define DUNE_IMC_HOMEPOSITION 909
+//! CurrentProfile identification number.
+#define DUNE_IMC_CURRENTPROFILE 1014
+//! CurrentProfileCell identification number.
+#define DUNE_IMC_CURRENTPROFILECELL 1015
+//! ADCPBeam identification number.
+#define DUNE_IMC_ADCPBEAM 1016
+//! GpioState identification number.
+#define DUNE_IMC_GPIOSTATE 2000
+//! GpioStateGet identification number.
+#define DUNE_IMC_GPIOSTATEGET 2001
+//! GpioStateSet identification number.
+#define DUNE_IMC_GPIOSTATESET 2002
+//! ColoredDissolvedOrganicMatter identification number.
+#define DUNE_IMC_COLOREDDISSOLVEDORGANICMATTER 2003
+//! FluorescentDissolvedOrganicMatter identification number.
+#define DUNE_IMC_FLUORESCENTDISSOLVEDORGANICMATTER 2004
 //! TotalMagIntensity identification number.
 #define DUNE_IMC_TOTALMAGINTENSITY 2006
+//! CommRestriction identification number.
+#define DUNE_IMC_COMMRESTRICTION 2010
+//! MqttTXFrame identification number.
+#define DUNE_IMC_MQTTTXFRAME 2011
+//! MqttRXFrame identification number.
+#define DUNE_IMC_MQTTRXFRAME 2012
 
 #endif
