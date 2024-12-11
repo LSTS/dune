@@ -246,7 +246,7 @@ namespace Actuators
         
         sendCommand(c_code_actuation, "servo," +
                                       std::to_string(msg->id) + "," +
-                                      std::to_string(msg->value));
+                                      std::to_string(Angles::degrees(msg->value)));
       }
 
       void
