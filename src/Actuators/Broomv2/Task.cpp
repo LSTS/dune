@@ -250,13 +250,7 @@ namespace Actuators
       void
       consume(const IMC::SetServoPosition* msg)
       {
-        if (m_handle == NULL)
-          return;
-        
-        sendCommand(c_code_actuation, "%c,%u,%f",
-                                       c_id_servo, 
-                                       msg->id,
-                                       Angles::degrees(msg->value));
+        setServoPosition(msg->id, Angles::degrees(msg->value));
       }
 
       void
@@ -277,6 +271,9 @@ namespace Actuators
       void
       sendCommand(const char& code, const char* fmt, ...)
       {
+        if (m_handle == NULL)
+          return;
+        
         char bfr[256];
         va_list args;
         va_start(args, fmt);
@@ -291,6 +288,23 @@ namespace Actuators
         std::sprintf(cmd, "%s%c%c", cmd, calcCRC8(cmd), c_line_term);
         spew("sending: %s", sanitize(cmd).c_str());
         m_handle->writeString(cmd);
+      }
+
+      void
+      setServoPosition(uint8_t id, fp32_t angle)
+      {
+        sendCommand(c_code_actuation, "%c,%u,%f",
+                                       c_id_servo, 
+                                       id,
+                                       angle);
+      }
+
+      void
+      setThrusterActuation(fp32_t value)
+      {
+        sendCommand(c_code_actuation, "%c,%f",
+                                       c_id_thruster,
+                                       value);
       }
 
       //! Executed when task is activated.
@@ -309,7 +323,7 @@ namespace Actuators
             m_mode != IMC::VehicleState::VS_BOOT &&
             m_mode != IMC::VehicleState::VS_SERVICE &&
             m_mode != IMC::VehicleState::VS_ERROR)
-          sendCommand(c_code_actuation, "%c,%f", c_id_thruster, m_thruster_ref);
+          setThrusterActuation(m_thruster_ref);
 
         return true;
       }
