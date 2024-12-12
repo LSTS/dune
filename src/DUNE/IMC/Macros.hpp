@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6347d9defff7438e2a2031366a35e122                            *
+// IMC XML MD5: e7a1328820ae78fe4fd25273a66f1a93                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -692,6 +692,10 @@
 #define DUNE_IMC_TOTALMAGINTENSITY 2006
 //! CommRestriction identification number.
 #define DUNE_IMC_COMMRESTRICTION 2010
+//! MqttTXFrame identification number.
+#define DUNE_IMC_MQTTTXFRAME 2011
+//! MqttRXFrame identification number.
+#define DUNE_IMC_MQTTRXFRAME 2012
 //! VersionInfo identification number.
 #define DUNE_IMC_VERSIONINFO 2021
 

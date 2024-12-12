@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6347d9defff7438e2a2031366a35e122                            *
+// IMC XML MD5: e7a1328820ae78fe4fd25273a66f1a93                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -26651,6 +26651,144 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(reason);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! MqttTXFrame.
+    class MqttTXFrame: public Message
+    {
+    public:
+      //! MQTT Topic.
+      std::string topic;
+      //! Payload.
+      std::vector<char> payload;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2011;
+      }
+
+      MqttTXFrame(void);
+
+      MqttTXFrame*
+      clone(void) const
+      {
+        return new MqttTXFrame(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return MqttTXFrame::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MqttTXFrame";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(topic) + IMC::getSerializationSize(payload);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! MqttRXFrame.
+    class MqttRXFrame: public Message
+    {
+    public:
+      //! MQTT Topic.
+      std::string topic;
+      //! Payload.
+      std::vector<char> payload;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2012;
+      }
+
+      MqttRXFrame(void);
+
+      MqttRXFrame*
+      clone(void) const
+      {
+        return new MqttRXFrame(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return MqttRXFrame::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MqttRXFrame";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(topic) + IMC::getSerializationSize(payload);
       }
 
       void

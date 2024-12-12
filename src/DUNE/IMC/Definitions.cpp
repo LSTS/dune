@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6347d9defff7438e2a2031366a35e122                            *
+// IMC XML MD5: e7a1328820ae78fe4fd25273a66f1a93                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -28128,6 +28128,130 @@ namespace DUNE
     {
       IMC::toJSON(os__, "restriction", restriction, nindent__);
       IMC::toJSON(os__, "reason", reason, nindent__);
+    }
+
+    MqttTXFrame::MqttTXFrame(void)
+    {
+      m_header.mgid = 2011;
+      clear();
+    }
+
+    void
+    MqttTXFrame::clear(void)
+    {
+      topic.clear();
+      payload.clear();
+    }
+
+    bool
+    MqttTXFrame::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::MqttTXFrame& other__ = static_cast<const MqttTXFrame&>(msg__);
+      if (topic != other__.topic) return false;
+      if (payload != other__.payload) return false;
+      return true;
+    }
+
+    int
+    MqttTXFrame::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    MqttTXFrame::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(topic, ptr__);
+      ptr__ += IMC::serialize(payload, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    MqttTXFrame::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(topic, bfr__, size__);
+      bfr__ += IMC::deserialize(payload, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    MqttTXFrame::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(topic, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(payload, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    MqttTXFrame::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "topic", topic, nindent__);
+      IMC::toJSON(os__, "payload", payload, nindent__);
+    }
+
+    MqttRXFrame::MqttRXFrame(void)
+    {
+      m_header.mgid = 2012;
+      clear();
+    }
+
+    void
+    MqttRXFrame::clear(void)
+    {
+      topic.clear();
+      payload.clear();
+    }
+
+    bool
+    MqttRXFrame::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::MqttRXFrame& other__ = static_cast<const MqttRXFrame&>(msg__);
+      if (topic != other__.topic) return false;
+      if (payload != other__.payload) return false;
+      return true;
+    }
+
+    int
+    MqttRXFrame::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    MqttRXFrame::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(topic, ptr__);
+      ptr__ += IMC::serialize(payload, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    MqttRXFrame::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(topic, bfr__, size__);
+      bfr__ += IMC::deserialize(payload, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    MqttRXFrame::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(topic, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(payload, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    MqttRXFrame::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "topic", topic, nindent__);
+      IMC::toJSON(os__, "payload", payload, nindent__);
     }
 
     VersionInfo::VersionInfo(void)
