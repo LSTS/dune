@@ -73,6 +73,8 @@ namespace Actuators
       Time::Counter<float> m_thruster_cmd_timer;
       //! Thruster reference actuation.
       fp32_t m_thruster_ref;
+      //! Vehicle operation mode
+      uint8_t m_mode;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -81,7 +83,8 @@ namespace Actuators
         Hardware::BasicDeviceDriver(name, ctx),
         m_handle(NULL),
         m_parser(this),
-        m_thruster_ref(0.0f)
+        m_thruster_ref(0.0f),
+        m_mode(IMC::VehicleState::VS_BOOT)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -111,6 +114,7 @@ namespace Actuators
         bind<IMC::IoEvent>(this);
         bind<IMC::SetServoPosition>(this);
         bind<IMC::SetThrusterActuation>(this);
+        bind<IMC::VehicleState>(this);
       }
 
       //! Destructor.
@@ -257,8 +261,17 @@ namespace Actuators
 
       void
       consume(const IMC::SetThrusterActuation* msg)
-      {        
+      {
         m_thruster_ref = msg->value;
+      }
+
+      void
+      consume(const IMC::VehicleState* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+        
+        m_mode = msg->op_mode;
       }
 
       void
@@ -292,7 +305,10 @@ namespace Actuators
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
-        if (m_thruster_cmd_timer.overflow())
+        if (m_thruster_cmd_timer.overflow() &&
+            m_mode != IMC::VehicleState::VS_BOOT &&
+            m_mode != IMC::VehicleState::VS_SERVICE &&
+            m_mode != IMC::VehicleState::VS_ERROR)
           sendCommand(c_code_actuation, "%c,%f", c_id_thruster, m_thruster_ref);
 
         return true;
