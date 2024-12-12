@@ -91,6 +91,8 @@ namespace Simulators
       std::string prng_type;
       //! PRNG seed.
       int prng_seed;
+      //! CTS Time
+      double cts_time;
     };
 
     class Driver: public Concurrency::Thread
@@ -158,6 +160,32 @@ namespace Simulators
         // Set header
         sim_acoustic_msg.setSource(a_msg.getSource());
         sim_acoustic_msg.setDestination(a_msg.getDestination());
+        sim_acoustic_msg.setTimeStamp(Clock::getSinceEpoch() + m_args->cts_time);
+
+        transmit(sim_acoustic_msg);
+      }
+
+      //! Overload of transmission for UamTxRange.
+      //! @param[in] msg message to transmit.
+      void
+      transmit(const IMC::UamTxRange a_msg)
+      {
+        IMC::SimAcousticMessage sim_acoustic_msg;
+        // Construct simulated acoustic message metadata
+        Coordinates::toWGS84(*m_sstate, sim_acoustic_msg.lat, sim_acoustic_msg.lon);
+        sim_acoustic_msg.depth    = m_sstate->z;
+        sim_acoustic_msg.modem_type    = m_args->modem_type;
+        sim_acoustic_msg.txtime   = sizeof(double) * 8 / m_args->tx_speed;
+        sim_acoustic_msg.sys_src  = m_task->getSystemName();
+
+        // Copy UamTxFrame data
+        sim_acoustic_msg.seq      = a_msg.seq;
+        sim_acoustic_msg.sys_dst  = a_msg.sys_dst;
+        sim_acoustic_msg.flags    = IMC::UamTxFrame::UTF_ACK;
+
+        // Set header
+        sim_acoustic_msg.setSource(a_msg.getSource());
+        sim_acoustic_msg.setDestination(a_msg.getDestination());
         sim_acoustic_msg.setTimeStamp();
 
         transmit(sim_acoustic_msg);
@@ -211,8 +239,7 @@ namespace Simulators
       {
         int n = msg->getSerializationSize();
         IMC::Packet::serialize(msg, m_buf, n);
-        m_sock->write(m_buf, n, m_args->udp_maddr, m_args->udp_port);
-
+        m_sock->write(m_buf, n, m_args->udp_maddr, m_args->udp_port);        
         std::stringstream ss;
         msg->toText(ss);
         m_task->debug(DTR("Message sent: \n%s"), ss.str().c_str());
