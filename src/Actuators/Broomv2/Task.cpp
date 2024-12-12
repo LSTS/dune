@@ -265,6 +265,17 @@ namespace Actuators
         if (msg->getSource() != getSystemId())
           return;
         
+        if (m_mode != IMC::VehicleState::VS_BOOT &&
+            m_mode != IMC::VehicleState::VS_SERVICE &&
+            m_mode != IMC::VehicleState::VS_ERROR &&
+            (msg->op_mode == IMC::VehicleState::VS_BOOT ||
+             msg->op_mode == IMC::VehicleState::VS_SERVICE ||
+             msg->op_mode == IMC::VehicleState::VS_ERROR))
+        {
+          m_thruster_ref = 0.0f;
+          setThrusterActuation(m_thruster_ref);
+        }
+
         m_mode = msg->op_mode;
       }
 
