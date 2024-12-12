@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 3c15430a350255d75629fe352bdc3ac7                            *
+// IMC XML MD5: 6347d9defff7438e2a2031366a35e122                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -357,7 +357,9 @@ namespace DUNE
         //! Report.
         OP_REPORT = 0,
         //! Query.
-        OP_QUERY = 1
+        OP_QUERY = 1,
+        //! Reload.
+        OP_RELOAD = 2
       };
 
       //! operation.
@@ -2450,7 +2452,9 @@ namespace DUNE
         //! Chlorophyll.
         PROF_CHLOROPHYLL = 5,
         //! Turbidity.
-        PROF_TURBIDITY = 6
+        PROF_TURBIDITY = 6,
+        //! Current Velocity.
+        PROF_CURRENT_VELOCITY = 7
       };
 
       //! Parameter.
@@ -5441,8 +5445,10 @@ namespace DUNE
         STATUS_INPUT_FAILURE = 101,
         //! Error trying to send acoustic text.
         STATUS_ERROR = 102,
+        //! Invalid address.
+        STATUS_INV_ADDR = 103,
         //! Message Type is not defined or is unsupported.
-        STATUS_UNSUPPORTED = 666
+        STATUS_UNSUPPORTED = 255
       };
 
       //! Request Identifier.
@@ -7605,7 +7611,9 @@ namespace DUNE
         //! Echo Sounder.
         ST_ECHOSOUNDER = 1,
         //! Multibeam.
-        ST_MULTIBEAM = 2
+        ST_MULTIBEAM = 2,
+        //! Pencil Beam.
+        ST_PENCILBEAM = 3
       };
 
       //! Type.
@@ -9629,7 +9637,9 @@ namespace DUNE
         //! Report.
         OP_REPORT = 0,
         //! Query.
-        OP_QUERY = 1
+        OP_QUERY = 1,
+        //! Register.
+        OP_REGISTER = 2
       };
 
       //! operation.
@@ -18498,7 +18508,9 @@ namespace DUNE
         //! Temporary Error.
         TSTAT_TEMPORARY_FAILURE = 102,
         //! Permanent Failure.
-        TSTAT_PERMANENT_FAILURE = 103
+        TSTAT_PERMANENT_FAILURE = 103,
+        //! Invalid Address.
+        TSTAT_INV_ADDR = 104
       };
 
       //! Request Identifier.
@@ -23242,7 +23254,9 @@ namespace DUNE
         //! Message has been sent.
         UTS_SENT = 8,
         //! Message has been acknowledged by the destination.
-        UTS_DELIVERED = 9
+        UTS_DELIVERED = 9,
+        //! No transducer.
+        UTS_NO_TRANSDUCER = 10
       };
 
       //! Sequence Id.
@@ -26052,6 +26066,8 @@ namespace DUNE
         UTF_XYZ = 0x01,
         //! ned.
         UTF_NED = 0x02,
+        //! enu.
+        UTF_ENU = 0x03,
         //! beams.
         UTF_BEAMS = 0x04
       };
@@ -26641,27 +26657,38 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
-    //! MqttTXFrame.
-    class MqttTXFrame: public Message
+    //! Version Info.
+    class VersionInfo: public Message
     {
     public:
-      //! MQTT Topic.
-      std::string topic;
-      //! Payload.
-      std::vector<char> payload;
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Reply.
+        OP_REPLY = 0,
+        //! Query.
+        OP_QUERY = 1
+      };
+
+      //! Operation.
+      uint8_t op;
+      //! Version.
+      std::string version;
+      //! Description.
+      std::string description;
 
       static uint16_t
       getIdStatic(void)
       {
-        return 2011;
+        return 2021;
       }
 
-      MqttTXFrame(void);
+      VersionInfo(void);
 
-      MqttTXFrame*
+      VersionInfo*
       clone(void) const
       {
-        return new MqttTXFrame(*this);
+        return new VersionInfo(*this);
       }
 
       void
@@ -26685,94 +26712,25 @@ namespace DUNE
       uint16_t
       getId(void) const
       {
-        return MqttTXFrame::getIdStatic();
+        return VersionInfo::getIdStatic();
       }
 
       const char*
       getName(void) const
       {
-        return "MqttTXFrame";
+        return "VersionInfo";
       }
 
       unsigned
       getFixedSerializationSize(void) const
       {
-        return 0;
+        return 1;
       }
 
       unsigned
       getVariableSerializationSize(void) const
       {
-        return IMC::getSerializationSize(topic) + IMC::getSerializationSize(payload);
-      }
-
-      void
-      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
-    };
-
-    //! MqttRXFrame.
-    class MqttRXFrame: public Message
-    {
-    public:
-      //! MQTT Topic.
-      std::string topic;
-      //! Payload.
-      std::vector<char> payload;
-
-      static uint16_t
-      getIdStatic(void)
-      {
-        return 2012;
-      }
-
-      MqttRXFrame(void);
-
-      MqttRXFrame*
-      clone(void) const
-      {
-        return new MqttRXFrame(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return MqttRXFrame::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "MqttRXFrame";
-      }
-
-      unsigned
-      getFixedSerializationSize(void) const
-      {
-        return 0;
-      }
-
-      unsigned
-      getVariableSerializationSize(void) const
-      {
-        return IMC::getSerializationSize(topic) + IMC::getSerializationSize(payload);
+        return IMC::getSerializationSize(version) + IMC::getSerializationSize(description);
       }
 
       void

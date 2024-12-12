@@ -1,5 +1,6 @@
+#!/bin/bash
 ############################################################################
-# Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2019 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -24,13 +25,28 @@
 # https://github.com/LSTS/dune/blob/master/LICENCE.md and                  #
 # http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
-# Author: Ricardo Martins                                                  #
+# Author: Jose Pinto                                                       #
 ############################################################################
 
-set(CTEST_PROJECT_NAME "DUNE")
-set(CTEST_NIGHTLY_START_TIME "01:00:00 GMT")
-set(CTEST_DROP_METHOD "http")
-set(CTEST_DROP_SITE "www.lsts.pt")
-set(CTEST_DROP_LOCATION "/cdash/submit.php?project=DUNE")
-set(CTEST_DROP_SITE_CDASH TRUE)
-set(CTEST_CUSTOM_MAXIMUM_NUMBER_OF_WARNINGS "500")
+# This script can be used to format all committed source files using 
+# clang-format. It can also be added used as .git/hooks/pre-commit script
+
+format_file() {
+  file="${1}"
+  if [ -f $file ]; then
+    clang-format -i ${1}
+    git add ${1}
+  fi
+}
+
+case "${1}" in
+  --help )
+    echo "Runs clang-format on locally committed source files"
+    ;;
+  * )
+    for file in `git diff-index --cached --name-only HEAD | grep -iE '\.(c|cpp|h|hpp)$' ` ; do
+	    echo "Applying clang-format to ${file}..."
+      format_file "${file}"
+    done
+    ;;
+esac

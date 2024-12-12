@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 3c15430a350255d75629fe352bdc3ac7                            *
+// IMC XML MD5: 6347d9defff7438e2a2031366a35e122                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -692,9 +692,7 @@
 #define DUNE_IMC_TOTALMAGINTENSITY 2006
 //! CommRestriction identification number.
 #define DUNE_IMC_COMMRESTRICTION 2010
-//! MqttTXFrame identification number.
-#define DUNE_IMC_MQTTTXFRAME 2011
-//! MqttRXFrame identification number.
-#define DUNE_IMC_MQTTRXFRAME 2012
+//! VersionInfo identification number.
+#define DUNE_IMC_VERSIONINFO 2021
 
 #endif

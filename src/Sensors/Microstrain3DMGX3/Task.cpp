@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -90,10 +90,10 @@ namespace Sensors
     //! %Task arguments.
     struct Arguments
     {
-      //! UART device.
-      std::string uart_dev;
-      //! UART baud rate.
-      unsigned uart_baud;
+      //! IO device (URI).
+      std::string io_dev;
+      //! Read frequency.
+      double read_frequency;
       //! Calibration threshold.
       double calib_threshold;
       //! Hard iron calibration.
@@ -107,10 +107,12 @@ namespace Sensors
       double timeout_failure;
       //! Calibration time stamp
       std::string calib_time;
+      //! Flag not to limit minimum read
+      bool min_read_flag;
     };
 
     //! %Microstrain3DMGX3 software driver.
-    struct Task: public DUNE::Tasks::Periodic
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! Internal read buffer.
       static const unsigned c_bfr_size = 128;
@@ -118,6 +120,8 @@ namespace Sensors
       static const unsigned c_num_addr = 6;
       //! Magnetic calibration initial address.
       static const uint16_t c_mag_addr = 0x0400;
+      //! Minimum Read Bytes
+      unsigned m_min_read;
       //! Rotation Matrix to correct mounting position.
       Math::Matrix m_rotation;
       //! Rotated calibration parameters.
@@ -154,7 +158,8 @@ namespace Sensors
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Periodic(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
+        m_min_read(0),
         m_uart(NULL),
         m_tstamp(0),
         m_state_timer(1.0),
@@ -162,13 +167,18 @@ namespace Sensors
         m_faults_count(0),
         m_timeout_count(0)
       {
-        param("Serial Port - Device", m_args.uart_dev)
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+                    
+        param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
-
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("115200")
-        .description("Serial port baud rate");
+        .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
+        
+        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
+        .units(Units::Hertz)
+        .defaultValue("1.0")
+        .description(DTR("Frequency at which task reads data"));
 
         param("Calibration Threshold", m_args.calib_threshold)
         .defaultValue("0.1")
@@ -203,6 +213,10 @@ namespace Sensors
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("N/A");
 
+        param("Set minimum read - Flag", m_args.min_read_flag)
+        .description("Flag to limit IO read. Set to false on newer linux versions")
+        .defaultValue("true");
+
         m_timer.setTop(c_reset_tout);
 
         // Magnetic calibration addresses.
@@ -216,6 +230,9 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.read_frequency))
+          setReadFrequency(m_args.read_frequency);
+        
         m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
 
         // Rotate calibration parameters.
@@ -237,50 +254,65 @@ namespace Sensors
         }
       }
 
-      //! Release resources.
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
+      {
+        try
+        {
+          m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
+          return true;
+        }
+        catch (...)
+        {
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 30);
+        }
+
+        return false;
+      }
+
+      //! Disconnect from device.
       void
-      onResourceRelease(void)
+      onDisconnect() override
       {
         Memory::clear(m_uart);
       }
 
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
+      //! Synchronize with device.
+      bool
+      onSynchronize() override
       {
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+        // Read firmware version in order to assess if we can communicate
+        // with the device.
+        m_uart->setMinimumRead(CMD_FWARE_VERSION_SIZE);
+        if (poll(CMD_FWARE_VERSION, CMD_FWARE_VERSION_SIZE, 0, 0))
+          return true;
 
-        try
-        {
-          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_uart->flush();
-        }
-        catch (std::runtime_error& e)
-        {
-          throw RestartNeeded(e.what(), 30);
-        }
+        return false;
       }
 
-      //! Initialize resources.
+      //! Device may be initialized.
       void
-      onResourceInitialization(void)
+      onInitializeDevice() override
       {
-        while (!stopping())
-        {
-          // Read firmware version in order to assess if we can communicate
-          // with the device.
-          m_uart->setMinimumRead(CMD_FWARE_VERSION_SIZE);
-          if (poll(CMD_FWARE_VERSION, CMD_FWARE_VERSION_SIZE, 0, 0))
-            break;
-
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-        }
+        // Need to reset monitor watchdog
+        m_wdog.reset();
 
         // Calibrate sensor.
         runCalibration();
 
         // Prepare to read data frame.
-        m_uart->setMinimumRead(CMD_DATA_SIZE);
+        // since 64 seems to be the struct termio VMIN limit
+        int max_data = m_args.min_read_flag ? CMD_DATA_SIZE : 0;
+        m_uart->setMinimumRead(max_data);
+      }
+
+      bool
+      resetUart()
+      {
+        delete(m_uart);
+        return onConnect();
       }
 
       void
@@ -330,6 +362,8 @@ namespace Sensors
         if (m_uart == NULL)
           return false;
 
+        m_min_read = cmd_size;
+
         // Request data.
         switch (cmd)
         {
@@ -374,6 +408,17 @@ namespace Sensors
         // Read response.
         size_t rv = m_uart->read(m_bfr, c_bfr_size);
         m_tstamp = Clock::getSinceEpoch();
+
+        Counter<double> timer;
+        timer.setTop(0.25);
+        while (rv < m_min_read)
+        {
+          rv += m_uart->read(m_bfr + rv, c_bfr_size - rv);
+          if (timer.overflow()) {
+            spew("timeout read!");
+            return false;
+          }
+        }
 
         if (rv == 0)
         {
@@ -446,6 +491,7 @@ namespace Sensors
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_CALIBRATING);
             inf(DTR("resetting device"));
             poll(CMD_DEVICE_RESET, CMD_DEVICE_RESET_SIZE, 0, 0);
+            resetUart();
           }
         }
       }
@@ -633,13 +679,11 @@ namespace Sensors
         m_sample_count = 0;
       }
 
-      //! Main task.
-      void
-      task(void)
+      //! Get data from device.
+      //! @return true if data was received, false otherwise.
+      bool
+      onReadData() override
       {
-        // Check for incoming messages.
-        consumeMessages();
-
         if (poll(CMD_DATA, CMD_DATA_SIZE, 0, 0))
         {
           // Set timestamps so we have realistic times.
@@ -717,6 +761,7 @@ namespace Sensors
         }
 
         reportEntityState();
+        return true;
       }
     };
   }

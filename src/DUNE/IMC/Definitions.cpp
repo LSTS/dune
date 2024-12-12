@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 3c15430a350255d75629fe352bdc3ac7                            *
+// IMC XML MD5: 6347d9defff7438e2a2031366a35e122                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -28130,128 +28130,72 @@ namespace DUNE
       IMC::toJSON(os__, "reason", reason, nindent__);
     }
 
-    MqttTXFrame::MqttTXFrame(void)
+    VersionInfo::VersionInfo(void)
     {
-      m_header.mgid = 2011;
+      m_header.mgid = 2021;
       clear();
     }
 
     void
-    MqttTXFrame::clear(void)
+    VersionInfo::clear(void)
     {
-      topic.clear();
-      payload.clear();
+      op = 0;
+      version.clear();
+      description.clear();
     }
 
     bool
-    MqttTXFrame::fieldsEqual(const Message& msg__) const
+    VersionInfo::fieldsEqual(const Message& msg__) const
     {
-      const IMC::MqttTXFrame& other__ = static_cast<const MqttTXFrame&>(msg__);
-      if (topic != other__.topic) return false;
-      if (payload != other__.payload) return false;
+      const IMC::VersionInfo& other__ = static_cast<const VersionInfo&>(msg__);
+      if (op != other__.op) return false;
+      if (version != other__.version) return false;
+      if (description != other__.description) return false;
       return true;
     }
 
     int
-    MqttTXFrame::validate(void) const
+    VersionInfo::validate(void) const
     {
       return true;
     }
 
     uint8_t*
-    MqttTXFrame::serializeFields(uint8_t* bfr__) const
+    VersionInfo::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(topic, ptr__);
-      ptr__ += IMC::serialize(payload, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(version, ptr__);
+      ptr__ += IMC::serialize(description, ptr__);
       return ptr__;
     }
 
     uint16_t
-    MqttTXFrame::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    VersionInfo::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(topic, bfr__, size__);
-      bfr__ += IMC::deserialize(payload, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(version, bfr__, size__);
+      bfr__ += IMC::deserialize(description, bfr__, size__);
       return bfr__ - start__;
     }
 
     uint16_t
-    MqttTXFrame::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    VersionInfo::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(topic, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(payload, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(version, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(description, bfr__, size__);
       return bfr__ - start__;
     }
 
     void
-    MqttTXFrame::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    VersionInfo::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
-      IMC::toJSON(os__, "topic", topic, nindent__);
-      IMC::toJSON(os__, "payload", payload, nindent__);
-    }
-
-    MqttRXFrame::MqttRXFrame(void)
-    {
-      m_header.mgid = 2012;
-      clear();
-    }
-
-    void
-    MqttRXFrame::clear(void)
-    {
-      topic.clear();
-      payload.clear();
-    }
-
-    bool
-    MqttRXFrame::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::MqttRXFrame& other__ = static_cast<const MqttRXFrame&>(msg__);
-      if (topic != other__.topic) return false;
-      if (payload != other__.payload) return false;
-      return true;
-    }
-
-    int
-    MqttRXFrame::validate(void) const
-    {
-      return true;
-    }
-
-    uint8_t*
-    MqttRXFrame::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(topic, ptr__);
-      ptr__ += IMC::serialize(payload, ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    MqttRXFrame::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(topic, bfr__, size__);
-      bfr__ += IMC::deserialize(payload, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    MqttRXFrame::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::reverseDeserialize(topic, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(payload, bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    MqttRXFrame::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "topic", topic, nindent__);
-      IMC::toJSON(os__, "payload", payload, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "version", version, nindent__);
+      IMC::toJSON(os__, "description", description, nindent__);
     }
   }
 }

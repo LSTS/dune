@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -1289,14 +1289,20 @@ main(int argc, char** argv)
     int list_size = msg_list->size();
     for(unsigned int i=0; i < (unsigned int)list_size; i++)
     {
-
       if(delay>0){
         int dl = rand() % delay_copy + 1;
+#ifdef _MSC_VER
+        Sleep(dl);
+#else
         sleep(dl);
+#endif
       }
       else{
+#ifdef _MSC_VER
+        Sleep(-delay);
+#else
         sleep(-delay);
-
+#endif
       }
 
       aux=msg_list->front();

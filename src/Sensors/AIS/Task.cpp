@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -63,13 +63,11 @@ namespace Sensors
     //! %Task arguments.
     struct Arguments
     {
-      //! Serial port device.
-      std::string uart_dev;
-      //! Serial port baud rate.
-      unsigned uart_baud;
+      //! IO device (URI).
+      std::string io_dev;
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! Serial port handle.
       IO::Handle* m_handle;
@@ -83,59 +81,53 @@ namespace Sensors
       bool m_nmea5_wait_fg;
       //! Vehicle Type.
       std::map<int, std::string> m_systems;
+      //! Buffer
+      std::vector<char> m_bfr;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
+        Hardware::BasicDeviceDriver(name, ctx),
         m_handle(NULL)
       {
         // Define configuration parameters.
-        param("Serial Port - Device", m_args.uart_dev)
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                    true);
+
+        param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
+        .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
+                     "or \"uart://DEVICE:BAUD\"");
 
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("38400")
-        .description("Serial port baud rate");
-
+        m_bfr.resize(c_read_buffer_size);
         m_nmea5_wait_fg = false;
       }
 
-      void
-      onResourceAcquisition(void)
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
       {
         try
         {
-          if (!openSocket()) // Check if instead of serial is a tcp port
-          {
-            m_handle = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-            m_handle->flush();
-          }
+          m_handle = openDeviceHandle(m_args.io_dev);
+          return true;
         }
         catch (...)
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+
+        return false;
       }
 
-      //! Check if we have a TCP socket as device input argument.
-      //! @return true if it is a TCP socket, false otherwise.
-      bool
-      openSocket(void)
-      {
-        char addr[128] = {0};
-        unsigned port = 0;
-
-        if (std::sscanf(m_args.uart_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
-          return false;
-
-        TCPSocket* sock = new TCPSocket;
-        sock->connect(addr, port);
-        m_handle = sock;
-        return true;
-      }
-
+      //! No initialization process.
       void
-      onResourceRelease(void)
+      onInitializeDevice() override
+      { }
+
+      //! Disconnect from device.
+      void
+      onDisconnect() override
       {
         Memory::clear(m_handle);
       }
@@ -215,41 +207,37 @@ namespace Sensors
         }
       }
 
-      void
-      onMain(void)
+      //! Get data from device.
+      //! @return true if data was received, false otherwise.
+      bool
+      onReadData() override
       {
-        std::vector<char> bfr;
-        bfr.resize(c_read_buffer_size);
+        if (!Poll::poll(*m_handle, 1.0))
+          return false;
 
-        while (!stopping())
+        size_t rv = m_handle->read(&m_bfr[0], m_bfr.size());
+        if (rv == 0)
         {
-          consumeMessages();
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+          throw RestartNeeded(DTR("I/O error"), 5);
+        }
 
-          if (!Poll::poll(*m_handle, 1.0))
-            continue;
-
-          size_t rv = m_handle->read(&bfr[0], bfr.size());
-          if (rv == 0)
+        for (size_t i = 0; i < rv; ++i)
+        {
+          // Detected line termination.
+          if (m_bfr[i] == c_line_term)
           {
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            throw RestartNeeded(DTR("I/O error"), 5);
+            process(m_line);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+            m_line.clear();
           }
-
-          for (size_t i = 0; i < rv; ++i)
+          else
           {
-            // Detected line termination.
-            if (bfr[i] == c_line_term)
-            {
-              process(m_line);
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-              m_line.clear();
-            }
-            else
-            {
-              m_line.push_back(bfr[i]);
-            }
+            m_line.push_back(m_bfr[i]);
           }
         }
+
+        return true;
       }
     };
   }

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -49,6 +49,8 @@ namespace Monitors
     static const unsigned c_servo_count = 4;
     //! Error timeout
     static const float c_error_timeout = 5.0;
+    //! Valid SetServoPosition timeout
+    static const float c_valid_set_servo_position_timeout = 0.01;
 
     enum FaultBits
     {
@@ -114,6 +116,8 @@ namespace Monitors
       uint8_t m_on_fault[c_servo_count];
       //! Timer for error timeout
       Time::Counter<float> m_timer;
+      //! Timer for servo position fault detection timeout
+      Time::Counter<float> m_timer_set_servo;
       //! Queue for error reports.
       std::queue<double> m_queue[c_servo_count];
       //! Major failure in one of the servos.
@@ -287,6 +291,7 @@ namespace Monitors
           m_set_servo[i] = 0.0;
           m_on_fault[i] = FT_NONE;
           m_timer.setTop(c_error_timeout);
+          m_timer_set_servo.setTop(c_valid_set_servo_position_timeout);
         }
 
         if (m_args.pos_fault_detect || m_args.curr_fault_detect)
@@ -301,6 +306,16 @@ namespace Monitors
 
         if (m_args.pos_fault_detect)
         {
+          if (m_timer_set_servo.overflow())
+          {
+            int id = msg->id;
+            if (m_pos_monitor[id] != NULL)
+            {
+              m_pos_monitor[id]->reset();
+            }
+            return;
+          }
+
           testPositionFaults(msg);
           m_timer.reset();
         }
@@ -313,6 +328,7 @@ namespace Monitors
           return;
 
         m_set_servo[msg->id] = msg->value;
+        m_timer_set_servo.reset();
       }
 
       void

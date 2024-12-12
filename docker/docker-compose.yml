@@ -1,0 +1,12 @@
+version: "3.3"
+services:
+    dune:
+        build: .
+        image: dune
+        volumes:
+            - ../:/dune/source
+            - ../../build/:/dune/build
+        restart: unless-stopped
+        container_name: dune_lsts
+        tty: true
+           

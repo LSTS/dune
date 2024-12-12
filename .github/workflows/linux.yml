@@ -16,6 +16,10 @@ jobs:
     - name: Prepare
       run: cmake -B ${{github.workspace}}/build -DDEBUG=1 -DTESTS=1
 
-    - name: Build & Test
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --target Experimental
+    - name: Build
+      # Build your program
+      run: cmake --build ${{github.workspace}}/build -j$(nproc)
+
+    - name: Test
+      # Run tests
+      run: ctest --test-dir ${{github.workspace}}/build -j$(nproc)
