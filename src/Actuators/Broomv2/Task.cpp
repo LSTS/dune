@@ -51,6 +51,8 @@ namespace Actuators
       std::string io_dev;
       //! Input timeout in seconds.
       float inp_tout;
+      //! Frequency to send thruster actuation command.
+      float thruster_freq;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
@@ -67,6 +69,10 @@ namespace Actuators
       Time::Counter<float> m_wdog;
       //! Attempt to connect on Idle watchdog.
       Time::Counter<uint16_t> m_wdog_con;
+      //! Timer for thruster actuation command.
+      Time::Counter<float> m_thruster_cmd_timer;
+      //! Thruster reference actuation.
+      fp32_t m_thruster_ref;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -74,7 +80,8 @@ namespace Actuators
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
         m_handle(NULL),
-        m_parser(this)
+        m_parser(this),
+        m_thruster_ref(0.0f)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -90,6 +97,13 @@ namespace Actuators
         .defaultValue("5.0f")
         .minimumValue("0.0f")
         .description("Input timeout");
+
+        param("Thruster Command Frequency", m_args.thruster_freq)
+        .units(Units::Second)
+        .maximumValue("100.0f")
+        .defaultValue("10.0f")
+        .minimumValue("0.0f")
+        .description("Frequency to send thruster actuation command.");
 
         setWaitForMessages(1.0);
 
@@ -159,6 +173,9 @@ namespace Actuators
 
         if (paramChanged(m_args.inp_tout))
           m_wdog.setTop(m_args.inp_tout);
+
+        if (paramChanged(m_args.thruster_freq))
+          m_thruster_cmd_timer.setTop(m_args.thruster_freq == 0.0f ? 0.0f : 1.0f / m_args.thruster_freq);
       }
 
       //! Reserve entity identifiers.
@@ -232,30 +249,31 @@ namespace Actuators
         if (m_handle == NULL)
           return;
         
-        sendCommand(c_code_actuation, "servo," +
-                                      std::to_string(msg->id) + "," +
-                                      std::to_string(Angles::degrees(msg->value)));
+        sendCommand(c_code_actuation, "%c,%u,%f",
+                                       c_id_servo, 
+                                       msg->id,
+                                       Angles::degrees(msg->value));
       }
 
       void
       consume(const IMC::SetThrusterActuation* msg)
-      {
-        if (m_handle == NULL)
-          return;
-        
-        sendCommand(c_code_actuation, "thruster," +
-                                      std::to_string(msg->id) + "," +
-                                      std::to_string(msg->value));
+      {        
+        m_thruster_ref = msg->value;
       }
 
       void
-      sendCommand(const char& code, const std::string data)
+      sendCommand(const char& code, const char* fmt, ...)
       {
-        char cmd[256];
+        char bfr[256];
+        va_list args;
+        va_start(args, fmt);
+        vsprintf(bfr, fmt, args);
+        va_end(args);
+        char cmd[256 + 7];
         std::sprintf(cmd, "%c,%c,%s,%c",
                            c_line_init,
                            code,
-                           data.c_str(),
+                           bfr,
                            c_data_term);
         std::sprintf(cmd, "%s%c%c", cmd, calcCRC8(cmd), c_line_term);
         spew("sending: %s", sanitize(cmd).c_str());
@@ -273,6 +291,9 @@ namespace Actuators
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+
+        if (m_thruster_cmd_timer.overflow())
+          sendCommand(c_code_actuation, "%c,%f", c_id_thruster, m_thruster_ref);
 
         return true;
       }
