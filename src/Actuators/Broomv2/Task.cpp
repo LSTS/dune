@@ -159,12 +159,24 @@ namespace Actuators
       void
       onDisconnect() override
       {
+        setDisconnect();
+
+        if (m_reader != NULL)
+        {
+          m_reader->stopAndJoin();
+          Memory::clear(m_reader);
+        }
+
+        Memory::clear(m_handle);
+
+        m_wdog_con.setTop(0.0f);
       }
 
       //! Initialize device.
       void
       onInitializeDevice() override
       {
+        setConnect();
         m_wdog.setTop(m_args.inp_tout);
       }
 
@@ -280,6 +292,22 @@ namespace Actuators
       }
 
       void
+      sendCommand(const char& code)
+      {
+        if (m_handle == NULL)
+          return;
+        
+        char cmd[64];
+        std::sprintf(cmd, "%c,%c,%c",
+                           c_line_init,
+                           code,
+                           c_data_term);
+        std::sprintf(cmd, "%s%c%c", cmd, calcCRC8(cmd), c_line_term);
+        spew("sending: %s", sanitize(cmd).c_str());
+        m_handle->writeString(cmd);
+      }
+
+      void
       sendCommand(const char& code, const char* fmt, ...)
       {
         if (m_handle == NULL)
@@ -316,6 +344,18 @@ namespace Actuators
         sendCommand(c_code_actuation, "%c,%f",
                                        c_id_thruster,
                                        value);
+      }
+
+      void
+      setConnect(void)
+      {
+        sendCommand(c_code_connect);
+      }
+
+      void
+      setDisconnect(void)
+      {
+        sendCommand(c_code_disconnect);
       }
 
       //! Executed when task is activated.

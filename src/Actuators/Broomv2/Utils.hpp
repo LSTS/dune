@@ -48,8 +48,16 @@ namespace Actuators
     //! Line data termination character.
     constexpr char c_data_term = '*';
 
+    //! Command code for acknowledge.
+    constexpr char c_code_ack = 'A';
     //! Command code for actuation.
     constexpr char c_code_actuation = 'a';
+    //! Command code for connect.
+    constexpr char c_code_connect = 'C';
+    //! Command code for disconnect.
+    constexpr char c_code_disconnect = 'D';
+    //! Command code for no acknowledge.
+    constexpr char c_code_nack = 'N';
 
     //! Command identifier for servo.
     constexpr char c_id_servo = 's';
