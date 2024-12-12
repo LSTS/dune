@@ -64,6 +64,15 @@ namespace Actuators
     //! Command identifier for thruster.
     constexpr char c_id_thruster = 't';
 
+    enum CMD_STATE
+    {
+      CMD_WAITING = 0,
+      CMD_NACK,
+      CMD_ACK,
+      CMD_IDLE,
+      CMD_ERROR
+    };
+
     uint8_t
     calcCRC8(const std::string data)
     {

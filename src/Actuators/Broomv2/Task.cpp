@@ -33,7 +33,6 @@
 // Local headers.
 #include "Utils.hpp"
 #include "Reader.hpp"
-#include "Parser.hpp"
 
 namespace Actuators
 {
@@ -63,8 +62,6 @@ namespace Actuators
       IO::Handle* m_handle;
       //! Reader thread.
       Reader* m_reader;
-      //! Parser.
-      Parser m_parser;
       //! Input watchdog.
       Time::Counter<float> m_wdog;
       //! Attempt to connect on Idle watchdog.
@@ -75,6 +72,10 @@ namespace Actuators
       fp32_t m_thruster_ref;
       //! Vehicle operation mode
       uint8_t m_mode;
+      //! Send command state.
+      CMD_STATE m_send_cmd_state;
+      //! Queue of commands to send.
+      std::queue<std::pair<std::string, bool>> m_queue;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -82,7 +83,6 @@ namespace Actuators
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
         m_handle(NULL),
-        m_parser(this),
         m_thruster_ref(0.0f),
         m_mode(IMC::VehicleState::VS_BOOT)
       {
@@ -139,6 +139,8 @@ namespace Actuators
       bool
       onConnect() override
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, CODE_ACTIVATING);
+
         try
         {
           m_handle = openDeviceHandle(m_args.io_dev);
@@ -172,12 +174,20 @@ namespace Actuators
         m_wdog_con.setTop(0.0f);
       }
 
+      void
+      setupBoard(void)
+      {
+        setConnect();
+
+        waitForReplies();
+      }
+
       //! Initialize device.
       void
       onInitializeDevice() override
       {
-        setConnect();
         m_wdog.setTop(m_args.inp_tout);
+        setupBoard();
       }
 
       //! Update internal state with new parameter values.
@@ -235,7 +245,7 @@ namespace Actuators
 
         spew("received: %s", sanitize(msg->value).c_str());
 
-        if (!m_parser.checkDataIn(msg->value))
+        if (!checkDataIn(msg->value))
         {
           trace(DTR("message with invalid checksum"));
           return;
@@ -243,7 +253,7 @@ namespace Actuators
 
         m_wdog.reset();
 
-        m_parser.interpretDataIn(msg->value);
+        interpretDataIn(msg->value);
       }
 
       void
@@ -291,8 +301,121 @@ namespace Actuators
         m_mode = msg->op_mode;
       }
 
+      //! Check if data is valid.
+      //! @return true if valid, false otherwise.
+      bool
+      checkDataIn(const std::string& line)
+      {
+        size_t pos = line.find_last_of(c_data_term);
+        if (pos == line.npos || line[pos + 1] == c_line_term)
+        {
+          debug(DTR("message has no checksum"));
+          return false;
+        }
+
+        uint8_t rcsum = line[pos + 1];
+        return rcsum == calcCRC8(line);
+      }
+
+      //! Interpret incoming data.
       void
-      sendCommand(const char& code)
+      interpretDataIn(const std::string& line)
+      {
+        std::vector<std::string> data;
+        String::split(line, ",", data);
+        if (data.size() < 3)
+          return;
+
+        char code = data[1].front();
+        switch (code)
+        {
+        case c_code_ack:
+          m_send_cmd_state = CMD_ACK;
+          break;
+
+        case c_code_nack:
+          m_send_cmd_state = CMD_NACK;
+          break;
+          
+        default:
+          break;
+        }
+      }
+
+      void
+      waitForReplies(void)
+      {
+        while(!m_queue.empty() && !stopping())
+        {
+          if (m_wdog.getTop() > 0.0f && m_wdog.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          }
+
+          waitForMessages(1.0);
+          checkCommandQueue();
+        }
+      }
+
+      void
+      resetCommadQueue(void)
+      {
+        m_send_cmd_state = CMD_IDLE;
+        m_queue.empty();
+      }
+
+      void
+      checkCommandQueue(void)
+      {
+        switch (m_send_cmd_state)
+        {
+        case CMD_ACK:
+          if (!m_queue.empty())
+            m_queue.pop();
+          [[fallthrough]];
+        case CMD_IDLE:
+        case CMD_NACK:
+        case CMD_ERROR:
+          if (!m_queue.empty())
+          {
+            auto& cmd = m_queue.front();
+            sendCommand(cmd.first, cmd.second, true);
+          }
+          else
+            m_send_cmd_state = CMD_IDLE;
+          break;
+        case CMD_WAITING:
+        default:
+          break;
+        }
+      }
+
+      void
+      sendCommand(std::string cmd, bool wait_ack, bool retry = false)
+      {
+        if (!retry)
+          m_queue.push(std::make_pair(cmd, wait_ack));
+
+        if(m_send_cmd_state == CMD_WAITING)
+          return;
+        
+        spew("sending: %s%s", sanitize(cmd).c_str(), wait_ack ? " (needs response)" : "");
+        m_handle->writeString(cmd.c_str());
+
+        if (!wait_ack)
+        {
+          m_send_cmd_state = CMD_IDLE;
+          m_queue.pop();
+        }
+        else
+          m_send_cmd_state = CMD_WAITING;
+        
+        return;
+      }
+
+      void
+      sendCommand(const char& code, bool wait_ack)
       {
         if (m_handle == NULL)
           return;
@@ -303,12 +426,11 @@ namespace Actuators
                            code,
                            c_data_term);
         std::sprintf(cmd, "%s%c%c", cmd, calcCRC8(cmd), c_line_term);
-        spew("sending: %s", sanitize(cmd).c_str());
-        m_handle->writeString(cmd);
+        sendCommand(cmd, wait_ack);
       }
 
       void
-      sendCommand(const char& code, const char* fmt, ...)
+      sendCommand(const char& code, bool wait_ack, const char* fmt, ...)
       {
         if (m_handle == NULL)
           return;
@@ -325,37 +447,38 @@ namespace Actuators
                            bfr,
                            c_data_term);
         std::sprintf(cmd, "%s%c%c", cmd, calcCRC8(cmd), c_line_term);
-        spew("sending: %s", sanitize(cmd).c_str());
-        m_handle->writeString(cmd);
+        sendCommand(cmd, wait_ack);
       }
 
       void
       setServoPosition(uint8_t id, fp32_t angle)
       {
-        sendCommand(c_code_actuation, "%c,%u,%f",
-                                       c_id_servo, 
-                                       id,
-                                       angle);
+        sendCommand(c_code_actuation, false, "%c,%u,%f",
+                                              c_id_servo, 
+                                              id,
+                                              angle);
       }
 
       void
       setThrusterActuation(fp32_t value)
       {
-        sendCommand(c_code_actuation, "%c,%f",
-                                       c_id_thruster,
-                                       value);
+        sendCommand(c_code_actuation, false, "%c,%f",
+                                              c_id_thruster,
+                                              value);
       }
 
       void
       setConnect(void)
       {
-        sendCommand(c_code_connect);
+        resetCommadQueue();
+        sendCommand(c_code_connect, true);
       }
 
       void
       setDisconnect(void)
       {
-        sendCommand(c_code_disconnect);
+        resetCommadQueue();
+        sendCommand(c_code_disconnect, false);
       }
 
       //! Executed when task is activated.
