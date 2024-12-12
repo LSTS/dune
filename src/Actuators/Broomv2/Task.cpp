@@ -93,7 +93,6 @@ namespace Actuators
 
         setWaitForMessages(1.0);
 
-        bind<IMC::DesiredSpeed>(this);
         bind<IMC::DevDataText>(this);
         bind<IMC::IoEvent>(this);
         bind<IMC::SetServoPosition>(this);
@@ -190,17 +189,6 @@ namespace Actuators
       void
       onResourceRelease(void)
       {
-      }
-
-      void
-      consume(const IMC::DesiredSpeed* msg)
-      {
-        if (m_handle == NULL)
-          return;
-        
-        sendCommand(c_code_actuation, "speed," +
-                                      std::to_string(msg->speed_units) + "," +
-                                      std::to_string(msg->value));
       }
 
       void
