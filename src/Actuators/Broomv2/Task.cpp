@@ -274,8 +274,9 @@ namespace Actuators
         m_handle->writeString(cmd);
       }
 
-      //! Get data from device.
-      //! @return true if data was received, false otherwise.
+      //! Executed when task is activated.
+      //! Data is read on consume(const IMC::DevDataText* msg).
+      //! @return true.
       bool
       onReadData() override
       {
@@ -285,7 +286,7 @@ namespace Actuators
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
-        return false;
+        return true;
       }
     };
   }
