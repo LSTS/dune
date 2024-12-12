@@ -51,6 +51,11 @@ namespace Actuators
     //! Command code for actuation.
     constexpr char c_code_actuation = 'a';
 
+    //! Command identifier for servo.
+    constexpr char c_id_servo = 's';
+    //! Command identifier for thruster.
+    constexpr char c_id_thruster = 't';
+
     uint8_t
     calcCRC8(const std::string data)
     {
