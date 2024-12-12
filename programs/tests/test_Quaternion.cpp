@@ -333,7 +333,7 @@ int main()
     test.boolean("q == -q", almostEqual(eul1, eul2));
   }
 
-  return 0;
+  return test.getReturnValue();
 }
 
 

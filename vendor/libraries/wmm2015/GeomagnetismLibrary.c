@@ -2792,7 +2792,7 @@ CALLS : none
 {
     int DMS[3], i;
     double temp = DegreesOfArc;
-    char tempstring[32] = "";
+    char tempstring[48] = "";
     char tempstring2[32] = "";
     strcpy(DMSstring, "");
     if(UnitDepth > 3)
