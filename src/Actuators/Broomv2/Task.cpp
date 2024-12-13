@@ -394,6 +394,9 @@ namespace Actuators
       void
       sendCommand(std::string cmd, bool wait_ack, bool retry = false)
       {
+        if (m_handle == NULL)
+          return;
+
         if (!retry)
           m_queue.push(std::make_pair(cmd, wait_ack));
 
@@ -416,10 +419,7 @@ namespace Actuators
 
       void
       sendCommand(const char& code, bool wait_ack)
-      {
-        if (m_handle == NULL)
-          return;
-        
+      {        
         char cmd[64];
         std::sprintf(cmd, "%c,%c,%c",
                            c_line_init,
@@ -431,10 +431,7 @@ namespace Actuators
 
       void
       sendCommand(const char& code, bool wait_ack, const char* fmt, ...)
-      {
-        if (m_handle == NULL)
-          return;
-        
+      {        
         char bfr[256];
         va_list args;
         va_start(args, fmt);
