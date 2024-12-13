@@ -296,6 +296,16 @@ namespace Actuators
         {
           m_thruster_ref = 0.0f;
           setThrusterActuation(m_thruster_ref);
+          stopActuation();
+        }
+        else if ((m_mode == IMC::VehicleState::VS_BOOT ||
+                  m_mode == IMC::VehicleState::VS_SERVICE ||
+                  m_mode == IMC::VehicleState::VS_ERROR) &&
+                  msg->op_mode != IMC::VehicleState::VS_BOOT &&
+                  msg->op_mode != IMC::VehicleState::VS_SERVICE &&
+                  msg->op_mode != IMC::VehicleState::VS_ERROR)
+        {
+          startActuation();
         }
 
         m_mode = msg->op_mode;
@@ -445,6 +455,18 @@ namespace Actuators
                            c_data_term);
         std::sprintf(cmd, "%s%c%c", cmd, calcCRC8(cmd), c_line_term);
         sendCommand(cmd, wait_ack);
+      }
+
+      void
+      startActuation(void)
+      {
+        sendCommand(c_code_actuation, true, "%c", c_code_actuation_start);
+      }
+
+      void
+      stopActuation(void)
+      {
+        sendCommand(c_code_actuation, true, "%c", c_code_actuation_stop);
       }
 
       void

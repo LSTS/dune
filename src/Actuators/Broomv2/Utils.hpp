@@ -59,6 +59,10 @@ namespace Actuators
     //! Command code for no acknowledge.
     constexpr char c_code_nack = 'N';
 
+    //! Command identifier for actuation start.
+    constexpr char c_code_actuation_start = 'H';
+    //! Command identifier for actuation stop.
+    constexpr char c_code_actuation_stop = 'L';
     //! Command identifier for servo.
     constexpr char c_id_servo = 's';
     //! Command identifier for thruster.
