@@ -450,7 +450,7 @@ namespace Actuators
       void
       setServoPosition(uint8_t id, fp32_t angle)
       {
-        sendCommand(c_code_actuation, false, "%c,%u,%f",
+        sendCommand(c_code_actuation, false, "%c,%u,%.2f",
                                               c_id_servo, 
                                               id,
                                               angle);
@@ -459,7 +459,7 @@ namespace Actuators
       void
       setThrusterActuation(fp32_t value)
       {
-        sendCommand(c_code_actuation, false, "%c,%f",
+        sendCommand(c_code_actuation, false, "%c,%.3f",
                                               c_id_thruster,
                                               value);
       }
