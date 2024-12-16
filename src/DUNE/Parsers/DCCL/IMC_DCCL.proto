@@ -1,0 +1,35 @@
+///////////////////////////////////////////////////////////////////////////////////////////
+// Every time the /Proto/dcclMsg.proto file is modified                                  //
+// turn on the DCCL flag while compiling in order to update the pb.cc and pb.h files     //
+// (in dune/build: cmake -DDCCL=ON ../source)                                             //
+///////////////////////////////////////////////////////////////////////////////////////////
+
+syntax = "proto3";
+import "dccl/option_extensions.proto";
+
+
+// Estimated State
+message EstimatedState {
+    option (dccl.msg) = { codec_version: 4 id: 350 max_bytes: 1024};
+    float lat = 1 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
+    float lon = 2 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
+    float height = 3 [(dccl.field) = { min: -1000 max: 7000  precision: 1 }];
+    float x = 4 [(dccl.field) = { min: -20000  max: 20000  precision: 1  }];
+    float y = 5 [(dccl.field) = { min: -20000 max: 20000  precision: 1 }];
+    float z = 6 [(dccl.field) = { min: -900 max: 900  precision: 1 }];
+    float phi = 7 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
+    float theta = 8 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
+    float psi = 9 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
+    float u = 10 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    float v = 11 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    float w = 12 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    float vx = 13 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    float vy = 14 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    float vz = 15 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    float p = 16 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
+    float q = 17 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
+    float r = 18 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
+    float depth = 19 [(dccl.field) = { min: -1 max: 400 precision: 1 }];
+    float altitude = 20 [(dccl.field) = { min: -1 max: 5000 precision: 1 }];
+
+}
