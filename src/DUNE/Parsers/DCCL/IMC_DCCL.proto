@@ -60,5 +60,5 @@ message Goto {
     float roll = 8 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
     float pitch = 9 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
     float yaw = 10 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
-    string stringa = 11;
+    string costum = 11  [(dccl.field) = { max_length: 4 }];                     //TODO: fare enum con possibili casi
 }
