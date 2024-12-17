@@ -65,12 +65,12 @@ namespace Control
         float speed_tol;
         //! Time after which diving controller kicks in to help submerge.
         double time_solo;
+        //! Time after which original reference is reset to force fins to submerge.
+        double time_submerge;
         //! Time step between each increase in speed by diving controller.
-        double time_step;
-        //! Speed step when helping to submerge.
-        double speed_step;
-        //! Maximum speed increase in percentage
-        unsigned max_increase;
+        double time_error;
+        //! Maximum speed when forcing dive
+        int max_rpm;
       };
 
       //! %Motor simulator task
@@ -92,18 +92,22 @@ namespace Control
         float m_speed_inc;
         //! Timer counter for solo attempt
         Time::Counter<float>* m_counter_solo;
-        //! Timer counter for each speed increase step
-        Time::Counter<float>* m_counter_step;
+        //! Timer counter for reseting to original z reference
+        Time::Counter<float>* m_counter_submerge;
+        //! Timer counter for issuing error if unable to submerge
+        Time::Counter<float>* m_counter_error;
         //! Motor's rpms.
         float m_rpm;
+        //! Vehicle speed
+        float m_speed;
         //! Vehicle's depth
         float m_depth;
         //! Vehicle's altitude (if any)
         float m_alt;
         //! Got necessary data to proceed
         bool m_got_data;
-        //! On last attempt
-        bool m_last_try;
+        //! If fins are in submerge position
+        bool m_fins_submerge;
         //! Braking flag
         bool m_braking;
         //! Control loops last reference
@@ -114,8 +118,8 @@ namespace Control
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Periodic(name, ctx),
           m_aloops(0),
-          m_counter_solo(NULL),
-          m_counter_step(NULL),
+          m_counter_solo(nullptr),
+          m_counter_error(nullptr),
           m_braking(false),
           m_scope_ref(0)
         {
@@ -133,19 +137,21 @@ namespace Control
           .units(Units::Second)
           .description("Time after which diving controller kicks in to help submerge");
 
-          param("Time Step", m_args.time_step)
-          .defaultValue("2.0")
+          param("Submerge Time", m_args.time_submerge)
+          .defaultValue("5.0")
           .units(Units::Second)
-          .description("Time step between each increase in speed by diving controller");
+          .description("Time step between start forcing (fins in neutral position) and "
+                       "reset original Z reference (fins in submerge position).");
 
-          param("Speed Step", m_args.speed_step)
-          .defaultValue("0.1")
-          .units(Units::Percentage)
-          .description("Speed step when helping to submerge");
-
-          param("Maximum Increase", m_args.max_increase)
-          .defaultValue("50")
-          .description("Maximum speed increase in percentage");
+          param("Error Time", m_args.time_error)
+          .defaultValue("7.0")
+          .units(Units::Second)
+          .description("Time between start of forcing submerge and issuing error");
+          
+          param("Maximum Diving RPM", m_args.max_rpm)
+          .units(Units::RPM)
+          .defaultValue("2500")
+          .minimumValue("0");
 
           // Initialize entity state.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -164,7 +170,7 @@ namespace Control
         onResourceRelease(void)
         {
           Memory::clear(m_counter_solo);
-          Memory::clear(m_counter_step);
+          Memory::clear(m_counter_error);
         }
 
         //! Acquire resources.
@@ -172,7 +178,8 @@ namespace Control
         onResourceAcquisition(void)
         {
           m_counter_solo = new Time::Counter<float>(m_args.time_solo);
-          m_counter_step = new Time::Counter<float>(m_args.time_step);
+          m_counter_error = new Time::Counter<float>(m_args.time_error);
+          m_counter_submerge = new Time::Counter<float>(m_args.time_submerge);
         }
 
         //! Initialize resources.
@@ -203,18 +210,19 @@ namespace Control
         {
           m_mstate = SM_IDLE;
           m_rpm = -1.0;
+          m_speed = 0.0;
           m_dspeed.clear();
           m_alt = -1.0;
           m_depth = -1.0;
           m_z_ref.clear();
 
-          m_last_try = false;
+          m_fins_submerge = true;
           m_got_data = false;
           m_incs = 0;
           m_speed_inc = 0.0;
 
           m_counter_solo->reset();
-          m_counter_step->reset();
+          m_counter_error->reset();
         }
 
         void
@@ -231,11 +239,8 @@ namespace Control
             if (m_mstate == SM_FORCING)
               dispatch(m_dspeed);
 
-            //partial reset
-            m_last_try = false;
-
             m_counter_solo->reset();
-            m_counter_step->reset();
+            m_counter_error->reset();
 
             m_mstate = SM_IDLE;
           }
@@ -417,9 +422,8 @@ namespace Control
 
           if (m_counter_solo->overflow())
           {
-            m_counter_step->reset();
             m_mstate = SM_FORCING;
-            increaseSpeed();
+            resetForcing();
           }
         }
 
@@ -451,7 +455,6 @@ namespace Control
             m_mstate = SM_IDLE;
 
             m_incs = 0;
-            m_last_try = false;
             debug("no longer attempting to submerge");
             return;
           }
@@ -461,63 +464,121 @@ namespace Control
             m_mstate = SM_SUBMERGED;
 
             m_incs = 0;
-            m_last_try = false;
-            dispatch(m_dspeed);
+            setOriginalSpeed();
+            setOriginalZRef();
+            m_fins_submerge = true;
             debug("vehicle submerged, speed set to original value");
             return;
           }
 
-          if (m_counter_step->overflow() && !increaseSpeed())
+          // Set fins to submerge position
+          if (!m_fins_submerge && m_counter_submerge->overflow())
           {
-            if (!m_last_try)
-            {
-              // give it a few more seconds before giving up
-              m_counter_solo->reset();
-              m_last_try = true;
-            }
-            else if (m_counter_solo->overflow())
-            {
-              std::string desc = DTR("failed to submerge");
-              setEntityState(IMC::EntityState::ESTA_ERROR, desc);
-              err("%s", desc.c_str());
-
-              // reset to original speed reference
-              dispatch(m_dspeed);
-
-              reset();
-              return;
-            }
+            war("Fins submerge");
+            setOriginalZRef();
+            m_counter_error->reset();
+            m_fins_submerge = true;
           }
+
+          // Unable to submerge
+          if (m_counter_submerge->overflow() && m_counter_error->overflow())
+          {
+            std::string desc = DTR("failed to submerge");
+            setEntityState(IMC::EntityState::ESTA_ERROR, desc);
+            err("%s", desc.c_str());
+
+            // reset to original speed and z reference
+            setOriginalSpeed();
+            setOriginalZRef();
+
+            reset();
+          }
+
+          // if (m_counter_step->overflow() && !increaseSpeed())
+          // {
+          //   if (!m_last_try)
+          //   {
+          //     // give it a few more seconds before giving up
+          //     m_counter_solo->reset();
+          //     m_last_try = true;
+          //   }
+          //   else if (m_counter_solo->overflow())
+          //   {
+          //     std::string desc = DTR("failed to submerge");
+          //     setEntityState(IMC::EntityState::ESTA_ERROR, desc);
+          //     err("%s", desc.c_str());
+
+          //     // reset to original speed reference
+          //     dispatch(m_dspeed);
+
+          //     reset();
+          //     return;
+          //   }
+          // }
+        }
+
+        void
+        resetForcing()
+        {
+          m_counter_submerge->reset();
+          m_counter_error->reset();
+          increaseSpeed();
+          setSurfaceRef();
+          m_fins_submerge = false;
         }
 
         //! Increase desired speed
         //! @return true if was able to increase speed, false otherwise
-        bool
+        void
         increaseSpeed(void)
         {
-          if (m_incs == 0)
-          {
-            // use the values only once since they might change
-            m_forced_speed.value = m_dspeed.value;
-            m_forced_speed.speed_units = m_dspeed.speed_units;
-            m_speed_inc = m_dspeed.value * m_args.speed_step;
-          }
-
-          ++m_incs;
-
-          if (m_incs * 10  > m_args.max_increase)
-            return false;
-
-          m_forced_speed.value += m_speed_inc;
-
+          m_forced_speed.speed_units = IMC::SUNITS_RPM;
+          m_forced_speed.value = m_args.max_rpm;
           dispatch(m_forced_speed);
+          // if (m_incs == 0)
+          // {
+          //   // use the values only once since they might change
+          //   m_forced_speed.value = m_dspeed.value;
+          //   m_forced_speed.speed_units = m_dspeed.speed_units;
+          //   m_speed_inc = m_dspeed.value * m_args.speed_step;
+          // }
 
-          debug("unable to submerge, increasing speed to %d%%",
-                (unsigned)(100.0 + (float)m_incs * 10.0));
+          // ++m_incs;
 
-          m_counter_step->reset();
+          // if (m_incs * 10  > m_args.max_increase)
+          //   return false;
 
-          return true;
+          // m_forced_speed.value += m_speed_inc;
+
+          // dispatch(m_forced_speed);
+
+          // debug("unable to submerge, increasing speed to %d%%",
+          //       (unsigned)(100.0 + (float)m_incs * 10.0));
+
+          // m_counter_step->reset();
+
+          // return true;
+        }
+
+        void
+        setOriginalSpeed()
+        {
+          dispatch(m_dspeed);
+        }
+
+        void
+        setSurfaceRef()
+        {
+          IMC::DesiredZ m_zero_z;
+          m_zero_z.z_units = IMC::Z_DEPTH;
+          m_zero_z.value = 0.0;
+          dispatch(m_zero_z);
+        }
+
+        void
+        setOriginalZRef()
+        {
+          dispatch(m_z_ref);
         }
 
         //! Check if we have depth/altitude reference
