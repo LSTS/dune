@@ -8,7 +8,7 @@ syntax = "proto3";
 import "dccl/option_extensions.proto";
 
 // Enum Z Units
-enum ZUnitsEnum {
+enum ZUnits {
     NONE = 0;
     DEPTH = 1;
     ALTITUDE = 2;
@@ -16,7 +16,7 @@ enum ZUnitsEnum {
 }
 
 // Enum Speed Units
-enum SpeedUnitsEnum {
+enum SpeedUnits {
     METERS_PS = 0;
     RPM = 1;
     PERCENTAGE = 2;
@@ -24,7 +24,7 @@ enum SpeedUnitsEnum {
 
 // Estimated State
 message EstimatedState {
-    option (dccl.msg) = { codec_version: 4 id: 350 max_bytes: 88};
+    option (dccl.msg) = { codec_version: 4 id: 350 max_bytes: 80};
     float lat = 1 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
     float lon = 2 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
     float height = 3 [(dccl.field) = { min: -1000 max: 7000  precision: 1 }];
@@ -47,18 +47,40 @@ message EstimatedState {
     float altitude = 20 [(dccl.field) = { min: -1 max: 5000 precision: 1 }];
 }
 
-// Goto Manuever
+// Goto Maneuver
 message Goto {
     option (dccl.msg) = { codec_version: 4 id: 450 max_bytes: 80};
     int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
     float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
     float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
     float z = 4 [(dccl.field) = { min: -900 max: 900 precision: 1 }];
-    ZUnitsEnum z_units = 5;
+    ZUnits z_units = 5;
     float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
-    SpeedUnitsEnum speed_units = 7;
+    SpeedUnits speed_units = 7;
     float roll = 8 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
     float pitch = 9 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
     float yaw = 10 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
-    string costum = 11  [(dccl.field) = { max_length: 4 }];                     //TODO: fare enum con possibili casi
+    //TODO: costum field > enum with possible string
+}
+
+// FollowPath Maneuver
+message FollowPath {
+    option (dccl.msg) = { codec_version: 4 id: 457 max_bytes: 1000};
+    int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
+    float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
+    float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
+    float z = 4 [(dccl.field) = { min: -900 max: 900 precision: 1 }];
+    ZUnits z_units = 5;
+    float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    SpeedUnits speed_units = 7;
+    repeated PathPoint points = 8 [(dccl.field) = { max_repeat: 30 }];
+    //TODO: costum field > enum with possible string
+}
+
+// PathPoint 
+message PathPoint {
+    option (dccl.msg) = { codec_version: 4 id: 458 max_bytes: 80};
+    float x = 1 [(dccl.field) = { min: -20000  max: 20000  precision: 1  }];
+    float y = 2 [(dccl.field) = { min: -20000 max: 20000  precision: 1 }];
+    float z = 3 [(dccl.field) = { min: -900 max: 900  precision: 1 }];
 }
