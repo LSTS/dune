@@ -86,10 +86,6 @@ namespace Control
         IMC::DesiredSpeed m_dspeed;
         //! Last received desired z.
         IMC::DesiredZ m_z_ref;
-        //! Number of speed increases
-        unsigned m_incs;
-        //! Speed amount to increase
-        float m_speed_inc;
         //! Timer counter for solo attempt
         Time::Counter<float>* m_counter_solo;
         //! Timer counter for reseting to original z reference
@@ -218,8 +214,6 @@ namespace Control
 
           m_fins_submerge = true;
           m_got_data = false;
-          m_incs = 0;
-          m_speed_inc = 0.0;
 
           m_counter_solo->reset();
           m_counter_error->reset();
@@ -424,6 +418,7 @@ namespace Control
           {
             m_mstate = SM_FORCING;
             resetForcing();
+            debug(DTR("Forcing"));
           }
         }
 
@@ -454,7 +449,6 @@ namespace Control
           {
             m_mstate = SM_IDLE;
 
-            m_incs = 0;
             debug("no longer attempting to submerge");
             return;
           }
@@ -463,7 +457,6 @@ namespace Control
           {
             m_mstate = SM_SUBMERGED;
 
-            m_incs = 0;
             setOriginalSpeed();
             setOriginalZRef();
             m_fins_submerge = true;
@@ -474,7 +467,7 @@ namespace Control
           // Set fins to submerge position
           if (!m_fins_submerge && m_counter_submerge->overflow())
           {
-            war("Fins submerge");
+            debug(DTR("Set fins to submerge"));
             setOriginalZRef();
             m_counter_error->reset();
             m_fins_submerge = true;
@@ -493,28 +486,6 @@ namespace Control
 
             reset();
           }
-
-          // if (m_counter_step->overflow() && !increaseSpeed())
-          // {
-          //   if (!m_last_try)
-          //   {
-          //     // give it a few more seconds before giving up
-          //     m_counter_solo->reset();
-          //     m_last_try = true;
-          //   }
-          //   else if (m_counter_solo->overflow())
-          //   {
-          //     std::string desc = DTR("failed to submerge");
-          //     setEntityState(IMC::EntityState::ESTA_ERROR, desc);
-          //     err("%s", desc.c_str());
-
-          //     // reset to original speed reference
-          //     dispatch(m_dspeed);
-
-          //     reset();
-          //     return;
-          //   }
-          // }
         }
 
         void
@@ -535,29 +506,6 @@ namespace Control
           m_forced_speed.speed_units = IMC::SUNITS_RPM;
           m_forced_speed.value = m_args.max_rpm;
           dispatch(m_forced_speed);
-          // if (m_incs == 0)
-          // {
-          //   // use the values only once since they might change
-          //   m_forced_speed.value = m_dspeed.value;
-          //   m_forced_speed.speed_units = m_dspeed.speed_units;
-          //   m_speed_inc = m_dspeed.value * m_args.speed_step;
-          // }
-
-          // ++m_incs;
-
-          // if (m_incs * 10  > m_args.max_increase)
-          //   return false;
-
-          // m_forced_speed.value += m_speed_inc;
-
-          // dispatch(m_forced_speed);
-
-          // debug("unable to submerge, increasing speed to %d%%",
-          //       (unsigned)(100.0 + (float)m_incs * 10.0));
-
-          // m_counter_step->reset();
-
-          // return true;
         }
 
         void
