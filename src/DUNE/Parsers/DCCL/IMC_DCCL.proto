@@ -30,7 +30,7 @@ message EstimatedState {
     float height = 3 [(dccl.field) = { min: -1000 max: 7000  precision: 1 }];
     float x = 4 [(dccl.field) = { min: -20000  max: 20000  precision: 1  }];
     float y = 5 [(dccl.field) = { min: -20000 max: 20000  precision: 1 }];
-    float z = 6 [(dccl.field) = { min: -900 max: 900  precision: 1 }];
+    float z = 6 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
     float phi = 7 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
     float theta = 8 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
     float psi = 9 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
@@ -53,7 +53,7 @@ message Goto {
     int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
     float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
     float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
-    float z = 4 [(dccl.field) = { min: -900 max: 900 precision: 1 }];
+    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
     ZUnits z_units = 5;
     float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
     SpeedUnits speed_units = 7;
@@ -69,7 +69,7 @@ message FollowPath {
     int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
     float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
     float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
-    float z = 4 [(dccl.field) = { min: -900 max: 900 precision: 1 }];
+    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
     ZUnits z_units = 5;
     float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
     SpeedUnits speed_units = 7;
@@ -82,5 +82,5 @@ message PathPoint {
     option (dccl.msg) = { codec_version: 4 id: 458 max_bytes: 80};
     float x = 1 [(dccl.field) = { min: -20000  max: 20000  precision: 1  }];
     float y = 2 [(dccl.field) = { min: -20000 max: 20000  precision: 1 }];
-    float z = 3 [(dccl.field) = { min: -900 max: 900  precision: 1 }];
+    float z = 3 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
 }
