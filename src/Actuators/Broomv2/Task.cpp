@@ -162,14 +162,13 @@ namespace Actuators
       void
       onDisconnect() override
       {
-        setDisconnect();
-
         if (m_reader != NULL)
         {
           m_reader->stopAndJoin();
           Memory::clear(m_reader);
         }
 
+        setDisconnect();
         Memory::clear(m_handle);
 
         m_wdog_con.setTop(0.0f);
