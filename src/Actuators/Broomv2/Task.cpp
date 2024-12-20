@@ -83,6 +83,7 @@ namespace Actuators
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
         m_handle(NULL),
+        m_reader(NULL),
         m_thruster_ref(0.0f),
         m_mode(IMC::VehicleState::VS_BOOT)
       {
