@@ -372,7 +372,8 @@ namespace Actuators
       resetCommadQueue(void)
       {
         m_send_cmd_state = CMD_IDLE;
-        m_queue.empty();
+        while (!m_queue.empty())
+          m_queue.pop();
       }
 
       void
