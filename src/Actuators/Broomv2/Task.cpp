@@ -247,7 +247,7 @@ namespace Actuators
 
         if (!checkDataIn(msg->value))
         {
-          trace(DTR("message with invalid checksum"));
+          trace(DTR("invalid message"));
           return;
         }
 
@@ -316,6 +316,13 @@ namespace Actuators
       bool
       checkDataIn(const std::string& line)
       {
+        size_t count = std::count(line.begin(), line.end(), ',');
+        if (count < 2)
+        {
+          debug(DTR("message with few fields"));
+          return false;
+        }
+
         size_t pos = line.find_last_of(c_data_term);
         if (pos == line.npos || line[pos + 1] == c_line_term)
         {
@@ -333,8 +340,6 @@ namespace Actuators
       {
         std::vector<std::string> data;
         String::split(line, ",", data);
-        if (data.size() < 3)
-          return;
 
         char code = data[1].front();
         switch (code)
@@ -346,6 +351,20 @@ namespace Actuators
         case c_code_nack:
           m_send_cmd_state = CMD_NACK;
           break;
+
+        case c_code_servos_fb:
+        {
+          if (data.size() < 3 + c_total_servos)
+            return;
+          IMC::ServoPosition sp;
+          for (unsigned i = 0; i < c_total_servos; i++)
+          {
+            sp.id = i;
+            sp.value = std::stof(data[2+i]);
+            dispatch(sp);
+          }
+          break;
+        }
           
         default:
           break;

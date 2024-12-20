@@ -39,6 +39,9 @@ namespace Actuators
   {
     using DUNE_NAMESPACES;
 
+    //! Total number of servos.
+    constexpr size_t c_total_servos = 4;
+
     //! Read buffer size.
     constexpr size_t c_read_buffer_size = 1024;
     //! Line initial character.
@@ -58,6 +61,8 @@ namespace Actuators
     constexpr char c_code_disconnect = 'D';
     //! Command code for no acknowledge.
     constexpr char c_code_nack = 'N';
+    //! Command code for servos feedback data.
+    constexpr char c_code_servos_fb = 'f';
 
     //! Command identifier for actuation start.
     constexpr char c_code_actuation_start = 'H';
