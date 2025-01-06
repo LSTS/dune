@@ -352,6 +352,9 @@ namespace Actuators
           IMC::ServoPosition sp;
           for (unsigned i = 0; i < c_total_servos; i++)
           {
+            if (data[2+i].empty())
+              continue;
+            
             sp.id = i;
             sp.value = std::stof(data[2+i]);
             dispatch(sp);
