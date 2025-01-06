@@ -70,8 +70,8 @@ namespace Actuators
       Time::Counter<float> m_thruster_cmd_timer;
       //! Thruster reference actuation.
       fp32_t m_thruster_ref;
-      //! Vehicle operation mode
-      uint8_t m_mode;
+      //! Actuation state.
+      bool m_actuation_state;
       //! Send command state.
       CMD_STATE m_send_cmd_state;
       //! Queue of commands to send.
@@ -85,7 +85,7 @@ namespace Actuators
         m_handle(NULL),
         m_reader(NULL),
         m_thruster_ref(0.0f),
-        m_mode(IMC::VehicleState::VS_BOOT)
+        m_actuation_state(false)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -286,29 +286,22 @@ namespace Actuators
       {
         if (msg->getSource() != getSystemId())
           return;
-        
-        if (m_mode != IMC::VehicleState::VS_BOOT &&
-            m_mode != IMC::VehicleState::VS_SERVICE &&
-            m_mode != IMC::VehicleState::VS_ERROR &&
-            (msg->op_mode == IMC::VehicleState::VS_BOOT ||
-             msg->op_mode == IMC::VehicleState::VS_SERVICE ||
-             msg->op_mode == IMC::VehicleState::VS_ERROR))
-        {
-          m_thruster_ref = 0.0f;
-          setThrusterActuation(m_thruster_ref);
-          stopActuation();
-        }
-        else if ((m_mode == IMC::VehicleState::VS_BOOT ||
-                  m_mode == IMC::VehicleState::VS_SERVICE ||
-                  m_mode == IMC::VehicleState::VS_ERROR) &&
-                  msg->op_mode != IMC::VehicleState::VS_BOOT &&
-                  msg->op_mode != IMC::VehicleState::VS_SERVICE &&
-                  msg->op_mode != IMC::VehicleState::VS_ERROR)
-        {
-          startActuation();
-        }
 
-        m_mode = msg->op_mode;
+        bool old_state = m_actuation_state;
+        updateActuationState(msg->op_mode);
+        
+        if (old_state && !m_actuation_state)
+          stopActuation();
+        else if (!old_state && m_actuation_state)
+          startActuation();
+      }
+
+      void
+      updateActuationState(uint8_t mode)
+      {
+        m_actuation_state = !(mode == IMC::VehicleState::VS_BOOT ||
+                              mode == IMC::VehicleState::VS_SERVICE ||
+                              mode == IMC::VehicleState::VS_ERROR);
       }
 
       //! Check if data is valid.
@@ -492,12 +485,37 @@ namespace Actuators
       void
       stopActuation(void)
       {
+        resetServoPosition();
+        resetThrusterActuation();
         sendCommand(c_code_actuation, true, "%c", c_code_actuation_stop);
+      }
+
+      void
+      resetServoPosition(void)
+      {
+        if (!m_actuation_state)
+          return;
+        
+        for (unsigned i = 0; i < c_total_servos; i++)
+          setServoPosition(i, 0);
+      }
+
+      void
+      resetThrusterActuation(void)
+      {
+        if (!m_actuation_state)
+          return;
+        
+        m_thruster_ref = 0.0f;
+        setThrusterActuation(m_thruster_ref);
       }
 
       void
       setServoPosition(uint8_t id, fp32_t angle)
       {
+        if (!m_actuation_state)
+          return;
+        
         sendCommand(c_code_actuation, false, "%c,%u,%.2f",
                                               c_id_servo, 
                                               id,
@@ -507,6 +525,9 @@ namespace Actuators
       void
       setThrusterActuation(fp32_t value)
       {
+        if (!m_actuation_state)
+          return;
+        
         sendCommand(c_code_actuation, false, "%c,%.3f",
                                               c_id_thruster,
                                               value);
@@ -538,10 +559,7 @@ namespace Actuators
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
-        if (m_thruster_cmd_timer.overflow() &&
-            m_mode != IMC::VehicleState::VS_BOOT &&
-            m_mode != IMC::VehicleState::VS_SERVICE &&
-            m_mode != IMC::VehicleState::VS_ERROR)
+        if (m_thruster_cmd_timer.overflow())
           setThrusterActuation(m_thruster_ref);
 
         return true;
