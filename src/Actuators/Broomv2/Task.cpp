@@ -374,7 +374,7 @@ namespace Actuators
       void
       waitForReplies(void)
       {
-        while(!m_queue.empty() && !stopping())
+        while (!m_queue.empty() && !stopping())
         {
           if (m_wdog.getTop() > 0.0f && m_wdog.overflow())
           {
