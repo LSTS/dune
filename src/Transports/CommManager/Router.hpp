@@ -65,14 +65,12 @@ namespace Transports
       process(IMC::VehicleMedium* msg)
       {
         m_medium = msg->medium;
-        Memory::clear(msg);
       }
 
       void
       process(IMC::RSSI* msg)
       {
         m_rssi_msg_map[msg->getSourceEntity()] = msg->value;
-        Memory::clear(msg);
       }
 
       void
@@ -101,7 +99,6 @@ namespace Transports
             m_gsm_announce_map[msg->sys_name] = std::string(number);
           }
         }
-        Memory::clear(msg);
       }
 
       void
@@ -879,7 +876,7 @@ namespace Transports
       }
 
       bool
-      visibleOverWifi(const std::string& system)
+      visibleOverWifi(std::string system)
       {
         if (system.empty())
           return false;
