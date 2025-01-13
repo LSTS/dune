@@ -58,7 +58,7 @@ namespace Transports
       //! Constructor.
       //! @param[in] task parent task.
       //! @param[in] uart serial port connected to the ISU.
-      Driver(Tasks::Task* task, SerialPort* uart, bool use_9523N, double wait_boot):
+      Driver(Tasks::Task* task, SerialPort* uart, bool use_9523N, double wait_boot, double rssi_time_check):
         HayesModem(task, uart),
         m_session_result_read(true),
         m_sbd_ring(false),
@@ -67,7 +67,7 @@ namespace Transports
         m_use_9523 = use_9523N;
         m_wait_boot = wait_boot;
         setLineTrim(true);
-        m_rssi_wdog.setTop(45.0);
+        m_rssi_wdog.setTop(rssi_time_check);
       }
 
       //! Destructor.

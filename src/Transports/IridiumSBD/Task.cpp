@@ -84,6 +84,8 @@ namespace Transports
       unsigned max_error;
       //! Time to reset errors
       double error_reset_period;
+      //! Time to check rssi (seconds)
+      double rssi_check_period;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -186,6 +188,11 @@ namespace Transports
         .minimumValue("60")
         .description("Period to reset error count");
 
+        param("Time to check RSSI signal", m_args.rssi_check_period)
+        .defaultValue("45.0")
+        .minimumValue("10")
+        .description("Time to check RSSI signal");
+
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
         m_queued_mt = 0;
@@ -238,27 +245,33 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_IDLE);
         try
         {
+          // To force dispatch of entity state, for other tasks now that we are in boot
+          for(uint8_t i = 0; i < 5; i++)
+          {
+            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_IDLE);
+            Time::Delay::wait(1.0);
+          }
+          inf("Opening serial port '%s' at %u bps", m_args.uart_dev.c_str(), m_args.uart_baud);
           if(m_args.use_9523)
             m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud_9523);
           else
             m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_driver = new Driver(this, m_uart, m_args.use_9523, c_pwr_on_delay);
+          m_driver = new Driver(this, m_uart, m_args.use_9523, c_pwr_on_delay, m_args.rssi_check_period);
           m_driver->initialize();
           m_driver->setTxRateMax(m_args.max_tx_rate);
           if(m_args.use_9523)
-          {
             inf("LIDB FW: %s", m_driver->getFirmVersionLIDB().c_str());
-            inf("Model: %s | IMEI: %s", m_driver->getModel().c_str(), m_driver->getIMEI().c_str());
-          }
+
           debug("manufacturer: %s", m_driver->getManufacturer().c_str());
-          debug("model: %s", m_driver->getModel().c_str());
-          debug("IMEI: %s", m_driver->getIMEI().c_str());
+          inf("Model: %s | IMEI: %s", m_driver->getModel().c_str(), m_driver->getIMEI().c_str());
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 5);
+          std::string msg = "onResourceAcquisition: " + std::string(e.what());
+          throw RestartNeeded(msg.c_str(), 10);
         }
       }
 
@@ -341,7 +354,10 @@ namespace Transports
           return;
 
         if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
-          throw RestartNeeded(DTR("input error"), 5);
+        {
+          std::string msg_info = "consume(const IMC::IoEvent* msg): " + std::string(DTR("input error"));
+          throw RestartNeeded(msg_info.c_str(), 10);
+        }
       }
 
       void
@@ -623,7 +639,7 @@ namespace Transports
           std::stringstream ss;
           ss << "Max error count exceeded: "
              << err.c_str();
-          throw RestartNeeded(ss.str(), 5.0);
+          throw RestartNeeded(ss.str(), 10.0);
         }
       }
 
