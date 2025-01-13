@@ -345,10 +345,23 @@ namespace Actuators
           m_send_cmd_state = CMD_NACK;
           break;
 
+        case c_code_thruster_rpm:
+        {
+          if (data.size() < 4)
+            return;
+          
+          IMC::Rpm rpm;
+          rpm.value = (int16_t) std::stof(data[2]);
+          dispatch(rpm);
+
+          break;
+        }
+
         case c_code_servos_fb:
         {
           if (data.size() < 3 + c_total_servos)
             return;
+          
           IMC::ServoPosition sp;
           for (unsigned i = 0; i < c_total_servos; i++)
           {
@@ -359,6 +372,7 @@ namespace Actuators
             sp.value = std::stof(data[2+i]);
             dispatch(sp);
           }
+
           break;
         }
           

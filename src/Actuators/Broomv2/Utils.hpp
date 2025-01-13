@@ -61,6 +61,8 @@ namespace Actuators
     constexpr char c_code_disconnect = 'D';
     //! Command code for no acknowledge.
     constexpr char c_code_nack = 'N';
+    //! Command code for thruster data.
+    constexpr char c_code_thruster_rpm = 'T';
     //! Command code for servos feedback data.
     constexpr char c_code_servos_fb = 'f';
 
