@@ -46,6 +46,8 @@ namespace Transports
 
     //! Power on delay.
     static const double c_pwr_on_delay = 5.0;
+    //! Monitor delay before check state (in seconds).
+    static const double c_monitor_delay = 20.0;
 
     enum TxRxPriority
     {
@@ -86,6 +88,10 @@ namespace Transports
       double error_reset_period;
       //! Time to check rssi (seconds)
       double rssi_check_period;
+      //! Monitor Iridium Modem
+      bool monitor_modem;
+      //! Monitor Iridium Task Label
+      std::string monitor_task_label;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -114,6 +120,8 @@ namespace Transports
       unsigned m_error_count;
       //! Errors are cleared at the end of this timer.
       Counter<double> m_error_timer;
+      //! Monitor check timer.
+      Counter<double> m_monitor_check_timer;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -193,8 +201,17 @@ namespace Transports
         .minimumValue("10")
         .description("Time to check RSSI signal");
 
+        param("Monitor Iridium Modems", m_args.monitor_modem)
+        .defaultValue("false")
+        .description("Monitor Iridium Modems");
+
+        param("Monitor Iridium Task Label", m_args.monitor_task_label)
+        .defaultValue("CPC")
+        .description("Monitor Iridium Task Label");
+
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
+        bind<IMC::EntityState>(this);
         m_queued_mt = 0;
       }
 
@@ -246,6 +263,7 @@ namespace Transports
       onResourceAcquisition(void)
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_IDLE);
+        m_monitor_check_timer.setTop(c_monitor_delay);
         try
         {
           // To force dispatch of entity state, for other tasks now that we are in boot
@@ -376,6 +394,26 @@ namespace Transports
 
         enqueueTxRequest(request);
         sendTxRequestStatus(request, IMC::IridiumTxStatus::TXSTATUS_QUEUED);
+      }
+
+      void
+      consume(const IMC::EntityState* msg)
+      {
+        if(m_args.monitor_modem)
+        {
+          if (m_monitor_check_timer.overflow())
+          {
+            if (m_args.monitor_task_label.compare(resolveEntity(msg->getSourceEntity())) == 0)
+            {
+              // check if description contains the string "Iridium: Switching"
+              if (msg->description.find("Iridium: Switching") != std::string::npos)
+              {
+                m_monitor_check_timer.reset();
+                throw RestartNeeded("Need to restart task for the new iridium modem", 5.0);
+              }
+            }
+          }
+        }
       }
 
       void
@@ -525,7 +563,7 @@ namespace Transports
 
           return false;
         }
-        
+
         return true;
       }
 
@@ -577,7 +615,7 @@ namespace Transports
         case TxRxPriority::Tx:
           if (!transmissionSequence())
             receptionSequence();
-          
+
           if (m_tx_window.overflow())
           {
             m_prio = TxRxPriority::Rx;
@@ -589,15 +627,15 @@ namespace Transports
         case TxRxPriority::Rx:
           if (!receptionSequence())
             transmissionSequence();
-          
+
           if (m_rx_window.overflow())
           {
             m_prio = TxRxPriority::Tx;
             m_tx_window.setTop(m_args.tx_window);
           }
-          
+
           break;
-        
+
         default:
           m_prio = TxRxPriority::Tx;
           m_tx_window.setTop(m_args.tx_window);
