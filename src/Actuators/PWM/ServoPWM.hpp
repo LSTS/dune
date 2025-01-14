@@ -165,18 +165,25 @@ namespace Actuators
             m_task->err("Unable to export GPIO pin (%d)", m_gpio);
             return false;
           }
-          strcpy(setValue, GPIOString);
-          fwrite(&setValue, sizeof(char), 2, myOutputHandle);
-          fclose(myOutputHandle);
+          else
+          {
+            strcpy(setValue, GPIOString);
+            fwrite(&setValue, sizeof(char), 2, myOutputHandle);
+            fclose(myOutputHandle);
+          }
+
           // Set direction of the pin to an output
           if ((myOutputHandle = fopen(GPIODirection, "rb+")) == NULL)
           {
             m_task->err("Unable to open direction handle (%d)", m_gpio);
             return false;
           }
-          strcpy(setValue,"out");
-          fwrite(&setValue, sizeof(char), 3, myOutputHandle);
-          fclose(myOutputHandle);
+          else 
+          {
+            strcpy(setValue,"out");
+            fwrite(&setValue, sizeof(char), 3, myOutputHandle);
+            fclose(myOutputHandle);
+          }
 
           return true;
         }
