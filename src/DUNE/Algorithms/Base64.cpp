@@ -120,7 +120,7 @@ namespace DUNE
     std::string
     Base64::decode(const unsigned char* bytes, size_t len)
     {
-      if (len % 4 != 0) return NULL;
+      if (len % 4 != 0) return "";
 
       size_t msg_len = 0;
       msg_len = len / 4 * 3;
