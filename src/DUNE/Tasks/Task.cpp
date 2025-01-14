@@ -431,7 +431,7 @@ namespace DUNE
         {
           IMC::EntityState estate;
           setEntityState(IMC::EntityState::ESTA_FAILURE, e.what());
-          dispatch(estate);
+          dispatch(estate, DF_LOOP_BACK);
           err(DTR("task died with uncaught exception: %s: restarting"), e.what());
         }
       }
@@ -476,7 +476,7 @@ namespace DUNE
         params.params.push_back(p);
       }
 
-      dispatchReply(*msg, params, !m_args.loopback ? 0 : DF_LOOP_BACK);
+      dispatchReply(*msg, params, DF_LOOP_BACK);
     }
 
     void
@@ -676,7 +676,7 @@ namespace DUNE
       log_entry.context = getName();
       log_entry.htime = Time::Clock::getSinceEpoch();
 
-      dispatch(log_entry);
+      dispatch(log_entry, DF_LOOP_BACK);
 
       switch (type)
       {
