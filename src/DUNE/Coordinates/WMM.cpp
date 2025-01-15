@@ -138,6 +138,7 @@ namespace DUNE
       geo.lambda = Math::Angles::degrees(lon);
       geo.UseGeoid = false;
       geo.HeightAboveEllipsoid = h * 1e-03;
+      geo.HeightAboveGeoid = 0;
 
       MAG_GeodeticToSpherical(m_data->ellip, geo, &sph);
       MAG_Geomag(m_data->ellip, sph, geo, m_data->timed_mm, &gme);
