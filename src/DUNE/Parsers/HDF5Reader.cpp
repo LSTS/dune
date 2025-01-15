@@ -71,7 +71,7 @@ namespace DUNE
         *m_file = hdf5::file::open(filename, hdf5::file::AccessFlags::READONLY);
 
         if (m_file == nullptr)
-          throw;
+          throw std::runtime_error(DTR("Failed to open HDF5 file: nullptr detected."));
       }
       catch (...)
       {
