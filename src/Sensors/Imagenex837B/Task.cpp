@@ -767,6 +767,9 @@ namespace Sensors
       bool
       ping(unsigned data_point)
       {
+        if (m_tcp == NULL)
+          return false; 
+
         m_sdata[SD_PACKET_NUM] = (uint8_t)data_point;
         m_tcp->write((const char*)m_sdata, c_sdata_size);
 
@@ -820,6 +823,9 @@ namespace Sensors
       bool
       getEcho(void)
       {
+        if (m_udp == NULL)
+          return false;
+
         if (m_frame83P == NULL)
           return false;
 
