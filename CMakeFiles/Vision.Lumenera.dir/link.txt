@@ -1,0 +1,2 @@
+/usr/bin/ar qc libVision.Lumenera.a  CMakeFiles/Vision.Lumenera.dir/src/Vision/Lumenera/Task.cpp.o
+/usr/bin/ranlib libVision.Lumenera.a

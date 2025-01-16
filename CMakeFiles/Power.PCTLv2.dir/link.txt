@@ -1,0 +1,2 @@
+/usr/bin/ar qc libPower.PCTLv2.a  CMakeFiles/Power.PCTLv2.dir/src/Power/PCTLv2/Task.cpp.o
+/usr/bin/ranlib libPower.PCTLv2.a

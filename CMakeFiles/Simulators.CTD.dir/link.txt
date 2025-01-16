@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.CTD.a  CMakeFiles/Simulators.CTD.dir/src/Simulators/CTD/Task.cpp.o
+/usr/bin/ranlib libSimulators.CTD.a
