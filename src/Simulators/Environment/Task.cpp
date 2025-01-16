@@ -419,6 +419,9 @@ namespace Simulators
         QuadTree::Item item;
         Bounds* bounds = 0;
 
+        if (lines.size() == 0)
+          throw RestartNeeded("Bathymetry Data configuration empty", 5);
+        
         for (unsigned i = 0; i < lines.size(); ++i)
         {
           std::vector<double> v;
