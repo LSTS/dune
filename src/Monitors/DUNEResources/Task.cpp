@@ -32,7 +32,10 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -119,136 +122,40 @@ namespace Monitors
       getDUNECPUUsage(void)
       {
 #if defined(DUNE_OS_LINUX)
-        std::string command = "ps -p " + std::to_string(m_pid) + " -o %cpu --no-headers";
-        std::array<char, 128> buffer;
-        std::string result;
-        std::shared_ptr<FILE> pipe(popen(command.c_str(), "r"), pclose);
-        if (!pipe)
-        {
-          trace("Error getDUNECPUUsage: open pipe failed");
-          return -1;
-        }
-        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
-        {
-          result += buffer.data();
-        }
-        try
-        {
-          return std::stod(result);
-        }
-        catch (const std::invalid_argument& e)
-        {
-          trace("Error getDUNECPUUsage: %s", e.what());
-          return -1;
-        }
+        const std::string command = "ps -p " + std::to_string(m_pid) + " -o %cpu --no-headers";
 #elif defined(DUNE_OS_WINDOWS)
-        std::string command = "wmic path Win32_PerfFormattedData_PerfProc_Process "
-                              "where \"IDProcess="
-                              + std::to_string(m_pid) + "\" get PercentProcessorTime";
-
-        std::array<char, 128> buffer;
-        std::string result;
-        std::shared_ptr<FILE> pipe(_popen(command.c_str(), "r"), _pclose);
-
-        if (!pipe)
-        {
-          trace("Error getDUNECPUUsage: open pipe failed WMIC");
-          return -1;
-        }
-
-        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
-        {
-          result += buffer.data();
-        }
-
+        const std::string command = "wmic path Win32_PerfFormattedData_PerfProc_Process where \"IDProcess=" + std::to_string(m_pid) + "\" get PercentProcessorTime";
+#endif
         try
         {
-          size_t pos = result.find_first_of("0123456789");
-          if (pos != std::string::npos)
-          {
-            result = result.substr(pos);
-            return std::stod(result);
-          }
-          else
-          {
-            trace("Error getDUNECPUUsage: No numeric value found in result");
-            return -1;
-          }
+          std::string result = executeCommand(command);
+          return std::stod(trim(result));
         }
-        catch (const std::invalid_argument& e)
+        catch (const std::exception& e)
         {
           trace("Error getDUNECPUUsage: %s", e.what());
           return -1;
         }
-#endif
       }
 
       double
       getDUNERAMUsage(void)
       {
 #if defined(DUNE_OS_LINUX)
-        std::string command = "ps -p " + std::to_string(m_pid) + " -o rss --no-headers";
-        std::array<char, 128> buffer;
-        std::string result;
-        std::shared_ptr<FILE> pipe(popen(command.c_str(), "r"), pclose);
-
-        if (!pipe)
-        {
-          trace("Error getDUNERAMUsage: open pipe failed");
-          return -1;
-        }
-
-        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
-        {
-          result += buffer.data();
-        }
-
-        try
-        {
-          return std::stod(result) / 1024.0;  // Return in MB
-        }
-        catch (const std::invalid_argument& e)
-        {
-          trace("Error getDUNERAMUsage: %s", e.what());
-          return -1;
-        }
+        const std::string command = "ps -p " + std::to_string(m_pid) + " -o rss --no-headers";
 #elif defined(DUNE_OS_WINDOWS)
-        std::string command = "wmic process where ProcessId=" + std::to_string(m_pid) + " get WorkingSetSize";
-        std::array<char, 128> buffer;
-        std::string result;
-        std::shared_ptr<FILE> pipe(_popen(command.c_str(), "r"), _pclose);
-
-        if (!pipe)
-        {
-          trace("Error getDUNERAMUsage: open pipe failed WMIC");
-          return -1;
-        }
-
-        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
-        {
-          result += buffer.data();
-        }
-
+        const std::string command = "wmic process where ProcessId=" + std::to_string(m_pid) + " get WorkingSetSize";
+#endif
         try
         {
-          size_t pos = result.find_first_of("0123456789");
-          if (pos != std::string::npos)
-          {
-            result = result.substr(pos);
-            return std::stod(result) / 1024.0 / 1024.0;  // Convert to MB
-          }
-          else
-          {
-            trace("Error getDUNERAMUsage: No numeric value found in result");
-            return -1;
-          }
+          std::string result = executeCommand(command);
+          return std::stod(trim(result)) / 1024.0; // Convert to MB
         }
-        catch (const std::invalid_argument& e)
+        catch (const std::exception& e)
         {
           trace("Error getDUNERAMUsage: %s", e.what());
           return -1;
         }
-#endif
       }
 
       void
@@ -256,18 +163,43 @@ namespace Monitors
       {
         inf("Cleaning RAM cache");
 #if defined(DUNE_OS_LINUX)
-        if(std::system("sync; echo 1 > /proc/sys/vm/drop_caches") != 0)
+        if (std::system("sync; echo 1 > /proc/sys/vm/drop_caches") != 0)
         {
           inf("Error cleanRamCache: Failed to clean cache");
         }
 #elif defined(DUNE_OS_WINDOWS)
-        std::system("echo \"\" > C:\\Windows\\Temp\\clean_cache.bat");
-        std::system("echo \"@echo off\" >> C:\\Windows\\Temp\\clean_cache.bat");
-        std::system("echo \"echo Cleaning cache...\" >> C:\\Windows\\Temp\\clean_cache.bat");
-        std::system("echo \"ipconfig /flushdns\" >> C:\\Windows\\Temp\\clean_cache.bat");
-        std::system("echo \"del /f /s /q C:\\Windows\\Temp\\*.*\" >> C:\\Windows\\Temp\\clean_cache.bat");
-        std::system("start C:\\Windows\\Temp\\clean_cache.bat");
+        std::system("powershell.exe -Command \"Clear-DnsClientCache; Remove-Item -Path C:\\Windows\\Temp\\* -Recurse -Force\"");
 #endif
+      }
+
+      //! Execute a command and capture the output.
+      std::string
+      executeCommand(const std::string& command)
+      {
+        std::array<char, 128> buffer;
+        std::stringstream result;
+        std::shared_ptr<FILE> pipe(popen(command.c_str(), "r"), pclose);
+
+        if (!pipe)
+        {
+          throw std::runtime_error("Failed to open pipe for command: " + command);
+        }
+
+        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
+        {
+          result << buffer.data();
+        }
+
+        return result.str();
+      }
+
+      //! Trim whitespace from both ends of a string.
+      std::string
+      trim(const std::string& str)
+      {
+        const auto start = str.find_first_not_of(" \t\n\r");
+        const auto end = str.find_last_not_of(" \t\n\r");
+        return (start == std::string::npos || end == std::string::npos) ? "" : str.substr(start, end - start + 1);
       }
 
       //! Main loop.
@@ -284,8 +216,6 @@ namespace Monitors
             double percentage = getDUNECPUUsage();
             double ram_usage = getDUNERAMUsage();
             trace("DUNE USAGE: CPU: %d %% | RAM: %d MB", (int)percentage, (int)ram_usage);
-            //char entity_state_text[128];
-            //std::sprintf(entity_state_text, "active | CPU: %d %% | RAM: %d MB", (int)percentage, (int)ram_usage);
             std::string entity_state_text = "active | CPU: " + std::to_string((int)percentage) + " % | RAM: " + std::to_string((int)ram_usage) + " MB";
             setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(entity_state_text.c_str())));
             m_dune_usage.value = (uint8_t)percentage;
