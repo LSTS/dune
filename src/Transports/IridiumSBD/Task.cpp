@@ -552,10 +552,17 @@ namespace Transports
             break;
 
           spew("removing expired");
-          if ((*itr)->getLastError() == NULL || (*itr)->getLastError().empty())
-            sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+          std::string msg = (*itr)->getLastError();
+          const char* errorMsg = msg.c_str();
+          if (errorMsg != nullptr && *errorMsg != '\0')
+          {
+              msg = errorMsg;
+              sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_ERROR, msg);
+          }
           else
-            sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_ERROR, (*itr)->getLastError());
+          {
+              sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+          }
           delete *itr;
           itr = m_tx_requests.erase(itr);
         }
