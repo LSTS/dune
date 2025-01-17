@@ -476,6 +476,7 @@ namespace Transports
 
         if (m_tx_request->hasExpired())
         {
+          inf(DTR("Message transmission hasExpired, re-enqueueing. (req id: %u)"), m_tx_request->getId());
           sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_ERROR,
               String::str(DTR("failed with error %u"), err_code));
           m_tx_requests.erase(std::remove(m_tx_requests.begin(), m_tx_requests.end(), m_tx_request), m_tx_requests.end());
@@ -484,6 +485,7 @@ namespace Transports
         }
 
         // Not expired, warn and re-enqueue
+        inf(DTR("Message transmission failed. (req id: %u)"), m_tx_request->getId());
         sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_QUEUED,
             String::str(DTR("re-enqueue, failed with error %u"), err_code));
         m_tx_request->setLastError(String::str(DTR("failed with error %u"), err_code));
