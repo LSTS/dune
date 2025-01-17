@@ -285,6 +285,7 @@ namespace Transports
 
           debug("manufacturer: %s", m_driver->getManufacturer().c_str());
           inf("Model: %s | IMEI: %s", m_driver->getModel().c_str(), m_driver->getIMEI().c_str());
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
         catch (std::runtime_error& e)
         {
