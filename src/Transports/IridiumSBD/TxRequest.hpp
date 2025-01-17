@@ -152,7 +152,7 @@ namespace Transports
       }
 
       void
-      setLastError(const std::string& error)
+      setLastError(const std::string error)
       {
         m_last_error = error;
       }
