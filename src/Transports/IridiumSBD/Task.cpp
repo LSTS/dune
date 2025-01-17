@@ -458,7 +458,7 @@ namespace Transports
         debug("dequeing message");
         m_driver->clearBufferMO();
         sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_OK);
-        inf(DTR("Message sent successfully."));
+        inf(DTR("Message sent successfully. (req id: %u)"), m_tx_request->getId());
         Memory::clear(m_tx_request);
       }
 
@@ -474,9 +474,19 @@ namespace Transports
         debug("invalidating MSN");
         m_tx_request->invalidateMSN();
 
-        sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_ERROR,
-            String::str(DTR("failed with error %u"), err_code));
+        if (m_tx_request->hasExpired())
+        {
+          sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_ERROR,
+              String::str(DTR("failed with error %u"), err_code));
+          m_tx_requests.erase(std::remove(m_tx_requests.begin(), m_tx_requests.end(), m_tx_request), m_tx_requests.end());
+          Memory::clear(m_tx_request);
+          return;
+        }
 
+        // Not expired, warn and re-enqueue
+        sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_QUEUED,
+            String::str(DTR("re-enqueue, failed with error %u"), err_code));
+        m_tx_request->setLastError(String::str(DTR("failed with error %u"), err_code));
         enqueueTxRequest(m_tx_request);
         m_tx_request = NULL;
       }
@@ -539,7 +549,10 @@ namespace Transports
             break;
 
           spew("removing expired");
-          sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+          if ((*itr)->getLastError() == NULL || (*itr)->getLastError().empty())
+            sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+          else
+            sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_ERROR, (*itr)->getLastError());
           delete *itr;
           itr = m_tx_requests.erase(itr);
         }
