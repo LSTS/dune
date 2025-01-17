@@ -52,7 +52,8 @@ namespace Transports
         m_src_adr(src_adr),
         m_src_eid(src_eid),
         m_req_id(req_id),
-        m_msn(-1)
+        m_msn(-1),
+        m_last_error("")
       {
         m_expiration = DUNE::Time::Clock::get() + ttl;
 
@@ -144,6 +145,24 @@ namespace Transports
         return DUNE::Time::Clock::get() > getExpiration();
       }
 
+      std::string
+      getLastError(void)
+      {
+        return m_last_error;
+      }
+
+      void
+      setLastError(const std::string error)
+      {
+        m_last_error = error;
+      }
+
+      void
+      clearLastError(void)
+      {
+        m_last_error.clear();
+      }
+
     private:
       //! Requester IMC address.
       uint16_t m_src_adr;
@@ -157,6 +176,8 @@ namespace Transports
       double m_expiration;
       //! Data to be transmitted.
       std::vector<uint8_t> m_data;
+      //! Last error message.
+      std::string m_last_error;
     };
   }
 }
