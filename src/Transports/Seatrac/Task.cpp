@@ -806,6 +806,8 @@ namespace Transports
       handleRxMessage(const std::string& str)
       {
         IMC::UamRxFrame msg;
+        if(!str.empty())
+          return;
         msg.data.assign((uint8_t*) &str[0], (uint8_t*) &str[str.size()]);
 
         // Lookup source system name.
