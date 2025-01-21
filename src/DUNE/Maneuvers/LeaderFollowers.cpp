@@ -41,10 +41,9 @@ namespace DUNE
       Maneuver(name, ctx)
     {
       // Control step period is ignored if negative
-      param("Control Step Frequency", m_cstep_period)
-      .units(Units::Hertz)
-      .defaultValue("-1.0")
-      .description("Ignored on negative values");
+      param("Leader", m_leader)
+      .defaultValue("false")
+      .description("True if this vehicle is the formation leader");
 
       bindToManeuver<LeaderFollowers, IMC::VehicleFormation>();
       bind<IMC::EstimatedState>(this, true);
@@ -57,7 +56,6 @@ namespace DUNE
     void
     LeaderFollowers::onUpdateParameters(void)
     {
-      m_cstep_period = 1.0 / m_cstep_period;
     }
 
     bool
@@ -207,11 +205,6 @@ namespace DUNE
     LeaderFollowers::consume(const IMC::EstimatedState* msg)
     {
       if (m_approach)
-        return;
-
-      double now = msg->getTimeStamp();
-
-      if (m_cstep_period > 0 && now - m_cstep_time < m_cstep_period)
         return;
 
       step(*msg);

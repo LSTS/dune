@@ -227,10 +227,17 @@ namespace DUNE
       {
         return m_speed;
       }
+
       uint8_t
       getSpeedUnits()
       {
         return m_speed_units;
+      }
+      
+      bool
+      isLeader()
+      {
+        return m_leader;
       }
 
     private:
@@ -241,12 +248,12 @@ namespace DUNE
       int m_fidx; //!< Formation index.
       double m_rlat; // Reference latitude set.
       double m_rlon; // Reference longitude set.
-      double m_cstep_period; //! control step period
       double m_cstep_time; //! time of last control step
       IMC::DesiredPath m_path;
       IMC::DesiredZ m_depth;
       double m_speed;
       uint8_t m_speed_units;
+      bool m_leader;
 
       bool
       initParticipants(const IMC::VehicleFormation*);
