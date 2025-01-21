@@ -37,6 +37,7 @@
 // DUNE headers.
 #include <DUNE/IMC.hpp>
 #include <DUNE/Maneuvers/Maneuver.hpp>
+#include <DUNE/Math/Constants.hpp>
 
 namespace DUNE
 {
@@ -132,7 +133,7 @@ namespace DUNE
       //! @param f_index formation index (vehicle)
       //! @return corresponding traj. point, optionally displaced by formation index offsets
       TPoint
-      point(int t_index, int f_index = -1) const;
+      point(int t_index, int f_index = -1);
 
       //! Get number of points in the trajetory.
       inline size_t
@@ -239,6 +240,15 @@ namespace DUNE
 
       bool
       initTrajectory(const IMC::VehicleFormation*);
+
+      double
+      normalizeRadian(double a)
+      {
+        if (a < 0)
+          a = Math::c_two_pi + a;
+
+        return a;
+      }
     };
   }
 }

@@ -27,6 +27,7 @@
 // Author: Eduardo Marques                                                  *
 //***************************************************************************
 
+#include <DUNE/Math/Angles.hpp>
 #include <DUNE/Coordinates.hpp>
 #include <DUNE/Maneuvers/LeaderFollowers.hpp>
 
@@ -274,24 +275,36 @@ namespace DUNE
     }
 
     LeaderFollowers::TPoint
-    LeaderFollowers::point(int t_index, int f_index) const
+    LeaderFollowers::point(int t_index, int f_index)
     {
       TPoint p = m_traj[t_index];
 
       if (f_index >= 0)
       {
         const Participant& v = participant(f_index);
-
         double bearing;
         double range;
-
         Coordinates::toPolar(v, &bearing, &range);
 
-        if ((size_t)t_index < trajectory_points() - 1)
-          bearing += Coordinates::getBearing(p, m_traj[t_index + 1]);
-        else
-          bearing += Coordinates::getBearing(m_traj[t_index - 2], p);
+        double offset = 0;
 
+        if (t_index == 0)
+        {
+          offset = Coordinates::getBearing(p, m_traj[t_index + 1]);
+        }
+        else if ((size_t)t_index == trajectory_points() - 1)
+        {
+          offset = Coordinates::getBearing(m_traj[t_index - 1], p);
+        }
+        else
+        {
+          double leg_1_bearing = normalizeRadian(Coordinates::getBearing(m_traj[t_index - 1], p));
+          double leg_2_bearing = normalizeRadian(Coordinates::getBearing(p, m_traj[t_index + 1]));
+          offset = leg_1_bearing + (leg_2_bearing - leg_1_bearing) / 2;
+        }
+
+        offset = Math::Angles::normalizeRadian(offset);
+        bearing = Math::Angles::normalizeRadian(bearing + offset);
         Coordinates::displace(p, bearing, range);
         p.z += v.z;
       }
