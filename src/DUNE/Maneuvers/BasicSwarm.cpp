@@ -29,7 +29,8 @@
 
 #include <DUNE/Math/Angles.hpp>
 #include <DUNE/Coordinates.hpp>
-#include <DUNE/Maneuvers/LeaderFollowers.hpp>
+#include <DUNE/Maneuvers/BasicSwarm.hpp>
+
 
 namespace DUNE
 {
@@ -37,7 +38,7 @@ namespace DUNE
   {
     using namespace DUNE::IMC;
 
-    LeaderFollowers::LeaderFollowers(const std::string& name, Tasks::Context& ctx):
+    BasicSwarm::BasicSwarm(const std::string& name, Tasks::Context& ctx):
       Maneuver(name, ctx)
     {
       // Control step period is ignored if negative
@@ -45,21 +46,21 @@ namespace DUNE
       .defaultValue("false")
       .description("True if this vehicle is the formation leader");
 
-      bindToManeuver<LeaderFollowers, IMC::VehicleFormation>();
+      bindToManeuver<BasicSwarm, IMC::VehicleFormation>();
       bind<IMC::EstimatedState>(this, true);
       bind<IMC::RemoteState>(this);
     }
 
-    LeaderFollowers::~LeaderFollowers(void)
+    BasicSwarm::~BasicSwarm(void)
     { }
 
     void
-    LeaderFollowers::onUpdateParameters(void)
+    BasicSwarm::onUpdateParameters(void)
     {
     }
 
     bool
-    LeaderFollowers::initParticipants(const IMC::VehicleFormation* maneuver)
+    BasicSwarm::initParticipants(const IMC::VehicleFormation* maneuver)
     {
       int idx = 0;
       int local_addr = getSystemId();
@@ -119,7 +120,7 @@ namespace DUNE
     }
 
     bool
-    LeaderFollowers::initTrajectory(const IMC::VehicleFormation* maneuver)
+    BasicSwarm::initTrajectory(const IMC::VehicleFormation* maneuver)
     {
       TPoint begin;
 
@@ -151,7 +152,7 @@ namespace DUNE
     }
 
     void
-    LeaderFollowers::consume(const IMC::VehicleFormation* msg)
+    BasicSwarm::consume(const IMC::VehicleFormation* msg)
     {
       if (!initParticipants(msg) || !initTrajectory(msg))
         return;
@@ -188,7 +189,7 @@ namespace DUNE
     }
 
     void
-    LeaderFollowers::onPathControlState(const IMC::PathControlState* pcs)
+    BasicSwarm::onPathControlState(const IMC::PathControlState* pcs)
     {
       if (pcs->flags & IMC::PathControlState::FL_NEAR)
       {
@@ -202,19 +203,18 @@ namespace DUNE
     }
 
     void
-    LeaderFollowers::consume(const IMC::EstimatedState* msg)
+    BasicSwarm::consume(const IMC::EstimatedState* msg)
     {
       if (m_approach)
         return;
 
       step(*msg);
-      m_cstep_time = now;
       m_rlat = msg->lat;
       m_rlon = msg->lon;
     }
 
     void
-    LeaderFollowers::consume(const IMC::RemoteState* msg)
+    BasicSwarm::consume(const IMC::RemoteState* msg)
     {
       std::map<int, int>::iterator itr = m_addr2idx.find(msg->getSource());
 
@@ -223,13 +223,13 @@ namespace DUNE
     }
 
     void
-    LeaderFollowers::toLocalCoordinates(double lat, double lon, double* x, double* y)
+    BasicSwarm::toLocalCoordinates(double lat, double lon, double* x, double* y)
     {
       Coordinates::WGS84::displacement(m_rlat, m_rlon, 0, lat, lon, 0, x, y);
     }
 
     void
-    LeaderFollowers::onManeuverDeactivation(void)
+    BasicSwarm::onManeuverDeactivation(void)
     {
       onReset();
 
@@ -240,7 +240,7 @@ namespace DUNE
     }
 
     void
-    LeaderFollowers::desiredPath(const TPoint& s, const TPoint& e, double speed, uint8_t speed_units, double radius)
+    BasicSwarm::desiredPath(const TPoint& s, const TPoint& e, double speed, uint8_t speed_units, double radius)
     {
       m_path.start_lat = m_rlat;
       m_path.start_lon = m_rlon;
@@ -262,7 +262,7 @@ namespace DUNE
     }
 
     void
-    LeaderFollowers::desiredSpeed(double value, uint8_t units)
+    BasicSwarm::desiredSpeed(double value, uint8_t units)
     {
       m_path.speed = value;
       m_path.speed_units = units;
@@ -273,8 +273,8 @@ namespace DUNE
       dispatch(speed);
     }
 
-    LeaderFollowers::TPoint
-    LeaderFollowers::point(int t_index, int f_index)
+    BasicSwarm::TPoint
+    BasicSwarm::point(int t_index, int f_index)
     {
       TPoint p = m_traj[t_index];
 

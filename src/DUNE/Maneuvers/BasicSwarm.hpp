@@ -44,20 +44,20 @@ namespace DUNE
   namespace Maneuvers
   {
     // Export DLL Symbol.
-    // class DUNE_DLL_SYM LeaderFollowers;
+    class DUNE_DLL_SYM BasicSwarm;
 
     //! Abstract base class for vehicle formation maneuver tasks.
-    class LeaderFollowers: public Maneuver
+    class BasicSwarm: public Maneuver
     {
     public:
       //! Constructor.
       //! @param name name.
       //! @param ctx context.
-      LeaderFollowers(const std::string& name, Tasks::Context& ctx);
+      BasicSwarm(const std::string& name, Tasks::Context& ctx);
 
       //! Destructor.
       virtual
-      ~LeaderFollowers(void);
+      ~BasicSwarm(void);
 
       virtual void
       onUpdateParameters(void);
@@ -195,14 +195,6 @@ namespace DUNE
           return 0xFFFF;
 
         return itr->second;
-      }
-
-      //! Get control step period.
-      //! @return control step period.
-      inline double
-      controlPeriod(void) const
-      {
-        return m_cstep_period;
       }
 
       //! Check if maneuver is still in approach stage (i.e. moving to the initial point).
