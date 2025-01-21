@@ -132,7 +132,7 @@ namespace DUNE
 
       IMC::MessageList<IMC::TrajectoryPoint>::const_iterator itr;
 
-      for(itr = list->begin() + 1; itr != list->end(); itr++)
+      for(itr = list->begin(); itr != list->end(); itr++)
       {
         TPoint p;
         p.x = (*itr)->x + begin.x;
