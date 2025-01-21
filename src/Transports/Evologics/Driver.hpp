@@ -429,6 +429,9 @@ namespace Transports
         long unsigned int data_size = 0;
         int rv = 0;
 
+        if(!str.empty())
+          return;
+
         rv = std::sscanf(str.c_str(),
                          "RECV,%lu,%u,%u,%u,%f,%u,%u,%f,%n",
                          &data_size, &msg.src, &msg.dst, &msg.bitrate, &msg.rssi,
@@ -504,7 +507,7 @@ namespace Transports
 
         if ((unsigned)offset >= str.size())
           throw std::runtime_error("empty payload");
-
+          
         msg.data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
       }
 
