@@ -56,8 +56,10 @@ namespace Maneuver
           static const int c_queue_size = 20;
           //! Number of current waypoint number
           int m_curr;
-          //! Previously assigned waypoint
+          //! Previously assigned participant waypoint
           TPoint m_prev;
+          //! Previously assigned virtual waypoint
+          TPoint m_prev_virtual;
           //! Circular buffer used to save last few estimated states every second
           Utils::CircularBuffer<IMC::EstimatedState> m_queue;
           //! Task arguments
@@ -88,9 +90,10 @@ namespace Maneuver
             (void)maneuver;
 
             m_prev = point(0, formation_index()); //Initiate m_prev as first waypoint
+            m_prev_virtual = point(0);
 
             // Initiate waypoint counter at zero
-            m_curr = 0;
+            m_curr = 1;
           }
 
           void
@@ -122,6 +125,7 @@ namespace Maneuver
           onPathCompletion(void)
           {
             TPoint next;
+            TPoint next_virtual;
 
             // If it is the first time the function on Path Completion is being called
             if (m_curr == 0)
@@ -144,12 +148,14 @@ namespace Maneuver
             // next.x = point(m_curr,formation_index()).x + m_delta(0);
             // next.y = point(m_curr,formation_index()).y + m_delta(1);
             next = point(m_curr, formation_index());
+            next_virtual = point(m_curr);
 
-            // How do we use t?
-            // next.t = point(m_curr, formation_index()).t - m_args.kf* m_delta(0);
+            double distance = getRange(m_prev, next);
+            double distance_virtual = getRange(m_prev_virtual, next_virtual);
+            double speed = (distance / distance_virtual) * getSpeed();
 
             // throw a leg of TPoints to be followed by the vehicle
-            desiredPath(m_prev, next);
+            desiredPath(m_prev, next, speed, getSpeedUnits());
 
             ++m_curr;
             m_prev = next;
