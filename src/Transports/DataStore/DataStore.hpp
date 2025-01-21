@@ -286,7 +286,10 @@ namespace Transports
 
         // no data can be added
         if (added.empty())
+        {
+          delete ret;
           return NULL;
+        }
 
         ret->base_lat = added.at(0)->latDegs;
         ret->base_lon = added.at(0)->lonDegs;
