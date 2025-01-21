@@ -13,7 +13,7 @@ namespace Actuators
     using DUNE_NAMESPACES;
 
     //! Path to PWM interface
-    static const char c_pwm_path[] = "/sys/class/pwm/pwmchip0/pwm";
+    static const char c_pwm_path[] = "/sys/class/pwm/pwmchip";
 
     enum FileFlags
     {
@@ -27,84 +27,98 @@ namespace Actuators
     class DirectPWM
     {
     public:
-      DirectPWM(DUNE::Tasks::Task* task, int channel):
+      //! Constructor
+      //! @param task parent task object
+      //! @param chip_id pwm chip id
+      //! @param channel pwm channel
+      //! @param period pwm initial period
+      //! @param duty_cycle pwm initial duty cycle
+      DirectPWM(DUNE::Tasks::Task* task, unsigned chip_id, int channel, uint32_t period = 202'000,
+                uint32_t duty_cycle = 12'500):
         m_task(task),
+        m_chip(chip_id),
         m_channel(channel)
       {
-        m_path_enable = c_pwm_path + String::str(m_channel) + "/enable";
-        m_path_period = c_pwm_path + String::str(m_channel) + "/period";
-        m_path_duty_cycle = c_pwm_path + String::str(m_channel) + "/duty_cycle";
+        std::string pchip_path = c_pwm_path + String::str(chip_id) + "/";
+        std::string export_path = pchip_path + "export";
+
+        writeChannel(export_path);
+
+        m_path_enable = pchip_path + "pwm" + String::str(m_channel) + "/enable";
+        m_path_period = pchip_path + "pwm" + String::str(m_channel) + "/period";
+        m_path_duty_cycle = pchip_path + "pwm" + String::str(m_channel) + "/duty_cycle";
 
         // validate file path interface
         validateFile(m_path_enable.c_str(), F_EXISTS | F_READ | F_WRITE);
         validateFile(m_path_period.c_str(), F_EXISTS | F_READ | F_WRITE);
         validateFile(m_path_duty_cycle.c_str(), F_EXISTS | F_READ | F_WRITE);
 
-        char buff[2];
-        m_outputFile = fopen(m_path_period.c_str(), "wb");
-        if (m_outputFile == NULL)
-          throw std::runtime_error("Failed to set period 20'000 in " + m_path_period);
-
-        setPeriod(20'000);
-
-        m_outputFile = fopen(m_path_enable.c_str(), "rb+");
-        if (m_outputFile == NULL)
-          throw std::runtime_error("Failed enable pwm " + m_path_enable);
-
-        strcpy(buff, "1");
-        fwrite(&buff, sizeof(char), 1, m_outputFile);
-        fclose(m_outputFile);
+        setPeriod(period);
+        setDutyCycle(duty_cycle);
+        enable();
       }
 
       ~DirectPWM(void)
       {
-        char buff[2];
-        m_outputFile = fopen(m_path_enable.c_str(), "rb+");
-        if (m_outputFile == NULL)
-          m_task->err("Failed disable pwm %s", m_path_enable.c_str());
-
-        strcpy(buff, "0");
-        fwrite(&buff, sizeof(char), 1, m_outputFile);
-        fclose(m_outputFile);
+        disable();
+        writeChannel(c_pwm_path + String::str(m_chip) + "/unexport");
       }
 
       void
-      setDutyCycle(uint32_t _duty)
+      setDutyCycle(uint32_t us)
       {
-        m_outputFile = fopen(m_path_duty_cycle.c_str(), "wb");
-        if (m_outputFile == NULL)
-        {
-          m_task->err("Failed to set duty cycle PWM %d", m_channel);
-          return;
-        }
-
-        char buf[64];
-
-        _duty *= 1000;
-        sprintf(buf, "%u", _duty);
-        fwrite(&buf, sizeof(char), sizeof(buf), m_outputFile);
-        fclose(m_outputFile);
+        m_task->spew("set pwm%d channel %d duty cycle %u us", m_chip, m_channel, us);
+        writeToFile(m_path_duty_cycle, String::str(us * 1000));
       }
 
       void
-      setPeriod(uint32_t _period)
+      setPeriod(uint32_t us)
       {
-        m_outputFile = fopen(m_path_period.c_str(), "wb");
-        if (m_outputFile == NULL)
-        {
-          m_task->err("Failed to period PWM %d", m_channel);
-          return;
-        }
+        m_task->spew("set pwm%d channel %d period %u us", m_chip, m_channel, us);
+        writeToFile(m_path_period, String::str(us * 1000));
+      }
 
-        char buf[64];
+      void
+      enable(void)
+      {
+        writeToFile(m_path_enable, "1");
+        m_task->spew("enable pwm%d channel %d", m_chip, m_channel);
+      }
 
-        _period *= 1000;
-        sprintf(buf, "%u", _period);
-        fwrite(&buf, sizeof(char), sizeof(buf), m_outputFile);
-        fclose(m_outputFile);
+      void
+      disable(void)
+      {
+        writeToFile(m_path_enable, "0");
+        m_task->spew("disable pwm%d channel %d", m_chip, m_channel);
       }
 
     private:
+      //! Write channel to path
+      //! @param fd path to export pwm channel
+      //! Used to export/unexport pwm channel to pwmchip
+      void
+      writeChannel(const std::string& fd)
+      {
+        // validate file path interface
+        validateFile(fd.c_str(), F_EXISTS | F_WRITE);
+
+        writeToFile(fd, String::str(m_channel));
+      }
+
+      //! Write value to file
+      //! @param fd path to file
+      //! @param value value to write
+      void
+      writeToFile(const std::string& fd, const std::string& val)
+      {
+        m_outputFile = fopen(fd.c_str(), "wb");
+        if (m_outputFile == NULL)
+          throw std::runtime_error("Failed to write to file " + fd);
+
+        fwrite(val.c_str(), sizeof(char), val.length(), m_outputFile);
+        fclose(m_outputFile);
+      }
+
       //! Check if file exists
       //! @param path path to file
       //! @return true if file exists, false otherwise
@@ -169,6 +183,8 @@ namespace Actuators
       std::string m_path_duty_cycle;
       //! Period PWM path
       std::string m_path_period;
+      //! PWM Chip ID
+      unsigned m_chip;
       //! PWM Channel
       int m_channel;
     };
