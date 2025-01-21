@@ -560,7 +560,10 @@ namespace Vision
         std::vector<std::string> header;
         std::vector<std::string>::iterator it;
         size_t jpg_size = 0;
-
+        
+        if (m_http == NULL)
+          return false;
+         
         m_http->skipToBoundary(m_boundary);
         m_timestamp = Clock::getSinceEpoch();
         m_http->getHeader(header);
