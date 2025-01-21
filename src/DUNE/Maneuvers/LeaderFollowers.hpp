@@ -214,13 +214,24 @@ namespace DUNE
       }
 
       void
-      desiredPath(const TPoint& start, const TPoint& end, double radius = -1);
+      desiredPath(const TPoint& start, const TPoint& end, double speed, uint8_t speed_units, double radius = -1);
 
       void
       desiredSpeed(double value, uint8_t speed_units);
 
       void
       toLocalCoordinates(double lat, double lon, double* x, double* y);
+
+      double
+      getSpeed()
+      {
+        return m_speed;
+      }
+      uint8_t
+      getSpeedUnits()
+      {
+        return m_speed_units;
+      }
 
     private:
       std::vector<TPoint> m_traj; //!< Trajectory points.
@@ -234,6 +245,8 @@ namespace DUNE
       double m_cstep_time; //! time of last control step
       IMC::DesiredPath m_path;
       IMC::DesiredZ m_depth;
+      double m_speed;
+      uint8_t m_speed_units;
 
       bool
       initParticipants(const IMC::VehicleFormation*);

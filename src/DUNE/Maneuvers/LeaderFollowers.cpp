@@ -179,6 +179,9 @@ namespace DUNE
       m_path.speed = msg->speed;
       m_path.speed_units = msg->speed_units;
 
+      m_speed = msg->speed;
+      m_speed_units = msg->speed_units;
+
       dispatch(m_path);
 
       m_approach = true; // signal approach stage
@@ -244,7 +247,7 @@ namespace DUNE
     }
 
     void
-    LeaderFollowers::desiredPath(const TPoint& s, const TPoint& e, double radius)
+    LeaderFollowers::desiredPath(const TPoint& s, const TPoint& e, double speed, uint8_t speed_units, double radius)
     {
       m_path.start_lat = m_rlat;
       m_path.start_lon = m_rlon;
@@ -258,6 +261,9 @@ namespace DUNE
 
       m_path.lradius = radius;
       m_path.flags = 0; // IMC::DesiredPath::FL_START;
+
+      m_path.speed = speed;
+      m_path.speed_units = speed_units;
 
       dispatch(m_path);
     }
