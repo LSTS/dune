@@ -47,7 +47,7 @@ namespace Actuators
     struct Arguments
     {
       //! PWM Channels
-      std::vector<unsigned> channels;
+      std::vector<std::string> channels;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -63,9 +63,8 @@ namespace Actuators
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
-        param("Channels", m_args.channels)
-          .defaultValue("0, 1")
-          .description("List of PWM channels active. Values separated by comma.");
+        param("PWM", m_args.channels)
+          .description("List of <PWM chip>:<Channel>:<Period>:<Duty Cycle>");
 
         bind<IMC::SetServoPosition>(this);
         bind<IMC::SetPWM>(this);
@@ -95,24 +94,51 @@ namespace Actuators
       void
       onResourceInitialization(void)
       {
-        for (size_t i = 0; i < m_args.channels.size(); i++)
-          createPWMChannel(m_args.channels[i]);
-
-        if (m_channel.empty())
+        try
         {
-          setEntityState(IMC::EntityState::ESTA_BOOT, "No PWM channels initialized");
-          return;
+          tryParseArgs();
+        }
+        catch (const std::exception& e)
+        {
+          throw RestartNeeded(e.what(), 10);
         }
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
-      createPWMChannel(int idx)
+      tryParseArgs(void)
+      {
+        for (const std::string& str : m_args.channels)
+        {
+          auto [chip, channel, period, dc] = parsePWM(str);
+          createPWMChannel(chip, channel, period, dc);
+        }
+      }
+
+      std::tuple<unsigned, int, uint32_t, uint32_t>
+      parsePWM(const std::string& str)
+      {
+        std::vector<std::string> parts;
+        String::split(str, ":", parts);
+
+        if (parts.size() != 4)
+          throw std::runtime_error("Invalid PWM format <chip:idx:period:dc> : " + str);
+
+        unsigned chip = std::stoi(parts[0]);
+        int channel = std::stoi(parts[1]);
+        uint32_t period = std::stoi(parts[2]);
+        uint32_t dc = std::stoi(parts[3]);
+
+        return { chip, channel, period, dc };
+      }
+
+      void
+      createPWMChannel(unsigned chip, int idx, uint32_t period, uint32_t dc)
       {
         try
         {
-          m_channel.emplace(idx, DirectPWM(this, idx));
+          m_channel.try_emplace(idx, this, chip, idx, period, dc);
         }
         catch (const std::exception& e)
         {
@@ -122,7 +148,7 @@ namespace Actuators
           return;
         }
 
-        inf("PWM channel %d initialized", idx);
+        inf("PWM chip %d channel %d initialized", chip, idx);
       }
 
       //! Release resources.
@@ -132,35 +158,6 @@ namespace Actuators
         m_channel.clear();
       }
 
-      void
-      consume(const IMC::SetServoPosition* msg)
-      {
-        debug("Setting Servo %d to %f - %d ", msg->id, msg->value, radToDutycycle(msg->value));
-
-        auto iter = m_channel.find(msg->id);
-        if (iter == m_channel.end())
-        {
-          debug("Channel %d not initialized", msg->id);
-          return;
-        }
-
-        DirectPWM& ref = iter->second;
-        ref.setDutyCycle(radToDutycycle(msg->value));
-      }
-
-      uint32_t
-      radToDutycycle(fp32_t rad)
-      {
-        float angle = Angles::degrees(rad);
-        if (angle < -90)
-          angle = -90;
-        else if (angle > 90)
-          angle = 90;
-
-        return angle * 5.5 + 1495;
-        // y = mx + b
-        // m = (-90 - 90)/(1000 - 2000) ; b = 1000 - (-90*m)
-      }
       void
       consume(const IMC::SetPWM* msg)
       {
