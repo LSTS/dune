@@ -143,9 +143,7 @@ namespace Maneuver
             // offset by a certain amount m_delta, updated when a new message is received
             // next.x = point(m_curr,formation_index()).x + m_delta(0);
             // next.y = point(m_curr,formation_index()).y + m_delta(1);
-            next.x = point(m_curr, formation_index()).x;
-            next.y = point(m_curr, formation_index()).y;
-            next.z = point(m_curr, formation_index()).z;
+            next = point(m_curr, formation_index());
 
             // How do we use t?
             // next.t = point(m_curr, formation_index()).t - m_args.kf* m_delta(0);
