@@ -530,7 +530,10 @@ namespace Plan
           IMC::MessageList<IMC::Maneuver> maneuvers;
 
           double lat, lon, depth;
-          getCurrentPosition(&lat, &lon, &depth);
+          if (!getCurrentPosition(&lat, &lon, &depth))
+          {
+            throw std::runtime_error(DTR("Current position is invalid"));
+          }
 
           IMC::Elevator* surface = new IMC::Elevator();
           surface->flags = IMC::Elevator::FLG_CURR_POS;
