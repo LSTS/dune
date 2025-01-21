@@ -93,8 +93,10 @@ namespace Simulators
         if (has_amass)
           vehicle->setAddedMassCoef(addedmass);
         else
+        {
+          delete vehicle;
           return 0;
-
+        }
         // Retrieve lift coefficient.
         double bodylift[8];
         bool has_lift = cfg.getList(section, "Body Lift Coefficients", bodylift, 8);
@@ -122,7 +124,11 @@ namespace Simulators
       double imatrix[6];
       bool has_imatrix = cfg.getList(section, "Inertial Matrix", imatrix, 6);
       if (!has_imatrix)
+      {
+        delete vehicle;
         return 0;
+      }
+      
       vehicle->setMassProp(mass, imatrix);
 
       // Retrieve linear drag coefficient.
