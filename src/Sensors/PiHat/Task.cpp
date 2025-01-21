@@ -169,7 +169,7 @@ namespace Sensors
 
         for (size_t i = 0; i < 8; i++)
         {
-          auto& ref = m_dirs[i];
+          uint16_t (&ref)[8][8] = m_dirs[i];
           if ((i % 2) == 0)
           {
             memcpy(ref, m_normal, sizeof(ref));

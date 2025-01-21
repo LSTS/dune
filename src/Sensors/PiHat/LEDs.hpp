@@ -63,7 +63,7 @@ namespace Sensors
           return;
         }
 
-        fb = (led_fb*)mmap(0, 128, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0);
+        fb = static_cast<led_fb*>(mmap(0, 128, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0));
         if (!fb)
           throw std::runtime_error("Cannot mmap framebuffer device.");
       }
