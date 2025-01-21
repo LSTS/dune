@@ -230,7 +230,7 @@ namespace Transports
         {
           int64_t size = Path(files[i]).size();
 
-          if (size < 0)
+          if (size < 1)
             continue;
 
           growBuffer(size);
