@@ -33,6 +33,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers
+#include "AcousticProtocol.hpp"
+
 namespace Maneuver
 {
   namespace VehicleFormation
@@ -62,18 +65,94 @@ namespace Maneuver
         Utils::CircularBuffer<IMC::EstimatedState> m_queue;
         //! Task arguments
         Arguments m_args;
+        //! Acoustic protocol
+        AcousticProtocol m_comms;
+        //! Acknowledgement timer
+        Time::Counter<double> m_ack_timer;
+        //! Received ack id
+        uint16_t m_rcv_ack_id;
+        //! Leader id
+        unsigned int m_leader_id;
 
         Task(const std::string& name, DUNE::Tasks::Context& ctx):
           BasicSwarm(name, ctx),
-          m_queue(c_queue_size)
+          m_queue(c_queue_size),
+          m_comms(this),
+          m_rcv_ack_id(IMC::AddressResolver::invalid()),
+          m_leader_id(IMC::AddressResolver::invalid())
         {
-
+          bind<IMC::UamRxFrame>(this, true);
         }
 
         void
         onUpdateParameters(void)
         {
           BasicSwarm::onUpdateParameters();
+
+          if (isLeader())
+            m_leader_id = getSystemId();
+        }
+
+        //! On resource initialization
+        void
+        onResourceInitialization(void)
+        {
+          Maneuver::onResourceInitialization();
+          m_ack_timer.setTop(10);
+        }
+
+        void
+        consume(const IMC::UamRxFrame * msg)
+        {
+          if (!m_comms.validate(msg))
+            return;
+
+          switch (msg->data[1])
+          {
+            case CODE_ACK:
+              recvAck(msg);
+              break;
+            case CODE_LEADER:
+              recvLeader(msg);
+              break;
+            default:
+              debug("Invalid acoustic code: %u", msg->data[1]);
+              break;
+          }
+        }
+
+        void
+        recvAck(const IMC::UamRxFrame* msg)
+        {
+          m_rcv_ack_id = resolveSystemName(msg->sys_src);
+        }
+
+        void
+        recvLeader(const IMC::UamRxFrame* msg)
+        {
+          m_leader_id = resolveSystemName(msg->sys_src);
+          m_comms.sendAck(msg->sys_src);
+        }
+
+        //! This is blocking!
+        bool
+        waitAck(uint16_t sys_id)
+        {
+          m_rcv_ack_id = IMC::AddressResolver::invalid();
+          m_ack_timer.reset();
+          while (!m_ack_timer.overflow())
+          {
+            waitForMessages(1.0);
+
+            if (sys_id == m_rcv_ack_id)
+            {
+               m_rcv_ack_id = IMC::AddressResolver::invalid();
+               return true;
+            }
+          }
+
+          m_rcv_ack_id = IMC::AddressResolver::invalid();
+          return false;
         }
 
         //! Close matlab logged vectors
@@ -92,6 +171,49 @@ namespace Maneuver
 
           // Initiate waypoint counter at zero
           m_curr = 1;
+
+          // Setup leader
+          if (isLeader())
+            sendLeader();
+          else
+            waitForLeader();
+
+        }
+
+        void
+        sendLeader()
+        {
+          for(size_t i = 0; i < participants(); i++)
+          {
+            if ((int)i == formation_index())
+              continue;
+
+            const Participant& part = participant(i);
+
+            int retries = 0;
+            while (retries < 5)
+            {
+              m_comms.sendLeader(resolveSystemId(part.vid));
+              if (waitAck(part.vid))
+                break;
+              else
+                retries++;
+            }
+          }
+        }
+
+        void
+        waitForLeader()
+        {
+          Time::Counter<double> wait;
+          wait.setTop(40);
+          while (!wait.overflow())
+          {
+            if (m_leader_id != IMC::AddressResolver::invalid())
+              return;
+          }
+
+          signalError(DTR("Timedout waiting for leader id"));
         }
 
         void
