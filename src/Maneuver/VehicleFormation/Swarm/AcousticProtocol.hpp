@@ -148,13 +148,7 @@ namespace Maneuver
         sendLeader(const std::string& sys)
         {
           std::vector<uint8_t> data;
-
-          unsigned int leader_id = m_task->getSystemId();
-
-          data.resize(sizeof(unsigned int) + 1);
-          data[0] = CODE_LEADER;
-          std::memcpy(&data[1], &leader_id, sizeof(unsigned int));
-
+          data.push_back(CODE_LEADER);
           sendFrame(sys, 0, data, false);
         }
 
