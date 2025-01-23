@@ -46,9 +46,10 @@ namespace Maneuver
         CODE_ACK    = 0x00,
         CODE_READY  = 0x01,
         CODE_LEADER = 0x02,
-        CODE_SETUP  = 0x03,
-        CODE_NEXT   = 0x04,
-        CODE_POS    = 0x05
+        CODE_START  = 0x03,
+        CODE_SETUP  = 0x04,
+        CODE_NEXT   = 0x05,
+        CODE_POS    = 0x06
       };
 
       struct Point
@@ -153,6 +154,14 @@ namespace Maneuver
         }
 
         void
+        sendStart(const std::string& sys)
+        {
+          std::vector<uint8_t> data;
+          data.push_back(CODE_START);
+          sendFrame(sys, 0, data, false);
+        }
+
+        void
         sendFrame(const std::string& sys, const uint16_t id, const std::vector<uint8_t>& data, bool ack)
         {
           DUNE::Algorithms::CRC8 crc(c_poly);
@@ -196,7 +205,6 @@ namespace Maneuver
             debug(DUNE::Utils::String::str("unknown system name: %s", msg->sys_src.c_str()));
             return false;
           }
-
           (void)imc_addr_src;
 
           uint16_t imc_addr_dst = 0;
