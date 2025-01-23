@@ -229,6 +229,9 @@ namespace Transports
           debug("limited communications simulation is not active");
           m_comm_limitations = false;
         }
+
+        if (m_listener != NULL)
+          m_listener->setTrace(m_args.trace_in);
       }
 
       void

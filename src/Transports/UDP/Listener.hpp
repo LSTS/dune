@@ -57,7 +57,13 @@ namespace Transports
         m_trace(trace),
         m_contacts(contact_timeout),
         m_lcomms(lcomms)
-      {  }
+      { }
+
+      void
+      setTrace(bool trace)
+      {
+        m_trace = trace;
+      }
 
       void
       getContacts(std::vector<Contact>& list)
