@@ -73,13 +73,21 @@ namespace Maneuver
         uint16_t m_rcv_ack_id;
         //! Leader id
         unsigned int m_leader_id;
+        //! Ready state of participants
+        std::map<int, bool> m_ready_state;
+        //! Start flag
+        bool m_start;
+        //! Send next point
+        bool m_send_next;
 
         Task(const std::string& name, DUNE::Tasks::Context& ctx):
           BasicSwarm(name, ctx),
           m_queue(c_queue_size),
           m_comms(this),
           m_rcv_ack_id(IMC::AddressResolver::invalid()),
-          m_leader_id(IMC::AddressResolver::invalid())
+          m_leader_id(IMC::AddressResolver::invalid()),
+          m_start(false),
+          m_send_next(false)
         {
           bind<IMC::UamRxFrame>(this, true);
         }
@@ -115,6 +123,12 @@ namespace Maneuver
             case CODE_LEADER:
               recvLeader(msg);
               break;
+            case CODE_READY:
+              recvReady(msg);
+              break;
+            case CODE_START:
+              recvStart(msg);
+              break;
             default:
               debug("Invalid acoustic code: %u", msg->data[1]);
               break;
@@ -132,6 +146,38 @@ namespace Maneuver
         {
           m_leader_id = resolveSystemName(msg->sys_src);
           m_comms.sendAck(msg->sys_src);
+        }
+
+        void
+        recvReady(const IMC::UamRxFrame* msg)
+        {
+          if (!isLeader())
+            return;
+
+          int idx = formation_index(resolveSystemName(msg->sys_src));
+          if (idx == 0xFFFF)
+          {
+            war("Received ready message from non-participant: %s", msg->sys_src.c_str());
+            return;
+          }
+
+          std::map<int, bool>::iterator itr = m_ready_state.find(idx);
+          if (itr == m_ready_state.end())
+          {
+            war("Received ready message from non-participant: %s", msg->sys_src.c_str());
+            return;
+          }
+
+          itr->second = true;
+        }
+
+        void
+        recvStart(const IMC::UamRxFrame* msg)
+        {
+          if (m_leader_id != resolveSystemName(msg->sys_src))
+            return;
+
+          m_start = true;
         }
 
         //! This is blocking!
@@ -165,6 +211,25 @@ namespace Maneuver
         onInit(const IMC::VehicleFormation* maneuver)
         {
           (void)maneuver;
+
+          // Send next point
+          m_send_next = false;
+
+          //! Reset ready state (Leader)
+          if (isLeader())
+          {
+            m_ready_state.clear();
+            for(size_t idx = 0; idx < participants(); idx++)
+            {
+              if ((int)idx == formation_index())
+                continue;
+
+              m_ready_state[idx] = false;
+            } 
+          }
+
+          //! Reset start flag
+          m_start = false;
 
           m_prev = point(0, formation_index()); //Initiate m_prev as first waypoint
           m_prev_virtual = point(0);
@@ -216,6 +281,19 @@ namespace Maneuver
           signalError(DTR("Timedout waiting for leader id"));
         }
 
+        bool
+        isFormationReady()
+        {
+          std::map<int, bool>::iterator itr;
+          for (itr = m_ready_state.begin(); itr != m_ready_state.end(); itr++)
+          {
+            if (itr->second == false)
+              return false;
+          }
+
+          return true;
+        }
+
         void
         onUpdate(int f_index, const IMC::RemoteState& rstate)
         {
@@ -244,24 +322,55 @@ namespace Maneuver
         void
         onPathCompletion(void)
         {
-          TPoint next;
-          TPoint next_virtual;
-
-          // If it is the first time the function on Path Completion is being called
-          if (m_curr == 0)
-          {
-            m_prev.x = m_estate.x;
-            m_prev.y = m_estate.y;
-            m_prev.z = m_estate.depth;
-            m_prev.t = 0.0;
-          }
-
           // if the current waypoint is the last, then all is done
           if ((size_t)m_curr == trajectory_points())
           {
             signalCompletion(); // All done
             return; // All done
           }
+
+          m_send_next = true;
+        } // End of function onPathCompletion
+
+        void
+        onStateReport()
+        {
+          if (!m_send_next)
+            return;
+
+          TPoint next;
+          TPoint next_virtual;
+
+          if (m_curr == 1)
+          {
+            setControl(IMC::CL_NONE);
+            Time::Counter<double> timeout(20.0);
+            Time::Counter<double> send_ready(2.0);
+            while(!(m_start || timeout.overflow()))
+            {
+              waitForMessages(1.0);
+              
+              if (!isLeader())
+              {
+                if (send_ready.overflow())
+                {
+                  m_comms.sendReady(resolveSystemId(m_leader_id));
+                  send_ready.reset();
+                }
+              }
+              else
+              {
+                if (isFormationReady())
+                {
+                  m_start = true;
+                  m_comms.sendStart("broadcast");
+                  break;
+                }
+              }
+            }
+            setControl(IMC::CL_PATH);
+          }
+
 
           // the trajectory given to the present vehicle will always be the original one
           // offset by a certain amount m_delta, updated when a new message is received
@@ -279,33 +388,7 @@ namespace Maneuver
 
           ++m_curr;
           m_prev = next;
-        } // End of function onPathCompletion
-
-        //! Function for finding values of x and y through linear interpolation
-        Matrix
-        findXY(IMC::EstimatedState a, IMC::EstimatedState b, double t)
-        {
-          double xa_ts = linearInterpolation(LinIntParam<double>(a.x,
-                                                                b.x,
-                                                                a.getTimeStamp(),
-                                                                b.getTimeStamp(),
-                                                                t));
-          double ya_ts = linearInterpolation(LinIntParam<double>(a.y,
-                                                                b.y,
-                                                                a.getTimeStamp(),
-                                                                b.getTimeStamp(),
-                                                                t));
-          double pa_ts[2] = {xa_ts, ya_ts};
-
-          return Matrix(pa_ts, 2, 1);
-        }
-
-        //! Function to convert meters per second to actuation using a linearized relation
-        //! between the two
-        double
-        toActuation(double desired_mps, double max_mps, double max_act, double min_mps, double min_act)
-        {
-          return (desired_mps - min_mps) * (max_act - min_act) / (max_mps - min_mps) + min_act;
+          m_send_next = false;
         }
       };
     }
