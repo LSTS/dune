@@ -22,6 +22,33 @@ enum SpeedUnits {
     PERCENTAGE = 2;
 }
 
+// Enum Maneuver Type
+enum ManeuverType {
+    GOTO = 0;
+    FOLLOWPATH = 1;
+    //Teleoperation
+    //YoYo
+}
+
+// Enum Entity Parameter Name
+enum ParameterName {
+    ACTIVE = 0;
+    BOTTOM_TRACK_MINIMUM_DEPTH = 1;
+}
+
+// Enum False True
+enum FalseTrue {
+    FALSE = 0;
+    TRUE = 1;
+}
+
+//Enum EntityName 
+enum EntityName {
+    PATH_CONTROL = 0;
+    RANGER = 1; 
+    ACOUSTIC_MODEM = 2;
+}
+
 // Estimated State
 message EstimatedState {
     option (dccl.msg) = { codec_version: 4 id: 350 max_bytes: 80};
@@ -83,4 +110,49 @@ message PathPoint {
     float x = 1 [(dccl.field) = { min: -20000  max: 20000  precision: 1  }];
     float y = 2 [(dccl.field) = { min: -20000 max: 20000  precision: 1 }];
     float z = 3 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
+}
+
+// Maneuver - message group
+message Maneuver{   
+    option (dccl.msg) = { codec_version: 4 id: 1 max_bytes: 300};
+    oneof ManeuverUnion{
+        Goto goto_maneuver = 1 ;
+        FollowPath followpath_maneuver = 2;
+        //TODO: Insert here other maneuvers from Message-Group Maneuver
+    }
+}
+
+// ParameterValue
+message ParameterValue{   
+    option (dccl.msg) = { codec_version: 4 id: 2 max_bytes: 300};
+    oneof ParameterValueUnion{
+        float value_number = 1 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+        FalseTrue value_bool = 2;
+    }
+}
+
+
+// EntityParameter
+message EntityParameter {
+    option (dccl.msg) = { codec_version: 4 id: 801 max_bytes: 20};
+    ParameterName name = 1;
+    ParameterValue value = 2;
+}
+
+//EntityParameters
+message EntityParameters {
+    option (dccl.msg) = { codec_version: 4 id: 802 max_bytes: 40};
+    EntityName name = 1; 
+    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 3 }];
+}
+
+
+// PlanManeuver 
+message PlanManeuver {
+    option (dccl.msg) = { codec_version: 4 id: 552 max_bytes: 400};
+    ManeuverType maneuver_type = 1;
+    int32 maneuver_number = 2 [(dccl.field) = { min: 0 max: 50}];
+    Maneuver data = 3;
+    repeated EntityParameters start_actions = 4 [(dccl.field) = { max_repeat: 5 }];
+    //end action
 }
