@@ -46,7 +46,10 @@ namespace Maneuver
 
       struct Arguments
       {
-
+        double ack_timeout;
+        double leader_setup_timeout;
+        double start_setup_timeout;
+        double send_ready_interval;
       };
 
       struct Task: public DUNE::Maneuvers::BasicSwarm
@@ -67,8 +70,6 @@ namespace Maneuver
         Arguments m_args;
         //! Acoustic protocol
         AcousticProtocol m_comms;
-        //! Acknowledgement timer
-        Time::Counter<double> m_ack_timer;
         //! Received ack id
         uint16_t m_rcv_ack_id;
         //! Leader id
@@ -89,6 +90,26 @@ namespace Maneuver
           m_start(false),
           m_send_next(false)
         {
+          param("Acknowledgement Timeout", m_args.ack_timeout)
+          .units(Units::Second)
+          .defaultValue("10.0")
+          .description("Acknowledgement timeout");
+
+          param("Leader Setup Timeout", m_args.leader_setup_timeout)
+          .units(Units::Second)
+          .defaultValue("40.0")
+          .description("Leader setup timeout");
+
+          param("Start Setup Timeout", m_args.start_setup_timeout)
+          .units(Units::Second)
+          .defaultValue("20.0")
+          .description("Start setup timeout");
+
+          param("Send Ready Interval", m_args.send_ready_interval)
+          .units(Units::Second)
+          .defaultValue("2.0")
+          .description("Send code READY interval");
+
           bind<IMC::UamRxFrame>(this, true);
         }
 
@@ -106,7 +127,6 @@ namespace Maneuver
         onResourceInitialization(void)
         {
           Maneuver::onResourceInitialization();
-          m_ack_timer.setTop(10);
         }
 
         void
@@ -168,6 +188,7 @@ namespace Maneuver
             return;
           }
 
+          trace("Received code READY from: %s", msg->sys_src.c_str());
           itr->second = true;
         }
 
@@ -177,6 +198,7 @@ namespace Maneuver
           if (m_leader_id != resolveSystemName(msg->sys_src))
             return;
 
+          trace("Received code START from: %s", msg->sys_src.c_str());
           m_start = true;
         }
 
@@ -185,8 +207,8 @@ namespace Maneuver
         waitAck(uint16_t sys_id)
         {
           m_rcv_ack_id = IMC::AddressResolver::invalid();
-          m_ack_timer.reset();
-          while (!m_ack_timer.overflow())
+          Time::Counter<double> ack_timer(m_args.ack_timeout);
+          while (!ack_timer.overflow())
           {
             waitForMessages(1.0);
 
@@ -217,16 +239,7 @@ namespace Maneuver
 
           //! Reset ready state (Leader)
           if (isLeader())
-          {
-            m_ready_state.clear();
-            for(size_t idx = 0; idx < participants(); idx++)
-            {
-              if ((int)idx == formation_index())
-                continue;
-
-              m_ready_state[idx] = false;
-            } 
-          }
+            resetReadyState();
 
           //! Reset start flag
           m_start = false;
@@ -238,11 +251,12 @@ namespace Maneuver
           m_curr = 1;
 
           // Setup leader
+          debug("Starting leader setup...");
           if (isLeader())
             sendLeader();
           else
             waitForLeader();
-
+          debug("Leader setup done. Leader is %s", resolveSystemId(m_leader_id));
         }
 
         void
@@ -270,8 +284,7 @@ namespace Maneuver
         void
         waitForLeader()
         {
-          Time::Counter<double> wait;
-          wait.setTop(40);
+          Time::Counter<double> wait(m_args.leader_setup_timeout);
           while (!wait.overflow())
           {
             if (m_leader_id != IMC::AddressResolver::invalid())
@@ -292,6 +305,19 @@ namespace Maneuver
           }
 
           return true;
+        }
+
+        void
+        resetReadyState()
+        {
+          m_ready_state.clear();
+          for(size_t idx = 0; idx < participants(); idx++)
+          {
+            if ((int)idx == formation_index())
+              continue;
+
+            m_ready_state[idx] = false;
+          } 
         }
 
         void
@@ -341,11 +367,13 @@ namespace Maneuver
           TPoint next;
           TPoint next_virtual;
 
+          // Synchronize on first point
           if (m_curr == 1)
           {
+            debug("Setting up start...");
             setControl(IMC::CL_NONE);
-            Time::Counter<double> timeout(20.0);
-            Time::Counter<double> send_ready(2.0);
+            Time::Counter<double> timeout(m_args.start_setup_timeout);
+            Time::Counter<double> send_ready(m_args.send_ready_interval);
             while(!(m_start || timeout.overflow()))
             {
               waitForMessages(1.0);
@@ -354,6 +382,7 @@ namespace Maneuver
               {
                 if (send_ready.overflow())
                 {
+                  trace("Sending code READY");
                   m_comms.sendReady(resolveSystemId(m_leader_id));
                   send_ready.reset();
                 }
@@ -362,6 +391,7 @@ namespace Maneuver
               {
                 if (isFormationReady())
                 {
+                  trace("Sending code START");
                   m_start = true;
                   m_comms.sendStart("broadcast");
                   break;
@@ -369,8 +399,8 @@ namespace Maneuver
               }
             }
             setControl(IMC::CL_PATH);
+            debug("Start setup done");
           }
-
 
           // the trajectory given to the present vehicle will always be the original one
           // offset by a certain amount m_delta, updated when a new message is received
