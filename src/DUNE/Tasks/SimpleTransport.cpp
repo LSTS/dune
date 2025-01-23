@@ -66,6 +66,9 @@ namespace DUNE
     void
     SimpleTransport::consume(const IMC::Message* msg)
     {
+      if (msg->getSource() != getSystemId())
+        return;
+      
       if (m_rl.filter(msg))
         return;
 
