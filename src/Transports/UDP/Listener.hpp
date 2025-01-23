@@ -139,7 +139,7 @@ namespace Transports
             m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
             if (m_trace)
-              msg->toText(std::cerr);
+              DUNE_MSG(m_task.getName(), "incoming: " + std::string(msg->getName()));
 
             delete msg;
           }
