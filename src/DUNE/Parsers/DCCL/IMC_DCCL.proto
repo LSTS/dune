@@ -49,6 +49,12 @@ enum EntityName {
     ACOUSTIC_MODEM = 2;
 }
 
+//Enum TransitionCondition 
+enum TransitionCondition {
+    MANEUVERISDONE = 0;
+    //Others?
+}
+
 // Estimated State
 message EstimatedState {
     option (dccl.msg) = { codec_version: 4 id: 350 max_bytes: 80};
@@ -158,7 +164,25 @@ message ManeuverID {
 message PlanManeuver {
     option (dccl.msg) = { codec_version: 4 id: 552 max_bytes: 400};
     ManeuverID maneuver_id = 1;
-    Maneuver data = 3;
-    repeated EntityParameters start_actions = 4 [(dccl.field) = { max_repeat: 5 }];
+    Maneuver data = 2;
+    repeated EntityParameters start_actions = 3 [(dccl.field) = { max_repeat: 5 }];
     //end action
 }
+
+
+// TransitionConditions 
+message TransitionConditions {
+    option (dccl.msg) = { codec_version: 4 id: 4 max_bytes: 30};
+    repeated TransitionCondition conditions = 1 [(dccl.field) = { max_repeat: 5 }];
+}
+
+
+// PlanTransition 
+message PlanTransition {
+    option (dccl.msg) = { codec_version: 4 id: 553 max_bytes: 400};
+    ManeuverID source_man = 1;
+    ManeuverID dest_man = 2;
+    TransitionConditions conditions = 3;
+    //TODO: TransitionActions
+}
+
