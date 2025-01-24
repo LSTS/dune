@@ -785,6 +785,8 @@ namespace DUNE
         std::string active_scope;
         //! Visibility of 'Active' parameter.
         std::string active_visibility;
+        //! Loopback internal messages
+        bool loopback;
       };
 
       //! Message recipient (queue).

@@ -229,6 +229,9 @@ namespace Transports
           debug("limited communications simulation is not active");
           m_comm_limitations = false;
         }
+
+        if (m_listener != NULL)
+          m_listener->setTrace(m_args.trace_in);
       }
 
       void
@@ -321,6 +324,9 @@ namespace Transports
       void
       consume(const IMC::Message* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
         if (m_lcomms->isActive())
         {
           if (msg->getId() == DUNE_IMC_ESTIMATEDSTATE)
@@ -337,7 +343,7 @@ namespace Transports
           return;
 
         if (m_args.trace_out)
-          msg->toText(std::cerr);
+          DUNE_MSG(getName(), "outgoing: " + std::string(msg->getName()));
 
         uint16_t rv;
         try
