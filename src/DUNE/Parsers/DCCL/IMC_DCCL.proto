@@ -146,12 +146,18 @@ message EntityParameters {
     repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 3 }];
 }
 
+// ManeuverID (composed by maneuver_type and maneuver_number (max number in the maneuver name = 50))
+message ManeuverID {
+    option (dccl.msg) = { codec_version: 4 id: 3 max_bytes: 30};
+    ManeuverType maneuver_type = 1;
+    int32 maneuver_number = 2 [(dccl.field) = { min: 0 max: 50}];
+}
+
 
 // PlanManeuver 
 message PlanManeuver {
     option (dccl.msg) = { codec_version: 4 id: 552 max_bytes: 400};
-    ManeuverType maneuver_type = 1;
-    int32 maneuver_number = 2 [(dccl.field) = { min: 0 max: 50}];
+    ManeuverID maneuver_id = 1;
     Maneuver data = 3;
     repeated EntityParameters start_actions = 4 [(dccl.field) = { max_repeat: 5 }];
     //end action
