@@ -157,33 +157,11 @@ namespace DUNE
       if (!initParticipants(msg) || !initTrajectory(msg))
         return;
 
-      setControl(IMC::CL_PATH);
-
-      const Participant& part = self();
-      m_path.end_lat = msg->lat;
-      m_path.end_lon = msg->lon;
-
-      double b1, r1, b2, r2;
-      Coordinates::toPolar(part, &b1, &r1);
-      Coordinates::toPolar(m_traj[0], &b2, &r2);
-      TPoint start_p;
-      start_p.x = 0;
-      start_p.y = 0;
-      Coordinates::displace(start_p, b1 + b2, r1);
-      Coordinates::WGS84::displace(start_p.x, start_p.y, &m_path.end_lat, &m_path.end_lon);
+      m_approach = true; // signal approach stage
 
       m_path.end_z_units = msg->z_units;
-      m_path.end_z = msg->z + part.z;
-
-      m_path.speed = msg->speed;
-      m_path.speed_units = msg->speed_units;
-
       m_speed = msg->speed;
       m_speed_units = msg->speed_units;
-
-      dispatch(m_path);
-
-      m_approach = true; // signal approach stage
 
       onInit(msg);
     }
@@ -205,9 +183,6 @@ namespace DUNE
     void
     BasicSwarm::consume(const IMC::EstimatedState* msg)
     {
-      if (m_approach)
-        return;
-
       step(*msg);
       m_rlat = msg->lat;
       m_rlon = msg->lon;
@@ -226,6 +201,14 @@ namespace DUNE
     BasicSwarm::toLocalCoordinates(double lat, double lon, double* x, double* y)
     {
       Coordinates::WGS84::displacement(m_rlat, m_rlon, 0, lat, lon, 0, x, y);
+    }
+
+    void
+    BasicSwarm::fromLocalCoordinates(double x, double y, float* lat, float* lon)
+    {
+      *lat = m_rlat;
+      *lon = m_rlon;
+      Coordinates::WGS84::displace(x, y, lat, lon);
     }
 
     void

@@ -214,6 +214,9 @@ namespace DUNE
       void
       toLocalCoordinates(double lat, double lon, double* x, double* y);
 
+      void
+      fromLocalCoordinates(double x, double y, float* lat, float* lon);
+
       double
       getSpeed()
       {
