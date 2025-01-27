@@ -56,16 +56,12 @@ namespace Maneuver
       {
         //! last state update
         IMC::EstimatedState m_estate;
-        //! Circular Buffer fixed size
-        static const int c_queue_size = 20;
         //! Number of current waypoint number
         int m_curr;
         //! Previously assigned participant waypoint
         TPoint m_prev;
         //! Previously assigned virtual waypoint
         TPoint m_prev_virtual;
-        //! Circular buffer used to save last few estimated states every second
-        Utils::CircularBuffer<IMC::EstimatedState> m_queue;
         //! Task arguments
         Arguments m_args;
         //! Acoustic protocol
@@ -83,7 +79,6 @@ namespace Maneuver
 
         Task(const std::string& name, DUNE::Tasks::Context& ctx):
           BasicSwarm(name, ctx),
-          m_queue(c_queue_size),
           m_comms(this),
           m_rcv_ack_id(IMC::AddressResolver::invalid()),
           m_leader_id(IMC::AddressResolver::invalid()),
@@ -244,9 +239,6 @@ namespace Maneuver
           //! Reset start flag
           m_start = false;
 
-          m_prev = point(0, formation_index()); //Initiate m_prev as first waypoint
-          m_prev_virtual = point(0);
-
           // Setup leader
           debug("Starting leader setup...");
           if (isLeader())
@@ -261,8 +253,11 @@ namespace Maneuver
           TPoint start;
           start.x = m_estate.x;
           start.y = m_estate.y;
-          // should prepare for altitude??
           start.z = m_estate.depth;
+
+          // Initiate m_prev as first waypoint
+          m_prev = point(0, formation_index());
+          m_prev_virtual = point(0);
 
           desiredPath(start, m_prev, maneuver->speed, maneuver->speed_units);
 
@@ -287,9 +282,18 @@ namespace Maneuver
               trace("Sending code LEADER to %s...", part_name.c_str());
               m_comms.sendLeader(part_name);
               if (waitAck(part.vid))
+              {
                 break;
+              }
               else
+              {
                 retries--;
+                if (retries == 0)
+                {
+                  signalError(String::str("Timedout setting up leader with %s", part_name.c_str()));
+                  return;
+                }
+              }
             }
           }
         }
@@ -331,7 +335,6 @@ namespace Maneuver
             if ((int)idx == formation_index())
               continue;
 
-            war("INDEX: %d", idx);
             m_ready_state[idx] = false;
           } 
         }
@@ -345,19 +348,6 @@ namespace Maneuver
         void
         step(const IMC::EstimatedState& estate)
         {
-          // save Estimated States into queue everytime formation_control runs
-          // ... queue is assumed to be a collection of Estimated States of the present vehicle with 1.0 sec step between timestamps
-
-          if (!m_queue.getSize()) // also means that it is the first time this function was called
-          {
-            m_queue.add(estate);
-          }
-          // this statement compares the received estimated_state with the last one saved in the queue
-          else if (estate.getTimeStamp() - m_queue(m_queue.getSize() - 1).getTimeStamp() >= 1.0)
-          {
-            m_queue.add(estate);
-          }
-
           m_estate = estate;
         }
 
@@ -390,7 +380,7 @@ namespace Maneuver
             setControl(IMC::CL_NONE);
             Time::Counter<double> timeout(m_args.start_setup_timeout);
             Time::Counter<double> send_ready(m_args.send_ready_interval);
-            while(!(m_start || timeout.overflow()))
+            while(!m_start)
             {
               waitForMessages(1.0);
               
@@ -413,15 +403,17 @@ namespace Maneuver
                   break;
                 }
               }
+
+              if (timeout.overflow())
+              {
+                signalError("Timedout waiting for start");
+                return;
+              }
             }
             setControl(IMC::CL_PATH);
             debug("Start setup done");
           }
 
-          // the trajectory given to the present vehicle will always be the original one
-          // offset by a certain amount m_delta, updated when a new message is received
-          // next.x = point(m_curr,formation_index()).x + m_delta(0);
-          // next.y = point(m_curr,formation_index()).y + m_delta(1);
           next = point(m_curr, formation_index());
           next_virtual = point(m_curr);
 
