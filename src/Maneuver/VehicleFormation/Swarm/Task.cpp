@@ -158,12 +158,14 @@ namespace Maneuver
         void
         recvAck(const IMC::UamRxFrame* msg)
         {
+          trace("Received code ACK from: %s", msg->sys_src.c_str());
           m_rcv_ack_id = resolveSystemName(msg->sys_src);
         }
 
         void
         recvLeader(const IMC::UamRxFrame* msg)
         {
+          trace("Received code LEADER from: %s", msg->sys_src.c_str());
           m_leader_id = resolveSystemName(msg->sys_src);
           m_comms.sendAck(msg->sys_src);
         }
@@ -177,14 +179,14 @@ namespace Maneuver
           int idx = formation_index(resolveSystemName(msg->sys_src));
           if (idx == 0xFFFF)
           {
-            war("Received ready message from non-participant: %s", msg->sys_src.c_str());
+            war("Received code READY from non-participant: %s", msg->sys_src.c_str());
             return;
           }
 
           std::map<int, bool>::iterator itr = m_ready_state.find(idx);
           if (itr == m_ready_state.end())
           {
-            war("Received ready message from non-participant: %s", msg->sys_src.c_str());
+            war("Received code READY from non-participant: %s", msg->sys_src.c_str());
             return;
           }
 
@@ -232,8 +234,6 @@ namespace Maneuver
         void
         onInit(const IMC::VehicleFormation* maneuver)
         {
-          (void)maneuver;
-
           // Send next point
           m_send_next = false;
 
@@ -247,9 +247,6 @@ namespace Maneuver
           m_prev = point(0, formation_index()); //Initiate m_prev as first waypoint
           m_prev_virtual = point(0);
 
-          // Initiate waypoint counter at zero
-          m_curr = 1;
-
           // Setup leader
           debug("Starting leader setup...");
           if (isLeader())
@@ -257,6 +254,20 @@ namespace Maneuver
           else
             waitForLeader();
           debug("Leader setup done. Leader is %s", resolveSystemId(m_leader_id));
+
+          // Send to first point
+          setControl(IMC::CL_PATH);
+
+          TPoint start;
+          start.x = m_estate.x;
+          start.y = m_estate.y;
+          // should prepare for altitude??
+          start.z = m_estate.depth;
+
+          desiredPath(start, m_prev, maneuver->speed, maneuver->speed_units);
+
+          // Initiate waypoint counter at one
+          m_curr = 1;
         }
 
         void
@@ -269,14 +280,16 @@ namespace Maneuver
 
             const Participant& part = participant(i);
 
-            int retries = 0;
-            while (retries < 5)
+            int retries = 5;
+            while (retries > 0)
             {
-              m_comms.sendLeader(resolveSystemId(part.vid));
+              std::string part_name = resolveSystemId(part.vid);
+              trace("Sending code LEADER to %s...", part_name.c_str());
+              m_comms.sendLeader(part_name);
               if (waitAck(part.vid))
                 break;
               else
-                retries++;
+                retries--;
             }
           }
         }
@@ -287,6 +300,8 @@ namespace Maneuver
           Time::Counter<double> wait(m_args.leader_setup_timeout);
           while (!wait.overflow())
           {
+            waitForMessages(1.0);
+
             if (m_leader_id != IMC::AddressResolver::invalid())
               return;
           }
@@ -316,6 +331,7 @@ namespace Maneuver
             if ((int)idx == formation_index())
               continue;
 
+            war("INDEX: %d", idx);
             m_ready_state[idx] = false;
           } 
         }
