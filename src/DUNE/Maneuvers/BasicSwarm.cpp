@@ -157,11 +157,14 @@ namespace DUNE
       if (!initParticipants(msg) || !initTrajectory(msg))
         return;
 
-      m_approach = true; // signal approach stage
-
+      if (msg->z_units != Z_DEPTH)
+        signalError(DTR("Unsuported z units"));
+      
       m_path.end_z_units = msg->z_units;
       m_speed = msg->speed;
       m_speed_units = msg->speed_units;
+
+      m_approach = true; // signal approach stage
 
       onInit(msg);
     }
