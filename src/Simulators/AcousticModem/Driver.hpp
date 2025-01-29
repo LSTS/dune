@@ -371,9 +371,7 @@ namespace Simulators
 
             //Remove from queue
             delete op;
-            auto next_it = std::next(it);
-            m_queue.erase(it);
-            it = next_it;
+            it = m_queue.erase(it);
           }
           else
           {
