@@ -51,8 +51,8 @@
 #include <DUNE/Math/General.hpp>
 #include <DUNE/Parsers/Config.hpp>
 
-#define ALLOCD(count) (double*)std::malloc(sizeof(double) * (count))
-#define ALLOCI(count) (int*)std::malloc(sizeof(int) * (count))
+#define ALLOCD(count) std::shared_ptr<double[]>(new double[count], std::default_delete<double[]>());
+#define ALLOCI(count) std::shared_ptr<int[]>(new int[count], std::default_delete<int[]>());
 
 namespace DUNE
 {
@@ -65,8 +65,7 @@ namespace DUNE
       m_nrows(0),
       m_ncols(0),
       m_size(0),
-      m_data(NULL),
-      m_counter(NULL)
+      m_data(NULL)
     { }
 
     Matrix::Matrix(size_t r, size_t c)
@@ -77,10 +76,7 @@ namespace DUNE
       m_nrows = r;
       m_ncols = c;
       m_size = r * c;
-      m_data = ALLOCD(m_size + 1);
-
-      m_counter = m_data + m_size;
-      *m_counter = 1;
+      m_data = ALLOCD(m_size);
     }
 
     Matrix::Matrix(size_t r, size_t c, double value)
@@ -91,10 +87,7 @@ namespace DUNE
       m_nrows = r;
       m_ncols = c;
       m_size = r * c;
-      m_data = ALLOCD(m_size + 1);
-
-      m_counter = m_data + m_size;
-      *m_counter = 1;
+      m_data = ALLOCD(m_size);
 
       fill(value);
     }
@@ -108,13 +101,10 @@ namespace DUNE
       if (m_size)
       {
         m_data = m.m_data;
-        m_counter = m.m_counter;
-        ++(*m_counter);
       }
       else
       {
         m_data = NULL;
-        m_counter = NULL;
       }
     }
 
@@ -126,12 +116,9 @@ namespace DUNE
       m_nrows = r;
       m_ncols = c;
       m_size = r * c;
-      m_data = ALLOCD(m_size + 1);
+      m_data = ALLOCD(m_size);
 
-      m_counter = m_data + m_size;
-      *m_counter = 1;
-
-      std::memcpy(m_data, data, m_size * sizeof(double));
+      std::memcpy(m_data.get(), data, m_size * sizeof(double));
     }
 
 
@@ -143,10 +130,7 @@ namespace DUNE
       m_nrows = n;
       m_ncols = n;
       m_size = n * n;
-      m_data = ALLOCD(m_size + 1);
-
-      m_counter = m_data + m_size;
-      *m_counter = 1;
+      m_data = ALLOCD(m_size);
 
       identity();
     }
@@ -156,9 +140,7 @@ namespace DUNE
       m_nrows = n;
       m_ncols = n;
       m_size = n * n;
-      m_data = ALLOCD(m_size + 1);
-      m_counter = m_data + m_size;
-      *m_counter = 1;
+      m_data = ALLOCD(m_size);
 
       fill(0);
 
@@ -174,72 +156,58 @@ namespace DUNE
     void
     Matrix::erase(void)
     {
-      if (m_size != 0 && m_counter != NULL)
-      {
-        if (--(*m_counter) == 0)
-        {
-          std::free(m_data);
-          m_data = NULL;
-          m_counter = NULL;
-          m_nrows = 0;
-          m_ncols = 0;
-          m_size = 0;
-        }
-      }
+      m_data.reset();
+      m_data = NULL;
+      m_nrows = 0;
+      m_ncols = 0;
+      m_size = 0;
     }
 
     void
     Matrix::split(void)
     {
-      if (!m_size)
+      if (!m_size || m_data.unique())
         return;
 
-      if ((*m_counter) == 1)
-        return;
-
-      (*m_counter)--;
-
-      double* newdata = ALLOCD(m_size + 1);
-      std::memcpy(newdata, m_data, m_size * sizeof(double));
+      std::shared_ptr<double[]> newdata = ALLOCD(m_size);
+      std::memcpy(newdata.get(), m_data.get(), m_size * sizeof(double));
       m_data = newdata;
-      m_counter = m_data + m_size;
-      *m_counter = 1;
     }
 
     double*
     Matrix::begin(void)
     {
-      return m_data;
+      return m_data.get();
     }
 
     double*
     Matrix::end(void)
     {
-      return m_data + m_size;
+      return m_data.get() + m_size;
     }
 
     const double*
     Matrix::begin(void) const
     {
-      return m_data;
+      return m_data.get();
     }
 
     const double*
     Matrix::end(void) const
     {
-      return m_data + m_size;
+      return m_data.get() + m_size;
     }
 
     const double*
     Matrix::cbegin(void) const
     {
-      return m_data;
+      return m_data.get();
     }
 
     const double*
     Matrix::cend(void) const
     {
-      return m_data + m_size;
+      return m_data.get() + m_size;
     }
 
     int
@@ -305,9 +273,8 @@ namespace DUNE
     void
     Matrix::fill(size_t r, size_t c, const double* data)
     {
-      erase();
       resize(r, c);
-      std::memcpy(m_data, data, m_size * sizeof(double));
+      std::memcpy(m_data.get(), data, m_size * sizeof(double));
     }
 
     void
@@ -318,7 +285,7 @@ namespace DUNE
 
       split();
 
-      double* p = m_data;
+      double* p = m_data.get();
 
       for (size_t i = 0; i < m_size; i++)
         *(p++) = x;
@@ -347,7 +314,7 @@ namespace DUNE
 
       split();
 
-      double* p = m_data;
+      double* p = m_data.get();
 
       for (size_t i = 0; i < m_size; i++)
       {
@@ -365,7 +332,7 @@ namespace DUNE
 
       split();
 
-      double* p = m_data;
+      double* p = m_data.get();
 
       for (size_t i = 0; i < m_size; i++)
       {
@@ -589,10 +556,7 @@ namespace DUNE
       m_nrows = r;
       m_ncols = c;
       m_size = r * c;
-      m_data = ALLOCD(m_size + 1);
-
-      m_counter = m_data + m_size;
-      *m_counter = 1;
+      m_data = ALLOCD(m_size);
     }
 
     void
@@ -614,18 +578,15 @@ namespace DUNE
         int clm_diff = c - m_ncols;
 
         // Matrix copy.
-        double* newdata =  ALLOCD(m_size + 1);
-        std::memcpy(newdata, m_data, m_size * sizeof(double));
+        std::shared_ptr<double[]> newdata =  ALLOCD(m_size);
+        std::memcpy(newdata.get(), m_data.get(), m_size * sizeof(double));
 
         erase();
 
         m_nrows = r;
         m_ncols = c;
         m_size = r * c;
-        m_data = ALLOCD(m_size + 1);
-
-        m_counter = m_data + m_size;
-        *m_counter = 1;
+        m_data = ALLOCD(m_size);
 
         fill(0);
 
@@ -640,7 +601,7 @@ namespace DUNE
           clm_diff > 0 ? icr += clm_diff : itr -= clm_diff;
         }
 
-        std::free(newdata);
+        newdata.reset();
       }
       else
       {
@@ -783,7 +744,7 @@ namespace DUNE
       else if (m.m_data == NULL)
         return false;
 
-      return std::memcmp(m_data, m.m_data, m_size * sizeof(double)) == 0;
+      return std::memcmp(m_data.get(), m.m_data.get(), m_size * sizeof(double)) == 0;
     }
 
     Matrix&
@@ -802,8 +763,6 @@ namespace DUNE
         m_ncols = m.m_ncols;
         m_size = m.m_size;
         m_data = m.m_data;
-        m_counter = m.m_counter;
-        (*m_counter)++;
 
         return *this;
       }
@@ -823,8 +782,8 @@ namespace DUNE
 
       split();
 
-      double* p1 = m_data;
-      double* p2 = m.m_data;
+      double* p1 = m_data.get();
+      double* p2 = m.m_data.get();
 
       for (size_t i = 0; i < m_size; i++)
         *(p1++) += *(p2++);
@@ -839,8 +798,8 @@ namespace DUNE
         throw Error("Incompatible dimensions!");
       split();
 
-      double* p1 = m_data;
-      double* p2 = m.m_data;
+      double* p1 = m_data.get();
+      double* p2 = m.m_data.get();
 
       for (size_t i = 0; i < m_size; i++)
         *(p1++) -= *(p2++);
@@ -856,8 +815,8 @@ namespace DUNE
 
       split();
 
-      double* p1 = m_data;
-      double* p2 = m.m_data;
+      double* p1 = m_data.get();
+      double* p2 = m.m_data.get();
 
       for (size_t i = 0; i < m_size; i++)
         *(p1++) *= *(p2++);
@@ -873,8 +832,8 @@ namespace DUNE
 
       split();
 
-      double* p1 = m_data;
-      double* p2 = m.m_data;
+      double* p1 = m_data.get();
+      double* p2 = m.m_data.get();
 
       for (size_t i = 0; i < m_size; i++)
         *(p1++) /= *(p2++);
@@ -897,7 +856,7 @@ namespace DUNE
     {
       split();
 
-      double* p = m_data;
+      double* p = m_data.get();
 
       for (size_t i = 0; i < m_size; i++)
         *(p++) *= x;
@@ -910,7 +869,7 @@ namespace DUNE
     {
       split();
 
-      double* p = m_data;
+      double* p = m_data.get();
 
       for (size_t i = 0; i < m_size; i++)
         *(p++) /= x;
@@ -935,7 +894,7 @@ namespace DUNE
       if (r > m_nrows || c > m_ncols)
         throw Error("Invalid dimensions!");
 
-      double* p = a.m_data;
+      double* p = a.m_data.get();
 
       for (size_t ii = i; ii < r; ii++)
         for (size_t jj = j; jj < c; jj++)
@@ -1406,7 +1365,7 @@ namespace DUNE
       if (isEmpty())
         throw Error("Trying to access an empty matrix!");
 
-      double* p = m_data;
+      double* p = m_data.get();
       return DUNE::Math::median(p, m_size);
     }
 
@@ -1440,15 +1399,15 @@ namespace DUNE
       int m = m_ncols;
       int r = m2.m_ncols;
 
-      double* m1_p = m_data;
+      double* m1_p = m_data.get();
 
       for (int i = 0; i < n; i++)
       {
         for (int k = 0; k < m; k++)
         {
           double v = *m1_p++; // <-> v = m1(i,k)
-          double* m2_p = m2.m_data + k * r;
-          double* s_p = s.m_data + i * r;
+          double* m2_p = m2.m_data.get() + k * r;
+          double* s_p = s.m_data.get() + i * r;
 
           // not pretty, but hopefully faster
           if (std::fabs(v) <= precision)
@@ -1488,9 +1447,9 @@ namespace DUNE
       Matrix s(m1.m_nrows, m1.m_ncols);
 
       int size = s.m_size;
-      double* p = s.m_data;
-      double* p1 = m1.m_data;
-      double* p2 = m2.m_data;
+      double* p = s.m_data.get();
+      double* p1 = m1.m_data.get();
+      double* p2 = m2.m_data.get();
 
       for (int i = 0; i < size; i++)
         *(p++) = *(p1++) + *(p2++);
@@ -1510,9 +1469,9 @@ namespace DUNE
       Matrix s(m1.m_nrows, m1.m_ncols);
 
       int size = s.m_size;
-      double* p = s.m_data;
-      double* p1 = m1.m_data;
-      double* p2 = m2.m_data;
+      double* p = s.m_data.get();
+      double* p1 = m1.m_data.get();
+      double* p2 = m2.m_data.get();
 
       for (int i = 0; i < size; i++)
         *(p++) = *(p1++) - *(p2++);
@@ -1535,15 +1494,15 @@ namespace DUNE
       int m = m1.m_ncols;
       int r = m2.m_ncols;
 
-      double* m1_p = m1.m_data;
+      double* m1_p = m1.m_data.get();
 
       for (int i = 0; i < n; i++)
       {
         for (int k = 0; k < m; k++)
         {
           double v = *m1_p++; // <-> v = m1(i,k)
-          double* m2_p = m2.m_data + k * r;
-          double* s_p = s.m_data + i * r;
+          double* m2_p = m2.m_data.get() + k * r;
+          double* s_p = s.m_data.get() + i * r;
 
           for (int j = 0; j < r; j++)
           {
@@ -1570,9 +1529,9 @@ namespace DUNE
       Matrix s(m1.m_nrows, m1.m_ncols);
 
       int size = s.m_size;
-      double* p = s.m_data;
-      double* p1 = m1.m_data;
-      double* p2 = m2.m_data;
+      double* p = s.m_data.get();
+      double* p1 = m1.m_data.get();
+      double* p2 = m2.m_data.get();
 
       for (int i = 0; i < size; i++)
         *(p++) = *(p1++) * *(p2++);
@@ -1592,9 +1551,9 @@ namespace DUNE
       Matrix s(a.m_nrows, a.m_ncols);
 
       int size = s.m_size;
-      double* p = s.m_data;
-      double* p1 = a.m_data;
-      double* p2 = b.m_data;
+      double* p = s.m_data.get();
+      double* p1 = a.m_data.get();
+      double* p2 = b.m_data.get();
 
       for (int i = 0; i < size; i++)
         *(p++) = *(p1++) / *(p2++);
@@ -1637,7 +1596,7 @@ namespace DUNE
     {
       int n = a.m_nrows;
       int m = a.m_ncols;
-      double* p = a.m_data;
+      double* p = a.m_data.get();
 
       for (int i = 0; i < n; i++)
       {
@@ -1706,7 +1665,7 @@ namespace DUNE
 
       for (int i = 0; i < n; i++)
         for (int j = 0; j < m; j++)
-          (t.m_data + j * n)[i] = (a.m_data + i * m)[j];
+          (t.m_data.get() + j * n)[i] = (a.m_data.get() + i * m)[j];
 
       return t;
     }
@@ -1721,9 +1680,9 @@ namespace DUNE
         throw Matrix::Error("Inversion of a nonsquare Matrix!");
 
       int n = m_nrows;
-      double* M = ALLOCD(2 * n * n);
-      double* p1 = M;
-      double* p2 = m_data;
+      std::shared_ptr<double[]> M = ALLOCD(2 * n * n);
+      double* p1 = M.get();
+      double* p2 = m_data.get();
 
       for (int i = 0; i < n; i++)
       {
@@ -1738,9 +1697,9 @@ namespace DUNE
         p1 += n;
       }
 
-      int rv = upper_triangular_pp(M, n, n + n, Matrix::precision);
+      int rv = upper_triangular_pp(M.get(), n, n + n, Matrix::precision);
 
-      std::free(M);
+      M.reset();
 
       return rv == 0;
     }
@@ -1755,9 +1714,9 @@ namespace DUNE
         throw Matrix::Error("Inversion of a nonsquare Matrix!");
 
       int n = a.m_nrows;
-      double* M = ALLOCD(2 * n * n);
-      double* p1 = M;
-      double* p2 = a.m_data;
+      std::shared_ptr<double[]> M = ALLOCD(2 * n * n);
+      double* p1 = M.get();
+      double* p2 = a.m_data.get();
 
       for (int i = 0; i < n; i++)
       {
@@ -1771,18 +1730,18 @@ namespace DUNE
         p1 += n;
       }
 
-      int result = Math::Matrix::upper_triangular_pp(M, n, n + n, Matrix::precision);
+      int result = Math::Matrix::upper_triangular_pp(M.get(), n, n + n, Matrix::precision);
 
       Matrix s(n, n);
 
       if (result)  // singular Matrix
       {
-        std::free(M);
+        M.reset();
         throw Matrix::Error("Inversion error!");
       }
 
-      p1 = s.m_data;
-      p2 = M;
+      p1 = s.m_data.get();
+      p2 = M.get();
       int n2 = n + n;
 
       for (int j = 0; j < n; j++)
@@ -1795,7 +1754,7 @@ namespace DUNE
           *p /= p2[n2 * i + i];
         }
 
-      std::free(M);
+      M.reset();
       return s;
     }
 
@@ -1813,11 +1772,11 @@ namespace DUNE
 
       int n = a.m_nrows;
       int m = b.m_ncols;
-      double* M = ALLOCD(n * (n + m));
+      std::shared_ptr<double[]> M = ALLOCD(n * (n + m));
 
-      double* p1 = M;
-      double* p2 = a.m_data;
-      double* p3 = b.m_data;
+      double* p1 = M.get();
+      double* p2 = a.m_data.get();
+      double* p3 = b.m_data.get();
       for (int i = 0; i < n; i++)
       {
         for (int j = 0; j < n; j++)
@@ -1827,18 +1786,18 @@ namespace DUNE
           *(p1++) = *(p3++);
       }
 
-      int result = Math::Matrix::upper_triangular_pp(M, n, n + m, Matrix::precision);
+      int result = Math::Matrix::upper_triangular_pp(M.get(), n, n + m, Matrix::precision);
 
       Matrix s(n, m);
 
       if (result)  // singular Matrix
       {
-        std::free(M);
+        M.reset();
         throw Matrix::Error("Inversion error!");
       }
 
-      p1 = s.m_data;
-      p2 = M;
+      p1 = s.m_data.get();
+      p2 = M.get();
       int n2 = n + m;
 
       for (int j = 0; j < m; j++)
@@ -1851,7 +1810,7 @@ namespace DUNE
           *p /= p2[n2 * i + i];
         }
 
-      std::free(M);
+      M.reset();
       return s;
     }
 
@@ -1865,11 +1824,11 @@ namespace DUNE
         throw Matrix::Error("Inversion of a nonsquare Matrix!");
 
       int n = a.m_nrows;
-      double* M = ALLOCD(2 * n * n);
-      int* index = ALLOCI(n);
+      std::shared_ptr<double[]> M = ALLOCD(2 * n * n);
+      std::shared_ptr<int[]> index = ALLOCI(n);
 
-      double* p1 = M;
-      double* p2 = a.m_data;
+      double* p1 = M.get();
+      double* p2 = a.m_data.get();
 
       for (int i = 0; i < n; i++)
       {
@@ -1884,19 +1843,19 @@ namespace DUNE
         index[i] = i;
       }
 
-      int result = Math::Matrix::upper_triangular_tp(M, index, n, n + n, Matrix::precision);
+      int result = Math::Matrix::upper_triangular_tp(M.get(), index.get(), n, n + n, Matrix::precision);
 
       Matrix s(n, n);
 
       if (result)  // singular Matrix
       {
-        std::free(index);
-        std::free(M);
+        index.reset();
+        M.reset();
         throw Matrix::Error("Inversion error!");
       }
 
-      p1 = s.m_data;
-      p2 = M;
+      p1 = s.m_data.get();
+      p2 = M.get();
       int n2 = n + n;
 
       for (int j = 0; j < n; j++)
@@ -1909,8 +1868,8 @@ namespace DUNE
           *p /= p2[n2 * i + i];
         }
 
-      std::free(index);
-      std::free(M);
+      index.reset();
+      M.reset();
       return s;
     }
 
@@ -1928,12 +1887,12 @@ namespace DUNE
 
       int n = a.m_nrows;
       int m = b.m_ncols;
-      double* M = ALLOCD(n * (n + m));
-      int* index = ALLOCI(n);
+       std::shared_ptr<double[]> M = ALLOCD(n * (n + m));
+       std::shared_ptr<int[]> index = ALLOCI(n);
 
-      double* p1 = M;
-      double* p2 = a.m_data;
-      double* p3 = b.m_data;
+      double* p1 = M.get();
+      double* p2 = a.m_data.get();
+      double* p3 = b.m_data.get();
       for (int i = 0; i < n; i++)
       {
         for (int j = 0; j < n; j++)
@@ -1943,19 +1902,19 @@ namespace DUNE
         index[i] = i;
       }
 
-      int result = Math::Matrix::upper_triangular_tp(M, index, n, n + m, Matrix::precision);
+      int result = Math::Matrix::upper_triangular_tp(M.get(), index.get(), n, n + m, Matrix::precision);
 
       Matrix s(n, m);
 
       if (result)  // singular Matrix
       {
-        std::free(index);
-        std::free(M);
+        index.reset();
+        M.reset();
         throw Matrix::Error("Inversion error!");
       }
 
-      p1 = s.m_data;
-      p2 = M;
+      p1 = s.m_data.get();
+      p2 = M.get();
       int n2 = n + m;
 
       for (int j = 0; j < m; j++)
@@ -1968,8 +1927,8 @@ namespace DUNE
           *p /= p2[n2 * i + i];
         }
 
-      std::free(index);
-      std::free(M);
+      index.reset();
+      M.reset();
       return s;
     }
 
@@ -2018,13 +1977,13 @@ namespace DUNE
 
       a.lup(L, U, P);
 
-      double* y = ALLOCD(n);
-      double* l = L.m_data;
-      double* u = U.m_data;
-      double* p = P.m_data;
+      std::shared_ptr<double[]> y = ALLOCD(n);
+      double* l = L.m_data.get();
+      double* u = U.m_data.get();
+      double* p = P.m_data.get();
 
       Matrix Minv(n, n);
-      double* m = Minv.m_data;
+      double* m = Minv.m_data.get();
 
       for (int k = 0; k < n; k++)
       {
@@ -2051,7 +2010,7 @@ namespace DUNE
         }
       }
 
-      std::free(y);
+      y.reset();
 
       return Minv;
     }
@@ -2078,7 +2037,7 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      double* p = a.m_data;
+      double* p = a.m_data.get();
       double m = *(p++);
       int size = a.m_size;
 
@@ -2098,7 +2057,7 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      double* p = a.m_data;
+      double* p = a.m_data.get();
       double m = *(p++);
       int size = a.m_size;
 
@@ -2118,7 +2077,7 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      double* p = a.m_data;
+      double* p = a.m_data.get();
       double s = 0;
       int size = a.m_size;
 
@@ -2134,7 +2093,7 @@ namespace DUNE
       if (a.isEmpty())
         throw Matrix::Error("Trying to access an empty matrix!");
 
-      double* p = a.m_data;
+      double* p = a.m_data.get();
       double ss = 0;
       int size = a.m_size;
 
@@ -2255,7 +2214,7 @@ namespace DUNE
         throw Error("Invalid arguments for dot product!");
 
       double v = 0;
-      double* pa = a.m_data, * pb = b.m_data, * end = pa + a.m_size;
+      double* pa = a.m_data.get(), * pb = b.m_data.get(), * end = pa + a.m_size;
 
       while (pa != end)
       {
@@ -2301,7 +2260,7 @@ namespace DUNE
 
       std::vector<double> rvalues;
 
-      double* p = m_data;
+      double* p = m_data.get();
 
       for (size_t r = 0; r < clines.size(); ++r)
       {

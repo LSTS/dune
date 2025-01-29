@@ -39,6 +39,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <memory>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -857,8 +858,7 @@ namespace DUNE
       size_t m_nrows;
       size_t m_ncols;
       size_t m_size;
-      double* m_data;
-      double* m_counter;
+      std::shared_ptr<double[]> m_data;
 
       //! This method acts as destructor.
       void
