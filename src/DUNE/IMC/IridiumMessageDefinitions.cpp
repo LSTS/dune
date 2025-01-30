@@ -234,6 +234,7 @@ namespace DUNE
         pos.time = _time;
         pos.lat = DUNE::Math::Angles::radians((_lat / 1000000.0));
         pos.lon = DUNE::Math::Angles::radians((_lon / 1000000.0));
+        pos.pos_class = 0;
 
         positions.push_back(pos);
       }
