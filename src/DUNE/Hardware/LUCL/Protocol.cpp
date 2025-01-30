@@ -227,8 +227,16 @@ namespace DUNE
         int size = 3 + data_size + 1;
         uint8_t msg[32] = {c_sync, (uint8_t)(data_size + 1), cmd};
 
-        std::memcpy(msg + 3, data, data_size);
-        msg[size - 1] = XORChecksum::compute(data, data_size, c_sync ^ (data_size + 1) ^ cmd) | c_csum_msk;
+        if (data == nullptr)
+        {
+          std::memcpy(msg + 3, data, data_size);
+          msg[size - 1] = XORChecksum::compute(data, data_size, c_sync ^ (data_size + 1) ^ cmd) | c_csum_msk;
+        }
+        else
+        {
+          msg[size - 1] = (c_sync ^ (data_size + 1) ^ cmd) | c_csum_msk;
+        }
+        
 
         write(msg, size);
       }
@@ -465,7 +473,7 @@ namespace DUNE
       bool
       Protocol::getFirmwareInfo(const std::string& file, std::string& name, unsigned& ver, unsigned& rev, unsigned& pat)
       {
-        char bfr[16] = {0};
+        char bfr[17] = {0};
         Path path = Path(file).basename();
 
         int rv = std::sscanf(path.c_str(), "%16[^-]-firmware-%u.%u.%u.hex",
