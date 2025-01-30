@@ -86,6 +86,9 @@ namespace DUNE
                       m_fragments[i].data.end());
         }
 
+        if (total_length == 0)
+          return 0;
+
         return IMC::Packet::deserialize((uint8_t*)&data[0], total_length);
       }
       else
