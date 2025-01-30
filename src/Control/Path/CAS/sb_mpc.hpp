@@ -1482,6 +1482,9 @@ namespace Control
 								// Transition - Overtaking obstacle
 								// OTG = OTG_0 && SB; // test -- P only!
 								// OTG = OTG_0 && !SB; //  test -- SB only!
+
+								// Verify what the default value should be.
+								OTG = false;
 								if (SB_0 && gCost == 0)
 									OTG = OTG_0 && !SB; // prioritize SB
 								if (!SB_0 && gCost == 0)
@@ -1492,7 +1495,7 @@ namespace Control
 								// OTN = OT_0 && !SB; //  test -- SB only!
 								if (SB_0)
 									OTN = OT_0 && !SB; // prioritize SB
-								if (!SB_0)
+								else
 									OTN = OT_0 && SB; // prioritize Port
 
 								// Transition - crossing obstacle
