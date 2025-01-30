@@ -44,6 +44,30 @@ namespace Maneuver
     {
       using DUNE_NAMESPACES;
 
+      const unsigned c_ls_max_retries = 5;
+
+      //! Finite state machine states.
+      enum StateMachineStates
+      {
+        //! Waiting for activation.
+        SM_IDLE,
+        //! Leader setup state.
+        SM_LEADER_SETUP,
+        //! Moving.
+        SM_MOVING,
+        //! Start setup state.
+        SM_START_SETUP
+      };
+
+      //! Finite state machine states.
+      enum LeaderSetupStates
+      {
+        //! Send code LEADER to participant.
+        LS_SEND_LEADER,
+        //! Wait acknowledgement from participant.
+        LS_ACK
+      };
+
       struct Arguments
       {
         double ack_timeout;
@@ -66,24 +90,50 @@ namespace Maneuver
         Arguments m_args;
         //! Acoustic protocol
         AcousticProtocol m_comms;
-        //! Received ack id
-        uint16_t m_rcv_ack_id;
+        //! Received ack from this id
+        uint16_t m_ack_id_rcv;
+        //! Waiting acknowledgement from this id
+        uint16_t m_ack_id_expected;
+        //! Acknowledgement timer
+        Time::Counter<double> m_ack_timeout;
         //! Leader id
         unsigned int m_leader_id;
         //! Ready state of participants
         std::map<int, bool> m_ready_state;
-        //! Start flag
-        bool m_start;
         //! Send next point
         bool m_send_next;
+        //! Current state machine state
+        StateMachineStates m_state;
+        //! Leader Setup variables
+        //! Leader Setup state
+        LeaderSetupStates m_ls_state;
+        //! Participant index
+        int m_ls_idx;
+        //! Leader Setup retries
+        size_t m_ls_retries;
+        //! Leader Setup timer
+        Time::Counter<double> m_ls_timeout;
+        //! Start Setup variables
+        //! Start Setup timeout
+        Time::Counter<double> m_ss_timeout;
+        //! Send ready interval
+        Time::Counter<double> m_ss_send_ready;
+        //! Start flag received from leader
+        bool m_ss_start;
+
 
         Task(const std::string& name, DUNE::Tasks::Context& ctx):
           BasicSwarm(name, ctx),
           m_comms(this),
-          m_rcv_ack_id(IMC::AddressResolver::invalid()),
+          m_ack_id_rcv(IMC::AddressResolver::invalid()),
+          m_ack_id_expected(IMC::AddressResolver::invalid()),
           m_leader_id(IMC::AddressResolver::invalid()),
-          m_start(false),
-          m_send_next(false)
+          m_send_next(false),
+          m_state(SM_IDLE),
+          m_ls_state(LS_SEND_LEADER),
+          m_ls_idx(0),
+          m_ls_retries(c_ls_max_retries),
+          m_ss_start(false)
         {
           param("Acknowledgement Timeout", m_args.ack_timeout)
           .units(Units::Second)
@@ -154,7 +204,7 @@ namespace Maneuver
         recvAck(const IMC::UamRxFrame* msg)
         {
           trace("Received code ACK from: %s", msg->sys_src.c_str());
-          m_rcv_ack_id = resolveSystemName(msg->sys_src);
+          m_ack_id_rcv = resolveSystemName(msg->sys_src);
         }
 
         void
@@ -172,7 +222,7 @@ namespace Maneuver
             return;
 
           int idx = formation_index(resolveSystemName(msg->sys_src));
-          if (idx == 0xFFFF)
+          if ((unsigned)idx == IMC::AddressResolver::invalid())
           {
             war("Received code READY from non-participant: %s", msg->sys_src.c_str());
             return;
@@ -196,57 +246,144 @@ namespace Maneuver
             return;
 
           trace("Received code START from: %s", msg->sys_src.c_str());
-          m_start = true;
+          m_ss_start = true;
         }
 
         //! This is blocking!
-        bool
-        waitAck(uint16_t sys_id)
+        void
+        expectAck(uint16_t sys_id)
         {
-          m_rcv_ack_id = IMC::AddressResolver::invalid();
-          Time::Counter<double> ack_timer(m_args.ack_timeout);
-          while (!ack_timer.overflow())
-          {
-            waitForMessages(1.0);
+          m_ack_id_expected = sys_id;
+          m_ack_id_rcv = IMC::AddressResolver::invalid();
+          m_ack_timeout.setTop(m_args.ack_timeout);
+        }
 
-            if (sys_id == m_rcv_ack_id)
-            {
-               m_rcv_ack_id = IMC::AddressResolver::invalid();
-               return true;
-            }
-          }
+        bool
+        gotAck()
+        {
+          if (m_ack_id_expected == IMC::AddressResolver::invalid())
+            return false;
 
-          m_rcv_ack_id = IMC::AddressResolver::invalid();
-          return false;
+          if (m_ack_id_rcv == IMC::AddressResolver::invalid())
+            return false;
+
+          return m_ack_id_rcv == m_ack_id_expected;
         }
 
         //! Close matlab logged vectors
         void
         onReset(void)
         {
+          m_state = SM_IDLE;
         }
 
         void
         onInit(const IMC::VehicleFormation* maneuver)
         {
-          // Send next point
-          m_send_next = false;
+          (void) maneuver;
 
-          //! Reset ready state (Leader)
-          if (isLeader())
-            resetReadyState();
-
-          //! Reset start flag
-          m_start = false;
-
-          // Setup leader
+          // Change state to LeaderSetup
           debug("Starting leader setup...");
+          setLeaderSetup();
+        }
+
+        void
+        setLeaderSetup()
+        {
+          setControl(IMC::CL_NONE);
+          m_ls_state = LS_SEND_LEADER;
+          m_ls_idx = 0;
+          m_ls_retries = c_ls_max_retries;
+          m_ls_timeout.setTop(m_args.leader_setup_timeout);
+          m_state = SM_LEADER_SETUP;
+          debug("Changing state to LEADER_SETUP");
+        }
+
+        void
+        leaderSetup()
+        {
           if (isLeader())
             sendLeader();
           else
             waitForLeader();
-          debug("Leader setup done. Leader is %s", resolveSystemId(m_leader_id));
+        }
 
+        void
+        sendLeader()
+        {
+          switch (m_ls_state)
+          {
+            case LS_SEND_LEADER:
+            {
+              if (m_ls_retries == 0)
+              {
+                signalError(String::str("Timedout setting up leader with %s", resolveSystemId(participant(m_ls_idx).vid)));
+                return;
+              }
+
+              if (m_ls_idx == formation_index())
+                m_ls_idx++;
+
+              const Participant& part = participant(m_ls_idx);
+              std::string part_name = resolveSystemId(part.vid);
+              trace("Sending code LEADER to %s...", part_name.c_str());
+              m_comms.sendLeader(part_name);
+
+              expectAck(part.vid);
+              m_ls_state = LS_ACK;
+            }
+            break;
+            
+            case LS_ACK:
+            {
+              if (m_ack_timeout.overflow())
+              {
+                m_ls_retries--;
+                m_ls_state = LS_SEND_LEADER;
+                return;
+              }
+
+              if (gotAck())
+              {
+                m_ls_idx++;
+                if ((size_t)m_ls_idx >= participants())
+                {
+                  debug("Leader setup done. Leader is %s", resolveSystemId(m_leader_id));
+                  sendToFirstPoint();
+                  return;
+                }
+
+                m_ls_retries = c_ls_max_retries;
+                m_ls_state = LS_SEND_LEADER;
+              }
+            }
+            break;
+            
+            default:
+              break;
+          }
+        }
+
+        void
+        waitForLeader()
+        {
+          if (m_ls_timeout.overflow())
+          {
+            signalError(DTR("Timedout waiting for leader id"));
+            return;
+          }
+
+          if (m_leader_id != IMC::AddressResolver::invalid())
+          {
+            debug("Leader setup done. Leader is %s", resolveSystemId(m_leader_id));
+            sendToFirstPoint();
+            return;
+          }
+        }
+
+        void
+        sendToFirstPoint()
+        {
           // Send to first point
           setControl(IMC::CL_PATH);
 
@@ -259,58 +396,79 @@ namespace Maneuver
           m_prev = point(0, formation_index());
           m_prev_virtual = point(0);
 
-          desiredPath(start, m_prev, maneuver->speed, maneuver->speed_units);
+          desiredPath(start, m_prev, getSpeed(), getSpeedUnits());
 
           // Initiate waypoint counter at one
           m_curr = 1;
+
+          // Change state to moving
+          m_state = SM_MOVING;
+          debug("Changing state to MOVING");
         }
 
         void
-        sendLeader()
+        setStartSetup()
         {
-          for(size_t i = 0; i < participants(); i++)
+          setControl(IMC::CL_NONE);
+          m_ss_timeout.setTop(m_args.start_setup_timeout);
+          m_ss_send_ready.setTop(m_args.send_ready_interval);
+          m_ss_start = false;
+          
+          m_ready_state.clear();
+          for(size_t idx = 0; idx < participants(); idx++)
           {
-            if ((int)i == formation_index())
+            if ((int)idx == formation_index())
               continue;
 
-            const Participant& part = participant(i);
-
-            int retries = 5;
-            while (retries > 0)
-            {
-              std::string part_name = resolveSystemId(part.vid);
-              trace("Sending code LEADER to %s...", part_name.c_str());
-              m_comms.sendLeader(part_name);
-              if (waitAck(part.vid))
-              {
-                break;
-              }
-              else
-              {
-                retries--;
-                if (retries == 0)
-                {
-                  signalError(String::str("Timedout setting up leader with %s", part_name.c_str()));
-                  return;
-                }
-              }
-            }
+            m_ready_state[idx] = false;
           }
+
+          m_state = SM_START_SETUP;
+          debug("Changing state to START_SETUP");
         }
 
         void
-        waitForLeader()
+        startSetup()
         {
-          Time::Counter<double> wait(m_args.leader_setup_timeout);
-          while (!wait.overflow())
+          if (m_ss_timeout.overflow())
           {
-            waitForMessages(1.0);
-
-            if (m_leader_id != IMC::AddressResolver::invalid())
-              return;
+            signalError("Timedout waiting for start");
+            return;
           }
 
-          signalError(DTR("Timedout waiting for leader id"));
+          if (isLeader())
+          {
+            // Leader waits to receive code READY from all participants
+            if (isFormationReady())
+            {
+              trace("Sending code START in broadcast");
+              m_comms.sendStart("broadcast");
+              setControl(IMC::CL_PATH);
+              sendToNextPoint();
+              debug("Start setup done");
+              return;
+            }
+          }
+          else
+          {
+            // Followers send code READY to leader
+            if (m_ss_send_ready.overflow())
+            {
+              std::string leader_name = resolveSystemId(m_leader_id);
+              trace("Sending code READY to %s", leader_name.c_str());
+              m_comms.sendReady(leader_name);
+              m_ss_send_ready.reset();
+            }
+
+            // Followers wait for code START from leader
+            if (m_ss_start)
+            {
+              setControl(IMC::CL_PATH);
+              sendToNextPoint();
+              debug("Start setup done");
+              return;
+            }
+          }
         }
 
         bool
@@ -327,16 +485,27 @@ namespace Maneuver
         }
 
         void
-        resetReadyState()
+        sendToNextPoint()
         {
-          m_ready_state.clear();
-          for(size_t idx = 0; idx < participants(); idx++)
-          {
-            if ((int)idx == formation_index())
-              continue;
+          TPoint next;
+          TPoint next_virtual;
 
-            m_ready_state[idx] = false;
-          } 
+          next = point(m_curr, formation_index());
+          next_virtual = point(m_curr);
+
+          double distance = getRange(m_prev, next);
+          double distance_virtual = getRange(m_prev_virtual, next_virtual);
+          double speed = (distance / distance_virtual) * getSpeed();
+
+          // throw a leg of TPoints to be followed by the vehicle
+          desiredPath(m_prev, next, speed, getSpeedUnits());
+
+          ++m_curr;
+          m_prev = next;
+          m_prev_virtual = next_virtual;
+
+          m_state = SM_MOVING;
+          debug("Changing state to MOVING");
         }
 
         void
@@ -361,72 +530,34 @@ namespace Maneuver
             return; // All done
           }
 
-          m_send_next = true;
+          if (m_curr == 1)
+          {
+            debug("Setting up start...");
+            setStartSetup();
+            return;
+          }
+          
+          sendToNextPoint();
         } // End of function onPathCompletion
 
         void
         onStateReport()
         {
-          if (!m_send_next)
-            return;
-
-          TPoint next;
-          TPoint next_virtual;
-
-          // Synchronize on first point
-          if (m_curr == 1)
+          switch (m_state)
           {
-            debug("Setting up start...");
-            setControl(IMC::CL_NONE);
-            Time::Counter<double> timeout(m_args.start_setup_timeout);
-            Time::Counter<double> send_ready(m_args.send_ready_interval);
-            while(!m_start)
-            {
-              waitForMessages(1.0);
-              
-              if (!isLeader())
-              {
-                if (send_ready.overflow())
-                {
-                  trace("Sending code READY");
-                  m_comms.sendReady(resolveSystemId(m_leader_id));
-                  send_ready.reset();
-                }
-              }
-              else
-              {
-                if (isFormationReady())
-                {
-                  trace("Sending code START");
-                  m_start = true;
-                  m_comms.sendStart("broadcast");
-                  break;
-                }
-              }
-
-              if (timeout.overflow())
-              {
-                signalError("Timedout waiting for start");
-                return;
-              }
-            }
-            setControl(IMC::CL_PATH);
-            debug("Start setup done");
+            case SM_IDLE:
+              break;
+            case SM_LEADER_SETUP:
+              leaderSetup();
+              break;
+            case SM_START_SETUP:
+              startSetup();
+              break;
+            case SM_MOVING:
+              break;
+            default:
+              break;
           }
-
-          next = point(m_curr, formation_index());
-          next_virtual = point(m_curr);
-
-          double distance = getRange(m_prev, next);
-          double distance_virtual = getRange(m_prev_virtual, next_virtual);
-          double speed = (distance / distance_virtual) * getSpeed();
-
-          // throw a leg of TPoints to be followed by the vehicle
-          desiredPath(m_prev, next, speed, getSpeedUnits());
-
-          ++m_curr;
-          m_prev = next;
-          m_send_next = false;
         }
       };
     }
