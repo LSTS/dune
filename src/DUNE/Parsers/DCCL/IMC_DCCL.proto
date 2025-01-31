@@ -55,6 +55,22 @@ enum TransitionCondition {
     //Others?
 }
 
+//Enum Type 
+enum Type {
+    BOOLEAN = 0;
+    NUMBER = 1;
+    TEXT = 2;
+    MESSAGE = 3;
+}
+
+//Enum AccessType 
+enum AccessType {
+    INPUT = 0;
+    OUTPUT = 1;
+    LOCAL = 2;
+}
+
+
 // Estimated State
 message EstimatedState {
     option (dccl.msg) = { codec_version: 4 id: 350 max_bytes: 80};
@@ -176,6 +192,15 @@ message TransitionConditions {
     repeated TransitionCondition conditions = 1 [(dccl.field) = { max_repeat: 5 }];
 }
 
+// PlanVariable
+message PlanVariable {
+    option (dccl.msg) = { codec_version: 4 id: 561 max_bytes: 400};
+    string name = 1 [(dccl.field).max_length = 2]; 
+    string value = 2 [(dccl.field).max_length = 2]; 
+    Type type = 3;
+    AccessType access = 4;
+}
+
 
 // PlanTransition 
 message PlanTransition {
@@ -194,11 +219,10 @@ message PlanSpecification {
     repeated PlanManeuver maneuvers = 3 [(dccl.field) = { max_repeat: 10 }];
     repeated PlanTransition transitions = 4 [(dccl.field) = { max_repeat: 10 }];
     repeated EntityParameters start_actions = 5 [(dccl.field) = { max_repeat: 5 }];
+    repeated PlanVariable variables = 6 [(dccl.field) = { max_repeat: 5 }];
     //end_actions
     //description
     //vnamespace
-    //variables
-
 }
 
 
