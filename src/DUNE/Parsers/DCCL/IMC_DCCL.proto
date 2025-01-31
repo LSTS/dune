@@ -186,12 +186,6 @@ message PlanManeuver {
 }
 
 
-// TransitionConditions 
-message TransitionConditions {
-    option (dccl.msg) = { codec_version: 4 id: 4 max_bytes: 30};
-    repeated TransitionCondition conditions = 1 [(dccl.field) = { max_repeat: 5 }];
-}
-
 // PlanVariable
 message PlanVariable {
     option (dccl.msg) = { codec_version: 4 id: 561 max_bytes: 400};
@@ -207,20 +201,20 @@ message PlanTransition {
     option (dccl.msg) = { codec_version: 4 id: 553 max_bytes: 400};
     ManeuverID source_man = 1;
     ManeuverID dest_man = 2;
-    TransitionConditions conditions = 3;
-    //TransitionActions
+    TransitionCondition conditions = 3;
+    //TransitionActions repeated field
 }
 
 // PlanSpecification 
 message PlanSpecification {
-    option (dccl.msg) = { codec_version: 4 id: 551 max_bytes: 5000};
+    option (dccl.msg) = { codec_version: 4 id: 551 max_bytes: 8000};
     string plan_id = 1 [(dccl.field).max_length = 2]; 
     string description = 2 [(dccl.field).max_length = 2]; 
     string vnamespace = 3 [(dccl.field).max_length = 2]; 
     ManeuverID start_man_id = 4;
-    repeated PlanManeuver maneuvers = 5 [(dccl.field) = { max_repeat: 10 }];
-    repeated PlanTransition transitions = 6 [(dccl.field) = { max_repeat: 10 }];
-    repeated EntityParameters start_actions = 7 [(dccl.field) = { max_repeat: 5 }];
+    repeated PlanManeuver maneuvers = 5 [(dccl.field) = { max_repeat: 30 }];
+    repeated PlanTransition transitions = 6 [(dccl.field) = { max_repeat: 30 }];
+    repeated EntityParameters start_actions = 7 [(dccl.field) = { max_repeat: 7 }];
     repeated PlanVariable variables = 8 [(dccl.field) = { max_repeat: 5 }];
     //end_actions
 }
