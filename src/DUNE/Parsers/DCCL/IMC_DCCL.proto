@@ -208,21 +208,21 @@ message PlanTransition {
     ManeuverID source_man = 1;
     ManeuverID dest_man = 2;
     TransitionConditions conditions = 3;
-    //TODO: TransitionActions
+    //TransitionActions
 }
 
 // PlanSpecification 
 message PlanSpecification {
     option (dccl.msg) = { codec_version: 4 id: 551 max_bytes: 5000};
     string plan_id = 1 [(dccl.field).max_length = 2]; 
-    ManeuverID start_man_id = 2;
-    repeated PlanManeuver maneuvers = 3 [(dccl.field) = { max_repeat: 10 }];
-    repeated PlanTransition transitions = 4 [(dccl.field) = { max_repeat: 10 }];
-    repeated EntityParameters start_actions = 5 [(dccl.field) = { max_repeat: 5 }];
-    repeated PlanVariable variables = 6 [(dccl.field) = { max_repeat: 5 }];
+    string description = 2 [(dccl.field).max_length = 2]; 
+    string vnamespace = 3 [(dccl.field).max_length = 2]; 
+    ManeuverID start_man_id = 4;
+    repeated PlanManeuver maneuvers = 5 [(dccl.field) = { max_repeat: 10 }];
+    repeated PlanTransition transitions = 6 [(dccl.field) = { max_repeat: 10 }];
+    repeated EntityParameters start_actions = 7 [(dccl.field) = { max_repeat: 5 }];
+    repeated PlanVariable variables = 8 [(dccl.field) = { max_repeat: 5 }];
     //end_actions
-    //description
-    //vnamespace
 }
 
 
