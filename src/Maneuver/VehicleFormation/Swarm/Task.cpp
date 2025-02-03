@@ -74,6 +74,7 @@ namespace Maneuver
         double leader_setup_timeout;
         double start_setup_timeout;
         double send_ready_interval;
+        double tdma_time_per_slot;
       };
 
       struct Task: public DUNE::Maneuvers::BasicSwarm
@@ -100,8 +101,6 @@ namespace Maneuver
         unsigned int m_leader_id;
         //! Ready state of participants
         std::map<int, bool> m_ready_state;
-        //! Send next point
-        bool m_send_next;
         //! Current state machine state
         StateMachineStates m_state;
         //! Leader Setup variables
@@ -128,7 +127,6 @@ namespace Maneuver
           m_ack_id_rcv(IMC::AddressResolver::invalid()),
           m_ack_id_expected(IMC::AddressResolver::invalid()),
           m_leader_id(IMC::AddressResolver::invalid()),
-          m_send_next(false),
           m_state(SM_IDLE),
           m_ls_state(LS_SEND_LEADER),
           m_ls_idx(0),
@@ -155,7 +153,12 @@ namespace Maneuver
           .defaultValue("2.0")
           .description("Send code READY interval");
 
-          bind<IMC::UamRxFrame>(this, true);
+          param("TDMA Time Per Slot", m_args.tdma_time_per_slot)
+          .units(Units::Second)
+          .defaultValue("5.0")
+          .description("Period while acoustic channel is reserved for each participant");
+
+          bind<IMC::UamRxFrame>(this);
         }
 
         void
@@ -163,8 +166,7 @@ namespace Maneuver
         {
           BasicSwarm::onUpdateParameters();
 
-          if (isLeader())
-            m_leader_id = getSystemId();
+          m_comms.setTimePerSlot(m_args.tdma_time_per_slot);
         }
 
         //! On resource initialization
@@ -245,7 +247,11 @@ namespace Maneuver
           if (m_leader_id != resolveSystemName(msg->sys_src))
             return;
 
-          trace("Received code START from: %s", msg->sys_src.c_str());
+          double sync_time;
+          std::memcpy(&sync_time, &msg->data[2], sizeof(double));
+          trace("Received code START from: %s. Sync time: %f", msg->sys_src.c_str(), sync_time);
+
+          m_comms.setSyncTime(sync_time);
           m_ss_start = true;
         }
 
@@ -275,12 +281,19 @@ namespace Maneuver
         onReset(void)
         {
           m_state = SM_IDLE;
+          m_comms.resetSyncTime();
+          m_comms.resetMaxSlots();
+          m_comms.resetSlot();
         }
 
         void
         onInit(const IMC::VehicleFormation* maneuver)
         {
           (void) maneuver;
+
+          // Set time slot configuration
+          m_comms.setMaxSlots(participants());
+          m_comms.setSlot(formation_index());
 
           // Change state to LeaderSetup
           debug("Starting leader setup...");
@@ -296,6 +309,12 @@ namespace Maneuver
           m_ls_retries = c_ls_max_retries;
           m_ls_timeout.setTop(m_args.leader_setup_timeout);
           m_state = SM_LEADER_SETUP;
+
+          if (isLeader())
+            m_leader_id = getSystemId();
+          else
+            m_leader_id = IMC::AddressResolver::invalid();
+
           debug("Changing state to LEADER_SETUP");
         }
 
@@ -442,7 +461,7 @@ namespace Maneuver
             if (isFormationReady())
             {
               trace("Sending code START in broadcast");
-              m_comms.sendStart("broadcast");
+              m_comms.sendStart("broadcast", Time::Clock::getSinceEpoch());
               setControl(IMC::CL_PATH);
               sendToNextPoint();
               debug("Start setup done");
@@ -558,6 +577,8 @@ namespace Maneuver
             default:
               break;
           }
+
+          m_comms.run();
         }
       };
     }
