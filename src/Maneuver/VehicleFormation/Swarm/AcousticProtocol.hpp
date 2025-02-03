@@ -47,9 +47,8 @@ namespace Maneuver
         CODE_READY  = 0x01,
         CODE_LEADER = 0x02,
         CODE_START  = 0x03,
-        CODE_SETUP  = 0x04,
-        CODE_NEXT   = 0x05,
-        CODE_POS    = 0x06
+        CODE_NEXT   = 0x04,
+        CODE_POS    = 0x05
       };
 
       struct Point
@@ -59,21 +58,17 @@ namespace Maneuver
         float lon;
       };
 
-      struct Setup
-      {
-        uint8_t formation_id;
-        float offset_x;
-        float offset_y;
-        float offset_z;
-      };
-
       //! Takeoff maneuver
       class AcousticProtocol
       {
       public:
         //! Default constructor.
         AcousticProtocol(DUNE::Tasks::Task* task):
-          m_task(task)
+          m_task(task),
+          m_sync_time(-1),
+          m_max_slots(-1),
+          m_slot(-1),
+          m_time_per_slot(-1)
         { }
 
         void
@@ -111,25 +106,6 @@ namespace Maneuver
         }
 
         void
-        sendSetup(const std::string& sys, const uint8_t formation_id, 
-                  const float offset_x, const float offset_y, const float offset_z)
-        {
-          std::vector<uint8_t> data;
-
-          Setup setup;
-          setup.formation_id = formation_id;
-          setup.offset_x = offset_x;
-          setup.offset_y = offset_y;
-          setup.offset_z = offset_z;
-
-          data.resize(sizeof(setup) + 1);
-          data[0] = CODE_SETUP;
-          std::memcpy(&data[1], &setup, sizeof(setup));
-
-          sendFrame(sys, 0, data, false);
-        }
-
-        void
         sendAck(const std::string& sys)
         {
           std::vector<uint8_t> data;
@@ -154,11 +130,15 @@ namespace Maneuver
         }
 
         void
-        sendStart(const std::string& sys)
+        sendStart(const std::string& sys, const double sync_time)
         {
           std::vector<uint8_t> data;
-          data.push_back(CODE_START);
+          data.resize(sizeof(double) + 1);
+          data[0] = CODE_START;
+          std::memcpy(&data[1], &sync_time, sizeof(double));
+          
           sendFrame(sys, 0, data, false);
+          setSyncTime(sync_time);
         }
 
         void
@@ -237,13 +217,126 @@ namespace Maneuver
           return (msg->sys_dst == "broadcast" || imc_addr_dst == m_task->getSystemId());
         }
 
+        void
+        setSyncTime(const double sync_time)
+        {
+          m_sync_time = sync_time;
+          m_slot_start = m_sync_time + m_slot * m_time_per_slot;
+          trace(DUNE::Utils::String::str("SYNC time set: %f", m_sync_time));
+        }
+
+        void
+        resetSyncTime()
+        {
+          m_sync_time = -1;
+        }
+
+        double
+        getSyncTime()
+        {
+          return m_sync_time;
+        }
+
+        void
+        setMaxSlots(const int max_slots)
+        {
+          m_max_slots = max_slots;
+          trace(DUNE::Utils::String::str("Max slots set: %d", m_max_slots));
+        }
+
+        void
+        resetMaxSlots()
+        {
+          m_max_slots = -1;
+        }
+
+        int
+        getMaxSlots()
+        {
+          return m_max_slots;
+        }
+
+        void
+        resetSlot()
+        {
+          m_slot = -1;
+        }
+
+        void
+        setSlot(const int slot)
+        {
+          m_slot = slot;
+          trace(DUNE::Utils::String::str("Slot set: %d", m_slot));
+        }
+
+        void
+        setTimePerSlot(const double time_per_slot)
+        {
+          m_time_per_slot = time_per_slot;
+          trace(DUNE::Utils::String::str("Time per slot set: %f", m_time_per_slot));
+        }
+
+        void
+        resetTimePerSlot()
+        {
+          m_time_per_slot = -1;
+        }
+
+        double
+        getTimePerSlot()
+        {
+          return m_time_per_slot;
+        }
+
+        bool
+        isTimeSlotConfigured()
+        {
+          return m_sync_time >= 0 && m_max_slots >= 0 && m_slot >= 0 && m_time_per_slot >= 0;
+        }
+
+        bool
+        available()
+        {
+          double now = DUNE::Time::Clock::getSinceEpoch();
+
+          if (!isTimeSlotConfigured())
+          {
+            war("Time slot configuration not set");
+            return false;
+          }
+
+          return m_slot_start <= now && now < m_slot_start + m_time_per_slot;
+        }
+
+        void
+        run()
+        {
+          if (!isTimeSlotConfigured())
+            return;
+          
+          double now = DUNE::Time::Clock::getSinceEpoch();
+          if (now > m_slot_start + m_time_per_slot)
+            m_slot_start += m_max_slots * m_time_per_slot;
+        }
+
       private:
         DUNE::Tasks::Task* m_task;
+        double m_sync_time;
+        double m_slot_start;
+        int m_max_slots;
+        int m_slot;
+        double m_time_per_slot;
 
         void
         debug(const std::string& msg) const
         {
           m_task->debug("[AcousticProtocol] >> %s", msg.c_str());
+        }
+
+        void
+        trace(const std::string& msg) const
+        {
+          m_task->trace("[AcousticProtocol] >> %s", msg.c_str());
         }
 
         void
