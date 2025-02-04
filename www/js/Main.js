@@ -25,238 +25,357 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Edit: Pedro Gonçalves                                                    *
 //***************************************************************************
 
-function Main(root_id)
-{
-    this.create('Main', root_id);
-    this.createHeader('Overview');
-    this.createTable();
-    this.createHeader('Tasks');
-    this.createTableTasks();
+function Main(root_id) {
+  this.create('Main', root_id);
+  this.createHeader('Overview');
+  this.createTable();
+  this.createHeader('Tasks');
+  this.createTableTasks();
 };
 
 Main.prototype = new BasicSection;
+var system_mode = 6;
+var GPS_srcEntity_id = -1;
+var rpm_value = 0;
 
 Main.prototype.m_fields = [
+  {
+    "label": "System:",
+    "data_function": getSystemInfo,
+    "side": "center",
+  },
+  {
+    "label": "Version:",
+    "data_field": "dune_version",
+    "side": "left"
+  },
+  {
+    "label": "Date:",
+    "data_function": function (data) { return dateToString(data.dune_time_current); },
+    "side": "left"
+  },
+  {
+    "label": "Uptime:",
+    "data_function": getUptime,
+    "side": "left"
+  },
+  {
+    "label": "Position:",
+    "data_function": getPosition,
+    "side": "left"
+  },
+  {
+    "label": "Speed:",
+    "data_function": getSpeed,
+    "side": "left"
+  },
+  {
+    "label": "Available Storage:",
+    "data_function": function (data) { return 100 - getMessageValue(data, 'StorageUsage', 0); },
+    "widget": new Gauge(),
+    "side": "left"
+  },
+  {
+    "label": "Available Energy:",
+    "data_function": function (data) { return getMessageValue(data, 'FuelLevel', 0); },
+    "widget": new Gauge(),
+    "side": "left"
+  },
+  {
+    "label": "DUNE CPU Usage:",
+    "data_function": function (data) { return getMessageCpuSingleUsage(data, 'DUNECPU', 0); },
+    "widget": new Gauge(0),
+    "side": "right"
+  },
+  {
+    "label": "CPUs:",
+    "data_function": function (data)
     {
-        "label": "System:",
-        "data_field": "dune_system",
-        "side": "left"
+      const cpuValues = [];
+      let cpuIndex = 1;
+      while (true)
+      {
+        const cpuLabel = `CPU${cpuIndex}`;
+        const cpuValue = getMessageCpuSingleUsage(data, cpuLabel, null);
+        if (cpuValue === null)
+        {
+          break;// Stop adding CPUs when no more are found.
+        }
+        cpuValues.push(cpuValue);
+        cpuIndex++;
+      }
+
+      return cpuValues;
     },
-    {
-        "label": "Version:",
-        "data_field": "dune_version",
-        "side": "left"
-    },
-    {
-        "label": "Date:",
-        "data_function": function(data) { return dateToString(data.dune_time_current); },
-        "side": "left"
-    },
-    {
-        "label": "Uptime:",
-        "data_function": getUptime,
-        "side": "left"
-    },
-    {
-        "label": "Position:",
-        "data_function": getPosition,
-        "side": "right"
-    },
-    {
-        "label": "CPU Usage:",
-        "data_function": function(data) { return getMessageValue(data, 'CpuUsage', 0); },
-        "widget": new Gauge(1),
-        "side": "right"
-    },
-    {
-        "label": "Available Storage:",
-        "data_function": function(data) { return 100 - getMessageValue(data, 'StorageUsage', 0); },
-        "widget": new Gauge(),
-        "side": "right"
-    },
-    {
-        "label": "Available Energy:",
-        "data_function": function(data) { return getMessageValue(data, 'FuelLevel', 0); },
-        "widget": new Gauge(),
-        "side": "right"
-    }
+    "widget": new ChartWidget(),
+    "side": "right"
+  }
 ];
 
-Main.prototype.createTable = function()
-{
-    this.m_table = document.createElement('table');
-    this.m_table.style.width = '100%';
-    this.m_base.appendChild(this.m_table);
-    var tr = document.createElement('tr');
-    var tdl = document.createElement('td');
-    tdl.style.verticalAlign = 'top';
-    tdl.style.width = '50%';
-    var tdr = document.createElement('td');
-    tdr.style.verticalAlign = 'top';
-    tdr.style.width = '50%';
-    tr.appendChild(tdl);
-    tr.appendChild(tdr);
-    this.m_table.appendChild(tr);
-    this.m_table.id = 'MainTable';
+Main.prototype.createTable = function () {
 
-    this.m_table_left = document.createElement('table');
-    this.m_table_left.id = 'MainOverviewLeft';
-    tdl.appendChild(this.m_table_left);
+  this.sys_name_div = document.createElement('div');
+  this.sys_name_div.id = 'systemName';
+  this.m_base.appendChild(this.sys_name_div)
 
-    this.m_table_right = document.createElement('table');
-    this.m_table_right.id = 'MainOverviewRight';
-    tdr.appendChild(this.m_table_right);
+  this.m_table = document.createElement('table');
+  this.m_table.style.maxWidth = '90%';
+  this.m_table.style.overflow = 'hidden';
+  this.m_table.style.width = '90%';
+  this.m_table.style.marginLeft = '5%';
+  this.m_table.style.marginRight = '5%';
+  this.m_table.style.boxSizing = 'border-box';
+  this.m_table.style.margin = '0 auto';
 
-    for (i in this.m_fields)
-    {
-        if (this.m_fields[i].side == 'left')
-        {
-            this.createTableEntry(i, this.m_table_left);
-        }
-        else
-        {
-            this.createTableEntry(i, this.m_table_right);
-        }
+  this.m_base.appendChild(this.m_table);
+
+  var tr = document.createElement('tr');
+  var tdc = document.createElement('td');
+  tdc.style.verticalAlign = 'top';
+
+  tr.style.boxShadow = "0 1px 2px var(--c-color-text)";
+  tr.style.padding = "10px 18px";
+  tr.style.borderRadius = "18px";
+
+  var tdl = document.createElement('td');
+  tdl.style.verticalAlign = 'top';
+  tdl.style.width = '70%';
+  var tdr = document.createElement('td');
+  tdr.style.verticalAlign = 'top';
+  tdr.style.width = '30%';
+  tr.appendChild(tdl);
+  tr.appendChild(tdr);
+  this.m_table.appendChild(tr);
+  this.m_table.id = 'MainTable';
+
+  this.m_table_left = document.createElement('table');
+  this.m_table_left.id = 'MainOverviewLeft';
+  tdl.appendChild(this.m_table_left);
+
+  this.m_table_right = document.createElement('table');
+  this.m_table_right.id = 'MainOverviewRight';
+  tdr.appendChild(this.m_table_right);
+
+  for (i in this.m_fields) {
+    if (this.m_fields[i].side == 'center') {
+      this.createTableHeader(i, this.sys_name_div);
+    } else if (this.m_fields[i].side == 'left') {
+      this.createTableEntry(i, this.m_table_left);
+    } else {
+      this.createTableEntry(i, this.m_table_right);
     }
+  }
 };
 
-Main.prototype.createTableTasks = function()
-{
-    this.m_tbl_task = document.createElement('table');
-    this.m_tbl_task.id = 'MainTaskTable';
-    this.m_tbl_task.style.width = '100%';
+Main.prototype.createTableTasks = function () {
+  this.m_tbl_task = document.createElement('table');
+  this.m_tbl_task.id = 'MainTaskTable';
+  this.m_tbl_task.style.width = '100%';
 
-    var div = document.createElement('div');
-    div.id = 'MainTaskTableDiv';
-    div.appendChild(this.m_tbl_task);
+  var div = document.createElement('div');
+  div.id = 'MainTaskTableDiv';
+  div.appendChild(this.m_tbl_task);
 
-    this.m_base.appendChild(div);
+  this.m_base.appendChild(div);
 };
 
-Main.prototype.createTableEntry = function(idx, tbl)
-{
-    var field = this.m_fields[idx];
-    var tr = document.createElement('tr');
-    tr.style.height = '25px';
-    var td_label = document.createElement('td');
-    td_label.className = 'entryLeft';
-    td_label.appendChild(document.createTextNode(field.label));
-    tr.appendChild(td_label);
-
-    var td_value = document.createElement('td');
-    td_value.className = 'entryRight';
-
-    tr.appendChild(td_value);
-    if (!("widget" in field))
-        field.widget = new TextLabel();
-    field.widget.create(td_value);
-
-    tbl.appendChild(tr);
+Main.prototype.createTableHeader = function (idx, tbl) {
+  var field = this.m_fields[idx];
+  
+  if (!("widget" in field))
+    field.widget = new TextLabel();
+  field.widget.create(tbl);
 };
 
-Main.prototype.update = function()
-{
-    for (i in this.m_fields)
-    {
-        var value = null;
-        var field = this.m_fields[i];
+Main.prototype.createTableEntry = function (idx, tbl) {
+  var field = this.m_fields[idx];
+  var tr = document.createElement('tr');
+  tr.style.height = '25px';
+  var td_label = document.createElement('td');
+  td_label.className = 'entryLeft';
+  td_label.appendChild(document.createTextNode(field.label));
+  tr.appendChild(td_label);
 
-        if ("data_function" in field)
-        {
-            value = field.data_function(g_data);
-        }
-        else if ("data_field" in field)
-        {
-            value = g_data[field.data_field];
-        }
+  var td_value = document.createElement('td');
+  td_value.className = 'entryRight';
 
-        field.widget.update(value);
+  tr.appendChild(td_value);
+  if (!("widget" in field))
+    field.widget = new TextLabel();
+  field.widget.create(td_value);
+
+  tbl.appendChild(tr);
+};
+
+Main.prototype.update = function () {
+  for (i in this.m_fields) {
+    var value = null;
+    var field = this.m_fields[i];
+
+    if ("data_function" in field) {
+      value = field.data_function(g_data);
     }
-
-    this.updateTasks();
-};
-
-Main.prototype.updateTasks = function()
-{
-    for (i in g_data.dune_messages)
-    {
-        var msg = g_data.dune_messages[i];
-
-        if (msg.abbrev == 'EntityState')
-        {
-            var name = g_data.dune_entities[msg.src_ent].label;
-            this.insertTaskNode(msg.src_ent, name, msg.description, msg.state);
-        }
-    }
-};
-
-Main.prototype.insertTaskNode = function(id, name, desc, status)
-{
-    for (var i = 0; i < this.m_tbl_task.childNodes.length; i++)
-    {
-        var item = this.m_tbl_task.childNodes[i];
-        var tgt = item.childNodes[1].firstChild;
-        if (tgt.data == name)
-        {
-            item.childNodes[0].firstChild.src = this.getEntityStateIcon(status);
-            item.childNodes[2].firstChild.data = desc;
-            return;
-        }
-        else if (name < tgt.data)
-        {
-            var n = this.createTask(id, name, desc, status);
-            this.m_tbl_task.insertBefore(n, item);
-            return;
-        }
+    else if ("data_field" in field) {
+      if(field.data_field === "dune_version")
+        value = g_data[field.data_field];
+      else
+        value = "N/A";
     }
 
-    var xn = this.createTask(id, name, desc, status);
-    this.m_tbl_task.appendChild(xn);
-};
+    field.widget.update(value);
+  }
 
-Main.prototype.createTask = function(id, name, desc, status)
-{
-    var tr = document.createElement('tr');
-
-    var td_status = document.createElement('td');
-    td_status.style.width = '30px';
-    var img_status = document.createElement('img');
-    img_status.src = this.getEntityStateIcon(status);
-    td_status.appendChild(img_status);
-    tr.appendChild(td_status);
-
-    var th_name = document.createElement('th');
-    th_name.style.width = '170px';
-    th_name.appendChild(document.createTextNode(name));
-    tr.appendChild(th_name);
-
-    var td_desc = document.createElement('td');
-    td_desc.appendChild(document.createTextNode(desc));
-    tr.appendChild(td_desc);
-
-    return tr;
-};
-
-function findMessage(data, abbrev)
-{
-    for (m in data.dune_messages)
-    {
-        var msg = data.dune_messages[m];
-
-        if (msg.abbrev == abbrev)
-            return msg;
+  //search in dune_messages for EntityInfo, then search for GPSFix and print src_ent.
+  for (i in g_data.dune_messages) {
+    var msg = g_data.dune_messages[i];
+    if (msg.abbrev == 'EntityInfo') {
+      var name = g_data.dune_entities[msg.src_ent].label;
+      if (name == 'GPS') {
+        GPS_srcEntity_id = msg.src_ent;
+      }
     }
+    if (msg.abbrev == 'Rpm') {
+      rpm_value = msg.value;
+    }
+  }
 
-    return null;
+  this.updateTasks();
+  this.updateVehicleState();
 };
 
-function getMessageValue(data, abbrev, defval)
+Main.prototype.updateTasks = function () {
+  for (i in g_data.dune_messages) {
+    var msg = g_data.dune_messages[i];
+
+    if (msg.abbrev == 'EntityState') {
+      var name = g_data.dune_entities[msg.src_ent].label;
+      this.insertTaskNode(msg.src_ent, name, msg.description, msg.state);
+    }
+  }
+};
+
+Main.prototype.updateVehicleState = function () {
+  for (i in g_data.dune_messages) {
+    var msg = g_data.dune_messages[i];
+    if (msg.abbrev == 'VehicleState') {
+      //console.log(msg);
+      //console.log(msg.op_mode);
+      system_mode = msg.op_mode;
+    }
+  }
+};
+
+Main.prototype.insertTaskNode = function (id, name, desc, status) {
+  for (var i = 0; i < this.m_tbl_task.childNodes.length; i++) {
+    var item = this.m_tbl_task.childNodes[i];
+    var tgt = item.childNodes[1].firstChild;
+    if (tgt.data == name) {
+      item.childNodes[0].firstChild.src = this.getEntityStateIcon(status);
+      item.childNodes[2].firstChild.data = desc;
+      return;
+    }
+    else if (name < tgt.data) {
+      var n = this.createTask(id, name, desc, status);
+      this.m_tbl_task.insertBefore(n, item);
+      return;
+    }
+  }
+
+  var xn = this.createTask(id, name, desc, status);
+  this.m_tbl_task.appendChild(xn);
+};
+
+Main.prototype.createTask = function (id, name, desc, status) {
+  var tr = document.createElement('tr');
+
+  var td_status = document.createElement('td');
+  td_status.style.width = '30px';
+  var img_status = document.createElement('img');
+  img_status.src = this.getEntityStateIcon(status);
+  td_status.appendChild(img_status);
+  tr.appendChild(td_status);
+
+  var th_name = document.createElement('th');
+  th_name.style.width = '170px';
+  th_name.appendChild(document.createTextNode(name));
+  tr.appendChild(th_name);
+
+  var td_desc = document.createElement('td');
+  td_desc.appendChild(document.createTextNode(desc));
+  tr.appendChild(td_desc);
+
+  return tr;
+};
+
+function findMessage(data, abbrev) {
+  for (m in data.dune_messages) {
+    var msg = data.dune_messages[m];
+
+    if (msg.abbrev == abbrev)
+      return msg;
+  }
+
+  return null;
+};
+
+function findMessageSRCID(data, abbrev, src_id) {
+  for (m in data.dune_messages) {
+    var msg = data.dune_messages[m];
+
+    if (msg.abbrev == abbrev && msg.src_ent == src_id)
+      return msg;
+  }
+
+  return null;
+};
+
+function getMessageValue(data, abbrev, defval) {
+  try {
+    return findMessage(data, abbrev).value;
+  }
+  catch (err) {
+    return defval;
+  }
+};
+
+function getMessageCpuSingleUsage(data, ent, defval) {
+  try {
+    //console.log("getMessageCpuSingleUsage >>>>>>>> "+ent+" : "+defval);
+    for (m in data.dune_entities) {
+      var eid = data.dune_entities[m].label;
+      if (eid.localeCompare(ent) == 0) {
+        //console.log(">>>>>>> "+eid+" : "+data.dune_entities[m].value);
+        //console.log(" ");
+        return data.dune_entities[m].value;
+      }
+    }
+    //console.log(" ");
+    return defval;
+  }
+  catch (err) {
+    return defval;
+  }
+};
+
+function getMessageCpuSingleUsage(data, ent, defval)
 {
     try
     {
-        return findMessage(data, abbrev).value;
+      for (m in data.dune_entities)
+      {
+          var eid = data.dune_entities[m].label;
+          if (eid.localeCompare(ent) == 0)
+          {
+            //console.log(">>>>>>> "+eid+" : "+data.dune_entities[m].value);
+            //console.log(" ");
+            return data.dune_entities[m].value;
+          }
+      }
+      //console.log(" ");
+      return defval;
     }
     catch (err)
     {
@@ -264,68 +383,152 @@ function getMessageValue(data, abbrev, defval)
     }
 };
 
-function convertRadiansToDM(value)
-{
-    if (value < 0)
-        value *= -1.0;
-
-    value *= 180 / Math.PI;
-    var degrees = Math.floor(value);
-    var minutes = (value - degrees) * 60.0;
-    return Array(degrees, minutes);
+function getSystemInfo(data) {
+  if (data && data.dune_messages) {
+    for (var i in data.dune_messages) {
+      if (data.dune_messages[i].abbrev == 'Announce' && data.dune_messages[i].sys_name == data.dune_system) {
+        var msg = data.dune_messages[i];
+        var systemType = getSystemType(data, msg.sys_type);
+        return msg.sys_name + ' (' + systemType + ')';
+      }
+    }
+  }
+  return 'Unknown';
 }
 
-function getPosition(data, value)
-{
-    var msg = findMessage(data, 'GpsFix');
+function getSystemType(data, value) {
+  //console.log("Value: "+value);
+  var abbreviationMap = {
+    0: "CCU",
+    1: "Human-portable Sensor",
+    2: "UUV",
+    3: "USV",
+    4: "UAV",
+    5: "UGV",
+    6: "Static sensor",
+    7: "Mobile sensor",
+    8: "Wireless Sensor Network"
+  };
 
-    if (msg == null)
-        return 'Unknown';
+  var modeMap = {
+    0: "SERVICE",
+    1: "CALIBRATION",
+    2: "ERROR",
+    3: "MANEUVER",
+    4: "EXTERNAL CONTROL",
+    5: "BOOT",
+    6: ""
+  };
 
-    var lat = convertRadiansToDM(msg.lat);
-    var str = ((msg.lat > 0) ? 'N' : 'S') + lat[0] + ' ' + lat[1].toFixed(4);
-    var lon = convertRadiansToDM(msg.lon);
-    return str + ' / ' + ((msg.lon > 0) ? 'E' : 'W') + lon[0] + ' ' + lon[1].toFixed(4);
+  changeBackgroundColor(system_mode);
+  if(system_mode == 6)
+  {
+    if (value in abbreviationMap) {
+      return abbreviationMap[value];
+    } else {
+      return "Unknown";
+    }
+  }
+  else
+  {
+    if (value in abbreviationMap) {
+      return abbreviationMap[value] + " - " + modeMap[system_mode];
+    } else {
+      return "Unknown";
+    }
+  }
 }
 
-function getUptime(data)
-{
-    var diff = data.dune_time_current - data.dune_time_start;
-    if (diff <= 0)
-        return "just started";
+function convertRadiansToDM(value) {
+  if (value < 0)
+    value *= -1.0;
 
-    var hours = Math.floor(diff / 3600);
-    var minutes = Math.floor((diff % 3600) / 60);
-    var seconds = Math.floor((diff % 3600) % 60);
+  value *= 180 / Math.PI;
+  var degrees = Math.floor(value);
+  var minutes = (value - degrees) * 60.0;
+  return Array(degrees, minutes);
+}
 
-    var str = '';
-    if (hours > 0)
-        str += hours + ' ' + ((hours > 1) ? 'hours' : 'hour');
+function getPosition(data, value) {
+  var msg = findMessage(data, 'GpsFix');
 
+  if (msg == null)
+    return 'Unknown';
+
+  var lat = convertRadiansToDM(msg.lat);
+  var str = ((msg.lat > 0) ? 'N' : 'S') + lat[0] + ' ' + lat[1].toFixed(4);
+  var lon = convertRadiansToDM(msg.lon);
+  return str + ' / ' + ((msg.lon > 0) ? 'E' : 'W') + lon[0] + ' ' + lon[1].toFixed(4);
+}
+
+function getSpeed(data, value) {
+  var msg = findMessageSRCID(data, 'GpsFix', GPS_srcEntity_id);
+  if (msg == null)
+    return 'Unknown';
+
+  //get the speed in meters from message, need to convert the string msg.sog to value
+  var speed = parseFloat(msg.sog);
+  //convert to Knots
+  var speedKnots = speed * 1.9438444924406;
+  var text = speed.toFixed(2) + ' m/s | ' + speedKnots.toFixed(2) + ' kt | rpm: ' + rpm_value;
+  return text;
+}
+
+function getUptime(data) {
+  var diff = data.dune_time_current - data.dune_time_start;
+  if (diff <= 0)
+    return "just started";
+
+  var hours = Math.floor(diff / 3600);
+  var minutes = Math.floor((diff % 3600) / 60);
+  var seconds = Math.floor((diff % 3600) % 60);
+
+  var str = '';
+  if (hours > 0)
+    str += hours + ' ' + ((hours > 1) ? 'hours' : 'hour');
+
+  if (minutes > 0) {
+    if (hours > 0) {
+      if (seconds > 0)
+        str += ', ';
+      else
+        str += ' and ';
+    }
+
+    str += minutes + ' ' + ((minutes > 1) ? 'minutes' : 'minute');
+  }
+
+  if (seconds > 0) {
     if (minutes > 0)
-    {
-        if (hours > 0)
-        {
-            if (seconds > 0)
-                str += ', ';
-            else
-                str += ' and ';
-        }
-
-        str += minutes + ' ' + ((minutes > 1) ? 'minutes' : 'minute');
+      str += ' and ';
+    else if (hours > 0) {
+      str += ' and ';
     }
 
-    if (seconds > 0)
-    {
-        if (minutes > 0)
-            str += ' and ';
-        else if (hours > 0)
-        {
-            str += ' and ';
-        }
+    str += seconds + ' ' + ((seconds > 1) ? 'seconds' : 'second') + ' ';
+  }
+  return str;
+}
 
-        str += seconds + ' ' + ((seconds > 1) ? 'seconds' : 'second') + ' ';
-    }
+function changeBackgroundColor(color_id) {
+  color = "#757575";
+  if(color_id == 0)
+    color = "#57B768";
+  else if(color_id == 1)
+    color = "#307191";
+  else if(color_id == 2)
+    color = "#A23F3E";
+  else if(color_id == 3)
+    color = "#D2DA4A";
+  else if(color_id == 4)
+    color = "#ff00ff";
+  else if(color_id == 5)
+    color = "#797EB5";
+  else if(color_id == 6)
+    color = "#757575";
 
-    return str;
+  const systemNameElement = document.getElementById('systemName');
+  if (systemNameElement) {
+    systemNameElement.style.backgroundColor = color;
+  }
 }

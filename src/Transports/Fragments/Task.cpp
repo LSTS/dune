@@ -85,6 +85,9 @@ namespace Transports
         IMC::Message * res = m_incoming[hash].setFragment(msg);
         if (res != NULL)
         {
+          debug("created message %s", res->getName());
+          res->setSource(msg->getSource());
+          res->setDestination(msg->getDestination());
           dispatch(res);
           m_incoming.erase(hash);
         }

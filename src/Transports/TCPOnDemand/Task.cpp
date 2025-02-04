@@ -92,7 +92,6 @@ namespace Transports
           m_value_RSSI(0),
           m_can_send(true),
           m_reqid(0),
-          m_number_tries(m_args.max_number_tries),
           m_connection_timeout(2)
       {
         param("Maximum Number of Tries", m_args.max_number_tries)
@@ -105,8 +104,8 @@ namespace Transports
 
         bind<IMC::TCPRequest>(this);
 
+        m_number_tries = m_args.max_number_tries;
         m_msg_send_timer.setTop(1);
-
       }
 
 

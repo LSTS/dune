@@ -75,6 +75,9 @@ namespace Transports
         m_mutex.unlock();
       }
 
+      void
+      setLogEntry(unsigned int number_lines);
+
     private:
       //! Convenience type definition for a map of power channels.
       typedef std::map<std::string, DUNE::IMC::PowerChannelState*> PowerChannelMap;
@@ -107,6 +110,7 @@ namespace Transports
 
       void
       updatePowerChannel(const DUNE::IMC::PowerChannelState* msg);
+
     };
   }
 }

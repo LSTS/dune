@@ -56,7 +56,7 @@ function requestLogBookEntries() {
 function handleLogBookEntries(text)
 {
     if (g_logbook_timer == null)
-	g_logbook_timer = setInterval(requestLogBookEntries, 4000);
+	    g_logbook_timer = setInterval(requestLogBookEntries, 4000);
 
     eval(text);
     g_dune_logbook = logbook;
@@ -69,7 +69,7 @@ function requestLogs()
     options.timeout = 10000;
     options.timeoutHandler = timeoutHandler;
     options.errorHandler = errorHandler;
-    HTTP.get('dune/logs/list.js', handleLogs, options);
+    //HTTP.get('dune/logs/list.js', handleLogs, options);
 };
 
 function handleLogs(text)
@@ -86,7 +86,6 @@ function setConnected(value)
     {
         icon.src = g_icons.path('normal');
         icon.title = 'Connected';
-
     }
     else
     {
@@ -140,11 +139,13 @@ function handleData(text)
     for (var i in data.dune_messages)
     {
         var msg = data.dune_messages[i];
-        if (msg.abbrev != 'EntityState')
+        //console.log(msg);
+        if (msg.abbrev != 'EntityState' && msg.abbrev != 'CpuUsage')
             continue;
 
         data.dune_entities[msg.src_ent].state = msg.state;
         data.dune_entities[msg.src_ent].description = msg.description;
+        data.dune_entities[msg.src_ent].value = msg.value;
     }
 
     g_data = data;

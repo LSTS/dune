@@ -122,7 +122,7 @@ namespace DUNE
     HayesModem::setRSSI(float value)
     {
       Concurrency::ScopedMutex l(m_mutex);
-      m_rssi.value = value;
+      m_rssi.value = (int)value;
       getTask()->dispatch(m_rssi);
     }
 

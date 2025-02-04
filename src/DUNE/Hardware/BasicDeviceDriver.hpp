@@ -44,6 +44,10 @@ namespace DUNE
     class BasicDeviceDriver: public DUNE::Tasks::Task
     {
     public:
+
+      //! Flag to control restartNeeded method.
+      bool m_restart_needed;
+
       BasicDeviceDriver(const std::string& name, DUNE::Tasks::Context& ctx);
 
       //! Consume estimated state messages.
@@ -65,6 +69,10 @@ namespace DUNE
       //! @param[in] msg PowerChannelState message.
       void
       consume(const IMC::PowerChannelState* msg);
+
+      //! Disable restartNeed method.
+      void
+      setRestartNeeded(bool state);
 
     protected:
       //! Create an I/O handle given an URI.

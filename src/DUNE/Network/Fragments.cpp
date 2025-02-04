@@ -82,6 +82,9 @@ namespace DUNE
 
     Fragments::~Fragments(void)
     {
+      for (unsigned i = 0; i < m_fragments.size(); i++)
+        delete m_fragments[i];
+
       m_fragments.clear();
     }
 

@@ -55,6 +55,12 @@ namespace Transports
       m_meta = os.str();
     }
 
+    void
+    MessageMonitor::setLogEntry(unsigned int number_lines)
+    {
+      m_log_entry = number_lines;
+    }
+
     MessageMonitor::~MessageMonitor(void)
     {
       ScopedMutex l(m_mutex);

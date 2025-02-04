@@ -178,29 +178,33 @@ Sensors.prototype.createValue = function(msg)
 
 Sensors.prototype.updateField = function(root, msg)
 {
-    var state = this.getEntityStateState(msg);
 
-    if ((g_data.dune_time_current - msg.time) > 10.0)
-    {
-        root.childNodes[2].firstChild.data = 'inactive';
-        root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
-        if (!state)
-            state = 2;
-    }
-    else
-    {
-        root.childNodes[2].firstChild.data = this.getEntityStateDesc(msg, 'active');
-        if (!state)
-            state = 1;
-    }
+  var date = new Date(msg.timestamp * 1000);
+  var hours = date.getHours();
+  var minutes = "0" + date.getMinutes();
+  var seconds = "0" + date.getSeconds();
+  var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
 
-    if (state)
-    {
-        root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
-    }
+  var dif = g_data.dune_time_current - msg.timestamp;
+  var totalSeconds = Math.floor(dif);
+  var h = Math.floor(totalSeconds / 3600);
+  var m = Math.floor((totalSeconds % 3600) / 60);
+  var s = totalSeconds % 60;
+  var formattedDiff = (h > 0 ? h + 'h ' : '') + (m > 0 ? m + 'm ' : '') + s + 's';
 
-    root.childNodes[1].firstChild.data = Number(msg.value).toFixed(2);
+  if (totalSeconds > 10.0) {
+      root.childNodes[2].firstChild.data = 'INACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
+      root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
+      state = 0;
+  } else {
+      root.childNodes[2].firstChild.data = 'ACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
+      state = 1;
+  }
+
+  root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
+  root.childNodes[1].firstChild.data = Number(msg.value).toFixed(2);
 };
+
 
 Sensors.prototype.update = function()
 {

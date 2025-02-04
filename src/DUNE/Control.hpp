@@ -48,5 +48,6 @@ namespace DUNE
 #include <DUNE/Control/AUVModel.hpp>
 #include <DUNE/Control/LinearSystem.hpp>
 #include <DUNE/Control/CoarseAltitude.hpp>
+#include <DUNE/Control/FilterEstimator.hpp>
 
 #endif

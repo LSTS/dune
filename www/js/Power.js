@@ -40,10 +40,11 @@ function Power(root_id)
     this.m_sbase.width = '100%';
 
     // Save button.
-    var btn = document.createElement('input');
-    btn.type = 'button';
-    btn.onclick = function() { submitPowerForm('all', 'save', 0); };
-    btn.value = 'Save State';
+    var btn = document.createElement('button');
+    btn.onclick = function(event) { submitPowerForm('all', 'save', 0, event); };
+    btn.textContent = 'Save State';
+    //add courser style
+    btn.style.cursor = "alias";
 
     this.m_base.appendChild(this.m_sbase);
     this.m_base.appendChild(btn);
@@ -85,12 +86,16 @@ Power.prototype.updateValue = function(root, msg)
     if (msg.state == 0)
     {
         base.childNodes[1].disabled = false;
+        base.childNodes[1].classList.add('active');
         base.childNodes[2].disabled = true;
+        base.childNodes[2].classList.remove('active');
     }
     else
     {
         base.childNodes[1].disabled = true;
+        base.childNodes[1].classList.remove('active');
         base.childNodes[2].disabled = false;
+        base.childNodes[2].classList.add('active');
     }
 };
 
@@ -141,10 +146,10 @@ Power.prototype.createEntry = function(msg)
 
 Power.prototype.appendButton = function(root, channel, op, label)
 {
-    var btn = document.createElement('input');
-    btn.type = 'button';
-    btn.onclick = function() { submitPowerForm(channel, op, root.id); };
-    btn.value = label;
+    var btn = document.createElement('button');
+    btn.onclick = function(event) { submitPowerForm(channel, op, root.id, event); };
+    btn.textContent = label;
+    btn.setAttribute('data-op', op);
     root.appendChild(btn);
 };
 
@@ -177,21 +182,49 @@ function handlePower(text)
 {
 }
 
-function submitPowerForm(channel, op, id)
-{
-    var url = 'dune/power/channel/' + op + '/' + channel;
+function submitPowerForm(channel, op, id, event) {
+  if (event) {
+      event.preventDefault();
+  }
 
-    if (op == 'sched_on' || op == 'sched_off')
-    {
-        var h = document.getElementById(id + 'Hours').value;
-        var m = document.getElementById(id + 'Minutes').value;
-        var s = document.getElementById(id + 'Seconds').value;
-        url += '/' + h + '/' + m + '/' + s;
-    }
+  var url = 'dune/power/channel/' + op + '/' + channel;
 
-    var options = Array();
-    options.timeout = 10000;
-    options.timeoutHandler = null;
-    options.errorHandler = null;
-    HTTP.get(url, handlePower, options);
+  if (op == 'sched_on' || op == 'sched_off') {
+      var h = document.getElementById(id + 'Hours').value;
+      var m = document.getElementById(id + 'Minutes').value;
+      var s = document.getElementById(id + 'Seconds').value;
+      url += '/' + h + '/' + m + '/' + s;
+  }
+
+  var activeBtn = event.target;
+  activeBtn.classList.add('loading');
+  setTimeout(function() {
+      activeBtn.classList.remove('loading');
+  }, 500);
+
+  var btnOn = document.querySelector(`#${id} button[data-op="on"]`);
+  var btnOff = document.querySelector(`#${id} button[data-op="off"]`);
+  if (op === 'on') {
+      btnOn.classList.remove('active');
+      btnOn.disabled = true;
+      btnOff.classList.remove('active');
+      btnOff.disabled = true;
+  } else if (op === 'off') {
+      btnOn.classList.remove('active');
+      btnOn.disabled = true;
+      btnOff.classList.remove('active');
+      btnOff.disabled = true;
+  }
+
+  //print url
+  console.log(url);
+
+  var options = Array();
+  options.timeout = 10000;
+  options.timeoutHandler = null;
+  options.errorHandler = null;
+
+  HTTP.get(url, function(response) {
+      handlePower(response);
+  }, options);
 }
