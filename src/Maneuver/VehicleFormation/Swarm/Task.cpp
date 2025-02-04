@@ -223,14 +223,8 @@ namespace Maneuver
           if (!isLeader())
             return;
 
-          int idx = formation_index(resolveSystemName(msg->sys_src));
-          if ((unsigned)idx == IMC::AddressResolver::invalid())
-          {
-            war("Received code READY from non-participant: %s", msg->sys_src.c_str());
-            return;
-          }
-
-          std::map<int, bool>::iterator itr = m_ready_state.find(idx);
+          int id = resolveSystemName(msg->sys_src);
+          std::map<int, bool>::iterator itr = m_ready_state.find(id);
           if (itr == m_ready_state.end())
           {
             war("Received code READY from non-participant: %s", msg->sys_src.c_str());
@@ -439,7 +433,7 @@ namespace Maneuver
             if ((int)idx == formation_index())
               continue;
 
-            m_ready_state[idx] = false;
+            m_ready_state[participant(idx).vid] = false;
           }
 
           m_state = SM_START_SETUP;
