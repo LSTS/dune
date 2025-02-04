@@ -165,7 +165,7 @@ namespace DUNE
       inline const Participant&
       participant(int index) const
       {
-        return m_participants[index];
+        return m_participants.at(index);
       }
 
       //! Get configuration of local vehicle in formation.
@@ -173,7 +173,7 @@ namespace DUNE
       inline const Participant&
       self(void)
       {
-        return m_participants[m_fidx];
+        return m_participants.at(m_fidx);
       }
 
       //! Get index of local vehicle in formation.
