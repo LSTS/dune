@@ -90,41 +90,39 @@ namespace Maneuver
 
       struct Task: public DUNE::Maneuvers::BasicSwarm
       {
-        //! last state update
+        //! Last state update.
         IMC::EstimatedState m_estate;
-        //! Number of current waypoint number
+        //! Number of current waypoint number.
         uint8_t m_curr;
-        //! Task arguments
+        //! Task arguments.
         Arguments m_args;
-        //! Acoustic protocol
+        //! Acoustic protocol.
         AcousticProtocol m_comms;
-        //! Received ack from this id
+        //! Received ack from this id.
         uint16_t m_ack_id_rcv;
-        //! Waiting acknowledgement from this id
+        //! Waiting acknowledgement from this id.
         uint16_t m_ack_id_expected;
-        //! Acknowledgement timer
+        //! Acknowledgement timer.
         Time::Counter<double> m_ack_timeout;
-        //! Leader id
+        //! Leader id.
         unsigned int m_leader_id;
-        //! Ready state of participants
+        //! Ready state of participants.
         std::map<int, bool> m_ready_state;
-        //! Current state machine state
+        //! Current state machine state.
         StateMachineStates m_state;
-        //! Leader Setup variables
-        //! Leader Setup state
+        //! Leader Setup state.
         LeaderSetupStates m_ls_state;
-        //! Participant index
+        //! Participant index.
         int m_ls_idx;
-        //! Leader Setup retries
+        //! Leader Setup retries.
         size_t m_ls_retries;
-        //! Leader Setup timer
+        //! Leader Setup timer.
         Time::Counter<double> m_ls_timeout;
-        //! Start Setup variables
-        //! Start Setup timeout
+        //! Start Setup timeout.
         Time::Counter<double> m_ss_timeout;
-        //! Send ready interval
+        //! Send ready interval.
         Time::Counter<double> m_ss_send_ready;
-        //! Start flag received from leader
+        //! Start flag received from leader.
         bool m_ss_start;
         //! Send position timer.
         Time::Counter<double> m_send_pos_timer;
