@@ -372,12 +372,19 @@ namespace Maneuver
         }
 
         void
-        leaderSetup()
+        leaderSetup(void)
         {
-          if (isLeader())
-            sendLeader();
-          else
-            waitForLeader();
+          try
+          {
+            if (isLeader())
+              sendLeader();
+            else
+              waitForLeader();
+          }
+          catch(const std::exception& e)
+          {
+            err(DTR("error sending leader: %s"), e.what());
+          }
         }
 
         void
