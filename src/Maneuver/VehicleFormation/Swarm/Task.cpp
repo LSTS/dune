@@ -524,7 +524,8 @@ namespace Maneuver
         void
         onUpdate(int f_index, const IMC::RemoteState& rstate)
         {
-          
+          (void) f_index;
+          (void) rstate;
         }
 
         void
