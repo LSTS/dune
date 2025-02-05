@@ -791,6 +791,8 @@ namespace Maneuver
               startSetup();
               break;
             case SM_MOVING:
+              dissiminatePosition();
+              checkLeaderReference();
               break;
             default:
               break;
