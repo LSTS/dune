@@ -50,9 +50,9 @@ namespace Maneuver
         CODE_POS    = 0x04
       };
 
-      struct Point
+      struct Position
       {
-        float heading;
+        uint8_t waypoint_idx;
         float lat;
         float lon;
       };
@@ -71,12 +71,12 @@ namespace Maneuver
         { }
 
         void
-        sendPos(const std::string& sys, const float heading, const float lat, const float lon)
+        sendPos(const std::string& sys, const float waypoint_index, const float lat, const float lon)
         {
           std::vector<uint8_t> data;
 
-          Point p;
-          p.heading = heading;
+          Position p;
+          p.waypoint_idx = waypoint_index;
           p.lat = lat;
           p.lon = lon;
 
