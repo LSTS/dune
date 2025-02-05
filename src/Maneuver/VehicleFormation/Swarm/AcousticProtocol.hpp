@@ -71,7 +71,7 @@ namespace Maneuver
         { }
 
         void
-        sendPos(const std::string& sys, const float waypoint_index, const float lat, const float lon)
+        sendPos(const std::string& sys, const uint8_t waypoint_index, const float lat, const float lon)
         {
           std::vector<uint8_t> data;
 
