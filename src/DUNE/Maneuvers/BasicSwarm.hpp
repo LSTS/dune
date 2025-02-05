@@ -127,6 +127,13 @@ namespace DUNE
         double y; //!< Y coordinate offset (East).
         double z; //!< Z coordinate offset (Down).
         double t; //!< time coordinate offset.
+
+        TPoint(void):
+          x(0),
+          y(0),
+          z(0),
+          t(0)
+        { }
       };
 
       //! Get a point in the trajectory.
@@ -150,6 +157,13 @@ namespace DUNE
         double x; //!< Along-track offset.
         double y; //!< Cross-track offset.
         double z; //!< Depth offset.
+
+        Participant(void):
+          vid(-1),
+          x(0),
+          y(0),
+          z(0)
+        { }
       };
 
       //! Get number of participants in formation.
@@ -219,21 +233,21 @@ namespace DUNE
       toLocalCoordinates(double lat, double lon, double* x, double* y);
 
       void
-      fromLocalCoordinates(double x, double y, float* lat, float* lon);
+      fromLocalCoordinates(double x, double y, double* lat, double* lon);
 
-      double
+      inline double
       getSpeed()
       {
         return m_speed;
       }
 
-      uint8_t
+      inline uint8_t
       getSpeedUnits()
       {
         return m_speed_units;
       }
       
-      bool
+      inline bool
       isLeader()
       {
         return m_leader;

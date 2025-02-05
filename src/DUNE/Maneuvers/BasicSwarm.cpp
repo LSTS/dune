@@ -222,7 +222,7 @@ namespace DUNE
     }
 
     void
-    BasicSwarm::fromLocalCoordinates(double x, double y, float* lat, float* lon)
+    BasicSwarm::fromLocalCoordinates(double x, double y, double* lat, double* lon)
     {
       *lat = m_rlat;
       *lon = m_rlon;
