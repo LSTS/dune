@@ -75,6 +75,9 @@ namespace Maneuver
         double start_setup_timeout;
         double send_ready_interval;
         double tdma_time_per_slot;
+        double pos_dissemination_periodicity;
+        double leader_reference_timeout;
+        double speed_max_delta;
       };
 
       struct Task: public DUNE::Maneuvers::BasicSwarm
@@ -115,7 +118,14 @@ namespace Maneuver
         Time::Counter<double> m_ss_send_ready;
         //! Start flag received from leader
         bool m_ss_start;
-
+        //! Send position timer.
+        Time::Counter<double> m_send_pos_timer;
+        //! Leader reference timeout timer.
+        Time::Counter<double> m_leader_ref_timer;
+        //! Leader position.
+        Position m_leader_pos;
+        //! Speed reference.
+        double m_speed_ref;
 
         Task(const std::string& name, DUNE::Tasks::Context& ctx):
           BasicSwarm(name, ctx),
@@ -128,7 +138,10 @@ namespace Maneuver
           m_ls_state(LS_SEND_LEADER),
           m_ls_idx(0),
           m_ls_retries(c_ls_max_retries),
-          m_ss_start(false)
+          m_ss_start(false),
+          m_send_pos_timer(0.0f),
+          m_leader_ref_timer(0.0f),
+          m_speed_ref(0.0f)
         {
           param("Acknowledgement Timeout", m_args.ack_timeout)
           .units(Units::Second)
@@ -155,6 +168,25 @@ namespace Maneuver
           .defaultValue("5.0")
           .description("Period while acoustic channel is reserved for each participant");
 
+          param("Position Dissemination Periodicity", m_args.pos_dissemination_periodicity)
+          .units(Units::Second)
+          .minimumValue("1.0")
+          .defaultValue("5.0")
+          .description("Periodicity of position dissemination.");
+
+          param("Leader Reference Timeout", m_args.leader_reference_timeout)
+          .units(Units::Second)
+          .minimumValue("5.0")
+          .defaultValue("10.0")
+          .description("Leader reference timeout");
+
+          param("Speed Maximum Delta", m_args.speed_max_delta)
+          .units(Units::MeterPerSecond)
+          .minimumValue("0.1")
+          .defaultValue("0.5")
+          .maximumValue("1.0")
+          .description("Maximum delta for speed adjustment");
+
           bind<IMC::UamRxFrame>(this);
         }
 
@@ -164,6 +196,9 @@ namespace Maneuver
           BasicSwarm::onUpdateParameters();
 
           m_comms.setTimePerSlot(m_args.tdma_time_per_slot);
+
+          if (paramChanged(m_args.pos_dissemination_periodicity))
+            m_send_pos_timer.setTop(m_args.pos_dissemination_periodicity);
         }
 
         //! On resource initialization
@@ -192,6 +227,9 @@ namespace Maneuver
               break;
             case CODE_START:
               recvStart(msg);
+              break;
+            case CODE_POS:
+              recvPos(msg);
               break;
             default:
               debug("Invalid acoustic code: %u", msg->data[1]);
@@ -246,7 +284,27 @@ namespace Maneuver
           m_ss_start = true;
         }
 
-        //! This is blocking!
+        void
+        recvPos(const IMC::UamRxFrame* msg)
+        {
+          if (m_leader_id != resolveSystemName(msg->sys_src))
+            return;
+          
+          //! Leader only broadcasts position after Start,
+          //! thus if Pos has been received, but Start has not been received, Start
+          if (!m_ss_start)
+            m_ss_start = true;
+          
+          m_leader_ref_timer.setTop(m_args.leader_reference_timeout);
+          std::memcpy(&m_leader_pos, &msg->data[2], sizeof(m_leader_pos));
+          trace("Received code POS from: %s | waypoint index: %u lat : %f lon: %f", msg->sys_src.c_str(),
+                                                                                    m_leader_pos.waypoint_idx,
+                                                                                    m_leader_pos.lat,
+                                                                                    m_leader_pos.lon);
+          
+          updateSpeed();
+        }
+
         void
         expectAck(uint16_t sys_id)
         {
@@ -448,6 +506,7 @@ namespace Maneuver
             {
               trace("Sending code START in broadcast");
               m_comms.sendStart("broadcast", Time::Clock::getSinceEpoch());
+              m_send_pos_timer.reset();
               setControl(IMC::CL_PATH);
               sendToNextPoint();
               debug("Start setup done");
@@ -543,10 +602,168 @@ namespace Maneuver
           }
           
           sendToNextPoint();
-        } // End of function onPathCompletion
+        }
+
+        inline void
+        orthogonalProjection(const TPoint& origin, const TPoint& destination, double* point, double* result)
+        {
+          double direction[2] = {destination.x - origin.x, destination.y - origin.y};
+          double origin2point[2] = {point[0] - origin.x, point[1] - origin.y};
+          double d1 = dot(origin2point, direction);
+          double d2 = dot(direction, direction);
+          double origin2proj[2] = {direction[0] * d1 / d2, direction[1] * d1 / d2};
+          result[0] = origin.x + origin2proj[0];
+          result[1] = origin.y + origin2proj[1];
+        }
+
+        inline double
+        dot(const double* a, const double* b)
+        {
+          return a[0] * b[0] + a[1] * b[1];
+        }
+
+        inline double
+        norm(const double* vector)
+        {
+          return std::sqrt(std::pow(vector[0], 2) + std::pow(vector[1], 2));
+        }
+
+        inline double
+        norm(const double* a, const double* b)
+        {
+          return std::sqrt(std::pow(a[0] - b[0], 2) + std::pow(a[1] - b[1], 2));
+        }
+
+        inline double
+        norm(const double* position, const TPoint& waypoint)
+        {
+          return std::sqrt(std::pow(position[0] - waypoint.x, 2) + std::pow(position[1] - waypoint.y, 2));
+        }
+
+        inline double
+        norm(const TPoint& a, const TPoint& b)
+        {
+          return std::sqrt(std::pow(a.x - b.x, 2) + std::pow(a.y - b.y, 2));
+        }
 
         void
-        onStateReport()
+        setSpeedReference(double coeff)
+        {
+          double original_speed = getSpeed();
+          m_speed_ref = original_speed * coeff;
+          if (m_speed_ref > original_speed + m_args.speed_max_delta)
+            m_speed_ref = original_speed + m_args.speed_max_delta;
+
+          if (m_speed_ref < 0.0f)
+            m_speed_ref = 0.0f;
+        }
+
+        double
+        adjustSpeedReference(void)
+        {
+          if (m_curr < 1 || m_curr >= trajectory_points())
+            return 1.0f;
+          
+          try
+          {
+            TPoint origin = point(m_curr - 1, formation_index());
+            TPoint origin_virtual = point(m_curr - 1);
+
+            TPoint destination = point(m_curr, formation_index());
+            TPoint destination_virtual = point(m_curr);
+
+            double leader_pos[2];
+            toLocalCoordinates(m_leader_pos.lat, m_leader_pos.lon, &leader_pos[0], &leader_pos[1]);
+            double leader_proj[2];
+            orthogonalProjection(origin_virtual, destination_virtual, leader_pos, leader_proj);
+            double self_pos[2] = {m_estate.x, m_estate.y};
+            double self_proj[2];
+            orthogonalProjection(origin, destination, self_pos, self_proj);
+
+            double distance_leader2dest = norm(leader_proj, destination_virtual);
+            double distance_self2dest = norm(self_proj, destination);
+            war("distance_leader2dest: %f, distance_self2dest: %f", distance_leader2dest, distance_self2dest);
+
+            return distance_self2dest / distance_leader2dest;
+          }
+          catch(const std::exception& e)
+          {
+            err(DTR("error adjusting speed reference: %s"), e.what());
+          }
+
+          return 1.0f;
+        }
+
+        double
+        returnToOriginalSpeed(double original_speed)
+        {
+          double elapsed = m_leader_ref_timer.getElapsed() / m_args.leader_reference_timeout;
+          if (elapsed > 1.0f)
+            elapsed = 1.0f;
+          return 1 + (1 - m_speed_ref / original_speed) * elapsed;
+        }
+
+        void
+        updateSpeed(void)
+        {
+          if (!isActive())
+            return;
+          
+          if (m_curr < 1)
+            return;
+
+          double coeff;
+          double original_speed = getSpeed();
+
+          if (m_leader_ref_timer.overflow() && m_leader_ref_timer.getTop() == 0.0f)
+            coeff = returnToOriginalSpeed(original_speed);
+          else if (m_curr == m_leader_pos.waypoint_idx)
+            coeff = adjustSpeedReference();
+          else if (m_curr > m_leader_pos.waypoint_idx)
+            coeff = 0;
+            // coeff = 1 - m_args.speed_max_delta / original_speed;
+          else
+            coeff = 1 + m_args.speed_max_delta / original_speed;
+          
+          setSpeedReference(coeff);
+          desiredSpeed(m_speed_ref, getSpeedUnits());
+        }
+
+        void
+        dissiminatePosition(void)
+        {
+          if (!isLeader())
+            return;
+
+          if (m_curr < 1)
+            return;
+          
+          if (m_send_pos_timer.overflow())
+          {
+            double lat, lon;
+            fromLocalCoordinates(m_estate.x, m_estate.y, &lat, &lon);
+            m_comms.sendPos("broadcast", m_curr, lat, lon);
+            m_send_pos_timer.reset();
+          }
+        }
+        
+        void
+        checkLeaderReference(void)
+        {
+          if (isLeader())
+            return;
+          
+          if (m_leader_ref_timer.overflow())
+          {
+            if (m_leader_ref_timer.getTop() != 0.0f)
+              m_leader_ref_timer.setTop(0.0f);
+            else
+              updateSpeed();
+          }
+        }
+
+        void
+        onStateReport(void)
         {
           switch (m_state)
           {
