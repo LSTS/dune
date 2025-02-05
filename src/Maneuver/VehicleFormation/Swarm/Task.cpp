@@ -540,8 +540,8 @@ namespace Maneuver
           // if the current waypoint is the last, then all is done
           if ((size_t)m_curr == trajectory_points())
           {
-            signalCompletion(); // All done
-            return; // All done
+            signalCompletion();
+            return;
           }
 
           if (m_curr == 1)
