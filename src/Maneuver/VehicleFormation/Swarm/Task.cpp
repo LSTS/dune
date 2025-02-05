@@ -70,13 +70,21 @@ namespace Maneuver
 
       struct Arguments
       {
+        //! Acknowledgement timeout.
         double ack_timeout;
+        //! Leader setup timeout.
         double leader_setup_timeout;
+        //! Start setup timeout.
         double start_setup_timeout;
+        //! Send ready interval.
         double send_ready_interval;
+        //! TDMA time per slot.
         double tdma_time_per_slot;
+        //! Position dissemination periodicity.
         double pos_dissemination_periodicity;
+        //! Leader reference timeout.
         double leader_reference_timeout;
+        //! Maximum delta for speed adjustment.
         double speed_max_delta;
       };
 
