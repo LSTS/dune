@@ -36,6 +36,7 @@
 
 // DUNE headers.
 #include <DUNE/IMC.hpp>
+#include <DUNE/Coordinates/WGS84.hpp>
 #include <DUNE/Maneuvers/Maneuver.hpp>
 #include <DUNE/Math/Constants.hpp>
 
@@ -210,6 +211,9 @@ namespace DUNE
 
       void
       desiredSpeed(double value, uint8_t speed_units);
+
+      void
+      updateTrajectory(double lat, double lon);
 
       void
       toLocalCoordinates(double lat, double lon, double* x, double* y);

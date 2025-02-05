@@ -187,8 +187,8 @@ namespace DUNE
     BasicSwarm::consume(const IMC::EstimatedState* msg)
     {
       step(*msg);
-      m_rlat = msg->lat;
-      m_rlon = msg->lon;
+      if (m_rlat != msg->lat || m_rlon != msg->lon)
+        updateTrajectory(msg->lat, msg->lon);
     }
 
     void
@@ -198,6 +198,21 @@ namespace DUNE
 
       if (itr != m_addr2idx.end())
         onUpdate(itr->second, *msg);
+    }
+
+    void
+    BasicSwarm::updateTrajectory(double lat, double lon)
+    {
+      for (auto& p : m_traj)
+      {
+        double old_lat = m_rlat;
+        double old_lon = m_rlon;
+        Coordinates::WGS84::displace(p.x, p.y, &old_lat, &old_lon);
+        Coordinates::WGS84::displacement(lat, lon, 0, old_lat, old_lon, 0, &p.x, &p.y);
+      }
+
+      m_rlat = lat;
+      m_rlon = lon;
     }
 
     void
