@@ -487,10 +487,9 @@ namespace Maneuver
         bool
         isFormationReady(void)
         {
-          std::map<int, bool>::iterator itr;
-          for (itr = m_ready_state.begin(); itr != m_ready_state.end(); itr++)
+          for (const auto& entry : m_ready_state)
           {
-            if (itr->second == false)
+            if (!entry.second)
               return false;
           }
 
