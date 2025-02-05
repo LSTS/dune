@@ -403,12 +403,16 @@ namespace Maneuver
               if (m_ls_idx == formation_index())
                 m_ls_idx++;
 
-              const Participant& part = participant(m_ls_idx);
-              std::string part_name = resolveSystemId(part.vid);
-              trace("Sending code LEADER to %s...", part_name.c_str());
-              m_comms.sendLeader(part_name);
+              if ((size_t)m_ls_idx < participants())
+              {
+                const Participant& part = participant(m_ls_idx);
+                std::string part_name = resolveSystemId(part.vid);
+                trace("Sending code LEADER to %s...", part_name.c_str());
+                m_comms.sendLeader(part_name);
 
-              expectAck(part.vid);
+                expectAck(part.vid);
+              }
+              
               m_ls_state = LS_ACK;
             }
             break;
@@ -425,7 +429,8 @@ namespace Maneuver
               if (gotAck())
               {
                 m_ls_idx++;
-                if ((size_t)m_ls_idx >= participants())
+                if ((size_t)m_ls_idx >= participants() ||
+                    (m_ls_idx == formation_index() && (size_t)m_ls_idx == participants() - 1))
                 {
                   debug("Leader setup done. Leader is %s", resolveSystemId(m_leader_id));
                   sendToFirstPoint();
