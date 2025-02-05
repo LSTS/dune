@@ -258,6 +258,9 @@ namespace Maneuver
           if (!isLeader())
             return;
 
+          if (m_state != SM_START_SETUP)
+            return;
+
           int id = resolveSystemName(msg->sys_src);
           std::map<int, bool>::iterator itr = m_ready_state.find(id);
           if (itr == m_ready_state.end())
