@@ -259,7 +259,7 @@ namespace Maneuver
         }
 
         bool
-        gotAck()
+        gotAck(void)
         {
           if (m_ack_id_expected == IMC::AddressResolver::invalid())
             return false;
@@ -295,7 +295,7 @@ namespace Maneuver
         }
 
         void
-        setLeaderSetup()
+        setLeaderSetup(void)
         {
           setControl(IMC::CL_NONE);
           m_ls_state = LS_SEND_LEADER;
@@ -322,7 +322,7 @@ namespace Maneuver
         }
 
         void
-        sendLeader()
+        sendLeader(void)
         {
           switch (m_ls_state)
           {
@@ -378,7 +378,7 @@ namespace Maneuver
         }
 
         void
-        waitForLeader()
+        waitForLeader(void)
         {
           if (m_ls_timeout.overflow())
           {
@@ -395,7 +395,7 @@ namespace Maneuver
         }
 
         void
-        sendToFirstPoint()
+        sendToFirstPoint(void)
         {
           // Send to first point
           setControl(IMC::CL_PATH);
@@ -420,7 +420,7 @@ namespace Maneuver
         }
 
         void
-        setStartSetup()
+        setStartSetup(void)
         {
           setControl(IMC::CL_NONE);
           m_ss_timeout.setTop(m_args.start_setup_timeout);
@@ -441,7 +441,7 @@ namespace Maneuver
         }
 
         void
-        startSetup()
+        startSetup(void)
         {
           if (m_ss_timeout.overflow())
           {
@@ -485,7 +485,7 @@ namespace Maneuver
         }
 
         bool
-        isFormationReady()
+        isFormationReady(void)
         {
           std::map<int, bool>::iterator itr;
           for (itr = m_ready_state.begin(); itr != m_ready_state.end(); itr++)
@@ -498,7 +498,7 @@ namespace Maneuver
         }
 
         void
-        sendToNextPoint()
+        sendToNextPoint(void)
         {
           TPoint next;
           TPoint next_virtual;
