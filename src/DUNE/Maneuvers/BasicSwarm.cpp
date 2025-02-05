@@ -277,6 +277,9 @@ namespace DUNE
     BasicSwarm::TPoint
     BasicSwarm::point(int t_index, int f_index)
     {
+      if (t_index < 0 || (size_t)t_index >= trajectory_points())
+        throw std::runtime_error(DTR("invalid trajectory index"));
+      
       TPoint p = m_traj[t_index];
 
       if (f_index >= 0)
