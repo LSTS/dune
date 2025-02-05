@@ -82,11 +82,7 @@ namespace Maneuver
         //! last state update
         IMC::EstimatedState m_estate;
         //! Number of current waypoint number
-        int m_curr;
-        //! Previously assigned participant waypoint
-        TPoint m_prev;
-        //! Previously assigned virtual waypoint
-        TPoint m_prev_virtual;
+        uint8_t m_curr;
         //! Task arguments
         Arguments m_args;
         //! Acoustic protocol
@@ -123,6 +119,7 @@ namespace Maneuver
 
         Task(const std::string& name, DUNE::Tasks::Context& ctx):
           BasicSwarm(name, ctx),
+          m_curr(0),
           m_comms(this),
           m_ack_id_rcv(IMC::AddressResolver::invalid()),
           m_ack_id_expected(IMC::AddressResolver::invalid()),
@@ -278,6 +275,7 @@ namespace Maneuver
           m_comms.resetSyncTime();
           m_comms.resetMaxSlots();
           m_comms.resetSlot();
+          m_curr = 0;
         }
 
         void
@@ -405,14 +403,8 @@ namespace Maneuver
           start.y = m_estate.y;
           start.z = m_estate.depth;
 
-          // Initiate m_prev as first waypoint
-          m_prev = point(0, formation_index());
-          m_prev_virtual = point(0);
-
-          desiredPath(start, m_prev, getSpeed(), getSpeedUnits());
-
-          // Initiate waypoint counter at one
-          m_curr = 1;
+          TPoint first = point(0, formation_index());
+          desiredPath(start, first, getSpeed(), getSpeedUnits());
 
           // Change state to moving
           m_state = SM_MOVING;
@@ -499,22 +491,20 @@ namespace Maneuver
         void
         sendToNextPoint(void)
         {
-          TPoint next;
-          TPoint next_virtual;
+          if (m_curr < 1)
+            return;
+          
+          TPoint prev = point(m_curr - 1, formation_index());
+          TPoint prev_virtual = point(m_curr - 1);
+          TPoint next = point(m_curr, formation_index());
+          TPoint next_virtual = point(m_curr);
 
-          next = point(m_curr, formation_index());
-          next_virtual = point(m_curr);
-
-          double distance = getRange(m_prev, next);
-          double distance_virtual = getRange(m_prev_virtual, next_virtual);
-          double speed = (distance / distance_virtual) * getSpeed();
+          double distance = norm(prev, next);
+          double distance_virtual = norm(prev_virtual, next_virtual);
+          setSpeedReference(distance / distance_virtual);
 
           // throw a leg of TPoints to be followed by the vehicle
-          desiredPath(m_prev, next, speed, getSpeedUnits());
-
-          ++m_curr;
-          m_prev = next;
-          m_prev_virtual = next_virtual;
+          desiredPath(prev, next, m_speed_ref, getSpeedUnits());
 
           m_state = SM_MOVING;
           debug("Changing state to MOVING");
@@ -536,6 +526,8 @@ namespace Maneuver
         void
         onPathCompletion(void)
         {
+          ++m_curr;
+
           // if the current waypoint is the last, then all is done
           if ((size_t)m_curr == trajectory_points())
           {
