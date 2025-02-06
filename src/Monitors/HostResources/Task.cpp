@@ -26,24 +26,43 @@
 //***************************************************************************
 // Author: Pedro Gonçalves                                                  *
 //***************************************************************************
-//* https://github.com/vivaladav/BitsOfBytes/blob/master/cpp-program-to-get-*
-//*       cpu-usage-from-command-line-in-linux/main.cpp                     *
-//***************************************************************************
 
 // ISO C++ 98 headers.
-#include <string>
+#include <array>
 #include <cstring>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+#include <iterator>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// POSIX headers.
+#if defined(DUNE_SYS_HAS_UNISTD_H)
+#include <unistd.h>
+#endif
+
+// Microsoft Windows headers.
+#if defined(DUNE_SYS_HAS_WINDOWS_H)
+#include <windows.h>
+#include <psapi.h>
+#endif
+
+#define IMC_RAM_USAGE_MESSAGE_EXISTS  (false)
+
 namespace Monitors
 {
-  namespace CPUSingleUsage
+  namespace HostResources
   {
     using DUNE_NAMESPACES;
 
-    static const float c_time_between_reads = 2.0f;
+    static const float c_time_between_ram_reads = 1.0f;
+    static const float c_time_between_ram_cache_clean = 3600.0f; // 1 hour
+    static const float c_time_between_cpu_reads = 2.0f;
     static const int c_max_cpu = 32;
 
     typedef struct CPUData
@@ -69,17 +88,29 @@ namespace Monitors
     struct Task: public DUNE::Tasks::Task
     {
       //! CpuUsage message
-      IMC::CpuUsage m_cpu[c_max_cpu];
-      //! CpuEdiLabel
-      uint8_t m_cpu_eid[c_max_cpu];
-      //! state time to check usage of cpus
-      Time::Counter<float> m_cpu_check;
+      IMC::CpuUsage m_dune_cpu_usage[c_max_cpu + 1];
+#if IMC_RAM_USAGE_MESSAGE_EXISTS
+      //! RamUsage message
+      IMC::RamUsage m_dune_ram_usage[2];
+#endif
+      //! state time to check usage of dune
+      Time::Counter<float> m_ram_check;
+      //! state time to clean cache
+      Time::Counter<float> m_ram_cache_clean;
       //! Read timestamp.
       double m_tstamp;
+      //! state time to check usage of cpus
+      Time::Counter<float> m_cpu_check;
       //! Number of CPUs
       int m_num_cpus;
       //! Buffer for entity state
-      std::string m_buffer_entity;
+      std::string m_buffer_cpu_entity;
+      //! Save pid of the process
+#if defined(DUNE_OS_LINUX)
+      pid_t m_pid;
+#elif defined(DUNE_OS_WINDOWS)
+      DWORD m_pid;
+#endif
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -97,9 +128,13 @@ namespace Monitors
         for(uint8_t i = 1 ; i <= m_num_cpus; i++)
         {
           std::string cpu_label = String::str("CPU%u", i);
-          m_cpu_eid[i - 1] = getEid(cpu_label);
-          m_cpu[i - 1].setSourceEntity(m_cpu_eid[i - 1]);
+          m_dune_cpu_usage[i - 1].setSourceEntity(getEid(cpu_label.c_str()));
         }
+        m_dune_cpu_usage[m_num_cpus].setSourceEntity(getEid("DUNE-CPU"));
+#if IMC_RAM_USAGE_MESSAGE_EXISTS
+        m_dune_ram_usage[0].setSourceEntity(getEid("DUNE-RAM"));
+        m_dune_ram_usage[1].setSourceEntity(getEid("DUNE-SWAP"));
+#endif
       }
 
       unsigned
@@ -123,6 +158,7 @@ namespace Monitors
       void
       onResourceAcquisition(void)
       {
+        m_buffer_cpu_entity = "active | Cores Detected: " + std::to_string(m_num_cpus);
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
       }
 
@@ -130,21 +166,117 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        updateEntityState();
-        m_cpu_check.setTop(c_time_between_reads);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_ram_check.setTop(c_time_between_ram_reads);
+        m_ram_cache_clean.setTop(c_time_between_ram_cache_clean);
+        cleanRamCache();
+#if defined(DUNE_OS_LINUX)
+        m_pid = getpid();
+#elif defined(DUNE_OS_WINDOWS)
+        m_pid = GetCurrentProcessId();
+#endif
+        trace("PID: %d", m_pid);
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
+      { }
+
+      double
+      getDUNECPUUsage(void)
       {
+#if defined(DUNE_OS_LINUX)
+        std::ifstream stat_file("/proc/self/stat");
+        std::string line;
+        std::getline(stat_file, line);
+        std::istringstream iss(line);
+        std::vector<std::string> tokens{std::istream_iterator<std::string>{iss},
+                                        std::istream_iterator<std::string>{}};
+        // utime + stime (in clock ticks)
+        uint64_t total_time = std::stoull(tokens[13]) + std::stoull(tokens[14]);
+        // Get uptime and calculate CPU percentage
+        std::ifstream uptime_file("/proc/uptime");
+        double uptime;
+        uptime_file >> uptime;
+        static uint64_t last_total = 0;
+        static double last_uptime = 0.0;
+        double percent = (total_time - last_total) / (uptime - last_uptime) / sysconf(_SC_CLK_TCK) * 100.0;
+        last_total = total_time;
+        last_uptime = uptime;
+        return percent;
+#elif defined(DUNE_OS_WINDOWS)
+        static ULARGE_INTEGER last_cpu_time, last_sys_time;
+        FILETIME ft_proc_creation, ft_proc_exit, ft_proc_kernel, ft_proc_user;
+        FILETIME ft_sys_idle, ft_sys_kernel, ft_sys_user;
+
+        GetSystemTimes(&ft_sys_idle, &ft_sys_kernel, &ft_sys_user);
+        GetProcessTimes(GetCurrentProcess(), &ft_proc_creation, &ft_proc_exit,
+                        &ft_proc_kernel, &ft_proc_user);
+
+        ULARGE_INTEGER cpu_time, sys_time;
+        cpu_time.LowPart = ft_proc_kernel.dwLowDateTime + ft_proc_user.dwLowDateTime;
+        cpu_time.HighPart = ft_proc_kernel.dwHighDateTime + ft_proc_user.dwHighDateTime;
+        sys_time.LowPart = ft_sys_kernel.dwLowDateTime + ft_sys_user.dwLowDateTime;
+        sys_time.HighPart = ft_sys_kernel.dwHighDateTime + ft_sys_user.dwHighDateTime;
+
+        static double last_percent = 0.0;
+        if (last_cpu_time.QuadPart != 0 && last_sys_time.QuadPart != 0)
+        {
+          uint64_t cpu_diff = cpu_time.QuadPart - last_cpu_time.QuadPart;
+          uint64_t sys_diff = sys_time.QuadPart - last_sys_time.QuadPart;
+          if (sys_diff > 0)
+            last_percent = (cpu_diff * 100.0) / sys_diff;
+        }
+        last_cpu_time = cpu_time;
+        last_sys_time = sys_time;
+        return last_percent;
+#endif
+      }
+
+      double
+      getDUNERAMUsage(void)
+      {
+#if defined(DUNE_OS_LINUX)
+        std::ifstream status_file("/proc/self/status");
+        std::string line;
+        while (std::getline(status_file, line))
+          if (line.find("VmRSS:") == 0)
+            return std::stod(line.substr(6)) / 1024.0; // kB -> MB
+        return -1;
+#elif defined(DUNE_OS_WINDOWS)
+        PROCESS_MEMORY_COUNTERS pmc;
+        return GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) ?
+               pmc.WorkingSetSize / (1024.0 * 1024.0) : -1; // Bytes -> MB
+#endif
+      }
+
+      double
+      getDUNESwapUsage(void)
+      {
+#if defined(DUNE_OS_LINUX)
+        std::ifstream status_file("/proc/self/status");
+        std::string line;
+        while (std::getline(status_file, line))
+          if (line.find("VmSwap:") == 0)
+            return std::stod(line.substr(7)) / 1024.0; // kB -> MB
+        return -1;
+#elif defined(DUNE_OS_WINDOWS)
+        PROCESS_MEMORY_COUNTERS pmc;
+        return GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) ?
+               pmc.PagefileUsage / (1024.0 * 1024.0) : -1; // Bytes -> MB
+#endif
       }
 
       void
-      updateEntityState(void)
+      cleanRamCache(void)
       {
-        m_buffer_entity = String::str("active | Cores Detected: %d | %s", m_num_cpus, getMemoryUsage().c_str());
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_buffer_entity.c_str())));
+#if defined(DUNE_OS_LINUX)
+        if (std::system("sync; echo 1 > /proc/sys/vm/drop_caches") != 0)
+          war(DTR("failed to clean RAM cache"));
+#elif defined(DUNE_OS_WINDOWS)
+        std::system("powershell.exe -Command \"Clear-DnsClientCache\"");
+#endif
       }
 
       std::string
@@ -263,10 +395,10 @@ namespace Monitors
         }
         for(uint8_t id = 0; id < m_num_cpus; id++)
         {
-          m_cpu[id].setTimeStamp(m_tstamp);
-          m_cpu[id].value = cpu_usage[id];
+          m_dune_cpu_usage[id].setTimeStamp(m_tstamp);
+          m_dune_cpu_usage[id].value = cpu_usage[id];
           debug("CPU%u: %d%%", id + 1, cpu_usage[id]);
-          dispatch(m_cpu[id], DF_KEEP_TIME | DF_LOOP_BACK);
+          dispatch(m_dune_cpu_usage[id], DF_KEEP_TIME | DF_LOOP_BACK);
         }
       }
 
@@ -326,6 +458,30 @@ namespace Monitors
         while (!stopping())
         {
           waitForMessages(0.01);
+          if (m_ram_check.overflow())
+          {
+            m_ram_check.reset();
+            m_tstamp = Clock::get();
+            uint8_t cpu = (uint8_t)getDUNECPUUsage();
+            double ram = getDUNERAMUsage();
+            double swap = getDUNESwapUsage();
+            //dispatch CPU and RAM usage
+            m_dune_cpu_usage[m_num_cpus].value = cpu;
+            m_dune_cpu_usage[m_num_cpus].setTimeStamp(m_tstamp);
+            dispatch(m_dune_cpu_usage[m_num_cpus]);
+#if IMC_RAM_USAGE_MESSAGE_EXISTS
+            m_dune_ram_usage[0].value = ram * 1024.0f; // MB -> kB
+            m_dune_ram_usage[0].setTimeStamp(m_tstamp);
+            dispatch(m_dune_ram_usage[0]);
+            m_dune_ram_usage[1].value = swap * 1024.0f; // MB -> kB
+            m_dune_ram_usage[1].setTimeStamp(m_tstamp);
+            dispatch(m_dune_ram_usage[1]);
+#endif
+            trace("DUNE Process: CPU: %d%%, RAM: %.1fMB, Swap: %.1fMB | %s", cpu, ram, swap, m_buffer_cpu_entity.c_str());
+            std::string msg = String::str("%s | DUNE-CPU: %d%%, DUNE-RAM: %.1fMB, DUNE-SWAP: %.1fMB", m_buffer_cpu_entity.c_str(), cpu, ram, swap);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, msg);
+          }
+
           if (m_cpu_check.overflow())
           {
             m_cpu_check.reset();
@@ -341,13 +497,19 @@ namespace Monitors
             }
             else
             {
-              m_cpu[0].setTimeStamp(m_tstamp);
+              m_dune_cpu_usage[0].setTimeStamp(m_tstamp);
               uint8_t usage = (uint8_t) getSingleCoreUsage();
-              m_cpu[0].value = usage;
+              m_dune_cpu_usage[0].value = usage;
               debug("CPU0: %d%%", usage);
-              dispatch(m_cpu[0], DF_KEEP_TIME | DF_LOOP_BACK);
+              dispatch(m_dune_cpu_usage[0], DF_KEEP_TIME | DF_LOOP_BACK);
             }
-            updateEntityState();
+            m_buffer_cpu_entity = String::str("active | Cores Detected: %d | %s", m_num_cpus, getMemoryUsage().c_str());
+          }
+
+          if (m_ram_cache_clean.overflow())
+          {
+            m_ram_cache_clean.reset();
+            cleanRamCache();
           }
         }
       }

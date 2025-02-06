@@ -86,7 +86,7 @@ Main.prototype.m_fields = [
   },
   {
     "label": "DUNE CPU Usage:",
-    "data_function": function (data) { return getMessageCpuSingleUsage(data, 'DUNECPU', 0); },
+    "data_function": function (data) { return getMessageCpuSingleUsage(data, 'DUNE-CPU', 0); },
     "widget": new Gauge(0),
     "side": "right"
   },
