@@ -827,13 +827,13 @@ namespace Control
 
           gamma_msg.value = String::str(
             "Gamma ADCP - source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
-            m_gamma_adcp.source, m_gamma_adcp.lat, m_gamma_adcp.lon, m_gamma_adcp.sog,
+            m_gamma_adcp.source.c_str(), m_gamma_adcp.lat, m_gamma_adcp.lon, m_gamma_adcp.sog,
             m_gamma_adcp.uc, m_gamma_adcp.depth, m_gamma_adcp.value);
           dispatch(gamma_msg);
 
           gamma_msg.value = String::str(
             "Gamma ADCP old- source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
-            m_gamma_adcp_old.source, m_gamma_adcp_old.lat, m_gamma_adcp_old.lon,
+            m_gamma_adcp_old.source.c_str(), m_gamma_adcp_old.lat, m_gamma_adcp_old.lon,
             m_gamma_adcp_old.sog, m_gamma_adcp_old.uc, m_gamma_adcp_old.depth,
             m_gamma_adcp_old.value);
           dispatch(gamma_msg);
@@ -847,13 +847,13 @@ namespace Control
 
           gamma_msg.value = String::str(
             "Gamma SOG - source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
-            m_gamma_sog.source, m_gamma_sog.lat, m_gamma_sog.lon, m_gamma_sog.sog, m_gamma_sog.uc,
+            m_gamma_sog.source.c_str(), m_gamma_sog.lat, m_gamma_sog.lon, m_gamma_sog.sog, m_gamma_sog.uc,
             m_gamma_sog.depth, m_gamma_sog.value);
           dispatch(gamma_msg);
 
           gamma_msg.value = String::str(
             "Gamma SOG old source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
-            m_gamma_sog_old.source, m_gamma_sog_old.lat, m_gamma_sog_old.lon, m_gamma_sog_old.sog,
+            m_gamma_sog_old.source.c_str(), m_gamma_sog_old.lat, m_gamma_sog_old.lon, m_gamma_sog_old.sog,
             m_gamma_sog_old.uc, m_gamma_sog_old.depth, m_gamma_sog_old.value);
           dispatch(gamma_msg);
 
