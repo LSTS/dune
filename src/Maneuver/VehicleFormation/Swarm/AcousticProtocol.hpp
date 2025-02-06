@@ -284,10 +284,7 @@ namespace Maneuver
           double now = DUNE::Time::Clock::getSinceEpoch();
 
           if (!isTimeSlotConfigured())
-          {
-            war("Time slot configuration not set");
             return false;
-          }
 
           return m_slot_start <= now && now < m_slot_start + m_time_per_slot;
         }
