@@ -44,18 +44,54 @@ namespace Actuators
   {
     using DUNE_NAMESPACES;
 
+    struct ThrusterConfig
+    {
+      uint32_t min;
+      uint32_t max;
+      uint32_t zero;
+
+      void
+      setConfig(const std::vector<uint32_t>& us)
+      {
+        if (us.size() != 3)
+          throw std::runtime_error("Invalid thruster configuration");
+
+        min = us[0];
+        max = us[1];
+        zero = us[2];
+      }
+
+      int32_t
+      toDutyCycle(float value)
+      {
+        Math::trimValue(value, -100, 100);
+
+        if (value == 0)
+          return zero;
+
+        if (value < 0)
+          return zero + (zero - min) * value / 100;
+
+        return zero + (max - zero) * value / 100;
+      }
+    };
+
     struct Arguments
     {
       //! PWM Channels
       std::vector<std::string> channels;
+      //! Thruster configuration
+      std::vector<uint32_t> thrusters;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! Task arguments
-      Arguments m_args;
+      //! Thruster configuration
+      struct ThrusterConfig m_thruster_config;
       //! PWM signals
       std::map<unsigned, DirectPWM> m_channel;
+      //! Task arguments
+      Arguments m_args;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -66,7 +102,11 @@ namespace Actuators
         param("PWM", m_args.channels)
           .description("List of <PWM chip>:<Channel>:<Period>:<Duty Cycle>");
 
-        bind<IMC::SetServoPosition>(this);
+        param("Thruster convertion", m_args.thrusters)
+          .defaultValue("1100, 1500, 1900")
+          .description("PWM duty cycles values for thrust convertion in us <Min>:<Max>:<Zero>");
+
+        bind<IMC::SetThrusterActuation>(this);
         bind<IMC::SetPWM>(this);
       }
 
@@ -114,6 +154,11 @@ namespace Actuators
           auto [chip, channel, period, dc] = parsePWM(str);
           createPWMChannel(chip, channel, period, dc);
         }
+
+        m_thruster_config.setConfig(m_args.thrusters);
+
+        debug("Thruster configuration: min=%d, max=%d, zero=%d", m_thruster_config.min,
+              m_thruster_config.max, m_thruster_config.zero);
       }
 
       std::tuple<unsigned, int, uint32_t, uint32_t>
@@ -173,6 +218,22 @@ namespace Actuators
         DirectPWM& ref = iter->second;
         ref.setPeriod(msg->period);
         ref.setDutyCycle(msg->duty_cycle);
+      }
+
+      void
+      consume(const IMC::SetThrusterActuation* msg)
+      {
+        debug("setting thruster %d to %f", msg->id, msg->value);
+
+        auto iter = m_channel.find(msg->id);
+        if (iter == m_channel.end())
+        {
+          debug("Channel %d not initialized", msg->id);
+          return;
+        }
+
+        DirectPWM& ref = iter->second;
+        ref.setDutyCycle(m_thruster_config.toDutyCycle(msg->value));
       }
 
       //! Main loop.
