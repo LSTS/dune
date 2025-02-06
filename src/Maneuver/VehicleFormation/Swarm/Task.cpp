@@ -703,7 +703,6 @@ namespace Maneuver
 
             double distance_leader2dest = norm(leader_proj, destination_virtual);
             double distance_self2dest = norm(self_proj, destination);
-            war("distance_leader2dest: %f, distance_self2dest: %f", distance_leader2dest, distance_self2dest);
 
             return distance_self2dest / distance_leader2dest;
           }
