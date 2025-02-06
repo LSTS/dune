@@ -44,7 +44,7 @@ namespace Maneuver
     {
       using DUNE_NAMESPACES;
 
-      const unsigned c_ls_max_retries = 5;
+      constexpr unsigned c_ls_max_retries = 5;
 
       //! Finite state machine states.
       enum StateMachineStates
