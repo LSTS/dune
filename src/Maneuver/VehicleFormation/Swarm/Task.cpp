@@ -132,6 +132,8 @@ namespace Maneuver
         Position m_leader_pos;
         //! Speed reference.
         double m_speed_ref;
+        //! Vehicle max speed;
+        double m_max_speed;
 
         Task(const std::string& name, DUNE::Tasks::Context& ctx):
           BasicSwarm(name, ctx),
@@ -192,6 +194,8 @@ namespace Maneuver
           .defaultValue("0.5")
           .maximumValue("1.0")
           .description("Maximum delta for speed adjustment");
+
+          m_ctx.config.get("General", "Maximum Speed", "2.0", m_max_speed);
 
           bind<IMC::UamRxFrame>(this);
         }
@@ -678,6 +682,8 @@ namespace Maneuver
 
           if (m_speed_ref < 0.0f)
             m_speed_ref = 0.0f;
+          else if (m_speed_ref > m_max_speed)
+            m_speed_ref = m_max_speed;
         }
 
         double
