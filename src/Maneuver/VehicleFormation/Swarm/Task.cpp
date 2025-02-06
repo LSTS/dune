@@ -306,10 +306,11 @@ namespace Maneuver
           
           m_leader_ref_timer.setTop(m_args.leader_reference_timeout);
           std::memcpy(&m_leader_pos, &msg->data[2], sizeof(m_leader_pos));
-          trace("Received code POS from: %s | waypoint index: %u lat : %f lon: %f", msg->sys_src.c_str(),
-                                                                                    m_leader_pos.waypoint_idx,
-                                                                                    m_leader_pos.lat,
-                                                                                    m_leader_pos.lon);
+          trace("Received code POS from: %s | waypoint index: %u lat : %f lon: %f speed %f", msg->sys_src.c_str(),
+                                                                                             m_leader_pos.waypoint_idx,
+                                                                                             m_leader_pos.lat,
+                                                                                             m_leader_pos.lon,
+                                                                                             m_leader_pos.speed);
           
           updateSpeed();
         }
@@ -762,7 +763,7 @@ namespace Maneuver
           {
             double lat, lon;
             fromLocalCoordinates(m_estate.x, m_estate.y, &lat, &lon);
-            m_comms.sendPos("broadcast", m_curr, lat, lon);
+            m_comms.sendPos("broadcast", m_curr, lat, lon, m_estate.u);
             m_send_pos_timer.reset();
           }
         }

@@ -55,6 +55,7 @@ namespace Maneuver
         uint8_t waypoint_idx;
         float lat;
         float lon;
+        float speed;
       };
 
       //! Takeoff maneuver
@@ -71,7 +72,7 @@ namespace Maneuver
         { }
 
         void
-        sendPos(const std::string& sys, const uint8_t waypoint_index, const float lat, const float lon)
+        sendPos(const std::string& sys, const uint8_t waypoint_index, const float lat, const float lon, const float speed)
         {
           std::vector<uint8_t> data;
 
@@ -79,6 +80,7 @@ namespace Maneuver
           p.waypoint_idx = waypoint_index;
           p.lat = lat;
           p.lon = lon;
+          p.speed = speed;
 
           data.resize(sizeof(p) + 1);
           data[0] = CODE_POS;
