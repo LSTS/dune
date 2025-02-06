@@ -671,10 +671,10 @@ namespace Maneuver
         void
         setSpeedReference(double coeff)
         {
-          double original_speed = getSpeed();
-          m_speed_ref = original_speed * coeff;
-          if (m_speed_ref > original_speed + m_args.speed_max_delta)
-            m_speed_ref = original_speed + m_args.speed_max_delta;
+          double speed_reference = (isLeader() || m_leader_ref_timer.overflow()) ? getSpeed() : m_leader_pos.speed;
+          m_speed_ref = speed_reference * coeff;
+          if (m_speed_ref > speed_reference + m_args.speed_max_delta)
+            m_speed_ref = speed_reference + m_args.speed_max_delta;
 
           if (m_speed_ref < 0.0f)
             m_speed_ref = 0.0f;
