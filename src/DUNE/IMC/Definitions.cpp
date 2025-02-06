@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: bb7e455e8ed7cd2a544c27d8b5b10bc5                            *
+// IMC XML MD5: 1d75717ef0e92e13f5874f4f40a1ec69                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -28620,6 +28620,74 @@ namespace DUNE
       IMC::toJSON(os__, "op", op, nindent__);
       IMC::toJSON(os__, "version", version, nindent__);
       IMC::toJSON(os__, "description", description, nindent__);
+    }
+
+    TotalHeading::TotalHeading(void)
+    {
+      m_header.mgid = 2022;
+      clear();
+    }
+
+    void
+    TotalHeading::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    TotalHeading::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TotalHeading& other__ = static_cast<const TotalHeading&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    TotalHeading::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    TotalHeading::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TotalHeading::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TotalHeading::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    TotalHeading::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    TotalHeading::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    TotalHeading::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
     }
   }
 }
