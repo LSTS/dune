@@ -37,60 +37,28 @@ namespace Actuators
 {
   //! Insert short task description here.
   //!
-  //! This task requires
-  //! dtoverlay=pwm-2chan,pin=18,func=2,pin2=19,func2=2 in /boot/config.txt or equivalent
+  //! This task requires dtoverlay=pwm-2chan for Raspberry Pi.
+  //! For RaspberryPi 5, /boot/config.txt or equivalent must have:
+  //!  - dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4 (to use GPIO12 and GPIO13)
+  //!    - Task Argument: PWM = 2:0:period:duty_cycle, 2:1:period:duty_cycle
+  //!  - dtoverlay=pwm-2chan,pin=18,func=2,pin2=19,func2=2 (to use GPIO18 and GPIO19)
+  //!    - Task Argument: PWM = 0:0:period:duty_cycle, 0:1:period:duty_cycle
   //! @author João Bogas
   namespace PWMv2
   {
     using DUNE_NAMESPACES;
 
-    struct ThrusterConfig
-    {
-      uint32_t min;
-      uint32_t max;
-      uint32_t zero;
-
-      void
-      setConfig(const std::vector<uint32_t>& us)
-      {
-        if (us.size() != 3)
-          throw std::runtime_error("Invalid thruster configuration");
-
-        min = us[0];
-        max = us[1];
-        zero = us[2];
-      }
-
-      int32_t
-      toDutyCycle(float value)
-      {
-        Math::trimValue(value, -100, 100);
-
-        if (value == 0)
-          return zero;
-
-        if (value < 0)
-          return zero + (zero - min) * value / 100;
-
-        return zero + (max - zero) * value / 100;
-      }
-    };
-
     struct Arguments
     {
-      //! PWM Channels
+      //! PWM Channels.
       std::vector<std::string> channels;
-      //! Thruster configuration
-      std::vector<uint32_t> thrusters;
     };
 
     struct Task: public DUNE::Tasks::Task
     {
-      //! Thruster configuration
-      struct ThrusterConfig m_thruster_config;
-      //! PWM signals
+      //! PWM signals.
       std::map<unsigned, DirectPWM> m_channel;
-      //! Task arguments
+      //! Task arguments.
       Arguments m_args;
 
       //! Constructor.
@@ -100,13 +68,8 @@ namespace Actuators
         DUNE::Tasks::Task(name, ctx)
       {
         param("PWM", m_args.channels)
-          .description("List of <PWM chip>:<Channel>:<Period>:<Duty Cycle>");
+        .description("List of <Index>:<PWM chip>:<Channel>:<Period>:<Duty Cycle>");
 
-        param("Thruster convertion", m_args.thrusters)
-          .defaultValue("1100, 1500, 1900")
-          .description("PWM duty cycles values for thrust convertion in us <Min>:<Max>:<Zero>");
-
-        bind<IMC::SetThrusterActuation>(this);
         bind<IMC::SetPWM>(this);
       }
 
@@ -149,51 +112,47 @@ namespace Actuators
       void
       tryParseArgs(void)
       {
-        for (const std::string& str : m_args.channels)
+        for (const auto& c : m_args.channels)
         {
-          auto [chip, channel, period, dc] = parsePWM(str);
-          createPWMChannel(chip, channel, period, dc);
+          auto [index, chip, channel, period, dc] = parsePWM(c);
+          createPWMChannel(index, chip, channel, period, dc);
         }
-
-        m_thruster_config.setConfig(m_args.thrusters);
-
-        debug("Thruster configuration: min=%d, max=%d, zero=%d", m_thruster_config.min,
-              m_thruster_config.max, m_thruster_config.zero);
       }
 
-      std::tuple<unsigned, int, uint32_t, uint32_t>
+      std::tuple<unsigned, unsigned, int, uint32_t, uint32_t>
       parsePWM(const std::string& str)
       {
         std::vector<std::string> parts;
         String::split(str, ":", parts);
 
-        if (parts.size() != 4)
-          throw std::runtime_error("Invalid PWM format <chip:idx:period:dc> : " + str);
+        if (parts.size() != 5)
+          throw std::runtime_error("Invalid PWM format <index:chip:channel:period:dc> : " + str);
 
-        unsigned chip = std::stoi(parts[0]);
-        int channel = std::stoi(parts[1]);
-        uint32_t period = std::stoi(parts[2]);
-        uint32_t dc = std::stoi(parts[3]);
+        unsigned index = std::stoi(parts[0]);
+        unsigned chip = std::stoi(parts[1]);
+        int channel = std::stoi(parts[2]);
+        uint32_t period = std::stoi(parts[3]);
+        uint32_t dc = std::stoi(parts[4]);
 
-        return { chip, channel, period, dc };
+        return {index, chip, channel, period, dc};
       }
 
       void
-      createPWMChannel(unsigned chip, int idx, uint32_t period, uint32_t dc)
+      createPWMChannel(unsigned idx, unsigned chip, int channel, uint32_t period, uint32_t dc)
       {
         try
         {
-          m_channel.try_emplace(idx, this, chip, idx, period, dc);
+          m_channel.try_emplace(idx, this, chip, channel, period, dc);
         }
         catch (const std::exception& e)
         {
-          err("Failed to initialize PWM channel %d: %s", idx, e.what());
+          err("Failed to initialize PWM %d: %s", idx, e.what());
           setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
           m_channel.erase(idx);
           return;
         }
 
-        inf("PWM chip %d channel %d initialized", chip, idx);
+        inf("PWM chip %d channel %d initialized", chip, channel);
       }
 
       //! Release resources.
@@ -206,34 +165,18 @@ namespace Actuators
       void
       consume(const IMC::SetPWM* msg)
       {
-        debug("Setting PWM %d to %u ms (%u)", msg->id, msg->duty_cycle, msg->period);
+        debug("Setting PWM %d to %u us (%u)", msg->id, msg->duty_cycle, msg->period);
 
-        auto iter = m_channel.find(msg->id);
-        if (iter == m_channel.end())
+        const auto& channel = m_channel.find(msg->id);
+        if (channel == m_channel.end())
         {
           debug("Channel %d not initialized", msg->id);
           return;
         }
 
-        DirectPWM& ref = iter->second;
-        ref.setPeriod(msg->period);
-        ref.setDutyCycle(msg->duty_cycle);
-      }
-
-      void
-      consume(const IMC::SetThrusterActuation* msg)
-      {
-        debug("setting thruster %d to %f", msg->id, msg->value);
-
-        auto iter = m_channel.find(msg->id);
-        if (iter == m_channel.end())
-        {
-          debug("Channel %d not initialized", msg->id);
-          return;
-        }
-
-        DirectPWM& ref = iter->second;
-        ref.setDutyCycle(m_thruster_config.toDutyCycle(msg->value));
+        auto& pwm = channel->second;
+        pwm.setPeriod(msg->period);
+        pwm.setDutyCycle(msg->duty_cycle);
       }
 
       //! Main loop.

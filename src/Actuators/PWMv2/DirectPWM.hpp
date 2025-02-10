@@ -33,8 +33,7 @@ namespace Actuators
       //! @param channel pwm channel
       //! @param period pwm initial period
       //! @param duty_cycle pwm initial duty cycle
-      DirectPWM(DUNE::Tasks::Task* task, unsigned chip_id, int channel, uint32_t period = 202'000,
-                uint32_t duty_cycle = 12'500):
+      DirectPWM(DUNE::Tasks::Task* task, unsigned chip_id, int channel, uint32_t period = 20000, uint32_t duty_cycle = 1500):
         m_task(task),
         m_chip(chip_id),
         m_channel(channel)
