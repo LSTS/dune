@@ -68,19 +68,19 @@ namespace Sensors
       //! IMC Message timestamp.
       double m_ts;
       //! IMC Euler Angles message.
-      IMC::EulerAngles euler;
+      IMC::EulerAngles m_euler;
       //! IMC Angular Velocity message.
-      IMC::AngularVelocity av;
+      IMC::AngularVelocity m_av;
       //! IMC Acceleration message.
-      IMC::Acceleration acc;
+      IMC::Acceleration m_acc;
       //! IMC Magnetic Field message.
-      IMC::MagneticField mag;
+      IMC::MagneticField m_mag;
       //! IMC Pressure message.
-      IMC::Pressure press;
+      IMC::Pressure m_press;
       //! IMC Temperature message.
-      IMC::Temperature temp;
+      IMC::Temperature m_temp;
       //! IMC Relative Humidity message.
-      IMC::RelativeHumidity rh;
+      IMC::RelativeHumidity m_rh;
       //! Task arguments.
       Arguments m_args;
 
@@ -213,41 +213,42 @@ namespace Sensors
       void
       readPos(const RTVector3& fusionPose)
       {
-        // Extract yaw, pitch, and roll
-        euler.psi = fusionPose.z();
-        euler.theta = fusionPose.x();
-        euler.phi = fusionPose.y();
+        // Extract roll, pitch and yaw
+        m_euler.theta = Angles::normalizeRadian(fusionPose.x());
+        m_euler.phi = Angles::normalizeRadian(fusionPose.y());
+        m_euler.psi = Angles::normalizeRadian(fusionPose.z());
+        m_euler.psi_magnetic = m_euler.psi;
 
-        dispatch(euler);
+        dispatch(m_euler);
 
-        spew("Yaw: %.2f°, Pitch: %.2f°, Roll: %.2f°", Angles::degrees(euler.psi),
-             Angles::degrees(euler.theta), Angles::degrees(euler.phi));
+        spew("Yaw: %.2f°, Pitch: %.2f°, Roll: %.2f°", Angles::degrees(m_euler.psi),
+             Angles::degrees(m_euler.theta), Angles::degrees(m_euler.phi));
       }
 
       //! Read Gyroscope data.
       void
       readGyro(const RTVector3& gyro)
       {
-        av.x = gyro.x();
-        av.y = gyro.y();
-        av.z = gyro.z();
+        m_av.x = gyro.x();
+        m_av.y = gyro.y();
+        m_av.z = gyro.z();
 
-        dispatch(av);
+        dispatch(m_av);
 
-        spew("Gyro: X: %.2f, Y: %.2f, Z: %.2f", av.x, av.y, av.z);
+        spew("Gyro: X: %.2f, Y: %.2f, Z: %.2f", m_av.x, m_av.y, m_av.z);
       }
 
       //! Read Accelerometer data.
       void
       readAccel(const RTVector3& accel)
       {
-        acc.x = accel.x();
-        acc.y = accel.y();
-        acc.z = accel.z();
+        m_acc.x = accel.x();
+        m_acc.y = accel.y();
+        m_acc.z = accel.z();
 
-        dispatch(acc);
+        dispatch(m_acc);
 
-        spew("Accel: X: %.2f, Y: %.2f, Z: %.2f", acc.x, acc.y, acc.z);
+        spew("Accel: X: %.2f, Y: %.2f, Z: %.2f", m_acc.x, m_acc.y, m_acc.z);
       }
 
       //! Read Compass data.
@@ -255,11 +256,11 @@ namespace Sensors
       readCompass(const RTVector3& compass)
       {
         // convert uT to Gauss
-        mag.x = compass.x() * 0.01;
-        mag.y = compass.y() * 0.01;
-        mag.z = compass.z() * 0.01;
+        m_mag.x = compass.x() * 0.01;
+        m_mag.y = compass.y() * 0.01;
+        m_mag.z = compass.z() * 0.01;
 
-        dispatch(mag);
+        dispatch(m_mag);
       }
 
       //! Read IMU data.
@@ -271,10 +272,10 @@ namespace Sensors
 
         m_ts = m_imu->getIMUData().timestamp;
 
-        euler.setTimeStamp(m_ts);
-        av.setTimeStamp(m_ts);
-        acc.setTimeStamp(m_ts);
-        mag.setTimeStamp(m_ts);
+        m_euler.setTimeStamp(m_ts);
+        m_av.setTimeStamp(m_ts);
+        m_acc.setTimeStamp(m_ts);
+        m_mag.setTimeStamp(m_ts);
 
         readPos(m_imu->getMeasuredPose());
         readGyro(m_imu->getGyro());
@@ -290,15 +291,15 @@ namespace Sensors
         if (!m_pressure->pressureRead(data))
           return;
 
-        press.value = data.pressure;
+        m_press.value = data.pressure;
 
-        spew("Pressure: %.2f", press.value);
-        dispatch(press);
+        spew("Pressure: %.2f", m_press.value);
+        dispatch(m_press);
 
-        temp.value = data.temperature;
+        m_temp.value = data.temperature;
 
-        spew("Temperature: %.2f", temp.value);
-        dispatch(temp);
+        spew("Temperature: %.2f", m_temp.value);
+        dispatch(m_temp);
       }
 
       //! Read Humidity sensor data.
@@ -309,12 +310,10 @@ namespace Sensors
         if (!m_humidity->humidityRead(data))
           return;
 
-        IMC::RelativeHumidity hum;
-        hum.value = data.humidity;
+        m_rh.value = data.humidity;
 
-        spew("Humidity: %.2f", hum.value);
-
-        dispatch(hum);
+        spew("Humidity: %.2f", m_rh.value);
+        dispatch(m_rh);
       }
 
       //! Update LED matrix.
@@ -344,7 +343,7 @@ namespace Sensors
           readHumidity();
 
           // Display arrow on LED matrix
-          double hd = Angles::degrees(atan2(mag.y, mag.x));  // from -180 to 180
+          double hd = Angles::degrees(atan2(m_mag.y, m_mag.x));  // from -180 to 180
 
           // North rotation
           double north = 0 - hd;
