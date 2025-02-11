@@ -114,9 +114,9 @@ namespace Actuators
         param("Starboard Thruster Reverse", m_args.starboard_reverse)
         .defaultValue("false");
 
-        param("Thruster convertion", m_args.thrusters)
+        param("Thruster Conversion", m_args.thrusters)
         .defaultValue("20000, 1100, 1500, 1900")
-        .description("PWM duty cycles values for thrust convertion in us <Period>:<Min>:<Zero>:<Max>");
+        .description("PWM duty cycles values for thrust conversion in microseconds {<Period>, <Min>, <Zero>, <Max>}");
 
         bind<IMC::SetThrusterActuation>(this);
       }
