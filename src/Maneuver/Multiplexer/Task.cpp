@@ -270,11 +270,6 @@ namespace Maneuver
         .units(Units::Meter)
         .description("Safe depth change to consider the maneuver was successful");
 
-        param("Dislodge -- Safe Depth Gap", m_args.dislodge.safe_gap)
-        .defaultValue("3.0")
-        .units(Units::Meter)
-        .description("Safe depth change to consider the maneuver was successful");
-
         param("ScheduledGoto -- Minimum Speed", m_args.scheduled.min_speed)
         .defaultValue("0.7")
         .units(Units::MeterPerSecond)
