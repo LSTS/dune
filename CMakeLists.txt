@@ -28,10 +28,14 @@
 ############################################################################
 
 # Validate CMake version.
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 if(COMMAND CMAKE_POLICY)
-  cmake_policy(SET CMP0003 NEW)
+  cmake_policy(SET CMP0075 NEW)
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
+    cmake_policy(SET CMP0153 OLD)
+    cmake_policy(SET CMP0145 OLD)
+  endif()
 endif(COMMAND CMAKE_POLICY)
 
 # Required C++ Standard.
