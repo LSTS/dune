@@ -179,8 +179,8 @@ namespace UserInterfaces
               out = new ParallelPort(m_args.pp_addr, nr);
             else if (m_args.interface.compare("Emulator") == 0)
               out = new Emulator(nr);
-            else
-              std::runtime_error(String::str("unsupported interface '%s'", m_args.interface.c_str()));
+            else 
+              throw std::runtime_error(String::str("unsupported interface '%s'", m_args.interface.c_str()));
           }
 
           out->setValue(0);
