@@ -241,7 +241,6 @@ namespace Actuators
         }
 
         m_thrusters_voltages.resize(total, c_default_thrusters_voltage);
-        m_models.resize(total);
       }
 
       //! Acquire resources.
@@ -283,17 +282,16 @@ namespace Actuators
         if (m_models.empty())
           return;
         
-        size_t total = m_thrusters_voltages.size();
-        if (total < 1)
-          return;
-
         try
         {
           IMC::Rpm rpm;
           rpm.setSource(getSystemId());
           rpm.setSourceEntity(m_eid[id]);
-          auto& model = m_models.at((total > 1) ? id : 0);
-          auto& voltage = (total > 1) ? m_thrusters_voltages.at(id) : m_thrusters_voltages.front();
+          auto& model = m_models.at((m_models.size() > 1) ? id : 0);
+          float voltage = c_default_thrusters_voltage;
+          size_t total = m_thrusters_voltages.size();
+          if (total > 0)
+            voltage = (total > 1) ? m_thrusters_voltages.at(id) : m_thrusters_voltages.front();
           rpm.value = model->getRPM(voltage, duty_cycle);
           trace("Thruster %u at %d rpm (duty cycle %u us)", id, rpm.value, duty_cycle);
           dispatch(rpm, DF_KEEP_SRC_EID);
@@ -311,9 +309,7 @@ namespace Actuators
         pwm.id = id;
         pwm.period = m_thruster_config.period;
         pwm.duty_cycle = duty_cycle;
-
         dispatch(pwm);
-        dispatchRPM(id, duty_cycle);
       }
 
       void
@@ -323,6 +319,7 @@ namespace Actuators
         auto& reverse = (msg->id == 0) ? m_args.port_reverse : m_args.starboard_reverse;
         uint32_t duty_cycle = m_thruster_config.toDutyCycle(msg->value, reverse);
         setPWM(msg->id, duty_cycle);
+        dispatchRPM(msg->id, duty_cycle);
       }
 
       void
