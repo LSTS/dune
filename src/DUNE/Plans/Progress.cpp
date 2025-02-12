@@ -74,7 +74,7 @@ namespace DUNE
       if (!getPoint(mcs, curr))
         return -1.0;
 
-      if (curr > durations.size())
+      if (curr >= durations.size())
         return -1.0;
 
       return total_duration - durations[curr] + (float)mcs->eta;
