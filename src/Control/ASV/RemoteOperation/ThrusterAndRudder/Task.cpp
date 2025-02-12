@@ -123,12 +123,6 @@ namespace Control
             actuate();
           }
 
-          double
-          applyScale(int value)
-          {
-            return Math::trimValue((value / 127.0) * m_args.scale, -1.0, 1.0);
-          }
-
           void
           consume(const IMC::LoggingControl* msg)
           {
@@ -207,7 +201,8 @@ namespace Control
             float val = hdng / 127.0;
             m_servo.value = val * Math::c_pi / 4;
             m_servo.value = Math::trimValue(m_servo.value, -Math::c_pi / 4, Math::c_pi / 4);
-
+            
+            m_thruster.value *= m_args.scale;
             actuate();
           }
 
