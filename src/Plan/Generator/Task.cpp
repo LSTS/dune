@@ -486,9 +486,13 @@ namespace Plan
         if (plan_id == "dive")
         {
           double lat, lon, depth;
-          getCurrentPosition(&lat, &lon, &depth);
-          depth = params.get("depth", m_args.dive_depth);
 
+          if (!getCurrentPosition(&lat, &lon, &depth))
+          {
+            throw std::runtime_error(DTR("Current position is invalid"));
+          }          
+
+          depth = params.get("depth", m_args.dive_depth);
           IMC::MessageList<IMC::Maneuver> maneuvers;
 
           IMC::Loiter* loiter = new IMC::Loiter();
@@ -574,8 +578,10 @@ namespace Plan
           IMC::MessageList<IMC::Maneuver> maneuvers;
 
           double lat, lon, depth;
-          getCurrentPosition(&lat, &lon, &depth);
-
+          if (!getCurrentPosition(&lat, &lon, &depth))
+          {
+            throw std::runtime_error(DTR("Current position is invalid"));
+          }
           IMC::Loiter* loiter = new IMC::Loiter();
           loiter->lat = lat;
           loiter->lon = lon;
@@ -618,7 +624,10 @@ namespace Plan
           double ang = Angles::radians(45.0 + rot);
           int i;
 
-          getCurrentPosition(&curlat, &curlon, &curdepth);
+          if (!getCurrentPosition(&curlat, &curlon, &curdepth))
+          {
+            throw std::runtime_error(DTR("Current position is invalid"));
+          }
 
           if (lat == 0 && lon == 0) {
             lat = curlat;
@@ -704,8 +713,11 @@ namespace Plan
           double radius = std::sqrt((size * size) /2);
           double ang = Angles::radians(-45.0 + rot);
 
-          getCurrentPosition(&curlat, &curlon, &curdepth);
-
+          if (!getCurrentPosition(&curlat, &curlon, &curdepth))
+          {
+            throw std::runtime_error(DTR("Current position is invalid"));
+          }
+          
           if (lat == 0 && lon == 0) {
             lat = curlat;
             lon = curlon;
