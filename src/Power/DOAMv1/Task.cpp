@@ -310,6 +310,11 @@ namespace Power
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
         inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
+        std::string fw_version = String::str("%u.%u.%u", major, minor, patch);
+        IMC::VersionInfo vi;
+        vi.version = fw_version;
+        vi.op = IMC::VersionInfo::OP_REPLY;
+        dispatch(vi);
       }
 
       void
