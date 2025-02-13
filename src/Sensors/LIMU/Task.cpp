@@ -268,10 +268,19 @@ namespace Sensors
         {
           UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
           if (info.isDevelopment())
+          {
             war(DTR("device is using unstable firmware"));
+          }
           else
+          {
+            std::string fw_version = String::str("%u.%u.%u", info.major, info.minor, info.patch);
+            IMC::VersionInfo vi;
+            vi.version = fw_version;
+            vi.op = IMC::VersionInfo::OP_REPLY;
+            dispatch(vi);
             inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
+          }
 
           return true;
         }
