@@ -50,7 +50,7 @@ namespace Actuators
     using DUNE_NAMESPACES;
 
     //! Default thrusters voltage.
-    static constexpr unsigned c_default_thrusters_voltage = 12.0f;
+    static constexpr float c_default_thrusters_voltage = 12.0f;
 
     struct Arguments
     {
