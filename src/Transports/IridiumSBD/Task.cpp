@@ -277,14 +277,27 @@ namespace Transports
             m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud_9523);
           else
             m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+
+          m_driver = new Driver(this, m_uart, m_args.use_9523, c_pwr_on_delay, m_args.rssi_check_period);
+          m_driver->initialize();
+          m_driver->setTxRateMax(m_args.max_tx_rate);
+          IMC::VersionInfo vi;
+          std::string version_model = "no libd-9523";
           m_driver = new Driver(this, m_uart, m_args.use_9523, c_pwr_on_delay, m_args.rssi_check_period);
           m_driver->initialize();
           m_driver->setTxRateMax(m_args.max_tx_rate);
           if(m_args.use_9523)
+          {
             inf("LIDB FW: %s", m_driver->getFirmVersionLIDB().c_str());
-
+            version_model = "LIDB FW: " + m_driver->getFirmVersionLIDB();
+          }
+          vi.version = version_model;
+          version_model = "Model: " + m_driver->getModel() + " | IMEI: " + m_driver->getIMEI();
+          vi.description = version_model;
+          vi.op = IMC::VersionInfo::OP_REPLY;
+          dispatch(vi);
           debug("manufacturer: %s", m_driver->getManufacturer().c_str());
-          inf("Model: %s | IMEI: %s", m_driver->getModel().c_str(), m_driver->getIMEI().c_str());
+          inf("%s", version_model.c_str());
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
         catch (std::runtime_error& e)
