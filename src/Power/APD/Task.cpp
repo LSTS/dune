@@ -230,12 +230,19 @@ namespace Power
           m_uart = new SerialPort(m_args.uart_dev, c_baud_rate);
           m_ctl = new UCTK::Interface(m_uart);
           UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
-
           if (info.isDevelopment())
+          {
             war(DTR("Device is using unstable firmware!"));
+          }
           else
-            inf(DTR("Firmware version %u.%u.%u"), info.major,
-                info.minor, info.patch);
+          {
+            std::string fw_version = String::str("%u.%u.%u", info.major, info.minor, info.patch);
+            IMC::VersionInfo vi;
+            vi.version = fw_version;
+            vi.op = IMC::VersionInfo::OP_REPLY;
+            dispatch(vi);
+            inf(DTR("Firmware version %s"), fw_version.c_str());
+          }
         }
         catch (std::runtime_error& e)
         {
