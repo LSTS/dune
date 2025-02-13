@@ -276,7 +276,12 @@ namespace Power
         }
         else
         {
-          inf("Firmware Version: %s", m_driver->getFirmwareVersion().c_str());
+          std::string firmware_info = m_driver->getFirmwareVersion();
+          inf("Firmware Version: %s", firmware_info.c_str());
+          IMC::VersionInfo vi;
+          vi.version = firmware_info;
+          vi.op = IMC::VersionInfo::OP_REPLY;
+          dispatch(vi);
         }
 
         if (!m_driver->initBatMan(m_args.number_cell, m_args.scale_factor))
