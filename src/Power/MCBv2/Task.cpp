@@ -611,6 +611,11 @@ namespace Power
       void
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
+        std::string fw_version = String::str("%u.%u.%u", major, minor, patch);
+        IMC::VersionInfo vi;
+        vi.version = fw_version;
+        vi.op = IMC::VersionInfo::OP_REPLY;
+        dispatch(vi);
         inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
