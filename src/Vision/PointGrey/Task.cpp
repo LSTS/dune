@@ -811,6 +811,10 @@ namespace Vision
         debug("copyright: %s", m_args.copyright.c_str());
         debug("Lens Model: %s", m_args.lens_model.c_str());
         debug("Lens Maker: %s", m_args.lens_maker.c_str());
+        IMC::VersionInfo vi;
+        vi.version = m_camInfo.firmwareVersion;
+        vi.op = IMC::VersionInfo::OP_REPLY;
+        dispatch(vi);
         #endif
       }
 
