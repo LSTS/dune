@@ -1,0 +1,53 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RTHostIMUGL", "RTHostIMUGL.vcxproj", "{8DE49D40-0CE4-4E17-9377-543DDF0C3A57}"
+	ProjectSection(ProjectDependencies) = postProject
+		{88277939-80B3-4156-9CD7-D2DE7A339BFB} = {88277939-80B3-4156-9CD7-D2DE7A339BFB}
+		{183C43F1-DC99-467E-8364-AA7E69E8E1A8} = {183C43F1-DC99-467E-8364-AA7E69E8E1A8}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QTGLLib", "..\RTIMULibGL\QtGLLib\QTGLLib.vcxproj", "{88277939-80B3-4156-9CD7-D2DE7A339BFB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VRWidgetLib", "..\RTIMULibGL\VRWidgetLib\VRWidgetLib.vcxproj", "{183C43F1-DC99-467E-8364-AA7E69E8E1A8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+		StaticDebug|Win32 = StaticDebug|Win32
+		StaticRelease|Win32 = StaticRelease|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8DE49D40-0CE4-4E17-9377-543DDF0C3A57}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8DE49D40-0CE4-4E17-9377-543DDF0C3A57}.Debug|Win32.Build.0 = Debug|Win32
+		{8DE49D40-0CE4-4E17-9377-543DDF0C3A57}.Release|Win32.ActiveCfg = Release|Win32
+		{8DE49D40-0CE4-4E17-9377-543DDF0C3A57}.Release|Win32.Build.0 = Release|Win32
+		{8DE49D40-0CE4-4E17-9377-543DDF0C3A57}.StaticDebug|Win32.ActiveCfg = Debug|Win32
+		{8DE49D40-0CE4-4E17-9377-543DDF0C3A57}.StaticDebug|Win32.Build.0 = Debug|Win32
+		{8DE49D40-0CE4-4E17-9377-543DDF0C3A57}.StaticRelease|Win32.ActiveCfg = Release|Win32
+		{8DE49D40-0CE4-4E17-9377-543DDF0C3A57}.StaticRelease|Win32.Build.0 = Release|Win32
+		{88277939-80B3-4156-9CD7-D2DE7A339BFB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{88277939-80B3-4156-9CD7-D2DE7A339BFB}.Debug|Win32.Build.0 = Debug|Win32
+		{88277939-80B3-4156-9CD7-D2DE7A339BFB}.Release|Win32.ActiveCfg = Release|Win32
+		{88277939-80B3-4156-9CD7-D2DE7A339BFB}.Release|Win32.Build.0 = Release|Win32
+		{88277939-80B3-4156-9CD7-D2DE7A339BFB}.StaticDebug|Win32.ActiveCfg = StaticDebug|Win32
+		{88277939-80B3-4156-9CD7-D2DE7A339BFB}.StaticDebug|Win32.Build.0 = StaticDebug|Win32
+		{88277939-80B3-4156-9CD7-D2DE7A339BFB}.StaticRelease|Win32.ActiveCfg = StaticRelease|Win32
+		{88277939-80B3-4156-9CD7-D2DE7A339BFB}.StaticRelease|Win32.Build.0 = StaticRelease|Win32
+		{183C43F1-DC99-467E-8364-AA7E69E8E1A8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{183C43F1-DC99-467E-8364-AA7E69E8E1A8}.Debug|Win32.Build.0 = Debug|Win32
+		{183C43F1-DC99-467E-8364-AA7E69E8E1A8}.Release|Win32.ActiveCfg = Release|Win32
+		{183C43F1-DC99-467E-8364-AA7E69E8E1A8}.Release|Win32.Build.0 = Release|Win32
+		{183C43F1-DC99-467E-8364-AA7E69E8E1A8}.StaticDebug|Win32.ActiveCfg = Debug|Win32
+		{183C43F1-DC99-467E-8364-AA7E69E8E1A8}.StaticDebug|Win32.Build.0 = Debug|Win32
+		{183C43F1-DC99-467E-8364-AA7E69E8E1A8}.StaticRelease|Win32.ActiveCfg = Release|Win32
+		{183C43F1-DC99-467E-8364-AA7E69E8E1A8}.StaticRelease|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		Qt5Version = $(DefaultQtVersion)
+	EndGlobalSection
+EndGlobal

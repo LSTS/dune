@@ -135,6 +135,8 @@ namespace Control
           m_scope_ref(0)
         {
           param("Maximum Thrust Actuation", m_args.act_max)
+          .minimumValue("0.0")
+          .maximumValue("1.0")
           .defaultValue("1.0")
           .description("Maximum Motor Command");
 

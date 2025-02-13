@@ -293,6 +293,8 @@ namespace Control
             .description("Percentage of thrust assistance");
 
           param("Maximum Thrust Actuation", m_args.max_thrust)
+            .minimumValue("0.0")
+            .maximumValue("1.0")
             .defaultValue("1.0")
             .description("Maximum Motor Command");
 
