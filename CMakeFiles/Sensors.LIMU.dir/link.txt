@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.LIMU.a  CMakeFiles/Sensors.LIMU.dir/src/Sensors/LIMU/Task.cpp.o
+/usr/bin/ranlib libSensors.LIMU.a

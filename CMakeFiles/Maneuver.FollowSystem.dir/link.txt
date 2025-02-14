@@ -1,0 +1,2 @@
+/usr/bin/ar qc libManeuver.FollowSystem.a  CMakeFiles/Maneuver.FollowSystem.dir/src/Maneuver/FollowSystem/Task.cpp.o
+/usr/bin/ranlib libManeuver.FollowSystem.a
