@@ -66,6 +66,9 @@ namespace DUNE
     void
     SimpleTransport::consume(const IMC::Message* msg)
     {
+      if (msg->getSource() != getSystemId())
+        return;
+      
       if (m_rl.filter(msg))
         return;
 
@@ -86,7 +89,7 @@ namespace DUNE
       }
 
       if (m_gargs.trace_out)
-        inf(DTR("outgoing: %s"), msg->getName());
+        DUNE_MSG(getName(), "outgoing: " + std::string(msg->getName()));
 
       onDataTransmission(p, n);
     }
@@ -118,8 +121,8 @@ namespace DUNE
           dispatch(m, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
           if (m_gargs.trace_in)
-            inf(DTR("incoming: %s"), m->getName());
-
+            DUNE_MSG(getName(), "incoming: " + std::string(m->getName()));
+          
           delete m;
         }
       }
