@@ -592,6 +592,8 @@ namespace Transports
           const std::vector<char> data(1);
           TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF, 0, 0, data);
           sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
+          // clear empty request
+          delete empty_req;
           debug(DTR("No message to be received or sent."));
 
           return false;
