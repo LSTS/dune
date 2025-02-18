@@ -241,8 +241,10 @@ namespace Monitors
         std::ifstream status_file("/proc/self/status");
         std::string line;
         while (std::getline(status_file, line))
+        {
           if (line.find("VmRSS:") == 0)
             return std::stod(line.substr(6)) / 1024.0; // kB -> MB
+        }
         return -1;
 #elif defined(DUNE_OS_WINDOWS)
         PROCESS_MEMORY_COUNTERS pmc;
@@ -258,8 +260,10 @@ namespace Monitors
         std::ifstream status_file("/proc/self/status");
         std::string line;
         while (std::getline(status_file, line))
+        {
           if (line.find("VmSwap:") == 0)
             return std::stod(line.substr(7)) / 1024.0; // kB -> MB
+        }
         return -1;
 #elif defined(DUNE_OS_WINDOWS)
         PROCESS_MEMORY_COUNTERS pmc;
@@ -288,13 +292,12 @@ namespace Monitors
         {
           return "";
         }
-        std::string line;
+        std::string line, key, unit;
+        std::istringstream iss;
+        long value;
         while (std::getline(meminfo, line))
         {
-          std::istringstream iss(line);
-          std::string key;
-          long value;
-          std::string unit;
+          iss.str(line);
           iss >> key >> value >> unit;
 
           if (key == "MemTotal:")
@@ -327,24 +330,21 @@ namespace Monitors
       readStatsCPU(std::vector<CPUData> &entries)
       {
         std::ifstream fileStat("/proc/stat");
-
         std::string line;
-
         const std::string STR_CPU("cpu");
         const std::size_t LEN_STR_CPU = STR_CPU.size();
         const std::string STR_TOT("tot");
+        std::istringstream ss;
 
         while (std::getline(fileStat, line))
         {
           // cpu stats line found
           if (!line.compare(0, LEN_STR_CPU, STR_CPU))
           {
-            std::istringstream ss(line);
-
+            ss.str(line);
             // store entry
             entries.emplace_back(CPUData());
             CPUData &entry = entries.back();
-
             // read cpu label
             ss >> entry.cpu;
 
