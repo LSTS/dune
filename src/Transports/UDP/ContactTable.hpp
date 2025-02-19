@@ -73,7 +73,8 @@ namespace Transports
         if (rv.second)
         {
           itr = rv.first;
-          itr->second.setTimeout(m_tout);
+          // Set invalid timeout.
+          itr->second.setTimeout(-1);
           return true;
         }
 
