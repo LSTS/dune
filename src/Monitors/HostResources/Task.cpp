@@ -60,7 +60,7 @@ namespace Monitors
   {
     using DUNE_NAMESPACES;
 
-    static const float c_time_between_ram_reads = 1.0f;
+    static const float c_time_between_ram_reads = 10.0f;
     static const float c_time_between_ram_cache_clean = 3600.0f; // 1 hour
     static const float c_time_between_cpu_reads = 2.0f;
     static const int c_max_cpu = 32;
@@ -166,7 +166,7 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
         m_ram_check.setTop(c_time_between_ram_reads);
         m_ram_cache_clean.setTop(c_time_between_ram_cache_clean);
         cleanRamCache();
@@ -293,11 +293,10 @@ namespace Monitors
           return "";
         }
         std::string line, key, unit;
-        std::istringstream iss;
         long value;
         while (std::getline(meminfo, line))
         {
-          iss.str(line);
+          std::istringstream  iss(line);
           iss >> key >> value >> unit;
 
           if (key == "MemTotal:")
@@ -319,8 +318,8 @@ namespace Monitors
         int swapAvailablePercent = swapTotal > 0 ? static_cast<int>(100 * swapFree / static_cast<double>(swapTotal)) : 0;
 
         std::ostringstream oss;
-        oss << "R: " << memAvailablePercent << "% (" << std::fixed << std::setprecision(1) << memSpentGB
-            << "GB of " << memTotalGB << "GB) | S: " << swapAvailablePercent << "% (" << swapSpentGB
+        oss << "MF:" << memAvailablePercent << "% (" << std::fixed << std::setprecision(1) << memSpentGB
+            << "GB of " << memTotalGB << "GB) | SF:" << swapAvailablePercent << "% (" << swapSpentGB
             << "GB of " << swapTotalGB << "GB)";
 
         return oss.str();
@@ -334,14 +333,13 @@ namespace Monitors
         const std::string STR_CPU("cpu");
         const std::size_t LEN_STR_CPU = STR_CPU.size();
         const std::string STR_TOT("tot");
-        std::istringstream ss;
 
         while (std::getline(fileStat, line))
         {
           // cpu stats line found
           if (!line.compare(0, LEN_STR_CPU, STR_CPU))
           {
-            ss.str(line);
+            std::istringstream ss(line);
             // store entry
             entries.emplace_back(CPUData());
             CPUData &entry = entries.back();
@@ -478,7 +476,7 @@ namespace Monitors
             dispatch(m_dune_ram_usage[1]);
 #endif
             trace("DUNE Process: CPU: %d%%, RAM: %.1fMB, Swap: %.1fMB | %s", cpu, ram, swap, m_buffer_cpu_entity.c_str());
-            std::string msg = String::str("%s | DUNE-CPU: %d%%, DUNE-RAM: %.1fMB, DUNE-SWAP: %.1fMB", m_buffer_cpu_entity.c_str(), cpu, ram, swap);
+            std::string msg = String::str("%s | DUNE (C:%d%%, R:%.1fMB, S:%.1fMB)", m_buffer_cpu_entity.c_str(), cpu, ram, swap);
             setEntityState(IMC::EntityState::ESTA_NORMAL, msg);
           }
 
@@ -503,7 +501,7 @@ namespace Monitors
               debug("CPU0: %d%%", usage);
               dispatch(m_dune_cpu_usage[0], DF_KEEP_TIME | DF_LOOP_BACK);
             }
-            m_buffer_cpu_entity = String::str("active | Cores Detected: %d | %s", m_num_cpus, getMemoryUsage().c_str());
+            m_buffer_cpu_entity = String::str("active | C:%d | %s", m_num_cpus, getMemoryUsage().c_str());
           }
 
           if (m_ram_cache_clean.overflow())
