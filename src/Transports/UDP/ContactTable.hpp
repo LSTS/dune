@@ -81,13 +81,13 @@ namespace Transports
         return false;
       }
 
-      void
+      bool
       update(unsigned id, const Address& addr)
       {
         Table::iterator itr = m_table.find(id);
 
         if (itr == m_table.end())
-          return;
+          return false;
 
         // Address has changed... update it.
         if (itr->second.getAddress() != addr)
@@ -97,6 +97,8 @@ namespace Transports
         }
 
         itr->second.update();
+
+        return true;
       }
 
     private:
