@@ -381,7 +381,12 @@ namespace Transports
             return;
         }
 
+        // Check if the message is from this system.
+        if (msg->getSource() == getSystemId())
+          return;
+
         m_node_table.addNode(msg->getSource(), msg->sys_name, msg->services);
+        m_listener->addContact(msg->getSource());
         m_lcomms->setAnnounce(msg);
       }
 
