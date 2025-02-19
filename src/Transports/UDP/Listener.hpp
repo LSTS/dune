@@ -135,10 +135,11 @@ namespace Transports
             }
 
             m_contacts_lock.lockWrite();
-            m_contacts.update(msg->getSource(), addr);
+            bool onTable = m_contacts.update(msg->getSource(), addr);
             m_contacts_lock.unlock();
 
-            m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+            if (onTable)
+              m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
             if (m_trace)
               msg->toText(std::cerr);
