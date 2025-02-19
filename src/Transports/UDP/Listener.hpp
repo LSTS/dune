@@ -77,6 +77,14 @@ namespace Transports
         m_contacts_lock.unlock();
       }
 
+      void
+      addContact(unsigned id)
+      {
+        m_contacts_lock.lockWrite();
+        m_contacts.addContact(id, Address::Any);
+        m_contacts_lock.unlock();
+      }
+
     private:
       // Buffer capacity.
       static const int c_bfr_size = 65535;
