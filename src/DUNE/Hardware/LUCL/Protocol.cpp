@@ -220,7 +220,7 @@ namespace DUNE
       Protocol::sendCommand(uint8_t cmd, const uint8_t* data, int data_size)
       {
         if (data_size > c_data_max)
-          throw std::runtime_error("maximum data size is 64 bytes");
+          throw std::invalid_argument("maximum data size is 64 bytes");
 
         using Algorithms::XORChecksum;
 
