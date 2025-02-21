@@ -227,16 +227,19 @@ namespace DUNE
         int size = 3 + data_size + 1;
         uint8_t msg[32] = {c_sync, (uint8_t)(data_size + 1), cmd};
 
-        if (data == nullptr)
+        if (data != nullptr && data_size > 0)
         {
           std::memcpy(msg + 3, data, data_size);
           msg[size - 1] = XORChecksum::compute(data, data_size, c_sync ^ (data_size + 1) ^ cmd) | c_csum_msk;
         }
-        else
+        else if (data == nullptr && data_size == 0)
         {
           msg[size - 1] = (c_sync ^ (data_size + 1) ^ cmd) | c_csum_msk;
         }
-        
+        else
+        {
+          throw std::invalid_argument("invalid data size for data");
+        }
 
         write(msg, size);
       }
