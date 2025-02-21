@@ -635,7 +635,11 @@ namespace Vision
         char governor[16];
         std::string result = "";
         FILE* pipe;
+        #ifdef _WIN32
+        if ((pipe = _popen("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r")) == NULL)
+        #else
         if ((pipe = popen("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r")) == NULL)
+        #endif
         {
           war("popen() failed - set_cpu_governor!");
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
@@ -653,10 +657,18 @@ namespace Vision
           }
           catch (...)
           {
+            #ifdef _WIN32
+            _pclose(pipe);
+            #else
             pclose(pipe);
+            #endif
             throw;
           }
+          #ifdef _WIN32
+          _pclose(pipe);
+          #else
           pclose(pipe);
+          #endif
           std::sscanf(buffer, "%s", governor);
           if( std::strcmp(governor, "ondemand") == 0)
           {
