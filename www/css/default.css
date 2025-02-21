@@ -772,3 +772,13 @@ label:hover .custom-checkbox {
     grid-template-columns: 1fr; /* Single column on small screens */
   }
 }
+
+.cpu-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin-right: 4px;
+  background-image: var(--cpu-icon-url);
+}

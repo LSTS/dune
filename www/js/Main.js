@@ -247,14 +247,46 @@ Main.prototype.update = function () {
 };
 
 Main.prototype.updateTasks = function () {
-  for (i in g_data.dune_messages) {
+  var cpuUsageMap = {};
+  for (var i in g_data.dune_messages) {
     var msg = g_data.dune_messages[i];
-
-    if (msg.abbrev == 'EntityState') {
-      var name = g_data.dune_entities[msg.src_ent].label;
-      this.insertTaskNode(msg.src_ent, name, msg.description, msg.state);
+    if (msg.abbrev === 'CpuUsage') {
+      cpuUsageMap[msg.src_ent] = msg.value;
     }
   }
+  for (var i in g_data.dune_messages) {
+    var msg = g_data.dune_messages[i];
+    if (msg.abbrev === 'EntityState') {
+      var name = g_data.dune_entities[msg.src_ent].label;
+      var description = msg.description;
+      if (cpuUsageMap[msg.src_ent] !== undefined) {
+        this.insertTaskNode(msg.src_ent, name, description, msg.state, cpuUsageMap[msg.src_ent]);
+      } else {
+        this.insertTaskNode(msg.src_ent, name, description, msg.state, -1);
+      }
+    }
+  }
+};
+
+
+Main.prototype.insertTaskNode = function (id, name, desc, status, cpuUsage) {
+  for (var i = 0; i < this.m_tbl_task.childNodes.length; i++) {
+    var item = this.m_tbl_task.childNodes[i];
+    var tgt = item.childNodes[1].firstChild;
+    if (tgt.data == name) {
+      item.childNodes[0].firstChild.src = this.getEntityStateIcon(status);
+      item.childNodes[3].firstChild.data = desc;
+      return;
+    }
+    else if (name < tgt.data) {
+      var n = this.createTask(id, name, desc, status, cpuUsage);
+      this.m_tbl_task.insertBefore(n, item);
+      return;
+    }
+  }
+
+  var xn = this.createTask(id, name, desc, status, cpuUsage);
+  this.m_tbl_task.appendChild(xn);
 };
 
 Main.prototype.updateVehicleState = function () {
@@ -268,31 +300,11 @@ Main.prototype.updateVehicleState = function () {
   }
 };
 
-Main.prototype.insertTaskNode = function (id, name, desc, status) {
-  for (var i = 0; i < this.m_tbl_task.childNodes.length; i++) {
-    var item = this.m_tbl_task.childNodes[i];
-    var tgt = item.childNodes[1].firstChild;
-    if (tgt.data == name) {
-      item.childNodes[0].firstChild.src = this.getEntityStateIcon(status);
-      item.childNodes[2].firstChild.data = desc;
-      return;
-    }
-    else if (name < tgt.data) {
-      var n = this.createTask(id, name, desc, status);
-      this.m_tbl_task.insertBefore(n, item);
-      return;
-    }
-  }
-
-  var xn = this.createTask(id, name, desc, status);
-  this.m_tbl_task.appendChild(xn);
-};
-
-Main.prototype.createTask = function (id, name, desc, status) {
+Main.prototype.createTask = function (id, name, desc, status, cpuUsage) {
   var tr = document.createElement('tr');
 
   var td_status = document.createElement('td');
-  td_status.style.width = '30px';
+  td_status.style.width = '20px';
   var img_status = document.createElement('img');
   img_status.src = this.getEntityStateIcon(status);
   td_status.appendChild(img_status);
@@ -302,6 +314,25 @@ Main.prototype.createTask = function (id, name, desc, status) {
   th_name.style.width = '170px';
   th_name.appendChild(document.createTextNode(name));
   tr.appendChild(th_name);
+
+  var td_cpu = document.createElement('td');
+  td_cpu.style.width = '50px';
+  var cpuContainer = document.createElement('div');
+  cpuContainer.style.display = 'flex';
+  cpuContainer.style.alignItems = 'center';
+  var cpuIcon = document.createElement('span');
+  cpuIcon.classList.add('cpu-icon');
+  cpuContainer.appendChild(cpuIcon);
+  var cpuText = document.createElement('span');
+  if (cpuUsage >= 0) {
+    cpuText.textContent = '(' + cpuUsage + '%)';
+  } else {
+    cpuText.textContent = '';
+  }
+  cpuContainer.appendChild(cpuText);
+
+  td_cpu.appendChild(cpuContainer);
+  tr.appendChild(td_cpu);
 
   var td_desc = document.createElement('td');
   td_desc.appendChild(document.createTextNode(desc));
@@ -343,9 +374,9 @@ function getMessageValue(data, abbrev, defval) {
 
 function getMessageCpuSingleUsage(data, ent, defval) {
   try {
-    //console.log("getMessageCpuSingleUsage >>>>>>>> "+ent+" : "+defval);
     for (m in data.dune_entities) {
       var eid = data.dune_entities[m].label;
+      //console.log(">>>>>>> " + eid + " : " + data.dune_entities[m].value);
       if (eid.localeCompare(ent) == 0) {
         //console.log(">>>>>>> "+eid+" : "+data.dune_entities[m].value);
         //console.log(" ");
@@ -358,29 +389,6 @@ function getMessageCpuSingleUsage(data, ent, defval) {
   catch (err) {
     return defval;
   }
-};
-
-function getMessageCpuSingleUsage(data, ent, defval)
-{
-    try
-    {
-      for (m in data.dune_entities)
-      {
-          var eid = data.dune_entities[m].label;
-          if (eid.localeCompare(ent) == 0)
-          {
-            //console.log(">>>>>>> "+eid+" : "+data.dune_entities[m].value);
-            //console.log(" ");
-            return data.dune_entities[m].value;
-          }
-      }
-      //console.log(" ");
-      return defval;
-    }
-    catch (err)
-    {
-        return defval;
-    }
 };
 
 function getSystemInfo(data) {
@@ -470,7 +478,7 @@ function getSpeed(data, value) {
   var speed = parseFloat(msg.sog);
   //convert to Knots
   var speedKnots = speed * 1.9438444924406;
-  var text = speed.toFixed(2) + ' m/s | ' + speedKnots.toFixed(2) + ' kt | rpm: ' + rpm_value;
+  var text = speed.toFixed(2) + ' m/s | ' + speedKnots.toFixed(2) + ' kn | rpm: ' + rpm_value;
   return text;
 }
 
