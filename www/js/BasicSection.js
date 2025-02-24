@@ -25,104 +25,89 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Edit: Pedro Gonçalves                                                    *
 //***************************************************************************
 
-function BasicSection()
-{ };
+function BasicSection() { };
 
-BasicSection.prototype.create = function(id, root_id)
-{
-    this.m_base = document.createElement('div');
-    this.m_base.id = id;
-    this.m_base.width = '100%';
-    this.m_base.className = 'Hidden';
+BasicSection.prototype.create = function (id, root_id) {
+  this.m_base = document.createElement('div');
+  this.m_base.id = id;
+  this.m_base.width = '100%';
+  this.m_base.className = 'Hidden';
 
-    this.m_root_id = root_id;
-    this.m_root = document.getElementById(root_id);
-    this.m_root.appendChild(this.m_base);
+  this.m_root_id = root_id;
+  this.m_root = document.getElementById(root_id);
+  this.m_root.appendChild(this.m_base);
 };
 
-BasicSection.prototype.createHeader = function(label)
-{
-    var h1 = document.createElement('h1');
-    h1.appendChild(document.createTextNode(label));
-    this.m_base.appendChild(h1);
-    var hr = document.createElement('hr');
-    this.m_base.appendChild(hr);
+BasicSection.prototype.createHeader = function (label) {
+  var h1 = document.createElement('h1');
+  h1.appendChild(document.createTextNode(label));
+  this.m_base.appendChild(h1);
+  var hr = document.createElement('hr');
+  this.m_base.appendChild(hr);
 };
 
-BasicSection.prototype.element = function()
-{
-    return this.m_base;
+BasicSection.prototype.element = function () {
+  return this.m_base;
 };
 
-BasicSection.prototype.resolveEntity = function(id)
-{
-    var ent = g_data.dune_entities[id];
+BasicSection.prototype.resolveEntity = function (id) {
+  var ent = g_data.dune_entities[id];
 
-    if (typeof ent == 'undefined')
-        return "Unknown";
+  if (typeof ent == 'undefined')
+    return "Unknown";
 
-    return ent.label;
+  return ent.label;
 };
 
-BasicSection.prototype.getEntityStateState = function(msg)
-{
-    var ent = g_data.dune_entities[msg.src_ent];
+BasicSection.prototype.getEntityStateState = function (msg) {
+  var ent = g_data.dune_entities[msg.src_ent];
 
-    if (typeof ent == 'undefined')
-        return "Unknown";
+  if (typeof ent == 'undefined')
+    return "Unknown";
 
-    return ent.state;
+  return ent.state;
 };
 
-BasicSection.prototype.getEntityStateDesc = function(msg, defval)
-{
-    if (msg.src_ent in g_data.dune_entities)
-    {
-        if ('desc' in g_data.dune_entities[msg.src_ent])
-            return g_data.dune_entities[msg.src_ent].desc;
-    }
+BasicSection.prototype.getEntityStateDesc = function (msg, defval) {
+  if (msg.src_ent in g_data.dune_entities) {
+    if ('desc' in g_data.dune_entities[msg.src_ent])
+      return g_data.dune_entities[msg.src_ent].desc;
+  }
 
-    return defval;
+  return defval;
 };
 
-BasicSection.prototype.findMessage = function(abbrev)
-{
-    for (var i in g_data.dune_messages)
-    {
-        var msg = g_data.dune_messages[i];
+BasicSection.prototype.findMessage = function (abbrev) {
+  for (var i in g_data.dune_messages) {
+    var msg = g_data.dune_messages[i];
 
-        if (msg.abbrev == abbrev)
-            return msg;
-    }
+    if (msg.abbrev == abbrev)
+      return msg;
+  }
 
-    return null;
+  return null;
 };
 
-BasicSection.prototype.getMessageValue = function(abbrev)
-{
-    return this.findMessage(abbrev).value;
+BasicSection.prototype.getMessageValue = function (abbrev) {
+  return this.findMessage(abbrev).value;
 };
 
-BasicSection.prototype.getEntityStateIcon = function(state)
-{
-    switch (Number(state))
-    {
+BasicSection.prototype.getEntityStateIcon = function (state) {
+  switch (Number(state)) {
     case 0:
-        return g_icons.path('warning');
+      return g_icons.path('warning');
     case 1:
-        return g_icons.path('normal');
-    case 2: case 3:
-        return g_icons.path('error');
-    case 4:
-        return g_icons.path('fatal');
-    }
+      return g_icons.path('normal');
+    case 2: case 3: case 4:
+      return g_icons.path('error');
+  }
 
-    return g_icons.path('unknown');
+  return g_icons.path('unknown');
 };
 
-BasicSection.prototype.id = function()
-{
-    return this.m_base.id;
+BasicSection.prototype.id = function () {
+  return this.m_base.id;
 };

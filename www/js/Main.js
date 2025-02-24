@@ -92,16 +92,13 @@ Main.prototype.m_fields = [
   },
   {
     "label": "CPUs:",
-    "data_function": function (data)
-    {
+    "data_function": function (data) {
       const cpuValues = [];
       let cpuIndex = 1;
-      while (true)
-      {
+      while (true) {
         const cpuLabel = `CPU${cpuIndex}`;
         const cpuValue = getMessageCpuSingleUsage(data, cpuLabel, null);
-        if (cpuValue === null)
-        {
+        if (cpuValue === null) {
           break;// Stop adding CPUs when no more are found.
         }
         cpuValues.push(cpuValue);
@@ -184,7 +181,7 @@ Main.prototype.createTableTasks = function () {
 
 Main.prototype.createTableHeader = function (idx, tbl) {
   var field = this.m_fields[idx];
-  
+
   if (!("widget" in field))
     field.widget = new TextLabel();
   field.widget.create(tbl);
@@ -215,30 +212,35 @@ Main.prototype.update = function () {
     var value = null;
     var field = this.m_fields[i];
 
-    if ("data_function" in field) {
-      value = field.data_function(g_data);
+    if (g_data) {
+      if ("data_function" in field) {
+        value = field.data_function(g_data);
+      }
+      else if ("data_field" in field) {
+        if (field.data_field === "dune_version")
+          value = g_data[field.data_field];
+        else
+          value = "N/A";
+      }
+    } else {
+      value = "N/A";
     }
-    else if ("data_field" in field) {
-      if(field.data_field === "dune_version")
-        value = g_data[field.data_field];
-      else
-        value = "N/A";
-    }
-
     field.widget.update(value);
   }
 
   //search in dune_messages for EntityInfo, then search for GPSFix and print src_ent.
-  for (i in g_data.dune_messages) {
-    var msg = g_data.dune_messages[i];
-    if (msg.abbrev == 'EntityInfo') {
-      var name = g_data.dune_entities[msg.src_ent].label;
-      if (name == 'GPS') {
-        GPS_srcEntity_id = msg.src_ent;
+  if (g_data && g_data.dune_messages) {
+    for (i in g_data.dune_messages) {
+      var msg = g_data.dune_messages[i];
+      if (msg.abbrev == 'EntityInfo') {
+        var name = g_data.dune_entities[msg.src_ent].label;
+        if (name == 'GPS') {
+          GPS_srcEntity_id = msg.src_ent;
+        }
       }
-    }
-    if (msg.abbrev == 'Rpm') {
-      rpm_value = msg.value;
+      if (msg.abbrev == 'Rpm') {
+        rpm_value = msg.value;
+      }
     }
   }
 
@@ -247,6 +249,19 @@ Main.prototype.update = function () {
 };
 
 Main.prototype.updateTasks = function () {
+  var now = Date.now();
+  if (this.lastUpdate && (now - this.lastUpdate) < 1000) {
+    //console.log("updateTasks: skipping");
+    return;
+  }
+  this.lastUpdate = now;
+  //console.log("updateTasks");
+  //console.log(g_data);
+
+  if (!g_data || !g_data.dune_messages) {
+    return;
+  }
+
   var cpuUsageMap = {};
   for (var i in g_data.dune_messages) {
     var msg = g_data.dune_messages[i];
@@ -268,7 +283,6 @@ Main.prototype.updateTasks = function () {
   }
 };
 
-
 Main.prototype.insertTaskNode = function (id, name, desc, status, cpuUsage) {
   for (var i = 0; i < this.m_tbl_task.childNodes.length; i++) {
     var item = this.m_tbl_task.childNodes[i];
@@ -276,6 +290,13 @@ Main.prototype.insertTaskNode = function (id, name, desc, status, cpuUsage) {
     if (tgt.data == name) {
       item.childNodes[0].firstChild.src = this.getEntityStateIcon(status);
       item.childNodes[3].firstChild.data = desc;
+      var cpuCell = item.childNodes[2];
+      if (cpuCell && cpuCell.firstChild && cpuCell.firstChild.childNodes.length >= 3) {
+        if (cpuUsage > 0)
+          cpuCell.firstChild.childNodes[2].textContent = ' ' + cpuUsage + '%';
+        else
+          cpuCell.firstChild.childNodes[2].textContent = '< 1%';
+      }
       return;
     }
     else if (name < tgt.data) {
@@ -290,12 +311,12 @@ Main.prototype.insertTaskNode = function (id, name, desc, status, cpuUsage) {
 };
 
 Main.prototype.updateVehicleState = function () {
-  for (i in g_data.dune_messages) {
-    var msg = g_data.dune_messages[i];
-    if (msg.abbrev == 'VehicleState') {
-      //console.log(msg);
-      //console.log(msg.op_mode);
-      system_mode = msg.op_mode;
+  if (g_data && g_data.dune_messages) {
+    for (i in g_data.dune_messages) {
+      var msg = g_data.dune_messages[i];
+      if (msg.abbrev == 'VehicleState') {
+        system_mode = msg.op_mode;
+      }
     }
   }
 };
@@ -316,20 +337,33 @@ Main.prototype.createTask = function (id, name, desc, status, cpuUsage) {
   tr.appendChild(th_name);
 
   var td_cpu = document.createElement('td');
-  td_cpu.style.width = '50px';
+  td_cpu.style.width = '40px';
   var cpuContainer = document.createElement('div');
   cpuContainer.style.display = 'flex';
   cpuContainer.style.alignItems = 'center';
+
+  var bracketOpen = document.createElement('span');
+  bracketOpen.textContent = '[';
+  cpuContainer.appendChild(bracketOpen);
+
   var cpuIcon = document.createElement('span');
   cpuIcon.classList.add('cpu-icon');
   cpuContainer.appendChild(cpuIcon);
+
   var cpuText = document.createElement('span');
-  if (cpuUsage >= 0) {
-    cpuText.textContent = '(' + cpuUsage + '%)';
+  cpuText.style.display = 'inline-block';
+  cpuText.style.width = '30px';
+  cpuText.style.textAlign = 'right';
+  if (cpuUsage > 0) {
+    cpuText.textContent = cpuUsage + '%';
   } else {
-    cpuText.textContent = '';
+    cpuText.textContent = '< 1%';
   }
   cpuContainer.appendChild(cpuText);
+
+  var bracketClose = document.createElement('span');
+  bracketClose.textContent = ']';
+  cpuContainer.appendChild(bracketClose);
 
   td_cpu.appendChild(cpuContainer);
   tr.appendChild(td_cpu);
@@ -429,16 +463,14 @@ function getSystemType(data, value) {
   };
 
   changeBackgroundColor(system_mode);
-  if(system_mode == 6)
-  {
+  if (system_mode == 6) {
     if (value in abbreviationMap) {
       return abbreviationMap[value];
     } else {
       return "Unknown";
     }
   }
-  else
-  {
+  else {
     if (value in abbreviationMap) {
       return abbreviationMap[value] + " - " + modeMap[system_mode];
     } else {
@@ -520,19 +552,19 @@ function getUptime(data) {
 
 function changeBackgroundColor(color_id) {
   color = "#757575";
-  if(color_id == 0)
+  if (color_id == 0)
     color = "#57B768";
-  else if(color_id == 1)
+  else if (color_id == 1)
     color = "#307191";
-  else if(color_id == 2)
+  else if (color_id == 2)
     color = "#A23F3E";
-  else if(color_id == 3)
+  else if (color_id == 3)
     color = "#D2DA4A";
-  else if(color_id == 4)
+  else if (color_id == 4)
     color = "#ff00ff";
-  else if(color_id == 5)
+  else if (color_id == 5)
     color = "#797EB5";
-  else if(color_id == 6)
+  else if (color_id == 6)
     color = "#757575";
 
   const systemNameElement = document.getElementById('systemName');
