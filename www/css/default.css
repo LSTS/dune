@@ -782,3 +782,36 @@ label:hover .custom-checkbox {
   margin-right: 4px;
   background-image: var(--cpu-icon-url);
 }
+
+#MainTaskTable tr[data-state="0"] td,
+#MainTaskTable tr[data-state="0"] th {
+  /*background-color: var(--c-color-warning);*/
+  border-radius: 18px;
+}
+
+#MainTaskTable tr[data-state="2"] td,
+#MainTaskTable tr[data-state="2"] th,
+#MainTaskTable tr[data-state="3"] td,
+#MainTaskTable tr[data-state="3"] th,
+#MainTaskTable tr[data-state="4"] td,
+#MainTaskTable tr[data-state="4"] th {
+  /*background-color: var(--c-color-error);*/
+  border-radius: 18px;
+}
+
+#MainTaskTable th.rounded-corner {
+  background-color: var(--c-background);
+  border-radius: 18px;
+}
+
+#MainTaskTable tr[data-state="0"] th.rounded-corner {
+  background-color: var(--c-color-warning);
+  border-radius: 18px;
+}
+
+#MainTaskTable tr[data-state="2"] th.rounded-corner,
+#MainTaskTable tr[data-state="3"] th.rounded-corner,
+#MainTaskTable tr[data-state="4"] th.rounded-corner {
+  background-color: var(--c-color-error_2);
+  border-radius: 18px;
+}

@@ -287,6 +287,9 @@ Main.prototype.insertTaskNode = function (id, name, desc, status, cpuUsage) {
   for (var i = 0; i < this.m_tbl_task.childNodes.length; i++) {
     var item = this.m_tbl_task.childNodes[i];
     var tgt = item.childNodes[1].firstChild;
+    if (!item || !tgt) {
+      continue;
+    }
     if (tgt.data == name) {
       item.childNodes[0].firstChild.src = this.getEntityStateIcon(status);
       item.childNodes[3].firstChild.data = desc;
@@ -297,17 +300,45 @@ Main.prototype.insertTaskNode = function (id, name, desc, status, cpuUsage) {
         else
           cpuCell.firstChild.childNodes[2].textContent = '< 1%';
       }
+      item.setAttribute("data-state", status);
+      this.updateHeaderBackground(status);
       return;
     }
     else if (name < tgt.data) {
       var n = this.createTask(id, name, desc, status, cpuUsage);
       this.m_tbl_task.insertBefore(n, item);
+      n.setAttribute("data-state", status);
+      this.updateHeaderBackground(status);
       return;
     }
   }
 
   var xn = this.createTask(id, name, desc, status, cpuUsage);
   this.m_tbl_task.appendChild(xn);
+  xn.setAttribute("data-state", status);
+  this.updateHeaderBackground(status);
+};
+
+Main.prototype.updateHeaderBackground = function (status) {
+  var thName = document.querySelector('#MainTaskTable th[data-column="name"]');
+  if (thName) {
+    thName.style.backgroundColor = this.getBackgroundColorForStatus(status);
+    thName.style.borderRadius = '18px';
+  }
+};
+
+Main.prototype.getBackgroundColorForStatus = function (status) {
+  switch (status) {
+    case 0:
+      return 'var(--c-color-warning)';
+    case 2:
+    case 3:
+    case 4:
+      return 'var(--c-color-error_2)';
+    default:
+    case 1:
+      return 'var(--c-background)';
+  }
 };
 
 Main.prototype.updateVehicleState = function () {
@@ -323,6 +354,7 @@ Main.prototype.updateVehicleState = function () {
 
 Main.prototype.createTask = function (id, name, desc, status, cpuUsage) {
   var tr = document.createElement('tr');
+  tr.setAttribute('data-state', status);
 
   var td_status = document.createElement('td');
   td_status.style.width = '20px';
@@ -333,6 +365,7 @@ Main.prototype.createTask = function (id, name, desc, status, cpuUsage) {
 
   var th_name = document.createElement('th');
   th_name.style.width = '170px';
+  th_name.classList.add('rounded-corner');
   th_name.appendChild(document.createTextNode(name));
   tr.appendChild(th_name);
 
