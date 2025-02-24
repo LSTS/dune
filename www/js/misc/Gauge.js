@@ -27,13 +27,11 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-function Gauge(reverse)
-{
+function Gauge(reverse) {
   this.m_type = (reverse == undefined) ? '' : 'reversed/';
-};
+}
 
-Gauge.prototype.create = function(root)
-{
+Gauge.prototype.create = function (root) {
   this.m_root = root;
   var tr = document.createElement('tr');
   var td = document.createElement('td');
@@ -52,17 +50,7 @@ Gauge.prototype.create = function(root)
   this.m_root.appendChild(table);
 };
 
-Gauge.prototype.update = function(value)
-{
-  if (value == null || value < 0 || value > 100)
-  {
-    this.m_value.firstChild.data = "N/A";
-    this.m_img.style.display = "none";
-  }
-  else
-  {
-    this.m_value.firstChild.data = Math.round(value) + '%';
-    this.m_img.style.display = "";
-    this.m_img.src = 'images/gauge/' + this.m_type + Math.round((value / 100) * 16) + '.png';
-  }
+Gauge.prototype.update = function (value) {
+  this.m_value.firstChild.data = Math.round(value) + '%';
+  this.m_img.src = 'images/gauge/' + this.m_type + Math.round((value / 100) * 16) + '.png';
 };

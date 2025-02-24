@@ -26,6 +26,7 @@
 //***************************************************************************
 // Author: Bernardo Gabriel                                                 *
 // Author: Ricardo Martins (legacy index.js)                                *
+// Edit: Pedro Gonçalves                                                    *
 //***************************************************************************
 
 var g_icons = new Icons();
