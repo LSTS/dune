@@ -26,10 +26,10 @@
 //***************************************************************************
 // Author: Bernardo Gabriel                                                 *
 // Author: Ricardo Martins (legacy BasicSection.js)                         *
+// Edit: Pedro Gonçalves                                                    *
 //***************************************************************************
 
-function BasicSection()
-{ };
+function BasicSection() { };
 
 BasicSection.prototype.create = function(id, root_id)
 {
