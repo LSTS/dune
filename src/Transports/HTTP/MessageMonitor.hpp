@@ -86,7 +86,7 @@ namespace Transports
       // Software meta information.
       std::string m_meta;
       // Table of messages.
-      std::map<unsigned, DUNE::IMC::Message*> m_msgs;
+      std::map<uint32_t, DUNE::IMC::Message*> m_msgs;
       // Entity map.
       EntityMap m_entities;
       // Concurrency mutex.
