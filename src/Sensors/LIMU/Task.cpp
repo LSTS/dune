@@ -414,6 +414,9 @@ namespace Sensors
         inf(DTR("new hard-iron calibration parameters: %.4f, %.4f, 0.0"),
             m_args.hard_iron[0],
             m_args.hard_iron[1]);
+
+        // remove pending deactivations
+        requestActivation();
       }
 
       //! Decode output data frame.
