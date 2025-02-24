@@ -24,6 +24,10 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
+//***************************************************************************
+// Author: Ricardo Martins                                                  *
+// Edit: Pedro Gonçalves                                                    *
+//***************************************************************************
 
 function Logbook(root_id) {
   this.create('Logbook', root_id);
@@ -35,8 +39,8 @@ function Logbook(root_id) {
 
 Logbook.prototype = new BasicSection;
 
-Logbook.prototype.getActiveFilters = function() {
-  if(document.getElementById("filter-info") == null) {
+Logbook.prototype.getActiveFilters = function () {
+  if (document.getElementById("filter-info") == null) {
     return null;
   }
   return {
@@ -47,18 +51,18 @@ Logbook.prototype.getActiveFilters = function() {
   };
 };
 
-Logbook.prototype.updateFiltersState = function() {
+Logbook.prototype.updateFiltersState = function () {
   const filtersState = {
-      INFO: document.getElementById("filter-info").checked,
-      WARNING: document.getElementById("filter-warning").checked,
-      ERROR: document.getElementById("filter-error").checked,
-      DEBUG: document.getElementById("filter-debug").checked
+    INFO: document.getElementById("filter-info").checked,
+    WARNING: document.getElementById("filter-warning").checked,
+    ERROR: document.getElementById("filter-error").checked,
+    DEBUG: document.getElementById("filter-debug").checked
   };
 
   localStorage.setItem('logbookFilters', JSON.stringify(filtersState));
 };
 
-Logbook.prototype.initialize = function() {
+Logbook.prototype.initialize = function () {
   this.m_base.innerHTML = "";
   g_logbook.setupLogbookFilters();
   this.restoreFiltersState();
@@ -153,9 +157,9 @@ function setupLogbookFilters() {
   });
 }
 
-Logbook.prototype.countEntries = function() {
+Logbook.prototype.countEntries = function () {
   if (g_dune_logbook != null) {
-      return g_dune_logbook.dune_logbook.filter(msg => msg.abbrev === "LogBookEntry").length;
+    return g_dune_logbook.dune_logbook.filter(msg => msg.abbrev === "LogBookEntry").length;
   }
   return 0;
 };
@@ -174,7 +178,7 @@ Logbook.prototype.updateContextFilter = function () {
   selectElement.value = this.selectedContext;
 };
 
-Logbook.prototype.updateUniqueContexts = function() {
+Logbook.prototype.updateUniqueContexts = function () {
   this.uniqueContexts.clear();
   if (g_dune_logbook != null) {
     for (var i = 0; i < g_dune_logbook.dune_logbook.length; i++) {
@@ -187,7 +191,18 @@ Logbook.prototype.updateUniqueContexts = function() {
   this.updateContextFilter();
 };
 
-document.getElementById('context-filter').onchange = function() {
-  g_logbook.selectedContext = this.value;
-  g_logbook.update();
-};
+document.addEventListener('DOMContentLoaded', function () {
+  const contextFilter = document.getElementById('context-filter');
+  if (contextFilter) {
+    contextFilter.onchange = function () {
+      if (typeof g_logbook !== 'undefined') {
+        g_logbook.selectedContext = this.value;
+        g_logbook.update();
+      } else {
+        console.log("g_logbook is not defined");
+      }
+    };
+  } else {
+    console.log("Element with ID 'context-filter' not found");
+  }
+});

@@ -48,7 +48,7 @@ ChartWidget.prototype.create = function (container) {
 ChartWidget.prototype.update = function (values) {
   if (values && values.length > 0) {
     this.chart.values = values;
-    this.chart.canvas.width = values.length * (this.chart.canvas.width/values.length); // Increase the width according to the number of CPUs
+    this.chart.canvas.width = values.length * (this.chart.canvas.width / values.length); // Increase the width according to the number of CPUs
     this.draw();
   }
 };
@@ -81,10 +81,9 @@ ChartWidget.prototype.draw = function () {
   var barHeightRatio = canvas.height / 100; // Assume the value is a percentage
 
   // Draw the bars for each available CPU
-  for (var i = 0; i < values.length; i++)
-  {
+  for (var i = 0; i < values.length; i++) {
     var value = values[i];
-    if(value == null)
+    if (value == null)
       value = 0;
     // Set color for the bar based on load
     var barColor = this.getBarColor(value);
