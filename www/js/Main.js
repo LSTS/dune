@@ -292,6 +292,8 @@ Main.prototype.insertTaskNode = function (id, name, desc, status, cpuUsage) {
     }
     if (tgt.data == name) {
       item.childNodes[0].firstChild.src = this.getEntityStateIcon(status);
+      item.childNodes[0].firstChild.style.width = '18px';
+      item.childNodes[0].firstChild.marginTop = '2px';
       item.childNodes[3].firstChild.data = desc;
       var cpuCell = item.childNodes[2];
       if (cpuCell && cpuCell.firstChild && cpuCell.firstChild.childNodes.length >= 3) {
@@ -360,6 +362,8 @@ Main.prototype.createTask = function (id, name, desc, status, cpuUsage) {
   td_status.style.width = '20px';
   var img_status = document.createElement('img');
   img_status.src = this.getEntityStateIcon(status);
+  img_status.style.width = '18px';
+  img_status.style.marginTop = '2px';
   td_status.appendChild(img_status);
   tr.appendChild(td_status);
 

@@ -5,7 +5,7 @@
 
 <head>
   <title>DUNE - Control Center</title>
-  <link rel="icon" type="image/vnd.microsoft.icon" href="images/dune.ico" />
+  <link rel="icon" type="image/vnd.microsoft.icon" href="images/icons/dune.ico" />
   <link rel="stylesheet" type="text/css" href="css/default.css" />
 
   <script type="text/javascript" src="js/Icons.js"></script>
@@ -101,9 +101,9 @@
             <li id="Logbook"><a href="javascript:show('Logbook')">Logbook</a></li>
             <li id="Announces"><a href="javascript:show('Announces')">Discovery Tool</a></li>
             <!-- <li id="Help"><a href="#">Help</a></li> -->
-            <li class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected"
-                  alt="Connected" /></a></li>
-            <li class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/dark-switch.png"
+            <li class="Static"><a href="#"><img id="ConnectionIcon" src="images/icons/system-off.png" title="Connected"
+                alt="Connected" style="margin-top: -7px;" /></a></li>
+            <li class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/icons/dark-switch.png"
                   title="Theme Change" alt="Light" style="max-width: 16px; max-height: 16px;"></a></li>
           </ul>
         </div>
@@ -146,11 +146,11 @@
       if (body.classList.contains('theme-light')) {
         body.classList.remove('theme-light');
         body.classList.add('theme-dark');
-        document.getElementById('ThemeIcon').src = 'images/light-switch.png';
+        document.getElementById('ThemeIcon').src = 'images/icons/light-switch.png';
       } else {
         body.classList.remove('theme-dark');
         body.classList.add('theme-light');
-        document.getElementById('ThemeIcon').src = 'images/dark-switch.png';
+        document.getElementById('ThemeIcon').src = 'images/icons/dark-switch.png';
       }
     }
   </script>

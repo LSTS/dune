@@ -147,6 +147,7 @@ Sensors.prototype.createValue = function (msg) {
 
   var img_status = document.createElement('img');
   img_status.src = g_icons.path('normal');
+  img_status.style.width = '18px';
 
   var td_status = document.createElement('td');
   td_status.style.width = '25px';
@@ -182,13 +183,13 @@ Sensors.prototype.updateField = function (root, msg) {
   if (totalSeconds > 10.0) {
     state = 0;
     root.childNodes[2].firstChild.data = 'INACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
-    root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
   } else {
     state = 1;
     root.childNodes[2].firstChild.data = 'ACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
   }
 
   root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
+  root.childNodes[3].firstChild.style.width = '18px';
   root.childNodes[1].firstChild.data = Number(msg.value).toFixed(2);
 };
 
