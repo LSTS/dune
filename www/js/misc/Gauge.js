@@ -69,6 +69,21 @@ Gauge.prototype.update = function (value) {
     }
   }
 
+  // style gradient
+  //const mainColor = `rgb(${red}, ${green}, 0)`;
+  //const lighterColor = this._lightenColor(mainColor, 0.6);
+  //this.m_bar.style.background = `linear-gradient(to right, ${lighterColor}, ${mainColor})`;
+
+  // style solid color
   const color = `rgb(${red}, ${green}, 0)`;
   this.m_bar.style.backgroundColor = color;
 };
+
+Gauge.prototype._lightenColor = function (rgb, amount) {
+  const match = rgb.match(/\d+/g);
+  let [r, g, b] = match.map(Number);
+  r = Math.min(255, Math.round(r + (255 - r) * amount));
+  g = Math.min(255, Math.round(g + (255 - g) * amount));
+  b = Math.min(255, Math.round(b + (255 - b) * amount));
+  return `rgb(${r}, ${g}, ${b})`;
+}
