@@ -129,6 +129,10 @@ input
 #ConnectionIcon
 {
   border: none;
+  width: 34px;
+  height: 34px;
+  background-size: contain;
+  background-repeat: no-repeat;
 }
 
 div.Hidden
