@@ -33,8 +33,9 @@ function ChartWidget() {
 
 ChartWidget.prototype.create = function (container) {
   var canvas = document.createElement('canvas');
+  // Default width and height – the width can be adjusted during update
   canvas.width = 200;
-  canvas.height = 100;
+  canvas.height = 135;
   container.appendChild(canvas);
 
   var ctx = canvas.getContext('2d');
@@ -48,24 +49,52 @@ ChartWidget.prototype.create = function (container) {
 ChartWidget.prototype.update = function (values) {
   if (values && values.length > 0) {
     this.chart.values = values;
-    this.chart.canvas.width = values.length * (this.chart.canvas.width / values.length); // Increase the width according to the number of CPUs
+    // divide the canvas width by the number of values to get the default bar width
+    var defaultBarWidth = this.chart.canvas.width / this.chart.values.length;
+    this.chart.canvas.width = values.length * defaultBarWidth;
     this.draw();
   }
 };
 
 ChartWidget.prototype.getBarColor = function (value) {
-  // Modern Material Design color palette based on load percentage
-  if (value <= 20) {
-    return '#66bb6a';  // Light green
-  } else if (value <= 40) {
-    return '#43a047';  // Medium green
-  } else if (value <= 60) {
-    return '#ffa726';  // Amber
-  } else if (value <= 80) {
-    return '#fb8c00';  // Orange
+  // Modern palette inspired by Material Design based on load percentage
+  // if (value <= 20) {
+  //   return '#66bb6a';  // Light green
+  // } else if (value <= 40) {
+  //   return '#43a047';  // Medium green
+  // } else if (value <= 60) {
+  //   return '#ffa726';  // Amber
+  // } else if (value <= 80) {
+  //   return '#fb8c00';  // Orange
+  // } else {
+  //   return '#e53935';  // Red
+  // }
+  if (value <= 50) {
+    red = Math.round(value * 5.1);
+    green = 255;
   } else {
-    return '#e53935';  // Red
+    red = 255;
+    green = Math.round((100 - value) * 5.1);
   }
+  return `rgb(${red}, ${green}, 0)`;
+
+};
+
+// Helper function to draw a rounded rectangle
+ChartWidget.prototype.drawRoundedRect = function (ctx, x, y, width, height, radius) {
+  // Ensure the radius doesn't exceed half of the width/height
+  radius = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
 };
 
 ChartWidget.prototype.draw = function () {
@@ -73,46 +102,79 @@ ChartWidget.prototype.draw = function () {
   var canvas = this.chart.canvas;
   var values = this.chart.values;
 
-  // Clean the canvas before drawing
+  // Clear the canvas before drawing
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Define the width of each bar based on the number of CPUs
-  var barWidth = canvas.width / values.length;
-  var barHeightRatio = canvas.height / 100; // Assume the value is a percentage
+  // Calculate the width of each bar based on the total number of bars
+  var maxWidth = canvas.width;  // Maximum allowed width for the entire chart (in pixels)
+  var barWidth = Math.max(maxWidth / values.length, 10);  // Ensure the minimum width of 10px for each bar
 
-  // Draw the bars for each available CPU
+  // Assume the value is a percentage (0-100)
+  var barHeightRatio = canvas.height / 100;
+
   for (var i = 0; i < values.length; i++) {
     var value = values[i];
-    if (value == null)
+    if (value == null) {
       value = 0;
-    // Set color for the bar based on load
+    }
+
     var barColor = this.getBarColor(value);
-    // Create a gradient effect for the bar
-    var gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, barColor);
-    gradient.addColorStop(1, '#ffffff');  // Lighter gradient towards the bottom
-    // Apply gradient as the fill style
-    ctx.fillStyle = gradient;
-    // Add a shadow for a modern material effect
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+    var x = i * barWidth;
+    var barHeight = value * barHeightRatio;
+    var y = canvas.height - barHeight;
+
+    // Create a vertical gradient from a lighter version of the bar color to the main color
+    var gradient = ctx.createLinearGradient(x, y, x, canvas.height);
+    gradient.addColorStop(0, this._lightenColor(barColor, 0.9));
+    gradient.addColorStop(1, barColor);
+
+    // Set a shadow for a modern effect
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
     ctx.shadowBlur = 4;
     ctx.shadowOffsetX = 2;
     ctx.shadowOffsetY = 2;
-    // Draw the bar
-    ctx.fillRect(i * barWidth, canvas.height - value * barHeightRatio, barWidth, value * barHeightRatio);
-    // Remove shadow for clean outlines
-    ctx.shadowColor = 'transparent';
-    // Draw the bar outline
-    ctx.strokeStyle = '#cccccc';  // Light grey for outlines
-    ctx.strokeRect(i * barWidth, canvas.height - value * barHeightRatio, barWidth, value * barHeightRatio);
-    // Draw the value in the center of the bar
-    ctx.fillStyle = 'black';
-    ctx.font = '10px Arial';
-    ctx.textAlign = 'center';
-    var text = value.toString();
-    var textX = i * barWidth + barWidth / 2;
-    var textY = canvas.height - value * barHeightRatio + 10;
-    ctx.fillText(text, textX, textY);
+
+    // Draw the bar with rounded corners
+    // style gradient
+    //ctx.fillStyle = gradient;
+
+    //style solid color
+    ctx.fillStyle = barColor;
+
+    this.drawRoundedRect(ctx, x + 2, y, barWidth - 4, barHeight, 4);
+    ctx.fill();
+
+    // Remove shadow for the outline
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Display the value centered inside the bar if the value is 9 or greater
+    if (value >= 9) {
+      ctx.fillStyle = '#000';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var textX = x + barWidth / 2;
+      var textY = y + barHeight / 2;
+      ctx.fillText(value.toString(), textX, textY);
+    }
   }
 };
 
+// Helper function to lighten a hexadecimal color
+// "amount" ranges from 0 (no change) to 1 (completely white)
+ChartWidget.prototype._lightenColor = function (hex, amount) {
+  // Remove the '#' and convert to a number
+  var num = parseInt(hex.slice(1), 16);
+  var r = (num >> 16) + Math.round(255 * amount);
+  var g = ((num >> 8) & 0x00FF) + Math.round(255 * amount);
+  var b = (num & 0x0000FF) + Math.round(255 * amount);
+  r = (r > 255) ? 255 : r;
+  g = (g > 255) ? 255 : g;
+  b = (b > 255) ? 255 : b;
+  // Convert back to hexadecimal
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b)
+    .toString(16)
+    .slice(1);
+};

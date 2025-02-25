@@ -825,15 +825,14 @@ label:hover .custom-checkbox {
   width: 200px;
   height: 18px;
   background-color: var(--c-background-h-l);
-  border-radius: 15px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
 .gauge-bar {
   height: 100%;
   width: 0%;
-  background-color: #4caf50;
-  border-radius: 15px 0 0 15px;
+  border-radius: 6px;
   transition: width 0.5s ease;
 }
 
@@ -842,7 +841,6 @@ label:hover .custom-checkbox {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: var(--c-color-text);
-  font-weight: bold;
+  color: #000000;
   font-size: 12px;
 }
