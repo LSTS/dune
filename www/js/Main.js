@@ -75,19 +75,25 @@ Main.prototype.m_fields = [
   {
     "label": "Available Storage:",
     "data_function": function (data) { return 100 - getMessageValue(data, 'StorageUsage', 0); },
-    "widget": new Gauge(),
+    "widget": new Gauge({
+      reverse: false
+    }),
     "side": "left"
   },
   {
     "label": "Available Energy:",
     "data_function": function (data) { return getMessageValue(data, 'FuelLevel', 0); },
-    "widget": new Gauge(),
+    "widget": new Gauge({
+      reverse: false
+    }),
     "side": "left"
   },
   {
     "label": "DUNE CPU Usage:",
     "data_function": function (data) { return getMessageCpuSingleUsage(data, 'DUNE-CPU', 0); },
-    "widget": new Gauge(0),
+    "widget": new Gauge({
+      reverse: true
+    }),
     "side": "right"
   },
   {

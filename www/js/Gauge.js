@@ -25,32 +25,50 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Edit: Pedro Gonçalves                                                    *
 //***************************************************************************
 
-function Gauge(reverse) {
-  this.m_type = (reverse == undefined) ? '' : 'reversed/';
+function Gauge(options) {
+  this.m_type = options && options.reverse ? 'reversed/' : '';
 }
 
 Gauge.prototype.create = function (root) {
   this.m_root = root;
-  var tr = document.createElement('tr');
-  var td = document.createElement('td');
-  this.m_img = document.createElement('img');
-  this.m_img.src = 'images/gauge/' + this.m_type + '0.png';
-
-  td.appendChild(this.m_img);
-  tr.appendChild(td);
-
-  this.m_value = document.createElement('td');
-  this.m_value.appendChild(document.createTextNode(''));
-  tr.appendChild(this.m_value);
-
-  var table = document.createElement('table');
-  table.appendChild(tr);
-  this.m_root.appendChild(table);
+  var gaugeContainer = document.createElement('div');
+  gaugeContainer.classList.add('gauge-container');
+  this.m_bar = document.createElement('div');
+  this.m_bar.classList.add('gauge-bar');
+  gaugeContainer.appendChild(this.m_bar);
+  this.m_value = document.createElement('div');
+  this.m_value.classList.add('gauge-value');
+  gaugeContainer.appendChild(this.m_value);
+  this.m_root.appendChild(gaugeContainer);
 };
 
 Gauge.prototype.update = function (value) {
-  this.m_value.firstChild.data = Math.round(value) + '%';
-  this.m_img.src = 'images/gauge/' + this.m_type + Math.round((value / 100) * 16) + '.png';
+  this.m_value.textContent = Math.round(value) + '%';
+  this.m_bar.style.width = Math.round(value) + '%';
+
+  let red, green;
+
+  if (this.m_type === 'reversed/') {
+    if (value <= 50) {
+      red = Math.round(value * 5.1);
+      green = 255;
+    } else {
+      red = 255;
+      green = Math.round((100 - value) * 5.1);
+    }
+  } else {
+    if (value <= 50) {
+      red = 255;
+      green = Math.round(value * 5.1);
+    } else {
+      red = Math.round((100 - value) * 5.1);
+      green = 255;
+    }
+  }
+
+  const color = `rgb(${red}, ${green}, 0)`;
+  this.m_bar.style.backgroundColor = color;
 };

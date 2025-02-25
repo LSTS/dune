@@ -819,3 +819,30 @@ label:hover .custom-checkbox {
   background-color: var(--c-color-error_2);
   border-radius: 18px;
 }
+
+.gauge-container {
+  position: relative;
+  width: 200px;
+  height: 18px;
+  background-color: var(--c-background-h-l);
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.gauge-bar {
+  height: 100%;
+  width: 0%;
+  background-color: #4caf50;
+  border-radius: 15px 0 0 15px;
+  transition: width 0.5s ease;
+}
+
+.gauge-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--c-color-text);
+  font-weight: bold;
+  font-size: 12px;
+}
