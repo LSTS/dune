@@ -375,8 +375,8 @@ namespace Monitors
                                bdt.hour, bdt.minutes, bdt.seconds,
                             (int)m_fuel, (int)m_bat_voltage, (int)m_fuel_conf);
 
+          s += String::str(" / s: %c", vehicleStateChar(m_vstate));
           s += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
-          s += String::str("/ s: %c", vehicleStateChar(m_vstate));
 
           msg.txt_data = String::str("(%s) %s", prefix, s.c_str());
         }
