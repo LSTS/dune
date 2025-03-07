@@ -197,8 +197,9 @@ namespace Control
 				}
 
 				// REMOVED: Matrix& predicted_traj, Matrix& colav_status, Matrix& obst_status.
+				//! param[out] obs The obstacle object with the worst cost.
 				void
-				getBestControlOffset(double &u_os_best, double &psi_os_best, double u_d, double psi_d_, const std::vector<double> &asv_state, const Eigen::Matrix<double, -1, 2> &waypoints_, const Math::Matrix &obst_states, Math::Matrix static_obst_states_, double &cost_mra)
+				getBestControlOffset(double &u_os_best, double &psi_os_best, double u_d, double psi_d_, const std::vector<double> &asv_state, const Eigen::Matrix<double, -1, 2> &waypoints_, const Math::Matrix &obst_states, Math::Matrix static_obst_states_, double &cost_mra, obstacle*& obs)
 				{
 					double cost = INFINITY;
 					double cost_k = 0, cost_i = 0, cost_o = 0; // cost_ac = 0;
@@ -775,8 +776,11 @@ namespace Control
 												HL_(k) = cost_k;
 
 											// save the overall worst cost for this control behavior
-											if (cost_k > cost_i)
+											if (cost_k > cost_i) // XXX: Here is the worst cost !!  -> Element k
+											{
 												cost_i = cost_k;
+												obs = obst_vect[k]; // save the obstacle with the worst cost
+											} 
 
 											// save the latest iter at which the ASV can return to its original path
 											if (ik_return_to_path > i_return_to_path)

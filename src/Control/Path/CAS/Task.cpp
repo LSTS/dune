@@ -200,6 +200,9 @@ namespace Control
         //! Information about the shallowest current cell.
         SingleCurrentCell m_shallowest_current_cell;
 
+        //! Transmission request id.
+        uint16_t m_tx_req_id;
+
         //! Task arguments.
         Arguments m_args;
 
@@ -222,7 +225,8 @@ namespace Control
         m_heave(0.0),
         m_wave_freq(0.0),
         m_cost(0.0),
-        m_avg(0)
+        m_avg(0),
+        m_tx_req_id(0)
         {
           param("Entity Label - Navigation simulation", m_args.elabel_nav_sim)
           .description("Entity label of 'GpsFix' message");
@@ -1338,7 +1342,8 @@ namespace Control
             else if(C_CAS && C_AG) // both, this is an anti-grounding and anti-collision scenario!
               debug("Anti-grounding and anti-collision situation!");
 
-            m_sb_mpc->getBestControlOffset(m_u_os, m_psi_os, m_asv_state[3], m_des_heading.value, m_asv_state, m_waypoints, m_dyn_obst_state, m_static_obst_state, m_cost);
+            obstacle* obs_vessel = nullptr;
+            m_sb_mpc->getBestControlOffset(m_u_os, m_psi_os, m_asv_state[3], m_des_heading.value, m_asv_state, m_waypoints, m_dyn_obst_state, m_static_obst_state, m_cost, obs_vessel);
 
             //! New desired course and course offset.
             m_des_heading.value += m_psi_os;
@@ -1350,18 +1355,44 @@ namespace Control
               debug("Course offset is %.0f, new desired course %.3f", Angles::degrees(m_psi_os), Angles::degrees(m_des_heading.value));
               
               // Find closest vessel - hypothetically it is the one we try to avoid.
-              std::vector<IMC::AisInfo>::const_iterator itr;
-              itr = m_dyn_obst_vec.begin();
-              double dist_prev = m_args.out_of_range;
-              std::string mmsi_min;
-              for(; itr != m_dyn_obst_vec.end(); ++itr)
+              // std::vector<IMC::AisInfo>::const_iterator itr;
+              // itr = m_dyn_obst_vec.begin();
+              // double dist_prev = m_args.out_of_range;
+              // std::string mmsi_min;
+              // for(; itr != m_dyn_obst_vec.end(); ++itr)
+              // {
+              //   double dist = (itr)->dist;
+              //   if(dist < dist_prev)
+              //     mmsi_min = (itr)->mmsi;
+
+              //   dist_prev = dist;
+              // }
+
+              if (obs_vessel != nullptr)
               {
-                double dist = (itr)->dist;
-                if(dist < dist_prev)
+                std::vector<IMC::AisInfo>::const_iterator itr = m_dyn_obst_vec.begin();
+                const AisInfo* ais_vessel = itr.base();
+
+                for(; itr != m_dyn_obst_vec.end(); ++itr)
                 {
-                  mmsi_min = (itr)->mmsi;
+                  std::stringstream geek(itr->mmsi); //contains int MMSI.
+                  int mmsi = 0; 
+                  geek >> mmsi;
+
+                  if (mmsi == obs_vessel->id_)
+                    ais_vessel = itr.base();
+                    break;
+
                 }
-                dist_prev = dist;
+
+                TransmissionRequest tr;
+                tr.req_id = m_tx_req_id++;
+                tr.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
+                tr.data_mode = TransmissionRequest::DMODE_INLINEMSG;
+                tr.msg_data.set(*ais_vessel);
+                tr.deadline = Clock::getSinceEpoch() + 60;
+
+                dispatch(tr);
               }
             }
 
