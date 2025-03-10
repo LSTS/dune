@@ -22,10 +22,28 @@ enum SpeedUnits {
     PERCENTAGE = 2;
 }
 
+// Enum Loiter Type
+enum LoiterType {
+    DEFAULT = 0;
+    CIRCULAR = 1;
+    RACETRACK = 2;
+    EIGHT = 3;
+    HOVER = 4;
+}
+
+// Enum Direction Type
+enum DirectionType {
+    VDEP = 0;
+    CLOCKW = 1;
+    CCLOCKW = 2;
+    IWINDCURR = 3;
+}
+
 // Enum Maneuver Type
 enum ManeuverType {
     GOTO = 0;
     FOLLOWPATH = 1;
+    LOITER = 2;
     //Teleoperation
     //YoYo
 }
@@ -124,6 +142,24 @@ message FollowPath {
     SpeedUnits speed_units = 7;
     repeated PathPoint points = 8 [(dccl.field) = { max_repeat: 30 }];
     //TODO: costum field > enum with possible string
+}
+
+// Loiter Maneuver
+message Loiter {
+    option (dccl.msg) = { codec_version: 4 id: 453 max_bytes: 1000};
+    int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
+    float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
+    float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
+    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    ZUnits z_units = 5;
+    int32 duration = 6 [(dccl.field) = { min: 0 max: 10800}];
+    float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    SpeedUnits speed_units = 8;
+    LoiterType type = 9;
+    float radius = 10 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
+    float length = 11 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
+    float bearing = 12 [(dccl.field) = { min: 0 max: 6.283 precision: 3 }];
+    DirectionType direction = 13;
 }
 
 // PathPoint 
