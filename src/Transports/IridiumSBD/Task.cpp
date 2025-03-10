@@ -272,11 +272,17 @@ namespace Transports
             setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_IDLE);
             Time::Delay::wait(1.0);
           }
-          inf("Opening serial port '%s' at %u bps", m_args.uart_dev.c_str(), m_args.uart_baud);
+
           if(m_args.use_9523)
+          {
+            inf("Opening serial port '%s' at %u bps", m_args.uart_dev.c_str(), m_args.uart_baud_9523);
             m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud_9523);
+          }
           else
+          {
+            inf("Opening serial port '%s' at %u bps", m_args.uart_dev.c_str(), m_args.uart_baud);
             m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          }
 
           IMC::VersionInfo vi;
           std::string version_model = "no libd-9523";
