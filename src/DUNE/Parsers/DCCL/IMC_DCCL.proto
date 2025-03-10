@@ -176,6 +176,7 @@ message Maneuver{
     oneof ManeuverUnion{
         Goto goto_maneuver = 1 ;
         FollowPath followpath_maneuver = 2;
+        Loiter loiter_maneuver = 3;
         //TODO: Insert here other maneuvers from Message-Group Maneuver
     }
 }
