@@ -48,7 +48,7 @@ function Power(root_id)
 
   // Reset all schedulles button.
   var btnResetAllSchedulles = document.createElement('button');
-  btnResetAllSchedulles.onclick = function(event) { resetAllSchedulles(event); };
+  btnResetAllSchedulles.onclick = (event) => { resetAllSchedulles(event); };
   btnResetAllSchedulles.textContent = 'Reset all schedulles';
   btnResetAllSchedulles.style.cursor = "alias";
 
@@ -176,7 +176,7 @@ Power.prototype.createEntry = function(name, value)
 Power.prototype.appendButton = function(root, channel, op, label)
 {
   var btn = document.createElement('button');
-  btn.onclick = function(event) { submitPowerChannel(channel, op, root.id, event); };
+  btn.onclick = (event) => { submitPowerChannel(channel, op, root.id, event); };
   btn.textContent = label;
   btn.setAttribute('data-op', op);
   root.appendChild(btn);
