@@ -76,10 +76,13 @@ namespace DUNE
         stopImpl();
       }
 
+      //! Join the thread.
+      //! @param s timeout in seconds.
+      //! If s is 0, the function will block until the thread exits.
       void
-      join(void)
+      join(unsigned s = 0)
       {
-        joinImpl();
+        joinImpl(s);
       }
 
       void
@@ -149,7 +152,7 @@ namespace DUNE
       stopImpl(void) = 0;
 
       virtual void
-      joinImpl(void) = 0;
+      joinImpl(unsigned s) = 0;
 
       virtual void
       setStateImpl(State value) = 0;
