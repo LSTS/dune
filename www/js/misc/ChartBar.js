@@ -27,11 +27,13 @@
 // Author: Pedro Gonçalves                                                  *
 //***************************************************************************
 
-function ChartWidget() {
+function ChartWidget()
+{
   this.chart = null;
 }
 
-ChartWidget.prototype.create = function (container) {
+ChartWidget.prototype.create = function (container)
+{
   var canvas = document.createElement('canvas');
   canvas.width = 200;
   canvas.height = 100;
@@ -45,30 +47,33 @@ ChartWidget.prototype.create = function (container) {
   };
 };
 
-ChartWidget.prototype.update = function (values) {
-  if (values && values.length > 0) {
+ChartWidget.prototype.update = function (values)
+{
+  if (values && values.length > 0)
+  {
     this.chart.values = values;
     this.chart.canvas.width = values.length * (this.chart.canvas.width/values.length); // Increase the width according to the number of CPUs
     this.draw();
   }
 };
 
-ChartWidget.prototype.getBarColor = function (value) {
+ChartWidget.prototype.getBarColor = function (value)
+{
   // Modern Material Design color palette based on load percentage
-  if (value <= 20) {
+  if (value <= 20)
     return '#66bb6a';  // Light green
-  } else if (value <= 40) {
+  else if (value <= 40)
     return '#43a047';  // Medium green
-  } else if (value <= 60) {
+  else if (value <= 60)
     return '#ffa726';  // Amber
-  } else if (value <= 80) {
+  else if (value <= 80)
     return '#fb8c00';  // Orange
-  } else {
+  else
     return '#e53935';  // Red
-  }
 };
 
-ChartWidget.prototype.draw = function () {
+ChartWidget.prototype.draw = function ()
+{
   var ctx = this.chart.ctx;
   var canvas = this.chart.canvas;
   var values = this.chart.values;
@@ -116,4 +121,3 @@ ChartWidget.prototype.draw = function () {
     ctx.fillText(text, textX, textY);
   }
 };
-

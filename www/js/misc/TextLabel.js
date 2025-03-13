@@ -32,12 +32,12 @@ function TextLabel()
 
 TextLabel.prototype.create = function(root)
 {
-    this.m_root = root;
-    var txt = document.createTextNode('');
-    this.m_root.appendChild(txt);
+  this.m_root = root;
+  var txt = document.createTextNode('');
+  this.m_root.appendChild(txt);
 };
 
 TextLabel.prototype.update = function(value)
 {
-    this.m_root.firstChild.data = value;
+  this.m_root.firstChild.data = value;
 };

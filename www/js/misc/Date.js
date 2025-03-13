@@ -27,33 +27,31 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-function Gauge(reverse)
+function dateToString(secs)
 {
-    this.m_type = (reverse == undefined) ? '' : 'reversed/';
-}
+  var date = new Date(secs * 1000);
+  var str = date.getUTCFullYear() + '-';
 
-Gauge.prototype.create = function(root)
-{
-    this.m_root = root;
-    var tr = document.createElement('tr');
-    var td = document.createElement('td');
-    this.m_img = document.createElement('img');
-    this.m_img.src = 'images/gauge/' + this.m_type + '0.png';
+  var month = date.getUTCMonth() + 1;
+  if (month < 10)
+    str += '0';
+  str += month + '-';
 
-    td.appendChild(this.m_img);
-    tr.appendChild(td);
+  if (date.getUTCDate() < 10)
+    str += '0';
+  str += date.getUTCDate() + ' ';
 
-    this.m_value = document.createElement('td');
-    this.m_value.appendChild(document.createTextNode(''));
-    tr.appendChild(this.m_value);
+  if (date.getUTCHours() < 10)
+    str += '0';
+  str += date.getUTCHours() + ':';
 
-    var table = document.createElement('table');
-    table.appendChild(tr);
-    this.m_root.appendChild(table);
-};
+  if (date.getUTCMinutes() < 10)
+    str += '0';
+  str += date.getUTCMinutes() + ':';
 
-Gauge.prototype.update = function(value)
-{
-    this.m_value.firstChild.data = Math.round(value) + '%';
-    this.m_img.src = 'images/gauge/' + this.m_type + Math.round((value / 100) * 16) + '.png';
+  if (date.getUTCSeconds() < 10)
+    str += '0';
+  str += date.getUTCSeconds();
+
+  return str;
 };
