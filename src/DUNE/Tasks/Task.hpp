@@ -234,6 +234,7 @@ namespace DUNE
       setPriority(unsigned int value)
       {
         m_args.priority = value;
+        setPriorityImpl(Concurrency::Scheduler::get(), value);
       }
 
       //! Get scheduling priority. The priority of a task might change
