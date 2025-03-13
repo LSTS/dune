@@ -88,6 +88,8 @@ namespace DUNE
       FileSystem::Path dir_scripts;
       //! UID of this instance.
       uint64_t uid;
+      //! DUNE's start time.
+      double start_time;
     };
   }
 }
