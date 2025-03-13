@@ -90,6 +90,22 @@ namespace DUNE
       return SCHED_OTHER;
     }
 
+    Scheduler::Policy
+    Scheduler::policy(unsigned policy)
+    {
+      switch (policy)
+      {
+        case SCHED_RR:
+          return POLICY_RR;
+        case SCHED_FIFO:
+          return POLICY_FIFO;
+        case SCHED_OTHER:
+          return POLICY_OTHER;
+      }
+
+      return POLICY_OTHER;
+    }
+
     unsigned
     Scheduler::minimumPriority(void)
     {

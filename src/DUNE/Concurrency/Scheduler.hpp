@@ -77,6 +77,13 @@ namespace DUNE
       static unsigned
       native(Policy policy);
 
+      //! Translate a native scheduling policy identifier to a DUNE
+      //! scheduling policy.
+      //! @param policy native scheduling policy identifier.
+      //! @return DUNE scheduling policy.
+      static Scheduler::Policy
+      policy(unsigned policy);
+
       //! Force the running thread to relinquish the processor until
       //! it becomes the head of its thread list.
       static void
