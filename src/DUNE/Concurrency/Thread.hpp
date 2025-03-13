@@ -34,12 +34,16 @@
 #include <string>
 
 // DUNE headers.
-#include <DUNE/Config.hpp>
-#include <DUNE/Concurrency/Initializer.hpp>
-#include <DUNE/Concurrency/Runnable.hpp>
-#include <DUNE/Concurrency/Mutex.hpp>
-#include <DUNE/Concurrency/Scheduler.hpp>
 #include <DUNE/Concurrency/Barrier.hpp>
+#include <DUNE/Concurrency/Initializer.hpp>
+#include <DUNE/Concurrency/Mutex.hpp>
+#include <DUNE/Concurrency/Runnable.hpp>
+#include <DUNE/Concurrency/Scheduler.hpp>
+#include <DUNE/Config.hpp>
+
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 extern "C" void*
 dune_concurrency_thread_entry_point(void*);
@@ -81,8 +85,11 @@ namespace DUNE
       void
       stopImpl(void);
 
+      //! Join the thread.
+      //! @param s timeout in seconds.
+      //! If s is zero, the function will block until thread is joined.
       void
-      joinImpl(void);
+      joinImpl(unsigned s);
 
       void
       setPriorityImpl(Scheduler::Policy policy, unsigned priority);
@@ -99,12 +106,20 @@ namespace DUNE
       //! actually started.
       Barrier m_start_barrier;
 
-#if defined(DUNE_SYS_HAS_PTHREAD)
-      //! POSIX thread handle.
-      pthread_t m_handle;
-      //! POSIX thread attributes.
-      pthread_attr_t m_attr;
-#endif
+      //! Thread object handle.
+      std::thread m_thread;
+      //! Mutex to protect join_done.
+      std::mutex join_mtx;
+      //! Condition variable to signal join completion.
+      std::condition_variable join_cv;
+      //! Join completion flag.
+      bool join_done;
+      //! Thread name.
+      std::string m_name;
+      //! Thread priority.
+      unsigned m_priority;
+      //! Thread scheduling policy.
+      Scheduler::Policy m_policy;
 
 #if defined(DUNE_OS_LINUX)
       //! Native identifier.

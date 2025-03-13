@@ -32,6 +32,8 @@
 #include <iostream>
 #include <limits>
 
+#include <chrono>
+
 // DUNE headers.
 #include <DUNE/Config.hpp>
 #include <DUNE/Utils/String.hpp>
@@ -95,6 +97,10 @@ dune_concurrency_thread_entry_point(void* data)
 
   td->setStateImpl(Thread::StateDead);
 
+  std::lock_guard<std::mutex> lk(td->join_mtx);
+  td->join_done = true;
+  td->join_cv.notify_all();
+
   return NULL;
 }
 
@@ -103,52 +109,31 @@ namespace DUNE
   namespace Concurrency
   {
     Thread::Thread(void):
-      m_start_barrier(2)
+      m_start_barrier(2),
+      m_priority(Scheduler::minimumPriority()),
+      m_policy(Scheduler::get())
     {
 #if defined(DUNE_OS_LINUX)
       m_id = -1;
       m_last_proc_time = 0;
-      m_last_global_time= 0;
+      m_last_global_time = 0;
 #endif
-
-      int rv = pthread_attr_init(&m_attr);
-      if (rv != 0)
-        throw ThreadError("failed to initialize attributes", rv);
-
-#if defined(PTHREAD_EXPLICIT_SCHED)
-      rv = pthread_attr_setinheritsched(&m_attr, PTHREAD_EXPLICIT_SCHED);
-      if (rv != 0)
-        throw ThreadError("failed to disable inheritance of scheduler parameters", rv);
-#endif
-
-      rv = pthread_attr_setdetachstate(&m_attr, PTHREAD_CREATE_JOINABLE);
-      if (rv != 0)
-        throw ThreadError("unable to set attribute detachable", rv);
-
-      pthread_attr_setstacksize(&m_attr, c_thread_stack_size);
 
       setStateImpl(StateUnknown);
     }
 
     Thread::~Thread(void)
-    {
-#if defined(DUNE_SYS_HAS_PTHREAD)
-      pthread_attr_destroy(&m_attr);
-#endif
-    }
+    { }
 
     void
     Thread::startImpl(void)
     {
-#if defined(DUNE_SYS_HAS_PTHREAD)
       setStateImpl(StateStarting);
 
-      int rv = pthread_create(&m_handle, &m_attr, dune_concurrency_thread_entry_point, this);
-      if (rv != 0)
-        throw ThreadError("failed to start thread", rv);
+      m_thread = std::thread(dune_concurrency_thread_entry_point, this);
+      setPriorityImpl(m_policy, m_priority);
 
       m_start_barrier.wait();
-#endif
     }
 
     void
@@ -158,40 +143,51 @@ namespace DUNE
     }
 
     void
-    Thread::joinImpl(void)
+    Thread::joinImpl(unsigned s)
     {
-#if defined(DUNE_SYS_HAS_PTHREAD)
-      int rv = pthread_join(m_handle, 0);
-      if (rv != 0)
-        throw ThreadError("failed to join thread", rv);
-#endif
+      if (!m_thread.joinable())
+        return;
+
+      if (s == 0)
+      {
+        m_thread.join();
+        return;
+      }
+
+      std::unique_lock<std::mutex> lk(join_mtx);
+      if (!join_cv.wait_for(lk, std::chrono::seconds(s),
+                            [this] { return join_done; })) /* isDead() ?? */
+      {
+        m_thread.detach();
+        throw ThreadError("thread join timeout", ETIME);
+        return;
+      }
+
+      m_thread.join();
     }
 
     void
     Thread::setPriorityImpl(Scheduler::Policy policy, unsigned a_priority)
     {
+      if (a_priority < Scheduler::minimumPriority(policy)
+          || a_priority > Scheduler::maximumPriority(policy))
+        throw ThreadError("unable to set thread priority", EINVAL);
+
+      m_policy = policy;
+      m_priority = a_priority;
+
+      if (!isRunning())
+        return;
+
 #if defined(DUNE_SYS_HAS_PTHREAD)
       int native_policy = Scheduler::native(policy);
       sched_param sparam;
       std::memset(&sparam, 0, sizeof(sparam));
       sparam.sched_priority = a_priority;
 
-      if (isRunning())
-      {
-        int rv = pthread_setschedparam(m_handle, native_policy, &sparam);
-        if (rv != 0)
-          throw ThreadError("unable to set thread priority", rv);
-      }
-      else
-      {
-        int rv = pthread_attr_setschedpolicy(&m_attr, native_policy);
-        if (rv != 0)
-          throw ThreadError("unable to set thread scheduling policy", rv);
-
-        rv = pthread_attr_setschedparam(&m_attr, &sparam);
-        if (rv != 0)
-          throw ThreadError("unable to set thread priority", rv);
-      }
+      int rv = pthread_setschedparam(m_thread.native_handle(), native_policy, &sparam);
+      if (rv != 0)
+        throw ThreadError("unable to set thread priority", rv);
 #endif
     }
 
@@ -205,22 +201,14 @@ namespace DUNE
 
       if (isRunning())
       {
-        int rv = pthread_getschedparam(m_handle, &native_policy, &sparam);
+        int rv = pthread_getschedparam(m_thread.native_handle(), &native_policy, &sparam);
         if (rv != 0)
           throw ThreadError("unable to get thread priority", rv);
 
         return sparam.sched_priority;
       }
 
-      int rv = pthread_attr_getschedpolicy(&m_attr, &native_policy);
-      if (rv != 0)
-        throw ThreadError("unable to get thread scheduling policy", rv);
-
-      rv = pthread_attr_getschedparam(&m_attr, &sparam);
-      if (rv != 0)
-        throw ThreadError("unable to set thread priority", rv);
-
-      return sparam.sched_priority;
+      return m_priority;
 #endif
 
       return 0;
