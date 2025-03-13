@@ -555,7 +555,6 @@ namespace UserInterfaces
       getInternalId(void)
       {
         m_treqid = (m_treqid + 1) * (m_treqid != UINT16_MAX);
-
         return m_treqid;
       }
 
