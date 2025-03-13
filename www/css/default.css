@@ -32,11 +32,11 @@ body
   color: var(--c-color-text);
 }
 
-button {
+button
+{
   background-color: #f5f3f8;
   color: black;
   border: none;
-  border-radius: 4px;
   padding: 6px 16px;
   cursor: pointer;
   box-shadow: 0 2px 4px var(--c-color-text);
@@ -45,21 +45,24 @@ button {
   border-radius: 8px;
 }
 
-button:hover {
+button:hover
+{
   background-color: #b0a5ca;
   color: #000000;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
-button.active {
+button.active
+{
   background-color: rgb(158, 191, 201);
   color: black;
   transition: transform 0.3s ease-in-out, background-color 0.3s ease;
-  transform: scale(1.1);
+  transform: scale(1.08);
   cursor: grab;
 }
 
-button:disabled {
+button:disabled
+{
   background-color: rgb(223, 217, 217);
   color: rgb(167, 161, 161);
   transition: transform 0.3s ease-in-out, background-color 0.3s ease;
@@ -67,21 +70,25 @@ button:disabled {
   cursor: not-allowed;
 }
 
-button.loading {
+button.loading
+{
   background-color: rgb(223, 217, 217);
   color: rgb(167, 161, 161);
   cursor: wait;
 }
 
-input[type="text"], input[type="number"], textarea {
+input[type="text"], input[type="number"], textarea
+{
   border: 1px solid #ccc;
   border-radius: 4px;
   padding: 4px;
-  width: 6%;
+  width: auto;
+  min-width: 100px;
   transition: border-color 0.3s;
 }
 
-input:focus {
+input:focus
+{
   border-color: #6200ea;
   outline: none;
 }
@@ -114,98 +121,9 @@ input
   padding: 1em;
 }
 
-.infoTable {
+.infoTable
+{
   border-radius: 8px !important;
-}
-
-#Logs
-{
-  text-align: left;
-}
-
-#Logs ul li ul
-{
-  list-style-type: none;
-  margin-left: 5px;
-  padding-left: 5px;
-}
-
-#Logs ul li ul li
-{
-  list-style-type: none;
-  margin-left: 5px;
-  padding-left: 5px;
-}
-
-div#Sensors {
-  max-height: 85vh;
-  overflow-y: scroll;
-}
-
-#Sensors table
-{
-  margin-bottom: 0.5em;
-  border-spacing: 0 4px;
-}
-
-#Sensors table:last-child
-{
-  margin-bottom: 0.5em;
-}
-
-#Sensors th
-{
-  /*Sensors title*/
-  background-color: var(--c-background-h-l);
-  color: var(--c-color-text-h-l);
-  border-radius: 12px;
-  box-shadow: 0 1px 2px var(--c-color-text);
-  padding: 6px;
-}
-
-#Sensors td
-{
-  padding: 2px;
-  padding-left: 5px;
-  padding-right: 5px;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px var(--c-color-text);
-  margin-bottom: 2px;
-  text-align: center;
-}
-
-#Sensors tr
-{
-  border: solid var(--c-color-text) thin;
-  border-collapse: collapse;
-  border: none;
-}
-
-#Sensors td:first-child
-{
-  /**/
-  background-color: var(--c-color-entity-sensor-background);
-  font-weight: bold;
-  width: 150px;
-  text-align: center;
-  color: var(--c-color-entity-sensor-color-label);
-}
-
-#Sensors td:nth-child(3)
-{
-  text-align: center !important;
-}
-
-#Sensors table
-{
-  margin-left: auto;
-  margin-right: auto;
-  width: 90%;
-}
-
-#Sensors td:last-child
-{
-  text-align: center;
 }
 
 #ConnectionIcon
@@ -217,14 +135,26 @@ div.Hidden
 {
   visibility: hidden;
   position: absolute;
-  left:0px;
-  top:0px;
-  width:0px;
-  height:0px;
-  overflow:hidden;
+  left: 0px;
+  top: 0px;
+  width: 0px;
+  height: 0px;
+  overflow: hidden;
 }
 
-td {
+div.Visible
+{
+  visibility: visible;
+  position: relative;
+  left: auto;
+  top: auto;
+  width: auto;
+  height: auto;
+  overflow: visible;
+}
+
+td
+{
   text-align: center;
   vertical-align: middle;
   font-size: 12px;
@@ -289,16 +219,13 @@ p.DEBUG
     color: var(--c-color-debug);
 }
 
-#logbook-filters {
-    display: none;
-}
-
 #MainOverviewLeft
 {
   margin-left: 70px;
   margin-right: auto;
-  width: 80%;
+  width: auto;
   text-align: center;
+  flex: 1;
   /*padding: 10px 18px;*/
   /*border-radius: 18px;*/
   /*box-shadow: 0 1px 2px var(--c-color-text);*/
@@ -308,8 +235,9 @@ p.DEBUG
 {
   margin-left: auto;
   margin-right: 80px;
-  width: 20%;
+  width: auto;
   text-align: center;
+  flex: 1;
   /*padding: 10px 18px;*/
   /*border-radius: 18px;*/
   /*box-shadow: 0 1px 2px var(--c-color-text);*/
@@ -387,6 +315,8 @@ p.DEBUG
   background-image: linear-gradient(to top,#2b2b2b, #555555);
   padding: 0 0 10px 0;
   z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
 }
 
 #Menu li ul li
@@ -435,9 +365,10 @@ p.DEBUG
 #Menu li:hover ul, #Menu li.Selected ul, #Menu li.FirstSelected ul
 {
   display: block;
+  opacity: 1;
 }
 
-#MainTaskTableDiv
+#MainEntityTableDiv
 {
   max-height: 60vh;
   overflow-y: scroll;
@@ -446,37 +377,149 @@ p.DEBUG
   margin-right: auto;
 }
 
-#MainTaskTable
+#MainEntityTable
 {
   overflow-y: auto;
 }
 
-#MainTaskTable tr
+#MainEntityTable tr
 {
-  /*border-bottom: solid var(--c-color-line-split-tasks) thin;*/
+  /*border-bottom: solid var(--c-color-line-split-entities) thin;*/
   padding: 10px 18px;
   border-radius: 18px;
   box-shadow: 0 1px 2px var(--c-color-text);
 }
 
-#MainTaskTable tr:last-child
+#MainEntityTable tr:last-child
 {
   border-bottom: none;
 }
 
-#MainTaskTable th, #MainTaskTable td
+#MainEntityTable th, #MainEntityTable td
 {
   text-align: left;
   padding: 5px;
 }
 
-#MainTaskTable th
+#MainEntityTable th
 {
   width: 150px;
   padding: 0px 18px;
 }
 
-#Power div{
+#systemName
+{
+  font-size: 1.5em;
+  font-weight: bold;
+  padding: 10px 18px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px var(--c-color-text);
+  margin-bottom: 1px;
+  /*color: var(--c-color-text-system-name);*/
+  color: #000000;
+  display: inline-block;
+  margin-bottom: 12px;
+  background-color: var(--c-background);
+}
+
+input[type="checkbox"]
+{
+  display: none;
+}
+
+label
+{
+  position: relative;
+  padding-left: 40px;
+  padding-top: 0px;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+}
+
+.custom-checkbox
+{
+  position: absolute;
+  left: 18px;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--c-color-text);
+  background-color: #fff;
+  border-radius: 4px;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+input[type="checkbox"]:checked + .custom-checkbox
+{
+  background-color: var(--c-color-checkbox-hover);
+  border-color: var(--c-color-checkbox-hover);
+}
+
+input[type="checkbox"]:checked + .custom-checkbox::after
+{
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 4px;
+  height: 7px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+label:hover .custom-checkbox
+{
+  border-color: var(--c-color-info);
+}
+
+.material-label
+{
+  font-size: 16px;
+  margin-right: 0.75rem;
+  user-select: none;
+  color: var(--c-color-text);
+}
+
+.material-select
+{
+  flex: 0.3;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.material-select:focus
+{
+  border-color: #6200ea;
+}
+
+.material-select:valid + .material-label,
+.material-select:not(:placeholder-shown) + .material-label
+{
+  top: -0.75rem;
+  left: 0.75rem;
+  font-size: 0.25rem;
+  color: #6200ea;
+}
+
+.cpu-icon
+{
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin-right: 4px;
+  background-image: var(--cpu-icon-url);
+}
+
+#Power div:not(.bottom-buttons)
+{
   max-height: 85vh;
   overflow-y: scroll;
 }
@@ -490,7 +533,8 @@ p.DEBUG
   padding: 6px;
 }
 
-#Power td form {
+#Power td form
+{
   text-align: center;
 }
 
@@ -527,67 +571,87 @@ p.DEBUG
   margin: 5px;
 }
 
-#systemName {
-  font-size: 1.5em;
+div#Sensors
+{
+  max-height: 85vh;
+  overflow-y: scroll;
+}
+
+#Sensors table
+{
+  margin-bottom: 0.5em;
+  border-spacing: 0 4px;
+}
+
+#Sensors table:last-child
+{
+  margin-bottom: 0.5em;
+}
+
+#Sensors th
+{
+  /*Sensors title*/
+  background-color: var(--c-background-h-l);
+  color: var(--c-color-text-h-l);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  padding: 6px;
+}
+
+#Sensors td
+{
+  padding: 2px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+#Sensors tr
+{
+  border: solid var(--c-color-text) thin;
+  border-collapse: collapse;
+  border: none;
+}
+
+#Sensors td:first-child
+{
+  /**/
+  background-color: var(--c-color-entity-sensor-background, #ddd);
   font-weight: bold;
-  padding: 10px 18px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px var(--c-color-text);
-  margin-bottom: 1px;
-  /*color: var(--c-color-text-system-name);*/
-  color: #000000;
-  display: inline-block;
-  margin-bottom: 12px;
-  background-color: var(--c-background);
+  width: 150px;
+  text-align: center;
+  color: var(--c-color-entity-sensor-color-label, #000);
 }
 
-input[type="checkbox"] {
-  display: none;
+#Sensors td:nth-child(3)
+{
+  text-align: center !important;
 }
 
-label {
-  position: relative;
-  padding-left: 40px;
-  padding-top: 0px;
-  cursor: pointer;
-  font-size: 14px;
-  user-select: none;
+#Sensors table
+{
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
 }
 
-.custom-checkbox {
-  position: absolute;
-  left: 18px;
-  top: 0;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--c-color-text);
-  background-color: #fff;
-  border-radius: 4px;
-  transition: background-color 0.3s, border-color 0.3s;
+#Sensors td:last-child
+{
+  text-align: center;
 }
 
-input[type="checkbox"]:checked + .custom-checkbox {
-  background-color: var(--c-color-checkbox-hover);
-  border-color: var(--c-color-checkbox-hover);
+#Logbook div:not(.logbook-filter):not(.form-group)
+{
+  max-height: 85vh;
+  font-size: 1rem;
+  overflow-y: scroll;
 }
 
-input[type="checkbox"]:checked + .custom-checkbox::after {
-  content: '';
-  position: absolute;
-  left: 3px;
-  top: 0px;
-  width: 4px;
-  height: 7px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-label:hover .custom-checkbox {
-  border-color: var(--c-color-info);
-}
-
-.form-group {
+#Logbook .form-group
+{
   display: flex;
   align-items: center;
   margin: 0.9rem 0;
@@ -596,189 +660,4 @@ label:hover .custom-checkbox {
   border-radius: 12px;
   box-shadow: 0 1px 2px var(--c-color-text);
   padding: 6px;
-}
-
-.material-label {
-  font-size: 16px;
-  margin-right: 0.75rem;
-  user-select: none;
-  color: var(--c-color-text);
-}
-
-.material-select {
-  flex: 0.3;
-  padding: 0.5rem 0.75rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  outline: none;
-  transition: border-color 0.2s ease;
-}
-
-.material-select:focus {
-  border-color: #6200ea;
-}
-
-.material-select:valid + .material-label,
-.material-select:not(:placeholder-shown) + .material-label {
-  top: -0.75rem;
-  left: 0.75rem;
-  font-size: 0.25rem;
-  color: #6200ea;
-}
-
-.announces-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 16px;
-  background-color: var(--c-background-h-l);
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-  max-height: 80vh;
-}
-
-.announce-section {
-  background-color: var(--c-background);
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.announce-title-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  padding: 10px;
-  border-bottom: 1px solid var(--c-color-border);
-  transition: background-color 0.3s ease;
-}
-
-.announce-title-container:hover {
-  background-color: var(--c-color-hover);
-}
-
-.announce-title {
-  font-size: 16px;
-  font-weight: 500;
-  margin: 0;
-}
-
-.announce-arrow {
-  font-size: 18px;
-  color: var(--c-color-text-secondary);
-  transition: transform 0.3s ease;
-}
-
-.announce-section.open .announce-arrow {
-  transform: rotate(180deg);
-}
-
-.announce-list {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* Define 2 columns */
-  gap: 12px; /* Add spacing between items */
-  padding: 0;
-  margin: 16px 0 0; /* Add spacing at the top of the list */
-}
-
-.announce-item {
-  display: flex;
-  flex-direction: column; /* Stack protocol, IP, and port */
-  padding: 8px;
-  /*background-color: var(--c-color-disabled);*/
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: justify; /* Justify the text */
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.announce-item:hover {
-  transform: translateY(-4px); /* Add a hover effect to "lift" the card */
-  box-shadow: 0 4px 8px rgba(125, 125, 245, 0.562);
-}
-
-/* Style for collapsed sections */
-.announce-section .announce-list {
-  display: none; /* Hide the list when the section is collapsed */
-}
-
-.announce-section.open .announce-list {
-  display: block; /* Show the list when the section is open */
-}
-
-/* Tooltip (popup) style */
-.announce-tooltip {
-  display: none;  /* Hidden by default */
-  position: absolute;
-  background-color: var(--c-color-text);
-  color: var(--c-background);
-  padding: 5px;
-  border-radius: 4px;
-  font-size: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  z-index: 100;
-}
-
-/* Position the tooltip relative to the section title */
-.announce-title:hover + .announce-tooltip {
-  display: block; /* Show tooltip on hover */
-}
-
-/* Apply color to links in announce items */
-.announce-item a {
-  color: #4fa3f7;  /* Set link color */
-  text-decoration: underline;   /* Underline links */
-}
-
-/* Hover effect for links */
-.announce-item a:hover {
-  color: #ffcc00;  /* Set hover color */
-  background-color: #e3f2fd;  /* Background color on hover */
-}
-
-.announce-item span {
-  display: block; /* Ensure each part is on its own line */
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.announce-item .protocol {
-  color: var(--c-color-info);
-  font-weight: bold;
-}
-
-.announce-item .ip {
-  font-size: 13px;
-  color: var(--c-color-secondary-text);
-}
-
-.announce-item .port {
-  font-size: 12px;
-  color: var(--c-color-disabled);
-}
-
-/* Add a hover effect to clickable items */
-.announce-item:hover span.protocol {
-  color: #2196f3;
-  text-decoration: underline;
-}
-
-/* Responsive design for smaller screens */
-@media (max-width: 600px) {
-  .announce-list {
-    grid-template-columns: 1fr; /* Single column on small screens */
-  }
-}
-
-.cpu-icon {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  margin-right: 4px;
-  background-image: var(--cpu-icon-url);
 }
