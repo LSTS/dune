@@ -454,7 +454,7 @@ namespace UserInterfaces
 
         DUNE::Utils::ByteBuffer
         getInfoJSON(std::string data)
-        {    
+        {
           std::ostringstream os;
           os << m_meta
              << "  \"sections\": \"" << Utils::String::join(m_sections.begin(), m_sections.end(), ",") << "\",\n"
@@ -549,9 +549,8 @@ namespace UserInterfaces
         unsigned
         createActionId(void)
         {
-          if (m_request_id == UINT_MAX)
-            m_request_id = 0;
-          return m_request_id++;
+          m_request_id = (m_request_id + 1) * (m_request_id != UINT32_MAX);
+          return m_request_id;
         }
 
         void
