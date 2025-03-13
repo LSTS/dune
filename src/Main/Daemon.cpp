@@ -213,7 +213,9 @@ runDaemon(DUNE::Daemon& daemon)
 int
 main(int argc, char** argv)
 {
+  double start = Clock::getSinceEpoch();
   Tasks::Context context;
+  context.start_time = start;
   I18N::setLanguage(context.dir_i18n);
   Scheduler::set(Scheduler::POLICY_RR);
 
