@@ -153,7 +153,7 @@ namespace UserInterfaces
 
         std::string
         sensorsJSON(void)
-        {         
+        {
           std::ostringstream os;
           os << "{\n\"data\":\n[\n";
           
