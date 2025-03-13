@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -27,13 +27,11 @@
 // Author: Pedro Gonçalves                                                  *
 //***************************************************************************
 
-function ChartWidget()
-{
+function ChartWidget() {
   this.chart = null;
 }
 
-ChartWidget.prototype.create = function (container)
-{
+ChartWidget.prototype.create = function (container) {
   var canvas = document.createElement('canvas');
   canvas.width = 200;
   canvas.height = 100;
@@ -47,33 +45,15 @@ ChartWidget.prototype.create = function (container)
   };
 };
 
-ChartWidget.prototype.update = function (values)
-{
-  if (values && values.length > 0)
-  {
+ChartWidget.prototype.update = function (values) {
+  if (values && values.length > 0) {
     this.chart.values = values;
     this.chart.canvas.width = values.length * (this.chart.canvas.width/values.length); // Increase the width according to the number of CPUs
     this.draw();
   }
 };
 
-ChartWidget.prototype.getBarColor = function (value)
-{
-  // Modern Material Design color palette based on load percentage
-  if (value <= 20)
-    return '#66bb6a';  // Light green
-  else if (value <= 40)
-    return '#43a047';  // Medium green
-  else if (value <= 60)
-    return '#ffa726';  // Amber
-  else if (value <= 80)
-    return '#fb8c00';  // Orange
-  else
-    return '#e53935';  // Red
-};
-
-ChartWidget.prototype.draw = function ()
-{
+ChartWidget.prototype.draw = function () {
   var ctx = this.chart.ctx;
   var canvas = this.chart.canvas;
   var values = this.chart.values;
@@ -89,28 +69,14 @@ ChartWidget.prototype.draw = function ()
   for (var i = 0; i < values.length; i++)
   {
     var value = values[i];
-    if(value == null)
-      value = 0;
-    // Set color for the bar based on load
-    var barColor = this.getBarColor(value);
-    // Create a gradient effect for the bar
     var gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, barColor);
-    gradient.addColorStop(1, '#ffffff');  // Lighter gradient towards the bottom
-    // Apply gradient as the fill style
+    gradient.addColorStop(0, 'rgba(54, 162, 235, 0.2)');
+    gradient.addColorStop(1, 'rgba(54, 162, 235, 1)');
     ctx.fillStyle = gradient;
-    // Add a shadow for a modern material effect
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-    // Draw the bar
     ctx.fillRect(i * barWidth, canvas.height - value * barHeightRatio, barWidth, value * barHeightRatio);
-    // Remove shadow for clean outlines
-    ctx.shadowColor = 'transparent';
-    // Draw the bar outline
-    ctx.strokeStyle = '#cccccc';  // Light grey for outlines
+    ctx.strokeStyle = 'rgba(54, 162, 235, 1)';
     ctx.strokeRect(i * barWidth, canvas.height - value * barHeightRatio, barWidth, value * barHeightRatio);
+
     // Draw the value in the center of the bar
     ctx.fillStyle = 'black';
     ctx.font = '10px Arial';
@@ -121,3 +87,4 @@ ChartWidget.prototype.draw = function ()
     ctx.fillText(text, textX, textY);
   }
 };
+
