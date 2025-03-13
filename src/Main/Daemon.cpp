@@ -167,6 +167,7 @@ runDaemon(DUNE::Daemon& daemon)
 
   try
   {
+    daemon.loadConfig();
     daemon.start();
 
     while (!s_stop)
