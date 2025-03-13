@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6347d9defff7438e2a2031366a35e122                            *
+// IMC XML MD5: 1d75717ef0e92e13f5874f4f40a1ec69                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -672,12 +672,22 @@
 #define DUNE_IMC_DMSDETECTION 908
 //! HomePosition identification number.
 #define DUNE_IMC_HOMEPOSITION 909
+//! AbsoluteWind identification number.
+#define DUNE_IMC_ABSOLUTEWIND 911
+//! AisInfo identification number.
+#define DUNE_IMC_AISINFO 912
+//! ENCAwareness identification number.
+#define DUNE_IMC_ENCAWARENESS 913
+//! Displacement identification number.
+#define DUNE_IMC_DISPLACEMENT 915
 //! CurrentProfile identification number.
 #define DUNE_IMC_CURRENTPROFILE 1014
 //! CurrentProfileCell identification number.
 #define DUNE_IMC_CURRENTPROFILECELL 1015
 //! ADCPBeam identification number.
 #define DUNE_IMC_ADCPBEAM 1016
+//! Frequency identification number.
+#define DUNE_IMC_FREQUENCY 1017
 //! GpioState identification number.
 #define DUNE_IMC_GPIOSTATE 2000
 //! GpioStateGet identification number.
@@ -694,5 +704,7 @@
 #define DUNE_IMC_COMMRESTRICTION 2010
 //! VersionInfo identification number.
 #define DUNE_IMC_VERSIONINFO 2021
+//! TotalHeading identification number.
+#define DUNE_IMC_TOTALHEADING 2022
 
 #endif

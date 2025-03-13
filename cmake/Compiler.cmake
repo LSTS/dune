@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -137,6 +137,13 @@ macro(dune_probe_cxx)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
       endif(PROFILE)
 
+      # remove warning psab #
+      set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -Wno-psabi")
+      # remove warning array-bounds #
+      set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -Wno-array-bounds")
+      # remove warning stringop-overflow #
+      set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -Wno-stringop-overflow")
+
       set(DUNE_CXX_FLAGS_STRICT "-Wall -Wshadow -pedantic")
       set(DUNE_C_FLAGS_STRICT "-Wall -Wshadow -pedantic")
       set(DUNE_CXX_FLAGS_LOOSE  "")
@@ -150,25 +157,33 @@ macro(dune_probe_cxx)
     if(DUNE_CXX_MICROSOFT)
       set(DUNE_CXX_NAME "Microsoft")
 
-      if(MSVC60)
+      # https://learn.microsoft.com/en-us/cpp/overview/compiler-versions
+      # https://cmake.org/cmake/help/latest/variable/MSVC_VERSION.html
+      if(MSVC_VERSION EQUAL 1200)
         message(FATAL_ERROR "Visual Studio 6.0 is not supported")
-      elseif(MSVC14)
-        set(msv_version "2015")
-      elseif(MSVC12)
-        set(msv_version "2013")
-      elseif(MSVC11)
-        set(msv_version "2012")
-      elseif(MSVC10)
-        set(msv_version "2010")
-      elseif(MSVC90)
-        set(msv_version "2008")
-      elseif(MSVC80)
-        set(msv_version "2005")
-      elseif(MSVC71)
-        set(msv_version "2003")
-      elseif(MSVC70)
+      elseif(MSVC_VERSION EQUAL 1300)
         set(msv_version "2002")
-      endif(MSVC60)
+      elseif(MSVC_VERSION EQUAL 1310)
+        set(msv_version "2003")
+      elseif(MSVC_VERSION EQUAL 1400)
+        set(msv_version "2005")
+      elseif(MSVC_VERSION EQUAL 1500)
+        set(msv_version "2008")
+      elseif(MSVC_VERSION EQUAL 1600)
+        set(msv_version "2010")
+      elseif(MSVC_VERSION EQUAL 1700)
+        set(msv_version "2012")
+      elseif(MSVC_VERSION EQUAL 1800)
+        set(msv_version "2013")
+      elseif(MSVC_VERSION EQUAL 1900)
+        set(msv_version "2015")
+      elseif(MSVC_VERSION GREATER_EQUAL 1910 AND MSVC_VERSION LESS 1920)
+        set(msv_version "2017")
+      elseif(MSVC_VERSION GREATER_EQUAL 1920 AND MSVC_VERSION LESS 1930)
+        set(msv_version "2019")
+      elseif(MSVC_VERSION GREATER_EQUAL 1930)
+        set(msv_version "2022")
+      endif()
 
       set(DUNE_CXX_CANONICAL "vs${msv_version}")
       set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} /wd4251 /wd4244 /wd4267 /wd4800 /wd4805 /wd4305 /wd4244 /wd4996")

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -169,10 +169,9 @@ namespace Simulators
       void
       consume(const IMC::ServoPosition* msg)
       {
-        UUV* v = static_cast<UUV*>(m_vehicle);
-        v->updateFin(msg->id, msg->value);
+        m_vehicle->updateFin(msg->id, msg->value);
       }
-
+      
       void
       consume(const IMC::SetThrusterActuation* msg)
       {

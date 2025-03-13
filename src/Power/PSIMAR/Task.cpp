@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -98,10 +98,19 @@ namespace Power
           m_psu_ctl = new UCTK::Interface(m_psu_escc);
           UCTK::FirmwareInfo info = m_psu_ctl->getFirmwareInfo();
           if (info.isDevelopment())
+          {
             war(DTR("device is using unstable firmware"));
+          }
           else
+          {
+            std::string fw_version = String::str("%u.%u.%u", info.major, info.minor, info.patch);
+            IMC::VersionInfo vi;
+            vi.version = fw_version;
+            vi.op = IMC::VersionInfo::OP_REPLY;
+            dispatch(vi);
             inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
+          }
 
           if ((info.major > 1) || (info.minor > 0))
             m_get_state = true;

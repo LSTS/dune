@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -257,6 +257,9 @@ namespace Transports
           case (ID_EXTDEVUPDATE):
             handleUpdates(static_cast<ExtendedDeviceUpdate *>(m)->positions);
             break;
+          case (ID_UPDATE_OP):
+            inf("received update operation via Iridium (ignoring).");
+            break;
           default:
             DUNE::IMC::ImcIridiumMessage * irMsg =
             static_cast<DUNE::IMC::ImcIridiumMessage *>(m);
@@ -267,6 +270,7 @@ namespace Transports
               inf("received IMC message of type %s via Iridium from %d.", irMsg->msg->getName(), irMsg->source);
               IMC::Message* m2 = irMsg->msg;
               m2->setSource(irMsg->source);
+              m2->setDestination(irMsg->destination);
               dispatch(m2);
             }
             else

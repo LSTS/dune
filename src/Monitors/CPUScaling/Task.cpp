@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2022 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -195,26 +195,9 @@ namespace Monitors
             }
           }
         }
+
         // Close the pipe
         pclose(pipe);
-        if(output.empty())
-        {
-          //get number of cpus
-          //read one by one the cpu running frequency from rpi
-          int num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-          for(int i = 0; i < num_cpus; i++)
-          {
-            std::ifstream file("/sys/devices/system/cpu/cpu" + std::to_string(i) + "/cpufreq/scaling_cur_freq");
-            if (file.is_open())
-            {
-              //frequency in MHz
-              int freq;
-              file >> freq;
-              file.close();
-              output += "| " + std::to_string(freq/1000) + " MHz ";
-            }
-          }
-        }
         return output;
       }
 

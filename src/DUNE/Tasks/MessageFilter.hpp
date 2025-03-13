@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -45,7 +45,7 @@ namespace DUNE
     class MessageFilter
     {
     public:
-      MessageFilter(void);
+      MessageFilter(bool use_hz = true);
 
       ~MessageFilter(void);
 
@@ -59,6 +59,8 @@ namespace DUNE
       filter(const IMC::Message* msg);
 
     private:
+      bool m_use_hz;
+
       // Rate limiters.
       typedef std::map<uint32_t, double> RateMap;
       RateMap m_rates;

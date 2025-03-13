@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2021 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -61,14 +61,14 @@ namespace DUNE
       {
         if(openFile() && getFirmwareSize() != 0)
         {
-          std::printf(" > Firmware File Size: %ld bytes (%.2f KB)\n", m_firmware_len, (m_firmware_len/1024.0));
+          std::printf(" > Firmware File Size: %ld bytes (%.2f KB)\n", (unsigned long)m_firmware_len, (m_firmware_len/1024.0));
           m_firmware_file_open = true;
           m_size_send = 0;
           m_buf_bin = (uint8_t *)malloc(m_firmware_len + 1);
           uint32_t number_bytes_read = std::fread(m_buf_bin, sizeof(uint8_t), m_firmware_len, file);
           if(number_bytes_read != m_firmware_len)
           {
-            std::printf(" > Wrong size read %ld - %d\n", m_firmware_len, number_bytes_read);
+            std::printf(" > Wrong size read %ld - %d\n", (unsigned long)m_firmware_len, number_bytes_read);
             m_firmware_file_open = false;
           }
           m_state = FIRMWARE_READ_BLOCK;
@@ -132,7 +132,7 @@ namespace DUNE
             break;
 
           case FIRMWARE_SEND_BLOCK:
-            std::printf("\r > Frame Size: %d | (S:%d of T:%ld [%2d%%])",m_block_len, m_size_send, m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
+            std::printf("\r > Frame Size: %d | (S:%d of T:%ld [%2d%%])",m_block_len, m_size_send, (unsigned long)m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
             sendFrameBlock(m_block_frame, m_block_len);
             m_state = FIRMWARE_WAIT_ACK;
             break;
@@ -150,7 +150,7 @@ namespace DUNE
               else if(std::strstr((char*)m_buf_reply, c_nack_frame.c_str()) != NULL)
               {
                 std::printf("\n > Received NACK, sending the same block frame\n");
-                std::printf("\r > Frame Size: %d | (S:%d of T:%ld [%2d%%])",m_block_len, m_size_send, m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
+                std::printf("\r > Frame Size: %d | (S:%d of T:%ld [%2d%%])",m_block_len, m_size_send, (unsigned long)m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
                 sendFrameBlock(m_block_frame, m_block_len);
                 m_state = FIRMWARE_WAIT_ACK;
               }
@@ -158,14 +158,14 @@ namespace DUNE
             else
             {
               std::printf("\n > Timeout, sending the same block frame\n");
-              std::printf("\r > Frame Size: %d | (S:%d of T:%ld [%2d%%])",m_block_len, m_size_send, m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
+              std::printf("\r > Frame Size: %d | (S:%d of T:%ld [%2d%%])",m_block_len, m_size_send, (unsigned long)m_firmware_len, (int)((m_size_send*100)/m_firmware_len));
               sendFrameBlock(m_block_frame, m_block_len);
               m_state = FIRMWARE_WAIT_ACK;
             }
             break;
 
           case FIRMWARE_IDLE:
-            std::printf(" > Finish Update: %ld - %d\n\n", m_firmware_len, m_size_send);
+            std::printf(" > Finish Update: %ld - %d\n\n", (unsigned long)m_firmware_len, m_size_send);
             return true;
             break;
           

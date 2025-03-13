@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -105,11 +105,13 @@ namespace DUNE
         Interface itf;
         itf.m_name = next->ifa_name;
         itf.m_addr = next->ifa_addr;
-        itf.m_bcast = next->ifa_broadaddr;
+        if (next->ifa_flags & IFF_BROADCAST)
+        {
+          itf.m_bcast = next->ifa_broadaddr;
+          itf.m_features |= FeatureBroadcast;
+        }
         if (next->ifa_flags & IFF_MULTICAST)
           itf.m_features |= FeatureMulticast;
-        if (next->ifa_flags & IFF_BROADCAST)
-          itf.m_features |= FeatureBroadcast;
         itfs.push_back(itf);
       }
       while ((next = next->ifa_next));

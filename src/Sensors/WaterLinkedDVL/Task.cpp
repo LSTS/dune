@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // Copyright 2016-2023 OceanScan - Marine Systems & Technology, Lda.        *

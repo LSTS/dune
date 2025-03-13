@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -33,7 +33,6 @@
 
 // VSIM headers.
 #include <VSIM/Vehicle.hpp>
-#include <VSIM/Fin.hpp>
 #include <VSIM/Volume.hpp>
 
 namespace Simulators
@@ -57,17 +56,6 @@ namespace Simulators
 
       //! Destructor.
       ~UUV(void);
-
-      //! Add a fin to vehicle's configuration.
-      //! @param[in] fin vehicle new fin.
-      void
-      addFin(Fin* fin);
-
-      //! Updates fin's actuation.
-      //! @param[in] id fin id.
-      //! @param[in] act fin actuation value.
-      void
-      updateFin(unsigned int id, double act);
 
       //! Set the buoyancy position.
       //! @param[in] x buoyancy position in the x-axis.

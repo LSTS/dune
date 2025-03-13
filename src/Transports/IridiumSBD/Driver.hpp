@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -58,7 +58,7 @@ namespace Transports
       //! Constructor.
       //! @param[in] task parent task.
       //! @param[in] uart serial port connected to the ISU.
-      Driver(Tasks::Task* task, SerialPort* uart, bool use_9523N, double wait_boot):
+      Driver(Tasks::Task* task, SerialPort* uart, bool use_9523N, double wait_boot, double rssi_time_check):
         HayesModem(task, uart),
         m_session_result_read(true),
         m_sbd_ring(false),
@@ -67,6 +67,7 @@ namespace Transports
         m_use_9523 = use_9523N;
         m_wait_boot = wait_boot;
         setLineTrim(true);
+        m_rssi_wdog.setTop(rssi_time_check);
       }
 
       //! Destructor.
@@ -293,6 +294,8 @@ namespace Transports
       uint16_t m_length_msg_9523;
       //! Delay of boot up of lidb board.
       double m_wait_boot;
+      //! Query RSSI watchdog.
+      Counter<double> m_rssi_wdog;
 
       //! Perform ISU initialization, this function must be called
       //! before any other.
@@ -356,6 +359,8 @@ namespace Transports
         {
           if (ind == 0)
             setRSSI(value * 20);
+
+          m_rssi_wdog.reset();
         }
         else
         {
@@ -565,6 +570,27 @@ namespace Transports
           readRaw(timer, bfr + 1, 1);
           return (bfr[0] << 8) | bfr[1];
         }
+      }
+    protected:
+      void
+      queryRSSI(void) override
+      {
+        if (!m_rssi_wdog.overflow())
+          return;
+
+        sendAT("+CSQ");
+
+        // Needs a timeout bigger than the default 5 seconds.
+        Counter<double> timer(7.0);
+        std::string val = readLine(timer);
+        expectOK();
+
+        unsigned rssi = 0;
+        if (std::sscanf(val.c_str(), "+CSQ:%u", &rssi) != 1)
+          throw DUNE::Hardware::InvalidFormat(val);
+
+        m_rssi_wdog.reset();
+        setRSSI(rssi * 20);
       }
     };
   }

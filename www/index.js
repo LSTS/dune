@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -24,135 +24,72 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Bernardo Gabriel                                                 *
+// Author: Ricardo Martins (legacy index.js)                                *
 //***************************************************************************
 
-var g_timer = null;
 var g_icons = new Icons();
 var g_uid = null;
-var g_log_uid = null;
-var g_data = null;
-var g_dune_logs = null;
-var g_dune_logbook = null;
-var g_logbook_timer = null;
+var g_time_current = null;
+var g_entities = null;
 
 window.onload = function()
 {
-    setConnected(false);
-    g_sections.create();
-    requestData();
-    requestLogs();
-    requestLogBookEntries();
-};
-
-function requestLogBookEntries() {
-    var options = Array();
-    options.timeout = 10000;
-    options.timeoutHandler = timeoutHandler;
-    options.errorHandler = errorHandler;
-    HTTP.get('dune/state/logbook.js', handleLogBookEntries, options);
-}
-
-function handleLogBookEntries(text)
-{
-    if (g_logbook_timer == null)
-	g_logbook_timer = setInterval(requestLogBookEntries, 4000);
-
-    eval(text);
-    g_dune_logbook = logbook;
-    g_sections.update();
-};
-
-function requestLogs()
-{
-    var options = Array();
-    options.timeout = 10000;
-    options.timeoutHandler = timeoutHandler;
-    options.errorHandler = errorHandler;
-    HTTP.get('dune/logs/list.js', handleLogs, options);
-};
-
-function handleLogs(text)
-{
-    eval(text);
-    g_dune_logs = dune_logs;
-};
-
-function setConnected(value)
-{
-    var icon = document.getElementById('ConnectionIcon');
-
-    if (value)
-    {
-        icon.src = g_icons.path('normal');
-        icon.title = 'Connected';
-    }
-    else
-    {
-        icon.src = g_icons.path('error');
-        icon.title = 'Disconnected';
-    }
-}
-
-function timeoutHandler()
-{
-    setConnected(false);
-}
-
-function errorHandler(status, status_text)
-{
-    timeoutHandler();
-}
-
-function requestData()
-{
-    var options = Array();
-    options.timeout = 10000;
-    options.timeoutHandler = timeoutHandler;
-    options.errorHandler = errorHandler;
-    HTTP.get('dune/state/messages.js', handleData, options);
-};
-
-function handleData(text)
-{
-    setConnected(true);
-
-    if (g_timer == null)
-        g_timer = setInterval(requestData, 4000);
-
-    eval(text);
-
-    // Check UID.
-    if (g_uid == null)
-    {
-        g_uid = data.dune_uid;
-    }
-
-    if (g_uid != data.dune_uid)
-    {
-        g_sections.clear();
-        g_sections.create();
-        g_uid = data.dune_uid;
-    }
-
-    // Process entities.
-    for (var i in data.dune_messages)
-    {
-        var msg = data.dune_messages[i];
-        //console.log(msg);
-        if (msg.abbrev != 'EntityState' && msg.abbrev != 'CpuUsage')
-            continue;
-
-        data.dune_entities[msg.src_ent].state = msg.state;
-        data.dune_entities[msg.src_ent].description = msg.description;
-        data.dune_entities[msg.src_ent].value = msg.value;
-    }
-
-    g_data = data;
-    g_sections.update();
+  setConnected(false);
+  g_sections.create();
+  g_sections.updateUsedSections(DEFAULT_SECTION);
+  g_sections.init();
+  g_sections.requestData();
 };
 
 function show(section)
 {
-    g_sections.show(section);
+  g_sections.show(section)
 };
+
+function resolveEntity(input)
+{
+  if (!g_entities)
+    return null;
+
+  const entries = Object.entries(g_entities);
+  if (typeof input === "number")
+  {
+    for (const [id, entity] of entries)
+    {
+      if (parseInt(id, 10) === input)
+        return entity.label;
+    }
+  }
+  else if (typeof input === "string")
+  {
+    for (const [id, entity] of entries)
+    {
+      if (entity.label === input)
+        return parseInt(id, 10);
+    }
+  }
+
+  return null;
+};
+
+function setConnected(value)
+{
+  var icon = document.getElementById('ConnectionIcon');
+
+  if (value)
+  {
+    icon.src = g_icons.path('normal');
+    icon.title = 'Connected';
+  }
+  else
+  {
+    icon.src = g_icons.path('error');
+    icon.title = 'Disconnected';
+  }
+};
+
+function getMenuItem(id)
+{
+  return document.getElementById(id);
+}

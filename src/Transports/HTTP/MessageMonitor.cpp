@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -53,6 +53,12 @@ namespace Transports
          << "  'dune_time_start': '" << std::setprecision(12) << Clock::getSinceEpoch() << "',\n"
          << "  'dune_system': '" << system << "',\n";
       m_meta = os.str();
+    }
+
+    void
+    MessageMonitor::setLogEntry(unsigned int number_lines)
+    {
+      m_log_entry = number_lines;
     }
 
     MessageMonitor::~MessageMonitor(void)

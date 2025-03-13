@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -120,7 +120,7 @@ namespace DUNE
       virtual void
       onResourceInitialization(void);
 
-      //! On resource aquisition
+      //! On resource acquisition
       //! This can be overriden but in that case this parent
       //! class implementation MUST be called.
       virtual void
@@ -180,6 +180,16 @@ namespace DUNE
         double vertical_speed;
         //! course error in relation to track bearing.
         double course_error;
+        //! Start lat.
+        double lat_st;
+        //! Start lon.
+        double lon_st;
+        //! End lat.
+        double lat_en;
+        //! End lon.
+        double lon_en;
+        //! Plan Waypoints.
+        Math::Matrix waypoints;
 
         //! Track position & velocity.
         struct TrackCoord

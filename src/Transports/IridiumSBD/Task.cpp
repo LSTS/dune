@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -46,6 +46,18 @@ namespace Transports
 
     //! Power on delay.
     static const double c_pwr_on_delay = 5.0;
+    //! Monitor delay before check state (in seconds).
+    static const double c_monitor_delay = 20.0;
+
+    enum TxRxPriority
+    {
+      //! No priority.
+      None,
+      //! Prioritize Transmission.
+      Tx,
+      //! Prioritize Reception.
+      Rx
+    };
 
     //! %Task arguments.
     struct Arguments
@@ -64,6 +76,22 @@ namespace Transports
       bool use_9523;
       //! Serial port baud rate fot 9523N Module.
       unsigned uart_baud_9523;
+      //! Name of the section with modem addresses.
+      std::string addr_section;
+      //! Transmission priority window period.
+      double tx_window;
+      //! Reception priority window period.
+      double rx_window;
+      //! Maximum number of errors to trigger restart
+      unsigned max_error;
+      //! Time to reset errors
+      double error_reset_period;
+      //! Time to check rssi (seconds)
+      double rssi_check_period;
+      //! Monitor Iridium Modem
+      bool monitor_modem;
+      //! Monitor Iridium Task Label
+      std::string monitor_task_label;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -82,6 +110,18 @@ namespace Transports
       Arguments m_args;
       //! Active transmission request.
       TxRequest* m_tx_request;
+      //! Transmission and Reception Priority.
+      TxRxPriority m_prio;
+      //! Transmission Window.
+      Counter<double> m_tx_window;
+      //! Reception Window.
+      Counter<double> m_rx_window;
+      //! Number of errors issued by modem
+      unsigned m_error_count;
+      //! Errors are cleared at the end of this timer.
+      Counter<double> m_error_timer;
+      //! Monitor check timer.
+      Counter<double> m_monitor_check_timer;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -90,7 +130,9 @@ namespace Transports
         DUNE::Tasks::Task(name, ctx),
         m_uart(NULL),
         m_driver(NULL),
-        m_tx_request(NULL)
+        m_tx_request(NULL),
+        m_prio(TxRxPriority::None),
+        m_error_count(0)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -126,8 +168,50 @@ namespace Transports
         .defaultValue("115200")
         .description("Serial port baud rate for 9523N Module");
 
+        param("Address Section", m_args.addr_section)
+        .defaultValue("Iridium Addresses")
+        .description("Name of the configuration section with modem addresses");
+
+        param("Transmission Window", m_args.tx_window)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("100")
+        .minimumValue("5")
+        .description("Window to prioritize Transmission over Reception");
+
+        param("Reception Window", m_args.rx_window)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("100")
+        .minimumValue("5")
+        .description("Window to prioritize Reception over Transmission");
+
+        param("Maximum Errors", m_args.max_error)
+        .defaultValue("3")
+        .minimumValue("0")
+        .description("Maximum number of errors to trigger restart");
+
+        param("Error Reset Period", m_args.error_reset_period)
+        .defaultValue("300")
+        .minimumValue("60")
+        .description("Period to reset error count");
+
+        param("Time to check RSSI signal", m_args.rssi_check_period)
+        .defaultValue("45.0")
+        .minimumValue("10")
+        .description("Time to check RSSI signal");
+
+        param("Monitor Iridium Modems", m_args.monitor_modem)
+        .defaultValue("false")
+        .description("Monitor Iridium Modems");
+
+        param("Monitor Iridium Task Label", m_args.monitor_task_label)
+        .defaultValue("CPC")
+        .description("Monitor Iridium Task Label");
+
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
+        bind<IMC::EntityState>(this);
         m_queued_mt = 0;
       }
 
@@ -153,6 +237,23 @@ namespace Transports
         if (paramChanged(m_args.mbox_check_per))
           m_mbox_check_timer.setTop(m_args.mbox_check_per);
 
+        if (paramChanged(m_args.tx_window))
+        {
+          if (m_tx_window.getRemaining() > m_args.tx_window && m_prio == TxRxPriority::Tx)
+            m_tx_window.setTop(m_args.tx_window);
+        }
+
+        if (paramChanged(m_args.rx_window))
+        {
+          if (m_rx_window.getRemaining() > m_args.rx_window && m_prio == TxRxPriority::Rx)
+            m_rx_window.setTop(m_args.rx_window);
+        }
+
+        if (paramChanged(m_args.error_reset_period))
+        {
+          m_error_timer.setTop(m_args.error_reset_period);
+        }
+
         if (m_driver != NULL)
           m_driver->setTxRateMax(m_args.max_tx_rate);
       }
@@ -161,27 +262,45 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_IDLE);
+        m_monitor_check_timer.setTop(c_monitor_delay);
         try
         {
+          // To force dispatch of entity state, for other tasks now that we are in boot
+          for(uint8_t i = 0; i < 5; i++)
+          {
+            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_IDLE);
+            Time::Delay::wait(1.0);
+          }
+          inf("Opening serial port '%s' at %u bps", m_args.uart_dev.c_str(), m_args.uart_baud);
           if(m_args.use_9523)
             m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud_9523);
           else
             m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_driver = new Driver(this, m_uart, m_args.use_9523, c_pwr_on_delay);
+
+          IMC::VersionInfo vi;
+          std::string version_model = "no libd-9523";
+          m_driver = new Driver(this, m_uart, m_args.use_9523, c_pwr_on_delay, m_args.rssi_check_period);
           m_driver->initialize();
           m_driver->setTxRateMax(m_args.max_tx_rate);
           if(m_args.use_9523)
           {
             inf("LIDB FW: %s", m_driver->getFirmVersionLIDB().c_str());
-            inf("Model: %s | IMEI: %s", m_driver->getModel().c_str(), m_driver->getIMEI().c_str());
+            version_model = "LIDB FW: " + m_driver->getFirmVersionLIDB();
           }
+          vi.version = version_model;
+          version_model = "Model: " + m_driver->getModel() + " | IMEI: " + m_driver->getIMEI();
+          vi.description = version_model;
+          vi.op = IMC::VersionInfo::OP_REPLY;
+          dispatch(vi);
           debug("manufacturer: %s", m_driver->getManufacturer().c_str());
-          debug("model: %s", m_driver->getModel().c_str());
-          debug("IMEI: %s", m_driver->getIMEI().c_str());
+          inf("%s", version_model.c_str());
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 5);
+          std::string msg = "onResourceAcquisition: " + std::string(e.what());
+          throw RestartNeeded(msg.c_str(), 10);
         }
       }
 
@@ -232,6 +351,28 @@ namespace Transports
         Memory::clear(m_uart);
       }
 
+      unsigned
+      getIridiumSerial(const std::string& destination)
+      {
+        unsigned serial = 0;
+        m_ctx.config.get(m_args.addr_section, destination, "0", serial);
+        return serial;
+      }
+
+      void
+      stripIridiumSerial(const uint8_t* bfr, size_t bfr_size, std::vector<uint8_t>& stripped)
+      {
+        size_t offs = 0;
+
+        if (bfr_size >= 5)
+        {
+          if (bfr[0] == 'R' && bfr[1] == 'B')
+            offs = 5;
+        }
+
+        stripped.assign(bfr + offs, bfr + bfr_size);
+      }
+
       void
       consume(const IMC::IoEvent* msg)
       {
@@ -242,7 +383,10 @@ namespace Transports
           return;
 
         if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
-          throw RestartNeeded(DTR("input error"), 5);
+        {
+          std::string msg_info = "consume(const IMC::IoEvent* msg): " + std::string(DTR("input error"));
+          throw RestartNeeded(msg_info.c_str(), 10);
+        }
       }
 
       void
@@ -255,10 +399,32 @@ namespace Transports
         unsigned src_adr = msg->getSource();
         unsigned src_eid = msg->getSourceEntity();
         TxRequest* request = new TxRequest(src_adr, src_eid, msg->req_id,
-                                           msg->ttl, msg->data);
+                                           msg->ttl, 
+                                           getIridiumSerial(msg->destination),
+                                           msg->data);
 
         enqueueTxRequest(request);
         sendTxRequestStatus(request, IMC::IridiumTxStatus::TXSTATUS_QUEUED);
+      }
+
+      void
+      consume(const IMC::EntityState* msg)
+      {
+        if(m_args.monitor_modem)
+        {
+          if (m_monitor_check_timer.overflow())
+          {
+            if (m_args.monitor_task_label.compare(resolveEntity(msg->getSourceEntity())) == 0)
+            {
+              // check if description contains the string "Iridium: Switching"
+              if (msg->description.find("Iridium: Switching") != std::string::npos)
+              {
+                m_monitor_check_timer.reset();
+                throw RestartNeeded("Need to restart task for the new iridium modem", 5.0);
+              }
+            }
+          }
+        }
       }
 
       void
@@ -303,7 +469,7 @@ namespace Transports
         debug("dequeing message");
         m_driver->clearBufferMO();
         sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_OK);
-        inf(DTR("Message sent successfully."));
+        inf(DTR("Message sent successfully. (req id: %u)"), m_tx_request->getId());
         Memory::clear(m_tx_request);
       }
 
@@ -319,9 +485,21 @@ namespace Transports
         debug("invalidating MSN");
         m_tx_request->invalidateMSN();
 
-        sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_ERROR,
-            String::str(DTR("failed with error %u"), err_code));
+        if (m_tx_request->hasExpired())
+        {
+          inf(DTR("Message transmission hasExpired, re-enqueueing. (req id: %u)"), m_tx_request->getId());
+          sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_ERROR,
+              String::str(DTR("failed with error %u"), err_code));
+          m_tx_requests.erase(std::remove(m_tx_requests.begin(), m_tx_requests.end(), m_tx_request), m_tx_requests.end());
+          Memory::clear(m_tx_request);
+          return;
+        }
 
+        // Not expired, warn and re-enqueue
+        inf(DTR("Message transmission failed. (req id: %u)"), m_tx_request->getId());
+        sendTxRequestStatus(m_tx_request, IMC::IridiumTxStatus::TXSTATUS_QUEUED,
+            String::str(DTR("re-enqueue, failed with error %u"), err_code));
+        m_tx_request->setLastError(String::str(DTR("failed with error %u"), err_code));
         enqueueTxRequest(m_tx_request);
         m_tx_request = NULL;
       }
@@ -331,16 +509,22 @@ namespace Transports
       {
         uint8_t bfr[340];
         unsigned rv = m_driver->readBufferMT(bfr, sizeof(bfr));
-        if (rv > 0)
+
+        if (rv == 0)
+        {
+          err(DTR("invalid SBD message"));
+          return;
+        }
+
+        std::vector<uint8_t> stripped;
+        stripIridiumSerial(bfr, rv, stripped);
+
+        if (stripped.size() > 0)
         {
           IMC::IridiumMsgRx sbd;
           sbd.setDestination(getSystemId());
-          sbd.data.assign(bfr, bfr + rv);
+          sbd.data.assign(stripped.begin(), stripped.end());
           dispatch(sbd, DF_KEEP_SRC_EID);
-        }
-        else
-        {
-          err(DTR("invalid SBD message of size %u"), rv);
         }
       }
 
@@ -378,10 +562,64 @@ namespace Transports
             break;
 
           spew("removing expired");
-          sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+          std::string msg = (*itr)->getLastError();
+          const char* errorMsg = msg.c_str();
+          if (errorMsg != nullptr && *errorMsg != '\0')
+          {
+              msg = errorMsg;
+              sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_ERROR, msg);
+          }
+          else
+          {
+              sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+          }
           delete *itr;
           itr = m_tx_requests.erase(itr);
         }
+      }
+
+      bool
+      receptionSequence()
+      {
+        if (m_driver->hasRingAlert())
+          m_driver->checkMailBoxAlert();
+        else if (m_driver->getQueuedMT() > 0 || m_mbox_check_timer.overflow())
+          m_driver->checkMailBox();
+        else if(m_driver->getQueuedMT() == 0 && m_tx_request == NULL) //No messages to be received or sent
+        {
+          unsigned src_adr = getSystemId();
+          unsigned src_eid = getEntityId();
+          const std::vector<char> data(1);
+          TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF, 0, 0, data);
+          sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
+          // clear empty request
+          delete empty_req;
+          debug(DTR("No message to be received or sent."));
+
+          return false;
+        }
+
+        return true;
+      }
+
+      bool
+      transmissionSequence()
+      {
+        if (m_tx_request != NULL)
+        {
+          unsigned msn = m_driver->getMOMSN();
+          m_tx_request->setMSN(msn);
+          m_driver->sendSBD(m_tx_request->getData());
+        }
+        else if (!m_tx_requests.empty())
+        {
+          m_tx_request = m_tx_requests.front();
+          m_tx_requests.pop_front();
+        }
+        else
+          return false;
+
+        return true;
       }
 
       void
@@ -396,7 +634,10 @@ namespace Transports
           handleSessionResult();
 
         if (m_driver->getRSSI() <= 0.1)
+        {
+          m_prio = TxRxPriority::None;
           return;
+        }
 
         if (m_driver->isCooling())
           return;
@@ -404,32 +645,35 @@ namespace Transports
         if (!isActive())
           m_mbox_check_timer.reset();
 
-        if (m_tx_request != NULL)
+        switch (m_prio)
         {
-          unsigned msn = m_driver->getMOMSN();
-          m_tx_request->setMSN(msn);
-          m_driver->sendSBD(m_tx_request->getData());
-        }
-        else if (m_tx_requests.empty())
-        {
-          if (m_driver->hasRingAlert())
-            m_driver->checkMailBoxAlert();
-          else if (m_driver->getQueuedMT() > 0 || m_mbox_check_timer.overflow())
-            m_driver->checkMailBox();
-          else if(m_driver->getQueuedMT() == 0) //No messages to be received or sent
+        case TxRxPriority::Tx:
+          if (!transmissionSequence())
+            receptionSequence();
+
+          if (m_tx_window.overflow())
           {
-            unsigned src_adr = getSystemId();
-            unsigned src_eid = getEntityId();
-            const std::vector<char> data(1);
-            TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF, 0, data);
-            sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
-            debug(DTR("No message to be received or sent."));
+            m_prio = TxRxPriority::Rx;
+            m_rx_window.setTop(m_args.rx_window);
           }
-        }
-        else
-        {
-          m_tx_request = m_tx_requests.front();
-          m_tx_requests.pop_front();
+
+          break;
+
+        case TxRxPriority::Rx:
+          if (!receptionSequence())
+            transmissionSequence();
+
+          if (m_rx_window.overflow())
+          {
+            m_prio = TxRxPriority::Tx;
+            m_tx_window.setTop(m_args.tx_window);
+          }
+
+          break;
+
+        default:
+          m_prio = TxRxPriority::Tx;
+          m_tx_window.setTop(m_args.tx_window);
         }
       }
 
@@ -439,8 +683,46 @@ namespace Transports
       {
         while (!stopping())
         {
-          waitForMessages(1.0);
-          processQueue();
+          try
+          {
+            waitForMessages(1.0);
+            processQueue();
+            checkError();
+          }
+          catch(const ReadTimeout& e)
+          {
+            signalError("ReadTimeout", e.what());
+          }
+          catch(const UnexpectedReply& e)
+          {
+            signalError("UnexpectedReply", e.what());
+          }
+        }
+      }
+
+      void
+      signalError(std::string name, std::string err)
+      {
+        m_error_count++;
+        m_error_timer.reset();
+        debug("%s (%d/%d): %s", name.c_str(), m_error_count, m_args.max_error, err.c_str());
+
+        if (m_error_count >= m_args.max_error)
+        {
+          std::stringstream ss;
+          ss << "Max error count exceeded: "
+             << err.c_str();
+          throw RestartNeeded(ss.str(), 10.0);
+        }
+      }
+
+      void
+      checkError()
+      {
+        if (m_error_timer.overflow())
+        {
+          m_error_timer.reset();
+          m_error_count = 0;
         }
       }
     };

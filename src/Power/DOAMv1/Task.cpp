@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -310,6 +310,11 @@ namespace Power
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
         inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
+        std::string fw_version = String::str("%u.%u.%u", major, minor, patch);
+        IMC::VersionInfo vi;
+        vi.version = fw_version;
+        vi.op = IMC::VersionInfo::OP_REPLY;
+        dispatch(vi);
       }
 
       void

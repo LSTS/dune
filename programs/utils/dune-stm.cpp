@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2021 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -51,7 +51,9 @@ main(int argc, char** argv)
   .add("-t", "--dev-type",
        "System device type", "TYPE")
   .add("-f", "--file",
-       "iBIN file", "IBIN_FILE");
+       "iBIN file", "IBIN_FILE")
+  .add("-b", "--bootUpdate",
+       "Update bootloader (true, false)", "BOOL");
 
   // Parse command line arguments.
   if (!options.parse(argc, argv))
@@ -84,13 +86,22 @@ main(int argc, char** argv)
     return 1;
   }
 
+  // Get boot update.
+  std::string boot_up = options.value("--bootUpdate");
+  if (boot_up.empty())
+  {
+    std::cerr << "ERROR: you must specify if bootloader update or not." << std::endl;
+    return 1;
+  }
+  bool boot_update = (boot_up == "true");
+
   // Get device type.
   IO::Handle* handle = NULL;
   std::string dev_type = options.value("--dev-type");
   handle = new SerialPort(sys_dev, c_baud_rate);
 
   STM::Interface itf(handle, ibin);
-  if(itf.syncBoot())
+  if(itf.syncBoot(boot_update))
   {
     Delay::wait(1);
     if(itf.checkSystemType())

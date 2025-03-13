@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -36,6 +36,7 @@
 
 // VSIM headers.
 #include <VSIM/Engine.hpp>
+#include <VSIM/Fin.hpp>
 #include <VSIM/Force.hpp>
 #include <VSIM/Object.hpp>
 
@@ -64,6 +65,11 @@ namespace Simulators
       void
       addEngine(Engine* engine);
 
+      //! Add a fin to vehicle's configuration.
+      //! @param[in] fin vehicle new fin.
+      void
+      addFin(Fin* fin);
+
       //! Applies vehicle commands forces.
       void
       applyControlForces(void);
@@ -83,6 +89,12 @@ namespace Simulators
       //! @param[in] act new engine actuation value.
       void
       updateEngine(unsigned int id, double act);
+
+      //! Updates fin's actuation.
+      //! @param[in] id fin id.
+      //! @param[in] act fin actuation value.
+      void
+      updateFin(unsigned int id, double act);
 
       //! Set added mass coefficient (for UUVs).
       //! @param[in] coefs added mass matrix coefficients.

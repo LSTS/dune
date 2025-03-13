@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -213,7 +213,9 @@ runDaemon(DUNE::Daemon& daemon)
 int
 main(int argc, char** argv)
 {
+  double start = Clock::getSinceEpoch();
   Tasks::Context context;
+  context.start_time = start;
   I18N::setLanguage(context.dir_i18n);
   Scheduler::set(Scheduler::POLICY_RR);
 

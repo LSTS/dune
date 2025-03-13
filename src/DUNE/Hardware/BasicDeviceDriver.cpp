@@ -58,6 +58,7 @@ namespace DUNE
       m_read_period(0.0),
       m_uri()
     {
+      m_restart_needed = true;
       bind<IMC::EstimatedState>(this);
       bind<IMC::LoggingControl>(this);
       bind<IMC::PowerChannelState>(this);
@@ -68,6 +69,12 @@ namespace DUNE
     BasicDeviceDriver::onResourceRelease(void)
     {
       requestDeactivation();
+    }
+
+    void
+    BasicDeviceDriver::setRestartNeeded(bool state)
+    {
+      m_restart_needed = state;
     }
 
     void
@@ -548,9 +555,12 @@ namespace DUNE
             for (auto p : m_power_channels)
               if (!p.second)
                 msg += p.first + " ";
-            
+
             failActivation(DTR(msg.c_str()));
-            queueState(SM_IDLE);
+            if(m_restart_needed)
+              requestRestart();
+            else
+              queueState(SM_IDLE);
           }
           break;
 
@@ -561,7 +571,10 @@ namespace DUNE
             std::string msg = "Activation timeout - connect to device: ";
             msg += m_uri;
             failActivation(DTR(msg.c_str()));
-            queueState(SM_IDLE);
+            if(m_restart_needed)
+              requestRestart();
+            else
+              queueState(SM_IDLE);
           }
           else if (m_power_on_timer.overflow())
           {
@@ -576,7 +589,10 @@ namespace DUNE
           if (m_wdog.overflow())
           {
             failActivation(DTR("Activation timeout - synchronize with device"));
-            queueState(SM_IDLE);
+            if(m_restart_needed)
+              requestRestart();
+            else
+              queueState(SM_IDLE);
           }
           else
           {
@@ -595,7 +611,10 @@ namespace DUNE
           if (m_wdog.overflow())
           {
             failActivation(DTR("Activation timeout - request current log name"));
-            queueState(SM_IDLE);
+            if(m_restart_needed)
+              requestRestart();
+            else
+              queueState(SM_IDLE);
           }
           else
           {
@@ -610,7 +629,10 @@ namespace DUNE
           if (m_wdog.overflow())
           {
             failActivation(DTR("Activation timeout - retrieve current log name"));
-            queueState(SM_IDLE);
+            if(m_restart_needed)
+              requestRestart();
+            else
+              queueState(SM_IDLE);
           }
           else
           {

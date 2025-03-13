@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -80,7 +80,7 @@ namespace Simulators
       if (!cfg.getList(section, "Buoyancy", buoyancy, 3))
         return 0;
 
-      // Get vehicle type and create vehicle's object.p
+      // Get vehicle type and create vehicle's object.
       std::string type;
       cfg.get(section, "Type", "UUV", type);
       if (type == "UUV" || type == "ROV")
@@ -103,13 +103,16 @@ namespace Simulators
         else
           return 0;
       }
-      else
+      else if (type == "ASV")
       {
-        if (type == "ASV")
-          vehicle = new Simulators::VSIM::ASV(volume);
-        else
-          return 0;
+        vehicle = new Simulators::VSIM::ASV(volume);
       }
+      else if (type == "Boat")
+      {
+        vehicle = new Simulators::VSIM::Boat(volume);
+      }
+      else
+        return 0;
 
       // Retrieve mass.
       double mass = 0.0;

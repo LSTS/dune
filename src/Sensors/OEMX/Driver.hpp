@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -207,6 +207,10 @@ namespace Sensors
         std::replace(typeCTD.begin(), typeCTD.end(), '\n', '\0');
 
         m_ctdData.ctdInfo = typeCTD + version + serialCTD;
+        IMC::VersionInfo vi;
+        vi.version = version;
+        vi.op = IMC::VersionInfo::OP_REPLY;
+        m_task->dispatch(vi);
       }
 
       std::string

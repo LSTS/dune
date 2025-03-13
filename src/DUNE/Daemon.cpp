@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -244,6 +244,7 @@ namespace DUNE
       stream << ";" << devs[i]->label << "=" << devs[i]->id;
 
     IMC::EntityList list;
+    list.setDestination(msg->getSource());
     list.op = IMC::EntityList::OP_REPORT;
     list.list = stream.str();
     dispatch(list);

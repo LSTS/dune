@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -36,22 +36,35 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Size for logbook buffer.
+    static const uint32_t c_logbook_sz = 128;
+    //! Size for error logbook buffer.
+    static const uint32_t c_elogbook_sz = 32;
+    //! Request uri.
+    constexpr const char* c_request_uri = "/dune/logbook";
+    //! Section id.
+    constexpr const char* c_section_id = "Logbook";
+
+    struct Arguments
+    {
+      //! Provide webpage section.
+      bool webpage_section;
+    };
+
     struct Task: public DUNE::Tasks::Task
     {
-      // Convenience typedef.
+      //! Convenience typedef.
       typedef CircularBuffer<IMC::LogBookEntry> LBEBuffer;
-      // Size for logbook buffer.
-      static const uint32_t c_logbook_sz = 128;
-      // Size for error logbook buffer.
-      static const uint32_t c_elogbook_sz = 32;
-      // Start time.
+      //! Start time.
       double m_start_time;
-      // General logbook buffer.
+      //! General logbook buffer.
       LBEBuffer m_logbook;
-      // Error logbook buffer.
+      //! Error logbook buffer.
       LBEBuffer m_elogbook;
-      // Reply message.
+      //! Reply message.
       IMC::LogBookControl m_reply;
+      //! Task arguments.
+      Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -61,6 +74,11 @@ namespace Transports
         m_reply.command = IMC::LogBookControl::LBC_REPLY;
         m_start_time = Time::Clock::getSinceEpoch();
 
+        param("Provide Webpage Section", m_args.webpage_section)
+        .defaultValue("true")
+        .description("Provide a webpage section for Logbook");
+
+        bind<IMC::HTTPAction>(this);
         bind<IMC::LogBookEntry>(this);
         bind<IMC::LogBookControl>(this);
       }
@@ -68,7 +86,81 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
+        if (m_args.webpage_section)
+          registerWebpageSection();
+        
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      bool
+      matchURL(const char* url, const char* str, bool fragment = false)
+      {
+        if (fragment)
+        {
+          int size = std::strlen(str);
+          return (std::strncmp(url, str, size) == 0);
+        }
+
+        return (std::strcmp(url, str) == 0);
+      }
+
+      void
+      registerWebpageSection(void)
+      {
+        IMC::HTTPAction action;
+        action.op = IMC::HTTPAction::OP_REGISTER;
+        action.data.assign(c_section_id, c_section_id + std::strlen(c_section_id));
+        dispatch(action);
+      }
+
+      std::string
+      logbookJSON(void)
+      {         
+        std::ostringstream os;
+        os << "{\n\"data\":\n[\n";
+        
+        uint32_t size = m_logbook.getSize();
+        uint32_t it = 0;
+        if (it <= size)
+        {
+          m_logbook(it).toJSON(os);
+          ++it;
+        }
+        
+        while (it < size)
+        {
+          os << ",\n";
+          m_logbook(it).toJSON(os);
+          ++it;
+        }
+        
+        os << "\n]\n}";
+        return os.str();
+      }
+
+      void
+      consume(const IMC::HTTPAction* msg)
+      {
+        if (!m_args.webpage_section)
+          return;
+        
+        if (msg->getSource() != getSystemId())
+          return;
+        
+        if (msg->op != IMC::HTTPAction::OP_REQUEST)
+          return;
+        
+        if (matchURL(msg->data.data(), c_request_uri))
+        {
+          IMC::HTTPAction action;
+          action.setDestination(msg->getSource());
+          action.setDestinationEntity(msg->getSourceEntity());
+          action.id = msg->id;
+          action.op = IMC::HTTPAction::OP_REPLY;
+          std::string text = logbookJSON();
+          action.data.assign(text.begin(), text.end());
+          dispatch(action);
+        }
       }
 
       void

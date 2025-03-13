@@ -1,5 +1,5 @@
 /***************************************************************************
-* Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+* Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 * Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 ****************************************************************************
 * This file is part of DUNE: Unified Navigation Environment.               *
@@ -27,8 +27,70 @@
 
 body
 {
-  font-family: Arial, Helvetica, sans;
+  background-color: #f5f5f5;
+  font-family: 'Roboto', sans-serif;
   color: var(--c-color-text);
+}
+
+button
+{
+  background-color: #f5f3f8;
+  color: black;
+  border: none;
+  padding: 6px 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px var(--c-color-text);
+  transition: background-color 0.3s;
+  font-size: 10px;
+  border-radius: 8px;
+}
+
+button:hover
+{
+  background-color: #b0a5ca;
+  color: #000000;
+  transform: scale(1.05);
+}
+
+button.active
+{
+  background-color: rgb(158, 191, 201);
+  color: black;
+  transition: transform 0.3s ease-in-out, background-color 0.3s ease;
+  transform: scale(1.08);
+  cursor: grab;
+}
+
+button:disabled
+{
+  background-color: rgb(223, 217, 217);
+  color: rgb(167, 161, 161);
+  transition: transform 0.3s ease-in-out, background-color 0.3s ease;
+  transform: scale(1);
+  cursor: not-allowed;
+}
+
+button.loading
+{
+  background-color: rgb(223, 217, 217);
+  color: rgb(167, 161, 161);
+  cursor: wait;
+}
+
+input[type="text"], input[type="number"], textarea
+{
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px;
+  width: auto;
+  min-width: 100px;
+  transition: border-color 0.3s;
+}
+
+input:focus
+{
+  border-color: #6200ea;
+  outline: none;
 }
 
 a
@@ -59,84 +121,9 @@ input
   padding: 1em;
 }
 
-.infoTable {
+.infoTable
+{
   border-radius: 8px !important;
-}
-
-#Logs
-{
-  text-align: left;
-}
-
-#Logs ul li ul
-{
-  list-style-type: none;
-  margin-left: 5px;
-  padding-left: 5px;
-}
-
-#Logs ul li ul li
-{
-  list-style-type: none;
-  margin-left: 5px;
-  padding-left: 5px;
-}
-
-div#Sensors {
-  max-height: 85vh;
-  overflow-y: scroll;
-}
-
-#Sensors table
-{
-  border-collapse: collapse;
-  margin-bottom: 1em;
-}
-
-#Sensors table:last-child
-{
-  margin-bottom: 0em;
-}
-
-#Sensors th
-{
-  /*Sensors title*/
-  background-color: var(--c-background-h-l);
-  color: var(--c-color-text-h-l);
-}
-
-#Sensors td
-{
-  padding: 2px;
-  padding-left: 5px;
-  padding-right: 5px;
-}
-
-#Sensors td:first-child
-{
-  /**/
-  background-color: var(--c-color-entity-sensor-background);
-  font-weight: bold;
-  width: 150px;
-  text-align: left;
-}
-
-#Sensors tr , #Sensors td, #Sensors th
-{
-  border: solid var(--c-color-text) thin;
-  border-collapse: collapse;
-}
-
-#Sensors table
-{
-  margin-left: auto;
-  margin-right: auto;
-  width: 90%;
-}
-
-#Sensors td:last-child
-{
-  text-align: right;
 }
 
 #ConnectionIcon
@@ -148,14 +135,26 @@ div.Hidden
 {
   visibility: hidden;
   position: absolute;
-  left:0px;
-  top:0px;
-  width:0px;
-  height:0px;
-  overflow:hidden;
+  left: 0px;
+  top: 0px;
+  width: 0px;
+  height: 0px;
+  overflow: hidden;
 }
 
-td {
+div.Visible
+{
+  visibility: visible;
+  position: relative;
+  left: auto;
+  top: auto;
+  width: auto;
+  height: auto;
+  overflow: visible;
+}
+
+td
+{
   text-align: center;
   vertical-align: middle;
   font-size: 12px;
@@ -191,39 +190,57 @@ hr
 p.INFO
 {
     text-align: left;
-    color: #538b01;
+    color: var(--c-color-info);
 }
 
 p.WARNING
 {
     text-align: left;
-    color: #E5C100;
+    color: var(--c-color-warning);
 }
 
 p.ERROR
 {
     text-align: left;
-    color: #B22222;
+    color: var(--c-color-error);
 }
 
 p.CRITICAL
 {
     text-align: left;
     font-weight: bold;
-    color: #B22222;
+    color: var(--c-color-critical);
 }
 
 p.DEBUG
 {
     text-align: left;
     font-weight: bold;
+    color: var(--c-color-debug);
 }
 
-#MainOverviewLeft, #MainOverviewRight
+#MainOverviewLeft
+{
+  margin-left: 70px;
+  margin-right: auto;
+  width: auto;
+  text-align: center;
+  flex: 1;
+  /*padding: 10px 18px;*/
+  /*border-radius: 18px;*/
+  /*box-shadow: 0 1px 2px var(--c-color-text);*/
+}
+
+#MainOverviewRight
 {
   margin-left: auto;
-  margin-right: auto;
+  margin-right: 80px;
+  width: auto;
   text-align: center;
+  flex: 1;
+  /*padding: 10px 18px;*/
+  /*border-radius: 18px;*/
+  /*box-shadow: 0 1px 2px var(--c-color-text);*/
 }
 
 #MenuBar
@@ -298,6 +315,8 @@ p.DEBUG
   background-image: linear-gradient(to top,#2b2b2b, #555555);
   padding: 0 0 10px 0;
   z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
 }
 
 #Menu li ul li
@@ -346,10 +365,10 @@ p.DEBUG
 #Menu li:hover ul, #Menu li.Selected ul, #Menu li.FirstSelected ul
 {
   display: block;
+  opacity: 1;
 }
 
-
-#MainTaskTableDiv
+#MainEntityTableDiv
 {
   max-height: 60vh;
   overflow-y: scroll;
@@ -358,31 +377,151 @@ p.DEBUG
   margin-right: auto;
 }
 
-#MainTaskTable
+#MainEntityTable
 {
-  overflow-y: scroll;
-  border-collapse: collapse;
+  overflow-y: auto;
 }
 
-#MainTaskTable tr
+#MainEntityTable tr
 {
-  border-bottom: solid var(--c-color-line-split-tasks) thin;
+  /*border-bottom: solid var(--c-color-line-split-entities) thin;*/
+  padding: 10px 18px;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px var(--c-color-text);
 }
 
-#MainTaskTable tr:last-child
+#MainEntityTable tr:last-child
 {
   border-bottom: none;
 }
 
-#MainTaskTable th, #MainTaskTable td
+#MainEntityTable th, #MainEntityTable td
 {
   text-align: left;
   padding: 5px;
 }
 
-#MainTaskTable th
+#MainEntityTable th
 {
   width: 150px;
+  padding: 0px 18px;
+}
+
+#systemName
+{
+  font-size: 1.5em;
+  font-weight: bold;
+  padding: 10px 18px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px var(--c-color-text);
+  margin-bottom: 1px;
+  /*color: var(--c-color-text-system-name);*/
+  color: #000000;
+  display: inline-block;
+  margin-bottom: 12px;
+  background-color: var(--c-background);
+}
+
+input[type="checkbox"]
+{
+  display: none;
+}
+
+label
+{
+  position: relative;
+  padding-left: 40px;
+  padding-top: 0px;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+}
+
+.custom-checkbox
+{
+  position: absolute;
+  left: 18px;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--c-color-text);
+  background-color: #fff;
+  border-radius: 4px;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+input[type="checkbox"]:checked + .custom-checkbox
+{
+  background-color: var(--c-color-checkbox-hover);
+  border-color: var(--c-color-checkbox-hover);
+}
+
+input[type="checkbox"]:checked + .custom-checkbox::after
+{
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 4px;
+  height: 7px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+label:hover .custom-checkbox
+{
+  border-color: var(--c-color-info);
+}
+
+.material-label
+{
+  font-size: 16px;
+  margin-right: 0.75rem;
+  user-select: none;
+  color: var(--c-color-text);
+}
+
+.material-select
+{
+  flex: 0.3;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.material-select:focus
+{
+  border-color: #6200ea;
+}
+
+.material-select:valid + .material-label,
+.material-select:not(:placeholder-shown) + .material-label
+{
+  top: -0.75rem;
+  left: 0.75rem;
+  font-size: 0.25rem;
+  color: #6200ea;
+}
+
+.cpu-icon
+{
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin-right: 4px;
+  background-image: var(--cpu-icon-url);
+}
+
+#Power div:not(.bottom-buttons)
+{
+  max-height: 85vh;
+  overflow-y: scroll;
 }
 
 #Power div{
@@ -394,9 +533,13 @@ p.DEBUG
 {
   background-color: var(--c-background-h-l);
   color: var(--c-color-text-h-l);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  padding: 6px;
 }
 
-#Power td form {
+#Power td form
+{
   text-align: center;
 }
 
@@ -419,8 +562,8 @@ p.DEBUG
   width: 95%;
   margin-left: auto;
   margin-right: auto;
-  border-collapse: collapse;
-  margin-bottom: 1em;
+  margin-bottom: 0.5em;
+  border-spacing: 0 4px;
 }
 
 #Power table tr
@@ -433,22 +576,93 @@ p.DEBUG
   margin: 5px;
 }
 
-#systemName {
-  width: 100%;
-  font-size: 1.75em;
+div#Sensors
+{
+  max-height: 85vh;
+  overflow-y: scroll;
+}
+
+#Sensors table
+{
+  margin-bottom: 0.5em;
+  border-spacing: 0 4px;
+}
+
+#Sensors table:last-child
+{
+  margin-bottom: 0.5em;
+}
+
+#Sensors th
+{
+  /*Sensors title*/
+  background-color: var(--c-background-h-l);
+  color: var(--c-color-text-h-l);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  padding: 6px;
+}
+
+#Sensors td
+{
+  padding: 2px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  margin-bottom: 2px;
   text-align: center;
+}
+
+#Sensors tr
+{
+  border: solid var(--c-color-text) thin;
+  border-collapse: collapse;
+  border: none;
+}
+
+#Sensors td:first-child
+{
+  /**/
+  background-color: var(--c-color-entity-sensor-background, #ddd);
   font-weight: bold;
-  margin: 0.5em;
+  width: 150px;
+  text-align: center;
+  color: var(--c-color-entity-sensor-color-label, #000);
 }
 
-.connected
+#Sensors td:nth-child(3)
 {
-  background-color: green; /* Cor de fundo para estado conectado */
-  color: white; /* Cor do texto para estado conectado */
+  text-align: center !important;
 }
 
-.disconnected
+#Sensors table
 {
-  background-color: red; /* Cor de fundo para estado desconectado */
-  color: white; /* Cor do texto para estado desconectado */
+  margin-left: auto;
+  margin-right: auto;
+  width: 90%;
+}
+
+#Sensors td:last-child
+{
+  text-align: center;
+}
+
+#Logbook div:not(.logbook-filter):not(.form-group)
+{
+  max-height: 85vh;
+  font-size: 1rem;
+  overflow-y: scroll;
+}
+
+#Logbook .form-group
+{
+  display: flex;
+  align-items: center;
+  margin: 0.9rem 0;
+  background-color: var(--c-background-h-l);
+  color: var(--c-color-text-h-l);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  padding: 6px;
 }

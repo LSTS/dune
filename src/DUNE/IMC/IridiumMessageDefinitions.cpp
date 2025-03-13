@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -78,9 +78,14 @@ namespace DUNE
             ret = (ExtendedDeviceUpdate *) new ExtendedDeviceUpdate();
             ret->deserialize(ptr, msg->data.size());
             return ret;
+          
+        case(ID_UPDATE_OP):
+            ret = (IridiumOperation *) new IridiumOperation();
+            ret->deserialize(ptr, msg->data.size());
+            return ret;
 
         default:
-          std::cerr << "Ignoring unrecognized Iridium message (" << msg_id
+          std::cerr << "[IridiumMessage::deserialize]:Ignoring unrecognized Iridium message (" << msg_id
               << ")" << std::endl;
             return NULL;
       }
@@ -137,7 +142,7 @@ namespace DUNE
 
       if (msg == NULL)
       {
-        std::cerr << "ERROR parsing Iridium message: unknown msg id: " << mgid << std::endl;
+        std::cerr << "[IridiumMessage::deserialize]:ERROR parsing Iridium message: unknown msg id: " << mgid << std::endl;
         return 0;
       }
 
@@ -173,7 +178,6 @@ namespace DUNE
       buffer += DUNE::IMC::deserialize(destination, buffer, length);
       buffer += DUNE::IMC::deserialize(msg_id, buffer, length);
       buffer += DUNE::IMC::deserialize(command, buffer, length);
-
       return buffer - start;
     }
 
@@ -353,5 +357,80 @@ namespace DUNE
 
       return buffer - start;
     }
+
+    IridiumOperation::IridiumOperation(void)
+    {
+      msg_id = ID_UPDATE_OP;
+    }
+
+    int
+    IridiumOperation::serialize(uint8_t * buffer)
+    {
+      uint8_t* start = buffer;
+      buffer += DUNE::IMC::serialize(source, buffer);
+      buffer += DUNE::IMC::serialize(destination, buffer);
+      buffer += DUNE::IMC::serialize(msg_id, buffer);
+      buffer += DUNE::IMC::serialize(ts, buffer);
+      buffer += DUNE::IMC::serialize(type, buffer);
+      return buffer - start;
+    }
+
+    int
+    IridiumOperation::deserialize(uint8_t* data, uint16_t len)
+    {
+      uint8_t* buffer = data;
+      buffer += DUNE::IMC::deserialize(source, buffer, len);
+      buffer += DUNE::IMC::deserialize(destination, buffer, len);
+      buffer += DUNE::IMC::deserialize(msg_id, buffer, len);
+      buffer += DUNE::IMC::deserialize(ts, buffer, len);
+      buffer += DUNE::IMC::deserialize(type, buffer, len);
+
+      return buffer - data;
+    }
+
+
+    ImcFullIridium::ImcFullIridium(void)
+    {
+      msg_id = ID_IMC_FULL_IRIDIUM;
+      msg = NULL;
+    }
+
+    ImcFullIridium::ImcFullIridium(IMC::Message* imc_msg)
+    {
+      msg_id = ID_IMC_FULL_IRIDIUM;
+      msg = imc_msg;
+    }
+
+    ImcFullIridium::~ImcFullIridium(void)
+    {
+      if (msg != NULL)
+        delete msg;
+    }
+
+    int
+    ImcFullIridium::serialize(uint8_t * data)
+    {
+      uint8_t* buffer = data;
+      buffer += DUNE::IMC::serialize(source, buffer);
+      buffer += DUNE::IMC::serialize(destination, buffer);
+      buffer += DUNE::IMC::serialize(msg_id, buffer);
+
+      buffer += IMC::Packet::serialize(msg, buffer, msg->getSerializationSize());
+      return buffer - data;
+    }
+
+    int
+    ImcFullIridium::deserialize(uint8_t* data, uint16_t len)
+    {
+      uint8_t* buffer = data;
+      buffer += DUNE::IMC::deserialize(source, buffer, len);
+      buffer += DUNE::IMC::deserialize(destination, buffer, len);
+      buffer += DUNE::IMC::deserialize(msg_id, buffer, len);
+
+      msg = IMC::Packet::deserialize(buffer, len);
+
+      return msg->getSerializationSize() + (buffer - data);
+    }
+
   } /* namespace IMC */
 } /* namespace DUNE */

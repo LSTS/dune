@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -220,6 +220,12 @@ namespace DUNE
       bind<IMC::Distance>(this);
       bind<IMC::DesiredZ>(this);
       bind<IMC::DesiredSpeed>(this);
+
+      // Initialize TrackingState
+      m_ts.loitering = false;
+      m_ts.nearby = false;
+      m_ts.end_time = Clock::get();
+      m_ts.z_control = false;
     }
 
     PathController::~PathController(void)
@@ -237,10 +243,6 @@ namespace DUNE
         m_speriod = 1.0 / m_speriod;
 
       m_ts.cc = m_course_ctl ? 1 : 0;
-      m_ts.loitering = false;
-      m_ts.nearby = false;
-      m_ts.end_time = Clock::get();
-      m_ts.z_control = false;
 
       if (m_ctm.enabled && m_ctm.nav_unc_factor > 0)
         bind<IMC::NavigationUncertainty>(this);
@@ -275,6 +277,8 @@ namespace DUNE
           Memory::clear(m_btrack);
         }
       }
+
+      m_ts.waypoints.resizeAndFill(1, 2, 0);
     }
 
     void
@@ -450,6 +454,9 @@ namespace DUNE
       m_ts.start.z = m_pcs.start_z;
       m_ts.start.z_units = m_pcs.start_z_units;
 
+      m_ts.lat_st = m_pcs.start_lat;
+      m_ts.lon_st = m_pcs.start_lon;
+
       if ((dpath->flags & IMC::DesiredPath::FL_LOITER_CURR) != 0 &&
           dpath->lradius > 0)
       {
@@ -473,6 +480,12 @@ namespace DUNE
                           &m_ts.end.x, &m_ts.end.y);
       m_ts.end.z = m_pcs.end_z;
       m_ts.end.z_units = m_pcs.end_z_units;
+
+      m_ts.lat_en = m_pcs.end_lat;
+      m_ts.lon_en = m_pcs.end_lon;
+
+      m_ts.waypoints(0, 0) = m_pcs.end_lat;
+      m_ts.waypoints(0, 1) = m_pcs.end_lon;
     }
 
     void

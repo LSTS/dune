@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -471,7 +471,7 @@ namespace Actuators
         fp32_t temp = fp32_t(temp_raw) * 0.1;
         int16_t rpm = (int16_t)rpm_raw / 7; // Rounds down to nearest whole number
 
-        inf("MSG_TQ_MOTOR_DRIVE: Motor#%d - Power: %dW; Temp %0.1fC; RPM: %d",
+        debug("MSG_TQ_MOTOR_DRIVE: Motor#%d - Power: %dW; Temp %0.1fC; RPM: %d",
               mot_idx, power, temp, rpm);
 
         IMC::Temperature temp_msg;
@@ -642,7 +642,7 @@ namespace Actuators
         m_can_bfr[2] = (char)(motor1 & 0x00FF);
         m_can_bfr[3] = (char)((motor1 & 0xFF00) >> 8);
 
-        inf(DTR("CAN_MOTOR_MSG_SENT: %d, %d"), motor0, motor1);
+        debug(DTR("CAN_MOTOR_MSG_SENT: %d, %d"), motor0, motor1);
 
         m_can->setTXID(prepareTorqeedoCANID(MSG_TQ_MOTOR_SET));
         m_can->write(m_can_bfr, 4);

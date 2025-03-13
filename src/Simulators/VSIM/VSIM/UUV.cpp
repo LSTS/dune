@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -99,18 +99,6 @@ namespace Simulators
       std::memcpy(m_body_lift_coef, coefs, sizeof(double) * 8);
     }
 
-    void
-    UUV::addFin(Fin* f)
-    {
-      addForce(f);
-    }
-
-    void
-    UUV::updateFin(unsigned int id, double act)
-    {
-      id = Fin::encodeId(id);
-      updateact(id, act);
-    }
 
     void
     UUV::applyRestoringForcesMoments(void)

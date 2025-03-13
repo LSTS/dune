@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -48,13 +48,23 @@ namespace Transports
       //! @param[in] ttl time-to-live (s).
       //! @param[in] data to transmit.
       TxRequest(uint16_t src_adr, uint8_t src_eid, uint16_t req_id,
-                unsigned ttl, const std::vector<char>& data):
+                unsigned ttl, unsigned iridium_serial, const std::vector<char>& data):
         m_src_adr(src_adr),
         m_src_eid(src_eid),
         m_req_id(req_id),
-        m_msn(-1)
+        m_msn(-1),
+        m_last_error("")
       {
         m_expiration = DUNE::Time::Clock::get() + ttl;
+
+        if (iridium_serial)
+        {
+          m_data.push_back('R');
+          m_data.push_back('B');
+          m_data.push_back((uint8_t)(iridium_serial >> 16));
+          m_data.push_back((uint8_t)(iridium_serial >> 8));
+          m_data.push_back((uint8_t)(iridium_serial >> 0));
+        }
         m_data.insert(m_data.end(), data.begin(), data.end());
       }
 
@@ -135,6 +145,24 @@ namespace Transports
         return DUNE::Time::Clock::get() > getExpiration();
       }
 
+      std::string
+      getLastError(void)
+      {
+        return m_last_error;
+      }
+
+      void
+      setLastError(const std::string error)
+      {
+        m_last_error = error;
+      }
+
+      void
+      clearLastError(void)
+      {
+        m_last_error.clear();
+      }
+
     private:
       //! Requester IMC address.
       uint16_t m_src_adr;
@@ -148,6 +176,8 @@ namespace Transports
       double m_expiration;
       //! Data to be transmitted.
       std::vector<uint8_t> m_data;
+      //! Last error message.
+      std::string m_last_error;
     };
   }
 }

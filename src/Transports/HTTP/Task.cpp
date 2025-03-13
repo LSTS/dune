@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -61,6 +61,8 @@ namespace Transports
       unsigned threads;
       //! List of messages to transport.
       std::vector<std::string> messages;
+      //! Number of maximum lines to send from logbook.
+      unsigned logbook_lines;
     };
 
     //! Buffer length.
@@ -100,6 +102,10 @@ namespace Transports
         .defaultValue("")
         .description("List of messages to transport");
 
+        param("Number Lines From LogBook to send", m_args.logbook_lines)
+        .defaultValue("100")
+        .description("List of messages to transport");
+
         m_cfg_dir = ctx.dir_cfg.str();
         m_agent = getSystemName();
 
@@ -109,6 +115,7 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
+        m_msg_mon.setLogEntry(m_args.logbook_lines);
         bind(this, m_args.messages);
 
         uint16_t last_port = m_args.port + c_max_port_tries;
@@ -163,8 +170,16 @@ namespace Transports
       void
       consume(const IMC::Message* msg)
       {
-        if (msg->getSource() == getSystemId())
+        //check if msg name is Announce
+        if (msg->getId() == DUNE_IMC_ANNOUNCE)
+        {
           m_msg_mon.updateMessage(msg);
+        }
+        else
+        {
+          if (msg->getSource() == getSystemId())
+            m_msg_mon.updateMessage(msg);
+        }
       }
 
       void

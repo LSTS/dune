@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -39,6 +39,7 @@ namespace Simulators
 }
 
 #include <VSIM/ASV.hpp>
+#include <VSIM/Boat.hpp>
 #include <VSIM/Engine.hpp>
 #include <VSIM/Fin.hpp>
 #include <VSIM/Force.hpp>

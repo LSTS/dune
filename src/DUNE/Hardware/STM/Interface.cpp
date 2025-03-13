@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2021 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -51,6 +51,8 @@ namespace DUNE
       static const int c_timeout_reply = 20;
       //! Bootloader sync.
       static const char* c_jump_to_boot_cmd = "$,BOOT,*";
+      //! Bootloader update
+      static const char* c_boot_update_cmd = "$,BLOADERUP,*";
       //! System Type.
       static const char* c_type_cmd = "$,TYPE,*";
       //! Valid system type
@@ -61,8 +63,6 @@ namespace DUNE
       static const std::string c_valid_system_type = "STM32";
       //! Frame ACK
       static const std::string c_ack_frame = "$,FRAME,OK,#,";
-      //! Minimum of char's in string
-      static const int c_min_char_in_string = 4;
 
       Interface::Interface(IO::Handle* handle, std::string ibin):
         m_handle(handle),
@@ -83,7 +83,7 @@ namespace DUNE
         {
           print(" > Waiting for the system to fully erase the flash\n");
           char send_text[32];
-          std::sprintf(send_text, "%s%ld,*", c_size_file_update, firmware.getFirmwareSize());
+          std::sprintf(send_text, "%s%ld,*", c_size_file_update, (unsigned long)firmware.getFirmwareSize());
           sendCommand(send_text);
           if(readReply(c_timeout_reply))
           {
@@ -148,7 +148,7 @@ namespace DUNE
       void
       Interface::checkSystemVersion(void)
       {
-        title(" Checking Boot Firmware Version");
+        title(" Checking System Firmware Version");
         sendCommand(c_system_version_cmd);
         if(readReply(c_timeout_reply))
         {
@@ -168,11 +168,11 @@ namespace DUNE
 
               last = next + 1;
             }
-            printf(" > Boot Firmware Version: %s\n", m_system_type.c_str());
+            printf(" > Firmware Version: %s\n", m_system_type.c_str());
           }
           else
           {
-            printf(" > Boot Firmware Version FAIL\n");
+            printf(" > Firmware Version FAIL\n");
           }
         }
         else
@@ -200,10 +200,18 @@ namespace DUNE
       }
 
       bool
-      Interface::syncBoot(void)
+      Interface::syncBoot(bool boot_update)
       {
-        title(" Checking Bootloader Sync");
-        sendCommand(c_jump_to_boot_cmd);
+        if(boot_update)
+        {
+          title(" Checking Main app Sync for bootloader update");
+          sendCommand(c_boot_update_cmd);
+        }
+        else
+        {
+          title(" Checking Bootloader Sync");
+          sendCommand(c_jump_to_boot_cmd);
+        }
         if(readReply(c_timeout_reply))
         {
           uint8_t csum_rx = m_frame_rx[m_frame_rx_count - 1];
@@ -226,7 +234,6 @@ namespace DUNE
       void
       Interface::sendCommand(const char* cmd)
       {
-        //std::printf("Send command: %s\n", cmd);
         size_t size_cmd = std::strlen(cmd);
         m_handle->write(cmd, size_cmd);
         uint8_t csum[2];
@@ -250,7 +257,7 @@ namespace DUNE
             {
               for (size_t i = 0; i < rv; ++i)
               {
-                if(m_buffer_rx[i] == '\n' && m_frame_rx_count > c_min_char_in_string)
+                if(m_buffer_rx[i] == '\n')
                 {
                   m_frame_rx[m_frame_rx_count] = '\0';
                   new_data_string = true;

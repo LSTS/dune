@@ -674,6 +674,9 @@ prepare_for_pass (j_compress_ptr cinfo)
     break;
 #ifdef ENTROPY_OPT_SUPPORTED
   case huff_opt_pass:
+#endif
+  case output_pass:
+#ifdef ENTROPY_OPT_SUPPORTED
     /* Do Huffman optimization for a scan after the first one. */
     select_scan_parameters(cinfo);
     per_scan_setup(cinfo);
@@ -689,8 +692,10 @@ prepare_for_pass (j_compress_ptr cinfo)
     master->pass_type = output_pass;
     master->pass_number++;
     /*FALLTHROUGH*/
+#ifndef DUNE_LEGACY
+    [[fallthrough]];
 #endif
-  case output_pass:
+#endif
     /* Do a data-output pass. */
     /* We need not repeat per-scan setup if prior optimization pass did it. */
     if (! cinfo->optimize_coding) {

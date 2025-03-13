@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -75,6 +75,9 @@ namespace Transports
         m_mutex.unlock();
       }
 
+      void
+      setLogEntry(unsigned int number_lines);
+
     private:
       //! Convenience type definition for a map of power channels.
       typedef std::map<std::string, DUNE::IMC::PowerChannelState*> PowerChannelMap;
@@ -107,6 +110,7 @@ namespace Transports
 
       void
       updatePowerChannel(const DUNE::IMC::PowerChannelState* msg);
+
     };
   }
 }

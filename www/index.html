@@ -1,3 +1,32 @@
+<!--*************************************************************************
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+//***************************************************************************
+// This file is part of DUNE: Unified Navigation Environment.               *
+//                                                                          *
+// Commercial Licence Usage                                                 *
+// Licencees holding valid commercial DUNE licences may use this file in    *
+// accordance with the commercial licence agreement provided with the       *
+// Software or, alternatively, in accordance with the terms contained in a  *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
+//                                                                          *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
+// included in the packaging of this file. You may not use this work        *
+// except in compliance with the Licence. Unless required by applicable     *
+// law or agreed to in writing, software distributed under the Licence is   *
+// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
+// ANY KIND, either express or implied. See the Licence for the specific    *
+// language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
+//***************************************************************************
+// Author: Ricardo Martins                                                  *
+//************************************************************************-->
+
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
@@ -5,32 +34,36 @@
 
 <head>
   <title>DUNE - Control Center</title>
+  <meta charset="UTF-8">
   <link rel="icon" type="image/vnd.microsoft.icon" href="images/dune.ico" />
   <link rel="stylesheet" type="text/css" href="css/default.css" />
 
-  <script type="text/javascript" src="js/Icons.js"></script>
+  <!-- MISC -->
+  <script type="text/javascript" src="js/misc/Icons.js"></script>
+  <script type="text/javascript" src="js/misc/HTTP.js"></script>
+  <script type="text/javascript" src="js/misc/Date.js"></script>
+  <script type="text/javascript" src="js/misc/ChartBar.js"></script>
+  <script type="text/javascript" src="js/misc/Gauge.js"></script>
+  <script type="text/javascript" src="js/misc/TextLabel.js"></script>
+  <script type="text/javascript" src="js/misc/AbbrevToLabel.js"></script>
+  <script type="text/javascript" src="js/misc/Utils.js"></script>
+  <script type="text/javascript" src="js/misc/Angles.js"></script>
+  
+  <!-- SECTIONS -->
+  <script type="text/javascript" src="js/sections/Sections.js"></script>
+  <script type="text/javascript" src="js/sections/BasicSection.js"></script>
+  <script type="text/javascript" src="js/sections/Info.js"></script>
+  <script type="text/javascript" src="js/sections/Sensors.js"></script>
+  <script type="text/javascript" src="js/sections/Power.js"></script>
+  <script type="text/javascript" src="js/sections/Logbook.js"></script>
+  <script type="text/javascript" src="js/sections/Acoustics.js"></script>
+  <script type="text/javascript" src="js/sections/Dummy.js"></script>
 
-  <script type="text/javascript" src="js/HTTP.js"></script>
-  <script type="text/javascript" src="js/Date.js"></script>
-  <script type="text/javascript" src="js/ChartBar.js"></script>
-  <script type="text/javascript" src="js/Gauge.js"></script>
-  <script type="text/javascript" src="js/TextLabel.js"></script>
-  <script type="text/javascript" src="js/AbbrevToLabel.js"></script>
-  <script type="text/javascript" src="js/Utils.js"></script>
-  <script type="text/javascript" src="js/Angles.js"></script>
-
-  <!-- Sections -->
-  <script type="text/javascript" src="js/Sections.js"></script>
-  <script type="text/javascript" src="js/BasicSection.js"></script>
-  <script type="text/javascript" src="js/Logs.js"></script>
-  <script type="text/javascript" src="js/Main.js"></script>
-  <script type="text/javascript" src="js/Power.js"></script>
-  <script type="text/javascript" src="js/Sensors.js"></script>
-  <script type="text/javascript" src="js/Logbook.js"></script>
   <script type="text/javascript" src="index.js"></script>
 
   <style>
-    body {
+    body
+    {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
@@ -38,29 +71,53 @@
     }
 
     /* White theme */
-    body.theme-light {
+    body.theme-light
+    {
+      --cpu-icon-url: url('../images/icons/cpu-light.png');
       --c-background: #ffffff;
       --c-color-text: #131212;
-      --c-background-h-l: #dfd992;
+      --c-color-text-system-name: #000000;
+      --c-background-h-l: #d6d5c4;
       --c-color-text-h-l: #2e2929;
-      --c-color-line-split-tasks: #726e6e;
+      --c-color-line-split-entities: #726e6e;
       --c-color-entity-sensor-background: #d4d1d1;
+      --c-color-entity-sensor-color-label: #000000;
+      --c-color-info: #538b01;
+      --c-color-warning: #E5C100;
+      --c-color-error: #B22222;
+      --c-color-critical: #B22222;
+      --c-color-debug: #000000;
+      --c-color-checkbox-hover: #6885e2;
+      --c-color-disabled: #cccccc;
+      --c-color-link: #3893e9;
       /* Add other styles for white theme */
     }
 
-
     /* Dark theme */
-    body.theme-dark {
-      --c-background: #131212;
+    body.theme-dark
+    {
+      --cpu-icon-url: url('../images/icons/cpu-dark.png');
+      --c-background: #363636;
       --c-color-text: #ffffff;
+      --c-color-text-system-name: #e7e2e2;
       --c-background-h-l: #707070;
       --c-color-text-h-l: #ffffff;
-      --c-color-line-split-tasks: #918d8d;
-      --c-color-entity-sensor-background: #443c3a;
+      --c-color-line-split-entities: #9ec0c0;
+      --c-color-entity-sensor-background: #a59891;
+      --c-color-entity-sensor-color-label: #3a3838;
+      --c-color-info: #38af1a;
+      --c-color-warning: #E5C100;
+      --c-color-error: #c74848;
+      --c-color-critical: #c74848;
+      --c-color-debug: #ffffff;
+      --c-color-checkbox-hover: #e2ba9a;
+      --c-color-disabled: #666666;
+      --c-color-link: #3893e9;
       /* Add other styles for dark theme */
     }
 
-    body.theme-dark form input:disabled {
+    body.theme-dark form input:disabled
+    {
       color: #cccccc;
     }
   </style>
@@ -72,23 +129,23 @@
       <td id="MenuBar">
         <div id="Menu">
           <ul>
-            <li id="Main" class="First"><a href="javascript:show('Main')">Main</a></li>
-            <li id="Sensors"><a href="javascript:show('Sensors')">Sensors</a></li>
-            <!-- <li id="Logs"><a href="javascript:show('Logs')">Logs</a></li> -->
-            <!-- <li id="Services"><a href="#">Services</a></li> -->
-            <li id="Power"><a href="javascript:show('Power')">Power</a></li>
-            <li id="Logbook"><a href="javascript:show('Logbook')">Logbook</a></li>
-            <!-- <li id="Help"><a href="#">Help</a></li> -->
-            <li class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected"
-                  alt="Connected" /></a></li>
-            <li class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/dark-switch.png"
-                  title="Theme Change" alt="Light" style="max-width: 16px; max-height: 16px;"></a></li>
+            <li id="buttonInfo" class="First"><a href="javascript:show('Info')">Info</a></li>
+            <li id="buttonSensors"><a href="javascript:show('Sensors')">Sensors</a></li>
+            <li id="buttonPower"><a href="javascript:show('Power')">Power</a></li>
+            <li id="buttonLogbook"><a href="javascript:show('Logbook')">Logbook</a></li>
+            <li id="buttonAcoustics"><a href="javascript:show('Acoustics')">Acoustics</a></li>
+            <li id="buttonDummy"><a href="javascript:show('Dummy')">Dummy</a></li>
+            <li id="buttonConnection" class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected"
+                alt="Connected" /></a></li>
+            <li id="buttonTheme" class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/dark-switch.png"
+                title="Theme Change" alt="Light" style="max-width: 16px; max-height: 16px;"></a></li>
           </ul>
         </div>
       </td>
     </tr>
     <tr>
-      <td class="infoTable" style="background-color: var(--c-background); padding: 0em; border: solid var(--c-color-text) thin;">
+      <td class="infoTable"
+        style="background-color: var(--c-background); padding: 0em; border: solid var(--c-color-text) thin;">
         <div id="x-container">
         </div>
       </td>
@@ -96,17 +153,21 @@
   </table>
 
   <div id="x-copyright">
-    <p>Copyright &copy; 2007-2024 - Universidade do Porto</p>
+    <p>Copyright &copy; 2007-2025 - Universidade do Porto</p>
   </div>
 
   <script>
-    function toggleTheme() {
+    function toggleTheme()
+    {
       var body = document.body;
-      if (body.classList.contains('theme-light')) {
+      if (body.classList.contains('theme-light'))
+      {
         body.classList.remove('theme-light');
         body.classList.add('theme-dark');
         document.getElementById('ThemeIcon').src = 'images/light-switch.png';
-      } else {
+      }
+      else
+      {
         body.classList.remove('theme-dark');
         body.classList.add('theme-light');
         document.getElementById('ThemeIcon').src = 'images/dark-switch.png';

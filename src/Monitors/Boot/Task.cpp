@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -45,6 +45,7 @@ namespace Monitors
       std::string default_recipient;
       std::string task_sms_name;
       std::string task_paramater_name;
+      std::string external_info_text;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -88,6 +89,11 @@ namespace Monitors
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("SMS Recipient Number")
         .description(DTR("Task Parameter for SMS Number"));
+
+        param("External Info Text", m_args.external_info_text)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("")
+        .description(DTR("External information to be sent in the boot message"));
 
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
       }
@@ -153,10 +159,13 @@ namespace Monitors
       sendSatelliteText()
       {
         Time::BrokenDown bdt(Time::Clock::getSinceEpoch());
-        std::string msg = "Boot: ";
+        std::string msg = "(" + std::string(getSystemName()) +") Boot: ";
         msg += String::str("%04u-%02u-%02u %02u:%02u:%02u", bdt.year, bdt.month,
                                                             bdt.day, bdt.hour, 
                                                             bdt.minutes, bdt.seconds);
+
+        if (!m_args.external_info_text.empty())
+          msg += " - " + m_args.external_info_text;
 
         IMC::TransmissionRequest request;
         request.setDestination(getSystemId());
@@ -174,10 +183,13 @@ namespace Monitors
       sendSMS()
       {
         Time::BrokenDown bdt(Time::Clock::getSinceEpoch());
-        std::string msg = "Boot: ";
+        std::string msg = "(" + std::string(getSystemName()) +") Boot: ";
         msg += String::str("%04u-%02u-%02u %02u:%02u:%02u", bdt.year, bdt.month,
                                                             bdt.day, bdt.hour, 
                                                             bdt.minutes, bdt.seconds);
+
+        if (!m_args.external_info_text.empty())
+          msg += " - " + m_args.external_info_text;
 
         IMC::TransmissionRequest request;
         request.setDestination(getSystemId());
@@ -230,7 +242,7 @@ namespace Monitors
             m_msg_sent = true;
           }
 
-          Delay::wait(1.0);
+          waitForMessages(1.0);
         }
       }
     };
