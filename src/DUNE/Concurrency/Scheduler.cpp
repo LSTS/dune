@@ -118,11 +118,33 @@ namespace DUNE
     }
 
     unsigned
+    Scheduler::minimumPriority(Policy policy)
+    {
+#if defined(DUNE_SYS_HAS_SCHED_GET_PRIORITY_MIN)
+      int native_policy = native(policy);
+      return sched_get_priority_min(native_policy);
+#endif
+
+      return 0;
+    }
+
+    unsigned
     Scheduler::maximumPriority(void)
     {
 #if defined(DUNE_SYS_HAS_SCHED_GET_PRIORITY_MAX)
       int policy = native();
       return sched_get_priority_max(policy);
+#endif
+
+      return 0;
+    }
+
+    unsigned
+    Scheduler::maximumPriority(Policy policy)
+    {
+#if defined(DUNE_SYS_HAS_SCHED_GET_PRIORITY_MIN)
+      int native_policy = native(policy);
+      return sched_get_priority_max(native_policy);
 #endif
 
       return 0;

@@ -96,12 +96,24 @@ namespace DUNE
       static unsigned
       minimumPriority(void);
 
+      //! Get the minimum priority value for a given scheduling policy.
+      //! @param policy scheduling policy.
+      //! @return minimum priority value for given scheduling policy.
+      static unsigned
+      minimumPriority(Policy policy);
+
       //! Get the maximum priority value for current default
       //! scheduling policy.
       //! @return maximum priority value for current scheduling
       //! policy.
       static unsigned
       maximumPriority(void);
+
+      //! Get the maximum priority value for a given scheduling policy.
+      //! @param policy scheduling policy.
+      //! @return maximum priority value for given scheduling policy.
+      static unsigned
+      maximumPriority(Policy policy);
     };
   }
 }
