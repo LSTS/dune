@@ -25,71 +25,56 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Bernardo Gabriel                                                 *
-// Author: Ricardo Martins (legacy index.js)                                *
 //***************************************************************************
 
-var g_icons = new Icons();
-var g_uid = null;
-var g_time_current = null;
-var g_entities = null;
-
-window.onload = function()
+function Dummy(root_id)
 {
-  setConnected(false);
-  g_sections.create();
-  g_sections.updateUsedSections(DEFAULT_SECTION);
-  g_sections.init();
-  g_sections.requestData();
+  this.create('Dummy', root_id);
+
+  let speechBubble = document.createElement("div");
+  speechBubble.textContent = "Hello, World!";
+  
+  speechBubble.style.display = "inline-block";
+  speechBubble.style.backgroundColor = "#f1f1f1";
+  speechBubble.style.padding = "10px 15px";
+  speechBubble.style.borderRadius = "10px";
+  speechBubble.style.border = "2px solid black";
+  speechBubble.style.fontFamily = "Arial, sans-serif";
+  speechBubble.style.fontSize = "16px";
+  speechBubble.style.position = "relative";
+  speechBubble.style.margin = "20px";
+
+  let tail = document.createElement("div");
+  tail.style.position = "absolute";
+  tail.style.bottom = "-10px";
+  tail.style.left = "20px";
+  tail.style.width = "0";
+  tail.style.height = "0";
+  tail.style.borderLeft = "10px solid transparent";
+  tail.style.borderRight = "10px solid transparent";
+  tail.style.borderTop = "10px solid black";
+
+  speechBubble.appendChild(tail);
+  this.element().appendChild(speechBubble);
+};
+  
+Dummy.prototype = Object.create(BasicSection.prototype);
+Dummy.prototype.constructor = Dummy;
+
+Dummy.prototype.start = function()
+{
 };
 
-function show(section)
+Dummy.prototype.timeoutHandler = function()
 {
-  g_sections.show(section)
+  this.remove();
 };
 
-function resolveEntity(input)
+Dummy.prototype.errorHandler = function(status, status_text)
 {
-  if (!g_entities)
-    return null;
-
-  const entries = Object.entries(g_entities);
-  if (typeof input === "number")
-  {
-    for (const [id, entity] of entries)
-    {
-      if (parseInt(id, 10) === input)
-        return entity.label;
-    }
-  }
-  else if (typeof input === "string")
-  {
-    for (const [id, entity] of entries)
-    {
-      if (entity.label === input)
-        return parseInt(id, 10);
-    }
-  }
-
-  return null;
+  this.timeoutHandler();
 };
 
-function setConnected(value)
+Dummy.prototype.update = function ()
 {
-  var icon = document.getElementById('ConnectionIcon');
-
-  if (value)
-  {
-    icon.src = g_icons.path('normal');
-    icon.title = 'Connected';
-  }
-  else
-  {
-    icon.src = g_icons.path('error');
-    icon.title = 'Disconnected';
-  }
 };
-
-function getMenuItem(id)
-{
-  return document.getElementById(id);
-}

@@ -25,71 +25,100 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Bernardo Gabriel                                                 *
-// Author: Ricardo Martins (legacy index.js)                                *
+// Author: Ricardo Martins (legacy BasicSection.js)                         *
 //***************************************************************************
 
-var g_icons = new Icons();
-var g_uid = null;
-var g_time_current = null;
-var g_entities = null;
+function BasicSection()
+{ };
 
-window.onload = function()
+BasicSection.prototype.create = function(id, root_id)
 {
-  setConnected(false);
-  g_sections.create();
-  g_sections.updateUsedSections(DEFAULT_SECTION);
-  g_sections.init();
-  g_sections.requestData();
+  this.m_used = false;
+  
+  this.m_base = document.createElement('div');
+  this.m_base.id = id;
+  this.m_base.style.width = '100%';
+  this.hide();
+  this.remove();
+
+  this.m_root_id = root_id;
+  this.m_root = document.getElementById(root_id);
+  if (!this.m_root)
+    return;
+
+  this.m_root.appendChild(this.m_base);
 };
 
-function show(section)
+BasicSection.prototype.createHeader = function(label)
 {
-  g_sections.show(section)
+  var h1 = document.createElement('h1');
+  h1.appendChild(document.createTextNode(label));
+  this.m_base.appendChild(h1);
+  var hr = document.createElement('hr');
+  this.m_base.appendChild(hr);
 };
 
-function resolveEntity(input)
+BasicSection.prototype.add = function()
 {
-  if (!g_entities)
-    return null;
+  if (this.m_used)
+    return;
 
-  const entries = Object.entries(g_entities);
-  if (typeof input === "number")
-  {
-    for (const [id, entity] of entries)
-    {
-      if (parseInt(id, 10) === input)
-        return entity.label;
-    }
-  }
-  else if (typeof input === "string")
-  {
-    for (const [id, entity] of entries)
-    {
-      if (entity.label === input)
-        return parseInt(id, 10);
-    }
-  }
+  const menuItem = getMenuItem("button" + this.id());
+  if (menuItem)
+    menuItem.style.display = 'block';
 
-  return null;
+  this.m_used = true;
+  this.element().style.display = 'block';
+  this.init();
 };
 
-function setConnected(value)
+BasicSection.prototype.remove = function()
 {
-  var icon = document.getElementById('ConnectionIcon');
+  const menuItem = getMenuItem("button" + this.id());
+  if (menuItem)
+    menuItem.style.display = 'none';
 
-  if (value)
-  {
-    icon.src = g_icons.path('normal');
-    icon.title = 'Connected';
-  }
-  else
-  {
-    icon.src = g_icons.path('error');
-    icon.title = 'Disconnected';
-  }
+  this.m_used = false;
+  this.element().style.display = 'none';
 };
 
-function getMenuItem(id)
+BasicSection.prototype.show = function()
 {
-  return document.getElementById(id);
-}
+  if (!this.m_used)
+    return;
+
+  this.element().className = 'Visible';
+};
+
+BasicSection.prototype.hide = function()
+{
+  this.element().className = 'Hidden';
+};
+
+BasicSection.prototype.element = function()
+{
+  return this.m_base;
+};
+
+BasicSection.prototype.id = function()
+{
+  return this.m_base.id;
+};
+
+BasicSection.prototype.init = function()
+{
+  if (!this.m_used)
+    return;
+
+  this.start();
+};
+
+BasicSection.prototype.start = function()
+{
+  throw new Error("Derived class must override start()");
+};
+
+BasicSection.prototype.update = function(data)
+{
+  throw new Error("Derived class must override update()");
+};

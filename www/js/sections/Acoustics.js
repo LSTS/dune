@@ -24,105 +24,77 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
-function BasicSection()
-{ };
-
-BasicSection.prototype.create = function(id, root_id)
+function Acoustics(root_id)
 {
-    this.m_base = document.createElement('div');
-    this.m_base.id = id;
-    this.m_base.width = '100%';
-    this.m_base.className = 'Hidden';
+  this.m_timer = null;
+  
+  this.create('Acoustics', root_id);
 
-    this.m_root_id = root_id;
-    this.m_root = document.getElementById(root_id);
-    this.m_root.appendChild(this.m_base);
+  this.handleData = this.handleData.bind(this);
+  this.requestData = this.requestData.bind(this);
+  this.errorHandler = this.errorHandler.bind(this);
+  this.timeoutHandler = this.timeoutHandler.bind(this);
+};
+  
+Acoustics.prototype = Object.create(BasicSection.prototype);
+Acoustics.prototype.constructor = Acoustics;
+
+Acoustics.prototype.start = function()
+{
+  this.requestData();
 };
 
-BasicSection.prototype.createHeader = function(label)
+Acoustics.prototype.timeoutHandler = function()
 {
-    var h1 = document.createElement('h1');
-    h1.appendChild(document.createTextNode(label));
-    this.m_base.appendChild(h1);
-    var hr = document.createElement('hr');
-    this.m_base.appendChild(hr);
+  this.remove();
 };
 
-BasicSection.prototype.element = function()
+Acoustics.prototype.errorHandler = function(status, status_text)
 {
-    return this.m_base;
+  this.timeoutHandler();
 };
 
-BasicSection.prototype.resolveEntity = function(id)
+Acoustics.prototype.requestData = function()
 {
-    var ent = g_data.dune_entities[id];
-
-    if (typeof ent == 'undefined')
-        return "Unknown";
-
-    return ent.label;
+  if (!this.m_used)
+    return;
+  
+  var options =
+  {
+    timeout: 10000,
+    timeoutHandler: this.timeoutHandler,
+    errorHandler: this.errorHandler
+  };
+  
+  HTTP.get('dune/acoustics', this.handleData, options);
 };
 
-BasicSection.prototype.getEntityStateState = function(msg)
+Acoustics.prototype.handleData = function(text)
 {
-    var ent = g_data.dune_entities[msg.src_ent];
+  if (this.m_timer == null)
+    this.m_timer = setInterval(this.requestData, 4000);
 
-    if (typeof ent == 'undefined')
-        return "Unknown";
+  let data;
+  try
+  {
+    data = JSON.parse(text);
+  }
+  catch (error)
+  {
+    // console.error("Failed to parse JSON:", error);
+    return;
+  }
 
-    return ent.state;
+  this.update(data);
 };
 
-BasicSection.prototype.getEntityStateDesc = function(msg, defval)
+Acoustics.prototype.update = function(data)
 {
-    if (msg.src_ent in g_data.dune_entities)
-    {
-        if ('desc' in g_data.dune_entities[msg.src_ent])
-            return g_data.dune_entities[msg.src_ent].desc;
-    }
-
-    return defval;
-};
-
-BasicSection.prototype.findMessage = function(abbrev)
-{
-    for (var i in g_data.dune_messages)
-    {
-        var msg = g_data.dune_messages[i];
-
-        if (msg.abbrev == abbrev)
-            return msg;
-    }
-
-    return null;
-};
-
-BasicSection.prototype.getMessageValue = function(abbrev)
-{
-    return this.findMessage(abbrev).value;
-};
-
-BasicSection.prototype.getEntityStateIcon = function(state)
-{
-    switch (Number(state))
-    {
-    case 0:
-        return g_icons.path('warning');
-    case 1:
-        return g_icons.path('normal');
-    case 2: case 3:
-        return g_icons.path('error');
-    case 4:
-        return g_icons.path('fatal');
-    }
-
-    return g_icons.path('unknown');
-};
-
-BasicSection.prototype.id = function()
-{
-    return this.m_base.id;
+  Object.entries(data).forEach(([key, value]) =>
+  {
+    console.log(key, value);
+  });
 };
