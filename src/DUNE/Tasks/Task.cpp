@@ -368,8 +368,14 @@ namespace DUNE
       {
         setPriority(m_args.priority);
       }
+      catch (std::exception& e)
+      {
+        debug("failed to set task priority - %s", e.what());
+      }
       catch (...)
-      { }
+      { 
+        debug("failed to set task priority - unknown error");
+      }
 
       while (!stopping())
       {
