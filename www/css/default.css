@@ -422,7 +422,7 @@ p.DEBUG
   background-color: var(--c-background);
 }
 
-input[type="checkbox"]
+input[type="checkbox"]:not(.acoustics-checkbox)
 {
   display: none;
 }
