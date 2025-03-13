@@ -214,7 +214,7 @@ namespace UserInterfaces
 
         std::string
         powerChannelsJSON(void)
-        {         
+        {
           std::ostringstream os;
           os << "{\n";
 
