@@ -39,6 +39,13 @@ namespace Monitors
   //! @author Bernardo Gabriel
   namespace AcousticModemsSelector
   {
+    using DUNE_NAMESPACES;
+
+    //! Request uri.
+    constexpr const char* c_request_uri = "/dune/acoustics";
+    //! Section id.
+    constexpr const char* c_section_id = "Acoustics";
+
     struct AcosuticModemInfo
     {
       //! Acoustic Modem type.
@@ -63,8 +70,6 @@ namespace Monitors
       std::string manta_elabel;
     };
 
-    using DUNE_NAMESPACES;
-
     struct Task: public DUNE::Tasks::Task
     {
       //! Task arguments.
@@ -79,13 +84,21 @@ namespace Monitors
       std::unordered_set<std::string> m_uan_config;
       //! New acoustic modems configuration state.
       bool m_amodems_state;
+      //! Targetable system names.
+      std::unordered_set<std::string> m_sys;
+      //! UAN Entity Id.
+      uint8_t m_uan_id;
+      //! Id for TransmissionRequest IMC message.
+      uint16_t m_treqid;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_amodems_state(false)
+        m_amodems_state(false),
+        m_uan_id(255),
+        m_treqid(0)
       {
         param("Acoustic Modems List Label", m_args.am_list)
         .defaultValue("Acoustic Modems")
@@ -107,7 +120,9 @@ namespace Monitors
         .defaultValue("Manta Core")
         .description("Manta Core entity label.");
 
+        bind<IMC::AcousticSystems>(this);
         bind<IMC::EntityParameters>(this);
+        bind<IMC::HTTPAction>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -145,8 +160,7 @@ namespace Monitors
           std::string selected = avoidTypeMultiSelection(type);
           if (!selected.empty())
           {
-            updateSelectedAcousticModem(type, m_acoustic_modems[selected].uri);
-            m_selected[type] = selected;
+            updateSelectedAcousticModem(selected);
             m_uan_config.insert(type);
           }
           else
@@ -173,6 +187,14 @@ namespace Monitors
       void
       onEntityResolution(void)
       {
+        try
+        {
+          m_uan_id = resolveEntity(m_args.uan_elabel);
+        }
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
+        {
+          war(DTR("%s"), e.what());
+        }
       }
 
       //! Acquire resources.
@@ -185,12 +207,117 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
+        registerWebpageSection();
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       {
+      }
+
+      void
+      registerWebpageSection(void)
+      {
+        IMC::HTTPAction action;
+        action.op = IMC::HTTPAction::OP_REGISTER;
+        action.data.assign(c_section_id, c_section_id + std::strlen(c_section_id));
+        dispatch(action);
+      }
+
+      bool
+      matchURL(const char* url, const char* str, bool fragment = false)
+      {
+        if (fragment)
+        {
+          int size = std::strlen(str);
+          return (std::strncmp(url, str, size) == 0);
+        }
+
+        return (std::strcmp(url, str) == 0);
+      }
+
+      std::string
+      acousticsJSON(void)
+      {
+        std::ostringstream os;
+        os << "{\n";
+
+        os << "\"acoustic_modems_types\": \"" << Utils::String::join(m_types.begin(), m_types.end(), ",") << "\",\n";
+
+        os << "\"acoustic_modems\":" << "\n{";
+        auto it = m_acoustic_modems.begin();
+        if (it != m_acoustic_modems.end())
+        {
+          os << "  \"" << it->first << "\": \"" << static_cast<int>(it->second.state) << "\"";
+          ++it;
+        }
+        
+        while (it != m_acoustic_modems.end())
+        {
+          os << ",\n  \"" << it->first << "\": \"" << static_cast<int>(it->second.state) << "\"";
+          ++it;
+        }
+        os << "},\n";
+
+        os << "\"acoustic_targets\": \"" << Utils::String::join(m_sys.begin(), m_sys.end(), ",") << "\"";
+
+        os << "\n}";
+        return os.str();
+      }
+
+      uint16_t
+      getInternalId(void)
+      {
+        m_treqid = (m_treqid + 1) * (m_treqid != UINT16_MAX);
+        return m_treqid;
+      }
+
+      void
+      dispatchAction(std::string action, std::string dest)
+      {
+        war("%s to %s", action.c_str(), dest.c_str());
+        IMC::TransmissionRequest treq;
+        treq.setDestination(getSystemId());
+        treq.comm_mean = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
+        treq.req_id = getInternalId();
+        treq.destination = dest;
+        treq.data_mode = (action == "ping") ?
+                          IMC::TransmissionRequest::DMODE_RANGE:
+                          IMC::TransmissionRequest::DMODE_ABORT;
+        dispatch(treq);
+      }
+
+      void
+      receivedAcousticModemsSelection(std::string selection)
+      {
+        IMC::SetEntityParameters sep;
+        sep.setDestination(getSystemId());
+        sep.name = getEntityLabel();
+
+        std::unordered_set<std::string> lst;
+        Utils::String::split(selection, "&", lst);
+        for (const auto& amodem: m_acoustic_modems)
+        {
+          IMC::EntityParameter p;
+          p.name = amodem.first;
+          p.value = (lst.find(amodem.first) != lst.end()) ? "true" : "false";
+          sep.params.push_back(p);
+        }
+
+        dispatch(sep, DF_LOOP_BACK);
+      }
+
+      void
+      consume(const IMC::AcousticSystems* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getSourceEntity() != m_uan_id)
+          return;
+        
+        String::split(msg->list, ",", m_sys);
       }
 
       void
@@ -243,6 +370,40 @@ namespace Monitors
               m_selected[param->name] = param->value;
               break;
             }
+          }
+        }
+      }
+
+      void
+      consume(const IMC::HTTPAction* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+        
+        if (msg->op != IMC::HTTPAction::OP_REQUEST)
+          return;
+        
+        if (matchURL(msg->data.data(), c_request_uri))
+        {
+          IMC::HTTPAction action;
+          action.setDestination(msg->getSource());
+          action.setDestinationEntity(msg->getSourceEntity());
+          action.id = msg->id;
+          action.op = IMC::HTTPAction::OP_REPLY;
+          std::string text = acousticsJSON();
+          action.data.assign(text.begin(), text.end());
+          dispatch(action);
+        }
+        else if (matchURL(msg->data.data(), c_request_uri, true))
+        {
+          std::vector<std::string> parts;
+          Utils::String::split(msg->data.data(), "/", parts);
+          if (parts.size() == 5)
+          {
+            if (parts[3] == "ping" || parts[3] == "abort")
+              dispatchAction(parts[3], parts[4]);
+            else if (parts[3] == "selection")
+              receivedAcousticModemsSelection(parts[4]);
           }
         }
       }
@@ -339,8 +500,11 @@ namespace Monitors
 
       //! Set selected acoustic modem for respective task.
       void
-      updateSelectedAcousticModem(const std::string& type, const std::string& uri)
+      updateSelectedAcousticModem(const std::string& selected)
       {
+        const std::string type = m_acoustic_modems[selected].type;
+        const std::string uri = m_acoustic_modems[selected].uri;
+        m_selected[type] = selected;
         debug("setting acoustic modem %s URI: %s", type.c_str(), uri.c_str());
         IMC::SetEntityParameters sep;
         sep.setDestination(getSystemId());
