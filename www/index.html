@@ -34,32 +34,36 @@
 
 <head>
   <title>DUNE - Control Center</title>
+  <meta charset="UTF-8">
   <link rel="icon" type="image/vnd.microsoft.icon" href="images/dune.ico" />
   <link rel="stylesheet" type="text/css" href="css/default.css" />
 
-  <script type="text/javascript" src="js/Icons.js"></script>
+  <!-- MISC -->
+  <script type="text/javascript" src="js/misc/Icons.js"></script>
+  <script type="text/javascript" src="js/misc/HTTP.js"></script>
+  <script type="text/javascript" src="js/misc/Date.js"></script>
+  <script type="text/javascript" src="js/misc/ChartBar.js"></script>
+  <script type="text/javascript" src="js/misc/Gauge.js"></script>
+  <script type="text/javascript" src="js/misc/TextLabel.js"></script>
+  <script type="text/javascript" src="js/misc/AbbrevToLabel.js"></script>
+  <script type="text/javascript" src="js/misc/Utils.js"></script>
+  <script type="text/javascript" src="js/misc/Angles.js"></script>
+  
+  <!-- SECTIONS -->
+  <script type="text/javascript" src="js/sections/Sections.js"></script>
+  <script type="text/javascript" src="js/sections/BasicSection.js"></script>
+  <script type="text/javascript" src="js/sections/Info.js"></script>
+  <script type="text/javascript" src="js/sections/Sensors.js"></script>
+  <script type="text/javascript" src="js/sections/Power.js"></script>
+  <script type="text/javascript" src="js/sections/Logbook.js"></script>
+  <script type="text/javascript" src="js/sections/Acoustics.js"></script>
+  <script type="text/javascript" src="js/sections/Dummy.js"></script>
 
-  <script type="text/javascript" src="js/HTTP.js"></script>
-  <script type="text/javascript" src="js/Date.js"></script>
-  <script type="text/javascript" src="js/ChartBar.js"></script>
-  <script type="text/javascript" src="js/Gauge.js"></script>
-  <script type="text/javascript" src="js/TextLabel.js"></script>
-  <script type="text/javascript" src="js/AbbrevToLabel.js"></script>
-  <script type="text/javascript" src="js/Utils.js"></script>
-  <script type="text/javascript" src="js/Angles.js"></script>
-
-  <!-- Sections -->
-  <script type="text/javascript" src="js/Sections.js"></script>
-  <script type="text/javascript" src="js/BasicSection.js"></script>
-  <script type="text/javascript" src="js/Announces.js"></script>
-  <script type="text/javascript" src="js/Main.js"></script>
-  <script type="text/javascript" src="js/Power.js"></script>
-  <script type="text/javascript" src="js/Sensors.js"></script>
-  <script type="text/javascript" src="js/Logbook.js"></script>
   <script type="text/javascript" src="index.js"></script>
 
   <style>
-    body {
+    body
+    {
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
@@ -67,14 +71,15 @@
     }
 
     /* White theme */
-    body.theme-light {
+    body.theme-light
+    {
       --cpu-icon-url: url('../images/icons/cpu-light.png');
       --c-background: #ffffff;
       --c-color-text: #131212;
       --c-color-text-system-name: #000000;
       --c-background-h-l: #d6d5c4;
       --c-color-text-h-l: #2e2929;
-      --c-color-line-split-tasks: #726e6e;
+      --c-color-line-split-entities: #726e6e;
       --c-color-entity-sensor-background: #d4d1d1;
       --c-color-entity-sensor-color-label: #000000;
       --c-color-info: #538b01;
@@ -88,16 +93,16 @@
       /* Add other styles for white theme */
     }
 
-
     /* Dark theme */
-    body.theme-dark {
+    body.theme-dark
+    {
       --cpu-icon-url: url('../images/icons/cpu-dark.png');
       --c-background: #363636;
       --c-color-text: #ffffff;
       --c-color-text-system-name: #e7e2e2;
       --c-background-h-l: #707070;
       --c-color-text-h-l: #ffffff;
-      --c-color-line-split-tasks: #9ec0c0;
+      --c-color-line-split-entities: #9ec0c0;
       --c-color-entity-sensor-background: #a59891;
       --c-color-entity-sensor-color-label: #3a3838;
       --c-color-info: #38af1a;
@@ -111,7 +116,8 @@
       /* Add other styles for dark theme */
     }
 
-    body.theme-dark form input:disabled {
+    body.theme-dark form input:disabled
+    {
       color: #cccccc;
     }
   </style>
@@ -123,16 +129,16 @@
       <td id="MenuBar">
         <div id="Menu">
           <ul>
-            <li id="Main" class="First"><a href="javascript:show('Main')">Main</a></li>
-            <li id="Sensors"><a href="javascript:show('Sensors')">Sensors</a></li>
-            <li id="Power"><a href="javascript:show('Power')">Power</a></li>
-            <li id="Logbook"><a href="javascript:show('Logbook')">Logbook</a></li>
-            <li id="Announces"><a href="javascript:show('Announces')">Discovery Tool</a></li>
-            <!-- <li id="Help"><a href="#">Help</a></li> -->
-            <li class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected"
-                  alt="Connected" /></a></li>
-            <li class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/dark-switch.png"
-                  title="Theme Change" alt="Light" style="max-width: 16px; max-height: 16px;"></a></li>
+            <li id="buttonInfo" class="First"><a href="javascript:show('Info')">Info</a></li>
+            <li id="buttonSensors"><a href="javascript:show('Sensors')">Sensors</a></li>
+            <li id="buttonPower"><a href="javascript:show('Power')">Power</a></li>
+            <li id="buttonLogbook"><a href="javascript:show('Logbook')">Logbook</a></li>
+            <li id="buttonAcoustics"><a href="javascript:show('Acoustics')">Acoustics</a></li>
+            <li id="buttonDummy"><a href="javascript:show('Dummy')">Dummy</a></li>
+            <li id="buttonConnection" class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected"
+                alt="Connected" /></a></li>
+            <li id="buttonTheme" class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/dark-switch.png"
+                title="Theme Change" alt="Light" style="max-width: 16px; max-height: 16px;"></a></li>
           </ul>
         </div>
       </td>
@@ -141,19 +147,6 @@
       <td class="infoTable"
         style="background-color: var(--c-background); padding: 0em; border: solid var(--c-color-text) thin;">
         <div id="x-container">
-          <div class="logbook-filter">
-          <div id="logbook-filters" style="display: none;">
-            <div class="form-group">
-              <label for="context-filter" class="material-label">Filter by Entity:</label>
-              <select id="context-filter" class="material-select" onchange="g_logbook.selectedContext = this.value; g_logbook.update();">
-                  <option value="all">Show All</option>
-              </select>
-              <label><input type="checkbox" class="material-checkbox" id="filter-info" checked><span class="custom-checkbox"></span> INFO</label>
-              <label><input type="checkbox" class="material-checkbox" id="filter-warning" checked><span class="custom-checkbox"></span> WARNING</label>
-              <label><input type="checkbox" class="material-checkbox" id="filter-error" checked><span class="custom-checkbox"></span> ERROR</label>
-              <label><input type="checkbox" class="material-checkbox" id="filter-debug" checked><span class="custom-checkbox"></span> DEBUG</label>
-            </div>
-          </div>
         </div>
       </td>
     </tr>
@@ -164,13 +157,17 @@
   </div>
 
   <script>
-    function toggleTheme() {
+    function toggleTheme()
+    {
       var body = document.body;
-      if (body.classList.contains('theme-light')) {
+      if (body.classList.contains('theme-light'))
+      {
         body.classList.remove('theme-light');
         body.classList.add('theme-dark');
         document.getElementById('ThemeIcon').src = 'images/light-switch.png';
-      } else {
+      }
+      else
+      {
         body.classList.remove('theme-dark');
         body.classList.add('theme-light');
         document.getElementById('ThemeIcon').src = 'images/dark-switch.png';
