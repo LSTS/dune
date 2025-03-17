@@ -31,6 +31,7 @@
 #include <cstring>
 #include <queue>
 #include <cmath>
+#include <vector>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -51,7 +52,7 @@ namespace Monitors
       //! Expiration time of lost communication SMS.
       unsigned sms_lost_coms_ttl;
       //! Default SMS recipient.
-      std::string recipient;
+      std::vector<std::string> recipients;
       //! Transmission interface.
       std::string interface;
       //! External information text.
@@ -94,10 +95,11 @@ namespace Monitors
         paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_USER);
 
-        param(DTR_RT("SMS Recipient Number"), m_args.recipient)
+        param(DTR_RT("SMS Recipient Number"), m_args.recipients)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .minimumSize(1)
         .defaultValue("+351966575686")
-        .description(DTR("Phone number of the SMS recipient"));
+        .description(DTR("Phone numbers of the SMS recipients"));
 
         param("Lost Communications Timeout", m_args.heartbeat_tout)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
@@ -349,13 +351,6 @@ namespace Monitors
         IMC::TransmissionRequest msg;
         msg.data_mode= IMC::TransmissionRequest::DMODE_TEXT;
 
-        if (recipient.size() == 0)
-          msg.destination = m_args.recipient;
-        else
-          msg.destination = recipient;
-
-        msg.deadline = Time::Clock::getSinceEpoch() + timeout;
-
         if (!m_emsg.empty())
         {
           msg.txt_data = String::str("(%s) %s", prefix, m_emsg.c_str());
@@ -390,7 +385,7 @@ namespace Monitors
         if (ird)
         {
           msg.comm_mean=IMC::TransmissionRequest::CMEAN_SATELLITE;
-          msg.deadline+=30;
+          msg.deadline = Time::Clock::getSinceEpoch() + timeout + 30;
           msg.req_id=m_req++;
           dispatch(msg);
 
@@ -398,14 +393,31 @@ namespace Monitors
                     timeout, msg.destination.c_str(), msg.txt_data.c_str());
         }
 
-        Utils::String::toLowerCase(msg.destination);
-        if (gsm && Utils::String::trim(msg.destination).compare("iridium") != 0){
+        if (gsm)
+        {
           msg.comm_mean=IMC::TransmissionRequest::CMEAN_GSM;
-          msg.req_id=m_req++;
-          dispatch(msg);
-
-          inf(DTR("sending SMS (t:%u) to %s: %s"),
-                    timeout, msg.destination.c_str(), msg.txt_data.c_str());
+          msg.deadline = Time::Clock::getSinceEpoch() + timeout;
+          
+          if (recipient.size() == 0 || recipient == "broadcast")
+          {
+            for(auto rec : m_args.recipients)
+            {
+              msg.destination = rec;
+              msg.req_id=m_req++;
+              dispatch(msg);
+              inf(DTR("sending SMS (t:%u) to %s: %s"),
+                        timeout, msg.destination.c_str(), msg.txt_data.c_str());
+            }
+          }
+          else
+          {
+            msg.destination = recipient;
+            Utils::String::toLowerCase(msg.destination);
+            msg.req_id=m_req++;
+            dispatch(msg);
+            inf(DTR("sending SMS (t:%u) to %s: %s"),
+                      timeout, msg.destination.c_str(), msg.txt_data.c_str());
+          }
         }
         else
         {
@@ -423,10 +435,6 @@ namespace Monitors
         {
           if (!m_hand.isUnderwater())
           {
-            // Use current emergency number.
-            if (number == "default")
-              number = m_args.recipient;
-
             sendSMS("R", m_args.sms_lost_coms_ttl, number);
             spew("sent report to %s", number.c_str());
           }
