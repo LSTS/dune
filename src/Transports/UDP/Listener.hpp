@@ -57,7 +57,13 @@ namespace Transports
         m_trace(trace),
         m_contacts(contact_timeout),
         m_lcomms(lcomms)
-      {  }
+      { }
+
+      void
+      setTrace(bool trace)
+      {
+        m_trace = trace;
+      }
 
       void
       getContacts(std::vector<Contact>& list)
@@ -133,7 +139,7 @@ namespace Transports
             m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
             if (m_trace)
-              msg->toText(std::cerr);
+              DUNE_MSG(m_task.getName(), "incoming: " + std::string(msg->getName()));
 
             delete msg;
           }
