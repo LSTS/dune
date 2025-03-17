@@ -320,13 +320,11 @@ namespace Transports
         char entity_state_text[128];
         if (m_queue.empty())
         {
-          std::sprintf(entity_state_text, "active | %s:%d | queue empty", m_args.uart_dev.c_str(), m_args.uart_baud);
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(entity_state_text)));
+          setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_IDLE).c_str());
           return;
         }
 
-        std::sprintf(entity_state_text, "active | %s:%d | queue size %d", m_args.uart_dev.c_str(), m_args.uart_baud, (int)m_queue.size());
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(entity_state_text)));
+        setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
 
         SmsRequest sms_req = m_queue.top();
         m_queue.pop();
@@ -426,7 +424,15 @@ namespace Transports
       getMessage(Status::Code code)
       {
         std::stringstream ss;
-        ss << getString(code) << m_balance;
+        ss << getString(code) 
+           << " | " << m_args.uart_dev.c_str() << ":" << m_args.uart_baud << " | ";
+        
+        if (m_queue.empty())
+          ss << "queue empty";
+        else
+          ss << "queue size " << m_queue.size();
+
+        ss << m_balance;
 
         return ss.str();
       }
