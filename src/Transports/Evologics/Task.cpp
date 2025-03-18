@@ -274,18 +274,10 @@ namespace Transports
 
         try
         {
-          {
-            char addr[128] = {0};
-            unsigned port = 0;
-
-            if (std::sscanf(m_args.io_dev.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
-              throw Network::InvalidAddress(m_args.io_dev);
-
-            TCPSocket atz;
-            atz.connect(addr, port);
-            atz.writeString("ATZ0\n");
-            Delay::wait(5.0);
-          }
+          auto resetHandle = openDeviceHandle(m_args.io_dev);
+          resetHandle->writeString("ATZ0\n");
+          Memory::clear(resetHandle);
+          Delay::wait(5.0);
 
           m_handle = openDeviceHandle(m_args.io_dev);
         }
@@ -411,6 +403,7 @@ namespace Transports
       {
         if (paramChanged(m_args.io_dev))
         {
+          war("%s", m_args.io_dev.c_str());
           dispatchURI();
           if (isActive())
             requestRestart();
