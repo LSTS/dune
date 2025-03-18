@@ -87,7 +87,7 @@ namespace DUNE
     }
 
     IO::Handle*
-    BasicDeviceDriver::openDeviceHandle(const std::string &device, bool canonicalInput)
+    BasicDeviceDriver::openDeviceHandle(const std::string& device, bool canonicalInput)
     {
       IO::Handle *handle = openSocketTCP(device);
       if (handle == nullptr)
@@ -100,7 +100,7 @@ namespace DUNE
     }
 
     IO::Handle*
-    BasicDeviceDriver::openUART(const std::string &device, bool canonicalInput)
+    BasicDeviceDriver::openUART(const std::string& device, bool canonicalInput)
     {
       char uart[128] = {0};
       unsigned baud = 0;
@@ -118,7 +118,7 @@ namespace DUNE
     }
 
     IO::Handle *
-    BasicDeviceDriver::openSocketTCP(const std::string &device)
+    BasicDeviceDriver::openSocketTCP(const std::string& device)
     {
       char addr[128] = {0};
       unsigned port = 0;
