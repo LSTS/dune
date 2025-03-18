@@ -1,0 +1,16 @@
+if(DUNE_SYS_HAS_DCCL AND DUNE_SYS_HAS_PROTOBUF)
+  file(TO_NATIVE_PATH ${CMAKE_CURRENT_LIST_DIR}/Proto PROTOMODEL_PATH) 
+  file(TO_NATIVE_PATH ${CMAKE_CURRENT_LIST_DIR} PROTOBINDING_PATH)
+  file(GLOB DATAMODEL_PROTOS "${CMAKE_CURRENT_LIST_DIR}/Proto/*.proto")
+  foreach(proto ${DATAMODEL_PROTOS})
+    file(TO_NATIVE_PATH ${proto} proto_native)
+    execute_process(COMMAND "/usr/bin/protoc" --proto_path=${PROTOMODEL_PATH} --cpp_out=${PROTOBINDING_PATH} ${proto_native} RESULT_VARIABLE rv)
+    #oss: /usr/bin/protoc if this is the exact location of this file. It should be this one. 
+    # ${PROTOBUF_PROTOC_EXECUTABLE} previously was used this cache variable but found problem, not setted
+    if(${rv})
+      message(SEND_ERROR "Generation of data model returned ${rv} for proto ${proto_native}")
+    endif()
+  endforeach(proto)
+else(DUNE_SYS_HAS_DCCL AND DUNE_SYS_HAS_PROTOBUF)
+  set(TASK_ENABLED FALSE)
+endif(DUNE_SYS_HAS_DCCL AND DUNE_SYS_HAS_PROTOBUF)

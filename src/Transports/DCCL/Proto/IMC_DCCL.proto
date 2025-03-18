@@ -5,6 +5,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 syntax = "proto3";
+package IMC_DCCL;
 import "dccl/option_extensions.proto";
 
 // Enum Z Units
@@ -245,7 +246,7 @@ message PlanTransition {
 // PlanSpecification 
 message PlanSpecification {
     option (dccl.msg) = { codec_version: 4 id: 551 max_bytes: 8000};
-    string plan_id = 1 [(dccl.field).max_length = 2]; 
+    string plan_id = 1 [(dccl.field).max_length = 20]; 
     string description = 2 [(dccl.field).max_length = 2]; 
     string vnamespace = 3 [(dccl.field).max_length = 2]; 
     ManeuverID start_man_id = 4;
