@@ -256,13 +256,33 @@ namespace UserInterfaces
         auto it = m_acoustic_modems.begin();
         if (it != m_acoustic_modems.end())
         {
-          os << "  \"" << it->first << "\": \"" << static_cast<int>(it->second.selected) << "\"";
+          os << "  \""
+          << it->first
+          << "\": \"";
+       
+          auto it_selected = m_selected.find(it->second.type);
+          if ((it_selected != m_selected.end()) && it->second.selected)
+            os << ((it->second.selected == it_selected->second.state) ? static_cast<int>(it->second.selected) : 2);
+          else 
+            os << static_cast<int>(it->second.selected);
+          
+          os << "\"";
           ++it;
         }
         
         while (it != m_acoustic_modems.end())
         {
-          os << ",\n  \"" << it->first << "\": \"" << static_cast<int>(it->second.selected) << "\"";
+          os << ",\n  \""
+             << it->first
+             << "\": \"";
+          
+          auto it_selected = m_selected.find(it->second.type);
+          if ((it_selected != m_selected.end()) && it->second.selected)
+            os << ((it->second.selected == it_selected->second.state) ? static_cast<int>(it->second.selected) : 2);
+          else 
+            os << static_cast<int>(it->second.selected);
+          
+          os << "\"";
           ++it;
         }
         os << "},\n";
