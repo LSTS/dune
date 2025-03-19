@@ -170,11 +170,6 @@ namespace UserInterfaces
         }
 
         updateSelectedTypes(String::join(m_uan_config.begin(), m_uan_config.end(), ","));
-
-        IMC::SaveEntityParameters sp;
-        sp.setDestination(getSystemId());
-        sp.name = getEntityLabel();
-        dispatch(sp);
       }
 
       //! Reserve entity identifiers.
