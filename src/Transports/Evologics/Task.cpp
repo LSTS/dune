@@ -264,6 +264,8 @@ namespace Transports
       bool
       onConnect() override
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+        
         // Change port for simulation purposes
         if (m_simulating)
         {
