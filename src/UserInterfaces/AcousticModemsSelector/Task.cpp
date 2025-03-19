@@ -398,7 +398,12 @@ namespace UserInterfaces
             if (parts[3] == "ping" || parts[3] == "abort")
               dispatchAction(parts[3], parts[4]);
             else if (parts[3] == "selection")
-              receivedAcousticModemsSelection(parts[4]);
+            {
+              if (parts[4] == "save")
+                saveParameters();
+              else
+                receivedAcousticModemsSelection(parts[4]);
+            }
           }
         }
       }
