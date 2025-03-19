@@ -56,6 +56,14 @@ namespace UserInterfaces
       bool selected;
     };
 
+    struct AcousticModemTask
+    {
+      //! Acoustic Modem name.
+      std::string name;
+      //! Task state.
+      bool state;
+    };
+
     struct Arguments
     {
       //! Acoustic Modems list label.
@@ -76,8 +84,8 @@ namespace UserInterfaces
       Arguments m_args;
       //! Map of acoustic modems (name, info{type, uri, selected}).
       std::map<std::string, AcousticModemInfo> m_acoustic_modems;
-      //! Map of activated acoustic modems (type, name).
-      std::map<std::string, std::string> m_selected;
+      //! Map of activated acoustic modems (type, task{name, state}).
+      std::map<std::string, AcousticModemTask> m_selected;
       //! Set of known types of acoustic modems.
       std::unordered_set<std::string> m_types;
       //! UAN acoustic modems configuration.
@@ -122,6 +130,7 @@ namespace UserInterfaces
 
         bind<IMC::AcousticSystems>(this);
         bind<IMC::EntityParameters>(this);
+        bind<IMC::EntityState>(this);
         bind<IMC::HTTPAction>(this);
       }
 
@@ -164,7 +173,10 @@ namespace UserInterfaces
             m_uan_config.insert(type);
           }
           else
+          {
+            m_selected.erase(type);
             m_uan_config.erase(type);
+          }
 
           dispatchAcousticModems(type);
         }
@@ -339,8 +351,8 @@ namespace UserInterfaces
                 {
                   m_acoustic_modems[m_selected[type].name].selected = true;
                   IMC::EntityParameter p;
-                  p.name = m_selected[type];
-                  p.value = m_acoustic_modems[m_selected[type]].selected ? "true" : "false";
+                  p.name = m_selected[type].name;
+                  p.value = m_acoustic_modems[m_selected[type].name].selected ? "true" : "false";
                   sep.params.push_back(p);
                   m_amodems_state = false;
                 }
@@ -356,17 +368,28 @@ namespace UserInterfaces
             }
           }
         }
-        else if (m_types.find(msg->name) != m_types.end())
+      }
+
+      void
+      consume(const IMC::EntityState* msg)
+      {
+        if (m_selected.empty())
+          return;
+        
+        if (msg->getSource() != getSystemId())
+          return;
+
+        try
         {
-          for (const auto& param: msg->params)
+          for (auto& it: m_selected)
           {
-            if (param->name == m_args.am_uri_param)
-            {
-              m_selected[param->name] = param->value;
-              break;
-            }
+            unsigned id = resolveEntity(it.first);
+            if (id == msg->getSourceEntity())
+              it.second.state = msg->state == IMC::EntityState::ESTA_NORMAL;
           }
         }
+        catch(...)
+        { }
       }
 
       void
@@ -507,7 +530,8 @@ namespace UserInterfaces
       {
         const std::string type = m_acoustic_modems[selected].type;
         const std::string uri = m_acoustic_modems[selected].uri;
-        m_selected[type] = selected;
+        m_selected[type].name = selected;
+        m_selected[type].state = false;
         debug("setting acoustic modem %s URI: %s", type.c_str(), uri.c_str());
         IMC::SetEntityParameters sep;
         sep.setDestination(getSystemId());
