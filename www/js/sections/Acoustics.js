@@ -209,7 +209,8 @@ Acoustics.prototype.fillAcousticsModemsList = function(modemsList)
     stateCircle.style.width = "20px";
     stateCircle.style.height = "20px";
     stateCircle.style.borderRadius = "50%";
-    stateCircle.style.backgroundColor = state == 1 ? "#90EE90" : "#FFCCCB";
+    const colors = ["#FFCCCB", "#90EE90", "#FFFFC5"];
+    stateCircle.style.backgroundColor = colors[state] || "#FFFFFF";
     stateCircle.style.marginRight = "10px";
 
     const selectCheckbox = document.createElement("input");
