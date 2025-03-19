@@ -52,8 +52,8 @@ namespace UserInterfaces
       std::string type;
       //! Acoustic Modem uri.
       std::string uri;
-      //! Acoustic Modem state.
-      bool state;
+      //! Acoustic Modem selected state.
+      bool selected;
     };
 
     struct Arguments
@@ -74,7 +74,7 @@ namespace UserInterfaces
     {
       //! Task arguments.
       Arguments m_args;
-      //! Map of acoustic modems (name, info{type, uri, state}).
+      //! Map of acoustic modems (name, info{type, uri, selected}).
       std::map<std::string, AcousticModemInfo> m_acoustic_modems;
       //! Map of activated acoustic modems (type, name).
       std::map<std::string, std::string> m_selected;
@@ -140,11 +140,11 @@ namespace UserInterfaces
             m_acoustic_modems[modem.first] = {getAcousticModemType(modem.first), modem.second, false};
             m_types.insert(m_acoustic_modems[modem.first].type);
 
-            param(modem.first, m_acoustic_modems[modem.first].state)
+            param(modem.first, m_acoustic_modems[modem.first].selected)
             .visibility(Tasks::Parameter::VISIBILITY_USER)
             .scope(Tasks::Parameter::SCOPE_GLOBAL)
             .defaultValue("false")
-            .description(DTR(String::str("Acoustic modem %s state. "
+            .description(DTR(String::str("True if acoustic modem %s is selected, false otherwise. "
                                          "Only one modem of the type %s can be selected. "
                                          "If multiple modems of the same type are selected, "
                                          "only the first, in alphabetical order, will be considered.",
@@ -244,13 +244,13 @@ namespace UserInterfaces
         auto it = m_acoustic_modems.begin();
         if (it != m_acoustic_modems.end())
         {
-          os << "  \"" << it->first << "\": \"" << static_cast<int>(it->second.state) << "\"";
+          os << "  \"" << it->first << "\": \"" << static_cast<int>(it->second.selected) << "\"";
           ++it;
         }
         
         while (it != m_acoustic_modems.end())
         {
-          os << ",\n  \"" << it->first << "\": \"" << static_cast<int>(it->second.state) << "\"";
+          os << ",\n  \"" << it->first << "\": \"" << static_cast<int>(it->second.selected) << "\"";
           ++it;
         }
         os << "},\n";
@@ -337,10 +337,10 @@ namespace UserInterfaces
               {
                 if (m_types.find(type) != m_types.end())
                 {
-                  m_acoustic_modems[m_selected[type]].state = true;
+                  m_acoustic_modems[m_selected[type].name].selected = true;
                   IMC::EntityParameter p;
                   p.name = m_selected[type];
-                  p.value = m_acoustic_modems[m_selected[type]].state ? "true" : "false";
+                  p.value = m_acoustic_modems[m_selected[type]].selected ? "true" : "false";
                   sep.params.push_back(p);
                   m_amodems_state = false;
                 }
@@ -419,7 +419,7 @@ namespace UserInterfaces
           if (modem.second.type != type)
             continue;
 
-          if (!modem.second.state)
+          if (!modem.second.selected)
             continue;
 
           if (first)
@@ -429,12 +429,12 @@ namespace UserInterfaces
             continue;
           }
 
-          modem.second.state = false;
+          modem.second.selected = false;
           needed = true;
 
           IMC::EntityParameter p;
           p.name = modem.first;
-          p.value = modem.second.state ? "true" : "false";
+          p.value = modem.second.selected ? "true" : "false";
           sep.params.push_back(p);
         }
 
@@ -470,7 +470,7 @@ namespace UserInterfaces
 
           IMC::EntityParameter p;
           p.name = modem.first;
-          p.value = modem.second.state;
+          p.value = modem.second.selected ? "true" : "false";
           params.params.push_back(p);
         }
 
