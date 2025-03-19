@@ -164,14 +164,21 @@ Acoustics.prototype.createChooseModemsSection = function()
 
   this.fillAcousticsModemsList(modemsList);
 
-  const updateButton = document.createElement("button");
-  updateButton.type = "button";
-  updateButton.textContent = "Update Selected Modems";
-  updateButton.style.marginTop = "20px";
-  updateButton.onclick = (event) => { submitAcousticModemsSelection(this.m_selected_modems, event); };
+  const sendButton = document.createElement("button");
+  sendButton.type = "button";
+  sendButton.textContent = "Send";
+  sendButton.style.marginTop = "20px";
+  sendButton.onclick = (event) => { submitAcousticModemsSelection(this.m_selected_modems, event); };
+
+  const saveButton = document.createElement("button");
+  saveButton.type = "button";
+  saveButton.textContent = "Save";
+  saveButton.style.marginTop = "20px";
+  saveButton.onclick = (event) => { submitSaveAcousticModemsSelection(event); };
 
   container.appendChild(modemsList);
-  container.appendChild(updateButton);
+  container.appendChild(sendButton);
+  container.appendChild(saveButton);
   this.element().appendChild(container);
 };
 
@@ -353,5 +360,14 @@ function submitAcousticModemsSelection(selection, event)
     event.preventDefault();
 
   const url = 'dune/acoustics/selection/' + Object.values(selection).join('&');
+  HTTP.post(url);
+};
+
+function submitSaveAcousticModemsSelection(event)
+{
+  if (event)
+    event.preventDefault();
+
+  const url = 'dune/acoustics/selection/save';
   HTTP.post(url);
 };
