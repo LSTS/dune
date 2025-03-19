@@ -403,7 +403,6 @@ namespace Transports
       {
         if (paramChanged(m_args.io_dev))
         {
-          war("%s", m_args.io_dev.c_str());
           dispatchURI();
           if (isActive())
             requestRestart();
