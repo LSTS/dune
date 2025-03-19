@@ -321,6 +321,8 @@ namespace Sensors
       bool
       onConnect() override
       {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+        
         // Configure transducer GPIO (if any).
         if (m_args.gpio_txd > 0)
         {
