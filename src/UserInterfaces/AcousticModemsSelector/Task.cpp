@@ -487,7 +487,10 @@ namespace UserInterfaces
       void
       updateSelectedTypes(const std::string& list)
       {
-        debug("setting UAN config: %s", list.c_str());
+        if (list.empty())
+          debug("erasing UAN config");
+        else
+          debug("setting UAN config: %s", list.c_str());
         IMC::SetEntityParameters sep;
         sep.setDestination(getSystemId());
         sep.name = m_args.uan_elabel;
