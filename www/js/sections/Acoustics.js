@@ -323,7 +323,7 @@ Acoustics.prototype.update = function(data)
   {
     const receivedTargets = data.acoustic_targets.split(",");
     const newTargets = !(receivedTargets.length === this.m_acoustic_targets.length && 
-                          receivedTargets.every((value, index) => value === this.m_acoustic_targets[index]));
+                         receivedTargets.every((value, index) => value === this.m_acoustic_targets[index]));
     if (newTargets)
     {
       this.m_acoustic_targets = receivedTargets;
