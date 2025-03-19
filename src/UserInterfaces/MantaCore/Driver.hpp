@@ -56,7 +56,7 @@ namespace UserInterfaces
       //! Acoustic modems config changed flag.
       bool m_new_modems_config;
 
-      Driver(Tasks::Task* task, IO::Handle* handle, int numberCell, std::string system_name):
+      Driver(Tasks::Task* task, IO::Handle* handle, int numberCell, std::string system_name, std::string ams_elabel):
         m_query_systems(false),
         m_new_modems_config(false),
         m_task(task),
@@ -67,7 +67,8 @@ namespace UserInterfaces
         m_parser_state(PARSER_PREAMBLE),
         m_free_text_state(0),
         m_free_text(task->getEntityLabel()),
-        m_treqid(0)
+        m_treqid(0),
+        m_ams_elabel(ams_elabel)
       {
         querySystems(true);
         m_handle->flush();
@@ -358,6 +359,16 @@ namespace UserInterfaces
         return m_amodems;
       }
 
+      void
+      saveAcousticModemsSelectorParameters(void)
+      {
+        m_task->debug("saving Acoustic Modems Selector parameters");
+        IMC::SaveEntityParameters sp;
+        sp.setDestination(m_task->getSystemId());
+        sp.name = m_ams_elabel;
+        m_task->dispatch(sp);
+      }
+
       //! TODO: if ((m_send_cmd_state == CMD_WAITING && m_wdog.overflow()), retransmit last -> after 5 attempts, com_error.
       //! TODO: if (m_send_cmd_state == CMD_NACK), retransmit last -> after 5 attempts, com_error.
       //! TODO: if command needs a response, make sure it makes sense
@@ -496,6 +507,8 @@ namespace UserInterfaces
           {
             if (lst[2] == "query")
               querySystems(true);
+            else if (lst[2] == "save")
+              saveAcousticModemsSelectorParameters();
             break;
           }
 
@@ -546,6 +559,8 @@ namespace UserInterfaces
       std::queue<std::pair<std::string, bool>> m_queue;
       //! Id for TransmissionRequest IMC message.
       uint16_t m_treqid;
+      //! Acoustic Modems Selector entity label.
+      std::string m_ams_elabel;
       //! Boot watchdog.
       Time::Counter<float> m_wdog_boot;
       //! List of modems.

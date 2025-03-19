@@ -304,7 +304,7 @@ namespace UserInterfaces
       onInitializeDevice() override
       {
         inf("initializing board");
-        m_driver = new Driver(this, m_handle, m_args.number_cell, getSystemName());
+        m_driver = new Driver(this, m_handle, m_args.number_cell, getSystemName(), m_args.ams_elabel);
         m_dispatch = new DispatchData(this, m_driver, &m_args, &m_imc);
         m_wdog.setTop(m_args.inp_tout);
         setupBoard();
