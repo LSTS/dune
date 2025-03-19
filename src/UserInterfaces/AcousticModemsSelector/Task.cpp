@@ -46,7 +46,7 @@ namespace UserInterfaces
     //! Section id.
     constexpr const char* c_section_id = "Acoustics";
 
-    struct AcosuticModemInfo
+    struct AcousticModemInfo
     {
       //! Acoustic Modem type.
       std::string type;
@@ -75,7 +75,7 @@ namespace UserInterfaces
       //! Task arguments.
       Arguments m_args;
       //! Map of acoustic modems (name, info{type, uri, state}).
-      std::map<std::string, AcosuticModemInfo> m_acoustic_modems;
+      std::map<std::string, AcousticModemInfo> m_acoustic_modems;
       //! Map of activated acoustic modems (type, name).
       std::map<std::string, std::string> m_selected;
       //! Set of known types of acoustic modems.
