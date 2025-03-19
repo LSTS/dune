@@ -381,8 +381,6 @@ namespace Sensors
         //! TODO: make sure configuration works
         //! otherwise, task will run even if no modem is connected
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
         dispatchSystems(true);
       }
 
