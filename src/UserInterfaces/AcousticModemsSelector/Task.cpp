@@ -524,6 +524,16 @@ namespace UserInterfaces
         return modem.substr(0, pos);
       }
 
+      void
+      saveParameters(void)
+      {
+        debug("saving entity parameters");
+        IMC::SaveEntityParameters sp;
+        sp.setDestination(getSystemId());
+        sp.name = getEntityLabel();
+        dispatch(sp);
+      }
+
       //! Main loop.
       void
       onMain(void)
