@@ -30,7 +30,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Monitors
+namespace UserInterfaces
 {
   //! Task responsible for handling selection of acoustic modems.
   //!
