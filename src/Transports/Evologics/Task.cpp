@@ -342,8 +342,6 @@ namespace Transports
         m_kalive_counter.setTop(m_args.kalive_tout);
 
         dispatchSystems(true);
-
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
