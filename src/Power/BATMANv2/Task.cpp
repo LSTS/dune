@@ -374,7 +374,7 @@ namespace Power
         {
           m_fuel.setTimeStamp(m_tstamp);
           m_fuel.value = (m_driver->m_batManData.r_cap * 100) / m_driver->m_batManData.f_cap;
-          m_fuel.confidence = 100;
+          m_fuel.confidence = 100 - m_driver->m_batManData.max_error;
           dispatch(m_fuel, DF_KEEP_TIME);
         }
 
@@ -383,12 +383,12 @@ namespace Power
           std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
           if (m_driver->m_batManData.time_full > 0)
           {
-            std::sprintf(m_bufer_entity, "fuel reserve - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
+            std::sprintf(m_bufer_entity, "Fuel reserve - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
             setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR(m_bufer_entity)));
           }
           else if((m_driver->m_batManData.time_empty > 0))
           {
-            std::sprintf(m_bufer_entity, "fuel reserve - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
+            std::sprintf(m_bufer_entity, "Fuel reserve - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
             setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR(m_bufer_entity)));
           }
           else
@@ -401,12 +401,12 @@ namespace Power
           std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
           if (m_driver->m_batManData.time_full > 0)
           {
-            std::sprintf(m_bufer_entity, "fuel warning - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
+            std::sprintf(m_bufer_entity, "Fuel warning - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
             setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
           }
           else if((m_driver->m_batManData.time_empty > 0))
           {
-            std::sprintf(m_bufer_entity, "fuel warning - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
+            std::sprintf(m_bufer_entity, "Fuel warning - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
             setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
           }
           else
@@ -419,12 +419,12 @@ namespace Power
           std::memset(&m_bufer_entity, '\0', sizeof(m_bufer_entity));
           if (m_driver->m_batManData.time_full > 0)
           {
-            std::sprintf(m_bufer_entity, "fuel running low - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
+            std::sprintf(m_bufer_entity, "Fuel running low - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
             setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
           }
           else if ((m_driver->m_batManData.time_empty > 0))
           {
-            std::sprintf(m_bufer_entity, "fuel running low - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
+            std::sprintf(m_bufer_entity, "Fuel running low - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
             setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_bufer_entity)));
           }
           else
@@ -438,21 +438,24 @@ namespace Power
 
           if (m_driver->m_batManData.time_full > 0)
             std::sprintf(m_bufer_entity,
-                         "H: %d %%, Volt: %.3f V, RCap: %.3f Ah, ETF: %s",
+                         "C: %d %%, H: %d %%, V: %.2f V, RC: %.2f Ah, ETF: %s",
+                         (100 - m_driver->m_batManData.max_error),
                          m_driver->m_batManData.health,
                          m_driver->m_batManData.voltage,
                          m_driver->m_batManData.r_cap,
                          minutesToTime(m_driver->m_batManData.time_full).c_str());
           else if (m_driver->m_batManData.time_empty > 0)
             std::sprintf(m_bufer_entity,
-                         "H: %d %%, Volt: %.3f V, RCap: %.3f Ah, ETD: %s",
+                         "C: %d %%, H: %d %%, V: %.2f V, RC: %.2f Ah, ETD: %s",
+                         (100 - m_driver->m_batManData.max_error),
                          m_driver->m_batManData.health,
                          m_driver->m_batManData.voltage,
                          m_driver->m_batManData.r_cap,
                          minutesToTime(m_driver->m_batManData.time_empty).c_str());
           else
             std::sprintf(m_bufer_entity,
-                         "H: %d %%, Volt: %.3f V, RCap: %.3f Ah",
+                         "C: %d %%, H: %d %%, V: %.2f V, RC: %.2f Ah",
+                         (100 - m_driver->m_batManData.max_error),
                          m_driver->m_batManData.health,
                          m_driver->m_batManData.voltage,
                          m_driver->m_batManData.r_cap);
