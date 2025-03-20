@@ -1,5 +1,5 @@
 # Find the libcurl package
-find_package(CURL REQUIRED)
+find_package(CURL QUIET)
 
 if (CURL_FOUND)
   message(STATUS "libcurl found.")
