@@ -252,6 +252,9 @@ namespace UserInterfaces
 
         os << "\"acoustic_modems_types\": \"" << Utils::String::join(m_types.begin(), m_types.end(), ",") << "\",\n";
 
+        if (!m_sys.empty())
+          os << "\"acoustic_targets\": \"" << Utils::String::join(m_sys.begin(), m_sys.end(), ",") << "\",\n";
+
         os << "\"acoustic_modems\":" << "\n{";
         auto it = m_acoustic_modems.begin();
         if (it != m_acoustic_modems.end())
@@ -285,9 +288,7 @@ namespace UserInterfaces
           os << "\"";
           ++it;
         }
-        os << "},\n";
-
-        os << "\"acoustic_targets\": \"" << Utils::String::join(m_sys.begin(), m_sys.end(), ",") << "\"";
+        os << "}\n";
 
         os << "\n}";
         return os.str();
