@@ -254,26 +254,28 @@ inline bool ParameterName_Parse(
   return ::google::protobuf::internal::ParseNamedEnum<ParameterName>(
     ParameterName_descriptor(), name, value);
 }
-enum FalseTrue {
-  FALSE = 0,
+enum ParamValue {
+  NONE = 0,
   TRUE = 1,
-  FalseTrue_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
-  FalseTrue_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+  FALSE = 2,
+  BOTH = 3,
+  ParamValue_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  ParamValue_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
-bool FalseTrue_IsValid(int value);
-const FalseTrue FalseTrue_MIN = FALSE;
-const FalseTrue FalseTrue_MAX = TRUE;
-const int FalseTrue_ARRAYSIZE = FalseTrue_MAX + 1;
+bool ParamValue_IsValid(int value);
+const ParamValue ParamValue_MIN = NONE;
+const ParamValue ParamValue_MAX = BOTH;
+const int ParamValue_ARRAYSIZE = ParamValue_MAX + 1;
 
-const ::google::protobuf::EnumDescriptor* FalseTrue_descriptor();
-inline const ::std::string& FalseTrue_Name(FalseTrue value) {
+const ::google::protobuf::EnumDescriptor* ParamValue_descriptor();
+inline const ::std::string& ParamValue_Name(ParamValue value) {
   return ::google::protobuf::internal::NameOfEnum(
-    FalseTrue_descriptor(), value);
+    ParamValue_descriptor(), value);
 }
-inline bool FalseTrue_Parse(
-    const ::std::string& name, FalseTrue* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<FalseTrue>(
-    FalseTrue_descriptor(), name, value);
+inline bool ParamValue_Parse(
+    const ::std::string& name, ParamValue* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<ParamValue>(
+    ParamValue_descriptor(), name, value);
 }
 enum EntityName {
   NONE_EN = 0,
@@ -1417,7 +1419,7 @@ class ParameterValue : public ::google::protobuf::Message /* @@protoc_insertion_
 
   enum ParameterValueUnionCase {
     kValueNumber = 1,
-    kValueBool = 2,
+    kValueString = 2,
     PARAMETERVALUEUNION_NOT_SET = 0,
   };
 
@@ -1488,21 +1490,21 @@ class ParameterValue : public ::google::protobuf::Message /* @@protoc_insertion_
   float value_number() const;
   void set_value_number(float value);
 
-  // .IMC_DCCL.FalseTrue value_bool = 2;
+  // .IMC_DCCL.ParamValue value_string = 2;
   private:
-  bool has_value_bool() const;
+  bool has_value_string() const;
   public:
-  void clear_value_bool();
-  static const int kValueBoolFieldNumber = 2;
-  ::IMC_DCCL::FalseTrue value_bool() const;
-  void set_value_bool(::IMC_DCCL::FalseTrue value);
+  void clear_value_string();
+  static const int kValueStringFieldNumber = 2;
+  ::IMC_DCCL::ParamValue value_string() const;
+  void set_value_string(::IMC_DCCL::ParamValue value);
 
   void clear_ParameterValueUnion();
   ParameterValueUnionCase ParameterValueUnion_case() const;
   // @@protoc_insertion_point(class_scope:IMC_DCCL.ParameterValue)
  private:
   void set_has_value_number();
-  void set_has_value_bool();
+  void set_has_value_string();
 
   inline bool has_ParameterValueUnion() const;
   inline void clear_has_ParameterValueUnion();
@@ -1511,7 +1513,7 @@ class ParameterValue : public ::google::protobuf::Message /* @@protoc_insertion_
   union ParameterValueUnionUnion {
     ParameterValueUnionUnion() {}
     float value_number_;
-    int value_bool_;
+    int value_string_;
   } ParameterValueUnion_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   ::google::protobuf::uint32 _oneof_case_[1];
@@ -3447,33 +3449,33 @@ inline void ParameterValue::set_value_number(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.ParameterValue.value_number)
 }
 
-// .IMC_DCCL.FalseTrue value_bool = 2;
-inline bool ParameterValue::has_value_bool() const {
-  return ParameterValueUnion_case() == kValueBool;
+// .IMC_DCCL.ParamValue value_string = 2;
+inline bool ParameterValue::has_value_string() const {
+  return ParameterValueUnion_case() == kValueString;
 }
-inline void ParameterValue::set_has_value_bool() {
-  _oneof_case_[0] = kValueBool;
+inline void ParameterValue::set_has_value_string() {
+  _oneof_case_[0] = kValueString;
 }
-inline void ParameterValue::clear_value_bool() {
-  if (has_value_bool()) {
-    ParameterValueUnion_.value_bool_ = 0;
+inline void ParameterValue::clear_value_string() {
+  if (has_value_string()) {
+    ParameterValueUnion_.value_string_ = 0;
     clear_has_ParameterValueUnion();
   }
 }
-inline ::IMC_DCCL::FalseTrue ParameterValue::value_bool() const {
-  // @@protoc_insertion_point(field_get:IMC_DCCL.ParameterValue.value_bool)
-  if (has_value_bool()) {
-    return static_cast< ::IMC_DCCL::FalseTrue >(ParameterValueUnion_.value_bool_);
+inline ::IMC_DCCL::ParamValue ParameterValue::value_string() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.ParameterValue.value_string)
+  if (has_value_string()) {
+    return static_cast< ::IMC_DCCL::ParamValue >(ParameterValueUnion_.value_string_);
   }
-  return static_cast< ::IMC_DCCL::FalseTrue >(0);
+  return static_cast< ::IMC_DCCL::ParamValue >(0);
 }
-inline void ParameterValue::set_value_bool(::IMC_DCCL::FalseTrue value) {
-  if (!has_value_bool()) {
+inline void ParameterValue::set_value_string(::IMC_DCCL::ParamValue value) {
+  if (!has_value_string()) {
     clear_ParameterValueUnion();
-    set_has_value_bool();
+    set_has_value_string();
   }
-  ParameterValueUnion_.value_bool_ = value;
-  // @@protoc_insertion_point(field_set:IMC_DCCL.ParameterValue.value_bool)
+  ParameterValueUnion_.value_string_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.ParameterValue.value_string)
 }
 
 inline bool ParameterValue::has_ParameterValueUnion() const {
@@ -4447,10 +4449,10 @@ template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::ParameterName>() {
   return ::IMC_DCCL::ParameterName_descriptor();
 }
-template <> struct is_proto_enum< ::IMC_DCCL::FalseTrue> : ::std::true_type {};
+template <> struct is_proto_enum< ::IMC_DCCL::ParamValue> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::FalseTrue>() {
-  return ::IMC_DCCL::FalseTrue_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::ParamValue>() {
+  return ::IMC_DCCL::ParamValue_descriptor();
 }
 template <> struct is_proto_enum< ::IMC_DCCL::EntityName> : ::std::true_type {};
 template <>
