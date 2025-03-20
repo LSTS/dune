@@ -344,7 +344,10 @@ namespace UserInterfaces
         if (msg->getSourceEntity() != m_uan_id)
           return;
         
-        String::split(msg->list, ",", m_sys);
+        if (msg->list.empty())
+          m_sys.clear();
+        else
+          String::split(msg->list, ",", m_sys);
       }
 
       void
