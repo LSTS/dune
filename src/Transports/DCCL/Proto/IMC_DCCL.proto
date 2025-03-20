@@ -10,7 +10,7 @@ import "dccl/option_extensions.proto";
 
 // Enum Z Units
 enum ZUnits {
-    NONE = 0;
+    NONE_ZU = 0;
     DEPTH = 1;
     ALTITUDE = 2;
     HEIGHT = 3;
@@ -63,9 +63,12 @@ enum FalseTrue {
 
 //Enum EntityName 
 enum EntityName {
-    PATH_CONTROL = 0;
-    RANGER = 1; 
-    ACOUSTIC_MODEM = 2;
+    NONE_EN = 0;
+    PATH_CONTROL = 1;
+    RANGER = 2; 
+    ACOUSTIC_MODEM = 3;
+    SIDESCAN = 4;
+    CAMERA = 5;
 }
 
 //Enum TransitionCondition 
@@ -119,8 +122,8 @@ message EstimatedState {
 message Goto {
     option (dccl.msg) = { codec_version: 4 id: 450 max_bytes: 80};
     int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
-    float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
-    float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
+    float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 6 }];
+    float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 6 }];
     float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
     ZUnits z_units = 5;
     float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];

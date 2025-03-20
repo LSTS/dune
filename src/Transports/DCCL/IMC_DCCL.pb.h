@@ -112,7 +112,7 @@ template<> ::IMC_DCCL::PlanVariable* Arena::CreateMaybeMessage<::IMC_DCCL::PlanV
 namespace IMC_DCCL {
 
 enum ZUnits {
-  NONE = 0,
+  NONE_ZU = 0,
   DEPTH = 1,
   ALTITUDE = 2,
   HEIGHT = 3,
@@ -120,7 +120,7 @@ enum ZUnits {
   ZUnits_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool ZUnits_IsValid(int value);
-const ZUnits ZUnits_MIN = NONE;
+const ZUnits ZUnits_MIN = NONE_ZU;
 const ZUnits ZUnits_MAX = HEIGHT;
 const int ZUnits_ARRAYSIZE = ZUnits_MAX + 1;
 
@@ -268,15 +268,18 @@ inline bool FalseTrue_Parse(
     FalseTrue_descriptor(), name, value);
 }
 enum EntityName {
-  PATH_CONTROL = 0,
-  RANGER = 1,
-  ACOUSTIC_MODEM = 2,
+  NONE_EN = 0,
+  PATH_CONTROL = 1,
+  RANGER = 2,
+  ACOUSTIC_MODEM = 3,
+  SIDESCAN = 4,
+  CAMERA = 5,
   EntityName_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   EntityName_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool EntityName_IsValid(int value);
-const EntityName EntityName_MIN = PATH_CONTROL;
-const EntityName EntityName_MAX = ACOUSTIC_MODEM;
+const EntityName EntityName_MIN = NONE_EN;
+const EntityName EntityName_MAX = CAMERA;
 const int EntityName_ARRAYSIZE = EntityName_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* EntityName_descriptor();
