@@ -248,9 +248,8 @@ Acoustics.prototype.fillAcousticsModemsList = function(modemsList)
         if (r.dataset.modemType === modemType && r !== row)
         {
           const otherCheckbox = r.querySelector("input[type='checkbox']");
-          if (otherCheckbox) {
+          if (otherCheckbox)
             otherCheckbox.checked = false;
-          }
           if (this.m_selected_modems[modemType] === r.dataset.modemName)
             delete this.m_selected_modems[modemType];
         }
