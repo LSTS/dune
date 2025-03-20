@@ -263,7 +263,7 @@ namespace UserInterfaces
           << it->first
           << "\": \"";
        
-          auto it_selected = m_selected.find(it->second.type);
+          const auto it_selected = m_selected.find(it->second.type);
           if ((it_selected != m_selected.end()) && it->second.selected)
             os << ((it->second.selected == it_selected->second.state) ? static_cast<int>(it->second.selected) : 2);
           else 
@@ -279,7 +279,7 @@ namespace UserInterfaces
              << it->first
              << "\": \"";
           
-          auto it_selected = m_selected.find(it->second.type);
+          const auto it_selected = m_selected.find(it->second.type);
           if ((it_selected != m_selected.end()) && it->second.selected)
             os << ((it->second.selected == it_selected->second.state) ? static_cast<int>(it->second.selected) : 2);
           else 
