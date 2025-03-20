@@ -56,6 +56,7 @@ Acoustics.prototype.start = function()
   this.m_acoustic_modems = new Map();
   this.m_acoustic_targets = [];
   this.m_selected_modems = {};
+  this.m_first = true;
   this.requestData();
 };
 
@@ -239,7 +240,7 @@ Acoustics.prototype.fillAcousticsModemsList = function(modemsList, selection)
     selectCheckbox.type = "checkbox";
     selectCheckbox.classList.add("acoustics-checkbox");
     selectCheckbox.style.marginRight = "10px";
-    selectCheckbox.checked = state >= 1 || selection.includes(modemName);
+    selectCheckbox.checked = this.m_first ? (state > 0) : selection.includes(modemName);
 
     let modemType = "";
     this.m_acoustic_modems_types.forEach(type =>
@@ -304,6 +305,7 @@ Acoustics.prototype.handleData = function(text)
   }
 
   this.update(data);
+  this.m_first = false;
 };
 
 function mapsAreEqual(map1, map2)
