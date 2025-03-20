@@ -192,11 +192,22 @@ Acoustics.prototype.updateChooseModemsSection = function()
   if (!modemsList)
     return;
 
+  let selection = [];
+  const modemRows = modemsList.querySelectorAll(".acoustic-modem-row");
+  if (!modemRows)
+    return;
+  modemRows.forEach(r =>
+  {
+    const checkbox = r.querySelector("input[type='checkbox']");
+    if (checkbox && checkbox.checked)
+      selection.push(r.dataset.modemName);
+  });
+
   modemsList.innerHTML = "";
-  this.fillAcousticsModemsList(modemsList);
+  this.fillAcousticsModemsList(modemsList, selection);
 };
 
-Acoustics.prototype.fillAcousticsModemsList = function(modemsList)
+Acoustics.prototype.fillAcousticsModemsList = function(modemsList, selection)
 {
   this.m_acoustic_modems.forEach((state, modemName) =>
   {
@@ -228,7 +239,7 @@ Acoustics.prototype.fillAcousticsModemsList = function(modemsList)
     selectCheckbox.type = "checkbox";
     selectCheckbox.classList.add("acoustics-checkbox");
     selectCheckbox.style.marginRight = "10px";
-    selectCheckbox.checked = state >= 1;
+    selectCheckbox.checked = state >= 1 || selection.includes(modemName);
 
     let modemType = "";
     this.m_acoustic_modems_types.forEach(type =>
