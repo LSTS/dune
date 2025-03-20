@@ -172,7 +172,7 @@ Acoustics.prototype.createChooseModemsSection = function()
   sendButton.type = "button";
   sendButton.textContent = "Send";
   sendButton.style.marginTop = "20px";
-  sendButton.onclick = (event) => { submitAcousticModemsSelection(this.m_selected_modems, event); };
+  sendButton.onclick = (event) => { submitAcousticModemsSelection(event); };
 
   const saveButton = document.createElement("button");
   saveButton.type = "button";
@@ -228,6 +228,7 @@ Acoustics.prototype.fillAcousticsModemsList = function(modemsList)
     selectCheckbox.type = "checkbox";
     selectCheckbox.classList.add("acoustics-checkbox");
     selectCheckbox.style.marginRight = "10px";
+    selectCheckbox.checked = state >= 1;
 
     let modemType = "";
     this.m_acoustic_modems_types.forEach(type =>
@@ -242,7 +243,6 @@ Acoustics.prototype.fillAcousticsModemsList = function(modemsList)
     selectCheckbox.onclick = () =>
     {
       const modemRows = modemsList.querySelectorAll(".acoustic-modem-row");
-
       modemRows.forEach(r =>
       {
         if (r.dataset.modemType === modemType && r !== row)
@@ -250,15 +250,8 @@ Acoustics.prototype.fillAcousticsModemsList = function(modemsList)
           const otherCheckbox = r.querySelector("input[type='checkbox']");
           if (otherCheckbox)
             otherCheckbox.checked = false;
-          if (this.m_selected_modems[modemType] === r.dataset.modemName)
-            delete this.m_selected_modems[modemType];
         }
       });
-
-      if (selectCheckbox.checked)
-        this.m_selected_modems[modemType] = modemName;
-      else
-        delete this.m_selected_modems[modemType];
     };
 
     row.appendChild(selectCheckbox);
@@ -359,14 +352,27 @@ function submitAction(action, target, event)
   HTTP.post(url);
 };
 
-function submitAcousticModemsSelection(selection, event)
+function submitAcousticModemsSelection(event)
 {
-  if (!selection)
-    return;
-
   if (event)
     event.preventDefault();
 
+  let selection = [];
+  const modemsList = document.getElementById("acoustics-modems-list");
+  if (!modemsList)
+    return;
+
+  const modemRows = modemsList.querySelectorAll(".acoustic-modem-row");
+  if (!modemRows)
+    return;
+  
+  modemRows.forEach(r =>
+  {
+    const checkbox = r.querySelector("input[type='checkbox']");
+    if (checkbox && checkbox.checked)
+      selection.push(r.dataset.modemName);
+  });
+  
   const url = 'dune/acoustics/selection/' + Object.values(selection).join('&');
   HTTP.post(url);
 };
