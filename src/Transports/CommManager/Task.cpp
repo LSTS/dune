@@ -678,9 +678,17 @@ namespace Transports
             m_router.sendViaSatellite(msg, m_args.iridium_plain_texts);
             break;
           case (IMC::TransmissionRequest::CMEAN_GSM):
-            if (msg->destination.empty() || msg->destination == "broadcast") {
+            if (msg->destination.empty() || msg->destination == "broadcast") 
+            {
               IMC::TransmissionRequest req = *msg->clone();
-              req.destination = m_ctx.config.get(c_sms_section, c_sms_field);
+              std::vector<std::string> recipients;
+              m_ctx.config.get(c_sms_section, c_sms_field, "", recipients);
+
+              for(auto recipient : recipients)
+              {
+                req.destination = recipient;
+                req.req_id = m_router.createInternalId();
+              }
               m_router.sendViaGSM(&req);
             }
             else
