@@ -329,7 +329,7 @@ Acoustics.prototype.update = function(data)
                          receivedTargets.every((value, index) => value === this.m_acoustic_targets[index]));
     if (newTargets)
     {
-      this.m_acoustic_targets = receivedTargets;
+      this.m_acoustic_targets = receivedTargets.sort();
       this.updateActionsSection();
     }
   }
@@ -365,7 +365,7 @@ function submitAcousticModemsSelection(event)
   const modemRows = modemsList.querySelectorAll(".acoustic-modem-row");
   if (!modemRows)
     return;
-  
+
   modemRows.forEach(r =>
   {
     const checkbox = r.querySelector("input[type='checkbox']");
