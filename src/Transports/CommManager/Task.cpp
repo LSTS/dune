@@ -139,6 +139,7 @@ namespace Transports
         bind<IMC::TransmissionRequest>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::VehicleMedium>(this);
+        bind<IMC::StateReport>(this);
 
         m_clean_timer.setTop(3);
         m_retransmission_timer.setTop(1);
@@ -802,6 +803,31 @@ namespace Transports
         //add to transmission_queue
         m_acoustic_requests[newId] = msg->clone();
         dispatch(tx);
+      }
+
+      //Conversion from AcousticOperation to AcousticRequest Message
+      void
+      consume(const IMC::StateReport* msg)
+      {
+        if (msg->getSource() == getSystemId())
+          return;
+
+        IMC::AssetReport report;
+        report.name = resolveSystemId(msg->getSource());
+
+        if (report.name == "unknown")
+          return;
+
+        report.report_time = msg->stime;
+        report.medium = IMC::AssetReport::RM_SATELLITE;
+        report.lat = msg->latitude;
+        report.lon = msg->longitude;
+        report.depth = msg->depth == 0xFFFF ? -1 : msg->depth / 10.0;
+        report.alt = msg->altitude == 0xFFFF ? -1 : msg->altitude / 10.0;
+        report.sog = msg->speed / 100.0;
+        report.cog = msg->heading / 65535.0 * Math::c_two_pi;
+
+        dispatch(report);
       }
 
       IMC::StateReport*
