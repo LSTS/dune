@@ -656,19 +656,23 @@ void AddDescriptorsImpl() {
       "\t\n\005HOVER\020\004*A\n\rDirectionType\022\010\n\004VDEP\020\000\022\n\n"
       "\006CLOCKW\020\001\022\013\n\007CCLOCKW\020\002\022\r\n\tIWINDCURR\020\003*4\n"
       "\014ManeuverType\022\010\n\004GOTO\020\000\022\016\n\nFOLLOWPATH\020\001\022"
-      "\n\n\006LOITER\020\002*;\n\rParameterName\022\n\n\006ACTIVE\020\000"
-      "\022\036\n\032BOTTOM_TRACK_MINIMUM_DEPTH\020\001* \n\tFals"
-      "eTrue\022\t\n\005FALSE\020\000\022\010\n\004TRUE\020\001*e\n\nEntityName"
-      "\022\013\n\007NONE_EN\020\000\022\020\n\014PATH_CONTROL\020\001\022\n\n\006RANGE"
-      "R\020\002\022\022\n\016ACOUSTIC_MODEM\020\003\022\014\n\010SIDESCAN\020\004\022\n\n"
-      "\006CAMERA\020\005*)\n\023TransitionCondition\022\022\n\016MANE"
-      "UVERISDONE\020\000*6\n\004Type\022\013\n\007BOOLEAN\020\000\022\n\n\006NUM"
-      "BER\020\001\022\010\n\004TEXT\020\002\022\013\n\007MESSAGE\020\003*.\n\nAccessTy"
-      "pe\022\t\n\005INPUT\020\000\022\n\n\006OUTPUT\020\001\022\t\n\005LOCAL\020\002b\006pr"
-      "oto3"
+      "\n\n\006LOITER\020\002*\333\001\n\rParameterName\022\013\n\007NONE_PN"
+      "\020\000\022\n\n\006ACTIVE\020\001\022\036\n\032BOTTOM_TRACK_MINIMUM_D"
+      "EPTH\020\002\022\026\n\022HIGH_FREQ_CHANNELS\020\003\022\023\n\017HIGH_F"
+      "REQ_RANGE\020\004\022\025\n\021LOW_FREQ_CHANNELS\020\005\022\022\n\016LO"
+      "W_FREQ_RANGE\020\006\022\024\n\020RANGE_MULTIPLIER\020\007\022\020\n\014"
+      "STROBE_DELAY\020\010\022\021\n\rSHUTTER_VALUE\020\t* \n\tFal"
+      "seTrue\022\t\n\005FALSE\020\000\022\010\n\004TRUE\020\001*e\n\nEntityNam"
+      "e\022\013\n\007NONE_EN\020\000\022\020\n\014PATH_CONTROL\020\001\022\n\n\006RANG"
+      "ER\020\002\022\022\n\016ACOUSTIC_MODEM\020\003\022\014\n\010SIDESCAN\020\004\022\n"
+      "\n\006CAMERA\020\005*)\n\023TransitionCondition\022\022\n\016MAN"
+      "EUVERISDONE\020\000*6\n\004Type\022\013\n\007BOOLEAN\020\000\022\n\n\006NU"
+      "MBER\020\001\022\010\n\004TEXT\020\002\022\013\n\007MESSAGE\020\003*.\n\nAccessT"
+      "ype\022\t\n\005INPUT\020\000\022\n\n\006OUTPUT\020\001\022\t\n\005LOCAL\020\002b\006p"
+      "roto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 4444);
+      descriptor, 4605);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "IMC_DCCL.proto", &protobuf_RegisterTypes);
   ::protobuf_dccl_2foption_5fextensions_2eproto::AddDescriptors();
@@ -773,6 +777,14 @@ bool ParameterName_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
       return true;
     default:
       return false;

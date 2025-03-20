@@ -226,14 +226,22 @@ inline bool ManeuverType_Parse(
     ManeuverType_descriptor(), name, value);
 }
 enum ParameterName {
-  ACTIVE = 0,
-  BOTTOM_TRACK_MINIMUM_DEPTH = 1,
+  NONE_PN = 0,
+  ACTIVE = 1,
+  BOTTOM_TRACK_MINIMUM_DEPTH = 2,
+  HIGH_FREQ_CHANNELS = 3,
+  HIGH_FREQ_RANGE = 4,
+  LOW_FREQ_CHANNELS = 5,
+  LOW_FREQ_RANGE = 6,
+  RANGE_MULTIPLIER = 7,
+  STROBE_DELAY = 8,
+  SHUTTER_VALUE = 9,
   ParameterName_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   ParameterName_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool ParameterName_IsValid(int value);
-const ParameterName ParameterName_MIN = ACTIVE;
-const ParameterName ParameterName_MAX = BOTTOM_TRACK_MINIMUM_DEPTH;
+const ParameterName ParameterName_MIN = NONE_PN;
+const ParameterName ParameterName_MAX = SHUTTER_VALUE;
 const int ParameterName_ARRAYSIZE = ParameterName_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* ParameterName_descriptor();
