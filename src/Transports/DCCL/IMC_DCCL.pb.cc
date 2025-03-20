@@ -72,7 +72,7 @@ class ParameterValueDefaultTypeInternal {
   ::google::protobuf::internal::ExplicitlyConstructed<ParameterValue>
       _instance;
   float value_number_;
-  int value_bool_;
+  int value_string_;
 } _ParameterValue_default_instance_;
 class EntityParameterDefaultTypeInternal {
  public:
@@ -437,7 +437,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::ParameterValue, _oneof_case_[0]),
   ~0u,  // no _weak_field_map_
   offsetof(::IMC_DCCL::ParameterValueDefaultTypeInternal, value_number_),
-  offsetof(::IMC_DCCL::ParameterValueDefaultTypeInternal, value_bool_),
+  offsetof(::IMC_DCCL::ParameterValueDefaultTypeInternal, value_string_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::ParameterValue, ParameterValueUnion_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EntityParameter, _internal_metadata_),
@@ -615,64 +615,64 @@ void AddDescriptorsImpl() {
       "ollowpath_maneuver\030\002 \001(\0132\024.IMC_DCCL.Foll"
       "owPathH\000\022+\n\017loiter_maneuver\030\003 \001(\0132\020.IMC_"
       "DCCL.LoiterH\000:\n\242\?\007\010\001\020\254\002(\004B\017\n\rManeuverUni"
-      "on\"\217\001\n\016ParameterValue\022/\n\014value_number\030\001 "
-      "\001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@H\000\022)\n\nvalue_"
-      "bool\030\002 \001(\0162\023.IMC_DCCL.FalseTrueH\000:\n\242\?\007\010\002"
-      "\020\254\002(\004B\025\n\023ParameterValueUnion\"m\n\017EntityPa"
-      "rameter\022%\n\004name\030\001 \001(\0162\027.IMC_DCCL.Paramet"
-      "erName\022\'\n\005value\030\002 \001(\0132\030.IMC_DCCL.Paramet"
-      "erValue:\n\242\?\007\010\241\006\020\024(\004\"t\n\020EntityParameters\022"
-      "\"\n\004name\030\001 \001(\0162\024.IMC_DCCL.EntityName\0220\n\006p"
-      "arams\030\002 \003(\0132\031.IMC_DCCL.EntityParameterB\005"
-      "\242\?\002P\003:\n\242\?\007\010\242\006\020((\004\"v\n\nManeuverID\022-\n\rmaneu"
-      "ver_type\030\001 \001(\0162\026.IMC_DCCL.ManeuverType\022."
-      "\n\017maneuver_number\030\002 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000"
-      "\000\000\000\000I@:\t\242\?\006\010\003\020\036(\004\"\242\001\n\014PlanManeuver\022)\n\013ma"
-      "neuver_id\030\001 \001(\0132\024.IMC_DCCL.ManeuverID\022 \n"
-      "\004data\030\002 \001(\0132\022.IMC_DCCL.Maneuver\0228\n\rstart"
-      "_actions\030\003 \003(\0132\032.IMC_DCCL.EntityParamete"
-      "rsB\005\242\?\002P\005:\013\242\?\010\010\250\004\020\220\003(\004\"\212\001\n\014PlanVariable\022"
-      "\023\n\004name\030\001 \001(\tB\005\242\?\002H\002\022\024\n\005value\030\002 \001(\tB\005\242\?\002"
-      "H\002\022\034\n\004type\030\003 \001(\0162\016.IMC_DCCL.Type\022$\n\006acce"
-      "ss\030\004 \001(\0162\024.IMC_DCCL.AccessType:\013\242\?\010\010\261\004\020\220"
-      "\003(\004\"\242\001\n\016PlanTransition\022(\n\nsource_man\030\001 \001"
-      "(\0132\024.IMC_DCCL.ManeuverID\022&\n\010dest_man\030\002 \001"
-      "(\0132\024.IMC_DCCL.ManeuverID\0221\n\nconditions\030\003"
-      " \001(\0162\035.IMC_DCCL.TransitionCondition:\013\242\?\010"
-      "\010\251\004\020\220\003(\004\"\357\002\n\021PlanSpecification\022\026\n\007plan_i"
-      "d\030\001 \001(\tB\005\242\?\002H\024\022\032\n\013description\030\002 \001(\tB\005\242\?\002"
-      "H\002\022\031\n\nvnamespace\030\003 \001(\tB\005\242\?\002H\002\022*\n\014start_m"
-      "an_id\030\004 \001(\0132\024.IMC_DCCL.ManeuverID\0220\n\tman"
-      "euvers\030\005 \003(\0132\026.IMC_DCCL.PlanManeuverB\005\242\?"
-      "\002P\036\0224\n\013transitions\030\006 \003(\0132\030.IMC_DCCL.Plan"
-      "TransitionB\005\242\?\002P\036\0228\n\rstart_actions\030\007 \003(\013"
-      "2\032.IMC_DCCL.EntityParametersB\005\242\?\002P\007\0220\n\tv"
-      "ariables\030\010 \003(\0132\026.IMC_DCCL.PlanVariableB\005"
-      "\242\?\002P\005:\013\242\?\010\010\247\004\020\300>(\004*:\n\006ZUnits\022\013\n\007NONE_ZU\020"
-      "\000\022\t\n\005DEPTH\020\001\022\014\n\010ALTITUDE\020\002\022\n\n\006HEIGHT\020\003*4"
-      "\n\nSpeedUnits\022\r\n\tMETERS_PS\020\000\022\007\n\003RPM\020\001\022\016\n\n"
-      "PERCENTAGE\020\002*L\n\nLoiterType\022\013\n\007DEFAULT\020\000\022"
-      "\014\n\010CIRCULAR\020\001\022\r\n\tRACETRACK\020\002\022\t\n\005EIGHT\020\003\022"
-      "\t\n\005HOVER\020\004*A\n\rDirectionType\022\010\n\004VDEP\020\000\022\n\n"
-      "\006CLOCKW\020\001\022\013\n\007CCLOCKW\020\002\022\r\n\tIWINDCURR\020\003*4\n"
-      "\014ManeuverType\022\010\n\004GOTO\020\000\022\016\n\nFOLLOWPATH\020\001\022"
-      "\n\n\006LOITER\020\002*\333\001\n\rParameterName\022\013\n\007NONE_PN"
-      "\020\000\022\n\n\006ACTIVE\020\001\022\036\n\032BOTTOM_TRACK_MINIMUM_D"
-      "EPTH\020\002\022\026\n\022HIGH_FREQ_CHANNELS\020\003\022\023\n\017HIGH_F"
-      "REQ_RANGE\020\004\022\025\n\021LOW_FREQ_CHANNELS\020\005\022\022\n\016LO"
-      "W_FREQ_RANGE\020\006\022\024\n\020RANGE_MULTIPLIER\020\007\022\020\n\014"
-      "STROBE_DELAY\020\010\022\021\n\rSHUTTER_VALUE\020\t* \n\tFal"
-      "seTrue\022\t\n\005FALSE\020\000\022\010\n\004TRUE\020\001*e\n\nEntityNam"
-      "e\022\013\n\007NONE_EN\020\000\022\020\n\014PATH_CONTROL\020\001\022\n\n\006RANG"
-      "ER\020\002\022\022\n\016ACOUSTIC_MODEM\020\003\022\014\n\010SIDESCAN\020\004\022\n"
-      "\n\006CAMERA\020\005*)\n\023TransitionCondition\022\022\n\016MAN"
-      "EUVERISDONE\020\000*6\n\004Type\022\013\n\007BOOLEAN\020\000\022\n\n\006NU"
-      "MBER\020\001\022\010\n\004TEXT\020\002\022\013\n\007MESSAGE\020\003*.\n\nAccessT"
-      "ype\022\t\n\005INPUT\020\000\022\n\n\006OUTPUT\020\001\022\t\n\005LOCAL\020\002b\006p"
-      "roto3"
+      "on\"\222\001\n\016ParameterValue\022/\n\014value_number\030\001 "
+      "\001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@H\000\022,\n\014value_"
+      "string\030\002 \001(\0162\024.IMC_DCCL.ParamValueH\000:\n\242\?"
+      "\007\010\002\020\254\002(\004B\025\n\023ParameterValueUnion\"m\n\017Entit"
+      "yParameter\022%\n\004name\030\001 \001(\0162\027.IMC_DCCL.Para"
+      "meterName\022\'\n\005value\030\002 \001(\0132\030.IMC_DCCL.Para"
+      "meterValue:\n\242\?\007\010\241\006\020\024(\004\"t\n\020EntityParamete"
+      "rs\022\"\n\004name\030\001 \001(\0162\024.IMC_DCCL.EntityName\0220"
+      "\n\006params\030\002 \003(\0132\031.IMC_DCCL.EntityParamete"
+      "rB\005\242\?\002P\003:\n\242\?\007\010\242\006\020((\004\"v\n\nManeuverID\022-\n\rma"
+      "neuver_type\030\001 \001(\0162\026.IMC_DCCL.ManeuverTyp"
+      "e\022.\n\017maneuver_number\030\002 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\000"
+      "1\000\000\000\000\000\000I@:\t\242\?\006\010\003\020\036(\004\"\242\001\n\014PlanManeuver\022)\n"
+      "\013maneuver_id\030\001 \001(\0132\024.IMC_DCCL.ManeuverID"
+      "\022 \n\004data\030\002 \001(\0132\022.IMC_DCCL.Maneuver\0228\n\rst"
+      "art_actions\030\003 \003(\0132\032.IMC_DCCL.EntityParam"
+      "etersB\005\242\?\002P\005:\013\242\?\010\010\250\004\020\220\003(\004\"\212\001\n\014PlanVariab"
+      "le\022\023\n\004name\030\001 \001(\tB\005\242\?\002H\002\022\024\n\005value\030\002 \001(\tB\005"
+      "\242\?\002H\002\022\034\n\004type\030\003 \001(\0162\016.IMC_DCCL.Type\022$\n\006a"
+      "ccess\030\004 \001(\0162\024.IMC_DCCL.AccessType:\013\242\?\010\010\261"
+      "\004\020\220\003(\004\"\242\001\n\016PlanTransition\022(\n\nsource_man\030"
+      "\001 \001(\0132\024.IMC_DCCL.ManeuverID\022&\n\010dest_man\030"
+      "\002 \001(\0132\024.IMC_DCCL.ManeuverID\0221\n\ncondition"
+      "s\030\003 \001(\0162\035.IMC_DCCL.TransitionCondition:\013"
+      "\242\?\010\010\251\004\020\220\003(\004\"\357\002\n\021PlanSpecification\022\026\n\007pla"
+      "n_id\030\001 \001(\tB\005\242\?\002H\024\022\032\n\013description\030\002 \001(\tB\005"
+      "\242\?\002H\002\022\031\n\nvnamespace\030\003 \001(\tB\005\242\?\002H\002\022*\n\014star"
+      "t_man_id\030\004 \001(\0132\024.IMC_DCCL.ManeuverID\0220\n\t"
+      "maneuvers\030\005 \003(\0132\026.IMC_DCCL.PlanManeuverB"
+      "\005\242\?\002P\036\0224\n\013transitions\030\006 \003(\0132\030.IMC_DCCL.P"
+      "lanTransitionB\005\242\?\002P\036\0228\n\rstart_actions\030\007 "
+      "\003(\0132\032.IMC_DCCL.EntityParametersB\005\242\?\002P\007\0220"
+      "\n\tvariables\030\010 \003(\0132\026.IMC_DCCL.PlanVariabl"
+      "eB\005\242\?\002P\005:\013\242\?\010\010\247\004\020\300>(\004*:\n\006ZUnits\022\013\n\007NONE_"
+      "ZU\020\000\022\t\n\005DEPTH\020\001\022\014\n\010ALTITUDE\020\002\022\n\n\006HEIGHT\020"
+      "\003*4\n\nSpeedUnits\022\r\n\tMETERS_PS\020\000\022\007\n\003RPM\020\001\022"
+      "\016\n\nPERCENTAGE\020\002*L\n\nLoiterType\022\013\n\007DEFAULT"
+      "\020\000\022\014\n\010CIRCULAR\020\001\022\r\n\tRACETRACK\020\002\022\t\n\005EIGHT"
+      "\020\003\022\t\n\005HOVER\020\004*A\n\rDirectionType\022\010\n\004VDEP\020\000"
+      "\022\n\n\006CLOCKW\020\001\022\013\n\007CCLOCKW\020\002\022\r\n\tIWINDCURR\020\003"
+      "*4\n\014ManeuverType\022\010\n\004GOTO\020\000\022\016\n\nFOLLOWPATH"
+      "\020\001\022\n\n\006LOITER\020\002*\333\001\n\rParameterName\022\013\n\007NONE"
+      "_PN\020\000\022\n\n\006ACTIVE\020\001\022\036\n\032BOTTOM_TRACK_MINIMU"
+      "M_DEPTH\020\002\022\026\n\022HIGH_FREQ_CHANNELS\020\003\022\023\n\017HIG"
+      "H_FREQ_RANGE\020\004\022\025\n\021LOW_FREQ_CHANNELS\020\005\022\022\n"
+      "\016LOW_FREQ_RANGE\020\006\022\024\n\020RANGE_MULTIPLIER\020\007\022"
+      "\020\n\014STROBE_DELAY\020\010\022\021\n\rSHUTTER_VALUE\020\t*5\n\n"
+      "ParamValue\022\010\n\004NONE\020\000\022\010\n\004TRUE\020\001\022\t\n\005FALSE\020"
+      "\002\022\010\n\004BOTH\020\003*e\n\nEntityName\022\013\n\007NONE_EN\020\000\022\020"
+      "\n\014PATH_CONTROL\020\001\022\n\n\006RANGER\020\002\022\022\n\016ACOUSTIC"
+      "_MODEM\020\003\022\014\n\010SIDESCAN\020\004\022\n\n\006CAMERA\020\005*)\n\023Tr"
+      "ansitionCondition\022\022\n\016MANEUVERISDONE\020\000*6\n"
+      "\004Type\022\013\n\007BOOLEAN\020\000\022\n\n\006NUMBER\020\001\022\010\n\004TEXT\020\002"
+      "\022\013\n\007MESSAGE\020\003*.\n\nAccessType\022\t\n\005INPUT\020\000\022\n"
+      "\n\006OUTPUT\020\001\022\t\n\005LOCAL\020\002b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 4605);
+      descriptor, 4629);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "IMC_DCCL.proto", &protobuf_RegisterTypes);
   ::protobuf_dccl_2foption_5fextensions_2eproto::AddDescriptors();
@@ -791,14 +791,16 @@ bool ParameterName_IsValid(int value) {
   }
 }
 
-const ::google::protobuf::EnumDescriptor* FalseTrue_descriptor() {
+const ::google::protobuf::EnumDescriptor* ParamValue_descriptor() {
   protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
   return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[6];
 }
-bool FalseTrue_IsValid(int value) {
+bool ParamValue_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
+    case 2:
+    case 3:
       return true;
     default:
       return false;
@@ -4125,11 +4127,11 @@ void Maneuver::InternalSwap(Maneuver* other) {
 
 void ParameterValue::InitAsDefaultInstance() {
   ::IMC_DCCL::_ParameterValue_default_instance_.value_number_ = 0;
-  ::IMC_DCCL::_ParameterValue_default_instance_.value_bool_ = 0;
+  ::IMC_DCCL::_ParameterValue_default_instance_.value_string_ = 0;
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int ParameterValue::kValueNumberFieldNumber;
-const int ParameterValue::kValueBoolFieldNumber;
+const int ParameterValue::kValueStringFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 ParameterValue::ParameterValue()
@@ -4149,8 +4151,8 @@ ParameterValue::ParameterValue(const ParameterValue& from)
       set_value_number(from.value_number());
       break;
     }
-    case kValueBool: {
-      set_value_bool(from.value_bool());
+    case kValueString: {
+      set_value_string(from.value_string());
       break;
     }
     case PARAMETERVALUEUNION_NOT_SET: {
@@ -4196,7 +4198,7 @@ void ParameterValue::clear_ParameterValueUnion() {
       // No need to clear
       break;
     }
-    case kValueBool: {
+    case kValueString: {
       // No need to clear
       break;
     }
@@ -4243,7 +4245,7 @@ bool ParameterValue::MergePartialFromCodedStream(
         break;
       }
 
-      // .IMC_DCCL.FalseTrue value_bool = 2;
+      // .IMC_DCCL.ParamValue value_string = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
@@ -4251,7 +4253,7 @@ bool ParameterValue::MergePartialFromCodedStream(
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
                  input, &value)));
-          set_value_bool(static_cast< ::IMC_DCCL::FalseTrue >(value));
+          set_value_string(static_cast< ::IMC_DCCL::ParamValue >(value));
         } else {
           goto handle_unusual;
         }
@@ -4289,10 +4291,10 @@ void ParameterValue::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFloat(1, this->value_number(), output);
   }
 
-  // .IMC_DCCL.FalseTrue value_bool = 2;
-  if (has_value_bool()) {
+  // .IMC_DCCL.ParamValue value_string = 2;
+  if (has_value_string()) {
     ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      2, this->value_bool(), output);
+      2, this->value_string(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -4314,10 +4316,10 @@ void ParameterValue::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(1, this->value_number(), target);
   }
 
-  // .IMC_DCCL.FalseTrue value_bool = 2;
-  if (has_value_bool()) {
+  // .IMC_DCCL.ParamValue value_string = 2;
+  if (has_value_string()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      2, this->value_bool(), target);
+      2, this->value_string(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -4343,10 +4345,10 @@ size_t ParameterValue::ByteSizeLong() const {
       total_size += 1 + 4;
       break;
     }
-    // .IMC_DCCL.FalseTrue value_bool = 2;
-    case kValueBool: {
+    // .IMC_DCCL.ParamValue value_string = 2;
+    case kValueString: {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::EnumSize(this->value_bool());
+        ::google::protobuf::internal::WireFormatLite::EnumSize(this->value_string());
       break;
     }
     case PARAMETERVALUEUNION_NOT_SET: {
@@ -4385,8 +4387,8 @@ void ParameterValue::MergeFrom(const ParameterValue& from) {
       set_value_number(from.value_number());
       break;
     }
-    case kValueBool: {
-      set_value_bool(from.value_bool());
+    case kValueString: {
+      set_value_string(from.value_string());
       break;
     }
     case PARAMETERVALUEUNION_NOT_SET: {

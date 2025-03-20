@@ -61,16 +61,14 @@ enum ParameterName {
     RANGE_MULTIPLIER = 7;
     STROBE_DELAY = 8;
     SHUTTER_VALUE = 9;
-
-
-
-
 }
 
-// Enum False True
-enum FalseTrue {
-    FALSE = 0;
+// Enum Parameter Value string
+enum ParamValue {
+    NONE = 0;
     TRUE = 1;
+    FALSE = 2;
+    BOTH = 3;
 }
 
 //Enum EntityName 
@@ -202,7 +200,7 @@ message ParameterValue{
     option (dccl.msg) = { codec_version: 4 id: 2 max_bytes: 300};
     oneof ParameterValueUnion{
         float value_number = 1 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
-        FalseTrue value_bool = 2;
+        ParamValue value_string = 2;
     }
 }
 
