@@ -337,6 +337,11 @@ Acoustics.prototype.update = function(data)
       this.updateActionsSection();
     }
   }
+  else if (this.m_acoustic_targets.length > 0)
+  {
+    this.m_acoustic_targets = [];
+    this.updateActionsSection();
+  }
 };
 
 function submitAction(action, target, event)
