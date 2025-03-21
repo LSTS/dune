@@ -714,12 +714,11 @@ namespace DUNE
         if (pitr->first == "Enabled")
           continue;
 
-        // Ignore Supervisors.Delegator and Monitors.AcousticModemsSelector sections
+        // Ignore Supervisors.Delegator and UserInterfaces.AcousticModemsSelector sections
         std::string section = getName();
         std::string::size_type p = section.find('/');
-        if(!std::strcmp(section.substr(0,p).c_str(),"Supervisors.Delegator"))
-          continue;
-        if(!std::strcmp(section.substr(0,p).c_str(),"Monitors.AcousticModemsSelector"))
+        if(!std::strcmp(section.substr(0,p).c_str(),"Supervisors.Delegator") ||
+           !std::strcmp(section.substr(0,p).c_str(),"UserInterfaces.AcousticModemsSelector"))
           continue;
 
         if (m_params.find(pitr->first) == m_params.end())
