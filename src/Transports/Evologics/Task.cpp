@@ -301,7 +301,8 @@ namespace Transports
       {
         if (m_driver)
         {
-          m_driver->stopAndJoin();
+          if (m_driver->isCreated())
+            m_driver->stopAndJoin();
           delete m_driver;
           m_driver = NULL;
         }
