@@ -52,11 +52,12 @@ Acoustics.prototype.constructor = Acoustics;
 
 Acoustics.prototype.start = function()
 {
+  this.m_first = true;
   this.m_acoustic_modems_types = [];
   this.m_acoustic_modems = new Map();
-  this.m_acoustic_targets = [];
   this.m_selected_modems = {};
-  this.m_first = true;
+  this.m_acoustic_targets = [];
+  this.updateActionsSection();
   this.requestData();
 };
 
