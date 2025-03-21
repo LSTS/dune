@@ -386,9 +386,6 @@ namespace DUNE
       void
       initializeDevice(void);
 
-      void
-      onRequestActivation(void) override;
-
       bool
       connect(void);
 
@@ -396,16 +393,7 @@ namespace DUNE
       failActivation(const std::string& message);
 
       void
-      onRequestDeactivation(void) override;
-
-      void
       disconnect(void);
-
-      void
-      onDeactivation(void) override;
-
-      void
-      onActivation(void) override;
 
       //! Request the name of the current log file.
       void
