@@ -122,6 +122,8 @@ namespace Transports
       bool m_simulating;
       //! Task arguments.
       Arguments m_args;
+      //! onRequestDeactivation was called.
+      bool m_deactivation_requested;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
@@ -131,7 +133,8 @@ namespace Transports
         m_sound_speed(0),
         m_sound_speed_eid(-1),
         m_declination(false),
-        m_ticket(NULL)
+        m_ticket(NULL),
+        m_deactivation_requested(false)
       {
         //! Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -279,18 +282,22 @@ namespace Transports
           auto resetHandle = openDeviceHandle(m_args.io_dev);
           resetHandle->writeString("ATZ0\n");
           Memory::clear(resetHandle);
-          Delay::wait(5.0);
+          Counter<double> delay(5.0f);
+          while(!delay.overflow() && !m_deactivation_requested)
+            consumeMessages();
 
+          if (m_deactivation_requested)
+            return false;
+          
           m_handle = openDeviceHandle(m_args.io_dev);
+          m_driver = new Driver(this, m_handle);
+          m_driver->setLineTermIn("\r\n");
+          m_driver->setLineTermOut("\n");
         }
         catch (std::runtime_error& e)
         {
           throw RestartNeeded(e.what(), 5, false);
         }
-
-        m_driver = new Driver(this, m_handle);
-        m_driver->setLineTermIn("\r\n");
-        m_driver->setLineTermOut("\n");
         
         return true;
       }
@@ -852,6 +859,34 @@ namespace Transports
             throw RestartNeeded(e.what(), 10.0);
           }
         }
+      }
+
+      void
+      onRequestActivation(void) override
+      {
+        BasicDeviceDriver::onRequestActivation();
+        m_deactivation_requested = false;
+      }
+      
+      void
+      onRequestDeactivation(void) override
+      {
+        BasicDeviceDriver::onRequestDeactivation();
+        m_deactivation_requested = true;
+      }
+
+      void
+      onActivation(void) override
+      {
+        BasicDeviceDriver::onActivation();
+        m_deactivation_requested = false;
+      }
+      
+      void
+      onDeactivation(void) override
+      {
+        BasicDeviceDriver::onDeactivation();
+        m_deactivation_requested = false;
       }
 
       //! Check for data.
