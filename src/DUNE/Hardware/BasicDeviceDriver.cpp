@@ -58,7 +58,10 @@ namespace DUNE
       m_read_period(0.0),
       m_uri()
     {
-      m_restart_needed = true;
+      param("Restart Needed", m_bdd_args.restart_needed)
+      .defaultValue("false")
+      .description("Flag to restart driver after activation fail.");
+
       bind<IMC::EstimatedState>(this);
       bind<IMC::LoggingControl>(this);
       bind<IMC::PowerChannelState>(this);
@@ -69,12 +72,6 @@ namespace DUNE
     BasicDeviceDriver::onResourceRelease(void)
     {
       requestDeactivation();
-    }
-
-    void
-    BasicDeviceDriver::setRestartNeeded(bool state)
-    {
-      m_restart_needed = state;
     }
 
     void
@@ -557,7 +554,7 @@ namespace DUNE
                 msg += p.first + " ";
 
             failActivation(DTR(msg.c_str()));
-            if(m_restart_needed)
+            if(m_bdd_args.restart_needed)
               requestRestart();
             else
               queueState(SM_IDLE);
@@ -571,7 +568,7 @@ namespace DUNE
             std::string msg = "Activation timeout - connect to device: ";
             msg += m_uri;
             failActivation(DTR(msg.c_str()));
-            if(m_restart_needed)
+            if(m_bdd_args.restart_needed)
               requestRestart();
             else
               queueState(SM_IDLE);
@@ -589,7 +586,7 @@ namespace DUNE
           if (m_wdog.overflow())
           {
             failActivation(DTR("Activation timeout - synchronize with device"));
-            if(m_restart_needed)
+            if(m_bdd_args.restart_needed)
               requestRestart();
             else
               queueState(SM_IDLE);
@@ -611,7 +608,7 @@ namespace DUNE
           if (m_wdog.overflow())
           {
             failActivation(DTR("Activation timeout - request current log name"));
-            if(m_restart_needed)
+            if(m_bdd_args.restart_needed)
               requestRestart();
             else
               queueState(SM_IDLE);
@@ -629,7 +626,7 @@ namespace DUNE
           if (m_wdog.overflow())
           {
             failActivation(DTR("Activation timeout - retrieve current log name"));
-            if(m_restart_needed)
+            if(m_bdd_args.restart_needed)
               requestRestart();
             else
               queueState(SM_IDLE);

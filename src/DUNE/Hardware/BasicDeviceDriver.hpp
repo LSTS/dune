@@ -41,13 +41,15 @@ namespace DUNE
 {
   namespace Hardware
   {
+    struct BDDArguments
+    {
+      //! Restart needed upon activation fail.
+      bool restart_needed;
+    };
+
     class BasicDeviceDriver: public DUNE::Tasks::Task
     {
     public:
-
-      //! Flag to control restartNeeded method.
-      bool m_restart_needed;
-
       BasicDeviceDriver(const std::string& name, DUNE::Tasks::Context& ctx);
 
       //! Consume estimated state messages.
@@ -69,10 +71,6 @@ namespace DUNE
       //! @param[in] msg PowerChannelState message.
       void
       consume(const IMC::PowerChannelState* msg);
-
-      //! Disable restartNeed method.
-      void
-      setRestartNeeded(bool state);
 
     protected:
       //! Create an I/O handle given an URI.
@@ -258,6 +256,18 @@ namespace DUNE
         m_wait_msg_timeout = timeout;
       }
 
+      void
+      onRequestActivation(void) override;
+
+      void
+      onRequestDeactivation(void) override;
+
+      void
+      onActivation(void) override;
+
+      void
+      onDeactivation(void) override;
+
     private:
       //! Finite state machine states.
       enum StateMachineStates
@@ -298,6 +308,8 @@ namespace DUNE
         SM_RESTART_WAIT
       };
 
+      //! Basic Device Driver Arguments.
+      BDDArguments m_bdd_args;
       //! Watchdog timer.
       DUNE::Time::Counter<double> m_wdog;
       //! Current state machine state.
