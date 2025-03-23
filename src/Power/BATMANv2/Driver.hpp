@@ -200,65 +200,154 @@ namespace Power
               return false;
             }
 
+            if (strlen(bfr) < 3)
+            {
+              m_task->err(DTR("Invalid buffer length"));
+              return false;
+            }
+
             bfr[strlen(bfr) - 3] = '\0';
 
             char* parameter = std::strtok(bfr, ",");
+            if (parameter == nullptr)
+            {
+              m_task->err(DTR("Invalid input format"));
+              return false;
+            }
+
             if(std::strcmp(parameter, "$VOLT") == 0)
             {
               parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.voltage);
+              if (parameter == nullptr)
+              {
+                m_task->err(DTR("Invalid input format: voltage"));
+                return false;
+              }
+              if (std::sscanf(parameter, "%f", &m_batManData.voltage) != 1)
+              {
+                m_task->err(DTR("Failed to parse voltage"));
+                return false;
+              }
               m_task->debug("Volt: %.3f V", m_batManData.voltage);
               m_batManData.state_new_data[0] = true;
             }
             else if(std::strcmp(parameter, "$AMPE") == 0)
             {
               parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.current);
+              if (parameter == nullptr)
+              {
+                m_task->err(DTR("Invalid input format: current"));
+                return false;
+              }
+              if (std::sscanf(parameter, "%f", &m_batManData.current) != 1)
+              {
+                m_task->err(DTR("Failed to parse current"));
+                return false;
+              }
               m_task->debug("Ampe: %.3f A", m_batManData.current);
               m_batManData.state_new_data[1] = true;
             }
             else if(std::strcmp(parameter, "$TEMP") == 0)
             {
               parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.temperature);
+              if (parameter == nullptr)
+              {
+                m_task->err(DTR("Invalid input format: temperature"));
+                return false;
+              }
+              if (std::sscanf(parameter, "%f", &m_batManData.temperature) != 1)
+              {
+                m_task->err(DTR("Failed to parse temperature"));
+                return false;
+              }
               m_task->debug("Temp: %.3f C", m_batManData.temperature);
               m_batManData.state_new_data[2] = true;
             }
             else if(std::strcmp(parameter, "$RCAP") == 0)
             {
               parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.r_cap);
+              if (parameter == nullptr)
+              {
+                m_task->err(DTR("Invalid input format: remaining capacity"));
+                return false;
+              }
+              if (std::sscanf(parameter, "%f", &m_batManData.r_cap) != 1)
+              {
+                m_task->err(DTR("Failed to parse remaining capacity"));
+                return false;
+              }
               m_task->debug("RCap: %.3f Ah", m_batManData.r_cap);
               m_batManData.state_new_data[3] = true;
             }
             else if(std::strcmp(parameter, "$FCAP") == 0)
             {
               parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.f_cap);
+              if (parameter == nullptr)
+              {
+                m_task->err(DTR("Invalid input format: full capacity"));
+                return false;
+              }
+              if (std::sscanf(parameter, "%f", &m_batManData.f_cap) != 1)
+              {
+                m_task->err(DTR("Failed to parse full capacity"));
+                return false;
+              }
               m_task->debug("FCap: %.3f Ah", m_batManData.f_cap);
               m_batManData.state_new_data[4] = true;
             }
             else if(std::strcmp(parameter, "$DCAP") == 0)
             {
               parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.d_cap);
+              if (parameter == nullptr)
+              {
+                m_task->err(DTR("Invalid input format: design capacity"));
+                return false;
+              }
+              if (std::sscanf(parameter, "%f", &m_batManData.d_cap) != 1)
+              {
+                m_task->err(DTR("Failed to parse design capacity"));
+                return false;
+              }
               m_task->debug("DCap: %.3f Ah", m_batManData.d_cap);
               m_batManData.state_new_data[5] = true;
             }
             else if (std::strcmp(parameter, "$HEAL") == 0)
             {
               parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%d", &m_batManData.health);
+              if (parameter == nullptr)
+              {
+                m_task->err(DTR("Invalid input format: health"));
+                return false;
+              }
+              if (std::sscanf(parameter, "%d", &m_batManData.health) != 1)
+              {
+                m_task->err(DTR("Failed to parse health"));
+                return false;
+              }
               m_task->debug("Health: %d %%", m_batManData.health);
               m_batManData.state_new_data[6] = true;
             }
             else if (std::strcmp(parameter, "$CELL") == 0)
             {
               parameter = std::strtok(NULL, ",");
+              if (parameter == nullptr)
+              {
+                m_task->err(DTR("Invalid input format cell voltage"));
+                return false;
+              }
               for(int i = 0; i < m_numberCell; i++)
               {
                 parameter = std::strtok(NULL, ",");
-                std::sscanf(parameter, "%f", &m_batManData.cell_volt[i]);
+                if (parameter == nullptr)
+                {
+                  m_task->err(DTR("Invalid input format cell voltage %d"), i+1);
+                  return false;
+                }
+                if (std::sscanf(parameter, "%f", &m_batManData.cell_volt[i]) != 1)
+                {
+                  m_task->err(DTR("Failed to parse cell voltage %d"), i+1);
+                  return false;
+                }
                 m_task->debug("Cell %d: %.3f V", i+1, m_batManData.cell_volt[i]);
               }
               m_batManData.state_new_data[7] = true;
@@ -266,14 +355,32 @@ namespace Power
             }
             else if (std::strcmp(parameter, "$BATS") == 0)
             {
+              if (parameter == nullptr)
+              {
+                m_task->err(DTR("Invalid input format time to empty"));
+                return false;
+              }
               parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.time_empty);
+              if (std::sscanf(parameter, "%f", &m_batManData.time_empty) != 1)
+              {
+                m_task->err(DTR("Failed to parse time to empty"));
+                return false;
+              }
               if (m_batManData.time_empty == 65535)
                 m_batManData.time_empty = -1;
 
               m_task->debug("Average Time to Empty: %.0f min", m_batManData.time_empty);
               parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.time_full);
+              if (parameter == nullptr)
+              {
+                m_task->err(DTR("Invalid input format time to full"));
+                return false;
+              }
+              if (std::sscanf(parameter, "%f", &m_batManData.time_full) != 1)
+              {
+                m_task->err(DTR("Failed to parse time to full"));
+                return false;
+              }
               if (m_batManData.time_full == 65535)
                 m_batManData.time_full = -1;
 
@@ -306,7 +413,7 @@ namespace Power
           //! Timeout for new data in uart
           float m_timeout_uart;
           //! Buffer of uart
-          char bfr[64];
+          char bfr[256];
       };
     }
 }

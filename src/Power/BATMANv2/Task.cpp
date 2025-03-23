@@ -469,10 +469,10 @@ namespace Power
       //! Main loop.
       void
       onMain(void)
-      {    
+      {
         while (!stopping())
         {
-          waitForMessages(0.01);
+          waitForMessages(0.001);
 
           if (m_wdog.overflow())
           {
@@ -497,13 +497,20 @@ namespace Power
           if (!Poll::poll(*m_uart, m_args.input_timeout))
             continue;
 
-          if(m_driver->haveNewData())
+          try
           {
-            m_tstamp = Clock::getSinceEpoch();
-            dispatchData();
-            m_count_attempts = 0;
-            m_is_first_reset = true;
-            m_wdog.reset();
+            if(m_driver->haveNewData())
+            {
+              m_tstamp = Clock::getSinceEpoch();
+              dispatchData();
+              m_count_attempts = 0;
+              m_is_first_reset = true;
+              m_wdog.reset();
+            }
+          }
+          catch (std::runtime_error& e)
+          {
+            err("haveNewData: %s", e.what());
           }
         }
         debug("Sending stop to BatMan");
