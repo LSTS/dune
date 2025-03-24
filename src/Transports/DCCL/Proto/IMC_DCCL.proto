@@ -65,7 +65,7 @@ enum ParameterName {
 
 // Enum Parameter Value string
 enum ParamValue {
-    NONE = 0;
+    NONE_PV = 0;
     TRUE = 1;
     FALSE = 2;
     BOTH = 3;
@@ -83,7 +83,8 @@ enum EntityName {
 
 //Enum TransitionCondition 
 enum TransitionCondition {
-    MANEUVERISDONE = 0;
+    NONE_TC = 0;
+    MANEUVERISDONE = 1;
     //Others?
 }
 
@@ -199,7 +200,7 @@ message Maneuver{
 message ParameterValue{   
     option (dccl.msg) = { codec_version: 4 id: 2 max_bytes: 300};
     oneof ParameterValueUnion{
-        float value_number = 1 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+        float value_number = 1 [(dccl.field) = { min: -400 max: 10000 precision: 1 }];
         ParamValue value_string = 2;
     }
 }
