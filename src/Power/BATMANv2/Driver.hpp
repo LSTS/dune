@@ -77,20 +77,11 @@ namespace Power
             float time_full;
           };
 
-          //! Serial port
-          SerialPort* m_uart;
-          //! Interrupt/Poll for serial port
-          Poll m_poll;
-          //! number of cell to read
-          int m_numberCell;
-
-
-          DriverBatMan(DUNE::Tasks::Task* task, SerialPort* uart, Poll poll, int numberCell):
+          DriverBatMan(DUNE::Tasks::Task* task, IO::Handle* handle, int numberCell):
             m_task(task)
           {
-            m_uart = uart;
-            m_poll = poll;
-            m_timeout_uart = 1.0f;
+            m_handle = handle;
+            m_timeout_uart = 0.1f;
             m_numberCell = numberCell;
             resetStateNewData();
           }
@@ -155,28 +146,47 @@ namespace Power
             char cmdText[32];
             char cmdReplyText[32];
             std::sprintf(cmdText, "%s%c\n", cmd, (Algorithms::XORChecksum::compute((uint8_t*)cmd, strlen(cmd) - 1) | 0x80));
-            std::sprintf(cmdReplyText, "%s%c\n", reply, (Algorithms::XORChecksum::compute((uint8_t*)reply, strlen(reply) - 1) | 0x80));
+            std::sprintf(cmdReplyText, "%s", reply);
             char bfrUart[128];
-            m_task->spew("Command: %s", cmdText);
-            m_uart->writeString(cmdText);
-
-            if (Poll::poll(*m_uart, m_timeout_uart))
+            m_task->spew("Command TX: %s", cmdText);
+            m_handle->flush();
+            m_handle->writeString(cmdText);
+            char buf_rx[128];
+            std::memset(&buf_rx, '\0', sizeof(buf_rx));
+            uint8_t cnt_rx = 0;
+            uint16_t number_rx_received = 0;
+            bool exit_loop = false;
+            while (Poll::poll(*m_handle, m_timeout_uart) && !exit_loop)
             {
-              m_uart->readString(bfrUart, sizeof(bfrUart));
-              m_task->spew("Reply: %s", bfrUart);
-              if (std::strcmp(bfrUart, cmdReplyText) == 0)
+              number_rx_received = m_handle->read(bfrUart, sizeof(bfrUart));
+              for(uint8_t i = 0; i < number_rx_received; i++)
               {
-                return true;
+                buf_rx[cnt_rx++] = bfrUart[i];
+
+                if (cnt_rx >= 127 || bfrUart[i] == '*')
+                {
+                  exit_loop = true;
+                  break;
+                }
               }
-              else if(std::strcmp(reply, "$VERS,") == 0)
-              {
-                char* vrs = std::strtok(bfrUart, ",");
-                vrs = std::strtok(NULL, ",");
-                m_batManData.firmVersion = vrs;
-                return true;
-              }
+              if (exit_loop)
+                break;
             }
 
+            m_task->spew("Command Reply: %s", buf_rx);
+            if (std::strstr(reply, "$VERS,") != NULL)
+            {
+              m_batManData.firmVersion = extractBetweenCommas(reply);
+              return true;
+            }
+            else if (std::strstr(buf_rx, cmdReplyText) != NULL)
+            {
+              return true;
+            }
+            else
+            {
+              m_task->war("Command failed: cmd: %s | reply: %s", cmdReplyText, buf_rx);
+            }
             return false;
           }
 
@@ -186,216 +196,168 @@ namespace Power
             char cmdText[32];
             std::sprintf(cmdText, "%s%c\n", cmd, (Algorithms::XORChecksum::compute((uint8_t*)cmd, strlen(cmd) - 1) | 0x80));
             m_task->spew("Command (no rsp): %s", cmdText);
-            m_uart->writeString(cmdText);
+            m_handle->writeString(cmdText);
           }
 
           bool
           haveNewData(void)
           {
-            std::size_t rv = m_uart->readString(bfr, sizeof(bfr));
-
-            if (rv == 0)
+            char buf_rx[128];
+            std::memset(&bfr, '\0', sizeof(bfr));
+            uint16_t cnt_rx = 0;
+            uint16_t number_rx_received = 0;
+            bool exit_loop = false;
+            while (Poll::poll(*m_handle, m_timeout_uart) && !exit_loop)
             {
-              m_task->err(DTR("I/O error"));
+              number_rx_received = m_handle->read(buf_rx, sizeof(buf_rx));
+              for(uint8_t i = 0; i < number_rx_received; i++)
+              {
+                bfr[cnt_rx++] = buf_rx[i];
+
+                if (cnt_rx >= 127 || buf_rx[i] == '*')
+                {
+                  exit_loop = true;
+                  break;
+                }
+              }
+              if (exit_loop)
+                break;
+            }
+
+            if (cnt_rx < 3)
+            {
+              m_task->trace("Invalid buffer length: %d | %s", cnt_rx, bfr);
               return false;
             }
 
-            if (strlen(bfr) < 3)
-            {
-              m_task->err(DTR("Invalid buffer length"));
-              return false;
-            }
+            //bfr[strlen(bfr) - 3] = '\0';
 
-            bfr[strlen(bfr) - 3] = '\0';
+            m_task->spew("Received: %s", bfr);
 
             char* parameter = std::strtok(bfr, ",");
-            if (parameter == nullptr)
+            if (!parameter)
             {
-              m_task->err(DTR("Invalid input format"));
+              m_task->trace(DTR("Invalid input format"));
               return false;
             }
 
-            if(std::strcmp(parameter, "$VOLT") == 0)
+            auto parseFloat = [&](const char* label, float& target, int stateIndex) -> bool
             {
-              parameter = std::strtok(NULL, ",");
-              if (parameter == nullptr)
+              parameter = std::strtok(nullptr, ",");
+              if (!parameter)
               {
-                m_task->err(DTR("Invalid input format: voltage"));
-                return false;
+              m_task->trace(DTR("Invalid input format: %s"), label);
+              return false;
               }
-              if (std::sscanf(parameter, "%f", &m_batManData.voltage) != 1)
+              if (std::sscanf(parameter, "%f", &target) != 1)
               {
-                m_task->err(DTR("Failed to parse voltage"));
-                return false;
+              m_task->war(DTR("Failed to parse %s"), label);
+              return false;
               }
-              m_task->debug("Volt: %.3f V", m_batManData.voltage);
-              m_batManData.state_new_data[0] = true;
+              m_task->debug("%s: %.3f", label, target);
+              m_batManData.state_new_data[stateIndex] = true;
+              return true;
+            };
+
+            auto parseInt = [&](const char* label, int& target, int stateIndex) -> bool
+            {
+              parameter = std::strtok(nullptr, ",");
+              if (!parameter)
+              {
+              m_task->trace(DTR("Invalid input format: %s"), label);
+              return false;
+              }
+              if (std::sscanf(parameter, "%d", &target) != 1)
+              {
+              m_task->war(DTR("Failed to parse %s"), label);
+              return false;
+              }
+              m_task->debug("%s: %d", label, target);
+              m_batManData.state_new_data[stateIndex] = true;
+              return true;
+            };
+
+            if (std::strstr(parameter, "$VOLT"))
+            {
+              if (!parseFloat("Voltage", m_batManData.voltage, 0))
+                return false;
             }
-            else if(std::strcmp(parameter, "$AMPE") == 0)
+            else if (std::strstr(parameter, "$AMPE"))
             {
-              parameter = std::strtok(NULL, ",");
-              if (parameter == nullptr)
-              {
-                m_task->err(DTR("Invalid input format: current"));
+              if (!parseFloat("Current", m_batManData.current, 1))
                 return false;
-              }
-              if (std::sscanf(parameter, "%f", &m_batManData.current) != 1)
-              {
-                m_task->err(DTR("Failed to parse current"));
-                return false;
-              }
-              m_task->debug("Ampe: %.3f A", m_batManData.current);
-              m_batManData.state_new_data[1] = true;
             }
-            else if(std::strcmp(parameter, "$TEMP") == 0)
+            else if (std::strstr(parameter, "$TEMP"))
             {
-              parameter = std::strtok(NULL, ",");
-              if (parameter == nullptr)
-              {
-                m_task->err(DTR("Invalid input format: temperature"));
+              if (!parseFloat("Temperature", m_batManData.temperature, 2))
                 return false;
-              }
-              if (std::sscanf(parameter, "%f", &m_batManData.temperature) != 1)
-              {
-                m_task->err(DTR("Failed to parse temperature"));
-                return false;
-              }
-              m_task->debug("Temp: %.3f C", m_batManData.temperature);
-              m_batManData.state_new_data[2] = true;
             }
-            else if(std::strcmp(parameter, "$RCAP") == 0)
+            else if (std::strstr(parameter, "$RCAP"))
             {
-              parameter = std::strtok(NULL, ",");
-              if (parameter == nullptr)
-              {
-                m_task->err(DTR("Invalid input format: remaining capacity"));
+              if (!parseFloat("Remaining Capacity", m_batManData.r_cap, 3))
                 return false;
-              }
-              if (std::sscanf(parameter, "%f", &m_batManData.r_cap) != 1)
-              {
-                m_task->err(DTR("Failed to parse remaining capacity"));
-                return false;
-              }
-              m_task->debug("RCap: %.3f Ah", m_batManData.r_cap);
-              m_batManData.state_new_data[3] = true;
             }
-            else if(std::strcmp(parameter, "$FCAP") == 0)
+            else if (std::strstr(parameter, "$FCAP"))
             {
-              parameter = std::strtok(NULL, ",");
-              if (parameter == nullptr)
-              {
-                m_task->err(DTR("Invalid input format: full capacity"));
+              if (!parseFloat("Full Capacity", m_batManData.f_cap, 4))
                 return false;
-              }
-              if (std::sscanf(parameter, "%f", &m_batManData.f_cap) != 1)
-              {
-                m_task->err(DTR("Failed to parse full capacity"));
-                return false;
-              }
-              m_task->debug("FCap: %.3f Ah", m_batManData.f_cap);
-              m_batManData.state_new_data[4] = true;
             }
-            else if(std::strcmp(parameter, "$DCAP") == 0)
+            else if (std::strstr(parameter, "$DCAP"))
             {
-              parameter = std::strtok(NULL, ",");
-              if (parameter == nullptr)
-              {
-                m_task->err(DTR("Invalid input format: design capacity"));
+              if (!parseFloat("Design Capacity", m_batManData.d_cap, 5))
                 return false;
-              }
-              if (std::sscanf(parameter, "%f", &m_batManData.d_cap) != 1)
-              {
-                m_task->err(DTR("Failed to parse design capacity"));
-                return false;
-              }
-              m_task->debug("DCap: %.3f Ah", m_batManData.d_cap);
-              m_batManData.state_new_data[5] = true;
             }
-            else if (std::strcmp(parameter, "$HEAL") == 0)
+            else if (std::strstr(parameter, "$HEAL"))
             {
-              parameter = std::strtok(NULL, ",");
-              if (parameter == nullptr)
-              {
-                m_task->err(DTR("Invalid input format: health"));
+              if (!parseInt("Health", m_batManData.health, 6))
                 return false;
-              }
-              if (std::sscanf(parameter, "%d", &m_batManData.health) != 1)
-              {
-                m_task->err(DTR("Failed to parse health"));
-                return false;
-              }
-              m_task->debug("Health: %d %%", m_batManData.health);
-              m_batManData.state_new_data[6] = true;
             }
-            else if (std::strcmp(parameter, "$CELL") == 0)
+            else if (std::strstr(parameter, "$CELL"))
             {
-              parameter = std::strtok(NULL, ",");
-              if (parameter == nullptr)
+              for (int i = 0; i < m_numberCell; ++i)
               {
-                m_task->err(DTR("Invalid input format cell voltage"));
-                return false;
-              }
-              for(int i = 0; i < m_numberCell; i++)
-              {
-                parameter = std::strtok(NULL, ",");
-                if (parameter == nullptr)
+                parameter = std::strtok(nullptr, ",");
+                if (!parameter)
                 {
-                  m_task->err(DTR("Invalid input format cell voltage %d"), i+1);
+                  m_task->trace(DTR("Invalid input format: Cell Voltage %d"), i + 1);
                   return false;
                 }
                 if (std::sscanf(parameter, "%f", &m_batManData.cell_volt[i]) != 1)
                 {
-                  m_task->err(DTR("Failed to parse cell voltage %d"), i+1);
+                  m_task->war(DTR("Failed to parse Cell Voltage %d"), i + 1);
                   return false;
                 }
-                m_task->debug("Cell %d: %.3f V", i+1, m_batManData.cell_volt[i]);
+                m_task->debug("Cell %d: %.3f V", i + 1, m_batManData.cell_volt[i]);
               }
               m_batManData.state_new_data[7] = true;
-              m_task->debug(" ");
             }
-            else if (std::strcmp(parameter, "$BATS") == 0)
+            else if (std::strstr(parameter, "$BATS"))
             {
-              if (parameter == nullptr)
-              {
-                m_task->err(DTR("Invalid input format time to empty"));
+              if (!parseFloat("Time to Empty", m_batManData.time_empty, 8))
                 return false;
-              }
-              parameter = std::strtok(NULL, ",");
-              if (std::sscanf(parameter, "%f", &m_batManData.time_empty) != 1)
-              {
-                m_task->err(DTR("Failed to parse time to empty"));
-                return false;
-              }
+
               if (m_batManData.time_empty == 65535)
                 m_batManData.time_empty = -1;
 
-              m_task->debug("Average Time to Empty: %.0f min", m_batManData.time_empty);
-              parameter = std::strtok(NULL, ",");
-              if (parameter == nullptr)
+              parameter = std::strtok(nullptr, ",");
+              if (!parameter)
               {
-                m_task->err(DTR("Invalid input format time to full"));
+                m_task->trace(DTR("Invalid input format: Time to Full"));
                 return false;
               }
               if (std::sscanf(parameter, "%f", &m_batManData.time_full) != 1)
               {
-                m_task->err(DTR("Failed to parse time to full"));
+                m_task->war(DTR("Failed to parse Time to Full"));
                 return false;
               }
               if (m_batManData.time_full == 65535)
                 m_batManData.time_full = -1;
 
-              m_task->debug("Average Time to Full: %.0f min", m_batManData.time_full);
+              m_task->debug("Time to Full: %.0f min", m_batManData.time_full);
               m_batManData.state_new_data[8] = true;
             }
 
-            bool result = true;
-            for(uint8_t t = 0; t < 8; t++)
-            {
-              if(m_batManData.state_new_data[t] == false)
-                result = false;
-            }
-
-            return result;
+            return std::all_of(std::begin(m_batManData.state_new_data), std::end(m_batManData.state_new_data), [](bool state) { return state; });
           }
 
           std::string
@@ -414,6 +376,26 @@ namespace Power
           float m_timeout_uart;
           //! Buffer of uart
           char bfr[256];
+          //! IO::Handle
+          IO::Handle* m_handle;
+          //! number of cell to read
+          int m_numberCell;
+
+          std::string
+          extractBetweenCommas(const char* str)
+          {
+            // Find the first comma
+            const char* firstComma = strchr(str, ',');
+            // Find the second comma after the first one
+            const char* secondComma = strchr(firstComma + 1, ',');
+            if (firstComma && secondComma)
+            {
+              // Extract the part between the commas
+              return std::string(firstComma + 1, secondComma - firstComma - 1);
+            }
+            // Return an empty string if commas are not found correctly
+            return "";
+        }
       };
     }
 }

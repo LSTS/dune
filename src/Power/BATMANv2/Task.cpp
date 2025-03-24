@@ -45,10 +45,8 @@ namespace Power
 
     struct Arguments
     {
-      //! Serial port device.
-      std::string uart_dev;
-      //! Serial port baud rate.
-      unsigned uart_baud;
+      //! IO device.
+      std::string io_dev;
       //! Input timeout.
       double input_timeout;
       //! Input number cell
@@ -73,12 +71,12 @@ namespace Power
       int number_attempts;
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
-      //! Serial port handle.
-      SerialPort* m_uart;
-      //! I/O Multiplexer.
-      Poll m_poll;
+      //! IO device handle.
+      IO::Handle* m_handle;
+      //! Flag to control date of connection to device
+      bool m_is_connecting_to_device;
       //! Task arguments
       Arguments m_args;
       //! Driver of BatMan
@@ -108,18 +106,21 @@ namespace Power
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
-        m_uart(NULL),
+        Hardware::BasicDeviceDriver(name, ctx),
+        m_handle(NULL),
+        m_is_connecting_to_device(false),
         m_driver(0),
         m_tstamp(0)
       {
-        param("Serial Port - Device", m_args.uart_dev)
-        .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
+        // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+          Tasks::Parameter::VISIBILITY_DEVELOPER, 
+          true);
 
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("38400")
-        .description("Serial port baud rate");
+        param("IO Port - Device", m_args.io_dev)
+        .defaultValue("")
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
 
         param("Input Timeout", m_args.input_timeout)
         .defaultValue("3.0")
@@ -188,6 +189,62 @@ namespace Power
 
       }
 
+      ~Task() override
+      {
+        onDisconnect();
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+      }
+
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
+      {
+        inf("onConnect");
+        try
+        {
+          m_handle = openDeviceHandle(m_args.io_dev);
+          m_is_connecting_to_device = true;
+          return true;
+        }
+        catch (...)
+        {
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+        return false;
+      }
+
+      //! Disconnect from device.
+      void
+      onDisconnect() override
+      {
+        inf("onDisconnect");
+        if(m_driver != NULL)
+        {
+          debug("Sending stop to BatMan");
+          m_driver->stopAcquisition();
+          Memory::clear(m_driver);
+        }
+        if(m_handle != NULL)
+        {
+          Memory::clear(m_handle);
+        }
+      }
+
+      void
+      onIdle(void)
+      {
+        if(m_is_connecting_to_device)
+        {
+          war(DTR("Failed to initiate connection with device, restarting connection..."));
+          requestActivation();
+        }
+      }
+
       //! Reserve entity identifiers.
       void
       onEntityReservation(void)
@@ -223,46 +280,25 @@ namespace Power
         return eid;
       }
 
-      //! Acquire resources.
+      //! Initialize device.
       void
-      onResourceAcquisition(void)
+      onInitializeDevice() override
       {
+        inf("onInitializeDevice");
+        m_is_connecting_to_device = false;
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_uart->setCanonicalInput(true);
-          m_uart->flush();
-          m_poll.add(*m_uart);
-          m_driver = new DriverBatMan(this, m_uart, m_poll, m_args.number_cell);
+          m_driver = new DriverBatMan(this, m_handle, m_args.number_cell);
           m_count_attempts = 0;
+          m_driver->stopAcquisition();
+          Delay::wait(c_delay_startup);
+          initBoard(false);
+          m_is_first_reset = true;
         }
         catch (std::runtime_error& e)
         {
           throw RestartNeeded(e.what(), 10);
-        }
-      }
-
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-        m_driver->stopAcquisition();
-        m_uart->flush();
-        Delay::wait(c_delay_startup);
-        initBoard(false);
-        m_is_first_reset = true;
-      }
-
-      //! Release resources.
-      void
-      onResourceRelease(void)
-      {
-        if (m_uart != NULL)
-        {
-          m_poll.remove(*m_uart);
-          Memory::clear(m_driver);
-          Memory::clear(m_uart);
         }
       }
 
@@ -467,54 +503,49 @@ namespace Power
       }
 
       //! Main loop.
-      void
-      onMain(void)
+      //! Check for input data.
+      //! @return true.
+      bool
+      onReadData() override
       {
-        while (!stopping())
+        waitForMessages(0.001);
+        if (m_wdog.overflow())
         {
-          waitForMessages(0.001);
-
-          if (m_wdog.overflow())
+          if (m_count_attempts >= m_args.number_attempts)
           {
-            if (m_count_attempts >= m_args.number_attempts)
-            {
-              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 10);
-            }
-
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR("trying connecting to board")));
-            war(DTR("trying connecting to board"));
-            m_count_attempts++;
-            if (m_is_first_reset)
-            {
-              m_driver->sendCommandNoRsp("@RESET,*");
-              m_is_first_reset = false;
-            }
-            m_uart->flush();
-            initBoard(true);
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 10);
           }
 
-          if (!Poll::poll(*m_uart, m_args.input_timeout))
-            continue;
-
-          try
+          setEntityState(IMC::EntityState::ESTA_NORMAL,
+                         Utils::String::str(DTR("trying connecting to board")));
+          war(DTR("trying connecting to board"));
+          m_count_attempts++;
+          if (m_is_first_reset)
           {
-            if(m_driver->haveNewData())
-            {
-              m_tstamp = Clock::getSinceEpoch();
-              dispatchData();
-              m_count_attempts = 0;
-              m_is_first_reset = true;
-              m_wdog.reset();
-            }
+            m_driver->sendCommandNoRsp("@RESET,*");
+            m_is_first_reset = false;
           }
-          catch (std::runtime_error& e)
+          initBoard(true);
+        }
+
+        try
+        {
+          if (m_driver->haveNewData())
           {
-            err("haveNewData: %s", e.what());
+            m_tstamp = Clock::getSinceEpoch();
+            dispatchData();
+            m_count_attempts = 0;
+            m_is_first_reset = true;
+            m_wdog.reset();
           }
         }
-        debug("Sending stop to BatMan");
-        m_driver->stopAcquisition();
+        catch (std::runtime_error& e)
+        {
+          err("haveNewData: %s", e.what());
+        }
+
+        return true;
       }
     };
   }
