@@ -305,6 +305,8 @@ namespace Power
       void
       initBoard(bool noRestart)
       {
+        m_wdog.setTop(m_args.input_timeout);
+        m_wdog.reset();
         if (!m_driver->getVersionFirmware())
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR("trying connecting to board")));
@@ -318,12 +320,14 @@ namespace Power
           vi.version = firmware_info;
           vi.op = IMC::VersionInfo::OP_REPLY;
           dispatch(vi);
+          m_wdog.reset();
         }
 
         if (!m_driver->initBatMan(m_args.number_cell, m_args.scale_factor))
         {
           if (!noRestart)
           {
+            war("Resetting board");
             m_driver->sendCommandNoRsp("@RESET,*");
             Delay::wait(1.0);
             throw RestartNeeded(DTR("failed to init BatMan"), 10, true);
@@ -335,11 +339,13 @@ namespace Power
             return;
           }
         }
+        m_wdog.reset();
 
         if (!m_driver->startAcquisition())
         {
           if (!noRestart)
           {
+            war("Resetting board");
             m_driver->sendCommandNoRsp("@RESET,*");
             Delay::wait(1.0);
             throw RestartNeeded(DTR("failed to start acquisition"), 10, true);
@@ -351,10 +357,9 @@ namespace Power
             return;
           }
         }
+        m_wdog.reset();
 
         debug("Init and Start OK");
-        m_wdog.setTop(m_args.input_timeout);
-        m_wdog.reset();
       }
 
       std::string
@@ -523,26 +528,31 @@ namespace Power
           m_count_attempts++;
           if (m_is_first_reset)
           {
+            war("Resetting board");
             m_driver->sendCommandNoRsp("@RESET,*");
+            Delay::wait(1.0);
             m_is_first_reset = false;
+            m_wdog.reset();
           }
           initBoard(true);
         }
-
-        try
+        else
         {
-          if (m_driver->haveNewData())
+          try
           {
-            m_tstamp = Clock::getSinceEpoch();
-            dispatchData();
-            m_count_attempts = 0;
-            m_is_first_reset = true;
-            m_wdog.reset();
+            if (m_driver->haveNewData())
+            {
+              m_tstamp = Clock::getSinceEpoch();
+              dispatchData();
+              m_count_attempts = 0;
+              m_is_first_reset = true;
+              m_wdog.reset();
+            }
           }
-        }
-        catch (std::runtime_error& e)
-        {
-          err("haveNewData: %s", e.what());
+          catch (std::runtime_error& e)
+          {
+            err("haveNewData: %s", e.what());
+          }
         }
 
         return true;
