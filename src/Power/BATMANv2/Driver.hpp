@@ -81,9 +81,13 @@ namespace Power
             m_task(task)
           {
             m_handle = handle;
-            m_timeout_uart = 0.1f;
+            m_timeout_uart = 1.0f;
             m_numberCell = numberCell;
             resetStateNewData();
+            std::memset(&bfr_rx, '\0', sizeof(bfr_rx));
+            cnt_bfr_rx = 0;
+            m_state_data_in = STATE_DATA_IN_PREAMBLE;
+            m_new_data_in = false;
           }
 
           ~DriverBatMan(void){}
@@ -132,11 +136,18 @@ namespace Power
           }
 
           bool
-          stopAcquisition(void)
+          stopAcquisition(bool wait_reply = true)
           {
-            if (sendCommand("@STOP,*", ""))
+            if (wait_reply)
+            {
+              if (sendCommand("@STOP,*", "$RSP,ACK,,*"))
+                return true;
+            }
+            else
+            {
+              sendCommandNoRsp("@STOP,*");
               return true;
-
+            }
             return false;
           }
 
@@ -176,6 +187,8 @@ namespace Power
                 break;
             }
 
+            m_handle->flush();
+
             if (cnt_rx < 3)
             {
               m_task->trace("SendCommand: Invalid buffer length: %d | %s", cnt_rx, buf_rx);
@@ -209,53 +222,199 @@ namespace Power
           void
           sendCommandNoRsp(const char* cmd)
           {
-            char cmdText[32];
+            char cmdText[64];
             std::sprintf(cmdText, "%s%c\n", cmd, (Algorithms::XORChecksum::compute((uint8_t*)cmd, strlen(cmd) - 1) | 0x80));
             m_task->spew("Command (no rsp): %s", cmdText);
+            m_handle->flush();
             m_handle->writeString(cmdText);
           }
 
           bool
           haveNewData(void)
           {
+            int number_rx_received = 0;
             char buf_rx[128];
-            std::memset(&bfr, '\0', sizeof(bfr));
-            uint16_t cnt_rx = 0;
-            uint16_t number_rx_received = 0;
-            bool exit_loop = false;
-            char csum_rx = 0x00;
-            while (Poll::poll(*m_handle, m_timeout_uart * 5) && !exit_loop)
+            if (Poll::poll(*m_handle, m_timeout_uart))
             {
-              number_rx_received = m_handle->read(buf_rx, sizeof(buf_rx));
+              number_rx_received = m_handle->read(buf_rx, 128);
               for(uint8_t i = 0; i < number_rx_received; i++)
               {
-                bfr[cnt_rx++] = buf_rx[i];
-
-                if (cnt_rx >= 127 || buf_rx[i] == '*')
-                {
-                  exit_loop = true;
-                  if((i + 1) < number_rx_received)
-                    csum_rx = buf_rx[i + 1];
-                  break;
-                }
+                parseDataIn(buf_rx[i]);
               }
-              if (exit_loop)
+            }
+            if(m_new_data_in)
+            {
+              m_new_data_in = false;
+              return true;
+            }
+            return false;
+          }
+
+          std::string
+          getFirmwareVersion(void)
+          {
+            return m_batManData.firmVersion;
+          }
+
+          BatManData m_batManData;
+
+        private:
+
+          enum StateDataIn
+          {
+            STATE_DATA_IN_PREAMBLE = 0,
+            STATE_DATA_IN_DATA,
+            STATE_DATA_IN_CRC,
+            STATE_DATA_IN_END
+          };
+
+          //! Parent task.
+          DUNE::Tasks::Task* m_task;
+          //! Timeout for new data in uart
+          float m_timeout_uart;
+          //! Buffer of uart
+          char bfr_rx[256];
+          //! Counter of buffer
+          uint16_t cnt_bfr_rx;
+          //! IO::Handle
+          IO::Handle* m_handle;
+          //! number of cell to read
+          int m_numberCell;
+          //! State of message byte data in
+          uint8_t m_state_data_in;
+          //! Flag to control new DataIn
+          bool m_new_data_in;
+
+          bool
+          parseFloat(char* parameter, const char* label, float& target, int stateIndex)
+          {
+            parameter = std::strtok(nullptr, ",");
+            if (!parameter)
+            {
+              m_task->trace(DTR("Invalid input format: %s"), label);
+              return false;
+            }
+            if (std::sscanf(parameter, "%f", &target) != 1)
+            {
+              m_task->war(DTR("Failed to parse %s"), label);
+              return false;
+            }
+            m_task->debug("%s: %.3f", label, target);
+            m_batManData.state_new_data[stateIndex] = true;
+            return true;
+          };
+
+          bool
+          parseInt(char* parameter, const char* label, int& target, int stateIndex)
+          {
+            parameter = std::strtok(nullptr, ",");
+            if (!parameter)
+            {
+              m_task->trace(DTR("Invalid input format: %s"), label);
+              return false;
+            }
+            if (std::sscanf(parameter, "%d", &target) != 1)
+            {
+              m_task->war(DTR("Failed to parse %s"), label);
+              return false;
+            }
+            m_task->debug("%s: %d", label, target);
+            m_batManData.state_new_data[stateIndex] = true;
+            return true;
+          };
+
+          std::string
+          extractBetweenCommas(const char* str)
+          {
+            // Find the first comma
+            const char* firstComma = strchr(str, ',');
+            // Find the second comma after the first one
+            const char* secondComma = (firstComma != nullptr) ? strchr(firstComma + 1, ',') : nullptr;
+            if (firstComma && secondComma)
+            {
+              // Extract the part between the commas
+              return std::string(firstComma + 1, secondComma - firstComma - 1);
+            }
+            // Return an empty string if commas are not found correctly
+            return "";
+          }
+
+          bool
+          verify_CRC8(char* data, char received_csum)
+          {
+            char csum = 0x00;
+            uint16_t t = 0;
+            while (data[t] != '*' && data[t] != '\0')
+            {
+              csum ^= data[t];
+              t++;
+            }
+
+            csum |= 0x80;
+            m_task->trace("csum: 0x%02x, received_csum: 0x%02x", (uint8_t)csum, (uint8_t)received_csum);
+            if(csum != received_csum)
+            {
+              m_task->war("Invalid CRC8:Data:%s | 0x%02x (C) != 0x%02x (R)", data, (uint8_t)csum, (uint8_t)received_csum);
+              return false;
+            }
+            return csum == received_csum;
+          }
+
+          void
+          parseDataIn(char data)
+          {
+            switch (m_state_data_in)
+            {
+              case STATE_DATA_IN_PREAMBLE:
+                if (data == '$')
+                {
+                  m_new_data_in = false;
+                  m_state_data_in = STATE_DATA_IN_DATA;
+                  cnt_bfr_rx = 0;
+                  std::memset(&bfr_rx, '\0', sizeof(bfr_rx));
+                  bfr_rx[cnt_bfr_rx++] = data;
+                }
+                break;
+              case STATE_DATA_IN_DATA:
+                if (data == '*')
+                {
+                  m_state_data_in = STATE_DATA_IN_CRC;
+                  bfr_rx[cnt_bfr_rx++] = data;
+                }
+                else if(cnt_bfr_rx >= 255)
+                {
+                  m_task->war("Buffer overflow on DataIn");
+                  m_handle->flush();
+                  m_state_data_in = STATE_DATA_IN_PREAMBLE;
+                }
+                else
+                {
+                  bfr_rx[cnt_bfr_rx++] = data;
+                }
+                break;
+              case STATE_DATA_IN_CRC:
+                bfr_rx[cnt_bfr_rx++] = data;
+                if (verify_CRC8(bfr_rx, data))
+                {
+                  m_state_data_in = STATE_DATA_IN_END;
+                }
+                else
+                {
+                  m_state_data_in = STATE_DATA_IN_PREAMBLE;
+                }
+                break;
+              case STATE_DATA_IN_END:
+                m_handle->flush();
+                m_task->trace("DataIn: %s", bfr_rx);
+                m_new_data_in = decodeDataIn(bfr_rx);
+                m_state_data_in = STATE_DATA_IN_PREAMBLE;
                 break;
             }
+          }
 
-            if (cnt_rx < 3)
-            {
-              m_task->trace("DataIn: Invalid buffer length: %d | %s", cnt_rx, bfr);
-              return false;
-            }
-
-            if(!verify_CRC8(bfr, csum_rx))
-            {
-              m_task->war("DataIn: Invalid CRC8: %s", bfr);
-              return false;
-            }
-
-            m_task->trace("Received: %s", bfr);
+          bool
+          decodeDataIn(char* bfr)
+          {
             char* parameter = std::strtok(bfr, ",");
             if (!parameter)
             {
@@ -346,102 +505,6 @@ namespace Power
             }
 
             return std::all_of(std::begin(m_batManData.state_new_data), std::end(m_batManData.state_new_data), [](bool state) { return state; });
-          }
-
-          std::string
-          getFirmwareVersion(void)
-          {
-            return m_batManData.firmVersion;
-          }
-
-          BatManData m_batManData;
-
-        private:
-
-          //! Parent task.
-          DUNE::Tasks::Task* m_task;
-          //! Timeout for new data in uart
-          float m_timeout_uart;
-          //! Buffer of uart
-          char bfr[256];
-          //! IO::Handle
-          IO::Handle* m_handle;
-          //! number of cell to read
-          int m_numberCell;
-
-          bool
-          parseFloat(char* parameter, const char* label, float& target, int stateIndex)
-          {
-            parameter = std::strtok(nullptr, ",");
-            if (!parameter)
-            {
-              m_task->trace(DTR("Invalid input format: %s"), label);
-              return false;
-            }
-            if (std::sscanf(parameter, "%f", &target) != 1)
-            {
-              m_task->war(DTR("Failed to parse %s"), label);
-              return false;
-            }
-            m_task->debug("%s: %.3f", label, target);
-            m_batManData.state_new_data[stateIndex] = true;
-            return true;
-          };
-
-          bool
-          parseInt(char* parameter, const char* label, int& target, int stateIndex)
-          {
-            parameter = std::strtok(nullptr, ",");
-            if (!parameter)
-            {
-              m_task->trace(DTR("Invalid input format: %s"), label);
-              return false;
-            }
-            if (std::sscanf(parameter, "%d", &target) != 1)
-            {
-              m_task->war(DTR("Failed to parse %s"), label);
-              return false;
-            }
-            m_task->debug("%s: %d", label, target);
-            m_batManData.state_new_data[stateIndex] = true;
-            return true;
-          };
-
-          std::string
-          extractBetweenCommas(const char* str)
-          {
-            // Find the first comma
-            const char* firstComma = strchr(str, ',');
-            // Find the second comma after the first one
-            const char* secondComma = strchr(firstComma + 1, ',');
-            if (firstComma && secondComma)
-            {
-              // Extract the part between the commas
-              return std::string(firstComma + 1, secondComma - firstComma - 1);
-            }
-            // Return an empty string if commas are not found correctly
-            return "";
-          }
-
-          bool
-          verify_CRC8(char* data, char received_csum)
-          {
-            char csum = 0x00;
-            uint16_t t = 0;
-            while (data[t] != '*' && data[t] != '\0')
-            {
-              csum ^= data[t];
-              t++;
-            }
-
-            csum |= 0x80;
-            m_task->trace("csum: 0x%02x, received_csum: 0x%02x", (uint8_t)csum, (uint8_t)received_csum);
-            if(csum != received_csum)
-            {
-              m_task->war("Invalid CRC8: 0x%02x != 0x%02x", (uint8_t)csum, (uint8_t)received_csum);
-              return false;
-            }
-            return csum == received_csum;
           }
       };
     }

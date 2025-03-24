@@ -94,13 +94,11 @@ namespace Power
       //! Fuel Level message
       IMC::FuelLevel m_fuel;
       //! Buffer forEntityState
-      char m_buffer_entity[128];
+      char m_buffer_entity[256];
       //! Read timestamp.
       double m_tstamp;
       //! Count for attempts
       int m_count_attempts;
-      //! Flag to control reset of board
-      bool m_is_first_reset;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -124,7 +122,7 @@ namespace Power
 
         param("Input Timeout", m_args.input_timeout)
         .defaultValue("3.0")
-        .minimumValue("2.0")
+        .minimumValue("2.5")
         .maximumValue("4.0")
         .units(Units::Second)
         .description("Amount of seconds to wait for data before reporting an error");
@@ -294,7 +292,6 @@ namespace Power
           m_driver->stopAcquisition();
           Delay::wait(c_delay_startup);
           initBoard(false);
-          m_is_first_reset = true;
         }
         catch (std::runtime_error& e)
         {
@@ -328,6 +325,8 @@ namespace Power
           if (!noRestart)
           {
             war("Resetting board");
+            m_driver->stopAcquisition(false);
+            Delay::wait(1.0);
             m_driver->sendCommandNoRsp("@RESET,*");
             Delay::wait(1.0);
             throw RestartNeeded(DTR("failed to init BatMan"), 10, true);
@@ -339,13 +338,19 @@ namespace Power
             return;
           }
         }
+        else
+        {
+          inf("BatMan initialized");
+        }
         m_wdog.reset();
 
         if (!m_driver->startAcquisition())
         {
           if (!noRestart)
           {
-            war("Resetting board");
+            war("Fail Start of Acquisition. Resetting board");
+            m_driver->stopAcquisition(false);
+            Delay::wait(1.0);
             m_driver->sendCommandNoRsp("@RESET,*");
             Delay::wait(1.0);
             throw RestartNeeded(DTR("failed to start acquisition"), 10, true);
@@ -356,6 +361,10 @@ namespace Power
             war(DTR("failed to start acquisition"));
             return;
           }
+        }
+        else
+        {
+          inf("Acquisition started");
         }
         m_wdog.reset();
 
@@ -429,18 +438,21 @@ namespace Power
           std::memset(&m_buffer_entity, '\0', sizeof(m_buffer_entity));
           if (m_driver->m_batManData.time_full > 0)
           {
-            std::sprintf(m_buffer_entity, "fuel reserve - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
-            setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR(m_buffer_entity)));
+            std::sprintf(m_buffer_entity, "active | %s | fuel reserve - ETF: %s",
+                            m_args.io_dev.c_str(),
+                            minutesToTime(m_driver->m_batManData.time_full).c_str());
           }
           else if((m_driver->m_batManData.time_empty > 0))
           {
-            std::sprintf(m_buffer_entity, "fuel reserve - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
-            setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR(m_buffer_entity)));
+            std::sprintf(m_buffer_entity, "active | %s | fuel reserve - ETD: %s",
+                            m_args.io_dev.c_str(),
+                            minutesToTime(m_driver->m_batManData.time_empty).c_str());
           }
           else
           {
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_FUEL_RESERVE);
+            std::sprintf(m_buffer_entity, "active | %s | fuel reserve", m_args.io_dev.c_str());
           }
+          setEntityState(IMC::EntityState::ESTA_ERROR, Utils::String::str(DTR(m_buffer_entity)));
         }
         else if (m_fuel.value < m_args.err_lvl)
         {
@@ -448,17 +460,16 @@ namespace Power
           if (m_driver->m_batManData.time_full > 0)
           {
             std::sprintf(m_buffer_entity, "fuel warning - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_buffer_entity)));
           }
           else if((m_driver->m_batManData.time_empty > 0))
           {
             std::sprintf(m_buffer_entity, "fuel warning - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_buffer_entity)));
           }
           else
           {
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_FUEL_RESERVE);
+            std::sprintf(m_buffer_entity, "active | %s | fuel reserve", m_args.io_dev.c_str());
           }
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_buffer_entity)));
         }
         else if (m_fuel.value < m_args.war_lvl)
         {
@@ -466,17 +477,16 @@ namespace Power
           if (m_driver->m_batManData.time_full > 0)
           {
             std::sprintf(m_buffer_entity, "fuel running low - ETF: %s", minutesToTime(m_driver->m_batManData.time_full).c_str());
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_buffer_entity)));
           }
           else if ((m_driver->m_batManData.time_empty > 0))
           {
             std::sprintf(m_buffer_entity, "fuel running low - ETD: %s", minutesToTime(m_driver->m_batManData.time_empty).c_str());
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_buffer_entity)));
           }
           else
           {
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_FUEL_LOW);
+            std::sprintf(m_buffer_entity, "active | %s | fuel running low", m_args.io_dev.c_str());
           }
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(m_buffer_entity)));
         }
         else
         {
@@ -484,21 +494,24 @@ namespace Power
 
           if (m_driver->m_batManData.time_full > 0)
             std::sprintf(m_buffer_entity,
-                         "H: %d %%, Volt: %.3f V, RCap: %.3f Ah, ETF: %s",
+                         "active | %s | H: %d %%, Volt: %.3f V, RCap: %.3f Ah, ETF: %s",
+                         m_args.io_dev.c_str(),
                          m_driver->m_batManData.health,
                          m_driver->m_batManData.voltage,
                          m_driver->m_batManData.r_cap,
                          minutesToTime(m_driver->m_batManData.time_full).c_str());
           else if (m_driver->m_batManData.time_empty > 0)
             std::sprintf(m_buffer_entity,
-                         "H: %d %%, Volt: %.3f V, RCap: %.3f Ah, ETD: %s",
+                         "active | %s | H: %d %%, Volt: %.3f V, RCap: %.3f Ah, ETD: %s",
+                         m_args.io_dev.c_str(),
                          m_driver->m_batManData.health,
                          m_driver->m_batManData.voltage,
                          m_driver->m_batManData.r_cap,
                          minutesToTime(m_driver->m_batManData.time_empty).c_str());
           else
             std::sprintf(m_buffer_entity,
-                         "H: %d %%, Volt: %.3f V, RCap: %.3f Ah",
+                         "active | %s | H: %d %%, Volt: %.3f V, RCap: %.3f Ah",
+                         m_args.io_dev.c_str(),
                          m_driver->m_batManData.health,
                          m_driver->m_batManData.voltage,
                          m_driver->m_batManData.r_cap);
@@ -518,44 +531,41 @@ namespace Power
         {
           if (m_count_attempts >= m_args.number_attempts)
           {
+            war("Resetting board");
+            m_driver->stopAcquisition(false);
+            Delay::wait(1.0);
+            m_driver->sendCommandNoRsp("@RESET,*");
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
             throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 10);
           }
 
           setEntityState(IMC::EntityState::ESTA_NORMAL,
                          Utils::String::str(DTR("trying connecting to board")));
-          war(DTR("trying connecting to board"));
+          inf("Timeout receiving data, trying reconnecting to board (%d of %d)",
+            m_count_attempts, m_args.number_attempts);
           m_count_attempts++;
-          if (m_is_first_reset)
-          {
-            war("Resetting board");
-            m_driver->sendCommandNoRsp("@RESET,*");
-            Delay::wait(1.0);
-            m_is_first_reset = false;
-            m_wdog.reset();
-          }
-          initBoard(true);
-        }
-        else
-        {
-          try
-          {
-            if (m_driver->haveNewData())
-            {
-              m_tstamp = Clock::getSinceEpoch();
-              dispatchData();
-              m_count_attempts = 0;
-              m_is_first_reset = true;
-              m_wdog.reset();
-            }
-          }
-          catch (std::runtime_error& e)
-          {
-            err("haveNewData: %s", e.what());
-          }
+          m_handle->flush();
+          m_wdog.reset();
+          return false;
         }
 
-        return true;
+        try
+        {
+          if (m_driver->haveNewData())
+          {
+            m_tstamp = Clock::getSinceEpoch();
+            dispatchData();
+            m_count_attempts = 0;
+            m_wdog.reset();
+            return true;
+          }
+        }
+        catch (std::runtime_error& e)
+        {
+          err("haveNewData: %s", e.what());
+        }
+
+        return false;
       }
     };
   }
