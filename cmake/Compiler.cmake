@@ -142,7 +142,9 @@ macro(dune_probe_cxx)
       # remove warning array-bounds #
       set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -Wno-array-bounds")
       # remove warning stringop-overflow #
-      set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -Wno-stringop-overflow")
+      if (NOT DUNELEGACY)
+        set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -Wno-stringop-overflow")
+      endif(NOT DUNELEGACY)
 
       set(DUNE_CXX_FLAGS_STRICT "-Wall -Wshadow -pedantic")
       set(DUNE_C_FLAGS_STRICT "-Wall -Wshadow -pedantic")
