@@ -224,7 +224,7 @@ namespace Power
             uint16_t number_rx_received = 0;
             bool exit_loop = false;
             char csum_rx = 0x00;
-            while (Poll::poll(*m_handle, m_timeout_uart) && !exit_loop)
+            while (Poll::poll(*m_handle, m_timeout_uart * 5) && !exit_loop)
             {
               number_rx_received = m_handle->read(buf_rx, sizeof(buf_rx));
               for(uint8_t i = 0; i < number_rx_received; i++)
@@ -436,6 +436,11 @@ namespace Power
 
             csum |= 0x80;
             m_task->trace("csum: 0x%02x, received_csum: 0x%02x", (uint8_t)csum, (uint8_t)received_csum);
+            if(csum != received_csum)
+            {
+              m_task->war("Invalid CRC8: 0x%02x != 0x%02x", (uint8_t)csum, (uint8_t)received_csum);
+              return false;
+            }
             return csum == received_csum;
           }
       };
