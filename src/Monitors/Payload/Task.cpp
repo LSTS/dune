@@ -124,21 +124,21 @@ namespace Monitors
         for (auto&& i : m_args.pay_msgs)
         {
           spew("Splitting %s", i.c_str());
-          std::vector<std::string> param;
-          String::split(i, ":", param);
-          if (param.size() != 2)
+          std::vector<std::string> params;
+          String::split(i, ":", params);
+          if (params.size() != 2)
           {
             err("invalid message format %s", i.c_str());
             continue;
           }
 
-          inf("Add message %s from %s to payload", param[0].c_str(), param[1].c_str());
-          unsigned msg_id = IMC::Factory::getIdFromAbbrev(param[0]);
-          unsigned eid = tryResolveEntity(param[1]);
+          inf("Add message %s from %s to payload", params[0].c_str(), params[1].c_str());
+          unsigned msg_id = IMC::Factory::getIdFromAbbrev(params[0]);
+          unsigned eid = tryResolveEntity(params[1]);
           m_storage.addToPayload(eid, msg_id);
 
           // Bind message to consumer.
-          bind(IMC::Factory::getIdFromAbbrev(param[0]),
+          bind(IMC::Factory::getIdFromAbbrev(params[0]),
                new Consumer<Task, IMC::Message>(*this, &Task::consumePayload));
         }
 
