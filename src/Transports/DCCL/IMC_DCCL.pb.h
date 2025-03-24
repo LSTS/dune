@@ -255,7 +255,7 @@ inline bool ParameterName_Parse(
     ParameterName_descriptor(), name, value);
 }
 enum ParamValue {
-  NONE = 0,
+  NONE_PV = 0,
   TRUE = 1,
   FALSE = 2,
   BOTH = 3,
@@ -263,7 +263,7 @@ enum ParamValue {
   ParamValue_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool ParamValue_IsValid(int value);
-const ParamValue ParamValue_MIN = NONE;
+const ParamValue ParamValue_MIN = NONE_PV;
 const ParamValue ParamValue_MAX = BOTH;
 const int ParamValue_ARRAYSIZE = ParamValue_MAX + 1;
 
@@ -303,12 +303,13 @@ inline bool EntityName_Parse(
     EntityName_descriptor(), name, value);
 }
 enum TransitionCondition {
-  MANEUVERISDONE = 0,
+  NONE_TC = 0,
+  MANEUVERISDONE = 1,
   TransitionCondition_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   TransitionCondition_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool TransitionCondition_IsValid(int value);
-const TransitionCondition TransitionCondition_MIN = MANEUVERISDONE;
+const TransitionCondition TransitionCondition_MIN = NONE_TC;
 const TransitionCondition TransitionCondition_MAX = MANEUVERISDONE;
 const int TransitionCondition_ARRAYSIZE = TransitionCondition_MAX + 1;
 

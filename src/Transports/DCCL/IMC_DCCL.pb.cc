@@ -616,7 +616,7 @@ void AddDescriptorsImpl() {
       "owPathH\000\022+\n\017loiter_maneuver\030\003 \001(\0132\020.IMC_"
       "DCCL.LoiterH\000:\n\242\?\007\010\001\020\254\002(\004B\017\n\rManeuverUni"
       "on\"\222\001\n\016ParameterValue\022/\n\014value_number\030\001 "
-      "\001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@H\000\022,\n\014value_"
+      "\001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\210\303@H\000\022,\n\014value_"
       "string\030\002 \001(\0162\024.IMC_DCCL.ParamValueH\000:\n\242\?"
       "\007\010\002\020\254\002(\004B\025\n\023ParameterValueUnion\"m\n\017Entit"
       "yParameter\022%\n\004name\030\001 \001(\0162\027.IMC_DCCL.Para"
@@ -661,18 +661,19 @@ void AddDescriptorsImpl() {
       "M_DEPTH\020\002\022\026\n\022HIGH_FREQ_CHANNELS\020\003\022\023\n\017HIG"
       "H_FREQ_RANGE\020\004\022\025\n\021LOW_FREQ_CHANNELS\020\005\022\022\n"
       "\016LOW_FREQ_RANGE\020\006\022\024\n\020RANGE_MULTIPLIER\020\007\022"
-      "\020\n\014STROBE_DELAY\020\010\022\021\n\rSHUTTER_VALUE\020\t*5\n\n"
-      "ParamValue\022\010\n\004NONE\020\000\022\010\n\004TRUE\020\001\022\t\n\005FALSE\020"
-      "\002\022\010\n\004BOTH\020\003*e\n\nEntityName\022\013\n\007NONE_EN\020\000\022\020"
-      "\n\014PATH_CONTROL\020\001\022\n\n\006RANGER\020\002\022\022\n\016ACOUSTIC"
-      "_MODEM\020\003\022\014\n\010SIDESCAN\020\004\022\n\n\006CAMERA\020\005*)\n\023Tr"
-      "ansitionCondition\022\022\n\016MANEUVERISDONE\020\000*6\n"
-      "\004Type\022\013\n\007BOOLEAN\020\000\022\n\n\006NUMBER\020\001\022\010\n\004TEXT\020\002"
-      "\022\013\n\007MESSAGE\020\003*.\n\nAccessType\022\t\n\005INPUT\020\000\022\n"
-      "\n\006OUTPUT\020\001\022\t\n\005LOCAL\020\002b\006proto3"
+      "\020\n\014STROBE_DELAY\020\010\022\021\n\rSHUTTER_VALUE\020\t*8\n\n"
+      "ParamValue\022\013\n\007NONE_PV\020\000\022\010\n\004TRUE\020\001\022\t\n\005FAL"
+      "SE\020\002\022\010\n\004BOTH\020\003*e\n\nEntityName\022\013\n\007NONE_EN\020"
+      "\000\022\020\n\014PATH_CONTROL\020\001\022\n\n\006RANGER\020\002\022\022\n\016ACOUS"
+      "TIC_MODEM\020\003\022\014\n\010SIDESCAN\020\004\022\n\n\006CAMERA\020\005*6\n"
+      "\023TransitionCondition\022\013\n\007NONE_TC\020\000\022\022\n\016MAN"
+      "EUVERISDONE\020\001*6\n\004Type\022\013\n\007BOOLEAN\020\000\022\n\n\006NU"
+      "MBER\020\001\022\010\n\004TEXT\020\002\022\013\n\007MESSAGE\020\003*.\n\nAccessT"
+      "ype\022\t\n\005INPUT\020\000\022\n\n\006OUTPUT\020\001\022\t\n\005LOCAL\020\002b\006p"
+      "roto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 4629);
+      descriptor, 4645);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "IMC_DCCL.proto", &protobuf_RegisterTypes);
   ::protobuf_dccl_2foption_5fextensions_2eproto::AddDescriptors();
@@ -832,6 +833,7 @@ const ::google::protobuf::EnumDescriptor* TransitionCondition_descriptor() {
 bool TransitionCondition_IsValid(int value) {
   switch (value) {
     case 0:
+    case 1:
       return true;
     default:
       return false;
