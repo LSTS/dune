@@ -435,7 +435,7 @@ namespace Transports
         if ((parts[2] != "\"\"") && (parts[2].size() <= 2))
         {
           m_busy = false;
-          getTask()->war("readSMS: Unexpected SMS header (3): %ld | %s", parts[2].size(), parts[2].c_str());
+          getTask()->war("readSMS: Unexpected SMS header (3): %zu | %s", parts[2].size(), parts[2].c_str());
         }
 
         location = parts[1];
@@ -459,7 +459,7 @@ namespace Transports
           }
           catch(...) //InvalidSync || InvalidMessageId || InvalidCrc
           {
-            getTask()->trace(DTR("Parsing unrecognized Base64 message as text:%s|S:%ld"), incoming_data.c_str(), incoming_data.size());
+            getTask()->trace(DTR("Parsing unrecognized Base64 message as text:%s|S:%zu"), incoming_data.c_str(), incoming_data.size());
             text.assign(incoming_data);
             text_mode = true;
             m_busy = false;
