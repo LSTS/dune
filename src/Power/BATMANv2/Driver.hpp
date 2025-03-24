@@ -176,7 +176,7 @@ namespace Power
             m_task->spew("Command Reply: %s", buf_rx);
             if (std::strstr(reply, "$VERS,") != NULL)
             {
-              m_batManData.firmVersion = extractBetweenCommas(reply);
+              m_batManData.firmVersion = extractBetweenCommas(buf_rx);
               return true;
             }
             else if (std::strstr(buf_rx, cmdReplyText) != NULL)
@@ -230,10 +230,7 @@ namespace Power
               return false;
             }
 
-            //bfr[strlen(bfr) - 3] = '\0';
-
             m_task->spew("Received: %s", bfr);
-
             char* parameter = std::strtok(bfr, ",");
             if (!parameter)
             {
@@ -241,75 +238,39 @@ namespace Power
               return false;
             }
 
-            auto parseFloat = [&](const char* label, float& target, int stateIndex) -> bool
-            {
-              parameter = std::strtok(nullptr, ",");
-              if (!parameter)
-              {
-              m_task->trace(DTR("Invalid input format: %s"), label);
-              return false;
-              }
-              if (std::sscanf(parameter, "%f", &target) != 1)
-              {
-              m_task->war(DTR("Failed to parse %s"), label);
-              return false;
-              }
-              m_task->debug("%s: %.3f", label, target);
-              m_batManData.state_new_data[stateIndex] = true;
-              return true;
-            };
-
-            auto parseInt = [&](const char* label, int& target, int stateIndex) -> bool
-            {
-              parameter = std::strtok(nullptr, ",");
-              if (!parameter)
-              {
-              m_task->trace(DTR("Invalid input format: %s"), label);
-              return false;
-              }
-              if (std::sscanf(parameter, "%d", &target) != 1)
-              {
-              m_task->war(DTR("Failed to parse %s"), label);
-              return false;
-              }
-              m_task->debug("%s: %d", label, target);
-              m_batManData.state_new_data[stateIndex] = true;
-              return true;
-            };
-
             if (std::strstr(parameter, "$VOLT"))
             {
-              if (!parseFloat("Voltage", m_batManData.voltage, 0))
+              if (!parseFloat(parameter, "Voltage", m_batManData.voltage, 0))
                 return false;
             }
             else if (std::strstr(parameter, "$AMPE"))
             {
-              if (!parseFloat("Current", m_batManData.current, 1))
+              if (!parseFloat(parameter, "Current", m_batManData.current, 1))
                 return false;
             }
             else if (std::strstr(parameter, "$TEMP"))
             {
-              if (!parseFloat("Temperature", m_batManData.temperature, 2))
+              if (!parseFloat(parameter, "Temperature", m_batManData.temperature, 2))
                 return false;
             }
             else if (std::strstr(parameter, "$RCAP"))
             {
-              if (!parseFloat("Remaining Capacity", m_batManData.r_cap, 3))
+              if (!parseFloat(parameter, "Remaining Capacity", m_batManData.r_cap, 3))
                 return false;
             }
             else if (std::strstr(parameter, "$FCAP"))
             {
-              if (!parseFloat("Full Capacity", m_batManData.f_cap, 4))
+              if (!parseFloat(parameter, "Full Capacity", m_batManData.f_cap, 4))
                 return false;
             }
             else if (std::strstr(parameter, "$DCAP"))
             {
-              if (!parseFloat("Design Capacity", m_batManData.d_cap, 5))
+              if (!parseFloat(parameter, "Design Capacity", m_batManData.d_cap, 5))
                 return false;
             }
             else if (std::strstr(parameter, "$HEAL"))
             {
-              if (!parseInt("Health", m_batManData.health, 6))
+              if (!parseInt(parameter, "Health", m_batManData.health, 6))
                 return false;
             }
             else if (std::strstr(parameter, "$CELL"))
@@ -333,7 +294,7 @@ namespace Power
             }
             else if (std::strstr(parameter, "$BATS"))
             {
-              if (!parseFloat("Time to Empty", m_batManData.time_empty, 8))
+              if (!parseFloat(parameter, "Time to Empty", m_batManData.time_empty, 8))
                 return false;
 
               if (m_batManData.time_empty == 65535)
@@ -381,6 +342,44 @@ namespace Power
           //! number of cell to read
           int m_numberCell;
 
+          bool
+          parseFloat(char* parameter, const char* label, float& target, int stateIndex)
+          {
+            parameter = std::strtok(nullptr, ",");
+            if (!parameter)
+            {
+              m_task->trace(DTR("Invalid input format: %s"), label);
+              return false;
+            }
+            if (std::sscanf(parameter, "%f", &target) != 1)
+            {
+              m_task->war(DTR("Failed to parse %s"), label);
+              return false;
+            }
+            m_task->debug("%s: %.3f", label, target);
+            m_batManData.state_new_data[stateIndex] = true;
+            return true;
+          };
+
+          bool
+          parseInt(char* parameter, const char* label, int& target, int stateIndex)
+          {
+            parameter = std::strtok(nullptr, ",");
+            if (!parameter)
+            {
+              m_task->trace(DTR("Invalid input format: %s"), label);
+              return false;
+            }
+            if (std::sscanf(parameter, "%d", &target) != 1)
+            {
+              m_task->war(DTR("Failed to parse %s"), label);
+              return false;
+            }
+            m_task->debug("%s: %d", label, target);
+            m_batManData.state_new_data[stateIndex] = true;
+            return true;
+          };
+
           std::string
           extractBetweenCommas(const char* str)
           {
@@ -395,7 +394,7 @@ namespace Power
             }
             // Return an empty string if commas are not found correctly
             return "";
-        }
+          }
       };
     }
 }
