@@ -708,8 +708,8 @@ namespace Sensors
 
         while (!timer.overflow())
         {
-          double wait = timer.getRemaining();
-          waitForMessages((wait < 1.0) ? wait : 1.0);
+          double waitTime = timer.getRemaining();
+          waitForMessages((waitTime < 1.0) ? waitTime : 1.0);
 
           int64_t diff = m_cmd->estimateTimeDelta(m_args.time_delta_max_latency);
           if (diff < 2)
