@@ -148,7 +148,7 @@ namespace Power
             std::sprintf(cmdText, "%s%c\n", cmd, (Algorithms::XORChecksum::compute((uint8_t*)cmd, strlen(cmd) - 1) | 0x80));
             std::sprintf(cmdReplyText, "%s", reply);
             char bfrUart[128];
-            m_task->spew("Command TX: %s", cmdText);
+            m_task->trace("Command TX: %s", cmdText);
             m_handle->flush();
             m_handle->writeString(cmdText);
             char buf_rx[128];
@@ -156,6 +156,7 @@ namespace Power
             uint8_t cnt_rx = 0;
             uint16_t number_rx_received = 0;
             bool exit_loop = false;
+            char csum_rx = 0x00;
             while (Poll::poll(*m_handle, m_timeout_uart) && !exit_loop)
             {
               number_rx_received = m_handle->read(bfrUart, sizeof(bfrUart));
@@ -166,6 +167,8 @@ namespace Power
                 if (cnt_rx >= 127 || bfrUart[i] == '*')
                 {
                   exit_loop = true;
+                  if((i + 1) < number_rx_received)
+                    csum_rx = bfrUart[i + 1];
                   break;
                 }
               }
@@ -173,7 +176,20 @@ namespace Power
                 break;
             }
 
-            m_task->spew("Command Reply: %s", buf_rx);
+            if (cnt_rx < 3)
+            {
+              m_task->trace("SendCommand: Invalid buffer length: %d | %s", cnt_rx, buf_rx);
+              return false;
+            }
+
+            m_task->trace("Command Reply: %s", buf_rx);
+
+            if(!verify_CRC8(buf_rx, csum_rx))
+            {
+              m_task->war("SendCommand: Invalid CRC8: %s", buf_rx);
+              return false;
+            }
+
             if (std::strstr(reply, "$VERS,") != NULL)
             {
               m_batManData.firmVersion = extractBetweenCommas(buf_rx);
@@ -207,6 +223,7 @@ namespace Power
             uint16_t cnt_rx = 0;
             uint16_t number_rx_received = 0;
             bool exit_loop = false;
+            char csum_rx = 0x00;
             while (Poll::poll(*m_handle, m_timeout_uart) && !exit_loop)
             {
               number_rx_received = m_handle->read(buf_rx, sizeof(buf_rx));
@@ -217,6 +234,8 @@ namespace Power
                 if (cnt_rx >= 127 || buf_rx[i] == '*')
                 {
                   exit_loop = true;
+                  if((i + 1) < number_rx_received)
+                    csum_rx = buf_rx[i + 1];
                   break;
                 }
               }
@@ -226,11 +245,17 @@ namespace Power
 
             if (cnt_rx < 3)
             {
-              m_task->trace("Invalid buffer length: %d | %s", cnt_rx, bfr);
+              m_task->trace("DataIn: Invalid buffer length: %d | %s", cnt_rx, bfr);
               return false;
             }
 
-            m_task->spew("Received: %s", bfr);
+            if(!verify_CRC8(bfr, csum_rx))
+            {
+              m_task->war("DataIn: Invalid CRC8: %s", bfr);
+              return false;
+            }
+
+            m_task->trace("Received: %s", bfr);
             char* parameter = std::strtok(bfr, ",");
             if (!parameter)
             {
@@ -275,6 +300,8 @@ namespace Power
             }
             else if (std::strstr(parameter, "$CELL"))
             {
+              //ignore first value (number of cells)
+              parameter = std::strtok(nullptr, ",");
               for (int i = 0; i < m_numberCell; ++i)
               {
                 parameter = std::strtok(nullptr, ",");
@@ -394,6 +421,22 @@ namespace Power
             }
             // Return an empty string if commas are not found correctly
             return "";
+          }
+
+          bool
+          verify_CRC8(char* data, char received_csum)
+          {
+            char csum = 0x00;
+            uint16_t t = 0;
+            while (data[t] != '*' && data[t] != '\0')
+            {
+              csum ^= data[t];
+              t++;
+            }
+
+            csum |= 0x80;
+            m_task->trace("csum: 0x%02x, received_csum: 0x%02x", (uint8_t)csum, (uint8_t)received_csum);
+            return csum == received_csum;
           }
       };
     }
