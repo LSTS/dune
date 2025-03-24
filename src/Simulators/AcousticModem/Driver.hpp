@@ -302,18 +302,18 @@ namespace Simulators
 
       //! Simulate random successful delivery
       //! based on gaussian model of distance and data size.
-      //! @param[in] distance distance to source vehicle.
+      //! @param[in] distance2source distance to source vehicle.
       //! @param[in] data_size size of message data.
       //! @return true if delivery is successful
       bool
-      deliverySucceeds(double distance, uint16_t data_size)
+      deliverySucceeds(double distance2source, uint16_t data_size)
       {
         // Out of range
-        if (distance > c_max_range)
+        if (distance2source > c_max_range)
           return false;
 
         // Gaussian profiles for distance and msg size
-        float dist_prob = exp(-1 * (distance*distance)/(2 * m_args->dst_peak_width * m_args->dst_peak_width));
+        float dist_prob = exp(-1 * (distance2source*distance2source)/(2 * m_args->dst_peak_width * m_args->dst_peak_width));
         float size_prob = exp(-1 * (float)(data_size*data_size)/
                                 (2 * m_args->dsize_peak_width * m_args->dsize_peak_width));
 
