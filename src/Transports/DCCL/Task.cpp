@@ -100,13 +100,11 @@ namespace Transports
         int num = msg->getPayloadSerializationSize();
         std::string plan_id = msg->plan_id;
         std::string start_man_id = msg->start_man_id;
+        //IMC::MessageList<DUNE::IMC::PlanTransition> transitions = msg->transitions;
 
+        inf("IMC INPUT MESSAGE BYTE: %d", num);
 
-        
-
-        inf("BYTE %d", num);
-
-        inf("#################### ENCODE ####################");
+        inf("########################################## ENCODE WITH DCCL LIB ##########################################");
         std::string encoded_bytes; 
         
         IMC_DCCL::PlanSpecification msg_planspec;
@@ -114,222 +112,445 @@ namespace Transports
         //PLAN_ID
         msg_planspec.set_plan_id(plan_id);       
 
-        //START_MAN_ID (Todo func find name and number)
-        IMC_DCCL::ManeuverID msg_manid;
-        msg_manid.set_maneuver_type(IMC_DCCL::GOTO);
-        msg_manid.set_maneuver_number(1);
+        //START_MAN_ID   
+        IMC_DCCL::ManeuverType man_type;
+        std::int16_t man_num;
+        SplitManeuverNumber(start_man_id, man_type, man_num);
 
+        IMC_DCCL::ManeuverID msg_manid;
+        msg_manid.set_maneuver_type(man_type);
+        msg_manid.set_maneuver_number(man_num);
         *msg_planspec.mutable_start_man_id() = msg_manid;
 
+
         //MANEUVERS
-        IMC_DCCL::PlanManeuver man_1;
-        IMC_DCCL::ManeuverID man_1_ID;
-        IMC_DCCL::Maneuver man_1_data;
-        IMC_DCCL::Goto man_1_goto;
-        IMC_DCCL::EntityParameters man_1_start_actions1;
-        IMC_DCCL::EntityParameters man_1_start_actions2;
-        IMC_DCCL::EntityParameters man_1_start_actions3;
-        IMC_DCCL::EntityParameter man_1_start_actions1_param1;
-        IMC_DCCL::EntityParameter man_1_start_actions2_param1;
-        IMC_DCCL::EntityParameter man_1_start_actions3_param1;
+        IMC::MessageList<IMC::PlanManeuver>::const_iterator manitr;
+        manitr = msg->maneuvers.begin();
 
-        man_1_ID.set_maneuver_number(1);
-        man_1_ID.set_maneuver_type(IMC_DCCL::GOTO);
+        for (; manitr != msg->maneuvers.end(); ++manitr)
+        {
+          if (*manitr == NULL)
+            continue;
+          
+          IMC_DCCL::PlanManeuver * msg_man = msg_planspec.add_maneuvers(); 
+          //maneuver_id
+          IMC_DCCL::ManeuverID* maneuver_id = msg_man->mutable_maneuver_id();
+          std::string man_id = (*manitr)->maneuver_id;  
 
-        man_1_goto.set_timeout(10000);
-        man_1_goto.set_lat(0.71880895);
-        man_1_goto.set_lon(-0.15193547);
-        man_1_goto.set_z(2.0);
-        man_1_goto.set_z_units(IMC_DCCL::DEPTH);
-        man_1_goto.set_speed(1200.0);
-        man_1_goto.set_speed_units(IMC_DCCL::RPM);
-        man_1_goto.set_roll(0.00000000);
-        man_1_goto.set_pitch(0.00000000);
-        man_1_goto.set_yaw(0.00000000);
+          IMC_DCCL::ManeuverType id_man_type;
+          std::int16_t id_man_num;
+          SplitManeuverNumber(man_id, id_man_type, id_man_num);
+          
+          maneuver_id->set_maneuver_type(id_man_type);
+          maneuver_id->set_maneuver_number(id_man_num);
 
-        man_1_start_actions1.set_name(IMC_DCCL::PATH_CONTROL);
-        man_1_start_actions1_param1.set_name(IMC_DCCL::BOTTOM_TRACK_MINIMUM_DEPTH);
-        man_1_start_actions1_param1.set_allocated_value(0);
-        *man_1_start_actions1.add_params() = man_1_start_actions1_param1;
+          //data - TODO: check different maneuvers
+          IMC_DCCL::Maneuver* data = msg_man->mutable_data();
+          IMC_DCCL::Goto* goto_maneuver = data->mutable_goto_maneuver();
 
-        man_1_start_actions2.set_name(IMC_DCCL::RANGER);
-        man_1_start_actions2_param1.set_name(IMC_DCCL::ACTIVE);
-        man_1_start_actions2_param1.set_allocated_value(0);
-        *man_1_start_actions2.add_params() = man_1_start_actions1_param1;
+          const IMC::Message* maneuver = (*manitr)->data.get(); //Todo: automatically recognize the IMC msg
+          const IMC::Goto* maneuver_goto =  static_cast<const IMC::Goto*>(maneuver);
 
-        man_1_start_actions3.set_name(IMC_DCCL::ACOUSTIC_MODEM);
-        man_1_start_actions3_param1.set_name(IMC_DCCL::ACTIVE);
-        man_1_start_actions3_param1.set_allocated_value(0);
-        *man_1_start_actions3.add_params() = man_1_start_actions1_param1;
-        
-        
-        man_1_data.set_allocated_goto_maneuver(&man_1_goto);
+          goto_maneuver->set_timeout(maneuver_goto->timeout);
+          goto_maneuver->set_lat(maneuver_goto->lat);
+          goto_maneuver->set_lon(maneuver_goto->lon);
+          goto_maneuver->set_z(maneuver_goto->z);
+          goto_maneuver->set_z_units(ToDCCL_ZUnits(maneuver_goto->z_units));
+          goto_maneuver->set_speed(maneuver_goto->speed);
+          goto_maneuver->set_speed_units(ToDCCL_SpeedUnits(maneuver_goto->speed_units));
+          goto_maneuver->set_roll(maneuver_goto->roll);
+          goto_maneuver->set_pitch(maneuver_goto->pitch);
+          goto_maneuver->set_yaw(maneuver_goto->yaw);      
 
-        man_1.set_allocated_maneuver_id(&man_1_ID);
-        man_1.set_allocated_data(&man_1_data);
-        *man_1.add_start_actions() = man_1_start_actions1;
-        *man_1.add_start_actions() = man_1_start_actions2;
-        *man_1.add_start_actions() = man_1_start_actions3;
-      
-        *msg_planspec.add_maneuvers()= man_1;   
+          //start actions
+          IMC::MessageList<IMC::Message>::const_iterator actitr;
+          actitr = (*manitr)->start_actions.begin();
+
+          for (; actitr != (*manitr)->start_actions.end(); ++actitr)
+          {
+            if (*actitr == NULL)
+              continue;
+
+            //create dccl msgs
+            IMC_DCCL::EntityParameters * start_ac = msg_man->add_start_actions();
+            
+            IMC::SetEntityParameters* sep;
+            sep = static_cast<IMC::SetEntityParameters*>(*actitr);
+            
+ 
+            //entity Name
+            start_ac->set_name(ToDCCL_EntityName(sep->name));
+            //params
+            IMC::MessageList<IMC::EntityParameter>::const_iterator paritr;
+            paritr = sep->params.begin();
+            for (; paritr != sep->params.end(); ++paritr)
+            {
+              if (*paritr == NULL)
+                continue;
+
+              //create dccl msgs
+              IMC_DCCL::EntityParameter * param = start_ac->add_params();
+              IMC_DCCL::ParameterValue* param_val = param->mutable_value();
+              //set param name
+              param->set_name(ToDCCL_ParameterName((*paritr)->name.c_str()));
+
+              //set param value
+              if(containsDigit((*paritr)->value)) param_val->set_value_number(std::stof((*paritr)->value));
+              else{ param_val->set_value_string(ToDCCL_ParameterValue((*paritr)->value.c_str()));}
+                     
+            }
 
 
-        IMC_DCCL::PlanManeuver man_2;
-        man_2.set_allocated_maneuver_id(&man_1_ID);
-        man_2.set_allocated_data(&man_1_data);  
-        *man_2.add_start_actions() = man_1_start_actions1;
-        *man_2.add_start_actions() = man_1_start_actions2;
-        *man_2.add_start_actions() = man_1_start_actions3;    
-        *msg_planspec.add_maneuvers()= man_2;  
+          }
 
-        IMC_DCCL::PlanManeuver man_3;
-        man_3.set_allocated_maneuver_id(&man_1_ID);
-        man_3.set_allocated_data(&man_1_data);   
-        *man_3.add_start_actions() = man_1_start_actions1;
-        *man_3.add_start_actions() = man_1_start_actions2;
-        *man_3.add_start_actions() = man_1_start_actions3;   
-        *msg_planspec.add_maneuvers()= man_3;   
-
-        IMC_DCCL::PlanManeuver man_4;
-        man_4.set_allocated_maneuver_id(&man_1_ID);
-        man_4.set_allocated_data(&man_1_data);
-        *man_4.add_start_actions() = man_1_start_actions1;
-        *man_4.add_start_actions() = man_1_start_actions2;
-        *man_4.add_start_actions() = man_1_start_actions3;      
-        *msg_planspec.add_maneuvers()= man_4;
-
-        IMC_DCCL::PlanManeuver man_5;
-        man_5.set_allocated_maneuver_id(&man_1_ID);
-        man_5.set_allocated_data(&man_1_data);   
-        *man_5.add_start_actions() = man_1_start_actions1;
-        *man_5.add_start_actions() = man_1_start_actions2;
-        *man_5.add_start_actions() = man_1_start_actions3;   
-        *msg_planspec.add_maneuvers()= man_5;
-
-        IMC_DCCL::PlanManeuver man_6;
-        man_6.set_allocated_maneuver_id(&man_1_ID);
-        man_6.set_allocated_data(&man_1_data); 
-        *man_6.add_start_actions() = man_1_start_actions1;
-        *man_6.add_start_actions() = man_1_start_actions2;
-        *man_6.add_start_actions() = man_1_start_actions3;     
-        *msg_planspec.add_maneuvers()= man_6;
-
-        IMC_DCCL::PlanManeuver man_7;
-        man_7.set_allocated_maneuver_id(&man_1_ID);
-        man_7.set_allocated_data(&man_1_data);    
-        *man_7.add_start_actions() = man_1_start_actions1;
-        *man_7.add_start_actions() = man_1_start_actions2;
-        *man_7.add_start_actions() = man_1_start_actions3;  
-        *msg_planspec.add_maneuvers()= man_7;
-
+        }
+ 
         //TRANSITIONS
-        IMC_DCCL::PlanTransition trans1;
-        IMC_DCCL::ManeuverID source_man;
-        IMC_DCCL::ManeuverID dest_man;
-        IMC_DCCL::PlanTransition trans2;
-        IMC_DCCL::PlanTransition trans3;
-        IMC_DCCL::PlanTransition trans4;
-        IMC_DCCL::PlanTransition trans5;
-        IMC_DCCL::PlanTransition trans6;
+        IMC::MessageList<IMC::PlanTransition>::const_iterator tritr;
+        tritr = msg->transitions.begin();
 
-        source_man.set_maneuver_number(1);  //same for every transition just to test
-        source_man.set_maneuver_type(IMC_DCCL::GOTO);        
-        dest_man.set_maneuver_number(1);  //same for every transition just to test
-        dest_man.set_maneuver_type(IMC_DCCL::GOTO);
+        for (; tritr != msg->transitions.end(); ++tritr)
+        {
+          if (*tritr == NULL)
+            continue;
 
-        trans1.set_allocated_source_man(&source_man);
-        trans1.set_allocated_dest_man(&dest_man);
-        trans1.set_conditions(IMC_DCCL::MANEUVERISDONE);
+          IMC_DCCL::PlanTransition * msg_trans = msg_planspec.add_transitions(); 
+          IMC_DCCL::ManeuverID* source_man = msg_trans->mutable_source_man();
+          IMC_DCCL::ManeuverID* dest_man = msg_trans->mutable_dest_man();
 
-        trans2.set_allocated_source_man(&source_man);
-        trans2.set_allocated_dest_man(&dest_man);
-        trans2.set_conditions(IMC_DCCL::MANEUVERISDONE);
+          std::string source = (*tritr)->source_man;  
+          std::string dest = (*tritr)->dest_man;
+          std::string tran_cond = (*tritr)->conditions;
 
-        trans3.set_allocated_source_man(&source_man);
-        trans3.set_allocated_dest_man(&dest_man);
-        trans3.set_conditions(IMC_DCCL::MANEUVERISDONE);
+          IMC_DCCL::ManeuverType source_man_type, dest_man_type;
+          std::int16_t source_man_num, dest_man_num;
+          SplitManeuverNumber(source, source_man_type, source_man_num);
+          SplitManeuverNumber(dest, dest_man_type, dest_man_num);
 
-        trans4.set_allocated_source_man(&source_man);
-        trans4.set_allocated_dest_man(&dest_man);
-        trans4.set_conditions(IMC_DCCL::MANEUVERISDONE);
+          
+          source_man->set_maneuver_type(source_man_type);
+          source_man->set_maneuver_number(source_man_num);  
+            
+          dest_man->set_maneuver_type(dest_man_type);
+          dest_man->set_maneuver_number(dest_man_num);
 
-        trans5.set_allocated_source_man(&source_man);
-        trans5.set_allocated_dest_man(&dest_man);
-        trans5.set_conditions(IMC_DCCL::MANEUVERISDONE);
-
-        trans6.set_allocated_source_man(&source_man);
-        trans6.set_allocated_dest_man(&dest_man);
-        trans6.set_conditions(IMC_DCCL::MANEUVERISDONE);
-
-        *msg_planspec.add_transitions() = trans1;
-        *msg_planspec.add_transitions() = trans2;
-        *msg_planspec.add_transitions() = trans3;
-        *msg_planspec.add_transitions() = trans4;
-        *msg_planspec.add_transitions() = trans5;
-        *msg_planspec.add_transitions() = trans6;
-
-
+          msg_trans->set_conditions(ToDCCL_TransitionCondition(tran_cond.c_str()));
+           
+        }
+      
         codec.load<IMC_DCCL::PlanSpecification>();
         codec.encode(&encoded_bytes, msg_planspec);
         size_t encoded_size = encoded_bytes.size();
 
         std::string hex_string = Utils::String::toHex(encoded_bytes);
-        inf("HEX msg %s", hex_string.c_str());
-        inf("SIZE HEX msg %zu", hex_string.size());
+        inf("ENCODED HEX: %s", hex_string.c_str());
+        inf("HEX msg characters %zu", hex_string.size());
         std::vector<char> buffer(hex_string.begin(), hex_string.end());
         size_t buffer_size = buffer.size();
 
 
-        inf("#################### DECODE ####################");
+
+
+        inf("########################################## DECODE DCCL MSG ##########################################");
 
         std::string recv_msg(buffer.begin(), buffer.end());
         std::string msgNoHex = String::fromHex(recv_msg);
 
         IMC_DCCL::PlanSpecification msg_planspec_rec;
         codec.decode(msgNoHex, &msg_planspec_rec);
-
         
-        inf("plan id: %s", msg_planspec_rec.plan_id().c_str());
+        //PLAN_ID & START_MAN_ID
+        IMC::PlanSpecification msg_pl;
+        
+        msg_pl.plan_id = msg_planspec_rec.plan_id()+"_DCCL";
+        msg_pl.start_man_id = MergeManeuverNumber(msg_planspec_rec.start_man_id().maneuver_type(), msg_planspec_rec.start_man_id().maneuver_number());
 
-        inf("start man id: type: %d", msg_planspec_rec.start_man_id().maneuver_type());
-        inf("start man id: number: %d", msg_planspec_rec.start_man_id().maneuver_number());
+        //MANEUVERS
+        IMC::MessageList<IMC::PlanManeuver> msg_pm_list;
 
-        for (unsigned int i = 0; i < 6; i++)
+        for (unsigned int i = 0; i < msg_planspec_rec.maneuvers_size(); i++)
         {
-          inf("transition ---------------------------- %d", i);
-          inf("transition cond: %d", msg_planspec_rec.transitions(i).conditions());
-          inf("transition source type: %d", msg_planspec_rec.transitions(i).source_man().maneuver_type());
-          inf("transition source number: %d", msg_planspec_rec.transitions(i).source_man().maneuver_number());
-          inf("transition dest type: %d", msg_planspec_rec.transitions(i).dest_man().maneuver_type());
-          inf("transition dest number: %d", msg_planspec_rec.transitions(i).dest_man().maneuver_number());
+          IMC::PlanManeuver msg_pm;
+          //maneuver_id
+          msg_pm.maneuver_id = MergeManeuverNumber(msg_planspec_rec.maneuvers(i).maneuver_id().maneuver_type(), msg_planspec_rec.maneuvers(i).maneuver_id().maneuver_number());
+          //data
+          //Todo: Check different maneuvers
+          //Todo: Insert right precision
+          IMC::Goto msg_goto;
+          msg_goto.timeout = msg_planspec_rec.maneuvers(i).data().goto_maneuver().timeout();
+          msg_goto.lat = msg_planspec_rec.maneuvers(i).data().goto_maneuver().lat();
+          msg_goto.lon = msg_planspec_rec.maneuvers(i).data().goto_maneuver().lon();
+          msg_goto.z = msg_planspec_rec.maneuvers(i).data().goto_maneuver().z();
+          msg_goto.z_units = ToIMC_ZUnits(msg_planspec_rec.maneuvers(i).data().goto_maneuver().z_units());
+          msg_goto.speed = msg_planspec_rec.maneuvers(i).data().goto_maneuver().speed();
+          msg_goto.speed_units = ToIMC_SpeedUnits(msg_planspec_rec.maneuvers(i).data().goto_maneuver().speed_units());
+          msg_goto.roll = msg_planspec_rec.maneuvers(i).data().goto_maneuver().roll();
+          msg_goto.pitch = msg_planspec_rec.maneuvers(i).data().goto_maneuver().pitch();
+          msg_goto.yaw = msg_planspec_rec.maneuvers(i).data().goto_maneuver().yaw();
+        
+          msg_pm.data.set(msg_goto);
+
+          
+          //start_actions
+          IMC::MessageList<IMC::Message> msg_sa_list;
+          
+          for (unsigned int j = 0; j <  msg_planspec_rec.maneuvers(i).start_actions_size(); j++){
+
+            IMC::SetEntityParameters sep;
+            sep.name = ToIMC_EntityName(msg_planspec_rec.maneuvers(i).start_actions(j).name());
+            
+            for (unsigned int k = 0; k <  msg_planspec_rec.maneuvers(i).start_actions(j).params_size(); k++){
+              IMC::EntityParameter ent_par;
+              ent_par.name = ToIMC_ParameterName(msg_planspec_rec.maneuvers(i).start_actions(j).params(k).name());
+
+              if(msg_planspec_rec.maneuvers(i).start_actions(j).params(k).value().ParameterValueUnion_case() == 1) ent_par.value = std::to_string(msg_planspec_rec.maneuvers(i).start_actions(j).params(k).value().value_number());
+              else{ent_par.value = ToIMC_ParameterValue(msg_planspec_rec.maneuvers(i).start_actions(j).params(k).value().value_string());}
+
+              
+              sep.params.push_back(ent_par);
+
+            }
+            msg_pm.start_actions.push_back(sep);
+
+          }
+
+          //Insert maneuver in the maneuvers list
+          msg_pm_list.push_back(msg_pm);
         }
 
-        for (unsigned int i = 0; i < 7; i++)
-        {
-          inf("man ---------------------------- %d", i);
-          inf("man id type: %d", msg_planspec_rec.maneuvers(i).maneuver_id().maneuver_type());
-          inf("man id number: %d", msg_planspec_rec.maneuvers(i).maneuver_id().maneuver_number());
-          inf("man goto timeout: %d", msg_planspec_rec.maneuvers(i).data().goto_maneuver().timeout());
-          inf("man goto lat: %.3f", msg_planspec_rec.maneuvers(i).data().goto_maneuver().lat());
-          inf("man goto lon: %.3f", msg_planspec_rec.maneuvers(i).data().goto_maneuver().lon());
-          inf("man goto z: %.3f", msg_planspec_rec.maneuvers(i).data().goto_maneuver().z());
-          inf("man goto zunit: %d", msg_planspec_rec.maneuvers(i).data().goto_maneuver().z_units());
-          inf("man goto speed: %.3f", msg_planspec_rec.maneuvers(i).data().goto_maneuver().speed());
-          inf("man goto speedunit: %d", msg_planspec_rec.maneuvers(i).data().goto_maneuver().speed_units());
-          inf("man goto roll: %.3f", msg_planspec_rec.maneuvers(i).data().goto_maneuver().roll());
-          inf("man goto pitch: %.3f", msg_planspec_rec.maneuvers(i).data().goto_maneuver().pitch());
-          inf("man goto yaw: %.3f", msg_planspec_rec.maneuvers(i).data().goto_maneuver().yaw());
-          inf("man start action name: %d", msg_planspec_rec.maneuvers(i).start_actions(0).name());
-          inf("man start action params: %d", msg_planspec_rec.maneuvers(i).start_actions(0).params(0).name());
-          inf("man start action params: %.1f", msg_planspec_rec.maneuvers(i).start_actions(0).params(0).value().value_number());
-          inf("man start action name: %d", msg_planspec_rec.maneuvers(i).start_actions(1).name());
-          inf("man start action params: %d", msg_planspec_rec.maneuvers(i).start_actions(1).params(0).name());
-          inf("man start action params: %.1f", msg_planspec_rec.maneuvers(i).start_actions(1).params(0).value().value_number());
-          inf("man start action name: %d", msg_planspec_rec.maneuvers(i).start_actions(2).name());
-          inf("man start action params: %d", msg_planspec_rec.maneuvers(i).start_actions(2).params(0).name());
-          inf("man start action params: %.1f", msg_planspec_rec.maneuvers(i).start_actions(2).params(0).value().value_number());
+        //add the maneuver list to the plan spec msg
+        msg_pl.maneuvers = msg_pm_list;
+
+        //TRANSITION
+        IMC::MessageList<IMC::PlanTransition> msg_pt_list;
+        for (unsigned int i = 0; i < msg_planspec_rec.transitions_size(); i++){
+          IMC::PlanTransition msg_pt;
+          msg_pt.source_man = MergeManeuverNumber(msg_planspec_rec.transitions(i).source_man().maneuver_type(), msg_planspec_rec.transitions(i).source_man().maneuver_number());
+          msg_pt.dest_man = MergeManeuverNumber(msg_planspec_rec.transitions(i).dest_man().maneuver_type(), msg_planspec_rec.transitions(i).dest_man().maneuver_number());
+          msg_pt.conditions = ToIMC_TransitionCondition(msg_planspec_rec.transitions(i).conditions());
+
+          //Insert transcond in the transcond list
+          msg_pt_list.push_back(msg_pt);
         }
 
+        //add the transition cond list to the plan spec msg
+        msg_pl.transitions = msg_pt_list;
+
+        //dispatch(msg_pl);
+
+        IMC::PlanControl load_plan_dccl;
+        load_plan_dccl.type = IMC::PlanControl::PC_REQUEST;
+        load_plan_dccl.op = IMC::PlanControl::PC_LOAD;
+
+
+        load_plan_dccl.plan_id = msg_pl.plan_id;
+        load_plan_dccl.arg.set(msg_pl);
+        load_plan_dccl.request_id = 0;
+        load_plan_dccl.flags = 0;
+        dispatch(load_plan_dccl);
+ 
+      }
+
+
+      //! Splits the text into name maneuver and number
+      //  param[in] text to be split
+      //  param[out] maneuver 
+      //  param[out] num 
+      void
+      SplitManeuverNumber(const std::string& text, IMC_DCCL::ManeuverType& man, std::int16_t& num)
+      {
+        std::string str;
+        str = sanitize(text); 
+
+        std::string man_goto = "Goto";
+        std::string man_loiter = "Loiter";
+
+        size_t start_idx = str.find(man_goto);
+
+        if (start_idx != std::string::npos)
+        {
+            man = IMC_DCCL::GOTO; //Maneuver type
+            num = std::stoi(str.substr(start_idx + man_goto.length()));   //Maneuver number                       
+          } else {
+
+            inf("Mission name still not encoded with DCCL");   
+          }
+        }   
+
+
+      //! Merge the maneuver type and maneuver number into a text
+      //  param[in] maneuver type and maneuver number
+      //  param[out] text with maneuver type and number es: Goto1 
+      std::string
+      MergeManeuverNumber(const IMC_DCCL::ManeuverType& man_type, const std::int16_t& man_num)
+      {
+        std::string str_man_type;
+        std::string str_man_num;
+
+        if(man_type == IMC_DCCL::GOTO) str_man_type = "Goto";
+        else if (man_type == IMC_DCCL::FOLLOWPATH) str_man_type = "FollowPath";
+        else if (man_type == IMC_DCCL::LOITER) str_man_type = "Loiter";
+      
+        str_man_num = std::to_string(man_num);
+        std::string merged = str_man_type + str_man_num;
+        return merged; 
+        
+        }   
+
+      
+      //! Convert IMC Zunits in IMC_DCCL Zunits
+      //  param[in] IMC ZUnits
+      //  param[out] IMC_DCCL ZUnits      
+      IMC_DCCL::ZUnits ToDCCL_ZUnits(const u_int8_t& imc_zunit){
+        if (imc_zunit == IMC::ZUnits::Z_DEPTH) return IMC_DCCL::DEPTH;
+        else if (imc_zunit == IMC::ZUnits::Z_ALTITUDE) return IMC_DCCL::ALTITUDE;
+        else if (imc_zunit == IMC::ZUnits::Z_HEIGHT) return IMC_DCCL::HEIGHT;
+        else {return IMC_DCCL::NONE_ZU;}
+      }
+
+      //! Convert IMC_DCCL Zunits in IMC Zunits
+      //  param[in] IMC_DCCL ZUnits 
+      //  param[out]  IMC ZUnits
+      IMC::ZUnits ToIMC_ZUnits(const u_int8_t& imc_dccl_zunit){
+        if (imc_dccl_zunit == IMC_DCCL::ZUnits::DEPTH) return IMC::ZUnits::Z_DEPTH;
+        else if (imc_dccl_zunit == IMC_DCCL::ZUnits::ALTITUDE) return IMC::ZUnits::Z_ALTITUDE;
+        else if (imc_dccl_zunit == IMC_DCCL::ZUnits::HEIGHT) return IMC::ZUnits::Z_HEIGHT;
+        else {return IMC::ZUnits::Z_NONE;}
+      }
+
+      //! Convert IMC SpeedUnita in IMC_DCCL SpeedUnits
+      //  param[in] IMC SpeedUnits
+      //  param[out] IMC_DCCL SpeedUnits      
+      IMC_DCCL::SpeedUnits ToDCCL_SpeedUnits(const u_int8_t& imc_speedunit){
+        if (imc_speedunit == IMC::SpeedUnits::SUNITS_METERS_PS) return IMC_DCCL::METERS_PS;
+        else if (imc_speedunit == IMC::SpeedUnits::SUNITS_RPM) return IMC_DCCL::RPM;
+        else {return IMC_DCCL::PERCENTAGE;}
+      }
+
+      //! Convert IMC_DCCL SpeedUnits in IMC Speedunits
+      //  param[in] IMC_DCCL SpeedUnits 
+      //  param[out]  IMC SpeedUnits
+      IMC::SpeedUnits ToIMC_SpeedUnits(const u_int8_t& imc_dccl_speed_unit){
+        if (imc_dccl_speed_unit == IMC_DCCL::SpeedUnits::METERS_PS) return IMC::SpeedUnits::SUNITS_METERS_PS;
+        else if (imc_dccl_speed_unit == IMC_DCCL::SpeedUnits::RPM) return IMC::SpeedUnits::SUNITS_RPM;
+        else {return IMC::SpeedUnits::SUNITS_PERCENTAGE;}
+      }
+
+
+      //! Convert Entity name in IMC_DCCL EntityName enum
+      //  param[in] IMC Entity name
+      //  param[out] IMC_DCCL EntityMame      
+      IMC_DCCL::EntityName ToDCCL_EntityName(const std::string& entity_name){
+        if (entity_name == "Path Control") return IMC_DCCL::PATH_CONTROL;
+        else if (entity_name == "Ranger") return IMC_DCCL::RANGER;
+        else if (entity_name == "Acoustic Modem") return IMC_DCCL::ACOUSTIC_MODEM;
+        else if (entity_name == "Sidescan") return IMC_DCCL::SIDESCAN;
+        else if (entity_name == "Camera") return IMC_DCCL::CAMERA;
+        else {return IMC_DCCL::NONE_EN;}
+      }
+
+      //! Convert IMC_DCCL EntityName enum in IMC entity name
+      //  param[in] IMC_DCCL EntityName
+      //  param[out] IMC EntityMame string     
+      std::string ToIMC_EntityName(const u_int8_t& imc_dccl_entity_name){
+        std::string name;
+        if (imc_dccl_entity_name == IMC_DCCL::EntityName::PATH_CONTROL) name = "Path Control";
+        else if (imc_dccl_entity_name == IMC_DCCL::EntityName::RANGER) name = "Ranger";
+        else if (imc_dccl_entity_name == IMC_DCCL::EntityName::ACOUSTIC_MODEM) name = "Acoustic Modem";
+        else if (imc_dccl_entity_name == IMC_DCCL::EntityName::SIDESCAN) name = "Sidescan";
+        else if (imc_dccl_entity_name == IMC_DCCL::EntityName::CAMERA) name = "Camera";
+        else {name = "Unknown DCCL";}
+
+        return name;
+      }
+
+      //! Convert entity parameter name in IMC_DCCL EntityName enum
+      //  param[in] IMC param name string   
+      //  param[out] IMC_DCCL ParameterName enum      
+      IMC_DCCL::ParameterName ToDCCL_ParameterName(const std::string& param_name){
+        if (param_name == "Active") return IMC_DCCL::ACTIVE;
+        else if (param_name == "Bottom Track -- Minimum Depth") return IMC_DCCL::BOTTOM_TRACK_MINIMUM_DEPTH;
+        else if (param_name == "High-Frequency Channels") return IMC_DCCL::HIGH_FREQ_CHANNELS;
+        else if (param_name == "High-Frequency Range") return IMC_DCCL::HIGH_FREQ_RANGE;
+        else if (param_name == "Low-Frequency Channels") return IMC_DCCL::LOW_FREQ_CHANNELS;
+        else if (param_name == "Low-Frequency Range") return IMC_DCCL::LOW_FREQ_RANGE;
+        else if (param_name == "Range Multiplier") return IMC_DCCL::RANGE_MULTIPLIER;
+        else if (param_name == "Strobe Delay (us)") return IMC_DCCL::STROBE_DELAY;
+        else if (param_name == "Shutter Value (ms)") return IMC_DCCL::SHUTTER_VALUE;
+        else {return IMC_DCCL::NONE_PN;}
+      }
+
+      //! Convert entity parameter name from IMC_DCCL EntitnyName enum in IMC available string
+      //  param[in] IMC_DCCL ParameterName enum   
+      //  param[out] IMC param name string      
+      std::string ToIMC_ParameterName(const u_int8_t& imc_dccl_param_name){
+        std::string name;
+        if (imc_dccl_param_name == IMC_DCCL::ParameterName::ACTIVE) name = "Active";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::BOTTOM_TRACK_MINIMUM_DEPTH) name = "Bottom Track -- Minimum Depth";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::HIGH_FREQ_CHANNELS) name = "High-Frequency Channels";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::HIGH_FREQ_RANGE) name = "High-Frequency Range";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::LOW_FREQ_CHANNELS) name = "Low-Frequency Channels";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::LOW_FREQ_RANGE) name = "Low-Frequency Range";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::RANGE_MULTIPLIER) name = "Range Multiplier";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::STROBE_DELAY) name = "Strobe Delay (us)";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::SHUTTER_VALUE) name = "Shutter Value (ms)";
+        else {name = "Unknow DCCL";}
+
+        return name;
+      }
+
+      //! Convert entity parameter value in IMC_DCCL Parameter value enum
+      //  param[in] IMC entity parameter value
+      //  param[out] IMC_DCCL ParamValue      
+      IMC_DCCL::ParamValue ToDCCL_ParameterValue(const std::string& param_value){
+
+        if (param_value == "true") return IMC_DCCL::TRUE;
+        else if (param_value == "false") return IMC_DCCL::FALSE;
+        else if (param_value == "Both") return IMC_DCCL::BOTH;
+        else {return IMC_DCCL::NONE_PV;}
+      }
+
+      //! Convert entity parameter value from IMC_DCCL Parameter value enum to IMC string
+      //  param[in] IMC_DCCL ParamValue enum
+      //  param[out] IMC params string      
+      std::string ToIMC_ParameterValue(const u_int8_t& imc_dccl_param_value){
+        std::string param_value;
+
+        if (imc_dccl_param_value == IMC_DCCL::ParamValue::TRUE) param_value = "true";
+        else if (imc_dccl_param_value == IMC_DCCL::ParamValue::FALSE) param_value = "false";        
+        else if (imc_dccl_param_value == IMC_DCCL::ParamValue::BOTH) param_value = "Both";
+        else {param_value = "Unknown DCCL";}
+
+        return param_value;
+      }
+
+      //! Convert transition condition value in IMC_DCCL TransitionCondition enum
+      //  param[in] IMC transition condition string
+      //  param[out] IMC_DCCL Transition condition enum      
+      IMC_DCCL::TransitionCondition ToDCCL_TransitionCondition(const std::string& param_value){
+
+        if (param_value == "ManeuverIsDone") return IMC_DCCL::TransitionCondition::MANEUVERISDONE;
+        else {return IMC_DCCL::TransitionCondition::NONE_TC;}
+      }
+
+      //! Convert transition condition value from IMC_DCCL TransitionCondition enum to IMC string
+      //  param[in] IMC_DCCL TransitionCondition enum
+      //  param[out] IMC transition condition string      
+      std::string ToIMC_TransitionCondition(const u_int8_t& imc_dccl_tran_cond){
+        std::string tran_cond;
+
+        if (imc_dccl_tran_cond == IMC_DCCL::TransitionCondition::MANEUVERISDONE) tran_cond = "ManeuverIsDone";
+        else {tran_cond = "Unknown DCCL";}
+
+        return tran_cond;
+      }
+    
+
+      bool containsDigit(const std::string& str) {
+        for (char c : str) {
+          if (std::isdigit(c)){return true;}
+        }
+        return false;
       }
 
       //! Main loop.
