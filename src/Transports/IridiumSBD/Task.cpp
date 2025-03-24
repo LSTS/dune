@@ -707,17 +707,17 @@ namespace Transports
       }
 
       void
-      signalError(std::string name, std::string err)
+      signalError(std::string name, std::string error)
       {
         m_error_count++;
         m_error_timer.reset();
-        debug("%s (%d/%d): %s", name.c_str(), m_error_count, m_args.max_error, err.c_str());
+        debug("%s (%d/%d): %s", name.c_str(), m_error_count, m_args.max_error, error.c_str());
 
         if (m_error_count >= m_args.max_error)
         {
           std::stringstream ss;
           ss << "Max error count exceeded: "
-             << err.c_str();
+             << error.c_str();
           throw RestartNeeded(ss.str(), 10.0);
         }
       }
