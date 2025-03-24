@@ -214,9 +214,9 @@ namespace Control
           void
           sendPowerOff(void)
           {
-            IMC::LoggingControl log;
-            log.op = LoggingControl::COP_REQUEST_STOP;
-            dispatch(log);
+            IMC::LoggingControl lc;
+            lc.op = LoggingControl::COP_REQUEST_STOP;
+            dispatch(lc);
 
             Counter<double> timer(3);
             while (!stopping())
@@ -254,10 +254,10 @@ namespace Control
           void
           restartLog(void)
           {
-            IMC::LoggingControl log;
-            log.name = m_log_name;
-            log.op = LoggingControl::COP_REQUEST_START;
-            dispatch(log);
+            IMC::LoggingControl lc;
+            lc.name = m_log_name;
+            lc.op = LoggingControl::COP_REQUEST_START;
+            dispatch(lc);
           }
 
           void
