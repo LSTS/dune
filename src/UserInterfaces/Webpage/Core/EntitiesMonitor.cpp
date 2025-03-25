@@ -57,30 +57,23 @@ namespace UserInterfaces
         m_entities[entity.first] = {DUNE::IMC::EntityState::ESTA_BOOT, entity.second, ""};
     }
 
-    std::string
+    json
     EntitiesMonitor::entitiesJSON(void)
     {
-      std::ostringstream os;
-      os << "  \"dune_entities\": \n  {\n";
-      auto entity = m_entities.begin();
-      while (entity != m_entities.end())
+      json j;
+      auto& dune_entities = j["dune_entities"];
+      for (const auto& it: m_entities)
       {
         uint8_t state;
         std::string label, description;
-        std::tie(state, label, description) = entity->second;
-
-        os << "    \"" << entity->first << "\": {"
-            << "\"state\": \"" << static_cast<int>(state) << "\", "
-            << "\"label\": \"" << label << "\", "
-            << "\"description\": \"" << description << "\"}";
-
-        ++entity;
-        if (entity != m_entities.end())
-          os << ",";
-        os << "\n";
+        auto& entity = dune_entities[it.first];
+        std::tie(state, label, description) = it.second;
+        entity["state"] = static_cast<int>(state);
+        entity["label"] = label;
+        entity["description"] = description;
       }
-      os << "  }";
-      return os.str();
+
+      return j;
     }
 
     void

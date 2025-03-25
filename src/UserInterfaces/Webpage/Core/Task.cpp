@@ -45,6 +45,8 @@
 #include "RequestHandler.hpp"
 #include "Server.hpp"
 
+#include <nlohmann-json/json.hpp>
+
 namespace UserInterfaces
 {
   //! DUNE Webpage.
@@ -55,6 +57,7 @@ namespace UserInterfaces
     namespace Core
     {
       using DUNE_NAMESPACES;
+      using json = nlohmann::json;
 
       struct Arguments
       {
@@ -92,7 +95,7 @@ namespace UserInterfaces
         //! HTTP requests map.
         std::map<unsigned, HTTPRequest> m_http_requests;
         //! Software meta information.
-        std::string m_meta;
+        json m_meta;
         //! Registered sections.
         std::vector<std::string> m_sections;
         //! System type.
@@ -128,14 +131,10 @@ namespace UserInterfaces
           .description("Timeout for HTTP requests");
 
           // Initialize meta information.
-          std::ostringstream os;
-          os << "{\n"
-            << "  \"dune_version\": \"" << getFullVersion() << " - " << getCompileDate() << "\",\n"
-            << "  \"dune_uid\": \"" << ctx.uid << "\",\n"
-            << "  \"dune_time_start\": \"" << std::setprecision(12) << ctx.start_time << "\",\n"
-            << "  \"dune_system\": \"" << getSystemName() << "\",\n";
-
-          m_meta = os.str();
+          m_meta["dune_version"] = std::string(getFullVersion()) + " - " + getCompileDate();
+          m_meta["dune_uid"] = ctx.uid;
+          m_meta["dune_time_start"] = ctx.start_time;
+          m_meta["dune_system"] = getSystemName();
 
           m_sections.push_back(c_default_section);
           
@@ -453,17 +452,18 @@ namespace UserInterfaces
         }
 
         DUNE::Utils::ByteBuffer
-        getInfoJSON(std::string data)
+        getInfoJSON(json data)
         {
-          std::ostringstream os;
-          os << m_meta
-             << "  \"sections\": \"" << Utils::String::join(m_sections.begin(), m_sections.end(), ",") << "\",\n"
-             << "  \"dune_time_current\": \"" << std::setprecision(12) << Clock::getSinceEpoch() << "\",\n"
-             << data
-             << "\n}";
-    
+          json j;
+          j["dune_time_current"] = Clock::getSinceEpoch();
+          j["sections"] = m_sections.empty() ? "" : Utils::String::join(m_sections.begin(), m_sections.end(), ",");
+
+          j.merge_patch(m_meta);
+          if (data.size() > 0)
+            j.merge_patch(data);
+          
           GzipCompressor cmp;
-          std::string str = os.str();
+          std::string str = j.dump();
           DUNE::Utils::ByteBuffer bfr;
           cmp.compress(bfr, (char*)str.c_str(), (unsigned long)str.size());
           return bfr;
@@ -491,7 +491,7 @@ namespace UserInterfaces
         void
         sendInfoJSON(TCPSocket* sock)
         {
-          std::ostringstream os;
+          json j;
 
 #if defined(DUNE_OS_LINUX)
           std::ifstream file("/proc/uptime");
@@ -500,19 +500,18 @@ namespace UserInterfaces
           {
             file >> uptime;
             file.close();
-            os << "  \"cpu_uptime\": \"" << std::setprecision(12) << uptime << "\",\n";
+            j["cpu_uptime"] = uptime;
           }
 #endif
           
           if (m_type != -1)
-            os << "  \"dune_system_type\": \"" << m_type << "\",\n";
+            j["dune_system_type"] = m_type;
     
           if (m_op_mode != -1)
-            os << "  \"dune_operation_mode\": \"" << m_op_mode << "\",\n";
-    
-          os << m_entities_mon.entitiesJSON();
+            j["dune_operation_mode"] = m_op_mode;
 
-          DUNE::Utils::ByteBuffer bfr = getInfoJSON(os.str());
+          j.merge_patch(m_entities_mon.entitiesJSON());
+          DUNE::Utils::ByteBuffer bfr = getInfoJSON(j);
           sendJSON(sock, &bfr, true);
         }
 

@@ -38,10 +38,14 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+#include <nlohmann-json/json.hpp>
+
 namespace UserInterfaces
 {
   namespace Webpage
   {
+    using json = nlohmann::json;
+    
     class EntitiesMonitor
     {
     public:
@@ -52,7 +56,7 @@ namespace UserInterfaces
       void
       setEntities(const std::map<unsigned, std::string>& entities);
 
-      std::string
+      json
       entitiesJSON(void);
 
       void
