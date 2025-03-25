@@ -30,6 +30,8 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+#include <nlohmann-json/json.hpp>
+
 namespace UserInterfaces
 {
   //! Insert short task description here.
@@ -41,6 +43,7 @@ namespace UserInterfaces
     namespace Sensors
     {
       using DUNE_NAMESPACES;
+      using json = nlohmann::json;
 
       //! Request uri.
       constexpr const char* c_request_uri = "/dune/sensors";
@@ -154,25 +157,16 @@ namespace UserInterfaces
         std::string
         sensorsJSON(void)
         {
-          std::ostringstream os;
-          os << "{\n\"data\":\n[\n";
-          
-          auto it = m_msgs.begin();
-          if (it != m_msgs.end())
+          json j;
+          auto& messages = j["messages"];
+          for (const auto& msg: m_msgs)
           {
-            it->second->toJSON(os);
-            ++it;
+            std::ostringstream os;
+            msg.second->toJSON(os);
+            messages += os.str();
           }
-          
-          while (it != m_msgs.end())
-          {
-            os << ",\n";
-            it->second->toJSON(os);
-            ++it;
-          }
-          
-          os << "\n]\n}";
-          return os.str();
+
+          return j.dump();
         }
 
         void
