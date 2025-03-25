@@ -215,18 +215,15 @@ Power.prototype.handleData = function(text)
   if (this.m_timer == null)
     this.m_timer = setInterval(this.requestData, 4000);
 
-  let data;
   try
   {
-    data = JSON.parse(text);
+    this.update(JSON.parse(text));
   }
   catch (error)
   {
-    console.error("Failed to parse JSON:", error);
+    // console.error("Failed to parse JSON:", error);
     return;
   }
-
-  this.update(data);
 };
 
 Power.prototype.update = function(data)
