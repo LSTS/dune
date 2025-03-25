@@ -301,9 +301,7 @@ Info.prototype.updateTaskNode = function(id, state, label, description)
 {
   if (!id || !state || !label || !description)
     return;
-
-  console.log(id, state, label, description);
-
+  
   const root = this.m_tasks.get(id);
   if (root)
     this.updateTaskField(root, state, description);
