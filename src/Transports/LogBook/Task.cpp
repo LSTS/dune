@@ -30,11 +30,14 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+#include <nlohmann-json/json.hpp>
+
 namespace Transports
 {
   namespace LogBook
   {
     using DUNE_NAMESPACES;
+    using json = nlohmann::json;
 
     //! Size for logbook buffer.
     static const uint32_t c_logbook_sz = 128;
@@ -115,27 +118,19 @@ namespace Transports
 
       std::string
       logbookJSON(void)
-      {         
-        std::ostringstream os;
-        os << "{\n\"data\":\n[\n";
-        
+      {
+        json j;
+        auto& logbook = j["logbook"];
         uint32_t size = m_logbook.getSize();
         uint32_t it = 0;
-        if (it <= size)
-        {
-          m_logbook(it).toJSON(os);
-          ++it;
-        }
-        
         while (it < size)
         {
-          os << ",\n";
-          m_logbook(it).toJSON(os);
-          ++it;
+          std::ostringstream os;
+          m_logbook(it++).toJSON(os);
+          logbook += os.str();
         }
-        
-        os << "\n]\n}";
-        return os.str();
+
+        return j.dump();
       }
 
       void
