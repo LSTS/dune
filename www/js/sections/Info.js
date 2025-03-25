@@ -334,8 +334,11 @@ Info.prototype.createTaskNode = function(id, state, label, description)
 
 Info.prototype.updateTaskField = function(root, state, description)
 {
-  root.src = getStateIcon(state);
-  root.data = description;
+  if (!root || !state || !description)
+    return;
+  
+  root.childNodes[0].firstChild.src = getStateIcon(state);
+  root.childNodes[2].firstChild.data = description;
 };
 
 function getSystemInfo(data)
