@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 1d75717ef0e92e13f5874f4f40a1ec69                            *
+// IMC XML MD5: 6e8033743562af8755e5e0350f6d63ca                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -1125,6 +1125,73 @@ namespace DUNE
 
       void
       setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! RAM Usage.
+    class RamUsage: public Message
+    {
+    public:
+      //! Ussage.
+      fp64_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 21;
+      }
+
+      RamUsage(void);
+
+      RamUsage*
+      clone(void) const
+      {
+        return new RamUsage(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return RamUsage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "RamUsage";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 8;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
     //! Simulated State.
@@ -26214,7 +26281,7 @@ namespace DUNE
       //! Amplitude.
       fp32_t amp;
       //! Correlation.
-      int8_t cor;
+      uint8_t cor;
 
       static uint16_t
       getIdStatic(void)
@@ -26519,6 +26586,119 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Wave Spectrum Parameters.
+    class WaveSpectrumParameters: public Message
+    {
+    public:
+      //! Significant Wave Height Hm0.
+      fp32_t sig_wave_height_hm0;
+      //! Wave Peak Direction.
+      fp32_t wave_peak_direction;
+      //! Wave Peak Period.
+      fp32_t wave_peak_period;
+      //! Wave Height Wind Hm0.
+      fp32_t wave_height_wind_hm0;
+      //! Wave Height Swell Hm0.
+      fp32_t wave_height_swell_hm0;
+      //! Wave Peak Period Wind.
+      fp32_t wave_peak_period_wind;
+      //! Wave Peak Period Swell.
+      fp32_t wave_peak_period_swell;
+      //! Wave Peak Direction Wind.
+      fp32_t wave_peak_direction_wind;
+      //! Wave Peak Direction Swell.
+      fp32_t wave_peak_direction_swell;
+      //! Wave Mean Direction.
+      fp32_t wave_mean_direction;
+      //! Wave Mean Period Tm02.
+      fp32_t wave_mean_period_tm02;
+      //! Wave Height Hmax.
+      fp32_t wave_height_hmax;
+      //! Wave Height Crest.
+      fp32_t wave_height_crest;
+      //! Wave Height Trough.
+      fp32_t wave_height_trough;
+      //! Wave Period Tmax.
+      fp32_t wave_period_tmax;
+      //! Wave Period Tz.
+      fp32_t wave_period_tz;
+      //! Significant Wave Height H1/3.
+      fp32_t significant_wave_height_h1_3;
+      //! Mean Spreading Angle.
+      fp32_t mean_spreading_angle;
+      //! First Order Spread.
+      fp32_t first_order_spread;
+      //! Long Crestedness Parameters.
+      fp32_t long_crestedness_parameters;
+      //! Heading.
+      fp32_t heading;
+      //! Pitch.
+      fp32_t pitch;
+      //! Roll.
+      fp32_t roll;
+      //! External Heading.
+      fp32_t external_heading;
+      //! StDev Heading.
+      fp32_t stdev_heading;
+      //! StDev Pitch.
+      fp32_t stdev_pitch;
+      //! StDev Roll.
+      fp32_t stdev_roll;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 1018;
+      }
+
+      WaveSpectrumParameters(void);
+
+      WaveSpectrumParameters*
+      clone(void) const
+      {
+        return new WaveSpectrumParameters(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return WaveSpectrumParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "WaveSpectrumParameters";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 108;
+      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;

@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 1d75717ef0e92e13f5874f4f40a1ec69                            *
+// IMC XML MD5: 6e8033743562af8755e5e0350f6d63ca                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -45,6 +45,7 @@ MESSAGE(14, EntityActivationState)
 MESSAGE(15, QueryEntityActivationState)
 MESSAGE(16, VehicleOperationalLimits)
 MESSAGE(20, MsgList)
+MESSAGE(21, RamUsage)
 MESSAGE(50, SimulatedState)
 MESSAGE(51, LeakSimulation)
 MESSAGE(52, UASimulation)
@@ -358,6 +359,7 @@ MESSAGE(1014, CurrentProfile)
 MESSAGE(1015, CurrentProfileCell)
 MESSAGE(1016, ADCPBeam)
 MESSAGE(1017, Frequency)
+MESSAGE(1018, WaveSpectrumParameters)
 MESSAGE(2000, GpioState)
 MESSAGE(2001, GpioStateGet)
 MESSAGE(2002, GpioStateSet)
