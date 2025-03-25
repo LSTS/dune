@@ -368,7 +368,7 @@ p.DEBUG
   opacity: 1;
 }
 
-#MainEntityTableDiv
+#MainTasksTableDiv
 {
   max-height: 60vh;
   overflow-y: scroll;
@@ -377,12 +377,12 @@ p.DEBUG
   margin-right: auto;
 }
 
-#MainEntityTable
+#MainTasksTable
 {
   overflow-y: auto;
 }
 
-#MainEntityTable tr
+#MainTasksTable tr
 {
   /*border-bottom: solid var(--c-color-line-split-entities) thin;*/
   padding: 10px 18px;
@@ -390,18 +390,18 @@ p.DEBUG
   box-shadow: 0 1px 2px var(--c-color-text);
 }
 
-#MainEntityTable tr:last-child
+#MainTasksTable tr:last-child
 {
   border-bottom: none;
 }
 
-#MainEntityTable th, #MainEntityTable td
+#MainTasksTable th, #MainTasksTable td
 {
   text-align: left;
   padding: 5px;
 }
 
-#MainEntityTable th
+#MainTasksTable th
 {
   width: 150px;
   padding: 0px 18px;

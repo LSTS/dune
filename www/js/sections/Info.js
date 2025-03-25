@@ -35,8 +35,8 @@ function Info(root_id)
   this.create('Info', root_id);
   this.createHeader('Overview');
   this.createTable();
-  this.createHeader('Entities');
-  this.createTableEntities();
+  this.createHeader('Tasks');
+  this.createTasksTable();
 
   this.handleData = this.handleData.bind(this);
   this.requestData = this.requestData.bind(this);
@@ -47,6 +47,9 @@ Info.prototype.constructor = Info;
 
 Info.prototype.start = function()
 {
+  this.m_tasks = new Map();
+  this.m_tasksOrderedkeys = [];
+
   this.requestData();
 }
 
@@ -123,8 +126,8 @@ Info.prototype.update = function(data)
   g_uid = data.dune_uid ? data.dune_uid : null;
   g_time_current = data.dune_time_current ? data.dune_time_current : null;
 
-  if (data.sections)
-    g_sections.updateUsedSections(data.sections.split(","));
+  if (data.dune_sections)
+    g_sections.updateUsedSections(data.dune_sections.split(","));
 
   for (let i in this.m_fields)
   {
@@ -182,16 +185,20 @@ Info.prototype.update = function(data)
   if (data.dune_entities)
     this.updateEntities(data.dune_entities);
 };
-  
+
 Info.prototype.updateEntities = function(entities)
 {
-  g_entities = entities;
   Object.values(entities).forEach(entity =>
   {
-    this.insertEntityNode(entity.state, entity.label, entity.description);
+    if (entity.id && entity.label)
+    {
+      g_resolver.set(entity.id, entity.label);
+      if (entity.state && entity.description)
+        this.updateTaskNode(entity.id, entity.state, entity.label, entity.description);
+    }
   });
 };
-  
+
 Info.prototype.createTable = function()
 {
   this.sys_name_div = document.createElement('div');
@@ -246,20 +253,20 @@ Info.prototype.createTable = function()
       this.createTableEntry(i, this.m_table_right);
   }
 };
-  
-Info.prototype.createTableEntities = function()
+
+Info.prototype.createTasksTable = function()
 {
-  this.m_tbl_entity = document.createElement('table');
-  this.m_tbl_entity.id = 'MainEntityTable';
-  this.m_tbl_entity.style.width = '100%';
+  this.m_task_tabel = document.createElement('table');
+  this.m_task_tabel.id = 'MainTasksTable';
+  this.m_task_tabel.style.width = '100%';
   
   var div = document.createElement('div');
-  div.id = 'MainEntityTableDiv';
-  div.appendChild(this.m_tbl_entity);
+  div.id = 'MainTasksTableDiv';
+  div.appendChild(this.m_task_tabel);
   
   this.m_base.appendChild(div);
 };
-  
+
 Info.prototype.createTableHeader = function(idx, tbl)
 {
   var field = this.m_fields[idx];
@@ -268,7 +275,7 @@ Info.prototype.createTableHeader = function(idx, tbl)
     field.widget = new TextLabel();
   field.widget.create(tbl);
 };
-  
+
 Info.prototype.createTableEntry = function(idx, tbl)
 {
   var field = this.m_fields[idx];
@@ -290,30 +297,21 @@ Info.prototype.createTableEntry = function(idx, tbl)
   tbl.appendChild(tr);
 };
 
-Info.prototype.insertEntityNode = function(state, label, description)
+Info.prototype.updateTaskNode = function(id, state, label, description)
 {
-  for (const item of this.m_tbl_entity.childNodes)
-  {
-    let tgt = item.childNodes[1].firstChild;
+  if (!id || !state || !label || !description)
+    return;
 
-    if (tgt.data === label)
-    {
-      item.childNodes[0].firstChild.src = getStateIcon(state);
-      item.childNodes[2].firstChild.data = description;
-      return;
-    }
+  console.log(id, state, label, description);
 
-    if (label < tgt.data)
-    {
-      this.m_tbl_entity.insertBefore(this.createEntity(state, label, description), item);
-      return;
-    }
-  }
-
-  this.m_tbl_entity.appendChild(this.createEntity(state, label, description));
+  const root = this.m_tasks.get(id);
+  if (root)
+    this.updateTaskField(root, state, description);
+  else
+    this.createTaskNode(id, state, label, description);
 };
-  
-Info.prototype.createEntity = function(state, label, description)
+
+Info.prototype.createTaskNode = function(id, state, label, description)
 {
   var tr = document.createElement('tr');
 
@@ -333,7 +331,13 @@ Info.prototype.createEntity = function(state, label, description)
   td_description.appendChild(document.createTextNode(description));
   tr.appendChild(td_description);
   
-  return tr;
+  this.insertOrdered(tr, id, this.m_tasksOrderedkeys, this.m_tasks, this.m_task_tabel);
+};
+
+Info.prototype.updateTaskField = function(root, state, description)
+{
+  root.src = getStateIcon(state);
+  root.data = description;
 };
 
 function getSystemInfo(data)
@@ -356,7 +360,7 @@ function getSystemInfo(data)
 
   return `${dune_system} (${getSystemType(dune_system_type)} - ${getOperationMode(dune_operation_mode)})`;
 };
-  
+
 function getSystemType(value)
 {
   var abbreviationMap =
@@ -435,7 +439,7 @@ function getUptime(time)
 
   return str;
 };
-  
+
 function changeSystemNameBackgroundColor(mode)
 {
   let color = "#757575";

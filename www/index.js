@@ -31,10 +31,11 @@
 var g_icons = new Icons();
 var g_uid = null;
 var g_time_current = null;
-var g_entities = null;
+var g_resolver = new Resolver();
 
 window.onload = function()
 {
+  g_resolver = new Resolver();
   setConnected(false);
   g_sections.create();
   g_sections.updateUsedSections(DEFAULT_SECTION);
@@ -49,29 +50,16 @@ function show(section)
 
 function resolveEntity(input)
 {
-  if (!g_entities)
+  if (!g_resolver)
     return null;
 
-  const entries = Object.entries(g_entities);
-  if (typeof input === "number")
-  {
-    for (const [id, entity] of entries)
-    {
-      if (parseInt(id, 10) === input)
-        return entity.label;
-    }
-  }
-  else if (typeof input === "string")
-  {
-    for (const [id, entity] of entries)
-    {
-      if (entity.label === input)
-        return parseInt(id, 10);
-    }
-  }
-
+  if (typeof input === 'number')
+    return g_resolver.get(input) || null;
+  else if (typeof input === 'string')
+    return g_resolver.getKey(input) || null;
+  
   return null;
-};
+}
 
 function getStateIcon(state)
 {
