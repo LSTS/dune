@@ -298,7 +298,7 @@ Info.prototype.insertEntityNode = function(state, label, description)
 
     if (tgt.data === label)
     {
-      item.childNodes[0].firstChild.src = this.getEntityStateIcon(state);
+      item.childNodes[0].firstChild.src = getStateIcon(state);
       item.childNodes[2].firstChild.data = description;
       return;
     }
@@ -320,7 +320,7 @@ Info.prototype.createEntity = function(state, label, description)
   var td_state = document.createElement('td');
   td_state.style.width = '20px';
   var img_state = document.createElement('img');
-  img_state.src = this.getEntityStateIcon(state);
+  img_state.src = getStateIcon(state);
   td_state.appendChild(img_state);
   tr.appendChild(td_state);
   
@@ -334,23 +334,6 @@ Info.prototype.createEntity = function(state, label, description)
   tr.appendChild(td_description);
   
   return tr;
-};
-
-Info.prototype.getEntityStateIcon = function(state)
-{
-  switch (Number(state))
-  {
-  case 0:
-    return g_icons.path('warning');
-  case 1:
-    return g_icons.path('normal');
-  case 2: case 3:
-    return g_icons.path('error');
-  case 4:
-    return g_icons.path('fatal');
-  }
-
-  return g_icons.path('unknown');
 };
 
 function getSystemInfo(data)

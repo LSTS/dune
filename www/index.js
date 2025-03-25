@@ -73,6 +73,23 @@ function resolveEntity(input)
   return null;
 };
 
+function getStateIcon(state)
+{
+  switch (Number(state))
+  {
+  case 0:
+    return g_icons.path('warning');
+  case 1:
+    return g_icons.path('normal');
+  case 2: case 3:
+    return g_icons.path('error');
+  case 4:
+    return g_icons.path('fatal');
+  }
+
+  return g_icons.path('unknown');
+};
+
 function setConnected(value)
 {
   var icon = document.getElementById('ConnectionIcon');

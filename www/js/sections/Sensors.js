@@ -167,28 +167,15 @@ Sensors.prototype.updateField = function(root, msg)
       .join(' ');
 
     root.childNodes[2].firstChild.data = 'last update at ' + formattedTime + ' (' + formattedDiff + ')';
-    root.childNodes[3].firstChild.src = this.getStateIcon(totalSeconds <= 10.0);
+    root.childNodes[3].firstChild.src = getStateIcon(totalSeconds <= 10.0);
   }
   else
   {
     root.childNodes[2].firstChild.data = 'last message with invalid timestamp';
-    root.childNodes[3].firstChild.src = this.getStateIcon(-1);
+    root.childNodes[3].firstChild.src = getStateIcon(-1);
   }
 
   root.childNodes[1].firstChild.data = Number(msg.value).toFixed(2);
-};
-
-Sensors.prototype.getStateIcon = function(state)
-{
-  switch (Number(state))
-  {
-  case 0:
-    return g_icons.path('warning');
-  case 1:
-    return g_icons.path('normal');
-  }
-
-  return g_icons.path('unknown');
 };
 
 Sensors.prototype.requestData = function()
