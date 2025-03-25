@@ -31,12 +31,8 @@
 function Logbook(root_id)
 {
   this.m_timer = null;
-  this.m_logbook = null;
   
   this.create('Logbook', root_id);
-
-  this.selectedContext = 'all';
-  this.uniqueContexts = new Set();
 
   this.setupLogbookFilters();
   const logEntriesContainer = document.createElement("div");
@@ -54,6 +50,10 @@ Logbook.prototype.constructor = Logbook;
 
 Logbook.prototype.start = function()
 {
+  this.m_logbook = [];
+  this.selectedContext = 'all';
+  this.uniqueContexts = new Set();
+
   this.requestData();
 };
 
@@ -196,7 +196,8 @@ Logbook.prototype.updateUniqueContexts = function(entries)
 
   entries.forEach(entry =>
   {
-    this.uniqueContexts.add(entry.context);
+    if (entry.context)
+      this.uniqueContexts.add(entry.context);
   });
 
   this.updateContextFilter();
@@ -222,18 +223,15 @@ Logbook.prototype.handleData = function(text)
   if (this.m_timer == null)
     this.m_timer = setInterval(this.requestData, 4000);
 
-  let data;
   try
   {
-    data = JSON.parse(text);
+    this.update(JSON.parse(text));
   }
   catch (error)
   {
     // console.error("Failed to parse JSON:", error);
     return;
   }
-
-  this.update(data);
 };
 
 Logbook.prototype.update = function(data)
@@ -242,12 +240,26 @@ Logbook.prototype.update = function(data)
   if (!logEntriesContainer)
     return;
 
-  if (data && data.data)
-    this.m_logbook = data.data;
+  if (data && data.logbook)
+  {
+    this.m_logbook = [];
+    data.logbook.forEach(entry =>
+    {
+      try
+      {
+        this.m_logbook.push(JSON.parse(entry));
+      }
+      catch (error)
+      {
+        // console.error("Failed to parse JSON:", error);
+      }
+    });
+  }
+
   this.updateUniqueContexts(this.m_logbook);
   
   let logbookStr = null;
-  if (this.m_logbook)
+  if (this.m_logbook.length > 0)
   {
     const result = [];
     const selectedContext = this.selectedContext;
