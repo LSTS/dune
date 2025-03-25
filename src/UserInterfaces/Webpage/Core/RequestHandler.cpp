@@ -298,7 +298,7 @@ namespace UserInterfaces
         {
           sendHeader(sock, STATUS_LINE_200, size, &hdr_fields);
           if (!sock->writeFile(file.c_str(), size - 1))
-            DUNE_ERR("HTTPHandle", "failed to send file: " << System::Error::getLastMessage());
+            DUNE_ERR("RequestHandler", "failed to send file: " << System::Error::getLastMessage());
           return;
         }
 
@@ -318,7 +318,7 @@ namespace UserInterfaces
         sendHeader(sock, STATUS_LINE_206, off_end - off_beg + 1, &hdr_fields);
 
         if (!sock->writeFile(file.c_str(), off_end, off_beg))
-          DUNE_ERR("HTTPHandle", "failed to send file: " << System::Error::getLastMessage());
+          DUNE_ERR("RequestHandler", "failed to send file: " << System::Error::getLastMessage());
       }
       catch(const std::exception& e)
       {
