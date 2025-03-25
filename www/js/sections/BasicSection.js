@@ -122,3 +122,36 @@ BasicSection.prototype.update = function(data)
 {
   throw new Error("Derived class must override update()");
 };
+
+BasicSection.prototype.insertOrdered = function(element, key, array, map, root)
+{
+  if (!element || !key || !array || !map || !root)
+    return;
+
+  let low = 0;
+  let high = array.length;
+
+  while (low < high)
+  {
+    let mid = Math.floor((low + high) / 2);
+    if (array[mid] < key)
+      low = mid + 1;
+    else
+      high = mid;
+  }
+
+  array.splice(low, 0, key);
+  map.set(key, element);
+  
+  if (low < array.length - 1 && low > 0)
+  {
+    let nextElement = map.get(array[low - 1]);
+    if (nextElement)
+    {
+      root.insertBefore(element, nextElement);
+      return;
+    }
+  }
+
+  root.appendChild(element);
+};
