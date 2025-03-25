@@ -30,6 +30,8 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+#include <nlohmann-json/json.hpp>
+
 namespace UserInterfaces
 {
   //! Insert short task description here.
@@ -41,6 +43,7 @@ namespace UserInterfaces
     namespace Dummy
     {
       using DUNE_NAMESPACES;
+      using json = nlohmann::json;
 
       //! Request uri.
       constexpr const char* c_request_uri = "/dune/dummy";
@@ -118,14 +121,10 @@ namespace UserInterfaces
 
         std::string
         dummyJSON(void)
-        {         
-          std::ostringstream os;
-          os << "{\n";
-
-          os << "\"dummy\": \"0\"";
-
-          os << "\n}";
-          return os.str();
+        {
+          json j;
+          j["dummy"] = 0;
+          return j.dump();
         }
 
         void
