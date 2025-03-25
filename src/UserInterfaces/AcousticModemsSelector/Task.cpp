@@ -30,6 +30,8 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+#include <nlohmann-json/json.hpp>
+
 namespace UserInterfaces
 {
   //! Task responsible for handling selection of acoustic modems.
@@ -40,6 +42,7 @@ namespace UserInterfaces
   namespace AcousticModemsSelector
   {
     using DUNE_NAMESPACES;
+    using json = nlohmann::json;
 
     //! Request uri.
     constexpr const char* c_request_uri = "/dune/acoustics";
@@ -247,51 +250,25 @@ namespace UserInterfaces
       std::string
       acousticsJSON(void)
       {
-        std::ostringstream os;
-        os << "{\n";
-
-        os << "\"acoustic_modems_types\": \"" << Utils::String::join(m_types.begin(), m_types.end(), ",") << "\",\n";
-
+        json j;
+        j["acoustic_modems_types"] = m_types.empty() ? "" : Utils::String::join(m_types.begin(), m_types.end(), ",");
         if (!m_sys.empty())
-          os << "\"acoustic_targets\": \"" << Utils::String::join(m_sys.begin(), m_sys.end(), ",") << "\",\n";
+          j["acoustic_targets"] = Utils::String::join(m_sys.begin(), m_sys.end(), ",");
 
-        os << "\"acoustic_modems\":" << "\n{";
-        auto it = m_acoustic_modems.begin();
-        if (it != m_acoustic_modems.end())
+        auto& acoustic_modems = j["acoustic_modems"];
+        for (const auto& entry : m_acoustic_modems)
         {
-          os << "  \""
-          << it->first
-          << "\": \"";
-       
-          const auto it_selected = m_selected.find(it->second.type);
-          if ((it_selected != m_selected.end()) && it->second.selected)
-            os << ((it->second.selected == it_selected->second.state) ? static_cast<int>(it->second.selected) : 2);
-          else 
-            os << static_cast<int>(it->second.selected);
+          const auto& key = entry.first;
+          const auto& modem = entry.second;
+          int value = static_cast<int>(modem.selected);
+          auto it_selected = m_selected.find(modem.type);
+          if (it_selected != m_selected.end() && modem.selected && (modem.selected != it_selected->second.state))
+            value = 2;
           
-          os << "\"";
-          ++it;
+          acoustic_modems[key] = value;
         }
-        
-        while (it != m_acoustic_modems.end())
-        {
-          os << ",\n  \""
-             << it->first
-             << "\": \"";
-          
-          const auto it_selected = m_selected.find(it->second.type);
-          if ((it_selected != m_selected.end()) && it->second.selected)
-            os << ((it->second.selected == it_selected->second.state) ? static_cast<int>(it->second.selected) : 2);
-          else 
-            os << static_cast<int>(it->second.selected);
-          
-          os << "\"";
-          ++it;
-        }
-        os << "}\n";
 
-        os << "\n}";
-        return os.str();
+        return j.dump();
       }
 
       uint16_t
