@@ -456,7 +456,7 @@ namespace UserInterfaces
         {
           json j;
           j["dune_time_current"] = Clock::getSinceEpoch();
-          j["sections"] = m_sections.empty() ? "" : Utils::String::join(m_sections.begin(), m_sections.end(), ",");
+          j["dune_sections"] = m_sections.empty() ? "" : Utils::String::join(m_sections.begin(), m_sections.end(), ",");
 
           j.merge_patch(m_meta);
           if (data.size() > 0)

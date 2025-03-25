@@ -68,6 +68,7 @@ namespace UserInterfaces
         std::string label, description;
         auto& entity = dune_entities[it.first];
         std::tie(state, label, description) = it.second;
+        entity["id"] = it.first;
         entity["state"] = static_cast<int>(state);
         entity["label"] = label;
         entity["description"] = description;
@@ -79,11 +80,9 @@ namespace UserInterfaces
     void
     EntitiesMonitor::updateEntityState(const DUNE::IMC::EntityState* msg)
     {
-      const auto& entity = m_entities.find(msg->getSourceEntity());
-      if (entity != m_entities.end())
-        entity->second = {msg->state, m_task->resolveEntity(msg->getSourceEntity()), msg->description};
-      else
-        m_entities[msg->getSourceEntity()] = {msg->state, m_task->resolveEntity(msg->getSourceEntity()), msg->description};
+      unsigned id = msg->getSourceEntity();
+      auto label = m_task->resolveEntity(id);
+      m_entities[id] = {msg->state, label, msg->description};
     }
   }
 }
