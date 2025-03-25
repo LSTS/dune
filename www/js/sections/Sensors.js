@@ -43,6 +43,11 @@ Sensors.prototype.constructor = Sensors;
 
 Sensors.prototype.start = function()
 {
+  this.m_subsections = new Map();
+  this.m_subsectionsOrderedkeys = [];
+  this.m_values = new Map();
+  this.m_valuesOrderedkeys = [];
+
   this.requestData();
 };
 
@@ -56,32 +61,55 @@ Sensors.prototype.errorHandler = function(status, status_text)
   this.timeoutHandler();
 };
 
-Sensors.prototype.updateSubSection = function(msg)
+Sensors.prototype.insertOrdered = function(element, key, array, map, root)
 {
-  for (var i = 0; i < this.m_base.childNodes.length; i++)
-  {
-    var tbl = this.m_base.childNodes[i];
-    var hdr = tbl.firstChild.firstChild.firstChild.data;
+  if (!element || !key || !array || !map || !root)
+    return;
 
-    if (hdr == msg.abbrev)
+  let low = 0;
+  let high = array.length;
+
+  while (low < high)
+  {
+    let mid = Math.floor((low + high) / 2);
+    if (array[mid] < key)
+      low = mid + 1;
+    else
+      high = mid;
+  }
+
+  array.splice(low, 0, key);
+  map.set(key, element);
+  
+  if (low < array.length - 1 && low > 0)
+  {
+    let nextElement = map.get(array[low - 1]);
+    if (nextElement)
     {
-      this.updateValue(tbl, msg);
-      return;
-    }
-    else if (msg.abbrev < hdr)
-    {
-      var ss = this.createSubSection(msg);
-      this.m_base.insertBefore(ss, tbl);
+      root.insertBefore(element, nextElement);
       return;
     }
   }
 
-  var ss = this.createSubSection(msg);
-  this.m_base.appendChild(ss);
+  root.appendChild(element);
+};
+
+Sensors.prototype.updateSubSection = function(msg)
+{
+  if (!msg || !msg.abbrev || !msg.value)
+    return;
+
+  if (!this.m_subsections.has(msg.abbrev))
+    this.createSubSection(msg);
+
+  this.updateValue(msg);
 };
 
 Sensors.prototype.createSubSection = function(msg)
 {
+  if (!msg || !msg.abbrev)
+    return;
+  
   var th = document.createElement('th');
   th.colSpan = 4;
   th.appendChild(document.createTextNode(msg.abbrev));
@@ -92,43 +120,29 @@ Sensors.prototype.createSubSection = function(msg)
   var tbl = document.createElement('table');
   tbl.appendChild(tr);
 
-  this.updateValue(tbl, msg);
-
+  this.insertOrdered(tbl, msg.abbrev, this.m_subsectionsOrderedkeys, this.m_subsections, this.m_base);
   return tbl;
 };
 
-Sensors.prototype.updateValue = function(parent, msg)
+Sensors.prototype.updateValue = function(msg)
 {
-  var el = resolveEntity(parseInt(msg.src_ent));
-  if (!el)
+  if (!msg || !msg.src_ent || !msg.abbrev)
     return;
 
-  for (var i = 1; i < parent.childNodes.length; i++)
-  {
-    var tr = parent.childNodes[i];
-    var ent = tr.firstChild.firstChild.data;
+  const src = resolveEntity(parseInt(msg.src_ent));
+  if (!src)
+    return;
 
-    if (ent == el)
-    {
-      this.updateField(tr, msg);
-      return;
-    }
-    else if (el < ent)
-    {
-      var vn = this.createValue(msg);
-      parent.insertBefore(vn, tr);
-      return;
-    }
-  }
-
-  var vn = this.createValue(msg);
-  parent.appendChild(vn);
+  const root = this.m_values.get(msg.abbrev + '.' + src);
+  if (root)
+    this.updateField(root, msg);
+  else
+    this.createValue(src, msg);
 };
 
-Sensors.prototype.createValue = function(msg)
+Sensors.prototype.createValue = function(src, msg)
 {
-  var src = resolveEntity(parseInt(msg.src_ent));
-  if (!src)
+  if (!src || !msg || !msg.abbrev)
     return;
 
   var td_label = document.createElement('td');
@@ -157,44 +171,43 @@ Sensors.prototype.createValue = function(msg)
   tr.appendChild(td_desc);
   tr.appendChild(td_status);
 
+  let root = this.m_subsections.get(msg.abbrev);
+  this.insertOrdered(tr, msg.abbrev + '.' + src, this.m_valuesOrderedkeys, this.m_values, root ? root : this.createSubSection(msg));
   this.updateField(tr, msg);
-
-  return tr;
 };
 
 Sensors.prototype.updateField = function(root, msg)
 {
-  var date = new Date(msg.timestamp * 1000);
-  var hours = date.getHours();
-  var minutes = "0" + date.getMinutes();
-  var seconds = "0" + date.getSeconds();
-  var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-  
-  var totalSeconds = null;
-  
-  if (msg.timestamp >= 0)
-  {
-    var dif = msg.timestamp - g_time_current;
-    totalSeconds = (dif < 0) ? Math.floor(dif) : 0;
-    var h = Math.floor(totalSeconds / 3600);
-    var m = Math.floor((totalSeconds % 3600) / 60);
-    var s = totalSeconds % 60;
-    var formattedDiff = (h > 0 ? h + 'h ' : '') + (m > 0 ? m + 'm ' : '') + s + 's';
+  if (!msg.timestamp || !msg.value)
+    return;
 
-    if (totalSeconds > 10.0)
-    {
-      root.childNodes[2].firstChild.data = 'INACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
-      root.childNodes[3].firstChild.src = this.getStateIcon(state);
-    }
-    else
-    {
-      root.childNodes[2].firstChild.data = 'ACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
-    }
+  const timestamp = parseFloat(msg.timestamp);
+  const date = new Date(timestamp * 1000);
+  const hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+  const formattedTime = `${hours}:${minutes}:${seconds}`;
+    
+  if (timestamp >= 0)
+  {
+    const totalSeconds = Math.max(0, Math.floor(timestamp - g_time_current));
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+
+    const formattedDiff = [h > 0 ? `${h}h` : '', m > 0 ? `${m}m` : '', `${s}s`]
+      .filter(Boolean)
+      .join(' ');
+
+    root.childNodes[2].firstChild.data = 'last update at ' + formattedTime + ' (' + formattedDiff + ')';
+    root.childNodes[3].firstChild.src = this.getStateIcon(totalSeconds <= 10.0);
   }
   else
+  {
     root.childNodes[2].firstChild.data = 'last message with invalid timestamp';
+    root.childNodes[3].firstChild.src = this.getStateIcon(-1);
+  }
 
-  root.childNodes[3].firstChild.src = this.getStateIcon((!totalSeconds || totalSeconds > 10.0) ? 1 : 0);
   root.childNodes[1].firstChild.data = Number(msg.value).toFixed(2);
 };
 
@@ -231,28 +244,31 @@ Sensors.prototype.handleData = function(text)
   if (this.m_timer == null)
     this.m_timer = setInterval(this.requestData, 4000);
 
-  let data;
   try
   {
-    data = JSON.parse(text);
+    this.update(JSON.parse(text));
   }
   catch (error)
   {
     // console.error("Failed to parse JSON:", error);
     return;
   }
-
-  this.update(data);
 };
 
 Sensors.prototype.update = function(data)
 {
-  let msgs = data.data;
-  if (!msgs)
+  if (!data && !data.messages)
     return;
 
-  msgs.forEach(msg =>
+  data.messages.forEach(msg =>
   {
-    this.updateSubSection(msg);
+    try
+    {
+      this.updateSubSection(JSON.parse(msg));
+    }
+    catch (error)
+    {
+      // console.error("Failed to parse JSON:", error);
+    }
   });
 };
