@@ -30,6 +30,8 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+#include <nlohmann-json/json.hpp>
+
 namespace UserInterfaces
 {
   //! Insert short task description here.
@@ -41,6 +43,7 @@ namespace UserInterfaces
     namespace PowerChannels
     {
       using DUNE_NAMESPACES;
+      using json = nlohmann::json;
 
       //! Request uri.
       constexpr const char* c_request_uri = "/dune/power";
@@ -215,27 +218,13 @@ namespace UserInterfaces
         std::string
         powerChannelsJSON(void)
         {
-          std::ostringstream os;
-          os << "{\n";
-
-          auto it = m_power_channels.begin();
-          if (it != m_power_channels.end())
-          {
-            os << "  \"" << it->first << "\": \"" << static_cast<int>(it->second) << "\"";
-            ++it;
-          }
-          
-          while (it != m_power_channels.end())
-          {
-            os << ",\n  \"" << it->first << "\": \"" << static_cast<int>(it->second) << "\"";
-            ++it;
-          }
-
-          os << "\n}";
-          return os.str();
+          json j;
+          auto& power_channels = j["power_channels"];
+          for (const auto& pwr_ch: m_power_channels)
+            power_channels[pwr_ch.first] = pwr_ch.second;
+            
+          return j.dump();
         }
-
-
 
         //! Main loop.
         void
