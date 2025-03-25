@@ -294,10 +294,9 @@ Acoustics.prototype.handleData = function(text)
   if (this.m_timer == null)
     this.m_timer = setInterval(this.requestData, 4000);
 
-  let data;
   try
   {
-    data = JSON.parse(text);
+    this.update(JSON.parse(text));
   }
   catch (error)
   {
@@ -305,7 +304,6 @@ Acoustics.prototype.handleData = function(text)
     return;
   }
 
-  this.update(data);
   this.m_first = false;
 };
 
