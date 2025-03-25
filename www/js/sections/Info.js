@@ -355,7 +355,7 @@ Info.prototype.getEntityStateIcon = function(state)
 
 function getSystemInfo(data)
 {
-  if (!data || typeof data.dune_system === "undefined") 
+  if (!data || !data.dune_system) 
     return "Unknown";
 
   const { dune_system, dune_system_type, dune_operation_mode } = data;
