@@ -79,18 +79,14 @@ Info.prototype.handleData = function(text)
   if (this.m_timer == null)
     this.m_timer = setInterval(this.requestData, 4000);
 
-  let data;
   try
   {
-    data = JSON.parse(text);
+    this.update(JSON.parse(text));
   }
   catch (error)
   {
-    console.error("Failed to parse JSON:", error);
     return;
   }
-
-  this.update(data);
 };
 
 Info.prototype.m_fields =
@@ -122,7 +118,7 @@ Info.prototype.m_fields =
   }
 ];
 
-Info.prototype.update = function (data)
+Info.prototype.update = function(data)
 {
   g_uid = data.dune_uid ? data.dune_uid : null;
   g_time_current = data.dune_time_current ? data.dune_time_current : null;
@@ -179,7 +175,7 @@ Info.prototype.update = function (data)
     }
     else
     {
-      console.warn(`Widget update method not found for field ${field.label}`);
+      // console.warn(`Widget update method not found for field ${field.label}`);
     }
   }
 
@@ -187,7 +183,7 @@ Info.prototype.update = function (data)
     this.updateEntities(data.dune_entities);
 };
   
-Info.prototype.updateEntities = function (entities)
+Info.prototype.updateEntities = function(entities)
 {
   g_entities = entities;
   Object.values(entities).forEach(entity =>
@@ -196,7 +192,7 @@ Info.prototype.updateEntities = function (entities)
   });
 };
   
-Info.prototype.createTable = function ()
+Info.prototype.createTable = function()
 {
   this.sys_name_div = document.createElement('div');
   this.sys_name_div.id = 'systemName';
@@ -251,7 +247,7 @@ Info.prototype.createTable = function ()
   }
 };
   
-Info.prototype.createTableEntities = function ()
+Info.prototype.createTableEntities = function()
 {
   this.m_tbl_entity = document.createElement('table');
   this.m_tbl_entity.id = 'MainEntityTable';
@@ -264,7 +260,7 @@ Info.prototype.createTableEntities = function ()
   this.m_base.appendChild(div);
 };
   
-Info.prototype.createTableHeader = function (idx, tbl)
+Info.prototype.createTableHeader = function(idx, tbl)
 {
   var field = this.m_fields[idx];
     
@@ -273,7 +269,7 @@ Info.prototype.createTableHeader = function (idx, tbl)
   field.widget.create(tbl);
 };
   
-Info.prototype.createTableEntry = function (idx, tbl)
+Info.prototype.createTableEntry = function(idx, tbl)
 {
   var field = this.m_fields[idx];
   var tr = document.createElement('tr');
@@ -294,7 +290,7 @@ Info.prototype.createTableEntry = function (idx, tbl)
   tbl.appendChild(tr);
 };
 
-Info.prototype.insertEntityNode = function (state, label, description)
+Info.prototype.insertEntityNode = function(state, label, description)
 {
   for (const item of this.m_tbl_entity.childNodes)
   {
@@ -317,7 +313,7 @@ Info.prototype.insertEntityNode = function (state, label, description)
   this.m_tbl_entity.appendChild(this.createEntity(state, label, description));
 };
   
-Info.prototype.createEntity = function (state, label, description)
+Info.prototype.createEntity = function(state, label, description)
 {
   var tr = document.createElement('tr');
 
