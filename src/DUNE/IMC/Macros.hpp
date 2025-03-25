@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 1d75717ef0e92e13f5874f4f40a1ec69                            *
+// IMC XML MD5: 6e8033743562af8755e5e0350f6d63ca                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -62,6 +62,8 @@
 #define DUNE_IMC_VEHICLEOPERATIONALLIMITS 16
 //! MsgList identification number.
 #define DUNE_IMC_MSGLIST 20
+//! RamUsage identification number.
+#define DUNE_IMC_RAMUSAGE 21
 //! SimulatedState identification number.
 #define DUNE_IMC_SIMULATEDSTATE 50
 //! LeakSimulation identification number.
@@ -688,6 +690,8 @@
 #define DUNE_IMC_ADCPBEAM 1016
 //! Frequency identification number.
 #define DUNE_IMC_FREQUENCY 1017
+//! WaveSpectrumParameters identification number.
+#define DUNE_IMC_WAVESPECTRUMPARAMETERS 1018
 //! GpioState identification number.
 #define DUNE_IMC_GPIOSTATE 2000
 //! GpioStateGet identification number.

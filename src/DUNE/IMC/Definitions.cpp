@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 1d75717ef0e92e13f5874f4f40a1ec69                            *
+// IMC XML MD5: 6e8033743562af8755e5e0350f6d63ca                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -1055,6 +1055,74 @@ namespace DUNE
     MsgList::setDestinationEntityNested(uint8_t value__)
     {
       msgs.setDestinationEntity(value__);
+    }
+
+    RamUsage::RamUsage(void)
+    {
+      m_header.mgid = 21;
+      clear();
+    }
+
+    void
+    RamUsage::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    RamUsage::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::RamUsage& other__ = static_cast<const RamUsage&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    RamUsage::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    RamUsage::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    RamUsage::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    RamUsage::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    RamUsage::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    RamUsage::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp64_t>(val);
+    }
+
+    void
+    RamUsage::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
     }
 
     SimulatedState::SimulatedState(void)
@@ -28082,6 +28150,218 @@ namespace DUNE
     Frequency::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    WaveSpectrumParameters::WaveSpectrumParameters(void)
+    {
+      m_header.mgid = 1018;
+      clear();
+    }
+
+    void
+    WaveSpectrumParameters::clear(void)
+    {
+      sig_wave_height_hm0 = 0;
+      wave_peak_direction = 0;
+      wave_peak_period = 0;
+      wave_height_wind_hm0 = 0;
+      wave_height_swell_hm0 = 0;
+      wave_peak_period_wind = 0;
+      wave_peak_period_swell = 0;
+      wave_peak_direction_wind = 0;
+      wave_peak_direction_swell = 0;
+      wave_mean_direction = 0;
+      wave_mean_period_tm02 = 0;
+      wave_height_hmax = 0;
+      wave_height_crest = 0;
+      wave_height_trough = 0;
+      wave_period_tmax = 0;
+      wave_period_tz = 0;
+      significant_wave_height_h1_3 = 0;
+      mean_spreading_angle = 0;
+      first_order_spread = 0;
+      long_crestedness_parameters = 0;
+      heading = 0;
+      pitch = 0;
+      roll = 0;
+      external_heading = 0;
+      stdev_heading = 0;
+      stdev_pitch = 0;
+      stdev_roll = 0;
+    }
+
+    bool
+    WaveSpectrumParameters::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::WaveSpectrumParameters& other__ = static_cast<const WaveSpectrumParameters&>(msg__);
+      if (sig_wave_height_hm0 != other__.sig_wave_height_hm0) return false;
+      if (wave_peak_direction != other__.wave_peak_direction) return false;
+      if (wave_peak_period != other__.wave_peak_period) return false;
+      if (wave_height_wind_hm0 != other__.wave_height_wind_hm0) return false;
+      if (wave_height_swell_hm0 != other__.wave_height_swell_hm0) return false;
+      if (wave_peak_period_wind != other__.wave_peak_period_wind) return false;
+      if (wave_peak_period_swell != other__.wave_peak_period_swell) return false;
+      if (wave_peak_direction_wind != other__.wave_peak_direction_wind) return false;
+      if (wave_peak_direction_swell != other__.wave_peak_direction_swell) return false;
+      if (wave_mean_direction != other__.wave_mean_direction) return false;
+      if (wave_mean_period_tm02 != other__.wave_mean_period_tm02) return false;
+      if (wave_height_hmax != other__.wave_height_hmax) return false;
+      if (wave_height_crest != other__.wave_height_crest) return false;
+      if (wave_height_trough != other__.wave_height_trough) return false;
+      if (wave_period_tmax != other__.wave_period_tmax) return false;
+      if (wave_period_tz != other__.wave_period_tz) return false;
+      if (significant_wave_height_h1_3 != other__.significant_wave_height_h1_3) return false;
+      if (mean_spreading_angle != other__.mean_spreading_angle) return false;
+      if (first_order_spread != other__.first_order_spread) return false;
+      if (long_crestedness_parameters != other__.long_crestedness_parameters) return false;
+      if (heading != other__.heading) return false;
+      if (pitch != other__.pitch) return false;
+      if (roll != other__.roll) return false;
+      if (external_heading != other__.external_heading) return false;
+      if (stdev_heading != other__.stdev_heading) return false;
+      if (stdev_pitch != other__.stdev_pitch) return false;
+      if (stdev_roll != other__.stdev_roll) return false;
+      return true;
+    }
+
+    int
+    WaveSpectrumParameters::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    WaveSpectrumParameters::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(sig_wave_height_hm0, ptr__);
+      ptr__ += IMC::serialize(wave_peak_direction, ptr__);
+      ptr__ += IMC::serialize(wave_peak_period, ptr__);
+      ptr__ += IMC::serialize(wave_height_wind_hm0, ptr__);
+      ptr__ += IMC::serialize(wave_height_swell_hm0, ptr__);
+      ptr__ += IMC::serialize(wave_peak_period_wind, ptr__);
+      ptr__ += IMC::serialize(wave_peak_period_swell, ptr__);
+      ptr__ += IMC::serialize(wave_peak_direction_wind, ptr__);
+      ptr__ += IMC::serialize(wave_peak_direction_swell, ptr__);
+      ptr__ += IMC::serialize(wave_mean_direction, ptr__);
+      ptr__ += IMC::serialize(wave_mean_period_tm02, ptr__);
+      ptr__ += IMC::serialize(wave_height_hmax, ptr__);
+      ptr__ += IMC::serialize(wave_height_crest, ptr__);
+      ptr__ += IMC::serialize(wave_height_trough, ptr__);
+      ptr__ += IMC::serialize(wave_period_tmax, ptr__);
+      ptr__ += IMC::serialize(wave_period_tz, ptr__);
+      ptr__ += IMC::serialize(significant_wave_height_h1_3, ptr__);
+      ptr__ += IMC::serialize(mean_spreading_angle, ptr__);
+      ptr__ += IMC::serialize(first_order_spread, ptr__);
+      ptr__ += IMC::serialize(long_crestedness_parameters, ptr__);
+      ptr__ += IMC::serialize(heading, ptr__);
+      ptr__ += IMC::serialize(pitch, ptr__);
+      ptr__ += IMC::serialize(roll, ptr__);
+      ptr__ += IMC::serialize(external_heading, ptr__);
+      ptr__ += IMC::serialize(stdev_heading, ptr__);
+      ptr__ += IMC::serialize(stdev_pitch, ptr__);
+      ptr__ += IMC::serialize(stdev_roll, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    WaveSpectrumParameters::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(sig_wave_height_hm0, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_peak_direction, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_peak_period, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_height_wind_hm0, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_height_swell_hm0, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_peak_period_wind, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_peak_period_swell, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_peak_direction_wind, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_peak_direction_swell, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_mean_direction, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_mean_period_tm02, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_height_hmax, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_height_crest, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_height_trough, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_period_tmax, bfr__, size__);
+      bfr__ += IMC::deserialize(wave_period_tz, bfr__, size__);
+      bfr__ += IMC::deserialize(significant_wave_height_h1_3, bfr__, size__);
+      bfr__ += IMC::deserialize(mean_spreading_angle, bfr__, size__);
+      bfr__ += IMC::deserialize(first_order_spread, bfr__, size__);
+      bfr__ += IMC::deserialize(long_crestedness_parameters, bfr__, size__);
+      bfr__ += IMC::deserialize(heading, bfr__, size__);
+      bfr__ += IMC::deserialize(pitch, bfr__, size__);
+      bfr__ += IMC::deserialize(roll, bfr__, size__);
+      bfr__ += IMC::deserialize(external_heading, bfr__, size__);
+      bfr__ += IMC::deserialize(stdev_heading, bfr__, size__);
+      bfr__ += IMC::deserialize(stdev_pitch, bfr__, size__);
+      bfr__ += IMC::deserialize(stdev_roll, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    WaveSpectrumParameters::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(sig_wave_height_hm0, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_peak_direction, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_peak_period, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_height_wind_hm0, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_height_swell_hm0, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_peak_period_wind, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_peak_period_swell, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_peak_direction_wind, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_peak_direction_swell, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_mean_direction, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_mean_period_tm02, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_height_hmax, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_height_crest, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_height_trough, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_period_tmax, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(wave_period_tz, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(significant_wave_height_h1_3, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(mean_spreading_angle, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(first_order_spread, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(long_crestedness_parameters, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(heading, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(pitch, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(roll, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(external_heading, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(stdev_heading, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(stdev_pitch, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(stdev_roll, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    WaveSpectrumParameters::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "sig_wave_height_hm0", sig_wave_height_hm0, nindent__);
+      IMC::toJSON(os__, "wave_peak_direction", wave_peak_direction, nindent__);
+      IMC::toJSON(os__, "wave_peak_period", wave_peak_period, nindent__);
+      IMC::toJSON(os__, "wave_height_wind_hm0", wave_height_wind_hm0, nindent__);
+      IMC::toJSON(os__, "wave_height_swell_hm0", wave_height_swell_hm0, nindent__);
+      IMC::toJSON(os__, "wave_peak_period_wind", wave_peak_period_wind, nindent__);
+      IMC::toJSON(os__, "wave_peak_period_swell", wave_peak_period_swell, nindent__);
+      IMC::toJSON(os__, "wave_peak_direction_wind", wave_peak_direction_wind, nindent__);
+      IMC::toJSON(os__, "wave_peak_direction_swell", wave_peak_direction_swell, nindent__);
+      IMC::toJSON(os__, "wave_mean_direction", wave_mean_direction, nindent__);
+      IMC::toJSON(os__, "wave_mean_period_tm02", wave_mean_period_tm02, nindent__);
+      IMC::toJSON(os__, "wave_height_hmax", wave_height_hmax, nindent__);
+      IMC::toJSON(os__, "wave_height_crest", wave_height_crest, nindent__);
+      IMC::toJSON(os__, "wave_height_trough", wave_height_trough, nindent__);
+      IMC::toJSON(os__, "wave_period_tmax", wave_period_tmax, nindent__);
+      IMC::toJSON(os__, "wave_period_tz", wave_period_tz, nindent__);
+      IMC::toJSON(os__, "significant_wave_height_h1_3", significant_wave_height_h1_3, nindent__);
+      IMC::toJSON(os__, "mean_spreading_angle", mean_spreading_angle, nindent__);
+      IMC::toJSON(os__, "first_order_spread", first_order_spread, nindent__);
+      IMC::toJSON(os__, "long_crestedness_parameters", long_crestedness_parameters, nindent__);
+      IMC::toJSON(os__, "heading", heading, nindent__);
+      IMC::toJSON(os__, "pitch", pitch, nindent__);
+      IMC::toJSON(os__, "roll", roll, nindent__);
+      IMC::toJSON(os__, "external_heading", external_heading, nindent__);
+      IMC::toJSON(os__, "stdev_heading", stdev_heading, nindent__);
+      IMC::toJSON(os__, "stdev_pitch", stdev_pitch, nindent__);
+      IMC::toJSON(os__, "stdev_roll", stdev_roll, nindent__);
     }
 
     GpioState::GpioState(void)
