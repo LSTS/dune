@@ -228,10 +228,13 @@ Power.prototype.handleData = function(text)
 
 Power.prototype.update = function(data)
 {
-  Object.entries(data).forEach(([key, value]) =>
+  if (data && data.power_channels)
   {
-    this.updateEntry(key, value);
-  });
+    Object.entries(data.power_channels).forEach(([key, value]) =>
+    {
+      this.updateEntry(key, value);
+    });
+  }
 };
 
 function submitPowerChannel(channel, op, id, event)
