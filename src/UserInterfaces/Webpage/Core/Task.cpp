@@ -67,6 +67,12 @@ namespace UserInterfaces
         unsigned threads;
         //! Timeout for HTTP requests.
         unsigned request_timeout;
+        //! Entity Label of Fuel Level source.
+        std::string fuel_level_elabel;
+        //! Fuel Level confidence theshold.
+        fp32_t fuel_level_confidence_threshold;
+        //! Entity Label of Storage Usage source.
+        std::string storage_usage_elabel;
       };
 
       //! Buffer length.
@@ -102,6 +108,14 @@ namespace UserInterfaces
         int m_type;
         //! System operation mode.
         int m_op_mode;
+        //! Entity Id of Fuel Level source.
+        int m_fuel_level_eid;
+        //! Fuel Level.
+        fp32_t m_fuel_level;
+        //! Entity Id of Storage Usage source.
+        int m_storage_usage_eid;
+        //! Storage Usage.
+        fp32_t m_storage_usage;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -112,7 +126,10 @@ namespace UserInterfaces
           m_entities_mon(this),
           m_request_id(0),
           m_type(-1),
-          m_op_mode(-1)
+          m_op_mode(-1),
+          m_fuel_level_eid(AddressResolver::invalid()),
+          m_fuel_level(-1.0f),
+          m_storage_usage_eid(AddressResolver::invalid())
         {
           // Define configuration parameters.
           param("Port", m_args.port)
@@ -130,6 +147,21 @@ namespace UserInterfaces
           .defaultValue("30.0")
           .description("Timeout for HTTP requests");
 
+          param("Fuel Level - Entity Label", m_args.fuel_level_elabel)
+          .defaultValue("Fuel Level")
+          .description("Entity Label of Fuel Level source");
+
+          param("Fuel Level - Confidence Theshold", m_args.fuel_level_confidence_threshold)
+          .units(Units::Percentage)
+          .minimumValue("0.0")
+          .maximumValue("100.0")
+          .defaultValue("50.0")
+          .description("Minimum confidence value to accept fuel level value");
+
+          param("Storage Usage - Entity Label", m_args.storage_usage_elabel)
+          .defaultValue("Daemon")
+          .description("Entity Label of Storage usage source");
+
           // Initialize meta information.
           m_meta["dune_version"] = std::string(getFullVersion()) + " - " + getCompileDate();
           m_meta["dune_uid"] = ctx.uid;
@@ -140,8 +172,38 @@ namespace UserInterfaces
           
           bind<IMC::Announce>(this);
           bind<IMC::EntityState>(this);
+          bind<IMC::FuelLevel>(this);
           bind<IMC::HTTPAction>(this);
+          bind<IMC::StorageUsage>(this);
           bind<IMC::VehicleState>(this);
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          if (paramChanged(m_args.fuel_level_elabel))
+          {
+            try
+            {
+              m_fuel_level_eid = resolveEntity(m_args.fuel_level_elabel);
+            }
+            catch(...)
+            {
+              m_fuel_level_eid = AddressResolver::invalid();
+            }
+          }
+
+          if (paramChanged(m_args.storage_usage_elabel))
+          {
+            try
+            {
+              m_storage_usage_eid = resolveEntity(m_args.storage_usage_elabel);
+            }
+            catch(...)
+            {
+              m_storage_usage_eid = AddressResolver::invalid();
+            }
+          }
         }
 
         void
@@ -222,6 +284,22 @@ namespace UserInterfaces
         }
 
         void
+        consume(const IMC::FuelLevel* msg)
+        {
+          if (!AddressResolver::isValid(m_fuel_level_eid))
+            return;
+
+          if (msg->getSource() != getSystemId())
+            return;
+
+          if (msg->getSourceEntity() != m_fuel_level_eid)
+            return;
+          
+          if (msg->confidence >= m_args.fuel_level_confidence_threshold)
+            m_fuel_level = msg->value;
+        }
+
+        void
         consume(const IMC::HTTPAction* msg)
         {
           if (msg->getSource() != getSystemId())
@@ -255,6 +333,21 @@ namespace UserInterfaces
           
           Memory::clear(sock);
           m_http_requests.erase(msg->id);
+        }
+
+        void
+        consume(const IMC::StorageUsage* msg)
+        {
+          if (!AddressResolver::isValid(m_storage_usage_eid))
+            return;
+
+          if (msg->getSource() != getSystemId())
+            return;
+
+          if (msg->getSourceEntity() != m_storage_usage_eid)
+            return;
+          
+          m_storage_usage = msg->value;
         }
 
         void
@@ -457,6 +550,8 @@ namespace UserInterfaces
           json j;
           j["dune_time_current"] = Clock::getSinceEpoch();
           j["dune_sections"] = m_sections.empty() ? "" : Utils::String::join(m_sections.begin(), m_sections.end(), ",");
+          j["dune_fuel_level"] = AddressResolver::isValid(m_fuel_level_eid) ? m_fuel_level : -1.0f;
+          j["dune_storage_usage"] = AddressResolver::isValid(m_storage_usage_eid) ? m_storage_usage : -1.0f;
 
           j.merge_patch(m_meta);
           if (data.size() > 0)
