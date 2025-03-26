@@ -1,0 +1,2 @@
+/usr/bin/ar qc libMonitors.Collisions.a  CMakeFiles/Monitors.Collisions.dir/src/Monitors/Collisions/Task.cpp.o
+/usr/bin/ranlib libMonitors.Collisions.a

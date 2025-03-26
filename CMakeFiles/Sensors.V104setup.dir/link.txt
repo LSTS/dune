@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.V104setup.a  CMakeFiles/Sensors.V104setup.dir/src/Sensors/V104setup/Task.cpp.o
+/usr/bin/ranlib libSensors.V104setup.a

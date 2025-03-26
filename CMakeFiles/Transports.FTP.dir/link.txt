@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.FTP.a  CMakeFiles/Transports.FTP.dir/src/Transports/FTP/Session.cpp.o CMakeFiles/Transports.FTP.dir/src/Transports/FTP/Task.cpp.o
+/usr/bin/ranlib libTransports.FTP.a

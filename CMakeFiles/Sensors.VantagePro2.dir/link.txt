@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.VantagePro2.a  CMakeFiles/Sensors.VantagePro2.dir/src/Sensors/VantagePro2/Task.cpp.o
+/usr/bin/ranlib libSensors.VantagePro2.a

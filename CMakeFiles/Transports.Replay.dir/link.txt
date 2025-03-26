@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.Replay.a  CMakeFiles/Transports.Replay.dir/src/Transports/Replay/Task.cpp.o
+/usr/bin/ranlib libTransports.Replay.a
