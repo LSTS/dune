@@ -110,7 +110,12 @@ Power.prototype.updateEntry = function(name, value)
 
 Power.prototype.updateValue = function(root, value)
 {
+  if (!root || value == null)
+    return;
+
   var base = root.childNodes[1].firstChild.firstChild;
+  if (!base)
+    return;
 
   if (value == 0)
   {
@@ -130,6 +135,9 @@ Power.prototype.updateValue = function(root, value)
 
 Power.prototype.createEntry = function(name, value)
 {
+  if (!name || value == null)
+    return;
+
   this.serial = this.serial + 1;
 
   // Header.
@@ -175,6 +183,9 @@ Power.prototype.createEntry = function(name, value)
 
 Power.prototype.appendButton = function(root, channel, op, label)
 {
+  if (!root || !channel || op == null || !label)
+    return;
+
   var btn = document.createElement('button');
   btn.onclick = (event) => { submitPowerChannel(channel, op, root.id, event); };
   btn.textContent = label;
@@ -184,6 +195,9 @@ Power.prototype.appendButton = function(root, channel, op, label)
 
 Power.prototype.appendInput = function(root, form_id, id, label)
 {
+  if (!root || !form_id || !id || !label)
+    return;
+
   var einput = document.createElement('input');
   einput.id = form_id + id;
   einput.type = 'text';
@@ -232,7 +246,7 @@ Power.prototype.update = function(data)
   {
     Object.entries(data.power_channels).forEach(([key, value]) =>
     {
-      this.updateEntry(key, value);
+      this.updateEntry(key, parseInt(value, 10));
     });
   }
 };
