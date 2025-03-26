@@ -54,6 +54,15 @@ Gauge.prototype.create = function(root)
 
 Gauge.prototype.update = function(value)
 {
-  this.m_value.firstChild.data = Math.round(value) + '%';
-  this.m_img.src = 'images/gauge/' + this.m_type + Math.round((value / 100) * 16) + '.png';
+  if (value < 0 || value > 100)
+  {
+    this.m_value.firstChild.data = "N/A";
+    this.m_img.style.display = "none";
+  }
+  else
+  {
+    this.m_value.firstChild.data = Math.round(value) + '%';
+    this.m_img.style.display = "";
+    this.m_img.src = 'images/gauge/' + this.m_type + Math.round((value / 100) * 16) + '.png';
+  }
 };
