@@ -69,16 +69,17 @@ Logbook.prototype.errorHandler = function(status, status_text)
 
 Logbook.prototype.getActiveFilters = function()
 {
-  if(!document.getElementById("filter-info") ||
-     !document.getElementById("filter-warning") ||
-     !document.getElementById("filter-error") ||
-     !document.getElementById("filter-debug"))
+  let info = document.getElementById("filter-info");
+  let warning = document.getElementById("filter-warning");
+  let error = document.getElementById("filter-error");
+  let debug = document.getElementById("filter-debug");
+  if(!info || !warning || !error || !debug)
     return null;
 
-  return {INFO: document.getElementById("filter-info").checked,
-          WARNING: document.getElementById("filter-warning").checked,
-          ERROR: document.getElementById("filter-error").checked,
-          DEBUG: document.getElementById("filter-debug").checked};
+  return {INFO: info.checked,
+          WARNING: warning.checked,
+          ERROR: error.checked,
+          DEBUG: debug.checked};
 };
 
 function typeAsString(typeInt)
@@ -196,7 +197,7 @@ Logbook.prototype.updateUniqueContexts = function(entries)
 
   entries.forEach(entry =>
   {
-    if (entry.context)
+    if (entry.context != null)
       this.uniqueContexts.add(entry.context);
   });
 
