@@ -58,10 +58,7 @@ namespace Sensors
       {
         fbfd = open(dev_name, O_RDWR);
         if (fbfd <= 0)
-        {
-          printf("Error: cannot open framebuffer device.\n");
-          return;
-        }
+          throw std::runtime_error("Error: cannot open framebuffer device.");
 
         fb = static_cast<led_fb*>(mmap(0, 128, PROT_READ | PROT_WRITE, MAP_SHARED, fbfd, 0));
         if (!fb)
