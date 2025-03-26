@@ -52,7 +52,7 @@
 #include <psapi.h>
 #endif
 
-#define IMC_RAM_USAGE_MESSAGE_EXISTS  (false)
+#define IMC_RAM_USAGE_MESSAGE_EXISTS  (true)
 
 namespace Monitors
 {
