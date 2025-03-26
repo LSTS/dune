@@ -25,9 +25,11 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Bernardo Gabriel                                                 *
+// Author: Pedro Gonçalves (legacy Main.js)                                 *
 // Author: Ricardo Martins (legacy Main.js)                                 *
 //***************************************************************************
 
+let self = null;
 function Info(root_id)
 {
   this.m_timer = null;
@@ -37,6 +39,8 @@ function Info(root_id)
   this.createTable();
   this.createHeader('Tasks');
   this.createTasksTable();
+
+  self = this;
 
   this.handleData = this.handleData.bind(this);
   this.requestData = this.requestData.bind(this);
@@ -49,6 +53,8 @@ Info.prototype.start = function()
 {
   this.m_tasks = new Map();
   this.m_tasksOrderedkeys = [];
+  this.m_cpu_usage = new Map();
+  this.m_dune_cpu_usage_eid = null;
 
   this.requestData();
 }
@@ -106,22 +112,22 @@ Info.prototype.m_fields =
   },
   {
     "label": "Date:",
-    "data_function": function (data) { return dateToString(data.dune_time_current); },
+    "data_function": function(data) { return dateToString(data.dune_time_current); },
     "side": "left"
   },
   {
     "label": "DUNE Uptime:",
-    "data_function": function (data) { return getUptime(data.dune_time_current - data.dune_time_start); },
+    "data_function": function(data) { return getUptime(data.dune_time_current - data.dune_time_start); },
     "side": "left"
   },
   {
     "label": "CPU Uptime:",
-    "data_function": function (data) { return getUptime(data.cpu_uptime); },
+    "data_function": function(data) { return getUptime(data.cpu_uptime); },
     "side": "left"
   },
   {
     "label": "Available Storage:",
-    "data_function": function (data)
+    "data_function": function(data)
     {
       const value = parseFloat(data.dune_storage_usage);
       return (value >= 0 && value <= 100) ? 100 - value : -1;
@@ -134,13 +140,49 @@ Info.prototype.m_fields =
   },
   {
     "label": "Available Energy:",
-    "data_function": function (data) { return parseFloat(data.dune_fuel_level); },
+    "data_function": function(data) { return parseFloat(data.dune_fuel_level); },
     "widget": new Gauge
     ({
       reverse: false
     }),
     "side": "left"
   },
+  {
+    "label": "DUNE CPU Usage:",
+    "data_function": function(data)
+    {
+      if (self.m_dune_cpu_usage_eid == null)
+        return -1;
+
+      const value = self.m_cpu_usage.get(self.m_dune_cpu_usage_eid);
+      return value;
+    },
+    "widget": new Gauge
+    ({
+      reverse: true
+    }),
+    "side": "right"
+  },
+  {
+    "label": "CPU Cores:",
+    "data_function": function(data)
+    {
+      const values = [];
+      for (let i = 1; ; i++)
+      {
+        const eid = resolveEntity(`CPU${i}`);
+        if (eid == null)
+          break;
+        const value = self.m_cpu_usage.get(eid);
+        if (value == null)
+          break;
+        values.push(value);
+      }
+      return values;
+    },
+    "widget": new ChartWidget(),
+    "side": "right"
+  }
 ];
 
 Info.prototype.update = function(data)
@@ -150,6 +192,12 @@ Info.prototype.update = function(data)
 
   if (data.dune_sections)
     g_sections.updateUsedSections(data.dune_sections.split(","));
+
+  if (data.dune_entities)
+    this.updateEntities(data.dune_entities);
+
+  if (data.dune_cpu_usage)
+    this.updateCpuUsage(data.dune_cpu_usage);
 
   for (let i in this.m_fields)
   {
@@ -203,20 +251,33 @@ Info.prototype.update = function(data)
       // console.warn(`Widget update method not found for field ${field.label}`);
     }
   }
+};
 
-  if (data.dune_entities)
-    this.updateEntities(data.dune_entities);
+Info.prototype.updateCpuUsage = function(cpu_usage)
+{
+  for (let i = 0; i < cpu_usage.length; i++)
+  {
+    if (cpu_usage[i] && cpu_usage[i].value)
+      this.m_cpu_usage.set(i, cpu_usage[i].value);
+  }
+
+  if (this.m_dune_cpu_usage_eid == null)
+    this.m_dune_cpu_usage_eid = resolveEntity("DUNE-CPU");
 };
 
 Info.prototype.updateEntities = function(entities)
 {
+  if (!entities || !(typeof entities === 'object'))
+    return;
+
   Object.values(entities).forEach(entity =>
   {
-    if (entity.id && entity.label)
+    if (entity && entity.id != null && entity.label != null)
     {
-      g_resolver.set(entity.id, entity.label);
+      const id = parseInt(entity.id, 10);
+      g_resolver.set(id, entity.label);
       if (entity.state && entity.description)
-        this.updateTaskNode(entity.id, entity.state, entity.label, entity.description);
+        this.updateTaskNode(id, entity.state, entity.label, entity.description); 
     }
   });
 };
@@ -321,7 +382,7 @@ Info.prototype.createTableEntry = function(idx, tbl)
 
 Info.prototype.updateTaskNode = function(id, state, label, description)
 {
-  if (!id || !state || !label || !description)
+  if (id == null || state == null || label == null || description == null)
     return;
   
   const root = this.m_tasks.get(id);
@@ -333,6 +394,9 @@ Info.prototype.updateTaskNode = function(id, state, label, description)
 
 Info.prototype.createTaskNode = function(id, state, label, description)
 {
+  if (id == null || state == null || label == null || description == null)
+    return;
+
   var tr = document.createElement('tr');
 
   var td_state = document.createElement('td');
@@ -356,7 +420,7 @@ Info.prototype.createTaskNode = function(id, state, label, description)
 
 Info.prototype.updateTaskField = function(root, state, description)
 {
-  if (!root || !state || !description)
+ if (!root || state == null || description == null)
     return;
   
   root.childNodes[0].firstChild.src = getStateIcon(state);
