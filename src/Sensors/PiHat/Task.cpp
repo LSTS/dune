@@ -34,6 +34,8 @@
 
 #include "RTIMULib/RTIMULib/RTIMULib.h"
 
+#include "Calibration.hpp"
+
 namespace Sensors
 {
   //! Device driver for RPi Sense HAT.
@@ -49,6 +51,8 @@ namespace Sensors
       std::string m_lib_config;
       //! LED matrix.
       std::string m_led_dev;
+      //! Calibration command.
+      std::string m_cal_cmd;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -102,6 +106,10 @@ namespace Sensors
         param("LED matrix device", m_args.m_led_dev)
           .defaultValue("/dev/fb0")
           .description("LED matrix device file");
+
+        param("Calibration command", m_args.m_cal_cmd)
+          .defaultValue("./calibrate.sh")
+          .description("Pi Sense Hat calibration command");
       }
 
       //! Update internal state with new parameter values.
@@ -123,18 +131,33 @@ namespace Sensors
       void
       onResourceAcquisition(void)
       {
-        m_led = new LEDMatrix(m_args.m_led_dev.c_str());
+        try
+        {
+          m_led = new LEDMatrix(m_args.m_led_dev.c_str());
 
-        m_settings = new RTIMUSettings(m_args.m_lib_config.c_str());
+          m_settings = new RTIMUSettings(m_args.m_lib_config.c_str());
 
-        m_imu = RTIMU::createIMU(m_settings);
-        m_imu->IMUInit();
+          m_imu = RTIMU::createIMU(m_settings);
+          if (m_imu == nullptr)
+            throw RestartNeeded("Failed to create IMU", 5);
 
-        m_pressure = RTPressure::createPressure(m_settings);
-        m_pressure->pressureInit();
+          m_imu->IMUInit();
 
-        m_humidity = RTHumidity::createHumidity(m_settings);
-        m_humidity->humidityInit();
+          m_pressure = RTPressure::createPressure(m_settings);
+          if (m_pressure == nullptr)
+            throw RestartNeeded("Failed to create Pressure sensor", 5);
+
+          m_pressure->pressureInit();
+
+          m_humidity = RTHumidity::createHumidity(m_settings);
+          if (m_humidity == nullptr)
+            throw RestartNeeded("Failed to create Humidity sensor", 5);
+          m_humidity->humidityInit();
+        }
+        catch (const std::exception& e)
+        {
+          throw RestartNeeded(e.what(), 5);
+        }
       }
 
       //! Initialize resources.
@@ -328,12 +351,18 @@ namespace Sensors
       void
       onMain(void)
       {
+        inf("Calibrating Pi Sense Hat...");
+        Calibration calib(this, m_args.m_cal_cmd, [&] { inf("Calibration completed"); });
+        calib.start();
+
         int delay = m_imu->IMUGetPollInterval();
         Counter<double> wdog(delay);
 
         while (!stopping())
         {
           waitForMessages(0.01);
+
+          continue;
 
           if (!wdog.overflow())
             continue;
@@ -355,6 +384,8 @@ namespace Sensors
 
           updateScreen(dir);
         }
+
+        calib.stopAndJoin();
       }
     };
   }
