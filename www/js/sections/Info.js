@@ -118,7 +118,29 @@ Info.prototype.m_fields =
     "label": "CPU Uptime:",
     "data_function": function (data) { return getUptime(data.cpu_uptime); },
     "side": "left"
-  }
+  },
+  {
+    "label": "Available Storage:",
+    "data_function": function (data)
+    {
+      const value = parseFloat(data.dune_storage_usage);
+      return (value >= 0 && value <= 100) ? 100 - value : -1;
+    },
+    "widget": new Gauge
+    ({
+      reverse: false
+    }),
+    "side": "left"
+  },
+  {
+    "label": "Available Energy:",
+    "data_function": function (data) { return parseFloat(data.dune_fuel_level); },
+    "widget": new Gauge
+    ({
+      reverse: false
+    }),
+    "side": "left"
+  },
 ];
 
 Info.prototype.update = function(data)
