@@ -52,7 +52,6 @@ Sections.prototype.create = function()
 
 Sections.prototype.init = function()
 {
-  this.m_sections.forEach(section => section.init());
   this.show(DEFAULT_SECTION);
 };
 
