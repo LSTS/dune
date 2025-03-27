@@ -519,7 +519,7 @@ namespace Transports
         for (auto iter = m_iri_subs.begin(); iter != m_iri_subs.end(); )
         {
           double elapsed = Clock::getSinceEpoch() - iter->second;
-          if (elapsed < 60)
+          if (elapsed < m_args.ir_timeout)
           {
             ++iter;
             continue;
