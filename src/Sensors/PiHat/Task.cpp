@@ -53,6 +53,8 @@ namespace Sensors
       std::string m_led_dev;
       //! Calibration command.
       std::string m_cal_cmd;
+      //! Calibration option.
+      int m_cal_opt;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -67,6 +69,8 @@ namespace Sensors
       RTPressure* m_pressure;
       //! Humidity sensor.
       RTHumidity* m_humidity;
+      //! Calibration thread handler.
+      Calibration* m_calib;
       //! Map of arrow directions to LED matrix.
       std::map<int, uint16_t[8][8]> m_dirs;
       //! IMC Message timestamp.
@@ -97,7 +101,8 @@ namespace Sensors
         m_settings(nullptr),
         m_imu(nullptr),
         m_pressure(nullptr),
-        m_humidity(nullptr)
+        m_humidity(nullptr),
+        m_calib(nullptr)
       {
         param("RTIMU lib config", m_args.m_lib_config)
           .defaultValue("/root/RTEllipsoidFit/RTIMULib.ini")
@@ -110,12 +115,21 @@ namespace Sensors
         param("Calibration command", m_args.m_cal_cmd)
           .defaultValue("./calibrate.sh")
           .description("Pi Sense Hat calibration command");
+
+        param("Calibration option", m_args.m_cal_opt)
+          .defaultValue("3")
+          .values("0, 1, 2, 3")
+          .description("Calibration options: 0 - Magnetometer, 1 - Magnetometer Ellipsoid, 2 - "
+                       "Accelerometer, 3 - Exit");
       }
 
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
-      { }
+      {
+        if (paramChanged(m_args.m_cal_opt))
+          onStartCalibration(m_args.m_cal_opt);
+      }
 
       //! Reserve entity identifiers.
       void
@@ -133,6 +147,9 @@ namespace Sensors
       {
         try
         {
+          m_calib =
+            new Calibration(this, m_args.m_cal_cmd, std::bind(&Task::onEndCalibration, this));
+
           m_led = new LEDMatrix(m_args.m_led_dev.c_str());
 
           m_settings = new RTIMUSettings(m_args.m_lib_config.c_str());
@@ -217,6 +234,7 @@ namespace Sensors
         Memory::clear(m_imu);
         Memory::clear(m_pressure);
         Memory::clear(m_humidity);
+        Memory::clear(m_calib);
       }
 
       //! Rotate 8x8 matrix 90 degrees.
@@ -347,13 +365,37 @@ namespace Sensors
         m_led->setMatrix(m_dirs[dir]);
       }
 
+      void
+      onStartCalibration(int opt)
+      {
+        if (opt < 0 || opt > 3)
+        {
+          war("Invalid calibration option: %d", opt);
+          return;
+        }
+
+        if (m_calib == nullptr)
+          return;
+
+        if (!m_calib->isRunning())
+          m_calib->start();
+
+        m_calib->setCalibration(static_cast<CalCmd>(opt));
+      }
+
+      void
+      onEndCalibration(void)
+      {
+        m_calib->stop();
+        inf("Stopping calibration thread");
+      }
+
       //! Main loop.
       void
       onMain(void)
       {
-        inf("Calibrating Pi Sense Hat...");
-        Calibration calib(this, m_args.m_cal_cmd, [&] { inf("Calibration completed"); });
-        calib.start();
+        // inf("Calibrating Pi Sense Hat...");
+        // m_calib->start();
 
         int delay = m_imu->IMUGetPollInterval();
         Counter<double> wdog(delay);
@@ -361,8 +403,6 @@ namespace Sensors
         while (!stopping())
         {
           waitForMessages(0.01);
-
-          continue;
 
           if (!wdog.overflow())
             continue;
@@ -384,8 +424,6 @@ namespace Sensors
 
           updateScreen(dir);
         }
-
-        calib.stopAndJoin();
       }
     };
   }
