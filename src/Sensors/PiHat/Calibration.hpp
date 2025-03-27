@@ -22,23 +22,21 @@ namespace Sensors
 
     constexpr unsigned c_bufsz = 1024;
 
-    // std::array<char, 5> cal_cmds = { 'm', 'e', 'a', 'f', 'x' };
+    enum CalCmd
+    {
+      //! Magnetometer calibration
+      CMD_MAG = 0,
+      //! Magnetometer ellipsoid calibration
+      CMD_MAG_ELLI = 1,
+      //! Accelerometer calibration
+      CMD_ACC = 2,
+      //! Exit calibration
+      CMD_EXIT = 3,
+    };
 
     class Calibration: public DUNE::Concurrency::Thread
     {
     public:
-      enum CalCmd
-      {
-        //! Magnetometer calibration
-        CMD_MAG = 0,
-        //! Magnetometer ellipsoid calibration
-        CMD_MAG_ELLI = 1,
-        //! Accelerometer calibration
-        CMD_ACC = 2,
-        //! Exit calibration
-        CMD_EXIT = 3,
-      };
-
       Calibration(Task* owner, const std::string& cmd, std::function<void(void)> onCompletion):
         p_read(-1),
         p_write(-1),
@@ -47,16 +45,52 @@ namespace Sensors
         onEnd(onCompletion)
       { }
 
+      ~Calibration(void)
+      {
+        if (isRunning())
+          stopAndJoin();
+      }
+
       void
-      sendCommand(const char* cmd)
+      setCalibration(CalCmd cmd)
       {
         if (p_write == -1)
           return;
 
-        write(p_write, cmd, strlen(cmd));
+        char option;
+        switch (cmd)
+        {
+          case CMD_MAG:
+            option = 'm';
+            break;
+          case CMD_MAG_ELLI:
+            option = 'e';
+            break;
+          case CMD_ACC:
+            option = 'a';
+            break;
+          case CMD_EXIT:
+            option = 'x';
+            break;
+          default:
+            return;
+        }
+
+        m_owner->war("[exec] - Sending calibration command: %c", option);
+
+        sendCommand(&option, 1);
       }
 
     private:
+      ssize_t
+      sendCommand(const char* cmd, size_t len)
+      {
+        if (p_write == -1)
+          return 0;
+
+        return write(p_write, cmd, len);
+      }
+
       //! Read from file descriptor
       ssize_t
       doRead(int fd, std::array<char, c_bufsz>& buffer, double seconds = 1.0)
@@ -132,6 +166,54 @@ namespace Sensors
         return result != 0;
       }
 
+      float
+      extractValue(const std::string& str, const std::string& key)
+      {
+        size_t start = str.find(key);
+        if (start == std::string::npos)
+          return NAN;
+
+        start += key.size();
+        return std::stof(str.substr(start + 1));
+      };
+
+      void
+      parseCalibrationValues(const std::array<char, c_bufsz>& buffer)
+      {
+        float min_x = NAN;
+        float min_y = NAN;
+        float min_z = NAN;
+
+        int rv = sscanf(buffer.data(), "Min x: %f min y: %f min z: %f", &min_x, &min_y, &min_z);
+        if (rv == 3)
+        {
+          // Update values
+          m_mag.min_x = min_x;
+          m_mag.min_y = min_y;
+          m_mag.min_z = min_z;
+
+          m_owner->war("[exec] - Calibration values: Min x: %.2f, Min y: %.2f, Min z: %.2f", min_x,
+                       min_y, min_z);
+          return;
+        }
+
+        float max_x = NAN;
+        float max_y = NAN;
+        float max_z = NAN;
+
+        rv = sscanf(buffer.data(), "Max x: %f max y: %f max z: %f", &max_x, &max_y, &max_z);
+        if (rv != 3)
+          return;
+
+        // Update values
+        m_mag.max_x = max_x;
+        m_mag.max_y = max_y;
+        m_mag.max_z = max_z;
+
+        m_owner->war("[exec] - Calibration values: Max x: %.2f, Max y: %.2f, Max z: %.2f", max_x,
+                     max_y, max_z);
+      }
+
       void
       run(void)
       {
@@ -182,6 +264,7 @@ namespace Sensors
             continue;
 
           m_owner->inf("%s", buffer.data());
+          parseCalibrationValues(buffer);
         }
 
         m_owner->debug("[exec] - Killing child process");
@@ -202,6 +285,18 @@ namespace Sensors
       std::string m_cmd;
 
       std::function<void(void)> onEnd;
+
+      struct CalibrationValues
+      {
+        float min_x;
+        float min_y;
+        float min_z;
+        float max_x;
+        float max_y;
+        float max_z;
+      };
+
+      CalibrationValues m_mag;
     };
 
   }  // namespace PiHat
