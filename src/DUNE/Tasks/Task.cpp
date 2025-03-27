@@ -453,8 +453,7 @@ namespace DUNE
       }
 
       if ((flags & DF_LOOP_BACK) ||
-          m_args.loopback ||
-          msg->getSource() != getSystemId())
+          m_args.loopback)
         m_ctx.mbus.dispatch(msg);
       else
         m_ctx.mbus.dispatch(msg, this);
