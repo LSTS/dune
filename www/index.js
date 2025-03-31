@@ -69,13 +69,14 @@ function getStateIcon(state)
     return g_icons.path('warning');
   case 1:
     return g_icons.path('normal');
-  case 2: case 3:
+  case 2:
+  case 3:
     return g_icons.path('error');
   case 4:
     return g_icons.path('fatal');
+  default:
+    return g_icons.path('unknown');
   }
-
-  return g_icons.path('unknown');
 };
 
 function setConnected(value)
