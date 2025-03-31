@@ -68,6 +68,9 @@ Power.prototype.constructor = Power;
 
 Power.prototype.start = function()
 {
+  this.m_powerChannels = new Map();
+  this.m_powerChannelsOrderedKeys = [];
+
   this.requestData();
 }
 
@@ -83,29 +86,17 @@ Power.prototype.errorHandler = function(status, status_text)
 
 Power.prototype.updateEntry = function(name, value)
 {
+  if (name == null || value == null)
+    return;
+
   if (name.slice(0, HIDE_PREFIX.length) == HIDE_PREFIX)
     return;
 
-  for (var i = 0; i < this.m_sbase.childNodes.length; i++)
-  {
-    var child = this.m_sbase.childNodes[i];
-    var n = child.firstChild.firstChild.firstChild.data;
-
-    if (n == name)
-    {
-      this.updateValue(child, value);
-      return;
-    }
-    else if (name < n)
-    {
-      var ne = this.createEntry(name, value);
-      this.m_sbase.insertBefore(ne, child);
-      return;
-    }
-  }
-
-  var ne = this.createEntry(name, value);
-  this.m_sbase.appendChild(ne);
+  const root = this.m_powerChannels.get(name);
+  if (root != null)
+    this.updateValue(root, value);
+  else
+    this.createEntry(name, value);
 };
 
 Power.prototype.updateValue = function(root, value)
@@ -178,7 +169,7 @@ Power.prototype.createEntry = function(name, value)
 
   this.updateValue(tbl, value);
 
-  return tbl;
+  this.insertOrdered(tbl, name, this.m_powerChannelsOrderedKeys, this.m_powerChannels, this.m_sbase);
 };
 
 Power.prototype.appendButton = function(root, channel, op, label)
