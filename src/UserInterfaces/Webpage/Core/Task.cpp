@@ -116,6 +116,12 @@ namespace UserInterfaces
         int m_storage_usage_eid;
         //! Storage Usage.
         fp32_t m_storage_usage;
+        //! Convenience type definition for a tuple for cpu usage data <value, timestamp>.
+        typedef std::tuple<uint8_t, double> CpuUsageData;
+        //! Convenience type definition for a map of cpu usage.
+        typedef std::map<unsigned, CpuUsageData> CpuUsageMap;
+        //! CPU Usage map.
+        CpuUsageMap m_cpu_usage;
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
@@ -171,6 +177,7 @@ namespace UserInterfaces
           m_sections.push_back(c_default_section);
           
           bind<IMC::Announce>(this);
+          bind<IMC::CpuUsage>(this);
           bind<IMC::EntityState>(this);
           bind<IMC::FuelLevel>(this);
           bind<IMC::HTTPAction>(this);
@@ -265,6 +272,15 @@ namespace UserInterfaces
             return;
           
           m_type = msg->sys_type;
+        }
+
+        void
+        consume(const IMC::CpuUsage* msg)
+        {
+          if (msg->getSource() != getSystemId())
+            return;
+
+          m_cpu_usage[msg->getSourceEntity()] = {msg->value, msg->getTimeStamp()};
         }
 
         void
@@ -552,6 +568,16 @@ namespace UserInterfaces
           j["dune_sections"] = m_sections.empty() ? "" : Utils::String::join(m_sections.begin(), m_sections.end(), ",");
           j["dune_fuel_level"] = AddressResolver::isValid(m_fuel_level_eid) ? m_fuel_level : -1.0f;
           j["dune_storage_usage"] = AddressResolver::isValid(m_storage_usage_eid) ? m_storage_usage : -1.0f;
+          auto& dune_cpu_usage = j["dune_cpu_usage"];
+          for (const auto& it: m_cpu_usage)
+          {
+            unsigned id = it.first;
+            uint8_t value = 0;
+            double timestamp = 0.0f;
+            std::tie(value, timestamp) = it.second;
+            dune_cpu_usage[id]["value"] = value;
+            dune_cpu_usage[id]["timestamp"] = timestamp;
+          }
 
           j.merge_patch(m_meta);
           if (data.size() > 0)
