@@ -129,8 +129,6 @@ Power.prototype.createEntry = function(name, value)
   if (!name || value == null)
     return;
 
-  this.serial = this.serial + 1;
-
   // Header.
   var th = document.createElement('th');
   th.colSpan = 2;
@@ -142,7 +140,7 @@ Power.prototype.createEntry = function(name, value)
   var ctr = document.createElement('tr');
 
   var form = document.createElement('form');
-  form.id = 'PowerChannelForm' + this.serial;
+  form.id = 'PowerChannelForm' + name;
   var btd = document.createElement('td');
   btd.appendChild(form);
 
