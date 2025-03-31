@@ -45,6 +45,7 @@ Sections.prototype.create = function()
   this.add(new Info('x-container'));
   this.add(new Power('x-container'));
   this.add(new Acoustics('x-container'));
+  this.add(new Announces('x-container'));
   this.add(new Sensors('x-container'));
   this.add(new Logbook('x-container'));
   this.add(new Dummy('x-container'));
