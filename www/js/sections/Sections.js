@@ -180,5 +180,3 @@ Sections.prototype.updateUsedSections = function(sections)
     this.useSection(section, sections.includes(section.id()));
   });
 };
-
-var g_sections = new Sections();

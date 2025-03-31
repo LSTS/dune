@@ -32,6 +32,7 @@ var g_icons = new Icons();
 var g_uid = null;
 var g_time_current = null;
 var g_resolver = new Resolver();
+var g_sections = new Sections();
 
 window.onload = function()
 {
