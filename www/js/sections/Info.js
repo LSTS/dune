@@ -389,7 +389,7 @@ Info.prototype.updateTaskNode = function(id, state, label, description, cpuUsage
     return;
   
   const root = this.m_tasks.get(id);
-  if (root)
+  if (root != null)
     this.updateTaskField(root, state, description, cpuUsage);
   else
     this.createTaskNode(id, state, label, description, cpuUsage);
