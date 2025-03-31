@@ -101,7 +101,7 @@ Sensors.prototype.updateValue = function(msg)
     return;
 
   const root = this.m_values.get(msg.abbrev + '.' + src);
-  if (root)
+  if (root != null)
     this.updateField(root, msg);
   else
     this.createValue(src, msg);
