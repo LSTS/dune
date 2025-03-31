@@ -36,7 +36,7 @@ function Info(root_id)
 
   this.create('Info', root_id);
   this.createHeader('Overview');
-  this.createTable();
+  this.createOverviewTable();
   this.createHeader('Tasks');
   this.createTasksTable();
 
@@ -193,11 +193,11 @@ Info.prototype.update = function(data)
   if (data.dune_sections)
     g_sections.updateUsedSections(data.dune_sections.split(","));
 
-  if (data.dune_entities)
-    this.updateEntities(data.dune_entities);
-
   if (data.dune_cpu_usage)
     this.updateCpuUsage(data.dune_cpu_usage);
+
+  if (data.dune_entities)
+    this.updateEntities(data.dune_entities);
 
   for (let i in this.m_fields)
   {
@@ -257,12 +257,9 @@ Info.prototype.updateCpuUsage = function(cpu_usage)
 {
   for (let i = 0; i < cpu_usage.length; i++)
   {
-    if (cpu_usage[i] && cpu_usage[i].value)
+    if (cpu_usage[i] && cpu_usage[i].value != null)
       this.m_cpu_usage.set(i, cpu_usage[i].value);
   }
-
-  if (this.m_dune_cpu_usage_eid == null)
-    this.m_dune_cpu_usage_eid = resolveEntity("DUNE-CPU");
 };
 
 Info.prototype.updateEntities = function(entities)
@@ -277,12 +274,18 @@ Info.prototype.updateEntities = function(entities)
       const id = parseInt(entity.id, 10);
       g_resolver.set(id, entity.label);
       if (entity.state && entity.description)
-        this.updateTaskNode(id, entity.state, entity.label, entity.description); 
+      {
+        const cpuUsage = this.m_cpu_usage.get(id);
+        this.updateTaskNode(id, entity.state, entity.label, entity.description, (cpuUsage == null) ? -1 : cpuUsage); 
+      }
     }
   });
+
+  if (this.m_dune_cpu_usage_eid == null)
+    this.m_dune_cpu_usage_eid = resolveEntity("DUNE-CPU");
 };
 
-Info.prototype.createTable = function()
+Info.prototype.createOverviewTable = function()
 {
   this.sys_name_div = document.createElement('div');
   this.sys_name_div.id = 'systemName';
@@ -340,11 +343,11 @@ Info.prototype.createTable = function()
 Info.prototype.createTasksTable = function()
 {
   this.m_task_tabel = document.createElement('table');
-  this.m_task_tabel.id = 'MainTasksTable';
+  this.m_task_tabel.id = 'InfoTasksTable';
   this.m_task_tabel.style.width = '100%';
   
   var div = document.createElement('div');
-  div.id = 'MainTasksTableDiv';
+  div.id = 'InfoTasksTableDiv';
   div.appendChild(this.m_task_tabel);
   
   this.m_base.appendChild(div);
@@ -380,21 +383,21 @@ Info.prototype.createTableEntry = function(idx, tbl)
   tbl.appendChild(tr);
 };
 
-Info.prototype.updateTaskNode = function(id, state, label, description)
+Info.prototype.updateTaskNode = function(id, state, label, description, cpuUsage)
 {
-  if (id == null || state == null || label == null || description == null)
+  if (id == null || state == null || label == null || description == null || cpuUsage == null)
     return;
   
   const root = this.m_tasks.get(id);
   if (root)
-    this.updateTaskField(root, state, description);
+    this.updateTaskField(root, state, description, cpuUsage);
   else
-    this.createTaskNode(id, state, label, description);
+    this.createTaskNode(id, state, label, description, cpuUsage);
 };
 
-Info.prototype.createTaskNode = function(id, state, label, description)
+Info.prototype.createTaskNode = function(id, state, label, description, cpuUsage)
 {
-  if (id == null || state == null || label == null || description == null)
+  if (id == null || state == null || label == null || description == null || cpuUsage == null)
     return;
 
   var tr = document.createElement('tr');
@@ -408,9 +411,44 @@ Info.prototype.createTaskNode = function(id, state, label, description)
   
   var th_label = document.createElement('th');
   th_label.style.width = '170px';
+  th_label.classList.add('rounded-corner');
+  th_label.style.backgroundColor = getLabelBackgroundColor(state);
   th_label.appendChild(document.createTextNode(label));
   tr.appendChild(th_label);
-  
+
+  var td_cpu = document.createElement('td');
+  td_cpu.style.width = '40px';
+  var cpuContainer = document.createElement('div');
+  cpuContainer.style.display = 'flex';
+  cpuContainer.style.alignItems = 'center';
+
+  var bracketOpen = document.createElement('span');
+  bracketOpen.textContent = '[';
+  cpuContainer.appendChild(bracketOpen);
+
+  var cpuIcon = document.createElement('span');
+  cpuIcon.classList.add('cpu-icon');
+  cpuContainer.appendChild(cpuIcon);
+
+  var cpuText = document.createElement('span');
+  cpuText.style.display = 'inline-block';
+  cpuText.style.width = '30px';
+  cpuText.style.textAlign = 'right';
+  if (cpuUsage < 0)
+    cpuText.textContent = ' N/A';
+  else if (cpuUsage > 0)
+    cpuText.textContent = ' ' + cpuUsage + '%';
+  else
+    cpuText.textContent = '< 1%';
+  cpuContainer.appendChild(cpuText);
+
+  var bracketClose = document.createElement('span');
+  bracketClose.textContent = ']';
+  cpuContainer.appendChild(bracketClose);
+
+  td_cpu.appendChild(cpuContainer);
+  tr.appendChild(td_cpu);
+
   var td_description = document.createElement('td');
   td_description.appendChild(document.createTextNode(description));
   tr.appendChild(td_description);
@@ -418,13 +456,26 @@ Info.prototype.createTaskNode = function(id, state, label, description)
   this.insertOrdered(tr, id, this.m_tasksOrderedkeys, this.m_tasks, this.m_task_tabel);
 };
 
-Info.prototype.updateTaskField = function(root, state, description)
+Info.prototype.updateTaskField = function(root, state, description, cpuUsage)
 {
- if (!root || state == null || description == null)
+ if (!root || state == null || description == null ||  cpuUsage == null)
     return;
   
   root.childNodes[0].firstChild.src = getStateIcon(state);
-  root.childNodes[2].firstChild.data = description;
+  root.childNodes[1].style.backgroundColor = getLabelBackgroundColor(state);
+  
+  var cpuCell = root.childNodes[2];
+  if (cpuCell && cpuCell.firstChild && cpuCell.firstChild.childNodes.length >= 3)
+  {
+    if (cpuUsage < 0)
+      cpuCell.firstChild.childNodes[2].textContent = ' N/A';
+    else if (cpuUsage > 0)
+      cpuCell.firstChild.childNodes[2].textContent = ' ' + cpuUsage + '%';
+    else
+      cpuCell.firstChild.childNodes[2].textContent = '< 1%';
+  }
+
+  root.childNodes[3].firstChild.data = description;
 };
 
 function getSystemInfo(data)
@@ -548,4 +599,20 @@ function changeSystemNameBackgroundColor(mode)
   const systemNameElement = document.getElementById('systemName');
   if (systemNameElement)
     systemNameElement.style.backgroundColor = color;
+};
+
+function getLabelBackgroundColor(state)
+{
+  switch (Number(state))
+  {
+    case 0:
+      return '#797EB5';
+    case 2:
+    case 3:
+    case 4:
+      return 'var(--c-color-error)';
+    case 1:
+    default:
+      return 'var(--c-background)';
+  }
 };
