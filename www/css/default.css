@@ -719,3 +719,156 @@ div#Sensors
   color: #000000;
   font-size: 12px;
 }
+
+.announces-container
+{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background-color: var(--c-background-h-l);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
+.announce-section
+{
+  background-color: var(--c-background);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.announce-title-container
+{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 10px;
+  border-bottom: 1px solid var(--c-color-border);
+  transition: background-color 0.3s ease;
+}
+
+.announce-title-container:hover
+{
+  background-color: var(--c-color-hover);
+}
+
+.announce-title
+{
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.announce-arrow
+{
+  font-size: 18px;
+  color: var(--c-color-text-secondary);
+  transition: transform 0.3s ease;
+}
+
+.announce-section.open .announce-arrow
+{
+  transform: rotate(180deg);
+}
+
+.announce-list
+{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0;
+  margin: 16px 0 0;
+}
+
+.announce-item
+{
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: justify;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.announce-item:hover
+{
+  transform: translateY(-4px);
+  box-shadow: 0 4px 8px rgba(125, 125, 245, 0.562);
+}
+
+.announce-section .announce-list
+{
+  display: none;
+}
+
+.announce-section.open .announce-list
+{
+  display: block;
+}
+
+.announce-tooltip
+{
+  display: none;
+  position: absolute;
+  background-color: var(--c-color-text);
+  color: var(--c-background);
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.announce-title:hover + .announce-tooltip
+{
+  display: block;
+}
+
+.announce-item a
+{
+  color: #4fa3f7;
+  text-decoration: underline;
+}
+
+.announce-item a:hover
+{
+  color: #ffcc00;
+  background-color: #e3f2fd;
+}
+
+.announce-item span
+{
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.announce-item .protocol
+{
+  color: var(--c-color-info);
+  font-weight: bold;
+}
+
+.announce-item .ip
+{
+  font-size: 13px;
+  color: var(--c-color-secondary-text);
+}
+
+.announce-item .port
+{
+  font-size: 12px;
+  color: var(--c-color-disabled);
+}
+
+.announce-item:hover span.protocol
+{
+  color: #2196f3;
+  text-decoration: underline;
+}
