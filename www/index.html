@@ -122,6 +122,11 @@
     {
       color: #cccccc;
     }
+
+    .invisible
+    {
+      display: none;
+    }
   </style>
 </head>
 
@@ -132,12 +137,12 @@
         <div id="Menu">
           <ul>
             <li id="buttonInfo" class="First"><a href="javascript:show('Info')">Info</a></li>
-            <li id="buttonSensors"><a href="javascript:show('Sensors')">Sensors</a></li>
-            <li id="buttonPower"><a href="javascript:show('Power')">Power</a></li>
-            <li id="buttonLogbook"><a href="javascript:show('Logbook')">Logbook</a></li>
-            <li id="buttonAcoustics"><a href="javascript:show('Acoustics')">Acoustics</a></li>
-            <li id="buttonAnnounces"><a href="javascript:show('Announces')">Discovery Tool</a></li>
-            <li id="buttonDummy"><a href="javascript:show('Dummy')">Dummy</a></li>
+            <li id="buttonSensors" class="invisible"><a href="javascript:show('Sensors')">Sensors</a></li>
+            <li id="buttonPower" class="invisible"><a href="javascript:show('Power')">Power</a></li>
+            <li id="buttonLogbook" class="invisible"><a href="javascript:show('Logbook')">Logbook</a></li>
+            <li id="buttonAcoustics" class="invisible"><a href="javascript:show('Acoustics')">Acoustics</a></li>
+            <li id="buttonAnnounces" class="invisible"><a href="javascript:show('Announces')">Discovery Tool</a></li>
+            <li id="buttonDummy" class="invisible"><a href="javascript:show('Dummy')">Dummy</a></li>
             <li id="buttonConnection" class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected"
                 alt="Connected" /></a></li>
             <li id="buttonTheme" class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/dark-switch.png"
