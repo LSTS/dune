@@ -507,24 +507,8 @@ label:hover .custom-checkbox
   color: #6200ea;
 }
 
-.cpu-icon
-{
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  margin-right: 4px;
-  background-image: var(--cpu-icon-url);
-}
-
 #Power div:not(.bottom-buttons)
 {
-  max-height: 85vh;
-  overflow-y: scroll;
-}
-
-#Power div{
   max-height: 85vh;
   overflow-y: scroll;
 }
