@@ -54,7 +54,7 @@ Gauge.prototype.create = function(root)
 
 Gauge.prototype.update = function(value)
 {
-  if (value < 0 || value > 100)
+  if (value == null || value < 0 || value > 100)
   {
     this.m_value.firstChild.data = "N/A";
     this.m_img.style.display = "none";
