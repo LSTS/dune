@@ -33,6 +33,7 @@
 // ISO C++ 98 headers.
 #include <string>
 #include <cstring>
+#include <thread>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -43,14 +44,14 @@ namespace Monitors
   {
     using DUNE_NAMESPACES;
 
-    static const float c_time_between_reads = 2.0f;
-    static const int c_max_cpu = 4;
+    //! CPUData total times;
+    static constexpr uint8_t c_total_times = 10;
 
-    typedef struct CPUData
+    struct CPUData
     {
       std::string cpu;
-      size_t times[c_max_cpu + 6];
-    } CPUData;
+      size_t times[c_total_times];
+    };
 
     enum CPUStates
     {
@@ -66,22 +67,18 @@ namespace Monitors
       S_GUEST_NICE
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public DUNE::Tasks::Periodic
     {
-      //! CpuUsage message
-      IMC::CpuUsage m_cpu[c_max_cpu];
-      //! CpuEdiLabel
-      uint8_t m_cpu_eid[c_max_cpu];
-      //! state time to check usage of cpus
-      Time::Counter<float> m_cpu_check;
-      //! Read timestamp.
-      double m_tstamp;
+      //! Cpu cores entity labels;
+      std::vector<uint8_t> m_cpu_eid;
+      //! Number of CPU cores.
+      unsigned int m_cores;
+      
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
-        m_tstamp(0)
+        DUNE::Tasks::Periodic(name, ctx)
       {
       }
 
@@ -89,18 +86,27 @@ namespace Monitors
       void
       onEntityReservation(void)
       {
-        for(uint8_t i = 1 ; i <= c_max_cpu; i++)
+        try
         {
-          std::string cpu_label = String::str("CPU%u", i);
-          m_cpu_eid[i - 1] = getEid(cpu_label);
-          m_cpu[i - 1].setSourceEntity(m_cpu_eid[i - 1]);
+          m_cores = std::thread::hardware_concurrency();
+          m_cpu_eid.resize(m_cores + 1);
+          m_cpu_eid[0] = getEid("DUNE-CPU");
+          for(uint8_t i = 1; i < m_cores + 1; i++)
+          {
+            std::string cpu_label = String::str("CPU%u", i + 1);
+            m_cpu_eid[i] = getEid(cpu_label);
+          }
+        }
+        catch(...)
+        {
+          requestDeactivation();
         }
       }
 
       unsigned
       getEid(std::string label)
       {
-        unsigned eid = 0;
+        unsigned eid = AddressResolver::invalid();
         try
         {
           eid = resolveEntity(label);
@@ -126,7 +132,6 @@ namespace Monitors
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        m_cpu_check.setTop(c_time_between_reads);
       }
 
       //! Release resources.
@@ -135,45 +140,36 @@ namespace Monitors
       {
       }
 
-      void
-      readStatsCPU(std::vector<CPUData> &entries)
+      std::vector<CPUData>
+      readStatsCPU(void)
       {
         std::ifstream fileStat("/proc/stat");
 
+        const std::string l("cpu");
+        const std::size_t s = l.size();
+        
+        std::vector<CPUData> entries;
         std::string line;
-
-        const std::string STR_CPU("cpu");
-        const std::size_t LEN_STR_CPU = STR_CPU.size();
-        const std::string STR_TOT("tot");
-
         while (std::getline(fileStat, line))
         {
-          // cpu stats line found
-          if (!line.compare(0, LEN_STR_CPU, STR_CPU))
+          if (!line.compare(0, s, l))
           {
             std::istringstream ss(line);
-
-            // store entry
-            entries.emplace_back(CPUData());
-            CPUData &entry = entries.back();
-
-            // read cpu label
+            CPUData entry;
             ss >> entry.cpu;
 
-            if (entry.cpu.size() > LEN_STR_CPU)
-              entry.cpu.erase(0, LEN_STR_CPU);
-            else
-              entry.cpu = STR_TOT;
-
-            // read times
-            for (int i = 0; i < c_max_cpu; ++i)
+            for (unsigned int i = 0; i < c_total_times; ++i)
               ss >> entry.times[i];
+
+            entries.push_back(entry);
           }
         }
+
+        return entries;
       }
 
       size_t
-      getActiveTime(const CPUData &e)
+      getActiveTime(const CPUData& e)
       {
         return e.times[S_USER] +
                e.times[S_NICE] +
@@ -186,54 +182,52 @@ namespace Monitors
       }
 
       size_t
-      getIdleTime(const CPUData &e)
+      getIdleTime(const CPUData& e)
       {
         return e.times[S_IDLE] + e.times[S_IOWAIT];
       }
 
       void
-      dispatchStatus(const std::vector<CPUData> &entries1, const std::vector<CPUData> &entries2)
+      dispatchStatus(const std::vector<CPUData>& entries1, const std::vector<CPUData>& entries2, const double tstamp)
       {
-        const size_t NUM_ENTRIES = entries1.size();
-        uint8_t cpu_usage[c_max_cpu];
-        for (size_t i = 1; i < NUM_ENTRIES; ++i)
+        const size_t size1 = entries1.size();
+        const size_t size2 = entries2.size();
+        if (size1 != size2 || size1 != m_cores + 1)
+          return;
+        
+        IMC::CpuUsage cpu_usage;
+        cpu_usage.setSource(getSystemId());
+        cpu_usage.setTimeStamp(tstamp);
+        std::ostringstream debugMsg;
+        for (size_t i = 0; i < size1; ++i)
         {
-          const CPUData &e1 = entries1[i];
-          const CPUData &e2 = entries2[i];
+          const CPUData& e1 = entries1[i];
+          const CPUData& e2 = entries2[i];
           const float ACTIVE_TIME = static_cast<float>(getActiveTime(e2) - getActiveTime(e1));
           const float IDLE_TIME = static_cast<float>(getIdleTime(e2) - getIdleTime(e1));
           const float TOTAL_TIME = ACTIVE_TIME + IDLE_TIME;
-          cpu_usage[i-1] = (100.f * ACTIVE_TIME / TOTAL_TIME);
+          cpu_usage.value = (100.f * ACTIVE_TIME / TOTAL_TIME);
+          cpu_usage.setSourceEntity(m_cpu_eid[i]);
+          dispatch(cpu_usage, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+
+          debugMsg << ((i > 0) ? " | " : "")
+                   << "CPU"
+                   << ((i > 0) ? std::to_string(i) : "")
+                   << ": "
+                   << std::to_string(cpu_usage.value) << "%";
         }
-        debug("CPU0: %03d%% | CPU1: %03d%% | CPU2: %03d%% | CPU3: %03d%%", cpu_usage[0], cpu_usage[1], cpu_usage[2], cpu_usage[3]);
         
-        for(uint8_t id = 0; id < c_max_cpu; id++)
-        {
-          m_cpu[id].setTimeStamp(m_tstamp);
-          m_cpu[id].value = cpu_usage[id];
-          dispatch(m_cpu[id], DF_KEEP_TIME | DF_LOOP_BACK);
-        }
+        debug("%s", debugMsg.str().c_str());
       }
 
-      //! Main loop.
       void
-      onMain(void)
+      task(void)
       {
-        while (!stopping())
-        {
-          waitForMessages(0.01);
-          if (m_cpu_check.overflow())
-          {
-            m_cpu_check.reset();
-            std::vector<CPUData> entries1;
-	          std::vector<CPUData> entries2;
-            m_tstamp = Clock::getSinceEpoch();
-            readStatsCPU(entries1);
-            Delay::waitMsec(100);
-            readStatsCPU(entries2);
-            dispatchStatus(entries1, entries2);
-          }
-        }
+        double tstamp = Clock::getSinceEpoch();
+        std::vector<CPUData> entries1 = readStatsCPU();
+        Delay::waitMsec(100);
+        std::vector<CPUData> entries2 = readStatsCPU();
+        dispatchStatus(entries1, entries2, tstamp);
       }
     };
   }
