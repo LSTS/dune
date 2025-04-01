@@ -34,7 +34,7 @@
 
 #include "RTIMULib/RTIMULib/RTIMULib.h"
 
-#include "Calibration.hpp"
+#include "LibCalibration.hpp"
 
 namespace Sensors
 {
@@ -69,7 +69,7 @@ namespace Sensors
       RTPressure* m_pressure;
       //! Humidity sensor.
       RTHumidity* m_humidity;
-      //! Calibration thread handler.
+      //! Calibration handler.
       Calibration* m_calib;
       //! Map of arrow directions to LED matrix.
       std::map<int, uint16_t[8][8]> m_dirs;
@@ -112,10 +112,6 @@ namespace Sensors
           .defaultValue("/dev/fb0")
           .description("LED matrix device file");
 
-        param("Calibration command", m_args.m_cal_cmd)
-          .defaultValue("./calibrate.sh")
-          .description("Pi Sense Hat calibration command");
-
         param("Calibration option", m_args.m_cal_opt)
           .defaultValue("3")
           .values("0, 1, 2, 3")
@@ -128,7 +124,7 @@ namespace Sensors
       onUpdateParameters(void)
       {
         if (paramChanged(m_args.m_cal_opt))
-          onStartCalibration(m_args.m_cal_opt);
+          onCalibration(m_args.m_cal_opt);
       }
 
       //! Reserve entity identifiers.
@@ -147,9 +143,6 @@ namespace Sensors
       {
         try
         {
-          m_calib =
-            new Calibration(this, m_args.m_cal_cmd, std::bind(&Task::onEndCalibration, this));
-
           m_led = new LEDMatrix(m_args.m_led_dev.c_str());
 
           m_settings = new RTIMUSettings(m_args.m_lib_config.c_str());
@@ -170,6 +163,8 @@ namespace Sensors
           if (m_humidity == nullptr)
             throw RestartNeeded("Failed to create Humidity sensor", 5);
           m_humidity->humidityInit();
+
+          m_calib = new Calibration(*this, *m_settings, *m_imu, "/root/RTEllipsoidFit/");
         }
         catch (const std::exception& e)
         {
@@ -366,7 +361,7 @@ namespace Sensors
       }
 
       void
-      onStartCalibration(int opt)
+      onCalibration(int opt)
       {
         if (opt < 0 || opt > 3)
         {
@@ -377,32 +372,22 @@ namespace Sensors
         if (m_calib == nullptr)
           return;
 
-        if (!m_calib->isRunning())
-          m_calib->start();
-
-        m_calib->setCalibration(static_cast<CalCmd>(opt));
-      }
-
-      void
-      onEndCalibration(void)
-      {
-        m_calib->stop();
-        inf("Stopping calibration thread");
+        m_calib->startCalibration((CalCmd)opt);
       }
 
       //! Main loop.
       void
       onMain(void)
       {
-        // inf("Calibrating Pi Sense Hat...");
-        // m_calib->start();
-
         int delay = m_imu->IMUGetPollInterval();
         Counter<double> wdog(delay);
 
         while (!stopping())
         {
           waitForMessages(0.01);
+
+          if (m_calib->onCalibration())
+            continue;
 
           if (!wdog.overflow())
             continue;
