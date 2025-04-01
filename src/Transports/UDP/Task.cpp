@@ -324,9 +324,6 @@ namespace Transports
       void
       consume(const IMC::Message* msg)
       {
-        if (msg->getSource() != getSystemId())
-          return;
-
         if (m_lcomms->isActive())
         {
           if (msg->getId() == DUNE_IMC_ESTIMATEDSTATE)
