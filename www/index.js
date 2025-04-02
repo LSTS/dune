@@ -87,12 +87,12 @@ function setConnected(value)
 
   if (value)
   {
-    icon.src = g_icons.path('normal');
+    icon.src = g_icons.path('system-on');
     icon.title = 'Connected';
   }
   else
   {
-    icon.src = g_icons.path('error');
+    icon.src = g_icons.path('system-off');
     icon.title = 'Disconnected';
   }
 };
