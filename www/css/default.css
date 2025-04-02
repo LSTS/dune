@@ -636,11 +636,17 @@ div#Sensors
   text-align: center;
 }
 
-#Logbook div:not(.logbook-filter):not(.form-group)
+#Logbook
 {
-  max-height: 85vh;
-  font-size: 1rem;
-  overflow-y: scroll;
+  overflow: visible;
+}
+
+#logbook-filter
+{
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+  padding: 0.1rem;
 }
 
 #Logbook .form-group
@@ -653,6 +659,13 @@ div#Sensors
   border-radius: 12px;
   box-shadow: 0 1px 2px var(--c-color-text);
   padding: 6px;
+}
+
+#logbook-entries
+{
+  max-height: 85vh;
+  font-size: 1rem;
+  overflow-y: scroll;
 }
 
 @media (max-width: 600px)
