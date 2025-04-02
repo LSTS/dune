@@ -69,17 +69,17 @@ Logbook.prototype.errorHandler = function(status, status_text)
 
 Logbook.prototype.getActiveFilters = function()
 {
-  let info = document.getElementById("filter-info");
-  let warning = document.getElementById("filter-warning");
-  let error = document.getElementById("filter-error");
-  let debug = document.getElementById("filter-debug");
-  if(!info || !warning || !error || !debug)
-    return null;
+  const filters = {};
+  for (const key of ["info", "warning", "error", "debug"])
+  {
+    const el = document.getElementById(`filter-${key}`);
+    if (el == null)
+      return null;
 
-  return {INFO: info.checked,
-          WARNING: warning.checked,
-          ERROR: error.checked,
-          DEBUG: debug.checked};
+    filters[key.toUpperCase()] = el.checked;
+  }
+
+  return filters;
 };
 
 function typeAsString(typeInt)
