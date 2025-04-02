@@ -28,11 +28,13 @@
 // Edit: Pedro Gonçalves                                                    *
 //***************************************************************************
 
-function Gauge(options) {
+function Gauge(options)
+{
   this.m_type = options && options.reverse ? 'reversed/' : '';
 }
 
-Gauge.prototype.create = function (root) {
+Gauge.prototype.create = function(root)
+{
   this.m_root = root;
   var gaugeContainer = document.createElement('div');
   gaugeContainer.classList.add('gauge-container');
@@ -59,19 +61,28 @@ Gauge.prototype.update = function(value)
 
   let red, green;
 
-  if (this.m_type === 'reversed/') {
-    if (value <= 50) {
+  if (this.m_type === 'reversed/')
+  {
+    if (value <= 50)
+    {
       red = Math.round(value * 5.1);
       green = 255;
-    } else {
+    }
+    else
+    {
       red = 255;
       green = Math.round((100 - value) * 5.1);
     }
-  } else {
-    if (value <= 50) {
+  }
+  else
+  {
+    if (value <= 50)
+    {
       red = 255;
       green = Math.round(value * 5.1);
-    } else {
+    }
+    else
+    {
       red = Math.round((100 - value) * 5.1);
       green = 255;
     }
@@ -87,7 +98,8 @@ Gauge.prototype.update = function(value)
   this.m_bar.style.backgroundColor = color;
 };
 
-Gauge.prototype._lightenColor = function (rgb, amount) {
+Gauge.prototype._lightenColor = function(rgb, amount)
+{
   const match = rgb.match(/\d+/g);
   let [r, g, b] = match.map(Number);
   r = Math.min(255, Math.round(r + (255 - r) * amount));
