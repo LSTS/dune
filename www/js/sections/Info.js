@@ -152,7 +152,7 @@ Info.prototype.m_fields =
     "data_function": function(data)
     {
       if (self.m_dune_cpu_usage_eid == null)
-        return -1;
+        return null;
 
       const value = self.m_cpu_usage.get(self.m_dune_cpu_usage_eid);
       return value;
@@ -388,7 +388,7 @@ Info.prototype.updateTaskNode = function(id, state, label, description, cpuUsage
   if (id == null || state == null || label == null || description == null || cpuUsage == null)
     return;
   
-  const root = this.m_tasks.get(id);
+  const root = this.m_tasks.get(label);
   if (root != null)
     this.updateTaskField(root, state, description, cpuUsage);
   else
@@ -453,7 +453,7 @@ Info.prototype.createTaskNode = function(id, state, label, description, cpuUsage
   td_description.appendChild(document.createTextNode(description));
   tr.appendChild(td_description);
   
-  this.insertOrdered(tr, id, this.m_tasksOrderedkeys, this.m_tasks, this.m_task_tabel);
+  this.insertOrdered(tr, label, this.m_tasksOrderedkeys, this.m_tasks, this.m_task_tabel);
 };
 
 Info.prototype.updateTaskField = function(root, state, description, cpuUsage)
