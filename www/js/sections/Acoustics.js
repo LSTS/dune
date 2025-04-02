@@ -133,7 +133,7 @@ Acoustics.prototype.updateActionsSection = function()
 
 Acoustics.prototype.fillTargetsSelect = function(targetsSelect)
 {
-  if (!targetsSelect)
+  if (targetsSelect == null)
     return;
 
   if (this.m_acoustic_targets.length === 0) 
@@ -191,12 +191,12 @@ Acoustics.prototype.createChooseModemsSection = function()
 Acoustics.prototype.updateChooseModemsSection = function()
 {
   const modemsList = document.getElementById("acoustics-modems-list");
-  if (!modemsList)
+  if (modemsList == null)
     return;
 
   let selection = [];
   const modemRows = modemsList.querySelectorAll(".acoustic-modem-row");
-  if (!modemRows)
+  if (modemRows == null)
     return;
   modemRows.forEach(r =>
   {
@@ -354,7 +354,7 @@ Acoustics.prototype.update = function(data)
 
 function submitAction(action, target, event)
 {
-  if (!action || !target)
+  if (action == null || target == null)
     return;
 
   if (event)
@@ -371,11 +371,11 @@ function submitAcousticModemsSelection(event)
 
   let selection = [];
   const modemsList = document.getElementById("acoustics-modems-list");
-  if (!modemsList)
+  if (modemsList == null)
     return;
 
   const modemRows = modemsList.querySelectorAll(".acoustic-modem-row");
-  if (!modemRows)
+  if (modemRows == null)
     return;
 
   modemRows.forEach(r =>

@@ -204,7 +204,7 @@ Info.prototype.update = function(data)
     var value = null;
     var field = this.m_fields[i];
 
-    if (!field)
+    if (field == null)
       continue;
   
     if ("data_function" in field)
@@ -264,7 +264,7 @@ Info.prototype.updateCpuUsage = function(cpu_usage)
 
 Info.prototype.updateEntities = function(entities)
 {
-  if (!entities || !(typeof entities === 'object'))
+  if (entities == null || !(typeof entities === 'object'))
     return;
 
   Object.values(entities).forEach(entity =>
@@ -458,7 +458,7 @@ Info.prototype.createTaskNode = function(id, state, label, description, cpuUsage
 
 Info.prototype.updateTaskField = function(root, state, description, cpuUsage)
 {
- if (!root || state == null || description == null ||  cpuUsage == null)
+ if (root == null || state == null || description == null ||  cpuUsage == null)
     return;
   
   root.childNodes[0].firstChild.src = getStateIcon(state);
@@ -480,7 +480,7 @@ Info.prototype.updateTaskField = function(root, state, description, cpuUsage)
 
 function getSystemInfo(data)
 {
-  if (!data || !data.dune_system) 
+  if (data == null || data.dune_system == null) 
     return "Unknown";
 
   const { dune_system, dune_system_type, dune_operation_mode } = data;

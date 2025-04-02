@@ -173,7 +173,7 @@ Logbook.prototype.setupLogbookFilters = function()
 Logbook.prototype.updateContextFilter = function()
 {
   const selectElement = document.getElementById('context-filter');
-  if (!selectElement)
+  if (selectElement == null)
     return;
   
   selectElement.innerHTML = '<option value="all">Show All</option>';
@@ -191,10 +191,10 @@ Logbook.prototype.updateContextFilter = function()
 
 Logbook.prototype.updateUniqueContexts = function(entries)
 {
-  this.uniqueContexts.clear();
-  if (!entries)
+  if (entries == null)
     return;
-
+  
+  this.uniqueContexts.clear();
   entries.forEach(entry =>
   {
     if (entry.context != null)
@@ -238,7 +238,7 @@ Logbook.prototype.handleData = function(text)
 Logbook.prototype.update = function(data)
 {
   const logEntriesContainer = document.getElementById("logbook-entries");
-  if (!logEntriesContainer)
+  if (logEntriesContainer == null)
     return;
 
   if (data && data.logbook)

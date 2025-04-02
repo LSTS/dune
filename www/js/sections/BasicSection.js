@@ -43,7 +43,7 @@ BasicSection.prototype.create = function(id, root_id)
 
   this.m_root_id = root_id;
   this.m_root = document.getElementById(root_id);
-  if (!this.m_root)
+  if (this.m_root == null)
     return;
 
   this.m_root.appendChild(this.m_base);
@@ -125,7 +125,7 @@ BasicSection.prototype.update = function(data)
 
 BasicSection.prototype.insertOrdered = function(element, key, array, map, root)
 {
-  if (!element || !key || !array || !map || !root)
+  if (element == null || key == null || array == null || map == null || root == null)
     return;
 
   let low = 0;

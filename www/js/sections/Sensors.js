@@ -63,7 +63,7 @@ Sensors.prototype.errorHandler = function(status, status_text)
 
 Sensors.prototype.updateSubSection = function(msg)
 {
-  if (!msg || msg.abbrev == null || msg.value == null)
+  if (msg == null || msg.abbrev == null || msg.value == null)
     return;
 
   if (!this.m_subsections.has(msg.abbrev))
@@ -74,7 +74,7 @@ Sensors.prototype.updateSubSection = function(msg)
 
 Sensors.prototype.createSubSection = function(msg)
 {
-  if (!msg || msg.abbrev == null)
+  if (msg == null || msg.abbrev == null)
     return;
   
   var th = document.createElement('th');
@@ -93,7 +93,7 @@ Sensors.prototype.createSubSection = function(msg)
 
 Sensors.prototype.updateValue = function(msg)
 {
-  if (!msg || msg.src_ent == null || msg.abbrev == null)
+  if (msg == null || msg.src_ent == null || msg.abbrev == null)
     return;
 
   const src = resolveEntity(parseInt(msg.src_ent, 10));
@@ -109,7 +109,7 @@ Sensors.prototype.updateValue = function(msg)
 
 Sensors.prototype.createValue = function(src, msg)
 {
-  if (src == null || !msg || msg.abbrev == null)
+  if (src == null || msg == null || msg.abbrev == null)
     return;
 
   var td_label = document.createElement('td');
@@ -145,7 +145,7 @@ Sensors.prototype.createValue = function(src, msg)
 
 Sensors.prototype.updateField = function(root, msg)
 {
-  if (!root || !msg || msg.timestamp == null || msg.value == null)
+  if (root == null || msg == null || msg.timestamp == null || msg.value == null)
     return;
 
   const timestamp = parseFloat(msg.timestamp);
@@ -211,7 +211,7 @@ Sensors.prototype.handleData = function(text)
 
 Sensors.prototype.update = function(data)
 {
-  if (!data && !data.messages)
+  if (data == null || data.messages == null)
     return;
 
   data.messages.forEach(msg =>

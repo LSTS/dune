@@ -172,7 +172,7 @@ Power.prototype.createEntry = function(name, value)
 
 Power.prototype.appendButton = function(root, channel, op, label)
 {
-  if (!root || !channel || op == null || !label)
+  if (root == null || channel == null || op == null || label == null)
     return;
 
   var btn = document.createElement('button');
@@ -184,7 +184,7 @@ Power.prototype.appendButton = function(root, channel, op, label)
 
 Power.prototype.appendInput = function(root, form_id, id, label)
 {
-  if (!root || !form_id || !id || !label)
+  if (root == null || form_id == null || id == null || label == null)
     return;
 
   var einput = document.createElement('input');

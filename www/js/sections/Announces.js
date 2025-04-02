@@ -111,7 +111,7 @@ Announces.prototype.handleData = function(text)
 
 Announces.prototype.update = function(data)
 {
-  if (!data && !data.announces)
+  if (data == null || data.announces == null)
     return;
 
   if (Date.now() - this.lastUpdate < 1000)
@@ -295,8 +295,7 @@ Announces.prototype.addIPsToSection = function (list, msg)
   newServicesSet.forEach(serviceString =>
   {
     const existingItem = Array.from(existingItems).find(item => item.textContent === serviceString);
-
-    if (!existingItem)
+    if (existingItem == null)
     {
       const listItem = document.createElement('li');
       listItem.textContent = serviceString;
