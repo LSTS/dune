@@ -35,7 +35,7 @@
 <head>
   <title>DUNE - Control Center</title>
   <meta charset="UTF-8">
-  <link rel="icon" type="image/vnd.microsoft.icon" href="images/dune.ico" />
+  <link rel="icon" type="image/vnd.microsoft.icon" href="images/icons/dune.ico" />
   <link rel="stylesheet" type="text/css" href="css/default.css" />
 
   <!-- MISC -->
@@ -144,9 +144,9 @@
             <li id="buttonAcoustics" class="invisible"><a href="javascript:show('Acoustics')">Acoustics</a></li>
             <li id="buttonAnnounces" class="invisible"><a href="javascript:show('Announces')">Discovery Tool</a></li>
             <li id="buttonDummy" class="invisible"><a href="javascript:show('Dummy')">Dummy</a></li>
-            <li id="buttonConnection" class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected"
-                alt="Connected" /></a></li>
-            <li id="buttonTheme" class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/dark-switch.png"
+            <li id="buttonConnection" class="Static"><a href="#"><img id="ConnectionIcon" src="images/icons/system-off.png" title="Connected"
+                alt="Connected" style="margin-top: -7px;"/></a></li>
+            <li id="buttonTheme" class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/icons/dark-switch.png"
                 title="Theme Change" alt="Light" style="max-width: 16px; max-height: 16px;"></a></li>
           </ul>
         </div>
@@ -173,7 +173,7 @@
       {
         body.classList.remove('theme-light');
         body.classList.add('theme-dark');
-        document.getElementById('ThemeIcon').src = 'images/light-switch.png';
+        document.getElementById('ThemeIcon').src = 'images/icons/light-switch.png';
       }
       else
       {
