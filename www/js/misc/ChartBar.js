@@ -27,11 +27,13 @@
 // Author: Pedro Gonçalves                                                  *
 //***************************************************************************
 
-function ChartWidget() {
+function ChartWidget()
+{
   this.chart = null;
 }
 
-ChartWidget.prototype.create = function (container) {
+ChartWidget.prototype.create = function(container)
+{
   var canvas = document.createElement('canvas');
   // Default width and height – the width can be adjusted during update
   canvas.width = 200;
@@ -46,8 +48,10 @@ ChartWidget.prototype.create = function (container) {
   };
 };
 
-ChartWidget.prototype.update = function (values) {
-  if (values && values.length > 0) {
+ChartWidget.prototype.update = function(values)
+{
+  if (values && values.length > 0)
+  {
     this.chart.values = values;
     // divide the canvas width by the number of values to get the default bar width
     var defaultBarWidth = this.chart.canvas.width / this.chart.values.length;
@@ -56,7 +60,8 @@ ChartWidget.prototype.update = function (values) {
   }
 };
 
-ChartWidget.prototype.getBarColor = function (value) {
+ChartWidget.prototype.getBarColor = function(value)
+{
   // Modern palette inspired by Material Design based on load percentage
   // if (value <= 20) {
   //   return '#66bb6a';  // Light green
@@ -69,19 +74,23 @@ ChartWidget.prototype.getBarColor = function (value) {
   // } else {
   //   return '#e53935';  // Red
   // }
-  if (value <= 50) {
+  if (value <= 50)
+  {
     red = Math.round(value * 5.1);
     green = 255;
-  } else {
+  } 
+  else
+  {
     red = 255;
     green = Math.round((100 - value) * 5.1);
   }
-  return `rgb(${red}, ${green}, 0)`;
 
+  return `rgb(${red}, ${green}, 0)`;
 };
 
 // Helper function to draw a rounded rectangle
-ChartWidget.prototype.drawRoundedRect = function (ctx, x, y, width, height, radius) {
+ChartWidget.prototype.drawRoundedRect = function (ctx, x, y, width, height, radius)
+{
   // Ensure the radius doesn't exceed half of the width/height
   radius = Math.min(radius, width / 2, height / 2);
   ctx.beginPath();
@@ -97,7 +106,8 @@ ChartWidget.prototype.drawRoundedRect = function (ctx, x, y, width, height, radi
   ctx.closePath();
 };
 
-ChartWidget.prototype.draw = function () {
+ChartWidget.prototype.draw = function()
+{
   var ctx = this.chart.ctx;
   var canvas = this.chart.canvas;
   var values = this.chart.values;
@@ -112,11 +122,11 @@ ChartWidget.prototype.draw = function () {
   // Assume the value is a percentage (0-100)
   var barHeightRatio = canvas.height / 100;
 
-  for (var i = 0; i < values.length; i++) {
+  for (var i = 0; i < values.length; i++)
+  {
     var value = values[i];
-    if (value == null) {
+    if (value == null)
       value = 0;
-    }
 
     var barColor = this.getBarColor(value);
     var x = i * barWidth;
@@ -150,7 +160,8 @@ ChartWidget.prototype.draw = function () {
     ctx.stroke();
 
     // Display the value centered inside the bar if the value is 9 or greater
-    if (value >= 9) {
+    if (value >= 9)
+    {
       ctx.fillStyle = '#000';
       ctx.font = '10px sans-serif';
       ctx.textAlign = 'center';
@@ -164,7 +175,8 @@ ChartWidget.prototype.draw = function () {
 
 // Helper function to lighten a hexadecimal color
 // "amount" ranges from 0 (no change) to 1 (completely white)
-ChartWidget.prototype._lightenColor = function (hex, amount) {
+ChartWidget.prototype._lightenColor = function(hex, amount)
+{
   // Remove the '#' and convert to a number
   var num = parseInt(hex.slice(1), 16);
   var r = (num >> 16) + Math.round(255 * amount);
