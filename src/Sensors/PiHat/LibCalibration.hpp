@@ -171,6 +171,12 @@ namespace Sensors
             m_wait_mag_done = false;
           }
         }
+        else if (m_curr_cal == CMD_MAG_ELLI)
+        {
+          m_mag_cal->magCalSaveRaw(m_ellipsoid_dir.c_str());
+          processEllipsoid();
+          m_curr_cal = CMD_INVALID;
+        }
         else
           m_curr_cal = CMD_INVALID;
       }
@@ -225,9 +231,7 @@ namespace Sensors
         if (m_mag_cal->magCalEllipsoidValid())
         {
           m_owner.inf("Ellipsoid calibration valid");
-          processEllipsoid();
-          m_mag_cal->magCalSaveRaw(m_ellipsoid_dir.c_str());
-          m_curr_cal = CMD_INVALID;
+          saveCalibration();
         }
       }
 
