@@ -45,7 +45,15 @@ Gauge.prototype.create = function (root) {
   this.m_root.appendChild(gaugeContainer);
 };
 
-Gauge.prototype.update = function (value) {
+Gauge.prototype.update = function(value)
+{
+  if (value == null)
+  {
+    this.m_value.textContent = 'N/A';
+    this.m_bar.style.display = 'none';
+    return;
+  }
+
   this.m_value.textContent = Math.round(value) + '%';
   this.m_bar.style.width = Math.round(value) + '%';
 
