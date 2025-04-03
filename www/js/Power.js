@@ -77,18 +77,20 @@ Power.prototype.updateEntry = function (msg) {
 
 Power.prototype.updateValue = function (root, msg) {
   var base = root.childNodes[1].firstChild.firstChild;
-
   if (msg.state == 0) {
-    base.childNodes[1].disabled = false;
-    base.childNodes[1].classList.add('active');
-    base.childNodes[2].disabled = true;
-    base.childNodes[2].classList.remove('active');
-  }
-  else {
-    base.childNodes[1].disabled = true;
-    base.childNodes[1].classList.remove('active');
+    // set image a of childNodes[1]
+    base.childNodes[1].src = 'images/icons/system-off.png';
     base.childNodes[2].disabled = false;
     base.childNodes[2].classList.add('active');
+    base.childNodes[3].disabled = true;
+    base.childNodes[3].classList.remove('active');
+  }
+  else {
+    base.childNodes[1].src = 'images/icons/system-on.png';
+    base.childNodes[2].disabled = true;
+    base.childNodes[2].classList.remove('active');
+    base.childNodes[3].disabled = false;
+    base.childNodes[3].classList.add('active');
   }
 };
 
@@ -115,6 +117,7 @@ Power.prototype.createEntry = function (msg) {
   name.value = msg.name;
   form.appendChild(name);
 
+  this.appendImage(form, msg.name, 'status', 'Status');
   this.appendButton(form, msg.name, 'on', 'Turn On');
   this.appendButton(form, msg.name, 'off', 'Turn Off');
   this.appendInput(form, form.id, 'Hours', 'hour(s)');
@@ -135,6 +138,17 @@ Power.prototype.createEntry = function (msg) {
 
   return tbl;
 };
+
+Power.prototype.appendImage = function (root, channel, op, label) {
+  var img = document.createElement('img');
+  img.src = 'images/icons/unknown.png';
+  img.alt = label;
+  img.style.width = 'auto';
+  img.style.height = '42px';
+  img.style.marginTop = '7px';
+  img.style.marginRight = '20px';
+  root.appendChild(img);
+}
 
 Power.prototype.appendButton = function (root, channel, op, label) {
   var btn = document.createElement('button');
