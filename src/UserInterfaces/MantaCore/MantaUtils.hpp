@@ -30,6 +30,11 @@
 #ifndef USERINTERFACES_MANTACORE_MANTAUTILS_HPP_INCLUDED_
 #define USERINTERFACES_MANTACORE_MANTAUTILS_HPP_INCLUDED_
 
+#include <ifaddrs.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/types.h>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -307,33 +312,33 @@ namespace UserInterfaces
     bool
     getInterfaceIP(const std::string& interfaceName, std::string& ipAddress)
     {
-      char command[100];
-      std::snprintf(command, sizeof(command), "ifconfig %s 2>/dev/null", interfaceName.c_str());
-      FILE *fp = popen(command, "r");
-      if (fp == nullptr)
+      struct ifaddrs* ifaddr = nullptr;
+      if (getifaddrs(&ifaddr) == -1)
         return false;
-
-      char line[256];
+  
       bool found = false;
-      while (fgets(line, sizeof(line), fp) != nullptr)
+      for (struct ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next)
       {
-        if (std::strstr(line, "inet ") != nullptr)
+        if (ifa->ifa_addr == nullptr)
+          continue;
+        
+        if (interfaceName != ifa->ifa_name)
+          continue;
+        
+        if (ifa->ifa_addr->sa_family == AF_INET)
         {
-          char *token = strtok(line, " ");
-          while (token != nullptr)
+          char host[INET_ADDRSTRLEN] = {0};
+          void* addrPtr = &((struct sockaddr_in*)ifa->ifa_addr)->sin_addr;
+          if (inet_ntop(AF_INET, addrPtr, host, sizeof(host)) != nullptr)
           {
-            if (strstr(token, "inet") != nullptr)
-            {
-              token = strtok(NULL, " ");
-              ipAddress = token;
-              found = true;
-              break;
-            }
-            token = strtok(NULL, " ");
+            ipAddress = host;
+            found = true;
+            break;
           }
         }
       }
-      pclose(fp);
+  
+      freeifaddrs(ifaddr);
       return found;
     }
   }
