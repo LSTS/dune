@@ -141,9 +141,6 @@ namespace UserInterfaces
         void
         consume(const IMC::Announce* msg)
         {
-          if (msg->getSource() == getSystemId())
-            return;
-          
           m_announces[msg->getSource()] = *msg;
         }
 
