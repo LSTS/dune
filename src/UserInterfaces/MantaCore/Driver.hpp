@@ -56,7 +56,7 @@ namespace UserInterfaces
       //! Acoustic modems config changed flag.
       bool m_new_modems_config;
 
-      Driver(Tasks::Task* task, IO::Handle* handle, int numberCell, std::string system_name, std::string ams_elabel):
+      Driver(Tasks::Task* task, IO::Handle* handle, int numberCell, std::string system_name, std::string ams_elabel, std::map<std::string, std::string> network_ips):
         m_query_systems(false),
         m_new_modems_config(false),
         m_task(task),
@@ -66,10 +66,13 @@ namespace UserInterfaces
         m_send_cmd_state(CMD_IDLE),
         m_parser_state(PARSER_PREAMBLE),
         m_free_text_state(0),
-        m_free_text(task->getEntityLabel()),
         m_treqid(0),
-        m_ams_elabel(ams_elabel)
+        m_ams_elabel(ams_elabel),
+        m_network_ips(network_ips),
+        m_networks_free_text_it(m_network_ips.end()),
+        m_amodems_free_text_it(m_amodems.end())
       {
+        m_system_name_free_text = String::str("System: %s%c", m_sys_name.c_str(), '\0');
         querySystems(true);
         m_handle->flush();
       }
@@ -223,41 +226,78 @@ namespace UserInterfaces
         sendCommand(bfr, false);
       }
 
+      bool
+      getNetworkFreeText(std::string& text)
+      {
+        if (m_network_ips.empty() || m_networks_free_text_it == m_network_ips.end())
+        {
+          m_networks_free_text_it = m_network_ips.end();
+          m_amodems_free_text_it = m_amodems.begin();
+          m_free_text_state++;
+          return false;
+        }
+        
+        std::string ip;
+        const auto result = getInterfaceIP(m_networks_free_text_it->second, ip);
+        text = String::str("%s IP: %s", m_networks_free_text_it->first.c_str(), result ? ip.c_str() : "fail");
+        m_networks_free_text_it++;
+        return true;
+      }
+
+      bool
+      getAcousticModemsFreeText(std::string& text)
+      {
+        if (m_amodems.empty() || m_amodems_free_text_it == m_amodems.end())
+        {
+          m_amodems_free_text_it = m_amodems.end();
+          m_free_text_state++;
+          return false;
+        }
+        
+        while(m_amodems_free_text_it != m_amodems.end())
+        {
+          if (m_amodems_free_text_it->second)
+          {
+            text = String::str("%s", m_amodems_free_text_it->first.c_str());
+            m_amodems_free_text_it++;
+            return true;
+          }
+
+          m_amodems_free_text_it++;
+        }
+
+        m_amodems_free_text_it = m_amodems.end();
+        m_free_text_state++;
+        return false;
+      }
+
       void
       updateFreeText(void)
       {
+        std::string text;
         switch (m_free_text_state)
         {
-          case 0:
-            m_free_text = String::str("System: %s%c", m_sys_name.c_str(), '\0');
-            break;
-
           case 1:
-            if(getInterfaceIP("eth0", m_sys_ip))
-              m_free_text = String::str("Int IP: %s%c", m_sys_ip.c_str(), '\0');
-            else
-              m_free_text = String::str("Int IP: Fail%c", '\0');
-            break;
+            if (getNetworkFreeText(text))
+              break;
 
+            [[fallthrough]];
+          
           case 2:
-            if(getInterfaceIP("ztcfw4jwt3", m_sys_ip))
-              m_free_text = String::str("Zero IP: %s%c", m_sys_ip.c_str(), '\0');
-            else
-              m_free_text = String::str("Zero IP: Fail%c", '\0');
-            break;
+            if (getAcousticModemsFreeText(text))
+              break;
 
-          case 3:
-            if(getInterfaceIP("wwan0", m_sys_ip))
-              m_free_text = String::str("GPRS IP: %s%c", m_sys_ip.c_str(), '\0');
-            else
-              m_free_text = String::str("GPRS IP: Fail%c", '\0');
-            break;
+            [[fallthrough]];
 
           default:
+          case 0:
+            text = m_system_name_free_text;
+            m_free_text_state = 1;
+            m_networks_free_text_it = m_network_ips.begin();
             break;
         }
-        sendFreeText(m_free_text);
-        m_free_text_state++;
+
+        sendFreeText(text);
         if(m_free_text_state >= MAX_LINE_FREE_TEXT)
           m_free_text_state = 0;
       }
@@ -530,6 +570,12 @@ namespace UserInterfaces
         return true;
       }
 
+      void
+      setNetworkIps(std::map<std::string, std::string> ips)
+      {
+        m_network_ips = ips;
+      }
+
     private:
       //! Parent task.
       DUNE::Tasks::Task* m_task;
@@ -551,10 +597,8 @@ namespace UserInterfaces
       char m_cmd_text[64];
       //! Firmware version.
       std::string m_version;
-      //| Free text state.
+      //! Free text state.
       uint8_t m_free_text_state;
-      //! Free text to send.
-      std::string m_free_text;
       //! Queue of commands to send.
       std::queue<std::pair<std::string, bool>> m_queue;
       //! Id for TransmissionRequest IMC message.
@@ -565,6 +609,14 @@ namespace UserInterfaces
       Time::Counter<float> m_wdog_boot;
       //! List of modems.
       std::map<std::string, bool> m_amodems;
+      //! Network interfaces IPv4 addresses.
+      std::map<std::string, std::string> m_network_ips;
+      //! System name free text.
+      std::string m_system_name_free_text;
+      //! Networks free text iterator.
+      std::map<std::string, std::string>::iterator m_networks_free_text_it;
+      //! Acoustic Modems free text iterator.
+      std::map<std::string, bool>::iterator m_amodems_free_text_it;
 
       uint16_t
       getInternalId(void)

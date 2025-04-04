@@ -82,6 +82,8 @@ namespace UserInterfaces
       std::unordered_set<std::string> m_uan_config;
       //! Set of known types of acoustic modems.
       std::unordered_set<std::string> m_types;
+      //! Network interfaces IPv4 addresses.
+      std::map<std::string, std::string> m_network_ips;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
@@ -197,6 +199,13 @@ namespace UserInterfaces
         .defaultValue("true")
         .description("Flag to activate data acquire from board.");
 
+        param("System Network Interfaces", m_args.network_interfaces)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("Int:eth0,Zero:ztcfw4jwt3,GPRS:wwan0")
+        .description("System network interfaces <name>:<interface>."
+                     "For multiple interfaces, use comma ',' to seperate values.");
+
         setWaitForMessages(1.0);
 
         bind<IMC::AcousticSystems>(this);
@@ -299,7 +308,7 @@ namespace UserInterfaces
       onInitializeDevice() override
       {
         inf("initializing board");
-        m_driver = new Driver(this, m_handle, m_args.number_cell, getSystemName(), m_args.ams_elabel);
+        m_driver = new Driver(this, m_handle, m_args.number_cell, getSystemName(), m_args.ams_elabel, m_network_ips);
         m_dispatch = new DispatchData(this, m_driver, &m_args, &m_imc);
         m_wdog.setTop(m_args.inp_tout);
         setupBoard();
@@ -623,6 +632,25 @@ namespace UserInterfaces
         {
           m_driver->requestDataPower(m_args.get_data);
           m_driver->requestDataHeading(m_args.get_data);
+        }
+
+        if (paramChanged(m_args.network_interfaces))
+        {
+          std::vector<std::string> entries;
+          String::split(m_args.network_interfaces, ",", entries);
+          m_network_ips.clear();
+          for (const auto& entry: entries)
+          {
+            std::vector<std::string> interfaces;
+            String::split(entry, ":", interfaces);
+            if (interfaces.size() != 2)
+              continue;
+            
+            m_network_ips[interfaces[0]] = interfaces[1];
+          }
+          
+          if (m_driver != NULL)
+            m_driver->setNetworkIps(m_network_ips);
         }
       }
 

@@ -195,6 +195,8 @@ namespace UserInterfaces
       bool power_channels_states[c_max_power_channels];
       //! Get data.
       bool get_data;
+      //! Network interfaces.
+      std::string network_interfaces;
     };
 
     struct BQData
