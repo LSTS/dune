@@ -43,6 +43,7 @@
 #include <DUNE/Concurrency/TSQueue.hpp>
 #include <DUNE/Tasks/Recipient.hpp>
 #include <DUNE/Tasks/Consumer.hpp>
+#include <DUNE/Tasks/FilteredConsumer.hpp>
 #include <DUNE/IMC/Constants.hpp>
 #include <DUNE/IMC/Definitions.hpp>
 #include <DUNE/IMC/Factory.hpp>
@@ -560,14 +561,29 @@ namespace DUNE
         m_param_editor = name;
       }
 
-      //! Bind a message to a consumer method.
+      //! Bind a message to a default consumer method, with a costum filter.
       //! @param task_obj consumer task.
-      //! @param consumer consumer method.
+      //! @param filter filter method.
       template <typename M, typename T>
       void
-      bind(T* task_obj, void (T::* consumer)(const M*) = &T::consume)
+      bind(T* task_obj, bool (T::* filter)(const M*))
       {
-        bind(M::getIdStatic(), new Consumer<T, M>(*task_obj, consumer));
+        bind(task_obj, &T::consume, filter);
+      }
+
+      //! Bind a message to a consumer method, with an optional filter.
+      //! @param task_obj consumer task.
+      //! @param consumer consumer method.
+      //! @param filter filter method (optional).
+      template <typename M, typename T>
+      void
+      bind(T* task_obj, void (T::* consumer)(const M*) = &T::consume, 
+           bool (T::* filter)(const M*) = nullptr)
+      {
+        if (filter == nullptr)
+          bind(M::getIdStatic(), new Consumer<T, M>(*task_obj, consumer));
+        else
+          bind(M::getIdStatic(), new FilteredConsumer<T, M>(*task_obj, consumer, filter));
       }
 
       //! Bind multiple messages to a default consumer method.
