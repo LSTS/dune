@@ -405,7 +405,9 @@ Info.prototype.createTaskNode = function(id, state, label, description, cpuUsage
   var td_state = document.createElement('td');
   td_state.style.width = '20px';
   var img_state = document.createElement('img');
-  img_state.src = getStateIcon(state);
+  img_state.src = this.getEntityStateIcon(state);
+  img_state.style.width = '18px';
+  img_state.style.marginTop = '2px';
   td_state.appendChild(img_state);
   tr.appendChild(td_state);
   
@@ -461,7 +463,7 @@ Info.prototype.updateTaskField = function(root, state, description, cpuUsage)
  if (root == null || state == null || description == null ||  cpuUsage == null)
     return;
   
-  root.childNodes[0].firstChild.src = getStateIcon(state);
+  root.childNodes[0].firstChild.src = this.getEntityStateIcon(state);
   root.childNodes[1].style.backgroundColor = getLabelBackgroundColor(state);
   
   var cpuCell = root.childNodes[2];
@@ -476,6 +478,26 @@ Info.prototype.updateTaskField = function(root, state, description, cpuUsage)
   }
 
   root.childNodes[3].firstChild.data = description;
+};
+
+Info.prototype.getEntityStateIcon = function(state)
+{
+  switch (Number(state))
+  {
+    case 0:
+      return g_icons.path('warning');
+
+    case 1:
+      return g_icons.path('normal');
+
+    case 2:
+    case 3:
+    case 4:
+      return g_icons.path('error');
+
+    default:
+      return g_icons.path('unknown');
+  }
 };
 
 function getSystemInfo(data)
