@@ -68,13 +68,10 @@ namespace UserInterfaces
           if (!m_queue.waitForItems(1.0))
             continue;
 
-          if (m_queue.closed())
+          if (m_queue.closed() || m_queue.empty())
             break;
 
-          TCPSocket* sock = m_queue.pop();
-          if (!sock)
-            continue;
-          
+          auto sock = m_queue.pop();
           bool sockHasToBeDeleted = true;
           try
           {
