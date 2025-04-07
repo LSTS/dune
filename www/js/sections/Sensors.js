@@ -87,8 +87,12 @@ Sensors.prototype.createSubSection = function(msg)
   var tbl = document.createElement('table');
   tbl.appendChild(tr);
   
-  this.m_values.set(msg.abbrev, new Map());
-  this.m_valuesOrderedkeys.set(msg.abbrev, []);
+  if (!this.m_values.has(msg.abbrev))
+    this.m_values.set(msg.abbrev, new Map());
+
+  if (!this.m_valuesOrderedkeys.has(msg.abbrev))
+    this.m_valuesOrderedkeys.set(msg.abbrev, []);
+
   this.insertOrdered(tbl, msg.abbrev, this.m_subsectionsOrderedkeys, this.m_subsections, this.m_base);
 };
 
