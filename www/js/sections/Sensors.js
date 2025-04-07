@@ -46,7 +46,7 @@ Sensors.prototype.start = function()
   this.m_subsections = new Map();
   this.m_subsectionsOrderedkeys = [];
   this.m_values = new Map();
-  this.m_valuesOrderedkeys = [];
+  this.m_valuesOrderedkeys = new Map();
 
   this.requestData();
 };
@@ -86,9 +86,10 @@ Sensors.prototype.createSubSection = function(msg)
 
   var tbl = document.createElement('table');
   tbl.appendChild(tr);
-
+  
+  this.m_values.set(msg.abbrev, new Map());
+  this.m_valuesOrderedkeys.set(msg.abbrev, []);
   this.insertOrdered(tbl, msg.abbrev, this.m_subsectionsOrderedkeys, this.m_subsections, this.m_base);
-  return tbl;
 };
 
 Sensors.prototype.updateValue = function(msg)
@@ -100,7 +101,7 @@ Sensors.prototype.updateValue = function(msg)
   if (src == null)
     return;
 
-  const root = this.m_values.get(msg.abbrev + '.' + src);
+  const root = this.m_values.get(msg.abbrev).get(src);
   if (root != null)
     this.updateField(root, msg);
   else
@@ -138,9 +139,12 @@ Sensors.prototype.createValue = function(src, msg)
   tr.appendChild(td_desc);
   tr.appendChild(td_status);
 
-  let root = this.m_subsections.get(msg.abbrev);
-  this.insertOrdered(tr, msg.abbrev + '.' + src, this.m_valuesOrderedkeys, this.m_values, root ? root : this.createSubSection(msg));
   this.updateField(tr, msg);
+  
+  const root = this.m_subsections.get(msg.abbrev);
+  const array = this.m_valuesOrderedkeys.get(msg.abbrev);
+  const map = this.m_values.get(msg.abbrev);
+  this.insertOrdered(tr, src, array, map, root);
 };
 
 Sensors.prototype.updateField = function(root, msg)
