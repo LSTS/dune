@@ -130,7 +130,6 @@ BasicSection.prototype.insertOrdered = function(element, key, array, map, root)
 
   let low = 0;
   let high = array.length;
-
   while (low < high)
   {
     let mid = Math.floor((low + high) / 2);
@@ -140,13 +139,14 @@ BasicSection.prototype.insertOrdered = function(element, key, array, map, root)
       high = mid;
   }
 
+  let nextKey = (low < array.length) ? array[low] : null;
   array.splice(low, 0, key);
   map.set(key, element);
-  
-  if (low < array.length - 1 && low > 0)
+
+  if (nextKey != null)
   {
-    let nextElement = map.get(array[low - 1]);
-    if (nextElement)
+    let nextElement = map.get(nextKey);
+    if (nextElement != null)
     {
       root.insertBefore(element, nextElement);
       return;
