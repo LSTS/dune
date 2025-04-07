@@ -42,7 +42,7 @@ namespace DUNE
     //! Log file prefix.
     static const char* c_log_prefix = "Data_";
 
-    BasicDeviceDriver::BasicDeviceDriver(const std::string &name, Tasks::Context &ctx):
+    BasicDeviceDriver::BasicDeviceDriver(const std::string& name, Tasks::Context& ctx):
       Tasks::Task(name, ctx),
       m_sm_state(SM_IDLE),
       m_wait_msg_timeout(0.0),
