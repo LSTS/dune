@@ -39,6 +39,7 @@ namespace Simulators
 }
 
 #include <VSIM/ASV.hpp>
+#include <VSIM/Boat.hpp>
 #include <VSIM/Engine.hpp>
 #include <VSIM/Fin.hpp>
 #include <VSIM/Force.hpp>

@@ -137,6 +137,15 @@ macro(dune_probe_cxx)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
       endif(PROFILE)
 
+      # remove warning psab #
+      set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -Wno-psabi")
+      # remove warning array-bounds #
+      set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -Wno-array-bounds")
+      # remove warning stringop-overflow #
+      if (NOT DUNELEGACY)
+        set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -Wno-stringop-overflow")
+      endif(NOT DUNELEGACY)
+
       set(DUNE_CXX_FLAGS_STRICT "-Wall -Wshadow -pedantic")
       set(DUNE_C_FLAGS_STRICT "-Wall -Wshadow -pedantic")
       set(DUNE_CXX_FLAGS_LOOSE  "")

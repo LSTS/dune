@@ -77,22 +77,17 @@ namespace Power
             float time_full;
           };
 
-          //! Serial port
-          SerialPort* m_uart;
-          //! Interrupt/Poll for serial port
-          Poll m_poll;
-          //! number of cell to read
-          int m_numberCell;
-
-
-          DriverBatMan(DUNE::Tasks::Task* task, SerialPort* uart, Poll poll, int numberCell):
+          DriverBatMan(DUNE::Tasks::Task* task, IO::Handle* handle, int numberCell):
             m_task(task)
           {
-            m_uart = uart;
-            m_poll = poll;
+            m_handle = handle;
             m_timeout_uart = 1.0f;
             m_numberCell = numberCell;
             resetStateNewData();
+            std::memset(&bfr_rx, '\0', sizeof(bfr_rx));
+            cnt_bfr_rx = 0;
+            m_state_data_in = STATE_DATA_IN_PREAMBLE;
+            m_new_data_in = false;
           }
 
           ~DriverBatMan(void){}
@@ -141,11 +136,18 @@ namespace Power
           }
 
           bool
-          stopAcquisition(void)
+          stopAcquisition(bool wait_reply = true)
           {
-            if (sendCommand("@STOP,*", ""))
+            if (wait_reply)
+            {
+              if (sendCommand("@STOP,*", "$RSP,ACK,,*"))
+                return true;
+            }
+            else
+            {
+              sendCommandNoRsp("@STOP,*");
               return true;
-
+            }
             return false;
           }
 
@@ -155,140 +157,97 @@ namespace Power
             char cmdText[32];
             char cmdReplyText[32];
             std::sprintf(cmdText, "%s%c\n", cmd, (Algorithms::XORChecksum::compute((uint8_t*)cmd, strlen(cmd) - 1) | 0x80));
-            std::sprintf(cmdReplyText, "%s%c\n", reply, (Algorithms::XORChecksum::compute((uint8_t*)reply, strlen(reply) - 1) | 0x80));
+            std::sprintf(cmdReplyText, "%s", reply);
             char bfrUart[128];
-            m_task->spew("Command: %s", cmdText);
-            m_uart->writeString(cmdText);
-
-            if (Poll::poll(*m_uart, m_timeout_uart))
+            m_task->trace("Command TX: %s", cmdText);
+            m_handle->flush();
+            m_handle->writeString(cmdText);
+            char buf_rx[128];
+            std::memset(&buf_rx, '\0', sizeof(buf_rx));
+            uint8_t cnt_rx = 0;
+            uint16_t number_rx_received = 0;
+            bool exit_loop = false;
+            char csum_rx = 0x00;
+            while (Poll::poll(*m_handle, m_timeout_uart) && !exit_loop)
             {
-              m_uart->readString(bfrUart, sizeof(bfrUart));
-              m_task->spew("Reply: %s", bfrUart);
-              if (std::strcmp(bfrUart, cmdReplyText) == 0)
+              number_rx_received = m_handle->read(bfrUart, sizeof(bfrUart));
+              for(uint8_t i = 0; i < number_rx_received; i++)
               {
-                return true;
+                buf_rx[cnt_rx++] = bfrUart[i];
+
+                if (cnt_rx >= 127 || bfrUart[i] == '*')
+                {
+                  exit_loop = true;
+                  if((i + 1) < number_rx_received)
+                    csum_rx = bfrUart[i + 1];
+                  break;
+                }
               }
-              else if(std::strcmp(reply, "$VERS,") == 0)
-              {
-                char* vrs = std::strtok(bfrUart, ",");
-                vrs = std::strtok(NULL, ",");
-                m_batManData.firmVersion = vrs;
-                return true;
-              }
+              if (exit_loop)
+                break;
             }
 
+            m_handle->flush();
+
+            if (cnt_rx < 3)
+            {
+              m_task->trace("SendCommand: Invalid buffer length: %d | %s", cnt_rx, buf_rx);
+              return false;
+            }
+
+            m_task->trace("Command Reply: %s", buf_rx);
+
+            if(!verify_CRC8(buf_rx, csum_rx))
+            {
+              m_task->war("SendCommand: Invalid CRC8: %s", buf_rx);
+              return false;
+            }
+
+            if (std::strstr(reply, "$VERS,") != NULL)
+            {
+              m_batManData.firmVersion = extractBetweenCommas(buf_rx);
+              return true;
+            }
+            else if (std::strstr(buf_rx, cmdReplyText) != NULL)
+            {
+              return true;
+            }
+            else
+            {
+              m_task->war("Command failed: cmd: %s | reply: %s", cmdReplyText, buf_rx);
+            }
             return false;
           }
 
           void
           sendCommandNoRsp(const char* cmd)
           {
-            char cmdText[32];
+            char cmdText[64];
             std::sprintf(cmdText, "%s%c\n", cmd, (Algorithms::XORChecksum::compute((uint8_t*)cmd, strlen(cmd) - 1) | 0x80));
             m_task->spew("Command (no rsp): %s", cmdText);
-            m_uart->writeString(cmdText);
+            m_handle->flush();
+            m_handle->writeString(cmdText);
           }
 
           bool
           haveNewData(void)
           {
-            std::size_t rv = m_uart->readString(bfr, sizeof(bfr));
-
-            if (rv == 0)
+            int number_rx_received = 0;
+            char buf_rx[128];
+            if (Poll::poll(*m_handle, m_timeout_uart))
             {
-              m_task->err(DTR("I/O error"));
-              return false;
-            }
-
-            bfr[strlen(bfr) - 3] = '\0';
-
-            char* parameter = std::strtok(bfr, ",");
-            if(std::strcmp(parameter, "$VOLT") == 0)
-            {
-              parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.voltage);
-              m_task->debug("Volt: %.3f V", m_batManData.voltage);
-              m_batManData.state_new_data[0] = true;
-            }
-            else if(std::strcmp(parameter, "$AMPE") == 0)
-            {
-              parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.current);
-              m_task->debug("Ampe: %.3f A", m_batManData.current);
-              m_batManData.state_new_data[1] = true;
-            }
-            else if(std::strcmp(parameter, "$TEMP") == 0)
-            {
-              parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.temperature);
-              m_task->debug("Temp: %.3f C", m_batManData.temperature);
-              m_batManData.state_new_data[2] = true;
-            }
-            else if(std::strcmp(parameter, "$RCAP") == 0)
-            {
-              parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.r_cap);
-              m_task->debug("RCap: %.3f Ah", m_batManData.r_cap);
-              m_batManData.state_new_data[3] = true;
-            }
-            else if(std::strcmp(parameter, "$FCAP") == 0)
-            {
-              parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.f_cap);
-              m_task->debug("FCap: %.3f Ah", m_batManData.f_cap);
-              m_batManData.state_new_data[4] = true;
-            }
-            else if(std::strcmp(parameter, "$DCAP") == 0)
-            {
-              parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.d_cap);
-              m_task->debug("DCap: %.3f Ah", m_batManData.d_cap);
-              m_batManData.state_new_data[5] = true;
-            }
-            else if (std::strcmp(parameter, "$HEAL") == 0)
-            {
-              parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%d", &m_batManData.health);
-              m_task->debug("Health: %d %%", m_batManData.health);
-              m_batManData.state_new_data[6] = true;
-            }
-            else if (std::strcmp(parameter, "$CELL") == 0)
-            {
-              parameter = std::strtok(NULL, ",");
-              for(int i = 0; i < m_numberCell; i++)
+              number_rx_received = m_handle->read(buf_rx, 128);
+              for(uint8_t i = 0; i < number_rx_received; i++)
               {
-                parameter = std::strtok(NULL, ",");
-                std::sscanf(parameter, "%f", &m_batManData.cell_volt[i]);
-                m_task->debug("Cell %d: %.3f V", i+1, m_batManData.cell_volt[i]);
+                parseDataIn(buf_rx[i]);
               }
-              m_batManData.state_new_data[7] = true;
-              m_task->debug(" ");
             }
-            else if (std::strcmp(parameter, "$BATS") == 0)
+            if(m_new_data_in)
             {
-              parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.time_empty);
-              if (m_batManData.time_empty == 65535)
-                m_batManData.time_empty = -1;
-
-              m_task->debug("Average Time to Empty: %.0f min", m_batManData.time_empty);
-              parameter = std::strtok(NULL, ",");
-              std::sscanf(parameter, "%f", &m_batManData.time_full);
-              if (m_batManData.time_full == 65535)
-                m_batManData.time_full = -1;
-
-              m_task->debug("Average Time to Full: %.0f min", m_batManData.time_full);
-              m_batManData.state_new_data[8] = true;
+              m_new_data_in = false;
+              return true;
             }
-
-            bool result = true;
-            for(uint8_t t = 0; t < 8; t++)
-            {
-              if(m_batManData.state_new_data[t] == false)
-                result = false;
-            }
-
-            return result;
+            return false;
           }
 
           std::string
@@ -301,12 +260,252 @@ namespace Power
 
         private:
 
+          enum StateDataIn
+          {
+            STATE_DATA_IN_PREAMBLE = 0,
+            STATE_DATA_IN_DATA,
+            STATE_DATA_IN_CRC,
+            STATE_DATA_IN_END
+          };
+
           //! Parent task.
           DUNE::Tasks::Task* m_task;
           //! Timeout for new data in uart
           float m_timeout_uart;
           //! Buffer of uart
-          char bfr[64];
+          char bfr_rx[256];
+          //! Counter of buffer
+          uint16_t cnt_bfr_rx;
+          //! IO::Handle
+          IO::Handle* m_handle;
+          //! number of cell to read
+          int m_numberCell;
+          //! State of message byte data in
+          uint8_t m_state_data_in;
+          //! Flag to control new DataIn
+          bool m_new_data_in;
+
+          bool
+          parseFloat(char* parameter, const char* label, float& target, int stateIndex)
+          {
+            parameter = std::strtok(nullptr, ",");
+            if (!parameter)
+            {
+              m_task->trace(DTR("Invalid input format: %s"), label);
+              return false;
+            }
+            if (std::sscanf(parameter, "%f", &target) != 1)
+            {
+              m_task->war(DTR("Failed to parse %s"), label);
+              return false;
+            }
+            m_task->debug("%s: %.3f", label, target);
+            m_batManData.state_new_data[stateIndex] = true;
+            return true;
+          };
+
+          bool
+          parseInt(char* parameter, const char* label, int& target, int stateIndex)
+          {
+            parameter = std::strtok(nullptr, ",");
+            if (!parameter)
+            {
+              m_task->trace(DTR("Invalid input format: %s"), label);
+              return false;
+            }
+            if (std::sscanf(parameter, "%d", &target) != 1)
+            {
+              m_task->war(DTR("Failed to parse %s"), label);
+              return false;
+            }
+            m_task->debug("%s: %d", label, target);
+            m_batManData.state_new_data[stateIndex] = true;
+            return true;
+          };
+
+          std::string
+          extractBetweenCommas(const char* str)
+          {
+            // Find the first comma
+            const char* firstComma = strchr(str, ',');
+            // Find the second comma after the first one
+            const char* secondComma = (firstComma != nullptr) ? strchr(firstComma + 1, ',') : nullptr;
+            if (firstComma && secondComma)
+            {
+              // Extract the part between the commas
+              return std::string(firstComma + 1, secondComma - firstComma - 1);
+            }
+            // Return an empty string if commas are not found correctly
+            return "";
+          }
+
+          bool
+          verify_CRC8(char* data, char received_csum)
+          {
+            char csum = 0x00;
+            uint16_t t = 0;
+            while (data[t] != '*' && data[t] != '\0')
+            {
+              csum ^= data[t];
+              t++;
+            }
+
+            csum |= 0x80;
+            m_task->trace("csum: 0x%02x, received_csum: 0x%02x", (uint8_t)csum, (uint8_t)received_csum);
+            if(csum != received_csum)
+            {
+              m_task->war("Invalid CRC8:Data:%s | 0x%02x (C) != 0x%02x (R)", data, (uint8_t)csum, (uint8_t)received_csum);
+              return false;
+            }
+            return csum == received_csum;
+          }
+
+          void
+          parseDataIn(char data)
+          {
+            switch (m_state_data_in)
+            {
+              case STATE_DATA_IN_PREAMBLE:
+                if (data == '$')
+                {
+                  m_new_data_in = false;
+                  m_state_data_in = STATE_DATA_IN_DATA;
+                  cnt_bfr_rx = 0;
+                  std::memset(&bfr_rx, '\0', sizeof(bfr_rx));
+                  bfr_rx[cnt_bfr_rx++] = data;
+                }
+                break;
+              case STATE_DATA_IN_DATA:
+                if (data == '*')
+                {
+                  m_state_data_in = STATE_DATA_IN_CRC;
+                  bfr_rx[cnt_bfr_rx++] = data;
+                }
+                else if(cnt_bfr_rx >= 255)
+                {
+                  m_task->war("Buffer overflow on DataIn");
+                  m_handle->flush();
+                  m_state_data_in = STATE_DATA_IN_PREAMBLE;
+                }
+                else
+                {
+                  bfr_rx[cnt_bfr_rx++] = data;
+                }
+                break;
+              case STATE_DATA_IN_CRC:
+                bfr_rx[cnt_bfr_rx++] = data;
+                if (verify_CRC8(bfr_rx, data))
+                {
+                  m_state_data_in = STATE_DATA_IN_END;
+                }
+                else
+                {
+                  m_state_data_in = STATE_DATA_IN_PREAMBLE;
+                }
+                break;
+              case STATE_DATA_IN_END:
+                m_handle->flush();
+                m_task->trace("DataIn: %s", bfr_rx);
+                m_new_data_in = decodeDataIn(bfr_rx);
+                m_state_data_in = STATE_DATA_IN_PREAMBLE;
+                break;
+            }
+          }
+
+          bool
+          decodeDataIn(char* bfr)
+          {
+            char* parameter = std::strtok(bfr, ",");
+            if (!parameter)
+            {
+              m_task->trace(DTR("Invalid input format"));
+              return false;
+            }
+
+            if (std::strstr(parameter, "$VOLT"))
+            {
+              if (!parseFloat(parameter, "Voltage", m_batManData.voltage, 0))
+                return false;
+            }
+            else if (std::strstr(parameter, "$AMPE"))
+            {
+              if (!parseFloat(parameter, "Current", m_batManData.current, 1))
+                return false;
+            }
+            else if (std::strstr(parameter, "$TEMP"))
+            {
+              if (!parseFloat(parameter, "Temperature", m_batManData.temperature, 2))
+                return false;
+            }
+            else if (std::strstr(parameter, "$RCAP"))
+            {
+              if (!parseFloat(parameter, "Remaining Capacity", m_batManData.r_cap, 3))
+                return false;
+            }
+            else if (std::strstr(parameter, "$FCAP"))
+            {
+              if (!parseFloat(parameter, "Full Capacity", m_batManData.f_cap, 4))
+                return false;
+            }
+            else if (std::strstr(parameter, "$DCAP"))
+            {
+              if (!parseFloat(parameter, "Design Capacity", m_batManData.d_cap, 5))
+                return false;
+            }
+            else if (std::strstr(parameter, "$HEAL"))
+            {
+              if (!parseInt(parameter, "Health", m_batManData.health, 6))
+                return false;
+            }
+            else if (std::strstr(parameter, "$CELL"))
+            {
+              //ignore first value (number of cells)
+              parameter = std::strtok(nullptr, ",");
+              for (int i = 0; i < m_numberCell; ++i)
+              {
+                parameter = std::strtok(nullptr, ",");
+                if (!parameter)
+                {
+                  m_task->trace(DTR("Invalid input format: Cell Voltage %d"), i + 1);
+                  return false;
+                }
+                if (std::sscanf(parameter, "%f", &m_batManData.cell_volt[i]) != 1)
+                {
+                  m_task->war(DTR("Failed to parse Cell Voltage %d"), i + 1);
+                  return false;
+                }
+                m_task->debug("Cell %d: %.3f V", i + 1, m_batManData.cell_volt[i]);
+              }
+              m_batManData.state_new_data[7] = true;
+            }
+            else if (std::strstr(parameter, "$BATS"))
+            {
+              if (!parseFloat(parameter, "Time to Empty", m_batManData.time_empty, 8))
+                return false;
+
+              if (m_batManData.time_empty == 65535)
+                m_batManData.time_empty = -1;
+
+              parameter = std::strtok(nullptr, ",");
+              if (!parameter)
+              {
+                m_task->trace(DTR("Invalid input format: Time to Full"));
+                return false;
+              }
+              if (std::sscanf(parameter, "%f", &m_batManData.time_full) != 1)
+              {
+                m_task->war(DTR("Failed to parse Time to Full"));
+                return false;
+              }
+              if (m_batManData.time_full == 65535)
+                m_batManData.time_full = -1;
+
+              m_task->debug("Time to Full: %.0f min", m_batManData.time_full);
+              m_batManData.state_new_data[8] = true;
+            }
+
+            return std::all_of(std::begin(m_batManData.state_new_data), std::end(m_batManData.state_new_data), [](bool state) { return state; });
+          }
       };
     }
 }

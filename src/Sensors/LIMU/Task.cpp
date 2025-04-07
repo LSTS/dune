@@ -268,10 +268,19 @@ namespace Sensors
         {
           UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
           if (info.isDevelopment())
+          {
             war(DTR("device is using unstable firmware"));
+          }
           else
+          {
+            std::string fw_version = String::str("%u.%u.%u", info.major, info.minor, info.patch);
+            IMC::VersionInfo vi;
+            vi.version = fw_version;
+            vi.op = IMC::VersionInfo::OP_REPLY;
+            dispatch(vi);
             inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
+          }
 
           return true;
         }
@@ -405,6 +414,9 @@ namespace Sensors
         inf(DTR("new hard-iron calibration parameters: %.4f, %.4f, 0.0"),
             m_args.hard_iron[0],
             m_args.hard_iron[1]);
+
+        // remove pending deactivations
+        requestActivation();
       }
 
       //! Decode output data frame.

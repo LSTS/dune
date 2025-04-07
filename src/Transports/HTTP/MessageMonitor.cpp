@@ -55,12 +55,18 @@ namespace Transports
       m_meta = os.str();
     }
 
+    void
+    MessageMonitor::setLogEntry(unsigned int number_lines)
+    {
+      m_log_entry = number_lines;
+    }
+
     MessageMonitor::~MessageMonitor(void)
     {
       ScopedMutex l(m_mutex);
 
       {
-        std::map<unsigned, IMC::Message*>::iterator itr = m_msgs.begin();
+        std::map<uint64_t, IMC::Message*>::iterator itr = m_msgs.begin();
         for (; itr != m_msgs.end(); ++itr)
           delete itr->second;
       }
@@ -119,7 +125,7 @@ namespace Transports
 
       os << "  'dune_messages': [\n";
 
-      std::map<unsigned, IMC::Message*>::iterator itr = m_msgs.begin();
+      std::map<uint64_t, IMC::Message*>::iterator itr = m_msgs.begin();
       itr->second->toJSON(os);
       ++itr;
 
@@ -140,7 +146,7 @@ namespace Transports
 
       GzipCompressor cmp;
       std::string str = os.str();
-      cmp.compress(m_msgs_json, (char*)str.c_str(), (unsigned long)str.size());
+      cmp.compress(m_msgs_json, (char*)str.c_str(), (uint64_t)str.size());
 
       return &m_msgs_json;
     }
@@ -154,8 +160,7 @@ namespace Transports
         updatePowerChannel(static_cast<const IMC::PowerChannelState*>(msg));
 
       IMC::Message* tmsg = msg->clone();
-      unsigned key = tmsg->getId() << 24 | tmsg->getSubId() << 8 | tmsg->getSourceEntity();
-
+      uint64_t key = tmsg->getId() << 8 | tmsg->getSourceEntity();
       if (m_msgs[key])
         delete m_msgs[key];
 

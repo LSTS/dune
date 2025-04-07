@@ -27,8 +27,63 @@
 
 body
 {
-  font-family: Arial, Helvetica, sans;
-  color: #666;
+  background-color: #f5f5f5;
+  font-family: 'Roboto', sans-serif;
+  color: var(--c-color-text);
+}
+
+button {
+  background-color: #f5f3f8;
+  color: black;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px var(--c-color-text);
+  transition: background-color 0.3s;
+  font-size: 10px;
+  border-radius: 8px;
+}
+
+button:hover {
+  background-color: #b0a5ca;
+  color: #000000;
+  transform: scale(1.1);
+}
+
+button.active {
+  background-color: rgb(158, 191, 201);
+  color: black;
+  transition: transform 0.3s ease-in-out, background-color 0.3s ease;
+  transform: scale(1.1);
+  cursor: grab;
+}
+
+button:disabled {
+  background-color: rgb(223, 217, 217);
+  color: rgb(167, 161, 161);
+  transition: transform 0.3s ease-in-out, background-color 0.3s ease;
+  transform: scale(1);
+  cursor: not-allowed;
+}
+
+button.loading {
+  background-color: rgb(223, 217, 217);
+  color: rgb(167, 161, 161);
+  cursor: wait;
+}
+
+input[type="text"], input[type="number"], textarea {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 4px;
+  width: 6%;
+  transition: border-color 0.3s;
+}
+
+input:focus {
+  border-color: #6200ea;
+  outline: none;
 }
 
 a
@@ -43,10 +98,9 @@ input
 
 #x-body-table
 {
-  width: 900px;
+  width: 75%;
   margin-left: auto;
   margin-right: auto;
-  border-collapse: collapse
 }
 
 #x-copyright
@@ -58,6 +112,10 @@ input
 #x-container
 {
   padding: 1em;
+}
+
+.infoTable {
+  border-radius: 8px !important;
 }
 
 #Logs
@@ -79,21 +137,30 @@ input
   padding-left: 5px;
 }
 
+div#Sensors {
+  max-height: 85vh;
+  overflow-y: scroll;
+}
+
 #Sensors table
 {
-  border-collapse: collapse;
-  margin-bottom: 1em;
+  margin-bottom: 0.5em;
+  border-spacing: 0 4px;
 }
 
 #Sensors table:last-child
 {
-  margin-bottom: 0em;
+  margin-bottom: 0.5em;
 }
 
 #Sensors th
 {
-  background-color: #777;
-  color: white;
+  /*Sensors title*/
+  background-color: var(--c-background-h-l);
+  color: var(--c-color-text-h-l);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  padding: 6px;
 }
 
 #Sensors td
@@ -101,20 +168,32 @@ input
   padding: 2px;
   padding-left: 5px;
   padding-right: 5px;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+#Sensors tr
+{
+  border: solid var(--c-color-text) thin;
+  border-collapse: collapse;
+  border: none;
 }
 
 #Sensors td:first-child
 {
-  background-color: #ddd;
+  /**/
+  background-color: var(--c-color-entity-sensor-background);
   font-weight: bold;
   width: 150px;
-  text-align: left;
+  text-align: center;
+  color: var(--c-color-entity-sensor-color-label);
 }
 
-#Sensors tr , #Sensors td, #Sensors th
+#Sensors td:nth-child(3)
 {
-  border: solid black thin;
-  border-collapse: collapse;
+  text-align: center !important;
 }
 
 #Sensors table
@@ -126,12 +205,16 @@ input
 
 #Sensors td:last-child
 {
-  text-align: right;
+  text-align: center;
 }
 
 #ConnectionIcon
 {
   border: none;
+  width: 34px;
+  height: 34px;
+  background-size: contain;
+  background-repeat: no-repeat;
 }
 
 div.Hidden
@@ -168,7 +251,7 @@ td.entryRight
 h1
 {
   font-size: 14px;
-  color: #666;
+  color: var(--c-color-text);
   text-align: left;
 }
 
@@ -181,39 +264,59 @@ hr
 p.INFO
 {
     text-align: left;
-    color: #538b01;
+    color: var(--c-color-info);
 }
 
 p.WARNING
 {
     text-align: left;
-    color: #E5C100;
+    color: var(--c-color-warning);
 }
 
 p.ERROR
 {
     text-align: left;
-    color: #B22222;
+    color: var(--c-color-error);
 }
 
 p.CRITICAL
 {
     text-align: left;
     font-weight: bold;
-    color: #B22222;
+    color: var(--c-color-critical);
 }
 
 p.DEBUG
 {
     text-align: left;
     font-weight: bold;
+    color: var(--c-color-debug);
 }
 
-#MainOverviewLeft, #MainOverviewRight
+#logbook-filters {
+    display: none;
+}
+
+#MainOverviewLeft
+{
+  margin-left: 70px;
+  margin-right: auto;
+  width: 80%;
+  text-align: center;
+  /*padding: 10px 18px;*/
+  /*border-radius: 18px;*/
+  /*box-shadow: 0 1px 2px var(--c-color-text);*/
+}
+
+#MainOverviewRight
 {
   margin-left: auto;
-  margin-right: auto;
+  margin-right: 80px;
+  width: 20%;
   text-align: center;
+  /*padding: 10px 18px;*/
+  /*border-radius: 18px;*/
+  /*box-shadow: 0 1px 2px var(--c-color-text);*/
 }
 
 #MenuBar
@@ -234,7 +337,7 @@ p.DEBUG
   height: 31px;
   display: inline;
   z-index: 10;
-  background: url(../images/menu/bg_navi_sublist.gif) -5000px 0 no-repeat;
+  margin-bottom: -1px;
 }
 
 #Menu ul
@@ -250,9 +353,12 @@ p.DEBUG
   float: left;
   position: relative;
   margin: 0;
+  margin-right: 1px;
   padding: 0;
   list-style: none;
-  background: url(../images/menu/btn_navi_right.gif) 100% 0 no-repeat;
+  background-image: linear-gradient(to top,#2b2b2b, #555555);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 #Menu li a
@@ -264,12 +370,13 @@ p.DEBUG
   font-weight: bold;
   text-decoration: none;
   padding: 6px 13px 0 13px;
-  background: url(../images/menu/btn_navi_left.gif) 0 0 no-repeat;
 }
 
-#Menu li.First a, #Menu li.FirstSelected a
+#Menu li.FirstSelected a
 {
-  background: url(../images/menu/btn_navi_left_first.gif) 0 0 no-repeat;
+  background-image: linear-gradient(to top,#ffffff, #707070);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
 #Menu li ul
@@ -281,7 +388,7 @@ p.DEBUG
   width: 200px;
   display: none;
   text-align: left;
-  background: url(../images/menu/bg_navi_sublist.gif) 0 100% no-repeat;
+  background-image: linear-gradient(to top,#2b2b2b, #555555);
   padding: 0 0 10px 0;
   z-index: 10;
 }
@@ -291,7 +398,7 @@ p.DEBUG
   clear: both;
   color: white;
   text-align: left;
-  background-image: none;
+  /* background-image: none; */
   font-size: 15px;
 }
 
@@ -308,14 +415,13 @@ p.DEBUG
 
 #Menu li:hover, #Menu li.Selected, #Menu li.FirstSelected
 {
-  background-position: 100% -100px;
+  background-image: linear-gradient(to top,#ffffff, #707070);
 }
 
 #Menu li:hover a, #Menu li.Selected a, #Menu li.FirstSelected a
 {
-  background-position: 0 -100px;
   color: #394852;
-  border-bottom: solid #f6f6f6 thin;
+  border-bottom: solid #fff thin;
 }
 
 #Menu li.Static
@@ -337,19 +443,24 @@ p.DEBUG
 
 #MainTaskTableDiv
 {
-  width: 80%;
+  max-height: 60vh;
+  overflow-y: scroll;
+  width: 90%;
   margin-left: auto;
   margin-right: auto;
 }
 
 #MainTaskTable
 {
-  border-collapse: collapse;
+  overflow-y: auto;
 }
 
 #MainTaskTable tr
 {
-  border-bottom: solid #999 thin;
+  /*border-bottom: solid var(--c-color-line-split-tasks) thin;*/
+  padding: 10px 18px;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px var(--c-color-text);
 }
 
 #MainTaskTable tr:last-child
@@ -366,12 +477,25 @@ p.DEBUG
 #MainTaskTable th
 {
   width: 150px;
+  padding: 0px 18px;
+}
+
+#Power div{
+  max-height: 85vh;
+  overflow-y: scroll;
 }
 
 #Power th
 {
-  background-color: #777;
-  color: white;
+  background-color: var(--c-background-h-l);
+  color: var(--c-color-text-h-l);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  padding: 6px;
+}
+
+#Power td form {
+  text-align: center;
 }
 
 #Power table tr td
@@ -393,8 +517,8 @@ p.DEBUG
   width: 95%;
   margin-left: auto;
   margin-right: auto;
-  border-collapse: collapse;
-  margin-bottom: 1em;
+  margin-bottom: 0.5em;
+  border-spacing: 0 4px;
 }
 
 #Power table tr
@@ -405,4 +529,318 @@ p.DEBUG
 #Power table form *
 {
   margin: 5px;
+}
+
+#systemName {
+  font-size: 1.5em;
+  font-weight: bold;
+  padding: 10px 18px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px var(--c-color-text);
+  margin-bottom: 1px;
+  /*color: var(--c-color-text-system-name);*/
+  color: #000000;
+  display: inline-block;
+  margin-bottom: 12px;
+  background-color: var(--c-background);
+}
+
+input[type="checkbox"] {
+  display: none;
+}
+
+label {
+  position: relative;
+  padding-left: 40px;
+  padding-top: 0px;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+}
+
+.custom-checkbox {
+  position: absolute;
+  left: 18px;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--c-color-text);
+  background-color: #fff;
+  border-radius: 4px;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+input[type="checkbox"]:checked + .custom-checkbox {
+  background-color: var(--c-color-checkbox-hover);
+  border-color: var(--c-color-checkbox-hover);
+}
+
+input[type="checkbox"]:checked + .custom-checkbox::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 4px;
+  height: 7px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+label:hover .custom-checkbox {
+  border-color: var(--c-color-info);
+}
+
+.form-group {
+  display: flex;
+  align-items: center;
+  margin: 0.9rem 0;
+  background-color: var(--c-background-h-l);
+  color: var(--c-color-text-h-l);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--c-color-text);
+  padding: 6px;
+}
+
+.material-label {
+  font-size: 16px;
+  margin-right: 0.75rem;
+  user-select: none;
+  color: var(--c-color-text);
+}
+
+.material-select {
+  flex: 0.3;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.material-select:focus {
+  border-color: #6200ea;
+}
+
+.material-select:valid + .material-label,
+.material-select:not(:placeholder-shown) + .material-label {
+  top: -0.75rem;
+  left: 0.75rem;
+  font-size: 0.25rem;
+  color: #6200ea;
+}
+
+.announces-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background-color: var(--c-background-h-l);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
+.announce-section {
+  background-color: var(--c-background);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.announce-title-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 10px;
+  border-bottom: 1px solid var(--c-color-border);
+  transition: background-color 0.3s ease;
+}
+
+.announce-title-container:hover {
+  background-color: var(--c-color-hover);
+}
+
+.announce-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.announce-arrow {
+  font-size: 18px;
+  color: var(--c-color-text-secondary);
+  transition: transform 0.3s ease;
+}
+
+.announce-section.open .announce-arrow {
+  transform: rotate(180deg);
+}
+
+.announce-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Define 2 columns */
+  gap: 12px; /* Add spacing between items */
+  padding: 0;
+  margin: 16px 0 0; /* Add spacing at the top of the list */
+}
+
+.announce-item {
+  display: flex;
+  flex-direction: column; /* Stack protocol, IP, and port */
+  padding: 8px;
+  /*background-color: var(--c-color-disabled);*/
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: justify; /* Justify the text */
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.announce-item:hover {
+  transform: translateY(-4px); /* Add a hover effect to "lift" the card */
+  box-shadow: 0 4px 8px rgba(125, 125, 245, 0.562);
+}
+
+/* Style for collapsed sections */
+.announce-section .announce-list {
+  display: none; /* Hide the list when the section is collapsed */
+}
+
+.announce-section.open .announce-list {
+  display: block; /* Show the list when the section is open */
+}
+
+/* Tooltip (popup) style */
+.announce-tooltip {
+  display: none;  /* Hidden by default */
+  position: absolute;
+  background-color: var(--c-color-text);
+  color: var(--c-background);
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+/* Position the tooltip relative to the section title */
+.announce-title:hover + .announce-tooltip {
+  display: block; /* Show tooltip on hover */
+}
+
+/* Apply color to links in announce items */
+.announce-item a {
+  color: #4fa3f7;  /* Set link color */
+  text-decoration: underline;   /* Underline links */
+}
+
+/* Hover effect for links */
+.announce-item a:hover {
+  color: #ffcc00;  /* Set hover color */
+  background-color: #e3f2fd;  /* Background color on hover */
+}
+
+.announce-item span {
+  display: block; /* Ensure each part is on its own line */
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.announce-item .protocol {
+  color: var(--c-color-info);
+  font-weight: bold;
+}
+
+.announce-item .ip {
+  font-size: 13px;
+  color: var(--c-color-secondary-text);
+}
+
+.announce-item .port {
+  font-size: 12px;
+  color: var(--c-color-disabled);
+}
+
+/* Add a hover effect to clickable items */
+.announce-item:hover span.protocol {
+  color: #2196f3;
+  text-decoration: underline;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 600px) {
+  .announce-list {
+    grid-template-columns: 1fr; /* Single column on small screens */
+  }
+}
+
+.cpu-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin-right: 4px;
+  background-image: var(--cpu-icon-url);
+}
+
+#MainTaskTable tr[data-state="0"] td,
+#MainTaskTable tr[data-state="0"] th {
+  /*background-color: var(--c-color-warning);*/
+  border-radius: 18px;
+}
+
+#MainTaskTable tr[data-state="2"] td,
+#MainTaskTable tr[data-state="2"] th,
+#MainTaskTable tr[data-state="3"] td,
+#MainTaskTable tr[data-state="3"] th,
+#MainTaskTable tr[data-state="4"] td,
+#MainTaskTable tr[data-state="4"] th {
+  /*background-color: var(--c-color-error);*/
+  border-radius: 18px;
+}
+
+#MainTaskTable th.rounded-corner {
+  background-color: var(--c-background);
+  border-radius: 18px;
+}
+
+#MainTaskTable tr[data-state="0"] th.rounded-corner {
+  background-color: var(--c-color-warning);
+  border-radius: 18px;
+}
+
+#MainTaskTable tr[data-state="2"] th.rounded-corner,
+#MainTaskTable tr[data-state="3"] th.rounded-corner,
+#MainTaskTable tr[data-state="4"] th.rounded-corner {
+  background-color: var(--c-color-error_2);
+  border-radius: 18px;
+}
+
+.gauge-container {
+  position: relative;
+  width: 200px;
+  height: 18px;
+  background-color: var(--c-background-h-l);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.gauge-bar {
+  height: 100%;
+  width: 0%;
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+.gauge-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #000000;
+  font-size: 12px;
 }

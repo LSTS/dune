@@ -199,10 +199,19 @@ namespace Sensors
           m_psu_ctl = new UCTK::Interface(m_psu_escc);
           UCTK::FirmwareInfo info = m_psu_ctl->getFirmwareInfo();
           if (info.isDevelopment())
+          {
             war(DTR("device is using unstable firmware"));
+          }
           else
+          {
+            std::string fw_version = String::str("%u.%u.%u", info.major, info.minor, info.patch);
+            IMC::VersionInfo vi;
+            vi.version = fw_version;
+            vi.op = IMC::VersionInfo::OP_REPLY;
+            dispatch(vi);
             inf(DTR("firmware version %u.%u.%u"), info.major,
                 info.minor, info.patch);
+          }
 
           // Open IMU.
           m_imu_escc = new Hardware::ESCC(m_args.imu_dev);

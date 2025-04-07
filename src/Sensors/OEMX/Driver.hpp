@@ -207,6 +207,10 @@ namespace Sensors
         std::replace(typeCTD.begin(), typeCTD.end(), '\n', '\0');
 
         m_ctdData.ctdInfo = typeCTD + version + serialCTD;
+        IMC::VersionInfo vi;
+        vi.version = version;
+        vi.op = IMC::VersionInfo::OP_REPLY;
+        m_task->dispatch(vi);
       }
 
       std::string

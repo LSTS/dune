@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6347d9defff7438e2a2031366a35e122                            *
+// IMC XML MD5: 6e8033743562af8755e5e0350f6d63ca                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -45,6 +45,7 @@ MESSAGE(14, EntityActivationState)
 MESSAGE(15, QueryEntityActivationState)
 MESSAGE(16, VehicleOperationalLimits)
 MESSAGE(20, MsgList)
+MESSAGE(21, RamUsage)
 MESSAGE(50, SimulatedState)
 MESSAGE(51, LeakSimulation)
 MESSAGE(52, UASimulation)
@@ -350,9 +351,15 @@ MESSAGE(906, ApmStatus)
 MESSAGE(907, SadcReadings)
 MESSAGE(908, DmsDetection)
 MESSAGE(909, HomePosition)
+MESSAGE(911, AbsoluteWind)
+MESSAGE(912, AisInfo)
+MESSAGE(913, ENCAwareness)
+MESSAGE(915, Displacement)
 MESSAGE(1014, CurrentProfile)
 MESSAGE(1015, CurrentProfileCell)
 MESSAGE(1016, ADCPBeam)
+MESSAGE(1017, Frequency)
+MESSAGE(1018, WaveSpectrumParameters)
 MESSAGE(2000, GpioState)
 MESSAGE(2001, GpioStateGet)
 MESSAGE(2002, GpioStateSet)
@@ -361,4 +368,5 @@ MESSAGE(2004, FluorescentDissolvedOrganicMatter)
 MESSAGE(2006, TotalMagIntensity)
 MESSAGE(2010, CommRestriction)
 MESSAGE(2021, VersionInfo)
+MESSAGE(2022, TotalHeading)
 #undef MESSAGE

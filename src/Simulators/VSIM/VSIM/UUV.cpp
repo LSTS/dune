@@ -99,18 +99,6 @@ namespace Simulators
       std::memcpy(m_body_lift_coef, coefs, sizeof(double) * 8);
     }
 
-    void
-    UUV::addFin(Fin* f)
-    {
-      addForce(f);
-    }
-
-    void
-    UUV::updateFin(unsigned int id, double act)
-    {
-      id = Fin::encodeId(id);
-      updateact(id, act);
-    }
 
     void
     UUV::applyRestoringForcesMoments(void)

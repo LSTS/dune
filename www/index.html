@@ -1,63 +1,159 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
-          "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
-  <head>
-    <title>DUNE - Control Center</title>
-    <link rel="icon" type="image/vnd.microsoft.icon" href="images/dune.ico"/>
-    <link rel="stylesheet" type="text/css" href="css/default.css"/>
 
-    <script type="text/javascript" src="js/Icons.js"></script>
+<head>
+  <title>DUNE - Control Center</title>
+  <link rel="icon" type="image/vnd.microsoft.icon" href="images/icons/dune.ico" />
+  <link rel="stylesheet" type="text/css" href="css/default.css" />
 
-    <script type="text/javascript" src="js/HTTP.js"></script>
-    <script type="text/javascript" src="js/Date.js"></script>
-    <script type="text/javascript" src="js/Gauge.js"></script>
-    <script type="text/javascript" src="js/TextLabel.js"></script>
-    <script type="text/javascript" src="js/AbbrevToLabel.js"></script>
-    <script type="text/javascript" src="js/Utils.js"></script>
-    <script type="text/javascript" src="js/Angles.js"></script>
+  <script type="text/javascript" src="js/Icons.js"></script>
 
-    <!-- Sections -->
-    <script type="text/javascript" src="js/Sections.js"></script>
-    <script type="text/javascript" src="js/BasicSection.js"></script>
-    <script type="text/javascript" src="js/Logs.js"></script>
-    <script type="text/javascript" src="js/Main.js"></script>
-    <script type="text/javascript" src="js/Power.js"></script>
-    <script type="text/javascript" src="js/Sensors.js"></script>
-    <script type="text/javascript" src="js/Logbook.js"></script>
-    <script type="text/javascript" src="index.js"></script>
-  </head>
+  <script type="text/javascript" src="js/HTTP.js"></script>
+  <script type="text/javascript" src="js/Date.js"></script>
+  <script type="text/javascript" src="js/ChartBar.js"></script>
+  <script type="text/javascript" src="js/Gauge.js"></script>
+  <script type="text/javascript" src="js/TextLabel.js"></script>
+  <script type="text/javascript" src="js/AbbrevToLabel.js"></script>
+  <script type="text/javascript" src="js/Utils.js"></script>
+  <script type="text/javascript" src="js/Angles.js"></script>
 
-  <body>
-    <table id="x-body-table">
-      <tr>
-        <td id="MenuBar">
-          <div id="Menu">
-            <ul>
-              <li id="Main" class="First"><a href="javascript:show('Main')">Main</a></li>
-              <li id="Sensors"><a href="javascript:show('Sensors')">Sensors</a></li>
-              <!-- <li id="Logs"><a href="javascript:show('Logs')">Logs</a></li> -->
-              <!-- <li id="Services"><a href="#">Services</a></li> -->
-              <li id="Power"><a href="javascript:show('Power')">Power</a></li>
-	          <li id="Logbook"><a href="javascript:show('Logbook')">Logbook</a></li>
-              <!-- <li id="Help"><a href="#">Help</a></li> -->
-              <li class="Static"><a href="#"><img id="ConnectionIcon" src="images/normal.png" title="Connected" alt="Connected"/></a></li>
-            </ul>
+  <!-- Sections -->
+  <script type="text/javascript" src="js/Sections.js"></script>
+  <script type="text/javascript" src="js/BasicSection.js"></script>
+  <script type="text/javascript" src="js/Announces.js"></script>
+  <script type="text/javascript" src="js/Main.js"></script>
+  <script type="text/javascript" src="js/Power.js"></script>
+  <script type="text/javascript" src="js/Sensors.js"></script>
+  <script type="text/javascript" src="js/Logbook.js"></script>
+  <script type="text/javascript" src="index.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--c-background);
+    }
+
+    /* White theme */
+    body.theme-light {
+      --cpu-icon-url: url('../images/icons/cpu-light.png');
+      --c-background: #ffffff;
+      --c-color-text: #131212;
+      --c-color-text-system-name: #000000;
+      --c-background-h-l: #d6d5c4;
+      --c-color-text-h-l: #2e2929;
+      --c-color-line-split-tasks: #726e6e;
+      --c-color-entity-sensor-background: #d4d1d1;
+      --c-color-entity-sensor-color-label: #000000;
+      --c-color-info: #538b01;
+      --c-color-warning: #E5C100;
+      --c-color-error: #B22222;
+      --c-color-error_2: #c74848;
+      --c-color-critical: #B22222;
+      --c-color-debug: #000000;
+      --c-color-checkbox-hover: #6885e2;
+      --c-color-disabled: #cccccc;
+      --c-color-link: #3893e9;
+      /* Add other styles for white theme */
+    }
+
+
+    /* Dark theme */
+    body.theme-dark {
+      --cpu-icon-url: url('../images/icons/cpu-dark.png');
+      --c-background: #363636;
+      --c-color-text: #ffffff;
+      --c-color-text-system-name: #e7e2e2;
+      --c-background-h-l: #707070;
+      --c-color-text-h-l: #ffffff;
+      --c-color-line-split-tasks: #9ec0c0;
+      --c-color-entity-sensor-background: #a59891;
+      --c-color-entity-sensor-color-label: #3a3838;
+      --c-color-info: #38af1a;
+      --c-color-warning: #E5C100;
+      --c-color-error: #c74848;
+      --c-color-critical: #c74848;
+      --c-color-debug: #ffffff;
+      --c-color-checkbox-hover: #e2ba9a;
+      --c-color-disabled: #666666;
+      --c-color-link: #3893e9;
+      /* Add other styles for dark theme */
+    }
+
+    body.theme-dark form input:disabled {
+      color: #cccccc;
+    }
+  </style>
+</head>
+
+<body class="theme-light"> <!-- Default white theme -->
+  <table id="x-body-table">
+    <tr>
+      <td id="MenuBar">
+        <div id="Menu">
+          <ul>
+            <li id="Main" class="First"><a href="javascript:show('Main')">Main</a></li>
+            <li id="Sensors"><a href="javascript:show('Sensors')">Sensors</a></li>
+            <li id="Power"><a href="javascript:show('Power')">Power</a></li>
+            <li id="Logbook"><a href="javascript:show('Logbook')">Logbook</a></li>
+            <li id="Announces"><a href="javascript:show('Announces')">Discovery Tool</a></li>
+            <!-- <li id="Help"><a href="#">Help</a></li> -->
+            <li class="Static"><a href="#"><img id="ConnectionIcon" src="images/icons/system-off.png" title="Connected"
+                alt="Connected" style="margin-top: -7px;" /></a></li>
+            <li class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/icons/dark-switch.png"
+                  title="Theme Change" alt="Light" style="max-width: 16px; max-height: 16px;"></a></li>
+          </ul>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td class="infoTable"
+        style="background-color: var(--c-background); padding: 0em; border: solid var(--c-color-text) thin;">
+        <div id="x-container">
+          <div class="logbook-filter">
+            <div id="logbook-filters" style="display: none;">
+              <div class="form-group">
+                <label for="context-filter" class="material-label">Filter by Entity:</label>
+                <select id="context-filter" class="material-select"
+                  onchange="g_logbook.selectedContext = this.value; g_logbook.update();">
+                  <option value="all">Show All</option>
+                </select>
+                <label><input type="checkbox" class="material-checkbox" id="filter-info" checked><span
+                    class="custom-checkbox"></span> INFO</label>
+                <label><input type="checkbox" class="material-checkbox" id="filter-warning" checked><span
+                    class="custom-checkbox"></span> WARNING</label>
+                <label><input type="checkbox" class="material-checkbox" id="filter-error" checked><span
+                    class="custom-checkbox"></span> ERROR</label>
+                <label><input type="checkbox" class="material-checkbox" id="filter-debug" checked><span
+                    class="custom-checkbox"></span> DEBUG</label>
+              </div>
+            </div>
           </div>
-        </td>
-      </tr>
-      <tr>
-        <td style="background-color: #f6f6f6; padding: 0em; border: solid #aaa thin">
-          <div id="x-container">
-          </div>
-        </td>
-      </tr>
-    </table>
+      </td>
+    </tr>
+  </table>
 
-    <div id="x-copyright">
-      <p>Copyright &copy; 2007-2025 - Universidade do Porto</p>
-    </div>
+  <div id="x-copyright">
+    <p>Copyright &copy; 2007-2025 - Universidade do Porto</p>
+  </div>
 
-  </body>
+  <script>
+    function toggleTheme() {
+      var body = document.body;
+      if (body.classList.contains('theme-light')) {
+        body.classList.remove('theme-light');
+        body.classList.add('theme-dark');
+        document.getElementById('ThemeIcon').src = 'images/icons/light-switch.png';
+      } else {
+        body.classList.remove('theme-dark');
+        body.classList.add('theme-light');
+        document.getElementById('ThemeIcon').src = 'images/icons/dark-switch.png';
+      }
+    }
+  </script>
+</body>
+
 </html>

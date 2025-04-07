@@ -88,6 +88,11 @@ namespace DUNE
       .defaultValue("None")
       .values("None, Debug, Trace, Spew");
 
+      param(DTR_RT("Loopback Internal Messages"), m_args.loopback)
+      .defaultValue("false")
+      .description("Loopback internal messages, such as EntityState"
+                   " and EntityParameters");
+
       m_recipient = new Recipient(this, ctx);
       m_entity = new Entities::StatefulEntity(this, m_ctx);
       m_entities.push_back(m_entity);
@@ -228,6 +233,7 @@ namespace DUNE
       if (m_args.elabel != m_entity->getLabel())
         m_params.set(DTR_RT("Entity Label"), m_entity->getLabel());
       m_entity->setActTimes(m_args.act_time, m_args.deact_time);
+      m_entity->setLoopback(m_args.loopback);
       m_entity->reportInfo();
 
       if (m_debug_level_string == "Debug")
@@ -446,10 +452,11 @@ namespace DUNE
           msg->setSourceEntity(getEntityId());
       }
 
-      if ((flags & DF_LOOP_BACK) == 0)
-        m_ctx.mbus.dispatch(msg, this);
-      else
+      if ((flags & DF_LOOP_BACK) ||
+          m_args.loopback)
         m_ctx.mbus.dispatch(msg);
+      else
+        m_ctx.mbus.dispatch(msg, this);
     }
 
     void
@@ -652,15 +659,16 @@ namespace DUNE
     Task::log(IMC::LogBookEntry::TypeEnum type, const char* format, std::va_list arg_list)
     {
       char bfr[c_log_message_max_size] = {0};
+      size_t rv = 0;
 
 #if defined(DUNE_SYS_HAS_VSNPRINTF)
-      vsnprintf(bfr, sizeof(bfr), format, arg_list);
+      rv = vsnprintf(bfr, sizeof(bfr), format, arg_list);
 
 #elif defined(DUNE_SYS_HAS_VSNPRINTF_S)
-      vsnprintf_s(bfr, sizeof(bfr), sizeof(bfr) - 1, format, arg_list);
+      rv = vsnprintf_s(bfr, sizeof(bfr), sizeof(bfr) - 1, format, arg_list);
 
 #else
-      std::vsprintf(bfr, format, arg_list);
+      rv = std::vsprintf(bfr, format, arg_list);
 #endif
 
       IMC::LogBookEntry log_entry;
@@ -671,6 +679,14 @@ namespace DUNE
       log_entry.htime = Time::Clock::getSinceEpoch();
 
       dispatch(log_entry);
+      //if rv value is bigger than c_log_message_max_size, replace the last 3 bytes by "..." on buffer bfr
+      if (rv >= c_log_message_max_size - 1)
+      {
+        bfr[c_log_message_max_size - 1] = '.';
+        bfr[c_log_message_max_size - 2] = '.';
+        bfr[c_log_message_max_size - 3] = '.';
+        bfr[c_log_message_max_size - 4] = ' ';
+      }
 
       switch (type)
       {

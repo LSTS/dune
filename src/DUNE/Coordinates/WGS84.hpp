@@ -26,6 +26,7 @@
 //***************************************************************************
 // Author: Eduardo Marques                                                  *
 // Author: Ricardo Martins                                                  *
+// Author: Alberto Dallolio                                                 *
 //***************************************************************************
 // These are the standard conversion routines as described in: J. Zhu,      *
 // "Conversion of Earth-centered Earth-fixed coordinates to geodetic        *
@@ -54,6 +55,8 @@ namespace DUNE
     // Export DLL Symbol.
     class DUNE_DLL_SYM WGS84;
 
+    //! Earth radius.
+    static const double c_radius = 6371000.0;
     //! Semi-major axis.
     static const double c_wgs84_a = 6378137.0;
     //! Semi-minor axis.
@@ -227,6 +230,34 @@ namespace DUNE
 
         // Call the general method
         displace(n, e, 0.00, lat, lon, &hae);
+      }
+
+      //! Get the cross-track distance (ct_dxt) from a location (lat3,lon3) from a great-circle path starting in (lat1,lon1) and ending in (lat2,lon2);
+      //! and the along-track distance (at_dxt) from the start location (lat1,lon2) to the closest point on the path to the external location (lat3,lon3).
+      //! The sign of ct_dxt tells you which side of the path the third point is on.
+      //!
+      //! @param[in] lat3 WGS-84 latitude of external coordinate (rad).
+      //! @param[in] lon3 WGS-84 longitude of external coordinate (rad).
+      //! @param[in] lat1 WGS-84 latitude of first path coordinate (rad).
+      //! @param[in] lon1 WGS-84 longitude of first path coordinate (rad).
+      //! @param[in] lat2 WGS-84 latitude of second path coordinate (rad).
+      //! @param[in] lon2 WGS-84 longitude of second path coordinate (rad).
+      //! @param[in,out] ct_dxt distance (m).
+      //! @param[in,out] at_dxt distance (m).
+      template <typename Ta, typename Tb>
+      static inline void
+      getCtAndAtDistance(Ta lat3, Ta lon3,
+                           Ta lat1, Ta lon1,
+                           Ta lat2, Ta lon2,
+                           Tb* ct_dxt, Tb* at_dxt)
+      {
+        double bearing13,range13,bearing12,range12;
+        double delta_13 = WGS84::distance(lat1,lon1,0,lat3,lon3,0);
+        double ang_dist13 = delta_13 / c_radius; // angular distance from path start location to external location.
+        WGS84::getNEBearingAndRange(lat1,lon1,lat3,lon3,&bearing13,&range13);
+        WGS84::getNEBearingAndRange(lat1,lon1,lat2,lon2,&bearing12,&range12);
+        *ct_dxt = (Tb)std::asin(std::sin(ang_dist13) * std::sin(bearing13-bearing12))*c_radius;
+        *at_dxt = (Tb)std::acos(std::cos(ang_dist13) / std::cos(*ct_dxt/c_radius))*c_radius;
       }
 
       //! Get North-East bearing and range between two

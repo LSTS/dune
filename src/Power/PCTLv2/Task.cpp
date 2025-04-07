@@ -526,6 +526,11 @@ namespace Power
       onVersion(unsigned major, unsigned minor, unsigned patch)
       {
         bool version_pre24 = false;
+        std::string fw_version = String::str("%u.%u.%u", major, minor, patch);
+        IMC::VersionInfo vi;
+        vi.version = fw_version;
+        vi.op = IMC::VersionInfo::OP_REPLY;
+        dispatch(vi);
 
         inf(DTR("firmware version %u.%u.%u"), major, minor, patch);
         if (major <= 2 && minor <= 3)

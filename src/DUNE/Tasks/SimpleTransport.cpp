@@ -86,7 +86,7 @@ namespace DUNE
       }
 
       if (m_gargs.trace_out)
-        inf(DTR("outgoing: %s"), msg->getName());
+        DUNE_MSG(getName(), "outgoing: " + std::string(msg->getName()));
 
       onDataTransmission(p, n);
     }
@@ -118,8 +118,8 @@ namespace DUNE
           dispatch(m, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
           if (m_gargs.trace_in)
-            inf(DTR("incoming: %s"), m->getName());
-
+            DUNE_MSG(getName(), "incoming: " + std::string(m->getName()));
+          
           delete m;
         }
       }

@@ -25,191 +25,181 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Edit: Pedro Gonçalves                                                    *
 //***************************************************************************
 
-function Sensors(root_id)
-{
-    this.create('Sensors', root_id);
+function Sensors(root_id) {
+  this.create('Sensors', root_id);
 };
 
 Sensors.prototype = new BasicSection;
 
 Sensors.prototype.m_msgs =
-    {
-        'Chlorophyll': { },
-        'Fluorescein': { },
-        'Phycocyanin': { },
-        'Phycoerythrin': { },
-        'RhodamineDye': { },
-        'Turbidity': { },
-        'Depth': { },
-        'Pressure': { },
-        'Temperature': { },
-        'SoundSpeed': { },
-        'Salinity': { },
-        'Conductivity': { },
-        'Current': { },
-        'Voltage': { },
-        'RSSI': { },
-        'LinkLevel':
-        {
-            'label': 'Link Level'
-        },
-        'Distance':
-        {
-            'label': 'Altitude'
-        },
-
-        'Rpm':
-        {
-            'label': 'RPMs'
-        },
-        'PH':{},
-        'Redox':{}
-    };
-
-Sensors.prototype.updateSubSection = function(msg)
 {
-    for (var i = 0; i < this.m_base.childNodes.length; i++)
-    {
-        var tbl = this.m_base.childNodes[i];
-        var hdr = tbl.firstChild.firstChild.firstChild.data;
+  'Chlorophyll': {},
+  'Fluorescein': {},
+  'Phycocyanin': {},
+  'Phycoerythrin': {},
+  'RhodamineDye': {},
+  'Turbidity': {},
+  'Depth': {},
+  'Pressure': {},
+  'Temperature': {},
+  'SoundSpeed': {},
+  'Salinity': {},
+  'Conductivity': {},
+  'Current': {},
+  'Voltage': {},
+  'RSSI': {},
+  'LinkLevel':
+  {
+    'label': 'Link Level'
+  },
+  'Distance':
+  {
+    'label': 'Altitude'
+  },
 
-        if (hdr == this.translateAbbrev(msg.abbrev))
-        {
-            this.updateValue(tbl, msg);
-            return;
-        }
-        else if (this.translateAbbrev(msg.abbrev) < hdr)
-        {
-            var ss = this.createSubSection(msg);
-            this.m_base.insertBefore(ss, tbl);
-            return;
-        }
-    }
-
-    var ss = this.createSubSection(msg);
-    this.m_base.appendChild(ss);
+  'Rpm':
+  {
+    'label': 'RPMs'
+  },
+  'PH': {},
+  'Redox': {}
 };
 
-Sensors.prototype.translateAbbrev = function(abbrev)
-{
-    if ('label' in this.m_msgs[abbrev])
-        return this.m_msgs[abbrev].label;
+Sensors.prototype.updateSubSection = function (msg) {
+  for (var i = 0; i < this.m_base.childNodes.length; i++) {
+    var tbl = this.m_base.childNodes[i];
+    var hdr = tbl.firstChild.firstChild.firstChild.data;
 
-    return abbrev;
+    if (hdr == this.translateAbbrev(msg.abbrev)) {
+      this.updateValue(tbl, msg);
+      return;
+    }
+    else if (this.translateAbbrev(msg.abbrev) < hdr) {
+      var ss = this.createSubSection(msg);
+      this.m_base.insertBefore(ss, tbl);
+      return;
+    }
+  }
+
+  var ss = this.createSubSection(msg);
+  this.m_base.appendChild(ss);
 };
 
-Sensors.prototype.createSubSection = function(msg)
-{
-    var th = document.createElement('th');
-    th.colSpan = 4;
-    th.appendChild(document.createTextNode(this.translateAbbrev(msg.abbrev)));
+Sensors.prototype.translateAbbrev = function (abbrev) {
+  if ('label' in this.m_msgs[abbrev])
+    return this.m_msgs[abbrev].label;
 
-    var tr = document.createElement('tr');
-    tr.appendChild(th);
-
-    var tbl = document.createElement('table');
-    tbl.appendChild(tr);
-
-    this.updateValue(tbl, msg);
-
-    return tbl;
+  return abbrev;
 };
 
-Sensors.prototype.updateValue = function(parent, msg)
-{
-    var el = this.resolveEntity(msg.src_ent);
+Sensors.prototype.createSubSection = function (msg) {
+  var th = document.createElement('th');
+  th.colSpan = 4;
+  th.appendChild(document.createTextNode(this.translateAbbrev(msg.abbrev)));
 
-    for (var i = 1; i < parent.childNodes.length; i++)
-    {
-        var tr = parent.childNodes[i];
-        var ent = tr.firstChild.firstChild.data;
+  var tr = document.createElement('tr');
+  tr.appendChild(th);
 
-        if (ent == el)
-        {
-            this.updateField(tr, msg);
-            return;
-        }
-        else if (el < ent)
-        {
-            var vn = this.createValue(msg);
-            parent.insertBefore(vn, tr);
-            return;
-        }
-    }
+  var tbl = document.createElement('table');
+  tbl.appendChild(tr);
 
-    var vn = this.createValue(msg);
-    parent.appendChild(vn);
+  this.updateValue(tbl, msg);
+
+  return tbl;
 };
 
-Sensors.prototype.createValue = function(msg)
-{
-    var td_label = document.createElement('td');
-    td_label.appendChild(document.createTextNode(this.resolveEntity(msg.src_ent)));
+Sensors.prototype.updateValue = function (parent, msg) {
+  var el = this.resolveEntity(msg.src_ent);
 
-    var td_value = document.createElement('td');
-    td_value.style.width = '50px';
-    td_value.appendChild(document.createTextNode(''));
+  for (var i = 1; i < parent.childNodes.length; i++) {
+    var tr = parent.childNodes[i];
+    var ent = tr.firstChild.firstChild.data;
 
-    var td_desc = document.createElement('td');
-    td_desc.style.textAlign = 'left';
-    td_desc.appendChild(document.createTextNode(''));
+    if (ent == el) {
+      this.updateField(tr, msg);
+      return;
+    }
+    else if (el < ent) {
+      var vn = this.createValue(msg);
+      parent.insertBefore(vn, tr);
+      return;
+    }
+  }
 
-    var img_status = document.createElement('img');
-    img_status.src = g_icons.path('normal');
-
-    var td_status = document.createElement('td');
-    td_status.style.width = '25px';
-    td_status.style.textAlign = 'center';
-    td_status.style.verticalAlign = 'middle';
-    td_status.appendChild(img_status);
-
-    var tr = document.createElement('tr');
-    tr.appendChild(td_label);
-    tr.appendChild(td_value);
-    tr.appendChild(td_desc);
-    tr.appendChild(td_status);
-
-    this.updateField(tr, msg);
-
-    return tr;
+  var vn = this.createValue(msg);
+  parent.appendChild(vn);
 };
 
-Sensors.prototype.updateField = function(root, msg)
-{
-    var state = this.getEntityStateState(msg);
+Sensors.prototype.createValue = function (msg) {
+  var td_label = document.createElement('td');
+  td_label.appendChild(document.createTextNode(this.resolveEntity(msg.src_ent)));
 
-    if ((g_data.dune_time_current - msg.time) > 10.0)
-    {
-        root.childNodes[2].firstChild.data = 'inactive';
-        root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
-        if (!state)
-            state = 2;
-    }
-    else
-    {
-        root.childNodes[2].firstChild.data = this.getEntityStateDesc(msg, 'active');
-        if (!state)
-            state = 1;
-    }
+  var td_value = document.createElement('td');
+  td_value.style.width = '50px';
+  td_value.appendChild(document.createTextNode(''));
 
-    if (state)
-    {
-        root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
-    }
+  var td_desc = document.createElement('td');
+  td_desc.style.textAlign = 'left';
+  td_desc.appendChild(document.createTextNode(''));
 
-    root.childNodes[1].firstChild.data = Number(msg.value).toFixed(2);
+  var img_status = document.createElement('img');
+  img_status.src = g_icons.path('normal');
+  img_status.style.width = '18px';
+
+  var td_status = document.createElement('td');
+  td_status.style.width = '25px';
+  td_status.style.textAlign = 'center';
+  td_status.style.verticalAlign = 'middle';
+  td_status.appendChild(img_status);
+
+  var tr = document.createElement('tr');
+  tr.appendChild(td_label);
+  tr.appendChild(td_value);
+  tr.appendChild(td_desc);
+  tr.appendChild(td_status);
+
+  this.updateField(tr, msg);
+
+  return tr;
 };
 
-Sensors.prototype.update = function()
-{
-    for (var i in g_data.dune_messages)
-    {
-        var msg = g_data.dune_messages[i];
-        if (msg.abbrev in this.m_msgs)
-        {
-            this.updateSubSection(msg);
-        }
+Sensors.prototype.updateField = function (root, msg) {
+  var date = new Date(msg.timestamp * 1000);
+  var hours = date.getHours();
+  var minutes = "0" + date.getMinutes();
+  var seconds = "0" + date.getSeconds();
+  var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+
+  var dif = g_data.dune_time_current - msg.timestamp;
+  var totalSeconds = Math.floor(dif);
+  var h = Math.floor(totalSeconds / 3600);
+  var m = Math.floor((totalSeconds % 3600) / 60);
+  var s = totalSeconds % 60;
+  var formattedDiff = (h > 0 ? h + 'h ' : '') + (m > 0 ? m + 'm ' : '') + s + 's';
+
+  if (totalSeconds > 10.0) {
+    state = 0;
+    root.childNodes[2].firstChild.data = 'INACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
+  } else {
+    state = 1;
+    root.childNodes[2].firstChild.data = 'ACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
+  }
+
+  root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
+  root.childNodes[3].firstChild.style.width = '18px';
+  root.childNodes[1].firstChild.data = Number(msg.value).toFixed(2);
+};
+
+Sensors.prototype.update = function () {
+  if (g_data.dune_messages) {
+    for (var i in g_data.dune_messages) {
+      var msg = g_data.dune_messages[i];
+      if (msg.abbrev in this.m_msgs) {
+        this.updateSubSection(msg);
+      }
     }
+  }
 };

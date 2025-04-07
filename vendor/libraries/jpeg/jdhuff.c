@@ -928,7 +928,7 @@ decode_mcu_AC_refine (j_decompress_ptr cinfo, JBLOCKROW *MCU_data)
 
     Se = cinfo->Se;
     p1 = 1 << cinfo->Al;	/* 1 in the bit position being coded */
-    m1 = ((unsigned int) -1) << cinfo->Al;  /* -1 in the bit position being coded */
+    m1 = ~0U << cinfo->Al; 
     natural_order = cinfo->natural_order;
 
     /* Load up working state */
