@@ -32,6 +32,11 @@ function Sensors(root_id)
 {
   this.create('Sensors', root_id);
 
+  this.m_subsections = new Map();
+  this.m_subsectionsOrderedkeys = [];
+  this.m_values = new Map();
+  this.m_valuesOrderedkeys = new Map();
+
   this.handleData = this.handleData.bind(this);
   this.requestData = this.requestData.bind(this);
   this.errorHandler = this.errorHandler.bind(this);
@@ -43,11 +48,6 @@ Sensors.prototype.constructor = Sensors;
 
 Sensors.prototype.start = function()
 {
-  this.m_subsections = new Map();
-  this.m_subsectionsOrderedkeys = [];
-  this.m_values = new Map();
-  this.m_valuesOrderedkeys = new Map();
-
   this.requestData();
 };
 
