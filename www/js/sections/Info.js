@@ -40,6 +40,11 @@ function Info(root_id)
   this.createHeader('Tasks');
   this.createTasksTable();
 
+  this.m_tasks = new Map();
+  this.m_tasksOrderedkeys = [];
+  this.m_cpu_usage = new Map();
+  this.m_dune_cpu_usage_eid = null;
+
   self = this;
 
   this.handleData = this.handleData.bind(this);
@@ -51,11 +56,6 @@ Info.prototype.constructor = Info;
 
 Info.prototype.start = function()
 {
-  this.m_tasks = new Map();
-  this.m_tasksOrderedkeys = [];
-  this.m_cpu_usage = new Map();
-  this.m_dune_cpu_usage_eid = null;
-
   this.requestData();
 }
 
