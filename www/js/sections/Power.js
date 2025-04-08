@@ -36,6 +36,9 @@ function Power(root_id)
   
   this.create('Power', root_id);
 
+  this.m_powerChannels = new Map();
+  this.m_powerChannelsOrderedKeys = [];
+
   this.m_sbase = document.createElement('div');
   this.m_sbase.style.width = '100%';
 
@@ -68,9 +71,6 @@ Power.prototype.constructor = Power;
 
 Power.prototype.start = function()
 {
-  this.m_powerChannels = new Map();
-  this.m_powerChannelsOrderedKeys = [];
-
   this.requestData();
 }
 
