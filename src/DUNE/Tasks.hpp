@@ -40,6 +40,7 @@ namespace DUNE
 #include <DUNE/Tasks/Factory.hpp>
 #include <DUNE/Tasks/Exceptions.hpp>
 #include <DUNE/Tasks/Consumer.hpp>
+#include <DUNE/Tasks/FilteredConsumer.hpp>
 #include <DUNE/Tasks/Periodic.hpp>
 #include <DUNE/Tasks/Profiles.hpp>
 #include <DUNE/Tasks/Task.hpp>
