@@ -109,7 +109,7 @@ namespace Transports
       {
       }
 
-      // If DCCL active: Encode the PlanSpecification with DCCL lib and dispatch and Acoustic resquest transmission to send it over acoustic
+      // If DCCL active: Encode the PlanSpecification with DCCL lib and dispatch an Acoustic resquest transmission to send it over acoustic
       void
       consume(const IMC::PlanSpecification* msg)
       {
@@ -118,11 +118,8 @@ namespace Transports
           int num = msg->getPayloadSerializationSize();
           std::string plan_id = msg->plan_id;
           std::string start_man_id = msg->start_man_id;
-          //IMC::MessageList<DUNE::IMC::PlanTransition> transitions = msg->transitions;
 
-          //inf("IMC INPUT MESSAGE BYTE: %d", num);
-
-          inf("########################################## ENCODE WITH DCCL LIB ##########################################");
+          inf("Encoding Plan Specification msg with DCCL Lib");
           std::string encoded_bytes; 
           
           IMC_DCCL::PlanSpecification msg_planspec;
@@ -311,7 +308,7 @@ namespace Transports
 
           std::string msgNoHex = String::fromHex(encoded_bytes);
 
-          inf("########################################## DECODE DCCL PLAN ##########################################");
+          inf("Decoding Acoustic Msg with DCCL");
 
           codec.load<IMC_DCCL::PlanSpecification>();
           IMC_DCCL::PlanSpecification msg_planspec_rec;
