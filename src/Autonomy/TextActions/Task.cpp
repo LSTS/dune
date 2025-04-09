@@ -41,6 +41,12 @@ namespace Autonomy
   {
     using DUNE_NAMESPACES;
 
+    // THIS SHOULD BE A PARAMETER
+    //! Config section from where to fetch emergency sms number
+    const std::string c_sms_section = "Monitors.Emergency";
+    //! Config field from where to fetch emergency sms number
+    const std::string c_sms_field = "SMS Recipient Number";
+
     struct Task: public DUNE::Tasks::Task
     {
       //! last received PlanControlState
@@ -405,13 +411,16 @@ namespace Autonomy
 
       //!Execute command 'phone' for the one in args or for origin if the args is null
       void
-	  handleChangeNumCommand(const std::string& origin,const std::string& args)
+	    handleChangeNumCommand(const std::string& origin,const std::string& args)
       {
     	  std::string newNum,foo;
     	  std::stringstream ss;
     	  if(args.empty())
-    		  newNum = origin;
-    	  else {
+        {
+          newNum = origin;
+        }
+    	  else 
+        {
     		  splitCommand(args,newNum,foo); //retrieves the first arg
     		  newNum = sanitize(newNum);
     		  if(!checkNumber(newNum))
@@ -422,15 +431,20 @@ namespace Autonomy
     			  return; //Not a valid phone number
     		  }
     	  }
-    		  IMC::EntityParameter parmeter;
-    		  parmeter.name = "SMS Recipient Number";
-    		  parmeter.value = newNum;
-    		  IMC::SetEntityParameters params;
-    		  params.name = "Emergency Monitor";
-    		  params.params.push_back(parmeter);
-    		  dispatch(params, DF_LOOP_BACK);
-    		  ss << "Changed emergency number " << " to " << newNum;
-    		  reply(origin,ss.str());
+
+        // Add new number to the list of recipients
+        std::string recipients = m_ctx.config.get(c_sms_section, c_sms_field);
+        recipients += "," + newNum;
+
+        IMC::EntityParameter parmeter;
+        parmeter.name = "SMS Recipient Number";
+        parmeter.value = recipients;
+        IMC::SetEntityParameters params;
+        params.name = "Emergency Monitor";
+        params.params.push_back(parmeter);
+        dispatch(params, DF_LOOP_BACK);
+        ss << "Changed emergency number " << " to " << newNum;
+        reply(origin,ss.str());
       }
 
       //! Execute command 'INFO'
