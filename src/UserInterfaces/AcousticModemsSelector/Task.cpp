@@ -340,12 +340,12 @@ namespace UserInterfaces
           sep.setDestination(getSystemId());
           sep.name = getEntityLabel();
 
-          for (const auto& param: msg->params)
+          for (const auto& it: msg->params)
           {
-            if (param->name == m_args.uan_modems_param)
+            if (it->name == m_args.uan_modems_param)
             {
               std::unordered_set<std::string> config;
-              String::split(param->value, ",", config);
+              String::split(it->value, ",", config);
               for (const auto& type: config)
               {
                 if (m_types.find(type) != m_types.end())
