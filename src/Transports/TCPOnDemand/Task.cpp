@@ -200,14 +200,9 @@ namespace Transports
       }
 
       uint16_t
-      createInternalId(){
-        if(m_reqid==0xFFFF){
-          m_reqid=0;
-        }
-        else{
-          m_reqid++;
-        }
-        return m_reqid;
+      createInternalId(void)
+      {
+        return ++m_reqid;
       }
 
       //! Remove message from the queue. Resets timer. And unlocks the queue
