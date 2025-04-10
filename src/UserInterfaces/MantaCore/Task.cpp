@@ -414,13 +414,13 @@ namespace UserInterfaces
         
         if (msg->name == m_args.ams_elabel)
         {
-          for (const auto& param: msg->params)
+          for (const auto& it: msg->params)
           {
-            std::string type = getAcousticModemType(param->name);
+            std::string type = getAcousticModemType(it->name);
             if (m_types.find(type) == m_types.end())
               continue;
 
-            m_amodems[param->name] = param->value == "true";
+            m_amodems[it->name] = it->value == "true";
           }
 
           if (m_amodems.size() > 0)
