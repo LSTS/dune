@@ -873,3 +873,8 @@ div#Sensors
   color: #2196f3;
   text-decoration: underline;
 }
+
+.acoustic-modem-row
+{
+  background-color: var(--c-background);
+}

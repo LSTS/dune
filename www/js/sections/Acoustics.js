@@ -223,7 +223,6 @@ Acoustics.prototype.fillAcousticsModemsList = function(modemsList, selection)
     row.style.border = "1px solid #ccc";
     row.style.borderRadius = "5px";
     row.style.marginBottom = "10px";
-    row.style.backgroundColor = "#f9f9f9";
 
     const label = document.createElement("span");
     label.textContent = modemName;
