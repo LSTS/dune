@@ -234,14 +234,9 @@ namespace Transports
       }
 
       uint16_t
-      createInternalId()
+      createInternalId(void)
       {
-        if (m_reqid == 0xFFFF)
-          m_reqid = 0;
-        else
-          m_reqid++;
-
-        return m_reqid;
+        return ++m_reqid;
       }
 
       void
