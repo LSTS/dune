@@ -141,7 +141,7 @@ namespace UserInterfaces
         void
         consume(const IMC::Announce* msg)
         {
-          m_announces[msg->getSource()] = *msg;
+          m_announces.insert({msg->getSource(), *msg});
         }
 
         void
