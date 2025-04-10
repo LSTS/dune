@@ -77,14 +77,8 @@ namespace UserInterfaces
       std::string cmd_pwr_down_abort;
       //! CPU power channel.
       std::string pwr_chn_cpu;
-      //! Name of supported systems.
-      std::vector<std::string> systems;
-      //! List of sections with system names.
-      std::vector<std::string> sys_addr_sections;
-      //! Set of excluded systems.
-      std::vector<std::string> sys_exclude;
-      //! Reply to AcousticSystemsQuery requests
-      bool reply_asq;
+      //! UAN entity label.
+      std::string uan_elabel;
     };
 
     struct Task: public Tasks::Task
@@ -113,18 +107,20 @@ namespace UserInterfaces
       uint16_t m_reqid;
       //! Progress bar.
       unsigned m_prog_bar;
-      //! Supported umodem system names.
-      std::set<std::string> m_addrs_umodem;
+      //! UAN Entity Id.
+      uint8_t m_uan_id;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
+        m_sys_itr(m_sys.end()),
         m_mode(MODE_NONE),
         m_power_down(false),
         m_power_down_now(false),
         m_cmd(0),
         m_last_acop(-1.0),
         m_reqid(0),
-        m_prog_bar(0)
+        m_prog_bar(0),
+        m_uan_id(AddressResolver::invalid())
       {
         // Define configuration parameters.
         param("Banner", m_args.banner)
@@ -159,25 +155,13 @@ namespace UserInterfaces
         .defaultValue("")
         .description("CPU power channel");
 
-        param("Sections of System Addresses", m_args.sys_addr_sections)
-        .defaultValue("")
-        .description("List of table names");
-
-        param("System Names", m_args.systems)
-        .defaultValue("")
-        .description("Array of supported system names");
-
-        param("Exclude System Names", m_args.sys_exclude)
-        .defaultValue("broadcast")
-        .description("List of excluded systems");
-
-        param("Reply to System Queries", m_args.reply_asq)
-        .defaultValue("false");
+        param("UAN - Entity Label", m_args.uan_elabel)
+        .defaultValue("Acoustic Access Controller")
+        .description("UAN entity label.");
 
         // Register listeners.
         bind<IMC::ButtonEvent>(this);
-        bind<IMC::AcousticOperation>(this);
-        bind<IMC::AcousticSystemsQuery>(this);
+        bind<IMC::AcousticSystems>(this);
         bind<IMC::PowerOperation>(this);
         bind<IMC::TransmissionStatus>(this);
         bind<IMC::Abort>(this);
@@ -186,39 +170,6 @@ namespace UserInterfaces
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.systems))
-        {
-          if (m_args.systems.empty())
-          {
-            for (unsigned i = 0; i < m_args.sys_addr_sections.size(); ++i)
-            {
-              std::vector<std::string> addrs = m_ctx.config.options(m_args.sys_addr_sections[i]);
-              m_sys.insert(addrs.begin(), addrs.end());
-
-              if(!strcmp(m_args.sys_addr_sections[i].c_str(), "Micromodem Addresses") ||
-                 !strcmp(m_args.sys_addr_sections[i].c_str(), "Micromodem Addresses - DMSMW"))
-                m_addrs_umodem.insert(addrs.begin(), addrs.end());
-            }
-
-          }
-          else
-          {
-            m_sys.insert(m_args.systems.begin(), m_args.systems.end());
-
-            std::vector<std::string> addrs = m_ctx.config.options("Micromodem Addresses");
-            m_addrs_umodem.insert(addrs.begin(), addrs.end());
-            std::vector<std::string> addrs_dmsmw = m_ctx.config.options("Micromodem Addresses - DMSMW");
-            m_addrs_umodem.insert(addrs_dmsmw.begin(), addrs_dmsmw.end());
-          }
-
-          // Remove our name from the list.
-          m_sys.erase(getSystemName());
-          for (size_t i = 0; i < m_args.sys_exclude.size(); ++i)
-            m_sys.erase(m_args.sys_exclude[i]);
-
-          m_sys_itr = m_sys.begin();
-          m_acoustic_systems.list = String::join(m_sys.begin(), m_sys.end(), ",");
-        }
       }
 
       void
@@ -239,6 +190,19 @@ namespace UserInterfaces
 
         selectSystem(false);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onEntityResolution(void)
+      {
+        try
+        {
+          m_uan_id = resolveEntity(m_args.uan_elabel);
+        }
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
+        {
+          war(DTR("%s"), e.what());
+        }
       }
 
       void
@@ -271,62 +235,35 @@ namespace UserInterfaces
       void
       requestAbort(const std::string& sys)
       {
-        if(m_addrs_umodem.find(sys) != m_addrs_umodem.end())
-        {
-          IMC::AcousticOperation acop;
-          acop.setDestination(getSystemId());
-          acop.system = sys;
-          acop.op = IMC::AcousticOperation::AOP_ABORT;
-          dispatch(&acop, DF_LOOP_BACK);
-        }
-        else
-        {
-          sendMessage(sys, IMC::TransmissionRequest::DMODE_ABORT);
-          abortSystem(sys);
-        }
+        sendMessage(sys, IMC::TransmissionRequest::DMODE_ABORT);
+        abortSystem(sys);
       }
 
       void
       requestPing(const std::string& sys)
       {
-        if(m_addrs_umodem.find(sys) != m_addrs_umodem.end())
-        {
-          IMC::AcousticOperation acop;
-          acop.setDestination(getSystemId());
-          acop.system = sys;
-          acop.op = IMC::AcousticOperation::AOP_RANGE;
-          dispatch(&acop, DF_LOOP_BACK);
-        }
-        else
-        {
-          sendMessage(sys, IMC::TransmissionRequest::DMODE_RANGE);
-          pingSystem(sys);
-        }
+        sendMessage(sys, IMC::TransmissionRequest::DMODE_RANGE);
+        pingSystem(sys);
       }
 
       void
-      sendMessage(const std::string& sys, int code){
+      sendMessage(const std::string& sys, int code)
+      {
         IMC::TransmissionRequest tr;
         tr.setDestination(getSystemId());
         tr.destination     = sys;
-        tr.deadline =  Time::Clock::getSinceEpoch() + 10;
+        tr.deadline        =  Time::Clock::getSinceEpoch() + 10;
         tr.req_id          = createInternalId();
         tr.comm_mean       = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
         tr.data_mode       = code;
 
         dispatch(&tr, DF_LOOP_BACK);
-
       }
 
       uint16_t
-      createInternalId(){
-        if(m_reqid==0xFFFF){
-          m_reqid=0;
-        }
-        else{
-          m_reqid++;
-        }
-        return m_reqid;
+      createInternalId(void)
+      {
+        return ++m_reqid;
       }
 
 
@@ -340,10 +277,19 @@ namespace UserInterfaces
       }
 
       void
-      consume(const IMC::AcousticSystemsQuery* msg)
+      consume(const IMC::AcousticSystems* msg)
       {
-        if (m_args.reply_asq)
-          dispatchReply(*msg, m_acoustic_systems);
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getSourceEntity() != m_uan_id)
+          return;
+        
+        std::set<std::string> new_sys;
+        String::split(msg->list, ",", new_sys);
+        m_sys = new_sys;
+        m_sys_itr = m_sys.begin();
+        selectSystem(false);
       }
 
       void
@@ -390,9 +336,11 @@ namespace UserInterfaces
       void
       consume(const IMC::TransmissionStatus* msg)
       {
+        if (msg->getDestination() != getSystemId())
+          return;
 
-        if(msg->getDestination() != getSystemId()) return;
-        if(msg->getDestinationEntity() != getEntityId()) return;
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
 
         m_lcd.op = IMC::LcdControl::OP_WRITE1;
 
@@ -442,58 +390,6 @@ namespace UserInterfaces
       }
 
       void
-      consume(const IMC::AcousticOperation* msg)
-      {
-        m_lcd.op = IMC::LcdControl::OP_WRITE1;
-
-        switch (msg->op)
-        {
-          case IMC::AcousticOperation::AOP_RANGE_TIMEOUT:
-            m_lcd.text = fill("Timeout");
-            reset();
-            break;
-
-          case IMC::AcousticOperation::AOP_RANGE_RECVED:
-            m_lcd.text = fill(String::str("Range %0.1fm", msg->range));
-            reset();
-            break;
-
-          case IMC::AcousticOperation::AOP_ABORT_TIMEOUT:
-            m_lcd.text = fill("Timeout");
-            reset();
-            break;
-
-          case IMC::AcousticOperation::AOP_ABORT_ACKED:
-            m_lcd.text = fill("Aborted!");
-            reset();
-            break;
-
-          case IMC::AcousticOperation::AOP_UNSUPPORTED:
-            m_lcd.text = fill("Not Supported");
-            reset();
-            break;
-
-          case IMC::AcousticOperation::AOP_NO_TXD:
-            m_lcd.text = fill("No Transducer");
-            reset();
-            break;
-
-          case IMC::AcousticOperation::AOP_ABORT:
-            abortSystem(msg->system);
-            break;
-
-          case IMC::AcousticOperation::AOP_RANGE:
-            pingSystem(msg->system);
-            break;
-
-          default:
-            return;
-        }
-
-        dispatch(m_lcd);
-      }
-
-      void
       consume(const IMC::ButtonEvent* msg)
       {
         if (m_sys.empty())
@@ -520,7 +416,17 @@ namespace UserInterfaces
       selectSystem(bool increment = true)
       {
         if (m_sys.empty())
+        {
+          m_lcd.op = IMC::LcdControl::OP_WRITE0;
+          m_lcd.text = center("No Targetable");
+          dispatch(m_lcd);
+          
+          m_lcd.op = IMC::LcdControl::OP_WRITE1;
+          m_lcd.text = center("Systems");
+          dispatch(m_lcd);
+
           return;
+        }
 
         if (increment)
         {
