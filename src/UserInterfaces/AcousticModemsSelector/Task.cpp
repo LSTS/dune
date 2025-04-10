@@ -281,7 +281,6 @@ namespace UserInterfaces
       void
       dispatchAction(std::string action, std::string dest)
       {
-        war("%s to %s", action.c_str(), dest.c_str());
         IMC::TransmissionRequest treq;
         treq.setDestination(getSystemId());
         treq.comm_mean = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
