@@ -95,7 +95,7 @@ namespace UserInterfaces
         m_sat(0),
         m_targets_set(false),
         m_amodems_set(false),
-        m_uan_id(255)
+        m_uan_id(AddressResolver::invalid())
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
