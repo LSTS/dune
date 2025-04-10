@@ -280,7 +280,11 @@ namespace UserInterfaces
           if (msg->getSource() != getSystemId())
             return;
 
+#if (DUNE_LEGACY)
+          m_cpu_usage[msg->getSourceEntity()] = std::make_tuple(msg->value, msg->getTimeStamp());
+#else
           m_cpu_usage[msg->getSourceEntity()] = {msg->value, msg->getTimeStamp()};
+#endif
         }
 
         void

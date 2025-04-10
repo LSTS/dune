@@ -54,7 +54,11 @@ namespace UserInterfaces
     {
       m_entities.clear();
       for (const auto& entity: entities)
+#if (DUNE_LEGACY)
+        m_entities[entity.first] = std::make_tuple(DUNE::IMC::EntityState::ESTA_BOOT, entity.second, "");
+#else
         m_entities[entity.first] = {DUNE::IMC::EntityState::ESTA_BOOT, entity.second, ""};
+#endif
     }
 
     json
@@ -82,7 +86,11 @@ namespace UserInterfaces
     {
       unsigned id = msg->getSourceEntity();
       auto label = m_task->resolveEntity(id);
+#if (DUNE_LEGACY)
+      m_entities[id] = std::make_tuple(msg->state, label, msg->description);
+#else
       m_entities[id] = {msg->state, label, msg->description};
+#endif
     }
   }
 }
