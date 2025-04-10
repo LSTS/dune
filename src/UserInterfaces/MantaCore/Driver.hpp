@@ -91,7 +91,11 @@ namespace UserInterfaces
         case CMD_ACK:
           if (!m_queue.empty())
             m_queue.pop();
+#if (DUNE_LEGACY)
+          /*FALLTHROUGH*/
+#else
           [[fallthrough]];
+#endif
         case CMD_IDLE:
         case CMD_NACK:
         case CMD_ERROR:
@@ -281,13 +285,21 @@ namespace UserInterfaces
             if (getNetworkFreeText(text))
               break;
 
+#if (DUNE_LEGACY)
+            /*FALLTHROUGH*/
+#else
             [[fallthrough]];
+#endif
           
           case 2:
             if (getAcousticModemsFreeText(text))
               break;
 
+#if (DUNE_LEGACY)
+            /*FALLTHROUGH*/
+#else
             [[fallthrough]];
+#endif
 
           default:
           case 0:
