@@ -561,14 +561,23 @@ namespace DUNE
         m_param_editor = name;
       }
 
+      //! Default filter method. Only accepts messages from self.
+      //! @param msg message pointer.
+      //! @return true if the message is from self, false otherwise.
+      bool
+      filterSelf(const IMC::Message* msg)
+      {
+        return msg->getSource() == getSystemId();
+      }
+
       //! Bind a message to a default consumer method, with a costum filter.
       //! @param task_obj consumer task.
       //! @param filter filter method.
       template <typename M, typename T>
       void
-      bind(T* task_obj, bool (T::* filter)(const M*))
+      bindUnfiltered(T* task_obj, void (T::* consumer)(const M*) = &T::consume)
       {
-        bind(task_obj, &T::consume, filter);
+        bind(task_obj, consumer, static_cast<bool (T::*)(const M*)>(nullptr));
       }
 
       //! Bind a message to a consumer method, with an optional filter.
@@ -578,7 +587,7 @@ namespace DUNE
       template <typename M, typename T>
       void
       bind(T* task_obj, void (T::* consumer)(const M*) = &T::consume, 
-           bool (T::* filter)(const M*) = nullptr)
+           bool (T::* filter)(const M*) = reinterpret_cast<bool (T::*)(const M*)>(&Task::filterSelf))
       {
         if (filter == nullptr)
           bind(M::getIdStatic(), new Consumer<T, M>(*task_obj, consumer));
