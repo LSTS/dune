@@ -128,7 +128,7 @@ namespace Actuators
       void
       onIdle(void) override
       {
-        if (m_wdog_con.getTop() > 0 && m_wdog_con.overflow())
+        if (m_wdog_con.getTop() && m_wdog_con.overflow())
         {
           m_wdog_con.setTop(0);
           requestActivation();
