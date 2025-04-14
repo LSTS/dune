@@ -109,7 +109,7 @@ namespace Actuators
         .minimumValue("0.0f")
         .description("Frequency to send thruster actuation command.");
 
-        setWaitForMessages(1.0);
+        setWaitForMessages(1.0f);
 
         bind<IMC::DevDataText>(this);
         bind<IMC::IoEvent>(this);
