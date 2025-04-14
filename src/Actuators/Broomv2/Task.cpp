@@ -483,13 +483,14 @@ namespace Actuators
         va_start(args, fmt);
         vsprintf(bfr, fmt, args);
         va_end(args);
-        char cmd[256 + 7];
-        std::sprintf(cmd, "%c,%c,%s,%c",
+        char text[256 + 7];
+        std::sprintf(text, "%c,%c,%s,%c",
                            c_line_init,
                            code,
                            bfr,
                            c_data_term);
-        std::sprintf(cmd, "%s%c%c", cmd, calcCRC8(cmd), c_line_term);
+        char cmd[256 + 7 + 2];
+        std::sprintf(cmd, "%s%c%c", text, calcCRC8(text), c_line_term);
         sendCommand(cmd, wait_ack);
       }
 
