@@ -98,15 +98,15 @@ namespace Actuators
 
         param("Input Timeout", m_args.inp_tout)
         .units(Units::Second)
-        .defaultValue("5.0f")
-        .minimumValue("0.0f")
+        .defaultValue("5.0")
+        .minimumValue("0.0")
         .description("Input timeout");
 
         param("Thruster Command Frequency", m_args.thruster_freq)
         .units(Units::Second)
-        .maximumValue("100.0f")
-        .defaultValue("10.0f")
-        .minimumValue("0.0f")
+        .maximumValue("100.0")
+        .defaultValue("10.0")
+        .minimumValue("0.0")
         .description("Frequency to send thruster actuation command.");
 
         setWaitForMessages(1.0f);
