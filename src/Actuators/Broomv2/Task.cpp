@@ -463,12 +463,13 @@ namespace Actuators
         if (m_handle == NULL)
           return;
         
-        char cmd[64];
-        std::sprintf(cmd, "%c,%c,%c",
+        char text[64];
+        std::sprintf(text, "%c,%c,%c",
                            c_line_init,
                            code,
                            c_data_term);
-        std::sprintf(cmd, "%s%c%c", cmd, calcCRC8(cmd), c_line_term);
+        char cmd[64 + 2];
+        std::sprintf(cmd, "%s%c%c", text, calcCRC8(text), c_line_term);
         sendCommand(cmd, wait_ack);
       }
 
