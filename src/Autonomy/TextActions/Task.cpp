@@ -70,6 +70,8 @@ namespace Autonomy
         std::string help_url;
         //! List of valid commands (does not reply to anything else)
         std::vector<std::string> valid_cmds;
+        //! Password hash
+        std::string pwd_hash;
 
       } m_args;
 
@@ -90,6 +92,9 @@ namespace Autonomy
         param("Valid Commands", m_args.valid_cmds)
           .defaultValue("abort,dislodge,dive,errors,info,force,go,help,phone,reboot,sk,start,surface");
 
+        param("Hash", m_args.pwd_hash)
+          .defaultValue("");
+          
         m_db_file = m_ctx.dir_db / "Plan.db";
 
         bind<IMC::TextMessage>(this);
@@ -131,9 +136,27 @@ namespace Autonomy
         inf("Processing text message from %s: '%s'", msg->origin.c_str(),
             sanitize(msg->text).c_str());
         Memory::replace(m_last, msg->clone());
-        std::istringstream iss(msg->text);
+
+        std::string txt = msg->text;
+        if (!m_args.pwd_hash.empty())
+        {
+          // Get password
+          size_t pos = msg->text.find(" ");
+          std::string pwd_txt = msg->text.substr(0, pos);
+
+          // Check password
+          DUNE::Algorithms::Sha256 sha;
+          sha.update(pwd_txt);
+          std::string hash = sha.digest();
+          if (hash != m_args.pwd_hash)
+            return;
+
+          // Remove password from text
+          txt = txt.substr(pos + 1);
+        }
+
         std::string cmd, args;
-        splitCommand(msg->text, cmd, args);
+        splitCommand(txt, cmd, args);
         handleCommand(msg->origin, cmd, args);
       }
 
@@ -299,7 +322,7 @@ namespace Autonomy
        */
       void
       splitCommand(const std::string& text, std::string& cmd, std::string& args)
-      {
+      { 
         cmd = sanitize(text);
         size_t pos = cmd.find(" ");
 
