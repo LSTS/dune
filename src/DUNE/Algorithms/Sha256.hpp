@@ -78,7 +78,7 @@ namespace DUNE
       std::string
       digest()
       {
-        int64_t totalBits = bitLength + dataLength * 8;
+        uint64_t totalBits = bitLength + dataLength * 8;
         dataBuffer[dataLength++] = 0x80;
 
         if (dataLength > 56)
@@ -105,10 +105,10 @@ namespace DUNE
       }
 
     private:
-      int8_t dataBuffer[64];
-      int32_t state[8];
-      int32_t dataLength;
-      int64_t bitLength;
+      uint8_t dataBuffer[64];
+      uint32_t state[8];
+      uint32_t dataLength;
+      uint64_t bitLength;
 
       void
       reset()
@@ -128,7 +128,7 @@ namespace DUNE
       void
       transform()
       {
-        static const int32_t k[64] = {
+        static const uint32_t k[64] = {
           0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4,
           0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe,
           0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f,
@@ -141,7 +141,7 @@ namespace DUNE
           0xc67178f2
         };
 
-        int32_t m[64];
+        uint32_t m[64];
         for (int i = 0; i < 16; ++i)
         {
           m[i] = (dataBuffer[i * 4] << 24) | (dataBuffer[i * 4 + 1] << 16)
@@ -150,28 +150,28 @@ namespace DUNE
 
         for (int i = 16; i < 64; ++i)
         {
-          int32_t s0 = rotr(m[i - 15], 7) ^ rotr(m[i - 15], 18) ^ (m[i - 15] >> 3);
-          int32_t s1 = rotr(m[i - 2], 17) ^ rotr(m[i - 2], 19) ^ (m[i - 2] >> 10);
+          uint32_t s0 = rotr(m[i - 15], 7) ^ rotr(m[i - 15], 18) ^ (m[i - 15] >> 3);
+          uint32_t s1 = rotr(m[i - 2], 17) ^ rotr(m[i - 2], 19) ^ (m[i - 2] >> 10);
           m[i] = m[i - 16] + s0 + m[i - 7] + s1;
         }
 
-        int32_t a = state[0];
-        int32_t b = state[1];
-        int32_t c = state[2];
-        int32_t d = state[3];
-        int32_t e = state[4];
-        int32_t f = state[5];
-        int32_t g = state[6];
-        int32_t h = state[7];
+        uint32_t a = state[0];
+        uint32_t b = state[1];
+        uint32_t c = state[2];
+        uint32_t d = state[3];
+        uint32_t e = state[4];
+        uint32_t f = state[5];
+        uint32_t g = state[6];
+        uint32_t h = state[7];
 
         for (int i = 0; i < 64; ++i)
         {
-          int32_t S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
-          int32_t ch = (e & f) ^ (~e & g);
-          int32_t temp1 = h + S1 + ch + k[i] + m[i];
-          int32_t S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
-          int32_t maj = (a & b) ^ (a & c) ^ (b & c);
-          int32_t temp2 = S0 + maj;
+          uint32_t S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+          uint32_t ch = (e & f) ^ (~e & g);
+          uint32_t temp1 = h + S1 + ch + k[i] + m[i];
+          uint32_t S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+          uint32_t maj = (a & b) ^ (a & c) ^ (b & c);
+          uint32_t temp2 = S0 + maj;
 
           h = g;
           g = f;
@@ -193,8 +193,8 @@ namespace DUNE
         state[7] += h;
       }
 
-      inline int32_t
-      rotr(int32_t x, int32_t n)
+      inline uint32_t
+      rotr(uint32_t x, uint32_t n)
       {
         return (x >> n) | (x << (32 - n));
       }
