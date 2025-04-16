@@ -243,7 +243,7 @@ namespace Transports
           std::string text(msg->data.begin(), msg->data.end());
           IMC::TextMessage tm;
           tm.text = text;
-          tm.origin = "iridium";
+          tm.origin = m_args.text_origin;
           std::stringstream ss;
           tm.toText(ss);
           spew("sending this message to bus: %s", ss.str().c_str());
