@@ -91,7 +91,7 @@ namespace Autonomy
           .defaultValue("https://bit.ly/2LZ0EOc");
 
         param("Valid Commands", m_args.valid_cmds)
-          .defaultValue("abort,dislodge,dive,errors,info,force,go,help,phone,reboot,sk,start,surface");
+          .defaultValue("abort,dislodge,dive,errors,info,force,go,help,phone,pos,reboot,sk,start,surface");
 
         param("Hash", m_args.pwd_hash)
           .defaultValue("");
