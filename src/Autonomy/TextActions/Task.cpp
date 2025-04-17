@@ -510,7 +510,7 @@ namespace Autonomy
         params.name = "Emergency Monitor";
         params.params.push_back(parmeter);
         dispatch(params, DF_LOOP_BACK);
-        ss << "Changed emergency number " << " to " << newNum;
+        ss << "Added emergency number " << newNum << "to recipients list.";
         reply(origin,ss.str());
       }
 
