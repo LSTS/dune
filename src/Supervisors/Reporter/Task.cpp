@@ -50,6 +50,10 @@ namespace Supervisors
       bool radio;
       //! Radio reports periodicity.
       double radio_period;
+      //! Enable sms reports.
+      bool sms;
+      //! SMS reports periodicity.
+      double sms_period;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -89,6 +93,19 @@ namespace Supervisors
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .units(Units::Second)
         .defaultValue("3")
+        .minimumValue("1")
+        .maximumValue("600")
+        .description("Reports periodicity");
+
+        param(DTR_RT("SMS Reports"), m_args.sms)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("false")
+        .description("Enable SMS system state reporting");
+
+        param(DTR_RT("SMS Reports Periodicity"), m_args.sms_period)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .units(Units::Second)
+        .defaultValue("600")
         .minimumValue("1")
         .maximumValue("600")
         .description("Reports periodicity");
@@ -145,6 +162,27 @@ namespace Supervisors
           }
         }
 
+        if (paramChanged(m_args.sms) || paramChanged(m_args.sms_period))
+        {
+          if (m_args.sms)
+          {
+            IMC::ReportControl rc;
+            rc.op = IMC::ReportControl::OP_REQUEST_START;
+            rc.comm_interface = IMC::ReportControl::CI_GSM;
+            rc.period = m_args.sms_period;
+            rc.sys_dst = "broadcast";
+            dispatch(rc, DF_LOOP_BACK);
+          }
+          else
+          {
+            IMC::ReportControl rc;
+            rc.op = IMC::ReportControl::OP_REQUEST_STOP;
+            rc.comm_interface = IMC::ReportControl::CI_GSM;
+            rc.period = m_args.sms_period;
+            rc.sys_dst = "broadcast";
+            dispatch(rc, DF_LOOP_BACK);
+          }
+        }
 
         if (m_dispatcher.isEmpty())
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
