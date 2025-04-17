@@ -468,100 +468,10 @@ namespace Transports
         }
         else
         {
-          sendReport(incoming_data);
           text.assign(incoming_data);
           text_mode = true;
         }
         m_busy = false;
-        return true;
-      }
-
-      bool
-      sendReport(std::string text)
-      {
-        char type;
-        char origin[100];
-        unsigned hour, minute, second;
-        char location[100];
-        int fuel, bat_voltage, fuel_conf;
-        char vehicle_state;
-        int progress;
-        int res = std::sscanf(text.c_str(), "(%c) (%[^)]) %02u:%02u:%02u / %[^/]/ f:%d v:%d c:%d / s: %c / p:%d", 
-                              &type, 
-                              origin, 
-                              &hour, 
-                              &minute, 
-                              &second,
-                              location,
-                              &fuel,
-                              &bat_voltage,
-                              &fuel_conf,
-                              &vehicle_state,
-                              &progress);
-
-        if (res < 9)
-          return false;
-
-        if (type != 'R' && type != 'T')
-          return false;
-
-        if (getTask()->resolveSystemName(origin) == IMC::AddressResolver::invalid())
-        {
-          getTask()->war("Received report from unknown system name: %s", origin);
-          return false;
-        }
-
-        // Create report
-        IMC::AssetReport report;
-        report.name = origin;
-        report.report_time = Time::Clock::getSinceEpoch();
-        report.medium = IMC::AssetReport::RM_SMS;
-
-        // Parse time
-        // tm bdt = {0};
-        // bdt.tm_mday = ;
-        // bdt.tm_mon = ;
-        // bdt.tm_year = ;
-        // bdt.tm_hour = hour;
-        // bdt.tm_min = minute;
-        // bdt.tm_sec = second;
-        // time_t report_time = mktime(&bdt);
-
-        // Parse location
-        if (String::startsWith(location, "Unknown Location"))
-        {
-          getTask()->war("Received report from %s with unknown Location", origin);
-          return false;
-        }
-        else
-        {
-          // Parse location.
-          int lat_deg, lon_deg;
-          float lat_min, lon_min;
-          int loc_res = std::sscanf(location, "%d %f, %d %f ", 
-                                    &lat_deg, 
-                                    &lat_min, 
-                                    &lon_deg, 
-                                    &lon_min);
-
-          if (loc_res != 4)
-            return false;
-
-          report.lat = Angles::convertDMSToDecimal(lat_deg, lat_min);
-          report.lon = Angles::convertDMSToDecimal(lon_deg, lon_min);
-        }
-
-        if (res > 9)
-        {
-          // Parse vehicle state
-        }
-
-        if (res > 10)
-        {
-          // Parse progress
-        }
-
-        getTask()->dispatch(report);
         return true;
       }
     };
