@@ -59,7 +59,8 @@ namespace Autonomy
       int m_reqid;
       //! Plan database file.
       Path m_db_file;
-
+      //! Emergency message generator.
+      Utils::EmergencyMessage* m_emsg;
 
       //! %Task arguments
       struct Arguments
@@ -99,15 +100,19 @@ namespace Autonomy
 
         bind<IMC::TextMessage>(this);
         bind<IMC::VehicleState>(this);
+        bind<IMC::PlanGeneration>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::PlanControl>(this);
-        bind<IMC::PlanGeneration>(this);
+        bind<IMC::GpsFix>(this);
+        bind<IMC::FuelLevel>(this);
+        bind<IMC::Voltage>(this);
       }
 
       void
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_emsg = new Utils::EmergencyMessage(getSystemName());
       }
 
       void
@@ -116,18 +121,44 @@ namespace Autonomy
         Memory::clear(m_pcs);
         Memory::clear(m_vstate);
         Memory::clear(m_last);
+        Memory::clear(m_emsg);
       }
 
       void
-      consume(const IMC::PlanControlState * msg)
+      consume(const IMC::GpsFix* msg)
       {
-        Memory::replace(m_pcs, msg->clone());
+        if (msg->validity & IMC::GpsFix::GFV_VALID_POS)
+        {
+          m_emsg->update(msg);
+        }
       }
 
       void
-      consume(const IMC::VehicleState * msg)
+      consume(const IMC::FuelLevel* msg)
+      {
+        m_emsg->update(msg);
+      }
+
+      void
+      consume(const IMC::Voltage* msg)
+      {
+        try
+        {
+          if (msg->getSourceEntity() != resolveEntity("Batteries"))
+            return;
+          m_emsg->update(msg);
+        }
+        catch (std::runtime_error& e)
+        {
+          spew("Batteries entity is not present.");
+        }
+      }
+
+      void
+      consume(const IMC::VehicleState* msg)
       {
         Memory::replace(m_vstate, msg->clone());
+        m_emsg->update(msg);
       }
 
       void
@@ -136,7 +167,13 @@ namespace Autonomy
         inf("Processing text message from %s: '%s'", msg->origin.c_str(),
             sanitize(msg->text).c_str());
         Memory::replace(m_last, msg->clone());
+        
+        // Check if it is sms report
+        // If it is a report, dispatch AssetReport
+        if (isReport(msg->text))
+          return;
 
+        // Check if it is not a report, then it is a command
         std::string txt = msg->text;
         if (!m_args.pwd_hash.empty())
         {
@@ -218,6 +255,12 @@ namespace Autonomy
         }
       }
 
+      void
+      consume(const IMC::PlanControlState* msg)
+      {
+        m_emsg->update(msg);
+      }
+
       bool
       retrievePlan(const std::string& plan_id, IMC::PlanSpecification& ps)
       {
@@ -234,7 +277,6 @@ namespace Autonomy
           Database::Blob data;
           get_plan_stmt >> data;
           ps.deserializeFields((const uint8_t*)&data[0], data.size());
-
         }
         catch (std::runtime_error& e)
         {
@@ -257,12 +299,12 @@ namespace Autonomy
           throw std::invalid_argument("Invalid plan id");
         }
 
-        for (PlanManeuver *man : ps.maneuvers)
+        for (PlanManeuver* man : ps.maneuvers)
         {
           maneuvers[man->maneuver_id] = man;
         }
 
-        for (PlanTransition *pt : ps.transitions)
+        for (PlanTransition* pt : ps.transitions)
         {
           transitions[pt->source_man] = pt;
         }
@@ -276,9 +318,9 @@ namespace Autonomy
         newSpec.plan_id = ps.plan_id + "-" + man_id;
         newSpec.start_man_id = man_id;
 
-
         std::string cur_man = man_id;
-        while(!cur_man.empty()) {
+        while (!cur_man.empty())
+        {
           if (maneuvers.find(cur_man) == maneuvers.end())
           {
             throw std::invalid_argument("Invalid maneuver id");
@@ -291,7 +333,7 @@ namespace Autonomy
           }
           else
           {
-            PlanTransition *pt = transitions[cur_man];
+            PlanTransition* pt = transitions[cur_man];
             newSpec.transitions.push_back(pt);
             cur_man = pt->dest_man;
           }
@@ -300,19 +342,18 @@ namespace Autonomy
         return newSpec;
       }
 
-
       //! Checks if a string is a phone number
       bool
-	  checkNumber(const std::string& str)
+      checkNumber(const std::string& str)
       {
-    	  std::string::const_iterator it = str.begin();
-    	  if(String::startsWith(str,"+") && str.size() > 1)
-    		  it++;
-    	  else if(String::startsWith(str,"+") && str.size() <= 1)
-    		  return false;
-    	  while (it != str.end() && std::isdigit(*it))
-    		  ++it;
-    	  return !str.empty() && it == str.end();
+        std::string::const_iterator it = str.begin();
+        if (String::startsWith(str, "+") && str.size() > 1)
+          it++;
+        else if (String::startsWith(str, "+") && str.size() <= 1)
+          return false;
+        while (it != str.end() && std::isdigit(*it))
+          ++it;
+        return !str.empty() && it == str.end();
       }
 
       /**! Splits the text into command and arguments
@@ -322,7 +363,7 @@ namespace Autonomy
        */
       void
       splitCommand(const std::string& text, std::string& cmd, std::string& args)
-      { 
+      {
         cmd = sanitize(text);
         size_t pos = cmd.find(" ");
 
@@ -342,7 +383,8 @@ namespace Autonomy
       //! \param origin the original sender
       //! \param text the text to be sent back to the sender
       void
-      reply(const std::string& origin, const std::string& text) {
+      reply(const std::string& origin, const std::string& text)
+      {
         TransmissionRequest req;
         req.setDestination(m_ctx.resolver.id());
         req.data_mode = TransmissionRequest::DMODE_TEXT;
@@ -411,6 +453,8 @@ namespace Autonomy
           handleChangeNumCommand(origin, args);
         else if (cmd == "resume")
           handleResumeCommand(origin, args, false);
+        else if (cmd == "pos")
+          handlePosCommand(origin);
         else
           handlePlanGeneratorCommand(origin, cmd, args);
       }
@@ -571,10 +615,10 @@ namespace Autonomy
         (void)origin;
       }
 
-
       //! Execute command 'RESUME'
       void
-      handleResumeCommand(const std::string& origin, const std::string& args, bool ignore_errors = true)
+      handleResumeCommand(const std::string& origin, const std::string& args,
+                          bool ignore_errors = true)
       {
         char plan_id[32];
         char man_id[32];
@@ -586,7 +630,8 @@ namespace Autonomy
 
         std::stringstream ss;
 
-        try {
+        try
+        {
           PlanSpecification spec = splitPlan(sanitize(plan_id), sanitize(man_id));
           IMC::PlanControl pcontrol;
           pcontrol.arg.set(spec);
@@ -604,7 +649,8 @@ namespace Autonomy
           ss << "Resuming plan " << sanitize(plan_id) << " from maneuver " << spec.start_man_id << ".";
           reply(origin, ss.str());
         }
-        catch (std::exception& e) {
+        catch (std::exception& e)
+        {
           ss << "Error processing resume: " << e.what() << ".";
           reply(origin, ss.str());
         }
@@ -631,9 +677,18 @@ namespace Autonomy
         reply(origin, ss.str());
       }
 
+      //! Sends emergency message (position) to the origin.
+      void
+      handlePosCommand(const std::string& origin)
+      {
+        std::string s = m_emsg->get();
+        reply(origin, s);
+      }
+
       //! Sends a PlanGeneration request resulting from an unknown command.
       void
-      handlePlanGeneratorCommand(const std::string& origin, const std::string& cmd, const std::string& args)
+      handlePlanGeneratorCommand(const std::string& origin, const std::string& cmd,
+                                 const std::string& args)
       {
         IMC::PlanGeneration pg;
 
@@ -645,8 +700,74 @@ namespace Autonomy
         (void)origin;
       }
 
+      bool
+      isReport(const std::string& text)
+      {
+        EmergencyMessage::DecodedPackate decoded;
+        int res = m_emsg->decode(text, decoded);
 
+        if (res < 9)
+          return false;
 
+        if (resolveSystemName(decoded.origin) == IMC::AddressResolver::invalid())
+        {
+          war("Received report from unknown system name: %s", decoded.origin);
+          return true;
+        }
+
+        // Create report
+        IMC::AssetReport report;
+        report.name = decoded.origin;
+        report.report_time = Time::Clock::getSinceEpoch();
+        report.medium = IMC::AssetReport::RM_SMS;
+
+        // Parse time
+        // tm bdt = {0};
+        // bdt.tm_mday = ;
+        // bdt.tm_mon = ;
+        // bdt.tm_year = ;
+        // bdt.tm_hour = hour;
+        // bdt.tm_min = minute;
+        // bdt.tm_sec = second;
+        // time_t report_time = mktime(&bdt);
+
+        // Parse location
+        if (String::startsWith(decoded.location, "Unknown Location"))
+        {
+          war("Received report from %s with unknown Location", decoded.origin);
+          return true;
+        }
+        else
+        {
+          // Parse location.
+          int lat_deg, lon_deg;
+          float lat_min, lon_min;
+          int loc_res = std::sscanf(decoded.location, "%d %f, %d %f ", 
+                                    &lat_deg, 
+                                    &lat_min, 
+                                    &lon_deg, 
+                                    &lon_min);
+
+          if (loc_res != 4)
+            return true;
+
+          report.lat = Angles::convertDMSToDecimal(lat_deg, lat_min);
+          report.lon = Angles::convertDMSToDecimal(lon_deg, lon_min);
+        }
+
+        if (res > 9)
+        {
+          // Parse vehicle state
+        }
+
+        if (res > 10)
+        {
+          // Parse progress
+        }
+
+        dispatch(report);
+        return true;
+      }
 
       void
       onMain(void)
