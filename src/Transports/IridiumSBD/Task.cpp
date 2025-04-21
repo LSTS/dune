@@ -48,6 +48,8 @@ namespace Transports
     static const double c_pwr_on_delay = 5.0;
     //! Monitor delay before check state (in seconds).
     static const double c_monitor_delay = 20.0;
+    //! Clear message queue parameter name.
+    const std::string c_clear_queue_param = "Clear Message Queue";
 
     enum TxRxPriority
     {
@@ -92,6 +94,8 @@ namespace Transports
       bool monitor_modem;
       //! Monitor Iridium Task Label
       std::string monitor_task_label;
+      //! Clear Message Queue
+      bool clear_queue;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -208,6 +212,12 @@ namespace Transports
         param("Monitor Iridium Task Label", m_args.monitor_task_label)
         .defaultValue("CPC")
         .description("Monitor Iridium Task Label");
+
+        param(c_clear_queue_param, m_args.clear_queue)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("false")
+        .description("Clears the message queue");
 
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
@@ -587,6 +597,10 @@ namespace Transports
       void
       clearMessageQueue(void)
       {
+        if (!m_args.clear_queue)
+          return;
+
+        // Clear the message queue
         war("Clearing message queue with %d messages", (int)m_tx_requests.size());
         std::list<TxRequest*>::iterator itr = m_tx_requests.begin();
         while (itr != m_tx_requests.end())
@@ -595,6 +609,17 @@ namespace Transports
           delete *itr;
           itr = m_tx_requests.erase(itr);
         }
+        war("Queue cleared");
+
+        // Reset clear queue flag
+        m_args.clear_queue = false;
+        IMC::SetEntityParameters msg;
+        IMC::EntityParameter clear_queue_param;
+        clear_queue_param.name = c_clear_queue_param;
+        clear_queue_param.value = "false";
+        msg.params.push_back(clear_queue_param);
+        msg.name = getEntityLabel();
+        dispatch(msg, DF_LOOP_BACK);
       }
 
       bool
@@ -707,6 +732,7 @@ namespace Transports
             waitForMessages(1.0);
             processQueue();
             checkError();
+            clearMessageQueue();
           }
           catch(const ReadTimeout& e)
           {
