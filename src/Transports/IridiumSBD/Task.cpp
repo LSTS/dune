@@ -584,6 +584,19 @@ namespace Transports
         }
       }
 
+      void
+      clearMessageQueue(void)
+      {
+        war("Clearing message queue with %d messages", (int)m_tx_requests.size());
+        std::list<TxRequest*>::iterator itr = m_tx_requests.begin();
+        while (itr != m_tx_requests.end())
+        {
+          sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+          delete *itr;
+          itr = m_tx_requests.erase(itr);
+        }
+      }
+
       bool
       receptionSequence()
       {
