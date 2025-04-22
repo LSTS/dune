@@ -38,6 +38,8 @@ namespace Control
 {
   namespace ASV
   {
+    //! %Autopilot is responsible for actuation control
+    //! for the Autonaut wave glider, with thruster and rudder.
     namespace Autopilot
     {
       using DUNE_NAMESPACES;
