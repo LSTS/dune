@@ -84,6 +84,8 @@ namespace Transports
       bool only_local;
       // Optional custom service type
       std::string custom_service;
+      // Ignore the UDP source message filter
+      bool ign_filter;
     };
 
     // Internal buffer size.
@@ -183,6 +185,10 @@ namespace Transports
         param("Custom Service Type", m_args.custom_service)
         .defaultValue("")
         .description("Optional custom service type (imc+udp+<Custom Service Type>), empty entry gives default service (imc+udp)");
+
+        param("Ignore Filter", m_args.ign_filter)
+        .defaultValue("false")
+        .description("Ignore the UDP source message filter.");
 
         // Allocate space for internal buffer.
         m_bfr = new uint8_t[c_bfr_size];
