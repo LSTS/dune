@@ -124,7 +124,7 @@ namespace DUNE
         delete [] m_buffer;
         m_buffer = b;
         m_head = 0;
-        m_tail = newsize - 1;
+        m_tail = newsize ? newsize - 1 : 0;
         m_size = newsize;
         m_capacity = n;
       }
