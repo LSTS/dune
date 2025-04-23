@@ -59,7 +59,7 @@ namespace Control
         //! External Filter type.
         std::string ext_filter_type;
         //! Filter activation variables.
-        bool lp_filtering, n_filtering, bs_filtering, ext_filtering, course_des_filtering;
+        bool lp_filtering, n_filtering, bs_filtering, ext_filtering;
         //! Low-pass filter taps.
         double lpf_taps;
         //! Low-pass filter scaling.
@@ -338,10 +338,6 @@ namespace Control
             .defaultValue("LPF")
             .description("External user-defined filter type");
 
-          param("Activate Desired Course Filtering", m_args.course_des_filtering)
-            .defaultValue("false")
-            .description("Activate desired user-defined course filtering");
-
           param("LP taps", m_args.lpf_taps)
             .defaultValue("10.0")
             .minimumValue("1.0")
@@ -457,14 +453,6 @@ namespace Control
           {
             m_gs_interval = m_args.gain_sch_t;
             m_timer_gs.setTop(m_gs_interval);  // 60.
-          }
-
-          if (paramChanged(m_args.course_des_filtering))
-          {
-            if (m_args.course_des_filtering)
-              m_chopping = true;
-            else
-              m_chopping = false;
           }
 
           if (paramChanged(m_args.en_gain_sch))
