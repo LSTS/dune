@@ -190,8 +190,6 @@ namespace Control
         bool m_gain_sch;
         //! True if vehicle is in service mode.
         bool m_service;
-        //! Scheduling source.
-        std::string m_sch_source;
         //! Vehicle Estimated State
         IMC::EstimatedState m_estate;
         //! Longitudinal relative speed.
@@ -432,9 +430,6 @@ namespace Control
             reset();
             setup(m_args.course_gains_turn);
           }
-
-          if (paramChanged(m_args.sch_source))
-            m_sch_source = m_args.sch_source;
 
           if (paramChanged(m_args.gain_sch_t))
           {
@@ -1153,28 +1148,28 @@ namespace Control
               float Kp = 0.0;
               float Ki = 0.0;
 
-              if (m_sch_source.compare("adcp") == 0 && m_gamma_avg_adcp != 0)
+              if (m_args.sch_source.compare("adcp") == 0 && m_gamma_avg_adcp != 0)
               {
                 trace("Gamma with ADCP value %f averaged over %.3f seconds.", m_gamma_avg_adcp,
                       m_gs_interval);
                 Kp = (0.4 / m_gamma_avg_adcp) * m_args.course_gains_trans[0];
                 Ki = (0.4 / m_gamma_avg_adcp) * m_args.course_gains_trans[1];
               }
-              else if (m_sch_source.compare("adcp_old") == 0 && m_gamma_avg_adcp_old != 0)
+              else if (m_args.sch_source.compare("adcp_old") == 0 && m_gamma_avg_adcp_old != 0)
               {
                 trace("Gamma with ADCP (OLD) value %f averaged over %.3f seconds.",
                       m_gamma_avg_adcp_old, m_gs_interval);
                 Kp = (0.4 / m_gamma_avg_adcp_old) * m_args.course_gains_trans[0];
                 Ki = (0.4 / m_gamma_avg_adcp_old) * m_args.course_gains_trans[1];
               }
-              else if (m_sch_source.compare("sog") == 0 && m_gamma_avg_sog != 0)
+              else if (m_args.sch_source.compare("sog") == 0 && m_gamma_avg_sog != 0)
               {
                 trace("Gamma with SOG value %f averaged over %.3f seconds.", m_gamma_avg_sog,
                       m_gs_interval);
                 Kp = (0.4 / m_gamma_avg_sog) * m_args.course_gains_trans[0];
                 Ki = (0.4 / m_gamma_avg_sog) * m_args.course_gains_trans[1];
               }
-              else if (m_sch_source.compare("sog_old") == 0 && m_gamma_avg_sog_old != 0)
+              else if (m_args.sch_source.compare("sog_old") == 0 && m_gamma_avg_sog_old != 0)
               {
                 trace("Gamma with SOG (OLD) value %f averaged over %.3f seconds.",
                       m_gamma_avg_sog_old, m_gs_interval);
