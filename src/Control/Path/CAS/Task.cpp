@@ -503,6 +503,7 @@ namespace Control
 
           // Register handler routines.
           bind<IMC::AisInfo>(this);
+          bind<IMC::CurrentProfile>(this);
           bind<IMC::GpsFix>(this);
           bind<IMC::AbsoluteWind>(this);
           bind<IMC::ENCAwareness>(this);
