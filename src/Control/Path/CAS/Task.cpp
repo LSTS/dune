@@ -132,7 +132,6 @@ namespace Control
         std::vector<IMC::AisInfo> m_dyn_obst_vec;
         // Create matrix with past, current and next waypoint.
         Eigen::Matrix<double,3,2> m_waypoints;
-        //Math::Matrix m_waypoints;
         //! Course offsets for contours.
         std::vector<double> m_offsets;
         //! Speed offset <Output from CAS>
@@ -508,8 +507,6 @@ namespace Control
           bind<IMC::AbsoluteWind>(this);
           bind<IMC::ENCAwareness>(this);
           bind<IMC::EstimatedState>(this);
-
-          //m_waypoints = Math::Matrix(1, 3, 0.0);
 
           m_shallowest_current_cell.depth = 0.0;
           m_shallowest_current_cell.vel = 0.0;
