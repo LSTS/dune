@@ -184,8 +184,6 @@ namespace Control
         bool m_chopping;
         //! A turn is happening.
         bool m_turning;
-        //! Desired Heading is arrived.
-        bool m_des_head_arrived;
         //! Speed Over Ground.
         double m_sog;
         //! Lats, lons.
@@ -250,7 +248,6 @@ namespace Control
           m_tstep(0.0),
           m_chopping(false),
           m_turning(false),
-          m_des_head_arrived(false),
           m_gain_sch(false),
           m_service(true),
           m_avg_adcp(0),
@@ -973,7 +970,6 @@ namespace Control
           if (!isActive())
             return;
 
-          m_des_head_arrived = true;
           m_timer.reset();
 
           m_desired_course = msg->value;
@@ -1241,11 +1237,6 @@ namespace Control
                 //! Re-configure PID with new gains.
                 setup(m_args.course_gains_trans);
               }
-            }
-
-            if (m_timer.overflow())
-            {
-              m_des_head_arrived = false;
             }
           }
         }
