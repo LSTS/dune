@@ -17,6 +17,12 @@
 #include "jpeglib.h"
 
 
+#if defined(__cplusplus) && __cplusplus >= 201703L
+#define FALLTHROUGH [[fallthrough]]
+#else
+#define FALLTHROUGH /* nothing */
+#endif
+
 /* Private state */
 
 typedef enum {
@@ -693,7 +699,7 @@ prepare_for_pass (j_compress_ptr cinfo)
     master->pass_number++;
     /*FALLTHROUGH*/
 #ifndef DUNE_LEGACY
-    [[fallthrough]];
+    FALLTHROUGH;
 #endif
 #endif
     /* Do a data-output pass. */
