@@ -236,6 +236,9 @@ namespace Transports
         if (m_iri_subs.empty())
           return;
 
+        if (m_filter.filter(msg))
+          return;
+
         sendIridiumMsg(msg);
       }
 
