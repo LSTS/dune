@@ -699,6 +699,14 @@ namespace Control
         }
 
         void
+        onPathDeactivation(void)
+        {
+          //! Deactivate Heading & Speed controller.
+          disableControlLoops(IMC::CL_YAW);
+          disableControlLoops(IMC::CL_SPEED);
+        }
+
+        void
         consume(const IMC::DevDataText * msg)
         {
           // TextActions sends a message to PathControl to turn cas on/off
