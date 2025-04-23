@@ -166,8 +166,6 @@ namespace Control
         Delta m_delta;
         //! Control loops last reference
         uint32_t m_scope_ref;
-        //! External Filter Type.
-        std::string m_ext_filter_type;
         //! Low-pass filter for wave filtering.
         FilterEstimator lpf;
         //! Notch filter for wave filtering.
@@ -436,9 +434,6 @@ namespace Control
             reset();
             setup(m_args.course_gains_turn);
           }
-
-          if (paramChanged(m_args.ext_filter_type))
-            m_ext_filter_type = m_args.ext_filter_type;
 
           if (paramChanged(m_args.thrust_assist))
             m_thrust_assistance = m_args.thrust_assist;
@@ -867,7 +862,7 @@ namespace Control
               // Apply external filter coefficients.
               m_act.value = ext.step(m_act.value);
               dispatch(m_act);
-              trace("Applying a %s filter with %0.3f cut-off frequency.", m_ext_filter_type.c_str(),
+              trace("Applying a %s filter with %0.3f cut-off frequency.", m_args.ext_filter_type.c_str(),
                     m_args.ext_filter_freq);
             }
             else if (m_args.lp_filtering == true && m_args.n_filtering == false
@@ -1085,14 +1080,14 @@ namespace Control
         {
           if (m_args.ext_filtering == true)
           {
-            if (m_ext_filter_type.compare("LPF") == 0)
+            if (m_args.ext_filter_type.compare("LPF") == 0)
               ext.build(
                 "LPF", m_args.lpf_taps, 1 / m_tstep,
                 pow(2 * M_PI / (m_args.ext_filter_freq), -1));  // Assuming delta is in seconds.
-            else if (m_ext_filter_type.compare("NF") == 0)
+            else if (m_args.ext_filter_type.compare("NF") == 0)
               ext.build("NF", m_args.nf_taps, 1 / m_tstep,
                         pow(2 * M_PI / m_args.ext_filter_freq, -1));
-            else if (m_ext_filter_type.compare("BSF") == 0)
+            else if (m_args.ext_filter_type.compare("BSF") == 0)
               ext.build("BSF", m_args.nf_taps, 1 / m_tstep,
                         pow(2 * M_PI / m_args.ext_filter_freq, -1)
                           - pow(2 * M_PI / m_args.ext_filter_freq, -1) * (m_args.bsf_scaling / 100),
