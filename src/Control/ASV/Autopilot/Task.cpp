@@ -220,7 +220,7 @@ namespace Control
         Arguments m_args;
 
         //! For speed controller
-        double m_act_speed = 0;
+        double m_desired_speed;
         //! Is in teleoperation
         bool m_teleop;
 
@@ -241,6 +241,7 @@ namespace Control
           m_avg_sog_old(0),
           m_avg_zero(0),
           m_avg_one(0),
+          m_desired_speed(0.0f),
           m_teleop(false)
         {
           param("Enable Gain Scheduling", m_args.en_gain_sch)
@@ -535,11 +536,11 @@ namespace Control
               break;
           }
 
-          m_act_speed = trimValue(speed, -m_args.max_thrust, m_args.max_thrust);
+          m_desired_speed = trimValue(speed, -m_args.max_thrust, m_args.max_thrust);
 
-          inf("onDesiredSpeed %f", m_act_speed);
+          inf("onDesiredSpeed %f", m_desired_speed);
           // IMC::SetThrusterActuation act;
-          // act.value = m_act_speed;
+          // act.value = m_desired_speed;
           // dispatch(act);
         }
 
@@ -905,13 +906,13 @@ namespace Control
             value = 0.0;
 
           double turning_thrust = trimValue(value, -m_args.max_thrust, m_args.max_thrust);
-          if (turning_thrust + m_act_speed > m_args.max_thrust)
+          if (turning_thrust + m_desired_speed > m_args.max_thrust)
           {
             war("Using max thrust");
             m_thruster.value = 1;
           }
           else
-            m_thruster.value = turning_thrust + m_act_speed;
+            m_thruster.value = turning_thrust + m_desired_speed;
 
           dispatch(m_thruster);
         }
