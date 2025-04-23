@@ -223,7 +223,7 @@ namespace DUNE
           ENCManager::DepthSoundingContainer_t closest= ENCManager::DepthSoundingContainer_t();
           for (ENCManager::DepthSoundingVector::iterator itr = fourClosest.begin(); itr != fourClosest.end(); ++itr) {
             distance = Coordinates::WGS84::distance(startLat+step*stepLat, startLon+step*stepLon,0, itr->Lat, itr->Lon,0);
-            if (distance < closest_distance or closest_distance < 0.0) {
+            if (distance < closest_distance || closest_distance < 0.0) {
               closest_distance=distance;
               closest = *itr;
             }
