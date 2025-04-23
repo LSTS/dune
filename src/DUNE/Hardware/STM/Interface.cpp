@@ -32,7 +32,11 @@
 #include <cstdarg>
 #include <string>
 #include <sys/stat.h>
+
+#if defined(DUNE_SYS_HAS_UNISTD_H)
 #include <unistd.h>
+#endif
+
 #include <fstream>
 
 // DUNE headers.
