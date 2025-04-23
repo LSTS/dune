@@ -155,8 +155,6 @@ namespace Control
         double m_timestamp_obst;
         //! Timestamp for last update from obstacle.
         std::vector<double> m_last_update;
-        //! True if ground is close.
-        bool m_static_obst;
         //! Absolute wind direction and speed.
         double m_wind_dir, m_wind_speed;
         
@@ -213,7 +211,6 @@ namespace Control
         m_timestamp_new(0.0),
         m_timestamp_prev(0.0),
         m_timestamp_obst(0.0),
-        m_static_obst(false),
         m_wind_dir(0.0),
         m_wind_speed(0.0),
         m_heave(0.0),
