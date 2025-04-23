@@ -155,8 +155,6 @@ namespace Control
         double m_timestamp_obst;
         //! Timestamp for last update from obstacle.
         std::vector<double> m_last_update;
-        //! Enable collision avoidance.
-        bool m_enable_cas;
         //! Enable anti-grounding.
         bool m_enable_ag;
         //! True if ground is close.
@@ -217,7 +215,6 @@ namespace Control
         m_timestamp_new(0.0),
         m_timestamp_prev(0.0),
         m_timestamp_obst(0.0),
-        m_enable_cas(false),
         m_enable_ag(false),
         m_static_obst(false),
         m_wind_dir(0.0),
@@ -530,13 +527,11 @@ namespace Control
 
           if (paramChanged(m_args.en_cas))
           {
-            if (m_enable_cas)
+            if (m_args.en_cas)
             {
               spew("Clearing dynamic obstacles");
               m_dyn_obst_vec.clear();
             }
-
-            m_enable_cas = m_args.en_cas;
           }
 
           if (paramChanged(m_args.en_antiground))
@@ -1044,7 +1039,7 @@ namespace Control
         {
           trace("CAS: Receiving AisInfo");
 
-          if (!m_enable_cas)
+          if (!m_args.en_cas)
             return;
 
           // Check if AutoNaut is Simulator is booting before you compute displacement.
@@ -1221,7 +1216,7 @@ namespace Control
           trace("LOS DESIRED COURSE: %f", Angles::degrees(m_des_heading.value));
 
           //! Nothing is enabled.
-          if(!m_enable_cas && !m_enable_ag)
+          if(!m_args.en_cas && !m_enable_ag)
           {
             dispatch(m_des_heading);
             return;
@@ -1235,10 +1230,10 @@ namespace Control
             return;
           }
 
-          if(m_enable_cas || m_enable_ag)
+          if(m_args.en_cas || m_enable_ag)
             createWPs(ts);
 
-          bool C_CAS = m_enable_cas && m_dyn_obst_vec.size() > 0;
+          bool C_CAS = m_args.en_cas && m_dyn_obst_vec.size() > 0;
           bool C_AG = m_enable_ag && (m_dangers.rows() > 0 || m_depths.rows() > 0);
 
           //! Compute dynamic obst. matrix for m_sb_mpc if CAS is enabled and there are dynamic obstacles in range.
