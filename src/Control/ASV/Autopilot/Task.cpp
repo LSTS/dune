@@ -157,7 +157,7 @@ namespace Control
         //! Current rudder position/actuation.
         IMC::SetServoPosition m_rudder;
         //! Current motor actuation.
-        IMC::SetThrusterActuation m_act_thrust;
+        IMC::SetThrusterActuation m_thruster;
         //! Desired course used by PID.
         float m_desired_course;
         //! Time of last estimated state message.
@@ -594,8 +594,8 @@ namespace Control
           reset();
 
           // Set initial thruster speed to zero.
-          m_act_thrust.id = 0;
-          m_act_thrust.value = 0.0;
+          m_thruster.id = 0;
+          m_thruster.value = 0.0;
         }
 
         void
@@ -661,8 +661,8 @@ namespace Control
           {
             debug("On Service -Dispatching a 0 rudder angle and 0 motor");
             dispatchRudder(0, m_tstep);
-            m_act_thrust.value = 0;
-            dispatch(m_act_thrust);
+            m_thruster.value = 0;
+            dispatch(m_thruster);
             reset();
             return;
           }
@@ -914,12 +914,12 @@ namespace Control
           if (turning_thrust + m_act_speed > m_args.max_thrust)
           {
             war("Using max thrust");
-            m_act_thrust.value = 1;
+            m_thruster.value = 1;
           }
           else
-            m_act_thrust.value = turning_thrust + m_act_speed;
+            m_thruster.value = turning_thrust + m_act_speed;
 
-          dispatch(m_act_thrust);
+          dispatch(m_thruster);
         }
 
         //! IMC::DesiredHeading contains a desired course over ground.
@@ -1119,8 +1119,8 @@ namespace Control
           if (!isActive())
           {
             reset();
-            m_act_thrust.value = 0.0;
-            dispatch(m_act_thrust);
+            m_thruster.value = 0.0;
+            dispatch(m_thruster);
             dispatchRudder(0, m_tstep);
           }
         }
