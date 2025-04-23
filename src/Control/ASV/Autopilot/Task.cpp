@@ -178,8 +178,6 @@ namespace Control
         bool m_turning;
         //! Speed Over Ground.
         double m_sog;
-        //! Lats, lons.
-        double m_lat, m_lon, m_lat_next_wp, m_lon_next_wp;
         //! Enable gain scheduling.
         bool m_gain_sch;
         //! True if vehicle is in service mode.
@@ -545,10 +543,6 @@ namespace Control
         void
         consume(const IMC::PathControlState* pcs)
         {
-          m_lat_next_wp = pcs->end_lat;
-          m_lon_next_wp = pcs->end_lon;
-          double dist_x, dist_y;
-          WGS84::displacement(m_lat, m_lon, 0, m_lat_next_wp, m_lon_next_wp, 0, &dist_x, &dist_y);
           m_pcs_flag_sate = pcs->flags;
         }
 
@@ -645,8 +639,6 @@ namespace Control
           // Compute Time Delta.
           m_tstep = m_delta.getDelta();
           m_sog = msg->sog;
-          m_lat = msg->lat;
-          m_lon = msg->lon;
 
           // If in service mode, center rudder.
           if (m_service)
