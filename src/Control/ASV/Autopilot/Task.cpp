@@ -155,7 +155,7 @@ namespace Control
         //! Control Parcels for course controller
         IMC::ControlParcel m_parcel;
         //! Current rudder position/actuation.
-        IMC::SetServoPosition m_act;
+        IMC::SetServoPosition m_rudder;
         //! Current rudder position/actuation.
         IMC::ServoPosition m_last_act;
         //! Current motor actuation.
@@ -568,12 +568,12 @@ namespace Control
         {
           m_course_pid.reset();
 
-          m_act.id = 0;
-          m_act.value = 0.0;
+          m_rudder.id = 0;
+          m_rudder.value = 0.0;
           m_last_act.id = 0;
           m_last_act.value = 0.0;
 
-          dispatch(m_act);
+          dispatch(m_rudder);
         }
 
         //! Setup PIDs.
@@ -704,10 +704,10 @@ namespace Control
 
           // Course Controller (PID controller)
           float rudder_cmd = m_course_pid.step(m_tstep, error, 0);  // error_der
-          m_act.value = -rudder_cmd;  // TODO: Check if its the same in reality.
+          m_rudder.value = -rudder_cmd;  // TODO: Check if its the same in reality.
 
           // Dispatch servo command.
-          dispatchRudder(m_act.value, m_tstep);
+          dispatchRudder(m_rudder.value, m_tstep);
 
           // Dispatch thrust command.
           dispatchThrust();
@@ -840,18 +840,18 @@ namespace Control
               + trimValue((value - m_last_act.value) / timestep, 0.0, m_args.act_ramp * timestep);
           }
 
-          m_act.value = trimValue(value, -m_args.act_max, m_args.act_max);
+          m_rudder.value = trimValue(value, -m_args.act_max, m_args.act_max);
 
           if (m_wave_freq == 0.0)
-            dispatch(m_act);
+            dispatch(m_rudder);
           else
           {
             if (m_args.ext_filtering == true && m_args.lp_filtering == false
                 && m_args.n_filtering == false && m_args.bs_filtering == false)
             {
               // Apply external filter coefficients.
-              m_act.value = ext.step(m_act.value);
-              dispatch(m_act);
+              m_rudder.value = ext.step(m_rudder.value);
+              dispatch(m_rudder);
               trace("Applying a %s filter with %0.3f cut-off frequency.", m_args.ext_filter_type.c_str(),
                     m_args.ext_filter_freq);
             }
@@ -859,44 +859,44 @@ namespace Control
                      && m_args.bs_filtering == false)
             {
               // Apply LPF coefficients.
-              m_act.value = lpf.step(m_act.value);
-              dispatch(m_act);
+              m_rudder.value = lpf.step(m_rudder.value);
+              dispatch(m_rudder);
               trace("LPF Filtering.");
             }
             else if (m_args.lp_filtering == false && m_args.n_filtering == true
                      && m_args.bs_filtering == false)
             {
               // Apply NF coefficients.
-              m_act.value = nf.step(m_act.value);
-              dispatch(m_act);
+              m_rudder.value = nf.step(m_rudder.value);
+              dispatch(m_rudder);
               trace("NF Filtering.");
             }
             else if (m_args.lp_filtering == true && m_args.n_filtering == true
                      && m_args.bs_filtering == false)
             {
               // Apply NF+LPF coefficients.
-              m_act.value = nf.step(m_act.value);
-              m_act.value = lpf.step(m_act.value);
-              dispatch(m_act);
+              m_rudder.value = nf.step(m_rudder.value);
+              m_rudder.value = lpf.step(m_rudder.value);
+              dispatch(m_rudder);
               trace("NF + LP Filtering.");
             }
             else if (m_args.lp_filtering == true && m_args.n_filtering == false
                      && m_args.bs_filtering == true)
             {
               // Apply BS+LPF coefficients.
-              m_act.value = bs.step(m_act.value);
-              m_act.value = lpf.step(m_act.value);
-              dispatch(m_act);
+              m_rudder.value = bs.step(m_rudder.value);
+              m_rudder.value = lpf.step(m_rudder.value);
+              dispatch(m_rudder);
               trace("BS + LP Filtering.");
             }
             else
             {
-              dispatch(m_act);
+              dispatch(m_rudder);
               trace("NO WAVE FILTERING");
             }
           }
 
-          m_last_act.value = m_act.value;
+          m_last_act.value = m_rudder.value;
         }
 
         //! Dispatch to bus SetThrusterActuation message
