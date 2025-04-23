@@ -206,6 +206,8 @@ if(NOT DUNE_OS_WINDOWS)
   message(STATUS "Adding: -Wno-cpp")
   set(DUNE_CXX_FLAGS "${DUNE_CXX_FLAGS} -Wno-cpp")
   set(DUNE_C_FLAGS "${DUNE_C_FLAGS} -Wno-cpp")
+else()
+  add_definitions(-D_USE_MATH_DEFINES)
 endif(NOT DUNE_OS_WINDOWS)
 
 message(STATUS "DUNE_CXX_FLAGS: ${DUNE_CXX_FLAGS}")
