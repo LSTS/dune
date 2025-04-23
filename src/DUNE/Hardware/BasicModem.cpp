@@ -379,7 +379,7 @@ namespace DUNE
 
       while (!isStopping())
       {
-        if (!IO::Poll::poll(*m_handle, 1.0))
+        if (!IO::Poll::poll(*m_handle, 0.01))
           continue;
 
         size_t rv = 0;
