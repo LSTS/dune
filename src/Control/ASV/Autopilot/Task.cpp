@@ -1091,8 +1091,8 @@ namespace Control
         void
         consume(const IMC::ControlLoops* msg)
         {
-          // Check if Yaw is being controlled.
-          if (!(msg->mask & (IMC::CL_YAW)))
+          // Check if Yaw and Speed are being controlled.
+          if (!(msg->mask & (IMC::CL_YAW | IMC::CL_SPEED)))
             return;
 
           if (msg->scope_ref < m_scope_ref)
