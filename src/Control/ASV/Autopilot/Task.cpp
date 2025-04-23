@@ -188,8 +188,6 @@ namespace Control
         double m_dist_to_wp;
         //! Enable gain scheduling.
         bool m_gain_sch;
-        //! Thrust during assistance.
-        double m_thrust_assistance;
         //! True if vehicle is in service mode.
         bool m_service;
         //! Scheduling source.
@@ -434,9 +432,6 @@ namespace Control
             reset();
             setup(m_args.course_gains_turn);
           }
-
-          if (paramChanged(m_args.thrust_assist))
-            m_thrust_assistance = m_args.thrust_assist;
 
           if (paramChanged(m_args.sch_source))
             m_sch_source = m_args.sch_source;
@@ -917,13 +912,13 @@ namespace Control
           // Use thruster if thruster is enabled, turning assistance is enabled and vessel is
           // actually turning.
           if (m_args.en_thrust_turn && m_turning)
-            value = m_thrust_assistance;
+            value = m_args.thrust_assist;
           // or if thruster is enabled, vessel is not turning,
           // but speed is very low.
           else if (m_args.en_thrust && !m_turning && m_sog < m_args.min_sog && m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
-            value = m_thrust_assistance;
+            value = m_args.thrust_assist;
           else if (m_args.en_thrust && m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
-            value = m_thrust_assistance;
+            value = m_args.thrust_assist;
           else
             value = 0.0;
 
