@@ -156,8 +156,6 @@ namespace Control
         IMC::ControlParcel m_parcel;
         //! Current rudder position/actuation.
         IMC::SetServoPosition m_rudder;
-        //! Current rudder position/actuation.
-        IMC::ServoPosition m_last_act;
         //! Current motor actuation.
         IMC::SetThrusterActuation m_act_thrust;
         //! Desired course used by PID.
@@ -570,8 +568,6 @@ namespace Control
 
           m_rudder.id = 0;
           m_rudder.value = 0.0;
-          m_last_act.id = 0;
-          m_last_act.value = 0.0;
 
           dispatch(m_rudder);
         }
@@ -833,11 +829,10 @@ namespace Control
         dispatchRudder(float value, double timestep)
         {
           // Activated if act_ramp parameter is set > 0.0
-          if ((value > m_last_act.value) && (m_args.act_ramp > 0.0))
+          if ((value > m_rudder.value) && (m_args.act_ramp > 0.0))
           {
-            value =
-              m_last_act.value
-              + trimValue((value - m_last_act.value) / timestep, 0.0, m_args.act_ramp * timestep);
+            value = m_rudder.value +
+                    trimValue((value - m_rudder.value) / timestep, 0.0, m_args.act_ramp * timestep);
           }
 
           m_rudder.value = trimValue(value, -m_args.act_max, m_args.act_max);
@@ -895,8 +890,6 @@ namespace Control
               trace("NO WAVE FILTERING");
             }
           }
-
-          m_last_act.value = m_rudder.value;
         }
 
         //! Dispatch to bus SetThrusterActuation message
