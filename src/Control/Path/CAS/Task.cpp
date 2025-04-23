@@ -123,7 +123,7 @@ namespace Control
       struct Task: public DUNE::Control::PathController
       {
         //! m_sb_mpc object.
-        simulationBasedMpc *m_sb_mpc = NULL;
+        simulationBasedMpc* m_sb_mpc;
         //! List of asv states
         std::vector<double> m_asv_state = std::vector<double>(6,0.0);
         //! Desired heading message.
@@ -202,6 +202,7 @@ namespace Control
 
         Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Control::PathController(name, ctx),
+m_sb_mpc(nullptr),
         m_u_os(0.0),
         m_psi_os(0.0),
         m_lat_asv(0.0),
