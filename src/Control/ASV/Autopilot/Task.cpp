@@ -427,7 +427,6 @@ namespace Control
           bind<IMC::VehicleState>(this);
           bind<IMC::CurrentProfile>(this);
           bind<IMC::PathControlState>(this);
-          bind<IMC::DevDataText>(this);
 
           // For speed controller
           bind<IMC::DesiredSpeed>(this);
@@ -585,33 +584,6 @@ namespace Control
           // IMC::SetThrusterActuation act;
           // act.value = m_act_speed;
           // dispatch(act);
-        }
-
-        void
-        consume(const IMC::DevDataText* msg)
-        {
-          if (std::strcmp(resolveEntity(msg->getSourceEntity()).c_str(), "Text Actions") == 0
-              && msg->getDestinationEntity() == resolveEntity("Autopilot"))
-          {
-            debug("Gains arrived from Iridium.");
-            std::string m_cmd = msg->value;
-
-            std::vector<float> gains_ir;
-
-            // Parse command.
-            char p[32], i[32], d[32];
-            std::sscanf(m_cmd.c_str(), "%s %s %s", p, i, d);
-            std::string p_str, i_str, d_str;
-            p_str.append(p);
-            i_str.append(i);
-            d_str.append(d);
-            gains_ir.push_back(std::atof(p_str.c_str()));
-            gains_ir.push_back(std::atof(i_str.c_str()));
-            gains_ir.push_back(std::atof(d_str.c_str()));
-
-            reset();
-            setup(gains_ir);
-          }
         }
 
         void
