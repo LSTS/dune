@@ -52,7 +52,21 @@
 #include <psapi.h>
 #endif
 
-#define IMC_RAM_USAGE_MESSAGE_EXISTS  (false)
+int
+getCPUCount(void)
+{ 
+#if defined(DUNE_OS_LINUX)
+  return sysconf(_SC_NPROCESSORS_ONLN);
+#elif defined(DUNE_OS_WINDOWS)
+  SYSTEM_INFO sysInfo;
+  GetSystemInfo(&sysInfo);
+  return sysInfo.dwNumberOfProcessors;
+#else
+  return 1; // Default to 1 CPU if not on Linux or Windows
+#endif
+}
+
+#define IMC_RAM_USAGE_MESSAGE_EXISTS (false)
 
 namespace Monitors
 {
@@ -118,7 +132,7 @@ namespace Monitors
         DUNE::Tasks::Task(name, ctx),
         m_tstamp(0)
       {
-        m_num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+        m_num_cpus = getCPUCount();
       }
 
       //! Reserve entity identifiers.
