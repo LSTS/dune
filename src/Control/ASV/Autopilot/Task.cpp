@@ -206,8 +206,6 @@ namespace Control
         double m_v_r;
         //! Total relative speed.
         double m_U_r;
-        //! Desired Course Timer.
-        Counter<double> m_timer;
         //! Gain Scheduling Timer.
         Counter<double> m_timer_gs;
         //! Gain scheduling interval.
@@ -632,8 +630,6 @@ namespace Control
           // Set initial thruster speed to zero.
           m_act_thrust.id = 0;
           m_act_thrust.value = 0.0;
-
-          m_timer.setTop(15.0);
         }
 
         void
@@ -969,8 +965,6 @@ namespace Control
         {
           if (!isActive())
             return;
-
-          m_timer.reset();
 
           m_desired_course = msg->value;
         }
