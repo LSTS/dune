@@ -198,8 +198,6 @@ namespace Control
         double m_thrust_assistance;
         //! True if vehicle is in service mode.
         bool m_service;
-        //! True if vehicle is in maneuver mode.
-        bool m_maneuver;
         //! Scheduling source.
         std::string m_sch_source;
         //! Vehicle Estimated State
@@ -255,7 +253,6 @@ namespace Control
           m_des_head_arrived(false),
           m_gain_sch(false),
           m_service(true),
-          m_maneuver(false),
           m_avg_adcp(0),
           m_avg_adcp_old(0),
           m_avg_sog(0),
@@ -682,13 +679,11 @@ namespace Control
 
           if (msg->op_mode == IMC::VehicleState::VS_MANEUVER)
           {
-            m_maneuver = true;
             m_service = false;
           }
           else
           {
             m_service = true;
-            m_maneuver = false;
           }
         }
 
