@@ -1148,7 +1148,7 @@ namespace Control
         }
 
         void
-        groundingCost()
+        groundingCost(void)
         {
           debug("groundingCost");
           // Cost function with environmental factors.
