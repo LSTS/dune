@@ -152,7 +152,7 @@ namespace Control
         DiscretePID m_course_pid;
         //! Control Parcels for course controller
         IMC::ControlParcel m_parcel;
-        //! Current rudder position/actuation.
+        //! Desired rudder position/actuation.
         IMC::SetServoPosition m_rudder;
         //! Desired thruster actuation.
         IMC::SetThrusterActuation m_thruster;
