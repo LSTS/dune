@@ -433,9 +433,6 @@ namespace Control
           bind<IMC::DesiredSpeed>(this);
           bind<IMC::Teleoperation>(this);
           bind<IMC::TeleoperationDone>(this);
-
-          // Initialize entity state.
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
 
         void
