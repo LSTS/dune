@@ -254,156 +254,156 @@ namespace Control
           m_teleop(false)
         {
           param("Enable Gain Scheduling", m_args.en_gain_sch)
-            .defaultValue("true")
-            .description("Enable gain scheduling during turn");
+          .defaultValue("true")
+          .description("Enable gain scheduling during turn");
 
           param("Preferred scheduling", m_args.sch_source)
-            .defaultValue("false")
-            .description("Preferred information for computing gamma.");
+          .defaultValue("false")
+          .description("Preferred information for computing gamma.");
 
           param("Gain Scheduling Interval", m_args.gain_sch_t)
-            .defaultValue("60")
-            .minimumValue("30")
-            .description("Interval for recomputing PID gains.");
+          .defaultValue("60")
+          .minimumValue("30")
+          .description("Interval for recomputing PID gains.");
 
           param("Use new gains", m_args.use_new_gains)
-            .defaultValue("false")
-            .description("Enable gain scheduling based on gamma");
+          .defaultValue("false")
+          .description("Enable gain scheduling based on gamma");
 
           param("Enable Thrust Assistance", m_args.en_thrust)
-            .defaultValue("true")
-            .description("Assist navigation with thruster");
+          .defaultValue("true")
+          .description("Assist navigation with thruster");
 
           param("Enable Thrust During Turn", m_args.en_thrust_turn)
-            .defaultValue("true")
-            .description("Assist the turn using the thruster");
+          .defaultValue("true")
+          .description("Assist the turn using the thruster");
 
           param("Thrust Assistance", m_args.thrust_assist)
-            .defaultValue("0.75")
-            .description("Percentage of thrust assistance");
+          .defaultValue("0.75")
+          .description("Percentage of thrust assistance");
 
           param("Maximum Thrust Actuation", m_args.max_thrust)
-            .defaultValue("1.0")
-            .description("Maximum Motor Command");
+          .defaultValue("1.0")
+          .description("Maximum Motor Command");
 
           param("Minimum Speed for Thrust", m_args.min_sog)
-            .defaultValue("0.3")
-            .description("Speed [m/s] below which thruster is used");
+          .defaultValue("0.3")
+          .description("Speed [m/s] below which thruster is used");
 
           param("Maximum Rudder Actuation", m_args.act_max)
-            .defaultValue("1.0")
-            .description("Maximum Rudder Command");
+          .defaultValue("1.0")
+          .description("Maximum Rudder Command");
 
           param("Course PID Gains Transect", m_args.course_gains_trans)
-            .defaultValue("")
-            .size(3)
-            .description("PID gains for Course controller during straight line");
+          .defaultValue("")
+          .size(3)
+          .description("PID gains for Course controller during straight line");
 
           param("Course PID Gains Turning", m_args.course_gains_turn)
-            .defaultValue("")
-            .size(3)
-            .description("PID gains for Course controller during turn");
+          .defaultValue("")
+          .size(3)
+          .description("PID gains for Course controller during turn");
 
           param("Ramp Actuation Limit", m_args.act_ramp)
-            .defaultValue("0.0")
-            .description("Ramp actuation limit when the value is rising in actuation per second");
+          .defaultValue("0.0")
+          .description("Ramp actuation limit when the value is rising in actuation per second");
 
           param("Log PID Parcels", m_args.log_parcels)
-            .defaultValue("false")
-            .description("Log the size of each PID parcel");
+          .defaultValue("false")
+          .description("Log the size of each PID parcel");
 
           param("Entity Label - Navigation", m_args.elabel_nav)
-            .description("Entity label of 'GpsFix' message");
+          .description("Entity label of 'GpsFix' message");
 
           param("Activate LP Filtering", m_args.lp_filtering)
-            .defaultValue("false")
-            .description("Activate Low-pass filtering of computed rudder angle");
+          .defaultValue("false")
+          .description("Activate Low-pass filtering of computed rudder angle");
 
           param("Activate N Filtering", m_args.n_filtering)
-            .defaultValue("false")
-            .description("Activate Notch filtering of computed rudder angle");
+          .defaultValue("false")
+          .description("Activate Notch filtering of computed rudder angle");
 
           param("Activate BS Filtering", m_args.bs_filtering)
-            .defaultValue("false")
-            .description("Activate Band-stop filtering of computed rudder angle");
+          .defaultValue("false")
+          .description("Activate Band-stop filtering of computed rudder angle");
 
           param("Activate External Filtering", m_args.ext_filtering)
-            .defaultValue("false")
-            .description("Activate external user-defined filtering of computed rudder angle");
+          .defaultValue("false")
+          .description("Activate external user-defined filtering of computed rudder angle");
 
           param("External Filter Type", m_args.ext_filter_type)
-            .defaultValue("LPF")
-            .description("External user-defined filter type");
+          .defaultValue("LPF")
+          .description("External user-defined filter type");
 
           param("LP taps", m_args.lpf_taps)
-            .defaultValue("10.0")
-            .minimumValue("1.0")
-            .description("Low-pass filter number of taps");
+          .defaultValue("10.0")
+          .minimumValue("1.0")
+          .description("Low-pass filter number of taps");
 
           param("LPF scaling", m_args.lpf_scaling)
-            .defaultValue("1.2")
-            .minimumValue("1.0")
-            .description("Low-pass filter gain to remove HF components");
+          .defaultValue("1.2")
+          .minimumValue("1.0")
+          .description("Low-pass filter gain to remove HF components");
 
           param("NF taps", m_args.nf_taps)
-            .defaultValue("10.0")
-            .minimumValue("1.0")
-            .description("Notch filter number of taps");
+          .defaultValue("10.0")
+          .minimumValue("1.0")
+          .description("Notch filter number of taps");
 
           param("BSF taps", m_args.bsf_taps)
-            .defaultValue("10.0")
-            .minimumValue("1.0")
-            .description("Band-stop filter(s) number of taps");
+          .defaultValue("10.0")
+          .minimumValue("1.0")
+          .description("Band-stop filter(s) number of taps");
 
           param("BSF scaling", m_args.bsf_scaling)
-            .defaultValue("20")
-            .minimumValue("1")
-            .description("BSF scaling percentage around cut-off estimated frequency");
+          .defaultValue("20")
+          .minimumValue("1")
+          .description("BSF scaling percentage around cut-off estimated frequency");
 
           param("External Filter Frequency", m_args.ext_filter_freq)
-            .units(Units::Hertz)
-            .defaultValue("1.0")
-            .description("Frequency for external user-defined filter.");
+          .units(Units::Hertz)
+          .defaultValue("1.0")
+          .description("Frequency for external user-defined filter.");
 
           param("Desired Course Percentage Increase", m_args.chop)
-            .defaultValue("30")
-            .description("Incremental portioning during desired course change.");
+          .defaultValue("30")
+          .description("Incremental portioning during desired course change.");
 
           param("Heading Control", m_args.heading_ctrl)
-            .defaultValue("false")
-            .description("Switch to heading control.");
+          .defaultValue("false")
+          .description("Switch to heading control.");
 
           param("SOG threshold - Heading Control", m_args.speed_threshold)
-            .defaultValue("0.1")
-            .minimumValue("0.001")
-            .description("SOG threshold above which switch to heading control.");
+          .defaultValue("0.1")
+          .minimumValue("0.001")
+          .description("SOG threshold above which switch to heading control.");
 
           param("Correlation Limit", m_args.corr_lim)
-            .defaultValue("50")
-            .maximumValue("100")
-            .minimumValue("0")
-            .description("Correlation above which measurement is discarded.");
+          .defaultValue("50")
+          .maximumValue("100")
+          .minimumValue("0")
+          .description("Correlation above which measurement is discarded.");
 
           param("Amplitude Limit", m_args.ampl_lim)
-            .defaultValue("0")
-            .units(Units::Decibel)
-            .description("Amplitude above which measurement is discarded.");
+          .defaultValue("0")
+          .units(Units::Decibel)
+          .description("Amplitude above which measurement is discarded.");
 
           param("Vehicle Pitch Rate Limit", m_args.pitch_rate)
-            .defaultValue("0")
-            .description("Pitching rate above which measurement is discarded.");
+          .defaultValue("0")
+          .description("Pitching rate above which measurement is discarded.");
 
           param("Vehicle Roll Rate Limit", m_args.roll_rate)
-            .defaultValue("0")
-            .description("Roll rate above which measurement is discarded.");
+          .defaultValue("0")
+          .description("Roll rate above which measurement is discarded.");
 
           param("Enable speed controller", m_args.speed_control)
-            .defaultValue("false");
+          .defaultValue("false");
 
           param("Minimum Turning Error", m_args.turn_min_error)
-            .defaultValue("25")
-            .units(Units::Degree)
-            .description("Minimum heading error to consider vessel is turning (in degrees).");
+          .defaultValue("25")
+          .units(Units::Degree)
+          .description("Minimum heading error to consider vessel is turning (in degrees).");
 
           // Register handler routines.
           bind<IMC::Abort>(this);
