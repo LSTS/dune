@@ -219,7 +219,7 @@ namespace Control
         //! Task arguments.
         Arguments m_args;
 
-        //! For speed controller
+        //! Desired speed.
         double m_desired_speed;
         //! Is in teleoperation
         bool m_teleop;
