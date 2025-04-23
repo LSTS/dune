@@ -180,8 +180,6 @@ namespace Control
         double m_wave_freq;
         //! Timestep.
         double m_tstep;
-        //! Chopping boolean.
-        bool m_chopping;
         //! A turn is happening.
         bool m_turning;
         //! Speed Over Ground.
@@ -244,7 +242,6 @@ namespace Control
           m_scope_ref(0),
           m_wave_freq(0.0),
           m_tstep(0.0),
-          m_chopping(false),
           m_turning(false),
           m_gain_sch(false),
           m_service(true),
