@@ -179,7 +179,7 @@ namespace DUNE
       if (!isRunning())
         return;
 
-#if defined(DUNE_SYS_HAS_PTHREAD)
+#if defined(DUNE_SYS_HAS_PTHREAD) && defined(DUNE_OS_LINUX)
       int native_policy = Scheduler::native(policy);
       sched_param sparam;
       std::memset(&sparam, 0, sizeof(sparam));
@@ -194,7 +194,7 @@ namespace DUNE
     unsigned
     Thread::getPriorityImpl(void)
     {
-#if defined(DUNE_SYS_HAS_PTHREAD)
+#if defined(DUNE_SYS_HAS_PTHREAD) && defined(DUNE_OS_LINUX)
       int native_policy;
       sched_param sparam;
       std::memset(&sparam, 0, sizeof(sparam));
