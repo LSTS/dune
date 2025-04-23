@@ -425,7 +425,6 @@ namespace Control
           bind<IMC::Frequency>(this);
           bind<IMC::GpsFix>(this);
           bind<IMC::VehicleState>(this);
-          // bind<IMC::SingleCurrentCell>(this);
           bind<IMC::CurrentProfile>(this);
           bind<IMC::PathControlState>(this);
           bind<IMC::DevDataText>(this);
