@@ -201,25 +201,25 @@ namespace Control
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Control::PathController(name, ctx),
-m_sb_mpc(nullptr),
-m_asv_state(6, 0.0),
-        m_u_os(0.0),
-        m_psi_os(0.0),
-        m_lat_asv(0.0),
-        m_lon_asv(0.0),
-        m_lat_obst(0.0),
-        m_lon_obst(0.0),
-        m_timestamp_new(0.0),
-        m_timestamp_prev(0.0),
-        m_timestamp_obst(0.0),
-        m_wind_dir(0.0),
-        m_wind_speed(0.0),
-        m_heave(0.0),
-        m_wave_freq(0.0),
-        m_cost(0.0),
-        m_avg(0),
-        m_tx_req_id(0)
+          DUNE::Control::PathController(name, ctx),
+          m_sb_mpc(nullptr),
+          m_asv_state(6, 0.0),
+          m_u_os(0.0),
+          m_psi_os(0.0),
+          m_lat_asv(0.0),
+          m_lon_asv(0.0),
+          m_lat_obst(0.0),
+          m_lon_obst(0.0),
+          m_timestamp_new(0.0),
+          m_timestamp_prev(0.0),
+          m_timestamp_obst(0.0),
+          m_wind_dir(0.0),
+          m_wind_speed(0.0),
+          m_heave(0.0),
+          m_wave_freq(0.0),
+          m_cost(0.0),
+          m_avg(0),
+          m_tx_req_id(0)
         {
           param("Entity Label - Navigation simulation", m_args.elabel_nav_sim)
           .description("Entity label of 'GpsFix' message");
@@ -542,7 +542,7 @@ m_asv_state(6, 0.0),
           if (paramChanged(m_args.directions))
             m_offsets = m_args.directions;
 
-          if (m_sb_mpc == NULL)
+          if (m_sb_mpc == nullptr)
             return;
 
           // T and DT cannot be changed online. If changed, re-create the object.
@@ -611,6 +611,9 @@ m_asv_state(6, 0.0),
         void
         onResourceInitialization(void)
         {
+          if (m_sb_mpc == nullptr)
+            return;
+          
           m_sb_mpc->create(m_args.T, m_args.DT, m_args.T_STAT, m_args.P, m_args.P_G, m_args.Q, m_args.D_CLOSE,
                            m_args.D_SAFE, m_args.D_SAFE_LAND, m_args.K_COLL, m_args.PHI_AH, m_args.PHI_OT, m_args.PHI_HO, m_args.PHI_CR,
                            m_args.KAPPA, m_args.KAPPA_TC, m_args.K_P, m_args.K_CHI, m_args.K_DP, m_args.K_DCHI_SB,
@@ -1310,7 +1313,7 @@ m_asv_state(6, 0.0),
               debug("m_static_obst_state rows to m_sb_mpc: %.0f %.3f %.0f",Angles::degrees(m_static_obst_state(i,0)),m_static_obst_state(i,1),m_static_obst_state(i,2));
           }
 
-          if((C_CAS || C_AG) && (m_timestamp_new - m_timestamp_prev) > 20.0)
+          if((C_CAS || C_AG) && (m_timestamp_new - m_timestamp_prev) > 20.0 && m_sb_mpc != nullptr)
           {
             if(!C_CAS && C_AG)
               debug("Anti-grounding situation!");
@@ -1357,10 +1360,10 @@ m_asv_state(6, 0.0),
                   geek >> mmsi;
 
                   if (mmsi == obs_vessel->id_)
-{
+                  {
                     ais_vessel = itr.base();
                     break;
-}
+                  }
                 }
 
                 TransmissionRequest tr;
