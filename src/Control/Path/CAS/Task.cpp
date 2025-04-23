@@ -513,7 +513,6 @@ namespace Control
           bind<IMC::AisInfo>(this);
           bind<IMC::GpsFix>(this);
           bind<IMC::AbsoluteWind>(this);
-          bind<IMC::DevDataText>(this);
           bind<IMC::ENCAwareness>(this);
           bind<IMC::EstimatedState>(this);
 
@@ -704,25 +703,6 @@ namespace Control
           //! Deactivate Heading & Speed controller.
           disableControlLoops(IMC::CL_YAW);
           disableControlLoops(IMC::CL_SPEED);
-        }
-
-        void
-        consume(const IMC::DevDataText * msg)
-        {
-          // TextActions sends a message to PathControl to turn cas on/off
-          if (std::strcmp(resolveEntity(msg->getSourceEntity()).c_str(), "Text Actions") == 0 && msg->getDestinationEntity() == resolveEntity("Path Control"))
-          {
-            std::string cmd = msg->value;
-
-            // Parse command.
-            char what[32];
-            std::sscanf(cmd.c_str(), "%s", what);
-
-            if (!strcmp(what, "on"))
-              m_enable_cas = true;
-            if (!strcmp(what, "off"))
-              m_enable_cas = false;
-          }
         }
 
         //! From GPS Task
