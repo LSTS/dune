@@ -1126,7 +1126,6 @@ namespace Control
           while (!stopping())
           {
             waitForMessages(0.01);
-            // consumeMessages();
 
             // If in maneuver and its time to update gains
             if (m_timer_gs.overflow() && !m_service && m_gain_sch)
