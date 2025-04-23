@@ -1357,9 +1357,10 @@ m_asv_state(6, 0.0),
                   geek >> mmsi;
 
                   if (mmsi == obs_vessel->id_)
+{
                     ais_vessel = itr.base();
                     break;
-
+}
                 }
 
                 TransmissionRequest tr;
