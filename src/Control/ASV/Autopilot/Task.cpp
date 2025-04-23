@@ -256,7 +256,6 @@ namespace Control
           m_gain_sch(false),
           m_service(true),
           m_maneuver(false),
-          // m_teleoperation(false),
           m_avg_adcp(0),
           m_avg_adcp_old(0),
           m_avg_sog(0),
@@ -1181,12 +1180,6 @@ namespace Control
         void
         consume(const IMC::ControlLoops* msg)
         {
-          // Check if its in teleoperation mode
-          // if (msg->mask & (IMC::CL_TELEOPERATION))
-          //  m_teleoperation = true;
-          // else
-          //  m_teleoperation = false;
-
           // Check if Yaw is being controlled.
           if (!(msg->mask & (IMC::CL_YAW)))
             return;
