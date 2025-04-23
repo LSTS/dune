@@ -72,8 +72,6 @@ namespace Control
         double bsf_scaling;
         //! External filter frequency.
         double ext_filter_freq;
-        //! Desired Course percentage increase.
-        int chop;
         //! Navigation entity label.
         std::string elabel_nav;
         //! Enable gain scheduling.
@@ -356,10 +354,6 @@ namespace Control
           .units(Units::Hertz)
           .defaultValue("1.0")
           .description("Frequency for external user-defined filter.");
-
-          param("Desired Course Percentage Increase", m_args.chop)
-          .defaultValue("30")
-          .description("Incremental portioning during desired course change.");
 
           param("Heading Control", m_args.heading_ctrl)
           .defaultValue("false")
