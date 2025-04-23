@@ -154,7 +154,7 @@ namespace Control
         IMC::ControlParcel m_parcel;
         //! Current rudder position/actuation.
         IMC::SetServoPosition m_rudder;
-        //! Current motor actuation.
+        //! Desired thruster actuation.
         IMC::SetThrusterActuation m_thruster;
         //! Desired course used by PID.
         float m_desired_course;
