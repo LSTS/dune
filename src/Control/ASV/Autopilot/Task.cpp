@@ -1096,19 +1096,17 @@ namespace Control
 
               trace("GAIN-SCHEDULED GAINS Kp: %f, Ki: %f", Kp, Ki);
 
+              reset();
+
               if (m_args.use_new_gains)
               {
                 trace("Using gain-scheduled gains!");
                 std::vector<float> gains{ Kp, Ki, 0.0 };
-                reset();
-                //! Re-configure PID with new gains.
                 setup(gains);
               }
               else
               {
                 debug("Using original gains!");
-                reset();
-                //! Re-configure PID with new gains.
                 setup(m_args.course_gains_trans);
               }
             }
