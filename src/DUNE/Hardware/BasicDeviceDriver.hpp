@@ -41,6 +41,10 @@ namespace DUNE
 {
   namespace Hardware
   {
+    struct BDDArguments
+    {
+    };
+
     class BasicDeviceDriver: public DUNE::Tasks::Task
     {
     public:
@@ -298,6 +302,8 @@ namespace DUNE
         SM_RESTART_WAIT
       };
 
+      //! Basic Device Driver Arguments.
+      BDDArguments m_bdd_args;
       //! Watchdog timer.
       DUNE::Time::Counter<double> m_wdog;
       //! Current state machine state.
