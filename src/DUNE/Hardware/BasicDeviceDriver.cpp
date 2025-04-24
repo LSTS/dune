@@ -62,6 +62,11 @@ namespace DUNE
       .defaultValue("")
       .description("Device's power channels");
 
+      param("Power On Delay", m_bdd_args.pwr_on_delay)
+      .minimumValue("0.0")
+      .defaultValue("0.0")
+      .description("Delay before powering on the device");
+
       m_restart_needed = true;
       bind<IMC::EstimatedState>(this);
       bind<IMC::LoggingControl>(this);
