@@ -1064,7 +1064,6 @@ namespace Control
         void
         consume(const IMC::ControlLoops* msg)
         {
-          // Check if Yaw and Speed are being controlled.
           if (!(msg->mask & (IMC::CL_YAW | IMC::CL_SPEED)))
             return;
 
@@ -1073,8 +1072,6 @@ namespace Control
 
           m_scope_ref = msg->scope_ref;
 
-          // Activate/Deactivate task as requested by the Control Loop message. Skip if its already
-          // as required.
           if (msg->enable == isActive())
             return;
 
@@ -1083,7 +1080,6 @@ namespace Control
           else
             requestDeactivation();
 
-          // If it was deactivated, stop thruster and center rudder
           if (!isActive())
           {
             reset();
