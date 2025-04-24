@@ -178,8 +178,6 @@ namespace Control
         double m_sog;
         //! Enable gain scheduling.
         bool m_gain_sch;
-        //! True if vehicle is in service mode.
-        bool m_service;
         //! Vehicle Estimated State
         IMC::EstimatedState m_estate;
         //! Longitudinal relative speed.
@@ -228,7 +226,6 @@ namespace Control
           m_tstep(0.0),
           m_turning(false),
           m_gain_sch(false),
-          m_service(true),
           m_avg_adcp(0),
           m_avg_adcp_old(0),
           m_avg_sog(0),
@@ -389,7 +386,6 @@ namespace Control
           bind<IMC::ControlLoops>(this);
           bind<IMC::Frequency>(this);
           bind<IMC::GpsFix>(this);
-          bind<IMC::VehicleState>(this);
           bind<IMC::CurrentProfile>(this);
           bind<IMC::PathControlState>(this);
 
@@ -569,22 +565,6 @@ namespace Control
         }
 
         void
-        consume(const IMC::VehicleState* msg)
-        {
-          if (msg->getSource() != getSystemId())
-            return;
-
-          if (msg->op_mode == IMC::VehicleState::VS_MANEUVER)
-          {
-            m_service = false;
-          }
-          else
-          {
-            m_service = true;
-          }
-        }
-
-        void
         consume(const IMC::EstimatedState* msg)
         {
           if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_nav_eid)
@@ -613,10 +593,8 @@ namespace Control
           m_tstep = m_delta.getDelta();
           m_sog = msg->sog;
 
-          // If in service mode, center rudder.
-          if (m_service)
+          if (!isActive())
           {
-            debug("On Service -Dispatching a 0 rudder angle and 0 motor");
             reset();
             return;
           }
@@ -1076,7 +1054,7 @@ namespace Control
             waitForMessages(0.01);
 
             // If in maneuver and its time to update gains
-            if (m_timer_gs.overflow() && !m_service && m_gain_sch)
+            if (m_timer_gs.overflow() && isActive() && m_gain_sch)
             {
               m_timer_gs.reset();
 
