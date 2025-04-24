@@ -85,6 +85,11 @@ namespace DUNE
     }
 
     void
+    BasicDeviceDriver::onUpdateParameters(void)
+    {
+    }
+
+    void
     BasicDeviceDriver::onResourceRelease(void)
     {
       requestDeactivation();

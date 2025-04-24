@@ -270,6 +270,9 @@ namespace DUNE
         m_wait_msg_timeout = timeout;
       }
 
+      void
+      onUpdateParameters(void) override;
+
     private:
       //! Finite state machine states.
       enum StateMachineStates
