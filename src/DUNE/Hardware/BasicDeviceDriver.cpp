@@ -72,6 +72,11 @@ namespace DUNE
       .defaultValue("0.0")
       .description("Delay before powering off the device");
 
+      param("Post Power On Delay", m_bdd_args.post_pwr_on_delay)
+      .minimumValue("0.0")
+      .defaultValue("0.0")
+      .description("Delay after powering up the device");
+
       m_restart_needed = true;
       bind<IMC::EstimatedState>(this);
       bind<IMC::LoggingControl>(this);
