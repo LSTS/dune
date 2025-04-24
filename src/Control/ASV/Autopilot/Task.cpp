@@ -383,7 +383,6 @@ namespace Control
           bind<IMC::DesiredHeading>(this);
           bind<IMC::ControlLoops>(this);
           bind<IMC::Frequency>(this);
-          bind<IMC::GpsFix>(this);
           bind<IMC::CurrentProfile>(this);
           bind<IMC::PathControlState>(this);
 
@@ -553,22 +552,14 @@ namespace Control
           if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_nav_eid)
             return;
 
-          m_estate = *msg;
-          spew("BODY frame speeds: u = %.3f, v = %.3f - HEADING %.3f", m_estate.u, m_estate.v,
-               Angles::degrees(m_estate.psi));
-        }
-
-        void
-        consume(const IMC::GpsFix* msg)
-        {
-          IMC::DevDataText gamma_msg;
-
-          if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_nav_eid)
-            return;
-
-          // Compute Time Delta.
           m_tstep = m_delta.getDelta();
-          m_sog = msg->sog;
+          m_estate = *msg;
+
+          double lat = m_estate.lat;
+          double lon = m_estate.lon;
+          WGS84::displace(m_estate.x, m_estate.y, &lat, &lon);
+
+          m_sog = std::sqrt(std::pow(m_estate.vx, 2) + std::pow(m_estate.vy, 2));
 
           if (!isActive())
           {
@@ -583,20 +574,8 @@ namespace Control
           float error = 0.0;
 
           // Course Error (From IMC::DesiredHeading)
-          if (m_args.heading_ctrl || (!m_args.heading_ctrl && m_sog < m_args.speed_threshold))
-          {
+          if (m_args.heading_ctrl)
             error = Angles::normalizeRadian(m_desired_course - m_estate.psi);
-            debug("Heading Control - COG %0.3f, Heading %0.3f, DHeading %0.3f, Error: %0.3f, SOG %0.3f",
-                  Angles::degrees(msg->cog), Angles::degrees(m_estate.psi),
-                  Angles::degrees(m_desired_course), Angles::degrees(error), m_sog);
-          }
-          else if (!m_args.heading_ctrl && m_sog > m_args.speed_threshold)
-          {
-            error = Angles::normalizeRadian(m_desired_course - msg->cog);
-            debug("Course Control - HEAD: %.3f, COG %0.3f, DCOG %0.3f, Error: %0.3f, SOG %0.3f",
-                  Angles::degrees(m_estate.psi), Angles::degrees(msg->cog),
-                  Angles::degrees(m_desired_course), Angles::degrees(error), m_sog);
-          }
 
           // Check if turning
           m_turning = std::abs(error) > Angles::radians(m_args.turn_min_error);
@@ -622,14 +601,14 @@ namespace Control
           m_gamma_adcp_old.source = "adcp_old";
           m_gamma_sog.source = "sog";
           m_gamma_sog_old.source = "sog_old";
-          m_gamma_adcp.lat = msg->lat;
-          m_gamma_adcp_old.lat = msg->lat;
-          m_gamma_sog.lat = msg->lat;
-          m_gamma_sog_old.lat = msg->lat;
-          m_gamma_adcp.lon = msg->lon;
-          m_gamma_adcp_old.lon = msg->lon;
-          m_gamma_sog.lon = msg->lon;
-          m_gamma_sog_old.lon = msg->lon;
+          m_gamma_adcp.lat = lat;
+          m_gamma_adcp_old.lat = lat;
+          m_gamma_sog.lat = lat;
+          m_gamma_sog_old.lat = lat;
+          m_gamma_adcp.lon = lon;
+          m_gamma_adcp_old.lon = lon;
+          m_gamma_sog.lon = lon;
+          m_gamma_sog_old.lon = lon;
           m_gamma_adcp.sog = m_sog;
           m_gamma_adcp_old.sog = m_sog;
           m_gamma_sog.sog = m_sog;
@@ -650,11 +629,12 @@ namespace Control
           m_U_r = std::sqrt(std::pow(m_u_r, 2) + std::pow(m_v_r, 2));
 
           m_gamma_adcp.value = m_u_r * m_U_r
-                               * (1.0 - (m_estate.u * u_c_body) / std::pow(m_sog, 2)
+                              * (1.0 - (m_estate.u * u_c_body) / std::pow(m_sog, 2)
                                   - (k * m_estate.u * m_u_r) / std::pow(m_sog, 2));
           m_gamma_adcp_old.value = 1.0 - (m_estate.u * u_c_body) / std::pow(m_sog, 2)
-                                   - (k * m_estate.u * m_u_r) / std::pow(m_sog, 2);
+                                  - (k * m_estate.u * m_u_r) / std::pow(m_sog, 2);
 
+          IMC::DevDataText gamma_msg;
           gamma_msg.value = String::str(
             "Gamma ADCP - source: %s, lat: %f, lon: %f, sog: %f, uc: %f, depth: %f, value: %f",
             m_gamma_adcp.source.c_str(), m_gamma_adcp.lat, m_gamma_adcp.lon, m_gamma_adcp.sog,
@@ -688,10 +668,10 @@ namespace Control
           dispatch(gamma_msg);
 
           spew("SPEEDS - u: %.3f, v: %.3f, u_c_body: %.3f, v_c_body: %.3f, u_r: %.3f, v_r: %.3f, "
-               "U: %.3f, U_r: %.3f",
-               m_estate.u, m_estate.v, u_c_body, v_c_body, m_u_r, m_v_r, m_sog, m_U_r);
+              "U: %.3f, U_r: %.3f",
+              m_estate.u, m_estate.v, u_c_body, v_c_body, m_u_r, m_v_r, m_sog, m_U_r);
           spew("GAMMAS - ADCP: %f, ADCP (OLD): %f, SOG: %f, SOG (OLD): %f", m_gamma_adcp.value,
-               m_gamma_adcp_old.value, m_gamma_sog.value, m_gamma_sog_old.value);
+              m_gamma_adcp_old.value, m_gamma_sog.value, m_gamma_sog_old.value);
 
           //! Compute gamma average.
           if (m_avg_adcp == 0)
@@ -707,7 +687,7 @@ namespace Control
           else
             m_gamma_avg_adcp_old =
               ((m_gamma_avg_adcp_old_last * m_avg_adcp_old + m_gamma_adcp_old.value)
-               / (m_avg_adcp_old + 1));
+              / (m_avg_adcp_old + 1));
           m_avg_adcp_old++;
           m_gamma_avg_adcp_old_last = m_gamma_avg_adcp_old;
 
@@ -724,7 +704,7 @@ namespace Control
           else
             m_gamma_avg_sog_old =
               ((m_gamma_avg_sog_old_last * m_avg_sog_old + m_gamma_sog_old.value)
-               / (m_avg_sog_old + 1));
+              / (m_avg_sog_old + 1));
           m_avg_sog_old++;
           m_gamma_avg_sog_old_last = m_gamma_avg_sog_old;
         }
