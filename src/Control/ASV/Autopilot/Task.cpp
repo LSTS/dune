@@ -72,7 +72,7 @@ namespace Control
         double bsf_scaling;
         //! External filter frequency.
         double ext_filter_freq;
-        //! Navigation entity label.
+        //! Navigation task entity label.
         std::string elabel_nav;
         //! Enable gain scheduling.
         bool en_gain_sch;
@@ -146,8 +146,8 @@ namespace Control
 
       struct Task: public Tasks::Task
       {
-        //! Navigation entity eid.
-        int m_nav_eid;
+        //! Navigation task entity eid.
+        unsigned m_nav_eid;
         //! Course PID controller
         DiscretePID m_course_pid;
         //! Control Parcels for course controller
@@ -223,6 +223,7 @@ namespace Control
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
+          m_nav_eid(AddressResolver::invalid()),
           m_scope_ref(0),
           m_wave_freq(0.0),
           m_tstep(0.0),
@@ -297,7 +298,7 @@ namespace Control
           .description("Log the size of each PID parcel");
 
           param("Entity Label - Navigation", m_args.elabel_nav)
-          .description("Entity label of 'GpsFix' message");
+          .description("Entity label of Navigation task");
 
           param("Activate LP Filtering", m_args.lp_filtering)
           .defaultValue("false")
@@ -450,7 +451,6 @@ namespace Control
           catch (...)
           {
             err("Failed resolving entity! Configuration error!");
-            m_nav_eid = 0;
           }
         }
 
