@@ -1052,7 +1052,6 @@ namespace Control
           {
             waitForMessages(0.01);
 
-            // If in maneuver and its time to update gains
             if (m_timer_gs.overflow() && isActive() && m_gain_sch)
             {
               m_timer_gs.reset();
