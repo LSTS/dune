@@ -195,6 +195,7 @@ namespace Power
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
       }
 
       //! Try to connect to the device.
