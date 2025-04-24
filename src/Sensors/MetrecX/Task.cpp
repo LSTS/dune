@@ -270,6 +270,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
+        
         m_need_setup = true;
 
         // Produce and update messages.
