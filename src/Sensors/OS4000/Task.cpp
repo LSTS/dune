@@ -185,6 +185,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
+        
         if (paramChanged(m_args.data_tout))
           m_wdog.setTop(m_args.data_tout);
       }
