@@ -72,8 +72,6 @@ namespace Control
         double bsf_scaling;
         //! External filter frequency.
         double ext_filter_freq;
-        //! Navigation entity label.
-        std::string elabel_nav;
         //! Enable gain scheduling.
         bool en_gain_sch;
         //! Use new gains (gain scheduling).
@@ -299,9 +297,6 @@ namespace Control
           .defaultValue("false")
           .description("Log the size of each PID parcel");
 
-          param("Entity Label - Navigation", m_args.elabel_nav)
-          .description("Entity label of 'GpsFix' message");
-
           param("Activate LP Filtering", m_args.lp_filtering)
           .defaultValue("false")
           .description("Activate Low-pass filtering of computed rudder angle");
@@ -448,15 +443,6 @@ namespace Control
         void
         onEntityResolution(void)
         {
-          try
-          {
-            m_nav_eid = resolveEntity(m_args.elabel_nav);
-          }
-          catch (...)
-          {
-            err("Failed resolving entity! Configuration error!");
-            m_nav_eid = 0;
-          }
         }
 
         //! Reserve entities.
