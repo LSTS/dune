@@ -797,15 +797,8 @@ namespace Control
           else
             value = 0.0;
 
-          double turning_thrust = trimValue(value, -m_args.max_thrust, m_args.max_thrust);
-          if (turning_thrust + m_desired_speed > m_args.max_thrust)
-          {
-            war("Using max thrust");
-            m_thruster.value = 1;
-          }
-          else
-            m_thruster.value = turning_thrust + m_desired_speed;
-
+          double thrust = trimValue(m_desired_speed + value, -m_args.max_thrust, m_args.max_thrust);
+          m_thruster.value = thrust;
           dispatch(m_thruster);
         }
 
