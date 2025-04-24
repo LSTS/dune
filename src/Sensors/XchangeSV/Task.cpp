@@ -91,6 +91,12 @@ namespace Sensors
         .description("Amount of seconds to wait for data before reporting an error");
       }
 
+      void
+      onUpdateParameters(void)
+      {
+        BasicDeviceDriver::onUpdateParameters();
+      }
+
       //! Try to connect to the device.
       //! @return true if connection was established, false otherwise.
       bool
