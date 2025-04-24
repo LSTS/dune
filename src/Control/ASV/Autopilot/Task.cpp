@@ -384,7 +384,6 @@ namespace Control
           .description("Minimum heading error to consider vessel is turning (in degrees).");
 
           // Register handler routines.
-          bind<IMC::Abort>(this);
           bind<IMC::EstimatedState>(this);
           bind<IMC::DesiredHeading>(this);
           bind<IMC::ControlLoops>(this);
@@ -583,17 +582,6 @@ namespace Control
           {
             m_service = true;
           }
-        }
-
-        void
-        consume(const IMC::Abort* msg)
-        {
-          if (msg->getSource() != getSystemId())
-            return;
-
-          // Redundancy, in case everything else fails
-          reset();
-          m_service = true;
         }
 
         void
