@@ -47,8 +47,10 @@ namespace Monitors
 
     struct Arguments
     {
-      //! 
+      //! Log time in format %ud:%uh:%um
       std::string log_time;
+      //! Max storage usage in percentage
+      uint8_t storage_usage;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -61,6 +63,8 @@ namespace Monitors
       Counter<double> m_wdog;
       //! Current log name.
       std::string m_log_name;
+      //! Log files queue.
+      std::queue<Path> m_log_files;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -70,8 +74,14 @@ namespace Monitors
         m_log_time(0)
       {
         param("Log Timeout", m_args.log_time)
-          .description("Log time in format %ud:%uh:%um");
+          .description("Log time in format %ud:%uh:%um, (days, hours, minutes)")
+          .defaultValue("1d");
 
+        param("Max Storage", m_args.storage_usage)
+          .description("Max storage usage in percentage")
+          .defaultValue("90");
+
+        bind<IMC::StorageUsage>(this);
         bind<IMC::LoggingControl>(this);
       }
 
@@ -91,6 +101,21 @@ namespace Monitors
 
         if (!isActive())
           requestActivation();
+      }
+
+      void
+      onResourceInitialization(void)
+      {
+        std::vector<Path> files;
+        m_ctx.dir_log.contents(files, 1, 1);
+
+        std::sort(files.begin(), files.end());
+
+        for (auto&& i : files)
+        {
+          inf("Log file %s", i.str().c_str());
+          m_log_files.push(i);
+        }
       }
 
       //! Parse time string.
@@ -153,6 +178,7 @@ namespace Monitors
             break;
 
           case IMC::LoggingControl::COP_STOPPED:
+            m_log_files.push(m_ctx.dir_log.str() + "/" + msg->name);
             m_wdog.setTop(0);
             m_log_name = getLogName(msg->name);
             break;
@@ -160,6 +186,13 @@ namespace Monitors
           default:
             break;
         }
+      }
+
+      void
+      consume(const IMC::StorageUsage* msg)
+      {
+        if (msg->value > m_args.storage_usage)
+          deleteLog();
       }
 
       //! Get log name.
@@ -184,6 +217,26 @@ namespace Monitors
 
         // Disable while log has not started
         m_wdog.setTop(0);
+      }
+
+      //! Delete oldest log file.
+      void
+      deleteLog(void)
+      {
+        if (m_log_files.empty())
+          return;
+
+        Path file = m_log_files.front();
+        m_log_files.pop();
+
+        if (!file.exists())
+        {
+          war("Log file %s does not exist", file.str().c_str());
+          return;
+        }
+
+        inf("Deleting log file %s", file.str().c_str());
+        file.remove(Path::MODE_RECURSIVE);
       }
 
       //! Main loop.
