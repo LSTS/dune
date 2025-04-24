@@ -35,6 +35,7 @@ if(COMMAND CMAKE_POLICY)
   if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
     cmake_policy(SET CMP0153 OLD)
     cmake_policy(SET CMP0145 OLD)
+    cmake_policy(SET CMP0144 NEW)
   endif()
 endif(COMMAND CMAKE_POLICY)
 
