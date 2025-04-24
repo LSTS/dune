@@ -283,11 +283,6 @@ namespace Navigation
           // Received valid GPS data.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
-          // Dispatch IMC::GpsFix with this task source id.
-          IMC::GpsFix nav = *msg;
-          nav.setSourceEntity(getEntityId());
-          dispatch(nav);
-
           // Fill out IMC::EstimatedState as well.
           m_estate.lat = m_origin->lat;
           m_estate.lon = m_origin->lon;
