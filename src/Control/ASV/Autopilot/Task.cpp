@@ -540,8 +540,11 @@ namespace Control
 
           m_rudder.id = 0;
           m_rudder.value = 0.0;
-
           dispatch(m_rudder);
+
+          m_thruster.id = 0;
+          m_thruster.value = 0.0;
+          dispatch(m_thruster);
         }
 
         //! Setup PIDs.
@@ -564,10 +567,6 @@ namespace Control
         {
           // Reset Heading Controller.
           reset();
-
-          // Set initial thruster speed to zero.
-          m_thruster.id = 0;
-          m_thruster.value = 0.0;
         }
 
         void
@@ -630,9 +629,6 @@ namespace Control
           if (m_service)
           {
             debug("On Service -Dispatching a 0 rudder angle and 0 motor");
-            dispatchRudder(0, m_tstep);
-            m_thruster.value = 0;
-            dispatch(m_thruster);
             reset();
             return;
           }
@@ -1081,12 +1077,7 @@ namespace Control
             requestDeactivation();
 
           if (!isActive())
-          {
             reset();
-            m_thruster.value = 0.0;
-            dispatch(m_thruster);
-            dispatchRudder(0, m_tstep);
-          }
         }
 
         void
