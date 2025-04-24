@@ -49,6 +49,8 @@ namespace DUNE
       double pwr_on_delay;
       //! Delay before powering off the device.
       double pwr_off_delay;
+      //! Delay after powering on the device.
+      double post_pwr_on_delay;
     };
 
     class BasicDeviceDriver: public DUNE::Tasks::Task
