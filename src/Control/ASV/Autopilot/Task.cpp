@@ -560,7 +560,6 @@ namespace Control
         void
         onResourceInitialization(void)
         {
-          // Reset Heading Controller.
           reset();
         }
 
@@ -1101,7 +1100,6 @@ namespace Control
               {
                 trace("Using gain-scheduled gains!");
                 std::vector<float> gains{ Kp, Ki, 0.0 };
-                //! Reset Course Controller.
                 reset();
                 //! Re-configure PID with new gains.
                 setup(gains);
@@ -1109,7 +1107,6 @@ namespace Control
               else
               {
                 debug("Using original gains!");
-                //! Reset Course Controller.
                 reset();
                 //! Re-configure PID with new gains.
                 setup(m_args.course_gains_trans);
