@@ -474,7 +474,6 @@ namespace Control
         void
         onResourceAcquisition(void)
         {
-          m_timer_gs.setTop(60);
         }
 
         void
