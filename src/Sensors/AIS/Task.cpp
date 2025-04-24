@@ -102,6 +102,12 @@ namespace Sensors
         m_nmea5_wait_fg = false;
       }
 
+      void
+      onUpdateParameters(void)
+      {
+        BasicDeviceDriver::onUpdateParameters();
+      }
+
       //! Try to connect to the device.
       //! @return true if connection was established, false otherwise.
       bool
