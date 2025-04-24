@@ -47,6 +47,8 @@ namespace DUNE
       std::vector<std::string> pwr_channels;
       //! Delay before powering on the device.
       double pwr_on_delay;
+      //! Delay before powering off the device.
+      double pwr_off_delay;
     };
 
     class BasicDeviceDriver: public DUNE::Tasks::Task
