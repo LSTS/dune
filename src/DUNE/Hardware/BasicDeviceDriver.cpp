@@ -99,6 +99,9 @@ namespace DUNE
 
       if (paramChanged(m_bdd_args.pwr_off_delay))
         setPowerOffDelay(m_bdd_args.pwr_off_delay);
+
+      if (paramChanged(m_bdd_args.post_pwr_on_delay))
+        setPostPowerOnDelay(m_bdd_args.post_pwr_on_delay);
     }
 
     void
