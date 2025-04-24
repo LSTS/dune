@@ -221,10 +221,10 @@ namespace Control
           m_tx_req_id(0)
         {
           param("Entity Label - Navigation simulation", m_args.elabel_nav_sim)
-          .description("Entity label of 'GpsFix' message");
+          .description("Entity label of Navigation in simulation");
 
           param("Entity Label - Navigation hardware", m_args.elabel_nav_hw)
-          .description("Entity label of 'GpsFix' message");
+          .description("Entity label of Navigation in hardware");
 
           param("Entity Label - Wind", m_args.elabel_ws)
           .description("Entity label of 'AbsoluteWind' message");
@@ -504,7 +504,6 @@ namespace Control
           // Register handler routines.
           bind<IMC::AisInfo>(this);
           bind<IMC::CurrentProfile>(this);
-          bind<IMC::GpsFix>(this);
           bind<IMC::AbsoluteWind>(this);
           bind<IMC::ENCAwareness>(this);
           bind<IMC::EstimatedState>(this);
@@ -695,25 +694,6 @@ namespace Control
           disableControlLoops(IMC::CL_SPEED);
         }
 
-        //! From GPS Task
-        void
-        consume(const IMC::GpsFix* msg)
-        {
-          if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_nav_eid)
-            return;
-
-          m_lat_asv = msg->lat;
-          m_lon_asv = msg->lon;
-          m_asv_state[0] = 0.0; // ASV assumed to be centered, (0,0)
-          m_asv_state[1] = 0.0;
-          m_asv_state[2] = msg->cog;
-          m_asv_state[3] = msg->sog;
-          m_asv_state[4] = 0.0; //! Assume zero sideslip
-          m_asv_state[5] = 0.0; //! Assume zero.
-
-          m_timestamp_new = msg->getTimeStamp();
-        }
-
         void
         consume(const IMC::AbsoluteWind* msg)
         {
@@ -862,7 +842,19 @@ namespace Control
             return;
 
           m_estate = *msg;
-          spew("BODY frame speeds: u = %.3f, v = %.3f - HEADING %.3f", m_estate.u, m_estate.v, Angles::degrees(m_estate.psi));
+
+          m_lat_asv = m_estate.lat;
+          m_lon_asv = m_estate.lon;
+          WGS84::displace(m_estate.x, m_estate.y, &m_lat_asv, &m_lon_asv);
+
+          m_asv_state[0] = 0.0; // ASV assumed to be centered, (0,0)
+          m_asv_state[1] = 0.0;
+          m_asv_state[2] = m_estate.psi;
+          m_asv_state[3] = std::sqrt(std::pow(m_estate.vx, 2) + std::pow(m_estate.vy, 2));
+          m_asv_state[4] = 0.0; //! Assume zero sideslip
+          m_asv_state[5] = 0.0; //! Assume zero.
+
+          m_timestamp_new = msg->getTimeStamp();
         }
 
         Math::Matrix
