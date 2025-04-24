@@ -284,6 +284,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
+        
         m_switch.setRange(m_args.range);
         m_switch.setStartGain(m_args.start_gain);
         m_switch.setPulseLength(m_args.pulse_length);
