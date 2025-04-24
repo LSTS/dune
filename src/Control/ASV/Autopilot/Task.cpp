@@ -583,14 +583,14 @@ namespace Control
           float error = 0.0;
 
           // Course Error (From IMC::DesiredHeading)
-          if (m_args.heading_ctrl || (!m_args.heading_ctrl && msg->sog < m_args.speed_threshold))
+          if (m_args.heading_ctrl || (!m_args.heading_ctrl && m_sog < m_args.speed_threshold))
           {
             error = Angles::normalizeRadian(m_desired_course - m_estate.psi);
             debug("Heading Control - COG %0.3f, Heading %0.3f, DHeading %0.3f, Error: %0.3f, SOG %0.3f",
                   Angles::degrees(msg->cog), Angles::degrees(m_estate.psi),
                   Angles::degrees(m_desired_course), Angles::degrees(error), m_sog);
           }
-          else if (!m_args.heading_ctrl && msg->sog > m_args.speed_threshold)
+          else if (!m_args.heading_ctrl && m_sog > m_args.speed_threshold)
           {
             error = Angles::normalizeRadian(m_desired_course - msg->cog);
             debug("Course Control - HEAD: %.3f, COG %0.3f, DCOG %0.3f, Error: %0.3f, SOG %0.3f",
