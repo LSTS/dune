@@ -144,8 +144,6 @@ namespace Sensors
       bool xdcr;
       //! Output Data Format.
       std::string output_format;
-      // Power channel name.
-      std::string power_channel;
       //! Range Modifier.
       bool mod;
       //! Range Modifier Additive Constant.
@@ -320,10 +318,6 @@ namespace Sensors
         .defaultValue("Data")
         .description("837/83P file name");
 
-        param("Power Channel", m_args.power_channel)
-        .defaultValue("")
-        .description("Power channel that controls the power of the device");
-
         param("Adaptive Range Modifier", m_args.mod)
         .defaultValue("true")
         .description("Adaptive Multibeam range modifier");
@@ -370,6 +364,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
+
         if (isActive())
         {
           if (paramChanged(m_args.io_dev))
@@ -461,12 +457,6 @@ namespace Sensors
         else
         {
           setAutoMode(false);
-        }
-
-        if (paramChanged(m_args.power_channel))
-        {
-          clearPowerChannelNames();
-          addPowerChannelName(m_args.power_channel);
         }
 
         if (paramChanged(m_args.mod_timer))
