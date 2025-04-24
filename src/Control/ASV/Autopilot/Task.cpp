@@ -178,8 +178,6 @@ namespace Control
         bool m_turning;
         //! Speed Over Ground.
         double m_sog;
-        //! Enable gain scheduling.
-        bool m_gain_sch;
         //! Vehicle Estimated State
         IMC::EstimatedState m_estate;
         //! Longitudinal relative speed.
@@ -226,7 +224,6 @@ namespace Control
           m_wave_freq(0.0),
           m_tstep(0.0),
           m_turning(false),
-          m_gain_sch(false),
           m_avg_adcp(0),
           m_avg_adcp_old(0),
           m_avg_sog(0),
@@ -419,8 +416,7 @@ namespace Control
 
           if (paramChanged(m_args.en_gain_sch))
           {
-            m_gain_sch = m_args.en_gain_sch;
-            if (!m_gain_sch)
+            if (!m_args.en_gain_sch)
             {
               reset();
               setup(m_args.course_gains_trans);
@@ -1040,7 +1036,7 @@ namespace Control
           {
             waitForMessages(0.01);
 
-            if (m_timer_gs.overflow() && isActive() && m_gain_sch)
+            if (m_timer_gs.overflow() && isActive() && m_args.en_gain_sch)
             {
               m_timer_gs.reset();
 
