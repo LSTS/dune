@@ -230,6 +230,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
+        
         if (paramChanged(m_args.read_frequency))
           setReadFrequency(m_args.read_frequency);
         
