@@ -784,12 +784,8 @@ namespace Control
         dispatchThrust(void)
         {
           double value;
-          // Use thruster if thruster is enabled, turning assistance is enabled and vessel is
-          // actually turning.
           if (m_args.en_thrust_turn && m_turning)
             value = m_args.thrust_assist;
-          // or if thruster is enabled, vessel is not turning,
-          // but speed is very low.
           else if (m_args.en_thrust && !m_turning && m_sog < m_args.min_sog && m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
             value = m_args.thrust_assist;
           else if (m_args.en_thrust && m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
