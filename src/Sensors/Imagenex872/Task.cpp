@@ -179,6 +179,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
+        
         setFrequency(m_args.frequency);
         setRange(m_args.range);
         setDataGain(m_args.dat_gain);
