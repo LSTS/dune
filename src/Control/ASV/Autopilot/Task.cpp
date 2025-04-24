@@ -215,8 +215,6 @@ namespace Control
 
         //! Desired speed.
         double m_desired_speed;
-        //! Is in teleoperation
-        bool m_teleop;
 
         // Flag to control PCS
         uint8_t m_pcs_flag_sate;
@@ -235,8 +233,7 @@ namespace Control
           m_avg_sog_old(0),
           m_avg_zero(0),
           m_avg_one(0),
-          m_desired_speed(0.0f),
-          m_teleop(false)
+          m_desired_speed(0.0f)
         {
           param("Enable Gain Scheduling", m_args.en_gain_sch)
           .defaultValue("true")
@@ -397,8 +394,6 @@ namespace Control
 
           // For speed controller
           bind<IMC::DesiredSpeed>(this);
-          bind<IMC::Teleoperation>(this);
-          bind<IMC::TeleoperationDone>(this);
         }
 
         void
@@ -484,22 +479,6 @@ namespace Control
         onResourceAcquisition(void)
         {
           m_timer_gs.setTop(60);
-        }
-
-        void
-        consume(const IMC::Teleoperation* msg)
-        {
-          (void)msg;
-          m_teleop = true;
-          debug("Teleoperation mode activated.");
-        }
-
-        void
-        consume(const IMC::TeleoperationDone* msg)
-        {
-          (void)msg;
-          m_teleop = false;
-          debug("Teleoperation mode deactivated.");
         }
 
         void
@@ -596,12 +575,6 @@ namespace Control
 
           if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_nav_eid)
             return;
-
-          if (m_teleop)
-          {
-            debug("Teleoperation mode active - no control allowed.");
-            return;
-          }
 
           // Compute Time Delta.
           m_tstep = m_delta.getDelta();
