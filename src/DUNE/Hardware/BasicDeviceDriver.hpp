@@ -43,6 +43,8 @@ namespace DUNE
   {
     struct BDDArguments
     {
+      //! Power channels.
+      std::vector<std::string> pwr_channels;
     };
 
     class BasicDeviceDriver: public DUNE::Tasks::Task
