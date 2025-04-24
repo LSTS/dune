@@ -43,8 +43,6 @@ namespace Sensors
     static const unsigned c_baud_rate = 115200;
     //! Number of axes.
     static const unsigned c_axes_count = 3;
-    //! Power-up delay (s).
-    static const double c_power_up_delay = 2.0;
     //! Hard Iron calibration parameter name.
     static const std::string c_hard_iron_param = "Hard-Iron Calibration";
     //! Hard Iron calibration date.
@@ -74,8 +72,6 @@ namespace Sensors
       unsigned output_frq;
       //! Raw data output.
       bool raw_data;
-      //! Power channel name.
-      std::string pwr_name;
       //! Hard-iron correction factors.
       std::vector<double> hard_iron;
       //! Rotation matrix values.
@@ -155,10 +151,6 @@ namespace Sensors
         .description("IO device URI in the form \"uart://DEVICE\"." 
                      "This device has only one baud rate.");
 
-        param("Power Channel - Name", m_args.pwr_name)
-        .defaultValue("")
-        .description("Name of the power channel");
-
         param(c_hard_iron_param, m_args.hard_iron)
         .units(Units::Gauss)
         .size(c_axes_count)
@@ -203,6 +195,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
+
         if (paramChanged(m_args.io_dev))
           m_args.io_dev += String::str(":%u", c_baud_rate);
 
@@ -224,13 +218,6 @@ namespace Sensors
 
         if (paramChanged(m_args.output_frq) || paramChanged(m_args.raw_data))
           setOutputFrequency(m_args.output_frq);
-
-        if (paramChanged(m_args.pwr_name))
-        {
-          clearPowerChannelNames();
-          addPowerChannelName(m_args.pwr_name);
-        }
-        setPostPowerOnDelay(c_power_up_delay);
       }
 
       //! Try to connect to the device.
