@@ -87,6 +87,12 @@ namespace DUNE
     void
     BasicDeviceDriver::onUpdateParameters(void)
     {
+      if (paramChanged(m_bdd_args.pwr_channels))
+      {
+        clearPowerChannelNames();
+        for (const auto& pc : m_bdd_args.pwr_channels)
+          addPowerChannelName(pc);
+      }
     }
 
     void
