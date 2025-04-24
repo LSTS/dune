@@ -90,6 +90,8 @@ namespace Control
         double min_sog;
         //! User defined thrust assistance.
         double thrust_assist;
+        //! Force thrust assistance.
+        bool force_thrust_assist;
         //! Switch to heading control.
         bool heading_ctrl;
         //! Speed threshold for heading control
@@ -258,6 +260,12 @@ namespace Control
           param("Thrust Assistance", m_args.thrust_assist)
           .defaultValue("0.75")
           .description("Percentage of thrust assistance");
+
+          param("Force Thrust Assistance", m_args.force_thrust_assist)
+          .defaultValue("false")
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          .description("Force thrust assistance when thrust assistance is enabled");
 
           param("Maximum Thrust Actuation", m_args.max_thrust)
           .defaultValue("1.0")
@@ -783,18 +791,18 @@ namespace Control
         void
         dispatchThrust(void)
         {
-          double value;
-          if (m_args.en_thrust_turn && m_turning)
-            value = m_args.thrust_assist;
-          else if (m_args.en_thrust && !m_turning && m_sog < m_args.min_sog && m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
-            value = m_args.thrust_assist;
-          else if (m_args.en_thrust && m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
-            value = m_args.thrust_assist;
-          else
-            value = 0.0;
+          double value = 0.0f;
+          if (m_args.en_thrust && m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
+          {
+            value = m_args.speed_control ? m_desired_speed : 0.0f;
 
-          double thrust = trimValue(m_desired_speed + value, -m_args.max_thrust, m_args.max_thrust);
-          m_thruster.value = thrust;
+            if ((m_args.en_thrust_turn && m_turning) ||
+                (m_sog < m_args.min_sog)             ||
+                (m_args.force_thrust_assist))
+              value += m_args.thrust_assist;
+          }
+
+          m_thruster.value = trimValue(value, -m_args.max_thrust, m_args.max_thrust);
           dispatch(m_thruster);
         }
 
