@@ -58,6 +58,10 @@ namespace DUNE
         m_read_period(0.0),
         m_uri()
     {
+      param("Power Channel - Names", m_bdd_args.pwr_channels)
+      .defaultValue("")
+      .description("Device's power channels");
+
       m_restart_needed = true;
       bind<IMC::EstimatedState>(this);
       bind<IMC::LoggingControl>(this);
