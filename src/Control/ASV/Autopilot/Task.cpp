@@ -451,6 +451,7 @@ namespace Control
           catch (...)
           {
             err("Failed resolving entity! Configuration error!");
+            //! TODO: this task should not be running if the entity is not resolved.
           }
         }
 
