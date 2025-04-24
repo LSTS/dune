@@ -93,6 +93,9 @@ namespace DUNE
         for (const auto& pc : m_bdd_args.pwr_channels)
           addPowerChannelName(pc);
       }
+
+      if (paramChanged(m_bdd_args.pwr_on_delay))
+        setPowerOnDelay(m_bdd_args.pwr_on_delay);
     }
 
     void
