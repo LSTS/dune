@@ -49,4 +49,5 @@ namespace DUNE
 #include <DUNE/Utils/Utils.hpp>
 #include <DUNE/Utils/XML.hpp>
 #include <DUNE/Utils/Codecs.hpp>
+#include <DUNE/Utils/Actuators.hpp>
 #endif
