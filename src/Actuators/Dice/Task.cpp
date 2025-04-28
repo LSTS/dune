@@ -30,8 +30,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-#include "T200.hpp"
-
 namespace Actuators
 {
   //! DICE - DIfferential thrust Converter for bluerobotics Esc500.
@@ -110,7 +108,7 @@ namespace Actuators
       //! Thrusters voltages.
       std::vector<float> m_thrusters_voltages;
       //! Thrusters model.
-      std::vector<std::unique_ptr<Model>> m_models;
+      std::vector<std::unique_ptr<Utils::Actuators::Model>> m_models;
       //! Thrusters entity id.
       uint16_t m_eid[2];
 
@@ -175,11 +173,11 @@ namespace Actuators
         return eid;
       }
 
-      std::unique_ptr<Actuators::Dice::Model>
+      std::unique_ptr<Utils::Actuators::Model>
       getModel(const std::string model)
       {
         if (model == "T200")
-          return std::make_unique<Actuators::Dice::T200>();
+          return std::make_unique<Utils::Actuators::T200>();
         
         throw std::invalid_argument("Invalid thruster model name");
       }
