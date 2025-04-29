@@ -305,7 +305,7 @@ namespace Transports
 
         // Start listener thread.
         m_listener = new Listener(*this, m_sock, m_lcomms,
-                                  m_args.contact_timeout, m_args.trace_in);
+                                  m_args.contact_timeout, m_args.ign_filter, m_args.trace_in);
         m_listener->start();
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
