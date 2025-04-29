@@ -112,6 +112,11 @@ namespace Control
 
         //! Minimum heading error to consider vessel is turning
         double turn_min_error;
+
+        //! Autonaut max speed (m/s).
+        double max_speed;
+        //! Autonaut thruster max rpm.
+        double max_rpm;
       };
 
       struct Gamma
@@ -385,6 +390,16 @@ namespace Control
           .defaultValue("25")
           .units(Units::Degree)
           .description("Minimum heading error to consider vessel is turning (in degrees).");
+
+          param("Autonaut Maximum Speed", m_args.max_speed)
+          .defaultValue("2.0")
+          .units(Units::MeterPerSecond)
+          .description("Maximum speed of the Autonaut (in m/s).");
+
+          param("Autonaut Thruster Maximum RPM", m_args.max_rpm)
+          .defaultValue("3600")
+          .units(Units::RPM)
+          .description("Maximum rpm of the Autonaut thruster.");
 
           // Register handler routines.
           bind<IMC::EstimatedState>(this);
