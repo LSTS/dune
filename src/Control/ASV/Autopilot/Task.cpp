@@ -504,11 +504,11 @@ namespace Control
           switch (msg->speed_units)
           {
             case IMC::SUNITS_METERS_PS:
-              speed = msg->value / 2;
+              speed = msg->value / m_args.max_speed;
               break;
 
             case IMC::SUNITS_RPM:
-              speed = msg->value / 3600;
+              speed = msg->value / m_args.max_rpm;
               break;
 
             case IMC::SUNITS_PERCENTAGE:
@@ -520,11 +520,7 @@ namespace Control
           }
 
           m_desired_speed = trimValue(speed, -m_args.max_thrust, m_args.max_thrust);
-
-          inf("onDesiredSpeed %f", m_desired_speed);
-          // IMC::SetThrusterActuation act;
-          // act.value = m_desired_speed;
-          // dispatch(act);
+          spew("onDesiredSpeed %f", m_desired_speed);
         }
 
         void
