@@ -96,6 +96,8 @@ namespace Transports
       std::string monitor_task_label;
       //! Clear Message Queue
       bool clear_queue;
+      //! Maximum number of messages in the queue
+      int queue_max;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -218,6 +220,11 @@ namespace Transports
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .defaultValue("false")
         .description("Clears the message queue");
+
+        param("Max Messages In Queue", m_args.queue_max)
+        .defaultValue("0")
+        .minimumValue("0")
+        .description("Maximum number of messages in queue. 0 means no limit");
 
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
@@ -460,6 +467,18 @@ namespace Transports
       void
       enqueueTxRequest(TxRequest* request)
       {
+        // Check for message limit
+        if (m_args.queue_max > 0)
+        {
+          while (m_tx_requests.size() >= m_args.queue_max)
+          {
+            TxRequest* req = m_tx_requests.front();
+            sendTxRequestStatus(req, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+            delete req;
+            m_tx_requests.pop_front();
+          }
+        }
+
         std::list<TxRequest*>::iterator itr = m_tx_requests.begin();
         for ( ; itr != m_tx_requests.end(); ++itr)
         {
