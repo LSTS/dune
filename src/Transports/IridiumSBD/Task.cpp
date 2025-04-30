@@ -371,19 +371,13 @@ namespace Transports
       openUART(const std::string& device)
       {
         if (device.empty())
-        {
-          err("empty device name");
-          return nullptr;
-        }
+          throw std::runtime_error("no device name");
 
         char uart[128] = {0};
         unsigned baud = 0;
         trace("[UART] >> attempting URI: %s", device.c_str());
         if (std::sscanf(device.c_str(), "uart://%[^:]:%u", uart, &baud) != 2)
-        {
-          err("invalid device name %s", device.c_str());
-          return nullptr;
-        }
+          throw std::runtime_error("invalid device name");
 
         return new SerialPort(uart, baud);
       }
