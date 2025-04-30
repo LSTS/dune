@@ -132,7 +132,7 @@ namespace Transports
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_handle(NULL),
+        m_handle(nullptr),
         m_driver(NULL),
         m_tx_request(NULL),
         m_prio(TxRxPriority::None),
@@ -367,14 +367,23 @@ namespace Transports
         Memory::clear(m_handle);
       }
 
-      IO::Handle *
-      openUART(const std::string &device)
+      IO::Handle*
+      openUART(const std::string& device)
       {
+        if (device.empty())
+        {
+          err("empty device name");
+          return nullptr;
+        }
+
         char uart[128] = {0};
         unsigned baud = 0;
         trace("[UART] >> attempting URI: %s", device.c_str());
         if (std::sscanf(device.c_str(), "uart://%[^:]:%u", uart, &baud) != 2)
+        {
+          err("invalid device name %s", device.c_str());
           return nullptr;
+        }
 
         return new SerialPort(uart, baud);
       }
