@@ -74,12 +74,12 @@ namespace Monitors
         m_log_time(0)
       {
         param("Log Timeout", m_args.log_time)
-          .description("Log time in format %ud:%uh:%um, (days, hours, minutes)")
-          .defaultValue("1d");
+        .description("Log time in format %ud:%uh:%um, (days, hours, minutes)")
+        .defaultValue("1d");
 
         param("Max Storage", m_args.storage_usage)
-          .description("Max storage usage in percentage")
-          .defaultValue("90");
+        .description("Max storage usage in percentage")
+        .defaultValue("90");
 
         bind<IMC::StorageUsage>(this);
         bind<IMC::LoggingControl>(this);
