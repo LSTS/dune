@@ -65,6 +65,8 @@ namespace Monitors
       std::string m_log_name;
       //! Log files queue.
       std::queue<Path> m_log_files;
+      //! Timestamp of last delete.
+      double m_last_delete;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -200,6 +202,9 @@ namespace Monitors
         if (msg->getSource() != getSystemId())
           return;
         
+        if (msg->getTimeStamp() < m_last_delete)
+          return;
+        
         if (msg->value > m_args.storage_usage)
           deleteLog();
       }
@@ -246,6 +251,7 @@ namespace Monitors
 
         inf("Deleting log file %s", file.str().c_str());
         file.remove(Path::MODE_RECURSIVE);
+        m_last_delete = Clock::getSinceEpoch();
       }
 
       //! Main loop.
