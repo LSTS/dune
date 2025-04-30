@@ -173,6 +173,9 @@ namespace Monitors
       void
       consume(const IMC::LoggingControl* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+          
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
