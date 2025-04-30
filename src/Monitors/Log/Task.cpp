@@ -79,6 +79,9 @@ namespace Monitors
 
         param("Max Storage", m_args.storage_usage)
         .description("Max storage usage in percentage")
+        .units(Units::Percentage)
+        .minimumValue("0")
+        .maximumValue("100")
         .defaultValue("90");
 
         bind<IMC::StorageUsage>(this);
