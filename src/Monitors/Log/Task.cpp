@@ -194,6 +194,9 @@ namespace Monitors
       void
       consume(const IMC::StorageUsage* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+        
         if (msg->value > m_args.storage_usage)
           deleteLog();
       }
