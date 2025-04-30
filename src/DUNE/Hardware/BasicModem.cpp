@@ -64,6 +64,9 @@ namespace DUNE
       m_line_term_out(c_line_term_out),
       m_line_trim(false)
     {
+      if (m_handle == nullptr)
+        throw std::runtime_error("Invalid I/O handle");
+        
       m_handle->flushInput();
     }
 
