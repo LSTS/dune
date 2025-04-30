@@ -113,7 +113,7 @@ namespace Monitors
 
         for (auto&& i : files)
         {
-          inf("Log file %s", i.str().c_str());
+          spew("Log file %s", i.str().c_str());
           m_log_files.push(i);
         }
       }
