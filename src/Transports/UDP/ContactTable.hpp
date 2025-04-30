@@ -61,17 +61,33 @@ namespace Transports
           list.push_back(itr->second);
       }
 
-      void
+      bool
+      addContact(unsigned id, const Address& addr)
+      {
+        Table::iterator itr = m_table.find(id);
+
+        if (itr != m_table.end())
+          return false;
+
+        std::pair<Table::iterator, bool> rv = m_table.insert(Entry(id, Contact(id, addr)));
+        if (rv.second)
+        {
+          itr = rv.first;
+          // Set invalid timeout.
+          itr->second.setTimeout(-1);
+          return true;
+        }
+
+        return false;
+      }
+
+      bool
       update(unsigned id, const Address& addr)
       {
         Table::iterator itr = m_table.find(id);
 
         if (itr == m_table.end())
-        {
-          std::pair<Table::iterator, bool> rv = m_table.insert(Entry(id, Contact(id, addr)));
-          itr = rv.first;
-          itr->second.setTimeout(m_tout);
-        }
+          return false;
 
         // Address has changed... update it.
         if (itr->second.getAddress() != addr)
@@ -81,6 +97,8 @@ namespace Transports
         }
 
         itr->second.update();
+
+        return true;
       }
 
     private:

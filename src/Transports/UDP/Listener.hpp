@@ -51,10 +51,11 @@ namespace Transports
     {
     public:
       Listener(Tasks::Task& task, UDPSocket& sock, LimitedComms* lcomms,
-               float contact_timeout, bool trace = false):
+               float contact_timeout, bool force = false, bool trace = false):
         m_task(task),
         m_sock(sock),
         m_trace(trace),
+        force_send(force),
         m_contacts(contact_timeout),
         m_lcomms(lcomms)
       { }
@@ -83,6 +84,14 @@ namespace Transports
         m_contacts_lock.unlock();
       }
 
+      void
+      addContact(unsigned id)
+      {
+        m_contacts_lock.lockWrite();
+        m_contacts.addContact(id, Address::Any);
+        m_contacts_lock.unlock();
+      }
+
     private:
       // Buffer capacity.
       static const int c_bfr_size = 65535;
@@ -94,6 +103,8 @@ namespace Transports
       UDPSocket& m_sock;
       // True to print incoming messages.
       bool m_trace;
+      // Flag to force sending messages.
+      bool force_send;
       // Table of contacts.
       ContactTable m_contacts;
       // Lock to serialize access to m_contacts.
@@ -133,10 +144,13 @@ namespace Transports
             }
 
             m_contacts_lock.lockWrite();
-            m_contacts.update(msg->getSource(), addr);
+            bool onTable = m_contacts.update(msg->getSource(), addr);
             m_contacts_lock.unlock();
 
-            m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+            if (force_send)
+              m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+            else if (onTable)
+              m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
             if (m_trace)
               DUNE_MSG(m_task.getName(), "incoming: " + std::string(msg->getName()));
