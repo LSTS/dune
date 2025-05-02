@@ -1,0 +1,2 @@
+/usr/bin/ar qc libVision.DFK51BG02H.a  CMakeFiles/Vision.DFK51BG02H.dir/src/Vision/DFK51BG02H/Task.cpp.o
+/usr/bin/ranlib libVision.DFK51BG02H.a

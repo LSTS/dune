@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.Target.a  CMakeFiles/Simulators.Target.dir/src/Simulators/Target/Task.cpp.o
+/usr/bin/ranlib libSimulators.Target.a

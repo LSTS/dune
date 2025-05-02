@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.SonTekArgonaut.a  CMakeFiles/Sensors.SonTekArgonaut.dir/src/Sensors/SonTekArgonaut/Task.cpp.o
+/usr/bin/ranlib libSensors.SonTekArgonaut.a

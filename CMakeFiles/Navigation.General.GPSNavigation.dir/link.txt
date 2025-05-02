@@ -1,0 +1,2 @@
+/usr/bin/ar qc libNavigation.General.GPSNavigation.a  CMakeFiles/Navigation.General.GPSNavigation.dir/src/Navigation/General/GPSNavigation/Task.cpp.o
+/usr/bin/ranlib libNavigation.General.GPSNavigation.a
