@@ -161,7 +161,7 @@ main(int argc, char** argv)
       fprintf(stdout, "       PowerChannelState, PushEntityParameters\n");
       fprintf(stdout, "  [Q]: QueryEntityInfo, QueryEntityParameters\n");
       fprintf(stdout, "  [R]: RegisterManeuver, RemoteActions, RemoteActionsRequest, ReplayControl, ReportControl,\n");
-      fprintf(stdout, "       RestartSystem\n");
+      fprintf(stdout, "       Restart\n");
       fprintf(stdout, "  [S]: SaveEntityParameters, SetEntityParameters, SetLedBrightness, SetServoPosition,\n");
       fprintf(stdout, "       SetThrusterActuation, Sms, SoundSpeed\n");
       fprintf(stdout, "  [T]: Target, TeleoperationDone, Temperature, TextMessage, TransmissionRequest, TrexCommand\n");
@@ -741,9 +741,9 @@ main(int argc, char** argv)
     msg = tmsg;
   }
 
-  if (strcmp(argv[3], "RestartSystem") == 0)
+  if (strcmp(argv[3], "Restart") == 0)
   {
-    IMC::RestartSystem* tmsg = new IMC::RestartSystem;
+    IMC::Restart* tmsg = new IMC::Restart;
     msg = tmsg;
   }
 
