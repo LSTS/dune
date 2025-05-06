@@ -27,9 +27,10 @@
 // Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_UTILS_ACTUATORS_HPP_INCLUDED_
-#define DUNE_UTILS_ACTUATORS_HPP_INCLUDED_
+#ifndef DUNE_UTILS_ACTUATORS_MODELS_RPM_HPP_INCLUDED_
+#define DUNE_UTILS_ACTUATORS_MODELS_RPM_HPP_INCLUDED_
 
-#include <DUNE/Utils/Actuators/Models/Models.hpp>
+#include <DUNE/Utils/Actuators/Models/RPM/Model.hpp>
+#include <DUNE/Utils/Actuators/Models/RPM/T200.hpp>
 
 #endif

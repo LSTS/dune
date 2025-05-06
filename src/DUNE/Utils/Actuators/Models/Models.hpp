@@ -30,32 +30,6 @@
 #ifndef DUNE_UTILS_ACTUATORS_MODELS_HPP_INCLUDED_
 #define DUNE_UTILS_ACTUATORS_MODELS_HPP_INCLUDED_
 
-#include <iostream>
-#include <cstdio>
-
-#include <DUNE/Math/General.hpp>
-
-namespace DUNE
-{
-  namespace Utils
-  {
-    namespace Actuators
-    {      
-      class Model
-      {
-      public:
-        //! Constructor.
-        Model(void) = default;
-        
-        //! Destructor.
-        virtual
-        ~Model(void) = default;
-    
-        virtual int16_t
-        getRPM(const float& voltage, const int16_t& duty_cycle) = 0;
-      };
-    }
-  }
-}
+#include <DUNE/Utils/Actuators/Models/RPM/RPM.hpp>
 
 #endif

@@ -27,9 +27,44 @@
 // Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_UTILS_ACTUATORS_HPP_INCLUDED_
-#define DUNE_UTILS_ACTUATORS_HPP_INCLUDED_
+#ifndef ACTUATORS_MODELS_RPM_MODEL_HPP_INCLUDED_
+#define ACTUATORS_MODELS_RPM_MODEL_HPP_INCLUDED_
 
-#include <DUNE/Utils/Actuators/Models/Models.hpp>
+#include <iostream>
+#include <cstdio>
+
+#include <DUNE/Math/General.hpp>
+
+namespace DUNE
+{
+  namespace Utils
+  {
+    namespace Actuators
+    {
+      namespace Models
+      {
+        namespace RPM
+        {
+          class Model
+          {
+          public:
+            //! Constructor.
+            Model(void) = default;
+            
+            //! Destructor.
+            virtual
+            ~Model(void) = default;
+
+            virtual uint16_t
+            getPWM(const float& voltage, const int16_t& rpm) = 0;
+        
+            virtual int16_t
+            getRPM(const float& voltage, const int16_t& pwm) = 0;
+          };
+        }
+      }
+    }
+  }
+}
 
 #endif
