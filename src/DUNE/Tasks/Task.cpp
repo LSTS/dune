@@ -43,6 +43,7 @@
 #include <DUNE/Tasks/Exceptions.hpp>
 #include <DUNE/Tasks/Task.hpp>
 #include <DUNE/Utils/XML.hpp>
+#include <DUNE/Utils/String.hpp>
 #include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Entities/EntityUtils.hpp>
 
@@ -102,6 +103,7 @@ namespace DUNE
       bind<IMC::PushEntityParameters>(this);
       bind<IMC::PopEntityParameters>(this);
       bind<IMC::QueryEntityState>(this);
+      bind<IMC::Restart>(this);
     }
 
     unsigned int
@@ -364,6 +366,16 @@ namespace DUNE
     }
 
     void
+    Task::restart(const IMC::Restart* msg, const unsigned delay)
+    {
+      const auto text = Utils::String::str("manual restart requested by 0x%x (%hhu)",
+                                            msg->getSource(),
+                                            msg->getSourceEntity());
+
+      throw RestartNeeded(text, delay, false);
+    }
+
+    void
     Task::run(void)
     {
 #if defined(DUNE_OS_LINUX)
@@ -561,6 +573,21 @@ namespace DUNE
     Task::consume(const IMC::PopEntityParameters* msg)
     {
       onPopEntityParameters(msg);
+    }
+
+    void
+    Task::consume(const IMC::Restart* msg)
+    {
+      if (msg->getDestination() != getSystemId())
+        return;
+
+      if (msg->getDestinationEntity() != getEntityId())
+        return;
+
+      if (msg->type != IMC::Restart::RestartTypeEnum::RSTYPE_TASK)
+        return;
+
+      onRequestRestart(msg);
     }
 
     void

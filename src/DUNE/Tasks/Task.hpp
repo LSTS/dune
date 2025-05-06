@@ -650,6 +650,10 @@ namespace DUNE
       void
       deactivationFailed(const std::string& reason);
 
+      //!
+      void
+      restart(const IMC::Restart* msg, const unsigned delay = 0);
+
       virtual bool
       onWriteParamsXML(std::ostream& os) const
       {
@@ -723,6 +727,13 @@ namespace DUNE
       {
         spew("on request activation");
         activate();
+      }
+
+      virtual void
+      onRequestRestart(const IMC::Restart* msg)
+      {
+        spew("on request restart");
+        restart(msg);
       }
 
       //! Called when an external deactivation request is
@@ -838,6 +849,9 @@ namespace DUNE
 
       void
       consume(const IMC::PopEntityParameters* msg);
+
+      void
+      consume(const IMC::Restart* msg);
     };
   }
 }
