@@ -709,6 +709,7 @@ namespace Sensors
             inf(DTR("failed to acknowledge restart request"));
 
           IMC::Restart restart;
+          restart.type = Restart::RSTYPE_SYSTEM;
           dispatch(restart);
         }
         else if (value == c_code_abort)
