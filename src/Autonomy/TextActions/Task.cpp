@@ -81,7 +81,8 @@ namespace Autonomy
         m_pcs(NULL),
         m_vstate(NULL),
         m_last(NULL),
-        m_reqid(0)
+        m_reqid(0),
+        m_emsg(nullptr)
       {
         param("Reply timeout", m_args.reply_timeout)
           .defaultValue("60")
