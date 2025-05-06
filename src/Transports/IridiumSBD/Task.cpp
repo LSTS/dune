@@ -122,10 +122,6 @@ namespace Transports
       Counter<double> m_monitor_check_timer;
       //! State of task.
       uint8_t m_state;
-      //! rx queue size.
-      unsigned m_rx_queue_size;
-      //! tx queue size
-      unsigned m_tx_queue_size;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -137,9 +133,7 @@ namespace Transports
         m_tx_request(NULL),
         m_prio(TxRxPriority::None),
         m_error_count(0),
-        m_state(Status::CODE_INIT),
-        m_rx_queue_size(99),
-        m_tx_queue_size(99)
+        m_state(Status::CODE_INIT)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -276,15 +270,23 @@ namespace Transports
             Time::Delay::wait(1.0);
           }
 
-          if(m_args.use_9523)
+          m_handle = openSocketTCP(m_args.io_dev);
+          if (m_handle == nullptr)
           {
-            inf("Opening serial port %s", m_args.io_dev_9523.c_str());
-            m_handle = openUART(m_args.io_dev_9523);
+            if(m_args.use_9523)
+            {
+              inf("Opening serial port %s", m_args.io_dev_9523.c_str());
+              m_handle = openUART(m_args.io_dev_9523);
+            }
+            else
+            {
+              inf("Opening serial port %s", m_args.io_dev.c_str());
+              m_handle = openUART(m_args.io_dev);
+            }
           }
           else
           {
-            inf("Opening serial port %s", m_args.io_dev.c_str());
-            m_handle = openUART(m_args.io_dev);
+            inf("Opening socket %s", m_args.io_dev.c_str());
           }
 
           IMC::VersionInfo vi;
@@ -377,6 +379,35 @@ namespace Transports
           return nullptr;
 
         return new SerialPort(uart, baud);
+      }
+
+      IO::Handle *
+      openSocketTCP(const std::string &device)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+        trace("[TCP] >> attempting URI: %s", device.c_str());
+
+        if (std::sscanf(device.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return nullptr;
+
+        TCPSocket *sock = nullptr;
+        try
+        {
+          sock = new TCPSocket();
+          sock->setKeepAlive(true);
+          sock->setNoDelay(true);
+          sock->setSendTimeout(1.0);
+          sock->setReceiveTimeout(1.0);
+          sock->connect(addr, port);
+        }
+        catch (...)
+        {
+          Memory::clear(sock);
+          throw;
+        }
+
+        return sock;
       }
 
       unsigned
@@ -722,14 +753,9 @@ namespace Transports
         //get rx and tx queue size
         unsigned rx_queue_size = m_driver->getQueuedMT();
         unsigned tx_queue_size = m_tx_requests.size();
-        if(m_rx_queue_size != rx_queue_size || m_tx_queue_size != tx_queue_size)
-        {
-          m_rx_queue_size = rx_queue_size;
-          m_tx_queue_size = tx_queue_size;
-          trace("rx queue size: %u, tx queue size: %u", m_rx_queue_size, m_tx_queue_size);
-          description += String::str("queue: rx:%u, tx:%u", rx_queue_size, tx_queue_size);
-          setEntityState(IMC::EntityState::ESTA_NORMAL, description);
-        }
+        trace("rx queue size: %u, tx queue size: %u", rx_queue_size, tx_queue_size);
+        description += String::str("queue: rx:%u, tx:%u", rx_queue_size, tx_queue_size);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, description);
       }
 
       //! Main loop.
@@ -740,7 +766,7 @@ namespace Transports
         {
           try
           {
-            waitForMessages(0.1);
+            waitForMessages(0.5);
             dispatchEntityState();
             processQueue();
             checkError();
