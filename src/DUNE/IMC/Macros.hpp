@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6e8033743562af8755e5e0350f6d63ca                            *
+// IMC XML MD5: 6bee838bc8d005037b4a2fadc1660b58                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -48,8 +48,8 @@
 #define DUNE_IMC_CPUUSAGE 7
 //! TransportBindings identification number.
 #define DUNE_IMC_TRANSPORTBINDINGS 8
-//! RestartSystem identification number.
-#define DUNE_IMC_RESTARTSYSTEM 9
+//! Restart identification number.
+#define DUNE_IMC_RESTART 9
 //! DevCalibrationControl identification number.
 #define DUNE_IMC_DEVCALIBRATIONCONTROL 12
 //! DevCalibrationState identification number.

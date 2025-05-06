@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6e8033743562af8755e5e0350f6d63ca                            *
+// IMC XML MD5: 6bee838bc8d005037b4a2fadc1660b58                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -563,8 +563,8 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
-    //! Restart System.
-    class RestartSystem: public Message
+    //! Restart.
+    class Restart: public Message
     {
     public:
       //! Restart Type.
@@ -573,7 +573,9 @@ namespace DUNE
         //! Dune.
         RSTYPE_DUNE = 1,
         //! System.
-        RSTYPE_SYSTEM = 2
+        RSTYPE_SYSTEM = 2,
+        //! Task.
+        RSTYPE_TASK = 3
       };
 
       //! Restart Type.
@@ -585,12 +587,12 @@ namespace DUNE
         return 9;
       }
 
-      RestartSystem(void);
+      Restart(void);
 
-      RestartSystem*
+      Restart*
       clone(void) const
       {
-        return new RestartSystem(*this);
+        return new Restart(*this);
       }
 
       void
@@ -614,13 +616,13 @@ namespace DUNE
       uint16_t
       getId(void) const
       {
-        return RestartSystem::getIdStatic();
+        return Restart::getIdStatic();
       }
 
       const char*
       getName(void) const
       {
-        return "RestartSystem";
+        return "Restart";
       }
 
       unsigned

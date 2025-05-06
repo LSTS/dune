@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6e8033743562af8755e5e0350f6d63ca                            *
+// IMC XML MD5: 6bee838bc8d005037b4a2fadc1660b58                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -510,34 +510,34 @@ namespace DUNE
       IMC::toJSON(os__, "message_id", message_id, nindent__);
     }
 
-    RestartSystem::RestartSystem(void)
+    Restart::Restart(void)
     {
       m_header.mgid = 9;
       clear();
     }
 
     void
-    RestartSystem::clear(void)
+    Restart::clear(void)
     {
       type = 0;
     }
 
     bool
-    RestartSystem::fieldsEqual(const Message& msg__) const
+    Restart::fieldsEqual(const Message& msg__) const
     {
-      const IMC::RestartSystem& other__ = static_cast<const RestartSystem&>(msg__);
+      const IMC::Restart& other__ = static_cast<const Restart&>(msg__);
       if (type != other__.type) return false;
       return true;
     }
 
     int
-    RestartSystem::validate(void) const
+    Restart::validate(void) const
     {
       return true;
     }
 
     uint8_t*
-    RestartSystem::serializeFields(uint8_t* bfr__) const
+    Restart::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(type, ptr__);
@@ -545,7 +545,7 @@ namespace DUNE
     }
 
     uint16_t
-    RestartSystem::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    Restart::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(type, bfr__, size__);
@@ -553,7 +553,7 @@ namespace DUNE
     }
 
     uint16_t
-    RestartSystem::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    Restart::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(type, bfr__, size__);
@@ -561,7 +561,7 @@ namespace DUNE
     }
 
     void
-    RestartSystem::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    Restart::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "type", type, nindent__);
     }
