@@ -24,26 +24,30 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Luis Venâncio                                                    *
+//***************************************************************************
+// Utility to generate sha256 hash from string.                             *
 //***************************************************************************
 
-#ifndef DUNE_ALGORITHMS_HPP_INCLUDED_
-#define DUNE_ALGORITHMS_HPP_INCLUDED_
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+using DUNE_NAMESPACES;
 
-namespace DUNE
+int
+main(int argc, char** argv)
 {
-  //! %General purpose algorithms.
-  namespace Algorithms
-  { }
+  if (argc != 2)
+  {
+    std::cerr << "Usage: " << argv[0] << " \"string\"\n" 
+              << "Hash \"string\" using sha256" <<std::endl;
+    return 1;
+  }
+
+  DUNE::Algorithms::Sha256 sha256;
+  sha256.update(reinterpret_cast<const uint8_t*>(argv[1]), std::strlen(argv[1]));
+
+  std::cout << "String: " << argv[1] << "\n"
+            << "Hash: " << sha256.digest() << std::endl;
+
+  return 0;
 }
-
-#include <DUNE/Algorithms/Base64.hpp>
-#include <DUNE/Algorithms/CRC8.hpp>
-#include <DUNE/Algorithms/CRC16.hpp>
-#include <DUNE/Algorithms/FletcherChecksum.hpp>
-#include <DUNE/Algorithms/MD5.hpp>
-#include <DUNE/Algorithms/Sha256.hpp>
-#include <DUNE/Algorithms/XORChecksum.hpp>
-#include <DUNE/Algorithms/UNESCO1983.hpp>
-
-#endif
