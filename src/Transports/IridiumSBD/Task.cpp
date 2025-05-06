@@ -48,6 +48,8 @@ namespace Transports
     static const double c_pwr_on_delay = 5.0;
     //! Monitor delay before check state (in seconds).
     static const double c_monitor_delay = 20.0;
+    //! Clear message queue parameter name.
+    const std::string c_clear_queue_param = "Clear Message Queue";
 
     enum TxRxPriority
     {
@@ -90,6 +92,10 @@ namespace Transports
       bool monitor_modem;
       //! Monitor Iridium Task Label
       std::string monitor_task_label;
+      //! Clear Message Queue
+      bool clear_queue;
+      //! Maximum number of messages in the queue
+      int queue_max;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -211,6 +217,17 @@ namespace Transports
         param("Monitor Iridium Task Label", m_args.monitor_task_label)
         .defaultValue("CPC")
         .description("Monitor Iridium Task Label");
+
+        param(c_clear_queue_param, m_args.clear_queue)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("false")
+        .description("Clears the message queue");
+
+        param("Max Messages In Queue", m_args.queue_max)
+        .defaultValue("0")
+        .minimumValue("0")
+        .description("Maximum number of messages in queue. 0 means no limit");
 
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
@@ -475,6 +492,18 @@ namespace Transports
       void
       enqueueTxRequest(TxRequest* request)
       {
+        // Check for message limit
+        if (m_args.queue_max > 0)
+        {
+          while (m_tx_requests.size() >= m_args.queue_max)
+          {
+            TxRequest* req = m_tx_requests.front();
+            sendTxRequestStatus(req, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+            delete req;
+            m_tx_requests.pop_front();
+          }
+        }
+
         std::list<TxRequest*>::iterator itr = m_tx_requests.begin();
         for ( ; itr != m_tx_requests.end(); ++itr)
         {
@@ -607,6 +636,34 @@ namespace Transports
           delete *itr;
           itr = m_tx_requests.erase(itr);
         }
+      }
+
+      void
+      clearMessageQueue(void)
+      {
+        if (!m_args.clear_queue)
+          return;
+
+        // Clear the message queue
+        war("Clearing message queue with %d messages", (int)m_tx_requests.size());
+        std::list<TxRequest*>::iterator itr = m_tx_requests.begin();
+        while (itr != m_tx_requests.end())
+        {
+          sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+          delete *itr;
+          itr = m_tx_requests.erase(itr);
+        }
+        war("Queue cleared");
+
+        // Reset clear queue flag
+        m_args.clear_queue = false;
+        IMC::SetEntityParameters msg;
+        IMC::EntityParameter clear_queue_param;
+        clear_queue_param.name = c_clear_queue_param;
+        clear_queue_param.value = "false";
+        msg.params.push_back(clear_queue_param);
+        msg.name = getEntityLabel();
+        dispatch(msg, DF_LOOP_BACK);
       }
 
       bool
@@ -747,6 +804,7 @@ namespace Transports
             dispatchEntityState();
             processQueue();
             checkError();
+            clearMessageQueue();
           }
           catch(const ReadTimeout& e)
           {
