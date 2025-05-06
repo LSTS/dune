@@ -95,7 +95,7 @@ namespace Transports
       //! Clear Message Queue
       bool clear_queue;
       //! Maximum number of messages in the queue
-      int queue_max;
+      size_t queue_max;
     };
 
     struct Task: public DUNE::Tasks::Task
