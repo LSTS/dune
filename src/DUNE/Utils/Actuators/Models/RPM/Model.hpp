@@ -56,7 +56,7 @@ namespace DUNE
             ~Model(void) = default;
 
             virtual uint16_t
-            getPWM(const float& voltage, const int16_t& rpm) = 0;
+            getPWM(const float& voltage, const int16_t& rpm, const bool& direction) = 0;
         
             virtual int16_t
             getRPM(const float& voltage, const int16_t& pwm) = 0;

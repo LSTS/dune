@@ -56,7 +56,7 @@ namespace DUNE
             ~Model(void) = default;
         
             virtual uint16_t
-            getPWM(const float& voltage, const float& current) = 0;
+            getPWM(const float& voltage, const float& current, const bool& direction) = 0;
 
             virtual float
             getCurrent(const float& voltage, const float& pwm) = 0;
