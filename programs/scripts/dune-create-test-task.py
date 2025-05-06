@@ -59,9 +59,6 @@ def licence(author):
             if line.startswith('# Author: '):
                 line = ('# Author: ' + author).ljust(len(line) - 1) + '#'
             block.append(line)
-    block = [l[1:] for l in block]
-    block = ['//' + l for l in block]
-    block = [l.replace('#', '*') for l in block]
     return '\n'.join(block) + '\n\n'
 
 # Parse command line arguments.
