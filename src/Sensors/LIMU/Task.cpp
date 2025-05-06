@@ -220,37 +220,52 @@ namespace Sensors
           setOutputFrequency(m_args.output_frq);
       }
 
-      //! Try to connect to the device.
-      //! @return true if connection was established, false otherwise.
-      bool
-      onConnect() override
+      void
+      onResourceAcquisition(void)
       {
         try
         {
-          m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
-          m_ctl = new UCTK::Interface(m_uart);
-          return true;
+          if (m_uart == NULL)
+            m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
+
+          if (m_ctl == NULL)
+            m_ctl = new UCTK::Interface(m_uart);
         }
         catch (std::runtime_error& e)
         {
           throw RestartNeeded(DTR(e.what()), 5.0);
         }
+      }
 
-        return false;
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
+      {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
+        return true;
+      }
+
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_ctl);
+        Memory::clear(m_uart);
       }
 
       //! Disconnect from device.
       void
       onDisconnect() override
       {
-        Memory::clear(m_ctl);
-        Memory::clear(m_uart);
       }
 
       //! Synchronize with device.
       bool
       onSynchronize() override
       {
+        if (m_ctl == NULL)
+          throw RestartNeeded(DTR("failed to synchronize"), 5.0);
+        
         try
         {
           UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
@@ -544,6 +559,9 @@ namespace Sensors
       void
       readInput(void)
       {
+        if (m_uart == NULL)
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        
         size_t rv = m_uart->read(m_buffer, sizeof(m_buffer));
         for (size_t i = 0; i < rv; ++i)
         {
@@ -606,6 +624,9 @@ namespace Sensors
       bool
       onReadData() override
       {
+        if (m_uart == NULL)
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        
         bool got_data = false;
         if (Poll::poll(*m_uart, 1.0))
         {
