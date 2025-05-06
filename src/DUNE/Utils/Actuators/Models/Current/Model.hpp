@@ -27,10 +27,44 @@
 // Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_UTILS_ACTUATORS_MODELS_HPP_INCLUDED_
-#define DUNE_UTILS_ACTUATORS_MODELS_HPP_INCLUDED_
+#ifndef ACTUATORS_MODELS_CURRENT_MODEL_HPP_INCLUDED_
+#define ACTUATORS_MODELS_CURRENT_MODEL_HPP_INCLUDED_
 
-#include <DUNE/Utils/Actuators/Models/RPM/RPM.hpp>
-#include <DUNE/Utils/Actuators/Models/Current/Current.hpp>
+#include <iostream>
+#include <cstdio>
+
+#include <DUNE/Math/General.hpp>
+
+namespace DUNE
+{
+  namespace Utils
+  {
+    namespace Actuators
+    {
+      namespace Models
+      {
+        namespace Current
+        {
+          class Model
+          {
+          public:
+            //! Constructor.
+            Model(void) = default;
+            
+            //! Destructor.
+            virtual
+            ~Model(void) = default;
+        
+            virtual uint16_t
+            getPWM(const float& voltage, const float& current) = 0;
+
+            virtual float
+            getCurrent(const float& voltage, const float& pwm) = 0;
+          };
+        }
+      }
+    }
+  }
+}
 
 #endif
