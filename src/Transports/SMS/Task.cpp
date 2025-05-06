@@ -317,7 +317,6 @@ namespace Transports
       void
       processQueue(void)
       {
-        char entity_state_text[128];
         if (m_queue.empty())
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_IDLE).c_str());
