@@ -941,7 +941,7 @@ namespace Transports
 
         if (ar.name == "unknown")
         {
-          war("Received report from unknown system id: %s", imc_src);
+          war("Received report from unknown system id: %d", imc_src);
           return;
         }
 
