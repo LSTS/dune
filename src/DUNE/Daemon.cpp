@@ -221,8 +221,8 @@ namespace DUNE
     {
       call_reboot = true;
       inf(DTR("Got message to reboot system"));
+      stop();
     }
-    stop();
   }
 
   void
