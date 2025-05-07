@@ -122,7 +122,7 @@ namespace DUNE
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
       if (getActivationTime() == 0.0)
-        war("Activation Time set to 0.0! Please set a positive time.");
+        throw std::runtime_error("Activation Time set to 0.0! Please set a positive time.");
     }
 
     IO::Handle*
