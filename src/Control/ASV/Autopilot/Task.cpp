@@ -92,8 +92,6 @@ namespace Control
         double thrust_assist;
         //! Force thrust assistance.
         bool force_thrust_assist;
-        //! Switch to heading control.
-        bool heading_ctrl;
         //! Speed threshold for heading control
         double speed_threshold;
         //! Gain scheduling period.
@@ -803,14 +801,18 @@ namespace Control
         dispatchThrust(void)
         {
           double value = 0.0f;
-          if (m_args.en_thrust && m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
+          if (m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
           {
-            value = m_args.speed_control ? m_desired_speed : 0.0f;
+            if (m_args.en_thrust)
+            {
+              value = m_args.speed_control ? m_desired_speed : 0.0f;
 
-            if ((m_args.en_thrust_turn && m_turning) ||
-                (m_sog < m_args.min_sog)             ||
-                (m_args.force_thrust_assist))
-              value += m_args.thrust_assist;
+              if ((m_args.en_thrust_turn && m_turning) ||
+                  (m_sog < m_args.min_sog))
+                value += m_args.thrust_assist;
+            }
+            else if (m_args.force_thrust_assist)
+              value = m_args.thrust_assist;
           }
 
           m_thruster.value = trimValue(value, -m_args.max_thrust, m_args.max_thrust);
