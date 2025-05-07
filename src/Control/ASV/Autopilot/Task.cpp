@@ -268,11 +268,11 @@ namespace Control
           .defaultValue("0.75")
           .description("Percentage of thrust assistance");
 
-          param("Force Thrust Assistance", m_args.force_thrust_assist)
+          param("Thruster Always On", m_args.force_thrust_assist)
           .defaultValue("true")
           .visibility(Tasks::Parameter::VISIBILITY_USER)
           .scope(Tasks::Parameter::SCOPE_MANEUVER)
-          .description("Force thrust assistance when thrust assistance is enabled");
+          .description("Force the thruster to be always on");
 
           param("Maximum Thrust Actuation", m_args.max_thrust)
           .minimumValue("0.0")
