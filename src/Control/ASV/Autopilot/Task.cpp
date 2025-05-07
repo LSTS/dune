@@ -356,7 +356,7 @@ namespace Control
           .description("Frequency for external user-defined filter.");
 
           param("Heading Control", m_args.heading_ctrl)
-          .defaultValue("false")
+          .defaultValue("true")
           .description("Switch to heading control.");
 
           param("SOG threshold - Heading Control", m_args.speed_threshold)
