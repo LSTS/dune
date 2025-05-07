@@ -281,6 +281,7 @@ namespace Control
           .description("Maximum Motor Command");
 
           param("Minimum Speed for Thrust", m_args.min_sog)
+          .minimumValue("0.0")
           .defaultValue("0.3")
           .description("Speed [m/s] below which thruster is used");
 
