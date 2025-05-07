@@ -257,6 +257,11 @@ namespace Control
           .defaultValue("true")
           .description("Assist navigation with thruster");
 
+          param("Minimum Speed for Thrust", m_args.min_sog)
+          .minimumValue("0.0")
+          .defaultValue("0.3")
+          .description("Speed [m/s] below which thruster is used");
+
           param("Enable Thrust During Turn", m_args.en_thrust_turn)
           .defaultValue("true")
           .description("Assist the turn using the thruster");
@@ -278,11 +283,6 @@ namespace Control
           .maximumValue("1.0")
           .defaultValue("1.0")
           .description("Maximum Motor Command");
-
-          param("Minimum Speed for Thrust", m_args.min_sog)
-          .minimumValue("0.0")
-          .defaultValue("0.3")
-          .description("Speed [m/s] below which thruster is used");
 
           param("Maximum Rudder Actuation", m_args.act_max)
           .defaultValue("1.0")
