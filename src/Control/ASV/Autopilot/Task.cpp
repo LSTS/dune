@@ -263,6 +263,8 @@ namespace Control
           .description("Assist the turn using the thruster");
 
           param("Thrust Assistance", m_args.thrust_assist)
+          .minimumValue("-1.0")
+          .maximumValue("1.0")
           .defaultValue("0.75")
           .description("Percentage of thrust assistance");
 
