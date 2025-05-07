@@ -267,7 +267,7 @@ namespace Control
           .description("Percentage of thrust assistance");
 
           param("Force Thrust Assistance", m_args.force_thrust_assist)
-          .defaultValue("false")
+          .defaultValue("true")
           .visibility(Tasks::Parameter::VISIBILITY_USER)
           .scope(Tasks::Parameter::SCOPE_MANEUVER)
           .description("Force thrust assistance when thrust assistance is enabled");
