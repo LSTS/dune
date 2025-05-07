@@ -774,9 +774,9 @@ namespace DUNE
         //! Main entity label.
         std::string elabel;
         //! Activation time.
-        uint16_t act_time;
+        float act_time;
         //! Deactivation time.
-        uint16_t deact_time;
+        float deact_time;
         //! Scheduling priority.
         unsigned int priority;
         //! True if task is active.
