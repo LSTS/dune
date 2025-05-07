@@ -227,6 +227,7 @@ namespace Control
           m_wave_freq(0.0),
           m_tstep(0.0),
           m_turning(false),
+          m_sog(0.0),
           m_avg_adcp(0),
           m_avg_adcp_old(0),
           m_avg_sog(0),
