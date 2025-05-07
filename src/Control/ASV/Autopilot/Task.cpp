@@ -360,10 +360,6 @@ namespace Control
           .defaultValue("1.0")
           .description("Frequency for external user-defined filter.");
 
-          param("Heading Control", m_args.heading_ctrl)
-          .defaultValue("true")
-          .description("Switch to heading control.");
-
           param("SOG threshold - Heading Control", m_args.speed_threshold)
           .defaultValue("0.1")
           .minimumValue("0.001")
@@ -598,8 +594,7 @@ namespace Control
           float error = 0.0;
 
           // Course Error (From IMC::DesiredHeading)
-          if (m_args.heading_ctrl)
-            error = Angles::normalizeRadian(m_desired_course - m_estate.psi);
+          error = Angles::normalizeRadian(m_desired_course - m_estate.psi);
 
           // Check if turning
           m_turning = std::abs(error) > Angles::radians(m_args.turn_min_error);
