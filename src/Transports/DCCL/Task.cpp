@@ -124,6 +124,14 @@ namespace Transports
           
           IMC_DCCL::PlanSpecification msg_planspec;
 
+          //HEADER
+          IMC_DCCL::Header msg_header;
+          msg_header.set_src(msg->getSource());
+          msg_header.set_src_ent(msg->getSourceEntity());
+          msg_header.set_dst(msg->getDestination());
+          msg_header.set_dst_ent(msg->getDestinationEntity());
+          *msg_planspec.mutable_head() = msg_header;
+
           //PLAN_ID
           msg_planspec.set_plan_id(plan_id);       
 
@@ -314,9 +322,15 @@ namespace Transports
           IMC_DCCL::PlanSpecification msg_planspec_rec;
           codec.decode(msgNoHex, &msg_planspec_rec);
           
-          //PLAN_ID & START_MAN_ID
           IMC::PlanSpecification msg_pl;
-          
+
+          //HEADER
+          msg_pl.setSource(msg_planspec_rec.head().src());
+          msg_pl.setSourceEntity(msg_planspec_rec.head().src_ent());
+          msg_pl.setDestination(msg_planspec_rec.head().dst());
+          msg_pl.setDestinationEntity(msg_planspec_rec.head().dst_ent());
+
+          //PLAN_ID & START_MAN_ID
           msg_pl.plan_id = msg_planspec_rec.plan_id()+"DCCL";
           msg_pl.start_man_id = MergeManeuverNumber(msg_planspec_rec.start_man_id().maneuver_type(), msg_planspec_rec.start_man_id().maneuver_number());
 
@@ -404,7 +418,8 @@ namespace Transports
           load_plan_dccl.flags = 0;
           dispatch(load_plan_dccl);
 
-         
+          inf("DISPATCH PLANSPEC REC");
+          dispatch(msg_pl);
        }
       
       }
