@@ -61,6 +61,8 @@ enum ParameterName {
     RANGE_MULTIPLIER = 7;
     STROBE_DELAY = 8;
     SHUTTER_VALUE = 9;
+    RANGE = 10;
+    FREQUENCY = 11;
 }
 
 // Enum Parameter Value string
@@ -79,6 +81,7 @@ enum EntityName {
     ACOUSTIC_MODEM = 3;
     SIDESCAN = 4;
     CAMERA = 5;
+    MULTIBEAM = 6;   
 }
 
 //Enum TransitionCondition 

@@ -549,11 +549,12 @@ namespace Transports
       //  param[in] IMC Entity name
       //  param[out] IMC_DCCL EntityMame      
       IMC_DCCL::EntityName ToDCCL_EntityName(const std::string& entity_name){
-        if (entity_name == "Path Control") return IMC_DCCL::PATH_CONTROL;
-        else if (entity_name == "Ranger") return IMC_DCCL::RANGER;
-        else if (entity_name == "Acoustic Modem") return IMC_DCCL::ACOUSTIC_MODEM;
-        else if (entity_name == "Sidescan") return IMC_DCCL::SIDESCAN;
-        else if (entity_name == "Camera") return IMC_DCCL::CAMERA;
+        if (entity_name == "Path Control") return IMC_DCCL::EntityName::PATH_CONTROL;
+        else if (entity_name == "Ranger") return IMC_DCCL::EntityName::RANGER;
+        else if (entity_name == "Acoustic Modem") return IMC_DCCL::EntityName::ACOUSTIC_MODEM;
+        else if (entity_name == "Sidescan") return IMC_DCCL::EntityName::SIDESCAN;
+        else if (entity_name == "Camera") return IMC_DCCL::EntityName::CAMERA;
+        else if (entity_name == "Multibeam") return IMC_DCCL::EntityName::MULTIBEAM;
         else {return IMC_DCCL::NONE_EN;}
       }
 
@@ -567,6 +568,7 @@ namespace Transports
         else if (imc_dccl_entity_name == IMC_DCCL::EntityName::ACOUSTIC_MODEM) name = "Acoustic Modem";
         else if (imc_dccl_entity_name == IMC_DCCL::EntityName::SIDESCAN) name = "Sidescan";
         else if (imc_dccl_entity_name == IMC_DCCL::EntityName::CAMERA) name = "Camera";
+        else if (imc_dccl_entity_name == IMC_DCCL::EntityName::MULTIBEAM) name = "Multibeam";
         else {name = "Unknown DCCL";}
 
         return name;
@@ -577,14 +579,16 @@ namespace Transports
       //  param[out] IMC_DCCL ParameterName enum      
       IMC_DCCL::ParameterName ToDCCL_ParameterName(const std::string& param_name){
         if (param_name == "Active") return IMC_DCCL::ACTIVE;
-        else if (param_name == "Bottom Track -- Minimum Depth") return IMC_DCCL::BOTTOM_TRACK_MINIMUM_DEPTH;
-        else if (param_name == "High-Frequency Channels") return IMC_DCCL::HIGH_FREQ_CHANNELS;
-        else if (param_name == "High-Frequency Range") return IMC_DCCL::HIGH_FREQ_RANGE;
-        else if (param_name == "Low-Frequency Channels") return IMC_DCCL::LOW_FREQ_CHANNELS;
-        else if (param_name == "Low-Frequency Range") return IMC_DCCL::LOW_FREQ_RANGE;
-        else if (param_name == "Range Multiplier") return IMC_DCCL::RANGE_MULTIPLIER;
-        else if (param_name == "Strobe Delay (us)") return IMC_DCCL::STROBE_DELAY;
-        else if (param_name == "Shutter Value (ms)") return IMC_DCCL::SHUTTER_VALUE;
+        else if (param_name == "Bottom Track -- Minimum Depth") return IMC_DCCL::ParameterName::BOTTOM_TRACK_MINIMUM_DEPTH;
+        else if (param_name == "High-Frequency Channels") return IMC_DCCL::ParameterName::HIGH_FREQ_CHANNELS;
+        else if (param_name == "High-Frequency Range") return IMC_DCCL::ParameterName::HIGH_FREQ_RANGE;
+        else if (param_name == "Low-Frequency Channels") return IMC_DCCL::ParameterName::LOW_FREQ_CHANNELS;
+        else if (param_name == "Low-Frequency Range") return IMC_DCCL::ParameterName::LOW_FREQ_RANGE;
+        else if (param_name == "Range Multiplier") return IMC_DCCL::ParameterName::RANGE_MULTIPLIER;
+        else if (param_name == "Strobe Delay (us)") return IMC_DCCL::ParameterName::STROBE_DELAY;
+        else if (param_name == "Shutter Value (ms)") return IMC_DCCL::ParameterName::SHUTTER_VALUE;
+        else if (param_name == "Range") return IMC_DCCL::ParameterName::RANGE;
+        else if (param_name == "Frequency") return IMC_DCCL::ParameterName::FREQUENCY;
         else {return IMC_DCCL::NONE_PN;}
       }
 
@@ -602,6 +606,8 @@ namespace Transports
         else if (imc_dccl_param_name == IMC_DCCL::ParameterName::RANGE_MULTIPLIER) name = "Range Multiplier";
         else if (imc_dccl_param_name == IMC_DCCL::ParameterName::STROBE_DELAY) name = "Strobe Delay (us)";
         else if (imc_dccl_param_name == IMC_DCCL::ParameterName::SHUTTER_VALUE) name = "Shutter Value (ms)";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::RANGE) name = "Range";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::FREQUENCY) name = "Frequency";
         else {name = "Unknow DCCL";}
 
         return name;
