@@ -257,6 +257,15 @@ message PlanTransition {
     //TransitionActions repeated field
 }
 
+// Header
+message Header {
+    option (dccl.msg) = { codec_version: 4 id: 4 max_bytes: 400};
+    int32 src = 1 [(dccl.field) = { min: 0 max: 81920}];
+    int32 src_ent = 2 [(dccl.field) = { min: 0 max: 255}];
+    int32 dst = 3 [(dccl.field) = { min: 0 max: 81920}];
+    int32 dst_ent = 4 [(dccl.field) = { min: 0 max: 255}];
+}
+
 // PlanSpecification 
 message PlanSpecification {
     option (dccl.msg) = { codec_version: 4 id: 551 max_bytes: 8000};
@@ -268,6 +277,7 @@ message PlanSpecification {
     repeated PlanTransition transitions = 6 [(dccl.field) = { max_repeat: 30 }];
     repeated EntityParameters start_actions = 7 [(dccl.field) = { max_repeat: 7 }];
     repeated PlanVariable variables = 8 [(dccl.field) = { max_repeat: 5 }];
+    Header head = 9;
     //end_actions
 }
 
