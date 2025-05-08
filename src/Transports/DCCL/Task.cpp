@@ -418,7 +418,7 @@ namespace Transports
           load_plan_dccl.flags = 0;
           dispatch(load_plan_dccl);
 
-          inf("DISPATCH PLANSPEC REC");
+          //dispatch PlanSpecification 
           dispatch(msg_pl);
        }
       
