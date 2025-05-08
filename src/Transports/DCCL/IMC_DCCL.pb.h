@@ -40,7 +40,7 @@ namespace protobuf_IMC_5fDCCL_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[14];
+  static const ::google::protobuf::internal::ParseTable schema[15];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -63,6 +63,9 @@ extern FollowPathDefaultTypeInternal _FollowPath_default_instance_;
 class Goto;
 class GotoDefaultTypeInternal;
 extern GotoDefaultTypeInternal _Goto_default_instance_;
+class Header;
+class HeaderDefaultTypeInternal;
+extern HeaderDefaultTypeInternal _Header_default_instance_;
 class Loiter;
 class LoiterDefaultTypeInternal;
 extern LoiterDefaultTypeInternal _Loiter_default_instance_;
@@ -98,6 +101,7 @@ template<> ::IMC_DCCL::EntityParameters* Arena::CreateMaybeMessage<::IMC_DCCL::E
 template<> ::IMC_DCCL::EstimatedState* Arena::CreateMaybeMessage<::IMC_DCCL::EstimatedState>(Arena*);
 template<> ::IMC_DCCL::FollowPath* Arena::CreateMaybeMessage<::IMC_DCCL::FollowPath>(Arena*);
 template<> ::IMC_DCCL::Goto* Arena::CreateMaybeMessage<::IMC_DCCL::Goto>(Arena*);
+template<> ::IMC_DCCL::Header* Arena::CreateMaybeMessage<::IMC_DCCL::Header>(Arena*);
 template<> ::IMC_DCCL::Loiter* Arena::CreateMaybeMessage<::IMC_DCCL::Loiter>(Arena*);
 template<> ::IMC_DCCL::Maneuver* Arena::CreateMaybeMessage<::IMC_DCCL::Maneuver>(Arena*);
 template<> ::IMC_DCCL::ManeuverID* Arena::CreateMaybeMessage<::IMC_DCCL::ManeuverID>(Arena*);
@@ -2269,6 +2273,130 @@ class PlanTransition : public ::google::protobuf::Message /* @@protoc_insertion_
 };
 // -------------------------------------------------------------------
 
+class Header : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.Header) */ {
+ public:
+  Header();
+  virtual ~Header();
+
+  Header(const Header& from);
+
+  inline Header& operator=(const Header& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  Header(Header&& from) noexcept
+    : Header() {
+    *this = ::std::move(from);
+  }
+
+  inline Header& operator=(Header&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Header& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const Header* internal_default_instance() {
+    return reinterpret_cast<const Header*>(
+               &_Header_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    13;
+
+  void Swap(Header* other);
+  friend void swap(Header& a, Header& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline Header* New() const final {
+    return CreateMaybeMessage<Header>(NULL);
+  }
+
+  Header* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<Header>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const Header& from);
+  void MergeFrom(const Header& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Header* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // int32 src = 1 [(.dccl.field) = {
+  void clear_src();
+  static const int kSrcFieldNumber = 1;
+  ::google::protobuf::int32 src() const;
+  void set_src(::google::protobuf::int32 value);
+
+  // int32 src_ent = 2 [(.dccl.field) = {
+  void clear_src_ent();
+  static const int kSrcEntFieldNumber = 2;
+  ::google::protobuf::int32 src_ent() const;
+  void set_src_ent(::google::protobuf::int32 value);
+
+  // int32 dst = 3 [(.dccl.field) = {
+  void clear_dst();
+  static const int kDstFieldNumber = 3;
+  ::google::protobuf::int32 dst() const;
+  void set_dst(::google::protobuf::int32 value);
+
+  // int32 dst_ent = 4 [(.dccl.field) = {
+  void clear_dst_ent();
+  static const int kDstEntFieldNumber = 4;
+  ::google::protobuf::int32 dst_ent() const;
+  void set_dst_ent(::google::protobuf::int32 value);
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.Header)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::int32 src_;
+  ::google::protobuf::int32 src_ent_;
+  ::google::protobuf::int32 dst_;
+  ::google::protobuf::int32 dst_ent_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_IMC_5fDCCL_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class PlanSpecification : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanSpecification) */ {
  public:
   PlanSpecification();
@@ -2304,7 +2432,7 @@ class PlanSpecification : public ::google::protobuf::Message /* @@protoc_inserti
                &_PlanSpecification_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   void Swap(PlanSpecification* other);
   friend void swap(PlanSpecification& a, PlanSpecification& b) {
@@ -2458,6 +2586,18 @@ class PlanSpecification : public ::google::protobuf::Message /* @@protoc_inserti
   ::IMC_DCCL::ManeuverID* mutable_start_man_id();
   void set_allocated_start_man_id(::IMC_DCCL::ManeuverID* start_man_id);
 
+  // .IMC_DCCL.Header head = 9;
+  bool has_head() const;
+  void clear_head();
+  static const int kHeadFieldNumber = 9;
+  private:
+  const ::IMC_DCCL::Header& _internal_head() const;
+  public:
+  const ::IMC_DCCL::Header& head() const;
+  ::IMC_DCCL::Header* release_head();
+  ::IMC_DCCL::Header* mutable_head();
+  void set_allocated_head(::IMC_DCCL::Header* head);
+
   // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanSpecification)
  private:
 
@@ -2470,6 +2610,7 @@ class PlanSpecification : public ::google::protobuf::Message /* @@protoc_inserti
   ::google::protobuf::internal::ArenaStringPtr description_;
   ::google::protobuf::internal::ArenaStringPtr vnamespace_;
   ::IMC_DCCL::ManeuverID* start_man_id_;
+  ::IMC_DCCL::Header* head_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_IMC_5fDCCL_2eproto::TableStruct;
 };
@@ -4048,6 +4189,66 @@ inline void PlanTransition::set_conditions(::IMC_DCCL::TransitionCondition value
 
 // -------------------------------------------------------------------
 
+// Header
+
+// int32 src = 1 [(.dccl.field) = {
+inline void Header::clear_src() {
+  src_ = 0;
+}
+inline ::google::protobuf::int32 Header::src() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Header.src)
+  return src_;
+}
+inline void Header::set_src(::google::protobuf::int32 value) {
+  
+  src_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Header.src)
+}
+
+// int32 src_ent = 2 [(.dccl.field) = {
+inline void Header::clear_src_ent() {
+  src_ent_ = 0;
+}
+inline ::google::protobuf::int32 Header::src_ent() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Header.src_ent)
+  return src_ent_;
+}
+inline void Header::set_src_ent(::google::protobuf::int32 value) {
+  
+  src_ent_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Header.src_ent)
+}
+
+// int32 dst = 3 [(.dccl.field) = {
+inline void Header::clear_dst() {
+  dst_ = 0;
+}
+inline ::google::protobuf::int32 Header::dst() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Header.dst)
+  return dst_;
+}
+inline void Header::set_dst(::google::protobuf::int32 value) {
+  
+  dst_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Header.dst)
+}
+
+// int32 dst_ent = 4 [(.dccl.field) = {
+inline void Header::clear_dst_ent() {
+  dst_ent_ = 0;
+}
+inline ::google::protobuf::int32 Header::dst_ent() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Header.dst_ent)
+  return dst_ent_;
+}
+inline void Header::set_dst_ent(::google::protobuf::int32 value) {
+  
+  dst_ent_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Header.dst_ent)
+}
+
+// -------------------------------------------------------------------
+
 // PlanSpecification
 
 // string plan_id = 1 [(.dccl.field) = {
@@ -4383,9 +4584,65 @@ PlanSpecification::variables() const {
   return variables_;
 }
 
+// .IMC_DCCL.Header head = 9;
+inline bool PlanSpecification::has_head() const {
+  return this != internal_default_instance() && head_ != NULL;
+}
+inline void PlanSpecification::clear_head() {
+  if (GetArenaNoVirtual() == NULL && head_ != NULL) {
+    delete head_;
+  }
+  head_ = NULL;
+}
+inline const ::IMC_DCCL::Header& PlanSpecification::_internal_head() const {
+  return *head_;
+}
+inline const ::IMC_DCCL::Header& PlanSpecification::head() const {
+  const ::IMC_DCCL::Header* p = head_;
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanSpecification.head)
+  return p != NULL ? *p : *reinterpret_cast<const ::IMC_DCCL::Header*>(
+      &::IMC_DCCL::_Header_default_instance_);
+}
+inline ::IMC_DCCL::Header* PlanSpecification::release_head() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanSpecification.head)
+  
+  ::IMC_DCCL::Header* temp = head_;
+  head_ = NULL;
+  return temp;
+}
+inline ::IMC_DCCL::Header* PlanSpecification::mutable_head() {
+  
+  if (head_ == NULL) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::Header>(GetArenaNoVirtual());
+    head_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanSpecification.head)
+  return head_;
+}
+inline void PlanSpecification::set_allocated_head(::IMC_DCCL::Header* head) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == NULL) {
+    delete head_;
+  }
+  if (head) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      head = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, head, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  head_ = head;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanSpecification.head)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
