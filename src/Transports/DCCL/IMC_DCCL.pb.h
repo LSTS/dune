@@ -240,12 +240,14 @@ enum ParameterName {
   RANGE_MULTIPLIER = 7,
   STROBE_DELAY = 8,
   SHUTTER_VALUE = 9,
+  RANGE = 10,
+  FREQUENCY = 11,
   ParameterName_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   ParameterName_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool ParameterName_IsValid(int value);
 const ParameterName ParameterName_MIN = NONE_PN;
-const ParameterName ParameterName_MAX = SHUTTER_VALUE;
+const ParameterName ParameterName_MAX = FREQUENCY;
 const int ParameterName_ARRAYSIZE = ParameterName_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* ParameterName_descriptor();
@@ -288,12 +290,13 @@ enum EntityName {
   ACOUSTIC_MODEM = 3,
   SIDESCAN = 4,
   CAMERA = 5,
+  MULTIBEAM = 6,
   EntityName_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   EntityName_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool EntityName_IsValid(int value);
 const EntityName EntityName_MIN = NONE_EN;
-const EntityName EntityName_MAX = CAMERA;
+const EntityName EntityName_MAX = MULTIBEAM;
 const int EntityName_ARRAYSIZE = EntityName_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* EntityName_descriptor();

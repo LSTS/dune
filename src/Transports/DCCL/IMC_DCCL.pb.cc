@@ -695,24 +695,25 @@ void AddDescriptorsImpl() {
       "\n\005EIGHT\020\003\022\t\n\005HOVER\020\004*A\n\rDirectionType\022\010\n"
       "\004VDEP\020\000\022\n\n\006CLOCKW\020\001\022\013\n\007CCLOCKW\020\002\022\r\n\tIWIN"
       "DCURR\020\003*4\n\014ManeuverType\022\010\n\004GOTO\020\000\022\016\n\nFOL"
-      "LOWPATH\020\001\022\n\n\006LOITER\020\002*\333\001\n\rParameterName\022"
+      "LOWPATH\020\001\022\n\n\006LOITER\020\002*\365\001\n\rParameterName\022"
       "\013\n\007NONE_PN\020\000\022\n\n\006ACTIVE\020\001\022\036\n\032BOTTOM_TRACK"
       "_MINIMUM_DEPTH\020\002\022\026\n\022HIGH_FREQ_CHANNELS\020\003"
       "\022\023\n\017HIGH_FREQ_RANGE\020\004\022\025\n\021LOW_FREQ_CHANNE"
       "LS\020\005\022\022\n\016LOW_FREQ_RANGE\020\006\022\024\n\020RANGE_MULTIP"
       "LIER\020\007\022\020\n\014STROBE_DELAY\020\010\022\021\n\rSHUTTER_VALU"
-      "E\020\t*8\n\nParamValue\022\013\n\007NONE_PV\020\000\022\010\n\004TRUE\020\001"
-      "\022\t\n\005FALSE\020\002\022\010\n\004BOTH\020\003*e\n\nEntityName\022\013\n\007N"
-      "ONE_EN\020\000\022\020\n\014PATH_CONTROL\020\001\022\n\n\006RANGER\020\002\022\022"
-      "\n\016ACOUSTIC_MODEM\020\003\022\014\n\010SIDESCAN\020\004\022\n\n\006CAME"
-      "RA\020\005*6\n\023TransitionCondition\022\013\n\007NONE_TC\020\000"
-      "\022\022\n\016MANEUVERISDONE\020\001*6\n\004Type\022\013\n\007BOOLEAN\020"
-      "\000\022\n\n\006NUMBER\020\001\022\010\n\004TEXT\020\002\022\013\n\007MESSAGE\020\003*.\n\n"
-      "AccessType\022\t\n\005INPUT\020\000\022\n\n\006OUTPUT\020\001\022\t\n\005LOC"
-      "AL\020\002b\006proto3"
+      "E\020\t\022\t\n\005RANGE\020\n\022\r\n\tFREQUENCY\020\013*8\n\nParamVa"
+      "lue\022\013\n\007NONE_PV\020\000\022\010\n\004TRUE\020\001\022\t\n\005FALSE\020\002\022\010\n"
+      "\004BOTH\020\003*t\n\nEntityName\022\013\n\007NONE_EN\020\000\022\020\n\014PA"
+      "TH_CONTROL\020\001\022\n\n\006RANGER\020\002\022\022\n\016ACOUSTIC_MOD"
+      "EM\020\003\022\014\n\010SIDESCAN\020\004\022\n\n\006CAMERA\020\005\022\r\n\tMULTIB"
+      "EAM\020\006*6\n\023TransitionCondition\022\013\n\007NONE_TC\020"
+      "\000\022\022\n\016MANEUVERISDONE\020\001*6\n\004Type\022\013\n\007BOOLEAN"
+      "\020\000\022\n\n\006NUMBER\020\001\022\010\n\004TEXT\020\002\022\013\n\007MESSAGE\020\003*.\n"
+      "\nAccessType\022\t\n\005INPUT\020\000\022\n\n\006OUTPUT\020\001\022\t\n\005LO"
+      "CAL\020\002b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 4852);
+      descriptor, 4893);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "IMC_DCCL.proto", &protobuf_RegisterTypes);
   ::protobuf_dccl_2foption_5fextensions_2eproto::AddDescriptors();
@@ -825,6 +826,8 @@ bool ParameterName_IsValid(int value) {
     case 7:
     case 8:
     case 9:
+    case 10:
+    case 11:
       return true;
     default:
       return false;
@@ -859,6 +862,7 @@ bool EntityName_IsValid(int value) {
     case 3:
     case 4:
     case 5:
+    case 6:
       return true;
     default:
       return false;
