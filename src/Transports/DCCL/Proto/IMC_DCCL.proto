@@ -220,7 +220,7 @@ message EntityParameter {
 message EntityParameters {
     option (dccl.msg) = { codec_version: 4 id: 802 max_bytes: 40};
     EntityName name = 1; 
-    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 3 }];
+    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 10 }];
 }
 
 // ManeuverID (composed by maneuver_type and maneuver_number (max number in the maneuver name = 50))
@@ -236,7 +236,7 @@ message PlanManeuver {
     option (dccl.msg) = { codec_version: 4 id: 552 max_bytes: 400};
     ManeuverID maneuver_id = 1;
     Maneuver data = 2;
-    repeated EntityParameters start_actions = 3 [(dccl.field) = { max_repeat: 5 }];
+    repeated EntityParameters start_actions = 3 [(dccl.field) = { max_repeat: 15 }];
     //end action
 }
 
@@ -271,7 +271,7 @@ message Header {
 
 // PlanSpecification 
 message PlanSpecification {
-    option (dccl.msg) = { codec_version: 4 id: 551 max_bytes: 8000};
+    option (dccl.msg) = { codec_version: 4 id: 551 max_bytes: 800000};
     string plan_id = 1 [(dccl.field).max_length = 20]; 
     string description = 2 [(dccl.field).max_length = 2]; 
     string vnamespace = 3 [(dccl.field).max_length = 2]; 
