@@ -618,10 +618,11 @@ namespace Transports
       //  param[out] IMC_DCCL ParamValue      
       IMC_DCCL::ParamValue ToDCCL_ParameterValue(const std::string& param_value){
 
-        if (param_value == "true") return IMC_DCCL::TRUE;
-        else if (param_value == "false") return IMC_DCCL::FALSE;
-        else if (param_value == "Both") return IMC_DCCL::BOTH;
-        else {return IMC_DCCL::NONE_PV;}
+        if (param_value == "true") return IMC_DCCL::ParamValue::TRUE;
+        else if (param_value == "false") return IMC_DCCL::ParamValue::FALSE;
+        else if (param_value == "Both") return IMC_DCCL::ParamValue::BOTH;
+        else if (param_value == "None") return IMC_DCCL::ParamValue::NONE_PV;
+        else {return IMC_DCCL::ParamValue::NONE_PV;}
       }
 
       //! Convert entity parameter value from IMC_DCCL Parameter value enum to IMC string
@@ -633,6 +634,7 @@ namespace Transports
         if (imc_dccl_param_value == IMC_DCCL::ParamValue::TRUE) param_value = "true";
         else if (imc_dccl_param_value == IMC_DCCL::ParamValue::FALSE) param_value = "false";        
         else if (imc_dccl_param_value == IMC_DCCL::ParamValue::BOTH) param_value = "Both";
+        else if (imc_dccl_param_value == IMC_DCCL::ParamValue::NONE_PV) param_value = "None";
         else {param_value = "Unknown DCCL";}
 
         return param_value;
