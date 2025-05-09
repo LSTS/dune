@@ -804,7 +804,11 @@ namespace Control
           double value = 0.0f;
           if (m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
           {
-            if (m_args.en_thrust)
+            if (m_args.force_thrust_assist)
+            {
+              value = m_args.thrust_assist;
+            }
+            else if (m_args.en_thrust)
             {
               value = m_args.speed_control ? m_desired_speed : 0.0f;
 
@@ -812,8 +816,6 @@ namespace Control
                   (m_sog < m_args.min_sog))
                 value += m_args.thrust_assist;
             }
-            else if (m_args.force_thrust_assist)
-              value = m_args.thrust_assist;
           }
 
           m_thruster.value = trimValue(value, -m_args.max_thrust, m_args.max_thrust);
