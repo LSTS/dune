@@ -485,7 +485,11 @@ namespace DUNE
       if (!old_state && itr->second)
         trace("device %s is powered", msg->name.c_str());
       else if (old_state && !itr->second)
+      {
         trace("device %s is no longer powered", msg->name.c_str());
+        if (isActive())
+          requestDeactivation();
+      }
     }
 
     //! Power-on device.
