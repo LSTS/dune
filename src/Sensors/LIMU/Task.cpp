@@ -243,7 +243,7 @@ namespace Sensors
       onConnect() override
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
-        return true;
+        return syncDevice();
       }
 
       void
@@ -259,9 +259,8 @@ namespace Sensors
       {
       }
 
-      //! Synchronize with device.
       bool
-      onSynchronize() override
+      syncDevice(void)
       {
         if (m_ctl == NULL)
           throw RestartNeeded(DTR("failed to synchronize"), 5.0);
