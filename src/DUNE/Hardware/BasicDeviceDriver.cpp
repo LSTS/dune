@@ -293,6 +293,7 @@ namespace DUNE
     void
     BasicDeviceDriver::requestRestart()
     {
+      spew("restart requested");
       m_restart = true;
       if (getCurrentState() >= SM_ACT_DONE)
         requestDeactivation();
@@ -818,7 +819,7 @@ namespace DUNE
     }
 
     void
-    BasicDeviceDriver::step()
+    BasicDeviceDriver::step(void)
     {
       if (!isActive())
         waitForMessages(1.0);
@@ -833,7 +834,7 @@ namespace DUNE
     }
 
     void
-    BasicDeviceDriver::onMain()
+    BasicDeviceDriver::onMain(void)
     {
       while (!stopping())
       {
@@ -841,7 +842,12 @@ namespace DUNE
         {
           step();
         }
-        catch (std::runtime_error &e)
+        catch(RestartNeeded& e)
+        {
+          requestRestart();
+          throw e;
+        }
+        catch(std::runtime_error& e)
         {
           war("%s", e.what());
           setEntityState(IMC::EntityState::ESTA_ERROR, e.what());
