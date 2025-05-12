@@ -260,6 +260,9 @@ namespace Transports
       onResourceAcquisition(void)
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_IDLE);
+        m_rx_queue_size = 99;
+        m_tx_queue_size = 99;
+        m_state = Status::CODE_IDLE;
         m_monitor_check_timer.setTop(c_monitor_delay);
         try
         {
@@ -317,17 +320,10 @@ namespace Transports
         }
       }
 
-      //! Initialize resources.
-      void
-      onResourceInitialization(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        m_state = Status::CODE_IDLE;
-      }
-
       void
       onActivation(void)
       {
+        inf("onActivation");
         m_mbox_check_timer.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         dispatchEntityState();
@@ -350,6 +346,7 @@ namespace Transports
       void
       onDeactivation(void)
       {
+        inf("onDeactivation");
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         m_state = Status::CODE_IDLE;
         dispatchEntityState();
@@ -795,6 +792,10 @@ namespace Transports
           ss << "Max error count exceeded: "
              << error.c_str();
           throw RestartNeeded(ss.str(), 10.0);
+        }
+        else
+        {
+          war("Error %d of %d: %s", m_error_count, m_args.max_error, error.c_str());
         }
       }
 
