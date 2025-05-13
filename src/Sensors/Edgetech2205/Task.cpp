@@ -114,9 +114,6 @@ namespace Sensors
         // Define configuration parameters.
         setParamSectionEditor("Edgetech2205");
 
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
-
         param("IPv4 Address", m_args.addr)
         .defaultValue("192.168.0.5")
         .description("IP address of the sonar");
@@ -204,10 +201,6 @@ namespace Sensors
         .description("Number of valid samples for initial time delta estimation");
 
         m_bfr.resize(c_buffer_size);
-
-        bind<IMC::EstimatedState>(this);
-        bind<IMC::LoggingControl>(this);
-        bind<IMC::PowerChannelState>(this);
       }
 
       void
