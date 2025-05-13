@@ -605,7 +605,7 @@ namespace DUNE
             idle();
           break;
 
-          // Begin activation sequence.
+        // Begin activation sequence.
         case SM_ACT_BEGIN:
           m_wdog.setTop(getActivationTime());
           if (m_power_channels.empty())
@@ -627,21 +627,21 @@ namespace DUNE
           }
           break;
 
-          // Delay before turning power on.
+        // Delay before turning power on.
         case SM_ACT_POWER_ON_DELAY:
-          if ( m_power_on_timer.overflow() )
+          if (m_power_on_timer.overflow())
           {
             queueState( SM_ACT_POWER_ON );
           }
           break;
 
-          // Turn power on.
+        // Turn power on.
         case SM_ACT_POWER_ON:
           turnPowerOn();
           queueState(SM_ACT_POWER_WAIT);
           break;
 
-          // Wait for power to be on.
+        // Wait for power to be on.
         case SM_ACT_POWER_WAIT:
           if (isPowered(true))
           {
@@ -664,7 +664,7 @@ namespace DUNE
           }
           break;
 
-          // Connect to device.
+        // Connect to device.
         case SM_ACT_DEV_WAIT:
           if (m_wdog.overflow())
           {
@@ -684,7 +684,7 @@ namespace DUNE
 
           break;
 
-          // Synchronize with device.
+        // Synchronize with device.
         case SM_ACT_DEV_SYNC:
           if (m_wdog.overflow())
           {
@@ -706,7 +706,7 @@ namespace DUNE
           }
           break;
 
-          // Request log name.
+        // Request log name.
         case SM_ACT_LOG_REQUEST:
           if (m_wdog.overflow())
           {
@@ -724,7 +724,7 @@ namespace DUNE
           }
           break;
 
-          // Wait for log name.
+        // Wait for log name.
         case SM_ACT_LOG_WAIT:
           if (m_wdog.overflow())
           {
@@ -741,7 +741,7 @@ namespace DUNE
           }
           break;
 
-          // Activation procedure is complete.
+        // Activation procedure is complete.
         case SM_ACT_DONE:
           try
           {
@@ -790,13 +790,13 @@ namespace DUNE
 
           break;
 
-          // Start deactivation procedure.
+        // Start deactivation procedure.
         case SM_DEACT_BEGIN:
           m_wdog.setTop( getDeactivationTime() );
           queueState( SM_DEACT_DISCONNECT );
           break;
 
-          // Gracefully disconnect from device.
+        // Gracefully disconnect from device.
         case SM_DEACT_DISCONNECT:
           disconnect();
 
@@ -815,7 +815,7 @@ namespace DUNE
 
           break;
 
-          // Turn power off.
+        // Turn power off.
         case SM_DEACT_POWER_OFF:
           if (m_power_off_timer.overflow() || m_wdog.overflow())
           {
@@ -824,13 +824,13 @@ namespace DUNE
           }
           break;
 
-          // Wait for power to be turned off.
+        // Wait for power to be turned off.
         case SM_DEACT_POWER_WAIT:
           if (isPowered(false))
             queueState(SM_DEACT_DONE);
           break;
 
-          // Deactivation is complete.
+        // Deactivation is complete.
         case SM_DEACT_DONE:
           try
           {
