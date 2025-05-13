@@ -96,11 +96,6 @@ namespace Sensors
         m_maneuvering(false),
         m_cs(CS_UNABLE)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
