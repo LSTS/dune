@@ -810,7 +810,7 @@ namespace DUNE
           if (enableLogControl())
             closeLog();
 
-          if (m_power_channels.empty())
+          if (isPowered(false))
           {
             queueState(SM_DEACT_DONE);
           }
