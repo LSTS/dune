@@ -78,8 +78,6 @@ namespace Sensors
     {
       //! IO device (URI).
       std::string io_dev;
-      //! Read frequency.
-      double read_frequency;
       // True if UART has local echo enabled.
       bool uart_echo;
       // Depth conversion factor.
@@ -170,11 +168,6 @@ namespace Sensors
         .defaultValue("")
         .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
                      "or \"uart://DEVICE:BAUD\"");
-        
-        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
-        .units(Units::Hertz)
-        .defaultValue("1.0")
-        .description(DTR("Frequency at which task reads data"));
 
         param("Serial Port - Local Echo", m_args.uart_echo)
         .defaultValue("false")
@@ -215,9 +208,6 @@ namespace Sensors
       onUpdateParameters(void)
       {
         BasicDeviceDriver::onUpdateParameters();
-        
-        if (paramChanged(m_args.read_frequency))
-          setReadFrequency(m_args.read_frequency);
 
         // Depth conversion (bar to meters of fluid).
         if (paramChanged(m_args.depth_conv))
