@@ -631,7 +631,7 @@ namespace DUNE
         case SM_ACT_POWER_ON_DELAY:
           if (m_power_on_timer.overflow())
           {
-            queueState( SM_ACT_POWER_ON );
+            queueState(SM_ACT_POWER_ON);
           }
           break;
 
@@ -799,8 +799,8 @@ namespace DUNE
 
         // Start deactivation procedure.
         case SM_DEACT_BEGIN:
-          m_wdog.setTop( getDeactivationTime() );
-          queueState( SM_DEACT_DISCONNECT );
+          m_wdog.setTop(getDeactivationTime());
+          queueState(SM_DEACT_DISCONNECT);
           break;
 
         // Gracefully disconnect from device.
