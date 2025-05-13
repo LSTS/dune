@@ -51,6 +51,10 @@ namespace DUNE
       double pwr_off_delay;
       //! Delay after powering on the device.
       double post_pwr_on_delay;
+      //! Sample Time Duration.
+      double sample_time_duration;
+      //! Periodicity of Data Sampling.
+      double periodicity_data_sampling;
     };
 
     class BasicDeviceDriver: public DUNE::Tasks::Task
@@ -173,6 +177,42 @@ namespace DUNE
         return false;
       }
 
+      inline double
+      getSamplePeriodicity(void)
+      {
+        return m_periodicity_timer.getTop();
+      }
+
+      inline double
+      getSamplePeriod(void)
+      {
+        return m_sample_timer.getTop();
+      }
+
+      inline double
+      getSamplePeriodicityRemaining(void)
+      {
+        return m_periodicity_timer.getRemaining();
+      }
+
+      inline double
+      getSamplePeriodRemaining(void)
+      {
+        return m_sample_timer.getRemaining();
+      }
+
+      inline double
+      getSamplePeriodicityElapsed(void)
+      {
+        return m_periodicity_timer.getElapsed();
+      }
+
+      inline double
+      getSamplePeriodElapsed(void)
+      {
+        return m_sample_timer.getElapsed();
+      }
+
       virtual bool
       onReadData(void) = 0;
 
@@ -196,6 +236,12 @@ namespace DUNE
 
       virtual void
       onInitializeDevice(void) = 0;
+
+      virtual void
+      onStartSampling(void);
+
+      virtual void
+      onStopSampling(void);
 
       //! Test if the estimated state message should be discarded.
       //! @param[in] msg estimated state message.
@@ -249,14 +295,6 @@ namespace DUNE
       // Request a restart
       void
       requestRestart();
-
-      //! Set the data read period.
-      //! @param[in] freq polling frequency, in hertz.
-      void
-      setReadFrequency(double freq)
-      {
-        m_read_period = freq > 0.0 ? 1.0/freq : 0.0;
-      }
 
       //! If set, task uses waitForMessages with specified timeout 
       //! insted of consumeMessages.
@@ -349,12 +387,14 @@ namespace DUNE
       double m_restart_delay;
       //! Restart timer.
       DUNE::Time::Counter<double> m_restart_timer;
-      //! Data read period in seconds.
-      double m_read_period;
-      //! Data read timer.
-      DUNE::Time::Counter<double> m_read_timer;
       //! Device URI.
       std::string m_uri;
+      //! Is sampling.
+      bool m_is_sampling;
+      //! Sampling timer.
+      DUNE::Time::Counter<double> m_sample_timer;
+      //! Periodicity timer.
+      DUNE::Time::Counter<double> m_periodicity_timer;
 
       void
       onResourceRelease(void) override;

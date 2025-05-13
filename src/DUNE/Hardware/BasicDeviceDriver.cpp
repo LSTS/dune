@@ -55,8 +55,8 @@ namespace DUNE
       m_timeout_count(0),
       m_restart(false),
       m_restart_delay(0.0),
-      m_read_period(0.0),
-      m_uri()
+      m_uri(),
+      m_is_sampling(false)
     {
       param("Power Channel - Names", m_bdd_args.pwr_channels)
       .defaultValue("")
@@ -76,6 +76,36 @@ namespace DUNE
       .minimumValue("0.0")
       .defaultValue("0.0")
       .description("Delay after powering up the device");
+
+      param("Sample Time Duration", m_bdd_args.sample_time_duration)
+      .scope(Tasks::Parameter::SCOPE_MANEUVER)
+      .visibility(Tasks::Parameter::VISIBILITY_USER)
+      .minimumValue("0.0")
+      .defaultValue("0.0")
+      .units(Units::Second)
+      .description("Sample Time Duration (S) in seconds. "
+                   "This value must not be greater than "
+                   "Periodicity of Data Sampling (P), otherwise, "
+                   "task will be deactivated."
+                   "<pre style='font-family: Monospaced'>"
+                   "[P][=========][=========]<br>"
+                   "[S][===------][===------]"
+                   "</pre>");
+
+      param("Periodicity of Data Sampling", m_bdd_args.periodicity_data_sampling)
+      .scope(Tasks::Parameter::SCOPE_MANEUVER)
+      .visibility(Tasks::Parameter::VISIBILITY_USER)
+      .minimumValue("0.0")
+      .defaultValue("0.0")
+      .units(Units::Second)
+      .description("Periodicity of Data Sampling (P) in seconds. "
+                   "This value must not be lower than "
+                   "Sample Time Duration (S), otherwise, "
+                   "task will be deactivated."
+                   "<pre style='font-family: Monospaced'>"
+                   "[P][=========][=========]<br>"
+                   "[S][===------][===------]"
+                   "</pre>");
 
       m_restart_needed = true;
       bind<IMC::EstimatedState>(this);
@@ -102,6 +132,20 @@ namespace DUNE
 
       if (paramChanged(m_bdd_args.post_pwr_on_delay))
         setPostPowerOnDelay(m_bdd_args.post_pwr_on_delay);
+
+      if (paramChanged(m_bdd_args.sample_time_duration) ||
+          paramChanged(m_bdd_args.periodicity_data_sampling))
+      {
+        if (m_bdd_args.sample_time_duration > m_bdd_args.periodicity_data_sampling)
+        {
+          err("Sample Time Duration is greater than Periodicity of Data Sampling -> Deactivating");
+          requestDeactivation();
+          return;
+        }
+
+        m_sample_timer.setTop(m_bdd_args.sample_time_duration);
+        m_periodicity_timer.setTop(m_bdd_args.periodicity_data_sampling);
+      }
     }
 
     void
@@ -540,6 +584,14 @@ namespace DUNE
     }
 
     void
+    BasicDeviceDriver::onStartSampling(void)
+    { }
+
+    void
+    BasicDeviceDriver::onStopSampling(void)
+    { }
+
+    void
     BasicDeviceDriver::updateStateMachine(void)
     {
       switch (dequeueState())
@@ -698,17 +750,40 @@ namespace DUNE
             break;
           }
 
-          m_read_timer.setTop(m_read_period);
           queueState(SM_ACT_SAMPLE);
+          m_sample_timer.setTop(m_bdd_args.sample_time_duration);
+          m_periodicity_timer.setTop(m_bdd_args.periodicity_data_sampling);
+          m_is_sampling = true;
+          onStartSampling();
           break;
 
-          // Read samples.
+        // Read samples.
         case SM_ACT_SAMPLE:
-          if (m_read_timer.overflow())
+          if (m_periodicity_timer.getTop() == 0.0f)
           {
-            m_read_timer.setTop(m_read_period);
             readSample();
           }
+          else if (m_periodicity_timer.overflow())
+          {
+            if (m_sample_timer.getTop() == 0.0f)
+              readSample();
+            else
+              m_sample_timer.reset();
+            
+            m_periodicity_timer.reset();
+            m_is_sampling = true;
+            onStartSampling();
+          }
+          else if (!m_sample_timer.overflow())
+          {
+            readSample();
+          }
+          else if (m_is_sampling)
+          {
+            m_is_sampling = false;
+            onStopSampling();
+          }
+
           break;
 
           // Start deactivation procedure.
@@ -827,8 +902,8 @@ namespace DUNE
     {
       if (!isActive())
         waitForMessages(1.0);
-      else if (m_read_period > 0.0)
-        waitForMessages(m_read_timer.getRemaining());
+      else if (m_sample_timer.getTop() > 0.0)
+        waitForMessages(m_sample_timer.getRemaining());
       else if (m_wait_msg_timeout > 0.0)
         waitForMessages(m_wait_msg_timeout);
       else
