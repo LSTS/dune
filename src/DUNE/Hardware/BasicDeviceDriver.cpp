@@ -637,13 +637,20 @@ namespace DUNE
 
         // Turn power on.
         case SM_ACT_POWER_ON:
-          turnPowerOn();
-          queueState(SM_ACT_POWER_WAIT);
+          if (isPowered())
+          {
+            queueState(SM_ACT_DEV_WAIT);
+          }
+          else
+          {
+            turnPowerOn();
+            queueState(SM_ACT_POWER_WAIT);
+          }
           break;
 
         // Wait for power to be on.
         case SM_ACT_POWER_WAIT:
-          if (isPowered(true))
+          if (isPowered())
           {
             m_power_on_timer.setTop(m_post_power_on_delay);
             queueState(SM_ACT_DEV_WAIT);
