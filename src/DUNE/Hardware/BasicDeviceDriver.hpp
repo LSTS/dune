@@ -311,6 +311,13 @@ namespace DUNE
       void
       onUpdateParameters(void) override;
 
+      //! Test if all device's power channel states are equal to state.
+      //! @param[in] state desired power state.
+      //! @return true if all device's power channel states are equal to state,
+      //! false otherwise or if power channels list is empty.
+      bool
+      isPowered(bool state = true);
+
     private:
       //! Finite state machine states.
       enum StateMachineStates
@@ -480,12 +487,6 @@ namespace DUNE
       //! @param[in] op desired power channel operation.
       void
       controlPower(IMC::PowerChannelControl::OperationEnum op);
-
-      //! Test if all devices are powered or not.
-      //! @param[in] state desired power state.
-      //! @return true if all devices are powered or not, false otherwise.
-      bool
-      isPowered(bool state);
 
       //! Update state machine.
       void
