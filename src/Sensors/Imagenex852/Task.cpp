@@ -168,9 +168,6 @@ namespace Sensors
         m_pfilt(NULL),
         m_uam_tx_ip(false)
       {
-        paramActive(Tasks::Parameter::SCOPE_IDLE,
-                    Tasks::Parameter::VISIBILITY_USER);
-
         // Define configuration parameters.
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
