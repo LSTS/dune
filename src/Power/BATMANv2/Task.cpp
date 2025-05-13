@@ -110,11 +110,6 @@ namespace Power
         m_driver(0),
         m_tstamp(0)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-          Tasks::Parameter::VISIBILITY_DEVELOPER, 
-          true);
-
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
