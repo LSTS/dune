@@ -227,10 +227,6 @@ namespace Sensors
         m_data(NULL),
         m_ec(NULL)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
-
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"tcp://ADDRESS:PORT\".");
