@@ -44,8 +44,6 @@ namespace Sensors
     {
       //! IO device (URI).
       std::string io_dev;
-      //! Read frequency.
-      double read_frequency;
       //! Depth calibration parameters.
       std::vector<double> depth_cal;
       //! Input timeout.
@@ -106,11 +104,6 @@ namespace Sensors
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
-        
-        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
-        .units(Units::Hertz)
-        .defaultValue("1.0")
-        .description(DTR("Frequency at which task reads data"));
 
         param("Depth Calibration", m_args.depth_cal)
         .defaultValue("1.0, 0.0")
@@ -132,9 +125,6 @@ namespace Sensors
       onUpdateParameters(void)
       {
         BasicDeviceDriver::onUpdateParameters();
-        
-        if (paramChanged(m_args.read_frequency))
-          setReadFrequency(m_args.read_frequency);
       }
 
       //! Try to connect to the device.
