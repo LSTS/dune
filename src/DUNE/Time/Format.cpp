@@ -30,6 +30,8 @@
 // ISO C++ 98 headers.
 #include <string>
 #include <ctime>
+#include <sstream>
+#include <iomanip>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -143,6 +145,37 @@ namespace DUNE
       char bfr[64];
       std::strftime(bfr, 64, "%a, %d %b %Y %H:%M:%S GMT", tmp);
       return bfr;
+    }
+
+    std::string
+    Format::getTimeDHMS(double tstamp)
+    {
+      unsigned days = static_cast<unsigned>(tstamp / 86400);
+      tstamp -= days * 86400;
+
+      unsigned hours = static_cast<unsigned>(tstamp / 3600);
+      tstamp -= hours * 3600;
+
+      unsigned minutes = static_cast<unsigned>(tstamp / 60);
+      tstamp -= minutes * 60;
+
+      std::ostringstream result;
+      if (days > 0)
+        result << days << "d";
+      if (hours > 0)
+        result << hours << "h";
+      if (minutes > 0)
+        result << minutes << "m";
+      if (tstamp > 0)
+        result << std::fixed << std::setprecision(1) << tstamp << "s";
+
+      return result.str();
+    }
+
+    std::string
+    Format::getTimeDHMS(void)
+    {
+      return getTimeDHMS(static_cast<double>(std::time(0)));
     }
   }
 }
