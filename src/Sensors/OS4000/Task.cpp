@@ -123,11 +123,6 @@ namespace Sensors
         m_uart(NULL),
         m_tstamp(0)
       {
-        // Retrieve config values.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
