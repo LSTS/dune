@@ -58,6 +58,10 @@ namespace DUNE
       m_uri(),
       m_is_sampling(false)
     {
+      paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                  Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                  true);
+
       param("Power Channel - Names", m_bdd_args.pwr_channels)
       .defaultValue("")
       .description("Device's power channels");
