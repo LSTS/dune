@@ -211,6 +211,7 @@ namespace DUNE
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
       .defaultValue(scope_str)
+      .values(Parameter::scopeValues())
       .description(DTR("Scoped of the 'Active' parameter"));
 
       std::string visibility_str = Parameter::visibilityToString(def_visibility);
@@ -218,6 +219,7 @@ namespace DUNE
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
       .defaultValue(visibility_str)
+      .values(Parameter::visibilityValues())
       .description(DTR("Visibility of the 'Active' parameter"));
 
       param(DTR_RT("Active"), m_args.active)
