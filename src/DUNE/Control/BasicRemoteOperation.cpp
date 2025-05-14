@@ -112,8 +112,6 @@ namespace DUNE
 
       else if (msg->op == IMC::RemoteActionsRequest::OP_QUERY)
       {
-        //! Clear the previous message
-        m_actions_request.actions.clear();
 
         setupAdditionalActions();
         inf("Dispatched actions: %s", m_actions_request.actions.c_str());
@@ -178,25 +176,32 @@ namespace DUNE
       for (unsigned int i = 0; i < new_actions.size(); i++)
       {
         bool new_action = true;
-        trace("Action: %s Type: %s", new_actions[i].name.c_str(), new_actions[i].type.c_str());
+        debug("Action: %s Type: %s", new_actions[i].name.c_str(), new_actions[i].type.c_str());
         for(unsigned int j = 0; j < actions.size(); j++)
         {
           //! Check if the action already exists
           if (actions[j].name == new_actions[i].name)
           {
             new_action = false;
-            trace("Action %s already exists and can't be changed. ILLEGAL", actions[j].name.c_str());
-            //! If it's a lock type, update it 
-            if (!actions[j].lock && new_actions[i].lock)
+            debug("Action %s already exists and can't be changed. ILLEGAL", actions[j].name.c_str());
+            //! Illegal lock change was made
+            if (actions[j].lock != new_actions[i].lock)
             {
-              debug("Lock attempt on %s. ILLEGAL", actions[j].name.c_str());
+              trace("Lock update attempt from %s. ILLEGAL", actions[j].name.c_str());
             }
-            //! If it isnt and the type is different, update it
-            else if (actions[j].type == new_actions[i].type && new_actions[i].type == "lock")
+            //! Attempt to change type of action. Illegal
+            else if (actions[j].type != new_actions[i].type)
             {
-              debug("Attempt to update action %s from %s to %s", actions[j].name.c_str(),
+              trace("Attempt to update action %s from %s to %s. ILLEGAL", actions[j].name.c_str(),
                                                                actions[j].type.c_str(), new_actions[i].type.c_str());
-              //m_verbs[j].type = task_verbs[i].type;
+            }
+            else if (actions[j].lock == new_actions[i].lock)
+            {
+              trace("Redudant action lock request attempt on %s", actions[j].name.c_str());
+            }
+            else if (actions[j].type != new_actions[i].type)
+            {
+              trace("Redudant action type request on %s. It is already of type %s", actions[j].name.c_str(), actions[j].type.c_str());
             }
           }
         }
@@ -218,6 +223,10 @@ namespace DUNE
     void
     BasicRemoteOperation::setupAdditionalActions()
     {
+
+      //! Clear the previous message
+      m_actions_request.actions.clear();
+
       addRemoteAction("Exit", "Button");
       for (unsigned int i = 0; i < m_actions.size(); ++i)
       {
