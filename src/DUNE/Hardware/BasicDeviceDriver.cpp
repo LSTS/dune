@@ -814,10 +814,7 @@ namespace DUNE
           }
 
           queueState(SM_ACT_SAMPLE);
-          m_sample_timer.setTop(m_bdd_args.sample_time_duration);
-          m_periodicity_timer.setTop(m_bdd_args.periodicity_data_sampling);
-          m_is_sampling = true;
-          onStartSampling();
+          m_periodicity_timer.setTop(0.0f);
           break;
 
         // Read samples.
@@ -828,20 +825,27 @@ namespace DUNE
             break;
           }
 
-          if (m_periodicity_timer.getTop() == 0.0f)
+          if (m_bdd_args.periodicity_data_sampling == 0.0f)
           {
             readSample();
           }
           else if (m_periodicity_timer.overflow())
           {
-            if (m_sample_timer.getTop() == 0.0f)
-              readSample();
-            else
-              m_sample_timer.reset();
-            
-            m_periodicity_timer.reset();
-            m_is_sampling = true;
             onStartSampling();
+            m_is_sampling = true;
+            readSample();
+
+            if (m_bdd_args.sample_time_duration == 0.0f)
+            {
+              onStopSampling();
+              m_is_sampling = false;
+            }
+            else
+            {
+              m_sample_timer.setTop(m_bdd_args.periodicity_data_sampling);
+            }
+            
+            m_periodicity_timer.setTop(m_bdd_args.sample_time_duration);
           }
           else if (!m_sample_timer.overflow())
           {
@@ -849,8 +853,8 @@ namespace DUNE
           }
           else if (m_is_sampling)
           {
-            m_is_sampling = false;
             onStopSampling();
+            m_is_sampling = false;
           }
 
           break;
