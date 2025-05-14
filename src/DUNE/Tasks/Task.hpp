@@ -504,6 +504,38 @@ namespace DUNE
         m_recipient->runCallBacks();
       }
 
+      void
+      setParameterScope(const std::string& name, const std::string& scope)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->scope(scope);
+      }
+
+      void
+      setParameterScope(const std::string& name, const Parameter::Scope& scope)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->scope(scope);
+      }
+
+      void
+      setParameterVisbility(const std::string& name, const std::string& visibility)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->visibility(visibility);
+      }
+
+      void
+      setParameterVisbility(const std::string& name, const Parameter::Visibility& visibility)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->visibility(visibility);
+      }
+
       //! Declare a configuration parameter that can be parsed using
       //! the basic parameter parser.
       //! @tparam T type of the destination variable.
