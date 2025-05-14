@@ -51,6 +51,8 @@ namespace DUNE
 
     static const unsigned c_visibility_count = sizeof(c_visibility_strs) / sizeof(char*);
 
+    static const std::string c_visibility_values = Utils::String::join(c_visibility_strs, c_visibility_strs + c_visibility_count, ",");
+
     static const char* c_scope_strs[] =
     {
       "global",
@@ -60,6 +62,8 @@ namespace DUNE
     };
 
     static const unsigned c_scope_count = sizeof(c_scope_strs) / sizeof(char*);
+
+    static const std::string c_scope_values = Utils::String::join(c_scope_strs, c_scope_strs + c_scope_count, ",");
 
     Parameter::Visibility
     Parameter::visibilityFromString(const std::string& v)
@@ -79,6 +83,12 @@ namespace DUNE
       return c_visibility_strs[v];
     }
 
+    std::string
+    Parameter::visibilityValues(void)
+    {
+      return c_visibility_values;
+    }
+
     Parameter::Scope
     Parameter::scopeFromString(const std::string& s)
     {
@@ -95,6 +105,12 @@ namespace DUNE
     Parameter::scopeToString(Scope s)
     {
       return c_scope_strs[s];
+    }
+
+    std::string
+    Parameter::scopeValues(void)
+    {
+      return c_scope_values;
     }
 
     Parameter::Parameter(const std::string& param_name, const std::string& type_name):
