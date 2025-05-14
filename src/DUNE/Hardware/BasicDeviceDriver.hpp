@@ -41,6 +41,8 @@ namespace DUNE
 {
   namespace Hardware
   {
+    using DUNE::Tasks::Parameter;
+    
     struct BDDArguments
     {
       //! Power channels.
@@ -53,8 +55,16 @@ namespace DUNE
       double post_pwr_on_delay;
       //! Sample Time Duration.
       double sample_time_duration;
+      //! Sample Time Duration visibility.
+      std::string sample_time_duration_visibility;
+      //! Sample Time Duration scope.
+      std::string sample_time_duration_scope;
       //! Periodicity of Data Sampling.
       double periodicity_data_sampling;
+      //! Periodicity of Data Sampling visibility.
+      std::string periodicity_data_sampling_visibility;
+      //! Periodicity of Data Sampling scope.
+      std::string periodicity_data_sampling_scope;
     };
 
     class BasicDeviceDriver: public DUNE::Tasks::Task
@@ -311,6 +321,12 @@ namespace DUNE
       void
       onUpdateParameters(void) override;
 
+      void
+      paramConfigurableSampling(Parameter::Scope def_scope = Parameter::SCOPE_GLOBAL,
+                                Parameter::Visibility def_visibility = Parameter::VISIBILITY_DEVELOPER,
+                                double def_sampling = 0.0f,
+                                double def_periodicity = 0.0f);
+
       //! Test if all device's power channel states are equal to state.
       //! @param[in] state desired power state.
       //! @return true if all device's power channel states are equal to state,
@@ -396,6 +412,8 @@ namespace DUNE
       DUNE::Time::Counter<double> m_restart_timer;
       //! Device URI.
       std::string m_uri;
+      // Honours configurable sampling.
+      bool m_honours_conf_samp;
       //! Is sampling.
       bool m_is_sampling;
       //! Sampling timer.

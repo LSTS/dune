@@ -56,6 +56,7 @@ namespace DUNE
       m_restart(false),
       m_restart_delay(0.0),
       m_uri(),
+      m_honours_conf_samp(false),
       m_is_sampling(false)
     {
       paramActive(Tasks::Parameter::SCOPE_GLOBAL,
@@ -80,36 +81,6 @@ namespace DUNE
       .minimumValue("0.0")
       .defaultValue("0.0")
       .description("Delay after powering up the device");
-
-      param("Sample Time Duration", m_bdd_args.sample_time_duration)
-      .scope(Tasks::Parameter::SCOPE_MANEUVER)
-      .visibility(Tasks::Parameter::VISIBILITY_USER)
-      .minimumValue("0.0")
-      .defaultValue("0.0")
-      .units(Units::Second)
-      .description("Sample Time Duration (S) in seconds. "
-                   "This value must not be greater than "
-                   "Periodicity of Data Sampling (P), otherwise, "
-                   "task will be deactivated."
-                   "<pre style='font-family: Monospaced'>"
-                   "[P][=========][=========]<br>"
-                   "[S][===------][===------]"
-                   "</pre>");
-
-      param("Periodicity of Data Sampling", m_bdd_args.periodicity_data_sampling)
-      .scope(Tasks::Parameter::SCOPE_MANEUVER)
-      .visibility(Tasks::Parameter::VISIBILITY_USER)
-      .minimumValue("0.0")
-      .defaultValue("0.0")
-      .units(Units::Second)
-      .description("Periodicity of Data Sampling (P) in seconds. "
-                   "This value must not be lower than "
-                   "Sample Time Duration (S), otherwise, "
-                   "task will be deactivated."
-                   "<pre style='font-family: Monospaced'>"
-                   "[P][=========][=========]<br>"
-                   "[S][===------][===------]"
-                   "</pre>");
 
       m_restart_needed = true;
       bind<IMC::EstimatedState>(this);
@@ -137,19 +108,100 @@ namespace DUNE
       if (paramChanged(m_bdd_args.post_pwr_on_delay))
         setPostPowerOnDelay(m_bdd_args.post_pwr_on_delay);
 
-      if (paramChanged(m_bdd_args.sample_time_duration) ||
-          paramChanged(m_bdd_args.periodicity_data_sampling))
+      if (m_honours_conf_samp)
       {
-        if (m_bdd_args.sample_time_duration > m_bdd_args.periodicity_data_sampling)
+        if (paramChanged(m_bdd_args.sample_time_duration) ||
+          paramChanged(m_bdd_args.periodicity_data_sampling))
         {
-          err("Sample Time Duration is greater than Periodicity of Data Sampling -> Deactivating");
-          requestDeactivation();
-          return;
+          if (m_bdd_args.sample_time_duration > m_bdd_args.periodicity_data_sampling)
+          {
+            err("Sample Time Duration is greater than Periodicity of Data Sampling -> Deactivating");
+            requestDeactivation();
+            return;
+          }
         }
 
-        m_sample_timer.setTop(m_bdd_args.sample_time_duration);
-        m_periodicity_timer.setTop(m_bdd_args.periodicity_data_sampling);
+        if (paramChanged(m_bdd_args.sample_time_duration_visibility))
+        setParameterVisbility("Sample Time Duration", m_bdd_args.sample_time_duration_visibility);
+
+        if (paramChanged(m_bdd_args.sample_time_duration_scope))
+          setParameterScope("Sample Time Duration", m_bdd_args.sample_time_duration_scope);
+
+        if (paramChanged(m_bdd_args.periodicity_data_sampling_visibility))
+          setParameterVisbility("Periodicity of Data Sampling", m_bdd_args.periodicity_data_sampling_visibility);
+
+        if (paramChanged(m_bdd_args.periodicity_data_sampling_scope))
+          setParameterScope("Periodicity of Data Sampling", m_bdd_args.periodicity_data_sampling_scope);
       }
+    }
+
+    void
+    BasicDeviceDriver::paramConfigurableSampling(Parameter::Scope def_scope,
+                                                 Parameter::Visibility def_visibility,
+                                                 double def_sampling,
+                                                 double def_periodicity)
+    {
+      m_honours_conf_samp = true;
+      std::string scope_str = Parameter::scopeToString(def_scope);
+      std::string visibility_str = Parameter::visibilityToString(def_visibility);
+
+      param("Sample Time Duration", m_bdd_args.sample_time_duration)
+      .scope(def_scope)
+      .visibility(def_visibility)
+      .minimumValue("0.0")
+      .defaultValue(uncastLexical(def_sampling))
+      .units(Units::Second)
+      .description("Sample Time Duration (S) in seconds. "
+                   "This value must not be greater than "
+                   "Periodicity of Data Sampling (P), otherwise, "
+                   "task will be deactivated."
+                   "<pre style='font-family: Monospaced'>"
+                   "[P][=========][=========]<br>"
+                   "[S][===------][===------]"
+                   "</pre>");
+
+      param("Sample Time Duration - Visibility", m_bdd_args.sample_time_duration_visibility)
+      .visibility(Parameter::VISIBILITY_DEVELOPER)
+      .scope(Parameter::SCOPE_GLOBAL)
+      .defaultValue("developer")
+      .values(Parameter::visibilityValues())
+      .description("Visibility of the 'Sample Time Duration' parameter");
+
+      param("Sample Time Duration - Scope", m_bdd_args.sample_time_duration_scope)
+      .visibility(Parameter::VISIBILITY_DEVELOPER)
+      .scope(Parameter::SCOPE_GLOBAL)
+      .defaultValue("global")
+      .values(Parameter::scopeValues())
+      .description("Scoped of the 'Sample Time Duration' parameter");
+
+      param("Periodicity of Data Sampling", m_bdd_args.periodicity_data_sampling)
+      .scope(Tasks::Parameter::SCOPE_GLOBAL)
+      .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+      .minimumValue("0.0")
+      .defaultValue(uncastLexical(def_periodicity))
+      .units(Units::Second)
+      .description("Periodicity of Data Sampling (P) in seconds. "
+                   "This value must not be lower than "
+                   "Sample Time Duration (S), otherwise, "
+                   "task will be deactivated."
+                   "<pre style='font-family: Monospaced'>"
+                   "[P][=========][=========]<br>"
+                   "[S][===------][===------]"
+                   "</pre>");
+
+      param("Periodicity of Data Sampling - Visibility", m_bdd_args.periodicity_data_sampling_visibility)
+      .visibility(Parameter::VISIBILITY_DEVELOPER)
+      .scope(Parameter::SCOPE_GLOBAL)
+      .defaultValue("developer")
+      .values(Parameter::visibilityValues())
+      .description("Visibility of the 'Periodicity of Data Sampling' parameter");
+
+      param("Periodicity of Data Sampling - Scope", m_bdd_args.periodicity_data_sampling_scope)
+      .visibility(Parameter::VISIBILITY_DEVELOPER)
+      .scope(Parameter::SCOPE_GLOBAL)
+      .defaultValue("global")
+      .values(Parameter::scopeValues())
+      .description("Scoped of the 'Periodicity of Data Sampling' parameter");
     }
 
     void
@@ -770,6 +822,12 @@ namespace DUNE
 
         // Read samples.
         case SM_ACT_SAMPLE:
+          if (!m_honours_conf_samp)
+          {
+            readSample();
+            break;
+          }
+
           if (m_periodicity_timer.getTop() == 0.0f)
           {
             readSample();
