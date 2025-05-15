@@ -96,6 +96,8 @@ namespace Sensors
         m_maneuvering(false),
         m_cs(CS_UNABLE)
       {
+        paramConfigurableSampling();
+        
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");

@@ -119,6 +119,8 @@ namespace Sensors
         m_sock(NULL)
       {
         // Define configuration parameters.
+        paramConfigurableSampling();
+        
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("tcp://192.168.0.5:4040")
         .description("IO device URI in the form \"tcp://HOST:PORT\"");
