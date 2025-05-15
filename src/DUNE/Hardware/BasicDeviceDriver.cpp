@@ -61,7 +61,9 @@ namespace DUNE
       m_restart_delay(0.0),
       m_uri(),
       m_honours_conf_samp(false),
-      m_is_sampling(false)
+      m_is_sampling(false),
+      m_sample_timer(0.0f),
+      m_periodicity_timer(0.0f)
     {
       paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                   Tasks::Parameter::VISIBILITY_DEVELOPER, 
