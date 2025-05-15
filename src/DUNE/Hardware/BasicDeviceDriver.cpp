@@ -839,7 +839,6 @@ namespace DUNE
           queueState(SM_ACT_SAMPLE);
 
           if (!m_honours_conf_samp ||
-              m_bdd_args.periodicity_data_sampling == 0.0f ||
               m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration)
             startSampling();
           else  
@@ -850,7 +849,6 @@ namespace DUNE
         // Read samples.
         case SM_ACT_SAMPLE:
           if (!m_honours_conf_samp ||
-              m_bdd_args.periodicity_data_sampling == 0.0f ||
               m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration)
           {
             readSample();
