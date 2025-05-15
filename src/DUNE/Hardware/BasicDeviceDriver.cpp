@@ -126,7 +126,7 @@ namespace DUNE
             return;
           }
 
-          if (m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration)
+          if (isActive() && (m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration))
             startSampling();
           else
             m_periodicity_timer.setTop(0.0f);
