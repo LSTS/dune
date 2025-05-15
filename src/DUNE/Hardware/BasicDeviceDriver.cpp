@@ -948,7 +948,7 @@ namespace DUNE
           if (!m_honours_conf_samp ||
               m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration)
             startSampling();
-          else  
+          else
             m_periodicity_timer.setTop(0.0f);
 
           break;
