@@ -41,6 +41,10 @@ namespace DUNE
 
     //! Log file prefix.
     static const char* c_log_prefix = "Data_";
+    //! Sample Time Duration.
+    static const char* c_sample_time_duration = "Sample Time Duration";
+    //! Periodicity of Data Sampling.
+    static const char* c_periodicity_data_sampling = "Periodicity of Data Sampling";
 
     BasicDeviceDriver::BasicDeviceDriver( const std::string &name, Tasks::Context &ctx ):
       Tasks::Task(name, ctx),
@@ -115,23 +119,23 @@ namespace DUNE
         {
           if (m_bdd_args.sample_time_duration > m_bdd_args.periodicity_data_sampling)
           {
-            err("Sample Time Duration is greater than Periodicity of Data Sampling -> Deactivating");
+            err("%s is greater than %s -> Deactivating", c_sample_time_duration, c_periodicity_data_sampling);
             requestDeactivation();
             return;
           }
         }
 
         if (paramChanged(m_bdd_args.sample_time_duration_visibility))
-        setParameterVisbility("Sample Time Duration", m_bdd_args.sample_time_duration_visibility);
+          setParameterVisbility(c_sample_time_duration, m_bdd_args.sample_time_duration_visibility);
 
         if (paramChanged(m_bdd_args.sample_time_duration_scope))
-          setParameterScope("Sample Time Duration", m_bdd_args.sample_time_duration_scope);
+          setParameterScope(c_sample_time_duration, m_bdd_args.sample_time_duration_scope);
 
         if (paramChanged(m_bdd_args.periodicity_data_sampling_visibility))
-          setParameterVisbility("Periodicity of Data Sampling", m_bdd_args.periodicity_data_sampling_visibility);
+          setParameterVisbility(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_visibility);
 
         if (paramChanged(m_bdd_args.periodicity_data_sampling_scope))
-          setParameterScope("Periodicity of Data Sampling", m_bdd_args.periodicity_data_sampling_scope);
+          setParameterScope(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_scope);
       }
     }
 
@@ -145,63 +149,63 @@ namespace DUNE
       std::string scope_str = Parameter::scopeToString(def_scope);
       std::string visibility_str = Parameter::visibilityToString(def_visibility);
 
-      param("Sample Time Duration", m_bdd_args.sample_time_duration)
+      param(c_sample_time_duration, m_bdd_args.sample_time_duration)
       .scope(def_scope)
       .visibility(def_visibility)
       .minimumValue("0.0")
       .defaultValue(uncastLexical(def_sampling))
       .units(Units::Second)
-      .description("Sample Time Duration (S) in seconds. "
-                   "This value must not be greater than "
-                   "Periodicity of Data Sampling (P), otherwise, "
+      .description(std::string(c_sample_time_duration) + " (S) in seconds. "
+                   "This value must not be greater than " + 
+                   std::string(c_periodicity_data_sampling) + " (P), otherwise, "
                    "task will be deactivated."
                    "<pre style='font-family: Monospaced'>"
                    "[P][=========][=========]<br>"
                    "[S][===------][===------]"
                    "</pre>");
 
-      param("Sample Time Duration - Visibility", m_bdd_args.sample_time_duration_visibility)
+      param(std::string(c_sample_time_duration) + " - Visibility", m_bdd_args.sample_time_duration_visibility)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
       .defaultValue("developer")
       .values(Parameter::visibilityValues())
-      .description("Visibility of the 'Sample Time Duration' parameter");
+      .description("Visibility of the '" + std::string(c_sample_time_duration) + "' parameter");
 
-      param("Sample Time Duration - Scope", m_bdd_args.sample_time_duration_scope)
+      param(std::string(c_sample_time_duration) + " - Scope", m_bdd_args.sample_time_duration_scope)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
       .defaultValue("global")
       .values(Parameter::scopeValues())
-      .description("Scoped of the 'Sample Time Duration' parameter");
+      .description("Scoped of the '" + std::string(c_sample_time_duration) + "' parameter");
 
-      param("Periodicity of Data Sampling", m_bdd_args.periodicity_data_sampling)
+      param(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling)
       .scope(Tasks::Parameter::SCOPE_GLOBAL)
       .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
       .minimumValue("0.0")
       .defaultValue(uncastLexical(def_periodicity))
       .units(Units::Second)
-      .description("Periodicity of Data Sampling (P) in seconds. "
-                   "This value must not be lower than "
-                   "Sample Time Duration (S), otherwise, "
+      .description(std::string(c_periodicity_data_sampling) + " (P) in seconds. "
+                   "This value must not be lower than " +
+                   std::string(c_sample_time_duration) + " (S), otherwise, "
                    "task will be deactivated."
                    "<pre style='font-family: Monospaced'>"
                    "[P][=========][=========]<br>"
                    "[S][===------][===------]"
                    "</pre>");
 
-      param("Periodicity of Data Sampling - Visibility", m_bdd_args.periodicity_data_sampling_visibility)
+      param(std::string(c_periodicity_data_sampling) + " - Visibility", m_bdd_args.periodicity_data_sampling_visibility)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
       .defaultValue("developer")
       .values(Parameter::visibilityValues())
-      .description("Visibility of the 'Periodicity of Data Sampling' parameter");
+      .description("Visibility of the '" + std::string(c_periodicity_data_sampling) + "' parameter");
 
-      param("Periodicity of Data Sampling - Scope", m_bdd_args.periodicity_data_sampling_scope)
+      param(std::string(c_periodicity_data_sampling) + " - Scope", m_bdd_args.periodicity_data_sampling_scope)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
       .defaultValue("global")
       .values(Parameter::scopeValues())
-      .description("Scoped of the 'Periodicity of Data Sampling' parameter");
+      .description("Scoped of the '" + std::string(c_periodicity_data_sampling) + "' parameter");
     }
 
     void
