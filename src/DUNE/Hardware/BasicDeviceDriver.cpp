@@ -729,6 +729,9 @@ namespace DUNE
     void
     BasicDeviceDriver::startSampling(void)
     {
+      if (m_is_sampling)
+        return;
+      
       spew("start sampling");
       onStartSampling();
       m_is_sampling = true;
@@ -737,6 +740,9 @@ namespace DUNE
     void
     BasicDeviceDriver::stopSampling(void)
     {
+      if (!m_is_sampling)
+        return;
+        
       spew("stop sampling");
       onStopSampling();
       m_is_sampling = false;
