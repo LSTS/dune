@@ -312,6 +312,9 @@ namespace DUNE
     {
       if (hasQueuedStates())
       {
+        if (m_sm_state == SM_ACT_SAMPLE && m_is_sampling)
+          stopSampling();
+        
         m_sm_state = m_sm_state_queue.front();
         m_sm_state_queue.pop();
       }
@@ -640,6 +643,22 @@ namespace DUNE
     }
 
     void
+    BasicDeviceDriver::startSampling(void)
+    {
+      spew("start sampling");
+      onStartSampling();
+      m_is_sampling = true;
+    }
+
+    void
+    BasicDeviceDriver::stopSampling(void)
+    {
+      spew("stop sampling");
+      onStopSampling();
+      m_is_sampling = false;
+    }
+
+    void
     BasicDeviceDriver::onStartSampling(void)
     { }
 
@@ -818,7 +837,7 @@ namespace DUNE
           if (!m_honours_conf_samp ||
               m_bdd_args.periodicity_data_sampling == 0.0f ||
               m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration)
-            onStartSampling();
+            startSampling();
           else  
             m_periodicity_timer.setTop(0.0f);
 
@@ -834,14 +853,12 @@ namespace DUNE
           }
           else if (m_periodicity_timer.overflow())
           {
-            onStartSampling();
-            m_is_sampling = true;
+            startSampling();
             readSample();
 
             if (m_bdd_args.sample_time_duration == 0.0f)
             {
-              onStopSampling();
-              m_is_sampling = false;
+              stopSampling();
             }
             else
             {
@@ -856,8 +873,7 @@ namespace DUNE
           }
           else if (m_is_sampling)
           {
-            onStopSampling();
-            m_is_sampling = false;
+            stopSampling();
           }
 
           break;

@@ -506,6 +506,12 @@ namespace DUNE
       void
       controlPower(IMC::PowerChannelControl::OperationEnum op);
 
+      void
+      startSampling(void);
+
+      void
+      stopSampling(void);
+
       //! Update state machine.
       void
       updateStateMachine(void);
