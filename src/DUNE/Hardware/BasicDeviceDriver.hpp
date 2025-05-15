@@ -253,6 +253,9 @@ namespace DUNE
       virtual void
       onStopSampling(void);
 
+      virtual void
+      setEntityStateSampling(bool state);
+
       //! Test if the estimated state message should be discarded.
       //! @param[in] msg estimated state message.
       //! @return true to discard message, false otherwise.

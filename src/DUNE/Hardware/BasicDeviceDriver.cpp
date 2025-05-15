@@ -762,6 +762,22 @@ namespace DUNE
     { }
 
     void
+    BasicDeviceDriver::setEntityStateSampling(bool state)
+    {
+      const auto sample_period = getSamplePeriod();
+      const auto periodicity = getSamplePeriodicity();
+      std::ostringstream description;
+      description << "active"
+                  << " | sampling: " << (state ? "on" : "off");
+      if ((periodicity != sample_period) && (sample_period > 0.0f))
+        description << " (r:"
+                    << Format::getTimeDHMS(state ? getSamplePeriodRemaining() : getSamplePeriodicityRemaining())
+                    << ")";
+
+      setEntityState(IMC::EntityState::ESTA_NORMAL, description.str());
+    }
+
+    void
     BasicDeviceDriver::updateStateMachine(void)
     {
       switch (dequeueState())
@@ -968,6 +984,9 @@ namespace DUNE
           {
             stopSampling();
           }
+
+          if (m_honours_conf_samp)
+            setEntityStateSampling(m_is_sampling);
 
           break;
 
