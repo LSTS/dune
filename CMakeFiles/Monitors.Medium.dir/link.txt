@@ -1,0 +1,2 @@
+/usr/bin/ar qc libMonitors.Medium.a  CMakeFiles/Monitors.Medium.dir/src/Monitors/Medium/Task.cpp.o
+/usr/bin/ranlib libMonitors.Medium.a

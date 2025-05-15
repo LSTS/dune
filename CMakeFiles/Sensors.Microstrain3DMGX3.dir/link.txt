@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.Microstrain3DMGX3.a  CMakeFiles/Sensors.Microstrain3DMGX3.dir/src/Sensors/Microstrain3DMGX3/Task.cpp.o
+/usr/bin/ranlib libSensors.Microstrain3DMGX3.a
