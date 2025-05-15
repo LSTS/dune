@@ -842,10 +842,10 @@ namespace DUNE
             }
             else
             {
-              m_sample_timer.setTop(m_bdd_args.periodicity_data_sampling);
+              m_sample_timer.setTop(m_bdd_args.sample_time_duration);
             }
             
-            m_periodicity_timer.setTop(m_bdd_args.sample_time_duration);
+            m_periodicity_timer.setTop(m_bdd_args.periodicity_data_sampling);
           }
           else if (!m_sample_timer.overflow())
           {
