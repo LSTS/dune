@@ -814,18 +814,21 @@ namespace DUNE
           }
 
           queueState(SM_ACT_SAMPLE);
-          m_periodicity_timer.setTop(0.0f);
+
+          if (!m_honours_conf_samp ||
+              m_bdd_args.periodicity_data_sampling == 0.0f ||
+              m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration)
+            onStartSampling();
+          else  
+            m_periodicity_timer.setTop(0.0f);
+
           break;
 
         // Read samples.
         case SM_ACT_SAMPLE:
-          if (!m_honours_conf_samp)
-          {
-            readSample();
-            break;
-          }
-
-          if (m_bdd_args.periodicity_data_sampling == 0.0f)
+          if (!m_honours_conf_samp ||
+              m_bdd_args.periodicity_data_sampling == 0.0f ||
+              m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration)
           {
             readSample();
           }
