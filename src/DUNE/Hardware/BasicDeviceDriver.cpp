@@ -770,7 +770,7 @@ namespace DUNE
       description << "active"
                   << " | sampling: " << (state ? "on" : "off");
       if ((periodicity != sample_period) && (sample_period > 0.0f))
-        description << " (r:"
+        description << " (r: "
                     << Format::getTimeDHMS(state ? getSamplePeriodRemaining() : getSamplePeriodicityRemaining())
                     << ")";
 
