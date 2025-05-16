@@ -114,14 +114,14 @@ namespace DUNE
       {
 
         setupAdditionalActions();
-        inf("Dispatched actions: %s", m_actions_request.actions.c_str());
+        trace("Dispatched actions: %s", m_actions_request.actions.c_str());
         dispatch(m_actions_request);
       }
 
       // In this case, save the new Additional Actions posted
       else if (msg->op == IMC::RemoteActionsRequest::OP_REGISTER)
       {
-        inf("Register request received");
+        trace("Register request received with actions: %s", msg->actions.c_str());
 
         //! Parse the received message FORMAT: (Verb=Type;Verb=Type)
         std::vector<std::string> parts;
@@ -249,28 +249,28 @@ namespace DUNE
     BasicRemoteOperation::parseActionType(const std::string& statement, const std::string seperator,
                                           std::string& action, std::string& type)
     {
-        if (Utils::String::ltrim(statement).size() < 3)
-          return;
+      if (Utils::String::ltrim(statement).size() < 3)
+        return;
 
-        std::vector<std::string> parts;
-        Utils::String::split(statement, seperator, parts);
+      std::vector<std::string> parts;
+      Utils::String::split(statement, seperator, parts);
 
-        if (parts.size() != 2) 
-          return;
-        
-        action = parts[0];
-        action = Utils::String::ltrim(action);
-        action = Utils::String::rtrim(action);
-        
-        if (action.empty()) 
-          return;
+      if (parts.size() != 2) 
+        return;
+      
+      action = parts[0];
+      action = Utils::String::ltrim(action);
+      action = Utils::String::rtrim(action);
+      
+      if (action.empty()) 
+        return;
 
-        type = parts[1];
-        type = Utils::String::ltrim(type);
-        type = Utils::String::rtrim(type);
-        Utils::String::toLowerCase(type);
-         
+      type = parts[1];
+      type = Utils::String::ltrim(type);
+      type = Utils::String::rtrim(type);
+      Utils::String::toLowerCase(type);
     }
+
     void
     BasicRemoteOperation::saveActions(const std::vector<std::string> additional_actions,
                                       std::vector<Action>& verbs, const std::string seperator)
@@ -342,11 +342,9 @@ namespace DUNE
       saveActions(m_additional_actions, additional_actions, ":");
       compareActions(m_actions, additional_actions);
 
+      //! If no range was specified, set it to default
       if (m_range.empty())
-      {
-        inf("Preset range of [-127, 127] to be used");
         m_range = "range127";
-      }
 
       //! Set the actions to be published
       setupAdditionalActions();
