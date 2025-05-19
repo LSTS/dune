@@ -560,12 +560,12 @@ namespace Autonomy
       {
         char what[32];
         std::sscanf(args.c_str(), "%s", what);
-        Restart msg;
+        RestartSystem msg;
         if (!strcmp(what, "dune"))
         {
           war("Restarting DUNE requested by %s", origin.c_str());
           reply(origin, "Restarting DUNE.");
-          msg.type = Restart::RSTYPE_DUNE;
+          msg.type = RestartSystem::RSTYPE_DUNE;
           dispatch(msg);
         }
         else if (!strcmp(what, "aux"))
@@ -581,7 +581,7 @@ namespace Autonomy
         {
           war("Restarting Main CPU requested by %s", origin.c_str());
           reply(origin, "Restarting.");
-          msg.type = Restart::RSTYPE_SYSTEM;
+          msg.type = RestartSystem::RSTYPE_SYSTEM;
           dispatch(msg);
         }
       }
