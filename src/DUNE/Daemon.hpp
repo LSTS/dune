@@ -72,7 +72,7 @@ namespace DUNE
     onResourceInitialization(void);
 
     void
-    consume(const DUNE::IMC::Restart* msg);
+    consume(const DUNE::IMC::RestartSystem* msg);
 
     void
     consume(const DUNE::IMC::EntityList* msg);

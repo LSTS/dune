@@ -138,7 +138,7 @@ namespace DUNE
 
     m_tman = new DUNE::Tasks::Manager(m_ctx);
 
-    bind<IMC::Restart>(this);
+    bind<IMC::RestartSystem>(this);
     bind<IMC::EntityList>(this);
     bind<IMC::SaveEntityParameters>(this);
     bind<IMC::EntityParameters>(this);
@@ -215,9 +215,9 @@ namespace DUNE
   }
 
   void
-  Daemon::consume(const IMC::Restart* msg)
+  Daemon::consume(const IMC::RestartSystem* msg)
   {
-    if (msg->type == IMC::Restart::RSTYPE_SYSTEM)
+    if (msg -> type == IMC::RestartSystem::RSTYPE_SYSTEM)
     {
       call_reboot = true;
       inf(DTR("Got message to reboot system"));
