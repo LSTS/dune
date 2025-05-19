@@ -684,7 +684,7 @@ namespace DUNE
 
       //!
       void
-      restart(const IMC::Restart* msg, const unsigned delay = 0);
+      restart(const IMC::RestartSystem* msg, const unsigned delay = 0);
 
       virtual bool
       onWriteParamsXML(std::ostream& os) const
@@ -762,7 +762,7 @@ namespace DUNE
       }
 
       virtual void
-      onRequestRestart(const IMC::Restart* msg)
+      onRequestRestart(const IMC::RestartSystem* msg)
       {
         spew("on request restart");
         restart(msg);
@@ -883,7 +883,7 @@ namespace DUNE
       consume(const IMC::PopEntityParameters* msg);
 
       void
-      consume(const IMC::Restart* msg);
+      consume(const IMC::RestartSystem* msg);
     };
   }
 }

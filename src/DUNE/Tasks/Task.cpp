@@ -103,7 +103,7 @@ namespace DUNE
       bind<IMC::PushEntityParameters>(this);
       bind<IMC::PopEntityParameters>(this);
       bind<IMC::QueryEntityState>(this);
-      bind<IMC::Restart>(this);
+      bind<IMC::RestartSystem>(this);
     }
 
     unsigned int
@@ -368,7 +368,7 @@ namespace DUNE
     }
 
     void
-    Task::restart(const IMC::Restart* msg, const unsigned delay)
+    Task::restart(const IMC::RestartSystem* msg, const unsigned delay)
     {
       const auto text = Utils::String::str("manual restart requested by 0x%x (%hhu)",
                                             msg->getSource(),
@@ -578,7 +578,7 @@ namespace DUNE
     }
 
     void
-    Task::consume(const IMC::Restart* msg)
+    Task::consume(const IMC::RestartSystem* msg)
     {
       if (msg->getDestination() != getSystemId())
         return;
@@ -586,7 +586,7 @@ namespace DUNE
       if (msg->getDestinationEntity() != getEntityId())
         return;
 
-      if (msg->type != IMC::Restart::RestartTypeEnum::RSTYPE_TASK)
+      if (msg->type != IMC::RestartSystem::RestartTypeEnum::RSTYPE_TASK)
         return;
 
       onRequestRestart(msg);
