@@ -42,6 +42,16 @@ namespace DUNE
 {
   namespace Control
   {
+
+    struct Action
+    {
+      public:
+        std::string name; 
+        std::string type;
+        bool lock = false;
+
+    };
+
     // Export DLL Symbol.
     class DUNE_DLL_SYM BasicRemoteOperation;
 
@@ -92,6 +102,12 @@ namespace DUNE
       }
 
       void
+      addActionLock(const std::string& action)
+      {
+        addRemoteAction(action, "Lock");
+      }
+      
+      void
       setConnectionTimeout(const float tout)
       {
         m_connection_timeout = tout;
@@ -104,7 +120,16 @@ namespace DUNE
       }
 
       void
-      setupAdditionalActions(const std::vector<std::string>& additional_actions);
+      saveActions(const std::vector<std::string> additional_actions, std::vector<Action>& verbs, const std::string seperator);
+
+      void
+      parseActionType(const std::string& statement, const std::string separator, std::string& action, std::string& type);
+      
+      void 
+      compareActions(std::vector<Action>& actions, std::vector<Action> new_actions);
+      
+      void
+      setupAdditionalActions();
 
       virtual void
       onConnectionTimeout(void)
@@ -158,7 +183,13 @@ namespace DUNE
       //! Time of the last remote action message received from the CCU.
       fp64_t m_last_action;
       //! Remote actions reply message;
-      IMC::RemoteActionsRequest m_actions;
+      IMC::RemoteActionsRequest m_actions_request;
+      //! Storage of Remote Operations
+      std::vector<Action> m_actions;
+      //! Storage of initial remote operations
+      std::vector<Action> m_actions_ini; 
+      //! Storage of range of Remote Operations
+      std::string m_range;
       //! Control loops last reference
       uint32_t m_scope_ref;
       //! Additional Remote Operation Actions
