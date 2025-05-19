@@ -89,6 +89,14 @@ Main.prototype.m_fields = [
     "side": "left"
   },
   {
+    "label": "Iridium RSSI:",
+    "data_function": function (data) { return getMessageValueFilter(data, 'RSSI', 'Iridium Modem',0); },
+    "widget": new Gauge({
+      reverse: false
+    }),
+    "side": "left"
+  },
+  {
     "label": "DUNE CPU Usage:",
     "data_function": function (data) { return getMessageCpuSingleUsage(data, 'DUNE-CPU', 0); },
     "widget": new Gauge({
@@ -114,6 +122,14 @@ Main.prototype.m_fields = [
       return cpuValues;
     },
     "widget": new ChartWidget(),
+    "side": "right"
+  },
+  {
+    "label": "GSM RSSI:",
+    "data_function": function (data) { return getMessageValueFilter(data, 'RSSI', 'SMS',0); },
+    "widget": new Gauge({
+      reverse: false
+    }),
     "side": "right"
   }
 ];
@@ -448,6 +464,23 @@ function getMessageValue(data, abbrev, defval) {
     return defval;
   }
 };
+
+function getMessageValueFilter(data, abbrev, task_name, defval) {
+  try {
+    for (m in data.dune_messages) {
+      var msg = data.dune_messages[m];
+      var src_ent = data.dune_entities[msg.src_ent].label;
+      if (msg.abbrev == abbrev && src_ent == task_name) {
+        //console.log(">>>> A >>> " + msg.src_ent + " : " + msg.value + " : " + src_ent);
+        return msg.value;
+      }
+    }
+    return defval;
+  }
+  catch (err) {
+    return defval;
+  }
+}
 
 function getMessageCpuSingleUsage(data, ent, defval) {
   try {
