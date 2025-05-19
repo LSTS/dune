@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6bee838bc8d005037b4a2fadc1660b58                            *
+// IMC XML MD5: 525bed614d94c59fe195f5b037a5270c                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -38,7 +38,7 @@ MESSAGE(4, QueryEntityInfo)
 MESSAGE(5, EntityList)
 MESSAGE(7, CpuUsage)
 MESSAGE(8, TransportBindings)
-MESSAGE(9, Restart)
+MESSAGE(9, RestartSystem)
 MESSAGE(12, DevCalibrationControl)
 MESSAGE(13, DevCalibrationState)
 MESSAGE(14, EntityActivationState)
@@ -329,6 +329,7 @@ MESSAGE(851, SoiPlan)
 MESSAGE(852, SoiCommand)
 MESSAGE(853, SoiState)
 MESSAGE(877, MessagePart)
+MESSAGE(878, MessagePartControl)
 MESSAGE(888, NeptusBlob)
 MESSAGE(889, Aborted)
 MESSAGE(890, UsblAngles)

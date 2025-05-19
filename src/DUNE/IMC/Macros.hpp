@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6bee838bc8d005037b4a2fadc1660b58                            *
+// IMC XML MD5: 525bed614d94c59fe195f5b037a5270c                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -48,8 +48,8 @@
 #define DUNE_IMC_CPUUSAGE 7
 //! TransportBindings identification number.
 #define DUNE_IMC_TRANSPORTBINDINGS 8
-//! Restart identification number.
-#define DUNE_IMC_RESTART 9
+//! RestartSystem identification number.
+#define DUNE_IMC_RESTARTSYSTEM 9
 //! DevCalibrationControl identification number.
 #define DUNE_IMC_DEVCALIBRATIONCONTROL 12
 //! DevCalibrationState identification number.
@@ -630,6 +630,8 @@
 #define DUNE_IMC_SOISTATE 853
 //! MessagePart identification number.
 #define DUNE_IMC_MESSAGEPART 877
+//! MessagePartControl identification number.
+#define DUNE_IMC_MESSAGEPARTCONTROL 878
 //! NeptusBlob identification number.
 #define DUNE_IMC_NEPTUSBLOB 888
 //! Aborted identification number.

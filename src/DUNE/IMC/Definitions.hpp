@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6bee838bc8d005037b4a2fadc1660b58                            *
+// IMC XML MD5: 525bed614d94c59fe195f5b037a5270c                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -563,8 +563,8 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
-    //! Restart.
-    class Restart: public Message
+    //! Restart System.
+    class RestartSystem: public Message
     {
     public:
       //! Restart Type.
@@ -587,12 +587,12 @@ namespace DUNE
         return 9;
       }
 
-      Restart(void);
+      RestartSystem(void);
 
-      Restart*
+      RestartSystem*
       clone(void) const
       {
-        return new Restart(*this);
+        return new RestartSystem(*this);
       }
 
       void
@@ -616,13 +616,13 @@ namespace DUNE
       uint16_t
       getId(void) const
       {
-        return Restart::getIdStatic();
+        return RestartSystem::getIdStatic();
       }
 
       const char*
       getName(void) const
       {
-        return "Restart";
+        return "RestartSystem";
       }
 
       unsigned
@@ -24331,6 +24331,86 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Message Fragment Control.
+    class MessagePartControl: public Message
+    {
+    public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Status Received.
+        OP_STATUS_RECEIVED = 0,
+        //! Request Retransmit.
+        OP_REQUEST_RETRANSMIT = 1
+      };
+
+      //! Transmission Unique Id.
+      uint8_t uid;
+      //! Operation.
+      uint8_t op;
+      //! Fragments IDs.
+      std::string frag_ids;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 878;
+      }
+
+      MessagePartControl(void);
+
+      MessagePartControl*
+      clone(void) const
+      {
+        return new MessagePartControl(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return MessagePartControl::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "MessagePartControl";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 2;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(frag_ids);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Neptus Blob.
     class NeptusBlob: public Message
     {
@@ -26435,10 +26515,10 @@ namespace DUNE
         UTF_XYZ = 0x01,
         //! ned.
         UTF_NED = 0x02,
-        //! enu.
-        UTF_ENU = 0x03,
         //! beams.
-        UTF_BEAMS = 0x04
+        UTF_BEAMS = 0x04,
+        //! enu.
+        UTF_ENU = 0x08
       };
 
       //! Number of Beams.

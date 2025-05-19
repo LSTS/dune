@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6bee838bc8d005037b4a2fadc1660b58                            *
+// IMC XML MD5: 525bed614d94c59fe195f5b037a5270c                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -510,34 +510,34 @@ namespace DUNE
       IMC::toJSON(os__, "message_id", message_id, nindent__);
     }
 
-    Restart::Restart(void)
+    RestartSystem::RestartSystem(void)
     {
       m_header.mgid = 9;
       clear();
     }
 
     void
-    Restart::clear(void)
+    RestartSystem::clear(void)
     {
       type = 0;
     }
 
     bool
-    Restart::fieldsEqual(const Message& msg__) const
+    RestartSystem::fieldsEqual(const Message& msg__) const
     {
-      const IMC::Restart& other__ = static_cast<const Restart&>(msg__);
+      const IMC::RestartSystem& other__ = static_cast<const RestartSystem&>(msg__);
       if (type != other__.type) return false;
       return true;
     }
 
     int
-    Restart::validate(void) const
+    RestartSystem::validate(void) const
     {
       return true;
     }
 
     uint8_t*
-    Restart::serializeFields(uint8_t* bfr__) const
+    RestartSystem::serializeFields(uint8_t* bfr__) const
     {
       uint8_t* ptr__ = bfr__;
       ptr__ += IMC::serialize(type, ptr__);
@@ -545,7 +545,7 @@ namespace DUNE
     }
 
     uint16_t
-    Restart::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    RestartSystem::deserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(type, bfr__, size__);
@@ -553,7 +553,7 @@ namespace DUNE
     }
 
     uint16_t
-    Restart::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    RestartSystem::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
     {
       const uint8_t* start__ = bfr__;
       bfr__ += IMC::deserialize(type, bfr__, size__);
@@ -561,7 +561,7 @@ namespace DUNE
     }
 
     void
-    Restart::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    RestartSystem::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "type", type, nindent__);
     }
@@ -25654,6 +25654,74 @@ namespace DUNE
       IMC::toJSON(os__, "frag_number", frag_number, nindent__);
       IMC::toJSON(os__, "num_frags", num_frags, nindent__);
       IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    MessagePartControl::MessagePartControl(void)
+    {
+      m_header.mgid = 878;
+      clear();
+    }
+
+    void
+    MessagePartControl::clear(void)
+    {
+      uid = 0;
+      op = 0;
+      frag_ids.clear();
+    }
+
+    bool
+    MessagePartControl::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::MessagePartControl& other__ = static_cast<const MessagePartControl&>(msg__);
+      if (uid != other__.uid) return false;
+      if (op != other__.op) return false;
+      if (frag_ids != other__.frag_ids) return false;
+      return true;
+    }
+
+    int
+    MessagePartControl::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    MessagePartControl::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(uid, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(frag_ids, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    MessagePartControl::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(uid, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(frag_ids, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    MessagePartControl::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(uid, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(frag_ids, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    MessagePartControl::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "uid", uid, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "frag_ids", frag_ids, nindent__);
     }
 
     NeptusBlob::NeptusBlob(void)
