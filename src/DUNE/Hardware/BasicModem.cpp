@@ -256,6 +256,7 @@ namespace DUNE
     BasicModem::readLine(void)
     {
       Time::Counter<double> timer(getTimeout());
+      IO::Poll::poll(*m_handle, 0.1);
       return readLine(timer);
     }
 
@@ -291,6 +292,7 @@ namespace DUNE
         m_line.push_back(c);
 
         //!@fixme: concurrency hazard.
+        Concurrency::ScopedMutex l(m_mutex); // Protect shared resource
         if (c == m_line_term_in[m_line_term_idx])
         {
           ++m_line_term_idx;
@@ -335,7 +337,7 @@ namespace DUNE
       txt.setDestination(getTask()->getSystemId());
       getTask()->dispatch(txt);
 
-      m_task->trace("recv: %s", Streams::sanitize(str).c_str());
+      m_task->trace("[BasicModem]:recv: %s", Streams::sanitize(str).c_str());
       m_line.clear();
 
       if (!m_skip_line.empty())
