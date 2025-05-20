@@ -24,7 +24,7 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Luis Venâncio                                                    *
 //***************************************************************************
 
 #ifndef DUNE_MATH_CIRCULAR_MEAN_HPP_INCLUDED_
