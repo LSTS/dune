@@ -237,7 +237,13 @@ namespace Transports
         }
 
         if (m_listener != NULL)
-          m_listener->setTrace(m_args.trace_in);
+        {
+          if (paramChanged(m_args.trace_in))
+            m_listener->setTrace(m_args.trace_in);
+
+          if (paramChanged(m_args.ign_filter))
+            m_listener->setIgnoreFilter(m_args.ign_filter);
+        }
       }
 
       void
