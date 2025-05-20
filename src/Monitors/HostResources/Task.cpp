@@ -461,6 +461,9 @@ namespace Monitors
             m_ram_check.reset();
             m_tstamp = Clock::get();
             uint8_t cpu = (uint8_t)getDUNECPUUsage();
+            if(m_num_cpus > 1)
+              cpu /= m_num_cpus;
+
             double ram = getDUNERAMUsage();
             double swap = getDUNESwapUsage();
             //dispatch CPU and RAM usage
