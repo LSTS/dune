@@ -260,8 +260,6 @@ namespace Transports
       onResourceAcquisition(void)
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_IDLE);
-        m_rx_queue_size = 99;
-        m_tx_queue_size = 99;
         m_state = Status::CODE_IDLE;
         m_monitor_check_timer.setTop(c_monitor_delay);
         try
