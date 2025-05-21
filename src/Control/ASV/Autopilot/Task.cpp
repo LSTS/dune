@@ -581,10 +581,7 @@ namespace Control
           m_sog = std::sqrt(std::pow(m_estate.vx, 2) + std::pow(m_estate.vy, 2));
 
           if (!isActive())
-          {
-            reset();
             return;
-          }
 
           // Check if we have a valid time delta.
           if (m_tstep < 0.0)
