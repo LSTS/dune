@@ -76,6 +76,8 @@ namespace Sensors
       unsigned uart_baud;
       //! Absolute wind statistics interval.
       double stats_interval;
+      //! Dispatch vertical profile.
+      double send_profile;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -151,6 +153,10 @@ namespace Sensors
           .units(Units::Second)
           .defaultValue("900.0")
           .description("Interval to compute absolute wind statistics. Default is 15 min.");
+
+        param("Dispatch Vertical Profile", m_args.send_profile)
+          .defaultValue("true")
+          .description("Dispatch vertical profile messages");
 
         bind<IMC::EstimatedState>(this);
       }
@@ -323,21 +329,24 @@ namespace Sensors
           dispatch(aw_avg, DF_KEEP_SRC_EID);
           dispatch(aw_max, DF_KEEP_SRC_EID);
 
-          // Vertical Profile messages
-          IMC::VerticalProfile vprofile;
-          IMC::ProfileSample ps;
-          
-          double lat, lon;
-          toWGS84(m_estate, lat, lon);
-          vprofile.lat = Angles::degrees(lat);
-          vprofile.lon = Angles::degrees(lon);
-          vprofile.numsamples = m_abs_wind_dir_avg.sampleSize();
-          // vprofile.parameter = IMC::VerticalProfile::PROF_ABSOLUTE_WIND;
-
-          ps.depth = aw_avg.direction;
-          ps.avg = aw_avg.speed;
-          vprofile.samples.push_back(ps);
-          dispatch(vprofile);
+          // Generate Vertical Profiles
+          if (m_args.send_profile)
+          {
+            IMC::VerticalProfile vprofile;
+            IMC::ProfileSample ps;
+            
+            double lat, lon;
+            toWGS84(m_estate, lat, lon);
+            vprofile.lat = Angles::degrees(lat);
+            vprofile.lon = Angles::degrees(lon);
+            vprofile.numsamples = m_abs_wind_dir_avg.sampleSize();
+            // vprofile.parameter = IMC::VerticalProfile::PROF_ABSOLUTE_WIND;
+  
+            ps.depth = aw_avg.direction;
+            ps.avg = aw_avg.speed;
+            vprofile.samples.push_back(ps);
+            dispatch(vprofile);
+          }
 
           // Reset statistics
           m_abs_wind_spd_cum = 0.0;
