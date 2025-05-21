@@ -461,7 +461,7 @@ namespace Sensors
         {
           if(m_args.adc_state[0] || m_args.adc_state[1] || m_args.adc_state[2] || m_args.adc_state[3])
           {
-            err(DTR("no read error received"));
+            err(DTR("no sample received"));
             setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           }
           else
@@ -493,6 +493,7 @@ namespace Sensors
         {
           waitForMessages(1.0);
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
+          throw RestartNeeded(DTR("Fail receiving data from board"), 5);
         }
 
         return checkDataSADC();
