@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: a96a19060ca939f58823cb345d5c4a77                            *
+// IMC XML MD5: 971b1d246a2548118d0fee2a17f455a2                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -2525,7 +2525,13 @@ namespace DUNE
         //! Current Velocity In x.
         PROF_CURRENT_VELOCITY_U = 7,
         //! Current Velocity In y.
-        PROF_CURRENT_VELOCITY_V = 8
+        PROF_CURRENT_VELOCITY_V = 8,
+        //! Absolute Wind.
+        PROF_ABSOLUTE_WIND = 9,
+        //! Dissolved Organic Matter.
+        PROF_DISS_ORGANIC_MATTER = 10,
+        //! Dissolved Oxygen.
+        PROF_DISS_OXYGEN = 11
       };
 
       //! Parameter.
