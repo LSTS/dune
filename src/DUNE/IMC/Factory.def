@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6e8033743562af8755e5e0350f6d63ca                            *
+// IMC XML MD5: 7e8fd14efb895736dc97c146aea2e6dc                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -351,15 +351,9 @@ MESSAGE(906, ApmStatus)
 MESSAGE(907, SadcReadings)
 MESSAGE(908, DmsDetection)
 MESSAGE(909, HomePosition)
-MESSAGE(911, AbsoluteWind)
-MESSAGE(912, AisInfo)
-MESSAGE(913, ENCAwareness)
-MESSAGE(915, Displacement)
 MESSAGE(1014, CurrentProfile)
 MESSAGE(1015, CurrentProfileCell)
 MESSAGE(1016, ADCPBeam)
-MESSAGE(1017, Frequency)
-MESSAGE(1018, WaveSpectrumParameters)
 MESSAGE(2000, GpioState)
 MESSAGE(2001, GpioStateGet)
 MESSAGE(2002, GpioStateSet)
