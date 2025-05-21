@@ -151,6 +151,8 @@ namespace Control
 
       struct Task: public Tasks::Task
       {
+        //! Active.
+        bool m_active;
         //! Navigation task entity eid.
         unsigned m_nav_eid;
         //! Course PID controller
@@ -222,6 +224,7 @@ namespace Control
 
         Task(const std::string& name, Tasks::Context& ctx):
           Tasks::Task(name, ctx),
+          m_active(false),
           m_nav_eid(AddressResolver::invalid()),
           m_scope_ref(0),
           m_wave_freq(0.0),
@@ -418,13 +421,17 @@ namespace Control
         {
           if (paramChanged(m_args.course_gains_trans) || paramChanged(m_args.log_parcels))
           {
-            reset();
+            if (m_active)
+              reset();
+
             setup(m_args.course_gains_trans);
           }
 
           if (paramChanged(m_args.course_gains_turn))
           {
-            reset();
+            if (m_active)
+              reset();
+
             setup(m_args.course_gains_turn);
           }
 
@@ -435,7 +442,9 @@ namespace Control
           {
             if (!m_args.en_gain_sch)
             {
-              reset();
+              if (m_active)
+                reset();
+
               setup(m_args.course_gains_trans);
               debug("Nominal gains restored.");
             }
@@ -472,20 +481,6 @@ namespace Control
             std::string label = getEntityLabel();
             m_parcel.setSourceEntity(reserveEntity(label + " - Yaw Parcel"));
           }
-        }
-
-        //! On activation
-        void
-        onActivation(void)
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        }
-
-        //! On deactivation
-        void
-        onDeactivation(void)
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
 
         void
@@ -562,7 +557,7 @@ namespace Control
         void
         onResourceInitialization(void)
         {
-          reset();
+          stop();
         }
 
         void
@@ -573,11 +568,9 @@ namespace Control
 
           m_tstep = m_delta.getDelta();
           m_estate = *msg;
-
           double lat = m_estate.lat;
           double lon = m_estate.lon;
           WGS84::displace(m_estate.x, m_estate.y, &lat, &lon);
-
           m_sog = std::sqrt(std::pow(m_estate.vx, 2) + std::pow(m_estate.vy, 2));
 
           if (!isActive())
@@ -823,7 +816,7 @@ namespace Control
         void
         consume(const IMC::DesiredHeading* msg)
         {
-          if (!isActive())
+          if (!m_active)
             return;
 
           m_desired_course = msg->value;
@@ -941,7 +934,7 @@ namespace Control
         void
         consume(const IMC::Frequency* msg)
         {
-          if (!isActive())
+          if (!m_active)
             return;
 
           // TODO: CHECK THE ENTITY!!!!!
@@ -1000,17 +993,39 @@ namespace Control
             return;
 
           m_scope_ref = msg->scope_ref;
-
-          if (msg->enable == isActive())
+          if ((msg->enable == ControlLoops::CL_ENABLE && m_active) ||
+              (msg->enable == ControlLoops::CL_DISABLE && !m_active))
             return;
 
-          if (msg->enable)
-            requestActivation();
-          else
-            requestDeactivation();
+          switch (msg->enable)
+          {
+          case ControlLoops::CL_ENABLE:
+            start();
+            break;
 
-          if (!isActive())
-            reset();
+          case ControlLoops::CL_DISABLE:
+            stop();
+            break;
+          
+          default:
+            return;
+          }
+
+          reset();
+        }
+
+        void
+        start(void)
+        {
+          m_active = true;
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        }
+
+        void
+        stop(void)
+        {
+          m_active = false;
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
 
         void
@@ -1020,62 +1035,62 @@ namespace Control
           {
             waitForMessages(0.01);
 
-            if (m_timer_gs.overflow() && isActive() && m_args.en_gain_sch)
+            if (!m_timer_gs.overflow() || !m_active || !m_args.en_gain_sch)
+              continue;
+
+            m_timer_gs.reset();
+
+            float Kp = 0.0;
+            float Ki = 0.0;
+
+            if (m_args.sch_source.compare("adcp") == 0 && m_gamma_avg_adcp != 0)
             {
-              m_timer_gs.reset();
+              trace("Gamma with ADCP value %f averaged over %.3f seconds.", m_gamma_avg_adcp,
+                    m_args.gain_sch_t);
+              Kp = (0.4 / m_gamma_avg_adcp) * m_args.course_gains_trans[0];
+              Ki = (0.4 / m_gamma_avg_adcp) * m_args.course_gains_trans[1];
+            }
+            else if (m_args.sch_source.compare("adcp_old") == 0 && m_gamma_avg_adcp_old != 0)
+            {
+              trace("Gamma with ADCP (OLD) value %f averaged over %.3f seconds.",
+                    m_gamma_avg_adcp_old, m_args.gain_sch_t);
+              Kp = (0.4 / m_gamma_avg_adcp_old) * m_args.course_gains_trans[0];
+              Ki = (0.4 / m_gamma_avg_adcp_old) * m_args.course_gains_trans[1];
+            }
+            else if (m_args.sch_source.compare("sog") == 0 && m_gamma_avg_sog != 0)
+            {
+              trace("Gamma with SOG value %f averaged over %.3f seconds.", m_gamma_avg_sog,
+                    m_args.gain_sch_t);
+              Kp = (0.4 / m_gamma_avg_sog) * m_args.course_gains_trans[0];
+              Ki = (0.4 / m_gamma_avg_sog) * m_args.course_gains_trans[1];
+            }
+            else if (m_args.sch_source.compare("sog_old") == 0 && m_gamma_avg_sog_old != 0)
+            {
+              trace("Gamma with SOG (OLD) value %f averaged over %.3f seconds.",
+                    m_gamma_avg_sog_old, m_args.gain_sch_t);
+              Kp = (0.4 / m_gamma_avg_sog_old) * m_args.course_gains_trans[0];
+              Ki = (0.4 / m_gamma_avg_sog_old) * m_args.course_gains_trans[1];
+            }
 
-              float Kp = 0.0;
-              float Ki = 0.0;
+            if (Kp < 0.5)
+              Kp = 0.5;
+            if (Ki < 0)
+              Ki = 0.0;
 
-              if (m_args.sch_source.compare("adcp") == 0 && m_gamma_avg_adcp != 0)
-              {
-                trace("Gamma with ADCP value %f averaged over %.3f seconds.", m_gamma_avg_adcp,
-                      m_args.gain_sch_t);
-                Kp = (0.4 / m_gamma_avg_adcp) * m_args.course_gains_trans[0];
-                Ki = (0.4 / m_gamma_avg_adcp) * m_args.course_gains_trans[1];
-              }
-              else if (m_args.sch_source.compare("adcp_old") == 0 && m_gamma_avg_adcp_old != 0)
-              {
-                trace("Gamma with ADCP (OLD) value %f averaged over %.3f seconds.",
-                      m_gamma_avg_adcp_old, m_args.gain_sch_t);
-                Kp = (0.4 / m_gamma_avg_adcp_old) * m_args.course_gains_trans[0];
-                Ki = (0.4 / m_gamma_avg_adcp_old) * m_args.course_gains_trans[1];
-              }
-              else if (m_args.sch_source.compare("sog") == 0 && m_gamma_avg_sog != 0)
-              {
-                trace("Gamma with SOG value %f averaged over %.3f seconds.", m_gamma_avg_sog,
-                      m_args.gain_sch_t);
-                Kp = (0.4 / m_gamma_avg_sog) * m_args.course_gains_trans[0];
-                Ki = (0.4 / m_gamma_avg_sog) * m_args.course_gains_trans[1];
-              }
-              else if (m_args.sch_source.compare("sog_old") == 0 && m_gamma_avg_sog_old != 0)
-              {
-                trace("Gamma with SOG (OLD) value %f averaged over %.3f seconds.",
-                      m_gamma_avg_sog_old, m_args.gain_sch_t);
-                Kp = (0.4 / m_gamma_avg_sog_old) * m_args.course_gains_trans[0];
-                Ki = (0.4 / m_gamma_avg_sog_old) * m_args.course_gains_trans[1];
-              }
+            trace("GAIN-SCHEDULED GAINS Kp: %f, Ki: %f", Kp, Ki);
 
-              if (Kp < 0.5)
-                Kp = 0.5;
-              if (Ki < 0)
-                Ki = 0.0;
+            reset();
 
-              trace("GAIN-SCHEDULED GAINS Kp: %f, Ki: %f", Kp, Ki);
-
-              reset();
-
-              if (m_args.use_new_gains)
-              {
-                trace("Using gain-scheduled gains!");
-                std::vector<float> gains{ Kp, Ki, 0.0 };
-                setup(gains);
-              }
-              else
-              {
-                debug("Using original gains!");
-                setup(m_args.course_gains_trans);
-              }
+            if (m_args.use_new_gains)
+            {
+              trace("Using gain-scheduled gains!");
+              std::vector<float> gains{ Kp, Ki, 0.0 };
+              setup(gains);
+            }
+            else
+            {
+              debug("Using original gains!");
+              setup(m_args.course_gains_trans);
             }
           }
         }
