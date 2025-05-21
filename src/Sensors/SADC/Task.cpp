@@ -50,11 +50,9 @@ namespace Sensors
 
     struct Arguments
     {
-      //! Serial port device.
-      std::string uart_dev;
-      //! Serial port baud rate.
-      unsigned uart_baud;
-      //! Serial Port timeOut for reading
+      //! IO device.
+      std::string io_dev;
+      //! TimeOut for reading
       float timeout_uart;
       //! Adc state
       bool adc_state[c_max_adc];
@@ -76,7 +74,7 @@ namespace Sensors
       float adc_conversion_factor;
     };
 
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
       //! Rpm message
       IMC::SadcReadings m_sadc;
@@ -84,10 +82,8 @@ namespace Sensors
       IMC::Voltage m_volt[c_max_adc];
       //! Task arguments.
       Arguments m_args;
-      //! Serial port device.
-      SerialPort* m_uart;
-      //! I/O Multiplexer.
-      Poll m_poll;
+      //! IO device handle.
+      IO::Handle* m_handle;
       //! Read timestamp.
       double m_tstamp;
       //! Parser for message
@@ -103,20 +99,20 @@ namespace Sensors
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
-        m_uart(NULL),
+        Hardware::BasicDeviceDriver(name, ctx),
+        m_handle(NULL),
         m_tstamp(0),
         m_driver(NULL)
       {
-        param("Serial Port - Device", m_args.uart_dev)
+        // Define configuration parameters.
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_DEVELOPER,
+                    true);
+
+        param("IO Port - Device", m_args.io_dev)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
-
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
-        .defaultValue("57600")
-        .description("Serial port baud rate");
+        .description("IO device used to communicate with the sensor");
 
         param("Serial Port - TimeOut", m_args.timeout_uart)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
@@ -214,100 +210,100 @@ namespace Sensors
         }
       }
 
-      //! Acquire resources.
-      void
-      onResourceAcquisition(void)
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
       {
+        inf("onConnect");
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
+          m_handle = openDeviceHandle(m_args.io_dev);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
+          m_is_correct_conf = true;
+          m_driver = new DriverSADC();
+          if(check_connection_sadc(c_timeout_connection_sadc))
+          {
+            config_SADC();
+            Delay::waitMsec(1000);
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+          }
+          else
+          {
+            throw RestartNeeded("Cannot connect to board", 5);
+          }
+          return true;
         }
-        catch (std::runtime_error& e)
+        catch (...)
         {
-          throw RestartNeeded(e.what(), 30);
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
+        return false;
       }
 
-      //! Initialize resources.
       void
-      onResourceInitialization(void)
+      onInitializeDevice() override
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
-        m_is_correct_conf = true;
-        m_driver = new DriverSADC();
-        m_poll.add(*m_uart);
-        if(check_connection_sadc(c_timeout_connection_sadc))
-        {
-          config_SADC();
-          Delay::waitMsec(1000);
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        }
-        else
-        {
-          throw RestartNeeded("Cannot connect to board", 5);
-        }
+        trace("onInitializeDevice");
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
       }
 
-      //! Release resources.
+      //! Disconnect from device.
       void
-      onResourceRelease(void)
+      onDisconnect() override
       {
-        if (m_uart != NULL)
-        {
-          m_uart->write(m_driver->disable_output(), strlen(m_driver->enable_output()));
-
-          m_poll.remove(*m_uart);
-          delete m_uart;
-          m_uart = NULL;
-
+        inf("onDisconnect");
+        if(m_driver != NULL)
           Memory::clear(m_driver);
-        }
+
+        if(m_handle != NULL)
+          Memory::clear(m_handle);
       }
 
       //! Config board SADC
       void
       config_SADC(void)
       {
-        m_uart->write(m_driver->disable_output(), strlen(m_driver->enable_output()));
+        m_handle->write(m_driver->disable_output(), strlen(m_driver->enable_output()));
         process_feedback();
 
         for(uint8_t t = 1; t <= c_max_adc; t++)
         {
           if(m_args.adc_state[t-1] == true)
           {
-            m_uart->write(m_driver->set_min_change_gain(t, m_args.min_value[t-1]), strlen(m_driver->set_min_change_gain(t, m_args.min_value[t-1])));
+            m_handle->write(m_driver->set_min_change_gain(t, m_args.min_value[t-1]), strlen(m_driver->set_min_change_gain(t, m_args.min_value[t-1])));
             process_feedback();
-            m_uart->write(m_driver->set_max_change_gain(t, m_args.max_value[t-1]), strlen(m_driver->set_max_change_gain(t, m_args.max_value[t-1])));
+            m_handle->write(m_driver->set_max_change_gain(t, m_args.max_value[t-1]), strlen(m_driver->set_max_change_gain(t, m_args.max_value[t-1])));
             process_feedback();
-            m_uart->write(m_driver->enable_channel(t), strlen(m_driver->enable_channel(t)));
+            m_handle->write(m_driver->enable_channel(t), strlen(m_driver->enable_channel(t)));
             process_feedback();
             if(m_args.adc_fixed_gain[t-1])
             {
-              m_uart->write(m_driver->fix_gain(t, m_args.adc_fixed_gain_value[t-1]), strlen(m_driver->fix_gain(t, m_args.adc_fixed_gain_value[t-1])));
+              m_handle->write(m_driver->fix_gain(t, m_args.adc_fixed_gain_value[t-1]), strlen(m_driver->fix_gain(t, m_args.adc_fixed_gain_value[t-1])));
               process_feedback();
             }
             else
             {
-              m_uart->write(m_driver->enable_auto_gain(t), strlen(m_driver->enable_auto_gain(t)));
+              m_handle->write(m_driver->enable_auto_gain(t), strlen(m_driver->enable_auto_gain(t)));
               process_feedback();
             }
           }
           else
           {
-            m_uart->write(m_driver->disable_channel(t), strlen(m_driver->disable_channel(t)));
+            m_handle->write(m_driver->disable_channel(t), strlen(m_driver->disable_channel(t)));
             process_feedback();
           }
         }
 
-        m_uart->write(m_driver->set_sample_ps(m_args.sample_rate), strlen(m_driver->set_sample_ps(m_args.sample_rate)));
+        m_handle->write(m_driver->set_sample_ps(m_args.sample_rate), strlen(m_driver->set_sample_ps(m_args.sample_rate)));
         process_feedback();
-        m_uart->write(m_driver->set_number_sample_sw(m_args.number_sample_switch), strlen(m_driver->set_number_sample_sw(m_args.number_sample_switch)));
+        m_handle->write(m_driver->set_number_sample_sw(m_args.number_sample_switch), strlen(m_driver->set_number_sample_sw(m_args.number_sample_switch)));
         process_feedback();
 
         if(m_is_correct_conf)
         {
           inf(DTR("Requesting SADC readings"));
-          m_uart->write(m_driver->enable_output(), strlen(m_driver->enable_output()));
+          m_handle->write(m_driver->enable_output(), strlen(m_driver->enable_output()));
           process_feedback();
         }
         else
@@ -323,7 +319,7 @@ namespace Sensors
         bool is_connect = false;
         for(int i = 0; i < (int)(c_timeout/0.2); i++)
         {
-          m_uart->write(m_driver->disable_output(), strlen(m_driver->enable_output()));
+          m_handle->write(m_driver->disable_output(), strlen(m_driver->enable_output()));
           is_connect = processInput(0.2, false);
           if(is_connect)
             break;
@@ -332,7 +328,7 @@ namespace Sensors
         return is_connect;
       }
 
-      //! Check feadback of commands
+      //! Check feedback of commands
       void
       process_feedback(void)
       {
@@ -344,14 +340,14 @@ namespace Sensors
       bool
       checkSerialPort(void)
       {
-        if (m_poll.wasTriggered(*m_uart))
+        if (Poll::poll(*m_handle, 0.01))
         {
           std::memset(&m_buffer, '0', sizeof(m_buffer));
           int rv = 0;
 
           try
           {
-            rv = m_uart->read(m_buffer, sizeof(m_buffer));
+            rv = m_handle->read(m_buffer, sizeof(m_buffer));
             m_tstamp = Clock::getSinceEpoch();
           }
           catch (std::exception& e)
@@ -389,7 +385,7 @@ namespace Sensors
 
         while (Clock::get() <= deadline)
         {
-          if (m_poll.poll(0.2))
+          if ((Poll::poll(*m_handle, 0.2)))
           {
             if (checkSerialPort())
             {
@@ -433,7 +429,7 @@ namespace Sensors
               }
               else
               {
-                std::string feedback_text = m_driver->translate_feadback();
+                std::string feedback_text = m_driver->translate_feedback();
                 if(feedback_text.compare("OK") == 0)
                 {
                   debug("%s",feedback_text.c_str());
@@ -475,30 +471,31 @@ namespace Sensors
           }
         }
 
-        m_uart->flush();
+        m_handle->flush();
 
         return checkEnd;
       }
 
       //! Main loop.
-      void
-      onMain(void)
+      //! Check for input data.
+      //! @return true.
+      bool
+      onReadData() override
       {
-        while (!stopping())
+        if (m_is_correct_conf)
         {
-          if(m_is_correct_conf)
-          {
-            consumeMessages();
+          consumeMessages();
 
-            if(checkDataSADC())
-              setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          }
-          else
-          {
-            waitForMessages(1.0);
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
-          }
+          if (checkDataSADC())
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
+        else
+        {
+          waitForMessages(1.0);
+          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
+        }
+
+        return checkDataSADC();
       }
     };
   }
