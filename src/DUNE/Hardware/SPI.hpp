@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -24,41 +24,80 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Luis Venâncio                                                    *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_HPP_INCLUDED_
-#define DUNE_HARDWARE_HPP_INCLUDED_
+#ifndef DUNE_HARDWARE_SPI_HPP_INCLUDED_
+#define DUNE_HARDWARE_SPI_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+#include <stdexcept>
+
+// DUNE headers.
+#include <DUNE/Config.hpp>
+#include <DUNE/Utils/String.hpp>
+#include <DUNE/System/Error.hpp>
+
+// Linux headers.
+#if defined(DUNE_SYS_HAS_LINUX_SPI_SPIDEV_H)
+#  include <linux/spi/spidev.h>
+#endif
 
 namespace DUNE
 {
-  //! Low level hardware drivers.
   namespace Hardware
-  { }
-}
+  {
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM SPI;
 
-#include <DUNE/Hardware/SerialPort.hpp>
-#include <DUNE/Hardware/I2C.hpp>
-#include <DUNE/Hardware/IOPort.hpp>
-#include <DUNE/Hardware/GPIO.hpp>
-#include <DUNE/Hardware/Buttons.hpp>
-#include <DUNE/Hardware/ESCC.hpp>
-#include <DUNE/Hardware/IntelHEX.hpp>
-#include <DUNE/Hardware/BasicModem.hpp>
-#include <DUNE/Hardware/HayesModem.hpp>
-#include <DUNE/Hardware/BasicDeviceDriver.hpp>
-#include <DUNE/Hardware/Exceptions.hpp>
-#include <DUNE/Hardware/UCTK/Constants.hpp>
-#include <DUNE/Hardware/UCTK/Errors.hpp>
-#include <DUNE/Hardware/UCTK/Parser.hpp>
-#include <DUNE/Hardware/UCTK/Bootloader.hpp>
-#include <DUNE/Hardware/LUCL/Protocol.hpp>
-#include <DUNE/Hardware/LUCL/ProtocolParser.hpp>
-#include <DUNE/Hardware/LUCL/BootLoader.hpp>
-#include <DUNE/Hardware/STM/Interface.hpp>
-#include <DUNE/Hardware/STM/FirmwareUpdate.hpp>
-#include <DUNE/Hardware/PWM.hpp>
-#include <DUNE/Hardware/SocketCAN.hpp>
-#include <DUNE/Hardware/SPI.hpp>
+    class SPI
+    {
+    public:
+      class Error: public std::runtime_error
+      {
+      public:
+        Error(std::string op, std::string msg):
+          std::runtime_error("SPI bus error (" + op + "): " + msg)
+        { }
+      };
+
+      //! SPI constructor.
+      SPI(const std::string& bus_dev, const uint8_t mode = SPI_MODE_0, uint8_t bits_per_word = 8, uint32_t speed_hz = 1000000);
+
+      //! SPI destructor.
+      ~SPI(void);
+
+      //! Initialize an SPI transfer.
+      //! @param adr slave address.
+      //! @param cmd command to send.
+      //! @param wdata data to write.
+      //! @param wlen number of bytes to write (or in 0x80 for a block write).
+      //! @param rdata place to store data read.
+      //! @param rlen number of bytes to read  (or in 0x80 for a block read).
+      //! @param bytes_read place to store number of bytes read.
+      int
+      transfer(uint8_t adr, uint8_t cmd, const uint8_t* wdata, uint8_t wlen, uint8_t* rdata, uint8_t rlen, uint8_t* bytes_read);
+
+      unsigned
+      read(uint8_t adr, uint8_t* bfr, unsigned bfr_len);
+
+      //! Connect to slave address.
+      //! @param addr slave address.
+      void
+      connect(uint8_t addr);
+
+      unsigned
+      read(uint8_t* bfr, unsigned bfr_len);
+
+      unsigned
+      write(const uint8_t* bfr, unsigned bfr_len);
+
+    private:
+      //! Maximum size of an i2c frame.
+      static const uint8_t c_max_data_len = 64;
+      int m_fd;
+    };
+  }
+}
 
 #endif
