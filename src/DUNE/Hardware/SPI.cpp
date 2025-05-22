@@ -35,9 +35,9 @@
 #include <DUNE/Hardware/SPI.hpp>
 
 // POSIX headers.
-// #if defined(DUNE_SYS_HAS_SYS_TYPES_H)
-// #  include <sys/types.h>
-// #endif
+#if defined(DUNE_SYS_HAS_SYS_TYPES_H)
+#  include <sys/types.h>
+#endif
 
 #if defined(DUNE_SYS_HAS_SYS_IOCTL_H)
 #  include <sys/ioctl.h>
@@ -60,13 +60,33 @@ namespace DUNE
 {
   namespace Hardware
   {
-    SPI::SPI(const std::string& bus_dev, const uint8_t mode, uint8_t bits_per_word, uint32_t speed_hz)
+    SPI::SPI(const std::string& bus_dev, const uint8_t mode, const uint8_t bits_per_word, const uint32_t speed_hz):
+      m_mode(mode),
+      m_bits_per_word(bits_per_word),
+      m_speed_hz(speed_hz)
     {
 #if defined(DUNE_SYS_HAS_LINUX_SPI_SPIDEV_H)
       if ((m_fd = open(bus_dev.c_str(), O_RDWR)) == -1)
         throw Error("opening device", System::Error::getLastMessage());
+
+      if (ioctl(m_fd, SPI_IOC_WR_MODE, &m_mode) < 0)
+        throw Error("setting SPIMode (WR)", System::Error::getLastMessage());
+      if (ioctl(m_fd, SPI_IOC_RD_MODE, &m_mode) < 0)
+        throw Error("setting SPIMode (RD)", System::Error::getLastMessage());
+      if (ioctl(m_fd, SPI_IOC_WR_BITS_PER_WORD, &m_bits_per_word) < 0)
+        throw Error("setting SPI bitsPerWord (WR)", System::Error::getLastMessage());
+      if (ioctl(m_fd, SPI_IOC_RD_BITS_PER_WORD, &m_bits_per_word) < 0)
+        throw Error("setting SPI bitsPerWord (RD)", System::Error::getLastMessage());
+      if (ioctl(m_fd, SPI_IOC_WR_MAX_SPEED_HZ, &m_speed_hz) < 0)
+        throw Error("setting SPI speed (WR)", System::Error::getLastMessage());
+      if (ioctl(m_fd, SPI_IOC_RD_MAX_SPEED_HZ, &m_speed_hz) < 0)
+        throw Error("setting SPI speed (RD)", System::Error::getLastMessage());
+
 #else
-      (void)dev;
+      (void)bus_dev;
+      (void)mode;
+      (void)bits_per_word;
+      (void)speed_hz;
       throw NotImplemented("SPI");
 #endif
     }
@@ -79,13 +99,28 @@ namespace DUNE
     }
 
     int
-    SPI::transfer(uint8_t adr, uint8_t cmd, const uint8_t* wdata, uint8_t wlen, uint8_t* rdata, uint8_t rlen, uint8_t* bytes_read)
+    SPI::transfer(uint8_t *tx_data, uint8_t *rx_data, unsigned length, bool leave_cs_low)
     {
       // Linux implementation.
 #if defined(DUNE_SYS_HAS_LINUX_SPI_SPIDEV_H)
+      struct spi_ioc_transfer spi;
+      int retVal = -1;
 
+      spi.tx_buf = reinterpret_cast<uint64_t>(tx_data);		//transmit from "data"
+      spi.rx_buf = reinterpret_cast<uint64_t>(rx_data);		//receive into "data"
+      spi.len = length;
+      spi.delay_usecs = 0;
+      spi.speed_hz = m_speed_hz;
+      spi.bits_per_word = m_bits_per_word;
+      spi.cs_change = leave_cs_low;						//0=Set CS high after a transfer, 1=leave CS set low
 
-      return 0;
+      retVal = ioctl(m_fd, SPI_IOC_MESSAGE(1), &spi);
+
+      if(retVal < 0)
+        throw Error("Problem transmitting SPI data..ioctl", System::Error::getLastMessage());
+
+      return retVal;
+
 #else
       (void)adr;
 

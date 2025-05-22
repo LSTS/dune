@@ -62,21 +62,28 @@ namespace DUNE
       };
 
       //! SPI constructor.
+      //! @param bus_dev device name (e.g. "/dev/spidev0.0").
+      //! @param mode SPI mode:
+      //!   SPI_MODE_0 (0,0) 	CPOL = 0, CPHA = 0, Clock idle low, data is clocked in on rising edge, output data (change) on falling edge
+      //!   SPI_MODE_1 (0,1) 	CPOL = 0, CPHA = 1, Clock idle low, data is clocked in on falling edge, output data (change) on rising edge
+      //!   SPI_MODE_2 (1,0) 	CPOL = 1, CPHA = 0, Clock idle high, data is clocked in on falling edge, output data (change) on rising edge
+      //!   SPI_MODE_3 (1,1) 	CPOL = 1, CPHA = 1, Clock idle high, data is clocked in on rising, edge output data (change) on falling edge
+      //! @param bits_per_word number of bits per word (default 8).
+      //! @param speed_hz SPI bus speed (default 1MHz).
+      //! @throw Error if the device cannot be opened.
       SPI(const std::string& bus_dev, const uint8_t mode = SPI_MODE_0, uint8_t bits_per_word = 8, uint32_t speed_hz = 1000000);
 
       //! SPI destructor.
       ~SPI(void);
 
-      //! Initialize an SPI transfer.
-      //! @param adr slave address.
-      //! @param cmd command to send.
-      //! @param wdata data to write.
-      //! @param wlen number of bytes to write (or in 0x80 for a block write).
-      //! @param rdata place to store data read.
-      //! @param rlen number of bytes to read  (or in 0x80 for a block read).
-      //! @param bytes_read place to store number of bytes read.
+      //! Transfer data to the SPI bus.
+      //! @param tx_data data to be sent.
+      //! @param rx_data data received.
+      //! @param length number of bytes to be transferred.
+      //! @param leave_cs_low if true, CS will be kept low after the transfer. CS will high when done otherwise.
+      //! @return number of bytes transferred.
       int
-      transfer(uint8_t adr, uint8_t cmd, const uint8_t* wdata, uint8_t wlen, uint8_t* rdata, uint8_t rlen, uint8_t* bytes_read);
+      transfer(uint8_t *tx_data, uint8_t *rx_data, unsigned length, bool leave_cs_low = false);
 
       unsigned
       read(uint8_t adr, uint8_t* bfr, unsigned bfr_len);
@@ -96,6 +103,9 @@ namespace DUNE
       //! Maximum size of an i2c frame.
       static const uint8_t c_max_data_len = 64;
       int m_fd;
+      uint8_t m_mode;
+      uint8_t m_bits_per_word;
+      uint32_t m_speed_hz;
     };
   }
 }
