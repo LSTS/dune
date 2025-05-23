@@ -66,7 +66,7 @@ namespace DUNE
       m_speed_hz(speed_hz)
     {
 #if defined(DUNE_SYS_HAS_LINUX_SPI_SPIDEV_H)
-      if ((m_fd = open(bus_dev.c_str(), O_RDWR)) == -1)
+      if ((m_fd = open(bus_dev.c_str(), O_RDWR)) < 0)
         throw Error("opening device", System::Error::getLastMessage());
 
       if (ioctl(m_fd, SPI_IOC_WR_MODE, &m_mode) < 0)
@@ -103,26 +103,29 @@ namespace DUNE
     {
       // Linux implementation.
 #if defined(DUNE_SYS_HAS_LINUX_SPI_SPIDEV_H)
-      struct spi_ioc_transfer spi;
+      struct spi_ioc_transfer spi[1] = {0};	//transfer structure
       int retVal = -1;
 
-      spi.tx_buf = reinterpret_cast<uint64_t>(tx_data);		//transmit from "data"
-      spi.rx_buf = reinterpret_cast<uint64_t>(rx_data);		//receive into "data"
-      spi.len = length;
-      spi.delay_usecs = 0;
-      spi.speed_hz = m_speed_hz;
-      spi.bits_per_word = m_bits_per_word;
-      spi.cs_change = leave_cs_low;						//0=Set CS high after a transfer, 1=leave CS set low
+      spi[0].tx_buf = reinterpret_cast<__u64>(tx_data);		//transmit from "data"
+      spi[0].rx_buf = reinterpret_cast<__u64>(rx_data);		//receive into "data"
+      spi[0].len = length;
+      // spi.delay_usecs = 0;
+      // spi.speed_hz = m_speed_hz;
+      // spi.bits_per_word = m_bits_per_word;
+      // spi.cs_change = leave_cs_low;						//0=Set CS high after a transfer, 1=leave CS set low
 
-      retVal = ioctl(m_fd, SPI_IOC_MESSAGE(1), &spi);
-
-      if(retVal < 0)
+      retVal = ioctl(m_fd, SPI_IOC_MESSAGE(1), spi);
+      if(retVal < 1)
         throw Error("Problem transmitting SPI data..ioctl", System::Error::getLastMessage());
 
       return retVal;
 
 #else
-      (void)adr;
+      (void)tx_data;
+      (void)rx_data;
+      (void)length;
+      (void)leave_cs_low;
+      throw NotImplemented("SPI::transfer");
 
       return 0;
 #endif
