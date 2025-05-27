@@ -503,9 +503,9 @@ namespace Control
 
           // Register handler routines.
           bind<IMC::AisInfo>(this);
-          bind<IMC::CurrentProfile>(this);
-          bind<IMC::AbsoluteWind>(this);
-          bind<IMC::ENCAwareness>(this);
+          // bind<IMC::CurrentProfile>(this);
+          // bind<IMC::AbsoluteWind>(this);
+          // bind<IMC::ENCAwareness>(this);
           bind<IMC::EstimatedState>(this);
 
           m_shallowest_current_cell.depth = 0.0;
@@ -694,15 +694,15 @@ namespace Control
           disableControlLoops(IMC::CL_SPEED);
         }
 
-        void
-        consume(const IMC::AbsoluteWind* msg)
-        {
-          if(msg->getSource() != getSystemId() || msg->getSourceEntity() != m_ws_eid)
-            return;
+        // void
+        // consume(const IMC::AbsoluteWind* msg)
+        // {
+        //   if(msg->getSource() != getSystemId() || msg->getSourceEntity() != m_ws_eid)
+        //     return;
 
-          m_wind_dir = msg->direction;
-          m_wind_speed = msg->speed;
-        }
+        //   m_wind_dir = msg->direction;
+        //   m_wind_speed = msg->speed;
+        // }
 
         void
         consume(const IMC::Displacement* msg)
@@ -722,97 +722,97 @@ namespace Control
           m_wave_freq = msg->value;
         }
 
-        void
-        consume(const IMC::CurrentProfile *msg)
-        {
-          Math::Matrix profile_average = Math::Matrix(3, msg->ncells, 0.0);
-          Math::Matrix ncells_averaged = Math::Matrix(1, msg->ncells, 0.0);
-          Math::Matrix single_profile = Math::Matrix(3, msg->ncells, 0.0);
+        // void
+        // consume(const IMC::CurrentProfile *msg)
+        // {
+        //   Math::Matrix profile_average = Math::Matrix(3, msg->ncells, 0.0);
+        //   Math::Matrix ncells_averaged = Math::Matrix(1, msg->ncells, 0.0);
+        //   Math::Matrix single_profile = Math::Matrix(3, msg->ncells, 0.0);
 
-          // Set this limit high enough based on LOGS.
-          if(m_estate.p < m_args.roll_rate && m_estate.q < m_args.pitch_rate)
-          {
-            double cell_beam_amplitude;
-            double cell_beam_correlation;
+        //   // Set this limit high enough based on LOGS.
+        //   if(m_estate.p < m_args.roll_rate && m_estate.q < m_args.pitch_rate)
+        //   {
+        //     double cell_beam_amplitude;
+        //     double cell_beam_correlation;
 
-            for(const auto cell:msg->profile)
-            {
-              // Construct velocities vector from cells.
-              bool cell_is_good = true;
+        //     for(const auto cell:msg->profile)
+        //     {
+        //       // Construct velocities vector from cells.
+        //       bool cell_is_good = true;
 
-              std::vector<double> beam_velocities;
+        //       std::vector<double> beam_velocities;
 
-              for(auto beam:cell->beams)
-              {
-                cell_beam_amplitude = beam->amp;
-                cell_beam_correlation = beam->cor;
+        //       for(auto beam:cell->beams)
+        //       {
+        //         cell_beam_amplitude = beam->amp;
+        //         cell_beam_correlation = beam->cor;
 
-                if(cell_beam_amplitude > m_args.ampl_lim && cell_beam_correlation > m_args.corr_lim)
-                {
-                  // Measurements in this Cell and Beam are good.
-                  beam_velocities.push_back(beam->vel);
-                } else
-                {
-                  // Measurements in this Cell and Beam are not good.
-                  cell_is_good = false;
-                  spew("BAD MEASUREMENT - CELL DISCARDED");
-                  break;
-                }
-              }
+        //         if(cell_beam_amplitude > m_args.ampl_lim && cell_beam_correlation > m_args.corr_lim)
+        //         {
+        //           // Measurements in this Cell and Beam are good.
+        //           beam_velocities.push_back(beam->vel);
+        //         } else
+        //         {
+        //           // Measurements in this Cell and Beam are not good.
+        //           cell_is_good = false;
+        //           spew("BAD MEASUREMENT - CELL DISCARDED");
+        //           break;
+        //         }
+        //       }
 
-              if(cell_is_good)
-              {
-                m_shallowest_current_cell.lat = m_estate.lat;
-                m_shallowest_current_cell.lon = m_estate.lon;
-                m_shallowest_current_cell.depth = cell->cell_position;
-                spew("Cell at depth %0.3f is good.", m_shallowest_current_cell.depth);
+        //       if(cell_is_good)
+        //       {
+        //         m_shallowest_current_cell.lat = m_estate.lat;
+        //         m_shallowest_current_cell.lon = m_estate.lon;
+        //         m_shallowest_current_cell.depth = cell->cell_position;
+        //         spew("Cell at depth %0.3f is good.", m_shallowest_current_cell.depth);
 
-                // Rotate of 45deg about z, as the sensor is rotated with respect to the vessel.
-                if(m_avg_zero==0)
-                  m_beam_velocity_zero_avg = beam_velocities[0];
-                else
-                  m_beam_velocity_zero_avg = ((m_beam_velocity_zero_avg_last * m_avg_zero + beam_velocities[0]) / (m_avg_zero + 1));
-                m_avg_zero++;
-                m_beam_velocity_zero_avg_last = m_beam_velocity_zero_avg;
+        //         // Rotate of 45deg about z, as the sensor is rotated with respect to the vessel.
+        //         if(m_avg_zero==0)
+        //           m_beam_velocity_zero_avg = beam_velocities[0];
+        //         else
+        //           m_beam_velocity_zero_avg = ((m_beam_velocity_zero_avg_last * m_avg_zero + beam_velocities[0]) / (m_avg_zero + 1));
+        //         m_avg_zero++;
+        //         m_beam_velocity_zero_avg_last = m_beam_velocity_zero_avg;
 
-                if(m_avg_one==0)
-                  m_beam_velocity_one_avg = beam_velocities[1];
-                else
-                  m_beam_velocity_one_avg = ((m_beam_velocity_one_avg_last * m_avg_one + beam_velocities[1]) / (m_avg_one + 1));
-                m_avg_zero++;
-                m_beam_velocity_one_avg_last = m_beam_velocity_one_avg;
+        //         if(m_avg_one==0)
+        //           m_beam_velocity_one_avg = beam_velocities[1];
+        //         else
+        //           m_beam_velocity_one_avg = ((m_beam_velocity_one_avg_last * m_avg_one + beam_velocities[1]) / (m_avg_one + 1));
+        //         m_avg_zero++;
+        //         m_beam_velocity_one_avg_last = m_beam_velocity_one_avg;
 
                 
-                double u_body = m_beam_velocity_zero_avg*std::cos(Angles::radians(45))-m_beam_velocity_one_avg*std::sin(Angles::radians(45));
-                double v_body = m_beam_velocity_zero_avg*std::sin(Angles::radians(45))+m_beam_velocity_one_avg*std::cos(Angles::radians(45));
+        //         double u_body = m_beam_velocity_zero_avg*std::cos(Angles::radians(45))-m_beam_velocity_one_avg*std::sin(Angles::radians(45));
+        //         double v_body = m_beam_velocity_zero_avg*std::sin(Angles::radians(45))+m_beam_velocity_one_avg*std::cos(Angles::radians(45));
 
-                debug("ADCP TASK: relative u %.3f, relative v %.3f",u_body,v_body);
+        //         debug("ADCP TASK: relative u %.3f, relative v %.3f",u_body,v_body);
 
-                // Add velocity/sog.
-                double u = m_estate.u - u_body;
-                double v = m_estate.v - v_body;
-                double w = m_estate.w - (beam_velocities[2]+beam_velocities[3])/2;              
+        //         // Add velocity/sog.
+        //         double u = m_estate.u - u_body;
+        //         double v = m_estate.v - v_body;
+        //         double w = m_estate.w - (beam_velocities[2]+beam_velocities[3])/2;              
 
-                // Transform speed vectors from body to inertial frame.
-                // Option 1 - João Costa
-                double u_c_ned, v_c_ned, w_c_ned;
-                Coordinates::BodyFixedFrame::toInertialFrame(m_estate.phi, m_estate.theta, m_estate.psi, u, v, w, &u_c_ned, &v_c_ned, &w_c_ned);
-                // Option 2 - Alberto Dallolio
-                //double u_c_ned = u*std::cos(m_estate.psi)*std::cos(m_estate.theta) + v*(std::cos(m_estate.psi)*std::sin(m_estate.theta)*std::sin(m_estate.phi) - std::sin(m_estate.psi)*std::cos(m_estate.phi)) + w*(std::sin(m_estate.psi)*std::sin(m_estate.phi) + std::cos(m_estate.psi)*std::cos(m_estate.phi)*std::sin(m_estate.theta));
-                //double v_c_ned = u*std::sin(m_estate.psi)*std::cos(m_estate.theta) + v*(std::cos(m_estate.psi)*std::cos(m_estate.phi) + std::sin(m_estate.psi)*std::sin(m_estate.theta)*std::sin(m_estate.phi)) + w*(std::sin(m_estate.theta)*std::sin(m_estate.psi)*std::cos(m_estate.phi) - std::cos(m_estate.psi)*std::sin(m_estate.phi));
-                //double w_c_ned = -u*std::sin(m_estate.theta) + v*std::cos(m_estate.theta)*std::sin(m_estate.phi) + w*std::cos(m_estate.theta)*std::cos(m_estate.phi);
+        //         // Transform speed vectors from body to inertial frame.
+        //         // Option 1 - João Costa
+        //         double u_c_ned, v_c_ned, w_c_ned;
+        //         Coordinates::BodyFixedFrame::toInertialFrame(m_estate.phi, m_estate.theta, m_estate.psi, u, v, w, &u_c_ned, &v_c_ned, &w_c_ned);
+        //         // Option 2 - Alberto Dallolio
+        //         //double u_c_ned = u*std::cos(m_estate.psi)*std::cos(m_estate.theta) + v*(std::cos(m_estate.psi)*std::sin(m_estate.theta)*std::sin(m_estate.phi) - std::sin(m_estate.psi)*std::cos(m_estate.phi)) + w*(std::sin(m_estate.psi)*std::sin(m_estate.phi) + std::cos(m_estate.psi)*std::cos(m_estate.phi)*std::sin(m_estate.theta));
+        //         //double v_c_ned = u*std::sin(m_estate.psi)*std::cos(m_estate.theta) + v*(std::cos(m_estate.psi)*std::cos(m_estate.phi) + std::sin(m_estate.psi)*std::sin(m_estate.theta)*std::sin(m_estate.phi)) + w*(std::sin(m_estate.theta)*std::sin(m_estate.psi)*std::cos(m_estate.phi) - std::cos(m_estate.psi)*std::sin(m_estate.phi));
+        //         //double w_c_ned = -u*std::sin(m_estate.theta) + v*std::cos(m_estate.theta)*std::sin(m_estate.phi) + w*std::cos(m_estate.theta)*std::cos(m_estate.phi);
 
-                // Compute 2D direction of current as atan(vy/vx), for the current cell.
-                double curr_direction = std::atan(v_c_ned/u_c_ned);
-                m_shallowest_current_cell.dir = curr_direction; // It must be in NED
+        //         // Compute 2D direction of current as atan(vy/vx), for the current cell.
+        //         double curr_direction = std::atan(v_c_ned/u_c_ned);
+        //         m_shallowest_current_cell.dir = curr_direction; // It must be in NED
 
-                // Compute velocity magnitude in 2D inertial frame, for the current cell.
-                double curr_velocity = std::sqrt(std::pow(v_c_ned,2) + std::pow(u_c_ned,2));
-                m_shallowest_current_cell.vel = curr_velocity; // It must be in NED
-              }
-            }
-          }
-        }
+        //         // Compute velocity magnitude in 2D inertial frame, for the current cell.
+        //         double curr_velocity = std::sqrt(std::pow(v_c_ned,2) + std::pow(u_c_ned,2));
+        //         m_shallowest_current_cell.vel = curr_velocity; // It must be in NED
+        //       }
+        //     }
+        //   }
+        // }
 
         // void
         // consume(const IMC::ENCAwareness *msg)
