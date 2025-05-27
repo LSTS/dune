@@ -83,12 +83,12 @@ namespace Transports
           m_incoming[hash].first = incMsg;
         }
 
+        IMC::Message* res = m_incoming[hash].first.setFragment(msg);
         m_incoming[hash].second = true;
         debug("Incoming message fragment for message %u (%d still missing)",
               hash >> 16,
               m_incoming[hash].first.getFragmentsMissing());
 
-        IMC::Message* res = m_incoming[hash].first.setFragment(msg);
         if (res != NULL)
         {
           debug("created message %s", res->getName());
