@@ -227,6 +227,21 @@ namespace Transports
       void
       consume(const IMC::MessagePartControl* msg)
       {
+        if (msg->getSource() == getSystemId())
+        {
+          switch (msg->op)
+          {
+          case IMC::MessagePartControl::OP_REQUEST_RETRANSMIT:
+            sendIridiumMsg(msg);
+            break;
+          
+          default:
+            break;
+          }
+          
+          return;
+        }
+
         if (msg->op != IMC::MessagePartControl::OP_REQUEST_RETRANSMIT)
           return;
 
