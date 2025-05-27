@@ -37,6 +37,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <sstream>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -59,16 +60,18 @@ namespace DUNE
         if (begin == end)
           return "";
 
+        std::ostringstream result;
         Iterator itr = begin;
-        std::string result = *itr;
+        result << *itr;
         ++itr;
 
-        for (; itr != end; ++itr)
+        while (itr != end)
         {
-          result.append(separator).append(*itr);
+          result << separator << *itr;
+          ++itr;
         }
 
-        return result;
+        return result.str();
       }
 
       //! Filter duplicates of a given character in a string.
