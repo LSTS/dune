@@ -103,10 +103,35 @@ namespace DUNE
       return Time::Clock::get() - m_creation_time;
     }
 
+    void
+    FragmentedMessage::resetAge(void)
+    {
+      m_creation_time = Time::Clock::get();
+    }
+
     int
     FragmentedMessage::getFragmentsMissing(void)
     {
       return m_num_frags - m_fragments.size();
+    }
+
+    void
+    FragmentedMessage::getFragmentsMissing(std::string& frag_ids)
+    {
+      frag_ids.clear();
+      auto missing = getFragmentsMissing();
+      if (missing <= 0)
+        return;
+
+      for (int i = 0; i < m_num_frags; i++)
+      {
+        if (m_fragments.find(i) == m_fragments.end())
+        {
+          if (!frag_ids.empty())
+            frag_ids += ",";
+          frag_ids += std::to_string(i);
+        }
+      }
     }
 
     FragmentedMessage::~FragmentedMessage(void)

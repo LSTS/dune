@@ -47,8 +47,14 @@ namespace DUNE
       double
       getAge(void);
 
+      void
+      resetAge(void);
+
       int
       getFragmentsMissing(void);
+
+      void
+      getFragmentsMissing(std::string& frag_ids);
 
       IMC::Message*
       setFragment(const IMC::MessagePart* part);
