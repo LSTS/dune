@@ -45,7 +45,11 @@ namespace Transports
 
     struct Task: public DUNE::Tasks::Task
     {
-      std::map<uint32_t, FragmentedMessage> m_incoming;
+      //! Map of incoming fragmented messages.
+      //! Key is a hash of the message uid and source.
+      //! Value is a pair of the fragmented message and a boolean
+      //! indicating if the message is still being received.
+      std::map<uint32_t, std::pair<FragmentedMessage, bool>> m_incoming;
       Time::Counter<float> m_gc_counter;
       Arguments m_args;
 
@@ -76,13 +80,15 @@ namespace Transports
         {
           FragmentedMessage incMsg;
           incMsg.setParentTask(this);
-          m_incoming[hash] = incMsg;
+          m_incoming[hash].first = incMsg;
         }
 
-        debug("Incoming message fragment (%d still missing)",
-              m_incoming[hash].getFragmentsMissing());
+        m_incoming[hash].second = true;
+        debug("Incoming message fragment for message %u (%d still missing)",
+              hash,
+              m_incoming[hash].first.getFragmentsMissing());
 
-        IMC::Message * res = m_incoming[hash].setFragment(msg);
+        IMC::Message* res = m_incoming[hash].first.setFragment(msg);
         if (res != NULL)
         {
           debug("created message %s", res->getName());
@@ -98,17 +104,39 @@ namespace Transports
       {
         debug("ripping old messages");
 
-        std::map<uint32_t, FragmentedMessage>::iterator it = m_incoming.begin();
+        std::map<uint32_t, std::pair<FragmentedMessage, bool>>::iterator it = m_incoming.begin();
         std::vector<uint32_t> remove;
         for ( ; it != m_incoming.end(); ++it)
         {
-          if (it->second.getAge() > m_args.max_age_secs)
+          if (it->second.first.getAge() > m_args.max_age_secs)
           {
+            if (it->second.second)
+            {              
+              IMC::MessagePartControl mpc;
+              mpc.uid = it->first;
+              mpc.op = IMC::MessagePartControl::OP_REQUEST_RETRANSMIT;
+              if (it->second.first.getFragmentsMissing() <= it->second.first.getFragmentsReceived())
+              {
+                it->second.first.getFragmentsMissing(mpc.frag_ids);
+              }
+              else
+              {
+                it->second.first.getFragmentsReceived(mpc.frag_ids);
+                mpc.frag_ids.insert(0, "!");
+              }
+              it->second.first.resetAge();
+              it->second.second = false;
+              inf(DTR("Incoming message %u is still incomplete (%d fragments missing). "
+                      "Requesting retransmission."), it->first, it->second.first.getFragmentsMissing());
+              continue;
+            }
+
             remove.push_back(it->first);
 
             // message has died of natural causes...
-            war(DTR("Removed incoming message from memory (%d fragments were still missing)."),
-                it->second.getFragmentsMissing());
+            war(DTR("Removed incoming message %u from memory (%d fragments were still missing)."),
+                it->first,    
+                it->second.first.getFragmentsMissing());
           }
         }
 
