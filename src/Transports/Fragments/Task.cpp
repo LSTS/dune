@@ -128,6 +128,7 @@ namespace Transports
               it->second.second = false;
               inf(DTR("Incoming message %u is still incomplete (%d fragments missing). "
                       "Requesting retransmission."), it->first, it->second.first.getFragmentsMissing());
+              dispatch(mpc);
               continue;
             }
 
