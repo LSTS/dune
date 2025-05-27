@@ -71,7 +71,7 @@ namespace DUNE
     IMC::MessagePart*
     Fragments::getFragment(int frag_number)
     {
-      return m_fragments[frag_number];
+      return m_fragments.at(frag_number);
     }
 
     int
