@@ -34,7 +34,7 @@ namespace DUNE
 {
   namespace Network
   {
-    int Fragments::s_uid = 0;
+    uint8_t Fragments::s_uid = 0;
 
     Fragments::Fragments(IMC::Message* msg, int mtu)
     {

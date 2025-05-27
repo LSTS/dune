@@ -52,8 +52,8 @@ namespace DUNE
       ~Fragments(void);
 
     private:
-      static int s_uid;
-      int m_uid;
+      static uint8_t s_uid;
+      uint8_t m_uid;
       int m_num_frags;
       std::vector<IMC::MessagePart*> m_fragments;
     };
