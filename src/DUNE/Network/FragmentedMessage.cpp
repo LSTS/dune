@@ -27,6 +27,8 @@
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
+#include <unordered_set>
+
 // DUNE headers.
 #include <DUNE/Network/FragmentedMessage.hpp>
 
@@ -129,15 +131,16 @@ namespace DUNE
       if (missing <= 0)
         return;
 
+      std::vector<int> temp(m_num_frags); 
+      std::iota(temp.begin(), temp.end(), 0);
+      std::unordered_set<int> result(temp.begin(), temp.end());
       for (int i = 0; i < m_num_frags; i++)
       {
-        if (m_fragments.find(i) == m_fragments.end())
-        {
-          if (!frag_ids.empty())
-            frag_ids += ",";
-          frag_ids += std::to_string(i);
-        }
+        if (m_fragments.find(i) != m_fragments.end())
+          result.erase(i);
       }
+
+      frag_ids = Utils::String::join(result.begin(), result.end(), ",");
     }
 
     void
@@ -148,15 +151,16 @@ namespace DUNE
       if (received <= 0)
         return;
         
+      std::vector<int> temp(m_num_frags); 
+      std::iota(temp.begin(), temp.end(), 0);
+      std::unordered_set<int> result(temp.begin(), temp.end());
       for (int i = 0; i < m_num_frags; i++)
       {
-        if (m_fragments.find(i) != m_fragments.end())
-        {
-          if (!frag_ids.empty())
-            frag_ids += ",";
-          frag_ids += std::to_string(i);
-        }
+        if (m_fragments.find(i) == m_fragments.end())
+          result.erase(i);
       }
+
+      frag_ids = Utils::String::join(result.begin(), result.end(), ",");
     }
 
     FragmentedMessage::~FragmentedMessage(void)
