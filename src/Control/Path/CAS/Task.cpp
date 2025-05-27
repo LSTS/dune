@@ -50,78 +50,70 @@ namespace Control
       {
         // Range parameter for obstacle surveillance
         double out_of_range;
-
         // Simulation Parameters
         double T, DT, T_STAT, P, P_G, Q, D_CLOSE, D_SAFE, D_SAFE_LAND, K_COLL, 
         KAPPA, KAPPA_TC, PHI_AH, PHI_OT, PHI_HO, PHI_CR, K_P, K_DP,
         K_CHI, K_DCHI_SB, K_DCHI_P, K_CHI_SB, K_CHI_P, D_INIT;
-
         int GUIDANCE_STRATEGY;
         double WP_R, LOS_LA_DIST, LOS_KI;
-
         // Rudder angle plus/minus range.
         double COURSE_RANGE;
         // Granularity of angle change.
         double GRANULARITY;
         // Amount of time after which a disappeared obstacle is removed from the list.
         double kill_obst;
-
         //! Enable collision avoidance.
         bool en_cas;
-        //! Enable anti-grounding.
-        bool en_antiground;
-
-        //! Safety radius around static threat.
-        double radius_around_threat;
-        //! Course offset for contours.
-        std::vector<double> directions;
-        //! Safety distance to static obstacle.
-        double K_GROUND;
-        //! Weights on environmental factors.
-        std::vector<double> K_ENV;
-        //! Navigation entity label in Simulation mode.
-        std::string elabel_nav_sim;
-        //! Navigation entity label in Hardware mode.
-        std::string elabel_nav_hw;
-        //! Wind entity label.
-        std::string elabel_ws;
-        //! Heave entity label.
-        std::string elabel_gnss;
-        //! EstimatedFreq entity label.
-        std::string elabel_es;
-
-        //! Amplitude limit.
-        double ampl_lim;
-        //! Correlation Limit.
-        double corr_lim;
-        //! Vehicle pitching rate limit.
-        double pitch_rate;
-        //! Vehicle rolling rate limit.
-        double roll_rate;
-
         //! Vector field parameters for loiter
         //! Corridor width
         double corridor;
         //! Entry angle
         double entry_angle;
+
+        //! Enable anti-grounding.
+        // bool en_antiground;
+        //! Safety radius around static threat.
+        // double radius_around_threat;
+        //! Course offset for contours.
+        // std::vector<double> directions;
+        //! Wind entity label.
+        // std::string elabel_ws;
+        //! Heave entity label.
+        // std::string elabel_gnss;
+        //! EstimatedFreq entity label.
+        // std::string elabel_es;
+        //! Amplitude limit.
+        // double ampl_lim;
+        //! Correlation Limit.
+        // double corr_lim;
+        //! Vehicle pitching rate limit.
+        // double pitch_rate;
+        //! Vehicle rolling rate limit.
+        // double roll_rate;
+        //! Safety distance to static obstacle.
+        // double K_GROUND;
+        //! Weights on environmental factors.
+        // std::vector<double> K_ENV;
       };
 
-      struct SingleCurrentCell
-      {
-        //! Latitude WGS-84.
-        fp64_t lat;
-        //! Longitude WGS-84.
-        fp64_t lon;
-        //! Cell Depth.
-        fp64_t depth;
-        //! Water Velocity.
-        fp64_t vel;
-        //! Direction.
-        fp64_t dir;
-      };
+      // struct SingleCurrentCell
+      // {
+      //   //! Latitude WGS-84.
+      //   fp64_t lat;
+      //   //! Longitude WGS-84.
+      //   fp64_t lon;
+      //   //! Cell Depth.
+      //   fp64_t depth;
+      //   //! Water Velocity.
+      //   fp64_t vel;
+      //   //! Direction.
+      //   fp64_t dir;
+      // };
 
       struct Task: public DUNE::Control::PathController
       {
+        //! Task arguments.
+        Arguments m_args;
         //! m_sb_mpc object.
         simulationBasedMpc* m_sb_mpc;
         //! List of asv states
@@ -132,8 +124,6 @@ namespace Control
         std::vector<IMC::AisInfo> m_dyn_obst_vec;
         // Create matrix with past, current and next waypoint.
         Eigen::Matrix<double,3,2> m_waypoints;
-        //! Course offsets for contours.
-        std::vector<double> m_offsets;
         //! Speed offset <Output from CAS>
         double m_u_os;
         //! Heading offset <Output from CAS>
@@ -142,10 +132,6 @@ namespace Control
         double m_lat_asv;
         //! AutoNaut longitude
         double m_lon_asv;
-        //! Obstacle latitude
-        double m_lat_obst;
-        //! Obstacle longitude
-        double m_lon_obst;
         //! Timestamp - new (from Autonaut)
         double m_timestamp_new;
         //! Timestamp - old (from Autonaut)
@@ -154,50 +140,42 @@ namespace Control
         double m_timestamp_obst;
         //! Timestamp for last update from obstacle.
         std::vector<double> m_last_update;
-        //! Absolute wind direction and speed.
-        double m_wind_dir, m_wind_speed;
-        
-        //! USV heave amplitude.
-        double m_heave;
-        //! Estimated wave encounter frequency.
-        double m_wave_freq;
         //! Cost <Output from CAS>
         double m_cost;
-
         //! Vehicle Estimated State
         IMC::EstimatedState m_estate;
-
         //! Average factor.
         int m_avg;
-        //! Navigation entity eid.
-        int m_nav_eid;
-        //! Wind entity eid.
-        int m_ws_eid;
-        //! Heave entity eid.
-        int m_gnss_eid;
-        //! Wave frequency entity eid.
-        int m_es_eid;
-
-        //! Cost function for grounding
-        Math::Matrix m_static_obst_state; //Eigen::Matrix<double,-1,3>
+        //! Dynamic obstacles state matrix.
         Math::Matrix m_dyn_obst_state; //Eigen::Matrix<double,-1,10> m_dyn_obst_state; //Math::Matrix m_dyn_obst_state;
-        Math::Matrix m_dangers, m_depths;
-
-        //! Average factor.
-        int m_avg_zero, m_avg_one;
-        //! Average last velocity value.
-        double m_beam_velocity_zero_avg_last, m_beam_velocity_one_avg_last;
-        //! Average velocity value.
-        double m_beam_velocity_zero_avg, m_beam_velocity_one_avg;
-
-        //! Information about the shallowest current cell.
-        SingleCurrentCell m_shallowest_current_cell;
-
         //! Transmission request id.
         uint16_t m_tx_req_id;
 
-        //! Task arguments.
-        Arguments m_args;
+        //! Course offsets for contours.
+        // std::vector<double> m_offsets;
+        //! Cost function for grounding
+        // Math::Matrix m_static_obst_state; //Eigen::Matrix<double,-1,3>
+        // Math::Matrix m_dangers, m_depths;
+        //! Average last velocity value.
+        // double m_beam_velocity_zero_avg_last, m_beam_velocity_one_avg_last;
+        //! Average velocity value.
+        // double m_beam_velocity_zero_avg, m_beam_velocity_one_avg;
+        //! Information about the shallowest current cell.
+        // SingleCurrentCell m_shallowest_current_cell;
+        //! Absolute wind direction and speed.
+        // double m_wind_dir, m_wind_speed;
+        //! USV heave amplitude.
+        // double m_heave;
+        //! Estimated wave encounter frequency.
+        // double m_wave_freq;
+        //! Wind entity eid.
+        // int m_ws_eid;
+        //! Heave entity eid.
+        // int m_gnss_eid;
+        //! Wave frequency entity eid.
+        // int m_es_eid;
+        //! Average factor.
+        // int m_avg_zero, m_avg_one;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx),
@@ -207,43 +185,21 @@ namespace Control
           m_psi_os(0.0),
           m_lat_asv(0.0),
           m_lon_asv(0.0),
-          m_lat_obst(0.0),
-          m_lon_obst(0.0),
           m_timestamp_new(0.0),
           m_timestamp_prev(0.0),
           m_timestamp_obst(0.0),
-          m_wind_dir(0.0),
-          m_wind_speed(0.0),
-          m_heave(0.0),
-          m_wave_freq(0.0),
           m_cost(0.0),
           m_avg(0),
           m_tx_req_id(0)
+          // m_wind_dir(0.0),
+          // m_wind_speed(0.0),
+          // m_heave(0.0),
+          // m_wave_freq(0.0)
         {
-          param("Entity Label - Navigation simulation", m_args.elabel_nav_sim)
-          .description("Entity label of Navigation in simulation");
-
-          param("Entity Label - Navigation hardware", m_args.elabel_nav_hw)
-          .description("Entity label of Navigation in hardware");
-
-          param("Entity Label - Wind", m_args.elabel_ws)
-          .description("Entity label of 'AbsoluteWind' message");
-          
-          param("Entity Label - Heave", m_args.elabel_gnss)
-          .description("Entity label of 'Displacement' message");
-
-          param("Entity Label - Wave Frequency", m_args.elabel_es)
-          .description("Entity label of 'Frequency' message");
-
           param("Enable Collision Avoidance", m_args.en_cas)
           .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("true")
           .description("Enable collision avoidance algorithm");
-
-          // param("Enable Anti Grounding", m_args.en_antiground)
-          // .visibility(Tasks::Parameter::VISIBILITY_USER)
-          // .defaultValue("true")
-          // .description("Enable anti-grounding algorithm");
           
           param("Maximum Obstacle Surveillance Range", m_args.out_of_range)
           .units(Units::Meter)
@@ -257,7 +213,8 @@ namespace Control
           .minimumValue("1.0")
           .maximumValue("600.0")
           .defaultValue("60.0")
-          .description("Amount of time after which a disappeared obstacle is removed from the list. [sec].");
+          .description("Amount of time after which a disappeared obstacle is "
+                       "removed from the list. [sec].");
 
           param("Prediction Horizon - Simulation Time", m_args.T)
           .units(Units::Second)
@@ -328,16 +285,6 @@ namespace Control
           .defaultValue("0.5")
           .description("Cost of Collision.");
 
-          param("Cost of grounding", m_args.K_GROUND)
-          .minimumValue("0.0")
-          .defaultValue("100.0")
-          .description("Cost of Grounding.");
-
-          param("Weights environmental factors", m_args.K_ENV)
-          .minimumValue("0.0, 0.0, 0.0, 0.0, 0.0")
-          .defaultValue("10.0, 10.0, 10.0, 10.0, 10.0")
-          .description("Weights on environmental factors.");
-
           param("Cost of not complying COLREGS", m_args.KAPPA)
           .minimumValue("0.0")
           .maximumValue("10.0")
@@ -362,7 +309,8 @@ namespace Control
           .minimumValue("0.0")
           .maximumValue("180.0")
           .defaultValue("30.0")
-          .description("Angle outside of which an obstacle will be said to be overtaking, if the speed of the obstacle is larger than the ship's own speed [deg].");
+          .description("Angle outside of which an obstacle will be said to be overtaking, "
+                       "if the speed of the obstacle is larger than the ship's own speed [deg].");
 
           param("PHI HO", m_args.PHI_HO)
           .units(Units::Degree)
@@ -375,7 +323,8 @@ namespace Control
           .minimumValue("0.0")
           .maximumValue("180.0")
           .defaultValue("30.0")
-          .description("Angle outside of which an obstacle is said to be crossing, if it is on the starboard side, heading towards the ship and not overtaking the ship [deg].");
+          .description("Angle outside of which an obstacle is said to be crossing, if it is "
+                       "on the starboard side, heading towards the ship and not overtaking the ship [deg].");
           
           param("Cost of Deviating from Nominal Speed", m_args.K_P)
           .minimumValue("0.0")
@@ -458,35 +407,6 @@ namespace Control
           .defaultValue("15.0")
           .description("Portions of positive angle range in degrees");
 
-          param("Radius around threat", m_args.radius_around_threat)
-          .units(Units::Meter)
-          .defaultValue("50.0")
-          .description("Safety radius around a static threat at sea.");
-
-          param("Course offsets", m_args.directions)
-          .units(Units::Degree)
-          .description("Course offsets for contours surroundings");
-                    
-          param("Correlation Limit", m_args.corr_lim)
-              .defaultValue("50")
-              .maximumValue("100")
-              .minimumValue("0")
-              .description("Correlation above which measurement is discarded.");
-
-          param("Amplitude Limit", m_args.ampl_lim)
-              .defaultValue("0")
-              .units(Units::Decibel)
-              .description("Amplitude above which measurement is discarded.");
-          
-          param("Vehicle Pitch Rate Limit", m_args.pitch_rate)
-              .defaultValue("0")
-              .description("Pitching rate above which measurement is discarded.");
-
-          param("Vehicle Roll Rate Limit", m_args.roll_rate)
-              .defaultValue("0")
-              .description("Roll rate above which measurement is discarded.");
-
-          
           param("Corridor -- Width", m_args.corridor)
           .minimumValue("1.0")
           .maximumValue("50.0")
@@ -501,16 +421,67 @@ namespace Control
           .units(Units::Degree)
           .description("Attack angle when lateral track error equals corridor width");
 
+          // param("Entity Label - Wind", m_args.elabel_ws)
+          // .description("Entity label of 'AbsoluteWind' message");
+          
+          // param("Entity Label - Heave", m_args.elabel_gnss)
+          // .description("Entity label of 'Displacement' message");
+
+          // param("Entity Label - Wave Frequency", m_args.elabel_es)
+          // .description("Entity label of 'Frequency' message");
+
+          // param("Enable Anti Grounding", m_args.en_antiground)
+          // .visibility(Tasks::Parameter::VISIBILITY_USER)
+          // .defaultValue("true")
+          // .description("Enable anti-grounding algorithm");
+
+          // param("Cost of grounding", m_args.K_GROUND)
+          // .minimumValue("0.0")
+          // .defaultValue("100.0")
+          // .description("Cost of Grounding.");
+
+          // param("Radius around threat", m_args.radius_around_threat)
+          // .units(Units::Meter)
+          // .defaultValue("50.0")
+          // .description("Safety radius around a static threat at sea.");
+
+          // param("Course offsets", m_args.directions)
+          // .units(Units::Degree)
+          // .description("Course offsets for contours surroundings");
+                    
+          // param("Correlation Limit", m_args.corr_lim)
+          //     .defaultValue("50")
+          //     .maximumValue("100")
+          //     .minimumValue("0")
+          //     .description("Correlation above which measurement is discarded.");
+
+          // param("Amplitude Limit", m_args.ampl_lim)
+          //     .defaultValue("0")
+          //     .units(Units::Decibel)
+          //     .description("Amplitude above which measurement is discarded.");
+          
+          // param("Vehicle Pitch Rate Limit", m_args.pitch_rate)
+          //     .defaultValue("0")
+          //     .description("Pitching rate above which measurement is discarded.");
+
+          // param("Vehicle Roll Rate Limit", m_args.roll_rate)
+          //     .defaultValue("0")
+          //     .description("Roll rate above which measurement is discarded.");
+
+          // param("Weights environmental factors", m_args.K_ENV)
+          // .minimumValue("0.0, 0.0, 0.0, 0.0, 0.0")
+          // .defaultValue("10.0, 10.0, 10.0, 10.0, 10.0")
+          // .description("Weights on environmental factors.");
+
           // Register handler routines.
           bind<IMC::AisInfo>(this);
           // bind<IMC::CurrentProfile>(this);
           // bind<IMC::AbsoluteWind>(this);
           // bind<IMC::ENCAwareness>(this);
-          bind<IMC::EstimatedState>(this);
 
-          m_shallowest_current_cell.depth = 0.0;
-          m_shallowest_current_cell.vel = 0.0;
-          m_shallowest_current_cell.dir = 0.0;
+          // m_shallowest_current_cell.depth = 0.0;
+          // m_shallowest_current_cell.vel = 0.0;
+          // m_shallowest_current_cell.dir = 0.0;
         }
 
         void
@@ -536,8 +507,8 @@ namespace Control
           //   }
           // }
 
-          if (paramChanged(m_args.directions))
-            m_offsets = m_args.directions;
+          // if (paramChanged(m_args.directions))
+          //   m_offsets = m_args.directions;
 
           if (m_sb_mpc == nullptr)
             return;
@@ -624,8 +595,8 @@ namespace Control
         {
           m_sb_mpc = new simulationBasedMpc(this);
 
-          m_offsets = m_args.directions;
-          m_static_obst_state.resizeAndFill(m_offsets.size(), 3, 10000.0); //! Large values: initial m_cost is high.
+          // m_offsets = m_args.directions;
+          // m_static_obst_state.resizeAndFill(m_offsets.size(), 3, 10000.0); //! Large values: initial m_cost is high.
         }
 
           //! Release resources.
@@ -645,18 +616,9 @@ namespace Control
         void
         onEntityResolution(void)
         {
-          if (m_ctx.profiles.isSelected("Simulation"))
-          {
-            m_nav_eid = getEid(m_args.elabel_nav_sim);
-          }
-          else if (m_ctx.profiles.isSelected("Hardware"))
-          {
-            m_nav_eid = getEid(m_args.elabel_nav_hw);
-          }
-
-          m_ws_eid = getEid(m_args.elabel_ws);
-          m_gnss_eid = getEid(m_args.elabel_gnss);
-          m_es_eid = getEid(m_args.elabel_es);
+          // m_ws_eid = getEid(m_args.elabel_ws);
+          // m_gnss_eid = getEid(m_args.elabel_gnss);
+          // m_es_eid = getEid(m_args.elabel_es);
         }
 
         //! Get entity id of label
@@ -704,23 +666,23 @@ namespace Control
         //   m_wind_speed = msg->speed;
         // }
 
-        void
-        consume(const IMC::Displacement* msg)
-        {
-          if(msg->getSource() != getSystemId() || msg->getSourceEntity() != m_gnss_eid)
-            return;
+        // void
+        // consume(const IMC::Displacement* msg)
+        // {
+        //   if(msg->getSource() != getSystemId() || msg->getSourceEntity() != m_gnss_eid)
+        //     return;
 
-          m_heave = msg->z;
-        }
+        //   m_heave = msg->z;
+        // }
 
-        void
-        consume(const IMC::Frequency* msg)
-        {
-          if(msg->getSource() != getSystemId() || msg->getSourceEntity() != m_es_eid)
-            return;
+        // void
+        // consume(const IMC::Frequency* msg)
+        // {
+        //   if(msg->getSource() != getSystemId() || msg->getSourceEntity() != m_es_eid)
+        //     return;
 
-          m_wave_freq = msg->value;
-        }
+        //   m_wave_freq = msg->value;
+        // }
 
         // void
         // consume(const IMC::CurrentProfile *msg)
@@ -834,28 +796,6 @@ namespace Control
         //     debug("Depths matrix rows: %d columns: %d", m_depths.rows(),m_depths.columns());
         //   }
         // }
-
-        void
-        consume(const IMC::EstimatedState *msg)
-        {
-          if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_nav_eid)
-            return;
-
-          m_estate = *msg;
-
-          m_lat_asv = m_estate.lat;
-          m_lon_asv = m_estate.lon;
-          WGS84::displace(m_estate.x, m_estate.y, &m_lat_asv, &m_lon_asv);
-
-          m_asv_state[0] = 0.0; // ASV assumed to be centered, (0,0)
-          m_asv_state[1] = 0.0;
-          m_asv_state[2] = m_estate.psi;
-          m_asv_state[3] = std::sqrt(std::pow(m_estate.vx, 2) + std::pow(m_estate.vy, 2));
-          m_asv_state[4] = 0.0; //! Assume zero sideslip
-          m_asv_state[5] = 0.0; //! Assume zero.
-
-          m_timestamp_new = msg->getTimeStamp();
-        }
 
         Math::Matrix
         analyseENC(std::string enc)
@@ -1039,15 +979,14 @@ namespace Control
 
           if (msg->msg_type.compare("1") == 0 || msg->msg_type.compare("2") == 0 || msg->msg_type.compare("3") == 0)
           {
-            // Real WGS-84 Coordinates [rad]. Static coordinates need to compensate for displacement in x/y-direction (WGS84::displace)
-            m_lat_obst = msg->lat;
-            m_lon_obst = msg->lon;
-
             // Distance between ASV - Obstacle
-            double distance = WGS84::distance(m_lat_asv, m_lon_asv, 0, m_lat_obst, m_lon_obst, 0);
+            double distance = WGS84::distance(m_lat_asv, m_lon_asv, 0, msg->lat, msg->lon, 0);
 
             // spew("Distance from obstacle %s is %0.1f",msg->mmsi.c_str(), distance);
-            trace("Received Obstacle from AIS with MMSI: %s, latitude %f and longitude %f, distance: %0.1f", msg->mmsi.c_str(), Angles::degrees(m_lat_obst), Angles::degrees(m_lon_obst), distance);
+            trace("Received Obstacle from AIS with MMSI: %s, latitude %f and longitude %f, distance: %0.1f", msg->mmsi.c_str(),
+                  Angles::degrees(msg->lat),
+                  Angles::degrees(msg->lon),
+                  distance);
 
             bool obs_exists = false;
             // Obstacle vector: UPDATE/REMOVE.
@@ -1196,8 +1135,29 @@ namespace Control
         }
 
         void
+        updateEstimatedState(const IMC::EstimatedState msg)
+        {
+          m_estate = msg;
+
+          m_lat_asv = m_estate.lat;
+          m_lon_asv = m_estate.lon;
+          WGS84::displace(m_estate.x, m_estate.y, &m_lat_asv, &m_lon_asv);
+
+          m_asv_state[0] = 0.0; // ASV assumed to be centered, (0,0)
+          m_asv_state[1] = 0.0;
+          m_asv_state[2] = m_estate.psi;
+          m_asv_state[3] = std::sqrt(std::pow(m_estate.vx, 2) + std::pow(m_estate.vy, 2));
+          m_asv_state[4] = 0.0; //! Assume zero sideslip
+          m_asv_state[5] = 0.0; //! Assume zero.
+
+          m_timestamp_new = msg.getTimeStamp();
+        }
+
+        void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
+          updateEstimatedState(state);
+
           //! LOS Navigation Law (called wrongly Pure Pursuit in Dune) - desired course is the LOS angle.
           m_des_heading.value = ts.los_angle;
           trace("LOS DESIRED COURSE: %f", Angles::degrees(m_des_heading.value));
@@ -1210,7 +1170,7 @@ namespace Control
           }
 
           //! Something might be enabled, but no data available.
-          if(m_dyn_obst_vec.size() == 0 && m_dangers.rows() == 0 && m_depths.rows() == 0)
+          if(m_dyn_obst_vec.size() == 0 /* && m_dangers.rows() == 0 && m_depths.rows() == 0 */)
           {
             trace("CAS or anti-grounding are enabled, but their tables are empty!");
             dispatch(m_des_heading);
@@ -1272,9 +1232,9 @@ namespace Control
               m_dyn_obst_state(i, 9) = mmsi;
 
               // Distance between ASV and Obstacle.
-              double distance = WGS84::distance(m_lat_asv, m_lon_asv, 0, m_dyn_obst_vec[i].lat, m_dyn_obst_vec[i].lon, 0);
-              (void)distance;
-              (void)state;
+              // double distance = WGS84::distance(m_lat_asv, m_lon_asv, 0, m_dyn_obst_vec[i].lat, m_dyn_obst_vec[i].lon, 0);
+              // (void)distance;
+              // (void)state;
               // //! Fill in CAS message.
               // cas.mmsi = m_dyn_obst_vec[i].mmsi;
               // cas.lat = m_dyn_obst_vec[i].lat;
@@ -1305,15 +1265,15 @@ namespace Control
 
           if((C_CAS /* || C_AG */) && (m_timestamp_new - m_timestamp_prev) > 20.0 && m_sb_mpc != nullptr)
           {
-            /* if(!C_CAS && C_AG)
-              debug("Anti-grounding situation!");
-            else  */if(C_CAS /* && !C_AG */)
+            // if(!C_CAS && C_AG)
+            //   debug("Anti-grounding situation!");
+            // else if(C_CAS && !C_AG)
               debug("Anti-collision situation!");
             // else if(C_CAS && C_AG) // both, this is an anti-grounding and anti-collision scenario!
             //   debug("Anti-grounding and anti-collision situation!");
 
             obstacle* obs_vessel = nullptr;
-            m_sb_mpc->getBestControlOffset(m_u_os, m_psi_os, m_asv_state[3], m_des_heading.value, m_asv_state, m_waypoints, m_dyn_obst_state, m_static_obst_state, m_cost, obs_vessel);
+            m_sb_mpc->getBestControlOffset(m_u_os, m_psi_os, m_asv_state[3], m_des_heading.value, m_asv_state, m_waypoints, m_dyn_obst_state, {}/* m_static_obst_state */, m_cost, obs_vessel);
 
             //! New desired course and course offset.
             m_des_heading.value += m_psi_os;
@@ -1382,7 +1342,7 @@ namespace Control
         void
         loiter(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          (void) state;
+          updateEstimatedState(state);
           
           double gain = std::tan(Angles::radians(m_args.entry_angle)) / m_args.corridor;
           double ref = DUNE::Math::c_half_pi + std::atan(2 * gain * (ts.range - ts.loiter.radius));
