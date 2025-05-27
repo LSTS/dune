@@ -27,6 +27,8 @@
 // Author: João Bogas                                                       *
 //***************************************************************************
 
+#include <unordered_set>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Network/Fragments.hpp>
@@ -53,6 +55,14 @@ namespace Transports
       "Set", "Delete", "Get", "Get Info", "Clear", "Get State", "Get DB State", "Boot", "Unknown",
     };
 
+    struct FragmentsRetransmission
+    {
+      //! Fragments.
+      Network::Fragments* m_fragments;
+      //! Fragment retransmission request period.
+      Time::Counter<uint32_t> m_period;
+    };
+
     struct Arguments
     {
       //! Maximum iridium message size.
@@ -67,6 +77,8 @@ namespace Transports
       uint16_t ttl;
       //! Iridium operation timeout.
       uint32_t ir_timeout;
+      //! Period where retransmission request of fragments is valid.
+      uint32_t frag_retransmit_period;
     };
 
     //! Shared pointer to PersistentMessage.
@@ -88,6 +100,10 @@ namespace Transports
       std::map<uint32_t, EntityState> m_entity_map;
       //! List of iridium subscribers. <ID, Timestamp>.
       std::map<unsigned, double> m_iri_subs;
+      //! Temporary list of message fragments for retransmission.
+      std::map<uint32_t, FragmentsRetransmission> m_retransmissions;
+      //! Timer to check retransmissions.
+      Time::Counter<uint32_t> m_retransmit_timer;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -95,7 +111,8 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_req_id(0),
-        m_filter(false)
+        m_filter(false),
+        m_retransmit_timer(0)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL, Tasks::Parameter::VISIBILITY_USER, false);
 
@@ -122,9 +139,17 @@ namespace Transports
           .defaultValue("600")
           .description("Iridium operation timeout in seconds.");
 
+        param("Fragments Retrasmission Request Timeout", m_args.frag_retransmit_period)
+          .minimumValue("0")
+          .defaultValue("1800")
+          .units(Units::Second)
+          .description("Represents the amount of time a message is valid for retransmission. "
+                       "If set to 0, retransmission requests are not allowed.");
+
         bind<IMC::IridiumTxStatus>(this);
         bind<IMC::IridiumMsgRx>(this);
         bind<IMC::EntityState>(this);
+        bind<IMC::MessagePartControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::EntityList>(this);
@@ -171,6 +196,58 @@ namespace Transports
       onDeactivation(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      std::unordered_set<int>
+      getRetransmissionList(Network::Fragments* fragments, const std::string& request)
+      {
+        if (request.empty())
+          return {};
+
+        auto frag_list = request;
+        auto negation = frag_list.front() == '!';
+        if (negation)
+          frag_list.erase(0, 1);
+
+        std::vector<int> frag_ids;
+        Utils::String::split(frag_list, ",", frag_ids);
+
+        if (!negation)
+          return std::unordered_set<int>(frag_ids.begin(), frag_ids.end());
+
+        std::vector<int> temp(fragments->getNumberOfFragments()); 
+        std::iota(temp.begin(), temp.end(), 0);
+        std::unordered_set<int> result(temp.begin(), temp.end());
+        for (const auto& id : frag_ids)
+          result.erase(id);
+
+        return result;
+      }
+
+      void
+      consume(const IMC::MessagePartControl* msg)
+      {
+        if (msg->op != IMC::MessagePartControl::OP_REQUEST_RETRANSMIT)
+          return;
+
+        if (m_args.frag_retransmit_period == 0)
+          return;
+
+        if (msg->frag_ids.empty())
+          return;
+
+        std::map<uint32_t, FragmentsRetransmission>::iterator it = m_retransmissions.find(msg->uid);
+        if (it == m_retransmissions.end())
+          return;
+
+        std::unordered_set<int> frags = getRetransmissionList(it->second.m_fragments, msg->frag_ids);
+        for (const auto& frag: frags)
+        {
+          IMC::MessagePart* msg_frag = it->second.m_fragments->getFragment(frag);
+
+          uint16_t tid = m_req_id++;
+          dispatchRequest(msg_frag, tid);
+        }
       }
 
       void
@@ -451,20 +528,20 @@ namespace Transports
         if (!isActive())
           return;
 
-        Network::Fragments frags(const_cast<IMC::Message*>(msg), m_args.max_payload);
+        Network::Fragments* frags = new Network::Fragments(const_cast<IMC::Message*>(msg), m_args.max_payload);
 
         PersistentPtr pmsg;
 
         if (persistent)
           pmsg = std::make_shared<PersistentMessage>(msg);
 
-        IMC::MessagePart* frag = frags.getFragment(0);
+        IMC::MessagePart* frag = frags->getFragment(0);
         inf("sending %d fragments of message %s (uid:%d) to destination %d",
-                  frags.getNumberOfFragments(), msg->getName(), frag->uid, msg->getDestination());
+                  frags->getNumberOfFragments(), msg->getName(), frag->uid, msg->getDestination());
 
-        for (int i = 0; i < frags.getNumberOfFragments(); i++)
+        for (int i = 0; i < frags->getNumberOfFragments(); i++)
         {
-          IMC::MessagePart* msg_frag = frags.getFragment(i);
+          IMC::MessagePart* msg_frag = frags->getFragment(i);
 
           uint16_t tid = m_req_id++;
           dispatchRequest(msg_frag, tid);
@@ -474,6 +551,20 @@ namespace Transports
 
           pmsg->addMessage(tid, msg_frag);
           m_ack_map[tid] = pmsg;
+        }
+
+        if (m_args.frag_retransmit_period > 0)
+        {
+          FragmentsRetransmission retransmission;
+          retransmission.m_fragments = frags;
+          retransmission.m_period.setTop(m_args.frag_retransmit_period);
+          if (m_retransmit_timer.getTop() == 0)
+            m_retransmit_timer.setTop(m_args.frag_retransmit_period);
+          m_retransmissions[frag->uid] = retransmission;
+        }
+        else
+        {
+          delete frags;
         }
       }
 
@@ -516,6 +607,35 @@ namespace Transports
       }
 
       void
+      checkRetransmissions(void)
+      {
+        if (m_retransmissions.empty())
+        {
+          m_retransmit_timer.setTop(0);
+          return;
+        }
+
+        if (!m_retransmit_timer.overflow())
+          return;
+
+        std::map<uint32_t, FragmentsRetransmission>::iterator it = m_retransmissions.begin();
+        for (; it != m_retransmissions.end(); it++)
+        {
+          const auto remaining = it->second.m_period.getRemaining();
+          if (remaining > 0)
+          {
+            if (remaining < m_retransmit_timer.getRemaining())
+              m_retransmit_timer.setTop(remaining);
+
+            continue;
+          }
+
+          delete it->second.m_fragments;
+          m_retransmissions.erase(it);
+        }
+      }
+
+      void
       checkIridiumSubs(void)
       {
         // Check if iridium subscriber is still active.
@@ -544,6 +664,8 @@ namespace Transports
 
           if (!isActive())
             continue;
+
+          checkRetransmissions();
 
           if (m_iri_subs.empty())
             continue;
