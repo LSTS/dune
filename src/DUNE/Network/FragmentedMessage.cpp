@@ -115,6 +115,12 @@ namespace DUNE
       return m_num_frags - m_fragments.size();
     }
 
+    int
+    FragmentedMessage::getFragmentsReceived(void)
+    {
+      return m_fragments.size();
+    }
+
     void
     FragmentedMessage::getFragmentsMissing(std::string& frag_ids)
     {
@@ -126,6 +132,25 @@ namespace DUNE
       for (int i = 0; i < m_num_frags; i++)
       {
         if (m_fragments.find(i) == m_fragments.end())
+        {
+          if (!frag_ids.empty())
+            frag_ids += ",";
+          frag_ids += std::to_string(i);
+        }
+      }
+    }
+
+    void
+    FragmentedMessage::getFragmentsReceived(std::string& frag_ids)
+    {
+      frag_ids.clear();
+      auto received = getFragmentsReceived();
+      if (received <= 0)
+        return;
+        
+      for (int i = 0; i < m_num_frags; i++)
+      {
+        if (m_fragments.find(i) != m_fragments.end())
         {
           if (!frag_ids.empty())
             frag_ids += ",";

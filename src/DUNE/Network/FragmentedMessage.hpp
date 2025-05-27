@@ -53,8 +53,14 @@ namespace DUNE
       int
       getFragmentsMissing(void);
 
+      int
+      getFragmentsReceived(void);
+
       void
       getFragmentsMissing(std::string& frag_ids);
+
+      void
+      getFragmentsReceived(std::string& frag_ids);
 
       IMC::Message*
       setFragment(const IMC::MessagePart* part);
