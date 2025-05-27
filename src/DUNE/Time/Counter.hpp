@@ -95,7 +95,7 @@ namespace DUNE
       inline T
       getRemaining(void) const
       {
-        if (m_overflow)
+        if (overflow())
           return 0;
 
         return m_top - (Clock::get() - m_last);
