@@ -240,10 +240,10 @@ namespace Control
           .defaultValue("true")
           .description("Enable collision avoidance algorithm");
 
-          param("Enable Anti Grounding", m_args.en_antiground)
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .defaultValue("true")
-          .description("Enable anti-grounding algorithm");
+          // param("Enable Anti Grounding", m_args.en_antiground)
+          // .visibility(Tasks::Parameter::VISIBILITY_USER)
+          // .defaultValue("true")
+          // .description("Enable anti-grounding algorithm");
           
           param("Maximum Obstacle Surveillance Range", m_args.out_of_range)
           .units(Units::Meter)
@@ -527,14 +527,14 @@ namespace Control
             }
           }
 
-          if (paramChanged(m_args.en_antiground))
-          {
-            if (m_args.en_antiground)
-            {
-              m_dangers.resize(0,0);
-              m_depths.resize(0,0);
-            }
-          }
+          // if (paramChanged(m_args.en_antiground))
+          // {
+          //   if (m_args.en_antiground)
+          //   {
+          //     m_dangers.resize(0,0);
+          //     m_depths.resize(0,0);
+          //   }
+          // }
 
           if (paramChanged(m_args.directions))
             m_offsets = m_args.directions;
@@ -814,26 +814,26 @@ namespace Control
           }
         }
 
-        void
-        consume(const IMC::ENCAwareness *msg)
-        {
-          if(!m_args.en_antiground)
-            return;
+        // void
+        // consume(const IMC::ENCAwareness *msg)
+        // {
+        //   if(!m_args.en_antiground)
+        //     return;
 
-          if(!msg->danger.empty())
-          {
-            m_dangers = analyseENC(msg->danger);
-            //! Remove last column as depth is not needed/present.
-            m_dangers = m_dangers.get(0,m_dangers.rows()-1,0,m_dangers.columns()-2);
-            debug("Dangers matrix rows: %d columns: %d", m_dangers.rows(),m_dangers.columns());
-          }
+        //   if(!msg->danger.empty())
+        //   {
+        //     m_dangers = analyseENC(msg->danger);
+        //     //! Remove last column as depth is not needed/present.
+        //     m_dangers = m_dangers.get(0,m_dangers.rows()-1,0,m_dangers.columns()-2);
+        //     debug("Dangers matrix rows: %d columns: %d", m_dangers.rows(),m_dangers.columns());
+        //   }
 
-          if(!msg->depth_at_loc.empty())
-          {
-            m_depths = analyseENC(msg->depth_at_loc);
-            debug("Depths matrix rows: %d columns: %d", m_depths.rows(),m_depths.columns());
-          }
-        }
+        //   if(!msg->depth_at_loc.empty())
+        //   {
+        //     m_depths = analyseENC(msg->depth_at_loc);
+        //     debug("Depths matrix rows: %d columns: %d", m_depths.rows(),m_depths.columns());
+        //   }
+        // }
 
         void
         consume(const IMC::EstimatedState *msg)
@@ -900,126 +900,126 @@ namespace Control
           return enc_mat;
         }
 
-        void
-        buildENCforCAS()
-        {
-          debug("buildENCforCAS");
-          int offset = 5;
-          Math::Matrix course_off_ranges(m_offsets.size(),2);
+        // void
+        // buildENCforCAS()
+        // {
+        //   debug("buildENCforCAS");
+        //   int offset = 5;
+        //   Math::Matrix course_off_ranges(m_offsets.size(),2);
 
-          for (size_t f = 0; f < m_offsets.size(); f++)
-          {
-            debug("Desired Heading %f",Angles::degrees(m_des_heading.value));
-            course_off_ranges(f,0) = m_des_heading.value + Angles::radians(m_offsets[f] - offset);
-            course_off_ranges(f,1) = m_des_heading.value + Angles::radians(m_offsets[f] + offset);
-            if(course_off_ranges(f,0)<0)
-              course_off_ranges(f,0) = Angles::radians(360) + course_off_ranges(f,0);
-            if(course_off_ranges(f,1)<0)
-              course_off_ranges(f,1) = Angles::radians(360) + course_off_ranges(f,1);
+        //   for (size_t f = 0; f < m_offsets.size(); f++)
+        //   {
+        //     debug("Desired Heading %f",Angles::degrees(m_des_heading.value));
+        //     course_off_ranges(f,0) = m_des_heading.value + Angles::radians(m_offsets[f] - offset);
+        //     course_off_ranges(f,1) = m_des_heading.value + Angles::radians(m_offsets[f] + offset);
+        //     if(course_off_ranges(f,0)<0)
+        //       course_off_ranges(f,0) = Angles::radians(360) + course_off_ranges(f,0);
+        //     if(course_off_ranges(f,1)<0)
+        //       course_off_ranges(f,1) = Angles::radians(360) + course_off_ranges(f,1);
             
-            m_static_obst_state(f,0) = Angles::radians(m_offsets[f]);
-            debug("RANGES %f %f for offset %.0f",Angles::degrees(course_off_ranges(f,0)),Angles::degrees(course_off_ranges(f,1)),m_offsets[f]);
-          }
-          //debug("%d course_off_ranges",course_off_ranges.rows());
+        //     m_static_obst_state(f,0) = Angles::radians(m_offsets[f]);
+        //     debug("RANGES %f %f for offset %.0f",Angles::degrees(course_off_ranges(f,0)),Angles::degrees(course_off_ranges(f,1)),m_offsets[f]);
+        //   }
+        //   //debug("%d course_off_ranges",course_off_ranges.rows());
 
-          //! Treat depth contours.
-          if(m_depths.rows() > 0)
-          {
-            for(int j=0; j<course_off_ranges.rows(); j++)
-            {
-              std::vector<double> single_distances;
-              for(int i=0; i<m_depths.rows(); i++)
-              {
-                double bearing,range;
-                WGS84::getNEBearingAndRange(m_lat_asv, m_lon_asv, m_depths(i,0), m_depths(i,1), &bearing, &range);
-                //debug("bearing %f and range %f",Angles::degrees(bearing),range);
+        //   //! Treat depth contours.
+        //   if(m_depths.rows() > 0)
+        //   {
+        //     for(int j=0; j<course_off_ranges.rows(); j++)
+        //     {
+        //       std::vector<double> single_distances;
+        //       for(int i=0; i<m_depths.rows(); i++)
+        //       {
+        //         double bearing,range;
+        //         WGS84::getNEBearingAndRange(m_lat_asv, m_lon_asv, m_depths(i,0), m_depths(i,1), &bearing, &range);
+        //         //debug("bearing %f and range %f",Angles::degrees(bearing),range);
 
-                if(bearing>=course_off_ranges(j,0) && bearing<=course_off_ranges(j,1))
-                  single_distances.push_back(range);
-              }
-              if(!single_distances.empty())
-              {
-                std::vector<double>::iterator itr = std::min_element(single_distances.begin(), single_distances.end());
-                int int_idx = std::distance(single_distances.begin(), itr);
-                m_static_obst_state(j,1) = single_distances[int_idx];
-                debug("Shallow contour location (%f,%f) for offset %.0f and range %f.",Angles::degrees(m_depths(int_idx,0)),Angles::degrees(m_depths(int_idx,1)),m_offsets[j],single_distances[int_idx]);
-              }
-              //debug("%f %f", Angles::degrees(m_static_obst_state(j,0)), m_static_obst_state(j,1));
-            }
-          }
+        //         if(bearing>=course_off_ranges(j,0) && bearing<=course_off_ranges(j,1))
+        //           single_distances.push_back(range);
+        //       }
+        //       if(!single_distances.empty())
+        //       {
+        //         std::vector<double>::iterator itr = std::min_element(single_distances.begin(), single_distances.end());
+        //         int int_idx = std::distance(single_distances.begin(), itr);
+        //         m_static_obst_state(j,1) = single_distances[int_idx];
+        //         debug("Shallow contour location (%f,%f) for offset %.0f and range %f.",Angles::degrees(m_depths(int_idx,0)),Angles::degrees(m_depths(int_idx,1)),m_offsets[j],single_distances[int_idx]);
+        //       }
+        //       //debug("%f %f", Angles::degrees(m_static_obst_state(j,0)), m_static_obst_state(j,1));
+        //     }
+        //   }
 
-          //! Treat dangers.
-          if(m_dangers.rows() > 0)
-          {
-            double R = 6371; //Radius of the Earth
-            for(int i=0;i<m_dangers.rows();i++)
-            {
-              double bearing,range;
-              WGS84::getNEBearingAndRange(m_lat_asv, m_lon_asv, m_dangers(i,0), m_dangers(i,1), &bearing, &range); // Angles::radians(63.45419383),Angles::radians(10.37723485)
-              debug("Static danger at (%f,%f), bearing %f and range %f",Angles::degrees(m_dangers(i,0)),Angles::degrees(m_dangers(i,1)),Angles::degrees(bearing),range);
+        //   //! Treat dangers.
+        //   if(m_dangers.rows() > 0)
+        //   {
+        //     double R = 6371; //Radius of the Earth
+        //     for(int i=0;i<m_dangers.rows();i++)
+        //     {
+        //       double bearing,range;
+        //       WGS84::getNEBearingAndRange(m_lat_asv, m_lon_asv, m_dangers(i,0), m_dangers(i,1), &bearing, &range); // Angles::radians(63.45419383),Angles::radians(10.37723485)
+        //       debug("Static danger at (%f,%f), bearing %f and range %f",Angles::degrees(m_dangers(i,0)),Angles::degrees(m_dangers(i,1)),Angles::degrees(bearing),range);
 
-              //! Check if static object is actually a threat.
-              if(bearing > m_des_heading.value + Angles::radians(m_offsets.back()) && bearing < m_des_heading.value + Angles::radians(m_offsets[0]))
-              {
-                //! Static object can be a threat.
-                for (size_t j = 1; j < m_offsets.size(); j++)
-                {
-                  std::vector<double> offset_neighbors;
-                  offset_neighbors.push_back(m_des_heading.value + Angles::radians(m_offsets[j]));
-                  offset_neighbors.push_back(m_des_heading.value + Angles::radians(m_offsets[j-1]));
-                  if(bearing>offset_neighbors[0] && bearing<offset_neighbors[1])
-                  {
-                    std::vector<double> dsts,lats2,lons2;
-                    for (size_t k = 0; k < offset_neighbors.size(); k++)
-                    {
-                      //! Check if the static objec is a threat.
-                      //! Find location (lat2,lon2) given a course and range applied to location (lat1,lon1).
-                      double range_ext = (range+50)/1000;
-                      double lat2 = std::asin(std::sin(m_lat_asv)*std::cos(range_ext/R) +
-                          std::cos(m_lat_asv)*std::sin(range_ext/R)*std::cos(offset_neighbors[k]));
-                      double lon2 = m_lon_asv + std::atan2(std::sin(offset_neighbors[k])*std::sin(range_ext/R)*std::cos(m_lat_asv),
-                                  std::cos(range_ext/R)-std::sin(m_lat_asv)*std::sin(lat2));
-                      //lats2.push_back(lat2);
-                      //lons2.push_back(lon2);
+        //       //! Check if static object is actually a threat.
+        //       if(bearing > m_des_heading.value + Angles::radians(m_offsets.back()) && bearing < m_des_heading.value + Angles::radians(m_offsets[0]))
+        //       {
+        //         //! Static object can be a threat.
+        //         for (size_t j = 1; j < m_offsets.size(); j++)
+        //         {
+        //           std::vector<double> offset_neighbors;
+        //           offset_neighbors.push_back(m_des_heading.value + Angles::radians(m_offsets[j]));
+        //           offset_neighbors.push_back(m_des_heading.value + Angles::radians(m_offsets[j-1]));
+        //           if(bearing>offset_neighbors[0] && bearing<offset_neighbors[1])
+        //           {
+        //             std::vector<double> dsts,lats2,lons2;
+        //             for (size_t k = 0; k < offset_neighbors.size(); k++)
+        //             {
+        //               //! Check if the static objec is a threat.
+        //               //! Find location (lat2,lon2) given a course and range applied to location (lat1,lon1).
+        //               double range_ext = (range+50)/1000;
+        //               double lat2 = std::asin(std::sin(m_lat_asv)*std::cos(range_ext/R) +
+        //                   std::cos(m_lat_asv)*std::sin(range_ext/R)*std::cos(offset_neighbors[k]));
+        //               double lon2 = m_lon_asv + std::atan2(std::sin(offset_neighbors[k])*std::sin(range_ext/R)*std::cos(m_lat_asv),
+        //                           std::cos(range_ext/R)-std::sin(m_lat_asv)*std::sin(lat2));
+        //               //lats2.push_back(lat2);
+        //               //lons2.push_back(lon2);
 
-                      double ct_dxt,at_dxt;
-                      Coordinates::WGS84::getCtAndAtDistance(m_dangers(i,0), m_dangers(i,1), m_lat_asv, m_lon_asv, lat2, lon2, &ct_dxt, &at_dxt);
-                      //dsts.push_back(std::fabs(ct_dxt));
-                      double dst = std::fabs(ct_dxt);
-                      if(dst < m_args.radius_around_threat*2)
-                      {
-                        debug("COG offset %.0f - Path ending up at (%f,%f) reports CT distance of %f meters.",m_offsets[j],Angles::degrees(lat2),Angles::degrees(lon2),dst);
-                        if(m_static_obst_state(j,1) == 10000.0)
-                        {
-                          m_static_obst_state(j,1) = range - m_args.radius_around_threat;
-                          debug("Inserting static threat for COG offset %.0f!",m_offsets[j]);
-                        } else if(range < m_static_obst_state(j,1)) //! it means that a depth contours already assigned to this course offset.
-                        {//! if the range to the danger < range to the depth contour, replace the second with the first.
-                          m_static_obst_state(j,1) = range - m_args.radius_around_threat;
-                          debug("Replacing depth contour threat with static threat for COG offset %.0f!",m_offsets[j]);
-                        }
+        //               double ct_dxt,at_dxt;
+        //               Coordinates::WGS84::getCtAndAtDistance(m_dangers(i,0), m_dangers(i,1), m_lat_asv, m_lon_asv, lat2, lon2, &ct_dxt, &at_dxt);
+        //               //dsts.push_back(std::fabs(ct_dxt));
+        //               double dst = std::fabs(ct_dxt);
+        //               if(dst < m_args.radius_around_threat*2)
+        //               {
+        //                 debug("COG offset %.0f - Path ending up at (%f,%f) reports CT distance of %f meters.",m_offsets[j],Angles::degrees(lat2),Angles::degrees(lon2),dst);
+        //                 if(m_static_obst_state(j,1) == 10000.0)
+        //                 {
+        //                   m_static_obst_state(j,1) = range - m_args.radius_around_threat;
+        //                   debug("Inserting static threat for COG offset %.0f!",m_offsets[j]);
+        //                 } else if(range < m_static_obst_state(j,1)) //! it means that a depth contours already assigned to this course offset.
+        //                 {//! if the range to the danger < range to the depth contour, replace the second with the first.
+        //                   m_static_obst_state(j,1) = range - m_args.radius_around_threat;
+        //                   debug("Replacing depth contour threat with static threat for COG offset %.0f!",m_offsets[j]);
+        //                 }
 
-                        if(k==1 && j != (size_t)m_static_obst_state.rows())
-                        {
-                          if(m_static_obst_state(j-1,1) == 10000.0)
-                          {
-                            m_static_obst_state(j-1,1) = range - m_args.radius_around_threat;
-                            debug("Inserting static threat also for PREVIOUS (!!) COG offset %.0f!",m_offsets[j-1]);
-                          } else if(range < m_static_obst_state(j+1,1)) //! it means that a depth contours already assigned to this course offset.
-                          {//! if the range to the danger < range to the depth contour, replace the second with the first.
-                            m_static_obst_state(j-1,1) = range - m_args.radius_around_threat;
-                            debug("Replacing depth contour threat with static threat also for PREVIOUS (!!) COG offset %.0f!",m_offsets[j-1]);
-                          }
-                        }
-                      }
-                      //debug("dst %f for offset neighbor %.0f",std::fabs(ct_dxt),Angles::degrees(offset_neighbors[k]));
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+        //                 if(k==1 && j != (size_t)m_static_obst_state.rows())
+        //                 {
+        //                   if(m_static_obst_state(j-1,1) == 10000.0)
+        //                   {
+        //                     m_static_obst_state(j-1,1) = range - m_args.radius_around_threat;
+        //                     debug("Inserting static threat also for PREVIOUS (!!) COG offset %.0f!",m_offsets[j-1]);
+        //                   } else if(range < m_static_obst_state(j+1,1)) //! it means that a depth contours already assigned to this course offset.
+        //                   {//! if the range to the danger < range to the depth contour, replace the second with the first.
+        //                     m_static_obst_state(j-1,1) = range - m_args.radius_around_threat;
+        //                     debug("Replacing depth contour threat with static threat also for PREVIOUS (!!) COG offset %.0f!",m_offsets[j-1]);
+        //                   }
+        //                 }
+        //               }
+        //               //debug("dst %f for offset neighbor %.0f",std::fabs(ct_dxt),Angles::degrees(offset_neighbors[k]));
+        //             }
+        //           }
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
 
         void
         consume(const IMC::AisInfo* msg)
@@ -1139,27 +1139,27 @@ namespace Control
           }
         }
 
-        void
-        groundingCost(void)
-        {
-          debug("groundingCost");
-          // Cost function with environmental factors.
-          double bathymetry = 1;
-          m_wind_dir = 60;
-          m_wind_speed = 10;
+        // void
+        // groundingCost(void)
+        // {
+        //   debug("groundingCost");
+        //   // Cost function with environmental factors.
+        //   double bathymetry = 1;
+        //   m_wind_dir = 60;
+        //   m_wind_speed = 10;
 
-          double psi_path = atan2(m_waypoints(1,1) - m_waypoints(0,1), m_waypoints(1,0) - m_waypoints(0,0));
+        //   double psi_path = atan2(m_waypoints(1,1) - m_waypoints(0,1), m_waypoints(1,0) - m_waypoints(0,0));
 
-          for(int i=0; i < m_static_obst_state.rows(); i++)
-          {
-            double bath_m_cost = m_args.K_ENV[0]*std::pow(bathymetry,2);
-            double heave_m_cost = m_args.K_ENV[1]*std::pow(m_heave,2);
-            double wave_freq_m_cost = m_args.K_ENV[2]*m_wave_freq;
-            double wind_m_cost = m_args.K_ENV[3]*m_wind_speed*std::pow(std::fmax(0, std::cos(psi_path + Angles::radians(m_offsets[i]) - Angles::radians(m_wind_dir))),2);
-            double current_m_cost = m_args.K_ENV[4]*m_shallowest_current_cell.vel*std::pow(std::fmax(0, std::cos(psi_path + Angles::radians(m_offsets[i]) - Angles::radians(m_shallowest_current_cell.dir))),2);
-            m_static_obst_state(i,2) = m_args.K_GROUND + bath_m_cost + heave_m_cost + wave_freq_m_cost + wind_m_cost + current_m_cost;
-          }
-        }
+        //   for(int i=0; i < m_static_obst_state.rows(); i++)
+        //   {
+        //     double bath_m_cost = m_args.K_ENV[0]*std::pow(bathymetry,2);
+        //     double heave_m_cost = m_args.K_ENV[1]*std::pow(m_heave,2);
+        //     double wave_freq_m_cost = m_args.K_ENV[2]*m_wave_freq;
+        //     double wind_m_cost = m_args.K_ENV[3]*m_wind_speed*std::pow(std::fmax(0, std::cos(psi_path + Angles::radians(m_offsets[i]) - Angles::radians(m_wind_dir))),2);
+        //     double current_m_cost = m_args.K_ENV[4]*m_shallowest_current_cell.vel*std::pow(std::fmax(0, std::cos(psi_path + Angles::radians(m_offsets[i]) - Angles::radians(m_shallowest_current_cell.dir))),2);
+        //     m_static_obst_state(i,2) = m_args.K_GROUND + bath_m_cost + heave_m_cost + wave_freq_m_cost + wind_m_cost + current_m_cost;
+        //   }
+        // }
 
         void
         createWPs(const TrackingState& ts)
@@ -1203,7 +1203,7 @@ namespace Control
           trace("LOS DESIRED COURSE: %f", Angles::degrees(m_des_heading.value));
 
           //! Nothing is enabled.
-          if(!m_args.en_cas && !m_args.en_antiground)
+          if(!m_args.en_cas /* && !m_args.en_antiground */)
           {
             dispatch(m_des_heading);
             return;
@@ -1217,11 +1217,11 @@ namespace Control
             return;
           }
 
-          if(m_args.en_cas || m_args.en_antiground)
+          if(m_args.en_cas /* || m_args.en_antiground */)
             createWPs(ts);
 
           bool C_CAS = m_args.en_cas && m_dyn_obst_vec.size() > 0;
-          bool C_AG = m_args.en_antiground && (m_dangers.rows() > 0 || m_depths.rows() > 0);
+          // bool C_AG = m_args.en_antiground && (m_dangers.rows() > 0 || m_depths.rows() > 0);
 
           //! Compute dynamic obst. matrix for m_sb_mpc if CAS is enabled and there are dynamic obstacles in range.
           if(C_CAS)
@@ -1294,23 +1294,23 @@ namespace Control
           }
 
           //! Compute static obst. matrix for m_sb_mpc if ANTI-GROUNDING is enabled and there are static obstacles in range.
-          if(C_AG)
-          {
-            m_static_obst_state.resizeAndFill(m_offsets.size(),3,10000.0); //! Large values: initial m_cost is high.
-            buildENCforCAS();
-            groundingCost();
-            for(int i = 0; i < m_static_obst_state.rows(); i++)
-              debug("m_static_obst_state rows to m_sb_mpc: %.0f %.3f %.0f",Angles::degrees(m_static_obst_state(i,0)),m_static_obst_state(i,1),m_static_obst_state(i,2));
-          }
+          // if(C_AG)
+          // {
+          //   m_static_obst_state.resizeAndFill(m_offsets.size(),3,10000.0); //! Large values: initial m_cost is high.
+          //   buildENCforCAS();
+          //   groundingCost();
+          //   for(int i = 0; i < m_static_obst_state.rows(); i++)
+          //     debug("m_static_obst_state rows to m_sb_mpc: %.0f %.3f %.0f",Angles::degrees(m_static_obst_state(i,0)),m_static_obst_state(i,1),m_static_obst_state(i,2));
+          // }
 
-          if((C_CAS || C_AG) && (m_timestamp_new - m_timestamp_prev) > 20.0 && m_sb_mpc != nullptr)
+          if((C_CAS /* || C_AG */) && (m_timestamp_new - m_timestamp_prev) > 20.0 && m_sb_mpc != nullptr)
           {
-            if(!C_CAS && C_AG)
+            /* if(!C_CAS && C_AG)
               debug("Anti-grounding situation!");
-            else if(C_CAS && !C_AG)
+            else  */if(C_CAS /* && !C_AG */)
               debug("Anti-collision situation!");
-            else if(C_CAS && C_AG) // both, this is an anti-grounding and anti-collision scenario!
-              debug("Anti-grounding and anti-collision situation!");
+            // else if(C_CAS && C_AG) // both, this is an anti-grounding and anti-collision scenario!
+            //   debug("Anti-grounding and anti-collision situation!");
 
             obstacle* obs_vessel = nullptr;
             m_sb_mpc->getBestControlOffset(m_u_os, m_psi_os, m_asv_state[3], m_des_heading.value, m_asv_state, m_waypoints, m_dyn_obst_state, m_static_obst_state, m_cost, obs_vessel);
