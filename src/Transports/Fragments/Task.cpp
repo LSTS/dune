@@ -85,7 +85,7 @@ namespace Transports
 
         m_incoming[hash].second = true;
         debug("Incoming message fragment for message %u (%d still missing)",
-              hash,
+              hash >> 16,
               m_incoming[hash].first.getFragmentsMissing());
 
         IMC::Message* res = m_incoming[hash].first.setFragment(msg);
@@ -113,7 +113,7 @@ namespace Transports
             if (it->second.second)
             {              
               IMC::MessagePartControl mpc;
-              mpc.uid = it->first;
+              mpc.uid = it->first >> 16;
               mpc.op = IMC::MessagePartControl::OP_REQUEST_RETRANSMIT;
               if (it->second.first.getFragmentsMissing() <= it->second.first.getFragmentsReceived())
               {
