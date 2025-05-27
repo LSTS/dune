@@ -37,6 +37,9 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Garbage collector timeout in seconds.
+    static const uint16_t c_gc_timeout = 120;
+
     struct Arguments
     {
       // Reception timeout.
@@ -45,23 +48,25 @@ namespace Transports
 
     struct Task: public DUNE::Tasks::Task
     {
+      //! Task arguments.
+      Arguments m_args;
       //! Map of incoming fragmented messages.
       //! Key is a hash of the message uid and source.
       //! Value is a pair of the fragmented message and a boolean
       //! indicating if the message is still being received.
       std::map<uint32_t, std::pair<FragmentedMessage, bool>> m_incoming;
+      //! Garbage collector counter.
       Time::Counter<float> m_gc_counter;
-      Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx)
+        DUNE::Tasks::Task(name, ctx),
+        m_gc_counter(c_gc_timeout)
       {
         param("Reception timeout", m_args.max_age_secs)
         .defaultValue("1800")
         .description("Maximum amount of seconds to wait for missing fragments in incoming messages");
 
         bind<IMC::MessagePart>(this);
-        m_gc_counter.setTop(120);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -99,7 +104,7 @@ namespace Transports
         }
       }
 
-      void
+      bool
       messageRipper(void)
       {
         debug("ripping old messages");
@@ -108,7 +113,8 @@ namespace Transports
         std::vector<uint32_t> remove;
         for ( ; it != m_incoming.end(); ++it)
         {
-          if (it->second.first.getAge() > m_args.max_age_secs)
+          const auto remaining = m_args.max_age_secs - it->second.first.getAge();
+          if (remaining <= 0.0f)
           {
             if (it->second.second)
             {              
@@ -139,10 +145,17 @@ namespace Transports
                 it->first,    
                 it->second.first.getFragmentsMissing());
           }
+          else if (remaining < m_gc_counter.getRemaining())
+          {
+            m_gc_counter.setTop(remaining);
+            return false;
+          }
         }
 
         for (size_t i = 0; i < remove.size(); ++i)
           m_incoming.erase(remove[i]);
+
+        return true;
       }
 
       void
@@ -154,8 +167,8 @@ namespace Transports
 
           if (m_gc_counter.overflow())
           {
-            messageRipper();
-            m_gc_counter.reset();
+            if (messageRipper())
+              m_gc_counter.setTop(c_gc_timeout);
           }
         }
       }
