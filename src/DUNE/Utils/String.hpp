@@ -37,7 +37,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
