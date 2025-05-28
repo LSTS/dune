@@ -28,6 +28,7 @@
 //***************************************************************************
 
 #include <unordered_set>
+#include <sstream>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -681,6 +682,13 @@ namespace Transports
             continue;
 
           checkRetransmissions();
+          std::ostringstream description;
+          description << "active";
+          description << " | "
+                      << "holding a total of "
+                      << m_retransmissions.size()
+                      << " messages for possible retransmission";
+          setEntityState(IMC::EntityState::ESTA_NORMAL, description.str());
 
           if (m_iri_subs.empty())
             continue;
