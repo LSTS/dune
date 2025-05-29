@@ -576,6 +576,17 @@ namespace Transports
           retransmission.m_period.setTop(m_args.frag_retransmit_period);
           if (m_retransmit_timer.getTop() == 0)
             m_retransmit_timer.setTop(m_args.frag_retransmit_period);
+
+          std::map<uint32_t, FragmentsRetransmission>::iterator it = m_retransmissions.find(frag->uid);
+          if (it != m_retransmissions.end())
+          {
+            trace("discarding previous Fragmented message with uid %u, "
+                  "as new Fragmented message with this uid was just created",
+                  frag->uid);
+            delete it->second.m_fragments;
+            m_retransmissions.erase(it);
+          }
+
           m_retransmissions[frag->uid] = retransmission;
         }
         else
