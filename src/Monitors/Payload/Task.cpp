@@ -159,6 +159,12 @@ namespace Monitors
             err("invalid message format %s", i.c_str());
             continue;
           }
+          else if (params[0].compare("MessagePart") == 0 ||
+                   params[0].compare("MessagePartControl") == 0)
+          {
+            inf("skipping: %s", params[0].c_str());
+            continue;
+          }
 
           inf("Add message %s from %s to payload", params[0].c_str(), params[1].c_str());
           unsigned msg_id = IMC::Factory::getIdFromAbbrev(params[0]);
