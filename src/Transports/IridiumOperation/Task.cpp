@@ -167,6 +167,9 @@ namespace Transports
         // Process filtered entities.
         if (paramChanged(m_args.entities_flt))
           m_filter.setupEntities(m_args.entities_flt, this);
+
+        if (paramChanged(m_args.msgs))
+          bind(this, m_args.msgs);
       }
 
       //! Reserve entity identifiers.
@@ -183,7 +186,6 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
-        bind(this, m_args.msgs);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
