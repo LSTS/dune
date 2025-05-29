@@ -150,6 +150,7 @@ namespace Transports
         bind<IMC::IridiumTxStatus>(this);
         bind<IMC::IridiumMsgRx>(this);
         bind<IMC::EntityState>(this);
+        bind<IMC::MessagePart>(this);
         bind<IMC::MessagePartControl>(this);
         bind<IMC::PlanDB>(this);
         bind<IMC::PlanControlState>(this);
@@ -233,6 +234,27 @@ namespace Transports
           result.erase(id);
 
         return result;
+      }
+
+      void
+      consume(const IMC::MessagePart* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getSourceEntity() == getEntityId())
+          return;
+
+        std::map<uint32_t, FragmentsRetransmission>::iterator it = m_retransmissions.find(msg->uid);
+        if (it != m_retransmissions.end())
+        {
+          trace("%s produced a Fragmented message with uid %u"
+                "holding retransmission for fragments with this uid already exists, discarding it",
+                resolveEntity(msg->getSourceEntity()).c_str(),
+                msg->uid);
+          delete it->second.m_fragments;
+          m_retransmissions.erase(it);
+        }
       }
 
       void
