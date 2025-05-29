@@ -141,7 +141,7 @@ namespace Monitors
           war("Entity %s not found", name.c_str());
         }
 
-        return 0;
+        return AddressResolver::invalid();
       }
 
       //! Acquire resources.
@@ -163,6 +163,20 @@ namespace Monitors
                    params[0].compare("MessagePartControl") == 0)
           {
             inf("skipping: %s", params[0].c_str());
+            continue;
+          }
+          else if (params[1].empty())
+          {
+            err("empty entity name for message %s", params[0].c_str());
+            continue;
+          }
+          else if (IMC::Factory::getIdFromAbbrev(params[0]) == 0)
+          {
+            err("message %s not found in IMC factory", params[0].c_str());
+            continue;
+          }
+          else if (AddressResolver::isValid(tryResolveEntity(params[1])))
+          {
             continue;
           }
 
