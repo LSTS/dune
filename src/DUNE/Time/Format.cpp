@@ -166,7 +166,7 @@ namespace DUNE
         result << hours << "h";
       if (minutes > 0)
         result << minutes << "m";
-      if (tstamp > 0)
+      if (tstamp >= 0)
         result << std::fixed << std::setprecision(1) << tstamp << "s";
 
       return result.str();
