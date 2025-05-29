@@ -190,6 +190,14 @@ namespace Transports
       }
 
       void
+      onResourceInitialization(void)
+      {
+        for (auto& it: m_retransmissions)
+          delete it.second.m_fragments;
+        m_retransmissions.clear();
+      }
+
+      void
       onActivation(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
