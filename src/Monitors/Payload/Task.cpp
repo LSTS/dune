@@ -27,6 +27,9 @@
 // Author: João Bogas                                                       *
 //***************************************************************************
 
+#include <sstream>
+#include <unordered_set>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Network/Fragments.hpp>
@@ -54,6 +57,16 @@ namespace Monitors
       uint32_t max_payload;
       //! Message time to live.
       uint16_t ttl;
+      //! Period where retransmission request of fragments is valid.
+      uint32_t frag_retransmit_period;
+    };
+
+    struct FragmentsRetransmission
+    {
+      //! Fragments.
+      Network::Fragments* m_fragments;
+      //! Fragment retransmission request period.
+      Time::Counter<uint32_t> m_period;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -66,6 +79,10 @@ namespace Monitors
       uint16_t m_req_id;
       //! Payload storage.
       Storage m_storage;
+      //! Temporary list of message fragments for retransmission.
+      std::map<uint32_t, FragmentsRetransmission> m_retransmissions;
+      //! Timer to check retransmissions.
+      Time::Counter<uint32_t> m_retransmit_timer;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -73,7 +90,8 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_req_id(1000),
-        m_storage(this)
+        m_storage(this),
+        m_retransmit_timer(0)
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER, Tasks::Parameter::VISIBILITY_USER, true);
 
@@ -92,6 +110,16 @@ namespace Monitors
         param("Message TTL", m_args.ttl)
           .defaultValue("30")
           .description("Time to live for iridium messages.");
+
+        param("Fragments Retrasmission Request Timeout", m_args.frag_retransmit_period)
+          .minimumValue("0")
+          .defaultValue("1800")
+          .units(Units::Second)
+          .description("Represents the amount of time a message is valid for retransmission. "
+                       "If set to 0, retransmission requests are not allowed.");
+
+        bind<IMC::MessagePart>(this);
+        bind<IMC::MessagePartControl>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -146,6 +174,14 @@ namespace Monitors
       }
 
       void
+      onResourceInitialization(void)
+      {
+        for (auto& it: m_retransmissions)
+          delete it.second.m_fragments;
+        m_retransmissions.clear();
+      }
+
+      void
       onActivation(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -165,18 +201,119 @@ namespace Monitors
         m_storage.store(msg);
       }
 
+      std::unordered_set<int>
+      getRetransmissionList(Network::Fragments* fragments, const std::string& request)
+      {
+        if (request.empty())
+          return {};
+
+        auto frag_list = request;
+        auto negation = frag_list.front() == '!';
+        if (negation)
+          frag_list.erase(0, 1);
+
+        std::vector<int> frag_ids;
+        Utils::String::split(frag_list, ",", frag_ids);
+
+        if (!negation)
+          return std::unordered_set<int>(frag_ids.begin(), frag_ids.end());
+
+        std::vector<int> temp(fragments->getNumberOfFragments()); 
+        std::iota(temp.begin(), temp.end(), 0);
+        std::unordered_set<int> result(temp.begin(), temp.end());
+        for (const auto& id : frag_ids)
+          result.erase(id);
+
+        return result;
+      }
+
+      void
+      consume(const IMC::MessagePart* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getSourceEntity() == getEntityId())
+          return;
+
+        std::map<uint32_t, FragmentsRetransmission>::iterator it = m_retransmissions.find(msg->uid);
+        if (it != m_retransmissions.end())
+        {
+          trace("%s produced a Fragmented message with uid %u"
+                "holding retransmission for fragments with this uid already exists, discarding it",
+                resolveEntity(msg->getSourceEntity()).c_str(),
+                msg->uid);
+          delete it->second.m_fragments;
+          m_retransmissions.erase(it);
+        }
+      }
+
+      void
+      consume(const IMC::MessagePartControl* msg)
+      {
+        if (msg->op != IMC::MessagePartControl::OP_REQUEST_RETRANSMIT)
+          return;
+
+        if (m_args.frag_retransmit_period == 0)
+          return;
+
+        if (msg->frag_ids.empty())
+          return;
+
+        std::map<uint32_t, FragmentsRetransmission>::iterator it = m_retransmissions.find(msg->uid);
+        if (it == m_retransmissions.end())
+          return;
+
+        std::unordered_set<int> frags = getRetransmissionList(it->second.m_fragments, msg->frag_ids);
+        for (const auto& frag: frags)
+        {
+          IMC::MessagePart* msg_frag = it->second.m_fragments->getFragment(frag);
+          sendInline(msg_frag);
+        }
+      }
+
       void
       sendIMCFragments(const IMC::Message* msg)
       {
         if (!isActive())
           return;
 
-        Network::Fragments frags(const_cast<IMC::Message*>(msg), m_args.max_payload);
+        Network::Fragments* frags = new Network::Fragments(const_cast<IMC::Message*>(msg), m_args.max_payload);
+        IMC::MessagePart* frag = frags->getFragment(0);
+        dispatch(frag);
+        inf("sending %d fragments of message %s (uid:%d) to destination %d",
+                  frags->getNumberOfFragments(), msg->getName(), frag->uid, msg->getDestination());
 
-        for (int i = 0; i < frags.getNumberOfFragments(); i++)
+        for (int i = 0; i < frags->getNumberOfFragments(); i++)
         {
-          IMC::MessagePart* msg_frag = frags.getFragment(i);
+          IMC::MessagePart* msg_frag = frags->getFragment(i);
           sendInline(msg_frag);
+        }
+
+        if (m_args.frag_retransmit_period > 0)
+        {
+          FragmentsRetransmission retransmission;
+          retransmission.m_fragments = frags;
+          retransmission.m_period.setTop(m_args.frag_retransmit_period);
+          if (m_retransmit_timer.getTop() == 0)
+            m_retransmit_timer.setTop(m_args.frag_retransmit_period);
+
+          
+          std::map<uint32_t, FragmentsRetransmission>::iterator it = m_retransmissions.find(frag->uid);
+          if (it != m_retransmissions.end())
+          {
+            trace("discarding previous Fragmented message with uid %u, "
+                  "as new Fragmented message with this uid was just created",
+                  frag->uid);
+            delete it->second.m_fragments;
+            m_retransmissions.erase(it);
+          }
+
+          m_retransmissions[frag->uid] = retransmission;
+        }
+        else
+        {
+          delete frags;
         }
       }
 
@@ -232,6 +369,35 @@ namespace Monitors
         return true;
       }
 
+      void
+      checkRetransmissions(void)
+      {
+        if (m_retransmissions.empty())
+        {
+          m_retransmit_timer.setTop(0);
+          return;
+        }
+
+        if (!m_retransmit_timer.overflow())
+          return;
+
+        std::map<uint32_t, FragmentsRetransmission>::iterator it = m_retransmissions.begin();
+        for (; it != m_retransmissions.end(); it++)
+        {
+          const auto remaining = it->second.m_period.getRemaining();
+          if (remaining > 0)
+          {
+            if (remaining < m_retransmit_timer.getRemaining())
+              m_retransmit_timer.setTop(remaining);
+
+            continue;
+          }
+
+          delete it->second.m_fragments;
+          m_retransmissions.erase(it);
+        }
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -242,6 +408,15 @@ namespace Monitors
 
           if (!isActive())
             continue;
+
+          checkRetransmissions();
+          std::ostringstream description;
+          description << "active";
+          description << " | "
+                      << "holding a total of "
+                      << m_retransmissions.size()
+                      << " messages for possible retransmission";
+          setEntityState(IMC::EntityState::ESTA_NORMAL, description.str());
 
           if (!m_send_wdog.overflow())
             continue;
