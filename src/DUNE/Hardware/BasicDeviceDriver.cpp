@@ -770,9 +770,11 @@ namespace DUNE
       description << "active"
                   << " | sampling: " << (state ? "on" : "off");
       if ((periodicity != sample_period) && (sample_period > 0.0f))
-        description << " (r: "
-                    << Format::getTimeDHMS(state ? getSamplePeriodRemaining() : getSamplePeriodicityRemaining())
-                    << ")";
+      {
+        const auto time = Format::getTimeDHMS(state ? getSamplePeriodRemaining() : getSamplePeriodicityRemaining());
+        if (!time.empty())
+          description << " (r: " << time << ")";
+      }
 
       setEntityState(IMC::EntityState::ESTA_NORMAL, description.str());
     }
