@@ -180,7 +180,7 @@ namespace Monitors
             continue;
           }
 
-          inf("Add message %s from %s to payload", params[0].c_str(), params[1].c_str());
+          debug("Add message %s from %s to payload", params[0].c_str(), params[1].c_str());
           unsigned msg_id = IMC::Factory::getIdFromAbbrev(params[0]);
           unsigned eid = tryResolveEntity(params[1]);
           m_storage.addToPayload(eid, msg_id);
