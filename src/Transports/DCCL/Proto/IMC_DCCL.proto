@@ -137,8 +137,8 @@ message EstimatedState {
 message Goto {
     option (dccl.msg) = { codec_version: 4 id: 450 max_bytes: 80};
     int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
-    float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 8 }];
-    float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 8 }];
+    float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 10 }];
+    float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 10 }];
     float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
     ZUnits z_units = 5;
     float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
@@ -152,10 +152,10 @@ message Goto {
 // StationKeeping Maneuver
 message StationKeeping {
     option (dccl.msg) = { codec_version: 4 id: 461 max_bytes: 80};
-    float lat = 1 [(dccl.field) = { min: -1.570 max: 1.570 precision: 8 }];
-    float lon = 2 [(dccl.field) = { min: -3.141 max: 3.141 precision: 8 }];
+    float lat = 1 [(dccl.field) = { min: -1.570 max: 1.570 precision: 10 }];
+    float lon = 2 [(dccl.field) = { min: -3.141 max: 3.141 precision: 10 }];
     float z = 3 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
-    ZUnits z_units = 4;
+    ZUnits z_units = 4;  
     float radius = 5 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
     int32 duration = 6 [(dccl.field) = { min: 0 max: 65535}];
     float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
