@@ -45,6 +45,7 @@ enum ManeuverType {
     GOTO = 0;
     FOLLOWPATH = 1;
     LOITER = 2;
+    STATIONKEEPING = 3;
     //Teleoperation
     //YoYo
 }
@@ -148,6 +149,20 @@ message Goto {
     //TODO: costum field > enum with possible string
 }
 
+// StationKeeping Maneuver
+message StationKeeping {
+    option (dccl.msg) = { codec_version: 4 id: 461 max_bytes: 80};
+    float lat = 1 [(dccl.field) = { min: -1.570 max: 1.570 precision: 8 }];
+    float lon = 2 [(dccl.field) = { min: -3.141 max: 3.141 precision: 8 }];
+    float z = 3 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    ZUnits z_units = 4;
+    float radius = 5 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
+    int32 duration = 6 [(dccl.field) = { min: 0 max: 65535}];
+    float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    SpeedUnits speed_units = 8;
+    //TODO: costum field > enum with possible string
+}
+
 // FollowPath Maneuver
 message FollowPath {
     option (dccl.msg) = { codec_version: 4 id: 457 max_bytes: 1000};
@@ -195,6 +210,7 @@ message Maneuver{
         Goto goto_maneuver = 1 ;
         FollowPath followpath_maneuver = 2;
         Loiter loiter_maneuver = 3;
+        StationKeeping stationkeeping_maneuver = 4;
         //TODO: Insert here other maneuvers from Message-Group Maneuver
     }
 }

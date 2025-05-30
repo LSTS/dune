@@ -27,12 +27,13 @@ extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_ParameterValue;
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_PathPoint;
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_PlanVariable;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_StationKeeping;
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_EntityParameter;
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_EntityParameters;
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_FollowPath;
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_PlanTransition;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<3> scc_info_Maneuver;
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<3> scc_info_PlanManeuver;
+extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<4> scc_info_Maneuver;
 }  // namespace protobuf_IMC_5fDCCL_2eproto
 namespace IMC_DCCL {
 class EstimatedStateDefaultTypeInternal {
@@ -45,6 +46,11 @@ class GotoDefaultTypeInternal {
   ::google::protobuf::internal::ExplicitlyConstructed<Goto>
       _instance;
 } _Goto_default_instance_;
+class StationKeepingDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<StationKeeping>
+      _instance;
+} _StationKeeping_default_instance_;
 class FollowPathDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<FollowPath>
@@ -67,6 +73,7 @@ class ManeuverDefaultTypeInternal {
   const ::IMC_DCCL::Goto* goto_maneuver_;
   const ::IMC_DCCL::FollowPath* followpath_maneuver_;
   const ::IMC_DCCL::Loiter* loiter_maneuver_;
+  const ::IMC_DCCL::StationKeeping* stationkeeping_maneuver_;
 } _Maneuver_default_instance_;
 class ParameterValueDefaultTypeInternal {
  public:
@@ -145,6 +152,20 @@ static void InitDefaultsGoto() {
 ::google::protobuf::internal::SCCInfo<0> scc_info_Goto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsGoto}, {}};
 
+static void InitDefaultsStationKeeping() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::IMC_DCCL::_StationKeeping_default_instance_;
+    new (ptr) ::IMC_DCCL::StationKeeping();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::IMC_DCCL::StationKeeping::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_StationKeeping =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsStationKeeping}, {}};
+
 static void InitDefaultsFollowPath() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -199,11 +220,12 @@ static void InitDefaultsManeuver() {
   ::IMC_DCCL::Maneuver::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<3> scc_info_Maneuver =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 3, InitDefaultsManeuver}, {
+::google::protobuf::internal::SCCInfo<4> scc_info_Maneuver =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 4, InitDefaultsManeuver}, {
       &protobuf_IMC_5fDCCL_2eproto::scc_info_Goto.base,
       &protobuf_IMC_5fDCCL_2eproto::scc_info_FollowPath.base,
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_Loiter.base,}};
+      &protobuf_IMC_5fDCCL_2eproto::scc_info_Loiter.base,
+      &protobuf_IMC_5fDCCL_2eproto::scc_info_StationKeeping.base,}};
 
 static void InitDefaultsParameterValue() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -346,6 +368,7 @@ static void InitDefaultsPlanSpecification() {
 void InitDefaults() {
   ::google::protobuf::internal::InitSCC(&scc_info_EstimatedState.base);
   ::google::protobuf::internal::InitSCC(&scc_info_Goto.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_StationKeeping.base);
   ::google::protobuf::internal::InitSCC(&scc_info_FollowPath.base);
   ::google::protobuf::internal::InitSCC(&scc_info_Loiter.base);
   ::google::protobuf::internal::InitSCC(&scc_info_PathPoint.base);
@@ -361,7 +384,7 @@ void InitDefaults() {
   ::google::protobuf::internal::InitSCC(&scc_info_PlanSpecification.base);
 }
 
-::google::protobuf::Metadata file_level_metadata[15];
+::google::protobuf::Metadata file_level_metadata[16];
 const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[11];
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
@@ -405,6 +428,19 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, roll_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, pitch_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, yaw_),
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, lat_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, lon_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, z_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, z_units_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, radius_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, duration_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, speed_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, speed_units_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::FollowPath, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -452,6 +488,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   offsetof(::IMC_DCCL::ManeuverDefaultTypeInternal, goto_maneuver_),
   offsetof(::IMC_DCCL::ManeuverDefaultTypeInternal, followpath_maneuver_),
   offsetof(::IMC_DCCL::ManeuverDefaultTypeInternal, loiter_maneuver_),
+  offsetof(::IMC_DCCL::ManeuverDefaultTypeInternal, stationkeeping_maneuver_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Maneuver, ManeuverUnion_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::ParameterValue, _internal_metadata_),
@@ -534,24 +571,26 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::IMC_DCCL::EstimatedState)},
   { 25, -1, sizeof(::IMC_DCCL::Goto)},
-  { 40, -1, sizeof(::IMC_DCCL::FollowPath)},
-  { 53, -1, sizeof(::IMC_DCCL::Loiter)},
-  { 71, -1, sizeof(::IMC_DCCL::PathPoint)},
-  { 79, -1, sizeof(::IMC_DCCL::Maneuver)},
-  { 88, -1, sizeof(::IMC_DCCL::ParameterValue)},
-  { 96, -1, sizeof(::IMC_DCCL::EntityParameter)},
-  { 103, -1, sizeof(::IMC_DCCL::EntityParameters)},
-  { 110, -1, sizeof(::IMC_DCCL::ManeuverID)},
-  { 117, -1, sizeof(::IMC_DCCL::PlanManeuver)},
-  { 125, -1, sizeof(::IMC_DCCL::PlanVariable)},
-  { 134, -1, sizeof(::IMC_DCCL::PlanTransition)},
-  { 142, -1, sizeof(::IMC_DCCL::Header)},
-  { 151, -1, sizeof(::IMC_DCCL::PlanSpecification)},
+  { 40, -1, sizeof(::IMC_DCCL::StationKeeping)},
+  { 53, -1, sizeof(::IMC_DCCL::FollowPath)},
+  { 66, -1, sizeof(::IMC_DCCL::Loiter)},
+  { 84, -1, sizeof(::IMC_DCCL::PathPoint)},
+  { 92, -1, sizeof(::IMC_DCCL::Maneuver)},
+  { 102, -1, sizeof(::IMC_DCCL::ParameterValue)},
+  { 110, -1, sizeof(::IMC_DCCL::EntityParameter)},
+  { 117, -1, sizeof(::IMC_DCCL::EntityParameters)},
+  { 124, -1, sizeof(::IMC_DCCL::ManeuverID)},
+  { 131, -1, sizeof(::IMC_DCCL::PlanManeuver)},
+  { 139, -1, sizeof(::IMC_DCCL::PlanVariable)},
+  { 148, -1, sizeof(::IMC_DCCL::PlanTransition)},
+  { 156, -1, sizeof(::IMC_DCCL::Header)},
+  { 165, -1, sizeof(::IMC_DCCL::PlanSpecification)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_EstimatedState_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_Goto_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_StationKeeping_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_FollowPath_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_Loiter_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_PathPoint_default_instance_),
@@ -582,7 +621,7 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_PROTOBUF_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 15);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 16);
 }
 
 void AddDescriptorsImpl() {
@@ -619,101 +658,111 @@ void AddDescriptorsImpl() {
       "\004roll\030\010 \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\360\2771o\022\203\300\312!\031@\022&\n\005"
       "pitch\030\t \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\360\2771o\022\203\300\312!\031@\022$\n\003"
       "yaw\030\n \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\360\2771o\022\203\300\312!\031@:\n\242\?\007\010"
-      "\302\003\020P(\004\"\323\002\n\nFollowPath\022&\n\007timeout\030\001 \001(\005B\025"
-      "\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\340\377\357@\022$\n\003lat\030\002 \001(\002B\027\242\?\024 "
-      "\003)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n\003lon\030\003 \001(\002B\027\242\?\024 \003)"
-      "T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001z\030\004 \001(\002B\027\242\?\024 \001)\000\000\000\000"
-      "\000\000y\3001\000\000\000\000\000\000y@\022!\n\007z_units\030\005 \001(\0162\020.IMC_DCC"
-      "L.ZUnits\022&\n\005speed\030\006 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001"
-      "\000\000\000\000\000@\237@\022)\n\013speed_units\030\007 \001(\0162\024.IMC_DCCL"
-      ".SpeedUnits\022*\n\006points\030\010 \003(\0132\023.IMC_DCCL.P"
-      "athPointB\005\242\?\002P\036:\013\242\?\010\010\311\003\020\350\007(\004\"\230\004\n\006Loiter\022"
-      "&\n\007timeout\030\001 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\340\377\357@\022"
-      "$\n\003lat\030\002 \001(\002B\027\242\?\024 \003)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n"
-      "\003lon\030\003 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001z"
-      "\030\004 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@\022!\n\007z_uni"
-      "ts\030\005 \001(\0162\020.IMC_DCCL.ZUnits\022\'\n\010duration\030\006"
-      " \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\000\030\305@\022&\n\005speed\030\007 \001"
-      "(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001\000\000\000\000\000@\237@\022)\n\013speed_uni"
-      "ts\030\010 \001(\0162\024.IMC_DCCL.SpeedUnits\022\"\n\004type\030\t"
-      " \001(\0162\024.IMC_DCCL.LoiterType\022\'\n\006radius\030\n \001"
-      "(\002B\027\242\?\024 \001)\000\000\000\000\000\000\360\?1\000\000\000\000\000j\370@\022\'\n\006length\030\013 "
-      "\001(\002B\027\242\?\024 \001)\000\000\000\000\000\000\360\?1\000\000\000\000\000j\370@\022(\n\007bearing\030"
-      "\014 \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\000\0001o\022\203\300\312!\031@\022*\n\tdirect"
-      "ion\030\r \001(\0162\027.IMC_DCCL.DirectionType:\013\242\?\010\010"
-      "\305\003\020\350\007(\004\"\203\001\n\tPathPoint\022\"\n\001x\030\001 \001(\002B\027\242\?\024 \001)"
-      "\000\000\000\000\000\210\323\3001\000\000\000\000\000\210\323@\022\"\n\001y\030\002 \001(\002B\027\242\?\024 \001)\000\000\000\000"
-      "\000\210\323\3001\000\000\000\000\000\210\323@\022\"\n\001z\030\003 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\300"
-      "1\000\000\000\000\000\000y@:\n\242\?\007\010\312\003\020P(\004\"\262\001\n\010Maneuver\022\'\n\rgo"
-      "to_maneuver\030\001 \001(\0132\016.IMC_DCCL.GotoH\000\0223\n\023f"
-      "ollowpath_maneuver\030\002 \001(\0132\024.IMC_DCCL.Foll"
-      "owPathH\000\022+\n\017loiter_maneuver\030\003 \001(\0132\020.IMC_"
-      "DCCL.LoiterH\000:\n\242\?\007\010\001\020\254\002(\004B\017\n\rManeuverUni"
-      "on\"\222\001\n\016ParameterValue\022/\n\014value_number\030\001 "
-      "\001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\210\303@H\000\022,\n\014value_"
-      "string\030\002 \001(\0162\024.IMC_DCCL.ParamValueH\000:\n\242\?"
-      "\007\010\002\020\254\002(\004B\025\n\023ParameterValueUnion\"m\n\017Entit"
-      "yParameter\022%\n\004name\030\001 \001(\0162\027.IMC_DCCL.Para"
-      "meterName\022\'\n\005value\030\002 \001(\0132\030.IMC_DCCL.Para"
-      "meterValue:\n\242\?\007\010\241\006\020\024(\004\"t\n\020EntityParamete"
-      "rs\022\"\n\004name\030\001 \001(\0162\024.IMC_DCCL.EntityName\0220"
-      "\n\006params\030\002 \003(\0132\031.IMC_DCCL.EntityParamete"
-      "rB\005\242\?\002P\n:\n\242\?\007\010\242\006\020((\004\"v\n\nManeuverID\022-\n\rma"
-      "neuver_type\030\001 \001(\0162\026.IMC_DCCL.ManeuverTyp"
-      "e\022.\n\017maneuver_number\030\002 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\000"
-      "1\000\000\000\000\000\000I@:\t\242\?\006\010\003\020\036(\004\"\242\001\n\014PlanManeuver\022)\n"
-      "\013maneuver_id\030\001 \001(\0132\024.IMC_DCCL.ManeuverID"
-      "\022 \n\004data\030\002 \001(\0132\022.IMC_DCCL.Maneuver\0228\n\rst"
-      "art_actions\030\003 \003(\0132\032.IMC_DCCL.EntityParam"
-      "etersB\005\242\?\002P\017:\013\242\?\010\010\250\004\020\220\003(\004\"\212\001\n\014PlanVariab"
-      "le\022\023\n\004name\030\001 \001(\tB\005\242\?\002H\002\022\024\n\005value\030\002 \001(\tB\005"
-      "\242\?\002H\002\022\034\n\004type\030\003 \001(\0162\016.IMC_DCCL.Type\022$\n\006a"
-      "ccess\030\004 \001(\0162\024.IMC_DCCL.AccessType:\013\242\?\010\010\261"
-      "\004\020\220\003(\004\"\242\001\n\016PlanTransition\022(\n\nsource_man\030"
-      "\001 \001(\0132\024.IMC_DCCL.ManeuverID\022&\n\010dest_man\030"
-      "\002 \001(\0132\024.IMC_DCCL.ManeuverID\0221\n\ncondition"
-      "s\030\003 \001(\0162\035.IMC_DCCL.TransitionCondition:\013"
-      "\242\?\010\010\251\004\020\220\003(\004\"\254\001\n\006Header\022\"\n\003src\030\001 \001(\005B\025\242\?\022"
-      ")\000\000\000\000\000\000\000\0001\000\000\000\000\000\000\364@\022&\n\007src_ent\030\002 \001(\005B\025\242\?\022"
-      ")\000\000\000\000\000\000\000\0001\000\000\000\000\000\340o@\022\"\n\003dst\030\003 \001(\005B\025\242\?\022)\000\000\000"
-      "\000\000\000\000\0001\000\000\000\000\000\000\364@\022&\n\007dst_ent\030\004 \001(\005B\025\242\?\022)\000\000\000"
-      "\000\000\000\000\0001\000\000\000\000\000\340o@:\n\242\?\007\010\004\020\220\003(\004\"\220\003\n\021PlanSpeci"
-      "fication\022\026\n\007plan_id\030\001 \001(\tB\005\242\?\002H\024\022\032\n\013desc"
-      "ription\030\002 \001(\tB\005\242\?\002H\002\022\031\n\nvnamespace\030\003 \001(\t"
-      "B\005\242\?\002H\002\022*\n\014start_man_id\030\004 \001(\0132\024.IMC_DCCL"
-      ".ManeuverID\0220\n\tmaneuvers\030\005 \003(\0132\026.IMC_DCC"
-      "L.PlanManeuverB\005\242\?\002P\036\0224\n\013transitions\030\006 \003"
-      "(\0132\030.IMC_DCCL.PlanTransitionB\005\242\?\002P\036\0228\n\rs"
-      "tart_actions\030\007 \003(\0132\032.IMC_DCCL.EntityPara"
-      "metersB\005\242\?\002P\007\0220\n\tvariables\030\010 \003(\0132\026.IMC_D"
-      "CCL.PlanVariableB\005\242\?\002P\005\022\036\n\004head\030\t \001(\0132\020."
-      "IMC_DCCL.Header:\014\242\?\t\010\247\004\020\200\3520(\004*:\n\006ZUnits\022"
-      "\013\n\007NONE_ZU\020\000\022\t\n\005DEPTH\020\001\022\014\n\010ALTITUDE\020\002\022\n\n"
-      "\006HEIGHT\020\003*4\n\nSpeedUnits\022\r\n\tMETERS_PS\020\000\022\007"
-      "\n\003RPM\020\001\022\016\n\nPERCENTAGE\020\002*L\n\nLoiterType\022\013\n"
-      "\007DEFAULT\020\000\022\014\n\010CIRCULAR\020\001\022\r\n\tRACETRACK\020\002\022"
-      "\t\n\005EIGHT\020\003\022\t\n\005HOVER\020\004*A\n\rDirectionType\022\010"
-      "\n\004VDEP\020\000\022\n\n\006CLOCKW\020\001\022\013\n\007CCLOCKW\020\002\022\r\n\tIWI"
-      "NDCURR\020\003*4\n\014ManeuverType\022\010\n\004GOTO\020\000\022\016\n\nFO"
-      "LLOWPATH\020\001\022\n\n\006LOITER\020\002*\365\001\n\rParameterName"
-      "\022\013\n\007NONE_PN\020\000\022\n\n\006ACTIVE\020\001\022\036\n\032BOTTOM_TRAC"
-      "K_MINIMUM_DEPTH\020\002\022\026\n\022HIGH_FREQ_CHANNELS\020"
-      "\003\022\023\n\017HIGH_FREQ_RANGE\020\004\022\025\n\021LOW_FREQ_CHANN"
-      "ELS\020\005\022\022\n\016LOW_FREQ_RANGE\020\006\022\024\n\020RANGE_MULTI"
-      "PLIER\020\007\022\020\n\014STROBE_DELAY\020\010\022\021\n\rSHUTTER_VAL"
-      "UE\020\t\022\t\n\005RANGE\020\n\022\r\n\tFREQUENCY\020\013*8\n\nParamV"
-      "alue\022\013\n\007NONE_PV\020\000\022\010\n\004TRUE\020\001\022\t\n\005FALSE\020\002\022\010"
-      "\n\004BOTH\020\003*t\n\nEntityName\022\013\n\007NONE_EN\020\000\022\020\n\014P"
-      "ATH_CONTROL\020\001\022\n\n\006RANGER\020\002\022\022\n\016ACOUSTIC_MO"
-      "DEM\020\003\022\014\n\010SIDESCAN\020\004\022\n\n\006CAMERA\020\005\022\r\n\tMULTI"
-      "BEAM\020\006*6\n\023TransitionCondition\022\013\n\007NONE_TC"
-      "\020\000\022\022\n\016MANEUVERISDONE\020\001*6\n\004Type\022\013\n\007BOOLEA"
-      "N\020\000\022\n\n\006NUMBER\020\001\022\010\n\004TEXT\020\002\022\013\n\007MESSAGE\020\003*."
-      "\n\nAccessType\022\t\n\005INPUT\020\000\022\n\n\006OUTPUT\020\001\022\t\n\005L"
-      "OCAL\020\002b\006proto3"
+      "\302\003\020P(\004\"\324\002\n\016StationKeeping\022$\n\003lat\030\001 \001(\002B\027"
+      "\242\?\024 \010)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n\003lon\030\002 \001(\002B\027\242\?"
+      "\024 \010)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001z\030\003 \001(\002B\027\242\?\024 \001)"
+      "\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@\022!\n\007z_units\030\004 \001(\0162\020.IMC"
+      "_DCCL.ZUnits\022\'\n\006radius\030\005 \001(\002B\027\242\?\024 \001)\000\000\000\000"
+      "\000\000\360\?1\000\000\000\000\000j\370@\022\'\n\010duration\030\006 \001(\005B\025\242\?\022)\000\000\000"
+      "\000\000\000\000\0001\000\000\000\000\340\377\357@\022&\n\005speed\030\007 \001(\002B\027\242\?\024 \001)\000\000\000"
+      "\000\000@\237\3001\000\000\000\000\000@\237@\022)\n\013speed_units\030\010 \001(\0162\024.IM"
+      "C_DCCL.SpeedUnits:\n\242\?\007\010\315\003\020P(\004\"\323\002\n\nFollow"
+      "Path\022&\n\007timeout\030\001 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000"
+      "\340\377\357@\022$\n\003lat\030\002 \001(\002B\027\242\?\024 \003)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036"
+      "\371\?\022$\n\003lon\030\003 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@"
+      "\022\"\n\001z\030\004 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@\022!\n\007"
+      "z_units\030\005 \001(\0162\020.IMC_DCCL.ZUnits\022&\n\005speed"
+      "\030\006 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001\000\000\000\000\000@\237@\022)\n\013speed"
+      "_units\030\007 \001(\0162\024.IMC_DCCL.SpeedUnits\022*\n\006po"
+      "ints\030\010 \003(\0132\023.IMC_DCCL.PathPointB\005\242\?\002P\036:\013"
+      "\242\?\010\010\311\003\020\350\007(\004\"\230\004\n\006Loiter\022&\n\007timeout\030\001 \001(\005B"
+      "\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\340\377\357@\022$\n\003lat\030\002 \001(\002B\027\242\?\024"
+      " \003)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n\003lon\030\003 \001(\002B\027\242\?\024 \003"
+      ")T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001z\030\004 \001(\002B\027\242\?\024 \001)\000\000\000"
+      "\000\000\000y\3001\000\000\000\000\000\000y@\022!\n\007z_units\030\005 \001(\0162\020.IMC_DC"
+      "CL.ZUnits\022\'\n\010duration\030\006 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000"
+      "\0001\000\000\000\000\000\030\305@\022&\n\005speed\030\007 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237"
+      "\3001\000\000\000\000\000@\237@\022)\n\013speed_units\030\010 \001(\0162\024.IMC_DC"
+      "CL.SpeedUnits\022\"\n\004type\030\t \001(\0162\024.IMC_DCCL.L"
+      "oiterType\022\'\n\006radius\030\n \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000\360"
+      "\?1\000\000\000\000\000j\370@\022\'\n\006length\030\013 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000"
+      "\360\?1\000\000\000\000\000j\370@\022(\n\007bearing\030\014 \001(\002B\027\242\?\024 \003)\000\000\000\000"
+      "\000\000\000\0001o\022\203\300\312!\031@\022*\n\tdirection\030\r \001(\0162\027.IMC_D"
+      "CCL.DirectionType:\013\242\?\010\010\305\003\020\350\007(\004\"\203\001\n\tPathP"
+      "oint\022\"\n\001x\030\001 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\210\323\3001\000\000\000\000\000\210\323@"
+      "\022\"\n\001y\030\002 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\210\323\3001\000\000\000\000\000\210\323@\022\"\n\001"
+      "z\030\003 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@:\n\242\?\007\010\312\003"
+      "\020P(\004\"\357\001\n\010Maneuver\022\'\n\rgoto_maneuver\030\001 \001(\013"
+      "2\016.IMC_DCCL.GotoH\000\0223\n\023followpath_maneuve"
+      "r\030\002 \001(\0132\024.IMC_DCCL.FollowPathH\000\022+\n\017loite"
+      "r_maneuver\030\003 \001(\0132\020.IMC_DCCL.LoiterH\000\022;\n\027"
+      "stationkeeping_maneuver\030\004 \001(\0132\030.IMC_DCCL"
+      ".StationKeepingH\000:\n\242\?\007\010\001\020\254\002(\004B\017\n\rManeuve"
+      "rUnion\"\222\001\n\016ParameterValue\022/\n\014value_numbe"
+      "r\030\001 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\210\303@H\000\022,\n\014va"
+      "lue_string\030\002 \001(\0162\024.IMC_DCCL.ParamValueH\000"
+      ":\n\242\?\007\010\002\020\254\002(\004B\025\n\023ParameterValueUnion\"m\n\017E"
+      "ntityParameter\022%\n\004name\030\001 \001(\0162\027.IMC_DCCL."
+      "ParameterName\022\'\n\005value\030\002 \001(\0132\030.IMC_DCCL."
+      "ParameterValue:\n\242\?\007\010\241\006\020\024(\004\"t\n\020EntityPara"
+      "meters\022\"\n\004name\030\001 \001(\0162\024.IMC_DCCL.EntityNa"
+      "me\0220\n\006params\030\002 \003(\0132\031.IMC_DCCL.EntityPara"
+      "meterB\005\242\?\002P\n:\n\242\?\007\010\242\006\020((\004\"v\n\nManeuverID\022-"
+      "\n\rmaneuver_type\030\001 \001(\0162\026.IMC_DCCL.Maneuve"
+      "rType\022.\n\017maneuver_number\030\002 \001(\005B\025\242\?\022)\000\000\000\000"
+      "\000\000\000\0001\000\000\000\000\000\000I@:\t\242\?\006\010\003\020\036(\004\"\242\001\n\014PlanManeuve"
+      "r\022)\n\013maneuver_id\030\001 \001(\0132\024.IMC_DCCL.Maneuv"
+      "erID\022 \n\004data\030\002 \001(\0132\022.IMC_DCCL.Maneuver\0228"
+      "\n\rstart_actions\030\003 \003(\0132\032.IMC_DCCL.EntityP"
+      "arametersB\005\242\?\002P\017:\013\242\?\010\010\250\004\020\220\003(\004\"\212\001\n\014PlanVa"
+      "riable\022\023\n\004name\030\001 \001(\tB\005\242\?\002H\002\022\024\n\005value\030\002 \001"
+      "(\tB\005\242\?\002H\002\022\034\n\004type\030\003 \001(\0162\016.IMC_DCCL.Type\022"
+      "$\n\006access\030\004 \001(\0162\024.IMC_DCCL.AccessType:\013\242"
+      "\?\010\010\261\004\020\220\003(\004\"\242\001\n\016PlanTransition\022(\n\nsource_"
+      "man\030\001 \001(\0132\024.IMC_DCCL.ManeuverID\022&\n\010dest_"
+      "man\030\002 \001(\0132\024.IMC_DCCL.ManeuverID\0221\n\ncondi"
+      "tions\030\003 \001(\0162\035.IMC_DCCL.TransitionConditi"
+      "on:\013\242\?\010\010\251\004\020\220\003(\004\"\254\001\n\006Header\022\"\n\003src\030\001 \001(\005B"
+      "\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\000\000\364@\022&\n\007src_ent\030\002 \001(\005B"
+      "\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\000\340o@\022\"\n\003dst\030\003 \001(\005B\025\242\?\022"
+      ")\000\000\000\000\000\000\000\0001\000\000\000\000\000\000\364@\022&\n\007dst_ent\030\004 \001(\005B\025\242\?\022"
+      ")\000\000\000\000\000\000\000\0001\000\000\000\000\000\340o@:\n\242\?\007\010\004\020\220\003(\004\"\220\003\n\021PlanS"
+      "pecification\022\026\n\007plan_id\030\001 \001(\tB\005\242\?\002H\024\022\032\n\013"
+      "description\030\002 \001(\tB\005\242\?\002H\002\022\031\n\nvnamespace\030\003"
+      " \001(\tB\005\242\?\002H\002\022*\n\014start_man_id\030\004 \001(\0132\024.IMC_"
+      "DCCL.ManeuverID\0220\n\tmaneuvers\030\005 \003(\0132\026.IMC"
+      "_DCCL.PlanManeuverB\005\242\?\002P\036\0224\n\013transitions"
+      "\030\006 \003(\0132\030.IMC_DCCL.PlanTransitionB\005\242\?\002P\036\022"
+      "8\n\rstart_actions\030\007 \003(\0132\032.IMC_DCCL.Entity"
+      "ParametersB\005\242\?\002P\007\0220\n\tvariables\030\010 \003(\0132\026.I"
+      "MC_DCCL.PlanVariableB\005\242\?\002P\005\022\036\n\004head\030\t \001("
+      "\0132\020.IMC_DCCL.Header:\014\242\?\t\010\247\004\020\200\3520(\004*:\n\006ZUn"
+      "its\022\013\n\007NONE_ZU\020\000\022\t\n\005DEPTH\020\001\022\014\n\010ALTITUDE\020"
+      "\002\022\n\n\006HEIGHT\020\003*4\n\nSpeedUnits\022\r\n\tMETERS_PS"
+      "\020\000\022\007\n\003RPM\020\001\022\016\n\nPERCENTAGE\020\002*L\n\nLoiterTyp"
+      "e\022\013\n\007DEFAULT\020\000\022\014\n\010CIRCULAR\020\001\022\r\n\tRACETRAC"
+      "K\020\002\022\t\n\005EIGHT\020\003\022\t\n\005HOVER\020\004*A\n\rDirectionTy"
+      "pe\022\010\n\004VDEP\020\000\022\n\n\006CLOCKW\020\001\022\013\n\007CCLOCKW\020\002\022\r\n"
+      "\tIWINDCURR\020\003*H\n\014ManeuverType\022\010\n\004GOTO\020\000\022\016"
+      "\n\nFOLLOWPATH\020\001\022\n\n\006LOITER\020\002\022\022\n\016STATIONKEE"
+      "PING\020\003*\365\001\n\rParameterName\022\013\n\007NONE_PN\020\000\022\n\n"
+      "\006ACTIVE\020\001\022\036\n\032BOTTOM_TRACK_MINIMUM_DEPTH\020"
+      "\002\022\026\n\022HIGH_FREQ_CHANNELS\020\003\022\023\n\017HIGH_FREQ_R"
+      "ANGE\020\004\022\025\n\021LOW_FREQ_CHANNELS\020\005\022\022\n\016LOW_FRE"
+      "Q_RANGE\020\006\022\024\n\020RANGE_MULTIPLIER\020\007\022\020\n\014STROB"
+      "E_DELAY\020\010\022\021\n\rSHUTTER_VALUE\020\t\022\t\n\005RANGE\020\n\022"
+      "\r\n\tFREQUENCY\020\013*8\n\nParamValue\022\013\n\007NONE_PV\020"
+      "\000\022\010\n\004TRUE\020\001\022\t\n\005FALSE\020\002\022\010\n\004BOTH\020\003*t\n\nEnti"
+      "tyName\022\013\n\007NONE_EN\020\000\022\020\n\014PATH_CONTROL\020\001\022\n\n"
+      "\006RANGER\020\002\022\022\n\016ACOUSTIC_MODEM\020\003\022\014\n\010SIDESCA"
+      "N\020\004\022\n\n\006CAMERA\020\005\022\r\n\tMULTIBEAM\020\006*6\n\023Transi"
+      "tionCondition\022\013\n\007NONE_TC\020\000\022\022\n\016MANEUVERIS"
+      "DONE\020\001*6\n\004Type\022\013\n\007BOOLEAN\020\000\022\n\n\006NUMBER\020\001\022"
+      "\010\n\004TEXT\020\002\022\013\n\007MESSAGE\020\003*.\n\nAccessType\022\t\n\005"
+      "INPUT\020\000\022\n\n\006OUTPUT\020\001\022\t\n\005LOCAL\020\002b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 4894);
+      descriptor, 5318);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "IMC_DCCL.proto", &protobuf_RegisterTypes);
   ::protobuf_dccl_2foption_5fextensions_2eproto::AddDescriptors();
@@ -804,6 +853,7 @@ bool ManeuverType_IsValid(int value) {
     case 0:
     case 1:
     case 2:
+    case 3:
       return true;
     default:
       return false;
@@ -2333,6 +2383,481 @@ void Goto::InternalSwap(Goto* other) {
 
 // ===================================================================
 
+void StationKeeping::InitAsDefaultInstance() {
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int StationKeeping::kLatFieldNumber;
+const int StationKeeping::kLonFieldNumber;
+const int StationKeeping::kZFieldNumber;
+const int StationKeeping::kZUnitsFieldNumber;
+const int StationKeeping::kRadiusFieldNumber;
+const int StationKeeping::kDurationFieldNumber;
+const int StationKeeping::kSpeedFieldNumber;
+const int StationKeeping::kSpeedUnitsFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+StationKeeping::StationKeeping()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  ::google::protobuf::internal::InitSCC(
+      &protobuf_IMC_5fDCCL_2eproto::scc_info_StationKeeping.base);
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:IMC_DCCL.StationKeeping)
+}
+StationKeeping::StationKeeping(const StationKeeping& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::memcpy(&lat_, &from.lat_,
+    static_cast<size_t>(reinterpret_cast<char*>(&speed_units_) -
+    reinterpret_cast<char*>(&lat_)) + sizeof(speed_units_));
+  // @@protoc_insertion_point(copy_constructor:IMC_DCCL.StationKeeping)
+}
+
+void StationKeeping::SharedCtor() {
+  ::memset(&lat_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&speed_units_) -
+      reinterpret_cast<char*>(&lat_)) + sizeof(speed_units_));
+}
+
+StationKeeping::~StationKeeping() {
+  // @@protoc_insertion_point(destructor:IMC_DCCL.StationKeeping)
+  SharedDtor();
+}
+
+void StationKeeping::SharedDtor() {
+}
+
+void StationKeeping::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ::google::protobuf::Descriptor* StationKeeping::descriptor() {
+  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const StationKeeping& StationKeeping::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_StationKeeping.base);
+  return *internal_default_instance();
+}
+
+
+void StationKeeping::Clear() {
+// @@protoc_insertion_point(message_clear_start:IMC_DCCL.StationKeeping)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  ::memset(&lat_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&speed_units_) -
+      reinterpret_cast<char*>(&lat_)) + sizeof(speed_units_));
+  _internal_metadata_.Clear();
+}
+
+bool StationKeeping::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:IMC_DCCL.StationKeeping)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // float lat = 1 [(.dccl.field) = {
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(13u /* 13 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, &lat_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // float lon = 2 [(.dccl.field) = {
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(21u /* 21 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, &lon_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // float z = 3 [(.dccl.field) = {
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(29u /* 29 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, &z_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .IMC_DCCL.ZUnits z_units = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
+          int value;
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
+                 input, &value)));
+          set_z_units(static_cast< ::IMC_DCCL::ZUnits >(value));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // float radius = 5 [(.dccl.field) = {
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(45u /* 45 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, &radius_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // int32 duration = 6 [(.dccl.field) = {
+      case 6: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &duration_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // float speed = 7 [(.dccl.field) = {
+      case 7: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(61u /* 61 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
+                 input, &speed_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // .IMC_DCCL.SpeedUnits speed_units = 8;
+      case 8: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(64u /* 64 & 0xFF */)) {
+          int value;
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
+                 input, &value)));
+          set_speed_units(static_cast< ::IMC_DCCL::SpeedUnits >(value));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:IMC_DCCL.StationKeeping)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:IMC_DCCL.StationKeeping)
+  return false;
+#undef DO_
+}
+
+void StationKeeping::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:IMC_DCCL.StationKeeping)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // float lat = 1 [(.dccl.field) = {
+  if (this->lat() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(1, this->lat(), output);
+  }
+
+  // float lon = 2 [(.dccl.field) = {
+  if (this->lon() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(2, this->lon(), output);
+  }
+
+  // float z = 3 [(.dccl.field) = {
+  if (this->z() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(3, this->z(), output);
+  }
+
+  // .IMC_DCCL.ZUnits z_units = 4;
+  if (this->z_units() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+      4, this->z_units(), output);
+  }
+
+  // float radius = 5 [(.dccl.field) = {
+  if (this->radius() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(5, this->radius(), output);
+  }
+
+  // int32 duration = 6 [(.dccl.field) = {
+  if (this->duration() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->duration(), output);
+  }
+
+  // float speed = 7 [(.dccl.field) = {
+  if (this->speed() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(7, this->speed(), output);
+  }
+
+  // .IMC_DCCL.SpeedUnits speed_units = 8;
+  if (this->speed_units() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+      8, this->speed_units(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:IMC_DCCL.StationKeeping)
+}
+
+::google::protobuf::uint8* StationKeeping::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.StationKeeping)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // float lat = 1 [(.dccl.field) = {
+  if (this->lat() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(1, this->lat(), target);
+  }
+
+  // float lon = 2 [(.dccl.field) = {
+  if (this->lon() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(2, this->lon(), target);
+  }
+
+  // float z = 3 [(.dccl.field) = {
+  if (this->z() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(3, this->z(), target);
+  }
+
+  // .IMC_DCCL.ZUnits z_units = 4;
+  if (this->z_units() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
+      4, this->z_units(), target);
+  }
+
+  // float radius = 5 [(.dccl.field) = {
+  if (this->radius() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(5, this->radius(), target);
+  }
+
+  // int32 duration = 6 [(.dccl.field) = {
+  if (this->duration() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(6, this->duration(), target);
+  }
+
+  // float speed = 7 [(.dccl.field) = {
+  if (this->speed() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(7, this->speed(), target);
+  }
+
+  // .IMC_DCCL.SpeedUnits speed_units = 8;
+  if (this->speed_units() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
+      8, this->speed_units(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.StationKeeping)
+  return target;
+}
+
+size_t StationKeeping::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.StationKeeping)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // float lat = 1 [(.dccl.field) = {
+  if (this->lat() != 0) {
+    total_size += 1 + 4;
+  }
+
+  // float lon = 2 [(.dccl.field) = {
+  if (this->lon() != 0) {
+    total_size += 1 + 4;
+  }
+
+  // float z = 3 [(.dccl.field) = {
+  if (this->z() != 0) {
+    total_size += 1 + 4;
+  }
+
+  // .IMC_DCCL.ZUnits z_units = 4;
+  if (this->z_units() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::EnumSize(this->z_units());
+  }
+
+  // float radius = 5 [(.dccl.field) = {
+  if (this->radius() != 0) {
+    total_size += 1 + 4;
+  }
+
+  // int32 duration = 6 [(.dccl.field) = {
+  if (this->duration() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int32Size(
+        this->duration());
+  }
+
+  // float speed = 7 [(.dccl.field) = {
+  if (this->speed() != 0) {
+    total_size += 1 + 4;
+  }
+
+  // .IMC_DCCL.SpeedUnits speed_units = 8;
+  if (this->speed_units() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::EnumSize(this->speed_units());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void StationKeeping::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.StationKeeping)
+  GOOGLE_DCHECK_NE(&from, this);
+  const StationKeeping* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const StationKeeping>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.StationKeeping)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.StationKeeping)
+    MergeFrom(*source);
+  }
+}
+
+void StationKeeping::MergeFrom(const StationKeeping& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.StationKeeping)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.lat() != 0) {
+    set_lat(from.lat());
+  }
+  if (from.lon() != 0) {
+    set_lon(from.lon());
+  }
+  if (from.z() != 0) {
+    set_z(from.z());
+  }
+  if (from.z_units() != 0) {
+    set_z_units(from.z_units());
+  }
+  if (from.radius() != 0) {
+    set_radius(from.radius());
+  }
+  if (from.duration() != 0) {
+    set_duration(from.duration());
+  }
+  if (from.speed() != 0) {
+    set_speed(from.speed());
+  }
+  if (from.speed_units() != 0) {
+    set_speed_units(from.speed_units());
+  }
+}
+
+void StationKeeping::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.StationKeeping)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void StationKeeping::CopyFrom(const StationKeeping& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:IMC_DCCL.StationKeeping)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool StationKeeping::IsInitialized() const {
+  return true;
+}
+
+void StationKeeping::Swap(StationKeeping* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void StationKeeping::InternalSwap(StationKeeping* other) {
+  using std::swap;
+  swap(lat_, other->lat_);
+  swap(lon_, other->lon_);
+  swap(z_, other->z_);
+  swap(z_units_, other->z_units_);
+  swap(radius_, other->radius_);
+  swap(duration_, other->duration_);
+  swap(speed_, other->speed_);
+  swap(speed_units_, other->speed_units_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::google::protobuf::Metadata StationKeeping::GetMetadata() const {
+  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
 void FollowPath::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
@@ -3776,6 +4301,8 @@ void Maneuver::InitAsDefaultInstance() {
       ::IMC_DCCL::FollowPath::internal_default_instance());
   ::IMC_DCCL::_Maneuver_default_instance_.loiter_maneuver_ = const_cast< ::IMC_DCCL::Loiter*>(
       ::IMC_DCCL::Loiter::internal_default_instance());
+  ::IMC_DCCL::_Maneuver_default_instance_.stationkeeping_maneuver_ = const_cast< ::IMC_DCCL::StationKeeping*>(
+      ::IMC_DCCL::StationKeeping::internal_default_instance());
 }
 void Maneuver::set_allocated_goto_maneuver(::IMC_DCCL::Goto* goto_maneuver) {
   ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
@@ -3819,10 +4346,25 @@ void Maneuver::set_allocated_loiter_maneuver(::IMC_DCCL::Loiter* loiter_maneuver
   }
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.Maneuver.loiter_maneuver)
 }
+void Maneuver::set_allocated_stationkeeping_maneuver(::IMC_DCCL::StationKeeping* stationkeeping_maneuver) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  clear_ManeuverUnion();
+  if (stationkeeping_maneuver) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      stationkeeping_maneuver = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, stationkeeping_maneuver, submessage_arena);
+    }
+    set_has_stationkeeping_maneuver();
+    ManeuverUnion_.stationkeeping_maneuver_ = stationkeeping_maneuver;
+  }
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.Maneuver.stationkeeping_maneuver)
+}
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int Maneuver::kGotoManeuverFieldNumber;
 const int Maneuver::kFollowpathManeuverFieldNumber;
 const int Maneuver::kLoiterManeuverFieldNumber;
+const int Maneuver::kStationkeepingManeuverFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Maneuver::Maneuver()
@@ -3848,6 +4390,10 @@ Maneuver::Maneuver(const Maneuver& from)
     }
     case kLoiterManeuver: {
       mutable_loiter_maneuver()->::IMC_DCCL::Loiter::MergeFrom(from.loiter_maneuver());
+      break;
+    }
+    case kStationkeepingManeuver: {
+      mutable_stationkeeping_maneuver()->::IMC_DCCL::StationKeeping::MergeFrom(from.stationkeeping_maneuver());
       break;
     }
     case MANEUVERUNION_NOT_SET: {
@@ -3899,6 +4445,10 @@ void Maneuver::clear_ManeuverUnion() {
     }
     case kLoiterManeuver: {
       delete ManeuverUnion_.loiter_maneuver_;
+      break;
+    }
+    case kStationkeepingManeuver: {
+      delete ManeuverUnion_.stationkeeping_maneuver_;
       break;
     }
     case MANEUVERUNION_NOT_SET: {
@@ -3965,6 +4515,18 @@ bool Maneuver::MergePartialFromCodedStream(
         break;
       }
 
+      // .IMC_DCCL.StationKeeping stationkeeping_maneuver = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_stationkeeping_maneuver()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -4009,6 +4571,12 @@ void Maneuver::SerializeWithCachedSizes(
       3, this->_internal_loiter_maneuver(), output);
   }
 
+  // .IMC_DCCL.StationKeeping stationkeeping_maneuver = 4;
+  if (has_stationkeeping_maneuver()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      4, this->_internal_stationkeeping_maneuver(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -4042,6 +4610,13 @@ void Maneuver::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageToArray(
         3, this->_internal_loiter_maneuver(), deterministic, target);
+  }
+
+  // .IMC_DCCL.StationKeeping stationkeeping_maneuver = 4;
+  if (has_stationkeeping_maneuver()) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        4, this->_internal_stationkeeping_maneuver(), deterministic, target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -4081,6 +4656,13 @@ size_t Maneuver::ByteSizeLong() const {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSize(
           *ManeuverUnion_.loiter_maneuver_);
+      break;
+    }
+    // .IMC_DCCL.StationKeeping stationkeeping_maneuver = 4;
+    case kStationkeepingManeuver: {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          *ManeuverUnion_.stationkeeping_maneuver_);
       break;
     }
     case MANEUVERUNION_NOT_SET: {
@@ -4125,6 +4707,10 @@ void Maneuver::MergeFrom(const Maneuver& from) {
     }
     case kLoiterManeuver: {
       mutable_loiter_maneuver()->::IMC_DCCL::Loiter::MergeFrom(from.loiter_maneuver());
+      break;
+    }
+    case kStationkeepingManeuver: {
+      mutable_stationkeeping_maneuver()->::IMC_DCCL::StationKeeping::MergeFrom(from.stationkeeping_maneuver());
       break;
     }
     case MANEUVERUNION_NOT_SET: {
@@ -7315,6 +7901,9 @@ template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::EstimatedState* Arena:
 }
 template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::Goto* Arena::CreateMaybeMessage< ::IMC_DCCL::Goto >(Arena* arena) {
   return Arena::CreateInternal< ::IMC_DCCL::Goto >(arena);
+}
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::StationKeeping* Arena::CreateMaybeMessage< ::IMC_DCCL::StationKeeping >(Arena* arena) {
+  return Arena::CreateInternal< ::IMC_DCCL::StationKeeping >(arena);
 }
 template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::FollowPath* Arena::CreateMaybeMessage< ::IMC_DCCL::FollowPath >(Arena* arena) {
   return Arena::CreateInternal< ::IMC_DCCL::FollowPath >(arena);
