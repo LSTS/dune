@@ -175,8 +175,9 @@ namespace Monitors
             err("message %s not found in IMC factory", params[0].c_str());
             continue;
           }
-          else if (AddressResolver::isValid(tryResolveEntity(params[1])))
+          else if (!AddressResolver::isValid(tryResolveEntity(params[1])))
           {
+            err("entity %s not found", params[1].c_str());
             continue;
           }
 
