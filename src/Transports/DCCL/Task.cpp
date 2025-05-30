@@ -119,7 +119,7 @@ namespace Transports
           std::string plan_id = msg->plan_id;
           std::string start_man_id = msg->start_man_id;
 
-          inf("Encoding Plan Specification msg with DCCL Lib");
+          inf("Encoding IMC Plan Specification msg with DCCL Lib");
           std::string encoded_bytes; 
           
           IMC_DCCL::PlanSpecification msg_planspec;
@@ -154,38 +154,65 @@ namespace Transports
           {
             if (*manitr == NULL)
               continue;
-            
+
             IMC_DCCL::PlanManeuver * msg_man = msg_planspec.add_maneuvers(); 
             //maneuver_id
             IMC_DCCL::ManeuverID* maneuver_id = msg_man->mutable_maneuver_id();
             std::string man_id = (*manitr)->maneuver_id;  
-
+           
             IMC_DCCL::ManeuverType id_man_type;
             std::int16_t id_man_num;
             SplitManeuverNumber(man_id, id_man_type, id_man_num);
-            
             maneuver_id->set_maneuver_type(id_man_type);
             maneuver_id->set_maneuver_number(id_man_num);
 
-            //data - TODO: check different maneuvers
-            IMC_DCCL::Maneuver* data = msg_man->mutable_data();
-            IMC_DCCL::Goto* goto_maneuver = data->mutable_goto_maneuver();
+            IMC_DCCL::Maneuver* data = msg_man->mutable_data();   //create DCCL
 
-            const IMC::Message* maneuver = (*manitr)->data.get(); //Todo: automatically recognize the IMC msg
-            const IMC::Goto* maneuver_goto =  static_cast<const IMC::Goto*>(maneuver);
 
-            goto_maneuver->set_timeout(maneuver_goto->timeout);
-            goto_maneuver->set_lat(maneuver_goto->lat);
-            goto_maneuver->set_lon(maneuver_goto->lon);
-            goto_maneuver->set_z(maneuver_goto->z);
-            goto_maneuver->set_z_units(ToDCCL_ZUnits(maneuver_goto->z_units));
-            goto_maneuver->set_speed(maneuver_goto->speed);
-            goto_maneuver->set_speed_units(ToDCCL_SpeedUnits(maneuver_goto->speed_units));
-            goto_maneuver->set_roll(maneuver_goto->roll);
-            goto_maneuver->set_pitch(maneuver_goto->pitch);
-            goto_maneuver->set_yaw(maneuver_goto->yaw);      
+            //maneuver data - based on different maneuvers
+            if(id_man_type == IMC_DCCL::GOTO){                  //GOTO Maneuver
+              inf("GOTO MAN");
 
-            //start actions
+              IMC_DCCL::Goto* goto_maneuver = data->mutable_goto_maneuver();
+
+              const IMC::Message* maneuver = (*manitr)->data.get(); 
+              const IMC::Goto* maneuver_goto =  static_cast<const IMC::Goto*>(maneuver);
+
+              goto_maneuver->set_timeout(maneuver_goto->timeout);
+              goto_maneuver->set_lat(maneuver_goto->lat);
+              goto_maneuver->set_lon(maneuver_goto->lon);
+              goto_maneuver->set_z(maneuver_goto->z);
+              goto_maneuver->set_z_units(ToDCCL_ZUnits(maneuver_goto->z_units));
+              goto_maneuver->set_speed(maneuver_goto->speed);
+              goto_maneuver->set_speed_units(ToDCCL_SpeedUnits(maneuver_goto->speed_units));
+              goto_maneuver->set_roll(maneuver_goto->roll);
+              goto_maneuver->set_pitch(maneuver_goto->pitch);
+              goto_maneuver->set_yaw(maneuver_goto->yaw);      
+
+            }else if(id_man_type == IMC_DCCL::STATIONKEEPING){    //STATIONKEEPING Maneuver
+              inf("STATIONKEEPING MAN");
+
+              IMC_DCCL::StationKeeping* stationkeeping_maneuver = data->mutable_stationkeeping_maneuver();
+
+              const IMC::Message* maneuver = (*manitr)->data.get(); 
+              const IMC::StationKeeping* maneuver_stationkeeping =  static_cast<const IMC::StationKeeping*>(maneuver);
+
+              stationkeeping_maneuver->set_lat(maneuver_stationkeeping->lat);
+              stationkeeping_maneuver->set_lon(maneuver_stationkeeping->lon);
+              stationkeeping_maneuver->set_z(maneuver_stationkeeping->z);
+              stationkeeping_maneuver->set_z_units(ToDCCL_ZUnits(maneuver_stationkeeping->z_units));
+              stationkeeping_maneuver->set_radius(maneuver_stationkeeping->radius);
+              stationkeeping_maneuver->set_duration(maneuver_stationkeeping->duration);
+              stationkeeping_maneuver->set_speed(maneuver_stationkeeping->speed);
+              stationkeeping_maneuver->set_speed_units(ToDCCL_SpeedUnits(maneuver_stationkeeping->speed_units));
+
+            }else{
+
+              inf("Encoding: Maneuver type still not encoded with DCCL");
+
+            }
+
+            //maneuver start actions
             IMC::MessageList<IMC::Message>::const_iterator actitr;
             actitr = (*manitr)->start_actions.begin();
 
@@ -342,22 +369,49 @@ namespace Transports
             IMC::PlanManeuver msg_pm;
             //maneuver_id
             msg_pm.maneuver_id = MergeManeuverNumber(msg_planspec_rec.maneuvers(i).maneuver_id().maneuver_type(), msg_planspec_rec.maneuvers(i).maneuver_id().maneuver_number());
-            //data
-            //Todo: Check different maneuvers
-            //Todo: Insert right precision
-            IMC::Goto msg_goto;
-            msg_goto.timeout = msg_planspec_rec.maneuvers(i).data().goto_maneuver().timeout();
-            msg_goto.lat = msg_planspec_rec.maneuvers(i).data().goto_maneuver().lat();
-            msg_goto.lon = msg_planspec_rec.maneuvers(i).data().goto_maneuver().lon();
-            msg_goto.z = msg_planspec_rec.maneuvers(i).data().goto_maneuver().z();
-            msg_goto.z_units = ToIMC_ZUnits(msg_planspec_rec.maneuvers(i).data().goto_maneuver().z_units());
-            msg_goto.speed = msg_planspec_rec.maneuvers(i).data().goto_maneuver().speed();
-            msg_goto.speed_units = ToIMC_SpeedUnits(msg_planspec_rec.maneuvers(i).data().goto_maneuver().speed_units());
-            msg_goto.roll = msg_planspec_rec.maneuvers(i).data().goto_maneuver().roll();
-            msg_goto.pitch = msg_planspec_rec.maneuvers(i).data().goto_maneuver().pitch();
-            msg_goto.yaw = msg_planspec_rec.maneuvers(i).data().goto_maneuver().yaw();
-          
-            msg_pm.data.set(msg_goto);
+            
+            //data based on maneuver type
+            if(msg_planspec_rec.maneuvers(i).data().has_goto_maneuver())
+            {
+              inf("DECODE GOTO");
+              IMC::Goto msg_goto;   //Todo: Insert right precision
+              
+              msg_goto.timeout = msg_planspec_rec.maneuvers(i).data().goto_maneuver().timeout();
+              msg_goto.lat = msg_planspec_rec.maneuvers(i).data().goto_maneuver().lat();
+              msg_goto.lon = msg_planspec_rec.maneuvers(i).data().goto_maneuver().lon();
+              msg_goto.z = msg_planspec_rec.maneuvers(i).data().goto_maneuver().z();
+              msg_goto.z_units = ToIMC_ZUnits(msg_planspec_rec.maneuvers(i).data().goto_maneuver().z_units());
+              msg_goto.speed = msg_planspec_rec.maneuvers(i).data().goto_maneuver().speed();
+              msg_goto.speed_units = ToIMC_SpeedUnits(msg_planspec_rec.maneuvers(i).data().goto_maneuver().speed_units());
+              msg_goto.roll = msg_planspec_rec.maneuvers(i).data().goto_maneuver().roll();
+              msg_goto.pitch = msg_planspec_rec.maneuvers(i).data().goto_maneuver().pitch();
+              msg_goto.yaw = msg_planspec_rec.maneuvers(i).data().goto_maneuver().yaw();
+            
+              msg_pm.data.set(msg_goto);
+            }
+            else if(msg_planspec_rec.maneuvers(i).data().has_stationkeeping_maneuver())
+            {
+              inf("DECODE STATIONKEEPING");
+              IMC::StationKeeping msg_stationkeeping;
+
+              msg_stationkeeping.lat = msg_planspec_rec.maneuvers(i).data().stationkeeping_maneuver().lat();
+              msg_stationkeeping.lon = msg_planspec_rec.maneuvers(i).data().stationkeeping_maneuver().lon();
+              msg_stationkeeping.z = msg_planspec_rec.maneuvers(i).data().stationkeeping_maneuver().z();
+              msg_stationkeeping.z_units = ToIMC_ZUnits(msg_planspec_rec.maneuvers(i).data().stationkeeping_maneuver().z_units());
+              msg_stationkeeping.radius = msg_planspec_rec.maneuvers(i).data().stationkeeping_maneuver().radius();
+              msg_stationkeeping.duration = msg_planspec_rec.maneuvers(i).data().stationkeeping_maneuver().duration();
+              msg_stationkeeping.speed = msg_planspec_rec.maneuvers(i).data().stationkeeping_maneuver().speed();
+              msg_stationkeeping.speed_units = ToIMC_SpeedUnits(msg_planspec_rec.maneuvers(i).data().stationkeeping_maneuver().speed_units());
+
+              msg_pm.data.set(msg_stationkeeping);
+
+            }
+            else
+            {
+              inf("Decoding: Maneuver type not recognized by DCCL");
+            }
+            
+
 
             
             //start_actions
@@ -471,18 +525,25 @@ namespace Transports
         str = sanitize(text); 
 
         std::string man_goto = "Goto";
-        std::string man_loiter = "Loiter";
+        std::string man_stationkeeping = "StationKeeping";
 
-        size_t start_idx = str.find(man_goto);
+        size_t start_idx;
 
-        if (start_idx != std::string::npos)
+        if ((start_idx = str.find(man_goto)) != std::string::npos)  //GOTO
         {
-            man = IMC_DCCL::GOTO; //Maneuver type
-            num = std::stoi(str.substr(start_idx + man_goto.length()));   //Maneuver number                       
-          } else {
+          man = IMC_DCCL::GOTO; //Maneuver type
+          num = std::stoi(str.substr(start_idx + man_goto.length()));   //Maneuver number                       
+        } 
+        else if ((start_idx = str.find(man_stationkeeping)) != std::string::npos) //STATION KEEPING
+        {
+          man = IMC_DCCL::STATIONKEEPING; //Maneuver type
+          num = std::stoi(str.substr(start_idx + man_stationkeeping.length()));   //Maneuver number   
+        }
+        else 
+        {
+          inf("Maneuver type still not encoded with DCCL");   
+        }
 
-            inf("Mission name still not encoded with DCCL");   
-          }
         }   
 
 
@@ -498,6 +559,7 @@ namespace Transports
         if(man_type == IMC_DCCL::GOTO) str_man_type = "Goto";
         else if (man_type == IMC_DCCL::FOLLOWPATH) str_man_type = "FollowPath";
         else if (man_type == IMC_DCCL::LOITER) str_man_type = "Loiter";
+        else if (man_type == IMC_DCCL::STATIONKEEPING) str_man_type = "StationKeeping";
       
         str_man_num = std::to_string(man_num);
         std::string merged = str_man_type + str_man_num;
