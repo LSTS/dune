@@ -177,7 +177,6 @@ namespace Monitors
           }
           else if (!AddressResolver::isValid(tryResolveEntity(params[1])))
           {
-            err("entity %s not found", params[1].c_str());
             continue;
           }
 
