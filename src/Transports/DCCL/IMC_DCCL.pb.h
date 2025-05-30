@@ -40,7 +40,7 @@ namespace protobuf_IMC_5fDCCL_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[15];
+  static const ::google::protobuf::internal::ParseTable schema[16];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -93,6 +93,9 @@ extern PlanTransitionDefaultTypeInternal _PlanTransition_default_instance_;
 class PlanVariable;
 class PlanVariableDefaultTypeInternal;
 extern PlanVariableDefaultTypeInternal _PlanVariable_default_instance_;
+class StationKeeping;
+class StationKeepingDefaultTypeInternal;
+extern StationKeepingDefaultTypeInternal _StationKeeping_default_instance_;
 }  // namespace IMC_DCCL
 namespace google {
 namespace protobuf {
@@ -111,6 +114,7 @@ template<> ::IMC_DCCL::PlanManeuver* Arena::CreateMaybeMessage<::IMC_DCCL::PlanM
 template<> ::IMC_DCCL::PlanSpecification* Arena::CreateMaybeMessage<::IMC_DCCL::PlanSpecification>(Arena*);
 template<> ::IMC_DCCL::PlanTransition* Arena::CreateMaybeMessage<::IMC_DCCL::PlanTransition>(Arena*);
 template<> ::IMC_DCCL::PlanVariable* Arena::CreateMaybeMessage<::IMC_DCCL::PlanVariable>(Arena*);
+template<> ::IMC_DCCL::StationKeeping* Arena::CreateMaybeMessage<::IMC_DCCL::StationKeeping>(Arena*);
 }  // namespace protobuf
 }  // namespace google
 namespace IMC_DCCL {
@@ -211,12 +215,13 @@ enum ManeuverType {
   GOTO = 0,
   FOLLOWPATH = 1,
   LOITER = 2,
+  STATIONKEEPING = 3,
   ManeuverType_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
   ManeuverType_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
 };
 bool ManeuverType_IsValid(int value);
 const ManeuverType ManeuverType_MIN = GOTO;
-const ManeuverType ManeuverType_MAX = LOITER;
+const ManeuverType ManeuverType_MAX = STATIONKEEPING;
 const int ManeuverType_ARRAYSIZE = ManeuverType_MAX + 1;
 
 const ::google::protobuf::EnumDescriptor* ManeuverType_descriptor();
@@ -779,6 +784,158 @@ class Goto : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
 };
 // -------------------------------------------------------------------
 
+class StationKeeping : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.StationKeeping) */ {
+ public:
+  StationKeeping();
+  virtual ~StationKeeping();
+
+  StationKeeping(const StationKeeping& from);
+
+  inline StationKeeping& operator=(const StationKeeping& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  StationKeeping(StationKeeping&& from) noexcept
+    : StationKeeping() {
+    *this = ::std::move(from);
+  }
+
+  inline StationKeeping& operator=(StationKeeping&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const StationKeeping& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const StationKeeping* internal_default_instance() {
+    return reinterpret_cast<const StationKeeping*>(
+               &_StationKeeping_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    2;
+
+  void Swap(StationKeeping* other);
+  friend void swap(StationKeeping& a, StationKeeping& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline StationKeeping* New() const final {
+    return CreateMaybeMessage<StationKeeping>(NULL);
+  }
+
+  StationKeeping* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<StationKeeping>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const StationKeeping& from);
+  void MergeFrom(const StationKeeping& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(StationKeeping* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // float lat = 1 [(.dccl.field) = {
+  void clear_lat();
+  static const int kLatFieldNumber = 1;
+  float lat() const;
+  void set_lat(float value);
+
+  // float lon = 2 [(.dccl.field) = {
+  void clear_lon();
+  static const int kLonFieldNumber = 2;
+  float lon() const;
+  void set_lon(float value);
+
+  // float z = 3 [(.dccl.field) = {
+  void clear_z();
+  static const int kZFieldNumber = 3;
+  float z() const;
+  void set_z(float value);
+
+  // .IMC_DCCL.ZUnits z_units = 4;
+  void clear_z_units();
+  static const int kZUnitsFieldNumber = 4;
+  ::IMC_DCCL::ZUnits z_units() const;
+  void set_z_units(::IMC_DCCL::ZUnits value);
+
+  // float radius = 5 [(.dccl.field) = {
+  void clear_radius();
+  static const int kRadiusFieldNumber = 5;
+  float radius() const;
+  void set_radius(float value);
+
+  // int32 duration = 6 [(.dccl.field) = {
+  void clear_duration();
+  static const int kDurationFieldNumber = 6;
+  ::google::protobuf::int32 duration() const;
+  void set_duration(::google::protobuf::int32 value);
+
+  // float speed = 7 [(.dccl.field) = {
+  void clear_speed();
+  static const int kSpeedFieldNumber = 7;
+  float speed() const;
+  void set_speed(float value);
+
+  // .IMC_DCCL.SpeedUnits speed_units = 8;
+  void clear_speed_units();
+  static const int kSpeedUnitsFieldNumber = 8;
+  ::IMC_DCCL::SpeedUnits speed_units() const;
+  void set_speed_units(::IMC_DCCL::SpeedUnits value);
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.StationKeeping)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  float lat_;
+  float lon_;
+  float z_;
+  int z_units_;
+  float radius_;
+  ::google::protobuf::int32 duration_;
+  float speed_;
+  int speed_units_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_IMC_5fDCCL_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
 class FollowPath : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.FollowPath) */ {
  public:
   FollowPath();
@@ -814,7 +971,7 @@ class FollowPath : public ::google::protobuf::Message /* @@protoc_insertion_poin
                &_FollowPath_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    2;
+    3;
 
   void Swap(FollowPath* other);
   friend void swap(FollowPath& a, FollowPath& b) {
@@ -972,7 +1129,7 @@ class Loiter : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
                &_Loiter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    4;
 
   void Swap(Loiter* other);
   friend void swap(Loiter& a, Loiter& b) {
@@ -1159,7 +1316,7 @@ class PathPoint : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_PathPoint_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    5;
 
   void Swap(PathPoint* other);
   friend void swap(PathPoint& a, PathPoint& b) {
@@ -1274,6 +1431,7 @@ class Maneuver : public ::google::protobuf::Message /* @@protoc_insertion_point(
     kGotoManeuver = 1,
     kFollowpathManeuver = 2,
     kLoiterManeuver = 3,
+    kStationkeepingManeuver = 4,
     MANEUVERUNION_NOT_SET = 0,
   };
 
@@ -1283,7 +1441,7 @@ class Maneuver : public ::google::protobuf::Message /* @@protoc_insertion_point(
                &_Maneuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    6;
 
   void Swap(Maneuver* other);
   friend void swap(Maneuver& a, Maneuver& b) {
@@ -1371,6 +1529,18 @@ class Maneuver : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::IMC_DCCL::Loiter* mutable_loiter_maneuver();
   void set_allocated_loiter_maneuver(::IMC_DCCL::Loiter* loiter_maneuver);
 
+  // .IMC_DCCL.StationKeeping stationkeeping_maneuver = 4;
+  bool has_stationkeeping_maneuver() const;
+  void clear_stationkeeping_maneuver();
+  static const int kStationkeepingManeuverFieldNumber = 4;
+  private:
+  const ::IMC_DCCL::StationKeeping& _internal_stationkeeping_maneuver() const;
+  public:
+  const ::IMC_DCCL::StationKeeping& stationkeeping_maneuver() const;
+  ::IMC_DCCL::StationKeeping* release_stationkeeping_maneuver();
+  ::IMC_DCCL::StationKeeping* mutable_stationkeeping_maneuver();
+  void set_allocated_stationkeeping_maneuver(::IMC_DCCL::StationKeeping* stationkeeping_maneuver);
+
   void clear_ManeuverUnion();
   ManeuverUnionCase ManeuverUnion_case() const;
   // @@protoc_insertion_point(class_scope:IMC_DCCL.Maneuver)
@@ -1378,6 +1548,7 @@ class Maneuver : public ::google::protobuf::Message /* @@protoc_insertion_point(
   void set_has_goto_maneuver();
   void set_has_followpath_maneuver();
   void set_has_loiter_maneuver();
+  void set_has_stationkeeping_maneuver();
 
   inline bool has_ManeuverUnion() const;
   inline void clear_has_ManeuverUnion();
@@ -1388,6 +1559,7 @@ class Maneuver : public ::google::protobuf::Message /* @@protoc_insertion_point(
     ::IMC_DCCL::Goto* goto_maneuver_;
     ::IMC_DCCL::FollowPath* followpath_maneuver_;
     ::IMC_DCCL::Loiter* loiter_maneuver_;
+    ::IMC_DCCL::StationKeeping* stationkeeping_maneuver_;
   } ManeuverUnion_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   ::google::protobuf::uint32 _oneof_case_[1];
@@ -1437,7 +1609,7 @@ class ParameterValue : public ::google::protobuf::Message /* @@protoc_insertion_
                &_ParameterValue_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   void Swap(ParameterValue* other);
   friend void swap(ParameterValue& a, ParameterValue& b) {
@@ -1565,7 +1737,7 @@ class EntityParameter : public ::google::protobuf::Message /* @@protoc_insertion
                &_EntityParameter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    8;
 
   void Swap(EntityParameter* other);
   friend void swap(EntityParameter& a, EntityParameter& b) {
@@ -1681,7 +1853,7 @@ class EntityParameters : public ::google::protobuf::Message /* @@protoc_insertio
                &_EntityParameters_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   void Swap(EntityParameters* other);
   friend void swap(EntityParameters& a, EntityParameters& b) {
@@ -1797,7 +1969,7 @@ class ManeuverID : public ::google::protobuf::Message /* @@protoc_insertion_poin
                &_ManeuverID_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   void Swap(ManeuverID* other);
   friend void swap(ManeuverID& a, ManeuverID& b) {
@@ -1907,7 +2079,7 @@ class PlanManeuver : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_PlanManeuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   void Swap(PlanManeuver* other);
   friend void swap(PlanManeuver& a, PlanManeuver& b) {
@@ -2042,7 +2214,7 @@ class PlanVariable : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_PlanVariable_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   void Swap(PlanVariable* other);
   friend void swap(PlanVariable& a, PlanVariable& b) {
@@ -2182,7 +2354,7 @@ class PlanTransition : public ::google::protobuf::Message /* @@protoc_insertion_
                &_PlanTransition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   void Swap(PlanTransition* other);
   friend void swap(PlanTransition& a, PlanTransition& b) {
@@ -2311,7 +2483,7 @@ class Header : public ::google::protobuf::Message /* @@protoc_insertion_point(cl
                &_Header_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   void Swap(Header* other);
   friend void swap(Header& a, Header& b) {
@@ -2435,7 +2607,7 @@ class PlanSpecification : public ::google::protobuf::Message /* @@protoc_inserti
                &_PlanSpecification_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    15;
 
   void Swap(PlanSpecification* other);
   friend void swap(PlanSpecification& a, PlanSpecification& b) {
@@ -3054,6 +3226,122 @@ inline void Goto::set_yaw(float value) {
 
 // -------------------------------------------------------------------
 
+// StationKeeping
+
+// float lat = 1 [(.dccl.field) = {
+inline void StationKeeping::clear_lat() {
+  lat_ = 0;
+}
+inline float StationKeeping::lat() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.StationKeeping.lat)
+  return lat_;
+}
+inline void StationKeeping::set_lat(float value) {
+  
+  lat_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.lat)
+}
+
+// float lon = 2 [(.dccl.field) = {
+inline void StationKeeping::clear_lon() {
+  lon_ = 0;
+}
+inline float StationKeeping::lon() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.StationKeeping.lon)
+  return lon_;
+}
+inline void StationKeeping::set_lon(float value) {
+  
+  lon_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.lon)
+}
+
+// float z = 3 [(.dccl.field) = {
+inline void StationKeeping::clear_z() {
+  z_ = 0;
+}
+inline float StationKeeping::z() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.StationKeeping.z)
+  return z_;
+}
+inline void StationKeeping::set_z(float value) {
+  
+  z_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.z)
+}
+
+// .IMC_DCCL.ZUnits z_units = 4;
+inline void StationKeeping::clear_z_units() {
+  z_units_ = 0;
+}
+inline ::IMC_DCCL::ZUnits StationKeeping::z_units() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.StationKeeping.z_units)
+  return static_cast< ::IMC_DCCL::ZUnits >(z_units_);
+}
+inline void StationKeeping::set_z_units(::IMC_DCCL::ZUnits value) {
+  
+  z_units_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.z_units)
+}
+
+// float radius = 5 [(.dccl.field) = {
+inline void StationKeeping::clear_radius() {
+  radius_ = 0;
+}
+inline float StationKeeping::radius() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.StationKeeping.radius)
+  return radius_;
+}
+inline void StationKeeping::set_radius(float value) {
+  
+  radius_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.radius)
+}
+
+// int32 duration = 6 [(.dccl.field) = {
+inline void StationKeeping::clear_duration() {
+  duration_ = 0;
+}
+inline ::google::protobuf::int32 StationKeeping::duration() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.StationKeeping.duration)
+  return duration_;
+}
+inline void StationKeeping::set_duration(::google::protobuf::int32 value) {
+  
+  duration_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.duration)
+}
+
+// float speed = 7 [(.dccl.field) = {
+inline void StationKeeping::clear_speed() {
+  speed_ = 0;
+}
+inline float StationKeeping::speed() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.StationKeeping.speed)
+  return speed_;
+}
+inline void StationKeeping::set_speed(float value) {
+  
+  speed_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.speed)
+}
+
+// .IMC_DCCL.SpeedUnits speed_units = 8;
+inline void StationKeeping::clear_speed_units() {
+  speed_units_ = 0;
+}
+inline ::IMC_DCCL::SpeedUnits StationKeeping::speed_units() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.StationKeeping.speed_units)
+  return static_cast< ::IMC_DCCL::SpeedUnits >(speed_units_);
+}
+inline void StationKeeping::set_speed_units(::IMC_DCCL::SpeedUnits value) {
+  
+  speed_units_ = value;
+  // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.speed_units)
+}
+
+// -------------------------------------------------------------------
+
 // FollowPath
 
 // int32 timeout = 1 [(.dccl.field) = {
@@ -3550,6 +3838,50 @@ inline ::IMC_DCCL::Loiter* Maneuver::mutable_loiter_maneuver() {
   }
   // @@protoc_insertion_point(field_mutable:IMC_DCCL.Maneuver.loiter_maneuver)
   return ManeuverUnion_.loiter_maneuver_;
+}
+
+// .IMC_DCCL.StationKeeping stationkeeping_maneuver = 4;
+inline bool Maneuver::has_stationkeeping_maneuver() const {
+  return ManeuverUnion_case() == kStationkeepingManeuver;
+}
+inline void Maneuver::set_has_stationkeeping_maneuver() {
+  _oneof_case_[0] = kStationkeepingManeuver;
+}
+inline void Maneuver::clear_stationkeeping_maneuver() {
+  if (has_stationkeeping_maneuver()) {
+    delete ManeuverUnion_.stationkeeping_maneuver_;
+    clear_has_ManeuverUnion();
+  }
+}
+inline const ::IMC_DCCL::StationKeeping& Maneuver::_internal_stationkeeping_maneuver() const {
+  return *ManeuverUnion_.stationkeeping_maneuver_;
+}
+inline ::IMC_DCCL::StationKeeping* Maneuver::release_stationkeeping_maneuver() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Maneuver.stationkeeping_maneuver)
+  if (has_stationkeeping_maneuver()) {
+    clear_has_ManeuverUnion();
+      ::IMC_DCCL::StationKeeping* temp = ManeuverUnion_.stationkeeping_maneuver_;
+    ManeuverUnion_.stationkeeping_maneuver_ = NULL;
+    return temp;
+  } else {
+    return NULL;
+  }
+}
+inline const ::IMC_DCCL::StationKeeping& Maneuver::stationkeeping_maneuver() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Maneuver.stationkeeping_maneuver)
+  return has_stationkeeping_maneuver()
+      ? *ManeuverUnion_.stationkeeping_maneuver_
+      : *reinterpret_cast< ::IMC_DCCL::StationKeeping*>(&::IMC_DCCL::_StationKeeping_default_instance_);
+}
+inline ::IMC_DCCL::StationKeeping* Maneuver::mutable_stationkeeping_maneuver() {
+  if (!has_stationkeeping_maneuver()) {
+    clear_ManeuverUnion();
+    set_has_stationkeeping_maneuver();
+    ManeuverUnion_.stationkeeping_maneuver_ = CreateMaybeMessage< ::IMC_DCCL::StationKeeping >(
+        GetArenaNoVirtual());
+  }
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Maneuver.stationkeeping_maneuver)
+  return ManeuverUnion_.stationkeeping_maneuver_;
 }
 
 inline bool Maneuver::has_ManeuverUnion() const {
@@ -4644,6 +4976,8 @@ inline void PlanSpecification::set_allocated_head(::IMC_DCCL::Header* head) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
