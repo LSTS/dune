@@ -170,11 +170,9 @@ namespace Transports
 
 
             //maneuver data - based on different maneuvers
-            if(id_man_type == IMC_DCCL::GOTO){                  //GOTO Maneuver
-              inf("GOTO MAN");
-
+            if(id_man_type == IMC_DCCL::GOTO)                   //GOTO Maneuver
+            {                  
               IMC_DCCL::Goto* goto_maneuver = data->mutable_goto_maneuver();
-
               const IMC::Message* maneuver = (*manitr)->data.get(); 
               const IMC::Goto* maneuver_goto =  static_cast<const IMC::Goto*>(maneuver);
 
@@ -188,12 +186,10 @@ namespace Transports
               goto_maneuver->set_roll(maneuver_goto->roll);
               goto_maneuver->set_pitch(maneuver_goto->pitch);
               goto_maneuver->set_yaw(maneuver_goto->yaw);      
-
-            }else if(id_man_type == IMC_DCCL::STATIONKEEPING){    //STATIONKEEPING Maneuver
-              inf("STATIONKEEPING MAN");
-
+            }
+            else if(id_man_type == IMC_DCCL::STATIONKEEPING)       //STATIONKEEPING Maneuver
+            {    
               IMC_DCCL::StationKeeping* stationkeeping_maneuver = data->mutable_stationkeeping_maneuver();
-
               const IMC::Message* maneuver = (*manitr)->data.get(); 
               const IMC::StationKeeping* maneuver_stationkeeping =  static_cast<const IMC::StationKeeping*>(maneuver);
 
@@ -205,8 +201,9 @@ namespace Transports
               stationkeeping_maneuver->set_duration(maneuver_stationkeeping->duration);
               stationkeeping_maneuver->set_speed(maneuver_stationkeeping->speed);
               stationkeeping_maneuver->set_speed_units(ToDCCL_SpeedUnits(maneuver_stationkeeping->speed_units));
-
-            }else{
+            }
+            else
+            {
 
               inf("Encoding: Maneuver type still not encoded with DCCL");
 
@@ -373,9 +370,8 @@ namespace Transports
             //data based on maneuver type
             if(msg_planspec_rec.maneuvers(i).data().has_goto_maneuver())
             {
-              inf("DECODE GOTO");
               IMC::Goto msg_goto;   //Todo: Insert right precision
-              
+
               msg_goto.timeout = msg_planspec_rec.maneuvers(i).data().goto_maneuver().timeout();
               msg_goto.lat = msg_planspec_rec.maneuvers(i).data().goto_maneuver().lat();
               msg_goto.lon = msg_planspec_rec.maneuvers(i).data().goto_maneuver().lon();
@@ -391,7 +387,6 @@ namespace Transports
             }
             else if(msg_planspec_rec.maneuvers(i).data().has_stationkeeping_maneuver())
             {
-              inf("DECODE STATIONKEEPING");
               IMC::StationKeeping msg_stationkeeping;
 
               msg_stationkeeping.lat = msg_planspec_rec.maneuvers(i).data().stationkeeping_maneuver().lat();
@@ -404,7 +399,6 @@ namespace Transports
               msg_stationkeeping.speed_units = ToIMC_SpeedUnits(msg_planspec_rec.maneuvers(i).data().stationkeeping_maneuver().speed_units());
 
               msg_pm.data.set(msg_stationkeeping);
-
             }
             else
             {
