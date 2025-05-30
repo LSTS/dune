@@ -190,13 +190,13 @@ namespace DUNE
       inline double
       getSamplePeriodicity(void)
       {
-        return m_periodicity_timer.getTop();
+        return m_bdd_args.periodicity_data_sampling;
       }
 
       inline double
       getSamplePeriod(void)
       {
-        return m_sample_timer.getTop();
+        return m_bdd_args.sample_time_duration;
       }
 
       inline double
