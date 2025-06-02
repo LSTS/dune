@@ -1381,7 +1381,8 @@ namespace Control
 
                   if (mmsi == obs_vessel->id_)
                     ais_vessel = itr.base();
-                    break;
+
+                  break;
 
                 }
 
