@@ -507,11 +507,32 @@ function getSystemInfo(data) {
       if (data.dune_messages[i].abbrev == 'Announce' && data.dune_messages[i].sys_name == data.dune_system) {
         var msg = data.dune_messages[i];
         var systemType = getSystemType(data, msg.sys_type);
+        document.title = msg.sys_name + ' (' + getSystemTypeString(msg.sys_type) + ')';
         return msg.sys_name + ' (' + systemType + ')';
       }
     }
   }
   return 'Unknown';
+}
+
+function getSystemTypeString(value) {
+  var abbreviationMap = {
+    0: "CCU",
+    1: "Human-portable Sensor",
+    2: "UUV",
+    3: "USV",
+    4: "UAV",
+    5: "UGV",
+    6: "Static sensor",
+    7: "Mobile sensor",
+    8: "Wireless Sensor Network"
+  };
+
+  if (value in abbreviationMap) {
+    return abbreviationMap[value];
+  } else {
+    return "Unknown";
+  }
 }
 
 function getSystemType(data, value) {
