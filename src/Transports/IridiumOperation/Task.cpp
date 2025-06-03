@@ -157,6 +157,13 @@ namespace Transports
         bind<IMC::EntityList>(this);
       }
 
+      ~Task(void)
+      {
+        for (auto& it: m_retransmissions)
+          delete it.second.m_fragments;
+        m_retransmissions.clear();
+      }
+
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
@@ -193,14 +200,14 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        for (auto& it: m_retransmissions)
-          delete it.second.m_fragments;
-        m_retransmissions.clear();
       }
 
       void
       onActivation(void)
       {
+        for (auto& it: m_retransmissions)
+          delete it.second.m_fragments;
+        m_retransmissions.clear();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
