@@ -63,7 +63,9 @@ namespace DUNE
       m_honours_conf_samp(false),
       m_is_sampling(false),
       m_sample_timer(0.0f),
-      m_periodicity_timer(0.0f)
+      m_periodicity_timer(0.0f),
+      m_honours_vp(false),
+      m_vp_timer(0.0f)
     {
       paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                   Tasks::Parameter::VISIBILITY_DEVELOPER, 
@@ -143,6 +145,16 @@ namespace DUNE
 
         if (paramChanged(m_bdd_args.periodicity_data_sampling_scope))
           setParameterScope(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_scope);
+      }
+
+      if (m_honours_vp)
+      {
+        if (paramChanged(m_bdd_args.vp_periodicity) && m_vp_timer.getTop() > 0.0f)
+        {
+          m_vp_timer.setTop(trimValue(m_bdd_args.vp_periodicity - m_vp_timer.getElapsed(),
+                                      0.0f,
+                                      m_bdd_args.vp_periodicity));
+        }
       }
     }
 
@@ -291,6 +303,18 @@ namespace DUNE
       .defaultValue("global")
       .values(Parameter::scopeValues())
       .description("Scoped of the '" + std::string(c_periodicity_data_sampling) + "' parameter");
+    }
+
+    void
+    BasicDeviceDriver::paramVerticalProfile(void)
+    {
+      m_honours_vp = true;
+
+      param("Vertical Profile Periodicity", m_bdd_args.vp_periodicity)
+      .units(Units::Second)
+      .minimumValue("0.0")
+      .defaultValue("0.0")
+      .description("Periodicity of vertical profiles. 0 means never send.");
     }
 
     void
@@ -606,7 +630,18 @@ namespace DUNE
     bool
     BasicDeviceDriver::readSample(void)
     {
-      return onReadData();
+      if (onReadData())
+      {
+        if (m_honours_vp && m_vp_timer.overflow())
+        {
+          onVerticalProfile();
+          m_vp_timer.setTop(m_bdd_args.vp_periodicity);
+        }
+
+        return true;
+      }
+
+      return false;
     }
 
     void
@@ -1058,6 +1093,10 @@ namespace DUNE
           break;
       }
     }
+
+    void
+    BasicDeviceDriver::onVerticalProfile(void)
+    { }
 
     bool
     BasicDeviceDriver::onSynchronize(void)

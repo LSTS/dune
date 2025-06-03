@@ -65,6 +65,8 @@ namespace DUNE
       std::string periodicity_data_sampling_visibility;
       //! Periodicity of Data Sampling scope.
       std::string periodicity_data_sampling_scope;
+      //! Vertical Profile Periodicity.
+      double vp_periodicity;
     };
 
     class BasicDeviceDriver: public DUNE::Tasks::Task
@@ -226,6 +228,9 @@ namespace DUNE
       virtual bool
       onReadData(void) = 0;
 
+      virtual void
+      onVerticalProfile(void);
+
       virtual bool
       onSynchronize(void);
 
@@ -330,6 +335,9 @@ namespace DUNE
                                 double def_sampling = 0.0f,
                                 double def_periodicity = 0.0f);
 
+      void
+      paramVerticalProfile(void);
+
       //! Test if all device's power channel states are equal to state.
       //! @param[in] state desired power state.
       //! @return true if all device's power channel states are equal to state,
@@ -415,7 +423,7 @@ namespace DUNE
       DUNE::Time::Counter<double> m_restart_timer;
       //! Device URI.
       std::string m_uri;
-      // Honours configurable sampling.
+      //! Honours configurable sampling.
       bool m_honours_conf_samp;
       //! Is sampling.
       bool m_is_sampling;
@@ -423,6 +431,10 @@ namespace DUNE
       DUNE::Time::Counter<double> m_sample_timer;
       //! Periodicity timer.
       DUNE::Time::Counter<double> m_periodicity_timer;
+      //! Honours vertical profiles.
+      bool m_honours_vp;
+      //! Timer for Vertical Profiles.
+      DUNE::Time::Counter<double> m_vp_timer;
 
       void
       onResourceRelease(void) override;
