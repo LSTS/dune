@@ -79,6 +79,10 @@ namespace Monitors
       uint16_t m_req_id;
       //! Payload storage.
       Storage m_storage;
+      //! Rate limiter for messages.
+      //! Maps a hash of (entity_id << 32 | message_id) to a pair of rate and timestamp of last message arrival.
+      //! The rate is in seconds and the timestamp is in seconds since epoch.
+      std::map<uint64_t, std::pair<unsigned, double>> m_rate_lim;
       //! Temporary list of message fragments for retransmission.
       std::map<uint32_t, FragmentsRetransmission> m_retransmissions;
       //! Timer to check retransmissions.
@@ -101,7 +105,9 @@ namespace Monitors
 
         param("Payload Messages", m_args.pay_msgs)
           .defaultValue("")
-          .description("List of messages <Message>:<Entity> to send using Iridium.");
+          .description("List of messages <Message>:<Entity>:<Rate> to send using Iridium. "
+                       "The rate is in seconds and is optional. If not specified or equal to 0, "
+                       "the message will be sent every time it is received.");
 
         param("Maximum payload size", m_args.max_payload)
           .defaultValue("259")
@@ -120,6 +126,13 @@ namespace Monitors
 
         bind<IMC::MessagePart>(this);
         bind<IMC::MessagePartControl>(this);
+      }
+
+      ~Task(void)
+      {
+        for (auto& it: m_retransmissions)
+          delete it.second.m_fragments;
+        m_retransmissions.clear();
       }
 
       //! Update internal state with new parameter values.
@@ -154,7 +167,8 @@ namespace Monitors
           spew("Splitting %s", i.c_str());
           std::vector<std::string> params;
           String::split(i, ":", params);
-          if (params.size() != 2)
+          unsigned msg_id = IMC::Factory::getIdFromAbbrev(params[0]);
+          if (params.size() < 2)
           {
             err("invalid message format %s", i.c_str());
             continue;
@@ -170,7 +184,7 @@ namespace Monitors
             err("empty entity name for message %s", params[0].c_str());
             continue;
           }
-          else if (IMC::Factory::getIdFromAbbrev(params[0]) == 0)
+          else if (msg_id == 0)
           {
             err("message %s not found in IMC factory", params[0].c_str());
             continue;
@@ -181,13 +195,16 @@ namespace Monitors
           }
 
           debug("Add message %s from %s to payload", params[0].c_str(), params[1].c_str());
-          unsigned msg_id = IMC::Factory::getIdFromAbbrev(params[0]);
+          
           unsigned eid = tryResolveEntity(params[1]);
           m_storage.addToPayload(eid, msg_id);
-
+          if (params.size() == 3)
+          {
+            uint64_t hash = (static_cast<uint64_t>(eid) << 32) | msg_id;
+            m_rate_lim[hash] = std::make_pair(castLexical<unsigned>(params[2]), 0);
+          }
           // Bind message to consumer.
-          bind(IMC::Factory::getIdFromAbbrev(params[0]),
-               new Consumer<Task, IMC::Message>(*this, &Task::consumePayload));
+          bind(msg_id, new Consumer<Task, IMC::Message>(*this, &Task::consumePayload));
         }
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -196,15 +213,16 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        for (auto& it: m_retransmissions)
-          delete it.second.m_fragments;
-        m_retransmissions.clear();
       }
 
       void
       onActivation(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        m_storage.clear();
+        for (auto& it: m_retransmissions)
+          delete it.second.m_fragments;
+        m_retransmissions.clear();
         m_send_wdog.setTop(m_args.timeout);
       }
 
@@ -214,10 +232,43 @@ namespace Monitors
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
+      bool
+      filter(const IMC::Message* msg)
+      {
+        if (!isActive())
+          return false;
+
+        auto curr = Clock::getSinceEpoch();
+        uint64_t hash = (static_cast<uint64_t>(msg->getSourceEntity()) << 32) | msg->getId();
+        auto it = m_rate_lim.find(hash);
+        if (it == m_rate_lim.end())
+          return true;
+
+        uint64_t rate = it->second.first;
+        if (rate == 0)
+          return true;
+
+        auto& last_time = it->second.second;
+        if (last_time == 0)
+        {
+          last_time = curr;
+          return true;
+        }
+
+        if (curr - last_time < rate)
+          return false;
+
+        last_time = curr;
+        return true;
+      }
+
       //! Consume payload messages.
       void
       consumePayload(const IMC::Message* msg)
       {
+        if (!filter(msg))
+          return;
+
         m_storage.store(msg);
       }
 
