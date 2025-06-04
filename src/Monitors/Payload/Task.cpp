@@ -148,18 +148,23 @@ namespace Monitors
             std::vector<std::string> params;
             String::split(i, ":", params);
             if (params.size() < 3)
+              continue;
+
+            try
+            {
+              unsigned msg_id = IMC::Factory::getIdFromAbbrev(params[0]);
+              unsigned eid = tryResolveEntity(params[1]);
+              if (params.size() == 3)
+              {
+                uint64_t hash = (static_cast<uint64_t>(eid) << 32) | msg_id;
+                auto it = m_rate_lim.find(hash);
+                if (it != m_rate_lim.end())
+                  it->second.first = castLexical<unsigned>(params[2]);
+              }
+            }
+            catch(...)
             {
               continue;
-            }
-            
-            unsigned msg_id = IMC::Factory::getIdFromAbbrev(params[0]);
-            unsigned eid = tryResolveEntity(params[1]);
-            if (params.size() == 3)
-            {
-              uint64_t hash = (static_cast<uint64_t>(eid) << 32) | msg_id;
-              auto it = m_rate_lim.find(hash);
-              if (it != m_rate_lim.end())
-                it->second.first = castLexical<unsigned>(params[2]);
             }
           }
         }
@@ -190,44 +195,51 @@ namespace Monitors
           spew("Splitting %s", i.c_str());
           std::vector<std::string> params;
           String::split(i, ":", params);
-          unsigned msg_id = IMC::Factory::getIdFromAbbrev(params[0]);
-          if (params.size() < 2)
+          try
           {
-            err("invalid message format %s", i.c_str());
-            continue;
-          }
-          else if (params[0].compare("MessagePart") == 0 ||
-                   params[0].compare("MessagePartControl") == 0)
-          {
-            inf("skipping: %s", params[0].c_str());
-            continue;
-          }
-          else if (params[1].empty())
-          {
-            err("empty entity name for message %s", params[0].c_str());
-            continue;
-          }
-          else if (msg_id == 0)
-          {
-            err("message %s not found in IMC factory", params[0].c_str());
-            continue;
-          }
-          else if (!AddressResolver::isValid(tryResolveEntity(params[1])))
-          {
-            continue;
-          }
+            unsigned msg_id = IMC::Factory::getIdFromAbbrev(params[0]);
+            if (params.size() < 2)
+            {
+              err("invalid message format %s", i.c_str());
+              continue;
+            }
+            else if (params[0].compare("MessagePart") == 0 ||
+                    params[0].compare("MessagePartControl") == 0)
+            {
+              inf("skipping: %s", params[0].c_str());
+              continue;
+            }
+            else if (params[1].empty())
+            {
+              err("empty entity name for message %s", params[0].c_str());
+              continue;
+            }
+            else if (msg_id == 0)
+            {
+              err("message %s not found in IMC factory", params[0].c_str());
+              continue;
+            }
+            else if (!AddressResolver::isValid(tryResolveEntity(params[1])))
+            {
+              continue;
+            }
 
-          debug("Add message %s from %s to payload", params[0].c_str(), params[1].c_str());
-          
-          unsigned eid = tryResolveEntity(params[1]);
-          m_storage.addToPayload(eid, msg_id);
-          if (params.size() == 3)
-          {
-            uint64_t hash = (static_cast<uint64_t>(eid) << 32) | msg_id;
-            m_rate_lim[hash] = std::make_pair(castLexical<unsigned>(params[2]), 0);
+            debug("Add message %s from %s to payload", params[0].c_str(), params[1].c_str());
+            
+            unsigned eid = tryResolveEntity(params[1]);
+            m_storage.addToPayload(eid, msg_id);
+            if (params.size() == 3)
+            {
+              uint64_t hash = (static_cast<uint64_t>(eid) << 32) | msg_id;
+              m_rate_lim[hash] = std::make_pair(castLexical<unsigned>(params[2]), 0);
+            }
+            // Bind message to consumer.
+            bind(msg_id, new Consumer<Task, IMC::Message>(*this, &Task::consumePayload));
           }
-          // Bind message to consumer.
-          bind(msg_id, new Consumer<Task, IMC::Message>(*this, &Task::consumePayload));
+          catch(...)
+          {
+            continue;
+          }
         }
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
