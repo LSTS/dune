@@ -58,6 +58,10 @@ namespace Transports
       unsigned lsf_volume_size;
       // Compression method.
       std::string lsf_compression;
+      // Rate limits.
+      std::vector<std::string> rate_lims;
+      // Filtered entities.
+      std::vector<std::string> entities_flt;
     };
 
     struct Task: public Tasks::Task
@@ -84,6 +88,8 @@ namespace Transports
       bool m_active;
       // Task arguments.
       Arguments m_args;
+      //! Message Filter
+      MessageFilter m_filter;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -110,6 +116,12 @@ namespace Transports
 
         param("Transports", m_args.messages)
         .defaultValue("");
+
+        param("Rate Limiters", m_args.rate_lims)
+        .description("List of <Message>:<Frequency>");
+
+        param("Filtered Entities", m_args.entities_flt)
+        .description("List of <Message>:<Entity>+<Entity> that define the source entities allowed to pass message of a specific message type.");
 
         m_log_ctl.setSource(getSystemId());
 
@@ -153,6 +165,12 @@ namespace Transports
         m_compression = Compression::Factory::method(m_args.lsf_compression);
         if (m_args.lsf_volumes.empty())
           m_args.lsf_volumes.push_back("");
+
+        if (paramChanged(m_args.rate_lims))
+          m_filter.setupRates(m_args.rate_lims);
+        
+        if (paramChanged(m_args.entities_flt))
+          m_filter.setupEntities(m_args.entities_flt, this);
       }
 
       void
@@ -226,6 +244,9 @@ namespace Transports
       void
       consume(const IMC::Message* msg)
       {
+        if (m_filter.filter(msg))
+          return;
+
         if (m_active)
           logMessage(msg);
       }
