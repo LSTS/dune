@@ -175,6 +175,8 @@ namespace Control
         bool m_turning;
         //! Speed Over Ground.
         double m_sog;
+        //! Speed over desired course.
+        double m_sog_course;
         //! Vehicle Estimated State
         IMC::EstimatedState m_estate;
         //! Desired speed.
@@ -568,7 +570,11 @@ namespace Control
           double lat = m_estate.lat;
           double lon = m_estate.lon;
           WGS84::displace(m_estate.x, m_estate.y, &lat, &lon);
+
+          // Project speed over ground, into the desired course.
+          // This is the speed of the vehicle in the direction of the desired course.
           m_sog = std::sqrt(std::pow(m_estate.vx, 2) + std::pow(m_estate.vy, 2));
+          m_sog_course = m_sog * std::cos(m_desired_course - m_estate.psi);
 
           if (!m_active)
             return;
@@ -801,7 +807,7 @@ namespace Control
               value = m_args.speed_control ? m_desired_speed : 0.0f;
 
               if ((m_args.en_thrust_turn && m_turning) ||
-                  (m_sog < m_args.min_sog))
+                  (m_sog_course < m_args.min_sog))
                 value += m_args.thrust_assist;
             }
           }
