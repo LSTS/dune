@@ -47,12 +47,17 @@ namespace Navigation
     {
       using DUNE_NAMESPACES;
 
+      //! Timeout for valid altitude.
+      static constexpr uint8_t c_alt_timeout = 10;
+
       struct Arguments
       {
         //! Euler Angles source entity label.
         std::string euler_label;
         //! Angular Velocity source entity label.
         std::string ang_label;
+         //! Distance source entity label.
+        std::string dist_label;
         //! Convert height to geoid height (MSL)
         bool convert_msl;
         //! Main unit.
@@ -77,6 +82,10 @@ namespace Navigation
         unsigned int m_euler_eid;
         //! Angular velocity entity eid.
         unsigned int m_ang_eid;
+        //! Distance entity eid.
+        unsigned int m_dist_eid;
+        //! Timeout for invalid altitude.
+        Counter<uint8_t> m_alt_timer;
         //! Transmission request id
         int m_reqid;
         //! Estimated state.
@@ -96,6 +105,10 @@ namespace Navigation
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
+          m_euler_eid(AddressResolver::invalid()),
+          m_ang_eid(AddressResolver::invalid()),
+          m_dist_eid(AddressResolver::invalid()),
+          m_alt_timer(c_alt_timeout),
           m_reqid(0),
           m_origin(nullptr)
         {
@@ -105,6 +118,10 @@ namespace Navigation
 
           param("Entity Label - Angular Velocity", m_args.ang_label)
             .description("Entity label of 'EulerAngles' and 'AngularVelocity' messages");
+
+          param("Entity Label - Distance", m_args.dist_label)
+            .defaultValue("")
+            .description("Entity label of 'Distance' messages");
 
           param("Main unit", m_args.main_unit)
             .description("Name of preferred GPS navigation unit.");
@@ -133,9 +150,11 @@ namespace Navigation
           m_estate.clear();
           m_offset = 0.0f;
           m_offset_flag = false;
+          m_estate.alt = -1.0;
 
           // Register callbacks
           bind<IMC::AngularVelocity>(this);
+          bind<IMC::Distance>(this);
           bind<IMC::EulerAngles>(this);
           bind<IMC::GpsFix>(this);
         }
@@ -155,6 +174,7 @@ namespace Navigation
         {
           m_euler_eid = getEid(m_args.euler_label);
           m_ang_eid = getEid(m_args.ang_label);
+          m_dist_eid = getEid(m_args.dist_label);
 
           // Gps entities
           m_main.id = getEid(m_args.main_unit);
@@ -162,27 +182,27 @@ namespace Navigation
           m_third.id = getEid(m_args.third_unit);
         }
 
-        //! Get entity id of label
-        //! Returns UINT16_MAX in case of missing label
+        //! Get entity id of label.
+        //! Returns Invalid ID in case of missing label.
         unsigned int
         getEid(const std::string& label)
         {
-          if (label.empty())
+          unsigned int id = AddressResolver::invalid();
+          if (!label.empty())
           {
-            war("Ignoring empty entity label");
-            return UINT16_MAX;
+            try
+            {
+              id = resolveEntity(label);
+            }
+            catch (const std::exception& e)
+            {
+              err(DTR("cann't resolve %s (%s), is there a task failure or a configuration error?"),
+                  label.c_str(), e.what());
+            }
           }
-
-          unsigned int id = UINT16_MAX;
-          try
-          {
-            id = resolveEntity(label);
-          }
-          catch (const std::exception& e)
-          {
-            err(DTR("can not resolve %s (%s), is there a task failure or a configuration error?"),
-                label.c_str(), e.what());
-          }
+          else
+            war(DTR("trying to get if for label, but label is empty. "
+                    "Is there a task failure or a configuration error?"));
 
           return id;
         }
@@ -207,6 +227,22 @@ namespace Navigation
           m_estate.p = msg->x;
           m_estate.q = msg->y;
           m_estate.r = msg->z;
+        }
+
+        void
+        consume(const IMC::Distance* msg)
+        {
+          if (!AddressResolver::isValid(m_dist_eid))
+            return;
+
+          if (msg->getSource() != getSystemId())
+            return;
+
+          if (msg->getSourceEntity() != m_dist_eid)
+            return;
+
+          m_alt_timer.reset();
+          m_estate.alt = msg->value;
         }
 
         void
@@ -359,6 +395,9 @@ namespace Navigation
 
             if (m_third.update())
               debug("Third Gps disappeared");
+            
+            if (m_alt_timer.overflow())
+              m_estate.alt = -1.0f;
 
             // Raise ERROR MODE if all GPSs are out of service.
             if (m_main.isInvalid() && m_second.isInvalid() && m_third.isInvalid())
