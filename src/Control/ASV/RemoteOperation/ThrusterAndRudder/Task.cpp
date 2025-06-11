@@ -83,7 +83,7 @@ namespace Control
             addActionButton("Stop");
             addActionButton("PowerOff");
             addActionButton("Restart Log");
-            addActionButton("Toggle SPOT");
+            // addActionButton("Toggle SPOT");
             addActionButton("Arm");
             addActionButton("Disarm");
             addActionButton("Enable CAS");
