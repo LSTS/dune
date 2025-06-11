@@ -340,7 +340,7 @@ namespace Sensors
             vprofile.lat = Angles::degrees(lat);
             vprofile.lon = Angles::degrees(lon);
             vprofile.numsamples = m_abs_wind_dir_avg.sampleSize();
-            vprofile.parameter = IMC::VerticalProfile::PROF_ABSOLUTE_WIND;
+            // vprofile.parameter = IMC::VerticalProfile::PROF_ABSOLUTE_WIND;
   
             ps.depth = aw_avg.direction;
             ps.avg = aw_avg.speed;
