@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 971b1d246a2548118d0fee2a17f455a2                            *
+// IMC XML MD5: 04ce1d1dac399100b9207708c4b21b88                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -708,6 +708,12 @@
 #define DUNE_IMC_TOTALMAGINTENSITY 2006
 //! CommRestriction identification number.
 #define DUNE_IMC_COMMRESTRICTION 2010
+//! QueryTypedEntityParameters identification number.
+#define DUNE_IMC_QUERYTYPEDENTITYPARAMETERS 2016
+//! TypedEntityParameter identification number.
+#define DUNE_IMC_TYPEDENTITYPARAMETER 2017
+//! ValuesIf identification number.
+#define DUNE_IMC_VALUESIF 2018
 //! VersionInfo identification number.
 #define DUNE_IMC_VERSIONINFO 2021
 //! TotalHeading identification number.
