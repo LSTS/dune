@@ -146,8 +146,11 @@ namespace Transports
             remove.push_back(it->first);
 
             // message has died of natural causes...
-            war(DTR("Removed incoming message %u from memory (%d fragments still missing)."),
-                it->first,    
+            const auto uid = static_cast<uint8_t>((it->first >> 16) & 0xFF);
+            const auto dest = static_cast<uint16_t>(it->first & 0xFFFF);
+            war(DTR("Removed incoming message with uid %u (system: 0x%x) from memory (%d fragments still missing)."),
+                uid,
+                dest,
                 it->second.first.getFragmentsMissing());
           }
           else if (remaining < m_gc_counter.getRemaining())
