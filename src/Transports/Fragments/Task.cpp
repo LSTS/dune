@@ -122,7 +122,7 @@ namespace Transports
             if (it->second.second)
             {              
               IMC::MessagePartControl mpc;
-              const uint16_t destination = static_cast<uint16_t>(it->first & 0xFFFF); 
+              const uint16_t destination = static_cast<uint16_t>(it->first & 0xFFFF);
               mpc.setDestination(destination);
               mpc.uid = static_cast<uint8_t>((it->first >> 16) & 0xFF);
               mpc.op = IMC::MessagePartControl::OP_REQUEST_RETRANSMIT;
