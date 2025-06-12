@@ -79,10 +79,11 @@ namespace Transports
       void
       consume(const IMC::MessagePart* msg)
       {
-        if (msg->getSource() == getSystemId())
+        const auto source = msg->getSource();
+        if (source == getSystemId())
           return;
 
-        int hash = (msg->uid << 16) | msg->getSource();
+        int hash = (msg->uid << 16) | source;
 
         if (m_incoming.find(hash) == m_incoming.end())
         {
@@ -93,8 +94,9 @@ namespace Transports
 
         IMC::Message* res = m_incoming[hash].first.setFragment(msg);
         m_incoming[hash].second = true;
-        debug("Incoming message fragment for message %u (%d still missing)",
-              hash >> 16,
+        debug("Incoming message fragment for message %u (system: 0x%x) (%d still missing)",
+              msg->uid,
+              source,
               m_incoming[hash].first.getFragmentsMissing());
 
         if (res != NULL)
