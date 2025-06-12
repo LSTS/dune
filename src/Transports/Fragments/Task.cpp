@@ -122,7 +122,9 @@ namespace Transports
             if (it->second.second)
             {              
               IMC::MessagePartControl mpc;
-              mpc.uid = it->first >> 16;
+              const uint16_t destination = static_cast<uint16_t>(it->first & 0xFFFF); 
+              mpc.setDestination(destination);
+              mpc.uid = static_cast<uint8_t>((it->first >> 16) & 0xFF);
               mpc.op = IMC::MessagePartControl::OP_REQUEST_RETRANSMIT;
               if (it->second.first.getFragmentsMissing() <= it->second.first.getFragmentsReceived())
               {
