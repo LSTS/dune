@@ -48,7 +48,7 @@ namespace Navigation
       using DUNE_NAMESPACES;
 
       //! Timeout for valid altitude.
-      static constexpr uint8_t c_alt_timeout = 10;
+      static constexpr float c_alt_timeout = 10.0f;
 
       struct Arguments
       {
@@ -85,7 +85,7 @@ namespace Navigation
         //! Distance entity eid.
         unsigned int m_dist_eid;
         //! Timeout for invalid altitude.
-        Counter<uint8_t> m_alt_timer;
+        Counter<float> m_alt_timer;
         //! Transmission request id
         int m_reqid;
         //! Estimated state.
