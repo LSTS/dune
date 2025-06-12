@@ -137,8 +137,8 @@ namespace Transports
               }
               it->second.first.resetAge();
               it->second.second = false;
-              inf(DTR("Incoming message %u is still incomplete (%d fragments missing). "
-                      "Requesting retransmission."), it->first, it->second.first.getFragmentsMissing());
+              inf(DTR("Incoming message with uid %u (system: 0x%x) is still incomplete (%d fragments missing). "
+                      "Requesting retransmission."), mpc.uid, destination, it->second.first.getFragmentsMissing());
               dispatch(mpc);
               continue;
             }
