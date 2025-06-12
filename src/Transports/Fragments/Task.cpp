@@ -79,6 +79,9 @@ namespace Transports
       void
       consume(const IMC::MessagePart* msg)
       {
+        if (msg->getSource() == getSystemId())
+          return;
+
         int hash = (msg->uid << 16) | msg->getSource();
 
         if (m_incoming.find(hash) == m_incoming.end())
