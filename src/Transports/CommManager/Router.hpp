@@ -358,9 +358,9 @@ namespace Transports
           case IMC::TransmissionRequest::DMODE_INLINEMSG:
             {
               IMC::ImcIridiumMessage m;
-              m.destination = 0xFFFF;
               m.source = m_parent->getSystemId();
               m.msg = msg->msg_data.get()->clone();
+              m.destination = m.msg->getDestination();
               uint8_t buffer[65535];
               int len = m.serialize(buffer);
               tx.data.assign(buffer, buffer + len);
