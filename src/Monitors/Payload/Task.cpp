@@ -376,6 +376,7 @@ namespace Monitors
           IMC::MessagePart* msg_frag = it->second.m_fragments->getFragment(frag);
           sendInline(msg_frag);
         }
+        it->second.m_period.reset();
       }
 
       void
