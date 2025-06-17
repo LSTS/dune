@@ -360,11 +360,11 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
 
-        if (msg->state == m_pcs.state && msg->plan_id == m_pcs.plan_id
-            && msg->man_id == m_pcs.man_id)
-          return;
-
         m_pcs = *msg;
+
+        // if (msg->state == m_pcs.state && msg->plan_id == m_pcs.plan_id
+        //     && msg->man_id == m_pcs.man_id)
+        //   return;
 
         if (m_iri_subs.empty())
           return;
@@ -475,13 +475,24 @@ namespace Transports
         if (ir_msg == nullptr)
           return;
 
+        // Not an iridium operation message.
         if (ir_msg->msg_id != ID_UPDATE_OP)
         {
           if (!isActive())
             requestActivation();
 
+          // Update the timestamp of the subscriber.
+          auto it = m_iri_subs.find(ir_msg->source);
+          if (it != m_iri_subs.end())
+          {
+            it->second = Clock::getSinceEpoch();
+            delete ir_msg;
+            return;
+          }
+
+          // New subscriber.
           m_iri_subs[ir_msg->source] = Clock::getSinceEpoch();
-          onIridiumActivation(ir_msg->source);
+          consume(&m_pcs); // Check if we need to send the PlanControlState message. 
           delete ir_msg;
           return;
         }
