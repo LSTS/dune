@@ -155,12 +155,14 @@ namespace Monitors
             {
               unsigned msg_id = IMC::Factory::getIdFromAbbrev(params[0]);
               unsigned eid = tryResolveEntity(params[1]);
-              if (params.size() == 3)
+              uint64_t hash = (static_cast<uint64_t>(eid) << 32) | msg_id;
+              auto it = m_rate_lim.find(hash);
+              if (it != m_rate_lim.end())
               {
-                uint64_t hash = (static_cast<uint64_t>(eid) << 32) | msg_id;
-                auto it = m_rate_lim.find(hash);
-                if (it != m_rate_lim.end())
+                if (params.size() == 3)                
                   it->second.first = castLexical<unsigned>(params[2]);
+                else
+                  m_rate_lim.erase(it);
               }
             }
             catch(...)
