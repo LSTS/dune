@@ -303,6 +303,7 @@ namespace Transports
           uint16_t tid = m_req_id++;
           dispatchRequest(msg_frag, tid);
         }
+        it->second.m_period.reset();
       }
 
       void
