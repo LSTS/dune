@@ -56,7 +56,7 @@ namespace DUNE
       createId(void);
 
       //! Unique identifier lock.
-      Mutex m_mutex;
+      Concurrency::Mutex m_mutex;
 
       static uint8_t s_uid;
       uint8_t m_uid;
