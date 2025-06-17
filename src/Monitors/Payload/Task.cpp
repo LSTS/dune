@@ -106,8 +106,9 @@ namespace Monitors
         param("Payload Messages", m_args.pay_msgs)
           .defaultValue("")
           .description("List of messages <Message>:<Entity>:<Rate> to send using Iridium. "
-                       "The rate is in seconds and is optional. If not specified or equal to 0, "
-                       "the message will be sent every time it is received.");
+                       "The rate is in seconds and is optional. If rate is not specified, "
+                       "the message will be sent every time it is received. "
+                       "If rate is 0, the message will be ignored.");
 
         param("Maximum payload size", m_args.max_payload)
           .defaultValue("259")
@@ -281,7 +282,7 @@ namespace Monitors
 
         uint64_t rate = it->second.first;
         if (rate == 0)
-          return true;
+          return false;
 
         auto& last_time = it->second.second;
         if (last_time == 0)
