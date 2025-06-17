@@ -152,7 +152,7 @@ namespace Transports
         catch (...)
         {
           setReadMode(saved_read_mode);
-          throw;
+          return 0;
         }
 
         return length;
