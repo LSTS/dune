@@ -49,6 +49,10 @@ namespace Navigation
 
       //! Timeout for valid altitude.
       static constexpr float c_alt_timeout = 10.0f;
+      //! Maximum horizontal accuracy (m)
+      static constexpr float c_max_hacc = 15.0f;
+      //! Maximum horizontal dilution of precision (HDOP)
+      static constexpr float c_max_hdop = 5.0f;
 
       struct Arguments
       {
@@ -289,17 +293,68 @@ namespace Navigation
         {
           gps.reset();
 
+          m_rej.utc_time = msg->utc_time;
+          m_rej.setTimeStamp(msg->getTimeStamp());
+
           if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
           {
-            debug("Got INVALID fix");
+            debug("Got INVALID fix: No Position");
 
             gps.setValid(false);
 
             // Dispatch Rejection to Invalid source Entity
             m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
             m_rej.setDestinationEntity(msg->getSourceEntity());
-            dispatch(m_rej);
+            dispatch(m_rej, DF_KEEP_TIME);
+            return;
+          }
 
+          // if ((msg->validity & IMC::GpsFix::GFV_VALID_HACC) == 0)
+          // {
+          //   m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
+          //   m_rej.setDestinationEntity(msg->getSourceEntity());
+
+          //   debug("Got INVALID fix: No Horizontal Accuracy");
+
+          //   gps.setValid(false);
+          //   dispatch(m_rej, DF_KEEP_TIME);
+          //   return;
+          // }
+
+          // if (msg->hacc > c_max_hacc)
+          // {
+          //   m_rej.reason = IMC::GpsFixRejection::RR_ABOVE_MAX_HACC;
+          //   m_rej.setDestinationEntity(msg->getSourceEntity());
+
+          //   debug("Got INVALID fix: Above Maximum HACC");
+
+          //   gps.setValid(false);
+          //   dispatch(m_rej, DF_KEEP_TIME);
+          //   return;
+          // }
+
+
+          if ((msg->validity & IMC::GpsFix::GFV_VALID_HDOP) == 0)
+          {
+            m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
+            m_rej.setDestinationEntity(msg->getSourceEntity());
+
+            debug("Got INVALID fix: No Horizontal Dilution of Precision");
+
+            gps.setValid(false);
+            dispatch(m_rej, DF_KEEP_TIME);
+            return;
+          }
+
+          if (msg->hdop > c_max_hdop)
+          {
+            m_rej.reason = IMC::GpsFixRejection::RR_ABOVE_MAX_HDOP;
+            m_rej.setDestinationEntity(msg->getSourceEntity());
+
+            debug("Got INVALID fix: Above Maximum HDOP");
+
+            gps.setValid(false);
+            dispatch(m_rej, DF_KEEP_TIME);
             return;
           }
 
