@@ -228,6 +228,9 @@ namespace Transports
           return;
 
         Memory::replace(m_pstate, new IMC::PlanControlState(*msg));
+
+        std::string str = msg->plan_id + "|Man:" + msg->man_id;
+        m_plan_chksum = CRC16::compute((uint8_t*)str.data(), str.size());
       }
 
       void
@@ -273,7 +276,9 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
 
-        m_plan_chksum = CRC16::compute((uint8_t*)msg->plan_id.data(), msg->plan_id.size());
+        std::string str = msg->plan_id + "|Man:" + msg->start_man_id;
+        m_plan_chksum = CRC16::compute((uint8_t*)str.data(), str.size());
+
       }
 
       void
