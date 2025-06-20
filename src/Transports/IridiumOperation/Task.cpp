@@ -360,16 +360,26 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
 
+        if (msg->state == m_pcs.state && msg->plan_id == m_pcs.plan_id
+            && msg->man_id == m_pcs.man_id)
+        {
+          m_pcs = *msg;  // Update the timestamp and other fields.
+          return;
+        }
+
         m_pcs = *msg;
 
-        // if (msg->state == m_pcs.state && msg->plan_id == m_pcs.plan_id
-        //     && msg->man_id == m_pcs.man_id)
-        //   return;
+        if (msg->state == IMC::PlanControlState::PCS_BLOCKED
+            || m_pcs.state == IMC::PlanControlState::PCS_INITIALIZING)
+        {
+          // Wait for next plan to execute.
+          return;
+        }
+
+        m_pcs.setSourceEntity(getEntityId());
+        dispatch(m_pcs);
 
         if (m_iri_subs.empty())
-          return;
-
-        if (m_filter.filter(msg))
           return;
 
         sendIridiumMsg(msg);
@@ -491,8 +501,7 @@ namespace Transports
           }
 
           // New subscriber.
-          m_iri_subs[ir_msg->source] = Clock::getSinceEpoch();
-          consume(&m_pcs); // Check if we need to send the PlanControlState message. 
+          onIridiumActivation(ir_msg->source);
           delete ir_msg;
           return;
         }
@@ -526,8 +535,6 @@ namespace Transports
               return;
             }
 
-            m_iri_subs[op->source] = Clock::getSinceEpoch();
-
             if (!isActive())
               requestActivation();
 
@@ -547,9 +554,9 @@ namespace Transports
       onIridiumActivation(unsigned id)
       {
         debug("Activating iridium for %d", id);
+        m_iri_subs[id] = Clock::getSinceEpoch();
 
-        //? Send All EntityState messages?
-
+        dispatch(m_pcs);
         sendIridiumMsg(&m_pcs);
       }
 
