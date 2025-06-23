@@ -497,6 +497,8 @@ namespace DUNE
     void
     Task::consume(const IMC::QueryEntityParameters* msg)
     {
+      inf("consume QueryEntityParameters: %s", msg->name.c_str());
+      return;
       onQueryEntityParameters(msg);
     }
 
@@ -506,12 +508,21 @@ namespace DUNE
       if (msg->name != getEntityLabel())
         return;
 
+      IMC::EntityParameters params;
+      params.name = getEntityLabel();
+
       IMC::MessageList<IMC::EntityParameter>::const_iterator itr = msg->params.begin();
       for (; itr != msg->params.end(); ++itr)
       {
         try
         {
-          m_params.set((*itr)->name, (*itr)->value);
+          if(m_params.set((*itr)->name, (*itr)->value))
+          {
+            IMC::EntityParameter p;
+            p.name = (*itr)->name;
+            p.value = (*itr)->value;
+            params.params.push_back(p);
+          }
           m_ctx.config.set(getName(), (*itr)->name, (*itr)->value);
         }
         catch (std::runtime_error& e)
@@ -520,6 +531,9 @@ namespace DUNE
               (*itr)->name.c_str());
         }
       }
+
+      if (!params.params.empty())
+        dispatch(params);
 
       updateParameters();
     }
