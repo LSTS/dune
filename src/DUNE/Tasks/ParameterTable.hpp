@@ -64,7 +64,11 @@ namespace DUNE
         return *p;
       }
 
-      void
+      //! Set a parameter value.
+      //! @param name parameter name.
+      //! @param value parameter value.
+      //! @return true if value changed, false otherwise.
+      bool
       set(const std::string& name, const std::string& value);
 
       void
