@@ -1317,6 +1317,7 @@ namespace Control
                 }
 
                 TransmissionRequest tr;
+                tr.setDestination(getSystemId());
                 tr.req_id = m_tx_req_id++;
                 tr.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
                 tr.data_mode = TransmissionRequest::DMODE_INLINEMSG;
