@@ -682,7 +682,7 @@ namespace Autonomy
       void
       handlePosCommand(const std::string& origin)
       {
-        std::string s = m_emsg->get();
+        std::string s = m_emsg->get("T");
         reply(origin, s);
       }
 
