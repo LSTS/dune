@@ -532,8 +532,8 @@ namespace DUNE
         }
       }
 
-      if (!params.params.empty())
-        dispatch(params);
+      // Dispatch even if empty to notify that the parameters were set.
+      dispatch(params);
 
       updateParameters();
     }
