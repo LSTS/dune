@@ -497,8 +497,6 @@ namespace DUNE
     void
     Task::consume(const IMC::QueryEntityParameters* msg)
     {
-      inf("consume QueryEntityParameters: %s", msg->name.c_str());
-      return;
       onQueryEntityParameters(msg);
     }
 
