@@ -1,18 +1,11 @@
-// Since Apr 2010
-
-#include <cmath>
-
 #include "ais.h"
-
-using std::abs;
 
 namespace libais {
 
-Ais1_2_3::Ais1_2_3(const char *nmea_payload, const size_t pad)
-    : AisMsg(nmea_payload, pad), nav_status(0), rot_over_range(false),
-      rot_raw(0), rot(0.0), sog(0.0), position_accuracy(0),
-      cog(0.0), true_heading(0), timestamp(0), special_manoeuvre(0), spare(0),
-      raim(false), sync_state(0),
+Ais9::Ais9(const char *nmea_payload, const size_t pad)
+    : AisMsg(nmea_payload, pad), alt(0), sog(0.0), position_accuracy(0),
+      cog(0.0), timestamp(0), alt_sensor(0), spare(0), dte(0), spare2(0),
+      assigned_mode(0), raim(false), commstate_flag(0), sync_state(0),
       slot_timeout_valid(false), slot_timeout(0),
       received_stations_valid(false), received_stations(0),
       slot_number_valid(false), slot_number(0),
@@ -29,29 +22,29 @@ Ais1_2_3::Ais1_2_3(const char *nmea_payload, const size_t pad)
     return;
   }
 
-  assert(message_id >= 1 && message_id <= 3);
+  assert(message_id == 9);
 
   bits.SeekTo(38);
-  nav_status = bits.ToUnsignedInt(38, 4);
+  alt = bits.ToUnsignedInt(38, 12);
+  sog = bits.ToUnsignedInt(50, 10);  // Type 9: Speed over ground is in knots.
 
-  rot_raw = bits.ToInt(42, 8);
-  rot_over_range = abs(rot_raw) > 126 ? true : false;
-  rot = pow((rot_raw/4.733), 2);
-  if (rot_raw < 0) rot = -rot;
-
-  sog = bits.ToUnsignedInt(50, 10) / 10.0;  // Knots.
   position_accuracy = bits[60];
   position = bits.ToAisPoint(61, 55);
-  cog = bits.ToUnsignedInt(116, 12) / 10.0;  // Degrees.
-  true_heading = bits.ToUnsignedInt(128, 9);
-  timestamp = bits.ToUnsignedInt(137, 6);
-  special_manoeuvre = bits.ToUnsignedInt(143, 2);
-  spare = bits.ToUnsignedInt(145, 3);
-  raim = bits[148];
+
+  cog = bits.ToUnsignedInt(116, 12) / 10.;
+  timestamp = bits.ToUnsignedInt(128, 6);
+  alt_sensor = bits[134];
+  spare = bits.ToUnsignedInt(135, 7);
+  dte = bits[142];
+  spare2 = bits.ToUnsignedInt(143, 3);
+  assigned_mode = bits[146];
+  raim = bits[147];
+  commstate_flag = bits[148];  // 0 SOTDMA, 1 ITDMA
 
   sync_state = bits.ToUnsignedInt(149, 2);
 
-  if (message_id == 1 || message_id == 2) {
+  if (commstate_flag == 0) {
+    // SOTDMA
     slot_timeout = bits.ToUnsignedInt(151, 3);
     slot_timeout_valid = true;
 
@@ -94,12 +87,7 @@ Ais1_2_3::Ais1_2_3(const char *nmea_payload, const size_t pad)
   }
 
   assert(bits.GetRemaining() == 0);
-
   status = AIS_OK;
-}
-
-ostream& operator<< (ostream &o, const Ais1_2_3 &msg) {
-  return o << msg.message_id << ": " << msg.mmsi;
 }
 
 }  // namespace libais

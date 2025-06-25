@@ -50,6 +50,8 @@ namespace Sensors
   namespace AIS
   {
     using DUNE_NAMESPACES;
+    using namespace libais;
+
 
     //! Read buffer size.
     static const size_t c_read_buffer_size = 82;
@@ -199,8 +201,8 @@ namespace Sensors
           if (itr != m_systems.end())
             rsi.sensor_class = itr->second;
 
-          rsi.lat = Angles::radians(msg.y);
-          rsi.lon = Angles::radians(msg.x);
+          rsi.lat = Angles::radians(msg.position.lat_deg);
+          rsi.lon = Angles::radians(msg.position.lng_deg);
           rsi.heading = Angles::radians(msg.cog);
           dispatch(rsi);
 

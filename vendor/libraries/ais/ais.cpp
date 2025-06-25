@@ -1,27 +1,22 @@
 // General helper functions for working with AIS and NMEA.
+#include <string>
 
 #include "ais.h"
 
-vector<string> Split(const string &str, const string &delim_str) {
-  assert(!delim_str.empty());
-  vector<string> r;
-  if (str.empty()) {
-    r.push_back("");
-    return r;
-  }
-  size_t prev = 0;
-  for (size_t off = str.find(delim_str);
-      off != string::npos;
-      off = str.find(delim_str, off + 1)) {
-    r.push_back(str.substr(prev, off-prev));
-    prev = off + delim_str.size();
-  }
-  r.push_back(str.substr(prev));
-  return r;
+extern "C" {
+int LibAisVersionMajor() {
+  return LIBAIS_VERSION_MAJOR;
 }
 
-string GetNthField(const string &str, const size_t n,
-                   const string &delim_str) {
+int LibAisVersionMinor() {
+  return LIBAIS_VERSION_MINOR;
+}
+}  // extern "C"
+
+namespace libais {
+
+std::string GetNthField(const std::string &str, const size_t n,
+                        const std::string &delim_str) {
   assert(!delim_str.empty());
   if (str.empty())
     return "";
@@ -30,7 +25,7 @@ string GetNthField(const string &str, const size_t n,
   size_t off = str.find(delim_str);
   size_t count = 0;
 
-  for (; off != string::npos && count != n;
+  for (; off != std::string::npos && count != n;
        off = str.find(delim_str, off + 1), count++) {
     prev = off + delim_str.size();
   }
@@ -41,9 +36,9 @@ string GetNthField(const string &str, const size_t n,
   return "";
 }
 
-int GetPad(const string &nmea_str) {
+int GetPad(const std::string &nmea_str) {
   // -1 on error
-  const string chksum_block(GetNthField(nmea_str, 6, ","));
+  const std::string chksum_block(GetNthField(nmea_str, 6, ","));
   if (chksum_block.size() != 4 || chksum_block[1] != '*')
     return -1;
   const char pad = chksum_block[0];
@@ -52,14 +47,11 @@ int GetPad(const string &nmea_str) {
   return static_cast<int>(pad - '0');
 }
 
-string GetBody(const string &nmea_str) {
+std::string GetBody(const std::string &nmea_str) {
   return GetNthField(nmea_str, 5, ",");
 }
 
-// for decoding str bits inside of a binary message
-const string bits_to_char_tbl="@ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "[\\]^- !\"#$%&`()*+,-./0123456789:;<=>?";
-
+// Note: Needs to be kept in sync with enum AIS_STATUS list in ais.h.
 const char * const AIS_STATUS_STRINGS[AIS_STATUS_NUM_CODES] = {
   "AIS_UNINITIALIZED",
   "AIS_OK",
@@ -68,60 +60,59 @@ const char * const AIS_STATUS_STRINGS[AIS_STATUS_NUM_CODES] = {
   "AIS_ERR_BAD_PTR",
   "AIS_ERR_UNKNOWN_MSG_TYPE",
   "AIS_ERR_MSG_NOT_IMPLEMENTED",
-  "AIS_ERR_BAD_MSG_CONTENT",
+  "AIS_ERR_MSG_SUB_NOT_IMPLEMENTED",
   "AIS_ERR_EXPECTED_STRING",
+  "AIS_ERR_BAD_MSG_CONTENT",
   "AIS_ERR_MSG_TOO_LONG",
+  "AIS_ERR_BAD_SUB_MSG",
+  "AIS_ERR_BAD_SUB_SUB_MSG",
 };
 
-bitset<6> Reverse(const bitset<6> &bits) {
-  bitset<6> out;
-  for (size_t i = 0; i < 6; i++)
-    out[5 - i] = bits[i];
-  return out;
-}
-
-bitset<6> nmea_ord[128];
-bool nmea_ord_initialized = false;
-
-// TODO(schwehr): singleton
-// http://gpsd.berlios.de/AIVDM.html#_aivdm_aivdo_payload_armoring
-void BuildNmeaLookup() {
-  if (nmea_ord_initialized)
-    return;
-  for (int c = 48; c < 88; c++) {
-    int val = c - 48;
-    nmea_ord[c] = Reverse(bitset<6>(val));
-  }
-  for (int c = 88; c < 128; c++) {
-    int val = c - 48;
-    val -= 8;
-    nmea_ord[c] = Reverse(bitset<6>(val));
-  }
-  nmea_ord_initialized = true;
-}
-
-AisMsg::AisMsg(const char *nmea_payload, const size_t pad) {
+AisMsg::AisMsg(const char *nmea_payload, const size_t pad)
+    : message_id(0), repeat_indicator(0), mmsi(0), status(AIS_UNINITIALIZED),
+      num_chars(0), num_bits(0), bits() {
   assert(nmea_payload);
   assert(pad < 6);
-  assert(nmea_ord_initialized);
-  status = AIS_UNINITIALIZED;
 
-  const size_t num_bits = std::strlen(nmea_payload) * 6 - pad;
-  if (num_bits < 38) {
-    std::cerr << "AisMsg num_bits " << num_bits << "\n";
-    status = AIS_ERR_BAD_BIT_COUNT;
-    return;
-  }
-
-  bitset<42> bs;
-  const string header(nmea_payload, 7);
-  const AIS_STATUS r = aivdm_to_bits(bs, header.c_str());
+  const AIS_STATUS r = bits.ParseNmeaPayload(nmea_payload, pad);
   if (r != AIS_OK) {
     status = r;
     return;
   }
+  num_bits = bits.GetNumBits();
+  num_chars = bits.GetNumChars();
 
-  message_id = ubits(bs, 0, 6);
-  repeat_indicator = ubits(bs, 6, 2);
-  mmsi = ubits(bs, 8, 30);
+  if (bits.GetNumBits() < 38) {
+    status = AIS_ERR_BAD_BIT_COUNT;
+    return;
+  }
+
+  message_id = bits.ToUnsignedInt(0, 6);
+  repeat_indicator = bits.ToUnsignedInt(6, 2);
+  mmsi = bits.ToUnsignedInt(8, 30);
 }
+
+bool AisMsg::CheckStatus() const {
+  if (status == AIS_OK || status == AIS_UNINITIALIZED) {
+    return true;
+  }
+#ifdef LIBAIS_DEBUG
+  std::cerr << "AisMsg::CheckStatus failed: "
+            << AIS_STATUS_STRINGS[status]
+            << std::endl;
+#endif
+  return false;
+}
+
+AisPoint::AisPoint() : lng_deg(0), lat_deg(0) {
+}
+
+AisPoint::AisPoint(double lng_deg_, double lat_deg_)
+    : lng_deg(lng_deg_), lat_deg(lat_deg_) {
+}
+
+ostream& operator<< (ostream &o, const AisPoint &position) {
+  return o << " (" << position.lng_deg << ", " << position.lat_deg << ")";
+}
+
+}  // namespace libais
