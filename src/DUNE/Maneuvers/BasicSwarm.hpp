@@ -120,6 +120,15 @@ namespace DUNE
       onReset(void)
       { }
 
+      virtual void
+      onUpdateParticipants(const IMC::VehicleFormation* msg)
+      {
+        (void)msg;
+      }
+
+      void
+      updateParticipant(const uint16_t vid, const double off_x, const double off_y, const double off_z);
+
       //! Trajectory point.
       struct TPoint
       {
@@ -261,12 +270,12 @@ namespace DUNE
       int m_fidx; //!< Formation index.
       double m_rlat; // Reference latitude set.
       double m_rlon; // Reference longitude set.
-      double m_cstep_time; //! time of last control step
       IMC::DesiredPath m_path;
       IMC::DesiredZ m_depth;
       double m_speed;
       uint8_t m_speed_units;
       bool m_leader;
+      bool m_init; //! Maneuver Initialization flag.
 
       bool
       initParticipants(const IMC::VehicleFormation*);
