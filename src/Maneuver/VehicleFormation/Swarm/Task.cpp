@@ -129,7 +129,7 @@ namespace Maneuver
         //! Leader reference timeout timer.
         Time::Counter<double> m_leader_ref_timer;
         //! Leader position.
-        Position m_leader_pos;
+        PositionPackage m_leader_pos;
         //! Speed reference.
         double m_speed_ref;
         //! Vehicle max speed;
@@ -241,6 +241,9 @@ namespace Maneuver
             case CODE_POS:
               recvPos(msg);
               break;
+            case CODE_PARTICIPANT:
+              recvParticipant(msg);
+              break;
             default:
               debug("Invalid acoustic code: %u", msg->data[1]);
               break;
@@ -317,6 +320,26 @@ namespace Maneuver
                                                                                              m_leader_pos.speed);
           
           updateSpeed();
+        }
+
+        void
+        recvParticipant(const IMC::UamRxFrame* msg)
+        {
+          if (m_leader_id != resolveSystemName(msg->sys_src))
+            return;
+          
+          //! Only update participant if moving
+          if (m_state != SM_MOVING)
+            return;
+          
+          ParticipantPackage part;
+          std::memcpy(&part, &msg->data[2], sizeof(part));
+          trace("Received code PARTICIPANT from: %s | vid: %u off_x : %f off_y: %f off_z %f", msg->sys_src.c_str(),
+                                                                                              part.vid,
+                                                                                              part.off_x,
+                                                                                              part.off_y,
+                                                                                              part.off_z);
+          updateParticipant(part.vid, part.off_x, part.off_y, part.off_z);
         }
 
         void
@@ -790,6 +813,34 @@ namespace Maneuver
         }
 
         void
+        onUpdateParticipants(const IMC::VehicleFormation* msg) override
+        {
+          if (!isLeader())
+            return;
+
+          if (m_state != SM_MOVING)
+          {
+            war("Not in MOVING state, ignoring update participants");
+            return;
+          }
+
+          war("New participant list received, reforming swarm");
+          // Update participants
+          const IMC::MessageList<IMC::VehicleFormationParticipant>* list = &msg->participants;
+          IMC::MessageList<IMC::VehicleFormationParticipant>::const_iterator itr;
+          for(itr = list->begin(); itr != list->end(); itr++)
+          {
+            // Update leader participants
+            updateParticipant((*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
+            // Broadcast new offsets to participants
+            m_comms.sendParticipant("broadcast", (*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
+            // Wait until sending next update
+            // This is blocking!!
+            waitWithConsume(1.0f);
+          }
+        }
+
+        void
         onStateReport(void)
         {
           switch (m_state)
@@ -811,6 +862,14 @@ namespace Maneuver
           }
 
           m_comms.run();
+        }
+
+        void
+        waitWithConsume(const double timeout)
+        {
+          Time::Counter<double> wait_timer(timeout);
+          while (!wait_timer.overflow())
+            waitForMessages(wait_timer.getRemaining());
         }
       };
     }
