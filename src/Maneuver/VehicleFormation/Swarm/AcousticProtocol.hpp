@@ -43,19 +43,28 @@ namespace Maneuver
 
       enum Codes
       {
-        CODE_ACK    = 0x00,
-        CODE_READY  = 0x01,
-        CODE_LEADER = 0x02,
-        CODE_START  = 0x03,
-        CODE_POS    = 0x04
+        CODE_ACK          = 0x00,
+        CODE_READY        = 0x01,
+        CODE_LEADER       = 0x02,
+        CODE_START        = 0x03,
+        CODE_POS          = 0x04,
+        CODE_PARTICIPANT  = 0x05
       };
 
-      struct Position
+      struct PositionPackage
       {
         uint8_t waypoint_idx;
         float lat;
         float lon;
         float speed;
+      };
+
+      struct ParticipantPackage
+      {
+        uint16_t vid; // Vehicle ID.
+        float off_x;
+        float off_y;
+        float off_z;
       };
 
       //! Takeoff maneuver
@@ -72,11 +81,29 @@ namespace Maneuver
         { }
 
         void
+        sendParticipant(const std::string& sys, const uint16_t vid, const float off_x, const float off_y, const float off_z)
+        {
+          std::vector<uint8_t> data;
+
+          ParticipantPackage part;
+          part.vid = vid;
+          part.off_x = off_x;
+          part.off_y = off_y;
+          part.off_z = off_z;
+
+          data.resize(sizeof(part) + 1);
+          data[0] = CODE_PARTICIPANT;
+          std::memcpy(&data[1], &part, sizeof(part));
+
+          sendFrame(sys, 0, data, false);
+        }
+
+        void
         sendPos(const std::string& sys, const uint8_t waypoint_index, const float lat, const float lon, const float speed)
         {
           std::vector<uint8_t> data;
 
-          Position p;
+          PositionPackage p;
           p.waypoint_idx = waypoint_index;
           p.lat = lat;
           p.lon = lon;
