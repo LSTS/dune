@@ -81,6 +81,8 @@ namespace Plan
           m_state = CS_NOT_STARTED;
         else
           m_state = CS_NONE;
+
+        m_elapsed = 0.0f;
       }
 
       //! Clear calibration
@@ -98,6 +100,7 @@ namespace Plan
         if (m_time >= 0.0)
         {
           m_state = CS_IN_PROGRESS;
+          m_elapsed = 0.0f;
           m_timer.setTop(m_time);
         }
         else
@@ -128,15 +131,15 @@ namespace Plan
       void
       forceRemainingTime(float time)
       {
-        if (time < 0.0)
+        if (time <= 0.0)
           return;
 
-        float elapsed = std::max(m_time - m_timer.getRemaining(), 0.0f);
-
-        float new_top = std::min(m_timer.getRemaining(), time);
-
-        m_timer.setTop(new_top);
-        m_time = new_top + elapsed;
+        float ts = m_timer.getRemaining();
+        if (time < ts)
+        {
+          m_elapsed += m_timer.getElapsed();
+          m_timer.setTop(time);
+        }
       }
 
       //! Get remaining time in calibration
@@ -147,12 +150,19 @@ namespace Plan
         return m_timer.getRemaining();
       }
 
+      //! Check if the timer has overflowed
+      bool
+      overflow(void)
+      {
+        return m_timer.overflow();
+      }
+
       //! Get elapsed calibration time
       //! @return elapsed calibration time
       float
       getElapsedTime(void)
       {
-        return m_time - m_timer.getRemaining();
+        return m_timer.getElapsed() + m_elapsed;
       }
 
       //! Check if calibration is in progress
@@ -198,6 +208,8 @@ namespace Plan
     private:
       //! Current plan's calibration time if any
       float m_time;
+      //! Elapsed calibration time
+      float m_elapsed;
       //! Calibration state
       CalibrationState m_state;
       //! Timer to estimate time left in calibration
