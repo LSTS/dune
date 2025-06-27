@@ -218,7 +218,8 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        m_iridium_timer.setTop(m_args.iridium_period);
+        if(paramChanged(m_args.iridium_period))
+          m_iridium_timer.setTop(0);
       }
 
       void
@@ -949,7 +950,7 @@ namespace Transports
 
                 Memory::clear(msg);
               }
-              m_iridium_timer.reset();
+              m_iridium_timer.setTop(m_args.iridium_period);
             }
           }
         }
