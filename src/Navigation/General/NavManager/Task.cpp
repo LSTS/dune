@@ -56,8 +56,10 @@ namespace Navigation
 
       struct Arguments
       {
-        //! Euler Angles source entity label.
-        std::string euler_label;
+        //! Main Euler Angles source entity label.
+        std::string main_euler_label;
+        //! Secondary Euler Angles source entity label.
+        std::string secondary_euler_label;
         //! Angular Velocity source entity label.
         std::string ang_label;
          //! Distance source entity label.
@@ -82,8 +84,10 @@ namespace Navigation
         float m_offset;
         //! Offset flag.
         bool m_offset_flag;
-        //! Euler Angles entity eid.
-        unsigned int m_euler_eid;
+        //! Main Euler Angles entity eid.
+        unsigned int m_main_euler_eid;
+        //! Secondary Euler Angles entity eid.
+        unsigned int m_secondary_euler_eid;
         //! Angular velocity entity eid.
         unsigned int m_ang_eid;
         //! Distance entity eid.
@@ -104,12 +108,15 @@ namespace Navigation
         GpsState m_second;
         //! Gps State for third unit.
         GpsState m_third;
+        //! Main 'EulerAngles' timer
+        Time::Counter<double> m_euler_timer;
         //! Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
-          m_euler_eid(AddressResolver::invalid()),
+          m_main_euler_eid(AddressResolver::invalid()),
+          m_secondary_euler_eid(AddressResolver::invalid()),
           m_ang_eid(AddressResolver::invalid()),
           m_dist_eid(AddressResolver::invalid()),
           m_alt_timer(c_alt_timeout),
@@ -117,11 +124,15 @@ namespace Navigation
           m_origin(nullptr)
         {
           // Define configuration parameters.
-          param("Entity Label - Euler Angles", m_args.euler_label)
-            .description("Entity label of 'GpsFix' and 'GroundVelocity' messages");
+          param("Entity Label - Main Euler Angles", m_args.main_euler_label)
+            .description("Entity label of main 'EulerAngles' provider");
+
+          param("Entity Label - Secondary Euler Angles", m_args.secondary_euler_label)
+            .defaultValue("")
+            .description("Entity label of secondary 'EulerAngles' provider");
 
           param("Entity Label - Angular Velocity", m_args.ang_label)
-            .description("Entity label of 'EulerAngles' and 'AngularVelocity' messages");
+            .description("Entity label of 'AngularVelocity' messages");
 
           param("Entity Label - Distance", m_args.dist_label)
             .defaultValue("")
@@ -176,7 +187,8 @@ namespace Navigation
         void
         onEntityResolution(void)
         {
-          m_euler_eid = getEid(m_args.euler_label);
+          m_main_euler_eid = getEid(m_args.main_euler_label);
+          m_secondary_euler_eid = getEid(m_args.secondary_euler_label);
           m_ang_eid = getEid(m_args.ang_label);
           m_dist_eid = getEid(m_args.dist_label);
 
@@ -218,6 +230,7 @@ namespace Navigation
           m_main.setTop(m_args.inp_tout);
           m_second.setTop(m_args.inp_tout);
           m_third.setTop(m_args.inp_tout);
+          m_euler_timer.setTop(m_args.inp_tout);
 
           setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
         }
@@ -252,13 +265,21 @@ namespace Navigation
         void
         consume(const IMC::EulerAngles* msg)
         {
-          if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_euler_eid)
+          if (msg->getSource() != getSystemId())
             return;
 
+          if (msg->getSourceEntity() == m_main_euler_eid ||
+              (msg->getSourceEntity() == m_secondary_euler_eid && m_euler_timer.overflow()))
+          {
+            m_estate.phi = msg->phi;
+            m_estate.theta = msg->theta;
+            m_estate.psi = msg->psi;
+          }
+
+          if (msg->getSourceEntity() == m_main_euler_eid)
+            m_euler_timer.reset();
+
           // debug("IMC::EulerAngles from %s",resolveEntity(msg->getSourceEntity()).c_str());
-          m_estate.phi = msg->phi;
-          m_estate.theta = msg->theta;
-          m_estate.psi = msg->psi;
         }
 
         void
