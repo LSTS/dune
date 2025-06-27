@@ -952,8 +952,8 @@ namespace Transports
                 dispatch(request, DF_LOOP_BACK);
 
                 Memory::clear(msg);
+                m_iridium_timer.setTop(m_args.iridium_period);
               }
-              m_iridium_timer.setTop(m_args.iridium_period);
             }
           }
         }
