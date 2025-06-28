@@ -27,8 +27,8 @@
 // Author: João Bogas                                                       *
 //***************************************************************************
 
-#ifndef NAVIGATION_GENERAL_NAVMANAGER_GPSSTATE_HPP_INCLUDED_
-#define NAVIGATION_GENERAL_NAVMANAGER_GPSSTATE_HPP_INCLUDED_
+#ifndef NAVIGATION_GENERAL_NAVMANAGER_DEVICESTATE_HPP_INCLUDED_
+#define NAVIGATION_GENERAL_NAVMANAGER_DEVICESTATE_HPP_INCLUDED_
 
 #include <DUNE/DUNE.hpp>
 
@@ -40,16 +40,16 @@ namespace Navigation
     {
       using DUNE_NAMESPACES;
 
-      struct GpsState
+      struct DeviceState
       {
-        GpsState(void):
+        DeviceState(void):
           is_lost(false),
           val(true),
           send_ir(false),
           id(UINT16_MAX)
         { }
 
-        ~GpsState(void)
+        ~DeviceState(void)
         { }
 
         //! Set counter top.
