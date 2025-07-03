@@ -50,6 +50,8 @@ namespace Transports
     static const double c_monitor_delay = 20.0;
     //! Clear message queue parameter name.
     const std::string c_clear_queue_param = "Clear Message Queue";
+    //! Timeout for general monitor restart message.
+    const double c_timeout_tx_request = 120.0;
 
     enum TxRxPriority
     {
@@ -815,6 +817,17 @@ namespace Transports
           if(m_general_monitor.overflow())
           {
             err("General monitor overflow, restarting task");
+            IMC::TransmissionRequest tr;
+            tr.setDestination(getSystemId());
+            tr.setSourceEntity(getEntityId());
+            tr.destination = "broadcast";
+            tr.deadline = Time::Clock::getSinceEpoch() + c_timeout_tx_request; // seconds
+            tr.req_id = std::rand() % 0xFFFF;
+            tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
+            tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
+            std::string msg = std::string(getName()) + " - General monitor overflow, restarting task";
+            tr.txt_data = msg;
+            dispatch(tr, DF_LOOP_BACK);
             throw RestartNeeded("General monitor overflow", 10.0);
           }
 
