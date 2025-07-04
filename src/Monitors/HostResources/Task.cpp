@@ -119,6 +119,11 @@ namespace Monitors
         m_tstamp(0)
       {
         m_num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+        if (m_num_cpus <= 0 || m_num_cpus > c_max_cpu)
+        {
+          war("Invalid number of CPUs detected: %d. Using 1 CPU instead.", m_num_cpus);
+          m_num_cpus = 1;
+        }
       }
 
       //! Reserve entity identifiers.
@@ -460,21 +465,50 @@ namespace Monitors
           {
             m_ram_check.reset();
             m_tstamp = Clock::get();
-            uint8_t cpu = (uint8_t)getDUNECPUUsage();
-            if(m_num_cpus > 1)
-              cpu /= m_num_cpus;
+            uint8_t cpu = 0;
+            try
+            {
+              cpu = (uint8_t)getDUNECPUUsage();
+              if(m_num_cpus > 1 && cpu > 0)
+                cpu /= m_num_cpus;
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to get CPU usage: %s", e.what());
+              cpu = 0;
+            }
 
-            double ram = getDUNERAMUsage();
-            double swap = getDUNESwapUsage();
+            double ram = 0.0;
+            try
+            {
+              ram = getDUNERAMUsage();
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to get RAM usage: %s", e.what());
+              ram = 0;
+            }
+
+            double swap = 0.0;
+            try
+            {
+              swap = getDUNESwapUsage();
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to get Swap usage: %s", e.what());
+              swap = 0;
+            }
+
             //dispatch CPU and RAM usage
             m_dune_cpu_usage[m_num_cpus].value = cpu;
             m_dune_cpu_usage[m_num_cpus].setTimeStamp(m_tstamp);
             dispatch(m_dune_cpu_usage[m_num_cpus]);
 #if IMC_RAM_USAGE_MESSAGE_EXISTS
-            m_dune_ram_usage[0].value = ram * 1024.0f; // MB -> kB
+            m_dune_ram_usage[0].value = ram * 1024.0f; // KB -> MB
             m_dune_ram_usage[0].setTimeStamp(m_tstamp);
             dispatch(m_dune_ram_usage[0]);
-            m_dune_ram_usage[1].value = swap * 1024.0f; // MB -> kB
+            m_dune_ram_usage[1].value = swap * 1024.0f; // KB -> MB
             m_dune_ram_usage[1].setTimeStamp(m_tstamp);
             dispatch(m_dune_ram_usage[1]);
 #endif
@@ -489,28 +523,59 @@ namespace Monitors
             m_tstamp = Clock::getSinceEpoch();
             if(m_num_cpus > 1)
             {
-              std::vector<CPUData> entries1;
-              std::vector<CPUData> entries2;
-              readStatsCPU(entries1);
-              Delay::waitMsec(100);
-              readStatsCPU(entries2);
-              dispatchStatus(entries1, entries2);
+              try
+              {
+                std::vector<CPUData> entries1;
+                std::vector<CPUData> entries2;
+                readStatsCPU(entries1);
+                Delay::waitMsec(100);
+                readStatsCPU(entries2);
+                dispatchStatus(entries1, entries2);
+              }
+              catch (std::exception& e)
+              {
+                war("Failed to read CPU stats: %s", e.what());
+              }
             }
             else
             {
-              m_dune_cpu_usage[0].setTimeStamp(m_tstamp);
-              uint8_t usage = (uint8_t) getSingleCoreUsage();
-              m_dune_cpu_usage[0].value = usage;
-              debug("CPU0: %d%%", usage);
-              dispatch(m_dune_cpu_usage[0], DF_KEEP_TIME | DF_LOOP_BACK);
+              try
+              {
+                m_dune_cpu_usage[0].setTimeStamp(m_tstamp);
+                uint8_t usage = (uint8_t) getSingleCoreUsage();
+                m_dune_cpu_usage[0].value = usage;
+                debug("CPU0: %d%%", usage);
+                dispatch(m_dune_cpu_usage[0], DF_KEEP_TIME | DF_LOOP_BACK);
+              }
+              catch (std::exception& e)
+              {
+                war("Failed to read Single CPU usage: %s", e.what());
+              }
             }
-            m_buffer_cpu_entity = String::str("active | C:%d | %s", m_num_cpus, getMemoryUsage().c_str());
+            std::string memory_text = "";
+            try
+            {
+              memory_text = getMemoryUsage();
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to get memory usage: %s", e.what());
+              memory_text = "unknown";
+            }
+            m_buffer_cpu_entity = String::str("active | C:%d | %s", m_num_cpus, memory_text.c_str());
           }
 
           if (m_ram_cache_clean.overflow())
           {
             m_ram_cache_clean.reset();
-            cleanRamCache();
+            try
+            {
+              cleanRamCache();
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to clean RAM cache: %s", e.what());
+            }
           }
         }
       }
