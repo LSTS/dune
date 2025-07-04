@@ -531,7 +531,7 @@ namespace DUNE
       }
 
       // Dispatch even if empty to notify that the parameters were set.
-      dispatch(params);
+      dispatchReply(*msg, params);
 
       updateParameters();
     }
