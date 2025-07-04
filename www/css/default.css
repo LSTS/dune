@@ -299,24 +299,24 @@ p.DEBUG
 
 #MainOverviewLeft
 {
-  margin-left: 70px;
+  margin-left: 20px;
   margin-right: auto;
-  width: 80%;
+  /* width: 80%; */
   text-align: center;
-  /*padding: 10px 18px;*/
-  /*border-radius: 18px;*/
-  /*box-shadow: 0 1px 2px var(--c-color-text);*/
+  /* padding: 10px 18px;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px var(--c-color-text); */
 }
 
 #MainOverviewRight
 {
   margin-left: auto;
-  margin-right: 80px;
-  width: 20%;
+  margin-right: 20px;
+  width: 240px;
   text-align: center;
-  /*padding: 10px 18px;*/
-  /*border-radius: 18px;*/
-  /*box-shadow: 0 1px 2px var(--c-color-text);*/
+  /* padding: 10px 18px;
+  border-radius: 18px;
+  box-shadow: 0 1px 2px var(--c-color-text); */
 }
 
 #MenuBar
@@ -443,9 +443,9 @@ p.DEBUG
 
 #MainTaskTableDiv
 {
-  max-height: 60vh;
+  max-height: 50vh;
   overflow-y: scroll;
-  width: 90%;
+  width: 95%;
   margin-left: auto;
   margin-right: auto;
 }
@@ -534,14 +534,14 @@ p.DEBUG
 #systemName {
   font-size: 1.5em;
   font-weight: bold;
-  padding: 10px 18px;
+  padding: 4px 8px;
   border-radius: 8px;
   box-shadow: 0 2px 6px var(--c-color-text);
   margin-bottom: 1px;
   /*color: var(--c-color-text-system-name);*/
   color: #000000;
   display: inline-block;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
   background-color: var(--c-background);
 }
 
@@ -639,8 +639,8 @@ label:hover .custom-checkbox {
   background-color: var(--c-background-h-l);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-  max-height: 80vh;
+  overflow-y: scroll;
+  max-height: 50vh;
 }
 
 .announce-section {
@@ -822,7 +822,6 @@ label:hover .custom-checkbox {
 
 .gauge-container {
   position: relative;
-  width: 200px;
   height: 18px;
   background-color: var(--c-background-h-l);
   border-radius: 6px;
@@ -843,4 +842,17 @@ label:hover .custom-checkbox {
   transform: translate(-50%, -50%);
   color: #000000;
   font-size: 12px;
+}
+
+.section-header {
+  font-weight: bold;
+  font-size: 1.0em;
+  /* background-color: #f0f0f0; */
+  color: var(--c-color-text);
+  margin: 10px 0 6px 0;
+  border-left: 4px solid #2196F3;
+  border-right: 4px solid #2196F3;
+  border-top: 2px solid #2196F3;
+  border-bottom: 2px solid #2196F3;
+  border-radius: 4px;
 }

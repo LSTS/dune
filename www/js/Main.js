@@ -41,68 +41,98 @@ var system_mode = 6;
 var GPS_srcEntity_id = -1;
 var rpm_value = 0;
 
+function getHeader(label) {
+  return function(data) {
+    var header = document.createElement('div');
+    header.className = 'section-header';
+    header.innerText = label;
+    return header;
+  };
+}
+
 Main.prototype.m_fields = [
   {
     "label": "System:",
     "data_function": getSystemInfo,
     "side": "center",
+    "single_line": true
   },
   {
-    "label": "Version:",
+    "label": "",
+    "data_function": getHeader("DUNE Information"),
+    "side": "left",
+    "widget": new HeaderWidget(),
+    "single_line": true
+  },
+  {
+    "label": "Core:",
     "data_field": "dune_version",
-    "side": "left"
+    "side": "left",
+    "single_line": false
   },
   {
-    "label": "Date:",
-    "data_function": function (data) { return dateToString(data.dune_time_current); },
-    "side": "left"
+    "label": "Private:",
+    "data_field_private": "dune_private_version",
+    "side": "left",
+    "single_line": false
   },
   {
     "label": "Uptime:",
     "data_function": getUptime,
-    "side": "left"
+    "side": "left",
+    "single_line": false
   },
   {
-    "label": "Position:",
-    "data_function": getPosition,
-    "side": "left"
-  },
-  {
-    "label": "Speed:",
-    "data_function": getSpeed,
-    "side": "left"
-  },
-  {
-    "label": "Available Storage:",
-    "data_function": function (data) { return 100 - getMessageValue(data, 'StorageUsage', 0); },
-    "widget": new Gauge({
-      reverse: false
-    }),
-    "side": "left"
-  },
-  {
-    "label": "Available Energy:",
-    "data_function": function (data) { return getMessageValue(data, 'FuelLevel', 0); },
-    "widget": new Gauge({
-      reverse: false
-    }),
-    "side": "left"
-  },
-  {
-    "label": "Iridium RSSI:",
-    "data_function": function (data) { return getMessageValueFilter(data, 'RSSI', 'Iridium Modem',0); },
-    "widget": new Gauge({
-      reverse: false
-    }),
-    "side": "left"
-  },
-  {
-    "label": "DUNE CPU Usage:",
+    "label": "Usage:",
     "data_function": function (data) { return getMessageCpuSingleUsage(data, 'DUNE-CPU', 0); },
     "widget": new Gauge({
       reverse: true
     }),
-    "side": "right"
+    "side": "left",
+    "single_line": false
+  },
+  {
+    "label": "",
+    "data_function": getHeader("System Information"),
+    "side": "left",
+    "widget": new HeaderWidget(),
+    "single_line": true
+  },
+  {
+    "label": "Date:",
+    "data_function": function (data) { return dateToString(data.dune_time_current); },
+    "side": "left",
+    "single_line": false
+  },
+  {
+    "label": "Position:",
+    "data_function": getPosition,
+    "side": "left",
+    "single_line": false
+  },
+  {
+    "label": "Speed:",
+    "data_function": getSpeed,
+    "side": "left",
+    "single_line": false
+  },
+  {
+    "label": "Available<br>Energy:",
+    "data_function": function (data) { return getMessageValue(data, 'FuelLevel', 0); },
+    "widget": new Gauge({
+      reverse: false
+    }),
+    "side": "left",
+    "single_line": false
+  },
+  {
+    "label": "Available<br>Storage:",
+    "data_function": function (data) { return 100 - getMessageValue(data, 'StorageUsage', 0); },
+    "widget": new Gauge({
+      reverse: false
+    }),
+    "side": "right",
+    "single_line": false
   },
   {
     "label": "CPUs:",
@@ -122,15 +152,33 @@ Main.prototype.m_fields = [
       return cpuValues;
     },
     "widget": new ChartWidget(),
-    "side": "right"
+    "side": "right",
+    "single_line": false
   },
   {
-    "label": "GSM RSSI:",
+    "label": "",
+    "data_function": getHeader("Communications Signal"),
+    "side": "right",
+    "widget": new HeaderWidget(),
+    "single_line": true
+  },
+  {
+    "label": "GSM",
     "data_function": function (data) { return getMessageValueFilter(data, 'RSSI', 'SMS',0); },
     "widget": new Gauge({
       reverse: false
     }),
-    "side": "right"
+    "side": "right",
+    "single_line": false
+  },
+  {
+    "label": "Iridium",
+    "data_function": function (data) { return getMessageValueFilter(data, 'RSSI', 'Iridium Modem',0); },
+    "widget": new Gauge({
+      reverse: false
+    }),
+    "side": "right",
+    "single_line": false
   }
 ];
 
@@ -141,7 +189,7 @@ Main.prototype.createTable = function () {
   this.m_base.appendChild(this.sys_name_div)
 
   this.m_table = document.createElement('table');
-  this.m_table.style.maxWidth = '90%';
+  //this.m_table.style.maxWidth = '100%';
   this.m_table.style.overflow = 'hidden';
   this.m_table.style.width = '90%';
   this.m_table.style.marginLeft = '5%';
@@ -155,17 +203,29 @@ Main.prototype.createTable = function () {
   var tdc = document.createElement('td');
   tdc.style.verticalAlign = 'top';
 
-  tr.style.boxShadow = "0 1px 2px var(--c-color-text)";
-  tr.style.padding = "10px 18px";
-  tr.style.borderRadius = "18px";
+  // tr.style.boxShadow = "0 1px 2px var(--c-color-text)";
+  // tr.style.padding = "10px 18px";
+  // tr.style.borderRadius = "18px";
 
   var tdl = document.createElement('td');
-  tdl.style.verticalAlign = 'top';
-  tdl.style.width = '70%';
+  tdl.style.verticalAlign = 'center';
+  tdl.style.width = '40%';
+  // tdl.style.padding = '10px 18px';
+  // tdl.style.boxShadow = "0 1px 2px var(--c-color-text)";
+
+  var tdc = document.createElement('td');
+  tdc.style.verticalAlign = 'center';
+  tdc.style.width = '10%';
+  // tdc.style.padding = '10px 18px';
+  // tdc.style.boxShadow = "0 1px 2px var(--c-color-text)";
+
   var tdr = document.createElement('td');
-  tdr.style.verticalAlign = 'top';
-  tdr.style.width = '30%';
+  tdr.style.verticalAlign = 'center';
+  tdr.style.width = '240px';
+  // tdr.style.padding = '10px 18px';
+  // tdr.style.boxShadow = "0 1px 2px var(--c-color-text)";
   tr.appendChild(tdl);
+  tr.appendChild(tdc);
   tr.appendChild(tdr);
   this.m_table.appendChild(tr);
   this.m_table.id = 'MainTable';
@@ -212,16 +272,28 @@ Main.prototype.createTableHeader = function (idx, tbl) {
 Main.prototype.createTableEntry = function (idx, tbl) {
   var field = this.m_fields[idx];
   var tr = document.createElement('tr');
-  tr.style.height = '25px';
-  var td_label = document.createElement('td');
-  td_label.className = 'entryLeft';
-  td_label.appendChild(document.createTextNode(field.label));
-  tr.appendChild(td_label);
+  //check if field.single_line is true, if so, set the height to 25px
+  if (!field.single_line) {
+    tr.style.height = '25px';
+    var td_label = document.createElement('td');
+    td_label.className = 'entryLeft';
+    //td_label.appendChild(document.createTextNode(field.label));
+    td_label.innerHTML = field.label;
+    tr.appendChild(td_label);
 
-  var td_value = document.createElement('td');
-  td_value.className = 'entryRight';
+    var td_value = document.createElement('td');
+    td_value.className = 'entryRight';
 
-  tr.appendChild(td_value);
+    tr.appendChild(td_value);
+  }
+  else
+  {
+    var td_value = document.createElement('td');
+    td_value.className = 'entryCenter';
+    td_value.colSpan = 3; // Make it span across all columns
+    td_value.innerHTML = field.label;
+    tr.appendChild(td_value);
+  }
   if (!("widget" in field))
     field.widget = new TextLabel();
   field.widget.create(td_value);
@@ -244,10 +316,17 @@ Main.prototype.update = function () {
         else
           value = "N/A";
       }
-    } else {
+      else if ("data_field_private" in field) {
+        if (field.data_field_private === "dune_private_version")
+          value = g_data[field.data_field_private];
+        else
+          value = "N/A";
+      }
+      else {
       value = "N/A";
-    }
+      }
     field.widget.update(value);
+    }
   }
 
   //search in dune_messages for EntityInfo, then search for GPSFix and print src_ent.
@@ -669,3 +748,38 @@ function changeBackgroundColor(color_id) {
     systemNameElement.style.backgroundColor = color;
   }
 }
+
+function HeaderWidget() {
+  this.element = document.createElement('div');
+  this.element.className = 'header-widget';
+}
+
+HeaderWidget.prototype.update = function(value) {
+  // Clear previous content
+  while(this.element.firstChild) {
+    this.element.removeChild(this.element.firstChild);
+  }
+
+  if (value instanceof HTMLElement) {
+    this.element.appendChild(value);
+  } else {
+    this.element.innerText = value;
+  }
+}
+
+HeaderWidget.prototype.create = function(container) {
+  container.appendChild(this.element);
+};
+
+// TextLabel também precisa de implementação (caso não exista)
+function TextLabel() {
+  this.element = document.createElement('div');
+}
+
+TextLabel.prototype.create = function(container) {
+  container.appendChild(this.element);
+};
+
+TextLabel.prototype.update = function(value) {
+  this.element.innerText = value;
+};
