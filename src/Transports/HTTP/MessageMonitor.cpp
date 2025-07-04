@@ -49,6 +49,7 @@ namespace Transports
       std::ostringstream os;
       os << "var data = {\n"
          << "  'dune_version': '" << getFullVersion() << " - " << getCompileDate() << "',\n"
+         << "  'dune_private_version': '" << getFullVersionPrivate() << "',\n"
          << "  'dune_uid': '" << m_uid << "',\n"
          << "  'dune_time_start': '" << std::setprecision(12) << Clock::getSinceEpoch() << "',\n"
          << "  'dune_system': '" << system << "',\n";
