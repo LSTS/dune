@@ -155,6 +155,7 @@ namespace Transports
         bind<IMC::PlanDB>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::EntityList>(this);
+        bind<IMC::EntityParameters>(this);
       }
 
       ~Task(void)
@@ -402,6 +403,29 @@ namespace Transports
           return;
 
         sendIridiumMsg(msg, true);
+      }
+
+      void
+      consume(const IMC::EntityParameters* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        // If the message is to the system itself or it has not a valid destination,
+        // ignore it.
+        // This is to avoid sending the message to the iridium network.
+        if (msg->getDestination() == getSystemId()
+            || msg->getDestination() == AddressResolver::invalid())
+          return;
+
+        if (m_iri_subs.empty())
+          return;
+
+        auto it = m_iri_subs.find(msg->getDestination());
+        if (it == m_iri_subs.end())
+          return;
+
+        sendIridiumMsg(msg);
       }
 
       //! Consume for control messages
