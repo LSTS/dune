@@ -149,6 +149,18 @@ namespace Transports
         else
           bind(this, m_args.messages);
 
+        //dispatch git version information.
+        IMC::VersionInfo version_info;
+        version_info.op = IMC::VersionInfo::OP_REPLY;
+        version_info.version = DUNE::getFullVersion();
+        inf(DTR("DUNE Version: %s"), version_info.version.c_str());
+        version_info.description = "DUNE Version Information";
+        dispatch(version_info);
+        version_info.version = DUNE::getFullVersionPrivate();
+        inf(DTR("DUNE Private Version: %s"), version_info.version.c_str());
+        version_info.description = "DUNE Private Version Information";
+        dispatch(version_info);
+
         // Initialize entity state.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
