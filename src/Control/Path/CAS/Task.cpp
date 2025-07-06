@@ -52,7 +52,7 @@ namespace Control
         double out_of_range;
 
         // Simulation Parameters
-        double T, DT, T_STAT, P, P_G, Q, D_CLOSE, D_SAFE, D_SAFE_LAND, K_COLL, 
+        double T, DT, T_STAT, P, P_G, Q, D_CLOSE, D_SAFE, D_SAFE_LAND, K_COLL,
         KAPPA, KAPPA_TC, PHI_AH, PHI_OT, PHI_HO, PHI_CR, K_P, K_DP,
         K_CHI, K_DCHI_SB, K_DCHI_P, K_CHI_SB, K_CHI_P, D_INIT;
 
@@ -163,7 +163,7 @@ namespace Control
         bool m_static_obst;
         //! Absolute wind direction and speed.
         double m_wind_dir, m_wind_speed;
-        
+
         //! USV heave amplitude.
         double m_heave;
         //! Estimated wave encounter frequency.
@@ -236,7 +236,7 @@ namespace Control
 
           param("Entity Label - Wind", m_args.elabel_ws)
           .description("Entity label of 'AbsoluteWind' message");
-          
+
           param("Entity Label - Heave", m_args.elabel_gnss)
           .description("Entity label of 'Displacement' message");
 
@@ -252,7 +252,7 @@ namespace Control
           .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("true")
           .description("Enable anti-grounding algorithm");
-          
+
           param("Maximum Obstacle Surveillance Range", m_args.out_of_range)
           .units(Units::Meter)
           .minimumValue("0.0")
@@ -357,7 +357,7 @@ namespace Control
           .maximumValue("100.0")
           .defaultValue("3.0")
           .description("Cost of changing a COLREGS behavior.");
-          
+
           param("PHI AH", m_args.PHI_AH)
           .units(Units::Degree)
           .minimumValue("0.0")
@@ -378,13 +378,13 @@ namespace Control
           .maximumValue("180.0")
           .defaultValue("30.0")
           .description("Angle within which an obstacle is said to be head on [deg].");
-          
+
           param("PHI CR", m_args.PHI_CR)
           .minimumValue("0.0")
           .maximumValue("180.0")
           .defaultValue("30.0")
           .description("Angle outside of which an obstacle is said to be crossing, if it is on the starboard side, heading towards the ship and not overtaking the ship [deg].");
-          
+
           param("Cost of Deviating from Nominal Speed", m_args.K_P)
           .minimumValue("0.0")
           .maximumValue("11.0")
@@ -474,7 +474,7 @@ namespace Control
           param("Course offsets", m_args.directions)
           .units(Units::Degree)
           .description("Course offsets for contours surroundings");
-                    
+
           param("Correlation Limit", m_args.corr_lim)
               .defaultValue("50")
               .maximumValue("100")
@@ -485,7 +485,7 @@ namespace Control
               .defaultValue("0")
               .units(Units::Decibel)
               .description("Amplitude above which measurement is discarded.");
-          
+
           param("Vehicle Pitch Rate Limit", m_args.pitch_rate)
               .defaultValue("0")
               .description("Pitching rate above which measurement is discarded.");
@@ -494,7 +494,7 @@ namespace Control
               .defaultValue("0")
               .description("Roll rate above which measurement is discarded.");
 
-          
+
           param("Corridor -- Width", m_args.corridor)
           .minimumValue("1.0")
           .maximumValue("50.0")
@@ -824,7 +824,7 @@ namespace Control
                 m_avg_zero++;
                 m_beam_velocity_one_avg_last = m_beam_velocity_one_avg;
 
-                
+
                 double u_body = m_beam_velocity_zero_avg*std::cos(Angles::radians(45))-m_beam_velocity_one_avg*std::sin(Angles::radians(45));
                 double v_body = m_beam_velocity_zero_avg*std::sin(Angles::radians(45))+m_beam_velocity_one_avg*std::cos(Angles::radians(45));
 
@@ -833,7 +833,7 @@ namespace Control
                 // Add velocity/sog.
                 double u = m_estate.u - u_body;
                 double v = m_estate.v - v_body;
-                double w = m_estate.w - (beam_velocities[2]+beam_velocities[3])/2;              
+                double w = m_estate.w - (beam_velocities[2]+beam_velocities[3])/2;
 
                 // Transform speed vectors from body to inertial frame.
                 // Option 1 - João Costa
@@ -894,7 +894,7 @@ namespace Control
           Math::Matrix enc_mat_single = Math::Matrix(1,3,0);
           size_t pos = enc.find(";");
           std::string strNew = enc;
-          
+
           while(pos != std::string::npos)
           {
             unsigned first = enc.find("=");
@@ -946,7 +946,7 @@ namespace Control
               course_off_ranges(f,0) = Angles::radians(360) + course_off_ranges(f,0);
             if(course_off_ranges(f,1)<0)
               course_off_ranges(f,1) = Angles::radians(360) + course_off_ranges(f,1);
-            
+
             m_static_obst_state(f,0) = Angles::radians(m_offsets[f]);
             debug("RANGES %f %f for offset %.0f",Angles::degrees(course_off_ranges(f,0)),Angles::degrees(course_off_ranges(f,1)),m_offsets[f]);
           }
@@ -1152,7 +1152,7 @@ namespace Control
               std::string temp_mmsi = m_dyn_obst_vec[i].mmsi;
               if (temp_mmsi.compare(msg->mmsi) != 0)
                 continue;
-                
+
               // MMSI exists in the list, add static/voyage related data.
               m_dyn_obst_vec[i].mmsi = msg->mmsi;
               m_dyn_obst_vec[i].callsign = msg->callsign;
@@ -1280,24 +1280,24 @@ namespace Control
               m_dyn_obst_state(i, 4) = 0.0;
               if(m_dyn_obst_vec[i].a == 0.0)
                 m_dyn_obst_state(i, 5) = 10.0;
-              else 
+              else
                 m_dyn_obst_state(i, 5) = m_dyn_obst_vec[i].a;
               if(m_dyn_obst_vec[i].b == 0.0)
                 m_dyn_obst_state(i, 6) = 10.0;
-              else 
+              else
                 m_dyn_obst_state(i, 6) = m_dyn_obst_vec[i].b;
               if(m_dyn_obst_vec[i].c == 0.0)
                 m_dyn_obst_state(i, 7) = 2.0;
-              else 
+              else
                 m_dyn_obst_state(i, 7) = m_dyn_obst_vec[i].c;
               if(m_dyn_obst_vec[i].d == 0.0)
                 m_dyn_obst_state(i, 8) = 2.0;
-              else 
+              else
                 m_dyn_obst_state(i, 8) = m_dyn_obst_vec[i].d;
-              
+
               // Convert MMSI from string to int for CAS.
               std::stringstream geek(m_dyn_obst_vec[i].mmsi); //contains int MMSI.
-              int mmsi = 0; 
+              int mmsi = 0;
               geek >> mmsi;
               m_dyn_obst_state(i, 9) = mmsi;
 
@@ -1353,7 +1353,7 @@ namespace Control
             else
             {
               debug("Course offset is %.0f, new desired course %.3f", Angles::degrees(m_psi_os), Angles::degrees(m_des_heading.value));
-              
+
               // Find closest vessel - hypothetically it is the one we try to avoid.
               // std::vector<IMC::AisInfo>::const_iterator itr;
               // itr = m_dyn_obst_vec.begin();
@@ -1376,13 +1376,14 @@ namespace Control
                 for(; itr != m_dyn_obst_vec.end(); ++itr)
                 {
                   std::stringstream geek(itr->mmsi); //contains int MMSI.
-                  int mmsi = 0; 
+                  int mmsi = 0;
                   geek >> mmsi;
 
                   if (mmsi == obs_vessel->id_)
+                  {
                     ais_vessel = itr.base();
                     break;
-
+                  }
                 }
 
                 TransmissionRequest tr;
@@ -1412,7 +1413,7 @@ namespace Control
         loiter(const IMC::EstimatedState& state, const TrackingState& ts)
         {
           (void) state;
-          
+
           double gain = std::tan(Angles::radians(m_args.entry_angle)) / m_args.corridor;
           double ref = DUNE::Math::c_half_pi + std::atan(2 * gain * (ts.range - ts.loiter.radius));
 
