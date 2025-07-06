@@ -209,6 +209,12 @@ namespace Monitors
         double percent = (total_time - last_total) / (uptime - last_uptime) / sysconf(_SC_CLK_TCK) * 100.0;
         last_total = total_time;
         last_uptime = uptime;
+        // Ensure percent is between 0 and 100
+        if (percent < 0.0)
+          percent = 0.0;
+        else if (percent > 100.0)
+          percent = 100.0;
+
         return percent;
 #elif defined(DUNE_OS_WINDOWS)
         static ULARGE_INTEGER last_cpu_time, last_sys_time;
@@ -235,6 +241,12 @@ namespace Monitors
         }
         last_cpu_time = cpu_time;
         last_sys_time = sys_time;
+        // Ensure percent is between 0 and 100
+        if (last_percent < 0.0)
+          last_percent = 0.0;
+        else if (last_percent > 100.0)
+          last_percent = 100.0;
+
         return last_percent;
 #endif
       }
@@ -248,13 +260,23 @@ namespace Monitors
         while (std::getline(status_file, line))
         {
           if (line.find("VmRSS:") == 0)
-            return std::stod(line.substr(6)) / 1024.0; // kB -> MB
+          {
+            double rst = std::stod(line.substr(6)) / 1024.0; // kB -> MB
+            if (rst < 0)
+              rst = 0;
+
+            return rst;
+          }
         }
-        return -1;
+        return 0;
 #elif defined(DUNE_OS_WINDOWS)
         PROCESS_MEMORY_COUNTERS pmc;
-        return GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) ?
-               pmc.WorkingSetSize / (1024.0 * 1024.0) : -1; // Bytes -> MB
+        double ram_usage = GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) ?
+               pmc.WorkingSetSize / (1024.0 * 1024.0) : 0; // Bytes -> MB
+        if (ram_usage < 0)
+          ram_usage = 0;
+
+        return ram_usage;
 #endif
       }
 
@@ -267,13 +289,23 @@ namespace Monitors
         while (std::getline(status_file, line))
         {
           if (line.find("VmSwap:") == 0)
-            return std::stod(line.substr(7)) / 1024.0; // kB -> MB
+          {
+            double value = std::stod(line.substr(7)) / 1024.0; // kB -> MB
+            if (value < 0)
+              value = 0;
+
+            return value;
+          }
         }
-        return -1;
+        return 0;
 #elif defined(DUNE_OS_WINDOWS)
         PROCESS_MEMORY_COUNTERS pmc;
-        return GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) ?
-               pmc.PagefileUsage / (1024.0 * 1024.0) : -1; // Bytes -> MB
+        double swap_usage = GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) ?
+               pmc.PagefileUsage / (1024.0 * 1024.0) : 1; // Bytes -> MB
+        if (swap_usage < 0)
+          swap_usage = 0;
+
+        return swap_usage;
 #endif
       }
 
@@ -292,7 +324,7 @@ namespace Monitors
       std::string
       getMemoryUsage()
       {
-        long memTotal = 0, memFree = 0, swapTotal = 0, swapFree = 0;
+        long memTotal = -1, memFree = -1, swapTotal = -1, swapFree = -1;
         std::ifstream meminfo("/proc/meminfo");
         if (!meminfo)
         {
@@ -304,6 +336,11 @@ namespace Monitors
         {
           std::istringstream  iss(line);
           iss >> key >> value >> unit;
+          //check if the value is a number
+          if (unit != "kB" || value < 0)
+          {
+            continue; // skip lines that do not have kB or have negative values
+          }
 
           if (key == "MemTotal:")
             memTotal = value;
@@ -316,19 +353,27 @@ namespace Monitors
         }
 
         meminfo.close();
-        double memSpentGB = (memTotal - memFree) / 1024.0 / 1024.0;
-        double memTotalGB = memTotal / 1024.0 / 1024.0;
-        double swapSpentGB = (swapTotal - swapFree) / 1024.0 / 1024.0;
-        double swapTotalGB = swapTotal / 1024.0 / 1024.0;
-        int memAvailablePercent = static_cast<int>(100 * memFree / static_cast<double>(memTotal));
-        int swapAvailablePercent = swapTotal > 0 ? static_cast<int>(100 * swapFree / static_cast<double>(swapTotal)) : 0;
+        // check if we have valid values
+        if (memTotal <= 0 || memFree < 0 || swapTotal < 0 || swapFree < 0)
+        {
+          return "unknown, failed to read memory info";
+        }
+        else
+        {
+          double memSpentGB = (memTotal - memFree) / 1024.0 / 1024.0;
+          double memTotalGB = memTotal / 1024.0 / 1024.0;
+          double swapSpentGB = (swapTotal - swapFree) / 1024.0 / 1024.0;
+          double swapTotalGB = swapTotal / 1024.0 / 1024.0;
+          int memAvailablePercent = static_cast<int>(100 * memFree / static_cast<double>(memTotal));
+          int swapAvailablePercent = swapTotal > 0 ? static_cast<int>(100 * swapFree / static_cast<double>(swapTotal)) : 0;
 
-        std::ostringstream oss;
-        oss << "MF:" << memAvailablePercent << "% (" << std::fixed << std::setprecision(1) << memSpentGB
-            << "GB of " << memTotalGB << "GB) | SF:" << swapAvailablePercent << "% (" << swapSpentGB
-            << "GB of " << swapTotalGB << "GB)";
+          std::ostringstream oss;
+          oss << "MF:" << memAvailablePercent << "% (" << std::fixed << std::setprecision(1) << memSpentGB
+              << "GB of " << memTotalGB << "GB) | SF:" << swapAvailablePercent << "% (" << swapSpentGB
+              << "GB of " << swapTotalGB << "GB)";
 
-        return oss.str();
+          return oss.str();
+        }
       }
 
       void
@@ -452,7 +497,13 @@ namespace Monitors
         unsigned long long total2 = user2 + nice2 + system2 + idle2;
         unsigned long long idle_diff = idle2 - idle1;
         unsigned long long total_diff = total2 - total1;
-        return 100.0 * (total_diff - idle_diff) / total_diff;
+        double usage = 100.0 * (total_diff - idle_diff) / total_diff;
+        if (usage < 0.0)
+          usage = 0.0;
+        else if (usage > 100.0)
+          usage = 100.0;
+
+        return usage;
       }
 
       //! Main loop.
@@ -478,6 +529,11 @@ namespace Monitors
               war("Failed to get CPU usage: %s", e.what());
               cpu = 0;
             }
+            catch (...)
+            {
+              war("Failed to get CPU usage: unknown error");
+              cpu = 0;
+            }
 
             double ram = 0.0;
             try
@@ -489,6 +545,11 @@ namespace Monitors
               war("Failed to get RAM usage: %s", e.what());
               ram = 0;
             }
+            catch (...)
+            {
+              war("Failed to get RAM usage: unknown error");
+              ram = 0;
+            }
 
             double swap = 0.0;
             try
@@ -498,6 +559,11 @@ namespace Monitors
             catch (std::exception& e)
             {
               war("Failed to get Swap usage: %s", e.what());
+              swap = 0;
+            }
+            catch (...)
+            {
+              war("Failed to get Swap usage: unknown error");
               swap = 0;
             }
 
@@ -537,6 +603,10 @@ namespace Monitors
               {
                 war("Failed to read CPU stats: %s", e.what());
               }
+              catch (...)
+              {
+                war("Failed to read CPU stats: unknown error");
+              }
             }
             else
             {
@@ -552,6 +622,10 @@ namespace Monitors
               {
                 war("Failed to read Single CPU usage: %s", e.what());
               }
+              catch (...)
+              {
+                war("Failed to read Single CPU usage: unknown error");
+              }
             }
             std::string memory_text = "";
             try
@@ -561,6 +635,11 @@ namespace Monitors
             catch (std::exception& e)
             {
               war("Failed to get memory usage: %s", e.what());
+              memory_text = "unknown";
+            }
+            catch (...)
+            {
+              war("Failed to get memory usage: unknown error");
               memory_text = "unknown";
             }
             m_buffer_cpu_entity = String::str("active | C:%d | %s", m_num_cpus, memory_text.c_str());
@@ -576,6 +655,10 @@ namespace Monitors
             catch (std::exception& e)
             {
               war("Failed to clean RAM cache: %s", e.what());
+            }
+            catch (...)
+            {
+              war("Failed to clean RAM cache: unknown error");
             }
           }
         }
