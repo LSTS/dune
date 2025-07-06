@@ -29,25 +29,20 @@
 // Author: José Braga                                                       *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <cmath>
-#include <cstdlib>
-
 // DUNE headers.
 #include <DUNE/Coordinates/WMM.hpp>
 #include <DUNE/Math/Angles.hpp>
 #include <DUNE/Time/BrokenDown.hpp>
 
-// WMM 2015 headers.
-#include <wmm2015/GeomagnetismHeader.h>
-
+// WMM 2025 headers.
+extern "C" {
+  #include <wmm2025/egm9615.h>
+  #include <wmm2025/GeomagnetismHeader.h>
+}
 namespace DUNE
 {
   namespace Coordinates
   {
-    static const unsigned c_num_geoid_cols = 1441;
-    static const unsigned c_num_geoid_rows = 721;
-
     struct WMMData
     {
       MAGtype_Geoid geoid;
@@ -70,33 +65,31 @@ namespace DUNE
     WMM::init(const FileSystem::Path& root)
     {
       m_data = new WMMData;
-      FileSystem::Path egmfile(root / "wmm/egm9615.bin");
-      FileSystem::Path wmmfile(root / "wmm/wmm.cof");
-
-      if (!egmfile.isFile())
-        throw std::runtime_error(egmfile.str() + " not found");
+      FileSystem::Path wmmfile(root / "wmm/wmmhr.cof");
 
       if (!wmmfile.isFile())
         throw std::runtime_error(wmmfile.str() + " not found");
 
+      MAGtype_MagneticModel *magnetic_model[1] = {nullptr};
+
       // Initialization
-      m_data->mm = MAG_robustReadMagModels(wmmfile.c_str());
+      int result =
+        MAG_robustReadMagModels(const_cast<char*>(wmmfile.c_str()),
+                                reinterpret_cast<MAGtype_MagneticModel*(*)[]>(&magnetic_model), 1);
+
+      if (result <= 0) {
+        // Handle error - no models were read
+        throw std::runtime_error("Failed to read WMM magnetic model file");
+      }
+
+      m_data->mm = magnetic_model[0];
 
       int num_terms = ((m_data->mm->nMax + 1) * (m_data->mm->nMax + 2) / 2);
       m_data->timed_mm = MAG_AllocateModelMemory(num_terms);
       MAG_SetDefaults(&m_data->ellip, &m_data->geoid);
 
       // Read geoid data
-      /* Set EGM96 Geoid parameters */
-      unsigned n = c_num_geoid_cols * c_num_geoid_rows;
-      m_data->geoid.GeoidHeightBuffer = (float *) std::malloc((n + 1) * sizeof(float));
-      std::FILE* file = std::fopen(egmfile.c_str(), "rb");
-      size_t rv = std::fread(m_data->geoid.GeoidHeightBuffer, sizeof(float), n, file);
-      if (rv != n)
-        throw std::runtime_error("unable to extract geoid");
-      std::fclose(file);
-
-      //m_data->geoid.GeoidHeightBuffer = GeoidHeightBuffer;
+      m_data->geoid.GeoidHeightBuffer = GeoidHeightBuffer;
       m_data->geoid.Geoid_Initialized = 1;
 
       // Adjust magnetic model according to date
@@ -114,7 +107,6 @@ namespace DUNE
     {
       MAG_FreeMagneticModelMemory(m_data->timed_mm);
       MAG_FreeMagneticModelMemory(m_data->mm);
-      std::free(m_data->geoid.GeoidHeightBuffer);
       delete m_data;
     }
 
