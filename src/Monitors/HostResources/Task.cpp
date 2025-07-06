@@ -280,6 +280,7 @@ namespace Monitors
       void
       cleanRamCache(void)
       {
+        inf("Cleaning RAM cache...");
 #if defined(DUNE_OS_LINUX)
         if (std::system("sync; echo 1 > /proc/sys/vm/drop_caches") != 0)
           war(DTR("failed to clean RAM cache"));
