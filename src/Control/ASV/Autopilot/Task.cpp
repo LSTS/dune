@@ -261,7 +261,7 @@ namespace Control
           param("Thruster Always On", m_args.force_thrust_assist)
           .defaultValue("true")
           .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .scope(Tasks::Parameter::SCOPE_MANEUVER)
+          //.scope(Tasks::Parameter::SCOPE_MANEUVER)
           .description("Force the thruster to be always on");
 
           param("Maximum Thrust Actuation", m_args.max_thrust)
