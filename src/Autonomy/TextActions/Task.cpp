@@ -259,6 +259,7 @@ namespace Autonomy
       void
       consume(const IMC::PlanControlState* msg)
       {
+        Memory::replace(m_pcs, msg->clone());
         m_emsg->update(msg);
       }
 
