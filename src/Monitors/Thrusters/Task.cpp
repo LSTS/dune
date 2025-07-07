@@ -158,8 +158,6 @@ namespace Monitors
       void
       consume(const IMC::Current* msg)
       {
-        (void)msg; // Avoid unused parameter warning.
-
         if (msg->getSource() != getSystemId())
           return;
 
