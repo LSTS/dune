@@ -242,11 +242,13 @@ namespace Control
 
           param("Minimum Speed for Thrust", m_args.min_sog)
           .units(Units::MeterPerSecond)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .minimumValue("0.0")
           .defaultValue("0.3")
           .description("Speed below which thruster is used");
 
           param("Enable Thrust During Turn", m_args.en_thrust_turn)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("true")
           .description("Assist the turn using the thruster");
 
