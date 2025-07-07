@@ -990,6 +990,8 @@ namespace Control
 
             bool obs_exists = false;
             // Obstacle vector: UPDATE/REMOVE.
+            // Create a list with indexed for later removal, invert order
+            std::vector<unsigned int> to_remove;
             for (unsigned int i = 0; i < m_dyn_obst_vec.size(); i++)
             {
               // spew("Update Obstacle vector: Source: %d Vector size: %d", m_dyn_obst_vec[i].getSource(), m_dyn_obst_vec.size());
@@ -1017,8 +1019,7 @@ namespace Control
                   // Obstacle Outside range - Remove Obstacle
                   debug("Obstacle with MMSI %s REMOVED - Outside range, obstacle vector size is now: %lu",
                         m_dyn_obst_vec[i].mmsi.c_str(), m_dyn_obst_vec.size() - 1);
-                  m_dyn_obst_vec.erase(m_dyn_obst_vec.begin() + i);
-                  m_last_update.erase(m_last_update.begin() + i);
+                  to_remove.push_back(i);
                 }
               }
               if (m_timestamp_obst - m_last_update[i] > m_args.kill_obst)
@@ -1027,8 +1028,25 @@ namespace Control
                 // Obstacle disappeared - Remove Obstacle
                 debug("Obstacle with MMSI %s is DISAPPEARED and REMOVED - obstacle vector size is now: %lu",
                       m_dyn_obst_vec[i].mmsi.c_str(), m_dyn_obst_vec.size() - 1);
-                m_dyn_obst_vec.erase(m_dyn_obst_vec.begin() + i);
-                m_last_update.erase(m_last_update.begin() + i);
+                // check first if already marked for removal
+                if (std::find(to_remove.begin(), to_remove.end(), i) == to_remove.end())
+                {
+                  to_remove.push_back(i);
+                }
+              }
+            }
+
+            // Remove obstacles that are marked for removal, in reverse order
+            for (auto it = to_remove.rbegin(); it != to_remove.rend(); ++it)
+            {
+              try
+              {
+                m_dyn_obst_vec.erase(m_dyn_obst_vec.begin() + *it);
+                m_last_update.erase(m_last_update.begin() + *it);
+              }
+              catch(const std::exception& e)
+              {
+                war("Failed to remove obstacle with index: %d", *it);
               }
             }
 
