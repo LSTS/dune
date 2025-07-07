@@ -237,6 +237,7 @@ namespace Control
           // m_avg_one(0)
         {
           param("Enable Thrust Assistance", m_args.en_thrust)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .defaultValue("true")
           .description("Assist navigation with thruster");
 
