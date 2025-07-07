@@ -255,7 +255,7 @@ namespace DUNE
     os << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n"
        << "<config"
        << " format=\"1\""
-       << " dune_version=\"" << getFullVersion() << "\""
+       << " version=\"" << getFullVersion() << "\""
        << " modules=\"" << getFullVersionPrivate() << "\""
        << " system=\"" << getSystemName() << "\""
        << " i18n=\"" << I18N::getLanguage() << "\">\n";
