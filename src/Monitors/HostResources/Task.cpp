@@ -600,8 +600,11 @@ namespace Monitors
             }
 #endif
             try{
-              trace("DUNE Process: CPU: %d%%, RAM: %.1fMB, Swap: %.1fMB | %s", cpu, ram, swap, m_buffer_cpu_entity.c_str());
-              std::string msg = String::str("%s | DUNE (C:%d%%, R:%.1fMB, S:%.1fMB)", m_buffer_cpu_entity.c_str(), cpu, ram, swap);
+              //check if m_buffer_cpu_entity is empty
+              const char* entity = m_buffer_cpu_entity.empty() ? "unknown" : m_buffer_cpu_entity.c_str();
+              //set entity state with CPU, RAM and Swap usage
+              trace("DUNE Process: CPU: %d%%, RAM: %.1fMB, Swap: %.1fMB | %s", cpu, ram, swap, entity);
+              std::string msg = String::str("%s | DUNE (C:%d%%, R:%.1fMB, S:%.1fMB)", entity, cpu, ram, swap);
               setEntityState(IMC::EntityState::ESTA_NORMAL, msg);
             }
             catch (std::exception& e)
@@ -656,7 +659,7 @@ namespace Monitors
                 war("Failed to read Single CPU usage: unknown error");
               }
             }
-            std::string memory_text = "";
+            std::string memory_text = "unknown";
             try
             {
               memory_text = getMemoryUsage();
