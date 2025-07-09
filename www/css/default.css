@@ -850,9 +850,9 @@ label:hover .custom-checkbox {
   /* background-color: #f0f0f0; */
   color: var(--c-color-text);
   margin: 10px 0 6px 0;
-  border-left: 4px solid #2196F3;
-  border-right: 4px solid #2196F3;
-  border-top: 2px solid #2196F3;
-  border-bottom: 2px solid #2196F3;
+  border-left: 4px solid #797c7e;
+  border-right: 4px solid #797c7e;
+  border-top: 2px solid #797c7e;
+  border-bottom: 2px solid #797c7e;
   border-radius: 4px;
 }
