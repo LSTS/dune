@@ -193,29 +193,41 @@ namespace Monitors
       {
 #if defined(DUNE_OS_LINUX)
         std::ifstream stat_file("/proc/self/stat");
+        if (!stat_file)
+          return 0.0;
+
         std::string line;
         std::getline(stat_file, line);
         std::istringstream iss(line);
         std::vector<std::string> tokens{std::istream_iterator<std::string>{iss},
                                         std::istream_iterator<std::string>{}};
-        // utime + stime (in clock ticks)
-        uint64_t total_time = std::stoull(tokens[13]) + std::stoull(tokens[14]);
-        // Get uptime and calculate CPU percentage
+        if (tokens.size() < 15)
+          return 0.0;
+
+        uint64_t total_time = 0;
+        try {
+          total_time = std::stoull(tokens[13]) + std::stoull(tokens[14]);
+        } catch (...) {
+          return 0.0;
+        }
+
         std::ifstream uptime_file("/proc/uptime");
+        if (!uptime_file)
+          return 0.0;
+
         double uptime;
         uptime_file >> uptime;
         static uint64_t last_total = 0;
         static double last_uptime = 0.0;
-        double percent = (total_time - last_total) / (uptime - last_uptime) / sysconf(_SC_CLK_TCK) * 100.0;
+        double delta_time = uptime - last_uptime;
+        if (delta_time <= 0.0)
+          return 0.0;
+
+        double percent = (total_time - last_total) / delta_time / sysconf(_SC_CLK_TCK) * 100.0;
         last_total = total_time;
         last_uptime = uptime;
-        // Ensure percent is between 0 and 100
-        if (percent < 0.0)
-          percent = 0.0;
-        else if (percent > 100.0)
-          percent = 100.0;
 
-        return percent;
+        return std::clamp(percent, 0.0, 100.0);
 #elif defined(DUNE_OS_WINDOWS)
         static ULARGE_INTEGER last_cpu_time, last_sys_time;
         FILETIME ft_proc_creation, ft_proc_exit, ft_proc_kernel, ft_proc_user;
@@ -314,8 +326,9 @@ namespace Monitors
       {
         inf("Cleaning RAM cache...");
 #if defined(DUNE_OS_LINUX)
-        if (std::system("sync; echo 1 > /proc/sys/vm/drop_caches") != 0)
-          war(DTR("failed to clean RAM cache"));
+        int ret = std::system("sync; echo 1 > /proc/sys/vm/drop_caches");
+        if (ret != 0)
+          war("RAM cache clean command failed with code %d", ret);
 #elif defined(DUNE_OS_WINDOWS)
         std::system("powershell.exe -Command \"Clear-DnsClientCache\"");
 #endif
@@ -381,30 +394,27 @@ namespace Monitors
       {
         std::ifstream fileStat("/proc/stat");
         std::string line;
-        const std::string STR_CPU("cpu");
-        const std::size_t LEN_STR_CPU = STR_CPU.size();
-        const std::string STR_TOT("tot");
-
         while (std::getline(fileStat, line))
         {
-          // cpu stats line found
-          if (!line.compare(0, LEN_STR_CPU, STR_CPU))
+          if (line.compare(0, 3, "cpu") != 0)
+            continue;
+
+          std::istringstream ss(line);
+          entries.emplace_back(CPUData());
+          CPUData& entry = entries.back();
+          ss >> entry.cpu;
+          if (entry.cpu.size() > 3)
+            entry.cpu.erase(0, 3);
+          else
+            entry.cpu = "tot";
+
+          for (int i = 0; i < S_GUEST_NICE; ++i)
           {
-            std::istringstream ss(line);
-            // store entry
-            entries.emplace_back(CPUData());
-            CPUData &entry = entries.back();
-            // read cpu label
-            ss >> entry.cpu;
-
-            if (entry.cpu.size() > LEN_STR_CPU)
-              entry.cpu.erase(0, LEN_STR_CPU);
-            else
-              entry.cpu = STR_TOT;
-
-            // read times
-            for (int i = 0; i < m_num_cpus; ++i)
-              ss >> entry.times[i];
+            if (!(ss >> entry.times[i]))
+            {
+              war("Failed to read CPU stat for core %d", i);
+              break;
+            }
           }
         }
       }
@@ -454,56 +464,45 @@ namespace Monitors
       double
       getSingleCoreUsage(void)
       {
-        char buffer[128];
-        FILE *fp;
-        unsigned long long user1, nice1, system1, idle1;
-        unsigned long long user2, nice2, system2, idle2;
-
-        // First snapshot
-        fp = popen("grep 'cpu ' /proc/stat", "r");
-        if (fp == NULL)
+        char buffer[128] = {0};
+        FILE* fp = popen("grep 'cpu ' /proc/stat", "r");
+        if (!fp || !fgets(buffer, sizeof(buffer) - 1, fp))
         {
-          trace("Fail to execute command");
-          return 0;
+          if (fp) pclose(fp);
+          return 0.0;
         }
-        if (fgets(buffer, sizeof(buffer) - 1, fp) == NULL)
+
+        unsigned long long user1 = 0, nice1 = 0, system1 = 0, idle1 = 0;
+        if (sscanf(buffer, "cpu %llu %llu %llu %llu", &user1, &nice1, &system1, &idle1) != 4)
         {
-          trace("Fail to read buffer");
           pclose(fp);
-          return 0;
+          return 0.0;
         }
-        sscanf(buffer, "cpu %llu %llu %llu %llu", &user1, &nice1, &system1, &idle1);
         pclose(fp);
-
         Delay::waitMsec(1000);
 
-        // Second snapshot
         fp = popen("grep 'cpu ' /proc/stat", "r");
-        if (fp == NULL)
+        if (!fp || !fgets(buffer, sizeof(buffer) - 1, fp))
         {
-          trace("Fail to execute command");
-          return 0;
+          if (fp) pclose(fp);
+          return 0.0;
         }
-        if (fgets(buffer, sizeof(buffer) - 1, fp) == NULL)
+
+        unsigned long long user2 = 0, nice2 = 0, system2 = 0, idle2 = 0;
+        if (sscanf(buffer, "cpu %llu %llu %llu %llu", &user2, &nice2, &system2, &idle2) != 4)
         {
-          trace("Fail to read buffer");
           pclose(fp);
-          return 0;
+          return 0.0;
         }
-        sscanf(buffer, "cpu %llu %llu %llu %llu", &user2, &nice2, &system2, &idle2);
         pclose(fp);
 
         unsigned long long total1 = user1 + nice1 + system1 + idle1;
         unsigned long long total2 = user2 + nice2 + system2 + idle2;
-        unsigned long long idle_diff = idle2 - idle1;
-        unsigned long long total_diff = total2 - total1;
-        double usage = 100.0 * (total_diff - idle_diff) / total_diff;
-        if (usage < 0.0)
-          usage = 0.0;
-        else if (usage > 100.0)
-          usage = 100.0;
+        unsigned long long delta_total = total2 > total1 ? total2 - total1 : 1;
+        unsigned long long delta_idle = idle2 > idle1 ? idle2 - idle1 : 0;
 
-        return usage;
+        double usage = 100.0 * (delta_total - delta_idle) / delta_total;
+        return std::clamp(usage, 0.0, 100.0);
       }
 
       //! Main loop.
