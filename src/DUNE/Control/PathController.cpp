@@ -206,6 +206,14 @@ namespace DUNE
 
       m_ctx.config.get("General", "Time Of Arrival Factor", "5.0", m_time_factor);
 
+      param("Use Radius To Endpoint", m_use_radius_to_endpoint)
+      .defaultValue("false")
+      .description("Use radius to endpoint instead of ETA.");
+      
+      param("Radius To Endpoint", m_end_radius)
+      .defaultValue("5")
+      .description("Radius around endpoint to consider maneuver as done.");
+
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);
       bind<IMC::DesiredPath>(this);
@@ -771,11 +779,35 @@ namespace DUNE
 
         const bool was_nearby = m_ts.nearby;
 
-        if (!m_ts.nearby && m_ts.eta <= 0)
+        if (!m_use_radius_to_endpoint)
         {
-          m_ts.eta = 0;
-          m_ts.nearby = true;
-          m_ts.end_time = m_ts.now;
+          if (!m_ts.nearby && m_ts.eta <= 0)
+          {
+            m_ts.eta = 0;
+            m_ts.nearby = true;
+            m_ts.end_time = m_ts.now;
+          }
+        }
+        else
+        {
+          double lat = m_estate.lat;
+          double lon = m_estate.lon;
+          // Check if we are within the radius of final point
+          WGS84::displace(m_estate.x, m_estate.y,
+                          &lat, &lon);
+
+          double x = 0.0;
+          double y = 0.0;
+          WGS84::displacement(lat, lon, 0,
+                              m_ts.lat_en, m_ts.lon_en, 0,
+                              &x, &y);
+          
+          if (!m_ts.nearby && Math::norm(x, y) <= m_end_radius)
+          {
+            m_ts.eta = 0;
+            m_ts.nearby = true;
+            m_ts.end_time = m_ts.now;
+          }
         }
 
         if (!was_nearby && m_ts.nearby)

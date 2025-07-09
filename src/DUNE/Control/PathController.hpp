@@ -513,6 +513,12 @@ namespace DUNE
       uint32_t m_scope_ref;
       //! Maximum admitted track length
       double m_max_track_length;
+      //! Echo Sounder Entity
+      unsigned int m_fls_entity;
+      //! Flag to use radius to final point instead of ETA
+      bool m_use_radius_to_endpoint;
+      //! Radius to endpoint
+      double m_end_radius;
     };
   }
 }
