@@ -546,12 +546,27 @@ function getMessageValue(data, abbrev, defval) {
 
 function getMessageValueFilter(data, abbrev, task_name, defval) {
   try {
+    //console.log(">>>> CHECK >>> abbrev:" + abbrev + " | task_name:" + task_name + " | defval:" + defval);
+    //console.log(data.dune_messages);
     for (m in data.dune_messages) {
       var msg = data.dune_messages[m];
-      var src_ent = data.dune_entities[msg.src_ent].label;
-      if (msg.abbrev == abbrev && src_ent == task_name) {
-        //console.log(">>>> A >>> " + msg.src_ent + " : " + msg.value + " : " + src_ent);
-        return msg.value;
+      if(msg.abbrev == abbrev)
+      {
+        //console.log(">>>> b >>> " + msg.src_ent + " : " + msg.value + " : " + msg.abbrev);
+        //console.log(data.dune_entities);
+        for (e in data.dune_entities) {
+          var ent = data.dune_entities[e];
+          //var ent_id = data.dune_entities[i].src_ent;
+          //var ent_label = data.dune_entities[i].label;
+          //console.log(">>>> C >>> " + ent_id + " : " + ent_label);
+          //console.log(ent);
+          //console.log(">>>> D >>> " + ent.label + " : " + task_name + " : id=" + e);
+          if(ent.label == task_name && String(e) === String(msg.src_ent)) {
+            //console.log(">>>>>>>>>>>>>>>>>> ID=" + e + " | value=" + msg.value + " | task_name=" + ent.label);
+            //console.log("SENDING VALUE: " + msg.value);
+            return msg.value;
+          }
+        }
       }
     }
     return defval;
