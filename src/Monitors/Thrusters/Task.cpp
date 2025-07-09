@@ -69,6 +69,9 @@ namespace Monitors
         DUNE::Tasks::Task(name, ctx),
         m_thrust_eid(UINT_MAX)
       {
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         param("Interval Time Window in Minutes", m_args.maximum_current_timeout)
           .defaultValue("30")
           .minimumValue("5")
