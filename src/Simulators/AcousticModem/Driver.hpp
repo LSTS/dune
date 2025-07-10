@@ -93,22 +93,27 @@ namespace Simulators
       int prng_seed;
       //! CTS Time
       double cts_time;
+      //! Dispatch acoustic messages to bus.
+      bool dispatch_acoustic_msgs = true;
     };
 
     class Driver: public Concurrency::Thread
     {
     public:
       //! Constructor.
-      Driver(DriverArguments* a_args, IMC::SimulatedState* a_sstate, Tasks::Task* a_task):
+      Driver(DriverArguments* a_args, Tasks::Task* a_task):
         m_task(a_task),
         m_args(a_args),
-        m_sstate(a_sstate),
+        m_lat(0),
+        m_lon(0),
+        m_depth(0),
         m_current_op(nullptr)
       {
         //Initialize UDP socket in multicast
         m_sock = new DUNE::Network::UDPSocket();
         m_sock->setMulticastTTL(1);
         m_sock->setMulticastLoop(true);
+        // m_sock->enableBroadcast(true);
         m_sock->joinMulticastGroup(m_args->udp_maddr);
         m_sock->bind(m_args->udp_port);
 
@@ -145,8 +150,7 @@ namespace Simulators
       {
         IMC::SimAcousticMessage sim_acoustic_msg;
         // Construct simulated acoustic message metadata
-        Coordinates::toWGS84(*m_sstate, sim_acoustic_msg.lat, sim_acoustic_msg.lon);
-        sim_acoustic_msg.depth    = m_sstate->z;
+        sim_acoustic_msg.depth    = m_depth;
         sim_acoustic_msg.modem_type    = m_args->modem_type;
         sim_acoustic_msg.txtime   = (double)a_msg.data.size() * 8 / m_args->tx_speed;
         sim_acoustic_msg.sys_src  = m_task->getSystemName();
@@ -165,6 +169,15 @@ namespace Simulators
         transmit(sim_acoustic_msg);
       }
 
+      void
+      set_position(double lat, double lon, double depth)
+      {
+        m_lat = lat;
+        m_lon = lon;
+        m_depth = depth;
+        m_task->spew(DTR("Position set to (%f, %f, %f)"), m_lat, m_lon, m_depth);
+      }
+      
       //! Overload of transmission for UamTxRange.
       //! @param[in] msg message to transmit.
       void
@@ -172,8 +185,9 @@ namespace Simulators
       {
         IMC::SimAcousticMessage sim_acoustic_msg;
         // Construct simulated acoustic message metadata
-        Coordinates::toWGS84(*m_sstate, sim_acoustic_msg.lat, sim_acoustic_msg.lon);
-        sim_acoustic_msg.depth    = m_sstate->z;
+        sim_acoustic_msg.depth    = m_depth;
+        sim_acoustic_msg.lat      = m_lat;
+        sim_acoustic_msg.lon      = m_lon;
         sim_acoustic_msg.modem_type    = m_args->modem_type;
         sim_acoustic_msg.txtime   = sizeof(double) * 8 / m_args->tx_speed;
         sim_acoustic_msg.sys_src  = m_task->getSystemName();
@@ -204,11 +218,13 @@ namespace Simulators
       double
       distance(const IMC::SimAcousticMessage* src_state)
       {
-        double lat, lon;
-        Coordinates::toWGS84(*m_sstate, lat, lon);
-
-        return WGS84::distance(lat, lon, m_sstate->z,
-                              src_state->lat, src_state->lon, src_state->depth);
+        m_task->debug(DTR("Distance from (%f, %f, %f) to (%f, %f, %f) is  %f"),
+                      m_lat, m_lon, m_depth,
+                      src_state->lat, src_state->lon, src_state->depth,
+                      WGS84::distance(m_lat, m_lon, m_depth,
+                                      (double)src_state->lat, (double)src_state->lon, (double)src_state->depth));
+        return WGS84::distance(m_lat, m_lon, m_depth,
+                                      (double)src_state->lat, (double)src_state->lon, (double)src_state->depth);
       }
 
     private:
@@ -217,7 +233,8 @@ namespace Simulators
       //! Driver arguments
       DriverArguments* m_args;
       //! Vehicle simulated state
-      IMC::SimulatedState* m_sstate;
+      double m_lat, m_lon, m_depth;
+      //IMC::SimulatedState* m_sstate;
       //! UDP socket.
       UDPSocket* m_sock;
       //! UDP message buffer.
@@ -239,7 +256,8 @@ namespace Simulators
       {
         int n = msg->getSerializationSize();
         IMC::Packet::serialize(msg, m_buf, n);
-        m_sock->write(m_buf, n, m_args->udp_maddr, m_args->udp_port);        
+        m_sock->write(m_buf, n, m_args->udp_maddr, m_args->udp_port);
+        // m_sock->write(m_buf, n, Address::Broadcast, m_args->udp_port);
         std::stringstream ss;
         msg->toText(ss);
         m_task->debug(DTR("Message sent: \n%s"), ss.str().c_str());
@@ -260,12 +278,26 @@ namespace Simulators
 
             if (msg->getId() == DUNE_IMC_SIMACOUSTICMESSAGE)
             {
-              IMC::SimAcousticMessage* amsg = static_cast<IMC::SimAcousticMessage*>(msg);
-              parse(amsg);
+              try
+              {
+                IMC::SimAcousticMessage* amsg = static_cast<IMC::SimAcousticMessage*>(msg);
+                parse(amsg);
 
-              std::stringstream ss;
-              amsg->toText(ss);
-              m_task->debug("Message received: \n%s", ss.str().c_str());
+                std::stringstream ss;
+                amsg->toText(ss);
+                m_task->debug("Message received: \n%s", ss.str().c_str());
+
+                if (m_args->dispatch_acoustic_msgs)
+                {
+                  // Dispatch message to task
+                  m_task->debug(DTR("Dispatching SimAcousticMessage: %s"), amsg->getName());
+                  m_task->dispatch(amsg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+                }
+              }
+              catch (std::bad_cast& e)
+              {
+                m_task->err(DTR("Error casting message: %s"), e.what());
+              }
             }
             else
             {
@@ -288,6 +320,8 @@ namespace Simulators
         double start_time = a_msg.getTimeStamp()
                             + distance(&a_msg)/c_sound_speed;
 
+        m_task->debug(DTR("Message received at %f, distance %f, start time %f"),
+                      Clock::getSinceEpoch(), distance(&a_msg), start_time);
         addToQueue(new Operation(false, start_time, a_msg));
       }
 
@@ -313,15 +347,21 @@ namespace Simulators
         check |= ((a_msg->sys_dst == "broadcast") & (a_msg->sys_src != m_task->getSystemName()));
         // and modem type
         check &= a_msg->modem_type == m_args->modem_type;
-        if (!check)
+        if (!check) {
+          m_task->debug(DTR("Message not for this modem: %s"), a_msg->modem_type.c_str());
           return false;
-
+        }
+        
         // Simulate data loss
         double dist = distance(a_msg);
         if (deliverySucceeds(dist, a_msg->data.size()))
         {
           receive(*a_msg);
           return true;
+        }
+        else
+        {
+          m_task->debug(DTR("Message dropped: %s"), a_msg->modem_type.c_str());
         }
 
         return false;
@@ -336,15 +376,22 @@ namespace Simulators
       deliverySucceeds(double distance, uint16_t data_size)
       {
         // Out of range
-        if (distance > c_max_range)
-          return false;
+        if (distance > c_max_range) {
+          m_task->debug(DTR("Message should dropped: out of range (%f > %f)"), distance, c_max_range);
+          return true;
+        }
 
         // Gaussian profiles for distance and msg size
         float dist_prob = exp(-1 * (distance*distance)/(2 * m_args->dst_peak_width * m_args->dst_peak_width));
         float size_prob = exp(-1 * (float)(data_size*data_size)/
                                 (2 * m_args->dsize_peak_width * m_args->dsize_peak_width));
 
-        return m_prng->uniform() <= dist_prob*size_prob;
+        if (m_prng->uniform() <= dist_prob*size_prob) {
+          m_task->debug(DTR("Message delivered successfully."));
+          return true;
+        }
+        m_task->debug(DTR("Message dropped: delivery failed (%f * %f)"), dist_prob, size_prob);
+        return false;
       }
 
       //! Attempt to set an operation as the current operation.
@@ -353,8 +400,10 @@ namespace Simulators
       bool
       setCurrentOperation(Operation a_op)
       {
-        if (!collisionLogic(a_op))
+        if (!collisionLogic(a_op)) {
+          m_task->debug(DTR("Collision detected, dropping operation: %s"), a_op.msg.getName());
           return false;
+        }
 
         Memory::replace(m_current_op, new Operation(a_op));
         m_operation_timer.setTop(a_op.msg.txtime);
@@ -394,6 +443,8 @@ namespace Simulators
           Operation* op = (*it);
           if (op->start_time <= Clock::getSinceEpoch())
           {
+            m_task->debug(DTR("Executing operation: %s at %f"),
+                          op->msg.getName(), Clock::getSinceEpoch());
             setCurrentOperation(*op);
 
             //Remove from queue
@@ -402,6 +453,8 @@ namespace Simulators
           }
           else
           {
+            m_task->debug(DTR("Operation %s not ready yet, waiting for %f seconds"),
+                          op->msg.getName(), op->start_time - Clock::getSinceEpoch());
             ++it;
           }
         }
@@ -443,6 +496,8 @@ namespace Simulators
             m_current_op->msg.setDestination(m_task->getSystemId());
             m_current_op->msg.setDestinationEntity(m_task->getEntityId());
 
+            m_task->debug(DTR("Dispatching message: %s"),
+                          m_current_op->msg.getName());
             m_task->dispatch(&m_current_op->msg, DF_LOOP_BACK);
 
             IMC::SimAcousticMessage request = m_current_op->msg;
