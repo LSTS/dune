@@ -87,8 +87,7 @@ namespace Simulators
       IMC::SimulatedState* m_sstate;
       //! Pending frames to be transmitted.
       IMC::UamTxFrame* m_pending;
-      //! bool are we running in simulation?
-      bool m_simulation_mode;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -97,8 +96,7 @@ namespace Simulators
         m_ticket(nullptr),
         m_driver(nullptr),
         m_sstate(nullptr),
-        m_pending(nullptr),
-        m_simulation_mode(false)
+        m_pending(nullptr)
       {
         param("UDP Communications -- Multicast Address", m_args.driver_args.udp_maddr)
         .defaultValue("225.0.2.1")
@@ -134,7 +132,7 @@ namespace Simulators
         .defaultValue("-1");
 
         param("Dispatch Acoustic Messages", m_args.driver_args.dispatch_acoustic_msgs)
-        .defaultValue("true")
+        .defaultValue("false")
         .description("Dispatch acoustic messages to bus");
         
         param("Acoustic Systems", m_args.systems)
@@ -156,7 +154,8 @@ namespace Simulators
       void
       onResourceAcquisition(void)
       {
-        m_driver = new Driver(&m_args.driver_args, this);
+        m_sstate = new IMC::SimulatedState;
+        m_driver = new Driver(&m_args.driver_args, m_sstate, this);
         m_driver->start();
 
         //Deactivate until SimulatedState message is received
@@ -400,7 +399,6 @@ namespace Simulators
       {
         if(!isActive())
           requestActivation();
-        m_simulation_mode = true;
         double lat, lon;
         Coordinates::toWGS84(*msg, lat, lon);
         m_driver->set_position(lat, lon, msg->z);
@@ -409,9 +407,6 @@ namespace Simulators
       void
       consume(const IMC::EstimatedState* msg)
       {
-        if (m_simulation_mode)
-          return;
-        
         if(!isActive())
           requestActivation();
         double lat, lon;

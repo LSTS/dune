@@ -101,7 +101,7 @@ namespace Simulators
     {
     public:
       //! Constructor.
-      Driver(DriverArguments* a_args, Tasks::Task* a_task):
+      Driver(DriverArguments* a_args, IMC::SimulatedState* a_sstate, Tasks::Task* a_task):
         m_task(a_task),
         m_args(a_args),
         m_lat(0),
@@ -151,6 +151,8 @@ namespace Simulators
         IMC::SimAcousticMessage sim_acoustic_msg;
         // Construct simulated acoustic message metadata
         sim_acoustic_msg.depth    = m_depth;
+        sim_acoustic_msg.lat      = m_lat;
+        sim_acoustic_msg.lon      = m_lon;
         sim_acoustic_msg.modem_type    = m_args->modem_type;
         sim_acoustic_msg.txtime   = (double)a_msg.data.size() * 8 / m_args->tx_speed;
         sim_acoustic_msg.sys_src  = m_task->getSystemName();
@@ -453,7 +455,7 @@ namespace Simulators
           }
           else
           {
-            m_task->debug(DTR("Operation %s not ready yet, waiting for %f seconds"),
+            m_task->spew(DTR("Operation %s not ready yet, waiting for %f seconds"),
                           op->msg.getName(), op->start_time - Clock::getSinceEpoch());
             ++it;
           }
