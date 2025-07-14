@@ -566,7 +566,9 @@ namespace Maneuver
             if (isFormationReady())
             {
               trace("Sending code START in broadcast");
-              m_acomms.sendStart("broadcast", Time::Clock::getSinceEpoch());
+              double sync_time = Time::Clock::getSinceEpoch();
+              m_acomms.setSyncTime(sync_time);
+              m_acomms.sendStart("broadcast", sync_time);
               m_send_pos_timer.reset();
               setControl(IMC::CL_PATH);
               sendToNextPoint();
