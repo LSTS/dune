@@ -35,6 +35,7 @@
 
 // Local headers
 #include "AcousticProtocol.hpp"
+#include "WifiProtocol.hpp"
 
 namespace Maneuver
 {
@@ -102,6 +103,8 @@ namespace Maneuver
         Arguments m_args;
         //! Acoustic protocol.
         AcousticProtocol m_acomms;
+        //! Acoustic protocol.
+        WifiProtocol* m_wcomms;
         //! Received ack from this id.
         uint16_t m_ack_id_rcv;
         //! Waiting acknowledgement from this id.
@@ -228,6 +231,14 @@ namespace Maneuver
         onResourceInitialization(void)
         {
           Maneuver::onResourceInitialization();
+          m_wcomms = new WifiProtocol(this, m_args.udp_maddr, m_args.udp_port);
+        }
+
+        void
+        onResourceRelease(void)
+        {
+          Maneuver::onResourceRelease();
+          DUNE::Memory::clear(m_wcomms);
         }
 
         void
