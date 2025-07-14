@@ -186,6 +186,9 @@ namespace DUNE
       hexToBytes(const std::string& hex);
 
       static std::string
+      bytesToHex(const std::vector<uint8_t>& bytes);
+
+      static std::string
       fromHex(const std::string& str);
 
       static void
