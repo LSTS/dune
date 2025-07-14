@@ -411,12 +411,12 @@ namespace Control
               default:
                 break;
             }
-
-            // Limit differential when thrusting forward.
-            thrust_diff = Math::trimValue(thrust_diff,
-                                          - m_args.act_diff_max,
-                                          m_args.act_diff_max);
           }
+
+          // Limit differential.
+          thrust_diff = Math::trimValue(thrust_diff,
+                                        - m_args.act_diff_max,
+                                        m_args.act_diff_max);
 
           m_act[0].value = thrust_com + thrust_diff;
           m_act[1].value = thrust_com - thrust_diff;
