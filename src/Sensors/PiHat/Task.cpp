@@ -49,6 +49,8 @@ namespace Sensors
       std::string m_lib_config;
       //! LED matrix.
       std::string m_led_dev;
+      //! Send IMU data.
+      bool m_send_imu_data;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -102,6 +104,10 @@ namespace Sensors
         param("LED matrix device", m_args.m_led_dev)
           .defaultValue("/dev/fb0")
           .description("LED matrix device file");
+
+        param("Send IMU data", m_args.m_send_imu_data)
+        .defaultValue("true")
+        .description("Send IMU data to bus.");
       }
 
       //! Update internal state with new parameter values.
@@ -338,7 +344,8 @@ namespace Sensors
           if (!wdog.overflow())
             continue;
 
-          readIMUData();
+          if (m_args.m_send_imu_data)
+            readIMUData();
           readPressure();
           readHumidity();
 
