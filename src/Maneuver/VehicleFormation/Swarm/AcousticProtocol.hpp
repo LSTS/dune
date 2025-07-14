@@ -37,36 +37,6 @@ namespace Maneuver
   {
     namespace Swarm
     {
-      // Synchronization byte.
-      static const uint8_t c_sync = 0xA2;
-      static const uint8_t c_poly = 0x07;
-
-      enum Codes
-      {
-        CODE_ACK          = 0x00,
-        CODE_READY        = 0x01,
-        CODE_LEADER       = 0x02,
-        CODE_START        = 0x03,
-        CODE_POS          = 0x04,
-        CODE_PARTICIPANT  = 0x05
-      };
-
-      struct PositionPackage
-      {
-        uint8_t waypoint_idx;
-        float lat;
-        float lon;
-        float speed;
-      };
-
-      struct ParticipantPackage
-      {
-        uint16_t vid; // Vehicle ID.
-        float off_x;
-        float off_y;
-        float off_z;
-      };
-
       //! Takeoff maneuver
       class AcousticProtocol
       {
@@ -79,6 +49,32 @@ namespace Maneuver
           m_slot(-1),
           m_time_per_slot(-1)
         { }
+
+        enum Codes
+        {
+          CODE_ACK          = 0x00,
+          CODE_READY        = 0x01,
+          CODE_LEADER       = 0x02,
+          CODE_START        = 0x03,
+          CODE_POS          = 0x04,
+          CODE_PARTICIPANT  = 0x05
+        };
+
+        struct PositionPackage
+        {
+          uint8_t waypoint_idx;
+          float lat;
+          float lon;
+          float speed;
+        };
+
+        struct ParticipantPackage
+        {
+          uint16_t vid; // Vehicle ID.
+          float off_x;
+          float off_y;
+          float off_z;
+        };
 
         void
         sendParticipant(const std::string& sys, const uint16_t vid, const float off_x, const float off_y, const float off_z)
@@ -334,6 +330,9 @@ namespace Maneuver
         int m_max_slots;
         int m_slot;
         double m_time_per_slot;
+        // Synchronization byte.
+        const uint8_t c_sync = 0xA2;
+        const uint8_t c_poly = 0x07;
 
         void
         debug(const std::string& msg) const

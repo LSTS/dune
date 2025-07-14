@@ -78,14 +78,18 @@ namespace Maneuver
         double start_setup_timeout;
         //! Send ready interval.
         double send_ready_interval;
-        //! TDMA time per slot.
-        double tdma_time_per_slot;
         //! Position dissemination periodicity.
         double pos_dissemination_periodicity;
         //! Leader reference timeout.
         double leader_reference_timeout;
         //! Maximum delta for speed adjustment.
         double speed_max_delta;
+        //! Multicast Address.
+        Address udp_maddr;
+        //! UDP port.
+        uint16_t udp_port;
+        //! TDMA time per slot.
+        double tdma_time_per_slot;
       };
 
       struct Task: public DUNE::Maneuvers::BasicSwarm
@@ -97,7 +101,7 @@ namespace Maneuver
         //! Task arguments.
         Arguments m_args;
         //! Acoustic protocol.
-        AcousticProtocol m_comms;
+        AcousticProtocol m_acomms;
         //! Received ack from this id.
         uint16_t m_ack_id_rcv;
         //! Waiting acknowledgement from this id.
@@ -129,7 +133,7 @@ namespace Maneuver
         //! Leader reference timeout timer.
         Time::Counter<double> m_leader_ref_timer;
         //! Leader position.
-        PositionPackage m_leader_pos;
+        AcousticProtocol::PositionPackage m_leader_pos;
         //! Speed reference.
         double m_speed_ref;
         //! Vehicle max speed;
@@ -138,7 +142,7 @@ namespace Maneuver
         Task(const std::string& name, DUNE::Tasks::Context& ctx):
           BasicSwarm(name, ctx),
           m_curr(0),
-          m_comms(this),
+          m_acomms(this),
           m_ack_id_rcv(IMC::AddressResolver::invalid()),
           m_ack_id_expected(IMC::AddressResolver::invalid()),
           m_leader_id(IMC::AddressResolver::invalid()),
@@ -171,11 +175,6 @@ namespace Maneuver
           .defaultValue("2.0")
           .description("Send code READY interval");
 
-          param("TDMA Time Per Slot", m_args.tdma_time_per_slot)
-          .units(Units::Second)
-          .defaultValue("5.0")
-          .description("Period while acoustic channel is reserved for each participant");
-
           param("Position Dissemination Periodicity", m_args.pos_dissemination_periodicity)
           .units(Units::Second)
           .minimumValue("1.0")
@@ -195,6 +194,19 @@ namespace Maneuver
           .maximumValue("1.0")
           .description("Maximum delta for speed adjustment");
 
+          param("Wifi Communications -- Multicast Address", m_args.udp_maddr)
+          .defaultValue("225.0.2.1")
+          .description("UDP multicast address for wifi communications");
+  
+          param("Wifi Communications -- Port", m_args.udp_port)
+          .defaultValue("8022")
+          .description("UDP port for wifi communications");
+
+          param("Acoustic Communications -- TDMA Time Per Slot", m_args.tdma_time_per_slot)
+          .units(Units::Second)
+          .defaultValue("5.0")
+          .description("Period while acoustic channel is reserved for each participant");
+
           m_ctx.config.get("General", "Maximum Speed", "2.0", m_max_speed);
 
           bind<IMC::UamRxFrame>(this);
@@ -205,7 +217,7 @@ namespace Maneuver
         {
           BasicSwarm::onUpdateParameters();
 
-          m_comms.setTimePerSlot(m_args.tdma_time_per_slot);
+          m_acomms.setTimePerSlot(m_args.tdma_time_per_slot);
 
           if (paramChanged(m_args.pos_dissemination_periodicity))
             m_send_pos_timer.setTop(m_args.pos_dissemination_periodicity);
@@ -221,27 +233,27 @@ namespace Maneuver
         void
         consume(const IMC::UamRxFrame * msg)
         {
-          if (!m_comms.validate(msg))
+          if (!m_acomms.validate(msg))
             return;
 
           switch (msg->data[1])
           {
-            case CODE_ACK:
+            case AcousticProtocol::CODE_ACK:
               recvAck(msg);
               break;
-            case CODE_LEADER:
+            case AcousticProtocol::CODE_LEADER:
               recvLeader(msg);
               break;
-            case CODE_READY:
+            case AcousticProtocol::CODE_READY:
               recvReady(msg);
               break;
-            case CODE_START:
+            case AcousticProtocol::CODE_START:
               recvStart(msg);
               break;
-            case CODE_POS:
+            case AcousticProtocol::CODE_POS:
               recvPos(msg);
               break;
-            case CODE_PARTICIPANT:
+            case AcousticProtocol::CODE_PARTICIPANT:
               recvParticipant(msg);
               break;
             default:
@@ -262,7 +274,7 @@ namespace Maneuver
         {
           trace("Received code LEADER from: %s", msg->sys_src.c_str());
           m_leader_id = resolveSystemName(msg->sys_src);
-          m_comms.sendAck(msg->sys_src);
+          m_acomms.sendAck(msg->sys_src);
         }
 
         void
@@ -296,7 +308,7 @@ namespace Maneuver
           std::memcpy(&sync_time, &msg->data[2], sizeof(double));
           trace("Received code START from: %s. Sync time: %f", msg->sys_src.c_str(), sync_time);
 
-          m_comms.setSyncTime(sync_time);
+          m_acomms.setSyncTime(sync_time);
           m_ss_start = true;
         }
 
@@ -332,7 +344,7 @@ namespace Maneuver
           if (m_state != SM_MOVING)
             return;
           
-          ParticipantPackage part;
+          AcousticProtocol::ParticipantPackage part;
           std::memcpy(&part, &msg->data[2], sizeof(part));
           trace("Received code PARTICIPANT from: %s | vid: %u off_x : %f off_y: %f off_z %f", msg->sys_src.c_str(),
                                                                                               part.vid,
@@ -367,9 +379,9 @@ namespace Maneuver
         onReset(void)
         {
           m_state = SM_IDLE;
-          m_comms.resetSyncTime();
-          m_comms.resetMaxSlots();
-          m_comms.resetSlot();
+          m_acomms.resetSyncTime();
+          m_acomms.resetMaxSlots();
+          m_acomms.resetSlot();
           m_curr = 0;
         }
 
@@ -379,8 +391,8 @@ namespace Maneuver
           (void) maneuver;
 
           // Set time slot configuration
-          m_comms.setMaxSlots(participants());
-          m_comms.setSlot(formation_index());
+          m_acomms.setMaxSlots(participants());
+          m_acomms.setSlot(formation_index());
 
           // Change state to LeaderSetup
           debug("Starting leader setup...");
@@ -442,7 +454,7 @@ namespace Maneuver
                 const Participant& part = participant(m_ls_idx);
                 std::string part_name = resolveSystemId(part.vid);
                 trace("Sending code LEADER to %s...", part_name.c_str());
-                m_comms.sendLeader(part_name);
+                m_acomms.sendLeader(part_name);
 
                 expectAck(part.vid);
               }
@@ -554,7 +566,7 @@ namespace Maneuver
             if (isFormationReady())
             {
               trace("Sending code START in broadcast");
-              m_comms.sendStart("broadcast", Time::Clock::getSinceEpoch());
+              m_acomms.sendStart("broadcast", Time::Clock::getSinceEpoch());
               m_send_pos_timer.reset();
               setControl(IMC::CL_PATH);
               sendToNextPoint();
@@ -569,7 +581,7 @@ namespace Maneuver
             {
               std::string leader_name = resolveSystemId(m_leader_id);
               trace("Sending code READY to %s", leader_name.c_str());
-              m_comms.sendReady(leader_name);
+              m_acomms.sendReady(leader_name);
               m_ss_send_ready.reset();
             }
 
@@ -792,7 +804,7 @@ namespace Maneuver
           {
             double lat, lon;
             fromLocalCoordinates(m_estate.x, m_estate.y, &lat, &lon);
-            m_comms.sendPos("broadcast", m_curr, lat, lon, m_estate.u);
+            m_acomms.sendPos("broadcast", m_curr, lat, lon, m_estate.u);
             m_send_pos_timer.reset();
           }
         }
@@ -833,7 +845,7 @@ namespace Maneuver
             // Update leader participants
             updateParticipant((*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
             // Broadcast new offsets to participants
-            m_comms.sendParticipant("broadcast", (*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
+            m_acomms.sendParticipant("broadcast", (*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
             // Wait until sending next update
             // This is blocking!!
             waitWithConsume(1.0f);
@@ -861,7 +873,7 @@ namespace Maneuver
               break;
           }
 
-          m_comms.run();
+          m_acomms.run();
         }
 
         void
