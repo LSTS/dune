@@ -55,6 +55,13 @@ namespace Maneuver
         void
         send(const std::string& sys, const std::vector<uint8_t>& data) override
         {
+          // TDMA
+          if (!available())
+          {
+            spew("Not available to send data, not in time slot");
+            return;
+          }
+
           DUNE::Algorithms::CRC8 crc(m_poly);
 
           DUNE::IMC::UamTxFrame frame;
@@ -73,6 +80,14 @@ namespace Maneuver
             crc.putByte(data[i]);
           }
           frame.data.push_back(crc.get());
+
+          // Debug
+          if (m_task->getDebugLevel() >= DUNE::Tasks::DebugLevel::DEBUG_LEVEL_SPEW)
+          {
+            std::vector<uint8_t> serialized_data(frame.data.begin(), frame.data.end());
+            spew(DUNE::Utils::String::str("Sending message: %s",
+                                          DUNE::Utils::String::bytesToHex(serialized_data).c_str()));
+          }
 
           m_task->dispatch(frame);
         }
