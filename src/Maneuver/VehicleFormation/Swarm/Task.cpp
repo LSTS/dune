@@ -160,7 +160,7 @@ namespace Maneuver
         {
           param("Acknowledgement Timeout", m_args.ack_timeout)
           .units(Units::Second)
-          .defaultValue("10.0")
+          .defaultValue("5.0")
           .description("Acknowledgement timeout");
 
           param("Sync Setup Timeout", m_args.sync_setup_timeout)
@@ -170,7 +170,7 @@ namespace Maneuver
 
           param("Start Setup Timeout", m_args.start_setup_timeout)
           .units(Units::Second)
-          .defaultValue("20.0")
+          .defaultValue("40.0")
           .description("Start setup timeout");
 
           param("Send Ready Interval", m_args.send_ready_interval)
@@ -187,7 +187,7 @@ namespace Maneuver
           param("Leader Reference Timeout", m_args.leader_reference_timeout)
           .units(Units::Second)
           .minimumValue("5.0")
-          .defaultValue("10.0")
+          .defaultValue("60.0")
           .description("Leader reference timeout");
 
           param("Speed Maximum Delta", m_args.speed_max_delta)
@@ -207,7 +207,7 @@ namespace Maneuver
 
           param("Acoustic Communications -- TDMA Time Per Slot", m_args.tdma_time_per_slot)
           .units(Units::Second)
-          .defaultValue("5.0")
+          .defaultValue("15.0")
           .description("Period while acoustic channel is reserved for each participant");
 
           m_ctx.config.get("General", "Maximum Speed", "2.0", m_max_speed);
@@ -297,6 +297,12 @@ namespace Maneuver
         void
         recvSync(const std::vector<uint8_t>& data)
         {
+          if (isLeader())
+            return;
+
+          if (m_state != SM_SYNC)
+            return;
+
           m_leader_id = m_wcomms->getSource(data);
           std::vector<uint8_t> packet = m_wcomms->getData(data);
           double sync_time;
@@ -538,7 +544,7 @@ namespace Maneuver
         {
           if (m_sync_timeout.overflow())
           {
-            signalError(DTR("Timedout waiting for leader id"));
+            signalError(DTR("Timedout waiting for sync"));
             return;
           }
 
