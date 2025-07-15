@@ -35,6 +35,7 @@
 
 // Local headers
 #include "AcousticProtocol.hpp"
+#include "WifiProtocol.hpp"
 
 namespace Maneuver
 {
@@ -44,28 +45,28 @@ namespace Maneuver
     {
       using DUNE_NAMESPACES;
 
-      constexpr unsigned c_ls_max_retries = 5;
+      constexpr unsigned c_sync_max_retries = 5;
 
       //! Finite state machine states.
       enum StateMachineStates
       {
         //! Waiting for activation.
         SM_IDLE,
-        //! Leader setup state.
-        SM_LEADER_SETUP,
-        //! Moving.
-        SM_MOVING,
+        //! Synchronization state.
+        SM_SYNC,
         //! Start setup state.
-        SM_START_SETUP
+        SM_START,
+        //! Moving state.
+        SM_MOVING
       };
 
       //! Finite state machine states.
-      enum LeaderSetupStates
+      enum SyncSetupStates
       {
-        //! Send code LEADER to participant.
-        LS_SEND_LEADER,
+        //! Send code SYNC to participant.
+        SYNCS_SEND,
         //! Wait acknowledgement from participant.
-        LS_ACK
+        SYNCS_ACK
       };
 
       struct Arguments
@@ -73,19 +74,23 @@ namespace Maneuver
         //! Acknowledgement timeout.
         double ack_timeout;
         //! Leader setup timeout.
-        double leader_setup_timeout;
+        double sync_setup_timeout;
         //! Start setup timeout.
         double start_setup_timeout;
         //! Send ready interval.
         double send_ready_interval;
-        //! TDMA time per slot.
-        double tdma_time_per_slot;
         //! Position dissemination periodicity.
         double pos_dissemination_periodicity;
         //! Leader reference timeout.
         double leader_reference_timeout;
         //! Maximum delta for speed adjustment.
         double speed_max_delta;
+        //! Multicast Address.
+        Address udp_maddr;
+        //! UDP port.
+        uint16_t udp_port;
+        //! TDMA time per slot.
+        double tdma_time_per_slot;
       };
 
       struct Task: public DUNE::Maneuvers::BasicSwarm
@@ -97,7 +102,9 @@ namespace Maneuver
         //! Task arguments.
         Arguments m_args;
         //! Acoustic protocol.
-        AcousticProtocol m_comms;
+        AcousticProtocol m_acomms;
+        //! Acoustic protocol.
+        WifiProtocol* m_wcomms;
         //! Received ack from this id.
         uint16_t m_ack_id_rcv;
         //! Waiting acknowledgement from this id.
@@ -111,25 +118,25 @@ namespace Maneuver
         //! Current state machine state.
         StateMachineStates m_state;
         //! Leader Setup state.
-        LeaderSetupStates m_ls_state;
+        SyncSetupStates m_sync_state;
         //! Participant index.
-        int m_ls_idx;
+        int m_sync_idx;
         //! Leader Setup retries.
-        size_t m_ls_retries;
+        size_t m_sync_retries;
         //! Leader Setup timer.
-        Time::Counter<double> m_ls_timeout;
+        Time::Counter<double> m_sync_timeout;
         //! Start Setup timeout.
-        Time::Counter<double> m_ss_timeout;
+        Time::Counter<double> m_start_timeout;
         //! Send ready interval.
-        Time::Counter<double> m_ss_send_ready;
+        Time::Counter<double> m_start_send_ready;
         //! Start flag received from leader.
-        bool m_ss_start;
+        bool m_flag_start;
         //! Send position timer.
         Time::Counter<double> m_send_pos_timer;
         //! Leader reference timeout timer.
         Time::Counter<double> m_leader_ref_timer;
         //! Leader position.
-        PositionPackage m_leader_pos;
+        CommsProtocol::PositionPackage m_leader_pos;
         //! Speed reference.
         double m_speed_ref;
         //! Vehicle max speed;
@@ -138,43 +145,38 @@ namespace Maneuver
         Task(const std::string& name, DUNE::Tasks::Context& ctx):
           BasicSwarm(name, ctx),
           m_curr(0),
-          m_comms(this),
+          m_acomms(this),
           m_ack_id_rcv(IMC::AddressResolver::invalid()),
           m_ack_id_expected(IMC::AddressResolver::invalid()),
           m_leader_id(IMC::AddressResolver::invalid()),
           m_state(SM_IDLE),
-          m_ls_state(LS_SEND_LEADER),
-          m_ls_idx(0),
-          m_ls_retries(c_ls_max_retries),
-          m_ss_start(false),
+          m_sync_state(SYNCS_SEND),
+          m_sync_idx(0),
+          m_sync_retries(c_sync_max_retries),
+          m_flag_start(false),
           m_send_pos_timer(0.0f),
           m_leader_ref_timer(0.0f),
           m_speed_ref(0.0f)
         {
           param("Acknowledgement Timeout", m_args.ack_timeout)
           .units(Units::Second)
-          .defaultValue("10.0")
+          .defaultValue("5.0")
           .description("Acknowledgement timeout");
 
-          param("Leader Setup Timeout", m_args.leader_setup_timeout)
+          param("Sync Setup Timeout", m_args.sync_setup_timeout)
           .units(Units::Second)
           .defaultValue("40.0")
-          .description("Leader setup timeout");
+          .description("Sync setup timeout");
 
           param("Start Setup Timeout", m_args.start_setup_timeout)
           .units(Units::Second)
-          .defaultValue("20.0")
+          .defaultValue("40.0")
           .description("Start setup timeout");
 
           param("Send Ready Interval", m_args.send_ready_interval)
           .units(Units::Second)
           .defaultValue("2.0")
           .description("Send code READY interval");
-
-          param("TDMA Time Per Slot", m_args.tdma_time_per_slot)
-          .units(Units::Second)
-          .defaultValue("5.0")
-          .description("Period while acoustic channel is reserved for each participant");
 
           param("Position Dissemination Periodicity", m_args.pos_dissemination_periodicity)
           .units(Units::Second)
@@ -185,7 +187,7 @@ namespace Maneuver
           param("Leader Reference Timeout", m_args.leader_reference_timeout)
           .units(Units::Second)
           .minimumValue("5.0")
-          .defaultValue("10.0")
+          .defaultValue("60.0")
           .description("Leader reference timeout");
 
           param("Speed Maximum Delta", m_args.speed_max_delta)
@@ -194,6 +196,19 @@ namespace Maneuver
           .defaultValue("0.5")
           .maximumValue("1.0")
           .description("Maximum delta for speed adjustment");
+
+          param("Wifi Communications -- Multicast Address", m_args.udp_maddr)
+          .defaultValue("225.0.2.1")
+          .description("UDP multicast address for wifi communications");
+  
+          param("Wifi Communications -- Port", m_args.udp_port)
+          .defaultValue("8022")
+          .description("UDP port for wifi communications");
+
+          param("Acoustic Communications -- TDMA Time Per Slot", m_args.tdma_time_per_slot)
+          .units(Units::Second)
+          .defaultValue("15.0")
+          .description("Period while acoustic channel is reserved for each participant");
 
           m_ctx.config.get("General", "Maximum Speed", "2.0", m_max_speed);
 
@@ -205,7 +220,7 @@ namespace Maneuver
         {
           BasicSwarm::onUpdateParameters();
 
-          m_comms.setTimePerSlot(m_args.tdma_time_per_slot);
+          m_acomms.setTimePerSlot(m_args.tdma_time_per_slot);
 
           if (paramChanged(m_args.pos_dissemination_periodicity))
             m_send_pos_timer.setTop(m_args.pos_dissemination_periodicity);
@@ -216,32 +231,54 @@ namespace Maneuver
         onResourceInitialization(void)
         {
           Maneuver::onResourceInitialization();
+          m_wcomms = new WifiProtocol(this, m_args.udp_maddr, m_args.udp_port);
         }
 
         void
-        consume(const IMC::UamRxFrame * msg)
+        onResourceRelease(void)
         {
-          if (!m_comms.validate(msg))
+          Maneuver::onResourceRelease();
+          DUNE::Memory::clear(m_wcomms);
+        }
+
+        void
+        parseWifiPacket(const std::vector<uint8_t>& data)
+        {
+          if (!m_wcomms->validate(data))
+            return;
+          
+          switch (data[5])
+          {
+            case CommsProtocol::Codes::CODE_ACK:
+              recvAck(data);
+              break;
+            case CommsProtocol::Codes::CODE_SYNC:
+              recvSync(data);
+              break;
+            case CommsProtocol::Codes::CODE_READY:
+              recvReady(data);
+              break;
+            case CommsProtocol::Codes::CODE_START:
+              recvStart(data);
+              break;
+            default:
+              debug("Invalid wifi code: %u", data[5]);
+              break;
+          }
+        }
+
+        void
+        consume(const IMC::UamRxFrame* msg)
+        {
+          if (!m_acomms.validate(msg))
             return;
 
           switch (msg->data[1])
           {
-            case CODE_ACK:
-              recvAck(msg);
-              break;
-            case CODE_LEADER:
-              recvLeader(msg);
-              break;
-            case CODE_READY:
-              recvReady(msg);
-              break;
-            case CODE_START:
-              recvStart(msg);
-              break;
-            case CODE_POS:
+            case CommsProtocol::Codes::CODE_POS:
               recvPos(msg);
               break;
-            case CODE_PARTICIPANT:
+            case CommsProtocol::Codes::CODE_PARTICIPANT:
               recvParticipant(msg);
               break;
             default:
@@ -251,73 +288,88 @@ namespace Maneuver
         }
 
         void
-        recvAck(const IMC::UamRxFrame* msg)
+        recvAck(const std::vector<uint8_t>& data)
         {
-          trace("Received code ACK from: %s", msg->sys_src.c_str());
-          m_ack_id_rcv = resolveSystemName(msg->sys_src);
+          m_ack_id_rcv = m_wcomms->getSource(data);
+          trace("Received code ACK from: %s", resolveSystemId(m_ack_id_rcv));
         }
 
         void
-        recvLeader(const IMC::UamRxFrame* msg)
+        recvSync(const std::vector<uint8_t>& data)
         {
-          trace("Received code LEADER from: %s", msg->sys_src.c_str());
-          m_leader_id = resolveSystemName(msg->sys_src);
-          m_comms.sendAck(msg->sys_src);
+          if (isLeader())
+            return;
+
+          if (m_state != SM_SYNC)
+            return;
+
+          m_leader_id = m_wcomms->getSource(data);
+          std::vector<uint8_t> packet = m_wcomms->getData(data);
+          double sync_time;
+          if (packet.size() < sizeof(double) + 1)
+          {
+            war("Received code SYNC from %s with invalid data size", resolveSystemId(m_leader_id));
+            return;
+          }
+          std::memcpy(&sync_time, &packet[1], sizeof(double));
+
+          trace("Received code SYNC from: %s. Sync time: %f", resolveSystemId(m_leader_id), sync_time);
+          m_acomms.setSyncTime(sync_time);
+          m_wcomms->sendAck(resolveSystemId(m_leader_id));
         }
 
         void
-        recvReady(const IMC::UamRxFrame* msg)
+        recvReady(const std::vector<uint8_t>& data)
         {
           if (!isLeader())
             return;
 
-          if (m_state != SM_START_SETUP)
+          if (m_state != SM_START)
             return;
 
-          int id = resolveSystemName(msg->sys_src);
-          std::map<int, bool>::iterator itr = m_ready_state.find(id);
+          uint16_t sys_id = m_wcomms->getSource(data);
+          std::string sys_name = resolveSystemId(sys_id);
+          std::map<int, bool>::iterator itr = m_ready_state.find(sys_id);
           if (itr == m_ready_state.end())
           {
-            war("Received code READY from non-participant: %s", msg->sys_src.c_str());
+            war("Received code READY from non-participant: %s", sys_name.c_str());
             return;
           }
 
-          trace("Received code READY from: %s", msg->sys_src.c_str());
+          trace("Received code READY from: %s", sys_name.c_str());
           itr->second = true;
         }
 
         void
-        recvStart(const IMC::UamRxFrame* msg)
+        recvStart(const std::vector<uint8_t>& data)
         {
-          if (m_leader_id != resolveSystemName(msg->sys_src))
+          if (m_leader_id != m_wcomms->getSource(data))
             return;
 
-          double sync_time;
-          std::memcpy(&sync_time, &msg->data[2], sizeof(double));
-          trace("Received code START from: %s. Sync time: %f", msg->sys_src.c_str(), sync_time);
-
-          m_comms.setSyncTime(sync_time);
-          m_ss_start = true;
+          trace("Received code START from: %s.", resolveSystemId(m_leader_id));
+          m_flag_start = true;
         }
 
         void
         recvPos(const IMC::UamRxFrame* msg)
         {
-          if (m_leader_id != resolveSystemName(msg->sys_src))
-            return;
-          
-          //! Leader only broadcasts position after Start,
-          //! thus if Pos has been received, but Start has not been received, Start
-          if (!m_ss_start)
-            m_ss_start = true;
-          
-          m_leader_ref_timer.setTop(m_args.leader_reference_timeout);
-          std::memcpy(&m_leader_pos, &msg->data[2], sizeof(m_leader_pos));
           trace("Received code POS from: %s | waypoint index: %u lat : %f lon: %f speed %f", msg->sys_src.c_str(),
                                                                                              m_leader_pos.waypoint_idx,
                                                                                              m_leader_pos.lat,
                                                                                              m_leader_pos.lon,
                                                                                              m_leader_pos.speed);
+          
+          //! Only process position if it is from the leader
+          if (m_leader_id != resolveSystemName(msg->sys_src))
+            return;
+          
+          //! Leader only broadcasts position after Start,
+          //! thus if Pos has been received, but Start has not been received, Start
+          if (!m_flag_start)
+            m_flag_start = true;
+          
+          m_leader_ref_timer.setTop(m_args.leader_reference_timeout);
+          std::memcpy(&m_leader_pos, &msg->data[2], sizeof(m_leader_pos));
           
           updateSpeed();
         }
@@ -332,7 +384,7 @@ namespace Maneuver
           if (m_state != SM_MOVING)
             return;
           
-          ParticipantPackage part;
+          AcousticProtocol::ParticipantPackage part;
           std::memcpy(&part, &msg->data[2], sizeof(part));
           trace("Received code PARTICIPANT from: %s | vid: %u off_x : %f off_y: %f off_z %f", msg->sys_src.c_str(),
                                                                                               part.vid,
@@ -367,9 +419,9 @@ namespace Maneuver
         onReset(void)
         {
           m_state = SM_IDLE;
-          m_comms.resetSyncTime();
-          m_comms.resetMaxSlots();
-          m_comms.resetSlot();
+          m_acomms.resetSyncTime();
+          m_acomms.resetMaxSlots();
+          m_acomms.resetSlot();
           m_curr = 0;
         }
 
@@ -379,41 +431,46 @@ namespace Maneuver
           (void) maneuver;
 
           // Set time slot configuration
-          m_comms.setMaxSlots(participants());
-          m_comms.setSlot(formation_index());
+          m_acomms.setMaxSlots(participants());
+          m_acomms.setSlot(formation_index());
 
           // Change state to LeaderSetup
-          debug("Starting leader setup...");
-          setLeaderSetup();
+          debug("Starting sync...");
+          setSyncState();
         }
 
         void
-        setLeaderSetup(void)
+        setSyncState(void)
         {
           setControl(IMC::CL_NONE);
-          m_ls_state = LS_SEND_LEADER;
-          m_ls_idx = 0;
-          m_ls_retries = c_ls_max_retries;
-          m_ls_timeout.setTop(m_args.leader_setup_timeout);
-          m_state = SM_LEADER_SETUP;
+          m_sync_state = SYNCS_SEND;
+          m_sync_idx = 0;
+          m_sync_retries = c_sync_max_retries;
+          m_sync_timeout.setTop(m_args.sync_setup_timeout);
+          m_state = SM_SYNC;
 
           if (isLeader())
+          {
             m_leader_id = getSystemId();
+            m_acomms.setSyncTime(Time::Clock::getSinceEpoch());
+          }
           else
+          {
             m_leader_id = IMC::AddressResolver::invalid();
+          }
 
-          debug("Changing state to LEADER_SETUP");
+          debug("Changing state to SYNC");
         }
 
         void
-        leaderSetup(void)
+        syncState(void)
         {
           try
           {
             if (isLeader())
-              sendLeader();
+              sendSync();
             else
-              waitForLeader();
+              waitForSync();
           }
           catch(const std::exception& e)
           {
@@ -422,57 +479,57 @@ namespace Maneuver
         }
 
         void
-        sendLeader(void)
+        sendSync(void)
         {
-          switch (m_ls_state)
+          switch (m_sync_state)
           {
-            case LS_SEND_LEADER:
+            case SYNCS_SEND:
             {
-              if (m_ls_retries == 0)
+              if (m_sync_retries == 0)
               {
-                signalError(String::str("Timedout setting up leader with %s", resolveSystemId(participant(m_ls_idx).vid)));
+                signalError(String::str("Timedout synching with %s", resolveSystemId(participant(m_sync_idx).vid)));
                 return;
               }
 
-              if (m_ls_idx == formation_index())
-                m_ls_idx++;
+              if (m_sync_idx == formation_index())
+              m_sync_idx++;
 
-              if ((size_t)m_ls_idx < participants())
+              if ((size_t)m_sync_idx < participants())
               {
-                const Participant& part = participant(m_ls_idx);
+                const Participant& part = participant(m_sync_idx);
                 std::string part_name = resolveSystemId(part.vid);
-                trace("Sending code LEADER to %s...", part_name.c_str());
-                m_comms.sendLeader(part_name);
+                trace("Sending code SYNC to %s...", part_name.c_str());
 
+                m_wcomms->sendSync(part_name, m_acomms.getSyncTime());
                 expectAck(part.vid);
               }
               
-              m_ls_state = LS_ACK;
+              m_sync_state = SYNCS_ACK;
             }
             break;
             
-            case LS_ACK:
+            case SYNCS_ACK:
             {
               if (m_ack_timeout.overflow())
               {
-                m_ls_retries--;
-                m_ls_state = LS_SEND_LEADER;
+                m_sync_retries--;
+                m_sync_state = SYNCS_SEND;
                 return;
               }
 
               if (gotAck())
               {
-                m_ls_idx++;
-                if ((size_t)m_ls_idx >= participants() ||
-                    (m_ls_idx == formation_index() && (size_t)m_ls_idx == participants() - 1))
+                m_sync_idx++;
+                if ((size_t)m_sync_idx >= participants() ||
+                    (m_sync_idx == formation_index() && (size_t)m_sync_idx == participants() - 1))
                 {
-                  debug("Leader setup done. Leader is %s", resolveSystemId(m_leader_id));
+                  debug("Sync setup done. Leader is %s", resolveSystemId(m_leader_id));
                   sendToFirstPoint();
                   return;
                 }
 
-                m_ls_retries = c_ls_max_retries;
-                m_ls_state = LS_SEND_LEADER;
+                m_sync_retries = c_sync_max_retries;
+                m_sync_state = SYNCS_SEND;
               }
             }
             break;
@@ -483,11 +540,11 @@ namespace Maneuver
         }
 
         void
-        waitForLeader(void)
+        waitForSync(void)
         {
-          if (m_ls_timeout.overflow())
+          if (m_sync_timeout.overflow())
           {
-            signalError(DTR("Timedout waiting for leader id"));
+            signalError(DTR("Timedout waiting for sync"));
             return;
           }
 
@@ -519,12 +576,12 @@ namespace Maneuver
         }
 
         void
-        setStartSetup(void)
+        setStartState(void)
         {
           setControl(IMC::CL_NONE);
-          m_ss_timeout.setTop(m_args.start_setup_timeout);
-          m_ss_send_ready.setTop(m_args.send_ready_interval);
-          m_ss_start = false;
+          m_start_timeout.setTop(m_args.start_setup_timeout);
+          m_start_send_ready.setTop(m_args.send_ready_interval);
+          m_flag_start = false;
           
           m_ready_state.clear();
           for(size_t idx = 0; idx < participants(); idx++)
@@ -535,14 +592,14 @@ namespace Maneuver
             m_ready_state[participant(idx).vid] = false;
           }
 
-          m_state = SM_START_SETUP;
+          m_state = SM_START;
           debug("Changing state to START_SETUP");
         }
 
         void
-        startSetup(void)
+        startState(void)
         {
-          if (m_ss_timeout.overflow())
+          if (m_start_timeout.overflow())
           {
             signalError("Timedout waiting for start");
             return;
@@ -554,7 +611,7 @@ namespace Maneuver
             if (isFormationReady())
             {
               trace("Sending code START in broadcast");
-              m_comms.sendStart("broadcast", Time::Clock::getSinceEpoch());
+              m_wcomms->sendStart("broadcast");
               m_send_pos_timer.reset();
               setControl(IMC::CL_PATH);
               sendToNextPoint();
@@ -565,16 +622,16 @@ namespace Maneuver
           else
           {
             // Followers send code READY to leader
-            if (m_ss_send_ready.overflow())
+            if (m_start_send_ready.overflow())
             {
               std::string leader_name = resolveSystemId(m_leader_id);
               trace("Sending code READY to %s", leader_name.c_str());
-              m_comms.sendReady(leader_name);
-              m_ss_send_ready.reset();
+              m_wcomms->sendReady(leader_name);
+              m_start_send_ready.reset();
             }
 
             // Followers wait for code START from leader
-            if (m_ss_start)
+            if (m_flag_start)
             {
               setControl(IMC::CL_PATH);
               sendToNextPoint();
@@ -646,7 +703,7 @@ namespace Maneuver
           if (m_curr == 1)
           {
             debug("Setting up start...");
-            setStartSetup();
+            setStartState();
             return;
           }
           
@@ -782,9 +839,6 @@ namespace Maneuver
         void
         dissiminatePosition(void)
         {
-          if (!isLeader())
-            return;
-
           if (m_curr < 1)
             return;
           
@@ -792,7 +846,7 @@ namespace Maneuver
           {
             double lat, lon;
             fromLocalCoordinates(m_estate.x, m_estate.y, &lat, &lon);
-            m_comms.sendPos("broadcast", m_curr, lat, lon, m_estate.u);
+            m_acomms.sendPos("broadcast", m_curr, lat, lon, m_estate.u);
             m_send_pos_timer.reset();
           }
         }
@@ -833,7 +887,7 @@ namespace Maneuver
             // Update leader participants
             updateParticipant((*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
             // Broadcast new offsets to participants
-            m_comms.sendParticipant("broadcast", (*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
+            m_acomms.sendParticipant("broadcast", (*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
             // Wait until sending next update
             // This is blocking!!
             waitWithConsume(1.0f);
@@ -847,11 +901,11 @@ namespace Maneuver
           {
             case SM_IDLE:
               break;
-            case SM_LEADER_SETUP:
-              leaderSetup();
+            case SM_SYNC:
+              syncState();
               break;
-            case SM_START_SETUP:
-              startSetup();
+            case SM_START:
+              startState();
               break;
             case SM_MOVING:
               dissiminatePosition();
@@ -861,7 +915,17 @@ namespace Maneuver
               break;
           }
 
-          m_comms.run();
+          // Acoustic communications
+          m_acomms.run();
+
+          // Wifi communications
+          if (m_wcomms)
+          {
+            std::vector<uint8_t> data;
+            if (m_wcomms->checkIncomingData(data))
+              parseWifiPacket(data);
+          }
+          
         }
 
         void

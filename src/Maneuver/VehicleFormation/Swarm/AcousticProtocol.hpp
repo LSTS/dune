@@ -28,52 +28,24 @@
 #ifndef MANEUVER_VEHICLEFORMATION_SWARM_ACOUSTICPROTOCOL_HPP_INCLUDED_
 #define MANEUVER_VEHICLEFORMATION_SWARM_ACOUSTICPROTOCOL_HPP_INCLUDED_
 
+// DUNE headers.
 #include <DUNE/Tasks.hpp>
 #include <DUNE/Utils/String.hpp>
 
+// Local headers.
+#include "CommsProtocol.hpp"
 namespace Maneuver
 {
   namespace VehicleFormation
   {
     namespace Swarm
     {
-      // Synchronization byte.
-      static const uint8_t c_sync = 0xA2;
-      static const uint8_t c_poly = 0x07;
-
-      enum Codes
-      {
-        CODE_ACK          = 0x00,
-        CODE_READY        = 0x01,
-        CODE_LEADER       = 0x02,
-        CODE_START        = 0x03,
-        CODE_POS          = 0x04,
-        CODE_PARTICIPANT  = 0x05
-      };
-
-      struct PositionPackage
-      {
-        uint8_t waypoint_idx;
-        float lat;
-        float lon;
-        float speed;
-      };
-
-      struct ParticipantPackage
-      {
-        uint16_t vid; // Vehicle ID.
-        float off_x;
-        float off_y;
-        float off_z;
-      };
-
-      //! Takeoff maneuver
-      class AcousticProtocol
+      class AcousticProtocol: public CommsProtocol
       {
       public:
         //! Default constructor.
         AcousticProtocol(DUNE::Tasks::Task* task):
-          m_task(task),
+          CommsProtocol(task, "AcousticProtocol", 0xA2),
           m_sync_time(-1),
           m_max_slots(-1),
           m_slot(-1),
@@ -81,98 +53,41 @@ namespace Maneuver
         { }
 
         void
-        sendParticipant(const std::string& sys, const uint16_t vid, const float off_x, const float off_y, const float off_z)
+        send(const std::string& sys, const std::vector<uint8_t>& data) override
         {
-          std::vector<uint8_t> data;
+          // TDMA
+          if (!available())
+          {
+            spew("Not available to send data, not in time slot");
+            return;
+          }
 
-          ParticipantPackage part;
-          part.vid = vid;
-          part.off_x = off_x;
-          part.off_y = off_y;
-          part.off_z = off_z;
-
-          data.resize(sizeof(part) + 1);
-          data[0] = CODE_PARTICIPANT;
-          std::memcpy(&data[1], &part, sizeof(part));
-
-          sendFrame(sys, 0, data, false);
-        }
-
-        void
-        sendPos(const std::string& sys, const uint8_t waypoint_index, const float lat, const float lon, const float speed)
-        {
-          std::vector<uint8_t> data;
-
-          PositionPackage p;
-          p.waypoint_idx = waypoint_index;
-          p.lat = lat;
-          p.lon = lon;
-          p.speed = speed;
-
-          data.resize(sizeof(p) + 1);
-          data[0] = CODE_POS;
-          std::memcpy(&data[1], &p, sizeof(p));
-
-          sendFrame(sys, 0, data, false);
-        }
-
-        void
-        sendAck(const std::string& sys)
-        {
-          std::vector<uint8_t> data;
-          data.push_back(CODE_ACK);
-          sendFrame(sys, 0, data, false);
-        }
-
-        void
-        sendReady(const std::string& sys)
-        {
-          std::vector<uint8_t> data;
-          data.push_back(CODE_READY);
-          sendFrame(sys, 0, data, false);
-        }
-
-        void
-        sendLeader(const std::string& sys)
-        {
-          std::vector<uint8_t> data;
-          data.push_back(CODE_LEADER);
-          sendFrame(sys, 0, data, false);
-        }
-
-        void
-        sendStart(const std::string& sys, const double sync_time)
-        {
-          std::vector<uint8_t> data;
-          data.resize(sizeof(double) + 1);
-          data[0] = CODE_START;
-          std::memcpy(&data[1], &sync_time, sizeof(double));
-          
-          sendFrame(sys, 0, data, false);
-          setSyncTime(sync_time);
-        }
-
-        void
-        sendFrame(const std::string& sys, const uint16_t id, const std::vector<uint8_t>& data, bool ack)
-        {
-          DUNE::Algorithms::CRC8 crc(c_poly);
+          DUNE::Algorithms::CRC8 crc(m_poly);
 
           DUNE::IMC::UamTxFrame frame;
           frame.setSource(m_task->getSystemId());
           frame.setSourceEntity(m_task->getEntityId());
           frame.setDestination(m_task->getSystemId());
           frame.sys_dst = sys;
-          frame.seq = id;
-          frame.flags = ack ? DUNE::IMC::UamTxFrame::UTF_ACK : 0;
+          frame.seq = 0;
+          frame.flags = 0;
 
-          frame.data.push_back(c_sync);
-          crc.putByte(c_sync);
+          frame.data.push_back(m_sync);
+          crc.putByte(m_sync);
           for (size_t i = 0; i < data.size(); ++i)
           {
             frame.data.push_back(data[i]);
             crc.putByte(data[i]);
           }
           frame.data.push_back(crc.get());
+
+          // Debug
+          if (m_task->getDebugLevel() >= DUNE::Tasks::DebugLevel::DEBUG_LEVEL_SPEW)
+          {
+            std::vector<uint8_t> serialized_data(frame.data.begin(), frame.data.end());
+            spew(DUNE::Utils::String::str("Sending message: %s",
+                                          DUNE::Utils::String::bytesToHex(serialized_data).c_str()));
+          }
 
           m_task->dispatch(frame);
         }
@@ -211,13 +126,13 @@ namespace Maneuver
 
           // (void)imc_addr_dst;
 
-          if ((uint8_t)msg->data[0] != c_sync)
+          if ((uint8_t)msg->data[0] != m_sync)
           {
             debug(DUNE::Utils::String::str("invalid synchronization number: %02X", msg->data[0]));
             return false;
           }
 
-          DUNE::Algorithms::CRC8 crc(c_poly);
+          DUNE::Algorithms::CRC8 crc(m_poly);
           crc.putArray((uint8_t*)&msg->data[0], msg->data.size() - 1);
           if (crc.get() != (uint8_t)(msg->data[msg->data.size() - 1]))
           {
@@ -328,30 +243,11 @@ namespace Maneuver
         }
 
       private:
-        DUNE::Tasks::Task* m_task;
         double m_sync_time;
         double m_slot_start;
         int m_max_slots;
         int m_slot;
         double m_time_per_slot;
-
-        void
-        debug(const std::string& msg) const
-        {
-          m_task->debug("[AcousticProtocol] >> %s", msg.c_str());
-        }
-
-        void
-        trace(const std::string& msg) const
-        {
-          m_task->trace("[AcousticProtocol] >> %s", msg.c_str());
-        }
-
-        void
-        war(const std::string& msg) const
-        {
-          m_task->war("[AcousticProtocol] >> %s", msg.c_str());
-        }
       };
     }
   }
