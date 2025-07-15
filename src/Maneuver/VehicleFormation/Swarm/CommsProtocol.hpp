@@ -49,9 +49,7 @@ namespace Maneuver
           m_poly(poly)
         { }
 
-        ~CommsProtocol()
-        {
-        }
+        virtual ~CommsProtocol() = default;
 
         enum Codes
         {
