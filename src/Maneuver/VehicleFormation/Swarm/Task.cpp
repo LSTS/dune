@@ -45,28 +45,28 @@ namespace Maneuver
     {
       using DUNE_NAMESPACES;
 
-      constexpr unsigned c_ls_max_retries = 5;
+      constexpr unsigned c_sync_max_retries = 5;
 
       //! Finite state machine states.
       enum StateMachineStates
       {
         //! Waiting for activation.
         SM_IDLE,
-        //! Leader setup state.
-        SM_LEADER_SETUP,
-        //! Moving.
-        SM_MOVING,
+        //! Synchronization state.
+        SM_SYNC,
         //! Start setup state.
-        SM_START_SETUP
+        SM_START,
+        //! Moving state.
+        SM_MOVING
       };
 
       //! Finite state machine states.
-      enum LeaderSetupStates
+      enum SyncSetupStates
       {
-        //! Send code LEADER to participant.
-        LS_SEND_LEADER,
+        //! Send code SYNC to participant.
+        SYNCS_SEND,
         //! Wait acknowledgement from participant.
-        LS_ACK
+        SYNCS_ACK
       };
 
       struct Arguments
@@ -74,7 +74,7 @@ namespace Maneuver
         //! Acknowledgement timeout.
         double ack_timeout;
         //! Leader setup timeout.
-        double leader_setup_timeout;
+        double sync_setup_timeout;
         //! Start setup timeout.
         double start_setup_timeout;
         //! Send ready interval.
@@ -118,25 +118,25 @@ namespace Maneuver
         //! Current state machine state.
         StateMachineStates m_state;
         //! Leader Setup state.
-        LeaderSetupStates m_ls_state;
+        SyncSetupStates m_sync_state;
         //! Participant index.
-        int m_ls_idx;
+        int m_sync_idx;
         //! Leader Setup retries.
-        size_t m_ls_retries;
+        size_t m_sync_retries;
         //! Leader Setup timer.
-        Time::Counter<double> m_ls_timeout;
+        Time::Counter<double> m_sync_timeout;
         //! Start Setup timeout.
-        Time::Counter<double> m_ss_timeout;
+        Time::Counter<double> m_start_timeout;
         //! Send ready interval.
-        Time::Counter<double> m_ss_send_ready;
+        Time::Counter<double> m_start_send_ready;
         //! Start flag received from leader.
-        bool m_ss_start;
+        bool m_flag_start;
         //! Send position timer.
         Time::Counter<double> m_send_pos_timer;
         //! Leader reference timeout timer.
         Time::Counter<double> m_leader_ref_timer;
         //! Leader position.
-        AcousticProtocol::PositionPackage m_leader_pos;
+        CommsProtocol::PositionPackage m_leader_pos;
         //! Speed reference.
         double m_speed_ref;
         //! Vehicle max speed;
@@ -150,10 +150,10 @@ namespace Maneuver
           m_ack_id_expected(IMC::AddressResolver::invalid()),
           m_leader_id(IMC::AddressResolver::invalid()),
           m_state(SM_IDLE),
-          m_ls_state(LS_SEND_LEADER),
-          m_ls_idx(0),
-          m_ls_retries(c_ls_max_retries),
-          m_ss_start(false),
+          m_sync_state(SYNCS_SEND),
+          m_sync_idx(0),
+          m_sync_retries(c_sync_max_retries),
+          m_flag_start(false),
           m_send_pos_timer(0.0f),
           m_leader_ref_timer(0.0f),
           m_speed_ref(0.0f)
@@ -163,10 +163,10 @@ namespace Maneuver
           .defaultValue("10.0")
           .description("Acknowledgement timeout");
 
-          param("Leader Setup Timeout", m_args.leader_setup_timeout)
+          param("Sync Setup Timeout", m_args.sync_setup_timeout)
           .units(Units::Second)
           .defaultValue("40.0")
-          .description("Leader setup timeout");
+          .description("Sync setup timeout");
 
           param("Start Setup Timeout", m_args.start_setup_timeout)
           .units(Units::Second)
@@ -249,22 +249,22 @@ namespace Maneuver
 
           switch (msg->data[1])
           {
-            case AcousticProtocol::CODE_ACK:
+            case CommsProtocol::Codes::CODE_ACK:
               recvAck(msg);
               break;
-            case AcousticProtocol::CODE_LEADER:
+            case CommsProtocol::Codes::CODE_LEADER:
               recvLeader(msg);
               break;
-            case AcousticProtocol::CODE_READY:
+            case CommsProtocol::Codes::CODE_READY:
               recvReady(msg);
               break;
-            case AcousticProtocol::CODE_START:
+            case CommsProtocol::Codes::CODE_START:
               recvStart(msg);
               break;
-            case AcousticProtocol::CODE_POS:
+            case CommsProtocol::Codes::CODE_POS:
               recvPos(msg);
               break;
-            case AcousticProtocol::CODE_PARTICIPANT:
+            case CommsProtocol::Codes::CODE_PARTICIPANT:
               recvParticipant(msg);
               break;
             default:
@@ -294,7 +294,7 @@ namespace Maneuver
           if (!isLeader())
             return;
 
-          if (m_state != SM_START_SETUP)
+          if (m_state != SM_START)
             return;
 
           int id = resolveSystemName(msg->sys_src);
@@ -320,7 +320,7 @@ namespace Maneuver
           trace("Received code START from: %s. Sync time: %f", msg->sys_src.c_str(), sync_time);
 
           m_acomms.setSyncTime(sync_time);
-          m_ss_start = true;
+          m_flag_start = true;
         }
 
         void
@@ -331,8 +331,8 @@ namespace Maneuver
           
           //! Leader only broadcasts position after Start,
           //! thus if Pos has been received, but Start has not been received, Start
-          if (!m_ss_start)
-            m_ss_start = true;
+          if (!m_flag_start)
+            m_flag_start = true;
           
           m_leader_ref_timer.setTop(m_args.leader_reference_timeout);
           std::memcpy(&m_leader_pos, &msg->data[2], sizeof(m_leader_pos));
@@ -406,37 +406,37 @@ namespace Maneuver
           m_acomms.setSlot(formation_index());
 
           // Change state to LeaderSetup
-          debug("Starting leader setup...");
-          setLeaderSetup();
+          debug("Starting sync...");
+          setSyncState();
         }
 
         void
-        setLeaderSetup(void)
+        setSyncState(void)
         {
           setControl(IMC::CL_NONE);
-          m_ls_state = LS_SEND_LEADER;
-          m_ls_idx = 0;
-          m_ls_retries = c_ls_max_retries;
-          m_ls_timeout.setTop(m_args.leader_setup_timeout);
-          m_state = SM_LEADER_SETUP;
+          m_sync_state = SYNCS_SEND;
+          m_sync_idx = 0;
+          m_sync_retries = c_sync_max_retries;
+          m_sync_timeout.setTop(m_args.sync_setup_timeout);
+          m_state = SM_SYNC;
 
           if (isLeader())
             m_leader_id = getSystemId();
           else
             m_leader_id = IMC::AddressResolver::invalid();
 
-          debug("Changing state to LEADER_SETUP");
+          debug("Changing state to SYNC");
         }
 
         void
-        leaderSetup(void)
+        syncState(void)
         {
           try
           {
             if (isLeader())
-              sendLeader();
+              sendSync();
             else
-              waitForLeader();
+              waitForSync();
           }
           catch(const std::exception& e)
           {
@@ -445,57 +445,57 @@ namespace Maneuver
         }
 
         void
-        sendLeader(void)
+        sendSync(void)
         {
-          switch (m_ls_state)
+          switch (m_sync_state)
           {
-            case LS_SEND_LEADER:
+            case SYNCS_SEND:
             {
-              if (m_ls_retries == 0)
+              if (m_sync_retries == 0)
               {
-                signalError(String::str("Timedout setting up leader with %s", resolveSystemId(participant(m_ls_idx).vid)));
+                signalError(String::str("Timedout synching with %s", resolveSystemId(participant(m_sync_idx).vid)));
                 return;
               }
 
-              if (m_ls_idx == formation_index())
-                m_ls_idx++;
+              if (m_sync_idx == formation_index())
+              m_sync_idx++;
 
-              if ((size_t)m_ls_idx < participants())
+              if ((size_t)m_sync_idx < participants())
               {
-                const Participant& part = participant(m_ls_idx);
+                const Participant& part = participant(m_sync_idx);
                 std::string part_name = resolveSystemId(part.vid);
-                trace("Sending code LEADER to %s...", part_name.c_str());
+                trace("Sending code SYNC to %s...", part_name.c_str());
                 m_acomms.sendLeader(part_name);
 
                 expectAck(part.vid);
               }
               
-              m_ls_state = LS_ACK;
+              m_sync_state = SYNCS_ACK;
             }
             break;
             
-            case LS_ACK:
+            case SYNCS_ACK:
             {
               if (m_ack_timeout.overflow())
               {
-                m_ls_retries--;
-                m_ls_state = LS_SEND_LEADER;
+                m_sync_retries--;
+                m_sync_state = SYNCS_SEND;
                 return;
               }
 
               if (gotAck())
               {
-                m_ls_idx++;
-                if ((size_t)m_ls_idx >= participants() ||
-                    (m_ls_idx == formation_index() && (size_t)m_ls_idx == participants() - 1))
+                m_sync_idx++;
+                if ((size_t)m_sync_idx >= participants() ||
+                    (m_sync_idx == formation_index() && (size_t)m_sync_idx == participants() - 1))
                 {
-                  debug("Leader setup done. Leader is %s", resolveSystemId(m_leader_id));
+                  debug("Sync setup done. Leader is %s", resolveSystemId(m_leader_id));
                   sendToFirstPoint();
                   return;
                 }
 
-                m_ls_retries = c_ls_max_retries;
-                m_ls_state = LS_SEND_LEADER;
+                m_sync_retries = c_sync_max_retries;
+                m_sync_state = SYNCS_SEND;
               }
             }
             break;
@@ -506,9 +506,9 @@ namespace Maneuver
         }
 
         void
-        waitForLeader(void)
+        waitForSync(void)
         {
-          if (m_ls_timeout.overflow())
+          if (m_sync_timeout.overflow())
           {
             signalError(DTR("Timedout waiting for leader id"));
             return;
@@ -542,12 +542,12 @@ namespace Maneuver
         }
 
         void
-        setStartSetup(void)
+        setStartState(void)
         {
           setControl(IMC::CL_NONE);
-          m_ss_timeout.setTop(m_args.start_setup_timeout);
-          m_ss_send_ready.setTop(m_args.send_ready_interval);
-          m_ss_start = false;
+          m_start_timeout.setTop(m_args.start_setup_timeout);
+          m_start_send_ready.setTop(m_args.send_ready_interval);
+          m_flag_start = false;
           
           m_ready_state.clear();
           for(size_t idx = 0; idx < participants(); idx++)
@@ -558,14 +558,14 @@ namespace Maneuver
             m_ready_state[participant(idx).vid] = false;
           }
 
-          m_state = SM_START_SETUP;
+          m_state = SM_START;
           debug("Changing state to START_SETUP");
         }
 
         void
-        startSetup(void)
+        startState(void)
         {
-          if (m_ss_timeout.overflow())
+          if (m_start_timeout.overflow())
           {
             signalError("Timedout waiting for start");
             return;
@@ -590,16 +590,16 @@ namespace Maneuver
           else
           {
             // Followers send code READY to leader
-            if (m_ss_send_ready.overflow())
+            if (m_start_send_ready.overflow())
             {
               std::string leader_name = resolveSystemId(m_leader_id);
               trace("Sending code READY to %s", leader_name.c_str());
               m_acomms.sendReady(leader_name);
-              m_ss_send_ready.reset();
+              m_start_send_ready.reset();
             }
 
             // Followers wait for code START from leader
-            if (m_ss_start)
+            if (m_flag_start)
             {
               setControl(IMC::CL_PATH);
               sendToNextPoint();
@@ -671,7 +671,7 @@ namespace Maneuver
           if (m_curr == 1)
           {
             debug("Setting up start...");
-            setStartSetup();
+            setStartState();
             return;
           }
           
@@ -872,11 +872,11 @@ namespace Maneuver
           {
             case SM_IDLE:
               break;
-            case SM_LEADER_SETUP:
-              leaderSetup();
+            case SM_SYNC:
+              syncState();
               break;
-            case SM_START_SETUP:
-              startSetup();
+            case SM_START:
+              startState();
               break;
             case SM_MOVING:
               dissiminatePosition();
