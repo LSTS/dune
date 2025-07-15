@@ -242,25 +242,39 @@ namespace Maneuver
         }
 
         void
-        consume(const IMC::UamRxFrame * msg)
+        parseWifiPacket(const std::vector<uint8_t>& data)
+        {
+          if (!m_wcomms->validate(data))
+            return;
+          
+          switch (data[5])
+          {
+            case CommsProtocol::Codes::CODE_ACK:
+              recvAck(data);
+              break;
+            case CommsProtocol::Codes::CODE_SYNC:
+              recvSync(data);
+              break;
+            case CommsProtocol::Codes::CODE_READY:
+              recvReady(data);
+              break;
+            case CommsProtocol::Codes::CODE_START:
+              recvStart(data);
+              break;
+            default:
+              debug("Invalid wifi code: %u", data[5]);
+              break;
+          }
+        }
+
+        void
+        consume(const IMC::UamRxFrame* msg)
         {
           if (!m_acomms.validate(msg))
             return;
 
           switch (msg->data[1])
           {
-            case CommsProtocol::Codes::CODE_ACK:
-              recvAck(msg);
-              break;
-            case CommsProtocol::Codes::CODE_LEADER:
-              recvLeader(msg);
-              break;
-            case CommsProtocol::Codes::CODE_READY:
-              recvReady(msg);
-              break;
-            case CommsProtocol::Codes::CODE_START:
-              recvStart(msg);
-              break;
             case CommsProtocol::Codes::CODE_POS:
               recvPos(msg);
               break;
@@ -274,22 +288,32 @@ namespace Maneuver
         }
 
         void
-        recvAck(const IMC::UamRxFrame* msg)
+        recvAck(const std::vector<uint8_t>& data)
         {
-          trace("Received code ACK from: %s", msg->sys_src.c_str());
-          m_ack_id_rcv = resolveSystemName(msg->sys_src);
+          m_ack_id_rcv = m_wcomms->getSource(data);
+          trace("Received code ACK from: %s", resolveSystemId(m_ack_id_rcv));
         }
 
         void
-        recvLeader(const IMC::UamRxFrame* msg)
+        recvSync(const std::vector<uint8_t>& data)
         {
-          trace("Received code LEADER from: %s", msg->sys_src.c_str());
-          m_leader_id = resolveSystemName(msg->sys_src);
-          m_acomms.sendAck(msg->sys_src);
+          m_leader_id = m_wcomms->getSource(data);
+          std::vector<uint8_t> packet = m_wcomms->getData(data);
+          double sync_time;
+          if (packet.size() < sizeof(double) + 1)
+          {
+            war("Received code SYNC from %s with invalid data size", resolveSystemId(m_leader_id));
+            return;
+          }
+          std::memcpy(&sync_time, &packet[1], sizeof(double));
+
+          trace("Received code SYNC from: %s. Sync time: %f", resolveSystemId(m_leader_id), sync_time);
+          m_acomms.setSyncTime(sync_time);
+          m_wcomms->sendAck(resolveSystemId(m_leader_id));
         }
 
         void
-        recvReady(const IMC::UamRxFrame* msg)
+        recvReady(const std::vector<uint8_t>& data)
         {
           if (!isLeader())
             return;
@@ -297,35 +321,39 @@ namespace Maneuver
           if (m_state != SM_START)
             return;
 
-          int id = resolveSystemName(msg->sys_src);
-          std::map<int, bool>::iterator itr = m_ready_state.find(id);
+          uint16_t sys_id = m_wcomms->getSource(data);
+          std::string sys_name = resolveSystemId(sys_id);
+          std::map<int, bool>::iterator itr = m_ready_state.find(sys_id);
           if (itr == m_ready_state.end())
           {
-            war("Received code READY from non-participant: %s", msg->sys_src.c_str());
+            war("Received code READY from non-participant: %s", sys_name.c_str());
             return;
           }
 
-          trace("Received code READY from: %s", msg->sys_src.c_str());
+          trace("Received code READY from: %s", sys_name.c_str());
           itr->second = true;
         }
 
         void
-        recvStart(const IMC::UamRxFrame* msg)
+        recvStart(const std::vector<uint8_t>& data)
         {
-          if (m_leader_id != resolveSystemName(msg->sys_src))
+          if (m_leader_id != m_wcomms->getSource(data))
             return;
 
-          double sync_time;
-          std::memcpy(&sync_time, &msg->data[2], sizeof(double));
-          trace("Received code START from: %s. Sync time: %f", msg->sys_src.c_str(), sync_time);
-
-          m_acomms.setSyncTime(sync_time);
+          trace("Received code START from: %s.", resolveSystemId(m_leader_id));
           m_flag_start = true;
         }
 
         void
         recvPos(const IMC::UamRxFrame* msg)
         {
+          trace("Received code POS from: %s | waypoint index: %u lat : %f lon: %f speed %f", msg->sys_src.c_str(),
+                                                                                             m_leader_pos.waypoint_idx,
+                                                                                             m_leader_pos.lat,
+                                                                                             m_leader_pos.lon,
+                                                                                             m_leader_pos.speed);
+          
+          //! Only process position if it is from the leader
           if (m_leader_id != resolveSystemName(msg->sys_src))
             return;
           
@@ -336,11 +364,6 @@ namespace Maneuver
           
           m_leader_ref_timer.setTop(m_args.leader_reference_timeout);
           std::memcpy(&m_leader_pos, &msg->data[2], sizeof(m_leader_pos));
-          trace("Received code POS from: %s | waypoint index: %u lat : %f lon: %f speed %f", msg->sys_src.c_str(),
-                                                                                             m_leader_pos.waypoint_idx,
-                                                                                             m_leader_pos.lat,
-                                                                                             m_leader_pos.lon,
-                                                                                             m_leader_pos.speed);
           
           updateSpeed();
         }
@@ -421,9 +444,14 @@ namespace Maneuver
           m_state = SM_SYNC;
 
           if (isLeader())
+          {
             m_leader_id = getSystemId();
+            m_acomms.setSyncTime(Time::Clock::getSinceEpoch());
+          }
           else
+          {
             m_leader_id = IMC::AddressResolver::invalid();
+          }
 
           debug("Changing state to SYNC");
         }
@@ -465,8 +493,8 @@ namespace Maneuver
                 const Participant& part = participant(m_sync_idx);
                 std::string part_name = resolveSystemId(part.vid);
                 trace("Sending code SYNC to %s...", part_name.c_str());
-                m_acomms.sendLeader(part_name);
 
+                m_wcomms->sendSync(part_name, m_acomms.getSyncTime());
                 expectAck(part.vid);
               }
               
@@ -577,9 +605,7 @@ namespace Maneuver
             if (isFormationReady())
             {
               trace("Sending code START in broadcast");
-              double sync_time = Time::Clock::getSinceEpoch();
-              m_acomms.setSyncTime(sync_time);
-              m_acomms.sendStart("broadcast", sync_time);
+              m_wcomms->sendStart("broadcast");
               m_send_pos_timer.reset();
               setControl(IMC::CL_PATH);
               sendToNextPoint();
@@ -594,7 +620,7 @@ namespace Maneuver
             {
               std::string leader_name = resolveSystemId(m_leader_id);
               trace("Sending code READY to %s", leader_name.c_str());
-              m_acomms.sendReady(leader_name);
+              m_wcomms->sendReady(leader_name);
               m_start_send_ready.reset();
             }
 
@@ -807,9 +833,6 @@ namespace Maneuver
         void
         dissiminatePosition(void)
         {
-          if (!isLeader())
-            return;
-
           if (m_curr < 1)
             return;
           
@@ -886,7 +909,17 @@ namespace Maneuver
               break;
           }
 
+          // Acoustic communications
           m_acomms.run();
+
+          // Wifi communications
+          if (m_wcomms)
+          {
+            std::vector<uint8_t> data;
+            if (m_wcomms->checkIncomingData(data))
+              parseWifiPacket(data);
+          }
+          
         }
 
         void

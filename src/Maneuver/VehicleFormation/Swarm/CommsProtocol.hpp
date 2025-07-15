@@ -55,7 +55,7 @@ namespace Maneuver
         {
           CODE_ACK          = 0x00,
           CODE_READY        = 0x01,
-          CODE_LEADER       = 0x02,
+          CODE_SYNC         = 0x02,
           CODE_START        = 0x03,
           CODE_POS          = 0x04,
           CODE_PARTICIPANT  = 0x05
@@ -130,21 +130,20 @@ namespace Maneuver
         }
 
         void
-        sendLeader(const std::string& sys)
+        sendSync(const std::string& sys, const double sync_time)
         {
           std::vector<uint8_t> data;
-          data.push_back(CODE_LEADER);
+          data.resize(sizeof(double) + 1);
+          data[0] = CODE_SYNC;
+          std::memcpy(&data[1], &sync_time, sizeof(double));
           send(sys, data);
         }
 
         void
-        sendStart(const std::string& sys, const double sync_time)
+        sendStart(const std::string& sys)
         {
           std::vector<uint8_t> data;
-          data.resize(sizeof(double) + 1);
-          data[0] = CODE_START;
-          std::memcpy(&data[1], &sync_time, sizeof(double));
-          
+          data.push_back(CODE_START);
           send(sys, data);
         }
 

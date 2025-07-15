@@ -121,7 +121,10 @@ namespace Maneuver
               size_t n = m_sock->read(m_buf, c_buf_size, &dummy);
               data.clear();
               data.assign(m_buf, m_buf + n);
-              return validate(data);
+              spew(DUNE::Utils::String::str("Received message: %s",
+                                            DUNE::Utils::String::bytesToHex(data).c_str()));
+
+              return true;
             }
           }
           catch(std::runtime_error& e)
@@ -132,23 +135,41 @@ namespace Maneuver
           return false;
         }
 
-      private:
-        // Buffer size for incoming data.
-        static const size_t c_buf_size = 128;
-        //! Buffer for incoming data.
-        uint8_t m_buf[c_buf_size];
-        //! Multicast Address.
-        DUNE::Network::Address m_udp_maddr;
-        //! UDP port.
-        uint16_t m_udp_port;
-        //! UDP socket.
-        DUNE::Network::UDPSocket* m_sock;
+        uint16_t
+        getSource(const std::vector<uint8_t>& data) const
+        {
+          if (data.size() < 5)
+            return DUNE::IMC::AddressResolver::invalid();
+
+          uint16_t src_id = 0;
+          memcpy(&src_id, &data[1], sizeof(uint16_t));
+          return src_id;
+        }
+
+        uint16_t
+        getDestination(const std::vector<uint8_t>& data) const
+        {
+          if (data.size() < 5)
+            return DUNE::IMC::AddressResolver::invalid();
+
+          uint16_t dst_id = 0;
+          memcpy(&dst_id, &data[3], sizeof(uint16_t));
+          return dst_id;
+        }
+
+        std::vector<uint8_t>
+        getData(const std::vector<uint8_t>& data) const
+        {
+          if (data.size() < 5)
+            return std::vector<uint8_t>();
+          return std::vector<uint8_t>(data.begin() + 5, data.end() - 1);
+        }
 
         bool
         validate(const std::vector<uint8_t>& data)
         {
           // Check size
-          if (data.size() < 2)
+          if (data.size() < 5)
           {
             debug("invalid message size");
             return false;
@@ -171,14 +192,12 @@ namespace Maneuver
           }
 
           // Check source and destination IDs
-          uint16_t imc_addr_src = 0;
-          memcpy(&imc_addr_src, &data[1], sizeof(uint16_t));
+          uint16_t imc_addr_src = getSource(data);
           // No loopback to self.
           if (imc_addr_src == m_task->getSystemId())
             return false;
 
-          uint16_t imc_addr_dst = 0;
-          memcpy(&imc_addr_dst, &data[3], sizeof(uint16_t));
+          uint16_t imc_addr_dst = getDestination(data);
           std::string sys_dst;
           try
           {
@@ -192,6 +211,18 @@ namespace Maneuver
 
           return (sys_dst == "broadcast" || imc_addr_dst == m_task->getSystemId());
         }
+
+      private:
+        // Buffer size for incoming data.
+        static const size_t c_buf_size = 128;
+        //! Buffer for incoming data.
+        uint8_t m_buf[c_buf_size];
+        //! Multicast Address.
+        DUNE::Network::Address m_udp_maddr;
+        //! UDP port.
+        uint16_t m_udp_port;
+        //! UDP socket.
+        DUNE::Network::UDPSocket* m_sock;
       };
     }
   }
