@@ -67,6 +67,8 @@ namespace Transports
       std::string pin;
       //! Number of consecutive errors to restart task.
       int consecutive_errors;
+      //! Send SMS text messages.
+      bool send_sms_text_messages;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
@@ -125,6 +127,11 @@ namespace Transports
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .description("Number of consecutive errors to restart the task");
 
+        param("Send SMS Text Messages", m_args.send_sms_text_messages)
+        .defaultValue("true")
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .description("Send SMS text messages. If false, only received SMS will be processed without sending any SMS text messages");
+
         setWaitForMessages(0.1);
 
         bind<IMC::SmsRequest>(this);
@@ -164,6 +171,10 @@ namespace Transports
         if(paramChanged(m_args.consecutive_errors))
         {
           inf("Number of consecutive errors to restart task set to %d", m_args.consecutive_errors);
+        }
+        if(paramChanged(m_args.send_sms_text_messages))
+        {
+          inf("Send SMS text messages set to %s", m_args.send_sms_text_messages ? "true" : "false");
         }
       }
 
@@ -226,6 +237,9 @@ namespace Transports
         trace("onResourceAcquisition");
         try
         {
+          inf("Waiting %d seconds before connecting to the GSM device", c_time_to_wait_before_sending_commands);
+          // Wait for the modem to "spew" initial data messages
+          Time::Delay::wait(c_time_to_wait_before_sending_commands);
           if (m_handle == NULL)
             m_handle = openDeviceHandle(m_args.io_dev);
 
@@ -290,6 +304,13 @@ namespace Transports
         sms_req.sms_text    = msg->sms_text;
         sms_req.src_adr     = msg->getSource();
         sms_req.src_eid     = msg->getSourceEntity();
+
+        if(!m_args.send_sms_text_messages)
+        {
+          m_driver->sendSmsStatus(&sms_req, IMC::SmsStatus::SMSSTAT_INPUT_FAILURE, DTR("Send of SMS text messages are disabled"));
+          inf("%s [%s]", DTR("Send of SMS text messages are disabled"), sms_req.sms_text.c_str());
+          return;
+        }
 
         if (msg->timeout <= 0)
         {
