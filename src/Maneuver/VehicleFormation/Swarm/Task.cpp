@@ -46,6 +46,26 @@ namespace Maneuver
       using DUNE_NAMESPACES;
 
       constexpr unsigned c_sync_max_retries = 5;
+      static const std::string c_fallback_maneuvers[] = {
+        "Auto",
+        "Goto",
+        "Stationkeeping"
+      };
+      static const std::string c_fallback_plan_name = "fallback_plan";
+      static const std::string c_fallback_maneuver_name = "fallback_maneuver";
+      
+      //! Finite state machine states.
+      enum FallbackOptions
+      {
+        //! Fallback maneuver is auto.
+        FO_AUTO,
+        //! Fallback maneuver is goto.
+        FO_GOTO,
+        //! Fallback maneuver is stationkeeping.
+        FO_STATIONKEEPING,
+        //! Number of fallback maneuvers
+        FO_NUM
+      };
 
       //! Finite state machine states.
       enum StateMachineStates
@@ -54,6 +74,8 @@ namespace Maneuver
         SM_IDLE,
         //! Synchronization state.
         SM_SYNC,
+        //! Approaching state.
+        SM_APPROACHING,
         //! Start setup state.
         SM_START,
         //! Moving state.
@@ -91,6 +113,10 @@ namespace Maneuver
         uint16_t udp_port;
         //! TDMA time per slot.
         double tdma_time_per_slot;
+        //! Fallback maneuver type.
+        std::string fallback_maneuver;
+        //! Position for fallback maneuver.
+        std::vector<double> fallback_position;
       };
 
       struct Task: public DUNE::Maneuvers::BasicSwarm
@@ -211,6 +237,27 @@ namespace Maneuver
           .description("Period while acoustic channel is reserved for each participant");
 
           m_ctx.config.get("General", "Maximum Speed", "2.0", m_max_speed);
+
+          std::string fallback_values;
+          for (uint8_t i = 0; i < FO_NUM; ++i)
+          {
+            if (i > 0)
+              fallback_values += ", ";
+            fallback_values += c_fallback_maneuvers[i];
+          }
+
+          param("Fallback Maneuver Type", m_args.fallback_maneuver)
+          .defaultValue("Auto")
+          .values(fallback_values)
+          .description("Fallback maneuver type. "
+                       "If the leader is lost, the vehicle will execute this maneuver. "
+                       "In Auto mode, the vehicle will try to execute the original plan.");
+
+          param("Fallback Position", m_args.fallback_position)
+          .units(Units::Degree)
+          .size(2)
+          .description("Position for fallback maneuver.");
+
 
           bind<IMC::UamRxFrame>(this);
         }
@@ -570,9 +617,9 @@ namespace Maneuver
           TPoint first = point(0, formation_index());
           desiredPath(start, first, getSpeed(), getSpeedUnits());
 
-          // Change state to moving
-          m_state = SM_MOVING;
-          debug("Changing state to MOVING");
+          // Change state to approaching
+          m_state = SM_APPROACHING;
+          debug("Changing state to APPROACHING");
         }
 
         void
@@ -613,6 +660,7 @@ namespace Maneuver
               trace("Sending code START in broadcast");
               m_wcomms->sendStart("broadcast");
               m_send_pos_timer.reset();
+              m_leader_ref_timer.setTop(m_args.leader_reference_timeout);
               setControl(IMC::CL_PATH);
               sendToNextPoint();
               debug("Start setup done");
@@ -634,6 +682,7 @@ namespace Maneuver
             if (m_flag_start)
             {
               setControl(IMC::CL_PATH);
+              m_leader_ref_timer.setTop(m_args.leader_reference_timeout);
               sendToNextPoint();
               debug("Start setup done");
               return;
@@ -857,12 +906,22 @@ namespace Maneuver
           if (isLeader())
             return;
           
+          // If leader timesout, then fallback maneuver is executed
           if (m_leader_ref_timer.overflow())
           {
-            if (m_leader_ref_timer.getTop() != 0.0f)
-              m_leader_ref_timer.setTop(0.0f);
+            // AUTO fallback maneuver
+            // If leader reference timer overflows, then the vehicle will try to execute the original plan
+            if (m_args.fallback_maneuver == c_fallback_maneuvers[FO_AUTO])
+            {
+              if (m_leader_ref_timer.getTop() != 0.0f)
+                m_leader_ref_timer.setTop(0.0f);
+              else
+                updateSpeed();
+            }
             else
-              updateSpeed();
+            {
+              sendFallbackManeuver();
+            }
           }
         }
 
@@ -895,6 +954,68 @@ namespace Maneuver
         }
 
         void
+        sendFallbackManeuver(void)
+        {
+          if (m_args.fallback_maneuver == c_fallback_maneuvers[FO_AUTO])
+           return;
+
+          IMC::PlanControl fallback_plan;
+          fallback_plan.type = IMC::PlanControl::PC_REQUEST;
+          fallback_plan.op = IMC::PlanControl::PC_START;
+          fallback_plan.plan_id = c_fallback_plan_name + "_" + m_args.fallback_maneuver;
+
+          IMC::PlanManeuver pm;
+          pm.maneuver_id = c_fallback_maneuver_name;
+
+          // TODO: 
+          //  - Adjustable speed
+          //  - Adjustable depth
+          //  - Adjustable radius
+          if (m_args.fallback_maneuver == c_fallback_maneuvers[FO_GOTO])
+          {
+            IMC::Goto man;
+            man.lat = Angles::radians(m_args.fallback_position[0]);
+            man.lon = Angles::radians(m_args.fallback_position[1]);
+            man.speed = 1.0f;
+            man.z = 0.0f;
+            man.z_units = IMC::ZUnits::Z_DEPTH;
+
+            pm.data.set(man);
+          }
+          else if (m_args.fallback_maneuver == c_fallback_maneuvers[FO_STATIONKEEPING])
+          {
+            IMC::StationKeeping man;
+            man.lat = Angles::radians(m_args.fallback_position[0]);
+            man.lon = Angles::radians(m_args.fallback_position[1]);
+            man.speed = 1.0f;
+            man.radius = 10.0f;
+            man.z = 0.0f;
+            man.z_units = IMC::ZUnits::Z_DEPTH;
+
+            pm.data.set(man);
+          }
+          else
+          {
+            // What to do here??
+            war("Unsupported fallback maneuver type: %s", m_args.fallback_maneuver.c_str());
+            return;
+          }
+  
+          IMC::PlanSpecification spec;
+          spec.plan_id = fallback_plan.plan_id;
+          spec.start_man_id = pm.maneuver_id;
+          spec.maneuvers.push_back(pm);
+   
+          fallback_plan.arg.set(spec);
+          fallback_plan.request_id = 0;
+          fallback_plan.flags = 0;
+          fallback_plan.setDestination(getSystemId());
+
+          signalError("Leader lost, fallback maneuver launched");
+          dispatch(fallback_plan);
+        }
+
+        void
         onStateReport(void)
         {
           switch (m_state)
@@ -903,6 +1024,8 @@ namespace Maneuver
               break;
             case SM_SYNC:
               syncState();
+              break;
+            case SM_APPROACHING:
               break;
             case SM_START:
               startState();
