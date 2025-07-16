@@ -282,15 +282,6 @@ namespace DUNE
 
       bool
       initTrajectory(const IMC::VehicleFormation*);
-
-      double
-      normalizeRadian(double a)
-      {
-        if (a < 0)
-          a = Math::c_two_pi + a;
-
-        return a;
-      }
     };
   }
 }

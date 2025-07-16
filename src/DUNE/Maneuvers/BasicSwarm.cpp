@@ -304,9 +304,9 @@ namespace DUNE
         }
         else
         {
-          double leg_1_bearing = normalizeRadian(Coordinates::getBearing(m_traj[t_index - 1], p));
-          double leg_2_bearing = normalizeRadian(Coordinates::getBearing(p, m_traj[t_index + 1]));
-          offset = leg_1_bearing + (leg_2_bearing - leg_1_bearing) / 2;
+          double leg_1_bearing = Coordinates::getBearing(m_traj[t_index - 1], p);
+          double leg_2_bearing = Coordinates::getBearing(p, m_traj[t_index + 1]);
+          offset = leg_1_bearing + Math::Angles::normalizeRadian(leg_2_bearing - leg_1_bearing) / 2;
         }
 
         offset = Math::Angles::normalizeRadian(offset);
