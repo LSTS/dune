@@ -209,6 +209,7 @@ namespace Transports
         if(m_handle != NULL)
         {
           Memory::clear(m_handle);
+          m_handle = NULL;
           inf("IO Device handle deleted");
         }
       }
@@ -222,11 +223,13 @@ namespace Transports
           m_handle = m_poll_thread->getHandle();
           m_poll_thread->stopAndJoin();
           Memory::clear(m_poll_thread);
+          m_poll_thread = NULL;
           inf("PollThread deleted");
         }
         if(m_driver != NULL)
         {
           Memory::clear(m_driver);
+          m_driver = NULL;
           inf("Driver deleted");
         }
       }
@@ -237,9 +240,13 @@ namespace Transports
         trace("onResourceAcquisition");
         try
         {
+          if (m_args.io_dev.empty())
+            throw RestartNeeded(DTR("Invalid IO device path"), c_time_to_restart_task);
+
           inf("Waiting %d seconds before connecting to the GSM device", c_time_to_wait_before_sending_commands);
           // Wait for the modem to "spew" initial data messages
           Time::Delay::wait(c_time_to_wait_before_sending_commands);
+
           if (m_handle == NULL)
             m_handle = openDeviceHandle(m_args.io_dev);
 
@@ -258,6 +265,11 @@ namespace Transports
           m_poll_thread->start();
 
           setupModem();
+        }
+        catch (const std::bad_alloc& e)
+        {
+          war("Memory allocation failed: %s", e.what());
+          throw RestartNeeded(DTR("Memory allocation failure"), c_time_to_restart_task);
         }
         catch (...)
         {
@@ -404,11 +416,18 @@ namespace Transports
           if(m_set_entity_state_timer.overflow())
           {
             m_set_entity_state_timer.reset();
-            std::string text_entity = "active | " + m_args.io_dev + " | tx: " +
-                                      std::to_string(m_driver->getSmsSentCount()) + " | rx: " +
-                                      std::to_string(m_driver->getSmsReceivedCount()) +
-                                      " | t_mb: " + m_driver->convertTimeToString(m_mailbox_timer.getRemaining());
-            setEntityState(IMC::EntityState::ESTA_NORMAL, text_entity.c_str());
+            if(m_driver != NULL )
+            {
+              std::string text_entity = "active | " + m_args.io_dev + " | tx: " +
+                                        std::to_string(m_driver->getSmsSentCount()) + " | rx: " +
+                                        std::to_string(m_driver->getSmsReceivedCount()) +
+                                        " | t_mb: " + m_driver->convertTimeToString(m_mailbox_timer.getRemaining());
+              setEntityState(IMC::EntityState::ESTA_NORMAL, text_entity.c_str());
+            }
+            else
+            {
+              setEntityState(IMC::EntityState::ESTA_NORMAL, "active | " + m_args.io_dev);
+            }
           }
         }
 
