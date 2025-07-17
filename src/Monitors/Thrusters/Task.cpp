@@ -52,6 +52,8 @@ namespace Monitors
       float current_threshold; // Default threshold in Amperes.
       //! Label of the thruster current channel.
       std::string thruster_current_channel_label;
+      //! Send updates over sattelite.
+      bool send_satellite;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -88,6 +90,10 @@ namespace Monitors
           .defaultValue("THRUST_D")
           .visibility(Tasks::Parameter::VISIBILITY_USER)
           .description("Label of the thruster current channel to monitor.");
+
+        param("Send Satellite Updates", m_args.send_satellite)
+        .defaultValue("false")
+        .description("Send updates over satellite.");
 
         bind<IMC::Current>(this);
       }
@@ -176,6 +182,9 @@ namespace Monitors
       void
       sendMessage(std::string message)
       {
+        if (!m_args.send_satellite)
+          return;
+
         IMC::TransmissionRequest tr;
         tr.setDestination(getSystemId());
         tr.setSourceEntity(getEntityId());
