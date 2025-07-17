@@ -100,17 +100,17 @@ namespace Monitors
         {
           m_current_check.setTop(m_args.maximum_current_timeout * 60.0f); // Convert minutes to seconds.
           m_current_check.reset();
-          inf("Interval for thrusted current warning: %d minutes", m_args.maximum_current_timeout);
+          spew("Interval for thrusted current warning: %d minutes", m_args.maximum_current_timeout);
         }
 
         if(paramChanged(m_args.current_threshold))
         {
-          inf("Current threshold set to: %.2f Amperes", m_args.current_threshold);
+          spew("Current threshold set to: %.2f Amperes", m_args.current_threshold);
         }
 
         if(paramChanged(m_args.thruster_current_channel_label))
         {
-          inf("Monitoring thruster current channel: %s", m_args.thruster_current_channel_label.c_str());
+          spew("Monitoring thruster current channel: %s", m_args.thruster_current_channel_label.c_str());
         }
       }
 
