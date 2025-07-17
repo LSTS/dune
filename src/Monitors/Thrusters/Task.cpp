@@ -47,6 +47,8 @@ namespace Monitors
     //! Task arguments.
     struct Arguments
     {
+      //! Thruster ID.
+      uint8_t thruster_id;
       //! Maximum time to wait for high current levels on the thruster (in minutes).
       int maximum_current_timeout;
       //! Current value threshold to trigger a warning.
@@ -63,17 +65,24 @@ namespace Monitors
       Arguments m_args;
       //! Time counter to control current level variations.
       Time::Counter<float> m_current_check;
-       //! Thrust entity id.
+      //! Thrust entity id.
       unsigned m_thrust_eid;
+      //! Last thruster actuation timestamp.
+      double m_last_thruster_actuation;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_thrust_eid(AddressResolver::invalid())
+        m_thrust_eid(AddressResolver::invalid()),
+        m_last_thruster_actuation(-1.0f)
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
+
+        param("Thruster ID", m_args.thruster_id)
+        .description("ID of the thruster to monitor.");
 
         param("Interval Time Window in Minutes", m_args.maximum_current_timeout)
         .defaultValue("30")
@@ -99,6 +108,7 @@ namespace Monitors
         .description("Send updates over satellite.");
 
         bind<IMC::Current>(this);
+        bind<IMC::SetThrusterActuation>(this);
       }
 
       void
@@ -180,6 +190,18 @@ namespace Monitors
         {
           m_current_check.reset(); // Reset the current check timer.
         }
+      }
+
+      void
+      consume(const IMC::SetThrusterActuation* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->id != m_args.thruster_id)
+          return;
+
+        m_last_thruster_actuation = (msg->value > 0.0f) ? msg->getTimeStamp() : -1.0f;
       }
 
       void
