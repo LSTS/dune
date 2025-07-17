@@ -40,8 +40,9 @@ namespace Monitors
   namespace Thrusters
   {
     using DUNE_NAMESPACES;
+
     //! Timeout for general monitor restart message.
-    const double c_timeout_tx_request = 120.0;
+    constexpr double c_timeout_tx_request = 120.0;
 
     //! Task arguments.
     struct Arguments
@@ -49,7 +50,7 @@ namespace Monitors
       //! Maximum time to wait for high current levels on the thruster (in minutes).
       int maximum_current_timeout;
       //! Current value threshold to trigger a warning.
-      float current_threshold; // Default threshold in Amperes.
+      float current_threshold;
       //! Label of the thruster current channel.
       std::string thruster_current_channel_label;
       //! Send updates over sattelite.
@@ -75,21 +76,23 @@ namespace Monitors
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Interval Time Window in Minutes", m_args.maximum_current_timeout)
-          .defaultValue("30")
-          .minimumValue("5")
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .description("Maximum time to wait for high current levels on the thruster (in minutes).");
+        .defaultValue("30")
+        .minimumValue("5")
+        .units(Units::Minute)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Maximum time to wait for high current levels on the thruster.");
 
         param("Current Threshold in Amperes", m_args.current_threshold)
-          .defaultValue("1.0")
-          .minimumValue("0.1")
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .description("Current value threshold to trigger a warning (in Amperes).");
+        .defaultValue("1.0")
+        .minimumValue("0.1")
+        .units(Units::Ampere)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Current value threshold to trigger a warning (in Amperes).");
 
         param("Thruster Current Channel Label", m_args.thruster_current_channel_label)
-          .defaultValue("THRUST_D")
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .description("Label of the thruster current channel to monitor.");
+        .defaultValue("THRUST_D")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Label of the thruster current channel to monitor.");
 
         param("Send Satellite Updates", m_args.send_satellite)
         .defaultValue("false")
