@@ -70,7 +70,7 @@ namespace Monitors
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_thrust_eid(UINT_MAX)
+        m_thrust_eid(AddressResolver::invalid())
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -163,7 +163,7 @@ namespace Monitors
           war("Failed to resolve entity '%s'. Ensure the entity label is correct and the entity is available.",
               m_args.thruster_current_channel_label.c_str());
 
-          m_thrust_eid = UINT_MAX;
+          m_thrust_eid = AddressResolver::invalid();
         }
       }
 
