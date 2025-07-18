@@ -238,7 +238,7 @@ namespace DUNE
         //! XOR checksum OR mask.
         static const uint8_t c_csum_msk = 0x80;
         //! Maximum command argument length.
-        static const uint8_t c_data_max = 64;
+        static const uint8_t c_data_max = 128;
         //! Read buffer size.
         static const int c_bfr_len = 128;
         //! Information command.
