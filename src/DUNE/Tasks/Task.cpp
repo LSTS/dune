@@ -43,6 +43,7 @@
 #include <DUNE/Tasks/Exceptions.hpp>
 #include <DUNE/Tasks/Task.hpp>
 #include <DUNE/Utils/XML.hpp>
+#include <DUNE/Utils/String.hpp>
 #include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Entities/EntityUtils.hpp>
 
@@ -102,6 +103,7 @@ namespace DUNE
       bind<IMC::PushEntityParameters>(this);
       bind<IMC::PopEntityParameters>(this);
       bind<IMC::QueryEntityState>(this);
+      bind<IMC::RestartSystem>(this);
     }
 
     unsigned int
@@ -209,6 +211,7 @@ namespace DUNE
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
       .defaultValue(scope_str)
+      .values(Parameter::scopeValues())
       .description(DTR("Scoped of the 'Active' parameter"));
 
       std::string visibility_str = Parameter::visibilityToString(def_visibility);
@@ -216,6 +219,7 @@ namespace DUNE
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
       .defaultValue(visibility_str)
+      .values(Parameter::visibilityValues())
       .description(DTR("Visibility of the 'Active' parameter"));
 
       param(DTR_RT("Active"), m_args.active)
@@ -364,6 +368,16 @@ namespace DUNE
     }
 
     void
+    Task::restart(const IMC::RestartSystem* msg, const unsigned delay)
+    {
+      const auto text = Utils::String::str("manual restart requested by 0x%x (%hhu)",
+                                            msg->getSource(),
+                                            msg->getSourceEntity());
+
+      throw RestartNeeded(text, delay, false);
+    }
+
+    void
     Task::run(void)
     {
 #if defined(DUNE_OS_LINUX)
@@ -492,12 +506,21 @@ namespace DUNE
       if (msg->name != getEntityLabel())
         return;
 
+      IMC::EntityParameters params;
+      params.name = getEntityLabel();
+
       IMC::MessageList<IMC::EntityParameter>::const_iterator itr = msg->params.begin();
       for (; itr != msg->params.end(); ++itr)
       {
         try
         {
-          m_params.set((*itr)->name, (*itr)->value);
+          if(m_params.set((*itr)->name, (*itr)->value))
+          {
+            IMC::EntityParameter p;
+            p.name = (*itr)->name;
+            p.value = (*itr)->value;
+            params.params.push_back(p);
+          }
           m_ctx.config.set(getName(), (*itr)->name, (*itr)->value);
         }
         catch (std::runtime_error& e)
@@ -506,6 +529,9 @@ namespace DUNE
               (*itr)->name.c_str());
         }
       }
+
+      // Dispatch even if empty to notify that the parameters were set.
+      dispatchReply(*msg, params);
 
       updateParameters();
     }
@@ -561,6 +587,21 @@ namespace DUNE
     Task::consume(const IMC::PopEntityParameters* msg)
     {
       onPopEntityParameters(msg);
+    }
+
+    void
+    Task::consume(const IMC::RestartSystem* msg)
+    {
+      if (msg->getDestination() != getSystemId())
+        return;
+
+      if (msg->getDestinationEntity() != getEntityId())
+        return;
+
+      if (msg->type != IMC::RestartSystem::RestartTypeEnum::RSTYPE_TASK)
+        return;
+
+      onRequestRestart(msg);
     }
 
     void

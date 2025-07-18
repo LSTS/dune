@@ -93,9 +93,9 @@ namespace DUNE
       //! Get remaining time.
       //! @return time remaining (s).
       inline T
-      getRemaining(void) const
+      getRemaining(void)
       {
-        if (m_overflow)
+        if (overflow())
           return 0;
 
         return m_top - (Clock::get() - m_last);

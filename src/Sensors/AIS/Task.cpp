@@ -50,6 +50,8 @@ namespace Sensors
   namespace AIS
   {
     using DUNE_NAMESPACES;
+    using namespace libais;
+
 
     //! Read buffer size.
     static const size_t c_read_buffer_size = 82;
@@ -88,11 +90,6 @@ namespace Sensors
         Hardware::BasicDeviceDriver(name, ctx),
         m_handle(NULL)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
@@ -100,6 +97,12 @@ namespace Sensors
 
         m_bfr.resize(c_read_buffer_size);
         m_nmea5_wait_fg = false;
+      }
+
+      void
+      onUpdateParameters(void)
+      {
+        BasicDeviceDriver::onUpdateParameters();
       }
 
       //! Try to connect to the device.
@@ -198,8 +201,8 @@ namespace Sensors
           if (itr != m_systems.end())
             rsi.sensor_class = itr->second;
 
-          rsi.lat = Angles::radians(msg.y);
-          rsi.lon = Angles::radians(msg.x);
+          rsi.lat = Angles::radians(msg.position.lat_deg);
+          rsi.lon = Angles::radians(msg.position.lng_deg);
           rsi.heading = Angles::radians(msg.cog);
           dispatch(rsi);
 

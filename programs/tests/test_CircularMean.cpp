@@ -24,109 +24,38 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: João Bogas                                                       *
+// Author: Eduardo Marques                                                  *
+//***************************************************************************
+// Utility program to test body fixed frame conversion functions.           *
 //***************************************************************************
 
-#ifndef NAVIGATION_GENERAL_NAVMANAGER_GPSSTATE_HPP_INCLUDED_
-#define NAVIGATION_GENERAL_NAVMANAGER_GPSSTATE_HPP_INCLUDED_
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <DUNE/Math/CircularMean.hpp>
+#include <DUNE/Math/Angles.hpp>
+#include "Test.hpp"
 
-#include <DUNE/DUNE.hpp>
+using namespace DUNE::Math;
 
-namespace Navigation
+int
+main(void)
 {
-  namespace General
-  {
-    namespace NavManager
-    {
-      using DUNE_NAMESPACES;
+  Test test("DUNE::Math::CirularMean");
+  bool success = false;
 
-      struct GpsState
-      {
-        GpsState(void):
-          is_lost(false),
-          val(true),
-          send_ir(false),
-          id(UINT16_MAX)
-        { }
+  CircularMean<double> cm;
+  cm.update(Angles::normalizeRadian(Angles::radians(355.0)));
+  cm.update(Angles::normalizeRadian(Angles::radians(5.0)));
+  cm.update(Angles::normalizeRadian(Angles::radians(15.0)));
+  
+  // std::cout << "Mean: " << Angles::degrees(cm.mean()) << std::endl;
+  // std::cout << "Radius: " << cm.radius() << std::endl;
 
-        ~GpsState(void)
-        { }
-
-        //! Set counter top.
-        void
-        setTop(double top)
-        {
-          interval.setTop(top);
-        }
-
-        //! Check if counter overflowed.
-        bool
-        overflow(void)
-        {
-          return interval.overflow();
-        }
-
-        //! Reset counter.
-        //! Set is_lost to false.
-        void
-        reset(void)
-        {
-          interval.reset();
-          is_lost = false;
-        }
-
-        //! Update Gps State.
-        //! Return true if Gps fix was lost since last call.
-        bool
-        update(void)
-        {
-          // Ignore if id is not set.
-          if(id == UINT16_MAX)
-            return false;
-
-          if(interval.overflow() && !is_lost)
-          {
-            is_lost = true;
-            return true;
-          }
-
-          return false;
-        }
-
-        //! Set state of last Gps fix.
-        void
-        setValid(bool valid)
-        {
-          val = valid;
-        }
-
-        //! Check if Gps fix is invalid.
-        bool  // FIXME: This is a bad name for this function
-        isInvalid(void)
-        {
-          return is_lost || !val;
-        }
-
-        //! Check if Iridium warning should be sent.
-        bool
-        sendIridium(void)
-        {
-          return (is_lost || !val) && !send_ir;
-        }
-
-        //! Time without GPS fix.
-        Counter<double> interval;
-        //! Gps State.
-        bool is_lost;
-        //! GpsFix validity.
-        bool val;
-        //! Iridium warning sent.
-        bool send_ir;
-        //! Gps Entity ID.
-        unsigned int id;
-      };
-    }
-  }
+  double margin = Angles::radians(0.1);
+  if (cm.mean() < Angles::normalizeRadian(Angles::radians(5.0 + margin)) &&
+      cm.mean() > Angles::normalizeRadian(Angles::radians(5.0 - margin)))
+    success = true;
+  test.boolean("CirularMean", success);
+  return test.getReturnValue();
 }
-
-#endif

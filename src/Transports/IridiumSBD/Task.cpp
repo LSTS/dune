@@ -48,6 +48,10 @@ namespace Transports
     static const double c_pwr_on_delay = 5.0;
     //! Monitor delay before check state (in seconds).
     static const double c_monitor_delay = 20.0;
+    //! Clear message queue parameter name.
+    const std::string c_clear_queue_param = "Clear Message Queue";
+    //! Timeout for general monitor restart message.
+    const double c_timeout_tx_request = 120.0;
 
     enum TxRxPriority
     {
@@ -90,6 +94,12 @@ namespace Transports
       bool monitor_modem;
       //! Monitor Iridium Task Label
       std::string monitor_task_label;
+      //! Clear Message Queue
+      bool clear_queue;
+      //! Maximum number of messages in the queue
+      size_t queue_max;
+      //! Timeout in seconds for the general monitor
+      double general_monitor_timeout;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -122,13 +132,19 @@ namespace Transports
       Counter<double> m_monitor_check_timer;
       //! State of task.
       uint8_t m_state;
+      //! rx queue size.
+      unsigned m_rx_queue_size;
+      //! tx queue size
+      unsigned m_tx_queue_size;
+      //! General Monitor
+      Counter<double> m_general_monitor;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_handle(NULL),
+        m_handle(nullptr),
         m_driver(NULL),
         m_tx_request(NULL),
         m_prio(TxRxPriority::None),
@@ -206,6 +222,22 @@ namespace Transports
         .defaultValue("CPC")
         .description("Monitor Iridium Task Label");
 
+        param(c_clear_queue_param, m_args.clear_queue)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .defaultValue("false")
+        .description("Clears the message queue");
+
+        param("Max Messages In Queue", m_args.queue_max)
+        .defaultValue("0")
+        .minimumValue("0")
+        .description("Maximum number of messages in queue. 0 means no limit");
+
+        param("General Monitor Timeout", m_args.general_monitor_timeout)
+        .defaultValue("600.0")
+        .minimumValue("60.0")
+        .description("Timeout in seconds for the general monitor");
+
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
         bind<IMC::EntityState>(this);
@@ -253,6 +285,12 @@ namespace Transports
 
         if (m_driver != NULL)
           m_driver->setTxRateMax(m_args.max_tx_rate);
+
+        if (paramChanged(m_args.general_monitor_timeout))
+        {
+          inf("Setting general monitor timeout to %f seconds", m_args.general_monitor_timeout);
+          m_general_monitor.setTop(m_args.general_monitor_timeout);
+        }
       }
 
       //! Acquire resources.
@@ -260,6 +298,8 @@ namespace Transports
       onResourceAcquisition(void)
       {
         setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_IDLE);
+        m_rx_queue_size = 99;
+        m_tx_queue_size = 99;
         m_state = Status::CODE_IDLE;
         m_monitor_check_timer.setTop(c_monitor_delay);
         try
@@ -316,6 +356,7 @@ namespace Transports
           std::string msg = "onResourceAcquisition: " + std::string(e.what());
           throw RestartNeeded(msg.c_str(), 10);
         }
+        m_general_monitor.setTop(m_args.general_monitor_timeout);
       }
 
       void
@@ -364,14 +405,17 @@ namespace Transports
         Memory::clear(m_handle);
       }
 
-      IO::Handle *
-      openUART(const std::string &device)
+      IO::Handle*
+      openUART(const std::string& device)
       {
+        if (device.empty())
+          throw std::runtime_error("no device name");
+
         char uart[128] = {0};
         unsigned baud = 0;
         trace("[UART] >> attempting URI: %s", device.c_str());
         if (std::sscanf(device.c_str(), "uart://%[^:]:%u", uart, &baud) != 2)
-          return nullptr;
+          throw std::runtime_error("invalid device name");
 
         return new SerialPort(uart, baud);
       }
@@ -498,6 +542,18 @@ namespace Transports
       void
       enqueueTxRequest(TxRequest* request)
       {
+        // Check for message limit
+        if (m_args.queue_max > 0)
+        {
+          while (m_tx_requests.size() >= m_args.queue_max)
+          {
+            TxRequest* req = m_tx_requests.front();
+            sendTxRequestStatus(req, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+            delete req;
+            m_tx_requests.pop_front();
+          }
+        }
+
         std::list<TxRequest*>::iterator itr = m_tx_requests.begin();
         for ( ; itr != m_tx_requests.end(); ++itr)
         {
@@ -632,6 +688,34 @@ namespace Transports
         }
       }
 
+      void
+      clearMessageQueue(void)
+      {
+        if (!m_args.clear_queue)
+          return;
+
+        // Clear the message queue
+        war("Clearing message queue with %d messages", (int)m_tx_requests.size());
+        std::list<TxRequest*>::iterator itr = m_tx_requests.begin();
+        while (itr != m_tx_requests.end())
+        {
+          sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+          delete *itr;
+          itr = m_tx_requests.erase(itr);
+        }
+        war("Queue cleared");
+
+        // Reset clear queue flag
+        m_args.clear_queue = false;
+        IMC::SetEntityParameters msg;
+        IMC::EntityParameter clear_queue_param;
+        clear_queue_param.name = c_clear_queue_param;
+        clear_queue_param.value = "false";
+        msg.params.push_back(clear_queue_param);
+        msg.name = getEntityLabel();
+        dispatch(msg, DF_LOOP_BACK);
+      }
+
       bool
       receptionSequence()
       {
@@ -701,34 +785,35 @@ namespace Transports
 
         switch (m_prio)
         {
-        case TxRxPriority::Tx:
-          if (!transmissionSequence())
-            receptionSequence();
+          case TxRxPriority::Tx:
+            if (!transmissionSequence())
+              receptionSequence();
 
-          if (m_tx_window.overflow())
-          {
-            m_prio = TxRxPriority::Rx;
-            m_rx_window.setTop(m_args.rx_window);
-          }
+            if (m_tx_window.overflow())
+            {
+              m_prio = TxRxPriority::Rx;
+              m_rx_window.setTop(m_args.rx_window);
+            }
 
-          break;
+            break;
 
-        case TxRxPriority::Rx:
-          if (!receptionSequence())
-            transmissionSequence();
+          case TxRxPriority::Rx:
+            if (!receptionSequence())
+              transmissionSequence();
 
-          if (m_rx_window.overflow())
-          {
+            if (m_rx_window.overflow())
+            {
+              m_prio = TxRxPriority::Tx;
+              m_tx_window.setTop(m_args.tx_window);
+            }
+
+            break;
+
+          default:
             m_prio = TxRxPriority::Tx;
             m_tx_window.setTop(m_args.tx_window);
-          }
-
-          break;
-
-        default:
-          m_prio = TxRxPriority::Tx;
-          m_tx_window.setTop(m_args.tx_window);
         }
+        m_general_monitor.reset();
       }
 
       void
@@ -759,12 +844,30 @@ namespace Transports
       {
         while (!stopping())
         {
+          if(m_general_monitor.overflow())
+          {
+            err("General monitor overflow, restarting task");
+            IMC::TransmissionRequest tr;
+            tr.setDestination(getSystemId());
+            tr.setSourceEntity(getEntityId());
+            tr.destination = "broadcast";
+            tr.deadline = Time::Clock::getSinceEpoch() + c_timeout_tx_request; // seconds
+            tr.req_id = std::rand() % 0xFFFF;
+            tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
+            tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
+            std::string msg = std::string(getName()) + " - General monitor overflow, restarting task";
+            tr.txt_data = msg;
+            dispatch(tr, DF_LOOP_BACK);
+            throw RestartNeeded("General monitor overflow", 10.0);
+          }
+
           try
           {
             waitForMessages(0.5);
             dispatchEntityState();
             processQueue();
             checkError();
+            clearMessageQueue();
           }
           catch(const ReadTimeout& e)
           {

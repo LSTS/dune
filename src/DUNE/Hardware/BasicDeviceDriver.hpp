@@ -41,6 +41,34 @@ namespace DUNE
 {
   namespace Hardware
   {
+    using DUNE::Tasks::Parameter;
+    
+    struct BDDArguments
+    {
+      //! Power channels.
+      std::vector<std::string> pwr_channels;
+      //! Delay before powering on the device.
+      double pwr_on_delay;
+      //! Delay before powering off the device.
+      double pwr_off_delay;
+      //! Delay after powering on the device.
+      double post_pwr_on_delay;
+      //! Sample Time Duration.
+      double sample_time_duration;
+      //! Sample Time Duration visibility.
+      std::string sample_time_duration_visibility;
+      //! Sample Time Duration scope.
+      std::string sample_time_duration_scope;
+      //! Periodicity of Data Sampling.
+      double periodicity_data_sampling;
+      //! Periodicity of Data Sampling visibility.
+      std::string periodicity_data_sampling_visibility;
+      //! Periodicity of Data Sampling scope.
+      std::string periodicity_data_sampling_scope;
+      //! Vertical Profile Periodicity.
+      double vp_periodicity;
+    };
+
     class BasicDeviceDriver: public DUNE::Tasks::Task
     {
     public:
@@ -81,7 +109,7 @@ namespace DUNE
       //!
       //! @return I/O handle.
       IO::Handle*
-      openDeviceHandle(const std::string& uri);
+      openDeviceHandle(const std::string& uri, bool canonicalInput = false);
 
       //! Create an I/O handle given a serial port URI.
       //!
@@ -89,7 +117,7 @@ namespace DUNE
       //!
       //! @return I/O handle.
       IO::Handle*
-      openUART(const std::string& uri);
+      openUART(const std::string& uri, bool canonicalInput = false);
 
       //! Create an I/O handle given a TCP port URI.
       //!
@@ -161,8 +189,47 @@ namespace DUNE
         return false;
       }
 
+      inline double
+      getSamplePeriodicity(void)
+      {
+        return m_bdd_args.periodicity_data_sampling;
+      }
+
+      inline double
+      getSamplePeriod(void)
+      {
+        return m_bdd_args.sample_time_duration;
+      }
+
+      inline double
+      getSamplePeriodicityRemaining(void)
+      {
+        return m_periodicity_timer.getRemaining();
+      }
+
+      inline double
+      getSamplePeriodRemaining(void)
+      {
+        return m_sample_timer.getRemaining();
+      }
+
+      inline double
+      getSamplePeriodicityElapsed(void)
+      {
+        return m_periodicity_timer.getElapsed();
+      }
+
+      inline double
+      getSamplePeriodElapsed(void)
+      {
+        return m_sample_timer.getElapsed();
+      }
+
       virtual bool
       onReadData(void) = 0;
+
+      virtual void
+      onVerticalProfile(void);
 
       virtual bool
       onSynchronize(void);
@@ -184,6 +251,15 @@ namespace DUNE
 
       virtual void
       onInitializeDevice(void) = 0;
+
+      virtual void
+      onStartSampling(void);
+
+      virtual void
+      onStopSampling(void);
+
+      virtual void
+      setEntityStateSampling(bool state);
 
       //! Test if the estimated state message should be discarded.
       //! @param[in] msg estimated state message.
@@ -238,14 +314,6 @@ namespace DUNE
       void
       requestRestart();
 
-      //! Set the data read period.
-      //! @param[in] freq polling frequency, in hertz.
-      void
-      setReadFrequency(double freq)
-      {
-        m_read_period = freq > 0.0 ? 1.0/freq : 0.0;
-      }
-
       //! If set, task uses waitForMessages with specified timeout 
       //! insted of consumeMessages.
       //! @param[in] timeout waitForMessages timeout.
@@ -257,6 +325,25 @@ namespace DUNE
         
         m_wait_msg_timeout = timeout;
       }
+
+      void
+      onUpdateParameters(void) override;
+
+      void
+      paramConfigurableSampling(Parameter::Scope def_scope = Parameter::SCOPE_GLOBAL,
+                                Parameter::Visibility def_visibility = Parameter::VISIBILITY_DEVELOPER,
+                                double def_sampling = 0.0f,
+                                double def_periodicity = 0.0f);
+
+      void
+      paramVerticalProfile(void);
+
+      //! Test if all device's power channel states are equal to state.
+      //! @param[in] state desired power state.
+      //! @return true if all device's power channel states are equal to state,
+      //! false otherwise or if power channels list is empty.
+      bool
+      isPowered(bool state = true);
 
     private:
       //! Finite state machine states.
@@ -298,6 +385,8 @@ namespace DUNE
         SM_RESTART_WAIT
       };
 
+      //! Basic Device Driver Arguments.
+      BDDArguments m_bdd_args;
       //! Watchdog timer.
       DUNE::Time::Counter<double> m_wdog;
       //! Current state machine state.
@@ -332,12 +421,20 @@ namespace DUNE
       double m_restart_delay;
       //! Restart timer.
       DUNE::Time::Counter<double> m_restart_timer;
-      //! Data read period in seconds.
-      double m_read_period;
-      //! Data read timer.
-      DUNE::Time::Counter<double> m_read_timer;
       //! Device URI.
       std::string m_uri;
+      //! Honours configurable sampling.
+      bool m_honours_conf_samp;
+      //! Is sampling.
+      bool m_is_sampling;
+      //! Sampling timer.
+      DUNE::Time::Counter<double> m_sample_timer;
+      //! Periodicity timer.
+      DUNE::Time::Counter<double> m_periodicity_timer;
+      //! Honours vertical profiles.
+      bool m_honours_vp;
+      //! Timer for Vertical Profiles.
+      DUNE::Time::Counter<double> m_vp_timer;
 
       void
       onResourceRelease(void) override;
@@ -424,11 +521,11 @@ namespace DUNE
       void
       controlPower(IMC::PowerChannelControl::OperationEnum op);
 
-      //! Test if all devices are powered or not.
-      //! @param[in] state desired power state.
-      //! @return true if all devices are powered or not, false otherwise.
-      bool
-      isPowered(bool state);
+      void
+      startSampling(void);
+
+      void
+      stopSampling(void);
 
       //! Update state machine.
       void

@@ -43,8 +43,6 @@ namespace Sensors
     static const unsigned c_baud_rate = 115200;
     //! Number of axes.
     static const unsigned c_axes_count = 3;
-    //! Power-up delay (s).
-    static const double c_power_up_delay = 2.0;
     //! Hard Iron calibration parameter name.
     static const std::string c_hard_iron_param = "Hard-Iron Calibration";
     //! Hard Iron calibration date.
@@ -74,8 +72,6 @@ namespace Sensors
       unsigned output_frq;
       //! Raw data output.
       bool raw_data;
-      //! Power channel name.
-      std::string pwr_name;
       //! Hard-iron correction factors.
       std::vector<double> hard_iron;
       //! Rotation matrix values.
@@ -145,19 +141,10 @@ namespace Sensors
         m_faults_count(0),
         m_timeout_count(0)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE\"." 
                      "This device has only one baud rate.");
-
-        param("Power Channel - Name", m_args.pwr_name)
-        .defaultValue("")
-        .description("Name of the power channel");
 
         param(c_hard_iron_param, m_args.hard_iron)
         .units(Units::Gauss)
@@ -203,6 +190,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
+
         if (paramChanged(m_args.io_dev))
           m_args.io_dev += String::str(":%u", c_baud_rate);
 
@@ -224,13 +213,23 @@ namespace Sensors
 
         if (paramChanged(m_args.output_frq) || paramChanged(m_args.raw_data))
           setOutputFrequency(m_args.output_frq);
+      }
 
-        if (paramChanged(m_args.pwr_name))
+      void
+      onResourceAcquisition(void)
+      {
+        try
         {
-          clearPowerChannelNames();
-          addPowerChannelName(m_args.pwr_name);
+          if (m_uart == NULL)
+            m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
+
+          if (m_ctl == NULL)
+            m_ctl = new UCTK::Interface(m_uart);
         }
-        setPostPowerOnDelay(c_power_up_delay);
+        catch (std::runtime_error& e)
+        {
+          throw RestartNeeded(DTR(e.what()), 5.0);
+        }
       }
 
       //! Try to connect to the device.
@@ -238,32 +237,29 @@ namespace Sensors
       bool
       onConnect() override
       {
-        try
-        {
-          m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
-          m_ctl = new UCTK::Interface(m_uart);
-          return true;
-        }
-        catch (std::runtime_error& e)
-        {
-          throw RestartNeeded(DTR(e.what()), 5.0);
-        }
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVATING);
+        return syncDevice();
+      }
 
-        return false;
+      void
+      onResourceRelease(void)
+      {
+        Memory::clear(m_ctl);
+        Memory::clear(m_uart);
       }
 
       //! Disconnect from device.
       void
       onDisconnect() override
       {
-        Memory::clear(m_ctl);
-        Memory::clear(m_uart);
       }
 
-      //! Synchronize with device.
       bool
-      onSynchronize() override
+      syncDevice(void)
       {
+        if (m_ctl == NULL)
+          throw RestartNeeded(DTR("failed to synchronize"), 5.0);
+        
         try
         {
           UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
@@ -557,6 +553,9 @@ namespace Sensors
       void
       readInput(void)
       {
+        if (m_uart == NULL)
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        
         size_t rv = m_uart->read(m_buffer, sizeof(m_buffer));
         for (size_t i = 0; i < rv; ++i)
         {
@@ -619,6 +618,9 @@ namespace Sensors
       bool
       onReadData() override
       {
+        if (m_uart == NULL)
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        
         bool got_data = false;
         if (Poll::poll(*m_uart, 1.0))
         {

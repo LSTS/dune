@@ -34,7 +34,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Local headers.
-#include "GpsState.hpp"
+#include "DeviceState.hpp"
 
 namespace Navigation
 {
@@ -47,12 +47,23 @@ namespace Navigation
     {
       using DUNE_NAMESPACES;
 
+      //! Timeout for valid altitude.
+      static constexpr float c_alt_timeout = 10.0f;
+      //! Maximum horizontal accuracy (m)
+      static constexpr float c_max_hacc = 15.0f;
+      //! Maximum horizontal dilution of precision (HDOP)
+      static constexpr float c_max_hdop = 5.0f;
+
       struct Arguments
       {
-        //! Euler Angles source entity label.
-        std::string euler_label;
+        //! Main Euler Angles source entity label.
+        std::string main_euler_label;
+        //! Secondary Euler Angles source entity label.
+        std::string secondary_euler_label;
         //! Angular Velocity source entity label.
         std::string ang_label;
+         //! Distance source entity label.
+        std::string dist_label;
         //! Convert height to geoid height (MSL)
         bool convert_msl;
         //! Main unit.
@@ -73,10 +84,12 @@ namespace Navigation
         float m_offset;
         //! Offset flag.
         bool m_offset_flag;
-        //! Euler Angles entity eid.
-        unsigned int m_euler_eid;
         //! Angular velocity entity eid.
         unsigned int m_ang_eid;
+        //! Distance entity eid.
+        unsigned int m_dist_eid;
+        //! Timeout for invalid altitude.
+        Counter<float> m_alt_timer;
         //! Transmission request id
         int m_reqid;
         //! Estimated state.
@@ -85,26 +98,44 @@ namespace Navigation
         IMC::GpsFix* m_origin;
         //! GPS fix rejection.
         IMC::GpsFixRejection m_rej;
-        //! Gps State for main unit.
-        GpsState m_main;
-        //! Gps State for secondary unit.
-        GpsState m_second;
-        //! Gps State for third unit.
-        GpsState m_third;
+        //! Device State for main gps unit.
+        DeviceState m_main;
+        //! Device State for secondary gps unit.
+        DeviceState m_second;
+        //! Device State for third gps unit.
+        DeviceState m_third;
+        //! Device State for main euler unit.
+        DeviceState m_euler_main;
+        //! Device State for secondary euler unit.
+        DeviceState m_euler_second;
+        //! Last valid course over ground
+        double m_last_cog;
         //! Task arguments.
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
+          m_ang_eid(AddressResolver::invalid()),
+          m_dist_eid(AddressResolver::invalid()),
+          m_alt_timer(c_alt_timeout),
           m_reqid(0),
-          m_origin(nullptr)
+          m_origin(nullptr),
+          m_last_cog(0.0f)
         {
           // Define configuration parameters.
-          param("Entity Label - Euler Angles", m_args.euler_label)
-            .description("Entity label of 'GpsFix' and 'GroundVelocity' messages");
+          param("Entity Label - Main Euler Angles", m_args.main_euler_label)
+            .description("Entity label of main 'EulerAngles' provider");
+
+          param("Entity Label - Secondary Euler Angles", m_args.secondary_euler_label)
+            .defaultValue("")
+            .description("Entity label of secondary 'EulerAngles' provider");
 
           param("Entity Label - Angular Velocity", m_args.ang_label)
-            .description("Entity label of 'EulerAngles' and 'AngularVelocity' messages");
+            .description("Entity label of 'AngularVelocity' messages");
+
+          param("Entity Label - Distance", m_args.dist_label)
+            .defaultValue("")
+            .description("Entity label of 'Distance' messages");
 
           param("Main unit", m_args.main_unit)
             .description("Name of preferred GPS navigation unit.");
@@ -133,9 +164,11 @@ namespace Navigation
           m_estate.clear();
           m_offset = 0.0f;
           m_offset_flag = false;
+          m_estate.alt = -1.0;
 
           // Register callbacks
           bind<IMC::AngularVelocity>(this);
+          bind<IMC::Distance>(this);
           bind<IMC::EulerAngles>(this);
           bind<IMC::GpsFix>(this);
         }
@@ -153,36 +186,40 @@ namespace Navigation
         void
         onEntityResolution(void)
         {
-          m_euler_eid = getEid(m_args.euler_label);
           m_ang_eid = getEid(m_args.ang_label);
+          m_dist_eid = getEid(m_args.dist_label);
 
           // Gps entities
           m_main.id = getEid(m_args.main_unit);
           m_second.id = getEid(m_args.secondary_unit);
           m_third.id = getEid(m_args.third_unit);
+
+          // Euler Angles entities
+          m_euler_main.id = getEid(m_args.main_euler_label);
+          m_euler_second.id = getEid(m_args.secondary_euler_label);
         }
 
-        //! Get entity id of label
-        //! Returns UINT16_MAX in case of missing label
+        //! Get entity id of label.
+        //! Returns Invalid ID in case of missing label.
         unsigned int
         getEid(const std::string& label)
         {
-          if (label.empty())
+          unsigned int id = AddressResolver::invalid();
+          if (!label.empty())
           {
-            war("Ignoring empty entity label");
-            return UINT16_MAX;
+            try
+            {
+              id = resolveEntity(label);
+            }
+            catch (const std::exception& e)
+            {
+              err(DTR("cann't resolve %s (%s), is there a task failure or a configuration error?"),
+                  label.c_str(), e.what());
+            }
           }
-
-          unsigned int id = UINT16_MAX;
-          try
-          {
-            id = resolveEntity(label);
-          }
-          catch (const std::exception& e)
-          {
-            err(DTR("can not resolve %s (%s), is there a task failure or a configuration error?"),
-                label.c_str(), e.what());
-          }
+          else
+            war(DTR("trying to get if for label, but label is empty. "
+                    "Is there a task failure or a configuration error?"));
 
           return id;
         }
@@ -190,10 +227,12 @@ namespace Navigation
         void
         onResourceAcquisition(void)
         {
-          // Navigation enters error mode without valid GPS data.
+          // Navigation enters error mode without valid GPS or EulerAngle data.
           m_main.setTop(m_args.inp_tout);
           m_second.setTop(m_args.inp_tout);
           m_third.setTop(m_args.inp_tout);
+          m_euler_main.setTop(m_args.inp_tout);
+          m_euler_second.setTop(m_args.inp_tout);
 
           setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
         }
@@ -210,12 +249,65 @@ namespace Navigation
         }
 
         void
-        consume(const IMC::EulerAngles* msg)
+        consume(const IMC::Distance* msg)
         {
-          if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_euler_eid)
+          if (!AddressResolver::isValid(m_dist_eid))
             return;
 
-          // debug("IMC::EulerAngles from %s",resolveEntity(msg->getSourceEntity()).c_str());
+          if (msg->getSource() != getSystemId())
+            return;
+
+          if (msg->getSourceEntity() != m_dist_eid)
+            return;
+
+          m_alt_timer.reset();
+          m_estate.alt = msg->value;
+        }
+
+        void
+        consume(const IMC::EulerAngles* msg)
+        {
+          if (msg->getSource() != getSystemId())
+            return;
+
+          if (msg->getSourceEntity() == m_euler_main.id)
+          {
+            updateEulerState(m_euler_main, msg);
+            if (!m_main.isInvalid())
+              setAttitude(msg);
+          }
+          else if (msg->getSourceEntity() == m_euler_second.id)
+          {
+            updateEulerState(m_euler_second, msg);
+            if (m_euler_main.isInvalid() && !m_euler_second.isInvalid())
+              setAttitude(msg);
+          }
+        }
+
+        //! Update Euler State with EulerAngles message
+        //! @param euler EulerState object to update
+        //! @param msg EulerAngles message
+        void
+        updateEulerState(DeviceState& euler, const IMC::EulerAngles* msg)
+        {
+          euler.reset();
+          // If psi is exatly zero, we consider the angles invalid.
+          // This is a workaround for the case where the GPS is not
+          // providing a valid heading.
+          if (msg->psi == 0.0)
+          {
+            debug("Got INVALID Euler Angles: No Heading (psi)");
+            euler.setValid(false);
+            return;
+          }
+
+          trace("Got VALID Euler Angles");
+          euler.setValid(true);
+        }
+
+        void
+        setAttitude(const IMC::EulerAngles* msg)
+        {
           m_estate.phi = msg->phi;
           m_estate.theta = msg->theta;
           m_estate.psi = msg->psi;
@@ -249,21 +341,72 @@ namespace Navigation
         //! @param gps GpsState object to update
         //! @param msg GpsFix message
         void
-        updateGpsState(GpsState& gps, const IMC::GpsFix* msg)
+        updateGpsState(DeviceState& gps, const IMC::GpsFix* msg)
         {
           gps.reset();
 
+          m_rej.utc_time = msg->utc_time;
+          m_rej.setTimeStamp(msg->getTimeStamp());
+
           if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
           {
-            debug("Got INVALID fix");
+            debug("Got INVALID fix: No Position");
 
             gps.setValid(false);
 
             // Dispatch Rejection to Invalid source Entity
             m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
             m_rej.setDestinationEntity(msg->getSourceEntity());
-            dispatch(m_rej);
+            dispatch(m_rej, DF_KEEP_TIME);
+            return;
+          }
 
+          // if ((msg->validity & IMC::GpsFix::GFV_VALID_HACC) == 0)
+          // {
+          //   m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
+          //   m_rej.setDestinationEntity(msg->getSourceEntity());
+
+          //   debug("Got INVALID fix: No Horizontal Accuracy");
+
+          //   gps.setValid(false);
+          //   dispatch(m_rej, DF_KEEP_TIME);
+          //   return;
+          // }
+
+          // if (msg->hacc > c_max_hacc)
+          // {
+          //   m_rej.reason = IMC::GpsFixRejection::RR_ABOVE_MAX_HACC;
+          //   m_rej.setDestinationEntity(msg->getSourceEntity());
+
+          //   debug("Got INVALID fix: Above Maximum HACC");
+
+          //   gps.setValid(false);
+          //   dispatch(m_rej, DF_KEEP_TIME);
+          //   return;
+          // }
+
+
+          if ((msg->validity & IMC::GpsFix::GFV_VALID_HDOP) == 0)
+          {
+            m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
+            m_rej.setDestinationEntity(msg->getSourceEntity());
+
+            debug("Got INVALID fix: No Horizontal Dilution of Precision");
+
+            gps.setValid(false);
+            dispatch(m_rej, DF_KEEP_TIME);
+            return;
+          }
+
+          if (msg->hdop > c_max_hdop)
+          {
+            m_rej.reason = IMC::GpsFixRejection::RR_ABOVE_MAX_HDOP;
+            m_rej.setDestinationEntity(msg->getSourceEntity());
+
+            debug("Got INVALID fix: Above Maximum HDOP");
+
+            gps.setValid(false);
+            dispatch(m_rej, DF_KEEP_TIME);
             return;
           }
 
@@ -282,11 +425,6 @@ namespace Navigation
 
           // Received valid GPS data.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
-          // Dispatch IMC::GpsFix with this task source id.
-          IMC::GpsFix nav = *msg;
-          nav.setSourceEntity(getEntityId());
-          dispatch(nav);
 
           // Fill out IMC::EstimatedState as well.
           m_estate.lat = m_origin->lat;
@@ -310,6 +448,10 @@ namespace Navigation
           m_estate.u = m_estate.vx * std::cos(m_estate.psi) + m_estate.vy * std::sin(m_estate.psi);
           m_estate.v = -m_estate.vx * std::sin(m_estate.psi) + m_estate.vy * std::cos(m_estate.psi);
           dispatch(m_estate);
+
+          // Save last valid course over ground.
+          // if (msg->validity & IMC::GpsFix::GFV_VALID_COG)
+          m_last_cog = msg->cog;
         }
 
         void
@@ -356,6 +498,7 @@ namespace Navigation
           {
             waitForMessages(1.0);
 
+            // Gps State updates.
             if (m_main.update())
               debug("Main Gps disappeared");
 
@@ -364,6 +507,9 @@ namespace Navigation
 
             if (m_third.update())
               debug("Third Gps disappeared");
+            
+            if (m_alt_timer.overflow())
+              m_estate.alt = -1.0f;
 
             // Raise ERROR MODE if all GPSs are out of service.
             if (m_main.isInvalid() && m_second.isInvalid() && m_third.isInvalid())
@@ -391,6 +537,38 @@ namespace Navigation
               // Send iridium message.
               sendIridium("Third GPS not working!");
               m_third.send_ir = true;
+            }
+
+            // Euler State updates.
+            if (m_euler_main.update())
+              debug("Main Euler Angles provider disappeared");
+            if (m_euler_second.update())
+              debug("Secondary Euler Angles provider disappeared");
+
+            if (m_euler_main.isInvalid() && m_euler_second.isInvalid())
+            {
+              // Use last course over ground if available.
+              if (m_euler_main.sendIridium() && m_euler_second.sendIridium())
+              {
+                debug("No EulerAngles providers! Using COG.");
+                sendIridium("No EulerAngles providers! Using COG.");
+                m_euler_main.send_ir = true;
+                m_euler_second.send_ir = true;
+              }
+
+              m_estate.psi = m_last_cog;
+            }
+            else if (m_euler_main.sendIridium())
+            {
+              debug("Main Euler Angles provider not working!");
+              sendIridium("Main Euler Angles provider not working!");
+              m_euler_main.send_ir = true;
+            }
+            else if (m_euler_second.sendIridium())
+            {
+              debug("Secondary Euler Angles provider not working!");
+              sendIridium("Secondary Euler Angles provider not working!");
+              m_euler_second.send_ir = true;
             }
           }
         }

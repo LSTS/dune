@@ -119,6 +119,11 @@ namespace Monitors
         m_tstamp(0)
       {
         m_num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
+        if (m_num_cpus <= 0 || m_num_cpus > c_max_cpu)
+        {
+          war("Invalid number of CPUs detected: %d. Using 1 CPU instead.", m_num_cpus);
+          m_num_cpus = 1;
+        }
       }
 
       //! Reserve entity identifiers.
@@ -188,23 +193,41 @@ namespace Monitors
       {
 #if defined(DUNE_OS_LINUX)
         std::ifstream stat_file("/proc/self/stat");
+        if (!stat_file)
+          return 0.0;
+
         std::string line;
         std::getline(stat_file, line);
         std::istringstream iss(line);
         std::vector<std::string> tokens{std::istream_iterator<std::string>{iss},
                                         std::istream_iterator<std::string>{}};
-        // utime + stime (in clock ticks)
-        uint64_t total_time = std::stoull(tokens[13]) + std::stoull(tokens[14]);
-        // Get uptime and calculate CPU percentage
+        if (tokens.size() < 15)
+          return 0.0;
+
+        uint64_t total_time = 0;
+        try {
+          total_time = std::stoull(tokens[13]) + std::stoull(tokens[14]);
+        } catch (...) {
+          return 0.0;
+        }
+
         std::ifstream uptime_file("/proc/uptime");
+        if (!uptime_file)
+          return 0.0;
+
         double uptime;
         uptime_file >> uptime;
         static uint64_t last_total = 0;
         static double last_uptime = 0.0;
-        double percent = (total_time - last_total) / (uptime - last_uptime) / sysconf(_SC_CLK_TCK) * 100.0;
+        double delta_time = uptime - last_uptime;
+        if (delta_time <= 0.0)
+          return 0.0;
+
+        double percent = (total_time - last_total) / delta_time / sysconf(_SC_CLK_TCK) * 100.0;
         last_total = total_time;
         last_uptime = uptime;
-        return percent;
+
+        return std::clamp(percent, 0.0, 100.0);
 #elif defined(DUNE_OS_WINDOWS)
         static ULARGE_INTEGER last_cpu_time, last_sys_time;
         FILETIME ft_proc_creation, ft_proc_exit, ft_proc_kernel, ft_proc_user;
@@ -230,6 +253,12 @@ namespace Monitors
         }
         last_cpu_time = cpu_time;
         last_sys_time = sys_time;
+        // Ensure percent is between 0 and 100
+        if (last_percent < 0.0)
+          last_percent = 0.0;
+        else if (last_percent > 100.0)
+          last_percent = 100.0;
+
         return last_percent;
 #endif
       }
@@ -243,13 +272,23 @@ namespace Monitors
         while (std::getline(status_file, line))
         {
           if (line.find("VmRSS:") == 0)
-            return std::stod(line.substr(6)) / 1024.0; // kB -> MB
+          {
+            double rst = std::stod(line.substr(6)) / 1024.0; // kB -> MB
+            if (rst < 0)
+              rst = 0;
+
+            return rst;
+          }
         }
-        return -1;
+        return 0;
 #elif defined(DUNE_OS_WINDOWS)
         PROCESS_MEMORY_COUNTERS pmc;
-        return GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) ?
-               pmc.WorkingSetSize / (1024.0 * 1024.0) : -1; // Bytes -> MB
+        double ram_usage = GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) ?
+               pmc.WorkingSetSize / (1024.0 * 1024.0) : 0; // Bytes -> MB
+        if (ram_usage < 0)
+          ram_usage = 0;
+
+        return ram_usage;
 #endif
       }
 
@@ -262,22 +301,34 @@ namespace Monitors
         while (std::getline(status_file, line))
         {
           if (line.find("VmSwap:") == 0)
-            return std::stod(line.substr(7)) / 1024.0; // kB -> MB
+          {
+            double value = std::stod(line.substr(7)) / 1024.0; // kB -> MB
+            if (value < 0)
+              value = 0;
+
+            return value;
+          }
         }
-        return -1;
+        return 0;
 #elif defined(DUNE_OS_WINDOWS)
         PROCESS_MEMORY_COUNTERS pmc;
-        return GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) ?
-               pmc.PagefileUsage / (1024.0 * 1024.0) : -1; // Bytes -> MB
+        double swap_usage = GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc)) ?
+               pmc.PagefileUsage / (1024.0 * 1024.0) : 1; // Bytes -> MB
+        if (swap_usage < 0)
+          swap_usage = 0;
+
+        return swap_usage;
 #endif
       }
 
       void
       cleanRamCache(void)
       {
+        inf("Cleaning RAM cache...");
 #if defined(DUNE_OS_LINUX)
-        if (std::system("sync; echo 1 > /proc/sys/vm/drop_caches") != 0)
-          war(DTR("failed to clean RAM cache"));
+        int ret = std::system("sync; echo 1 > /proc/sys/vm/drop_caches");
+        if (ret != 0)
+          war("RAM cache clean command failed with code %d", ret);
 #elif defined(DUNE_OS_WINDOWS)
         std::system("powershell.exe -Command \"Clear-DnsClientCache\"");
 #endif
@@ -286,7 +337,7 @@ namespace Monitors
       std::string
       getMemoryUsage()
       {
-        long memTotal = 0, memFree = 0, swapTotal = 0, swapFree = 0;
+        long memTotal = -1, memFree = -1, swapTotal = -1, swapFree = -1;
         std::ifstream meminfo("/proc/meminfo");
         if (!meminfo)
         {
@@ -298,6 +349,11 @@ namespace Monitors
         {
           std::istringstream  iss(line);
           iss >> key >> value >> unit;
+          //check if the value is a number
+          if (unit != "kB" || value < 0)
+          {
+            continue; // skip lines that do not have kB or have negative values
+          }
 
           if (key == "MemTotal:")
             memTotal = value;
@@ -310,19 +366,27 @@ namespace Monitors
         }
 
         meminfo.close();
-        double memSpentGB = (memTotal - memFree) / 1024.0 / 1024.0;
-        double memTotalGB = memTotal / 1024.0 / 1024.0;
-        double swapSpentGB = (swapTotal - swapFree) / 1024.0 / 1024.0;
-        double swapTotalGB = swapTotal / 1024.0 / 1024.0;
-        int memAvailablePercent = static_cast<int>(100 * memFree / static_cast<double>(memTotal));
-        int swapAvailablePercent = swapTotal > 0 ? static_cast<int>(100 * swapFree / static_cast<double>(swapTotal)) : 0;
+        // check if we have valid values
+        if (memTotal <= 0 || memFree < 0 || swapTotal < 0 || swapFree < 0)
+        {
+          return "unknown, failed to read memory info";
+        }
+        else
+        {
+          double memSpentGB = (memTotal - memFree) / 1024.0 / 1024.0;
+          double memTotalGB = memTotal / 1024.0 / 1024.0;
+          double swapSpentGB = (swapTotal - swapFree) / 1024.0 / 1024.0;
+          double swapTotalGB = swapTotal / 1024.0 / 1024.0;
+          int memAvailablePercent = static_cast<int>(100 * memFree / static_cast<double>(memTotal));
+          int swapAvailablePercent = swapTotal > 0 ? static_cast<int>(100 * swapFree / static_cast<double>(swapTotal)) : 0;
 
-        std::ostringstream oss;
-        oss << "MF:" << memAvailablePercent << "% (" << std::fixed << std::setprecision(1) << memSpentGB
-            << "GB of " << memTotalGB << "GB) | SF:" << swapAvailablePercent << "% (" << swapSpentGB
-            << "GB of " << swapTotalGB << "GB)";
+          std::ostringstream oss;
+          oss << "MF:" << memAvailablePercent << "% (" << std::fixed << std::setprecision(1) << memSpentGB
+              << "GB of " << memTotalGB << "GB) | SF:" << swapAvailablePercent << "% (" << swapSpentGB
+              << "GB of " << swapTotalGB << "GB)";
 
-        return oss.str();
+          return oss.str();
+        }
       }
 
       void
@@ -330,30 +394,27 @@ namespace Monitors
       {
         std::ifstream fileStat("/proc/stat");
         std::string line;
-        const std::string STR_CPU("cpu");
-        const std::size_t LEN_STR_CPU = STR_CPU.size();
-        const std::string STR_TOT("tot");
-
         while (std::getline(fileStat, line))
         {
-          // cpu stats line found
-          if (!line.compare(0, LEN_STR_CPU, STR_CPU))
+          if (line.compare(0, 3, "cpu") != 0)
+            continue;
+
+          std::istringstream ss(line);
+          entries.emplace_back(CPUData());
+          CPUData& entry = entries.back();
+          ss >> entry.cpu;
+          if (entry.cpu.size() > 3)
+            entry.cpu.erase(0, 3);
+          else
+            entry.cpu = "tot";
+
+          for (int i = 0; i < S_GUEST_NICE; ++i)
           {
-            std::istringstream ss(line);
-            // store entry
-            entries.emplace_back(CPUData());
-            CPUData &entry = entries.back();
-            // read cpu label
-            ss >> entry.cpu;
-
-            if (entry.cpu.size() > LEN_STR_CPU)
-              entry.cpu.erase(0, LEN_STR_CPU);
-            else
-              entry.cpu = STR_TOT;
-
-            // read times
-            for (int i = 0; i < m_num_cpus; ++i)
-              ss >> entry.times[i];
+            if (!(ss >> entry.times[i]))
+            {
+              war("Failed to read CPU stat for core %d", i);
+              break;
+            }
           }
         }
       }
@@ -403,50 +464,45 @@ namespace Monitors
       double
       getSingleCoreUsage(void)
       {
-        char buffer[128];
-        FILE *fp;
-        unsigned long long user1, nice1, system1, idle1;
-        unsigned long long user2, nice2, system2, idle2;
-
-        // First snapshot
-        fp = popen("grep 'cpu ' /proc/stat", "r");
-        if (fp == NULL)
+        char buffer[128] = {0};
+        FILE* fp = popen("grep 'cpu ' /proc/stat", "r");
+        if (!fp || !fgets(buffer, sizeof(buffer) - 1, fp))
         {
-          trace("Fail to execute command");
-          return 0;
+          if (fp) pclose(fp);
+          return 0.0;
         }
-        if (fgets(buffer, sizeof(buffer) - 1, fp) == NULL)
+
+        unsigned long long user1 = 0, nice1 = 0, system1 = 0, idle1 = 0;
+        if (sscanf(buffer, "cpu %llu %llu %llu %llu", &user1, &nice1, &system1, &idle1) != 4)
         {
-          trace("Fail to read buffer");
           pclose(fp);
-          return 0;
+          return 0.0;
         }
-        sscanf(buffer, "cpu %llu %llu %llu %llu", &user1, &nice1, &system1, &idle1);
         pclose(fp);
-
         Delay::waitMsec(1000);
 
-        // Second snapshot
         fp = popen("grep 'cpu ' /proc/stat", "r");
-        if (fp == NULL)
+        if (!fp || !fgets(buffer, sizeof(buffer) - 1, fp))
         {
-          trace("Fail to execute command");
-          return 0;
+          if (fp) pclose(fp);
+          return 0.0;
         }
-        if (fgets(buffer, sizeof(buffer) - 1, fp) == NULL)
+
+        unsigned long long user2 = 0, nice2 = 0, system2 = 0, idle2 = 0;
+        if (sscanf(buffer, "cpu %llu %llu %llu %llu", &user2, &nice2, &system2, &idle2) != 4)
         {
-          trace("Fail to read buffer");
           pclose(fp);
-          return 0;
+          return 0.0;
         }
-        sscanf(buffer, "cpu %llu %llu %llu %llu", &user2, &nice2, &system2, &idle2);
         pclose(fp);
 
         unsigned long long total1 = user1 + nice1 + system1 + idle1;
         unsigned long long total2 = user2 + nice2 + system2 + idle2;
-        unsigned long long idle_diff = idle2 - idle1;
-        unsigned long long total_diff = total2 - total1;
-        return 100.0 * (total_diff - idle_diff) / total_diff;
+        unsigned long long delta_total = total2 > total1 ? total2 - total1 : 1;
+        unsigned long long delta_idle = idle2 > idle1 ? idle2 - idle1 : 0;
+
+        double usage = 100.0 * (delta_total - delta_idle) / delta_total;
+        return std::clamp(usage, 0.0, 100.0);
       }
 
       //! Main loop.
@@ -460,57 +516,180 @@ namespace Monitors
           {
             m_ram_check.reset();
             m_tstamp = Clock::get();
-            uint8_t cpu = (uint8_t)getDUNECPUUsage();
-            if(m_num_cpus > 1)
-              cpu /= m_num_cpus;
+            uint8_t cpu = 0;
+            try
+            {
+              cpu = (uint8_t)getDUNECPUUsage();
+              if(m_num_cpus > 1 && cpu > 0)
+                cpu /= m_num_cpus;
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to get CPU usage: %s", e.what());
+              cpu = 0;
+            }
+            catch (...)
+            {
+              war("Failed to get CPU usage: unknown error");
+              cpu = 0;
+            }
 
-            double ram = getDUNERAMUsage();
-            double swap = getDUNESwapUsage();
+            double ram = 0.0;
+            try
+            {
+              ram = getDUNERAMUsage();
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to get RAM usage: %s", e.what());
+              ram = 0;
+            }
+            catch (...)
+            {
+              war("Failed to get RAM usage: unknown error");
+              ram = 0;
+            }
+
+            double swap = 0.0;
+            try
+            {
+              swap = getDUNESwapUsage();
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to get Swap usage: %s", e.what());
+              swap = 0;
+            }
+            catch (...)
+            {
+              war("Failed to get Swap usage: unknown error");
+              swap = 0;
+            }
+
             //dispatch CPU and RAM usage
-            m_dune_cpu_usage[m_num_cpus].value = cpu;
-            m_dune_cpu_usage[m_num_cpus].setTimeStamp(m_tstamp);
-            dispatch(m_dune_cpu_usage[m_num_cpus]);
+            try{
+              m_dune_cpu_usage[m_num_cpus].value = cpu;
+              m_dune_cpu_usage[m_num_cpus].setTimeStamp(m_tstamp);
+              dispatch(m_dune_cpu_usage[m_num_cpus]);
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to dispatch CPU usage: %s", e.what());
+            }
+            catch (...)
+            {
+              war("Failed to dispatch CPU usage: unknown error");
+            }
 #if IMC_RAM_USAGE_MESSAGE_EXISTS
-            m_dune_ram_usage[0].value = ram * 1024.0f; // MB -> kB
-            m_dune_ram_usage[0].setTimeStamp(m_tstamp);
-            dispatch(m_dune_ram_usage[0]);
-            m_dune_ram_usage[1].value = swap * 1024.0f; // MB -> kB
-            m_dune_ram_usage[1].setTimeStamp(m_tstamp);
-            dispatch(m_dune_ram_usage[1]);
+            try{
+              m_dune_ram_usage[0].value = ram * 1024.0f; // KB -> MB
+              m_dune_ram_usage[0].setTimeStamp(m_tstamp);
+              dispatch(m_dune_ram_usage[0]);
+              m_dune_ram_usage[1].value = swap * 1024.0f; // KB -> MB
+              m_dune_ram_usage[1].setTimeStamp(m_tstamp);
+              dispatch(m_dune_ram_usage[1]);
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to dispatch RAM usage: %s", e.what());
+            }
+            catch (...)
+            {
+              war("Failed to dispatch RAM usage: unknown error");
+            }
 #endif
-            trace("DUNE Process: CPU: %d%%, RAM: %.1fMB, Swap: %.1fMB | %s", cpu, ram, swap, m_buffer_cpu_entity.c_str());
-            std::string msg = String::str("%s | DUNE (C:%d%%, R:%.1fMB, S:%.1fMB)", m_buffer_cpu_entity.c_str(), cpu, ram, swap);
-            setEntityState(IMC::EntityState::ESTA_NORMAL, msg);
+            try{
+              //check if m_buffer_cpu_entity is empty
+              const char* entity = m_buffer_cpu_entity.empty() ? "unknown" : m_buffer_cpu_entity.c_str();
+              //set entity state with CPU, RAM and Swap usage
+              trace("DUNE Process: CPU: %d%%, RAM: %.1fMB, Swap: %.1fMB | %s", cpu, ram, swap, entity);
+              std::string msg = String::str("%s | DUNE (C:%d%%, R:%.1fMB, S:%.1fMB)", entity, cpu, ram, swap);
+              setEntityState(IMC::EntityState::ESTA_NORMAL, msg);
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to set entity state: %s", e.what());
+            }
+            catch (...)
+            {
+              war("Failed to set entity state: unknown error");
+            }
           }
-
-          if (m_cpu_check.overflow())
+          else if (m_cpu_check.overflow())
           {
             m_cpu_check.reset();
             m_tstamp = Clock::getSinceEpoch();
             if(m_num_cpus > 1)
             {
-              std::vector<CPUData> entries1;
-              std::vector<CPUData> entries2;
-              readStatsCPU(entries1);
-              Delay::waitMsec(100);
-              readStatsCPU(entries2);
-              dispatchStatus(entries1, entries2);
+              try
+              {
+                std::vector<CPUData> entries1;
+                std::vector<CPUData> entries2;
+                readStatsCPU(entries1);
+                Delay::waitMsec(100);
+                readStatsCPU(entries2);
+                dispatchStatus(entries1, entries2);
+              }
+              catch (std::exception& e)
+              {
+                war("Failed to read CPU stats: %s", e.what());
+              }
+              catch (...)
+              {
+                war("Failed to read CPU stats: unknown error");
+              }
             }
             else
             {
-              m_dune_cpu_usage[0].setTimeStamp(m_tstamp);
-              uint8_t usage = (uint8_t) getSingleCoreUsage();
-              m_dune_cpu_usage[0].value = usage;
-              debug("CPU0: %d%%", usage);
-              dispatch(m_dune_cpu_usage[0], DF_KEEP_TIME | DF_LOOP_BACK);
+              try
+              {
+                m_dune_cpu_usage[0].setTimeStamp(m_tstamp);
+                uint8_t usage = (uint8_t) getSingleCoreUsage();
+                m_dune_cpu_usage[0].value = usage;
+                debug("CPU0: %d%%", usage);
+                dispatch(m_dune_cpu_usage[0], DF_KEEP_TIME | DF_LOOP_BACK);
+              }
+              catch (std::exception& e)
+              {
+                war("Failed to read Single CPU usage: %s", e.what());
+              }
+              catch (...)
+              {
+                war("Failed to read Single CPU usage: unknown error");
+              }
             }
-            m_buffer_cpu_entity = String::str("active | C:%d | %s", m_num_cpus, getMemoryUsage().c_str());
+            std::string memory_text = "unknown";
+            try
+            {
+              memory_text = getMemoryUsage();
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to get memory usage: %s", e.what());
+              memory_text = "unknown";
+            }
+            catch (...)
+            {
+              war("Failed to get memory usage: unknown error");
+              memory_text = "unknown";
+            }
+            m_buffer_cpu_entity = String::str("active | C:%d | %s", m_num_cpus, memory_text.c_str());
           }
-
-          if (m_ram_cache_clean.overflow())
+          else if (m_ram_cache_clean.overflow())
           {
             m_ram_cache_clean.reset();
-            cleanRamCache();
+            try
+            {
+              cleanRamCache();
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to clean RAM cache: %s", e.what());
+            }
+            catch (...)
+            {
+              war("Failed to clean RAM cache: unknown error");
+            }
           }
         }
       }

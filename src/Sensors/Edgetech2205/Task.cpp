@@ -63,8 +63,6 @@ namespace Sensors
       unsigned range_hf;
       //! Range of the low-frequency subsystem.
       unsigned range_lf;
-      //! Name of sidescan's power channel.
-      std::string power_channel;
       //! Pulse auto selection mode.
       unsigned autosel_mode;
       //! Trigger divisor.
@@ -115,9 +113,6 @@ namespace Sensors
       {
         // Define configuration parameters.
         setParamSectionEditor("Edgetech2205");
-
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
 
         param("IPv4 Address", m_args.addr)
         .defaultValue("192.168.0.5")
@@ -181,10 +176,6 @@ namespace Sensors
         .maximumValue("4")
         .description("Auto pulse selection mode");
 
-        param("Power Channel - Sidescan", m_args.power_channel)
-        .defaultValue("Private (Sidescan)")
-        .description("Name of sidescan's power channel");
-
         param("Number of Discarded Initial Samples", m_args.ignored_sample_count)
         .defaultValue("15")
         .description("Number of initial samples to ignore");
@@ -210,20 +201,12 @@ namespace Sensors
         .description("Number of valid samples for initial time delta estimation");
 
         m_bfr.resize(c_buffer_size);
-
-        bind<IMC::EstimatedState>(this);
-        bind<IMC::LoggingControl>(this);
-        bind<IMC::PowerChannelState>(this);
       }
 
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.power_channel))
-        {
-          clearPowerChannelNames();
-          addPowerChannelName(m_args.power_channel);
-        }
+        BasicDeviceDriver::onUpdateParameters();
 
         if (!isActive())
           return;

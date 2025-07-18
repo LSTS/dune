@@ -701,6 +701,8 @@ namespace DUNE
         WGS84::displacement(lat, lon, 0,
                             m_pcs.end_lat, m_pcs.end_lon, 0,
                             &m_ts.end.x, &m_ts.end.y);
+        Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
+                                        &m_ts.track_bearing, &m_ts.track_length);
       }
 
       const double now = Clock::get();

@@ -92,8 +92,6 @@ namespace Sensors
     {
       //! IO device (URI).
       std::string io_dev;
-      //! Read frequency.
-      double read_frequency;
       //! Calibration threshold.
       double calib_threshold;
       //! Hard iron calibration.
@@ -167,18 +165,11 @@ namespace Sensors
         m_faults_count(0),
         m_timeout_count(0)
       {
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
+        paramConfigurableSampling();
+        
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
-        
-        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
-        .units(Units::Hertz)
-        .defaultValue("1.0")
-        .description(DTR("Frequency at which task reads data"));
 
         param("Calibration Threshold", m_args.calib_threshold)
         .defaultValue("0.1")
@@ -230,8 +221,7 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.read_frequency))
-          setReadFrequency(m_args.read_frequency);
+        BasicDeviceDriver::onUpdateParameters();
         
         m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
 

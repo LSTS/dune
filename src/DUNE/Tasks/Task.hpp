@@ -504,6 +504,38 @@ namespace DUNE
         m_recipient->runCallBacks();
       }
 
+      void
+      setParameterScope(const std::string& name, const std::string& scope)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->scope(scope);
+      }
+
+      void
+      setParameterScope(const std::string& name, const Parameter::Scope& scope)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->scope(scope);
+      }
+
+      void
+      setParameterVisbility(const std::string& name, const std::string& visibility)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->visibility(visibility);
+      }
+
+      void
+      setParameterVisbility(const std::string& name, const Parameter::Visibility& visibility)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->visibility(visibility);
+      }
+
       //! Declare a configuration parameter that can be parsed using
       //! the basic parameter parser.
       //! @tparam T type of the destination variable.
@@ -650,6 +682,10 @@ namespace DUNE
       void
       deactivationFailed(const std::string& reason);
 
+      //!
+      void
+      restart(const IMC::RestartSystem* msg, const unsigned delay = 0);
+
       virtual bool
       onWriteParamsXML(std::ostream& os) const
       {
@@ -725,6 +761,13 @@ namespace DUNE
         activate();
       }
 
+      virtual void
+      onRequestRestart(const IMC::RestartSystem* msg)
+      {
+        spew("on request restart");
+        restart(msg);
+      }
+
       //! Called when an external deactivation request is
       //! received. Derived classes that need to perform extra steps
       //! to prepare normal execution should replace the default
@@ -774,9 +817,9 @@ namespace DUNE
         //! Main entity label.
         std::string elabel;
         //! Activation time.
-        uint16_t act_time;
+        float act_time;
         //! Deactivation time.
-        uint16_t deact_time;
+        float deact_time;
         //! Scheduling priority.
         unsigned int priority;
         //! True if task is active.
@@ -838,6 +881,9 @@ namespace DUNE
 
       void
       consume(const IMC::PopEntityParameters* msg);
+
+      void
+      consume(const IMC::RestartSystem* msg);
     };
   }
 }

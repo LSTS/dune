@@ -37,6 +37,11 @@ namespace DUNE
   const char*
   getFullVersion(void);
 
+  //! Retrieve the full private version as a string.
+  //! @return full private version string.
+  const char*
+  getFullVersionPrivate(void);
+
   //! Retrieve the compilation date as a string.
   //! @return compilation date.
   const char*

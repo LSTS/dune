@@ -225,150 +225,150 @@ namespace Control
 					waypoints = waypoints_;
 
 					// Pure Anti-Grounding
-					if (static_obst_states_(0, 0) != 10000.0 && obst_states.rows() == 0)
-					{
-						std::cout << "SB-MPC: PURE ANTI-GROUNDING" << std::endl;
-						n_obst = 1;
-						HL_0.resize(n_obst);
-						HL_.resize(n_obst); // relative hazard level computed from cost
-						OBS_PASSED_0.resize(n_obst);
+					// if (static_obst_states_(0, 0) != 10000.0 && obst_states.rows() == 0)
+					// {
+					// 	std::cout << "SB-MPC: PURE ANTI-GROUNDING" << std::endl;
+					// 	n_obst = 1;
+					// 	HL_0.resize(n_obst);
+					// 	HL_.resize(n_obst); // relative hazard level computed from cost
+					// 	OBS_PASSED_0.resize(n_obst);
 
-						double Chi_ca_i = 0.0;
-						int i_return_to_path = 0, ik_return_to_path = 0, i_return_to_path_best = n_samp; // iter at which ASV can return to path
-						int cp = 0, n_cp = 1;																														 // course-offset iterator and change points
-						for (auto j = 0; j < P_ca_.size(); j++)
-						{ // iterates through speed 'offsets', only 1 speed
-							for (auto i = 0; i < Chi_ca_.size(); i++)
-							{ // iterates through course offsets
-								// std::cout << "CHI_CA LOOP" << std::endl;
-								for (int cp_ = 0; cp_ < n_cp; cp_++)
-								{
-									// setup for guidance behavior simulation
-									if (cp_ > 0 && (0.0 == Chi_ca_[i] || (guidance_strategy < 2 && std::fabs(Chi_ca_[i]) >= 90.0 * DEG2RAD)))
-										break;
+					// 	double Chi_ca_i = 0.0;
+					// 	int i_return_to_path = 0, ik_return_to_path = 0, i_return_to_path_best = n_samp; // iter at which ASV can return to path
+					// 	int cp = 0, n_cp = 1;																														 // course-offset iterator and change points
+					// 	for (auto j = 0; j < P_ca_.size(); j++)
+					// 	{ // iterates through speed 'offsets', only 1 speed
+					// 		for (auto i = 0; i < Chi_ca_.size(); i++)
+					// 		{ // iterates through course offsets
+					// 			// std::cout << "CHI_CA LOOP" << std::endl;
+					// 			for (int cp_ = 0; cp_ < n_cp; cp_++)
+					// 			{
+					// 				// setup for guidance behavior simulation
+					// 				if (cp_ > 0 && (0.0 == Chi_ca_[i] || (guidance_strategy < 2 && std::fabs(Chi_ca_[i]) >= 90.0 * DEG2RAD)))
+					// 					break;
 
-									Chi_ca_i = Chi_ca_[i]; // offset for cp=0
+					// 				Chi_ca_i = Chi_ca_[i]; // offset for cp=0
 
-									cp = cp_; // for forward iteration
-									if (guidance_strategy >= 2 && cp_ > 0 && cp_ < n_cp)
-										cp = n_cp - cp_; // for reverse iteration (not needed if return path is predicted?)
+					// 				cp = cp_; // for forward iteration
+					// 				if (guidance_strategy >= 2 && cp_ > 0 && cp_ < n_cp)
+					// 					cp = n_cp - cp_; // for reverse iteration (not needed if return path is predicted?)
 
-									if (cp > 0 && guidance_strategy < 2)
-									{ // LOS, WPP
+					// 				if (cp > 0 && guidance_strategy < 2)
+					// 				{ // LOS, WPP
 
-										if (Chi_ca_[i] > 0)
-											Chi_ca_i = Chi_ca_[i] + 15.0 * DEG2RAD * cp;
+					// 					if (Chi_ca_[i] > 0)
+					// 						Chi_ca_i = Chi_ca_[i] + 15.0 * DEG2RAD * cp;
 
-										if (Chi_ca_[i] < 0)
-											Chi_ca_i = Chi_ca_[i] - 15.0 * DEG2RAD * cp;
-									}
-									else if (cp > 0)
-									{									// CH, HH; reverse iteration!
-										Chi_ca_i = 0.0; // no offset => return to original ref.
-									}
+					// 					if (Chi_ca_[i] < 0)
+					// 						Chi_ca_i = Chi_ca_[i] - 15.0 * DEG2RAD * cp;
+					// 				}
+					// 				else if (cp > 0)
+					// 				{									// CH, HH; reverse iteration!
+					// 					Chi_ca_i = 0.0; // no offset => return to original ref.
+					// 				}
 
-									if (std::fabs(Chi_ca_i * RAD2DEG) > 90.0)
-										break;
+					// 				if (std::fabs(Chi_ca_i * RAD2DEG) > 90.0)
+					// 					break;
 
-									asv->linearPrediction(asv_state, u_d * P_ca_[j], psi_d + Chi_ca_i, waypoints, Chi_ca_i, cp, guidance_strategy, WP_R_, LOS_LA_DIST_, LOS_KI_);
+					// 				asv->linearPrediction(asv_state, u_d * P_ca_[j], psi_d + Chi_ca_i, waypoints, Chi_ca_i, cp, guidance_strategy, WP_R_, LOS_LA_DIST_, LOS_KI_);
 
-									// Compute worst cost associated with the current control behavior and the corresponding scenarios for each obsbtacle
-									cost_i = -1;
-									cost_o = 0;
-									ik_return_to_path = 0;
-									i_return_to_path = 0;
-									for (int k = 0; k < n_obst; k++)
-									{
-										HL_(k) = 0;
+					// 				// Compute worst cost associated with the current control behavior and the corresponding scenarios for each obsbtacle
+					// 				cost_i = -1;
+					// 				cost_o = 0;
+					// 				ik_return_to_path = 0;
+					// 				i_return_to_path = 0;
+					// 				for (int k = 0; k < n_obst; k++)
+					// 				{
+					// 					HL_(k) = 0;
 
-										for (int l = 0; l < n_obst_branches; l++)
-										{
-											cost_k = costFunction(P_ca_[j], Chi_ca_[i], k, 0, 0, 0, 0, 0, 0, u_d, l, ik_return_to_path, obst_states, static_obst_states_, i);
+					// 					for (int l = 0; l < n_obst_branches; l++)
+					// 					{
+					// 						cost_k = costFunction(P_ca_[j], Chi_ca_[i], k, 0, 0, 0, 0, 0, 0, u_d, l, ik_return_to_path, obst_states, static_obst_states_, i);
 
-											if (guidance_strategy >= 2 && cp == 0 && Chi_ca_[i] != 0)
-												cost_k = cost_k; // + 0.1*n_cp; // (a small) path deviation penalty
+					// 						if (guidance_strategy >= 2 && cp == 0 && Chi_ca_[i] != 0)
+					// 							cost_k = cost_k; // + 0.1*n_cp; // (a small) path deviation penalty
 
-											if (guidance_strategy >= 2 && cp > 0)
-												cost_k = cost_k; // + 0.1*cp; // (a small) path deviation penalty
+					// 						if (guidance_strategy >= 2 && cp > 0)
+					// 							cost_k = cost_k; // + 0.1*cp; // (a small) path deviation penalty
 
-											// save the worst cost among the branches of this obstacle
-											if (cost_k > HL_(k) && OBS_PASSED_0(k) == 0)
-												HL_(k) = cost_k;
+					// 						// save the worst cost among the branches of this obstacle
+					// 						if (cost_k > HL_(k) && OBS_PASSED_0(k) == 0)
+					// 							HL_(k) = cost_k;
 
-											// save the overall worst cost for this control behavior
-											if (cost_k > cost_i)
-												cost_i = cost_k;
+					// 						// save the overall worst cost for this control behavior
+					// 						if (cost_k > cost_i)
+					// 							cost_i = cost_k;
 
-											// save the latest iter at which the ASV can return to its original path
-											if (ik_return_to_path > i_return_to_path)
-												i_return_to_path = ik_return_to_path;
-										}
-										// accumulate cost for all obstacles
-										cost_o = cost_o + HL_(k);
-									}
+					// 						// save the latest iter at which the ASV can return to its original path
+					// 						if (ik_return_to_path > i_return_to_path)
+					// 							i_return_to_path = ik_return_to_path;
+					// 					}
+					// 					// accumulate cost for all obstacles
+					// 					cost_o = cost_o + HL_(k);
+					// 				}
 
-									// Save current scenario if cost is lower than that of previously checked controls
-									std::cout << "New cost: " << cost_i << " With course offset: " << Chi_ca_[i] * RAD2DEG << std::endl;
-									if (cost_i < cost)
-									{
-										cost = cost_i;						// Minimizing the overall cost
-										u_os_best = P_ca_[j];			// test with 1
-										psi_os_best = Chi_ca_[i]; // test with -30*DEG2RAD
-										n_psi_os_best = cp + 1;		// number of course offsets
-										i_return_to_path_best = i_return_to_path;
-										std::cout << "Current cost is lower: " << cost << " With course offset: " << psi_os_best * RAD2DEG << std::endl;
+					// 				// Save current scenario if cost is lower than that of previously checked controls
+					// 				std::cout << "New cost: " << cost_i << " With course offset: " << Chi_ca_[i] * RAD2DEG << std::endl;
+					// 				if (cost_i < cost)
+					// 				{
+					// 					cost = cost_i;						// Minimizing the overall cost
+					// 					u_os_best = P_ca_[j];			// test with 1
+					// 					psi_os_best = Chi_ca_[i]; // test with -30*DEG2RAD
+					// 					n_psi_os_best = cp + 1;		// number of course offsets
+					// 					i_return_to_path_best = i_return_to_path;
+					// 					std::cout << "Current cost is lower: " << cost << " With course offset: " << psi_os_best * RAD2DEG << std::endl;
 
-										if (i_return_to_path > cp && i_return_to_path < n_samp - pred_step)
-										{
-											asv->linearPrediction(asv_state, u_d * P_ca_[j], psi_d, waypoints, 0, i_return_to_path, guidance_strategy, WP_R_, LOS_LA_DIST_, LOS_KI_);
-										}
+					// 					if (i_return_to_path > cp && i_return_to_path < n_samp - pred_step)
+					// 					{
+					// 						asv->linearPrediction(asv_state, u_d * P_ca_[j], psi_d, waypoints, 0, i_return_to_path, guidance_strategy, WP_R_, LOS_LA_DIST_, LOS_KI_);
+					// 					}
 
-										x_opt = asv->m_x;
-										y_opt = asv->m_y;
+					// 					x_opt = asv->m_x;
+					// 					y_opt = asv->m_y;
 
-										// save the relative hazard level for each obstacle at the optimum
-										// highest value indicates which obstacle is considered most dangerous
-										for (int k = 0; k < n_obst; k++)
-										{
-											if (cost_o > 0)
-											{
-												HL_0(k) = HL_(k) / cost_o;
-											}
-											else
-											{
-												HL_0(k) = 0;
-											}
-										}
-									}
-								}
-							}
-						}
+					// 					// save the relative hazard level for each obstacle at the optimum
+					// 					// highest value indicates which obstacle is considered most dangerous
+					// 					for (int k = 0; k < n_obst; k++)
+					// 					{
+					// 						if (cost_o > 0)
+					// 						{
+					// 							HL_0(k) = HL_(k) / cost_o;
+					// 						}
+					// 						else
+					// 						{
+					// 							HL_0(k) = 0;
+					// 						}
+					// 					}
+					// 				}
+					// 			}
+					// 		}
+					// 	}
 
-						P_ca_last_ = u_os_best;
-						Chi_ca_last_ = psi_os_best;
-						CF_0 = u_os_best * (1 - (std::fabs(RAD2DEG * psi_os_best) / 15.0) / 8.0); // 6 course offsets possible towards SB/P, 2 factors possible speed reduction
+					// 	P_ca_last_ = u_os_best;
+					// 	Chi_ca_last_ = psi_os_best;
+					// 	CF_0 = u_os_best * (1 - (std::fabs(RAD2DEG * psi_os_best) / 15.0) / 8.0); // 6 course offsets possible towards SB/P, 2 factors possible speed reduction
 
-						std::cout << "_______________" << std::endl;
-						std::cout << "PURE ANTI-GROUNDING" << std::endl;
-						std::cout << "_______________" << std::endl;
-						std::cout << "cost : " << cost << std::endl;
-						std::cout << "course offset : " << Angles::degrees(psi_os_best) << std::endl;
-						std::cout << "relative hazard level : " << HL_0 << std::endl;
-						std::cout << "control freedom : " << CF_0 << std::endl;
-						std::cout << "return to path at iter: " << i_return_to_path_best << std::endl;
-						std::cout << "_______________" << std::endl;
+					// 	std::cout << "_______________" << std::endl;
+					// 	std::cout << "PURE ANTI-GROUNDING" << std::endl;
+					// 	std::cout << "_______________" << std::endl;
+					// 	std::cout << "cost : " << cost << std::endl;
+					// 	std::cout << "course offset : " << Angles::degrees(psi_os_best) << std::endl;
+					// 	std::cout << "relative hazard level : " << HL_0 << std::endl;
+					// 	std::cout << "control freedom : " << CF_0 << std::endl;
+					// 	std::cout << "return to path at iter: " << i_return_to_path_best << std::endl;
+					// 	std::cout << "_______________" << std::endl;
 
-						if (guidance_strategy < 2)
-						{
-							std::cout << "predicted course offsets: " << n_psi_os_best << std::endl;
-						}
-						else
-						{
-							std::cout << "using prediction path " << n_psi_os_best << std::endl;
-						}
-						std::cout << "_________________________________" << std::endl;
-					}
-					else if (obst_states.rows() > 0)
+					// 	if (guidance_strategy < 2)
+					// 	{
+					// 		std::cout << "predicted course offsets: " << n_psi_os_best << std::endl;
+					// 	}
+					// 	else
+					// 	{
+					// 		std::cout << "using prediction path " << n_psi_os_best << std::endl;
+					// 	}
+					// 	std::cout << "_________________________________" << std::endl;
+					// }
+					// else if (obst_states.rows() > 0)
 					{
 						std::cout << "SB-MPC: DYNAMIC OBSTACLES" << std::endl;
 
@@ -1316,13 +1316,15 @@ namespace Control
 				// bool AH_0, bool OBS_PASSED unused?
 				double costFunction(double P_ca, double Chi_ca, int k, bool SB_0, bool CRG_0, bool OTG_0, bool OT_0, bool HOT_0, double DIST_0, double u_d, int l, int &ik_return_to_path, Math::Matrix obst_state, Math::Matrix static_obst_state, int chi_ca_index)
 				{
+					(void)static_obst_state;
+					(void)chi_ca_index;
 					// bool AH_0, bool OBS_PASSED_0 unused?
-					double dist, dist_to_land, phi, phi_o, psi_o, psi_rel, R, R_ground, C, C_ground, C1, C2, k_coll, d_safe_i, R_c, s_0;
+					double dist/* , dist_to_land */, phi, phi_o, psi_o, psi_rel, R, R_ground, C, C_ground, C1, C2, k_coll, d_safe_i, R_c, s_0;
 					Eigen::Vector2d d, asv_pred_pos, los, los_inv, v_o, v_s;
 					bool mu, OT, SB, HO, CR, OTG, CRG, OTN, HOT, mu_0;
 					double d_safe = D_SAFE_;
 					double d_close = D_CLOSE_;
-					double d_safe_land = D_SAFE_LAND_;
+					// double d_safe_land = D_SAFE_LAND_;
 					double H0 = 0;
 					double H1 = 0;
 					double H2 = 0;
@@ -1355,27 +1357,27 @@ namespace Control
 						C2 = 0;
 						C_ground = 0;
 						mu = 0;
-            mu_0 = 0;
+            			mu_0 = 0;
 						gCost = 0;
 
 						t += DT_ * pred_step;
 						j = (int)(i / (double)pred_step); // synchronize asv and obstacle prediction steps
 
-						if (static_obst_state(0, 0) != 10000.0)
-						{
-							asv_pred_pos(0) = asv->m_x[i];
-							asv_pred_pos(1) = asv->m_y[i];
+						// if (static_obst_state(0, 0) != 10000.0)
+						// {
+						// 	asv_pred_pos(0) = asv->m_x[i];
+						// 	asv_pred_pos(1) = asv->m_y[i];
 
-							dist_to_land = static_obst_state(chi_ca_index, 1);
+						// 	dist_to_land = static_obst_state(chi_ca_index, 1);
 
-							double risk_land = 0.0;
+						// 	double risk_land = 0.0;
 
-							if (dist_to_land <= d_safe_land && dist_to_land != 0.0)
-								risk_land = d_safe_land / dist_to_land;
+						// 	if (dist_to_land <= d_safe_land && dist_to_land != 0.0)
+						// 		risk_land = d_safe_land / dist_to_land;
 
-							R_ground = (1 / pow(std::fabs(t - t0), P_G_)) * pow(risk_land, Q_);
-							C_ground = static_obst_state(chi_ca_index, 2);
-						}
+						// 	R_ground = (1 / pow(std::fabs(t - t0), P_G_)) * pow(risk_land, Q_);
+						// 	C_ground = static_obst_state(chi_ca_index, 2);
+						// }
 						if (obst_state.rows() > 0)
 						{
 

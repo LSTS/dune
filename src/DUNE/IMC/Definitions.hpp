@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 971b1d246a2548118d0fee2a17f455a2                            *
+// IMC XML MD5: 04ce1d1dac399100b9207708c4b21b88                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -2526,12 +2526,14 @@ namespace DUNE
         PROF_CURRENT_VELOCITY_U = 7,
         //! Current Velocity In y.
         PROF_CURRENT_VELOCITY_V = 8,
-        //! Absolute Wind.
-        PROF_ABSOLUTE_WIND = 9,
+        //! Absolute Wind Average.
+        PROF_ABSOLUTE_WIND_AVG = 9,
+        //! Absolute Wind Maximum.
+        PROF_ABSOLUTE_WIND_MAX = 10,
         //! Dissolved Organic Matter.
-        PROF_DISS_ORGANIC_MATTER = 10,
+        PROF_DISS_ORGANIC_MATTER = 11,
         //! Dissolved Oxygen.
-        PROF_DISS_OXYGEN = 11
+        PROF_DISS_OXYGEN = 12
       };
 
       //! Parameter.
@@ -27292,6 +27294,325 @@ namespace DUNE
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Values If.
+    class ValuesIf: public Message
+    {
+    public:
+      //! Param.
+      std::string param;
+      //! Value.
+      std::string value;
+      //! Values List.
+      std::string values_list;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2018;
+      }
+
+      ValuesIf(void);
+
+      ValuesIf*
+      clone(void) const
+      {
+        return new ValuesIf(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return ValuesIf::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "ValuesIf";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(param) + IMC::getSerializationSize(value) + IMC::getSerializationSize(values_list);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Typed Entity Parameter.
+    class TypedEntityParameter: public Message
+    {
+    public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! Boolean Domain.
+        TYPE_BOOL = 1,
+        //! Integer Domain.
+        TYPE_INT = 2,
+        //! Float Domain.
+        TYPE_FLOAT = 3,
+        //! String Domain.
+        TYPE_STRING = 4,
+        //! List of Booleans.
+        TYPE_LIST_BOOL = 5,
+        //! List of Integers.
+        TYPE_LIST_INT = 6,
+        //! List of Floats.
+        TYPE_LIST_FLOAT = 7,
+        //! List of Strings.
+        TYPE_LIST_STRING = 8
+      };
+
+      //! Visibility.
+      enum VisibilityEnum
+      {
+        //! User.
+        VISIBILITY_USER = 0,
+        //! Developer.
+        VISIBILITY_DEVELOPER = 1
+      };
+
+      //! Scope.
+      enum ScopeEnum
+      {
+        //! Global.
+        SCOPE_GLOBAL = 0,
+        //! Idle.
+        SCOPE_IDLE = 1,
+        //! Plan.
+        SCOPE_PLAN = 2,
+        //! Maneuver.
+        SCOPE_MANEUVER = 3
+      };
+
+      //! Parameter Name.
+      std::string name;
+      //! Type.
+      uint8_t type;
+      //! Default Value.
+      std::string default_value;
+      //! Units.
+      std::string units;
+      //! Description.
+      std::string description;
+      //! Values List.
+      std::string values_list;
+      //! Min Value.
+      fp32_t min_value;
+      //! Max Value.
+      fp32_t max_value;
+      //! List Min Size.
+      uint8_t list_min_size;
+      //! List Max Size.
+      uint8_t list_max_size;
+      //! Values If List.
+      MessageList<ValuesIf> values_if_list;
+      //! Visibility.
+      uint8_t visibility;
+      //! Scope.
+      uint8_t scope;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2017;
+      }
+
+      TypedEntityParameter(void);
+
+      TypedEntityParameter*
+      clone(void) const
+      {
+        return new TypedEntityParameter(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TypedEntityParameter::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TypedEntityParameter";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 13;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(name) + IMC::getSerializationSize(default_value) + IMC::getSerializationSize(units) + IMC::getSerializationSize(description) + IMC::getSerializationSize(values_list) + values_if_list.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
+    //! Query Typed Entity Parameters.
+    class QueryTypedEntityParameters: public Message
+    {
+    public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Request.
+        OP_REQUEST = 0,
+        //! Reply.
+        OP_REPLY = 1
+      };
+
+      //! Operation.
+      uint8_t op;
+      //! Request identitier.
+      uint32_t request_id;
+      //! Entity Name.
+      std::string entity_name;
+      //! Parameters.
+      MessageList<TypedEntityParameter> parameters;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2016;
+      }
+
+      QueryTypedEntityParameters(void);
+
+      QueryTypedEntityParameters*
+      clone(void) const
+      {
+        return new QueryTypedEntityParameters(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return QueryTypedEntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "QueryTypedEntityParameters";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 5;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(entity_name) + parameters.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
     };
 
     //! Version Info.

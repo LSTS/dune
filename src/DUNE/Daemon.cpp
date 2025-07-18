@@ -130,7 +130,6 @@ namespace DUNE
       m_ctx.profiles.select(profiles);
       inf(DTR("execution profiles: %s"), profiles.c_str());
     }
-
     // CPU usage.
     m_ctx.config.get("General", "CPU Usage - Maximum", "65", m_cpu_max_usage);
     m_ctx.config.get("General", "CPU Usage - Moving Average Samples", "10", m_cpu_avg_samples);
@@ -221,8 +220,8 @@ namespace DUNE
     {
       call_reboot = true;
       inf(DTR("Got message to reboot system"));
+      stop();
     }
-    stop();
   }
 
   void
@@ -257,6 +256,7 @@ namespace DUNE
        << "<config"
        << " format=\"1\""
        << " version=\"" << getFullVersion() << "\""
+       << " modules=\"" << getFullVersionPrivate() << "\""
        << " system=\"" << getSystemName() << "\""
        << " i18n=\"" << I18N::getLanguage() << "\">\n";
 
