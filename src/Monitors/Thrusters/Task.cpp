@@ -43,6 +43,8 @@ namespace Monitors
 
     //! Timeout for general monitor restart message.
     constexpr double c_timeout_tx_request = 120.0;
+    //! Parameter label to restart thruster.
+    const char* c_restart_thruster_param = "Restart Thruster";
 
     //! Task arguments.
     struct Arguments
@@ -65,6 +67,8 @@ namespace Monitors
       bool submerged_only;
       //! Auto restart thruster.
       bool auto_restart;
+      //! Force restart thruster.
+      bool force_restart;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -140,6 +144,11 @@ namespace Monitors
         .values("false,true")
         .description("Try to restart thruster automatically.");
 
+        param(c_restart_thruster_param, m_args.force_restart)
+        .values("false,true")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Try to restart thruster.");
+
         bind<IMC::Current>(this);
         bind<IMC::SetThrusterActuation>(this);
         bind<IMC::VehicleMedium>(this);
@@ -188,6 +197,12 @@ namespace Monitors
         if(paramChanged(m_args.thruster_current_channel_label))
         {
           spew("Monitoring thruster current channel: %s", m_args.thruster_current_channel_label.c_str());
+        }
+
+        if (paramChanged(m_args.force_restart))
+        {
+          tryRestartThruster();
+          resetParameter(c_restart_thruster_param);
         }
       }
 
