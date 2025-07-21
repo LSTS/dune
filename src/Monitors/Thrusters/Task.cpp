@@ -69,8 +69,8 @@ namespace Monitors
       Time::Counter<float> m_current_check;
       //! Thrust entity id.
       unsigned m_thrust_eid;
-      //! Last thruster actuation timestamp.
-      double m_last_thruster_actuation;
+      //! Thruster is being actuated or not.
+      bool m_actuated;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -78,7 +78,7 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_thrust_eid(AddressResolver::invalid()),
-        m_last_thruster_actuation(-1.0f)
+        m_actuated(false)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -216,7 +216,8 @@ namespace Monitors
         if (msg->id != m_args.thruster_id)
           return;
 
-        m_last_thruster_actuation = (msg->value > 0.0f) ? msg->getTimeStamp() : -1.0f;
+        const bool actuated = (msg->value != 0.0f);
+        m_actuated = actuated;
       }
 
       void
