@@ -55,6 +55,8 @@ namespace Monitors
       float current_threshold;
       //! Label of the thruster current channel.
       std::string thruster_current_channel_label;
+      //! Label of the thruster power channel.
+      std::string thruster_power_channel_label;
       //! Send updates over sattelite.
       bool send_satellite;
     };
@@ -102,6 +104,10 @@ namespace Monitors
         .defaultValue("THRUST_D")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Label of the thruster current channel to monitor.");
+
+        param("Thruster Power Channel Label", m_args.thruster_power_channel_label)
+        .defaultValue("THRUST_C")
+        .description("Label of the thruster power channel.");
 
         param("Send Satellite Updates", m_args.send_satellite)
         .defaultValue("false")
