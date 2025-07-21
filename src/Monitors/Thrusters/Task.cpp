@@ -78,7 +78,7 @@ namespace Monitors
         m_thrust_eid(AddressResolver::invalid()),
         m_last_thruster_actuation(-1.0f)
       {
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Thruster ID", m_args.thruster_id)
