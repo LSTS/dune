@@ -49,8 +49,10 @@ namespace Monitors
     {
       //! Thruster ID.
       uint8_t thruster_id;
-      //! Maximum time to wait for high current levels on the thruster (in minutes).
+      //! Maximum time to wait for high current levels on the thruster.
       int maximum_current_timeout;
+      //! Timeout for a periodic check while in error
+      int periodic_check_error;
       //! Current value threshold to trigger a warning.
       float current_threshold;
       //! Label of the thruster current channel.
@@ -75,6 +77,8 @@ namespace Monitors
       bool m_actuated;
       //! Thruster is submerged or not.
       bool m_submerged;
+      //! Error state.
+      bool m_error;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -83,7 +87,8 @@ namespace Monitors
         DUNE::Tasks::Task(name, ctx),
         m_thrust_eid(AddressResolver::invalid()),
         m_actuated(false),
-        m_submerged(false)
+        m_submerged(false),
+        m_error(false)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -91,12 +96,19 @@ namespace Monitors
         param("Thruster ID", m_args.thruster_id)
         .description("ID of the thruster to monitor.");
 
-        param("Interval Time Window in Minutes", m_args.maximum_current_timeout)
+        param("Timeout for Expected Actuation", m_args.maximum_current_timeout)
+        .defaultValue("30")
+        .minimumValue("5")
+        .units(Units::Second)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Maximum time to wait for high current levels on the thruster.");
+
+        param("Timeout for Periodic Check in Error", m_args.periodic_check_error)
         .defaultValue("30")
         .minimumValue("5")
         .units(Units::Minute)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .description("Maximum time to wait for high current levels on the thruster.");
+        .description("Timeout to do a periodic check when the thruster is in error.");
 
         param("Current Threshold in Amperes", m_args.current_threshold)
         .defaultValue("1.0")
@@ -214,6 +226,14 @@ namespace Monitors
         if(msg->value >= m_args.current_threshold)
         {
           m_current_check.reset(); // Reset the current check timer.
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          if (m_error)
+          {
+            m_error = false;
+            std::string msg = "THRUSTER " + std::to_string(m_args.thruster_id) + " RECOVERED FROM ERROR.";
+            inf("%s", msg.c_str());
+            sendMessageOverSattelite(msg);
+          }
         }
       }
 
@@ -227,6 +247,9 @@ namespace Monitors
           return;
 
         const bool actuated = (msg->value != 0.0f);
+        if (actuated && !m_actuated)
+          m_current_check.reset();
+
         m_actuated = actuated;
       }
 
@@ -277,14 +300,20 @@ namespace Monitors
           waitForMessages(0.01);
           if (isActuated() && m_current_check.overflow())
           {
-            m_current_check.reset();
-            std::stringstream ss;
-            ss << "THRUST WRN;"
-               << "T:" << m_args.maximum_current_timeout
-               << "|A:" << m_args.current_threshold
-               << "|L:" << m_args.thruster_current_channel_label;
-            inf("Current Window Overflow: %s", ss.str().c_str());
-            sendMessageOverSattelite(ss.str());
+            if ((m_error && m_current_check.getElapsed() > m_args.periodic_check_error * 60.0f) ||
+                !m_error)
+            {
+              m_error = true;
+              setEntityState(IMC::EntityState::ESTA_ERROR, "Thruster Not Responding");
+              std::stringstream ss;
+              ss << "THRUST WRN;"
+                 << "T:" << m_args.maximum_current_timeout
+                 << "|A:" << m_args.current_threshold
+                 << "|L:" << m_args.thruster_current_channel_label;
+              inf("Current Window Overflow: %s", ss.str().c_str());
+              sendMessageOverSattelite(ss.str());
+              m_current_check.reset();
+            }
           }
         }
       }
