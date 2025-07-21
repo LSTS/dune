@@ -59,6 +59,8 @@ namespace Monitors
       std::string thruster_power_channel_label;
       //! Send updates over sattelite.
       bool send_satellite;
+      //! Only monitor thruster when submerged.
+      bool submerged_only;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -115,6 +117,10 @@ namespace Monitors
         param("Send Satellite Updates", m_args.send_satellite)
         .defaultValue("false")
         .description("Send updates over satellite.");
+
+        param("Monitor only when submerged", m_args.submerged_only)
+        .values("false,true")
+        .description("Only monitor thruster when submerged.");
 
         bind<IMC::Current>(this);
         bind<IMC::SetThrusterActuation>(this);
@@ -253,6 +259,15 @@ namespace Monitors
         dispatch(tr);
       }
 
+      inline bool
+      isActuated(void)
+      {
+        if (m_args.submerged_only && !m_submerged)
+          return false;
+
+        return m_actuated;
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -260,7 +275,7 @@ namespace Monitors
         while (!stopping())
         {
           waitForMessages(0.01);
-          if (m_current_check.overflow())
+          if (isActuated() && m_current_check.overflow())
           {
             m_current_check.reset();
             std::stringstream ss;
