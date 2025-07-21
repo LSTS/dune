@@ -154,7 +154,6 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
         m_current_check.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         inf("Interval for thrusted current warning: %d minutes, "
