@@ -155,7 +155,7 @@ namespace Monitors
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
-        m_current_check.setTop(m_args.maximum_current_timeout * 60.0f); // Convert minutes to seconds.
+        m_current_check.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         inf("Interval for thrusted current warning: %d minutes, "
             "Current threshold set to: %.2f Amperes, "
