@@ -233,11 +233,13 @@ namespace Monitors
           if (m_current_check.overflow())
           {
             m_current_check.reset();
-            std::string string_message = "THRUST WRN;T:" + std::to_string(m_args.maximum_current_timeout) +
-              "|A:" + std::to_string(m_args.current_threshold) +
-              "|L:" + m_args.thruster_current_channel_label;
-            inf("Current Window Overflow: %s", string_message.c_str());
-            sendMessageOverSattelite(string_message);
+            std::stringstream ss;
+            ss << "THRUST WRN;"
+               << "T:" << m_args.maximum_current_timeout
+               << "|A:" << m_args.current_threshold
+               << "|L:" << m_args.thruster_current_channel_label;
+            inf("Current Window Overflow: %s", ss.str().c_str());
+            sendMessageOverSattelite(ss.str());
           }
         }
       }
