@@ -71,6 +71,8 @@ namespace Monitors
       unsigned m_thrust_eid;
       //! Thruster is being actuated or not.
       bool m_actuated;
+      //! Thruster is submerged or not.
+      bool m_submerged;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -78,7 +80,8 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_thrust_eid(AddressResolver::invalid()),
-        m_actuated(false)
+        m_actuated(false),
+        m_submerged(false)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -115,6 +118,7 @@ namespace Monitors
 
         bind<IMC::Current>(this);
         bind<IMC::SetThrusterActuation>(this);
+        bind<IMC::VehicleMedium>(this);
       }
 
       void
@@ -218,6 +222,16 @@ namespace Monitors
 
         const bool actuated = (msg->value != 0.0f);
         m_actuated = actuated;
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        m_submerged = (msg->medium == IMC::VehicleMedium::VM_WATER) ||
+                      (msg->medium == IMC::VehicleMedium::VM_UNDERWATER);
       }
 
       void
