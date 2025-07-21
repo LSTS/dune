@@ -146,6 +146,20 @@ namespace Monitors
       }
 
       void
+      resetParameter(const char* flag)
+      {
+        trace("Reseting flag '%s'.", flag);
+        IMC::SetEntityParameters sep;
+        sep.setDestination(getSystemId());
+        sep.setDestinationEntity(getEntityId());
+        IMC::EntityParameter ep;
+        ep.name = flag;
+        ep.value = "false";
+        sep.params.push_back(ep);
+        dispatch(sep, DF_LOOP_BACK);
+      }
+
+      void
       onUpdateParameters(void)
       {
         trace("onUpdateParameters");
