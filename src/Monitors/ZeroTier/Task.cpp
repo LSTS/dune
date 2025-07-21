@@ -76,7 +76,7 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx)
       {
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("AutoReconnect", m_args.auto_restart)
