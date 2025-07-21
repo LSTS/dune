@@ -63,6 +63,8 @@ namespace Monitors
       bool send_satellite;
       //! Only monitor thruster when submerged.
       bool submerged_only;
+      //! Auto restart thruster.
+      bool auto_restart;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -133,6 +135,10 @@ namespace Monitors
         param("Monitor only when submerged", m_args.submerged_only)
         .values("false,true")
         .description("Only monitor thruster when submerged.");
+
+        param("Auto Restart", m_args.auto_restart)
+        .values("false,true")
+        .description("Try to restart thruster automatically.");
 
         bind<IMC::Current>(this);
         bind<IMC::SetThrusterActuation>(this);
@@ -327,6 +333,9 @@ namespace Monitors
                  << "|L:" << m_args.thruster_current_channel_label;
               inf("Current Window Overflow: %s", ss.str().c_str());
               sendMessageOverSattelite(ss.str());
+              if (m_args.auto_restart)
+                tryRestartThruster();
+
               m_current_check.reset();
             }
           }
