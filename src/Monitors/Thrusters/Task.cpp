@@ -282,6 +282,21 @@ namespace Monitors
         dispatch(tr);
       }
 
+      void
+      tryRestartThruster(void)
+      {
+        std::string msg = "Attempting to restart thruster " + std::to_string(m_args.thruster_id);
+        inf("%s", msg.c_str());
+        sendMessageOverSattelite(msg);
+        IMC::PowerChannelControl pcc;
+        pcc.name = m_args.thruster_power_channel_label;
+        pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        dispatch(pcc, DF_LOOP_BACK);
+        Time::Delay::wait(10.0);
+        pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
+        dispatch(pcc, DF_LOOP_BACK);
+      }
+
       inline bool
       isActuated(void)
       {
