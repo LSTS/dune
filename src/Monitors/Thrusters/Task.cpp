@@ -117,9 +117,19 @@ namespace Monitors
         trace("onUpdateParameters");
         if(paramChanged(m_args.maximum_current_timeout))
         {
-          m_current_check.setTop(m_args.maximum_current_timeout * 60.0f); // Convert minutes to seconds.
-          m_current_check.reset();
-          spew("Interval for thrusted current warning: %d minutes", m_args.maximum_current_timeout);
+          spew("Interval for thruster current warning: %d minutes", m_args.maximum_current_timeout);
+          const auto old_top = m_current_check.getTop();
+          auto new_top = m_args.maximum_current_timeout * 60.0f;
+          if (old_top != 0.0f)
+          {
+            const auto elapsed = m_current_check.getElapsed();
+            if (elapsed >= new_top)
+              m_current_check.setTop(0.0f);
+            else if (m_current_check.getRemaining() > new_top)
+              m_current_check.setTop(new_top - elapsed);
+          }
+          else
+            m_current_check.setTop(new_top);
         }
 
         if(paramChanged(m_args.current_threshold))
