@@ -205,7 +205,7 @@ namespace Monitors
       }
 
       void
-      sendMessage(std::string message)
+      sendMessageOverSattelite(const std::string& message)
       {
         if (!m_args.send_satellite)
           return;
@@ -237,7 +237,7 @@ namespace Monitors
               "|A:" + std::to_string(m_args.current_threshold) +
               "|L:" + m_args.thruster_current_channel_label;
             inf("Current Window Overflow: %s", string_message.c_str());
-            sendMessage(string_message);
+            sendMessageOverSattelite(string_message);
           }
         }
       }
