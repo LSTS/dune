@@ -265,9 +265,9 @@ namespace Monitors
           if (m_error)
           {
             m_error = false;
-            std::string msg = "THRUSTER " + std::to_string(m_args.thruster_id) + " RECOVERED FROM ERROR.";
-            inf("%s", msg.c_str());
-            sendMessageOverSattelite(msg);
+            std::string text = "THRUSTER " + std::to_string(m_args.thruster_id) + " RECOVERED FROM ERROR.";
+            inf("%s", text.c_str());
+            sendMessageOverSattelite(text);
           }
         }
       }
