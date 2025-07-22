@@ -202,8 +202,11 @@ namespace Monitors
 
         if (paramChanged(m_args.force_restart))
         {
-          tryRestartThruster();
-          resetParameter(c_restart_thruster_param);
+          if (m_args.force_restart)
+          {
+            tryRestartThruster();
+            resetParameter(c_restart_thruster_param);
+          }
         }
       }
 
