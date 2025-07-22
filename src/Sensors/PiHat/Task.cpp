@@ -146,6 +146,14 @@ namespace Sensors
           m_led = new LEDMatrix(m_args.m_led_dev.c_str());
 
           m_settings = new RTIMUSettings(m_args.m_lib_config.c_str());
+          if (!m_settings->m_compassCalValid)
+            throw RestartNeeded("RTIMU compass calibration not valid", 5);
+
+          if (!m_settings->m_gyroBiasValid)
+            throw RestartNeeded("RTIMU gyro bias calibration not valid", 5);
+
+          if (!m_settings->m_accelCalValid)
+            throw RestartNeeded("RTIMU accelerometer calibration not valid", 5);
 
           m_imu = RTIMU::createIMU(m_settings);
           if (m_imu == nullptr)
