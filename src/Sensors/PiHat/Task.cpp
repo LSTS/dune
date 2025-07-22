@@ -105,7 +105,7 @@ namespace Sensors
         m_calib(nullptr)
       {
         param("RTIMU lib config", m_args.m_lib_config)
-          .defaultValue("/root/RTEllipsoidFit/RTIMULib.ini")
+          .defaultValue("/etc/RTIMULib")
           .description("RTIMU lib config file");
 
         param("LED matrix device", m_args.m_led_dev)
