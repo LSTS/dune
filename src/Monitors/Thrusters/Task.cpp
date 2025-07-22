@@ -145,6 +145,7 @@ namespace Monitors
         .description("Try to restart thruster automatically.");
 
         param(c_restart_thruster_param, m_args.force_restart)
+        .defaultValue("false")
         .values("false,true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Try to restart thruster.");
