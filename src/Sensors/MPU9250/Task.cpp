@@ -112,14 +112,13 @@ namespace Sensors
         try
         {
           m_handle = openDeviceHandle(m_args.io_dev);
-          return true;
         }
         catch (...)
         {
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
-        return false;
+        return true;
       }
 
       void
@@ -130,6 +129,9 @@ namespace Sensors
 
         eid = reserveEntity("Fusion_F");
         m_fusion_ids['F'] = eid;  // Fusion ID for 'F'
+
+        eid = reserveEntity("Fusion_S");
+        m_fusion_ids['S'] = eid;  // Fusion ID for 'S'
 
         eid = reserveEntity("Raw_MPU9250");
         m_fusion_ids['R'] = eid;  // Fusion ID for 'R'
@@ -197,6 +199,11 @@ namespace Sensors
             // Process Fusion data
             onFusionData(tokens, timestamp);
             break;
+          case 'S':
+            // Process Sensor Fusion data
+            onSimpleFusionData(tokens, timestamp);
+            break;
+
           case 'R':
             // Process Raw MPU9250 data
             onRawData(tokens, timestamp);
@@ -308,8 +315,33 @@ namespace Sensors
         euler.setSourceEntity(m_fusion_ids['F']);
         euler.setTimeStamp(timestamp);
         dispatch(euler, DF_KEEP_SRC_EID | DF_KEEP_TIME);
-       
-        inf("Fusion: roll=%.4f, pitch=%.4f, yaw=%.4f", roll, pitch, yaw);
+
+        spew("Fusion: roll=%.4f, pitch=%.4f, yaw=%.4f", roll, pitch, yaw);
+      }
+
+      void
+      onSimpleFusionData(const std::vector<std::string>& data, double timestamp)
+      {
+        // Expecting: data[0]=roll, data[1]=pitch, data[2]=yaw
+        if (data.size() != 3)
+        {
+          war("Simple Fusion: insufficient data fields");
+          return;
+        }
+
+        float roll = std::stof(data[0]);
+        float pitch = std::stof(data[1]);
+        float yaw = std::stof(data[2]);
+
+        IMC::EulerAngles euler;
+        euler.phi = Angles::radians(roll);
+        euler.theta = Angles::radians(pitch);
+        euler.psi = Angles::radians(yaw);
+        euler.setSourceEntity(m_fusion_ids['S']);
+        euler.setTimeStamp(timestamp);
+        dispatch(euler, DF_KEEP_SRC_EID | DF_KEEP_TIME);
+
+        spew("Simple Fusion: roll=%.4f, pitch=%.4f, yaw=%.4f", roll, pitch, yaw);
       }
 
       //! Main loop.
