@@ -85,6 +85,8 @@ namespace Monitors
       bool m_submerged;
       //! Error state.
       bool m_error;
+      //! Timestamp of last actuation.
+      double m_last_actuation;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -93,6 +95,7 @@ namespace Monitors
         DUNE::Tasks::Task(name, ctx),
         m_thrust_eid(AddressResolver::invalid()),
         m_actuated(false),
+        m_last_actuation(0.0f),
         m_submerged(false),
         m_error(false)
       {
@@ -290,6 +293,7 @@ namespace Monitors
           m_current_check.reset();
 
         m_actuated = actuated;
+        m_last_actuation = Time::Clock::getSinceEpoch();
       }
 
       void
@@ -336,15 +340,6 @@ namespace Monitors
         dispatch(pcc, DF_LOOP_BACK);
       }
 
-      inline bool
-      isActuated(void)
-      {
-        if (m_args.submerged_only && !m_submerged)
-          return false;
-
-        return m_actuated;
-      }
-
       //! Main loop.
       void
       onMain(void)
@@ -352,27 +347,39 @@ namespace Monitors
         while (!stopping())
         {
           waitForMessages(0.01);
-          if (isActuated() && m_current_check.overflow())
+
+          if (m_last_actuation <= 0.0f)
+            continue;
+
+          const double now = Time::Clock::getSinceEpoch();
+          const double actuation_diff = now - m_last_actuation;
+          const float elapsed = m_current_check.getElapsed();
+          const bool no_recent_current = (elapsed < actuation_diff);
+
+          if (!no_recent_current && !m_current_check.overflow())
+            continue;
+
+          const bool elapsed_exceeded = elapsed >= m_args.periodic_check_error * 60.0f;
+
+          if (!m_error || (m_error && elapsed_exceeded))
           {
-            if ((m_error && m_current_check.getElapsed() > m_args.periodic_check_error * 60.0f) ||
-                !m_error)
-            {
-              m_error = true;
-              setEntityState(IMC::EntityState::ESTA_ERROR, "Thruster Not Responding");
-              std::ostringstream ss;
-              ss << "THRUST WRN;"
-                 << "T:" << m_args.maximum_current_timeout
-                 << "|A:" << m_args.current_threshold
-                 << "|L:" << m_args.thruster_current_channel_label;
+            m_error = true;
+            setEntityState(IMC::EntityState::ESTA_ERROR, "Thruster Not Responding");
 
-              const std::string& msg = ss.str();
-              inf("Current Window Overflow: %s", msg.c_str());
-              sendMessageOverSattelite(msg);
-              if (m_args.auto_restart)
-                tryRestartThruster();
+            std::ostringstream ss;
+            ss << "THRUST WRN;"
+               << "T:" << m_args.maximum_current_timeout
+               << "|A:" << m_args.current_threshold
+               << "|L:" << m_args.thruster_current_channel_label;
 
-              m_current_check.reset();
-            }
+            const std::string& msg = ss.str();
+            inf("Current Window Overflow: %s", msg.c_str());
+            sendMessageOverSattelite(msg);
+
+            if (m_args.auto_restart)
+              tryRestartThruster();
+
+            m_current_check.reset();
           }
         }
       }
