@@ -359,13 +359,15 @@ namespace Monitors
             {
               m_error = true;
               setEntityState(IMC::EntityState::ESTA_ERROR, "Thruster Not Responding");
-              std::stringstream ss;
+              std::ostringstream ss;
               ss << "THRUST WRN;"
                  << "T:" << m_args.maximum_current_timeout
                  << "|A:" << m_args.current_threshold
                  << "|L:" << m_args.thruster_current_channel_label;
-              inf("Current Window Overflow: %s", ss.str().c_str());
-              sendMessageOverSattelite(ss.str());
+
+              const std::string& msg = ss.str();
+              inf("Current Window Overflow: %s", msg.c_str());
+              sendMessageOverSattelite(msg);
               if (m_args.auto_restart)
                 tryRestartThruster();
 
