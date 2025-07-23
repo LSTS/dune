@@ -379,6 +379,9 @@ namespace Monitors
         {
           waitForMessages(0.01);
 
+          if (!isActive())
+            continue;
+
           if (m_last_actuation <= 0.0f)
             continue;
 
