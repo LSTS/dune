@@ -263,7 +263,7 @@ namespace Monitors
         }
         catch (...)
         {
-          war("Failed to resolve entity '%s'. Ensure the entity label is correct and the entity is available.",
+          err("Failed to resolve entity '%s'. Ensure the entity label is correct and the entity is available.",
               m_args.thruster_current_channel_label.c_str());
 
           m_thrust_eid = AddressResolver::invalid();
@@ -375,6 +375,9 @@ namespace Monitors
       void
       onMain(void)
       {
+        if (!AddressResolver::isValid(m_thrust_eid) && isActive())
+          requestDeactivation();
+
         while (!stopping())
         {
           waitForMessages(0.01);
