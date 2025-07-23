@@ -95,8 +95,8 @@ namespace Monitors
         DUNE::Tasks::Task(name, ctx),
         m_thrust_eid(AddressResolver::invalid()),
         m_actuated(false),
-        m_last_actuation(0.0f),
         m_error(false),
+        m_last_actuation(0.0f),
         m_medium_deactivation(false)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
