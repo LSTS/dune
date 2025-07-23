@@ -290,7 +290,7 @@ namespace Transports
 
         if (paramChanged(m_args.general_monitor_timeout))
         {
-          inf("Setting general monitor timeout to %f seconds", m_args.general_monitor_timeout);
+          trace("Setting general monitor timeout to %f seconds", m_args.general_monitor_timeout);
           m_general_monitor.setTop(m_args.general_monitor_timeout);
         }
       }
