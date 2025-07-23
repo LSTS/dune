@@ -41,6 +41,16 @@
 
 namespace Monitors
 {
+  //! Monitor for ZeroTier service.
+  //! This monitor checks the state of the ZeroTier service and can
+  //! restart it if necessary.
+  //! This monitor is designed to run on a Linux-based system with ZeroTier installed and configured.
+  //! It will check the state of the ZeroTier service and restart it if it's not running.
+  //! It will check the connectivity to remote hosts.
+  //! It will restart the system GSM modem, if the Internet service is provided by it.
+  //!
+  //! Tested on:
+  //! - Linux kernel version 6.8.0-63-generic and ZeroTier version 1.14.2, using g++ 13.3.0.
   namespace ZeroTier
   {
     using DUNE_NAMESPACES;
