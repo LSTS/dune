@@ -81,12 +81,12 @@ namespace Monitors
       unsigned m_thrust_eid;
       //! Thruster is being actuated or not.
       bool m_actuated;
-      //! Thruster is submerged or not.
-      bool m_submerged;
       //! Error state.
       bool m_error;
       //! Timestamp of last actuation.
       double m_last_actuation;
+      //! Deactivation was promoted by medium change.
+      bool m_medium_deactivation;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -96,8 +96,8 @@ namespace Monitors
         m_thrust_eid(AddressResolver::invalid()),
         m_actuated(false),
         m_last_actuation(0.0f),
-        m_submerged(false),
-        m_error(false)
+        m_error(false),
+        m_medium_deactivation(false)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -170,6 +170,20 @@ namespace Monitors
         ep.value = "false";
         sep.params.push_back(ep);
         dispatch(sep, DF_LOOP_BACK);
+      }
+
+      void
+      onActivation(void) override
+      {
+        DUNE::Tasks::Task::onActivation();
+        m_medium_deactivation = false;
+      }
+
+      void
+      onDeactivation(void) override
+      {
+        DUNE::Tasks::Task::onDeactivation();
+        m_medium_deactivation = false;
       }
 
       void
@@ -302,8 +316,25 @@ namespace Monitors
         if (msg->getSource() != getSystemId())
           return;
 
-        m_submerged = (msg->medium == IMC::VehicleMedium::VM_WATER) ||
-                      (msg->medium == IMC::VehicleMedium::VM_UNDERWATER);
+        const bool submerged = (msg->medium == IMC::VehicleMedium::VM_WATER) ||
+                               (msg->medium == IMC::VehicleMedium::VM_UNDERWATER);
+
+        if (m_args.submerged_only)
+        {
+          if (submerged)
+          {
+            if (m_medium_deactivation)
+              requestActivation();
+          }
+          else
+          {
+            if (isActive())
+            {
+              requestDeactivation();
+              m_medium_deactivation = true;
+            }  
+          }
+        }
       }
 
       void
