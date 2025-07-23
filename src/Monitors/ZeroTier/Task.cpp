@@ -44,8 +44,23 @@ namespace Monitors
   namespace ZeroTier
   {
     using DUNE_NAMESPACES;
+
     //! Timeout for general monitor restart message.
-    const double c_timeout_tx_request = 120.0;
+    constexpr double c_timeout_tx_request = 120.0;
+    //! Command to check ZeroTier state.
+    const char* c_zerotier_state_command = "zerotier-cli info";
+    //! ZeroTier state command expected result - part 1.
+    const char* c_zerotier_state_result_1 = "200";
+    //! ZeroTier state command expected result - part 2.
+    const char* c_zerotier_state_result_2 = "ONLINE";
+    //! Command to restart ZeroTier service.
+    const char* c_zerotier_restart_command = "timeout 5 systemctl restart zerotier-one";
+    //! Result when command times out.
+    constexpr int c_command_timeout_result = 124;
+    //! Parameter label to force restart of ZeroTier service.
+    const char* c_force_restart_param = "Force Restart";
+    //! Parameter label to restart GSM modem.
+    const char* c_restart_modem_gsm_param = "Restart Modem GSM";
 
     //! Task arguments.
     struct Arguments
@@ -53,7 +68,7 @@ namespace Monitors
       //! Flag to control automatic restart of ZeroTier service.
       bool auto_restart;
       //! Timeout in minutes to check ZeroTier state.
-      int zerotier_state_timeout;
+      float zerotier_state_timeout;
       //! Flag to control force of restart of ZeroTier service.
       bool force_restart;
       //! Flag to control restar of modem GSM
@@ -62,6 +77,8 @@ namespace Monitors
       std::string gsm_modem_power_label;
       //! List of ip's to check for connectivity.
       std::vector<std::string> remote_hosts_ip;
+      //! Send updates over sattelite.
+      bool send_satellite;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -70,6 +87,7 @@ namespace Monitors
       Arguments m_args;
       //! Time between checks of the ZeroTier state.
       Time::Counter<float> m_zerotier_state_check;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -80,39 +98,48 @@ namespace Monitors
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("AutoReconnect", m_args.auto_restart)
-          .defaultValue("true")
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .description("AutoReconnect the ZeroTier service if it is not running.");
+        .defaultValue("true")
+        .values("false,true")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Restart the ZeroTier service if it is not running.");
 
         param("AutoCheck Interval in Minutes", m_args.zerotier_state_timeout)
-          .defaultValue("10")
-          .minimumValue("2")
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .description("Timeout in minutes to check ZeroTier state. "
-                       "If the ZeroTier service is not running, it will be restarted.");
+        .defaultValue("10")
+        .minimumValue("2")
+        .units(Units::Minute)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Timeout in minutes to check ZeroTier state. "
+                     "If the ZeroTier service is not running, it will be restarted.");
 
-        param("Force Restart", m_args.force_restart)
-          .defaultValue("false")
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .description("Force restart of ZeroTier service if it is not running. "
-                       "If this is set to true, the service will be restarted even if it is running.");
+        param(c_force_restart_param, m_args.force_restart)
+        .defaultValue("false")
+        .values("false,true")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Force restart of ZeroTier service if it is not running. "
+                     "If this is set to true, the service will be restarted even if it is running.");
 
-        param("Restart Modem GSM", m_args.restart_modem_gsm)
-          .defaultValue("false")
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .description("Restart the GSM modem if it is not running. "
-                       "If this is set to true, the modem will be restarted even if it is running.");
+        param(c_restart_modem_gsm_param, m_args.restart_modem_gsm)
+        .defaultValue("false")
+        .values("false,true")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Restart the GSM modem if it is not running. "
+                     "If this is set to true, the modem will be restarted even if it is running.");
 
         param("Label of GSM Modem Power", m_args.gsm_modem_power_label)
-          .defaultValue("MOBILE_1_C")
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .description("Label of the GSM modem power channel. "
-                       "This is used to control the power of the GSM modem. ");
+        .defaultValue("")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Label of the GSM modem power channel. "
+                     "This is used to control the power of the GSM modem.");
 
         param("Remote Hosts IP to Check for Connectivity", m_args.remote_hosts_ip)
         .defaultValue("")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .description("List of Remote Hosts IP to Check for Connectivity");
+        .description("List of Remote Hosts IP to Check for Connectivity.");
+
+        param("Send Satellite Updates", m_args.send_satellite)
+        .defaultValue("false")
+        .values("false,true")
+        .description("Send updates over satellite.");
       }
 
       void
@@ -121,38 +148,50 @@ namespace Monitors
         trace("onUpdateParameters");
         if (paramChanged(m_args.auto_restart))
         {
-          inf("AutoReconnect parameter changed to: %s", m_args.auto_restart ? "true" : "false");
+          spew("AutoReconnect parameter changed to: %s", m_args.auto_restart ? "true" : "false");
         }
 
         if (paramChanged(m_args.zerotier_state_timeout))
         {
-          inf("AutoReconnect - Interval in Minutes parameter changed to: %d minutes", m_args.zerotier_state_timeout);
-          m_zerotier_state_check.setTop(m_args.zerotier_state_timeout * 60.0f); // Convert minutes to seconds.
+          spew("AutoReconnect Interval in Minutes parameter changed to: %f minutes", m_args.zerotier_state_timeout);
+          const auto old_top = m_zerotier_state_check.getTop();
+          auto new_top = m_args.zerotier_state_timeout * 60.0f;
+          if (old_top != 0.0f)
+          {
+            const auto elapsed = m_zerotier_state_check.getElapsed();
+            if (elapsed >= new_top)
+              m_zerotier_state_check.setTop(0.0f);
+            else if (m_zerotier_state_check.getRemaining() > new_top)
+              m_zerotier_state_check.setTop(new_top - elapsed);
+          }
         }
 
         if (paramChanged(m_args.force_restart))
         {
-          inf("Force Restart parameter changed to: %s", m_args.force_restart ? "true" : "false");
+          spew("Force Restart parameter changed to: %s", m_args.force_restart ? "true" : "false");
           if (m_args.force_restart)
           {
             restartZeroTierService();
-            m_args.force_restart = false;  // Reset the flag after restart.
+            resetParameter(c_force_restart_param);
           }
         }
 
         if (paramChanged(m_args.restart_modem_gsm))
         {
-          inf("Restart Modem GSM parameter changed to: %s", m_args.restart_modem_gsm ? "true" : "false");
+          spew("Restart Modem GSM parameter changed to: %s", m_args.restart_modem_gsm ? "true" : "false");
           if (m_args.restart_modem_gsm)
           {
             restartGSMModem();
-            m_args.restart_modem_gsm = false;  // Reset the flag after restart.
+            resetParameter(c_restart_modem_gsm_param);
           }
         }
 
         if (paramChanged(m_args.gsm_modem_power_label))
         {
-          inf("Label of GSM Modem Power parameter changed to: %s", m_args.gsm_modem_power_label.c_str());
+          if (m_args.gsm_modem_power_label.empty())
+            spew("Label of GSM Modem Power is empty.");
+          else
+            spew("Label of GSM Modem Power parameter changed to: %s", m_args.gsm_modem_power_label.c_str());
         }
       }
 
@@ -168,9 +207,8 @@ namespace Monitors
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
-        m_zerotier_state_check.setTop(m_args.zerotier_state_timeout * 60.0f); // Convert minutes to seconds.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        inf("Auto-restart: %s, check interval: %d minutes", m_args.auto_restart ? "true" : "false", m_args.zerotier_state_timeout);
+        inf("Auto-restart: %s, check interval: %f minutes", m_args.auto_restart ? "true" : "false", m_args.zerotier_state_timeout);
       }
 
       //! Release resources.
@@ -178,8 +216,22 @@ namespace Monitors
       onResourceRelease(void)
       { }
 
-      //! Task to execute comand to check state of ZeroTier.
-      //! The function have safety checks to ensure that the application dont give segmentation
+      void
+      resetParameter(const char* flag)
+      {
+        trace("Reseting flag '%s'.", flag);
+        IMC::SetEntityParameters sep;
+        sep.setDestination(getSystemId());
+        sep.setDestinationEntity(getEntityId());
+        IMC::EntityParameter ep;
+        ep.name = flag;
+        ep.value = "false";
+        sep.params.push_back(ep);
+        dispatch(sep, DF_LOOP_BACK);
+      }
+
+      //! Task to execute command to check state of ZeroTier.
+      //! The function have safety checks to ensure that the application doesn't give segmentation
       //! fault or core dump.
       //! @return string with the state of ZeroTier.
       std::string
@@ -191,31 +243,29 @@ namespace Monitors
         {
           // Execute the command to get the ZeroTier state.
           std::array<char, 128> buffer;
-          auto deleter = [](FILE* f) {
+          auto deleter = [](FILE* f)
+          {
             if (f)
               pclose(f);
           };
-          std::unique_ptr<FILE, decltype(deleter)> pipe(popen("zerotier-cli info", "r"), deleter);
+
+          std::unique_ptr<FILE, decltype(deleter)> pipe(popen(c_zerotier_state_command, "r"), deleter);
           if (!pipe)
           {
             war("Failed to open pipe for ZeroTier command.");
             return "Error: Failed to open pipe for ZeroTier command.";
           }
+
           while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr)
           {
             state += buffer.data();
           }
+
           // Check if there was an error while reading from the pipe.
           if (ferror(pipe.get()))
           {
             war("Error reading from ZeroTier command pipe.");
             return "Error: Error reading from ZeroTier command pipe.";
-          }
-
-          // If the state is empty, indicate that no data was returned from the command.
-          if (state.empty())
-          {
-            state = "Error: No data returned from ZeroTier command.";
           }
         }
         catch (const std::exception& e)
@@ -231,26 +281,16 @@ namespace Monitors
         }
 
         // case string state contains "\n", replace by "#"
-        try
-        {
-          size_t pos = 0;
-          while ((pos = state.find('\n', pos)) != std::string::npos)
-          {
-            state.replace(pos, 1, "#");
-            pos += 1;  // Move past the replaced character.
-          }
-          return state;
-        }
-        catch (const std::exception& e)
-        {
-          war("Error processing ZeroTier state: %s", e.what());
-          return "Error: " + std::string(e.what());
-        }
+        Utils::String::replaceAll(state, "\n", "#");
+        return state;
       }
 
       void
-      sendMessage(std::string message)
+      sendMessageOverSattelite(const std::string& message)
       {
+        if (!m_args.send_satellite)
+          return;
+
         IMC::TransmissionRequest tr;
         tr.setDestination(getSystemId());
         tr.setSourceEntity(getEntityId());
@@ -268,23 +308,21 @@ namespace Monitors
       restartZeroTierService(void)
       {
         inf("Attempting to restart ZeroTier service...");
-        // Use timeout to prevent blocking indefinitely
-        int result = system("timeout 5 systemctl restart zerotier-one");
-
+        int result = std::system(c_zerotier_restart_command);
         if (result == 0)
         {
           inf("ZeroTier service restarted successfully.");
-          sendMessage("ZeroTier service restarted successfully.");
+          sendMessageOverSattelite("ZeroTier service restarted successfully.");
         }
-        else if (WIFEXITED(result) && WEXITSTATUS(result) == 124)
+        else if (WIFEXITED(result) && WEXITSTATUS(result) == c_command_timeout_result)
         {
           err("Restart command timed out.");
-          sendMessage("Error: Restart command timed out.");
+          sendMessageOverSattelite("Error: Restart command timed out.");
         }
         else
         {
           err("Failed to restart ZeroTier service. (%d)", result);
-          sendMessage("Failed to restart ZeroTier service. Error code: " + std::to_string(result));
+          sendMessageOverSattelite("Failed to restart ZeroTier service. Error code: " + std::to_string(result));
         }
       }
 
@@ -292,18 +330,17 @@ namespace Monitors
       restartGSMModem(void)
       {
         // Attempt to restart GSM modem.
-        inf("Attempting to restart GSM modem...");
         inf("Powering off GSM modem %s...", m_args.gsm_modem_power_label.c_str());
         IMC::PowerChannelControl pcc;
         pcc.name = m_args.gsm_modem_power_label;
         pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
         dispatch(pcc, DF_LOOP_BACK);
-        Time::Delay::wait(10.0);  // Wait for 5 seconds before powering on again.
+        Time::Delay::wait(10.0);  // Wait for 10 seconds before powering on again.
         inf("Powering on GSM modem %s...", m_args.gsm_modem_power_label.c_str());
         pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
         dispatch(pcc, DF_LOOP_BACK);
         inf("GSM modem %s restarted successfully.", m_args.gsm_modem_power_label.c_str());
-        sendMessage("GSM modem " + m_args.gsm_modem_power_label + " restarted successfully.");
+        sendMessageOverSattelite("GSM modem " + m_args.gsm_modem_power_label + " restarted successfully.");
       }
 
       bool
@@ -350,9 +387,9 @@ namespace Monitors
       {
         inf("Checking ZeroTier state...");
         std::string state_zerotier = getZeroTierState();
-        if (state_zerotier.find("200") != std::string::npos || state_zerotier.find("ONLINE") != std::string::npos)
+        if (state_zerotier.find(c_zerotier_state_result_1) != std::string::npos || state_zerotier.find(c_zerotier_state_result_2) != std::string::npos)
         {
-          inf("ZeroTier is running: %s", state_zerotier.c_str());
+          inf("ZeroTier is running: %s", sanitize(state_zerotier).c_str());
           // Check internet connection to remote hosts, if all fail, send a message to warning
           if (!m_args.remote_hosts_ip.empty())
           {
@@ -373,12 +410,15 @@ namespace Monitors
               {
                 war("No internet connection to any of the configured remote hosts.");
                 std::string message_iri = "No internet connection to any of the configured remote hosts | [" + state_zerotier + "]";
-                sendMessage(message_iri);
+                sendMessageOverSattelite(message_iri);
                 if (m_args.auto_restart)
                 {
-                  inf("Attempting restart of GSM modem due to no internet connection.");
-                  restartGSMModem();
-                  Time::Delay::wait(20.0);  // Wait for 20 seconds before restarting ZeroTier state again.
+                  if (!m_args.gsm_modem_power_label.empty())
+                  {
+                    inf("Attempting restart of GSM modem due to no internet connection.");
+                    restartGSMModem();
+                    Time::Delay::wait(20.0);  // Wait for 20 seconds before restarting ZeroTier state again.
+                  }
                   inf("Attempting to restart ZeroTier service due to no internet connection.");
                   restartZeroTierService();
                 }
@@ -412,12 +452,15 @@ namespace Monitors
               {
                 war("No internet connection to any of the configured remote hosts.");
                 std::string message_iri = "No internet connection to any of the configured remote hosts | [" + state_zerotier + "]";
-                sendMessage(message_iri);
+                sendMessageOverSattelite(message_iri);
                 if (m_args.auto_restart)
                 {
                   inf("Attempting restart of GSM modem due to no internet connection.");
-                  restartGSMModem();
-                  Time::Delay::wait(20.0);  // Wait for 20 seconds before restarting ZeroTier state again.
+                  if (!m_args.gsm_modem_power_label.empty())
+                  {
+                    restartGSMModem();
+                    Time::Delay::wait(20.0);  // Wait for 20 seconds before restarting ZeroTier state again.
+                  }
                   inf("Attempting to restart ZeroTier service due to no internet connection.");
                   restartZeroTierService();
                 }
@@ -436,7 +479,7 @@ namespace Monitors
         else
         {
           war("ZeroTier is not running or in an error state: %s", state_zerotier.c_str());
-          sendMessage("ZeroTier is not running or in an error state: " + state_zerotier);
+          sendMessageOverSattelite("ZeroTier is not running or in an error state: " + state_zerotier);
           if (m_args.auto_restart)
           {
             restartZeroTierService();
@@ -545,10 +588,14 @@ namespace Monitors
         while (!stopping())
         {
           waitForMessages(0.01);
+
+          if (!isActive())
+            continue;
+
           if (m_zerotier_state_check.overflow())
           {
             checkZeroTierState();
-            m_zerotier_state_check.reset();
+            m_zerotier_state_check.setTop(m_args.zerotier_state_timeout * 60.0f);
           }
         }
       }
