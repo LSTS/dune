@@ -473,6 +473,8 @@ namespace Control
           // .defaultValue("10.0, 10.0, 10.0, 10.0, 10.0")
           // .description("Weights on environmental factors.");
 
+          setParameterScope("Bottom Track -- Minimum Depth", Parameter::SCOPE_GLOBAL);
+
           // Register handler routines.
           bind<IMC::AisInfo>(this);
           // bind<IMC::CurrentProfile>(this);
