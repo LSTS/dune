@@ -413,7 +413,7 @@ namespace Monitors
             inf("Current Window Overflow: %s", msg.c_str());
             sendMessageOverSattelite(msg);
 
-            if (m_args.auto_restart)
+            if (m_args.auto_restart && !m_args.thruster_power_channel_label.empty())
               tryRestartThruster();
 
             m_current_check.reset();
