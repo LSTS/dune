@@ -74,7 +74,7 @@ namespace DUNE
       inline T
       reset(void)
       {
-        m_last = static_cast<T>(Clock::get());
+        m_last = Clock::get();
         m_overflow = false;
         return m_last;
       }
@@ -113,7 +113,7 @@ namespace DUNE
       //! Top value.
       T m_top;
       //! Time of last reset.
-      T m_last;
+      double m_last;
       //! True if the counter overflowed.
       bool m_overflow;
     };
