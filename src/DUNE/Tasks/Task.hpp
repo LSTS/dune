@@ -796,6 +796,9 @@ namespace DUNE
         spew("on deactivation");
       }
 
+      void
+      saveEntityParameters(void);
+
       virtual void
       onQueryEntityParameters(const IMC::QueryEntityParameters* msg);
 
