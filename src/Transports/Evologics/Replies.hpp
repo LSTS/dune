@@ -41,6 +41,32 @@ namespace Transports
   namespace Evologics
   {
     using DUNE_NAMESPACES;
+    
+    struct RecvJanusBaseline 
+    {
+      RecvJanusBaseline(void):
+        version(0),
+        mobility(false),
+        schedule(false),
+        tx_rx(false),
+        forward(false),
+        user_class_id(0),
+        application_type(0),
+        crc(0)
+      {
+        memset(adb, 0, sizeof(adb));
+      }
+
+      uint8_t version;            // 4 bits
+      bool mobility;              // 1 bit
+      bool schedule;              // 1 bit
+      bool tx_rx;                 // 1 bit
+      bool forward;               // 1 bit
+      uint8_t user_class_id;      // 8 bits
+      uint8_t application_type;   // 6 bits
+      uint8_t adb[5];             // 34 bits (Ignore first 6 bits, use only 2 bits)
+      uint8_t crc;                // 8 bits
+    };
 
     struct RecvIM
     {
