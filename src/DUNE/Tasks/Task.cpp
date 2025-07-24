@@ -514,13 +514,11 @@ namespace DUNE
       {
         try
         {
-          if(m_params.set((*itr)->name, (*itr)->value))
-          {
-            IMC::EntityParameter p;
-            p.name = (*itr)->name;
-            p.value = (*itr)->value;
-            params.params.push_back(p);
-          }
+          m_params.set((*itr)->name, (*itr)->value);
+          IMC::EntityParameter p;
+          p.name = (*itr)->name;
+          p.value = (*itr)->value;
+          params.params.push_back(p);
           m_ctx.config.set(getName(), (*itr)->name, (*itr)->value);
         }
         catch (std::runtime_error& e)
@@ -530,8 +528,8 @@ namespace DUNE
         }
       }
 
-      // Dispatch even if empty to notify that the parameters were set.
-      dispatchReply(*msg, params);
+      if (!params.params.empty())
+        dispatchReply(*msg, params);
 
       updateParameters();
     }
