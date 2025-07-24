@@ -308,6 +308,7 @@ namespace Sensors
         double hi_x = m_args.hard_iron[0] - msg->x;
         double hi_y = m_args.hard_iron[1] - msg->y;
 
+        IMC::MessageList<IMC::EntityParameter> params;
         IMC::EntityParameter hip;
         hip.name = c_hard_iron_param;
         hip.value = String::str("%.4f, %.4f, 0.0", hi_x, hi_y);
@@ -318,15 +319,9 @@ namespace Sensors
         calt.value = String::str("%04u-%02u-%02u %02u:%02u", bdt.year, bdt.month,
                                  bdt.day, bdt.hour, bdt.minutes);
 
-        IMC::SetEntityParameters np;
-        np.name = getEntityLabel();
-        np.params.push_back(hip);
-        np.params.push_back(calt);
-        dispatch(np, DF_LOOP_BACK);
-
-        IMC::SaveEntityParameters sp;
-        sp.name = getEntityLabel();
-        dispatch(sp);
+        params.push_back(hip);
+        params.push_back(calt);
+        setEntityParameters(params, true);
       }
 
       //! Define sensor output frequency.
