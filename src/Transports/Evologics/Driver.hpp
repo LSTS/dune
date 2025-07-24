@@ -50,6 +50,8 @@ namespace Transports
     static const double c_timeout = 5.0;
     //! Instant message maximum size.
     static const size_t c_im_max_size = 64;
+    //! JANUS CRC polynomial.
+    static const uint8_t c_janus_poly = 0x07;
 
     //! Asynchronous messages.
     static const char* c_async_msgs[] =
@@ -73,6 +75,7 @@ namespace Transports
       "RECVSTART",
       "RECVFAILED",
       "RECVEND",
+      "RECVJRB",
       "SENDSTART",
       "SENDEND",
       "SENDPBM",
@@ -438,6 +441,44 @@ namespace Transports
           throw std::runtime_error("invalid format for RECV");
 
         msg.data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
+      }
+
+      void
+      parseReceivedJanusBaseline(const std::string& str, RecvJanusBaseline& msg)
+      {
+        int offset = 0;
+        long unsigned int data_size = 0;
+        int rv = 0;
+
+        rv = std::sscanf(str.c_str(),
+                         "RECVJRB,%lu,%n",
+                         &data_size, &offset);
+
+        if (rv != 2)
+          throw std::runtime_error("invalid format for RECVJRB");
+
+        std::vector<uint8_t> data;
+        data.assign((uint8_t*)&str[offset], (uint8_t*)&str[str.size()]);
+
+        if (data.size() != 8)
+          throw std::runtime_error("invalid data size for RECVJRB");
+
+        Algorithms::CRC8 crc(c_janus_poly);
+        crc.putArray(&data[0], data.size() - 1);
+        if (crc.get() != data[data.size() - 1])
+          throw std::runtime_error("invalid CRC for RECVJRB");
+
+        msg.version             = data[0] >> 4;
+        msg.mobility            = data[0] & 0b00001000;
+        msg.schedule            = data[0] & 0b00000100;
+        msg.tx_rx               = data[0] & 0b00000010;
+        msg.forward             = data[0] & 0b00000001;
+        msg.user_class_id       = data[1];
+        msg.application_type    = data[2] >> 2;
+        msg.adb[0]              = data[2] & 0b00000011;
+        for (uint8_t i = 1; i < 5; ++i)
+          msg.adb[i]            = data[2+i];
+        msg.crc                 = data[7];
       }
 
       void
