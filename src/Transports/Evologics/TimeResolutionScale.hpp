@@ -57,24 +57,24 @@ namespace Transports
       double trsvIndexToMs(const uint8_t i) const
       {
         if (i > c_max_index)
-          return m_trsv_table[c_max_index]
+          return m_trsv_table[c_max_index];
         return m_trsv_table[i];
       }
 
       // Convert index of repeat interval to milliseconds.
       //! @param[in] i index.
       //! @return time in seconds.
-      double trptIndexToMs(const uint8_t i) const;
+      double trptIndexToMs(const uint8_t i) const
       {
         if (i > c_max_index)
-          return m_trpt_table[c_max_index]
+          return m_trpt_table[c_max_index];
         return m_trpt_table[i];
       }
       
     private:
-      constexpr uint8_t c_max_index = 127;
-      constexpr double c_trsv_rate = 1.1;
-      constexpr double c_trpt_rate = 1.176769793407883;
+      const uint8_t c_max_index = 127;
+      const double c_trsv_rate = 1.1;
+      const double c_trpt_rate = 1.176769793407883;
   
       std::vector<double> m_trsv_table;
       std::vector<double> m_trpt_table;
