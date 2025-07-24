@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6e8033743562af8755e5e0350f6d63ca                            *
+// IMC XML MD5: b1259c5520f7984d32553175736ee30a                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -320,6 +320,7 @@ MESSAGE(815, UamRxFrame)
 MESSAGE(816, UamTxStatus)
 MESSAGE(817, UamRxRange)
 MESSAGE(818, UamTxRange)
+MESSAGE(819, UamJanusPacket)
 MESSAGE(820, FormCtrlParam)
 MESSAGE(821, FormationEval)
 MESSAGE(822, FormationControlParams)
@@ -329,6 +330,7 @@ MESSAGE(851, SoiPlan)
 MESSAGE(852, SoiCommand)
 MESSAGE(853, SoiState)
 MESSAGE(877, MessagePart)
+MESSAGE(878, MessagePartControl)
 MESSAGE(888, NeptusBlob)
 MESSAGE(889, Aborted)
 MESSAGE(890, UsblAngles)
@@ -367,6 +369,9 @@ MESSAGE(2003, ColoredDissolvedOrganicMatter)
 MESSAGE(2004, FluorescentDissolvedOrganicMatter)
 MESSAGE(2006, TotalMagIntensity)
 MESSAGE(2010, CommRestriction)
+MESSAGE(2016, QueryTypedEntityParameters)
+MESSAGE(2017, TypedEntityParameter)
+MESSAGE(2018, ValuesIf)
 MESSAGE(2021, VersionInfo)
 MESSAGE(2022, TotalHeading)
 #undef MESSAGE
