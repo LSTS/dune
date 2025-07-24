@@ -611,15 +611,7 @@ namespace Transports
         IMC::EntityParameter hip;
         hip.name = c_hard_iron_param;
         hip.value = String::str("%f, %f, 0.0", hi_x, hi_y);
-
-        IMC::SetEntityParameters np;
-        np.name = getEntityLabel();
-        np.params.push_back(hip);
-        dispatch(np, DF_LOOP_BACK);
-
-        IMC::SaveEntityParameters sp;
-        sp.name = getEntityLabel();
-        dispatch(sp);
+        setEntityParameter(hip, true);
       }
 
       //! Check if sensor has the same hard iron calibration parameters.
