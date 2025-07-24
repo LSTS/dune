@@ -797,6 +797,14 @@ namespace DUNE
       }
 
       void
+      setEntityParameter(const IMC::EntityParameter& param,
+                         const bool save = false);
+
+      void
+      setEntityParameters(const IMC::MessageList<IMC::EntityParameter>& params,
+                          const bool save = false);
+
+      void
       saveEntityParameters(void);
 
       virtual void

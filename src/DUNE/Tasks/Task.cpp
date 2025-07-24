@@ -605,6 +605,34 @@ namespace DUNE
     }
 
     void
+    Task::setEntityParameter(const IMC::EntityParameter& param, const bool save)
+    {
+      IMC::SetEntityParameters sep;
+      sep.setDestination(getSystemId());
+      sep.setDestinationEntity(getEntityId());
+      sep.name = getEntityLabel();
+      sep.params.push_back(param);
+      dispatch(sep, DF_LOOP_BACK);
+
+      if (save)
+        saveEntityParameters();
+    }
+
+    void
+    Task::setEntityParameters(const IMC::MessageList<IMC::EntityParameter>& params, const bool save)
+    {
+      IMC::SetEntityParameters sep;
+      sep.setDestination(getSystemId());
+      sep.setDestinationEntity(getEntityId());
+      sep.name = getEntityLabel();
+      sep.params = params;
+      dispatch(sep, DF_LOOP_BACK);
+
+      if (save)
+        saveEntityParameters();
+    }
+
+    void
     Task::saveEntityParameters(void)
     {
       IMC::SaveEntityParameters sp;
