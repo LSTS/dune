@@ -396,14 +396,7 @@ namespace Transports
           if(m_driver->getBalance(m_args.ussd_code, m_balance))
             setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
 
-          m_args.request_balance = false;
-          IMC::SetEntityParameters msg;
-          IMC::EntityParameter balance_param;
-          balance_param.name = c_balance_request_param;
-          balance_param.value = "false";
-          msg.params.push_back(balance_param);
-          msg.name = getEntityLabel();
-          dispatch(msg, DF_LOOP_BACK);
+          applyEntityParameter(m_args.request_balance, false);
         }
       }
 
