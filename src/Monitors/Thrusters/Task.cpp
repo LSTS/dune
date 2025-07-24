@@ -43,8 +43,6 @@ namespace Monitors
 
     //! Timeout for general monitor restart message.
     constexpr double c_timeout_tx_request = 120.0;
-    //! Parameter label to restart thruster.
-    const char* c_restart_thruster_param = "Restart Thruster";
 
     //! Task arguments.
     struct Arguments
@@ -147,7 +145,7 @@ namespace Monitors
         .values("false,true")
         .description("Try to restart thruster automatically.");
 
-        param(c_restart_thruster_param, m_args.force_restart)
+        param("Restart Thruster", m_args.force_restart)
         .defaultValue("false")
         .values("false,true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
@@ -156,20 +154,6 @@ namespace Monitors
         bind<IMC::Current>(this);
         bind<IMC::SetThrusterActuation>(this);
         bind<IMC::VehicleMedium>(this);
-      }
-
-      void
-      resetParameter(const char* flag)
-      {
-        trace("Reseting flag '%s'.", flag);
-        IMC::SetEntityParameters sep;
-        sep.setDestination(getSystemId());
-        sep.setDestinationEntity(getEntityId());
-        IMC::EntityParameter ep;
-        ep.name = flag;
-        ep.value = "false";
-        sep.params.push_back(ep);
-        dispatch(sep, DF_LOOP_BACK);
       }
 
       void
@@ -222,7 +206,7 @@ namespace Monitors
           if (m_args.force_restart)
           {
             tryRestartThruster();
-            resetParameter(c_restart_thruster_param);
+            applyEntityParameter(m_args.force_restart, false);
           }
         }
       }
