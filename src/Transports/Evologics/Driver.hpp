@@ -469,9 +469,9 @@ namespace Transports
           throw std::runtime_error("invalid CRC for RECVJRB");
 
         msg.version             = data[0] >> 4;
-        msg.mobility            = data[0] & 0b00001000;
-        msg.schedule            = data[0] & 0b00000100;
-        msg.tx_rx               = data[0] & 0b00000010;
+        msg.mobility            = (data[0] & 0b00001000) >> 3;
+        msg.schedule            = (data[0] & 0b00000100) >> 2;
+        msg.tx_rx               = (data[0] & 0b00000010) >> 1;
         msg.forward             = data[0] & 0b00000001;
         msg.user_class_id       = data[1];
         msg.application_type    = data[2] >> 2;
