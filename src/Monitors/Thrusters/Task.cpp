@@ -324,7 +324,7 @@ namespace Monitors
       void
       tryRestartThruster(void)
       {
-        std::string msg = "Attempting to restart thruster " + std::to_string(m_args.thruster_id);
+        std::string msg = "Trying to restart thruster " + std::to_string(m_args.thruster_id);
         inf("%s", msg.c_str());
         sendMessageOverSattelite(msg);
         IMC::PowerChannelControl pcc;
