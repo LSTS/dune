@@ -36,6 +36,7 @@
 // Local headers.
 #include "Driver.hpp"
 #include "Ticket.hpp"
+#include "TimeResolutionScale.hpp"
 
 namespace Transports
 {
@@ -123,6 +124,8 @@ namespace Transports
       IMC::VehicleMedium m_medium;
       //! Simulator flag
       bool m_simulating;
+      //! Time scale convertion for reserve time and repeat interval.
+      TimeResolutionScale m_scale_conversion;
       //! Task arguments.
       Arguments m_args;
 
@@ -540,6 +543,10 @@ namespace Transports
           handleUsblPosition(msg->value);
         else if (String::startsWith(msg->value, "USBLANGLES"))
           handleUsblAngles(msg->value);
+
+        // Janus.
+        else if (String::startsWith(msg->value, "RECVJRB"))
+          handleJanusBaseline(msg->value);
       }
 
       void
@@ -793,6 +800,56 @@ namespace Transports
         reply.fill(ua);
 
         dispatch(ua);
+      }
+
+      void
+      handleJanusBaseline(const std::string& str)
+      {
+        RecvJanusBaseline baseline;
+        IMC::UamJanusPacket packet;
+        try
+        {
+          m_driver->parseReceivedJanusBaseline(str, baseline);
+        }
+        catch (std::runtime_error& e)
+        {
+          packet.error = e.what();
+          dispatch(packet);
+          err("Problem parsing Janus baseline: %s", e.what());
+          return;
+        }
+        
+        //  packet.seq = ??;
+        packet.op = IMC::UamJanusPacket::OP_BASELINE_RECV;
+
+        packet.baseline_flags |= baseline.mobility ? IMC::UamJanusPacket::JANUSBL_MOBILE : 0;
+        // Use schedule
+        if (baseline.schedule)
+        {
+          // Check first 8 bits of ADB (Ignore first 6 bits of array).
+          uint8_t schedule = (baseline.adb[0] & 0b00000011) << 6;
+          schedule |= (baseline.adb[1] >> 2);
+
+          if (schedule & 0b10000000)
+          {
+            packet.baseline_flags |= IMC::UamJanusPacket::JANUSBL_REPEAT_INTERVAL;
+            // Compute intervale
+            packet.time = m_scale_conversion.trptIndexToMs(schedule & 0b01111111);
+          }
+          else
+          {
+            packet.baseline_flags |= IMC::UamJanusPacket::JANUSBL_RESERVATION_TIME;
+            // Compute reservation time
+            packet.time = m_scale_conversion.trsvIndexToMs(schedule & 0b01111111);
+          }
+        }
+        packet.baseline_flags |= baseline.tx_rx ? IMC::UamJanusPacket::JANUSBL_DECODE_CAPABILITY : 0;
+      
+        packet.class_user_id = baseline.user_class_id;
+        packet.application_type = baseline.application_type;
+        packet.adb.assign((char*)&baseline.adb[0], (char*)&baseline.adb[4]);
+
+        dispatch(packet);
       }
 
       void
