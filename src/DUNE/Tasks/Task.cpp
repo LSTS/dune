@@ -605,6 +605,14 @@ namespace DUNE
     }
 
     void
+    Task::saveEntityParameters(void)
+    {
+      IMC::SaveEntityParameters sp;
+      sp.name = getEntityLabel();
+      dispatch(sp, DF_LOOP_BACK);
+    }
+
+    void
     Task::writeParamsXML(std::ostream& os) const
     {
       if (onWriteParamsXML(os))
