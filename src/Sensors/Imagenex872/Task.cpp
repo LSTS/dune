@@ -258,15 +258,10 @@ namespace Sensors
       void
       setPeriodicity(double value)
       {
-        IMC::SetEntityParameters sep;
-        sep.name = getEntityLabel();
-        sep.setDestination(getSystemId());
-        sep.setDestinationEntity(getEntityId());
-        IMC::EntityParameter ep;
-        ep.name = c_periodicity_param_name;
-        ep.value = std::to_string(value);
-        sep.params.push_back(ep);
-        dispatch(sep, DF_LOOP_BACK);
+        IMC::EntityParameter param;
+        param.name = c_periodicity_param_name;
+        param.value = std::to_string(value);
+        setEntityParameter(param);
       }
 
       void
