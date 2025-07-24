@@ -67,10 +67,6 @@ namespace Monitors
     const char* c_zerotier_restart_command = "timeout 5 systemctl restart zerotier-one";
     //! Result when command times out.
     constexpr int c_command_timeout_result = 124;
-    //! Parameter label to force restart of ZeroTier service.
-    const char* c_force_restart_param = "Force Restart";
-    //! Parameter label to restart GSM modem.
-    const char* c_restart_modem_gsm_param = "Restart Modem GSM";
 
     //! Task arguments.
     struct Arguments
@@ -121,14 +117,14 @@ namespace Monitors
         .description("Timeout in minutes to check ZeroTier state. "
                      "If the ZeroTier service is not running, it will be restarted.");
 
-        param(c_force_restart_param, m_args.force_restart)
+        param("Force Restart", m_args.force_restart)
         .defaultValue("false")
         .values("false,true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Force restart of ZeroTier service if it is not running. "
                      "If this is set to true, the service will be restarted even if it is running.");
 
-        param(c_restart_modem_gsm_param, m_args.restart_modem_gsm)
+        param("Restart Modem GSM", m_args.restart_modem_gsm)
         .defaultValue("false")
         .values("false,true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
@@ -182,7 +178,7 @@ namespace Monitors
           if (m_args.force_restart)
           {
             restartZeroTierService();
-            resetParameter(c_force_restart_param);
+            applyEntityParameter(m_args.force_restart, false);
           }
         }
 
@@ -192,7 +188,7 @@ namespace Monitors
           if (m_args.restart_modem_gsm)
           {
             restartGSMModem();
-            resetParameter(c_restart_modem_gsm_param);
+            applyEntityParameter(m_args.restart_modem_gsm, false);
           }
         }
 
@@ -225,20 +221,6 @@ namespace Monitors
       void
       onResourceRelease(void)
       { }
-
-      void
-      resetParameter(const char* flag)
-      {
-        trace("Reseting flag '%s'.", flag);
-        IMC::SetEntityParameters sep;
-        sep.setDestination(getSystemId());
-        sep.setDestinationEntity(getEntityId());
-        IMC::EntityParameter ep;
-        ep.name = flag;
-        ep.value = "false";
-        sep.params.push_back(ep);
-        dispatch(sep, DF_LOOP_BACK);
-      }
 
       //! Task to execute command to check state of ZeroTier.
       //! The function have safety checks to ensure that the application doesn't give segmentation
