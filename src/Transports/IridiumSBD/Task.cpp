@@ -671,14 +671,7 @@ namespace Transports
         war("Queue cleared");
 
         // Reset clear queue flag
-        m_args.clear_queue = false;
-        IMC::SetEntityParameters msg;
-        IMC::EntityParameter clear_queue_param;
-        clear_queue_param.name = c_clear_queue_param;
-        clear_queue_param.value = "false";
-        msg.params.push_back(clear_queue_param);
-        msg.name = getEntityLabel();
-        dispatch(msg, DF_LOOP_BACK);
+        applyEntityParameter(m_args.clear_queue, false);
       }
 
       bool
