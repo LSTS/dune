@@ -37,6 +37,7 @@ namespace DUNE
   { }
 }
 
+#include <DUNE/Monitors/AISProximity.hpp>
 #include <DUNE/Monitors/DelayedTrigger.hpp>
 #include <DUNE/Monitors/MediumHandler.hpp>
 #include <DUNE/Monitors/MotorCurrentMonitor.hpp>
