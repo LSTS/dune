@@ -62,6 +62,14 @@ namespace DUNE
         reset();
       }
 
+      //! Set top value without resetting.
+      //! @param top counter's top value.
+      inline void
+      setTopWithoutReset(T top)
+      {
+        m_top = top;
+      }
+
       //! Get top value.
       //! @return counter's top value.
       inline T
