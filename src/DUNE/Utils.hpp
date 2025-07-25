@@ -53,4 +53,5 @@ namespace DUNE
 #include <DUNE/Utils/Actuators.hpp>
 #include <DUNE/Utils/LineParser.hpp>
 #include <DUNE/Utils/SmartPointers.hpp>
+#include <DUNE/Utils/Connections.hpp>
 #endif
