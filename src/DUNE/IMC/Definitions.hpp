@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 04ce1d1dac399100b9207708c4b21b88                            *
+// IMC XML MD5: 8dc5c4eff704a6869be2461d13b39bce                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -2522,10 +2522,10 @@ namespace DUNE
         PROF_CHLOROPHYLL = 5,
         //! Turbidity.
         PROF_TURBIDITY = 6,
-        //! Current Velocity In x.
-        PROF_CURRENT_VELOCITY_U = 7,
-        //! Current Velocity In y.
-        PROF_CURRENT_VELOCITY_V = 8,
+        //! Current Velocity In North.
+        PROF_CURRENT_VELOCITY_N = 7,
+        //! Current Velocity In East.
+        PROF_CURRENT_VELOCITY_E = 8,
         //! Absolute Wind Average.
         PROF_ABSOLUTE_WIND_AVG = 9,
         //! Absolute Wind Maximum.
@@ -23559,6 +23559,125 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! UamJanusPacket.
+    class UamJanusPacket: public Message
+    {
+    public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Send Request.
+        OP_SEND_REQ = 0,
+        //! Baseline Packet Received.
+        OP_BASELINE_RECV = 1,
+        //! Baseline Unpack Request.
+        OP_UNPACK_REQ = 2,
+        //! Baseline Unpack Reply.
+        OP_UNPACK_REPLY = 3,
+        //! Baseline Unpack Error.
+        OP_UNPACK_ERROR = 4,
+        //! Send Success.
+        OP_SEND_SUCCESS = 5,
+        //! Send Error.
+        OP_SEND_ERROR = 6
+      };
+
+      //! Baseline Packet Flags.
+      enum BaselinePacketFlagsBits
+      {
+        //! Mobile.
+        JANUSBL_MOBILE = 0x01,
+        //! Repeat Interval.
+        JANUSBL_REPEAT_INTERVAL = 0x02,
+        //! Reservation Time.
+        JANUSBL_RESERVATION_TIME = 0x04,
+        //! Decode Capability.
+        JANUSBL_DECODE_CAPABILITY = 0x08,
+        //! Forward Capability.
+        JANUSBL_FORWARD_CAPABILITY = 0x16
+      };
+
+      //! Sequence Id.
+      uint16_t seq;
+      //! Operation.
+      uint8_t op;
+      //! Baseline Packet Flags.
+      uint8_t baseline_flags;
+      //! Time.
+      fp32_t time;
+      //! Class User Id.
+      uint8_t class_user_id;
+      //! Application Type.
+      uint8_t application_type;
+      //! Application Data Block.
+      std::vector<char> adb;
+      //! Error.
+      std::string error;
+      //! Length.
+      uint8_t length;
+      //! Janus Cargo.
+      std::vector<char> cargo;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 819;
+      }
+
+      UamJanusPacket(void);
+
+      UamJanusPacket*
+      clone(void) const
+      {
+        return new UamJanusPacket(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return UamJanusPacket::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "UamJanusPacket";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 11;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(adb) + IMC::getSerializationSize(error) + IMC::getSerializationSize(cargo);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Formation Control Parameters.
     class FormCtrlParam: public Message
     {
@@ -26364,6 +26483,88 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Trigger Action.
+    class TriggerAction: public Message
+    {
+    public:
+      //! Event.
+      enum EventEnum
+      {
+        //! Request.
+        TAE_REQUEST = 0,
+        //! Success.
+        TAE_SUCCESS = 1,
+        //! Failure.
+        TAE_FAILURE = 2
+      };
+
+      //! Event.
+      uint8_t event;
+      //! Action Identifier.
+      uint16_t act_id;
+      //! Custom settings for triggered action.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 1004;
+      }
+
+      TriggerAction(void);
+
+      TriggerAction*
+      clone(void) const
+      {
+        return new TriggerAction(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TriggerAction::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TriggerAction";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 3;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! ADCP Beam Measurements.
     class ADCPBeam: public Message
     {
@@ -26790,6 +26991,176 @@ namespace DUNE
       getFixedSerializationSize(void) const
       {
         return 108;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! HoPS Transmit.
+    class HoPSTX: public Message
+    {
+    public:
+      //! Priority.
+      enum PriorityEnum
+      {
+        //! High.
+        PRIO_HIGH = 0,
+        //! Normal.
+        PRIO_NORMAL = 1,
+        //! Attached.
+        PRIO_ATTACHED = 255
+      };
+
+      //! HoPS Destination.
+      uint8_t hops_dst;
+      //! Priority.
+      uint8_t prio;
+      //! Data.
+      std::vector<char> data;
+      //! Extra Information.
+      std::string extra;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 1060;
+      }
+
+      HoPSTX(void);
+
+      HoPSTX*
+      clone(void) const
+      {
+        return new HoPSTX(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return HoPSTX::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "HoPSTX";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 2;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(data) + IMC::getSerializationSize(extra);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! HoPS Receive.
+    class HoPSRX: public Message
+    {
+    public:
+      //! Priority.
+      enum PriorityEnum
+      {
+        //! High.
+        PRIO_HIGH = 0,
+        //! Normal.
+        PRIO_NORMAL = 1,
+        //! Attached.
+        PRIO_ATTACHED = 255
+      };
+
+      //! HoPS Source.
+      uint8_t hops_src;
+      //! HoPS Destination.
+      uint8_t hops_dst;
+      //! Priority.
+      uint8_t prio;
+      //! Data.
+      std::vector<char> data;
+      //! Extra Information.
+      std::string extra;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 1061;
+      }
+
+      HoPSRX(void);
+
+      HoPSRX*
+      clone(void) const
+      {
+        return new HoPSRX(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return HoPSRX::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "HoPSRX";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 3;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(data) + IMC::getSerializationSize(extra);
       }
 
       void

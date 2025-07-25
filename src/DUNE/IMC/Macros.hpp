@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 04ce1d1dac399100b9207708c4b21b88                            *
+// IMC XML MD5: 8dc5c4eff704a6869be2461d13b39bce                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -612,6 +612,8 @@
 #define DUNE_IMC_UAMRXRANGE 817
 //! UamTxRange identification number.
 #define DUNE_IMC_UAMTXRANGE 818
+//! UamJanusPacket identification number.
+#define DUNE_IMC_UAMJANUSPACKET 819
 //! FormCtrlParam identification number.
 #define DUNE_IMC_FORMCTRLPARAM 820
 //! FormationEval identification number.
@@ -684,6 +686,8 @@
 #define DUNE_IMC_ENCAWARENESS 913
 //! Displacement identification number.
 #define DUNE_IMC_DISPLACEMENT 915
+//! TriggerAction identification number.
+#define DUNE_IMC_TRIGGERACTION 1004
 //! CurrentProfile identification number.
 #define DUNE_IMC_CURRENTPROFILE 1014
 //! CurrentProfileCell identification number.
@@ -694,6 +698,10 @@
 #define DUNE_IMC_FREQUENCY 1017
 //! WaveSpectrumParameters identification number.
 #define DUNE_IMC_WAVESPECTRUMPARAMETERS 1018
+//! HoPSTX identification number.
+#define DUNE_IMC_HOPSTX 1060
+//! HoPSRX identification number.
+#define DUNE_IMC_HOPSRX 1061
 //! GpioState identification number.
 #define DUNE_IMC_GPIOSTATE 2000
 //! GpioStateGet identification number.

@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 04ce1d1dac399100b9207708c4b21b88                            *
+// IMC XML MD5: 8dc5c4eff704a6869be2461d13b39bce                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -320,6 +320,7 @@ MESSAGE(815, UamRxFrame)
 MESSAGE(816, UamTxStatus)
 MESSAGE(817, UamRxRange)
 MESSAGE(818, UamTxRange)
+MESSAGE(819, UamJanusPacket)
 MESSAGE(820, FormCtrlParam)
 MESSAGE(821, FormationEval)
 MESSAGE(822, FormationControlParams)
@@ -356,11 +357,14 @@ MESSAGE(911, AbsoluteWind)
 MESSAGE(912, AisInfo)
 MESSAGE(913, ENCAwareness)
 MESSAGE(915, Displacement)
+MESSAGE(1004, TriggerAction)
 MESSAGE(1014, CurrentProfile)
 MESSAGE(1015, CurrentProfileCell)
 MESSAGE(1016, ADCPBeam)
 MESSAGE(1017, Frequency)
 MESSAGE(1018, WaveSpectrumParameters)
+MESSAGE(1060, HoPSTX)
+MESSAGE(1061, HoPSRX)
 MESSAGE(2000, GpioState)
 MESSAGE(2001, GpioStateGet)
 MESSAGE(2002, GpioStateSet)
