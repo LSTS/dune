@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 6e8033743562af8755e5e0350f6d63ca                            *
+// IMC XML MD5: 562e76a9ab04a28d47230f2549654a53                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -612,6 +612,8 @@
 #define DUNE_IMC_UAMRXRANGE 817
 //! UamTxRange identification number.
 #define DUNE_IMC_UAMTXRANGE 818
+//! UamJanusPacket identification number.
+#define DUNE_IMC_UAMJANUSPACKET 819
 //! FormCtrlParam identification number.
 #define DUNE_IMC_FORMCTRLPARAM 820
 //! FormationEval identification number.
@@ -630,6 +632,8 @@
 #define DUNE_IMC_SOISTATE 853
 //! MessagePart identification number.
 #define DUNE_IMC_MESSAGEPART 877
+//! MessagePartControl identification number.
+#define DUNE_IMC_MESSAGEPARTCONTROL 878
 //! NeptusBlob identification number.
 #define DUNE_IMC_NEPTUSBLOB 888
 //! Aborted identification number.
@@ -706,6 +710,12 @@
 #define DUNE_IMC_TOTALMAGINTENSITY 2006
 //! CommRestriction identification number.
 #define DUNE_IMC_COMMRESTRICTION 2010
+//! QueryTypedEntityParameters identification number.
+#define DUNE_IMC_QUERYTYPEDENTITYPARAMETERS 2016
+//! TypedEntityParameter identification number.
+#define DUNE_IMC_TYPEDENTITYPARAMETER 2017
+//! ValuesIf identification number.
+#define DUNE_IMC_VALUESIF 2018
 //! VersionInfo identification number.
 #define DUNE_IMC_VERSIONINFO 2021
 //! TotalHeading identification number.
