@@ -104,6 +104,9 @@ namespace Monitors
           setNavigationLight(m_args.stern_light_state_with_targets);
         else
           setNavigationLight(m_args.stern_light_state_no_targets);
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL,
+                      CODE_ACTIVE);
       }
 
       void
