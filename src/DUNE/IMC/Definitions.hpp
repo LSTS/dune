@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 04ce1d1dac399100b9207708c4b21b88                            *
+// IMC XML MD5: d1be0cfac9c5cd84878f9f1587a1f713                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -2522,10 +2522,10 @@ namespace DUNE
         PROF_CHLOROPHYLL = 5,
         //! Turbidity.
         PROF_TURBIDITY = 6,
-        //! Current Velocity In x.
-        PROF_CURRENT_VELOCITY_U = 7,
-        //! Current Velocity In y.
-        PROF_CURRENT_VELOCITY_V = 8,
+        //! Current Velocity In North.
+        PROF_CURRENT_VELOCITY_N = 7,
+        //! Current Velocity In East.
+        PROF_CURRENT_VELOCITY_E = 8,
         //! Absolute Wind Average.
         PROF_ABSOLUTE_WIND_AVG = 9,
         //! Absolute Wind Maximum.
