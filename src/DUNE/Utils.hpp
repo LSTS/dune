@@ -54,4 +54,5 @@ namespace DUNE
 #include <DUNE/Utils/LineParser.hpp>
 #include <DUNE/Utils/SmartPointers.hpp>
 #include <DUNE/Utils/Connections.hpp>
+#include <DUNE/Utils/NMEAParser.hpp>
 #endif
