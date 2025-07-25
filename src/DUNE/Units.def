@@ -121,6 +121,8 @@ UNIT(DegreeCelsius            , "\xc2\xb0""C")
 
 // Time.
 UNIT(Second                   , "s")
+UNIT(Decisecond               , "ds")
+UNIT(Centisecond              , "cs")
 UNIT(Millisecond              , "ms")
 UNIT(Microsecond              , "us")
 UNIT(Nanosecond               , "ns")
