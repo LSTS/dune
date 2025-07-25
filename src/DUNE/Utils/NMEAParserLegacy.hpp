@@ -25,8 +25,8 @@
 // Author: Ricardo Martins                                                  *
 //***************************************************************************
 
-#ifndef DUNE_UTILS_NMEA_PARSER_HPP_INCLUDED_
-#define DUNE_UTILS_NMEA_PARSER_HPP_INCLUDED_
+#ifndef DUNE_UTILS_NMEA_PARSER_LEGACY_HPP_INCLUDED_
+#define DUNE_UTILS_NMEA_PARSER_LEGACY_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
@@ -37,8 +37,8 @@ namespace DUNE
   namespace Utils
   {
     // Export DLL Symbols.
-    struct DUNE_DLL_SYM NMEASentence;
-    class DUNE_DLL_SYM NMEAParser;
+    struct DUNE_DLL_SYM NMEASentenceLegacy;
+    class DUNE_DLL_SYM NMEAParserLegacy;
 
     enum NMEACommands
     {
@@ -66,11 +66,11 @@ namespace DUNE
     };
 
     //! Suported NMEA sentences.
-    struct NMEASentence
+    struct NMEASentenceLegacy
     {
       //! Make struct polymorphic for dynamic_cast.
       virtual
-      ~NMEASentence() {}
+      ~NMEASentenceLegacy() {}
 
       //! Sentence type.
       int type;
@@ -342,19 +342,19 @@ namespace DUNE
       } data;
     };
 
-    class NMEAParser
+    class NMEAParserLegacy
     {
     public:
-      NMEAParser(int garbage = 0);
+      NMEAParserLegacy(int garbage = 0);
 
-      ~NMEAParser(void)
+      ~NMEAParserLegacy(void)
       { }
 
       bool
-      parse(char byte, NMEASentence& sentence);
+      parse(char byte, NMEASentenceLegacy& sentence);
 
       bool
-      parse(char *buffer, unsigned size, NMEASentence& sentence);
+      parse(char *buffer, unsigned size, NMEASentenceLegacy& sentence);
 
       static void
       parseCoordinate(const char* str, double& var, double def);
@@ -439,34 +439,34 @@ namespace DUNE
       State m_dftrans;
 
       virtual bool
-      parseCommand(NMEASentence& sentence);
+      parseCommand(NMEASentenceLegacy& sentence);
 
       bool
-      parseGGA(NMEASentence& sentence);
+      parseGGA(NMEASentenceLegacy& sentence);
 
       bool
-      parseDBT(NMEASentence& sentence);
+      parseDBT(NMEASentenceLegacy& sentence);
 
       bool
-      parseMTW(NMEASentence& sentence);
+      parseMTW(NMEASentenceLegacy& sentence);
 
       bool
-      parseSSB(NMEASentence& sentence);
+      parseSSB(NMEASentenceLegacy& sentence);
 
       bool
-      parseSSA(NMEASentence& sentence);
+      parseSSA(NMEASentenceLegacy& sentence);
 
       bool
-      parseCTL(NMEASentence& sentence);
+      parseCTL(NMEASentenceLegacy& sentence);
 
       bool
-      parseVBW(NMEASentence& sentence);
+      parseVBW(NMEASentenceLegacy& sentence);
 
       bool
-      parseCFG(NMEASentence& sentence);
+      parseCFG(NMEASentenceLegacy& sentence);
 
       bool
-      parseNET(NMEASentence& sentence);
+      parseNET(NMEASentenceLegacy& sentence);
     protected:
 
       void

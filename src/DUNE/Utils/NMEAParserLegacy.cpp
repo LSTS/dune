@@ -35,14 +35,14 @@
 // DUNE headers.
 #include <DUNE/Math/Angles.hpp>
 #include <DUNE/Utils/String.hpp>
-#include <DUNE/Utils/NMEAParser.hpp>
+#include <DUNE/Utils/NMEAParserLegacy.hpp>
 #include <DUNE/Algorithms/XORChecksum.hpp>
 
 namespace DUNE
 {
   namespace Utils
   {
-    NMEAParser::NMEAParser(int garbage):
+    NMEAParserLegacy::NMEAParserLegacy(int garbage):
       m_state(STATE_START),
       m_cmd_garbage(garbage),
       m_dftrans(STATE_CMD)
@@ -52,7 +52,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parse(char *buffer, unsigned size, NMEASentence& sentence)
+    NMEAParserLegacy::parse(char *buffer, unsigned size, NMEASentenceLegacy& sentence)
     {
       for (unsigned i = 0; i < size; i++)
       {
@@ -64,7 +64,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parse(char byte, NMEASentence& sentence)
+    NMEAParserLegacy::parse(char byte, NMEASentenceLegacy& sentence)
     {
       switch (m_state)
       {
@@ -149,7 +149,7 @@ namespace DUNE
     }
 
     void
-    NMEAParser::parseCoordinate(const char* str, double& var, double def)
+    NMEAParserLegacy::parseCoordinate(const char* str, double& var, double def)
     {
       const char* ptr = std::strchr(str, '.');
 
@@ -170,7 +170,7 @@ namespace DUNE
     }
 
     void
-    NMEAParser::parseEpochTime(const char* str, double& var, double def)
+    NMEAParserLegacy::parseEpochTime(const char* str, double& var, double def)
     {
       if (std::strlen(str) < 9)
       {
@@ -215,7 +215,7 @@ namespace DUNE
     }
 
     void
-    NMEAParser::parseUTCTime(const char* str, double& var, double def)
+    NMEAParserLegacy::parseUTCTime(const char* str, double& var, double def)
     {
       if (std::strlen(str) < 6)
       {
@@ -231,7 +231,7 @@ namespace DUNE
     }
 
     void
-    NMEAParser::parseInteger(const char* str, int& var)
+    NMEAParserLegacy::parseInteger(const char* str, int& var)
     {
       char* endptr;
       errno = 0;
@@ -249,7 +249,7 @@ namespace DUNE
     }
 
     void
-    NMEAParser::parseDouble(const char* str, double& var)
+    NMEAParserLegacy::parseDouble(const char* str, double& var)
     {
       char* endptr;
       errno = 0;
@@ -262,7 +262,7 @@ namespace DUNE
     }
 
     void
-    NMEAParser::rebuildSentence()
+    NMEAParserLegacy::rebuildSentence()
     {
       m_sentence = "$";
       m_sentence += m_cmd;
@@ -273,7 +273,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parseCommand(NMEASentence& sentence)
+    NMEAParserLegacy::parseCommand(NMEASentenceLegacy& sentence)
     {
       rebuildSentence();
 
@@ -299,7 +299,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parseGGA(NMEASentence& sentence)
+    NMEAParserLegacy::parseGGA(NMEASentenceLegacy& sentence)
     {
       std::vector<std::string> tokens;
       String::split(m_data, ",", tokens);
@@ -326,7 +326,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parseDBT(NMEASentence& sentence)
+    NMEAParserLegacy::parseDBT(NMEASentenceLegacy& sentence)
     {
       std::vector<std::string> tokens;
       String::split(m_data, ",", tokens);
@@ -345,7 +345,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parseSSB(NMEASentence& sentence)
+    NMEAParserLegacy::parseSSB(NMEASentenceLegacy& sentence)
     {
       std::vector<std::string> tokens;
       String::split(m_data, ",", tokens);
@@ -365,31 +365,31 @@ namespace DUNE
       sentence.data.ssb.did = did;
 
       if (tokens[3] == "T")
-        sentence.data.ssb.cf = NMEASentence::SentenceData::SSB::T;
+        sentence.data.ssb.cf = NMEASentenceLegacy::SentenceData::SSB::T;
       else if (tokens[3] == "B")
-        sentence.data.ssb.cf = NMEASentence::SentenceData::SSB::B;
+        sentence.data.ssb.cf = NMEASentenceLegacy::SentenceData::SSB::B;
       else if (tokens[3] == "H")
-        sentence.data.ssb.cf = NMEASentence::SentenceData::SSB::H;
+        sentence.data.ssb.cf = NMEASentenceLegacy::SentenceData::SSB::H;
       else if (tokens[3] == "N")
-        sentence.data.ssb.cf = NMEASentence::SentenceData::SSB::N;
+        sentence.data.ssb.cf = NMEASentenceLegacy::SentenceData::SSB::N;
       else if (tokens[3] == "E")
-        sentence.data.ssb.cf = NMEASentence::SentenceData::SSB::E;
+        sentence.data.ssb.cf = NMEASentenceLegacy::SentenceData::SSB::E;
       else if (tokens[3] == "G")
-        sentence.data.ssb.cf = NMEASentence::SentenceData::SSB::G;
+        sentence.data.ssb.cf = NMEASentenceLegacy::SentenceData::SSB::G;
 
       if (tokens[4] == "T")
-        sentence.data.ssb.op = NMEASentence::SentenceData::SSB::OP_T;
+        sentence.data.ssb.op = NMEASentenceLegacy::SentenceData::SSB::OP_T;
       else if (tokens[4] == "V")
-        sentence.data.ssb.op = NMEASentence::SentenceData::SSB::OP_V;
+        sentence.data.ssb.op = NMEASentenceLegacy::SentenceData::SSB::OP_V;
 
       if (tokens[5] == "T")
-        sentence.data.ssb.tr = NMEASentence::SentenceData::SSB::TR_T;
+        sentence.data.ssb.tr = NMEASentenceLegacy::SentenceData::SSB::TR_T;
       else if (tokens[5] == "R")
-        sentence.data.ssb.tr = NMEASentence::SentenceData::SSB::TR_R;
+        sentence.data.ssb.tr = NMEASentenceLegacy::SentenceData::SSB::TR_R;
       else if (tokens[5] == "P")
-        sentence.data.ssb.tr = NMEASentence::SentenceData::SSB::TR_P;
+        sentence.data.ssb.tr = NMEASentenceLegacy::SentenceData::SSB::TR_P;
       else if (tokens[5] == "U")
-        sentence.data.ssb.tr = NMEASentence::SentenceData::SSB::TR_U;
+        sentence.data.ssb.tr = NMEASentenceLegacy::SentenceData::SSB::TR_U;
 
       parseDouble(tokens[6].c_str(), sentence.data.ssb.x);
       parseDouble(tokens[7].c_str(), sentence.data.ssb.y);
@@ -402,7 +402,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parseSSA(NMEASentence& sentence)
+    NMEAParserLegacy::parseSSA(NMEASentenceLegacy& sentence)
     {
       std::vector<std::string> tokens;
       String::split(m_data, ",", tokens);
@@ -422,26 +422,26 @@ namespace DUNE
       sentence.data.ssa.did = did;
 
       if (tokens[3] == "T")
-        sentence.data.ssa.cf = NMEASentence::SentenceData::SSA::T;
+        sentence.data.ssa.cf = NMEASentenceLegacy::SentenceData::SSA::T;
       else if (tokens[3] == "B")
-        sentence.data.ssa.cf = NMEASentence::SentenceData::SSA::B;
+        sentence.data.ssa.cf = NMEASentenceLegacy::SentenceData::SSA::B;
       else if (tokens[3] == "H")
-        sentence.data.ssa.cf = NMEASentence::SentenceData::SSA::H;
+        sentence.data.ssa.cf = NMEASentenceLegacy::SentenceData::SSA::H;
       else if (tokens[3] == "N")
-        sentence.data.ssa.cf = NMEASentence::SentenceData::SSA::N;
+        sentence.data.ssa.cf = NMEASentenceLegacy::SentenceData::SSA::N;
       else if (tokens[3] == "E")
-        sentence.data.ssa.cf = NMEASentence::SentenceData::SSA::E;
+        sentence.data.ssa.cf = NMEASentenceLegacy::SentenceData::SSA::E;
       else if (tokens[3] == "G")
-        sentence.data.ssa.cf = NMEASentence::SentenceData::SSA::G;
+        sentence.data.ssa.cf = NMEASentenceLegacy::SentenceData::SSA::G;
 
       if (tokens[4] == "T")
-        sentence.data.ssa.tr = NMEASentence::SentenceData::SSA::TR_T;
+        sentence.data.ssa.tr = NMEASentenceLegacy::SentenceData::SSA::TR_T;
       else if (tokens[4] == "R")
-        sentence.data.ssa.tr = NMEASentence::SentenceData::SSA::TR_R;
+        sentence.data.ssa.tr = NMEASentenceLegacy::SentenceData::SSA::TR_R;
       else if (tokens[4] == "P")
-        sentence.data.ssa.tr = NMEASentence::SentenceData::SSA::TR_P;
+        sentence.data.ssa.tr = NMEASentenceLegacy::SentenceData::SSA::TR_P;
       else if (tokens[4] == "U")
-        sentence.data.ssa.tr = NMEASentence::SentenceData::SSA::TR_U;
+        sentence.data.ssa.tr = NMEASentenceLegacy::SentenceData::SSA::TR_U;
 
       parseDouble(tokens[5].c_str(), sentence.data.ssa.bearing);
       parseDouble(tokens[6].c_str(), sentence.data.ssa.elevation);
@@ -458,7 +458,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parseCTL(NMEASentence& sentence)
+    NMEAParserLegacy::parseCTL(NMEASentenceLegacy& sentence)
     {
       sentence.type = CTL;
 
@@ -482,7 +482,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parseMTW(NMEASentence& sentence)
+    NMEAParserLegacy::parseMTW(NMEASentenceLegacy& sentence)
     {
       std::vector<std::string> tokens;
       String::split(m_data, ",", tokens);
@@ -501,7 +501,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parseVBW(NMEASentence& sentence)
+    NMEAParserLegacy::parseVBW(NMEASentenceLegacy& sentence)
     {
       // Example: $VMVBW,0.46,-0.27,A,,,V,,V,,V*65
       std::vector<std::string> tokens;
@@ -522,7 +522,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parseCFG(NMEASentence& sentence)
+    NMEAParserLegacy::parseCFG(NMEASentenceLegacy& sentence)
     {
       sentence.type = CFG;
 
@@ -530,13 +530,13 @@ namespace DUNE
       String::split(m_data, ",", tokens);
 
       if (tokens.front() == "")
-        sentence.data.cfg.type = NMEASentence::SentenceData::CFG::NONE;
+        sentence.data.cfg.type = NMEASentenceLegacy::SentenceData::CFG::NONE;
       else if (tokens.front() == "S")
-        sentence.data.cfg.type = NMEASentence::SentenceData::CFG::SET;
+        sentence.data.cfg.type = NMEASentenceLegacy::SentenceData::CFG::SET;
       else if (tokens.front() == "G")
-        sentence.data.cfg.type = NMEASentence::SentenceData::CFG::GET;
+        sentence.data.cfg.type = NMEASentenceLegacy::SentenceData::CFG::GET;
       else if (tokens.front() == "E")
-        sentence.data.cfg.type = NMEASentence::SentenceData::CFG::ERROR;
+        sentence.data.cfg.type = NMEASentenceLegacy::SentenceData::CFG::ERROR;
 
       if (tokens.size() < 2U)
         return false;
@@ -548,7 +548,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::parseNET(NMEASentence& sentence)
+    NMEAParserLegacy::parseNET(NMEASentenceLegacy& sentence)
     {
       sentence.type = NET;
 
@@ -557,7 +557,7 @@ namespace DUNE
 
       if (tokens.front() == "I")
       {
-        sentence.data.net.type = NMEASentence::SentenceData::NET::TYPE_DELIVERY_SYSTEM_TOKEN;
+        sentence.data.net.type = NMEASentenceLegacy::SentenceData::NET::TYPE_DELIVERY_SYSTEM_TOKEN;
         int token;
         parseInteger(tokens[1].c_str(), token);
         sentence.data.net.data.delivery_system_token.token = token;
@@ -569,19 +569,19 @@ namespace DUNE
           return false;
 
         if (tokens.front() == "T")
-          sentence.data.net.type = NMEASentence::SentenceData::NET::TYPE_TRANSMIT;
+          sentence.data.net.type = NMEASentenceLegacy::SentenceData::NET::TYPE_TRANSMIT;
         else if (tokens.front() == "A")
-          sentence.data.net.type = NMEASentence::SentenceData::NET::TYPE_ACCEPTED;
+          sentence.data.net.type = NMEASentenceLegacy::SentenceData::NET::TYPE_ACCEPTED;
         else if (tokens.front() == "D")
-          sentence.data.net.type = NMEASentence::SentenceData::NET::TYPE_DELIVERED;
+          sentence.data.net.type = NMEASentenceLegacy::SentenceData::NET::TYPE_DELIVERED;
         else if (tokens.front() == "R")
-          sentence.data.net.type = NMEASentence::SentenceData::NET::TYPE_RECEIVED;
+          sentence.data.net.type = NMEASentenceLegacy::SentenceData::NET::TYPE_RECEIVED;
         else if (tokens.front() == "C")
-          sentence.data.net.type = NMEASentence::SentenceData::NET::TYPE_CANCELED;
+          sentence.data.net.type = NMEASentenceLegacy::SentenceData::NET::TYPE_CANCELED;
         else if (tokens.front() == "E")
-          sentence.data.net.type = NMEASentence::SentenceData::NET::TYPE_ERROR;
+          sentence.data.net.type = NMEASentenceLegacy::SentenceData::NET::TYPE_ERROR;
         else
-          sentence.data.net.type = NMEASentence::SentenceData::NET::TYPE_OTHER;
+          sentence.data.net.type = NMEASentenceLegacy::SentenceData::NET::TYPE_OTHER;
 
         int src;
         int dst;
@@ -591,11 +591,11 @@ namespace DUNE
         sentence.data.net.data.msg.dst = dst;
 
         if (tokens.at(3) == "0")
-          sentence.data.net.data.msg.prio = NMEASentence::SentenceData::NET::Data::Msg::PRIO_HIGH;
+          sentence.data.net.data.msg.prio = NMEASentenceLegacy::SentenceData::NET::Data::Msg::PRIO_HIGH;
         else if (tokens.at(3) == "A")
-          sentence.data.net.data.msg.prio = NMEASentence::SentenceData::NET::Data::Msg::PRIO_ATTACHED;
+          sentence.data.net.data.msg.prio = NMEASentenceLegacy::SentenceData::NET::Data::Msg::PRIO_ATTACHED;
         else
-          sentence.data.net.data.msg.prio = NMEASentence::SentenceData::NET::Data::Msg::PRIO_NORMAL;
+          sentence.data.net.data.msg.prio = NMEASentenceLegacy::SentenceData::NET::Data::Msg::PRIO_NORMAL;
 
         int token;
         parseInteger(tokens[4].c_str(), token);
@@ -608,7 +608,7 @@ namespace DUNE
     }
 
     bool
-    NMEAParser::validateChecksum(const char* bfr, int bfr_len)
+    NMEAParserLegacy::validateChecksum(const char* bfr, int bfr_len)
     {
       if (bfr_len < 5)
         return false;
