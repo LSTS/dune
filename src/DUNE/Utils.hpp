@@ -51,4 +51,5 @@ namespace DUNE
 #include <DUNE/Utils/XML.hpp>
 #include <DUNE/Utils/Codecs.hpp>
 #include <DUNE/Utils/Actuators.hpp>
+#include <DUNE/Utils/LineParser.hpp>
 #endif
