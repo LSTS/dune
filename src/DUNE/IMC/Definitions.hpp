@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 562e76a9ab04a28d47230f2549654a53                            *
+// IMC XML MD5: 5132f68dffb4939a49bbaba996b367c5                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -23578,16 +23578,8 @@ namespace DUNE
         OP_SEND_REQ = 0,
         //! Baseline Packet Received.
         OP_BASELINE_RECV = 1,
-        //! Baseline Unpack Request.
-        OP_UNPACK_REQ = 2,
-        //! Baseline Unpack Reply.
-        OP_UNPACK_REPLY = 3,
-        //! Baseline Unpack Error.
-        OP_UNPACK_ERROR = 4,
-        //! Send Success.
-        OP_SEND_SUCCESS = 5,
-        //! Send Error.
-        OP_SEND_ERROR = 6
+        //! Cargo Received.
+        OP_CARGO_RECV = 2
       };
 
       //! Baseline Packet Flags.

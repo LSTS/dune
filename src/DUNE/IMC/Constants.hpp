@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 562e76a9ab04a28d47230f2549654a53                            *
+// IMC XML MD5: 5132f68dffb4939a49bbaba996b367c5                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
@@ -39,7 +39,7 @@
 //! Git repository information.
 #define DUNE_IMC_CONST_GIT_INFO "2025-07-25 88f069b  (HEAD -> feature/janus, origin/feature/janus)"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "562e76a9ab04a28d47230f2549654a53"
+#define DUNE_IMC_CONST_MD5 "5132f68dffb4939a49bbaba996b367c5"
 //! Synchronization number.
 #define DUNE_IMC_CONST_SYNC 0xFE54
 //! Reversed synchronization number.
