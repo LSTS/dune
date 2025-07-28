@@ -150,6 +150,8 @@ namespace Sensors
           .defaultValue("4.0")
           .minimumValue("0.0")
           .description("Input timeout");
+
+        setWaitForMessages(0.1);
       }
 
       //! Update internal state with new parameter values.
