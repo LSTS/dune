@@ -398,7 +398,7 @@ namespace Sensors
         euler.phi = Angles::normalizeRadian(Angles::radians(f_roll));
         euler.theta = Angles::normalizeRadian(Angles::radians(f_pitch));
         euler.psi = Angles::normalizeRadian(Angles::radians(f_yaw));
-        // euler.psi_magnetic = Angles::normalizeRadian(euler.psi);
+        euler.psi_magnetic = euler.psi;
 
         dispatchMessage(euler);
 
