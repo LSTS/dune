@@ -138,16 +138,13 @@ namespace Monitors
         .description("Send updates over satellite.");
 
         param("Monitor only when submerged", m_args.submerged_only)
-        .values("false,true")
         .description("Only monitor thruster when submerged.");
 
         param("Auto Restart", m_args.auto_restart)
-        .values("false,true")
         .description("Try to restart thruster automatically.");
 
         param("Restart Thruster", m_args.force_restart)
         .defaultValue("false")
-        .values("false,true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Try to restart thruster.");
 
