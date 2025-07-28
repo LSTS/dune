@@ -64,13 +64,13 @@ namespace Monitors
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Stern Light State No Targets", m_args.stern_light_state_no_targets)
-        .minimumValue("0")
-        .defaultValue("0")
+        .minimumValue("-1")
+        .defaultValue("-1")
         .description("State of the stern light when no targets are in proximity.");
 
         param("Stern Light State With Targets", m_args.stern_light_state_with_targets)
-        .minimumValue("0")
-        .defaultValue("1")
+        .minimumValue("-1")
+        .defaultValue("0")
         .description("State of the stern light when targets are in proximity.");
 
         param("Stern Light Entity", m_args.stern_light_entity)
