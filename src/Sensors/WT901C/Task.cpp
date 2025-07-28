@@ -173,6 +173,8 @@ namespace Sensors
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
         return true;
       }
 
