@@ -105,7 +105,6 @@ namespace Monitors
 
         param("AutoReconnect", m_args.auto_restart)
         .defaultValue("true")
-        .values("false,true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Restart the ZeroTier service if it is not running.");
 
@@ -119,14 +118,12 @@ namespace Monitors
 
         param("Force Restart", m_args.force_restart)
         .defaultValue("false")
-        .values("false,true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Force restart of ZeroTier service if it is not running. "
                      "If this is set to true, the service will be restarted even if it is running.");
 
         param("Restart Modem GSM", m_args.restart_modem_gsm)
         .defaultValue("false")
-        .values("false,true")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Restart the GSM modem if it is not running. "
                      "If this is set to true, the modem will be restarted even if it is running.");
@@ -144,7 +141,6 @@ namespace Monitors
 
         param("Send Satellite Updates", m_args.send_satellite)
         .defaultValue("false")
-        .values("false,true")
         .description("Send updates over satellite.");
       }
 
