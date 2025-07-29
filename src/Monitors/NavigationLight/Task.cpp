@@ -39,14 +39,14 @@ namespace Monitors
 
     struct Arguments
     {
-      //! Stern light state with no targets in proximity.
-      int stern_light_state_no_targets;
-      //! Stern light state with targets in proximity.
-      int stern_light_state_with_targets;
-      //! Stern light entity label.
-      std::string stern_light_entity;
-      //! Stern light parameter label.
-      std::string stern_light_parameter_label;
+      //! Light state with no targets in proximity.
+      int light_state_no_targets;
+      //! Light state with targets in proximity.
+      int light_state_with_targets;
+      //! Light entity label.
+      std::string light_entity;
+      //! Light parameter label.
+      std::string light_parameter_label;
     };
 
     struct Task: public DUNE::Monitors::AISProximity
@@ -63,35 +63,35 @@ namespace Monitors
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
 
-        param("Stern Light State No Targets", m_args.stern_light_state_no_targets)
+        param("Light State No Targets", m_args.light_state_no_targets)
         .minimumValue("-1")
         .defaultValue("-1")
-        .description("State of the stern light when no targets are in proximity.");
+        .description("State of the light when no targets are in proximity.");
 
-        param("Stern Light State With Targets", m_args.stern_light_state_with_targets)
+        param("Light State With Targets", m_args.light_state_with_targets)
         .minimumValue("-1")
         .defaultValue("0")
-        .description("State of the stern light when targets are in proximity.");
+        .description("State of the light when targets are in proximity.");
 
-        param("Stern Light Entity", m_args.stern_light_entity)
+        param("Light Entity", m_args.light_entity)
         .editable("false")
         .defaultValue("")
-        .description("Entity label for the stern light.");
+        .description("Entity label for the light.");
 
-        param("Stern Light Parameter Label", m_args.stern_light_parameter_label)
+        param("Light Parameter Label", m_args.light_parameter_label)
         .editable("false")
         .defaultValue("")
-        .description("Parameter label for the stern light state.");
+        .description("Parameter label for the light state.");
       }
 
       void
       setNavigationLight(int state)
       {
-        debug("setting stern light state to %d", state);
+        debug("setting light state to %d", state);
         IMC::SetEntityParameters sep;
-        sep.name = m_args.stern_light_entity;
+        sep.name = m_args.light_entity;
         IMC::EntityParameter param;
-        param.name = m_args.stern_light_parameter_label;
+        param.name = m_args.light_parameter_label;
         param.value = std::to_string(state);
         sep.params.push_back(param);
         dispatch(sep);
@@ -101,9 +101,9 @@ namespace Monitors
       onActivation(void) override
       {
         if (targetsInProximity())
-          setNavigationLight(m_args.stern_light_state_with_targets);
+          setNavigationLight(m_args.light_state_with_targets);
         else
-          setNavigationLight(m_args.stern_light_state_no_targets);
+          setNavigationLight(m_args.light_state_no_targets);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL,
                       CODE_ACTIVE);
@@ -116,7 +116,7 @@ namespace Monitors
           return;
 
         war("Proximity alert triggered for AIS targets."); 
-        setNavigationLight(m_args.stern_light_state_with_targets);
+        setNavigationLight(m_args.light_state_with_targets);
       }
 
       void
@@ -126,7 +126,7 @@ namespace Monitors
           return;
 
         inf("No AIS targets in the area.");
-        setNavigationLight(m_args.stern_light_state_no_targets);
+        setNavigationLight(m_args.light_state_no_targets);
       }
     };
   }
