@@ -37,6 +37,9 @@ namespace Monitors
   {
     using DUNE_NAMESPACES;
 
+    //! Timeout for general monitor restart message.
+    constexpr double c_timeout_tx_request = 120.0;
+
     struct Arguments
     {
       //! Light state with no targets in proximity.
@@ -53,12 +56,15 @@ namespace Monitors
     {
       //! Task Arguments
       Arguments m_args;
+      //! Flag to indicate if the led is on or off.
+      bool m_led_on;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Monitors::AISProximity(name, ctx)
+        DUNE::Monitors::AISProximity(name, ctx),
+        m_led_on(false)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -85,6 +91,46 @@ namespace Monitors
       }
 
       void
+      onUpdateParameters(void)
+      {
+        bool changed_led_state = false;
+        if (paramChanged(m_args.light_state_no_targets))
+        {
+          setNavigationLight(m_args.light_state_no_targets);
+          changed_led_state = true;
+        }
+
+        if (paramChanged(m_args.light_state_with_targets))
+        {
+          setNavigationLight(m_args.light_state_with_targets);
+          changed_led_state = true;
+        }
+
+        if(changed_led_state)
+        {
+          inf("Light state updated: No Targets = %d, With Targets = %d",
+              m_args.light_state_no_targets, m_args.light_state_with_targets);
+          onActivation();
+        }
+      }
+
+      void
+      sendMessageOverSatellite(const std::string& message)
+      {
+        IMC::TransmissionRequest tr;
+        tr.setDestination(getSystemId());
+        tr.setSourceEntity(getEntityId());
+        tr.destination = "broadcast";
+        tr.deadline = Time::Clock::getSinceEpoch() + c_timeout_tx_request;  // seconds
+        tr.req_id = std::rand() % 0xFFFF;
+        tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
+        tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
+        std::string msg = std::string(getName()) + " - " + message;
+        tr.txt_data = msg;
+        dispatch(tr);
+      }
+
+      void
       setNavigationLight(int state)
       {
         debug("setting light state to %d", state);
@@ -101,12 +147,21 @@ namespace Monitors
       onActivation(void) override
       {
         if (targetsInProximity())
+        {
           setNavigationLight(m_args.light_state_with_targets);
+          m_led_on = true;
+          inf("Initialized led state to on");
+          sendMessageOverSatellite("INIT LED ON");
+        }
         else
+        {
           setNavigationLight(m_args.light_state_no_targets);
+          m_led_on = false;
+          inf("Initialized led state to off");
+          sendMessageOverSatellite("INTI LED OFF");
+        }
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL,
-                      CODE_ACTIVE);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, CODE_ACTIVE);
       }
 
       void
@@ -117,6 +172,11 @@ namespace Monitors
 
         war("Proximity alert triggered for AIS targets."); 
         setNavigationLight(m_args.light_state_with_targets);
+        if (!m_led_on)
+        {
+          m_led_on = true;
+          sendMessageOverSatellite("LED ON");
+        }
       }
 
       void
@@ -127,6 +187,11 @@ namespace Monitors
 
         inf("No AIS targets in the area.");
         setNavigationLight(m_args.light_state_no_targets);
+        if (m_led_on)
+        {
+          m_led_on = false;
+          sendMessageOverSatellite("LED OFF");
+        }
       }
     };
   }
