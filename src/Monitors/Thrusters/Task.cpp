@@ -288,7 +288,8 @@ namespace Monitors
           m_current_check.reset();
 
         m_actuated = actuated;
-        m_last_actuation = Time::Clock::getSinceEpoch();
+        if (m_actuated)
+          m_last_actuation = Time::Clock::getSinceEpoch();
       }
 
       void
