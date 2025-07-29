@@ -221,7 +221,7 @@ namespace Monitors
       {
         m_current_check.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        inf("Interval for thrusted current warning: %d minutes, "
+        inf("Interval for thruster current warning: %d minutes, "
             "Current threshold set to: %.2f Amperes, "
             "Monitoring thruster current channel: %s",
             m_args.maximum_current_timeout,
