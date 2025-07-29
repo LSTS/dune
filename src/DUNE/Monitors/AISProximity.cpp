@@ -48,7 +48,31 @@ namespace DUNE
         return;
 
       const auto ts = msg->getTimeStamp();
-      const auto distance = msg->dist /* WGS84::distance(m_lat, m_lon, 0, msg->lat, msg->lon, 0) */;
+      float distance = 0;
+
+      switch (m_method)
+      {
+      case DISTANCE_METHOD_LATLON:
+        WGS84::distance(m_lat, m_lon, 0, msg->lat, msg->lon, 0);
+        break;
+
+      case DISTANCE_METHOD_AIS_DIST:
+        distance = msg->dist;
+        break;
+      
+      case DISTANCE_METHOD_BOTH:
+        if (msg->dist <= 0.0f)
+          distance = WGS84::distance(m_lat, m_lon, 0, msg->lat, msg->lon, 0);
+        else
+          distance = msg->dist;
+        break;
+
+      default:
+        throw std::runtime_error("Unknown distance method in AISProximity.");
+      }
+
+      war("Received AIS message from %s (%s) at a distance of %f",
+           msg->mmsi.c_str(), msg->name.c_str(), distance);
 
       std::map<std::string, DUNE::Monitors::AISTarget>::iterator target = m_ais_targets.find(msg->mmsi);
       if (target == m_ais_targets.end())
