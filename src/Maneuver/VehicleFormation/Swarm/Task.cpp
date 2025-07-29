@@ -213,7 +213,7 @@ namespace Maneuver
           param("Leader Reference Timeout", m_args.leader_reference_timeout)
           .units(Units::Second)
           .minimumValue("5.0")
-          .defaultValue("60.0")
+          .defaultValue("20.0")
           .description("Leader reference timeout");
 
           param("Speed Maximum Delta", m_args.speed_max_delta)
@@ -715,6 +715,7 @@ namespace Maneuver
 
           double distance = norm(prev, next);
           double distance_virtual = norm(prev_virtual, next_virtual);
+
           setSpeedReference(distance / distance_virtual);
 
           // throw a leg of TPoints to be followed by the vehicle
@@ -804,7 +805,18 @@ namespace Maneuver
         void
         setSpeedReference(double coeff)
         {
-          double speed_reference = (isLeader() || m_leader_ref_timer.overflow()) ? getSpeed() : m_leader_pos.speed;
+          double speed_reference = 0;
+          if (isLeader())
+            speed_reference = getSpeed();
+          else if (m_leader_ref_timer.overflow())
+            speed_reference = getSpeed();
+          else if (m_leader_pos.speed == 0)
+            speed_reference = getSpeed();
+          else
+            speed_reference = m_leader_pos.speed;
+
+          // double speed_reference = (isLeader() || m_leader_ref_timer.overflow()) ? getSpeed() : m_leader_pos.speed;
+
           m_speed_ref = speed_reference * coeff;
           if (m_speed_ref > speed_reference + m_args.speed_max_delta)
             m_speed_ref = speed_reference + m_args.speed_max_delta;
@@ -871,13 +883,13 @@ namespace Maneuver
           double coeff;
           double original_speed = getSpeed();
 
-          if (m_leader_ref_timer.overflow() && m_leader_ref_timer.getTop() == 0.0f)
+          if (m_leader_ref_timer.getTop() == 0.0f)
             coeff = returnToOriginalSpeed(original_speed);
           else if (m_curr == m_leader_pos.waypoint_idx)
             coeff = adjustSpeedReference();
           else if (m_curr > m_leader_pos.waypoint_idx)
-            coeff = 0;
-            // coeff = 1 - m_args.speed_max_delta / original_speed;
+            // coeff = 0;
+            coeff = 1 - m_args.speed_max_delta / original_speed;
           else
             coeff = 1 + m_args.speed_max_delta / original_speed;
           
@@ -914,7 +926,10 @@ namespace Maneuver
             if (m_args.fallback_maneuver == c_fallback_maneuvers[FO_AUTO])
             {
               if (m_leader_ref_timer.getTop() != 0.0f)
+              {
                 m_leader_ref_timer.setTop(0.0f);
+                war("AUTO Mode Engaged");
+              }
               else
                 updateSpeed();
             }
