@@ -382,7 +382,6 @@ namespace Monitors
 
           if (!m_error || (m_error && elapsed_exceeded))
           {
-            m_error = true;
             setEntityState(IMC::EntityState::ESTA_ERROR, "Thruster Not Responding");
 
             std::ostringstream ss;
@@ -398,7 +397,10 @@ namespace Monitors
             if (m_args.auto_restart && !m_args.thruster_power_channel_label.empty())
               tryRestartThruster();
 
-            m_current_check.reset();
+            if (m_error)
+              m_current_check.reset();
+            else
+              m_error = true;
           }
         }
       }
