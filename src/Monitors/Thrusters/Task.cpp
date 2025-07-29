@@ -393,7 +393,7 @@ namespace Monitors
 
           if (!m_error)
           {
-            ss << "THRUST WRN;"
+            ss << "WRN;"
                << "T:" << m_args.maximum_current_timeout
                << "|A:" << m_args.current_threshold
                << "|L:" << m_args.thruster_current_channel_label;
@@ -401,7 +401,7 @@ namespace Monitors
           }
           else
           {
-            ss << "THRUST WRN;"
+            ss << "WRN;"
                << "P:" << m_args.periodic_check_error;
           }
 
