@@ -46,6 +46,8 @@ namespace DUNE
 
     struct AISPArguments
     {
+      //! Method to calculate distance.
+      std::string distance_method;
       //! Proximity distance in kilometers.
       unsigned proximity_distance;
       //! Timeout for discarding an AIS target.
@@ -60,6 +62,16 @@ namespace DUNE
       double distance;
     };
 
+    enum DistanceMethod : uint8_t
+    {
+      //! Use WGS84 latitude/longitude distance.
+      DISTANCE_METHOD_LATLON = 0,
+      //! Use AIS distance.
+      DISTANCE_METHOD_AIS_DIST = 1,
+      //! Use both methods.
+      DISTANCE_METHOD_BOTH = 2
+    };
+
     class AISProximity: public DUNE::Tasks::Periodic
     {
     public:
@@ -70,6 +82,13 @@ namespace DUNE
         m_lon(0.0f),
         m_last_estate(0.0f)
       {
+        param("Distance Method", m_aisp_args.distance_method)
+        .defaultValue("")
+        .values("latlon,ais_dist,both")
+        .description("Method to determine distance to AIS targets. "
+                     "Options: latlon (WGS84), ais_dist (from AIS message), both (use both methods). "
+                     "When using 'both', if distance from AIS message is <= 0, use WGS84 calculation.");
+
         param("Proximity Distance", m_aisp_args.proximity_distance)
         .minimumValue("0")
         .defaultValue("0")
@@ -93,6 +112,11 @@ namespace DUNE
       void
       onUpdateParameters(void) override
       {
+        if (paramChanged(m_aisp_args.distance_method))
+          m_method = (m_aisp_args.distance_method == "latlon") ? DISTANCE_METHOD_LATLON :
+                     (m_aisp_args.distance_method == "ais_dist") ? DISTANCE_METHOD_AIS_DIST :
+                     DISTANCE_METHOD_BOTH;
+
         if (paramChanged(m_aisp_args.proximity_distance))
           updateAISTargets();
       }
@@ -125,6 +149,8 @@ namespace DUNE
     private:
       //! Task arguments.
       AISPArguments m_aisp_args;
+      //! Method to calculate distance.
+      DistanceMethod m_method;
       //! Current latitude.
       double m_lat;
       //! Current longitude.
