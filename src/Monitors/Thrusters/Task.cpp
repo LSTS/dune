@@ -85,6 +85,8 @@ namespace Monitors
       double m_last_actuation;
       //! Deactivation was promoted by medium change.
       bool m_medium_deactivation;
+      //! Submerged state.
+      bool m_submerged;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -95,7 +97,8 @@ namespace Monitors
         m_actuated(false),
         m_error(false),
         m_last_actuation(0.0f),
-        m_medium_deactivation(false)
+        m_medium_deactivation(false),
+        m_submerged(false)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -298,12 +301,12 @@ namespace Monitors
         if (msg->getSource() != getSystemId())
           return;
 
-        const bool submerged = (msg->medium == IMC::VehicleMedium::VM_WATER) ||
-                               (msg->medium == IMC::VehicleMedium::VM_UNDERWATER);
+        m_submerged = (msg->medium == IMC::VehicleMedium::VM_WATER) ||
+                      (msg->medium == IMC::VehicleMedium::VM_UNDERWATER);
 
         if (m_args.submerged_only)
         {
-          if (submerged)
+          if (m_submerged)
           {
             if (m_medium_deactivation)
               requestActivation();
@@ -359,6 +362,12 @@ namespace Monitors
       {
         if (!AddressResolver::isValid(m_thrust_eid) && isActive())
           requestDeactivation();
+
+        if (m_args.submerged_only && !m_submerged && isActive())
+        {
+          requestDeactivation();
+          m_medium_deactivation = true;
+        }
 
         while (!stopping())
         {
