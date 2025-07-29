@@ -106,16 +106,17 @@ namespace Monitors
         param("Thruster ID", m_args.thruster_id)
         .description("ID of the thruster to monitor.");
 
-        param("Timeout for Expected Actuation", m_args.maximum_current_timeout)
+        param("Expected Actuation", m_args.maximum_current_timeout)
         .defaultValue("30")
-        .minimumValue("5")
+        .minimumValue("15")
+        .maximumValue("59")
         .units(Units::Second)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Maximum time to wait for high current levels on the thruster.");
 
-        param("Timeout for Periodic Check in Error", m_args.periodic_check_error)
+        param("Periodic Check During Error", m_args.periodic_check_error)
         .defaultValue("30")
-        .minimumValue("5")
+        .minimumValue("2")
         .units(Units::Minute)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Timeout to do a periodic check when the thruster is in error.");
@@ -161,6 +162,7 @@ namespace Monitors
       {
         DUNE::Tasks::Task::onActivation();
         m_medium_deactivation = false;
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
@@ -168,6 +170,7 @@ namespace Monitors
       {
         DUNE::Tasks::Task::onDeactivation();
         m_medium_deactivation = false;
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -176,19 +179,8 @@ namespace Monitors
         trace("onUpdateParameters");
         if(paramChanged(m_args.maximum_current_timeout))
         {
-          spew("Interval for thruster current warning: %d minutes", m_args.maximum_current_timeout);
-          const auto old_top = m_current_check.getTop();
-          auto new_top = m_args.maximum_current_timeout * 60.0f;
-          if (old_top != 0.0f)
-          {
-            const auto elapsed = m_current_check.getElapsed();
-            if (elapsed >= new_top)
-              m_current_check.setTop(0.0f);
-            else if (m_current_check.getRemaining() > new_top)
-              m_current_check.setTop(new_top - elapsed);
-          }
-          else
-            m_current_check.setTop(new_top);
+          spew("Interval for thruster current warning: %d seconds", m_args.maximum_current_timeout);
+          m_current_check.setTop(m_args.maximum_current_timeout);
         }
 
         if(paramChanged(m_args.current_threshold))
@@ -224,10 +216,12 @@ namespace Monitors
       {
         m_current_check.reset();
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        inf("Interval for thruster current warning: %d minutes, "
+        inf("Interval for thruster current warning: %d seconds, "
+            "Period check during error: %d minutes, "
             "Current threshold set to: %.2f Amperes, "
             "Monitoring thruster current channel: %s",
             m_args.maximum_current_timeout,
+            m_args.periodic_check_error,
             m_args.current_threshold,
             m_args.thruster_current_channel_label.c_str());
       }
@@ -382,35 +376,46 @@ namespace Monitors
           const double now = Time::Clock::getSinceEpoch();
           const double actuation_diff = now - m_last_actuation;
           const float elapsed = m_current_check.getElapsed();
-          const bool no_recent_current = (elapsed < actuation_diff);
-
-          if (!no_recent_current && !m_current_check.overflow())
-            continue;
+          const bool no_recent_current = (actuation_diff >= 0.0f &&
+                                          elapsed >= 0.0f &&
+                                          elapsed - actuation_diff >= m_args.maximum_current_timeout) ?
+                                          elapsed > actuation_diff : false;
+          const bool error = (m_actuated && m_current_check.overflow()) ||
+                             (!m_actuated && m_last_actuation > 0.0f && no_recent_current);
 
           const bool elapsed_exceeded = elapsed >= m_args.periodic_check_error * 60.0f;
+          if (!error || (m_error && !elapsed_exceeded))
+            continue;
 
-          if (!m_error || (m_error && elapsed_exceeded))
+          setEntityState(IMC::EntityState::ESTA_ERROR, "Thruster not responding");
+
+          std::ostringstream ss;
+
+          if (!m_error)
           {
-            setEntityState(IMC::EntityState::ESTA_ERROR, "Thruster Not Responding");
-
-            std::ostringstream ss;
             ss << "THRUST WRN;"
                << "T:" << m_args.maximum_current_timeout
                << "|A:" << m_args.current_threshold
                << "|L:" << m_args.thruster_current_channel_label;
-
-            const std::string& msg = ss.str();
-            inf("Current Window Overflow: %s", msg.c_str());
-            sendMessageOverSattelite(msg);
-
-            if (m_args.auto_restart && !m_args.thruster_power_channel_label.empty())
-              tryRestartThruster();
-
-            if (m_error)
-              m_current_check.reset();
-            else
-              m_error = true;
+            
           }
+          else
+          {
+            ss << "THRUST WRN;"
+               << "P:" << m_args.periodic_check_error;
+          }
+
+          const std::string& msg = ss.str();
+          war("Thruster not responding: %s", msg.c_str());
+          sendMessageOverSattelite(msg);
+
+          if (m_args.auto_restart && !m_args.thruster_power_channel_label.empty())
+            tryRestartThruster();
+
+          if (m_error)
+            m_current_check.reset();
+          else
+            m_error = true;
         }
       }
     };
