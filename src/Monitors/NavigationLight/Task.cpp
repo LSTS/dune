@@ -93,6 +93,7 @@ namespace Monitors
       void
       onUpdateParameters(void)
       {
+        AISProximity::onUpdateParameters();
         bool changed_led_state = false;
         if (paramChanged(m_args.light_state_no_targets))
         {
