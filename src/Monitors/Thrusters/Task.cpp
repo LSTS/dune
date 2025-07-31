@@ -170,7 +170,18 @@ namespace Monitors
       {
         DUNE::Tasks::Task::onDeactivation();
         m_medium_deactivation = false;
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        if(m_submerged)
+        {
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        }
+        else
+        {
+          std::string text_entity = "Thruster monitoring deactivated due to medium change. (Submerged: "
+            + std::string(m_submerged ? "true" : "false") + ")";
+          inf("%s)", text_entity.c_str());
+          std::string text_set = "idle | " + text_entity;
+          setEntityState(IMC::EntityState::ESTA_NORMAL, text_set.c_str());
+        }
       }
 
       void
