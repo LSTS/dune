@@ -155,7 +155,7 @@ namespace Monitors
 
         if (paramChanged(m_args.zerotier_state_timeout))
         {
-          spew("AutoReconnect Interval in Minutes parameter changed to: %f minutes", m_args.zerotier_state_timeout);
+          spew("AutoReconnect Interval in Minutes parameter changed to: %.0f minutes", m_args.zerotier_state_timeout);
           const auto old_top = m_zerotier_state_check.getTop();
           auto new_top = m_args.zerotier_state_timeout * 60.0f;
           if (old_top != 0.0f)
@@ -208,15 +208,30 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-        inf("Auto-restart: %s, check interval: %f minutes", m_args.auto_restart ? "true" : "false", m_args.zerotier_state_timeout);
+        if(isActive())
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
+        inf("Auto-restart: %s, check interval: %.0f minutes", m_args.auto_restart ? "true" : "false", m_args.zerotier_state_timeout);
       }
 
       //! Release resources.
       void
       onResourceRelease(void)
       { }
+
+      void
+      onActivation(void) override
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void) override
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
 
       //! Task to execute command to check state of ZeroTier.
       //! The function have safety checks to ensure that the application doesn't give segmentation
