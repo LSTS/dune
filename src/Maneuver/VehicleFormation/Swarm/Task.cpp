@@ -900,14 +900,26 @@ namespace Maneuver
           double original_speed = getSpeed();
 
           if (m_leader_ref_timer.getTop() == 0.0f)
+          {
             coeff = returnToOriginalSpeed(original_speed);
+            trace("Coeff \"original speed\": %f", coeff);
+          }
           else if (m_curr == m_leader_pos.waypoint_idx)
+          {
             coeff = adjustSpeedReference();
+            trace("Coeff \"same waypoint\": %f", coeff);
+          }
           else if (m_curr > m_leader_pos.waypoint_idx)
+          {
             // coeff = 0;
             coeff = 1 - m_args.speed_max_delta / original_speed;
+            trace("Coeff \"ahead of leader\": %f", coeff);
+          }
           else
+          {
             coeff = 1 + m_args.speed_max_delta / original_speed;
+            trace("Coeff \"behind leader\": %f", coeff);
+          }
           
           setSpeedReference(coeff);
           desiredSpeed(m_speed_ref, getSpeedUnits());
