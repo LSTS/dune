@@ -928,6 +928,9 @@ namespace Maneuver
         void
         dissiminatePosition(void)
         {
+          if(!isLeader())
+            return;
+            
           if (m_curr < 1)
             return;
           
