@@ -107,6 +107,8 @@ namespace Maneuver
         double leader_reference_timeout;
         //! Maximum delta for speed adjustment.
         double speed_max_delta;
+        //! Minimum speed to maintain vehicle submerged
+        double submerged_speed_min;
         //! Multicast Address.
         Address udp_maddr;
         //! UDP port.
@@ -222,6 +224,13 @@ namespace Maneuver
           .defaultValue("0.5")
           .maximumValue("1.0")
           .description("Maximum delta for speed adjustment");
+
+          param("Minimum Speed To Maintain Submerged", m_args.submerged_speed_min)
+          .units(Units::MeterPerSecond)
+          .minimumValue("0.7")
+          .defaultValue("0.7")
+          .maximumValue("1.0")
+          .description("Minimum speed to maintain vehicle submerged");
 
           param("Wifi Communications -- Multicast Address", m_args.udp_maddr)
           .defaultValue("225.0.2.1")
@@ -614,7 +623,10 @@ namespace Maneuver
           start.y = m_estate.y;
           start.z = m_estate.depth;
 
+          // Force surface on APPROACH
           TPoint first = point(0, formation_index());
+          first.z = 0.0;
+
           desiredPath(start, first, getSpeed(), getSpeedUnits());
 
           // Change state to approaching
@@ -825,6 +837,10 @@ namespace Maneuver
             m_speed_ref = 0.0f;
           else if (m_speed_ref > m_max_speed)
             m_speed_ref = m_max_speed;
+
+          // While moving vehicle needs a minimum speed to stay submeged
+          if (m_state == SM_MOVING && m_speed_ref < m_args.submerged_speed_min)
+            m_speed_ref = m_args.submerged_speed_min;
         }
 
         double
