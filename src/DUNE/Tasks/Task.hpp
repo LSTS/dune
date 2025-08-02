@@ -504,6 +504,38 @@ namespace DUNE
         m_recipient->runCallBacks();
       }
 
+      void
+      setParameterScope(const std::string& name, const std::string& scope)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->scope(scope);
+      }
+
+      void
+      setParameterScope(const std::string& name, const Parameter::Scope& scope)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->scope(scope);
+      }
+
+      void
+      setParameterVisbility(const std::string& name, const std::string& visibility)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->visibility(visibility);
+      }
+
+      void
+      setParameterVisbility(const std::string& name, const Parameter::Visibility& visibility)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
+        if (itr != m_params.end())
+          itr->second->visibility(visibility);
+      }
+
       //! Declare a configuration parameter that can be parsed using
       //! the basic parameter parser.
       //! @tparam T type of the destination variable.
@@ -650,6 +682,10 @@ namespace DUNE
       void
       deactivationFailed(const std::string& reason);
 
+      //!
+      void
+      restart(const IMC::RestartSystem* msg, const unsigned delay = 0);
+
       virtual bool
       onWriteParamsXML(std::ostream& os) const
       {
@@ -725,6 +761,13 @@ namespace DUNE
         activate();
       }
 
+      virtual void
+      onRequestRestart(const IMC::RestartSystem* msg)
+      {
+        spew("on request restart");
+        restart(msg);
+      }
+
       //! Called when an external deactivation request is
       //! received. Derived classes that need to perform extra steps
       //! to prepare normal execution should replace the default
@@ -752,6 +795,39 @@ namespace DUNE
       {
         spew("on deactivation");
       }
+
+      template<typename T>
+      void
+      applyEntityParameter(T& param, const T& value, bool save = false)
+      {
+        try
+        {
+          void* var = static_cast<void*>(&param);
+          IMC::EntityParameters params;
+          params.name = getEntityLabel();
+          const auto& p = m_params.apply(var, uncastLexical(value));
+          params.params.push_back(p);
+          dispatch(params);
+
+          if (save)
+            saveEntityParameters();
+        }
+        catch(const std::exception& e)
+        {
+          war("Failed to apply entity parameter: %s", e.what());
+        }
+      }
+
+      void
+      setEntityParameter(const IMC::EntityParameter& param,
+                         const bool save = false);
+
+      void
+      setEntityParameters(const IMC::MessageList<IMC::EntityParameter>& params,
+                          const bool save = false);
+
+      void
+      saveEntityParameters(void);
 
       virtual void
       onQueryEntityParameters(const IMC::QueryEntityParameters* msg);
@@ -838,6 +914,9 @@ namespace DUNE
 
       void
       consume(const IMC::PopEntityParameters* msg);
+
+      void
+      consume(const IMC::RestartSystem* msg);
     };
   }
 }

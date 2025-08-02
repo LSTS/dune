@@ -92,8 +92,6 @@ namespace Sensors
     {
       //! IO device (URI).
       std::string io_dev;
-      //! Read frequency.
-      double read_frequency;
       //! Calibration threshold.
       double calib_threshold;
       //! Hard iron calibration.
@@ -167,18 +165,11 @@ namespace Sensors
         m_faults_count(0),
         m_timeout_count(0)
       {
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
+        paramConfigurableSampling();
+        
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
-        
-        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
-        .units(Units::Hertz)
-        .defaultValue("1.0")
-        .description(DTR("Frequency at which task reads data"));
 
         param("Calibration Threshold", m_args.calib_threshold)
         .defaultValue("0.1")
@@ -230,8 +221,7 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.read_frequency))
-          setReadFrequency(m_args.read_frequency);
+        BasicDeviceDriver::onUpdateParameters();
         
         m_rotation.fill(3, 3, &m_args.rotation_mx[0]);
 
@@ -329,6 +319,7 @@ namespace Sensors
         double hi_x = m_args.hard_iron[0] + msg->x;
         double hi_y = m_args.hard_iron[1] + msg->y;
 
+        IMC::MessageList<IMC::EntityParameter> params;
         IMC::EntityParameter hip;
         hip.name = c_hard_iron_param;
         hip.value = String::str("%f, %f, 0.0", hi_x, hi_y);
@@ -339,15 +330,9 @@ namespace Sensors
         calt.value = String::str("%04u-%02u-%02u %02u:%02u", bdt.year, bdt.month,
                                  bdt.day, bdt.hour, bdt.minutes);
 
-        IMC::SetEntityParameters np;
-        np.name = getEntityLabel();
-        np.params.push_back(hip);
-        np.params.push_back(calt);
-        dispatch(np, DF_LOOP_BACK);
-
-        IMC::SaveEntityParameters sp;
-        sp.name = getEntityLabel();
-        dispatch(sp);
+        params.push_back(hip);
+        params.push_back(calt);
+        setEntityParameters(params, true);
       }
 
       //! Send commands to the device.

@@ -36,6 +36,8 @@
 #define DUNE_SHORT_NAME "@PROJECT_SHORT_NAME@"
 //! DUNE's version string.
 #define DUNE_VERSION_STR "@PROJECT_VERSION@"
+//! DUNE's private version string.
+#define DUNE_PRIVATE_VERSION_STR "@PROJECT_VERSION@"
 //! DUNE's version year.
 #define DUNE_VERSION_YEAR @PROJECT_VERSION_YEAR@
 //! DUNE's version month.

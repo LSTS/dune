@@ -69,6 +69,12 @@ namespace DUNE
 
       static std::string
       getRFC1123(bool utc = true);
+
+      static std::string
+      getTimeDHMS(double tstamp);
+
+      static std::string
+      getTimeDHMS(void);
     };
   }
 }

@@ -83,6 +83,7 @@ namespace Control
             addActionButton("Stop");
             addActionButton("PowerOff");
             addActionButton("Restart Log");
+            // addActionButton("Toggle SPOT");
             addActionButton("Arm");
             addActionButton("Disarm");
             addActionButton("Enable CAS");
@@ -166,6 +167,9 @@ namespace Control
               enableCAS(true);
             else if (tuples.get("Disable CAS", 0))
               enableCAS(false);
+
+            else if (tuples.get("Toggle SPOT", 0))
+              toggleSpot();
           }
 
           void
@@ -258,6 +262,15 @@ namespace Control
             lc.name = m_log_name;
             lc.op = LoggingControl::COP_REQUEST_START;
             dispatch(lc);
+          }
+
+          void
+          toggleSpot(void)
+          {
+            IMC::PowerChannelControl pcc;
+            pcc.name = "SPOT_C";
+            pcc.op = IMC::PowerChannelControl::PCC_OP_TOGGLE;
+            dispatch(pcc);
           }
 
           void

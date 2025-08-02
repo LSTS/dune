@@ -29,6 +29,11 @@
 # Retrieve extra versioning information.                                   #
 ############################################################################
 
+message(STATUS "")
+message(STATUS "******************************************")
+message(STATUS "***           Version Status           ***")
+message(STATUS "******************************************")
+
 if(DUNE_VERSION_TPL AND DUNE_VERSION_OUT)
   execute_process(COMMAND git rev-parse --symbolic-full-name --abbrev-ref HEAD
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
@@ -61,8 +66,49 @@ if(DUNE_VERSION_TPL AND DUNE_VERSION_OUT)
     set(DUNE_GIT_INFO "${DUNE_GIT_INFO},dirty")
   endif(empty_string)
 
-  configure_file("${DUNE_VERSION_TPL}" "${DUNE_VERSION_OUT}.tmp")
+  message(AUTHOR_WARNING "DUNE VERSION - ${DUNE_GIT_INFO}")
 
+  ### GET PRIVATE GIT INFO FROM FOLDER private
+  set(PRIVATE_DIR "${PROJECT_SOURCE_DIR}/private")
+  if(EXISTS "${PRIVATE_DIR}")
+    execute_process(COMMAND git rev-parse --symbolic-full-name --abbrev-ref HEAD
+      WORKING_DIRECTORY "${PRIVATE_DIR}"
+      OUTPUT_VARIABLE private_branch
+      ERROR_QUIET
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(private_branch STREQUAL "")
+      set(private_branch "unknown")
+    endif()
+
+    execute_process(COMMAND git rev-parse --short HEAD
+      WORKING_DIRECTORY "${PRIVATE_DIR}"
+      OUTPUT_VARIABLE private_sha1
+      ERROR_QUIET
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(private_sha1 STREQUAL "")
+      set(private_sha1 "unknown")
+    endif()
+
+    execute_process(COMMAND git status -s
+      WORKING_DIRECTORY "${PRIVATE_DIR}"
+      OUTPUT_VARIABLE private_dirty
+      ERROR_QUIET
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(STRIP "${private_dirty}" private_dirty)
+    if(private_dirty STREQUAL "")
+      set(private_dirty "")
+    else()
+      set(private_dirty ",dirty")
+    endif()
+
+    set(DUNE_GIT_PRIVATE_INFO "${private_branch},${private_sha1}${private_dirty}")
+    message(AUTHOR_WARNING "DUNE PRIVATE VERSION - ${DUNE_GIT_PRIVATE_INFO}")
+  else()
+    set(DUNE_GIT_PRIVATE_INFO "unknown or not apply")
+    message(AUTHOR_WARNING "DUNE PRIVATE VERSION - unknown or not apply")
+  endif()
+
+  configure_file("${DUNE_VERSION_TPL}" "${DUNE_VERSION_OUT}.tmp")
   execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
     "${DUNE_VERSION_OUT}.tmp" "${DUNE_VERSION_OUT}"
     RESULT_VARIABLE files_cmp
@@ -75,7 +121,9 @@ if(DUNE_VERSION_TPL AND DUNE_VERSION_OUT)
 else()
   set(DUNE_CORE_SOURCES ${DUNE_CORE_SOURCES}
     ${DUNE_GENERATED}/src/DUNE/Version.cpp)
-    
+
+  message(STATUS "${DUNE_GENERATED}")
+
   if(NOT EXISTS "${DUNE_GENERATED}/src/DUNE/Version.cpp")
     file(WRITE "${DUNE_GENERATED}/src/DUNE/Version.cpp" "")
   endif()

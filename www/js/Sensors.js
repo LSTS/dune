@@ -182,11 +182,12 @@ Sensors.prototype.updateField = function (root, msg) {
 
   if (totalSeconds > 10.0) {
     state = 0;
-    root.childNodes[2].firstChild.data = 'INACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
+    //root.childNodes[2].firstChild.data = 'INACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
   } else {
     state = 1;
-    root.childNodes[2].firstChild.data = 'ACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
+    //root.childNodes[2].firstChild.data = 'ACTIVE - Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
   }
+  root.childNodes[2].firstChild.data = 'Last Update at ' + formattedTime + ' (' + formattedDiff + ')';
 
   root.childNodes[3].firstChild.src = this.getEntityStateIcon(state);
   root.childNodes[3].firstChild.style.width = '18px';
