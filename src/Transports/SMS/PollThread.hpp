@@ -49,7 +49,7 @@ namespace Transports
   namespace SMS
   {
     //! Size of buffer to read data from IO handle.
-    static const size_t c_bfr_size = 4096;
+    static const size_t c_bfr_size = 1024 * 8; // 8 KB
     //! Command timeout for ls command, in seconds
     static const float c_ls_timeout_cmd = 1.0f;
     //! Timeout for new line detection, in seconds
@@ -89,17 +89,16 @@ namespace Transports
           {
             if(m_is_handle_opened)
             {
-              uint8_t bfr[c_bfr_size];
               if(Poll::poll(*m_handle, 0.01))
               {
-                size_t rv = m_handle->read(bfr, c_bfr_size);
+                size_t rv = m_handle->read(m_bfr, c_bfr_size);
                 m_task->debug("[PollThread]:%ld bytes read from IO handle", rv);
                 if(rv > 0)
                 {
                   m_new_line_timer.reset();
                   for(size_t i = 0; i < rv; i++)
                   {
-                    m_bfr_rx[m_cnt_rx++] = bfr[i];
+                    m_bfr_rx[m_cnt_rx++] = m_bfr[i];
                     if(m_cnt_rx >= c_bfr_size)
                     {
                       m_task->inf("[PollThread]:Buffer overflow, resetting buffer");
@@ -223,10 +222,12 @@ namespace Transports
         IO::Handle* m_handle;
         //! Driver of CPC.
         Driver* m_driver;
-        //! Buffer to read data from IO handle.
+        //! Buffer to merge all read data from IO handle.
         uint8_t m_bfr_rx[c_bfr_size];
+        //! Buffer to read data from IO handle.
+        uint8_t m_bfr[c_bfr_size];
         //! Counter of rx bytes.
-        uint16_t m_cnt_rx;
+        uint32_t m_cnt_rx;
         //! IO device URI.
         std::string m_io_dev;
         //! Flag to indicate if the handle is opened.

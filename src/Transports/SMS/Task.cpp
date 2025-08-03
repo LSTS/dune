@@ -89,12 +89,18 @@ namespace Transports
       Time::Counter<float> m_set_entity_state_timer;
       //! counter to control number of errors.
       int m_counter_errors;
+      //! Flag to control state of modem;
+      bool m_modem_ready;
+      //! Flag to control setup of modem.
+      bool m_setup_modem;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
         m_handle(NULL),
         m_driver(NULL),
-        m_poll_thread(NULL)
+        m_poll_thread(NULL),
+        m_modem_ready(false),
+        m_setup_modem(false)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -206,12 +212,6 @@ namespace Transports
       {
         trace("onResourceRelease");
         deleteObjects();
-        if(m_handle != NULL)
-        {
-          Memory::clear(m_handle);
-          m_handle = NULL;
-          inf("IO Device handle deleted");
-        }
       }
 
       void
@@ -226,11 +226,31 @@ namespace Transports
           m_poll_thread = NULL;
           inf("PollThread deleted");
         }
+        else
+        {
+          inf("PollThread is NULL, nothing to delete");
+        }
+
         if(m_driver != NULL)
         {
           Memory::clear(m_driver);
           m_driver = NULL;
           inf("Driver deleted");
+        }
+        else
+        {
+          inf("Driver is NULL, nothing to delete");
+        }
+
+        if(m_handle != NULL)
+        {
+          Memory::clear(m_handle);
+          m_handle = NULL;
+          inf("IO Device handle deleted");
+        }
+        else
+        {
+          inf("IO Device handle is NULL, nothing to delete");
         }
       }
 
@@ -240,31 +260,44 @@ namespace Transports
         trace("onResourceAcquisition");
         try
         {
-          if (m_args.io_dev.empty())
-            throw RestartNeeded(DTR("Invalid IO device path"), c_time_to_restart_task);
-
-          inf("Waiting %d seconds before connecting to the GSM device", c_time_to_wait_before_sending_commands);
-          // Wait for the modem to "spew" initial data messages
-          Time::Delay::wait(c_time_to_wait_before_sending_commands);
-
-          if (m_handle == NULL)
-            m_handle = openDeviceHandle(m_args.io_dev);
-
-          if (m_handle == NULL)
-            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), c_time_to_restart_task);
-
-          if (m_driver == NULL)
-            m_driver = new Driver(this, m_handle, m_args.time_to_accept_sms, m_args.pin);
-
-          if(m_poll_thread != NULL)
+          if(isActive() || m_setup_modem)
           {
-            m_poll_thread->stop();
-            Memory::clear(m_poll_thread);
-          }
-          m_poll_thread = new PollThread(this, m_handle, m_driver, m_args.io_dev);
-          m_poll_thread->start();
+            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+            if (m_args.io_dev.empty())
+              throw RestartNeeded(DTR("Invalid IO device path"), c_time_to_restart_task);
 
-          setupModem();
+            inf("Waiting %d seconds before connecting to the GSM device", c_time_to_wait_before_sending_commands);
+            // Wait for the modem to "spew" initial data messages
+            Time::Delay::wait(c_time_to_wait_before_sending_commands);
+
+            if (m_handle == NULL)
+              m_handle = openDeviceHandle(m_args.io_dev);
+
+            if (m_handle == NULL)
+              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), c_time_to_restart_task);
+            else
+              inf("IO Device handle opened successfully");
+
+            if (m_driver == NULL)
+              m_driver = new Driver(this, m_handle, m_args.time_to_accept_sms, m_args.pin);
+
+            if(m_poll_thread != NULL)
+            {
+              m_poll_thread->stop();
+              Memory::clear(m_poll_thread);
+            }
+            m_poll_thread = new PollThread(this, m_handle, m_driver, m_args.io_dev);
+            m_poll_thread->start();
+
+            setupModem();
+            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVE);
+            m_modem_ready = true;
+          }
+          else
+          {
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+            m_modem_ready = false;
+          }
         }
         catch (const std::bad_alloc& e)
         {
@@ -282,8 +315,9 @@ namespace Transports
       bool
       onConnect() override
       {
+        m_modem_ready = false;
         trace("onConnect");
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVE);
+        m_setup_modem = true;
         return true;
       }
 
@@ -291,8 +325,11 @@ namespace Transports
       void
       onDisconnect() override
       {
+        m_modem_ready = false;
+        m_setup_modem = false;
         trace("onDisconnect");
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        deleteObjects();
       }
 
        //! Initialize device.
@@ -349,6 +386,9 @@ namespace Transports
         m_mailbox_timer.setTop(m_args.time_to_check_mailbox);
         m_set_entity_state_timer.setTop(c_time_to_set_entity_state);
 
+        if(m_driver == NULL)
+          throw RestartNeeded(DTR("Driver is NULL, cannot setup modem"), c_time_to_restart_task);
+
         if (!m_driver->initModemGSM())
         {
           throw RestartNeeded(DTR("Fail to setup GSM modem"), c_time_to_restart_task);
@@ -366,12 +406,21 @@ namespace Transports
       void
       checkDataIn(void)
       {
-        m_driver->parseIncomingData();
+        if(m_driver != NULL)
+          m_driver->parseIncomingData();
+        else
+          inf("Driver is NULL, cannot check data in");
       }
 
       void
       checkCommandsTriggered(void)
       {
+        if(m_driver == NULL)
+        {
+          inf("Driver is NULL, cannot check commands triggered");
+          return;
+        }
+
         if(m_mailbox_timer.overflow())
         {
           m_mailbox_timer.reset();
@@ -384,8 +433,8 @@ namespace Transports
         }
         else if(m_driver != NULL && m_driver->receivedSMS())
         {
-          m_driver->clearReceivedSMS();
           m_mailbox_timer.reset();
+          m_driver->clearReceivedSMS();
         }
       }
 
@@ -394,56 +443,65 @@ namespace Transports
       bool
       onReadData() override
       {
-        checkDataIn();
-        checkCommandsTriggered();
-        m_driver->processQueues();
+        if(isActive() && m_modem_ready)
+        {
+          checkDataIn();
+          checkCommandsTriggered();
 
-        if(m_poll_thread != NULL && m_poll_thread->isHandleReset())
-        {
-          m_poll_thread->clearHandleFlag();
-          inf("Seting up the modem");
-          onDisconnect();
-          // Wait for the modem to "spew" initial data messages
-          Time::Delay::wait(c_time_to_wait_before_sending_commands);
-          m_handle->flushInput();
-          m_handle->flushOutput();
-          setupModem();
-          onConnect();
-          m_driver->setHandleIsOpen(true);
-        }
-        else
-        {
-          if(m_set_entity_state_timer.overflow())
+          if(m_poll_thread != NULL && m_poll_thread->isHandleReset())
           {
-            m_set_entity_state_timer.reset();
-            if(m_driver != NULL )
+            m_poll_thread->clearHandleFlag();
+            inf("Seting up the modem");
+            onDisconnect();
+            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+            m_modem_ready = false;
+            m_setup_modem = true;
+          }
+          else
+          {
+            if(m_set_entity_state_timer.overflow())
             {
-              std::string text_entity = "active | " + m_args.io_dev + " | tx: " +
-                                        std::to_string(m_driver->getSmsSentCount()) + " | rx: " +
-                                        std::to_string(m_driver->getSmsReceivedCount()) +
-                                        " | t_mb: " + m_driver->convertTimeToString(m_mailbox_timer.getRemaining());
-              setEntityState(IMC::EntityState::ESTA_NORMAL, text_entity.c_str());
+              m_set_entity_state_timer.reset();
+              if(m_driver != NULL )
+              {
+                std::string text_entity = "active | " + m_args.io_dev + " | tx: " +
+                                          std::to_string(m_driver->getSmsSentCount()) + " | rx: " +
+                                          std::to_string(m_driver->getSmsReceivedCount()) +
+                                          " | t_mb: " + m_driver->convertTimeToString(m_mailbox_timer.getRemaining());
+                setEntityState(IMC::EntityState::ESTA_NORMAL, text_entity.c_str());
+              }
+              else
+              {
+                setEntityState(IMC::EntityState::ESTA_NORMAL, "active | " + m_args.io_dev);
+              }
             }
-            else
+          }
+
+          if(m_driver == NULL)
+          {
+            inf("Driver is NULL, cannot process queues");
+            return false;
+          }
+
+          m_driver->processQueues();
+
+          if(m_driver->getNumberOfErrors() >= m_args.consecutive_errors)
+          {
+            throw RestartNeeded(DTR("Too many consecutive errors, restarting task"), c_time_to_restart_task);
+          }
+          else
+          {
+            if(m_counter_errors != m_driver->getNumberOfErrors())
             {
-              setEntityState(IMC::EntityState::ESTA_NORMAL, "active | " + m_args.io_dev);
+              m_counter_errors = m_driver->getNumberOfErrors();
+              war("Counter errors: %d of %d", m_counter_errors, m_args.consecutive_errors);
             }
           }
         }
-
-        if(m_driver->getNumberOfErrors() >= m_args.consecutive_errors)
+        else if(isActive() && !m_modem_ready)
         {
-          throw RestartNeeded(DTR("Too many consecutive errors, restarting task"), c_time_to_restart_task);
+          onResourceAcquisition();
         }
-        else
-        {
-          if(m_counter_errors != m_driver->getNumberOfErrors())
-          {
-            m_counter_errors = m_driver->getNumberOfErrors();
-            war("Counter errors: %d of %d", m_counter_errors, m_args.consecutive_errors);
-          }
-        }
-
         return false;
       }
     };
