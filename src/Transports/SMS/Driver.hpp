@@ -794,7 +794,6 @@ namespace Transports
           m_task->err("[Driver]:Send Failed: [%s] to %s, req_id: %d",
                       sanitize(sms_req.sms_text).c_str(), sms_req.destination.c_str(), sms_req.req_id);
           m_modem_sending_commands = false;
-          m_counter_errors++;
           return false;
         }
 
