@@ -344,15 +344,24 @@ namespace Transports
       void
       consume(const IMC::SmsRequest* msg)
       {
-        if(m_driver == NULL)
-          return;
-
         SMS::SmsRequest sms_req;
         sms_req.req_id      = msg->req_id;
         sms_req.destination = msg->destination;
         sms_req.sms_text    = msg->sms_text;
         sms_req.src_adr     = msg->getSource();
         sms_req.src_eid     = msg->getSourceEntity();
+
+        if(m_driver == NULL)
+        {
+          IMC::SmsStatus sms_status;
+          sms_status.setDestination(sms_req.src_adr);
+          sms_status.setDestinationEntity(sms_req.src_eid);
+          sms_status.req_id = sms_req.req_id;
+          sms_status.info   = "Send of SMS text messages are disabled";
+          sms_status.status = IMC::SmsStatus::SMSSTAT_INPUT_FAILURE;
+          dispatch(sms_status);
+          return;
+        }
 
         if(!m_args.send_sms_text_messages)
         {
@@ -491,6 +500,9 @@ namespace Transports
           }
           else
           {
+            if(m_driver->getNumberOfErrors() == 0)
+              m_counter_errors = 0;
+
             if(m_counter_errors != m_driver->getNumberOfErrors())
             {
               m_counter_errors = m_driver->getNumberOfErrors();
