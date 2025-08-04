@@ -118,12 +118,22 @@ namespace Monitors
         DUNE::Tasks::Task(name, ctx),
         m_tstamp(0)
       {
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         m_num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
         if (m_num_cpus <= 0 || m_num_cpus > c_max_cpu)
         {
           war("Invalid number of CPUs detected: %d. Using 1 CPU instead.", m_num_cpus);
           m_num_cpus = 1;
         }
+      }
+
+      void
+      onDeactivation(void) override
+      {
+        Tasks::Task::onDeactivation();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       //! Reserve entity identifiers.
@@ -512,6 +522,10 @@ namespace Monitors
         while (!stopping())
         {
           waitForMessages(0.01);
+
+          if (!isActive())
+            continue;
+
           if (m_ram_check.overflow())
           {
             m_ram_check.reset();
