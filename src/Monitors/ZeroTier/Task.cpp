@@ -83,7 +83,7 @@ namespace Monitors
       std::string gsm_modem_power_label;
       //! List of ip's to check for connectivity.
       std::vector<std::string> remote_hosts_ip;
-      //! Send updates over sattelite.
+      //! Send updates over satellite.
       bool send_satellite;
     };
 
@@ -289,7 +289,7 @@ namespace Monitors
       }
 
       void
-      sendMessageOverSattelite(const std::string& message)
+      sendMessageOverSatellite(const std::string& message)
       {
         if (!m_args.send_satellite)
           return;
@@ -315,17 +315,17 @@ namespace Monitors
         if (result == 0)
         {
           inf("ZeroTier service restarted successfully.");
-          sendMessageOverSattelite("ZeroTier service restarted successfully.");
+          sendMessageOverSatellite("ZeroTier service restarted successfully.");
         }
         else if (WIFEXITED(result) && WEXITSTATUS(result) == c_command_timeout_result)
         {
           err("Restart command timed out.");
-          sendMessageOverSattelite("Error: Restart command timed out.");
+          sendMessageOverSatellite("Error: Restart command timed out.");
         }
         else
         {
           err("Failed to restart ZeroTier service. (%d)", result);
-          sendMessageOverSattelite("Failed to restart ZeroTier service. Error code: " + std::to_string(result));
+          sendMessageOverSatellite("Failed to restart ZeroTier service. Error code: " + std::to_string(result));
         }
       }
 
@@ -343,7 +343,7 @@ namespace Monitors
         pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_ON;
         dispatch(pcc, DF_LOOP_BACK);
         inf("GSM modem %s restarted successfully.", m_args.gsm_modem_power_label.c_str());
-        sendMessageOverSattelite("GSM modem " + m_args.gsm_modem_power_label + " restarted successfully.");
+        sendMessageOverSatellite("GSM modem " + m_args.gsm_modem_power_label + " restarted successfully.");
       }
 
       bool
@@ -413,7 +413,7 @@ namespace Monitors
               {
                 war("No internet connection to any of the configured remote hosts.");
                 std::string message_iri = "No internet connection to any of the configured remote hosts | [" + state_zerotier + "]";
-                sendMessageOverSattelite(message_iri);
+                sendMessageOverSatellite(message_iri);
                 if (m_args.auto_restart)
                 {
                   if (!m_args.gsm_modem_power_label.empty())
@@ -455,7 +455,7 @@ namespace Monitors
               {
                 war("No internet connection to any of the configured remote hosts.");
                 std::string message_iri = "No internet connection to any of the configured remote hosts | [" + state_zerotier + "]";
-                sendMessageOverSattelite(message_iri);
+                sendMessageOverSatellite(message_iri);
                 if (m_args.auto_restart)
                 {
                   inf("Attempting restart of GSM modem due to no internet connection.");
@@ -482,7 +482,7 @@ namespace Monitors
         else
         {
           war("ZeroTier is not running or in an error state: %s", state_zerotier.c_str());
-          sendMessageOverSattelite("ZeroTier is not running or in an error state: " + state_zerotier);
+          sendMessageOverSatellite("ZeroTier is not running or in an error state: " + state_zerotier);
           if (m_args.auto_restart)
           {
             restartZeroTierService();
