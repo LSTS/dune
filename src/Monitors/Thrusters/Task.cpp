@@ -59,7 +59,7 @@ namespace Monitors
       std::string thruster_current_channel_label;
       //! Label of the thruster power channel.
       std::string thruster_power_channel_label;
-      //! Send updates over sattelite.
+      //! Send updates over satellite.
       bool send_satellite;
       //! Only monitor thruster when submerged.
       bool submerged_only;
@@ -277,7 +277,7 @@ namespace Monitors
             m_error = false;
             std::string text = "THRUSTER " + std::to_string(m_args.thruster_id) + " RECOVERED";
             inf("%s", text.c_str());
-            sendMessageOverSattelite(text);
+            sendMessageOverSatellite(text);
           }
         }
       }
@@ -328,7 +328,7 @@ namespace Monitors
       }
 
       void
-      sendMessageOverSattelite(const std::string& message)
+      sendMessageOverSatellite(const std::string& message)
       {
         if (!m_args.send_satellite)
           return;
@@ -351,7 +351,7 @@ namespace Monitors
       {
         std::string msg = "Trying to restart thruster " + std::to_string(m_args.thruster_id);
         inf("%s", msg.c_str());
-        sendMessageOverSattelite(msg);
+        sendMessageOverSatellite(msg);
         IMC::PowerChannelControl pcc;
         pcc.name = m_args.thruster_power_channel_label;
         pcc.op = IMC::PowerChannelControl::PCC_OP_TURN_OFF;
@@ -418,7 +418,7 @@ namespace Monitors
 
           const std::string& msg = ss.str();
           war("Thruster not responding: %s", msg.c_str());
-          sendMessageOverSattelite(msg);
+          sendMessageOverSatellite(msg);
 
           if (m_args.auto_restart && !m_args.thruster_power_channel_label.empty())
             tryRestartThruster();
