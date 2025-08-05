@@ -138,7 +138,7 @@ namespace Transports
       initModemGSM(void)
       {
         m_modem_sending_commands = true;
-        sendCommand("ATE1\r\n", "OK"); // Disable echo
+        sendCommand("ATE1\r\n", "OK"); // Enable echo
         if(respondReceived())
         {
           m_task->trace("[Driver]:Modem echo enabled to get responses");
