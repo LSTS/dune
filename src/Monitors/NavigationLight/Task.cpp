@@ -141,25 +141,16 @@ namespace Monitors
         param.value = std::to_string(state);
         sep.params.push_back(param);
         dispatch(sep);
+        sendMessageOverSatellite(String::str("Set light state: %d", state));
       }
 
       void
       onActivation(void) override
       {
         if (targetsInProximity())
-        {
           setNavigationLight(m_args.light_state_with_targets);
-          m_led_on = true;
-          inf("Initialized led state to on");
-          sendMessageOverSatellite("INIT LED ON");
-        }
         else
-        {
           setNavigationLight(m_args.light_state_no_targets);
-          m_led_on = false;
-          inf("Initialized led state to off");
-          sendMessageOverSatellite("INTI LED OFF");
-        }
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, CODE_ACTIVE);
       }
@@ -172,11 +163,6 @@ namespace Monitors
 
         war("Proximity alert triggered for AIS targets."); 
         setNavigationLight(m_args.light_state_with_targets);
-        if (!m_led_on)
-        {
-          m_led_on = true;
-          sendMessageOverSatellite("LED ON");
-        }
       }
 
       void
@@ -187,11 +173,6 @@ namespace Monitors
 
         inf("No AIS targets in the area.");
         setNavigationLight(m_args.light_state_no_targets);
-        if (m_led_on)
-        {
-          m_led_on = false;
-          sendMessageOverSatellite("LED OFF");
-        }
       }
     };
   }
