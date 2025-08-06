@@ -94,6 +94,31 @@ namespace Monitors
         param("Send Satellite Updates", m_args.send_satellite)
         .defaultValue("false")
         .description("Send updates over satellite.");
+
+        bind<IMC::EntityParameters>(this);
+      }
+
+      void
+      consume(const IMC::EntityParameters* msg)
+      {
+        if (msg->name != m_args.light_entity)
+          return;
+
+        for (const auto& param : msg->params)
+        {
+          if (param->name == m_args.light_parameter_label)
+          {
+            try
+            {
+              castLexical(param->value, m_state);
+            }
+            catch (const std::exception& e)
+            {
+              err("Invalid light state value: %s", e.what());
+            }
+            break;
+          }
+        }
       }
 
       void
