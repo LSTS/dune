@@ -50,6 +50,8 @@ namespace Monitors
       std::string light_entity;
       //! Light parameter label.
       std::string light_parameter_label;
+      //! Send updates over satellite.
+      bool send_satellite;
     };
 
     struct Task: public DUNE::Monitors::AISProximity
@@ -88,6 +90,10 @@ namespace Monitors
         .editable("false")
         .defaultValue("")
         .description("Parameter label for the light state.");
+
+        param("Send Satellite Updates", m_args.send_satellite)
+        .defaultValue("false")
+        .description("Send updates over satellite.");
       }
 
       void
@@ -118,6 +124,9 @@ namespace Monitors
       void
       sendMessageOverSatellite(const std::string& message)
       {
+        if (!m_args.send_satellite)
+          return;
+
         IMC::TransmissionRequest tr;
         tr.setDestination(getSystemId());
         tr.setSourceEntity(getEntityId());
