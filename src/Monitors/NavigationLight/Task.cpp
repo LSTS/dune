@@ -100,25 +100,15 @@ namespace Monitors
       onUpdateParameters(void)
       {
         AISProximity::onUpdateParameters();
-        bool changed_led_state = false;
-        if (paramChanged(m_args.light_state_no_targets))
-        {
+
+        if (!isActive())
+          return;
+
+        if (paramChanged(m_args.light_state_no_targets) && !targetsInProximity())
           setNavigationLight(m_args.light_state_no_targets);
-          changed_led_state = true;
-        }
 
-        if (paramChanged(m_args.light_state_with_targets))
-        {
+        if (paramChanged(m_args.light_state_with_targets) && targetsInProximity())
           setNavigationLight(m_args.light_state_with_targets);
-          changed_led_state = true;
-        }
-
-        if(changed_led_state)
-        {
-          inf("Light state updated: No Targets = %d, With Targets = %d",
-              m_args.light_state_no_targets, m_args.light_state_with_targets);
-          onActivation();
-        }
       }
 
       void
