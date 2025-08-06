@@ -60,13 +60,16 @@ namespace Monitors
       Arguments m_args;
       //! Current light state.
       int m_state;
+      //! Light state before activation.
+      int m_idle_state;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Monitors::AISProximity(name, ctx),
-        m_state(INT_MAX)
+        m_state(INT_MAX),
+        m_idle_state(INT_MAX)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -111,6 +114,8 @@ namespace Monitors
             try
             {
               castLexical(param->value, m_state);
+              if (!isActive())
+                m_idle_state = m_state;
             }
             catch (const std::exception& e)
             {
@@ -182,6 +187,15 @@ namespace Monitors
           setNavigationLight(m_args.light_state_no_targets);
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void) override
+      {
+        if (m_idle_state != INT_MAX)
+          setNavigationLight(m_idle_state);
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL, CODE_IDLE);
       }
 
       void
