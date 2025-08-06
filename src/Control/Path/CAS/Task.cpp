@@ -474,6 +474,7 @@ namespace Control
           // .description("Weights on environmental factors.");
 
           setParameterScope("Bottom Track -- Minimum Depth", Parameter::SCOPE_GLOBAL);
+          setParameterVisbility("Bottom Track -- Minimum Depth", Parameter::VISIBILITY_DEVELOPER);
 
           // Register handler routines.
           bind<IMC::AisInfo>(this);
