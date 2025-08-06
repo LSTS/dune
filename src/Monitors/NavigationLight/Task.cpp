@@ -58,15 +58,15 @@ namespace Monitors
     {
       //! Task Arguments
       Arguments m_args;
-      //! Flag to indicate if the led is on or off.
-      bool m_led_on;
+      //! Current light state.
+      int m_state;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Monitors::AISProximity(name, ctx),
-        m_led_on(false)
+        m_state(INT_MAX)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -133,6 +133,10 @@ namespace Monitors
       void
       setNavigationLight(int state)
       {
+        if (m_state == state)
+          return;
+
+        m_state = state;
         debug("setting light state to %d", state);
         IMC::SetEntityParameters sep;
         sep.name = m_args.light_entity;
