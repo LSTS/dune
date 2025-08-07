@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: d1be0cfac9c5cd84878f9f1587a1f713                            *
+// IMC XML MD5: b794b0c221e5aa0d1c123a3514b9cf52                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -5099,7 +5099,9 @@ namespace DUNE
         //! Initiate Reverse Range.
         AOP_REVERSE_RANGE = 17,
         //! Forced Abort.
-        AOP_FORCED_ABORT = 18
+        AOP_FORCED_ABORT = 18,
+        //! Fragment Message.
+        AOP_MSG_FRAGMENT = 19
       };
 
       //! Operation.
