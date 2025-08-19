@@ -67,6 +67,8 @@ namespace Sensors
       std::string io_handle;
       //! Input timeout.
       float inp_tout;
+      //! Read frequency.
+      float read_freq;
     };
 
     class WaitingForHeader: public std::exception
@@ -159,13 +161,25 @@ namespace Sensors
           .minimumValue("0.0")
           .description("Input timeout");
 
-        setWaitForMessages(0.1);
+        param("Read Frequency", m_args.read_freq)
+          .units(Units::Hertz)
+          .defaultValue("0.0")
+          .description("Frequency at which to read data from the device.");
       }
 
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
-      { }
+      {
+        if (paramChanged(m_args.read_freq))
+        {
+          setReadFrequency(m_args.read_freq);
+          inf("Setting read frequency to %f Hz", m_args.read_freq);
+        }
+
+        if (paramChanged(m_args.inp_tout))
+          m_wdog.setTop(m_args.inp_tout);
+      }
 
       //! Connect to the device.
       //! @return true if connection was established, false otherwise.
@@ -484,6 +498,7 @@ namespace Sensors
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
 
+        // If read frequency != 0, this value will not be very accurate.
         if (m_freq_counter.overflow())
         {
           m_freq_avg.update(m_msg_count);
