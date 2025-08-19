@@ -129,6 +129,12 @@ namespace Sensors
       Packet m_packet;
       //! Timestamp of last packet received.
       double m_ts;
+      //! Frequency counter for dispatching data.
+      Counter<double> m_freq_counter;
+      //! Average frequency of data received.
+      MovingAverage<double> m_freq_avg;
+      //! Packet parsed count.
+      unsigned m_msg_count;
       //! Task arguments.
       Arguments m_args;
 
@@ -136,7 +142,9 @@ namespace Sensors
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        Hardware::BasicDeviceDriver(name, ctx)
+        Hardware::BasicDeviceDriver(name, ctx),
+        m_handle(nullptr),
+        m_freq_avg(10)
       {
         // Define configuration parameters.
         paramActive(Tasks::Parameter::SCOPE_GLOBAL, Tasks::Parameter::VISIBILITY_DEVELOPER, true);
@@ -190,6 +198,8 @@ namespace Sensors
       onInitializeDevice(void) override
       {
         m_wdog.setTop(m_args.inp_tout);
+        m_msg_count = 0;
+        m_freq_counter.setTop(1.0);
       }
 
       //! Wait for header byte.
@@ -301,7 +311,9 @@ namespace Sensors
             break;
 
           case PACKET_QUATERNION:
+            m_msg_count++;
             break;
+
           default:
             break;
         }
@@ -441,6 +453,7 @@ namespace Sensors
       {
         msg.setTimeStamp(m_ts);
         dispatch(msg, DF_KEEP_TIME);
+        m_msg_count++;
       }
 
       void
@@ -469,6 +482,14 @@ namespace Sensors
         {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+
+        if (m_freq_counter.overflow())
+        {
+          m_freq_avg.update(m_msg_count);
+          m_freq_counter.reset();
+          debug("Frequency: %f Hz : Last second %d", m_freq_avg.mean(), m_msg_count);
+          m_msg_count = 0;
         }
 
         if (!Poll::poll(*m_handle, m_args.inp_tout))
