@@ -100,14 +100,6 @@ namespace Sensors
       }
     };
 
-    enum SensorInputState
-    {
-      WAIT_HEADER,
-      WAIT_TYPE,
-      READ_DATA,
-      WAIT_CHECKSUM
-    };
-
     struct Packet
     {
       uint8_t header;
@@ -125,8 +117,6 @@ namespace Sensors
       IO::Handle* m_handle;
       //! Input watchdog.
       Counter<double> m_wdog;
-      //! Current sensor state.
-      SensorInputState m_sensor_state;
       //! Current packet.
       Packet m_packet;
       //! Timestamp of last packet received.
@@ -228,7 +218,6 @@ namespace Sensors
           throw WaitingForHeader();
 
         m_packet.header = byte;
-        m_sensor_state = WAIT_TYPE;
       }
 
       //! Read packet type.
@@ -245,15 +234,12 @@ namespace Sensors
 
         m_packet.type = byte;
         m_packet.input.resize(it->second);
-
-        m_sensor_state = READ_DATA;
       }
 
       void
       readInput(void)
       {
         readFromDevice(m_packet.input.data(), m_packet.input.size());
-        m_sensor_state = WAIT_CHECKSUM;
       }
 
       //! Read data from the device.
@@ -263,7 +249,7 @@ namespace Sensors
       //! @return timestamp of the read operation.
       //! @throws FormattedError if reading fails or times out.
       double
-      readFromDevice(uint8_t* data, size_t size, double timeout = 1.0)
+      readFromDevice(uint8_t* data, size_t size, double timeout = 0.1)
       {
         double ts = -1.0;
         Counter<float> timer(timeout);
@@ -333,7 +319,6 @@ namespace Sensors
         }
 
         // Reset state to wait for next header.
-        m_sensor_state = WAIT_HEADER;
         m_wdog.reset();
 
         // Print packet in hex format.
@@ -437,32 +422,6 @@ namespace Sensors
       }
 
       void
-      tryProcess(void)
-      {
-        switch (m_sensor_state)
-        {
-          case WAIT_HEADER:
-            waitHeader();
-            break;
-
-          case WAIT_TYPE:
-            readType();
-            break;
-
-          case READ_DATA:
-            readInput();
-            break;
-
-          case WAIT_CHECKSUM:
-            onChecksum();
-            break;
-
-          default:
-            break;
-        }
-      }
-
-      void
       dispatchMessage(IMC::Message& msg)
       {
         msg.setTimeStamp(m_ts);
@@ -475,7 +434,10 @@ namespace Sensors
       {
         try
         {
-          tryProcess();
+          waitHeader();
+          readType();
+          readInput();
+          onChecksum();
         }
         catch (const WaitingForHeader&)
         {
@@ -485,7 +447,6 @@ namespace Sensors
         catch (const std::exception& e)
         {
           err("Err: %s", e.what());
-          m_sensor_state = WAIT_HEADER;
         }
       }
 
@@ -506,9 +467,6 @@ namespace Sensors
           debug("Frequency: %f Hz : Last second %d", m_freq_avg.mean(), m_msg_count);
           m_msg_count = 0;
         }
-
-        if (!Poll::poll(*m_handle, m_args.inp_tout))
-          return false;
 
         process();
 
