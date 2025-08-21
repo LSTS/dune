@@ -99,6 +99,7 @@ namespace DUNE
       if (fd == 0)
         throw FileOpenError(fname, System::Error::getLastMessage());
 
+      bool remove = false;
       while (std::fscanf(fd, " %1023[^\n] ", line) == 1)
       {
         ++line_count;
@@ -110,6 +111,7 @@ namespace DUNE
         // Section name.
         if (std::sscanf(line, "[%[^]]] ", section) == 1)
         {
+          remove = false;
           String::rightTrimInPlace(section);
 
           if (std::strncmp(section, "Include ", 8) == 0)
@@ -147,13 +149,29 @@ namespace DUNE
             String::resize(option, -1);
             // append if a previous value already exists
             append = m_data[section].find(option) != m_data[section].end();
+            remove = false;
           }
+          else if (String::endsWith(String::str(option), "-"))
+          {
+            String::resize(option, -1);
+            // remove if a previous value already exists
+            remove = m_data[section].find(option) != m_data[section].end();
+          }
+          else
+            remove = false;
 
           std::strncpy(tmp, option, c_max_bfr_size);
           if (append)
           {
             m_data[section][option] += ", ";
             m_data[section][option] += arg;
+          }
+          else if (remove)
+          {
+            std::vector<std::string> list;
+            String::split(arg, ",", list);
+            for (const auto& val: list)
+              String::removeSequence(m_data[section][option], val);
           }
           else
             m_data[section][option] = arg;
@@ -180,12 +198,24 @@ namespace DUNE
           if (section_count == 0)
             throw SyntaxError(fname, line_count);
 
-          if (String::endsWith(String::str(option), "+"))
-            String::resize(option, -1);
+          if (remove)
+          {
+            std::vector<std::string> list;
+            String::split(arg, ",", list);
+            for (const auto& val: list)
+              String::removeSequence(m_data[section][tmp], val);
+          }
+          else
+          {
+            if (String::endsWith(String::str(option), "+"))
+            {
+              String::resize(option, -1);
+            }
 
-          String::rightTrimInPlace(arg);
-          m_data[section][tmp] += " ";
-          m_data[section][tmp] += arg;
+            String::rightTrimInPlace(arg);
+            m_data[section][tmp] += " ";
+            m_data[section][tmp] += arg;
+          }
         }
         // Syntax error.
         else
