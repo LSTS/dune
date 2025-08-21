@@ -263,6 +263,15 @@ namespace Transports
           logMessage(msg);
       }
 
+      void
+      queryEntityList(void)
+      {
+        IMC::EntityList query;
+        query.setDestination(getSystemId());
+        query.op = EntityList::OP_QUERY;
+        dispatch(query);
+      }
+
       bool
       changeVolumeDirectory(void)
       {
@@ -402,6 +411,11 @@ namespace Transports
         m_log_ctl.setTimeStamp(ref_time);
         logMessage(&m_log_ctl);
         dispatch(m_log_ctl, DF_KEEP_TIME);
+
+        //! Query Entity List to have at least one Entity List per log file.
+        //! The EntityList message will only be logged
+        //! if EntityList is on m_args.messages or if m_args.messages is empty.
+        queryEntityList();
 
         inf(DTR("log started '%s'"), m_log_ctl.name.c_str());
 
