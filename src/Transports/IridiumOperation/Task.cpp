@@ -46,6 +46,9 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
+    //! Timeout for a recent external entity list query.
+    static constexpr uint32_t c_timeout_recent_external_query = 15;
+
     //! Database types string representation.
     static const char* c_db_types[] = {
       "Request", "Success", "Failure", "In Progress", "Unknown",
@@ -105,6 +108,8 @@ namespace Transports
       std::map<uint32_t, FragmentsRetransmission> m_retransmissions;
       //! Timer to check retransmissions.
       Time::Counter<uint32_t> m_retransmit_timer;
+      //! Recent external entity list query timer.
+      Time::Counter<uint32_t> m_recent_ext_query_timer;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -389,20 +394,40 @@ namespace Transports
       void
       consume(const IMC::EntityList* msg)
       {
-        if (msg->getSource() != getSystemId())
-          return;
+        switch (msg->op)
+        {
+        case EntityList::OP_REPORT:
+        {
+          if (msg->getSource() != getSystemId())
+            return;
 
-        if (msg->op != EntityList::OP_REPORT)
-          return;
+          if (m_recent_ext_query_timer.getTop() > 0 && !m_recent_ext_query_timer.overflow())
+          {
+            if (m_iri_subs.empty())
+              return;
 
-        if (m_iri_subs.empty())
-          return;
+            auto it = m_iri_subs.find(msg->getDestination());
+            if (it == m_iri_subs.end())
+              return;
 
-        auto it = m_iri_subs.find(msg->getDestination());
-        if (it == m_iri_subs.end())
-          return;
+            sendIridiumMsg(msg, true);
+            m_recent_ext_query_timer.setTop(0);
+          }
 
-        sendIridiumMsg(msg, true);
+          break;
+        }
+        
+        case EntityList::OP_QUERY:
+        {
+          if (msg->getSource() != getSystemId())
+            m_recent_ext_query_timer.setTop(c_timeout_recent_external_query);
+
+          break;
+        }
+
+        default:
+          break;
+        }
       }
 
       void
