@@ -546,7 +546,7 @@ namespace DUNE
       Parameter&
       param(const std::string& name, T& var)
       {
-        return param<BasicParameterParser<T> >(name, var);
+        return param<BasicParameterParser<T>>(name, var);
       }
 
       //! Declare a configuration parameter that can be parsed using
