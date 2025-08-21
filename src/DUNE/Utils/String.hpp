@@ -279,6 +279,12 @@ namespace DUNE
       //! @return true if 'str' ends with 'suffix', false otherwise.
       static bool
       endsWith(const std::string& str, const std::string& suffix);
+
+      //! Remove a sequence 'seq' from a string 'str' with comma-seperated values.
+      //! @param[in] str string.
+      //! @param[in] seq sequence.
+      static void
+      removeSequence(std::string& str, const std::string& seq);
     };
   }
 }

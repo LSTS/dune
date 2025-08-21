@@ -402,5 +402,22 @@ namespace DUNE
 
       return str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
     }
+
+    void
+    String::removeSequence(std::string& str, const std::string& seq)
+    {
+      if (seq.empty() || str.empty() || seq.size() > str.size())
+        return;
+
+      size_t pos = 0;
+      while ((pos = str.find(seq, pos)) != std::string::npos)
+      {
+        size_t remove_len = seq.length();
+        if (pos + remove_len < str.size() && str[pos + remove_len] == ',')
+          ++remove_len;
+
+        str.erase(pos, remove_len);
+      }
+    }
   }
 }
