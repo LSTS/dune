@@ -198,7 +198,6 @@ namespace Power
       bool
       onConnect() override
       {
-        inf("onConnect");
         try
         {
           m_handle = openDeviceHandle(m_args.io_dev);
@@ -216,7 +215,6 @@ namespace Power
       void
       onDisconnect() override
       {
-        inf("onDisconnect");
         if(m_driver != NULL)
         {
           debug("Sending stop to BatMan");
