@@ -802,13 +802,23 @@ namespace DUNE
       const auto sample_period = getSamplePeriod();
       const auto periodicity = getSamplePeriodicity();
       std::ostringstream description;
-      description << "active"
-                  << " | sampling: " << (state ? "on" : "off");
-      if ((periodicity != sample_period) && (sample_period > 0.0f))
+      description << "active";
+      if ((periodicity != sample_period))
       {
-        const auto time = Format::getTimeDHMS(state ? getSamplePeriodRemaining() : getSamplePeriodicityRemaining());
-        if (!time.empty())
-          description << " (r: " << time << ")";
+        if ((sample_period > 0.0f))
+        {
+          description << " | sampling: " << (state ? "on" : "off");
+          const auto time = Format::getTimeDHMS(state ? getSamplePeriodRemaining() : getSamplePeriodicityRemaining());
+          if (!time.empty())
+            description << " (r: " << time << ")";
+        }
+        else
+        {
+          const auto time = Format::getTimeDHMS(getSamplePeriodicity());
+          if (!time.empty())
+            description << " | doing a periodic sample every " << time;
+        }
+          
       }
 
       setEntityState(IMC::EntityState::ESTA_NORMAL, description.str());
