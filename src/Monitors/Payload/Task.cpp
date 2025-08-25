@@ -314,7 +314,7 @@ namespace Monitors
       getRetransmissionList(Network::Fragments* fragments, const std::string& request)
       {
         if (request.empty())
-          return {};
+          return std::unordered_set<int>();
 
         auto frag_list = request;
         auto negation = frag_list.front() == '!';
