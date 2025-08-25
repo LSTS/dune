@@ -603,13 +603,13 @@ namespace DUNE
     }
 
     void
-    Task::setEntityParameter(const IMC::EntityParameter& param, const bool save)
+    Task::setEntityParameter(const IMC::EntityParameter& p, const bool save)
     {
       IMC::SetEntityParameters sep;
       sep.setDestination(getSystemId());
       sep.setDestinationEntity(getEntityId());
       sep.name = getEntityLabel();
-      sep.params.push_back(param);
+      sep.params.push_back(p);
       dispatch(sep, DF_LOOP_BACK);
 
       if (save)

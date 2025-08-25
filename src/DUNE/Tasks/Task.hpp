@@ -798,15 +798,15 @@ namespace DUNE
 
       template<typename T>
       void
-      applyEntityParameter(T& param, const T& value, bool save = false)
+      applyEntityParameter(T& p, const T& value, bool save = false)
       {
         try
         {
-          void* var = static_cast<void*>(&param);
+          void* var = static_cast<void*>(&p);
           IMC::EntityParameters params;
           params.name = getEntityLabel();
-          const auto& p = m_params.apply(var, uncastLexical(value));
-          params.params.push_back(p);
+          const auto& p_ = m_params.apply(var, uncastLexical(value));
+          params.params.push_back(p_);
           dispatch(params);
 
           if (save)
