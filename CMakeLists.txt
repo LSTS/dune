@@ -40,7 +40,13 @@ if(COMMAND CMAKE_POLICY)
 endif(COMMAND CMAKE_POLICY)
 
 # Required C++ Standard.
-set(CMAKE_CXX_STANDARD 17)
+if(DUNELEGACY)
+  set(CMAKE_CXX_STANDARD 14)
+  add_compile_definitions(-DDUNE_LEGACY)
+else()
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -109,13 +115,6 @@ dune_option(DUNELEGACY "Disable compilation of C++17 features")
 # Internationalization.
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
 
-#############################################################################
-# DUNE Legacy build
-#############################################################################
-if(DUNELEGACY)
-  set(CMAKE_CXX_STANDARD 14)
-  add_definitions(-DDUNE_LEGACY)
-endif(DUNELEGACY)
 
 #############################################################################
 # DUNE's default build type
