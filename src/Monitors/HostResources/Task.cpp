@@ -237,7 +237,15 @@ namespace Monitors
         last_total = total_time;
         last_uptime = uptime;
 
+  #if (DUNE_LEGACY)
+        if (percent < 0.0)
+          return 0.0;
+        if (percent > 100.0)
+          return 100.0;
+        return percent;
+  #else
         return std::clamp(percent, 0.0, 100.0);
+  #endif
 #elif defined(DUNE_OS_WINDOWS)
         static ULARGE_INTEGER last_cpu_time, last_sys_time;
         FILETIME ft_proc_creation, ft_proc_exit, ft_proc_kernel, ft_proc_user;
@@ -270,6 +278,8 @@ namespace Monitors
           last_percent = 100.0;
 
         return last_percent;
+#else
+        return 0.0;
 #endif
       }
 
@@ -512,7 +522,16 @@ namespace Monitors
         unsigned long long delta_idle = idle2 > idle1 ? idle2 - idle1 : 0;
 
         double usage = 100.0 * (delta_total - delta_idle) / delta_total;
+
+#if (DUNE_LEGACY)
+        if (usage < 0.0)
+          return 0.0;
+        if (usage > 100.0)
+          return 100.0;
+        return usage;
+#else
         return std::clamp(usage, 0.0, 100.0);
+#endif
       }
 
       //! Main loop.
