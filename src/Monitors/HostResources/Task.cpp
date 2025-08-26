@@ -440,13 +440,14 @@ namespace Monitors
             m_cpu_check.reset();
             m_tstamp = Clock::getSinceEpoch();
             std::vector<CpuTimes> prev = readCpuTimes();
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));  // intervalo de medição
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             std::vector<CpuTimes> curr = readCpuTimes();
 
             for (size_t i = 0; i < prev.size(); ++i)
             {
               if (i == 0)
-                continue;  // pula o total geral "cpu"
+                continue;
+
               int usage = static_cast<int>(calculateUsage(prev[i], curr[i]));
               m_dune_cpu_usage[i].setTimeStamp(m_tstamp);
               m_dune_cpu_usage[i].value = usage;
