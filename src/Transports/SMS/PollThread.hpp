@@ -92,7 +92,7 @@ namespace Transports
               if(Poll::poll(*m_handle, 0.01))
               {
                 size_t rv = m_handle->read(m_bfr, c_bfr_size);
-                m_task->debug("[PollThread]:%ld bytes read from IO handle", rv);
+                m_task->debug("[PollThread]:%zu bytes read from IO handle", rv);
                 if(rv > 0)
                 {
                   m_new_line_timer.reset();

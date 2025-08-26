@@ -173,11 +173,18 @@ namespace Sensors
       onUpdateParameters(void)
       {
         BasicDeviceDriver::onUpdateParameters();
-        
-        setFrequency(m_args.frequency);
-        setRange(m_args.range);
-        setDataGain(m_args.dat_gain);
-        setBalanceGain(m_args.bal_gain);
+
+        if (paramChanged(m_args.frequency))        
+          setFrequency(m_args.frequency);
+
+        if (paramChanged(m_args.range))
+          setRange(m_args.range);
+
+        if (paramChanged(m_args.dat_gain))
+          setDataGain(m_args.dat_gain);
+
+        if (paramChanged(m_args.bal_gain))
+          setBalanceGain(m_args.bal_gain);
 
         if (paramChanged(m_args.io_dev) && m_sock != NULL)
           throw RestartNeeded(DTR("restarting to change URI"), 1);
@@ -258,10 +265,10 @@ namespace Sensors
       void
       setPeriodicity(double value)
       {
-        IMC::EntityParameter param;
-        param.name = c_periodicity_param_name;
-        param.value = std::to_string(value);
-        setEntityParameter(param);
+        IMC::EntityParameter p;
+        p.name = c_periodicity_param_name;
+        p.value = std::to_string(value);
+        setEntityParameter(p);
       }
 
       void
