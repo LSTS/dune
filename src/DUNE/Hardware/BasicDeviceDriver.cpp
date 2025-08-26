@@ -1157,8 +1157,8 @@ namespace DUNE
     {
       if (!isActive())
         waitForMessages(1.0);
-      else if (m_sample_timer.getTop() > 0.0)
-        waitForMessages(m_sample_timer.getRemaining());
+      else if (m_honours_conf_samp && !m_is_sampling)
+        waitForMessages(getSamplePeriodicityRemaining());
       else if (m_wait_msg_timeout > 0.0)
         waitForMessages(m_wait_msg_timeout);
       else
