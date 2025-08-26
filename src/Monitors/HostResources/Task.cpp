@@ -42,6 +42,30 @@ namespace Monitors
     static const float c_time_between_cpu_reads = 2.0f;
     static const int c_max_cpu = 32;
 
+    struct CpuTimes
+    {
+      unsigned long long user = 0;
+      unsigned long long nice = 0;
+      unsigned long long system = 0;
+      unsigned long long idle = 0;
+      unsigned long long iowait = 0;
+      unsigned long long irq = 0;
+      unsigned long long softirq = 0;
+      unsigned long long steal = 0;
+
+      unsigned long long
+      total() const
+      {
+        return user + nice + system + idle + iowait + irq + softirq + steal;
+      }
+
+      unsigned long long
+      active() const
+      {
+        return total() - idle - iowait;
+      }
+    };
+
     typedef struct CPUData
     {
       std::string cpu;
@@ -151,6 +175,7 @@ namespace Monitors
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
         m_ram_check.setTop(c_time_between_ram_reads);
         m_ram_cache_clean.setTop(c_time_between_ram_cache_clean);
+        m_cpu_check.setTop(c_time_between_cpu_reads);
         m_pid = getpid();
         trace("PID: %d", m_pid);
       }
@@ -291,6 +316,40 @@ namespace Monitors
         }
       }
 
+      double
+      calculateUsage(const CpuTimes& prev, const CpuTimes& curr)
+      {
+        unsigned long long activeDiff = curr.active() - prev.active();
+        unsigned long long totalDiff = curr.total() - prev.total();
+        if (totalDiff == 0)
+          return 0.0;
+        return 100.0 * activeDiff / totalDiff;
+      }
+
+      std::vector<CpuTimes>
+      readCpuTimes()
+      {
+        std::ifstream file("/proc/stat");
+        std::string line;
+        std::vector<CpuTimes> cpus;
+
+        while (std::getline(file, line))
+        {
+          if (line.substr(0, 3) != "cpu")
+            break;
+
+          std::istringstream ss(line);
+          std::string cpuLabel;
+          CpuTimes times;
+
+          ss >> cpuLabel >> times.user >> times.nice >> times.system >> times.idle >> times.iowait
+            >> times.irq >> times.softirq >> times.steal;
+
+          cpus.push_back(times);
+        }
+        return cpus;
+      }
+
       void
       onMain(void)
       {
@@ -374,6 +433,25 @@ namespace Monitors
             catch (...)
             {
               war("RAM cache clean unknown error");
+            }
+          }
+          else if (m_cpu_check.overflow())
+          {
+            m_cpu_check.reset();
+            m_tstamp = Clock::getSinceEpoch();
+            std::vector<CpuTimes> prev = readCpuTimes();
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));  // intervalo de medição
+            std::vector<CpuTimes> curr = readCpuTimes();
+
+            for (size_t i = 0; i < prev.size(); ++i)
+            {
+              if (i == 0)
+                continue;  // pula o total geral "cpu"
+              int usage = static_cast<int>(calculateUsage(prev[i], curr[i]));
+              m_dune_cpu_usage[i].setTimeStamp(m_tstamp);
+              m_dune_cpu_usage[i].value = usage;
+              trace("CPU%lu: %d%%", i + 1, usage);
+              dispatch(m_dune_cpu_usage[i], DF_KEEP_TIME | DF_LOOP_BACK);
             }
           }
         }
