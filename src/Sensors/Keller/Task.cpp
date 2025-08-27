@@ -551,8 +551,10 @@ namespace Sensors
       }
 
       void
-      reportEntityState(void)
+      setEntityStateSampling(bool state) override
       {
+        (void)state;
+
         if (m_wdog.overflow())
         {
           std::string text = String::str(DTR("%0.1f seconds without valid data"),
@@ -613,7 +615,6 @@ namespace Sensors
           }
         }
 
-        reportEntityState();
         return reading;
       }
     };
