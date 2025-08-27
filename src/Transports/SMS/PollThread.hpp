@@ -158,8 +158,8 @@ namespace Transports
             return false;
           }
           // Validate the device path to avoid command injection
-          // Accepts only "/dev/ttyUSB" followed by digits
-          std::regex re("^/dev/ttyUSB[0-9]+$");
+          // Accepts "/dev/tty" followed by letters and digits, or "/dev/uart/" followed by digits
+          std::regex re("^(/dev/tty[a-zA-Z]+[0-9]+|/dev/uart/[0-9]+)$");
           if (!std::regex_match(device, re))
           {
             m_task->war("[PollThread]: Invalid device path format: %s", device.c_str());
