@@ -1,3 +1,7 @@
+if(DUNELEGACY)
+  return()
+endif()
+
 find_package(PkgConfig QUIET)
 
 pkg_check_modules(MODBUS libmodbus QUIET)
