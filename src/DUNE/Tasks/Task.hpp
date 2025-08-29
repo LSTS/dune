@@ -192,7 +192,7 @@ namespace DUNE
 
       //! Retrieve the task's activation time.
       //! @return activation time of the task.
-      uint16_t
+      float
       getActivationTime(void) const
       {
         return m_args.act_time;
@@ -200,7 +200,7 @@ namespace DUNE
 
       //! Retrieve the task's deactivation time.
       //! @return deactivation time of the task.
-      uint16_t
+      float
       getDeactivationTime(void) const
       {
         return m_args.deact_time;
