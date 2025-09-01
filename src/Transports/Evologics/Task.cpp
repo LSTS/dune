@@ -540,6 +540,12 @@ namespace Transports
           handleUsblPosition(msg->value);
         else if (String::startsWith(msg->value, "USBLANGLES"))
           handleUsblAngles(msg->value);
+
+        // Janus.
+        else if (String::startsWith(msg->value, "RECVJRB"))
+          handleJanusBaseline(msg->value);
+        else if (String::startsWith(msg->value, "RECVJRP"))
+          handleJanusCargo(msg->value);
       }
 
       void
@@ -589,22 +595,48 @@ namespace Transports
         ticket.seq = msg->seq;
         ticket.ack = (msg->flags & IMC::UamTxFrame::UTF_ACK) != 0;
         ticket.pbm = (msg->flags & IMC::UamTxFrame::UTF_DELAYED) != 0;
+        ticket.janus_send = (msg->flags & IMC::UamTxFrame::UTF_JANUS_SEND) != 0;
 
-        if (msg->sys_dst == getSystemName())
+        if (msg->flags & IMC::UamTxFrame::UTF_JANUS_GET_CARGO)
         {
-          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
+          // Janus cargo length.
+          if (msg->data.size() != 1)
+          {
+            war(DTR("Invalid data size for Janus cargo request: %u != 1"), msg->data.size());
+            sendTxStatus(ticket, IMC::UamTxStatus::UTS_UNSUPPORTED);
+            return;
+          }
+
+          try
+          {
+            m_driver->getJanusCargo(msg->data[0]);
+          }
+          catch(std::runtime_error& e)
+          {
+            sendTxStatus(ticket, IMC::UamTxStatus::UTS_FAILED, e.what());
+          }
+
           return;
         }
-
-        try
+        
+        if (!ticket.janus_send)
         {
-          ticket.addr = lookupSystemAddress(msg->sys_dst);
-        }
-        catch (...)
-        {
-          war(DTR("invalid system name %s"), msg->sys_dst.c_str());
-          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
-          return;
+          if (msg->sys_dst == getSystemName())
+          {
+            sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
+            return;
+          }
+  
+          try
+          {
+            ticket.addr = lookupSystemAddress(msg->sys_dst);
+          }
+          catch (...)
+          {
+            war(DTR("invalid system name %s"), msg->sys_dst.c_str());
+            sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
+            return;
+          }
         }
 
         // Fail if busy.
@@ -613,7 +645,7 @@ namespace Transports
           sendTxStatus(ticket, IMC::UamTxStatus::UTS_BUSY);
           return;
         }
-
+        
         try
         {
           transmitData((const uint8_t*)&msg->data[0], msg->data.size(), ticket);
@@ -628,12 +660,17 @@ namespace Transports
         sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
 
         m_kalive_counter.reset();
-
       }
 
       void
       transmitData(const uint8_t* data, unsigned data_size, Ticket& ticket)
       {
+        if (ticket.janus_send)
+        {
+          m_driver->sendJRP(data, data_size);
+          return;
+        }
+
         if (ticket.pbm)
         {
           m_driver->sendPBM(data, data_size, ticket.addr);
@@ -793,6 +830,53 @@ namespace Transports
         reply.fill(ua);
 
         dispatch(ua);
+      }
+
+      void
+      handleJanusBaseline(const std::string& str)
+      {
+        int offset = 0;
+        long unsigned int data_size = 0;
+        int rv = 0;
+
+        rv = std::sscanf(str.c_str(),
+                         "RECVJRB,%lu,%n",
+                         &data_size, &offset);
+
+        if (rv != 2)
+          throw std::runtime_error("invalid format for RECVJRB");
+        
+        IMC::UamRxFrame msg;
+        msg.flags |= IMC::UamRxFrame::URF_JANUS_BASELINE;
+        msg.data.assign((char*)&str[offset], (char*)&str[str.size() - 1]);
+        
+        dispatch(msg);
+      }
+
+      void
+      handleJanusCargo(const std::string& str)
+      {
+        int offset = 0;
+        long unsigned int data_size = 0;
+        uint32_t timestamp = 0;
+        uint32_t duration = 0;
+        float rssi = 0.0f;
+        float velocity = 0.0f;
+        int rv = 0;
+
+        rv = std::sscanf(str.c_str(),
+                         "RECVJRP,%lu,%lu,%lu,%f,%f,%n",
+                         &data_size, &timestamp, &duration, &rssi, &velocity,
+                         &offset);
+
+        if (rv != 6)
+          throw std::runtime_error("invalid format for RECVJRP");
+        
+        IMC::UamRxFrame msg;
+        msg.flags |= IMC::UamRxFrame::URF_JANUS_CARGO;
+        msg.data.assign((char*)&str[offset], (char*)&str[str.size() - 1]);
+        
+        dispatch(msg);
       }
 
       void
