@@ -75,7 +75,6 @@ namespace UserInterfaces
     constexpr char BYTE_CHANNEL_DATA            = 'C';
     constexpr char BYTE_DATA_POWER              = 'D';
     constexpr char BYTE_FIRMWARE                = 'f';
-    constexpr char BYTE_HEADING                 = 'h';
     constexpr char BYTE_BQ_INFO                 = 'i';
     constexpr char BYTE_KNOWN_AMODEMS           = 'K';
     constexpr char BYTE_STATUS                  = 'k';

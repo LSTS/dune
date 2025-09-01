@@ -293,7 +293,6 @@ namespace UserInterfaces
         m_driver->requestFirmwareVersion();
         m_driver->setNumberCells();
         m_driver->requestDataPower(m_args.get_data);
-        m_driver->requestDataHeading(m_args.get_data);
 
         for (auto& pwr_ch: m_pwr_chs)
           m_driver->setPowerChannelState(pwr_ch.second->state.name,
@@ -631,7 +630,6 @@ namespace UserInterfaces
         if (m_driver != NULL && paramChanged(m_args.get_data))
         {
           m_driver->requestDataPower(m_args.get_data);
-          m_driver->requestDataHeading(m_args.get_data);
         }
 
         if (paramChanged(m_args.network_interfaces))

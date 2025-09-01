@@ -210,18 +210,6 @@ namespace UserInterfaces
       }
 
       void
-      requestDataHeading(bool on)
-      {
-        m_task->spew("request heading data");
-        sprintf(m_cmd_text, "%c,%c,%s%c",
-                             BYTE_PREAMBLE,
-                             BYTE_HEADING,
-                             on ? "on" : "off",
-                            '\0');
-        sendCommand(m_cmd_text, true);
-      }
-
-      void
       sendStatus(char code, char type, std::string info)
       {
         m_task->debug("sending status");
@@ -516,18 +504,6 @@ namespace UserInterfaces
                 return false;
             }
             
-            break;
-          }
-
-          case BYTE_HEADING:
-          {
-            IMC::EulerAngles euler;
-            euler.psi = std::stof(lst[2]);
-            euler.theta = std::stof(lst[3]);
-            euler.phi = std::stof(lst[4]);
-            euler.psi_magnetic = euler.psi;
-            m_task->dispatch(euler);
-            m_task->spew("HEADING: yaw: %.3f pitch: %.3f roll: %.3f", euler.psi, euler.theta, euler.phi);
             break;
           }
 
