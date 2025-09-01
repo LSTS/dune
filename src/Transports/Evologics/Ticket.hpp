@@ -55,6 +55,8 @@ namespace Transports
       bool ack;
       //! Piggyback message.
       bool pbm;
+      //! Janus send flag.
+      bool janus_send;
     };
   }
 }
