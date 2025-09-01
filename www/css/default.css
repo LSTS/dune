@@ -225,24 +225,26 @@ p.DEBUG
 
 #MainOverviewLeft
 {
-  margin-left: 20px;
+  margin-left: 70px;
   margin-right: auto;
-  /* width: 80%; */
+  width: auto;
   text-align: center;
-  /* padding: 10px 18px;
-  border-radius: 18px;
-  box-shadow: 0 1px 2px var(--c-color-text); */
+  flex: 1;
+  /*padding: 10px 18px;*/
+  /*border-radius: 18px;*/
+  /*box-shadow: 0 1px 2px var(--c-color-text);*/
 }
 
 #MainOverviewRight
 {
   margin-left: auto;
-  margin-right: 20px;
-  width: 240px;
+  margin-right: 80px;
+  width: auto;
   text-align: center;
-  /* padding: 10px 18px;
-  border-radius: 18px;
-  box-shadow: 0 1px 2px var(--c-color-text); */
+  flex: 1;
+  /*padding: 10px 18px;*/
+  /*border-radius: 18px;*/
+  /*box-shadow: 0 1px 2px var(--c-color-text);*/
 }
 
 #MenuBar
@@ -372,9 +374,9 @@ p.DEBUG
 
 #InfoTasksTableDiv
 {
-  max-height: 50vh;
+  max-height: 60vh;
   overflow-y: scroll;
-  width: 95%;
+  width: 90%;
   margin-left: auto;
   margin-right: auto;
 }
@@ -612,15 +614,9 @@ div#Sensors
   /**/
   background-color: var(--c-color-entity-sensor-background, #ddd);
   font-weight: bold;
-  padding: 4px 8px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px var(--c-color-text);
-  margin-bottom: 1px;
-  /*color: var(--c-color-text-system-name);*/
-  color: #000000;
-  display: inline-block;
-  margin-bottom: 6px;
-  background-color: var(--c-background);
+  width: 150px;
+  text-align: center;
+  color: var(--c-color-entity-sensor-color-label, #000);
 }
 
 #Sensors td:nth-child(3)
@@ -734,8 +730,8 @@ div#Sensors
   background-color: var(--c-background-h-l);
   border-radius: 8px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow-y: scroll;
-  max-height: 50vh;
+  overflow-y: auto;
+  max-height: 80vh;
 }
 
 .announce-section
@@ -881,84 +877,4 @@ div#Sensors
 .acoustic-modem-row
 {
   background-color: var(--c-background);
-}
-
-.cpu-icon {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  margin-right: 4px;
-  background-image: var(--cpu-icon-url);
-}
-
-#MainTaskTable tr[data-state="0"] td,
-#MainTaskTable tr[data-state="0"] th {
-  /*background-color: var(--c-color-warning);*/
-  border-radius: 18px;
-}
-
-#MainTaskTable tr[data-state="2"] td,
-#MainTaskTable tr[data-state="2"] th,
-#MainTaskTable tr[data-state="3"] td,
-#MainTaskTable tr[data-state="3"] th,
-#MainTaskTable tr[data-state="4"] td,
-#MainTaskTable tr[data-state="4"] th {
-  /*background-color: var(--c-color-error);*/
-  border-radius: 18px;
-}
-
-#MainTaskTable th.rounded-corner {
-  background-color: var(--c-background);
-  border-radius: 18px;
-}
-
-#MainTaskTable tr[data-state="0"] th.rounded-corner {
-  background-color: var(--c-color-warning);
-  border-radius: 18px;
-}
-
-#MainTaskTable tr[data-state="2"] th.rounded-corner,
-#MainTaskTable tr[data-state="3"] th.rounded-corner,
-#MainTaskTable tr[data-state="4"] th.rounded-corner {
-  background-color: var(--c-color-error_2);
-  border-radius: 18px;
-}
-
-.gauge-container {
-  position: relative;
-  height: 18px;
-  background-color: var(--c-background-h-l);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.gauge-bar {
-  height: 100%;
-  width: 0%;
-  border-radius: 6px;
-  transition: width 0.5s ease;
-}
-
-.gauge-value {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #000000;
-  font-size: 12px;
-}
-
-.section-header {
-  font-weight: bold;
-  font-size: 1.0em;
-  /* background-color: #f0f0f0; */
-  color: var(--c-color-text);
-  margin: 10px 0 6px 0;
-  border-left: 4px solid #797c7e;
-  border-right: 4px solid #797c7e;
-  border-top: 2px solid #797c7e;
-  border-bottom: 2px solid #797c7e;
-  border-radius: 4px;
 }

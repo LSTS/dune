@@ -34,6 +34,7 @@
 
 <head>
   <title>DUNE - Control Center</title>
+  <meta charset="UTF-8">
   <link rel="icon" type="image/vnd.microsoft.icon" href="images/icons/dune.ico" />
   <link rel="stylesheet" type="text/css" href="css/default.css" />
 
@@ -136,16 +137,17 @@
       <td id="MenuBar">
         <div id="Menu">
           <ul>
-            <li id="Main" class="First"><a href="javascript:show('Main')">Main</a></li>
-            <li id="Sensors"><a href="javascript:show('Sensors')">Sensors</a></li>
-            <li id="Power"><a href="javascript:show('Power')">Power</a></li>
-            <li id="Logbook"><a href="javascript:show('Logbook')">Logbook</a></li>
-            <li id="Announces"><a href="javascript:show('Announces')">Discovery Tool</a></li>
-            <!-- <li id="Help"><a href="#">Help</a></li> -->
-            <li class="Static"><a href="#"><img id="ConnectionIcon" src="images/icons/system-off.png" title="Connected"
-                alt="Connected" style="margin-top: -7px;" /></a></li>
-            <li class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/icons/dark-switch.png"
-                  title="Theme Change" alt="Light" style="max-width: 16px; max-height: 16px;"></a></li>
+            <li id="buttonInfo" class="First"><a href="javascript:show('Info')">Info</a></li>
+            <li id="buttonSensors" class="invisible"><a href="javascript:show('Sensors')">Sensors</a></li>
+            <li id="buttonPower" class="invisible"><a href="javascript:show('Power')">Power</a></li>
+            <li id="buttonLogbook" class="invisible"><a href="javascript:show('Logbook')">Logbook</a></li>
+            <li id="buttonAcoustics" class="invisible"><a href="javascript:show('Acoustics')">Acoustics</a></li>
+            <li id="buttonAnnounces" class="invisible"><a href="javascript:show('Announces')">Discovery Tool</a></li>
+            <li id="buttonDummy" class="invisible"><a href="javascript:show('Dummy')">Dummy</a></li>
+            <li id="buttonConnection" class="Static"><a href="#"><img id="ConnectionIcon" src="images/icons/system-off.png" title="Connected"
+                alt="Connected" style="margin-top: -7px;"/></a></li>
+            <li id="buttonTheme" class="Static"><a href="#" onclick="toggleTheme()"><img id="ThemeIcon" src="images/icons/dark-switch.png"
+                title="Theme Change" alt="Light" style="max-width: 16px; max-height: 16px;"></a></li>
           </ul>
         </div>
       </td>
@@ -154,25 +156,7 @@
       <td class="infoTable"
         style="background-color: var(--c-background); padding: 0em; border: solid var(--c-color-text) thin;">
         <div id="x-container">
-          <div class="logbook-filter">
-            <div id="logbook-filters" style="display: none;">
-              <div class="form-group">
-                <label for="context-filter" class="material-label">Filter by Entity:</label>
-                <select id="context-filter" class="material-select"
-                  onchange="g_logbook.selectedContext = this.value; g_logbook.update();">
-                  <option value="all">Show All</option>
-                </select>
-                <label><input type="checkbox" class="material-checkbox" id="filter-info" checked><span
-                    class="custom-checkbox"></span> INFO</label>
-                <label><input type="checkbox" class="material-checkbox" id="filter-warning" checked><span
-                    class="custom-checkbox"></span> WARNING</label>
-                <label><input type="checkbox" class="material-checkbox" id="filter-error" checked><span
-                    class="custom-checkbox"></span> ERROR</label>
-                <label><input type="checkbox" class="material-checkbox" id="filter-debug" checked><span
-                    class="custom-checkbox"></span> DEBUG</label>
-              </div>
-            </div>
-          </div>
+        </div>
       </td>
     </tr>
   </table>
@@ -190,7 +174,9 @@
         body.classList.remove('theme-light');
         body.classList.add('theme-dark');
         document.getElementById('ThemeIcon').src = 'images/icons/light-switch.png';
-      } else {
+      }
+      else
+      {
         body.classList.remove('theme-dark');
         body.classList.add('theme-light');
         document.getElementById('ThemeIcon').src = 'images/icons/dark-switch.png';
