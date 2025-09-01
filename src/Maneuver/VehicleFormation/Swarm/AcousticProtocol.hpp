@@ -56,11 +56,11 @@ namespace Maneuver
         send(const std::string& sys, const std::vector<uint8_t>& data) override
         {
           // TDMA
-          if (!available())
-          {
-            spew("Not available to send data, not in time slot");
-            return;
-          }
+          // if (!available())
+          // {
+          //   spew("Not available to send data, not in time slot");
+          //   return;
+          // }
 
           DUNE::Algorithms::CRC8 crc(m_poly);
 
