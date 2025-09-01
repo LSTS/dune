@@ -249,7 +249,6 @@ namespace Control
 
           param("Force Pitch At Surface", m_args.force_pitch)
           .defaultValue("false")
-          .units(Units::Meter)
           .description("Force pitching up at the surface");
 
           param("Pitch Angle At Surface", m_args.surface_pitch)

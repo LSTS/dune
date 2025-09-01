@@ -196,35 +196,43 @@ namespace Monitors
         request.comm_mean = IMC::TransmissionRequest::CMEAN_GSM;
         request.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
         request.deadline = Time::Clock::getSinceEpoch() + m_args.ttl;
+        request.txt_data = msg;
 
         // Attempt to grab recipient number from Monitors.Emergency
-        // If failure defaults to default_recipient 
+        // If failure defaults to default_recipient
+        std::vector<std::string> recipients;
         try
         {
           if(m_args.default_recipient.empty())
           {
-            request.destination = m_ctx.config.get(m_args.task_sms_name.c_str(), m_args.task_paramater_name.c_str());
-            debug("Got recipient number from %s: %s", m_args.task_sms_name.c_str(), request.destination.c_str());
+            m_ctx.config.get(m_args.task_sms_name.c_str(), m_args.task_paramater_name.c_str(), "", recipients);
+            debug("Got recipient numbers from %s: %s", m_args.task_sms_name.c_str(), request.destination.c_str());
           }
           else
           {
-            request.destination = m_args.default_recipient;
+            recipients.push_back(m_args.default_recipient);
             debug("Using default recipient number: %s", request.destination.c_str());
           }
         }
         catch(...)
         {
-          request.destination = m_args.default_recipient;
+          recipients.push_back(m_args.default_recipient);
           debug("Failed to grab recipient number from %s. Using default number: %s", m_args.task_sms_name.c_str(), request.destination.c_str());
         }
 
-        if (request.destination.empty())
+        if (recipients.empty())
+        {
+          err("No recipient number found. SMS not sent.");
           return;
+        }
 
-        request.txt_data = msg;
-        request.req_id = 1;
-
-        dispatch(request);
+        request.req_id = 0;
+        for (auto recipient : recipients)
+        {
+          request.destination = recipient;
+          request.req_id++;
+          dispatch(request);
+        }
       }
 
       //! Main loop.

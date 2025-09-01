@@ -28,18 +28,25 @@
 ############################################################################
 
 # Validate CMake version.
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 if(COMMAND CMAKE_POLICY)
   cmake_policy(SET CMP0075 NEW)
   if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.28")
     cmake_policy(SET CMP0153 OLD)
     cmake_policy(SET CMP0145 OLD)
+    cmake_policy(SET CMP0144 NEW)
   endif()
 endif(COMMAND CMAKE_POLICY)
 
 # Required C++ Standard.
-set(CMAKE_CXX_STANDARD 17)
+if(DUNELEGACY)
+  set(CMAKE_CXX_STANDARD 14)
+  add_compile_definitions(-DDUNE_LEGACY)
+else()
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -54,8 +61,8 @@ set(PROJECT_SHORT_NAME "DUNE")
 set(PROJECT_VENDOR "Universidade do Porto - LSTS")
 set(PROJECT_COPYRIGHT "Copyright (C) 2007-2025 - ${PROJECT_VENDOR}")
 set(PROJECT_CONTACT "DUNE <dune@lsts.pt>")
-set(PROJECT_VERSION_YEAR  "2024")
-set(PROJECT_VERSION_MONTH "09")
+set(PROJECT_VERSION_YEAR  "2025")
+set(PROJECT_VERSION_MONTH "08")
 set(PROJECT_VERSION_PATCH "0")
 set(PROJECT_VERSION_RCN   "0")
 
@@ -108,13 +115,6 @@ dune_option(DUNELEGACY "Disable compilation of C++17 features")
 # Internationalization.
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
 
-#############################################################################
-# DUNE Legacy build
-#############################################################################
-if(DUNELEGACY)
-  set(CMAKE_CXX_STANDARD 14)
-  add_definitions(-DDUNE_LEGACY)
-endif(DUNELEGACY)
 
 #############################################################################
 # DUNE's default build type

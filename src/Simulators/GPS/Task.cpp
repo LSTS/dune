@@ -76,7 +76,7 @@ namespace Simulators
       double hdop;
       //! Horizontal Accuracy.
       double hacc;
-      //! Number of sattelites.
+      //! Number of satellites.
       uint16_t n_sat;
       //! Initial position (degrees)
       std::vector<double> position;

@@ -158,15 +158,14 @@ namespace Sensors
       //! DAVIS' LOOP data packet data.
       LOOPData m_LOOPData;
 
-      Parser(DUNE::Tasks::Task *task) : m_task(task),
-                                        m_parser_state_OK(Parser::PS_PREAMBLE_1),
-                                        m_parser_state_LOOP(Parser::PS_ACK)
-      {
-      }
+      Parser(DUNE::Tasks::Task *task) : 
+        m_task(task),
+        m_parser_state_OK(Parser::PS_PREAMBLE_1),
+        m_parser_state_LOOP(Parser::PS_ACK)
+      { }
 
       ~Parser(void)
-      {
-      }
+      { }
 
       //! Parse message received
       bool

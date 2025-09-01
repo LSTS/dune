@@ -25,22 +25,65 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Edit: Pedro Gonçalves                                                    *
 //***************************************************************************
 
-function findMessage(data, abbrev)
-{
-  for (m in data.dune_messages)
-  {
-    var msg = data.dune_messages[m];
+function Gauge(options) {
+  this.m_type = options && options.reverse ? 'reversed/' : '';
+}
 
-    if (msg.abbrev == abbrev)
-      return msg;
+Gauge.prototype.create = function (root) {
+  this.m_root = root;
+  var gaugeContainer = document.createElement('div');
+  gaugeContainer.classList.add('gauge-container');
+  this.m_bar = document.createElement('div');
+  this.m_bar.classList.add('gauge-bar');
+  gaugeContainer.appendChild(this.m_bar);
+  this.m_value = document.createElement('div');
+  this.m_value.classList.add('gauge-value');
+  gaugeContainer.appendChild(this.m_value);
+  this.m_root.appendChild(gaugeContainer);
+};
+
+Gauge.prototype.update = function (value) {
+  this.m_value.textContent = Math.round(value) + '%';
+  this.m_bar.style.width = Math.round(value) + '%';
+
+  let red, green;
+
+  if (this.m_type === 'reversed/') {
+    if (value <= 50) {
+      red = Math.round(value * 5.1);
+      green = 255;
+    } else {
+      red = 255;
+      green = Math.round((100 - value) * 5.1);
+    }
+  } else {
+    if (value <= 50) {
+      red = 255;
+      green = Math.round(value * 5.1);
+    } else {
+      red = Math.round((100 - value) * 5.1);
+      green = 255;
+    }
   }
 
-  return null;
+  // style gradient
+  //const mainColor = `rgb(${red}, ${green}, 0)`;
+  //const lighterColor = this._lightenColor(mainColor, 0.6);
+  //this.m_bar.style.background = `linear-gradient(to right, ${lighterColor}, ${mainColor})`;
+
+  // style solid color
+  const color = `rgb(${red}, ${green}, 0)`;
+  this.m_bar.style.backgroundColor = color;
 };
 
-function getMessageValue(data, abbrev)
-{
-  return findMessage(data, abbrev).value;
-};
+Gauge.prototype._lightenColor = function (rgb, amount) {
+  const match = rgb.match(/\d+/g);
+  let [r, g, b] = match.map(Number);
+  r = Math.min(255, Math.round(r + (255 - r) * amount));
+  g = Math.min(255, Math.round(g + (255 - g) * amount));
+  b = Math.min(255, Math.round(b + (255 - b) * amount));
+  return `rgb(${r}, ${g}, ${b})`;
+}

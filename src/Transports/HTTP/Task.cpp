@@ -380,6 +380,8 @@ namespace Transports
         RequestHandler::HeaderFieldsMap hdr;
         hdr["Content-Type"] = "text/javascript";
         sendData(sock, os.str(), &hdr);
+        os << "var systemPrivateVersion = '" << getFullVersionPrivate() << "';";
+        sendData(sock, os.str(), &hdr);
       }
 
       void

@@ -24,8 +24,7 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Bernardo Gabriel                                                 *
-// Author: Ricardo Martins (legacy index.js)                                *
+// Author: Ricardo Martins                                                  *
 // Edit: Pedro Gonçalves                                                    *
 //***************************************************************************
 
@@ -35,19 +34,112 @@ var g_time_current = null;
 var g_resolver = new Resolver();
 var g_sections = new Sections();
 
-window.onload = function()
-{
-  g_resolver = new Resolver();
+window.onload = function () {
   setConnected(false);
   g_sections.create();
-  g_sections.updateUsedSections(DEFAULT_SECTION);
-  g_sections.init();
-  g_sections.requestData();
+  requestData();
+  requestLogs();
+  requestLogBookEntries();
 };
 
-function show(section)
-{
-  g_sections.show(section)
+function requestLogBookEntries() {
+  var options = Array();
+  options.timeout = 10000;
+  options.timeoutHandler = timeoutHandler;
+  options.errorHandler = errorHandler;
+  HTTP.get('dune/state/logbook.js', handleLogBookEntries, options);
+}
+
+function handleLogBookEntries(text) {
+  if (g_logbook_timer == null)
+    g_logbook_timer = setInterval(requestLogBookEntries, 4000);
+
+  eval(text);
+  g_dune_logbook = logbook;
+  g_sections.update();
+};
+
+function requestLogs() {
+  var options = Array();
+  options.timeout = 10000;
+  options.timeoutHandler = timeoutHandler;
+  options.errorHandler = errorHandler;
+  //HTTP.get('dune/logs/list.js', handleLogs, options);
+};
+
+function handleLogs(text) {
+  eval(text);
+  g_dune_logs = dune_logs;
+};
+
+function setConnected(value) {
+  var icon = document.getElementById('ConnectionIcon');
+  icon.style.marginTop = '-7px';
+  icon.style.marginLeft = '0px';
+  icon.style.marginRight = '0px';
+  if (value) {
+    icon.src = g_icons.path('system-on');
+    icon.title = 'Connected';
+  }
+  else {
+    icon.src = g_icons.path('system-off');
+    icon.title = 'Disconnected';
+  }
+}
+
+function timeoutHandler() {
+  setConnected(false);
+}
+
+function errorHandler(status, status_text) {
+  timeoutHandler();
+}
+
+function requestData() {
+  var options = Array();
+  options.timeout = 10000;
+  options.timeoutHandler = timeoutHandler;
+  options.errorHandler = errorHandler;
+  HTTP.get('dune/state/messages.js', handleData, options);
+};
+
+function handleData(text) {
+  setConnected(true);
+
+  if (g_timer == null)
+    g_timer = setInterval(requestData, 4000);
+
+  eval(text);
+
+  // Check UID.
+  if (g_uid == null) {
+    g_uid = data.dune_uid;
+  }
+
+  if (g_uid != data.dune_uid) {
+    g_sections.clear();
+    g_sections.create();
+    g_uid = data.dune_uid;
+  }
+
+  // Process entities.
+  for (var i in data.dune_messages) {
+    var msg = data.dune_messages[i];
+    //console.log(msg);
+    if (msg.abbrev != 'EntityState' && msg.abbrev != 'CpuUsage')
+      continue;
+
+    data.dune_entities[msg.src_ent].state = msg.state;
+    data.dune_entities[msg.src_ent].description = msg.description;
+    data.dune_entities[msg.src_ent].value = msg.value;
+  }
+
+  g_data = data;
+  g_sections.update();
+};
+
+function show(section) {
+  g_sections.show(section);
 };
 
 function resolveEntity(input)

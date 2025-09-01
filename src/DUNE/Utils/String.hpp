@@ -61,16 +61,18 @@ namespace DUNE
         if (begin == end)
           return "";
 
+        std::ostringstream result;
         Iterator itr = begin;
-        std::string result = *itr;
+        result << *itr;
         ++itr;
 
-        for (; itr != end; ++itr)
+        while (itr != end)
         {
-          result.append(separator).append(*itr);
+          result << separator << *itr;
+          ++itr;
         }
 
-        return result;
+        return result.str();
       }
 
       //! Filter duplicates of a given character in a string.
@@ -345,6 +347,12 @@ namespace DUNE
       //! @return true if 'str' ends with 'suffix', false otherwise.
       static bool
       endsWith(const std::string& str, const std::string& suffix);
+
+      //! Remove a sequence 'seq' from a string 'str' with comma-seperated values.
+      //! @param[in] str string.
+      //! @param[in] seq sequence.
+      static void
+      removeSequence(std::string& str, const std::string& seq);
     };
   }
 }

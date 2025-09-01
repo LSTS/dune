@@ -187,7 +187,7 @@ namespace Navigation
         wait(void)
         {
           double delay = m_timer.getRemaining();
-          if (delay < 0 || delay > 1.0)
+          if (delay <= 0 || delay > 1.0)
             delay = 1.0;
           waitForMessages(delay);
         }

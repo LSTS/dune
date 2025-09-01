@@ -84,6 +84,8 @@ namespace Transports
       bool only_local;
       // Optional custom service type
       std::string custom_service;
+      // Ignore the UDP source message filter
+      bool ign_filter;
     };
 
     // Internal buffer size.
@@ -184,6 +186,10 @@ namespace Transports
         .defaultValue("")
         .description("Optional custom service type (imc+udp+<Custom Service Type>), empty entry gives default service (imc+udp)");
 
+        param("Ignore Filter", m_args.ign_filter)
+        .defaultValue("false")
+        .description("Ignore the UDP source message filter.");
+
         // Allocate space for internal buffer.
         m_bfr = new uint8_t[c_bfr_size];
 
@@ -231,7 +237,13 @@ namespace Transports
         }
 
         if (m_listener != NULL)
-          m_listener->setTrace(m_args.trace_in);
+        {
+          if (paramChanged(m_args.trace_in))
+            m_listener->setTrace(m_args.trace_in);
+
+          if (paramChanged(m_args.ign_filter))
+            m_listener->setIgnoreFilter(m_args.ign_filter);
+        }
       }
 
       void
@@ -302,7 +314,7 @@ namespace Transports
 
         // Start listener thread.
         m_listener = new Listener(*this, m_sock, m_lcomms,
-                                  m_args.contact_timeout, m_args.trace_in);
+                                  m_args.contact_timeout, m_args.ign_filter, m_args.trace_in);
         m_listener->start();
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -340,7 +352,7 @@ namespace Transports
           return;
 
         if (m_args.trace_out)
-          DUNE_MSG(getName(), "outgoing: " + std::string(msg->getName()));
+          inf("outgoing: %s", msg->getName());
 
         uint16_t rv;
         try
@@ -384,7 +396,12 @@ namespace Transports
             return;
         }
 
+        // Check if the message is from this system.
+        if (msg->getSource() == getSystemId())
+          return;
+
         m_node_table.addNode(msg->getSource(), msg->sys_name, msg->services);
+        m_listener->addContact(msg->getSource());
         m_lcomms->setAnnounce(msg);
       }
 

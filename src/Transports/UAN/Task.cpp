@@ -1076,6 +1076,24 @@ namespace Transports
         fuel.value = (float)dat.fuel_level;
         fuel.confidence = (float)dat.fuel_conf;
         dispatch(fuel);
+
+        IMC::AssetReport ar;
+        ar.name = resolveSystemId(imc_src);
+
+        if (ar.name == "unknown")
+        {
+          war("Received report from unknown system id: %d", imc_src);
+          return;
+        }
+
+        ar.report_time = Time::Clock::getSinceEpoch();
+        ar.medium = IMC::AssetReport::RM_SMS;
+        ar.lat = dat.lat;
+        ar.lon = dat.lon;
+        ar.depth = dat.depth;
+        ar.alt = dat.alt;
+        ar.cog = dat.yaw;
+        dispatch(ar);
       }
 
       //! Main loop of USBL modem.

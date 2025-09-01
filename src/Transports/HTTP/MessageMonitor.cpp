@@ -49,6 +49,7 @@ namespace Transports
       std::ostringstream os;
       os << "var data = {\n"
          << "  'dune_version': '" << getFullVersion() << " - " << getCompileDate() << "',\n"
+         << "  'dune_private_version': '" << getFullVersionPrivate() << "',\n"
          << "  'dune_uid': '" << m_uid << "',\n"
          << "  'dune_time_start': '" << std::setprecision(12) << Clock::getSinceEpoch() << "',\n"
          << "  'dune_system': '" << system << "',\n";
@@ -214,9 +215,12 @@ namespace Transports
       ScopedMutex l(m_mutex);
 
       if (m_logbook.size() >= m_log_entry)
+      {
+        Memory::clear(m_logbook.front());
         m_logbook.erase(m_logbook.begin());
+      }
 
-      m_logbook.push_back(new IMC::LogBookEntry(*msg));
+      m_logbook.push_back(msg->clone());
     }
 
     void

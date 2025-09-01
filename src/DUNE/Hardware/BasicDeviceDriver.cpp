@@ -41,8 +41,12 @@ namespace DUNE
 
     //! Log file prefix.
     static const char* c_log_prefix = "Data_";
+    //! Sample Time Duration.
+    static const char* c_sample_time_duration = "Sample Time Duration";
+    //! Periodicity of Data Sampling.
+    static const char* c_periodicity_data_sampling = "Periodicity of Data Sampling";
 
-    BasicDeviceDriver::BasicDeviceDriver(const std::string& name, Tasks::Context& ctx):
+    BasicDeviceDriver::BasicDeviceDriver( const std::string &name, Tasks::Context &ctx ):
       Tasks::Task(name, ctx),
       m_sm_state(SM_IDLE),
       m_wait_msg_timeout(0.0),
@@ -55,17 +59,265 @@ namespace DUNE
       m_timeout_count(0),
       m_restart(false),
       m_restart_delay(0.0),
-      m_read_period(0.0),
-      m_uri()
+      m_uri(),
+      m_honours_conf_samp(false),
+      m_is_sampling(false),
+      m_sample_timer(0.0f),
+      m_periodicity_timer(0.0f),
+      m_honours_vp(false),
+      m_vp_timer(0.0f)
     {
+      paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                  Tasks::Parameter::VISIBILITY_DEVELOPER, 
+                  true);
+
       param("Restart Needed", m_bdd_args.restart_needed)
       .defaultValue("false")
       .description("Flag to restart driver after activation fail.");
+
+      param("Power Channel - Names", m_bdd_args.pwr_channels)
+      .defaultValue("")
+      .description("Device's power channels");
+
+      param("Power On Delay", m_bdd_args.pwr_on_delay)
+      .minimumValue("0.0")
+      .defaultValue("0.0")
+      .description("Delay before powering on the device");
+
+      param("Power Off Delay", m_bdd_args.pwr_off_delay)
+      .minimumValue("0.0")
+      .defaultValue("0.0")
+      .description("Delay before powering off the device");
+
+      param("Post Power On Delay", m_bdd_args.post_pwr_on_delay)
+      .minimumValue("0.0")
+      .defaultValue("0.0")
+      .description("Delay after powering up the device");
 
       bind<IMC::EstimatedState>(this);
       bind<IMC::LoggingControl>(this);
       bind<IMC::PowerChannelState>(this);
       bind<IMC::SoundSpeed>(this);
+    }
+
+    void
+    BasicDeviceDriver::onUpdateParameters(void)
+    {
+      if (paramChanged(m_bdd_args.pwr_channels))
+      {
+        clearPowerChannelNames();
+        for (const auto& pc : m_bdd_args.pwr_channels)
+          addPowerChannelName(pc);
+      }
+
+      if (paramChanged(m_bdd_args.pwr_on_delay))
+        setPowerOnDelay(m_bdd_args.pwr_on_delay);
+
+      if (paramChanged(m_bdd_args.pwr_off_delay))
+        setPowerOffDelay(m_bdd_args.pwr_off_delay);
+
+      if (paramChanged(m_bdd_args.post_pwr_on_delay))
+        setPostPowerOnDelay(m_bdd_args.post_pwr_on_delay);
+
+      if (m_honours_conf_samp)
+      {
+        if (paramChanged(m_bdd_args.sample_time_duration) ||
+          paramChanged(m_bdd_args.periodicity_data_sampling))
+        {
+          if (m_bdd_args.sample_time_duration > m_bdd_args.periodicity_data_sampling)
+          {
+            err("%s is greater than %s -> Deactivating", c_sample_time_duration, c_periodicity_data_sampling);
+            requestDeactivation();
+            return;
+          }
+
+          if (isActive() && (m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration))
+            startSampling();
+          else
+            m_periodicity_timer.setTop(0.0f);
+        }
+
+        if (paramChanged(m_bdd_args.sample_time_duration_visibility))
+          setParameterVisbility(c_sample_time_duration, m_bdd_args.sample_time_duration_visibility);
+
+        if (paramChanged(m_bdd_args.sample_time_duration_scope))
+          setParameterScope(c_sample_time_duration, m_bdd_args.sample_time_duration_scope);
+
+        if (paramChanged(m_bdd_args.periodicity_data_sampling_visibility))
+          setParameterVisbility(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_visibility);
+
+        if (paramChanged(m_bdd_args.periodicity_data_sampling_scope))
+          setParameterScope(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_scope);
+      }
+
+      if (m_honours_vp)
+      {
+        if (paramChanged(m_bdd_args.vp_periodicity) && m_vp_timer.getTop() > 0.0f)
+        {
+          m_vp_timer.setTop(trimValue(m_bdd_args.vp_periodicity - m_vp_timer.getElapsed(),
+                                      0.0f,
+                                      m_bdd_args.vp_periodicity));
+        }
+      }
+    }
+
+    void
+    BasicDeviceDriver::paramConfigurableSampling(Parameter::Scope def_scope,
+                                                 Parameter::Visibility def_visibility,
+                                                 double def_sampling,
+                                                 double def_periodicity)
+    {
+      m_honours_conf_samp = true;
+      std::string scope_str = Parameter::scopeToString(def_scope);
+      std::string visibility_str = Parameter::visibilityToString(def_visibility);
+
+      param(c_sample_time_duration, m_bdd_args.sample_time_duration)
+      .scope(def_scope)
+      .visibility(def_visibility)
+      .minimumValue("0.0")
+      .defaultValue(uncastLexical(def_sampling))
+      .units(Units::Second)
+      .description(std::string(c_sample_time_duration) + " (S) in seconds. "
+                   "This value must not be greater than " + 
+                   std::string(c_periodicity_data_sampling) + " (P), otherwise, "
+                   "task will be deactivated."
+                   "<table border=\"1\">"
+                     "<thead>"
+                       "<tr>"
+                         "<th>[S]</th>"
+                         "<th>[P]</th>"
+                         "<th>Description</th>"
+                       "</tr>"
+                     "</thead>"
+                     "<tbody>"
+                       "<tr>"
+                         "<td>=P</td>"
+                         "<td>=S</td>"
+                         "<td>Continuous sampling</td>"
+                       "</tr>"
+                       "<tr>"
+                         "<td>=0</td>"
+                         "<td>&gt;0</td>"
+                         "<td>"
+                           "Periodic single sample"
+                           "<pre style='font-family: Monospaced'>"
+                           "[P][=====][=====]<br>"
+                           "[S]|------|------"
+                           "</pre>"
+                         "</td>"
+                       "</tr>"
+                       "<tr>"
+                         "<td>&lt;P</td>"
+                         "<td>&gt;S</td>"
+                         "<td>"
+                           "Periodic sampling"
+                           "<pre style='font-family: Monospaced'>"
+                           "[P][=====][=====]<br>"
+                           "[S][==---][==---]"
+                           "</pre>"
+                         "</td>"
+                       "</tr>"
+                       "<tr>"
+                         "<td>&gt;P</td>"
+                         "<td>&lt;S</td>"
+                         "<td>Invalid</td>"
+                       "</tr>"
+                     "</tbody>"
+                   "</table>");
+
+      param(std::string(c_sample_time_duration) + " - Visibility", m_bdd_args.sample_time_duration_visibility)
+      .visibility(Parameter::VISIBILITY_DEVELOPER)
+      .scope(Parameter::SCOPE_GLOBAL)
+      .defaultValue("developer")
+      .values(Parameter::visibilityValues())
+      .description("Visibility of the '" + std::string(c_sample_time_duration) + "' parameter");
+
+      param(std::string(c_sample_time_duration) + " - Scope", m_bdd_args.sample_time_duration_scope)
+      .visibility(Parameter::VISIBILITY_DEVELOPER)
+      .scope(Parameter::SCOPE_GLOBAL)
+      .defaultValue("global")
+      .values(Parameter::scopeValues())
+      .description("Scoped of the '" + std::string(c_sample_time_duration) + "' parameter");
+
+      param(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling)
+      .scope(Tasks::Parameter::SCOPE_GLOBAL)
+      .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+      .minimumValue("0.0")
+      .defaultValue(uncastLexical(def_periodicity))
+      .units(Units::Second)
+      .description(std::string(c_periodicity_data_sampling) + " (P) in seconds. "
+                   "This value must not be lower than " +
+                   std::string(c_sample_time_duration) + " (S), otherwise, "
+                   "task will be deactivated."
+                   "<table border=\"1\">"
+                     "<thead>"
+                       "<tr>"
+                         "<th>[S]</th>"
+                         "<th>[P]</th>"
+                         "<th>Description</th>"
+                       "</tr>"
+                     "</thead>"
+                     "<tbody>"
+                       "<tr>"
+                         "<td>=P</td>"
+                         "<td>=S</td>"
+                         "<td>Continuous sampling</td>"
+                       "</tr>"
+                       "<tr>"
+                         "<td>=0</td>"
+                         "<td>&gt;0</td>"
+                         "<td>"
+                           "Periodic single sample"
+                           "<pre style='font-family: Monospaced'>"
+                           "[P][=====][=====]<br>"
+                           "[S]|------|------"
+                           "</pre>"
+                         "</td>"
+                       "</tr>"
+                       "<tr>"
+                         "<td>&lt;P</td>"
+                         "<td>&gt;S</td>"
+                         "<td>"
+                           "Periodic sampling"
+                           "<pre style='font-family: Monospaced'>"
+                           "[P][=====][=====]<br>"
+                           "[S][==---][==---]"
+                           "</pre>"
+                         "</td>"
+                       "</tr>"
+                       "<tr>"
+                         "<td>&gt;P</td>"
+                         "<td>&lt;S</td>"
+                         "<td>Invalid</td>"
+                       "</tr>"
+                     "</tbody>"
+                   "</table>");
+
+      param(std::string(c_periodicity_data_sampling) + " - Visibility", m_bdd_args.periodicity_data_sampling_visibility)
+      .visibility(Parameter::VISIBILITY_DEVELOPER)
+      .scope(Parameter::SCOPE_GLOBAL)
+      .defaultValue("developer")
+      .values(Parameter::visibilityValues())
+      .description("Visibility of the '" + std::string(c_periodicity_data_sampling) + "' parameter");
+
+      param(std::string(c_periodicity_data_sampling) + " - Scope", m_bdd_args.periodicity_data_sampling_scope)
+      .visibility(Parameter::VISIBILITY_DEVELOPER)
+      .scope(Parameter::SCOPE_GLOBAL)
+      .defaultValue("global")
+      .values(Parameter::scopeValues())
+      .description("Scoped of the '" + std::string(c_periodicity_data_sampling) + "' parameter");
+    }
+
+    void
+    BasicDeviceDriver::paramVerticalProfile(void)
+    {
+      m_honours_vp = true;
+
+      param("Vertical Profile Periodicity", m_bdd_args.vp_periodicity)
+      .units(Units::Second)
+      .minimumValue("0.0")
+      .defaultValue("0.0")
+      .description("Periodicity of vertical profiles. 0 means never send.");
     }
 
     void
@@ -80,7 +332,7 @@ namespace DUNE
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
       if (getActivationTime() == 0.0)
-        war("Activation Time set to 0.0! Please set a positive time.");
+        throw std::runtime_error("Activation Time set to 0.0! Please set a positive time.");
     }
 
     IO::Handle*
@@ -170,6 +422,9 @@ namespace DUNE
     {
       if (hasQueuedStates())
       {
+        if (m_sm_state == SM_ACT_SAMPLE && m_is_sampling)
+          stopSampling();
+        
         m_sm_state = m_sm_state_queue.front();
         m_sm_state_queue.pop();
       }
@@ -251,6 +506,7 @@ namespace DUNE
     void
     BasicDeviceDriver::requestRestart()
     {
+      spew("restart requested");
       m_restart = true;
       if (getCurrentState() >= SM_ACT_DONE)
         requestDeactivation();
@@ -371,7 +627,18 @@ namespace DUNE
     bool
     BasicDeviceDriver::readSample(void)
     {
-      return onReadData();
+      if (onReadData())
+      {
+        if (m_honours_vp && m_vp_timer.overflow())
+        {
+          onVerticalProfile();
+          m_vp_timer.setTop(m_bdd_args.vp_periodicity);
+        }
+
+        return true;
+      }
+
+      return false;
     }
 
     void
@@ -442,7 +709,11 @@ namespace DUNE
       if (!old_state && itr->second)
         trace("device %s is powered", msg->name.c_str());
       else if (old_state && !itr->second)
+      {
         trace("device %s is no longer powered", msg->name.c_str());
+        if (isActive())
+          requestDeactivation();
+      }
     }
 
     //! Power-on device.
@@ -493,6 +764,64 @@ namespace DUNE
     }
 
     void
+    BasicDeviceDriver::startSampling(void)
+    {
+      if (m_is_sampling)
+        return;
+      
+      spew("start sampling");
+      onStartSampling();
+      m_is_sampling = true;
+    }
+
+    void
+    BasicDeviceDriver::stopSampling(void)
+    {
+      if (!m_is_sampling)
+        return;
+        
+      spew("stop sampling");
+      onStopSampling();
+      m_is_sampling = false;
+    }
+
+    void
+    BasicDeviceDriver::onStartSampling(void)
+    { }
+
+    void
+    BasicDeviceDriver::onStopSampling(void)
+    { }
+
+    void
+    BasicDeviceDriver::setEntityStateSampling(bool state)
+    {
+      const auto sample_period = getSamplePeriod();
+      const auto periodicity = getSamplePeriodicity();
+      std::ostringstream description;
+      description << "active";
+      if ((periodicity != sample_period))
+      {
+        if ((sample_period > 0.0f))
+        {
+          description << " | sampling: " << (state ? "on" : "off");
+          const auto time = Format::getTimeDHMS(state ? getSamplePeriodRemaining() : getSamplePeriodicityRemaining());
+          if (!time.empty())
+            description << " (r: " << time << ")";
+        }
+        else
+        {
+          const auto time = Format::getTimeDHMS(getSamplePeriodicity());
+          if (!time.empty())
+            description << " | doing a periodic sample every " << time;
+        }
+          
+      }
+
+      setEntityState(IMC::EntityState::ESTA_NORMAL, description.str());
+    }
+
+    void
     BasicDeviceDriver::updateStateMachine(void)
     {
       switch (dequeueState())
@@ -526,21 +855,28 @@ namespace DUNE
 
         // Delay before turning power on.
         case SM_ACT_POWER_ON_DELAY:
-          if ( m_power_on_timer.overflow() )
+          if (m_power_on_timer.overflow())
           {
-            queueState( SM_ACT_POWER_ON );
+            queueState(SM_ACT_POWER_ON);
           }
           break;
 
         // Turn power on.
         case SM_ACT_POWER_ON:
-          turnPowerOn();
-          queueState(SM_ACT_POWER_WAIT);
+          if (isPowered())
+          {
+            queueState(SM_ACT_DEV_WAIT);
+          }
+          else
+          {
+            turnPowerOn();
+            queueState(SM_ACT_POWER_WAIT);
+          }
           break;
 
         // Wait for power to be on.
         case SM_ACT_POWER_WAIT:
-          if (isPowered(true))
+          if (isPowered())
           {
             m_power_on_timer.setTop(m_post_power_on_delay);
             queueState(SM_ACT_DEV_WAIT);
@@ -651,23 +987,57 @@ namespace DUNE
             break;
           }
 
-          m_read_timer.setTop(m_read_period);
           queueState(SM_ACT_SAMPLE);
+
+          if (!m_honours_conf_samp ||
+              m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration)
+            startSampling();
+          else
+            m_periodicity_timer.setTop(0.0f);
+
           break;
 
         // Read samples.
         case SM_ACT_SAMPLE:
-          if (m_read_timer.overflow())
+          if (!m_honours_conf_samp ||
+              m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration)
           {
-            m_read_timer.setTop(m_read_period);
             readSample();
           }
+          else if (m_periodicity_timer.overflow())
+          {
+            startSampling();
+            readSample();
+
+            if (m_bdd_args.sample_time_duration == 0.0f)
+            {
+              stopSampling();
+            }
+            else
+            {
+              m_sample_timer.setTop(m_bdd_args.sample_time_duration);
+            }
+            
+            m_periodicity_timer.setTop(m_bdd_args.periodicity_data_sampling);
+          }
+          else if (!m_sample_timer.overflow())
+          {
+            readSample();
+          }
+          else if (m_is_sampling)
+          {
+            stopSampling();
+          }
+
+          if (m_honours_conf_samp)
+            setEntityStateSampling(m_is_sampling);
+
           break;
 
         // Start deactivation procedure.
         case SM_DEACT_BEGIN:
-          m_wdog.setTop( getDeactivationTime() );
-          queueState( SM_DEACT_DISCONNECT );
+          m_wdog.setTop(getDeactivationTime());
+          queueState(SM_DEACT_DISCONNECT);
           break;
 
         // Gracefully disconnect from device.
@@ -677,7 +1047,7 @@ namespace DUNE
           if (enableLogControl())
             closeLog();
 
-          if (m_power_channels.empty())
+          if (isPowered(false))
           {
             queueState(SM_DEACT_DONE);
           }
@@ -731,6 +1101,10 @@ namespace DUNE
       }
     }
 
+    void
+    BasicDeviceDriver::onVerticalProfile(void)
+    { }
+
     bool
     BasicDeviceDriver::onSynchronize(void)
     {
@@ -776,12 +1150,12 @@ namespace DUNE
     }
 
     void
-    BasicDeviceDriver::step()
+    BasicDeviceDriver::step(void)
     {
       if (!isActive())
         waitForMessages(1.0);
-      else if (m_read_period > 0.0)
-        waitForMessages(m_read_timer.getRemaining());
+      else if (m_honours_conf_samp && !m_is_sampling)
+        waitForMessages(getSamplePeriodicityRemaining());
       else if (m_wait_msg_timeout > 0.0)
         waitForMessages(m_wait_msg_timeout);
       else
@@ -791,7 +1165,7 @@ namespace DUNE
     }
 
     void
-    BasicDeviceDriver::onMain()
+    BasicDeviceDriver::onMain(void)
     {
       while (!stopping())
       {
@@ -799,7 +1173,12 @@ namespace DUNE
         {
           step();
         }
-        catch (std::runtime_error &e)
+        catch(RestartNeeded& e)
+        {
+          requestRestart();
+          throw e;
+        }
+        catch(std::runtime_error& e)
         {
           war("%s", e.what());
           setEntityState(IMC::EntityState::ESTA_ERROR, e.what());

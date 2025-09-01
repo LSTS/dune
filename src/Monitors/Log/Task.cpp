@@ -47,8 +47,20 @@ namespace Monitors
 
     struct Arguments
     {
-      //! 
+      //! Log time in format %ud:%uh:%um.
       std::string log_time;
+      //! Max storage usage in percentage.
+      uint8_t storage_usage;
+      //! Procedure to call when max storage is reached.
+      std::string max_storage_procedure;
+    };
+
+    enum class MaxStorageProcedure
+    {
+      None,
+      DeleteOldest,
+      Stop,
+      Unknown
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -61,17 +73,43 @@ namespace Monitors
       Counter<double> m_wdog;
       //! Current log name.
       std::string m_log_name;
+      //! Log files queue.
+      std::queue<Path> m_log_files;
+      //! Timestamp of last delete.
+      double m_last_delete;
+      //! Max storage state.
+      bool m_state;
+      //! Max storage procedure.
+      MaxStorageProcedure m_max_storage_proc;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_log_time(0)
+        m_log_time(0),
+        m_state(false),
+        m_max_storage_proc(MaxStorageProcedure::Unknown)
       {
-        param("Log Timeout", m_args.log_time)
-          .description("Log time in format %ud:%uh:%um");
+        paramActive(Parameter::SCOPE_GLOBAL, Parameter::VISIBILITY_USER, true);
 
+        param("Log Timeout", m_args.log_time)
+        .description("Log time in format %ud:%uh:%um, (days, hours, minutes)")
+        .defaultValue("1d");
+
+        param("Max Storage", m_args.storage_usage)
+        .description("Max storage usage in percentage")
+        .units(Units::Percentage)
+        .minimumValue("0")
+        .maximumValue("100")
+        .defaultValue("90");
+
+        param("Max Storage Procedure", m_args.max_storage_procedure)
+        .values("none,delete_oldest,stop")
+        .defaultValue("none")
+        .description("Procedure to call when max storage is reached");
+
+        bind<IMC::StorageUsage>(this);
         bind<IMC::LoggingControl>(this);
       }
 
@@ -89,8 +127,32 @@ namespace Monitors
           return;
         }
 
-        if (!isActive())
-          requestActivation();
+        if (paramChanged(m_args.max_storage_procedure))
+          m_max_storage_proc = parseProcedure(m_args.max_storage_procedure);
+      }
+
+      MaxStorageProcedure
+      parseProcedure(const std::string& str)
+      {
+        if (str == "none") return MaxStorageProcedure::None;
+        if (str == "delete_oldest") return MaxStorageProcedure::DeleteOldest;
+        if (str == "stop") return MaxStorageProcedure::Stop;
+        return MaxStorageProcedure::Unknown;
+      }
+
+      void
+      onResourceInitialization(void)
+      {
+        std::vector<Path> files;
+        m_ctx.dir_log.contents(files, 1, 1);
+
+        std::sort(files.begin(), files.end());
+
+        for (auto&& i : files)
+        {
+          spew("Log file %s", i.str().c_str());
+          m_log_files.push(i);
+        }
       }
 
       //! Parse time string.
@@ -145,6 +207,9 @@ namespace Monitors
       void
       consume(const IMC::LoggingControl* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+          
         switch (msg->op)
         {
           case IMC::LoggingControl::COP_STARTED:
@@ -153,12 +218,61 @@ namespace Monitors
             break;
 
           case IMC::LoggingControl::COP_STOPPED:
+            m_log_files.push(m_ctx.dir_log.str() + "/" + msg->name);
             m_wdog.setTop(0);
             m_log_name = getLogName(msg->name);
             break;
 
           default:
             break;
+        }
+      }
+
+      void
+      consume(const IMC::StorageUsage* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+        
+        if (msg->getTimeStamp() < m_last_delete)
+          return;
+
+        if (msg->value > m_args.storage_usage)
+        {
+          switch (m_max_storage_proc)
+          {
+          case MaxStorageProcedure::None:
+            if (!m_state)
+              inf("Max storage reached, but no procedure defined");
+            break;
+
+          case MaxStorageProcedure::DeleteOldest:
+            deleteLog();
+            break;
+
+          case MaxStorageProcedure::Stop:
+            if (!m_state)
+            {
+              war("Max storage reached, stopping log");
+              stopLog();
+            }
+            break;
+          
+          case MaxStorageProcedure::Unknown:
+          default:
+            if (!m_state)
+              err("Max storage reached, but no procedure defined");
+            break;
+          }
+
+          m_state = true;
+        }
+        else
+        {
+          if (m_state)
+            restartLog();
+        
+          m_state = false;
         }
       }
 
@@ -184,6 +298,36 @@ namespace Monitors
 
         // Disable while log has not started
         m_wdog.setTop(0);
+      }
+
+      //! Send request to stop log.
+      void
+      stopLog(void)
+      {
+        IMC::LoggingControl msg;
+        msg.op = LoggingControl::COP_REQUEST_STOP;
+        dispatch(msg);
+      }
+
+      //! Delete oldest log file.
+      void
+      deleteLog(void)
+      {
+        if (m_log_files.empty())
+          return;
+
+        Path file = m_log_files.front();
+        m_log_files.pop();
+
+        if (!file.exists())
+        {
+          war("Log file %s does not exist", file.str().c_str());
+          return;
+        }
+
+        inf("Deleting log file %s", file.str().c_str());
+        file.remove(Path::MODE_RECURSIVE);
+        m_last_delete = Clock::getSinceEpoch();
       }
 
       //! Main loop.

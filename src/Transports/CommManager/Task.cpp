@@ -66,6 +66,8 @@ namespace Transports
     const std::string c_sms_section = "Monitors.Emergency";
     //! Config field from where to fetch emergency sms number
     const std::string c_sms_field = "SMS Recipient Number";
+    //! Minimum period for iridium messages, in seconds
+    const int c_minimum_iridium_period = 300;
 
     struct Task: public DUNE::Tasks::Task
     {
@@ -153,6 +155,7 @@ namespace Transports
         bind<IMC::TransmissionRequest>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::VehicleMedium>(this);
+        bind<IMC::StateReport>(this);
 
         m_clean_timer.setTop(3);
         m_retransmission_timer.setTop(1);
@@ -229,8 +232,8 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.iridium_period))
-          m_iridium_timer.setTop(m_args.iridium_period);
+        if(paramChanged(m_args.iridium_period))
+          m_iridium_timer.setTop(0);
       }
 
       void
@@ -240,6 +243,9 @@ namespace Transports
           return;
 
         Memory::replace(m_pstate, new IMC::PlanControlState(*msg));
+
+        std::string str = msg->plan_id + "|Man:" + msg->man_id;
+        m_plan_chksum = CRC16::compute((uint8_t*)str.data(), str.size());
       }
 
       void
@@ -285,7 +291,9 @@ namespace Transports
         if (msg->getSource() != getSystemId())
           return;
 
-        m_plan_chksum = CRC16::compute((uint8_t*)msg->plan_id.data(), msg->plan_id.size());
+        std::string str = msg->plan_id + "|Man:" + msg->start_man_id;
+        m_plan_chksum = CRC16::compute((uint8_t*)str.data(), str.size());
+
       }
 
       void
@@ -715,9 +723,17 @@ namespace Transports
             m_router.sendViaSatellite(msg, m_args.iridium_plain_texts);
             break;
           case (IMC::TransmissionRequest::CMEAN_GSM):
-            if (msg->destination.empty() || msg->destination == "broadcast") {
+            if (msg->destination.empty() || msg->destination == "broadcast") 
+            {
               IMC::TransmissionRequest req = *msg->clone();
-              req.destination = m_ctx.config.get(c_sms_section, c_sms_field);
+              std::vector<std::string> recipients;
+              m_ctx.config.get(c_sms_section, c_sms_field, "", recipients);
+
+              for(auto recipient : recipients)
+              {
+                req.destination = recipient;
+                req.req_id = m_router.createInternalId();
+              }
               m_router.sendViaGSM(&req);
             }
             else
@@ -831,6 +847,31 @@ namespace Transports
         dispatch(tx);
       }
 
+      //Conversion from AcousticOperation to AcousticRequest Message
+      void
+      consume(const IMC::StateReport* msg)
+      {
+        if (msg->getSource() == getSystemId())
+          return;
+
+        IMC::AssetReport report;
+        report.name = resolveSystemId(msg->getSource());
+
+        if (report.name == "unknown")
+          return;
+
+        report.report_time = msg->stime;
+        report.medium = IMC::AssetReport::RM_SATELLITE;
+        report.lat = msg->latitude;
+        report.lon = msg->longitude;
+        report.depth = msg->depth == 0xFFFF ? -1 : msg->depth / 10.0;
+        report.alt = msg->altitude == 0xFFFF ? -1 : msg->altitude / 10.0;
+        report.sog = msg->speed / 100.0;
+        report.cog = msg->heading / 65535.0 * Math::c_two_pi;
+
+        dispatch(report);
+      }
+
       IMC::StateReport*
       produceReport()
       {
@@ -937,15 +978,16 @@ namespace Transports
                 request.setDestination (getSystemId());
                 request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
                 request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
-                request.deadline = Time::Clock::getSinceEpoch() + m_args.iridium_period;
+                fp64_t ttl = std::max(c_minimum_iridium_period, m_args.iridium_period);
+                request.deadline = Time::Clock::getSinceEpoch() + ttl;
                 request.destination = "broadcast";
                 request.msg_data.set(msg);
                 request.req_id = m_router.createInternalId();
                 dispatch(request, DF_LOOP_BACK);
 
                 Memory::clear(msg);
+                m_iridium_timer.setTop(m_args.iridium_period);
               }
-              m_iridium_timer.reset();
             }
           }
         }

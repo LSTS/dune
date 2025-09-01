@@ -28,82 +28,86 @@
 // Edit: Pedro Gonçalves                                                    *
 //***************************************************************************
 
-function Gauge(options)
-{
-  this.m_type = options && options.reverse ? 'reversed/' : '';
-}
+function BasicSection() { };
 
-Gauge.prototype.create = function(root)
-{
-  this.m_root = root;
-  var gaugeContainer = document.createElement('div');
-  gaugeContainer.classList.add('gauge-container');
-  this.m_bar = document.createElement('div');
-  this.m_bar.classList.add('gauge-bar');
-  gaugeContainer.appendChild(this.m_bar);
-  this.m_value = document.createElement('div');
-  this.m_value.classList.add('gauge-value');
-  gaugeContainer.appendChild(this.m_value);
-  this.m_root.appendChild(gaugeContainer);
+BasicSection.prototype.create = function (id, root_id) {
+  this.m_base = document.createElement('div');
+  this.m_base.id = id;
+  this.m_base.width = '100%';
+  this.m_base.className = 'Hidden';
+
+  this.m_root_id = root_id;
+  this.m_root = document.getElementById(root_id);
+  this.m_root.appendChild(this.m_base);
 };
 
-Gauge.prototype.update = function(value)
-{
-  if (value == null)
-  {
-    this.m_value.textContent = 'N/A';
-    this.m_bar.style.display = 'none';
-    return;
-  }
-
-  this.m_value.textContent = Math.round(value) + '%';
-  this.m_bar.style.width = Math.round(value) + '%';
-
-  let red, green;
-
-  if (this.m_type === 'reversed/')
-  {
-    if (value <= 50)
-    {
-      red = Math.round(value * 5.1);
-      green = 255;
-    }
-    else
-    {
-      red = 255;
-      green = Math.round((100 - value) * 5.1);
-    }
-  }
-  else
-  {
-    if (value <= 50)
-    {
-      red = 255;
-      green = Math.round(value * 5.1);
-    }
-    else
-    {
-      red = Math.round((100 - value) * 5.1);
-      green = 255;
-    }
-  }
-
-  // style gradient
-  //const mainColor = `rgb(${red}, ${green}, 0)`;
-  //const lighterColor = this._lightenColor(mainColor, 0.6);
-  //this.m_bar.style.background = `linear-gradient(to right, ${lighterColor}, ${mainColor})`;
-
-  // style solid color
-  const color = `rgb(${red}, ${green}, 0)`;
-  this.m_bar.style.backgroundColor = color;
+BasicSection.prototype.createHeader = function (label) {
+  var h1 = document.createElement('h1');
+  h1.appendChild(document.createTextNode(label));
+  this.m_base.appendChild(h1);
+  var hr = document.createElement('hr');
+  this.m_base.appendChild(hr);
 };
 
-Gauge.prototype._lightenColor = function(rgb, amount)
-{
-  const match = rgb.match(/\d+/g);
-  let [r, g, b] = match.map(Number);
-  r = Math.min(255, Math.round(r + (255 - r) * amount));
-  g = Math.min(255, Math.round(g + (255 - g) * amount));
-  b = Math.min(255, Math.round(b + (255 - b) * amount));
-  return `rgb(${r}, ${g}, ${b})`;
-}
+BasicSection.prototype.element = function () {
+  return this.m_base;
+};
+
+BasicSection.prototype.resolveEntity = function (id) {
+  var ent = g_data.dune_entities[id];
+
+  if (typeof ent == 'undefined')
+    return "Unknown";
+
+  return ent.label;
+};
+
+BasicSection.prototype.getEntityStateState = function (msg) {
+  var ent = g_data.dune_entities[msg.src_ent];
+
+  if (typeof ent == 'undefined')
+    return "Unknown";
+
+  return ent.state;
+};
+
+BasicSection.prototype.getEntityStateDesc = function (msg, defval) {
+  if (msg.src_ent in g_data.dune_entities) {
+    if ('desc' in g_data.dune_entities[msg.src_ent])
+      return g_data.dune_entities[msg.src_ent].desc;
+  }
+
+  return defval;
+};
+
+BasicSection.prototype.findMessage = function (abbrev) {
+  for (var i in g_data.dune_messages) {
+    var msg = g_data.dune_messages[i];
+
+    if (msg.abbrev == abbrev)
+      return msg;
+  }
+
+  return null;
+};
+
+BasicSection.prototype.getMessageValue = function (abbrev) {
+  return this.findMessage(abbrev).value;
+};
+
+BasicSection.prototype.getEntityStateIcon = function (state) {
+  switch (Number(state)) {
+    case 0:
+      return g_icons.path('warning');
+    case 1:
+      return g_icons.path('normal');
+    case 2: case 3: case 4:
+      return g_icons.path('error');
+  }
+
+  return g_icons.path('unknown');
+};
+
+BasicSection.prototype.id = function () {
+  return this.m_base.id;
+};

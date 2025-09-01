@@ -58,8 +58,8 @@ namespace Transports
       //! Constructor.
       //! @param[in] task parent task.
       //! @param[in] uart serial port connected to the ISU.
-      Driver(Tasks::Task* task, SerialPort* uart, bool use_9523N, double wait_boot, double rssi_time_check):
-        HayesModem(task, uart),
+      Driver(Tasks::Task* task, IO::Handle* handle, bool use_9523N, double wait_boot, double rssi_time_check):
+        HayesModem(task, handle),
         m_session_result_read(true),
         m_sbd_ring(false),
         m_queued_mt(0)
@@ -152,7 +152,7 @@ namespace Transports
         catch (...)
         {
           setReadMode(saved_read_mode);
-          throw;
+          return 0;
         }
 
         return length;

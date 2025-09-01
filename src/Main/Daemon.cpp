@@ -218,13 +218,14 @@ main(int argc, char** argv)
   context.start_time = start;
   I18N::setLanguage(context.dir_i18n);
   Scheduler::set(Scheduler::POLICY_RR);
+  std::string versions = String::str("%s - private: %s", getFullVersion(), getFullVersionPrivate());
 
   OptionParser options;
   options.executable("dune")
   .program(DUNE_SHORT_NAME)
   .copyright(DUNE_COPYRIGHT)
   .email(DUNE_CONTACT)
-  .version(getFullVersion())
+  .version(versions.c_str())
   .date(getCompileDate())
   .arch(DUNE_SYSTEM_NAME)
   .add("-d", "--config-dir",

@@ -51,10 +51,11 @@ namespace Transports
     {
     public:
       Listener(Tasks::Task& task, UDPSocket& sock, LimitedComms* lcomms,
-               float contact_timeout, bool trace = false):
+               float contact_timeout, bool force = false, bool trace = false):
         m_task(task),
         m_sock(sock),
         m_trace(trace),
+        m_force_send(force),
         m_contacts(contact_timeout),
         m_lcomms(lcomms)
       { }
@@ -63,6 +64,12 @@ namespace Transports
       setTrace(bool trace)
       {
         m_trace = trace;
+      }
+
+      void
+      setIgnoreFilter(bool ignore)
+      {
+        m_force_send = ignore;
       }
 
       void
@@ -83,6 +90,14 @@ namespace Transports
         m_contacts_lock.unlock();
       }
 
+      void
+      addContact(unsigned id)
+      {
+        m_contacts_lock.lockWrite();
+        m_contacts.addContact(id, Address::Any);
+        m_contacts_lock.unlock();
+      }
+
     private:
       // Buffer capacity.
       static const int c_bfr_size = 65535;
@@ -94,6 +109,8 @@ namespace Transports
       UDPSocket& m_sock;
       // True to print incoming messages.
       bool m_trace;
+      // Flag to force sending messages.
+      bool m_force_send;
       // Table of contacts.
       ContactTable m_contacts;
       // Lock to serialize access to m_contacts.
@@ -117,6 +134,8 @@ namespace Transports
 
             uint16_t rv = m_sock.read(bfr, c_bfr_size, &addr);
             IMC::Message* msg = IMC::Packet::deserialize(bfr, rv);
+            if (m_trace)
+              m_task.inf("incomming: %s", msg->getName());
 
             if (m_lcomms->isActive())
             {
@@ -128,18 +147,19 @@ namespace Transports
               if (!m_lcomms->isNodeWithinRange(msg->getSource(), msg->getId()))
               {
                 delete msg;
+                m_task.debug("message was filtered");
                 continue;
               }
             }
 
             m_contacts_lock.lockWrite();
-            m_contacts.update(msg->getSource(), addr);
+            bool onTable = m_contacts.update(msg->getSource(), addr);
             m_contacts_lock.unlock();
 
-            m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
-
-            if (m_trace)
-              DUNE_MSG(m_task.getName(), "incoming: " + std::string(msg->getName()));
+            if (m_force_send || onTable)
+              m_task.dispatch(msg, DF_KEEP_TIME | DF_KEEP_SRC_EID);
+            else
+              m_task.debug("message was filtered");
 
             delete msg;
           }
