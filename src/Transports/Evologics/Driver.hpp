@@ -73,6 +73,8 @@ namespace Transports
       "RECVSTART",
       "RECVFAILED",
       "RECVEND",
+      "RECVJRB",
+      "RECVJRP",
       "SENDSTART",
       "SENDEND",
       "SENDPBM",
@@ -264,6 +266,30 @@ namespace Transports
         // Do not set modem busy.
         std::string cmd = String::str("*SENDPBM,%u,%u,", data_size, dst);
         cmd.append((char*)data, data_size);
+        sendAT(cmd);
+        expectOK();
+      }
+
+      //! Janus packet send.
+      //! @param[in] data data to send.
+      //! @param[in] data_size number of bytes to send.
+      void
+      sendJRP(const uint8_t* data, size_t data_size)
+      {
+        // Do not set modem busy.
+        std::string cmd = String::str("*SENDJRP,%u,", data_size);
+        cmd.append((char*)data, data_size);
+        sendAT(cmd);
+        expectOK();
+        setBusy(true);
+      }
+
+      // Janus get cargo.
+      //! @param[in] cargo_size size of the cargo.
+      void
+      getJanusCargo(size_t cargo_size)
+      {
+        std::string cmd = String::str("@JRLP%u", cargo_size);
         sendAT(cmd);
         expectOK();
       }
