@@ -219,6 +219,11 @@ namespace UserInterfaces
         bind<IMC::TransmissionStatus>(this);
       }
 
+      ~Task(void)
+      {
+        onDisconnect();
+      }
+
       void
       onIdle(void) override
       {
