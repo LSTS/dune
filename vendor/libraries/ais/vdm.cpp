@@ -225,7 +225,7 @@ std::string Join(const vector<std::string> &parts, char delim) {
 
 unique_ptr<NmeaSentence> NmeaSentence::Merge(
     const vector<unique_ptr<NmeaSentence>> &prior_sentences) const {
-  if (prior_sentences.size() != sentence_total_ - 1) {
+  if (prior_sentences.size() != static_cast<std::vector<std::unique_ptr<NmeaSentence>>::size_type>(sentence_total_ - 1)) {
     return nullptr;
   }
 
@@ -237,8 +237,8 @@ unique_ptr<NmeaSentence> NmeaSentence::Merge(
   }
 
   // Check the order.
-  for (int i = 0; i < prior_sentences.size(); ++i) {
-    if (prior_sentences[i]->sentence_number() != i + 1) {
+  for (std::vector<std::unique_ptr<NmeaSentence>>::size_type i = 0; i < prior_sentences.size(); ++i) {
+    if (prior_sentences[i]->sentence_number() != static_cast<int>(i) + 1) {
       return nullptr;
     }
   }
@@ -334,7 +334,7 @@ bool VdmStream::AddLine(const std::string &line) {
 
     // Middle sentences of a message.
     if (cnt != tot) {
-      if (incoming_sentences_[seq].size() + 1 != cnt) {
+      if (incoming_sentences_[seq].size() + 1 != static_cast<std::vector<std::unique_ptr<NmeaSentence>>::size_type>(cnt)) {
         return false;
       }
       incoming_sentences_[seq].emplace_back(std::move(sentence));
@@ -342,7 +342,7 @@ bool VdmStream::AddLine(const std::string &line) {
     }
 
     // Got final sentence in a multi-line message.
-    if (incoming_sentences_[seq].size() != tot - 1) {
+    if (incoming_sentences_[seq].size() != static_cast<std::vector<std::unique_ptr<NmeaSentence>>::size_type>(tot - 1)) {
       incoming_sentences_[seq].clear();
       return false;
     }
