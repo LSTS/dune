@@ -248,18 +248,18 @@ namespace Monitors
 
           // First read
           std::uint64_t total1 = readTotalJiffies();
-          debug("Total jiffies 1: %llu", total1);
+          debug("Total jiffies 1: %lu", total1);
           std::uint64_t proc1 = readProcJiffies();
-          debug("Proc jiffies 1: %llu", proc1);
+          debug("Proc jiffies 1: %lu", proc1);
 
-          // Interval (200ms, can be tuned)
-          std::this_thread::sleep_for(std::chrono::milliseconds(200));
+          // Interval (1000ms, can be tuned)
+          std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
           // Second read
           std::uint64_t total2 = readTotalJiffies();
-          debug("Total jiffies 2: %llu", total2);
+          debug("Total jiffies 2: %lu", total2);
           std::uint64_t proc2 = readProcJiffies();
-          debug("Proc jiffies 2: %llu", proc2);
+          debug("Proc jiffies 2: %lu", proc2);
 
           std::uint64_t deltaTotal = (total2 > total1) ? (total2 - total1) : 0ULL;
           std::uint64_t deltaProc = (proc2 > proc1) ? (proc2 - proc1) : 0ULL;
@@ -286,8 +286,7 @@ namespace Monitors
                            * (static_cast<double>(deltaProc) / static_cast<double>(deltaTotal))
                            * static_cast<double>(m_num_cpus);
 
-            trace("CPU usage: %.2f%% (proc %llu, total %llu) on %ld CPUs", usage, deltaProc,
-                deltaTotal, numCpus);
+            trace("CPU usage: %.2f%% (proc %lu, total %lu) on %ld CPUs", usage, deltaProc, deltaTotal, numCpus);
             // Allow >100% for multithreaded processes (e.g. 200% = 2 cores fully used)
             // Clamp only to fit inside uint8_t (0..255)
             if (std::isnan(usage) || usage < 0.0)
