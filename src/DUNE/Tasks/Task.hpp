@@ -182,6 +182,15 @@ namespace DUNE
         return m_ctx.entities.resolve(id);
       }
 
+      //! Retrieve the number of entities registered in the
+      //! context's entity database.
+      //! @return number of entities.
+      u_int16_t
+      getEntityCount(void) const
+      {
+        return m_ctx.entities.size();
+      }
+
       //! Get current debug level.
       //! @return debug level.
       DebugLevel
