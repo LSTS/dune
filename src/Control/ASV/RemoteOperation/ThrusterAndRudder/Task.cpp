@@ -235,12 +235,12 @@ namespace Control
             }
 
             war("PowerOff CPU");
-            int result = std::system("/usr/sbin/poweroff");
+            int result = std::system("systemctl poweroff");
             while (result == -1)
             {
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
               err(DTR("failed to execute poweroff command"));
-              result = std::system("/usr/sbin/poweroff");
+              result = std::system("systemctl poweroff");
             }
           }
 
