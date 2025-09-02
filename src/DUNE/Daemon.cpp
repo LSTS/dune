@@ -288,7 +288,11 @@ namespace DUNE
       }
       else
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        uint32_t num_tasks = m_tman->getNumTasks();
+        uint16_t num_entities = getEntityCount();
+        std::string text = Utils::String::str("active | Number of tasks: %d | Number of Entities: %d",
+                      num_tasks, num_entities);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, text);
       }
     }
   }
