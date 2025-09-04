@@ -95,6 +95,8 @@ namespace Maneuver
       {
         //! Acknowledgement timeout.
         double ack_timeout;
+        //! Ignore Acknowledgement.
+        bool ignore_ack;
         //! Leader setup timeout.
         double sync_setup_timeout;
         //! Start setup timeout.
@@ -190,6 +192,10 @@ namespace Maneuver
           .units(Units::Second)
           .defaultValue("5.0")
           .description("Acknowledgement timeout");
+
+          param("Ignore Acknowledgement", m_args.ignore_ack)
+          .defaultValue("false")
+          .description("Leader ignores acknowledgement in synchonization phase");
 
           param("Sync Setup Timeout", m_args.sync_setup_timeout)
           .units(Units::Second)
@@ -537,6 +543,27 @@ namespace Maneuver
         void
         sendSync(void)
         {
+          if (m_args.ignore_ack)
+          {
+            // If ignoring ack, just send SYNC to all participants once
+            while ((size_t)m_sync_idx < participants())
+            {
+              if (m_sync_idx == formation_index())
+                m_sync_idx++;
+
+              const Participant& part = participant(m_sync_idx);
+              std::string part_name = resolveSystemId(part.vid);
+              trace("Sending code SYNC to %s...", part_name.c_str());
+
+              m_wcomms->sendSync(part_name, m_acomms.getSyncTime());
+              m_sync_idx++;
+            }
+
+            debug("Sync setup done. No Ack. Leader is %s", resolveSystemId(m_leader_id));
+            sendToFirstPoint();
+            return;
+          }
+
           switch (m_sync_state)
           {
             case SYNCS_SEND:
@@ -548,7 +575,7 @@ namespace Maneuver
               }
 
               if (m_sync_idx == formation_index())
-              m_sync_idx++;
+                m_sync_idx++;
 
               if ((size_t)m_sync_idx < participants())
               {
