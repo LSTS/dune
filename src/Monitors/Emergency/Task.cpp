@@ -80,7 +80,8 @@ namespace Monitors
         Tasks::Periodic(name, ctx),
         m_in_mission(false),
         m_req(0),
-        m_reporter(NULL)
+        m_reporter(NULL),
+        m_emsg(nullptr)
       {
         paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_USER);
