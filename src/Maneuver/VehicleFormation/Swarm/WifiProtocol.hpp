@@ -46,17 +46,15 @@ namespace Maneuver
         //! Default constructor.
         WifiProtocol(DUNE::Tasks::Task* task, 
                      const DUNE::Network::Address& udp_maddr,
-                     const uint16_t udp_port):
+                     const uint16_t udp_port,
+                     std::vector<DUNE::Network::Address>& addresses):
           CommsProtocol(task, "WifiProtocol", 0xA3),
           m_udp_maddr(udp_maddr),
-          m_udp_port(udp_port)
+          m_udp_port(udp_port),
+          m_addresses(addresses)
         { 
           m_sock = new DUNE::Network::UDPSocket();
-          m_sock->setMulticastTTL(1);
-          m_sock->setMulticastLoop(true);
-          // m_sock->enableBroadcast(true);
-          m_sock->joinMulticastGroup(m_udp_maddr);
-          m_sock->bind(m_udp_port);
+          m_sock->bind(udp_port, DUNE::Network::Address::Any, false);
         }
 
         ~WifiProtocol()
@@ -104,9 +102,13 @@ namespace Maneuver
           }
           buf.push_back(crc.get());
 
-          m_sock->write(&buf[0], buf.size(), m_udp_maddr, m_udp_port);
-          spew(DUNE::Utils::String::str("Sending message: %s",
-                                        DUNE::Utils::String::bytesToHex(buf).c_str()));
+          for (auto addr : m_addresses)
+          {
+            m_sock->write(&buf[0], buf.size(), addr, m_udp_port);
+            spew(DUNE::Utils::String::str("Sending message (to %s): %s",
+                                          addr.c_str(),
+                                          DUNE::Utils::String::bytesToHex(buf).c_str()));
+          }
         }
 
         //! Check UDP socket for incoming message.
@@ -121,7 +123,8 @@ namespace Maneuver
               size_t n = m_sock->read(m_buf, c_buf_size, &dummy);
               data.clear();
               data.assign(m_buf, m_buf + n);
-              spew(DUNE::Utils::String::str("Received message: %s",
+              spew(DUNE::Utils::String::str("Received message (from %s): %s",
+                                            dummy.c_str(),
                                             DUNE::Utils::String::bytesToHex(data).c_str()));
 
               return true;
@@ -223,6 +226,8 @@ namespace Maneuver
         uint16_t m_udp_port;
         //! UDP socket.
         DUNE::Network::UDPSocket* m_sock;
+        //! Swarm addresses
+        std::vector<DUNE::Network::Address> m_addresses;
       };
     }
   }
