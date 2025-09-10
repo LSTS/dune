@@ -123,6 +123,8 @@ namespace Maneuver
         std::vector<double> fallback_position;
         //! Name of the section with participant addresses.
         std::string addr_section;
+        //! Check CRC on received messages.
+        bool check_crc;
       };
 
       struct Task: public DUNE::Maneuvers::BasicSwarm
@@ -253,6 +255,10 @@ namespace Maneuver
           .defaultValue("15.0")
           .description("Period while acoustic channel is reserved for each participant");
 
+          param("Check CRC On Received Messages", m_args.check_crc)
+          .defaultValue("true")
+          .description("Check CRC on received acoustic messages");
+
           m_ctx.config.get("General", "Maximum Speed", "2.0", m_max_speed);
 
           std::string fallback_values;
@@ -279,7 +285,6 @@ namespace Maneuver
           .defaultValue("Swarm Addresses")
           .description("Name of the configuration section with participant addresses");
 
-
           bind<IMC::UamRxFrame>(this);
         }
 
@@ -292,6 +297,9 @@ namespace Maneuver
 
           if (paramChanged(m_args.pos_dissemination_periodicity))
             m_send_pos_timer.setTop(m_args.pos_dissemination_periodicity);
+
+          if (paramChanged(m_args.check_crc))
+            m_acomms.setCheckCRC(m_args.check_crc);
         }
 
         //! On resource initialization
@@ -299,7 +307,6 @@ namespace Maneuver
         onResourceInitialization(void)
         {
           Maneuver::onResourceInitialization();
-
 
           // Process modem addresses.
           std::vector<Address> addresses;

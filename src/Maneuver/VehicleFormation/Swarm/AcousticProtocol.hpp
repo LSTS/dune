@@ -49,7 +49,8 @@ namespace Maneuver
           m_sync_time(-1),
           m_max_slots(-1),
           m_slot(-1),
-          m_time_per_slot(-1)
+          m_time_per_slot(-1),
+          m_check_crc(true)
         { }
 
         void
@@ -82,12 +83,12 @@ namespace Maneuver
           frame.data.push_back(crc.get());
 
           // Debug
-          // if (m_task->getDebugLevel() >= DUNE::Tasks::DebugLevel::DEBUG_LEVEL_SPEW)
-          // {
-          //   std::vector<uint8_t> serialized_data(frame.data.begin(), frame.data.end());
-          //   spew(DUNE::Utils::String::str("Sending message: %s",
-          //                                 DUNE::Utils::String::bytesToHex(serialized_data).c_str()));
-          // }
+          if (m_task->getDebugLevel() >= DUNE::Tasks::DebugLevel::DEBUG_LEVEL_SPEW)
+          {
+            std::vector<uint8_t> serialized_data(frame.data.begin(), frame.data.end());
+            spew(DUNE::Utils::String::str("Sending message: %s",
+                                          DUNE::Utils::String::bytesToHex(serialized_data).c_str()));
+          }
 
           m_task->dispatch(frame);
         }
@@ -132,12 +133,18 @@ namespace Maneuver
             return false;
           }
 
-          DUNE::Algorithms::CRC8 crc(m_poly);
-          crc.putArray((uint8_t*)&msg->data[0], msg->data.size() - 1);
-          if (crc.get() != (uint8_t)(msg->data[msg->data.size() - 1]))
+          if (m_check_crc)
           {
-            debug("invalid CRC");
-            return false;
+            DUNE::Algorithms::CRC8 crc(m_poly);
+            crc.putArray((uint8_t*)&msg->data[0], msg->data.size() - 1);
+            if (crc.get() != (uint8_t)(msg->data[msg->data.size() - 1]))
+            {
+              debug("invalid CRC");
+              std::vector<uint8_t> serialized_data2(msg->data.begin(), msg->data.end());
+              spew(DUNE::Utils::String::str("Received message: %s",
+                                            DUNE::Utils::String::bytesToHex(serialized_data2).c_str()));
+              return false;
+            }
           }
 
           return (msg->sys_dst == "broadcast" || imc_addr_dst == m_task->getSystemId());
@@ -220,6 +227,13 @@ namespace Maneuver
           return m_sync_time >= 0 && m_max_slots >= 0 && m_slot >= 0 && m_time_per_slot >= 0;
         }
 
+        void
+        setCheckCRC(const bool check_crc)
+        {
+          m_check_crc = check_crc;
+          trace(DUNE::Utils::String::str("Check CRC set: %d", m_check_crc));
+        }
+
         bool
         available()
         {
@@ -248,6 +262,7 @@ namespace Maneuver
         int m_max_slots;
         int m_slot;
         double m_time_per_slot;
+        bool m_check_crc;
       };
     }
   }
