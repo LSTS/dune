@@ -935,7 +935,8 @@ namespace Maneuver
           double elapsed = m_leader_ref_timer.getElapsed() / m_args.leader_reference_timeout;
           if (elapsed > 1.0f)
             elapsed = 1.0f;
-          return 1 + (1 - m_speed_ref / original_speed) * elapsed;
+          // return 1 + (1 - m_speed_ref / original_speed) * elapsed;
+          return 1;
         }
 
         void
@@ -1128,7 +1129,7 @@ namespace Maneuver
               startState();
               break;
             case SM_MOVING:
-              dissiminatePosition();
+              // dissiminatePosition();
               checkLeaderReference();
               break;
             default:
