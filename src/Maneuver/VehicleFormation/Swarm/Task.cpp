@@ -1129,7 +1129,7 @@ namespace Maneuver
               startState();
               break;
             case SM_MOVING:
-              // dissiminatePosition();
+              dissiminatePosition();
               checkLeaderReference();
               break;
             default:
