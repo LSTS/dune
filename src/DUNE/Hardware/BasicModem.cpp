@@ -174,8 +174,11 @@ namespace DUNE
     void
     BasicModem::setReadMode(BasicModem::ReadMode mode)
     {
-      Concurrency::ScopedMutex l(m_mutex);
-      m_read_mode = mode;
+      {
+        Concurrency::ScopedMutex l(m_mutex);
+        m_read_mode = mode;
+      }
+
       if (mode == READ_MODE_LINE) {
         if (m_bytes.size() > 0) { // if have bytes in queue, transfer to lines
           getTask()->spew(
