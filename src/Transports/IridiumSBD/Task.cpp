@@ -756,7 +756,9 @@ namespace Transports
           default:
             m_prio = TxRxPriority::Tx;
             m_tx_window.setTop(m_args.tx_window);
+            break;
         }
+
         m_general_monitor.reset();
       }
 
