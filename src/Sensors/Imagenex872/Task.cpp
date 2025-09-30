@@ -64,8 +64,6 @@ namespace Sensors
     {
       //! IO device.
       std::string io_dev;
-      //! Read frequency.
-      double read_frequency;
       // Data gain.
       unsigned dat_gain;
       // Balance gain.
@@ -98,6 +96,8 @@ namespace Sensors
     static const int c_rdata_dat_size = 1000;
     // Return data footer size.
     static const int c_rdata_ftr_size = 1;
+    // Parameter name of Periodicity.
+    constexpr const char* c_periodicity_param_name = "Periodicity of Data Sampling";
 
     struct Task: public Hardware::BasicDeviceDriver
     {
@@ -119,18 +119,11 @@ namespace Sensors
         m_sock(NULL)
       {
         // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
-
-        // Define configuration parameters.
+        paramConfigurableSampling();
+        
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("tcp://192.168.0.5:4040")
         .description("IO device URI in the form \"tcp://HOST:PORT\"");
-        
-        param(DTR_RT("Execution Frequency"), m_args.read_frequency)
-        .units(Units::Hertz)
-        .defaultValue("1.0")
-        .description(DTR("Frequency at which task reads data"));
 
         param("Data Gain", m_args.dat_gain)
         .defaultValue("40")
@@ -179,16 +172,22 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        setFrequency(m_args.frequency);
-        setRange(m_args.range);
-        setDataGain(m_args.dat_gain);
-        setBalanceGain(m_args.bal_gain);
+        BasicDeviceDriver::onUpdateParameters();
+
+        if (paramChanged(m_args.frequency))        
+          setFrequency(m_args.frequency);
+
+        if (paramChanged(m_args.range))
+          setRange(m_args.range);
+
+        if (paramChanged(m_args.dat_gain))
+          setDataGain(m_args.dat_gain);
+
+        if (paramChanged(m_args.bal_gain))
+          setBalanceGain(m_args.bal_gain);
 
         if (paramChanged(m_args.io_dev) && m_sock != NULL)
           throw RestartNeeded(DTR("restarting to change URI"), 1);
-
-        if (paramChanged(m_args.read_frequency))
-          setReadFrequency(m_args.read_frequency);
       }
 
       //! Try to connect to the device.
@@ -264,13 +263,22 @@ namespace Sensors
       }
 
       void
+      setPeriodicity(double value)
+      {
+        IMC::EntityParameter p;
+        p.name = c_periodicity_param_name;
+        p.value = std::to_string(value);
+        setEntityParameter(p);
+      }
+
+      void
       setRange(unsigned value)
       {
         unsigned idx = getIndex(value, c_ranges, c_ranges_size);
         m_sdata[SD_RANGE] = (uint8_t)c_ranges[idx];
         m_ping.min_range = 0;
         m_ping.max_range = c_ranges[idx];
-        setReadFrequency(1.0 / (c_range_rates[idx] / 1000.0));
+        setPeriodicity(c_range_rates[idx] / 1000.0);
       }
 
       void

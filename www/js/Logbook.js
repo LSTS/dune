@@ -104,9 +104,11 @@ Logbook.prototype.update = function () {
     logbookStr = "<p>Logbook is empty.</p>";
   }
 
-  this.m_base.style.height = "85vh";
+  this.m_base.style.height = "80vh";
   this.m_base.style.fontSize = "1rem";
   this.m_base.style.overflowY = "scroll";
+  this.m_base.style.marginLeft = "auto";
+  this.m_base.style.marginRight = "auto";
   this.m_base.innerHTML = "";
   this.m_base.innerHTML += logbookStr;
 };

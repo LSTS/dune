@@ -196,50 +196,56 @@ namespace Monitors
           err(DTR("EntityState message without source entity"));
           return;
         }
-
-        ESRecord& r = m_record[msg->getSourceEntity()];
-
-        bool noteworthy = r.monitor && r.state != msg->state;
-
-        if (noteworthy)
+        try
         {
-          if (Clock::get() - r.last_transition < m_args.transition_gap)
-            ++r.transitions;
-          else
+          ESRecord& r = m_record.at(msg->getSourceEntity());
+
+          bool noteworthy = r.monitor && r.state != msg->state;
+
+          if (noteworthy)
+          {
+            if (Clock::get() - r.last_transition < m_args.transition_gap)
+              ++r.transitions;
+            else
+              r.transitions = 0;
+
+            r.last_transition = Clock::get();
+
+            if (r.transitions < m_args.max_transitions)
+            {
+              inf("%s : %s -> %s | %s", DTR(r.label.c_str()), DTR(c_state_desc[r.state]),
+                  DTR(c_state_desc[msg->state]), msg->description.c_str());
+            }
+            else if (r.transitions == m_args.max_transitions)
+            {
+              war(DTR("%s entity state is unstable (%s <-> %s), ignoring"),
+                  DTR(r.label.c_str()), DTR(c_state_desc[r.state]), DTR(c_state_desc[msg->state]));
+            }
+          }
+
+          if (Clock::get() - r.last_transition > m_args.transition_gap &&
+              r.transitions > m_args.max_transitions)
+          {
             r.transitions = 0;
 
-          r.last_transition = Clock::get();
-
-          if (r.transitions < m_args.max_transitions)
-          {
-            inf("%s : %s -> %s | %s", DTR(r.label.c_str()), DTR(c_state_desc[r.state]),
+            war(DTR("%s : State stabilized in %s | %s"), DTR(r.label.c_str()),
                 DTR(c_state_desc[msg->state]), msg->description.c_str());
           }
-          else if (r.transitions == m_args.max_transitions)
+
+          r.time = Clock::get();
+          r.state = msg->state;
+
+          if (noteworthy)
           {
-            war(DTR("%s entity state is unstable (%s <-> %s), ignoring"),
-                DTR(r.label.c_str()), DTR(c_state_desc[r.state]), DTR(c_state_desc[msg->state]));
+            if (r.state != IMC::EntityState::ESTA_NORMAL &&
+                r.state != IMC::EntityState::ESTA_FAULT)
+              setLastError(r.label + ": " + msg->description);
+            reportState();
           }
         }
-
-        if (Clock::get() - r.last_transition > m_args.transition_gap &&
-            r.transitions > m_args.max_transitions)
+        catch(...)
         {
-          r.transitions = 0;
-
-          war(DTR("%s : State stabilized in %s | %s"), DTR(r.label.c_str()),
-              DTR(c_state_desc[msg->state]), msg->description.c_str());
-        }
-
-        r.time = Clock::get();
-        r.state = msg->state;
-
-        if (noteworthy)
-        {
-          if (r.state != IMC::EntityState::ESTA_NORMAL &&
-              r.state != IMC::EntityState::ESTA_FAULT)
-            setLastError(r.label + ": " + msg->description);
-          reportState();
+          return;
         }
       }
 

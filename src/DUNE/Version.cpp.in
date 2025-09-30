@@ -39,6 +39,12 @@ namespace DUNE
   }
 
   const char*
+  getFullVersionPrivate(void)
+  {
+    return "@DUNE_GIT_PRIVATE_INFO@";
+  }
+
+  const char*
   getCompileDate(void)
   {
     return __DATE__ " - " __TIME__;

@@ -42,6 +42,7 @@ namespace DUNE
 #include <DUNE/Algorithms/CRC16.hpp>
 #include <DUNE/Algorithms/FletcherChecksum.hpp>
 #include <DUNE/Algorithms/MD5.hpp>
+#include <DUNE/Algorithms/Sha256.hpp>
 #include <DUNE/Algorithms/XORChecksum.hpp>
 #include <DUNE/Algorithms/UNESCO1983.hpp>
 

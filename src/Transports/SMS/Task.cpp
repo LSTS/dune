@@ -24,8 +24,7 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
-// Changes: Pedro Gonçalves                                                 *
+// Author: Pedro Gonçalves                                                 *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -38,397 +37,484 @@
 
 // Local headers.
 #include "Driver.hpp"
+#include "PollThread.hpp"
 
 namespace Transports
 {
-  //! Device driver for ETSI GSM 07.07 compatible GSM modems.
   //!
-  //! @author Ricardo Martins
+  //! @author Pedro Gonçalves
+  //! @brief SMS transport task.
   namespace SMS
   {
     using DUNE_NAMESPACES;
-
-    //! Default timer - security (m)
-    static const int m_balance_per_default = 5;
-    //! Number of sequence errors to ignore before restarting the modem.
-    static const unsigned c_seq_errors = 5;
-
-    struct SmsRequest
-    {
-      // Request id.
-      uint16_t req_id;
-      // Source address.
-      uint16_t src_adr;
-      // Source entity id.
-      uint8_t src_eid;
-      // Recipient.
-      std::string destination;
-      // Message to send.
-      std::string sms_text;
-      // Deadline to deliver the
-      double deadline;
-      // Higher deadlines have less priority.
-      bool
-      operator<(const SmsRequest& other) const
-      {
-        return deadline > other.deadline;
-      }
-    };
+    //! Time to wait before checking RSSI.
+    static const float c_time_to_check_rssi = 60.0;
+    //! Timeout to set entity state.
+    static const float c_time_to_set_entity_state = 4.0;
+    //! Time, in seconds to wait before start sending commands to the modem.
+    static const int c_time_to_wait_before_sending_commands = 10;
 
     //! %Task arguments.
     struct Arguments
     {
-      //! UART device.
-      std::string uart_dev;
-      //! UART baud rate.
-      unsigned uart_baud;
-      //! GSM Pin.
+      //! IO device.
+      std::string io_dev;
+      //! Time to check mailbox in seconds.
+      int time_to_check_mailbox;
+      //! Maximum time to accept a incoming SMS.
+      int time_to_accept_sms;
+      //! PIN number.
       std::string pin;
-      //! RSSI periodicity (s).
-      double rssi_per;
-      //! Read SMS periodicity (s).
-      double rsms_per;
-      //! SMS send timeout (s).
-      double sms_tout;
-      //! Device response timeout.
-      float reply_tout;
-      //! Code to request balance.
-      unsigned ussd_code;
-      //! Request balance.
-      bool request_balance;
-      //! Balance periodicity (m).
-      unsigned balance_per;
+      //! Number of consecutive errors to restart task.
+      int consecutive_errors;
+      //! Send SMS text messages.
+      bool send_sms_text_messages;
     };
 
-    static const std::string c_balance_request_param = "Request Balance";
-
-    struct Task: public DUNE::Tasks::Task
+    struct Task: public Hardware::BasicDeviceDriver
     {
-      //! Serial port handle.
-      SerialPort* m_uart;
-      //! GSM driver.
-      Driver* m_driver;
-      //! SMS queue.
-      std::priority_queue<SmsRequest> m_queue;
-      //! RSSI query timer.
-      Counter<double> m_rssi_timer;
-      //! SMS reception query timer.
-      Counter<double> m_rsms_timer;
-      //! SMS Request id for SMS Messages
-      unsigned m_req_id;
       //! Task arguments.
       Arguments m_args;
-      //! Balance of card
-      std::string m_balance;
-      //! Balance timer count.
-      Time::Counter<int> m_balance_timer;
-      //! Balance periodicity (s).
-      int m_balance_per;
-      //! Number of sequence errors.
-      unsigned m_seq_errors;
-
-      bool m_success_balance;
-      int m_rssi;
+      //! IO device handle.
+      IO::Handle* m_handle;
+      //! Driver of SMS modem
+      Driver* m_driver;
+      //! Thread to read from IO device.
+      PollThread* m_poll_thread;
+      //! RSSI timer.
+      Time::Counter<float> m_rssi_timer;
+      //! Mailbox timer.
+      Time::Counter<float> m_mailbox_timer;
+      //! Set entity state timer.
+      Time::Counter<float> m_set_entity_state_timer;
+      //! counter to control number of errors.
+      int m_counter_errors;
+      //! Flag to control state of modem;
+      bool m_modem_ready;
+      //! Flag to control setup of modem.
+      bool m_setup_modem;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx),
-        m_uart(NULL),
+        Hardware::BasicDeviceDriver(name, ctx),
+        m_handle(NULL),
         m_driver(NULL),
-        m_req_id(1560),
-        m_seq_errors(0),
-        m_success_balance(false),
-        m_rssi(0)
+        m_poll_thread(NULL),
+        m_modem_ready(false),
+        m_setup_modem(false)
       {
-        param("Serial Port - Device", m_args.uart_dev)
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER);
+
+        param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .description("IO device URI in the form \"uart:///dev/tty[a-zA-Z][0-9]:BAUD\" or \"uart:///dev/uart/[0-9]:BAUD\"");
 
-        param("Serial Port - Baud Rate", m_args.uart_baud)
-        .defaultValue("115200")
-        .description("Serial port baud rate");
+        param("Time to Check Mailbox in Seconds", m_args.time_to_check_mailbox)
+        .defaultValue("150")
+        .minimumValue("30")
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .description("Time to wait before checking mailbox in seconds");
 
-        param("Reply Timeout", m_args.reply_tout)
-        .defaultValue("2.0")
-        .units(Units::Second)
-        .description("Amount of time to wait for a command reply");
+        param("Maximum Time to Accept SMS in Hours", m_args.time_to_accept_sms)
+        .defaultValue("12")
+        .minimumValue("1")
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .description("Maximum time to accept an incoming SMS in Hours");
 
-        param("PIN", m_args.pin)
+        param("PIN Number", m_args.pin)
         .defaultValue("")
-        .description("PIN Code");
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .description("PIN number to unlock the SIM card");
 
-        param("RSSI Periodicity", m_args.rssi_per)
-        .defaultValue("10")
-        .units(Units::Second)
-        .description("Periodicity of RSSI reports");
+        param("Number of Consecutive Errors to Restart Task", m_args.consecutive_errors)
+        .defaultValue("5")
+        .minimumValue("2")
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .description("Number of consecutive errors to restart the task");
 
-        param("Read SMS Periodicity", m_args.rsms_per)
-        .defaultValue("10")
-        .units(Units::Second)
-        .description("Periodicity of received SMS checks");
-
-        param("SMS Send Timeout", m_args.sms_tout)
-        .defaultValue("60")
-        .units(Units::Second)
-        .description("Maximum amount of time to wait for SMS send completion");
-
-        param("USSD code", m_args.ussd_code)
-        .defaultValue("123")
-        .description("USSD code");
-
-        param("Request Balance", m_args.request_balance)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        param("Send SMS Text Messages", m_args.send_sms_text_messages)
         .defaultValue("true")
-        .description("Enable Balance Request");
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .description("Send SMS text messages. If false, only received SMS will be processed without sending any SMS text messages");
 
-        param("Balance Periodicity", m_args.balance_per)
-        .defaultValue("60")
-        .description("Balance Periodicity");
+        setWaitForMessages(0.1);
 
         bind<IMC::SmsRequest>(this);
-        bind<IMC::IoEvent>(this);
+      }
+
+      ~Task() override
+      {
+        onDisconnect();
       }
 
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.rsms_per))
-          m_rsms_timer.setTop(m_args.rsms_per);
+        trace("onUpdateParameters");
+        BasicDeviceDriver::onUpdateParameters();
+        if(paramChanged(m_args.time_to_check_mailbox))
+        {
+          m_mailbox_timer.setTop(m_args.time_to_check_mailbox);
+          inf("Time to check mailbox set to %d seconds", m_args.time_to_check_mailbox);
+        }
+        if(paramChanged(m_args.time_to_accept_sms))
+        {
+          if(m_driver != NULL)
+          {
+            m_driver->setTimeToAcceptSMS(m_args.time_to_accept_sms);
+            inf("Maximum time to accept SMS set to %d hours", m_args.time_to_accept_sms);
+          }
+        }
+        if(paramChanged(m_args.pin))
+        {
+          if(m_driver != NULL)
+          {
+            m_driver->setPin(m_args.pin);
+            inf("PIN number set to %s", m_args.pin.c_str());
+          }
+        }
+        if(paramChanged(m_args.consecutive_errors))
+        {
+          inf("Number of consecutive errors to restart task set to %d", m_args.consecutive_errors);
+        }
+        if(paramChanged(m_args.send_sms_text_messages))
+        {
+          inf("Send SMS text messages set to %s", m_args.send_sms_text_messages ? "true" : "false");
+        }
+      }
 
-        if (paramChanged(m_args.rssi_per))
-          m_rssi_timer.setTop(m_args.rssi_per);
+      //! Reserve entity identifiers.
+      void
+      onEntityReservation(void)
+      {
+        trace("onEntityReservation");
+      }
 
-        if (paramChanged(m_args.balance_per)) {
-          if(m_args.balance_per > m_balance_per_default)
-            m_balance_timer.setTop(m_args.balance_per * 60);
-          else
-            m_balance_timer.setTop(m_balance_per_default * 60);
+      unsigned
+      getEid(std::string label)
+      {
+        unsigned eid = 0;
+        try
+        {
+          eid = resolveEntity(label);
+        }
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
+        {
+          (void)e;
+          eid = reserveEntity(label);
+        }
+        return eid;
+      }
+
+      void
+      onResourceRelease(void)
+      {
+        trace("onResourceRelease");
+        deleteObjects();
+      }
+
+      void
+      deleteObjects(void)
+      {
+        trace("deleteObjects");
+        if(m_poll_thread != NULL)
+        {
+          m_handle = m_poll_thread->getHandle();
+          m_poll_thread->stopAndJoin();
+          Memory::clear(m_poll_thread);
+          m_poll_thread = NULL;
+          inf("PollThread deleted");
+        }
+        else
+        {
+          inf("PollThread is NULL, nothing to delete");
+        }
+
+        if(m_driver != NULL)
+        {
+          Memory::clear(m_driver);
+          m_driver = NULL;
+          inf("Driver deleted");
+        }
+        else
+        {
+          inf("Driver is NULL, nothing to delete");
+        }
+
+        if(m_handle != NULL)
+        {
+          Memory::clear(m_handle);
+          m_handle = NULL;
+          inf("IO Device handle deleted");
+        }
+        else
+        {
+          inf("IO Device handle is NULL, nothing to delete");
         }
       }
 
       void
       onResourceAcquisition(void)
       {
+        trace("onResourceAcquisition");
         try
         {
-          m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
-          m_driver = new Driver(this, m_uart, m_args.pin);
-          m_driver->initialize();
-          debug("manufacturer: %s", m_driver->getManufacturer().c_str());
-          debug("model: %s", m_driver->getModel().c_str());
-          debug("IMEI: %s", m_driver->getIMEI().c_str());
-          announceNumber();
+          if(isActive() || m_setup_modem)
+          {
+            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+            if (m_args.io_dev.empty())
+              throw RestartNeeded(DTR("Invalid IO device path"), c_time_to_restart_task);
+
+            inf("Waiting %d seconds before connecting to the GSM device", c_time_to_wait_before_sending_commands);
+            // Wait for the modem to "spew" initial data messages
+            Time::Delay::wait(c_time_to_wait_before_sending_commands);
+
+            if (m_handle == NULL)
+              m_handle = openDeviceHandle(m_args.io_dev);
+
+            if (m_handle == NULL)
+              throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), c_time_to_restart_task);
+            else
+              inf("IO Device handle opened successfully");
+
+            if (m_driver == NULL)
+              m_driver = new Driver(this, m_handle, m_args.time_to_accept_sms, m_args.pin);
+
+            if(m_poll_thread != NULL)
+            {
+              m_poll_thread->stop();
+              Memory::clear(m_poll_thread);
+            }
+            m_poll_thread = new PollThread(this, m_handle, m_driver, m_args.io_dev);
+            m_poll_thread->start();
+
+            setupModem();
+            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_ACTIVE);
+            m_modem_ready = true;
+          }
+          else
+          {
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+            m_modem_ready = false;
+          }
         }
-        catch (std::runtime_error& e)
+        catch (const std::bad_alloc& e)
         {
-          throw RestartNeeded(String::str(DTR("onResourceAcquisition: %s"), e.what()), 5);
+          war("Memory allocation failed: %s", e.what());
+          throw RestartNeeded(DTR("Memory allocation failure"), c_time_to_restart_task);
         }
-      }
-
-      void
-      onResourceInitialization(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_IDLE).c_str());
-      }
-
-      void
-      onResourceRelease(void)
-      {
-        if (m_driver)
+        catch (...)
         {
-          m_driver->stopAndJoin();
-          delete m_driver;
-          m_driver = NULL;
-        }
-        Memory::clear(m_uart);
-        m_seq_errors = 0;
-      }
-
-      void
-      consume(const IMC::IoEvent* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        if (msg->getDestination() != getEntityId())
-          return;
-
-        if (msg->type == IMC::IoEvent::IOV_TYPE_INPUT_ERROR)
-        {
-          throw RestartNeeded(DTR("IoEvent:input error"), 5);
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), c_time_to_restart_task);
         }
       }
 
-      void
-      sendSmsStatus(const SmsRequest* sms_req,IMC::SmsStatus::StatusEnum status,const std::string& info = "")
+      //! Try to connect to the device.
+      //! @return true if connection was established, false otherwise.
+      bool
+      onConnect() override
       {
-        IMC::SmsStatus sms_status;
-        sms_status.setDestination(sms_req->src_adr);
-        sms_status.setDestinationEntity(sms_req->src_eid);
-        sms_status.req_id = sms_req->req_id;
-        sms_status.info   = info;
-        sms_status.status = status;
-        dispatch(sms_status);
+        m_modem_ready = false;
+        trace("onConnect");
+        m_setup_modem = true;
+        return true;
       }
+
+      //! Disconnect from device.
+      void
+      onDisconnect() override
+      {
+        m_modem_ready = false;
+        m_setup_modem = false;
+        trace("onDisconnect");
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        deleteObjects();
+      }
+
+       //! Initialize device.
+      void
+      onInitializeDevice() override
+      {}
+
+      void
+      onIdle(void)
+      {}
 
       void
       consume(const IMC::SmsRequest* msg)
       {
-        SmsRequest sms_req;
+        SMS::SmsRequest sms_req;
         sms_req.req_id      = msg->req_id;
         sms_req.destination = msg->destination;
         sms_req.sms_text    = msg->sms_text;
         sms_req.src_adr     = msg->getSource();
         sms_req.src_eid     = msg->getSourceEntity();
 
+        if(m_driver == NULL)
+        {
+          IMC::SmsStatus sms_status;
+          sms_status.setDestination(sms_req.src_adr);
+          sms_status.setDestinationEntity(sms_req.src_eid);
+          sms_status.req_id = sms_req.req_id;
+          sms_status.info   = "Send of SMS text messages are disabled";
+          sms_status.status = IMC::SmsStatus::SMSSTAT_INPUT_FAILURE;
+          dispatch(sms_status);
+          return;
+        }
+
+        if(!m_args.send_sms_text_messages)
+        {
+          m_driver->sendSmsStatus(&sms_req, IMC::SmsStatus::SMSSTAT_INPUT_FAILURE, DTR("Send of SMS text messages are disabled"));
+          inf("%s [%s]", DTR("Send of SMS text messages are disabled"), sms_req.sms_text.c_str());
+          return;
+        }
+
         if (msg->timeout <= 0)
         {
-          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"SMS timeout cannot be zero");
-          inf("%s", DTR("SMS timeout cannot be zero"));
+          m_driver->sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"SMS timeout cannot be zero");
+          war("%s", DTR("SMS timeout cannot be zero"));
           return;
         }
         if(sms_req.sms_text.length() > 160) //160 characters encoded in 8-bit alphabet per SMS message
         {
-          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"Can only send 160 characters over SMS.");
-          inf("%s", DTR("Can only send 160 characters over SMS"));
+          m_driver->sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,"Can only send 160 characters over SMS.");
+          war("%s", DTR("Can only send 160 characters over SMS"));
 		      return;
         }
         sms_req.deadline = Clock::getSinceEpoch() + msg->timeout;
-        m_queue.push(sms_req);
-        sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_QUEUED,DTR("SMS sent to queue"));
+        m_driver->addtoSendQueue(sms_req);
+        m_driver->sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_QUEUED,DTR("SMS sent to queue"));
       }
 
       void
-      announceNumber(void)
+      setupModem(void)
       {
-        std::string number = m_driver->getOwnNumber();
-        if (number != "")
-        {
-          std::stringstream os;
-          os << "imc+gsm://" << number << "/";
+        m_counter_errors = 0; // Reset error counter
+        m_rssi_timer.setTop(c_time_to_check_rssi);
+        m_mailbox_timer.setTop(m_args.time_to_check_mailbox);
+        m_set_entity_state_timer.setTop(c_time_to_set_entity_state);
 
-          IMC::AnnounceService announce;
-          announce.service = os.str();
-          announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
-          dispatch(announce);
+        if(m_driver == NULL)
+          throw RestartNeeded(DTR("Driver is NULL, cannot setup modem"), c_time_to_restart_task);
+
+        if (!m_driver->initModemGSM())
+        {
+          throw RestartNeeded(DTR("Fail to setup GSM modem"), c_time_to_restart_task);
+        }
+        else
+        {
+          inf("Modem initialized successfully");
+          m_driver->getRssi();
+          m_driver->parseIncomingData();  // Process the response
+          m_driver->checkMailBox(); // Check mailbox for any pending messages
+          m_driver->parseIncomingData();  // Process the response
         }
       }
 
       void
-      processQueue(void)
+      checkDataIn(void)
       {
-        char entity_state_text[128];
-        if (m_queue.empty())
+        if(m_driver != NULL)
+          m_driver->parseIncomingData();
+        else
+          inf("Driver is NULL, cannot check data in");
+      }
+
+      void
+      checkCommandsTriggered(void)
+      {
+        if(m_driver == NULL)
         {
-          std::sprintf(entity_state_text, "active | %s:%d | queue empty", m_args.uart_dev.c_str(), m_args.uart_baud);
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(entity_state_text)));
+          inf("Driver is NULL, cannot check commands triggered");
           return;
         }
 
-        std::sprintf(entity_state_text, "active | %s:%d | queue size %d", m_args.uart_dev.c_str(), m_args.uart_baud, (int)m_queue.size());
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Utils::String::str(DTR(entity_state_text)));
-
-        SmsRequest sms_req = m_queue.top();
-        m_queue.pop();
-
-        // Message is too old, discard it.
-        if (Time::Clock::getSinceEpoch() >= sms_req.deadline)
+        if(m_mailbox_timer.overflow())
         {
-          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_INPUT_FAILURE,DTR("SMS timeout"));
-          war(DTR("discarded expired SMS to recipient %s"), sms_req.destination.c_str());
-          return;
+          m_mailbox_timer.reset();
+          m_driver->checkMailBox();
         }
-
-        try
+        else if(m_rssi_timer.overflow())
         {
-          m_driver->getRSSI();
-          m_driver->sendSMS(sms_req.destination, sms_req.sms_text, m_args.sms_tout);
-          //SMS successfully sent, otherwise driver throws error
-          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_SENT);
+          m_rssi_timer.reset();
+          m_driver->getRssi();
         }
-        catch (...)
+        else if(m_driver != NULL && m_driver->receivedSMS())
         {
-          m_queue.push(sms_req);
-          sendSmsStatus(&sms_req,IMC::SmsStatus::SMSSTAT_ERROR, DTR("Error sending message over GSM modem"));
-          inf(DTR("Error sending SMS to recipient %s"),sms_req.destination.c_str());
+          m_mailbox_timer.reset();
+          m_driver->clearReceivedSMS();
         }
       }
 
-      void
-      pollStatus(void)
+      //! Check for input data.
+      //! @return true.
+      bool
+      onReadData() override
       {
-        try
+        if(isActive() && m_modem_ready)
         {
-          if(m_driver->isModemBusy())
-            return;
+          checkDataIn();
+          checkCommandsTriggered();
 
-          if (m_rssi_timer.overflow())
+          if(m_poll_thread != NULL && m_poll_thread->isHandleReset())
           {
-            m_rssi_timer.reset();
-            m_rssi = m_driver->getRSSI();
-            m_seq_errors = 0;
-          }
-          else if (m_rsms_timer.overflow())
-          {
-            m_rsms_timer.reset();
-            if(m_rssi > 0)
-              m_driver->checkMessages();
-
-            m_seq_errors = 0;
-          }
-        }
-        catch (std::exception& e)
-        {
-          if(++m_seq_errors >= c_seq_errors)
-          {
-            throw RestartNeeded(String::str(DTR("failed to poll status: %s"), e.what()), 5);
+            m_poll_thread->clearHandleFlag();
+            inf("Seting up the modem");
+            onDisconnect();
+            setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+            m_modem_ready = false;
+            m_setup_modem = true;
           }
           else
           {
-            trace("failed to poll status (%d): %s", m_seq_errors, e.what());
-            m_driver->stopAndJoin();
-            m_driver->initialize();
+            if(m_set_entity_state_timer.overflow())
+            {
+              m_set_entity_state_timer.reset();
+              if(m_driver != NULL )
+              {
+                std::string text_entity = "active | " + m_args.io_dev + " | tx: " +
+                                          std::to_string(m_driver->getSmsSentCount()) + " | rx: " +
+                                          std::to_string(m_driver->getSmsReceivedCount()) +
+                                          " | t_mb: " + m_driver->convertTimeToString(m_mailbox_timer.getRemaining());
+                setEntityState(IMC::EntityState::ESTA_NORMAL, text_entity.c_str());
+              }
+              else
+              {
+                setEntityState(IMC::EntityState::ESTA_NORMAL, "active | " + m_args.io_dev);
+              }
+            }
+          }
+
+          if(m_driver == NULL)
+          {
+            inf("Driver is NULL, cannot process queues");
+            return false;
+          }
+
+          m_driver->processQueues();
+
+          if(m_driver->getNumberOfErrors() >= m_args.consecutive_errors)
+          {
+            throw RestartNeeded(DTR("Too many consecutive errors, restarting task"), c_time_to_restart_task);
+          }
+          else
+          {
+            if(m_driver->getNumberOfErrors() == 0)
+              m_counter_errors = 0;
+
+            if(m_counter_errors != m_driver->getNumberOfErrors())
+            {
+              m_counter_errors = m_driver->getNumberOfErrors();
+              war("Counter errors: %d of %d", m_counter_errors, m_args.consecutive_errors);
+            }
           }
         }
-      }
-
-      void checkBalance(void)
-      {
-        if(m_args.request_balance)
+        else if(isActive() && !m_modem_ready)
         {
-          if(m_driver->getBalance(m_args.ussd_code, m_balance))
-            setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
-
-          m_args.request_balance = false;
-          IMC::SetEntityParameters msg;
-          IMC::EntityParameter balance_param;
-          balance_param.name = c_balance_request_param;
-          balance_param.value = "false";
-          msg.params.push_back(balance_param);
-          msg.name = getEntityLabel();
-          dispatch(msg, DF_LOOP_BACK);
+          onResourceAcquisition();
         }
-      }
-
-      void
-      onMain(void)
-      {
-        while (!stopping())
-        {
-          waitForMessages(1.0);
-          pollStatus();
-          processQueue();
-          checkBalance();
-        }
-      }
-
-      std::string
-      getMessage(Status::Code code)
-      {
-        std::stringstream ss;
-        ss << getString(code) << m_balance;
-
-        return ss.str();
+        return false;
       }
     };
   }

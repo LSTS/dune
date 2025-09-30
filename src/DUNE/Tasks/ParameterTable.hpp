@@ -40,6 +40,7 @@
 #include <DUNE/Tasks/AbstractParameterParser.hpp>
 #include <DUNE/Tasks/Parameter.hpp>
 #include <DUNE/Parsers/Config.hpp>
+#include <DUNE/IMC/Definitions.hpp>
 
 namespace DUNE
 {
@@ -64,7 +65,11 @@ namespace DUNE
         return *p;
       }
 
-      void
+      //! Set a parameter value.
+      //! @param name parameter name.
+      //! @param value parameter value.
+      //! @return true if value changed, false otherwise.
+      bool
       set(const std::string& name, const std::string& value);
 
       void
@@ -119,6 +124,22 @@ namespace DUNE
       find(const std::string& name)
       {
         return m_names.find(name);
+      }
+
+      IMC::EntityParameter
+      apply(void* ptr, const std::string& value)
+      {
+        std::map<void*, Parameter*>::iterator itr = m_pointers.find(ptr);
+        if (itr == m_pointers.end())
+          throw std::runtime_error(DTR("variable does not exist"));
+
+        itr->second->read(value);
+        itr->second->commit();
+
+        IMC::EntityParameter p;
+        p.name = itr->second->name();
+        p.value = itr->second->value();
+        return p;
       }
 
     private:

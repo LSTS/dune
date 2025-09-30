@@ -284,10 +284,9 @@ namespace Plan
       {
         // check if some calibration time can be skipped
         if (waitingForDevice())
-        {
           m_calib->forceRemainingTime(scheduledTimeLeft());
-        }
-        else if (m_calib->getElapsedTime() >= m_min_cal_time)
+
+        if (m_calib->overflow() || m_calib->getElapsedTime() >= m_min_cal_time)
         {
           // If we're past the minimum calibration time
           m_calib->stop();

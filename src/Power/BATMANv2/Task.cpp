@@ -110,11 +110,6 @@ namespace Power
         m_driver(0),
         m_tstamp(0)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-          Tasks::Parameter::VISIBILITY_DEVELOPER, 
-          true);
-
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
@@ -195,6 +190,7 @@ namespace Power
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
       }
 
       //! Try to connect to the device.
@@ -202,7 +198,6 @@ namespace Power
       bool
       onConnect() override
       {
-        inf("onConnect");
         try
         {
           m_handle = openDeviceHandle(m_args.io_dev);
@@ -220,7 +215,6 @@ namespace Power
       void
       onDisconnect() override
       {
-        inf("onDisconnect");
         if(m_driver != NULL)
         {
           debug("Sending stop to BatMan");

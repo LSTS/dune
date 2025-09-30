@@ -79,14 +79,14 @@ Power.prototype.updateValue = function (root, msg) {
   var base = root.childNodes[1].firstChild.firstChild;
   if (msg.state == 0) {
     // set image a of childNodes[1]
-    base.childNodes[1].src = 'images/icons/system-off.png';
+    base.childNodes[1].src = 'images/icons/red-off.png';
     base.childNodes[2].disabled = false;
     base.childNodes[2].classList.add('active');
     base.childNodes[3].disabled = true;
     base.childNodes[3].classList.remove('active');
   }
   else {
-    base.childNodes[1].src = 'images/icons/system-on.png';
+    base.childNodes[1].src = 'images/icons/green-on.png';
     base.childNodes[2].disabled = true;
     base.childNodes[2].classList.remove('active');
     base.childNodes[3].disabled = false;
@@ -144,8 +144,8 @@ Power.prototype.appendImage = function (root, channel, op, label) {
   img.src = 'images/icons/unknown.png';
   img.alt = label;
   img.style.width = 'auto';
-  img.style.height = '42px';
-  img.style.marginTop = '7px';
+  img.style.height = '20px';
+  img.style.marginTop = '8px';
   img.style.marginRight = '20px';
   root.appendChild(img);
 }

@@ -102,7 +102,7 @@ namespace Control
           param("Height bandwidth", m_args.phi_h)
           .units(Units::Meter)
           .defaultValue("20")
-          .description("Limit distance above and bellow desired height from which maximum control is used");
+          .description("Limit distance above and below desired height from which maximum control is used");
 
           param("DesiredZ Filter", m_args.cmd_src)
           .defaultValue("")

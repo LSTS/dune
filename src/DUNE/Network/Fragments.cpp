@@ -34,11 +34,11 @@ namespace DUNE
 {
   namespace Network
   {
-    int Fragments::s_uid = 0;
+    uint8_t Fragments::s_uid = 0;
 
     Fragments::Fragments(IMC::Message* msg, int mtu)
     {
-      m_uid = s_uid++;
+      m_uid = createId();
       m_num_frags = 0;
       int frag_size = mtu - DUNE_IMC_CONST_HEADER_SIZE - 5 - DUNE_IMC_CONST_FOOTER_SIZE;
       if (frag_size <= 0)
@@ -71,7 +71,7 @@ namespace DUNE
     IMC::MessagePart*
     Fragments::getFragment(int frag_number)
     {
-      return m_fragments[frag_number];
+      return m_fragments.at(frag_number);
     }
 
     int
@@ -88,5 +88,15 @@ namespace DUNE
       m_fragments.clear();
     }
 
+    uint8_t
+    Fragments::createId(void)
+    {
+      Concurrency::ScopedMutex m(m_mutex);
+
+      if (s_uid == 255)
+        s_uid = 0;
+
+      return s_uid++;
+    }
   } /* namespace Fragments */
 } /* namespace Transports */

@@ -246,6 +246,8 @@ namespace Transports
       {
         while (!stopping())
         {
+          waitForMessages(0.01);
+
           if (m_poll.poll(1.0))
           {
             checkSerialPort();

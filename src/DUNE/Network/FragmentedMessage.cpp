@@ -27,6 +27,8 @@
 // Author: Jose Pinto                                                       *
 //***************************************************************************
 
+#include <unordered_set>
+
 // DUNE headers.
 #include <DUNE/Network/FragmentedMessage.hpp>
 
@@ -103,10 +105,62 @@ namespace DUNE
       return Time::Clock::get() - m_creation_time;
     }
 
+    void
+    FragmentedMessage::resetAge(void)
+    {
+      m_creation_time = Time::Clock::get();
+    }
+
     int
     FragmentedMessage::getFragmentsMissing(void)
     {
       return m_num_frags - m_fragments.size();
+    }
+
+    int
+    FragmentedMessage::getFragmentsReceived(void)
+    {
+      return m_fragments.size();
+    }
+
+    void
+    FragmentedMessage::getFragmentsMissing(std::string& frag_ids)
+    {
+      frag_ids.clear();
+      auto missing = getFragmentsMissing();
+      if (missing <= 0)
+        return;
+
+      std::vector<int> temp(m_num_frags); 
+      std::iota(temp.begin(), temp.end(), 0);
+      std::unordered_set<int> result(temp.begin(), temp.end());
+      for (int i = 0; i < m_num_frags; i++)
+      {
+        if (m_fragments.find(i) != m_fragments.end())
+          result.erase(i);
+      }
+
+      frag_ids = Utils::String::join(result.begin(), result.end(), ",");
+    }
+
+    void
+    FragmentedMessage::getFragmentsReceived(std::string& frag_ids)
+    {
+      frag_ids.clear();
+      auto received = getFragmentsReceived();
+      if (received <= 0)
+        return;
+        
+      std::vector<int> temp(m_num_frags); 
+      std::iota(temp.begin(), temp.end(), 0);
+      std::unordered_set<int> result(temp.begin(), temp.end());
+      for (int i = 0; i < m_num_frags; i++)
+      {
+        if (m_fragments.find(i) == m_fragments.end())
+          result.erase(i);
+      }
+
+      frag_ids = Utils::String::join(result.begin(), result.end(), ",");
     }
 
     FragmentedMessage::~FragmentedMessage(void)

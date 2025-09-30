@@ -31,30 +31,51 @@ function ChartWidget() {
   this.chart = null;
 }
 
-ChartWidget.prototype.create = function (container) {
-  var canvas = document.createElement('canvas');
-  // Default width and height – the width can be adjusted during update
-  canvas.width = 200;
-  canvas.height = 135;
-  container.appendChild(canvas);
+const width_final = 240;
 
-  var ctx = canvas.getContext('2d');
+ChartWidget.prototype.create = function (container) {
+  const canvas = document.createElement('canvas');
+  const dpr = window.devicePixelRatio || 1;
+  //console.log(`Container width: ${container.clientWidth}`);
+  const displayWidth = width_final;
+  const displayHeight = width_final/2;
+  //console.log(`Creating chart with display size: ${displayWidth}x${displayHeight}`);
+  canvas.style.width = displayWidth + 'px';
+  canvas.style.height = displayHeight + 'px';
+  canvas.style.padding = '0px';
+  canvas.style.overflow = 'hidden';
+  canvas.style.display = 'block';
+  canvas.style.margin = 'auto auto';
+
+  canvas.width = displayWidth * dpr;
+  canvas.height = displayHeight * dpr;
+  container.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
   this.chart = {
     canvas: canvas,
     ctx: ctx,
-    values: []
+    values: [],
+    displayWidth: displayWidth,
+    displayHeight: displayHeight
   };
 };
 
 ChartWidget.prototype.update = function (values) {
+  //console.log(`Canvas width: ${this.chart.canvas.width}`);
   if (values && values.length > 0) {
     this.chart.values = values;
-    // divide the canvas width by the number of values to get the default bar width
-    var defaultBarWidth = this.chart.canvas.width / this.chart.values.length;
-    this.chart.canvas.width = values.length * defaultBarWidth;
+    const dpr = window.devicePixelRatio || 1;
+    const displayWidth = width_final;
+    this.chart.canvas.style.width = displayWidth + 'px';
+    this.chart.canvas.width = displayWidth * dpr;
+    this.chart.ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
+    this.chart.ctx.scale(dpr, dpr);
     this.draw();
   }
 };
+
 
 ChartWidget.prototype.getBarColor = function (value) {
   // Modern palette inspired by Material Design based on load percentage
@@ -98,65 +119,50 @@ ChartWidget.prototype.drawRoundedRect = function (ctx, x, y, width, height, radi
 };
 
 ChartWidget.prototype.draw = function () {
-  var ctx = this.chart.ctx;
-  var canvas = this.chart.canvas;
-  var values = this.chart.values;
+  const ctx = this.chart.ctx;
+  const canvas = this.chart.canvas;
+  const values = this.chart.values;
+  const minimumValueToShow = 9;
 
-  // Clear the canvas before drawing
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  //const width = canvas.clientWidth - 1; // -1 to avoid scrollbar
+  const width = width_final;
+  const height = canvas.clientHeight;
+  ctx.clearRect(0, 0, width, height);
+  //console.log(`Drawing chart with ${values.length} values/cores`);
+  //console.log(`Canvas size: ${width}x${height}`);
+  const finalWidth = width_final;
+  const barWidth = Math.floor(finalWidth / values.length);
+  //console.log(`Bar width: ${barWidth}`);
+  const barHeightRatio = height / 100;
 
-  // Calculate the width of each bar based on the total number of bars
-  var maxWidth = canvas.width;  // Maximum allowed width for the entire chart (in pixels)
-  var barWidth = Math.max(maxWidth / values.length, 10);  // Ensure the minimum width of 10px for each bar
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i] || 0;
 
-  // Assume the value is a percentage (0-100)
-  var barHeightRatio = canvas.height / 100;
+    const barColor = this.getBarColor(value);
+    const x = i * barWidth;
+    const barHeight = value * barHeightRatio;
+    const y = height - barHeight;
 
-  for (var i = 0; i < values.length; i++) {
-    var value = values[i];
-    if (value == null) {
-      value = 0;
-    }
-
-    var barColor = this.getBarColor(value);
-    var x = i * barWidth;
-    var barHeight = value * barHeightRatio;
-    var y = canvas.height - barHeight;
-
-    // Create a vertical gradient from a lighter version of the bar color to the main color
-    var gradient = ctx.createLinearGradient(x, y, x, canvas.height);
-    gradient.addColorStop(0, this._lightenColor(barColor, 0.9));
-    gradient.addColorStop(1, barColor);
-
-    // Set a shadow for a modern effect
     ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
     ctx.shadowBlur = 4;
     ctx.shadowOffsetX = 2;
     ctx.shadowOffsetY = 2;
 
-    // Draw the bar with rounded corners
-    // style gradient
-    //ctx.fillStyle = gradient;
-
-    //style solid color
     ctx.fillStyle = barColor;
-
-    this.drawRoundedRect(ctx, x + 2, y, barWidth - 4, barHeight, 4);
+    this.drawRoundedRect(ctx, x + 2, y, Math.max(0, barWidth - 4), barHeight, 4);
     ctx.fill();
 
-    // Remove shadow for the outline
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Display the value centered inside the bar if the value is 9 or greater
-    if (value >= 9) {
+    if (value >= minimumValueToShow) {
       ctx.fillStyle = '#000';
-      ctx.font = '10px sans-serif';
+      ctx.font = '10px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      var textX = x + barWidth / 2;
-      var textY = y + barHeight / 2;
+      const textX = x + barWidth / 2;
+      const textY = y + barHeight / 2;
       ctx.fillText(value.toString(), textX, textY);
     }
   }

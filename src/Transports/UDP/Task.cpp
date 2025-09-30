@@ -237,7 +237,13 @@ namespace Transports
         }
 
         if (m_listener != NULL)
-          m_listener->setTrace(m_args.trace_in);
+        {
+          if (paramChanged(m_args.trace_in))
+            m_listener->setTrace(m_args.trace_in);
+
+          if (paramChanged(m_args.ign_filter))
+            m_listener->setIgnoreFilter(m_args.ign_filter);
+        }
       }
 
       void
@@ -346,7 +352,7 @@ namespace Transports
           return;
 
         if (m_args.trace_out)
-          DUNE_MSG(getName(), "outgoing: " + std::string(msg->getName()));
+          inf("outgoing: %s", msg->getName());
 
         uint16_t rv;
         try

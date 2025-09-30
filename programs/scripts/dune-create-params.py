@@ -27,7 +27,7 @@
 ############################################################################
 # Author: Ricardo Martins                                                  #
 ############################################################################
-# This script will generate parameter XML files for all vehicles in        #
+# This script will generate parameter XML files for vehicles in            #
 # all supported languages.                                                 #
 ############################################################################
 
@@ -35,6 +35,23 @@ import os
 import sys
 import glob
 import subprocess
+import argparse
+
+# Parser for command line
+parser = argparse.ArgumentParser(description="Process list of vehicle.ini files")
+
+# List of Vehicle files
+parser.add_argument('-c', '--configs', nargs='+',
+                      help="List of vehicles to be used for param creation (ex: -c adamastor caravel). If empty, all .ini files will be used.")
+
+# List of Vehicle files
+parser.add_argument('-d', '--config-dir', nargs='+',
+                      help="Directory of the configuration files. If empty, default directory will be considered.")
+
+# Save the arguments
+args = parser.parse_args()
+configs = args.configs
+config_dir = args.config_dir
 
 # Destination folder.
 for arg in sys.argv:
@@ -64,9 +81,16 @@ i18n_dir = os.path.abspath(os.path.join(top_dir, 'i18n'))
 # Find config files.
 list_ini = []
 inis = glob.glob(os.path.join(etc_dir, '*.ini'))
-for ini in inis:
-    f = os.path.splitext(os.path.basename(ini))[0]
-    list_ini.append(f)
+if configs:
+    for config in configs:
+        for ini in inis: 
+            f = os.path.splitext(os.path.basename(ini))[0]
+            if config == f: 
+                list_ini.append(f)
+else:
+    for ini in inis:
+        f = os.path.splitext(os.path.basename(ini))[0]
+        list_ini.append(f)
 
 # Find translations.
 i18n_set = set()
@@ -92,15 +116,19 @@ if not os.path.exists('./dune'):
 
 for i18n in sint:
     name = i18n.split('.')[0]
-    lang = name + '.UTF-8'
-
+    lang = f"{name}.UTF-8"
+    os.environ.update({
+        'LC_ALL': lang,
+        'LANG': lang,
+        'LANGUAGE': lang
+    })
     for ini in list_ini:
-        os.environ['LC_ALL'] = lang
-        os.environ['LANG'] = lang
-        os.environ['LANGUAGE'] = lang
-        sys.stderr.write('\n* Processing %s:\n\n' % ini)
+        sys.stderr.write(f'\n* Processing {ini}:\n\n')
         sys.stderr.flush()
-        subprocess.check_call(['./dune', '-c', ini, '-p', 'Hardware', '-X', dst_dir])
+        cmd = ['./dune', '-c', ini, '-p', 'Hardware', '-X', dst_dir]
+        if config_dir:
+            cmd += ['-d', config_dir[0]]
+        subprocess.check_call(cmd)
 
 xmls = glob.glob(os.path.join(dst_dir, '*.xml'))
 for xml in xmls:

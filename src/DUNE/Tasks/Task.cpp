@@ -43,6 +43,7 @@
 #include <DUNE/Tasks/Exceptions.hpp>
 #include <DUNE/Tasks/Task.hpp>
 #include <DUNE/Utils/XML.hpp>
+#include <DUNE/Utils/String.hpp>
 #include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Entities/EntityUtils.hpp>
 
@@ -102,6 +103,7 @@ namespace DUNE
       bind<IMC::PushEntityParameters>(this);
       bind<IMC::PopEntityParameters>(this);
       bind<IMC::QueryEntityState>(this);
+      bind<IMC::RestartSystem>(this);
     }
 
     unsigned int
@@ -209,6 +211,7 @@ namespace DUNE
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
       .defaultValue(scope_str)
+      .values(Parameter::scopeValues())
       .description(DTR("Scoped of the 'Active' parameter"));
 
       std::string visibility_str = Parameter::visibilityToString(def_visibility);
@@ -216,6 +219,7 @@ namespace DUNE
       .visibility(Parameter::VISIBILITY_DEVELOPER)
       .scope(Parameter::SCOPE_GLOBAL)
       .defaultValue(visibility_str)
+      .values(Parameter::visibilityValues())
       .description(DTR("Visibility of the 'Active' parameter"));
 
       param(DTR_RT("Active"), m_args.active)
@@ -298,7 +302,7 @@ namespace DUNE
       spew("activate");
 
       if (m_honours_active)
-        m_params.set("Active", "true");
+        applyEntityParameter(m_args.active, true);
 
       spew("calling on activation");
       onActivation();
@@ -317,7 +321,7 @@ namespace DUNE
       spew("activation failed: %s", reason.c_str());
       
       if (m_honours_active)
-        m_params.set("Active", "false");
+        applyEntityParameter(m_args.active, false);
 
       m_entity->failActivation(reason);
     }
@@ -343,7 +347,7 @@ namespace DUNE
       spew("deactivate");
 
       if (m_honours_active)
-        m_params.set("Active", "false");
+        applyEntityParameter(m_args.active, false);
 
       spew("calling on deactivation");
       onDeactivation();
@@ -361,6 +365,16 @@ namespace DUNE
     {
       spew("deactivation failed");
       m_entity->failDeactivation(reason);
+    }
+
+    void
+    Task::restart(const IMC::RestartSystem* msg, const unsigned delay)
+    {
+      const auto text = Utils::String::str("manual restart requested by 0x%x (%hhu)",
+                                            msg->getSource(),
+                                            msg->getSourceEntity());
+
+      throw RestartNeeded(text, delay, false);
     }
 
     void
@@ -492,12 +506,19 @@ namespace DUNE
       if (msg->name != getEntityLabel())
         return;
 
+      IMC::EntityParameters params;
+      params.name = getEntityLabel();
+
       IMC::MessageList<IMC::EntityParameter>::const_iterator itr = msg->params.begin();
       for (; itr != msg->params.end(); ++itr)
       {
         try
         {
           m_params.set((*itr)->name, (*itr)->value);
+          IMC::EntityParameter p;
+          p.name = (*itr)->name;
+          p.value = (*itr)->value;
+          params.params.push_back(p);
           m_ctx.config.set(getName(), (*itr)->name, (*itr)->value);
         }
         catch (std::runtime_error& e)
@@ -506,6 +527,9 @@ namespace DUNE
               (*itr)->name.c_str());
         }
       }
+
+      if (!params.params.empty())
+        dispatchReply(*msg, params);
 
       updateParameters();
     }
@@ -561,6 +585,57 @@ namespace DUNE
     Task::consume(const IMC::PopEntityParameters* msg)
     {
       onPopEntityParameters(msg);
+    }
+
+    void
+    Task::consume(const IMC::RestartSystem* msg)
+    {
+      if (msg->getDestination() != getSystemId())
+        return;
+
+      if (msg->getDestinationEntity() != getEntityId())
+        return;
+
+      if (msg->type != IMC::RestartSystem::RestartTypeEnum::RSTYPE_TASK)
+        return;
+
+      onRequestRestart(msg);
+    }
+
+    void
+    Task::setEntityParameter(const IMC::EntityParameter& p, const bool save)
+    {
+      IMC::SetEntityParameters sep;
+      sep.setDestination(getSystemId());
+      sep.setDestinationEntity(getEntityId());
+      sep.name = getEntityLabel();
+      sep.params.push_back(p);
+      dispatch(sep, DF_LOOP_BACK);
+
+      if (save)
+        saveEntityParameters();
+    }
+
+    void
+    Task::setEntityParameters(const IMC::MessageList<IMC::EntityParameter>& params, const bool save)
+    {
+      IMC::SetEntityParameters sep;
+      sep.setDestination(getSystemId());
+      sep.setDestinationEntity(getEntityId());
+      sep.name = getEntityLabel();
+      sep.params = params;
+      dispatch(sep, DF_LOOP_BACK);
+
+      if (save)
+        saveEntityParameters();
+    }
+
+    void
+    Task::saveEntityParameters(void)
+    {
+      IMC::SaveEntityParameters sp;
+      sp.name = getEntityLabel();
+      dispatch(sp, DF_LOOP_BACK);
     }
 
     void

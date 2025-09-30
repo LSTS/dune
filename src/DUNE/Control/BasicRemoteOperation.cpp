@@ -62,13 +62,11 @@ namespace DUNE
           .defaultValue("1.0")
           .units(Units::Second);
 
-      addActionButton("Exit");
-
       param("Additional Actions", m_additional_actions)
           .defaultValue("")
           .description("Actions to be added to remote actions list (comma separated in the form Action:Type)");
 
-      m_actions.op = IMC::RemoteActionsRequest::OP_REPORT;
+      m_actions_request.op = IMC::RemoteActionsRequest::OP_REPORT;
 
       // Register handler routines.
       bind<IMC::Teleoperation>(this);
@@ -108,10 +106,31 @@ namespace DUNE
     void
     BasicRemoteOperation::consume(const IMC::RemoteActionsRequest* msg)
     {
-      if (msg->op != IMC::RemoteActionsRequest::OP_QUERY)
+
+      if (msg->op == IMC::RemoteActionsRequest::OP_REPORT)
         return;
 
-      dispatch(m_actions);
+      else if (msg->op == IMC::RemoteActionsRequest::OP_QUERY)
+      {
+
+        setupAdditionalActions();
+        trace("Dispatched actions: %s", m_actions_request.actions.c_str());
+        dispatch(m_actions_request);
+      }
+
+      // In this case, save the new Additional Actions posted
+      else if (msg->op == IMC::RemoteActionsRequest::OP_REGISTER)
+      {
+        trace("Register request received with actions: %s", msg->actions.c_str());
+
+        //! Parse the received message FORMAT: (Verb=Type;Verb=Type)
+        std::vector<std::string> parts;
+        Utils::String::split(msg->actions, ";", parts);
+        std::vector<Action> task_verbs;
+
+        saveActions(parts, task_verbs, "=");
+        compareActions(m_actions, task_verbs);
+      }
     }
 
     void
@@ -147,53 +166,194 @@ namespace DUNE
       }
     }
 
-    void
-    BasicRemoteOperation::setupAdditionalActions(const std::vector<std::string>& additional_actions)
+    void 
+    BasicRemoteOperation::compareActions(std::vector<Action>& actions, std::vector<Action> new_actions)
     {
+
+      std::vector<Action> action_adder;
+
+      //! Iterate through the list of actions and update old ones if necessary
+      for (unsigned int i = 0; i < new_actions.size(); i++)
+      {
+        bool new_action = true;
+        debug("Action: %s Type: %s", new_actions[i].name.c_str(), new_actions[i].type.c_str());
+        for(unsigned int j = 0; j < actions.size(); j++)
+        {
+          //! Check if the action already exists
+          if (actions[j].name == new_actions[i].name)
+          {
+            new_action = false;
+            debug("Action %s already exists and can't be changed. ILLEGAL", actions[j].name.c_str());
+            //! Illegal lock change was made
+            if (actions[j].lock != new_actions[i].lock)
+            {
+              trace("Lock update attempt from %s. ILLEGAL", actions[j].name.c_str());
+            }
+            //! Attempt to change type of action. Illegal
+            else if (actions[j].type != new_actions[i].type)
+            {
+              trace("Attempt to update action %s from %s to %s. ILLEGAL", actions[j].name.c_str(),
+                                                               actions[j].type.c_str(), new_actions[i].type.c_str());
+            }
+            else if (actions[j].lock == new_actions[i].lock)
+            {
+              trace("Redudant action lock request attempt on %s", actions[j].name.c_str());
+            }
+            else if (actions[j].type != new_actions[i].type)
+            {
+              trace("Redudant action type request on %s. It is already of type %s", actions[j].name.c_str(), actions[j].type.c_str());
+            }
+          }
+        }
+        //! Action doesnt exist, so add it
+        if (new_action)
+        {
+          action_adder.push_back(new_actions[i]);
+          debug("Added new action %s of type %s with lock: %d", new_actions[i].name.c_str(),
+                                                              new_actions[i].type.c_str(), new_actions[i].lock);
+        }
+      }
+      if (!action_adder.empty())
+      {
+        for (unsigned int i = 0; i < action_adder.size(); i++)
+          actions.push_back(action_adder[i]);
+      }
+    }
+
+    void
+    BasicRemoteOperation::setupAdditionalActions()
+    {
+
+      //! Clear the previous message
+      m_actions_request.actions.clear();
+
+      addRemoteAction("Exit", "Button");
+      for (unsigned int i = 0; i < m_actions.size(); ++i)
+      {
+        //! Turn the first letter of "type" uppercase
+        m_actions[i].type[0] = std::toupper(m_actions[i].type.c_str()[0]);
+
+        //! Add action and lock if it is required
+        addRemoteAction(m_actions[i].name, m_actions[i].type);
+        if (m_actions[i].lock) 
+          addRemoteAction(m_actions[i].name, "Lock");
+      }      
+
+      //! If a Range has been specified, send it
+      m_range[0] = std::toupper(m_range.c_str()[0]);
+      if (!m_range.empty()) 
+        addRemoteAction("Ranges", m_range);
+    }
+
+    void 
+    BasicRemoteOperation::parseActionType(const std::string& statement, const std::string seperator,
+                                          std::string& action, std::string& type)
+    {
+      if (Utils::String::ltrim(statement).size() < 3)
+        return;
+
+      std::vector<std::string> parts;
+      Utils::String::split(statement, seperator, parts);
+
+      if (parts.size() != 2) 
+        return;
+      
+      action = parts[0];
+      action = Utils::String::ltrim(action);
+      action = Utils::String::rtrim(action);
+      
+      if (action.empty()) 
+        return;
+
+      type = parts[1];
+      type = Utils::String::ltrim(type);
+      type = Utils::String::rtrim(type);
+      Utils::String::toLowerCase(type);
+    }
+
+    void
+    BasicRemoteOperation::saveActions(const std::vector<std::string> additional_actions,
+                                      std::vector<Action>& verbs, const std::string seperator)
+    {
+      std::vector<std::string> locks;      
       for (unsigned int i = 0; i < additional_actions.size(); ++i)
       {
-        if (Utils::String::ltrim(additional_actions[i]).size() < 3)
-          continue;
+        std::string action_name;
+        std::string type_lowercase; 
+        Action action; 
 
-        std::vector<std::string> parts;
-        Utils::String::split(additional_actions[i], ":", parts);
+        parseActionType(additional_actions[i], seperator, action_name, type_lowercase);
 
-        if (parts.size() != 2) continue;
-
-        std::string action_name = parts[0];
-        action_name = Utils::String::ltrim(action_name);
-        action_name = Utils::String::rtrim(action_name);
-        if (action_name.empty()) continue;
-
-        std::string type_lowercase = parts[1];
-        type_lowercase = Utils::String::ltrim(type_lowercase);
-        type_lowercase = Utils::String::rtrim(type_lowercase);
-        Utils::String::toLowerCase(type_lowercase);
-
-        if (!type_lowercase.compare("button"))
+        //! If its not a lock or a range
+        if (type_lowercase.compare("lock") && action_name.compare("Ranges"))
         {
-          addActionButton(action_name);
+          if (!type_lowercase.compare("button") || !type_lowercase.compare("axis") || !type_lowercase.compare("halfslider") || !type_lowercase.compare("slider"))
+          {
+            action.name = action_name;
+            action.type = type_lowercase;
+            verbs.push_back(action);
+          }
+          else 
+          {
+            war("Type %s is invalid. ILLEGAL", type_lowercase.c_str()); 
+          }
         }
-        else if (!type_lowercase.compare("axis"))
+        //! If its a lock
+        else if (!type_lowercase.compare("lock"))
         {
-          addActionAxis(action_name);
+          locks.push_back(action_name);
         }
-        else if (!type_lowercase.compare("slider"))
+        else if (!action_name.compare("Ranges"))
         {
-          addActionSlider(action_name);
+          //! If its not a lock
+          if (m_range.empty()) 
+            m_range = type_lowercase;
+          else 
+            war("Attempt to change the Range was made by Register. ILLEGAL");
         }
-        else if (!type_lowercase.compare("halfslider"))
+      }
+      //! Done to prevent a lock to be defined with no type associated with it
+      for (unsigned int i = 0; i < locks.size(); ++i)
+      {
+        bool lock_valid = false;
+        for (unsigned int j = 0; j < verbs.size(); ++j)
         {
-          addActionHalfSlider(action_name);
+          if(!locks[i].compare(verbs[j].name))
+          {
+           lock_valid = true;
+           verbs[j].lock = true;
+          }
         }
+        if (!lock_valid)
+          debug("Lock action for %s has no type associated with it. ILLEGAL", locks[i].c_str());
       }
     }
 
     void
     BasicRemoteOperation::onResourceInitialization(void)
     {
-      setupAdditionalActions(m_additional_actions);
+      //! Child task will add actions manually (in constructor) so we need to parse them
+      std::vector<std::string> manual_actions;
+      Utils::String::split(m_actions_request.actions, ";", manual_actions);      
+      saveActions(manual_actions, m_actions, "=");
+
+      //! Parse additional actions from ini file and compare with manual ones
+      std::vector<Action> additional_actions;
+      saveActions(m_additional_actions, additional_actions, ":");
+      compareActions(m_actions, additional_actions);
+
+      //! If no range was specified, set it to default
+      if (m_range.empty())
+        m_range = "range127";
+
+      //! Set the actions to be published
+      setupAdditionalActions();
+     
+      //! Save the initial additional actions
+      m_actions_ini =  m_actions;
+    
       setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      dispatch(m_actions_request);
     }
 
     void
@@ -240,10 +400,10 @@ namespace DUNE
     {
       std::string tuple = action + "=" + type;
 
-      if (m_actions.actions.size() != 0)
-        m_actions.actions.append(";");
+      if (m_actions_request.actions.size() != 0)
+        m_actions_request.actions.append(";");
 
-      m_actions.actions.append(tuple);
+      m_actions_request.actions.append(tuple);
     }
 
     void

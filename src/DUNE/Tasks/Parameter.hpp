@@ -89,11 +89,17 @@ namespace DUNE
       static const char*
       visibilityToString(Visibility v);
 
+      static std::string
+      visibilityValues(void);
+
       static Scope
       scopeFromString(const std::string& s);
 
       static const char*
       scopeToString(Scope s);
+
+      static std::string
+      scopeValues(void);
 
       //! Constructor.
       Parameter(const std::string& param_name, const std::string& type_name);

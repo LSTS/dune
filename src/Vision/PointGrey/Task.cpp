@@ -62,7 +62,6 @@ namespace Vision
     using DUNE_NAMESPACES;
 
     static const int c_number_max_thread = 25;
-    static const int c_number_max_fps = 5;
     static const int c_max_number_attempts_bus = 5;
     static const float c_time_to_release_cached_ram = 300.0;
     static const float c_time_to_release_camera = 3.0;
@@ -314,17 +313,6 @@ namespace Vision
         set_cpu_governor();
         init_gpio_driver();
         init_gpio_strobe();
-
-        if(m_args.number_fs > 0 && m_args.number_fs <= c_number_max_fps)
-        {
-          m_cnt_fps.setTop((1.0/m_args.number_fs));
-        }
-        else
-        {
-          war("Number of frames are wrong (1 <> 5)");
-          war("Setting number of frames to default (4)");
-          m_cnt_fps.setTop(0.25);
-        }
 
         if(m_args.number_photos < 500 && m_args.split_photos)
         {
