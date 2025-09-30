@@ -165,11 +165,6 @@ namespace DUNE
       m_last_cmd = cmd;
       cmd.append(getLineTermOut());
 
-      IMC::DevDataText txt;
-      txt.value = cmd;
-      txt.setDestination(getTask()->getSystemId());
-      getTask()->dispatch(txt);
-
       send(cmd);
     }
 
