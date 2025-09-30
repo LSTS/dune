@@ -68,8 +68,6 @@ namespace Transports
     {
       //! IO device.
       std::string io_dev;
-      //! IO device 9523.
-      std::string io_dev_9523;
       //! Mailbox check periodicity.
       double mbox_check_per;
       //! Maximum transmission rate.
@@ -157,10 +155,6 @@ namespace Transports
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("IO Port - Device", m_args.io_dev)
-        .defaultValue("")
-        .description("IO Port - Device used to communicate with the modem");
-
-        param("IO Port - Device 9523", m_args.io_dev_9523)
         .defaultValue("")
         .description("IO Port - Device used to communicate with the modem");
 
@@ -313,16 +307,8 @@ namespace Transports
             Time::Delay::wait(1.0);
           }
 
-          if(m_args.use_9523)
-          {
-            inf("Opening serial port %s", m_args.io_dev_9523.c_str());
-            m_handle = openUART(m_args.io_dev_9523);
-          }
-          else
-          {
-            inf("Opening serial port %s", m_args.io_dev.c_str());
-            m_handle = openUART(m_args.io_dev);
-          }
+          inf("Opening serial port %s", m_args.io_dev.c_str());
+          m_handle = openUART(m_args.io_dev);
 
           IMC::VersionInfo vi;
           std::string version_model = "no libd-9523";
@@ -770,7 +756,9 @@ namespace Transports
           default:
             m_prio = TxRxPriority::Tx;
             m_tx_window.setTop(m_args.tx_window);
+            break;
         }
+
         m_general_monitor.reset();
       }
 
@@ -783,10 +771,7 @@ namespace Transports
         else
           description =  "idle | ";
 
-        if(m_args.use_9523)
-          description += m_args.io_dev_9523 + " | ";
-        else
-          description += m_args.io_dev + " | ";
+        description += m_args.io_dev + " | ";
 
         //get rx and tx queue size
         unsigned rx_queue_size = m_driver->getQueuedMT();
