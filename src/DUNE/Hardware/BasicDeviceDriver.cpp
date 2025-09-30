@@ -45,6 +45,28 @@ namespace DUNE
     static const char* c_sample_time_duration = "Sample Time Duration";
     //! Periodicity of Data Sampling.
     static const char* c_periodicity_data_sampling = "Periodicity of Data Sampling";
+    //! Continuous Sampling description.
+    static const char* c_continuous_sampling_desc = "<td>Continuous sampling</td>";
+    //! Periodic Single Sample description.
+    static const char* c_periodic_single_sample_desc = "<td>"
+                                                         "Periodic single sample"
+                                                         "<pre style='font-family: Monospaced'>"
+                                                         "[P][=====][=====]<br>"
+                                                         "[S]|------|------"
+                                                         "</pre>"
+                                                       "</td>";
+    //! Periodic Sampling description.
+    static const char* c_periodic_sampling_desc = "<td>"
+                                                    "Periodic sampling"
+                                                    "<pre style='font-family: Monospaced'>"
+                                                    "[P][=====][=====]<br>"
+                                                    "[S][==---][==---]"
+                                                    "</pre>"
+                                                  "</td>";
+    //! Invalid Sampling description.
+    static const char* c_invalid_sampling_desc = "<td>Invalid</td>";
+    //! Not supported Sampling description.
+    static const char* c_not_supported_sampling_desc = "<td>Not supported</td>";
 
     BasicDeviceDriver::BasicDeviceDriver( const std::string &name, Tasks::Context &ctx ):
       Tasks::Task(name, ctx),
@@ -64,6 +86,8 @@ namespace DUNE
       m_is_sampling(false),
       m_sample_timer(0.0f),
       m_periodicity_timer(0.0f),
+      m_conf_samp_modes(CSM_NO_CONF_SAMP),
+      m_conf_samp_mode(CSM_NO_CONF_SAMP),
       m_honours_vp(false),
       m_vp_timer(0.0f)
     {
@@ -127,8 +151,41 @@ namespace DUNE
             requestDeactivation();
             return;
           }
+          else if (m_bdd_args.sample_time_duration == m_bdd_args.periodicity_data_sampling)
+          {
+            if (!(m_conf_samp_modes & ConfigurableSamplingSupportedModes::CSM_CONTINUOUS_SAMPLING))
+            {
+              err("Continuous Sampling not supported -> Deactivating");
+              requestDeactivation();
+              return;
+            }
 
-          if (isActive() && (m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration))
+            m_conf_samp_mode = ConfigurableSamplingSupportedModes::CSM_CONTINUOUS_SAMPLING;
+          }
+          else if (m_bdd_args.sample_time_duration == 0.0f)
+          {
+            if (!(m_conf_samp_modes & ConfigurableSamplingSupportedModes::CSM_PERIODIC_SINGLE_SAMPLING))
+            {
+              err("Periodic Single Sampling not supported -> Deactivating");
+              requestDeactivation();
+              return;
+            }
+
+            m_conf_samp_mode = ConfigurableSamplingSupportedModes::CSM_PERIODIC_SINGLE_SAMPLING;
+          }
+          else
+          {
+            if (!(m_conf_samp_modes & ConfigurableSamplingSupportedModes::CSM_PERIODIC_SAMPLING))
+            {
+              err("Periodic Sampling not supported -> Deactivating");
+              requestDeactivation();
+              return;
+            }
+
+            m_conf_samp_mode = ConfigurableSamplingSupportedModes::CSM_PERIODIC_SAMPLING;
+          }
+
+          if (isActive() && (m_conf_samp_mode == ConfigurableSamplingSupportedModes::CSM_CONTINUOUS_SAMPLING))
             startSampling();
           else
             m_periodicity_timer.setTop(0.0f);
@@ -159,7 +216,8 @@ namespace DUNE
     }
 
     void
-    BasicDeviceDriver::paramConfigurableSampling(Parameter::Scope def_scope,
+    BasicDeviceDriver::paramConfigurableSampling(ConfigurableSamplingSupportedModes supported_modes,
+                                                 Parameter::Scope def_scope,
                                                  Parameter::Visibility def_visibility,
                                                  double def_sampling,
                                                  double def_periodicity)
@@ -167,6 +225,50 @@ namespace DUNE
       m_honours_conf_samp = true;
       std::string scope_str = Parameter::scopeToString(def_scope);
       std::string visibility_str = Parameter::visibilityToString(def_visibility);
+      m_conf_samp_modes = supported_modes;
+
+      std::ostringstream samp_dur_description;
+      samp_dur_description << c_sample_time_duration << " (S) in seconds. "
+                           << "This value must not be greater than "
+                           << c_periodicity_data_sampling << " (P), otherwise, "
+                           << "task will be deactivated."
+                           << "<table border=\"1\">"
+                           <<   "<thead>"
+                           <<     "<tr>"
+                           <<       "<th>[S]</th>"
+                           <<       "<th>[P]</th>"
+                           <<       "<th>Description</th>"
+                           <<     "</tr>"
+                           <<   "</thead>"
+                           <<   "<tbody>"
+                           <<     "<tr>"
+                           <<       "<td>=P</td>"
+                           <<       "<td>=S</td>"
+                           <<       ((m_conf_samp_modes & ConfigurableSamplingSupportedModes::CSM_CONTINUOUS_SAMPLING) ?
+                                     c_continuous_sampling_desc :
+                                     c_not_supported_sampling_desc)
+                           <<     "</tr>"
+                           <<     "<tr>"
+                           <<       "<td>=0</td>"
+                           <<       "<td>&gt;0</td>"
+                           <<       ((m_conf_samp_modes & ConfigurableSamplingSupportedModes::CSM_PERIODIC_SINGLE_SAMPLING) ?
+                                     c_periodic_single_sample_desc :
+                                     c_not_supported_sampling_desc)
+                           <<     "</tr>"
+                           <<     "<tr>"
+                           <<       "<td>&lt;P</td>"
+                           <<       "<td>&gt;S</td>"
+                           <<       ((m_conf_samp_modes & ConfigurableSamplingSupportedModes::CSM_PERIODIC_SAMPLING) ?
+                                     c_periodic_sampling_desc :
+                                     c_not_supported_sampling_desc)
+                           <<     "</tr>"
+                           <<     "<tr>"
+                           <<       "<td>&gt;P</td>"
+                           <<       "<td>&lt;S</td>"
+                           <<       c_invalid_sampling_desc
+                           <<     "</tr>"
+                           <<   "</tbody>"
+                           << "</table>";
 
       param(c_sample_time_duration, m_bdd_args.sample_time_duration)
       .scope(def_scope)
@@ -174,53 +276,7 @@ namespace DUNE
       .minimumValue("0.0")
       .defaultValue(uncastLexical(def_sampling))
       .units(Units::Second)
-      .description(std::string(c_sample_time_duration) + " (S) in seconds. "
-                   "This value must not be greater than " + 
-                   std::string(c_periodicity_data_sampling) + " (P), otherwise, "
-                   "task will be deactivated."
-                   "<table border=\"1\">"
-                     "<thead>"
-                       "<tr>"
-                         "<th>[S]</th>"
-                         "<th>[P]</th>"
-                         "<th>Description</th>"
-                       "</tr>"
-                     "</thead>"
-                     "<tbody>"
-                       "<tr>"
-                         "<td>=P</td>"
-                         "<td>=S</td>"
-                         "<td>Continuous sampling</td>"
-                       "</tr>"
-                       "<tr>"
-                         "<td>=0</td>"
-                         "<td>&gt;0</td>"
-                         "<td>"
-                           "Periodic single sample"
-                           "<pre style='font-family: Monospaced'>"
-                           "[P][=====][=====]<br>"
-                           "[S]|------|------"
-                           "</pre>"
-                         "</td>"
-                       "</tr>"
-                       "<tr>"
-                         "<td>&lt;P</td>"
-                         "<td>&gt;S</td>"
-                         "<td>"
-                           "Periodic sampling"
-                           "<pre style='font-family: Monospaced'>"
-                           "[P][=====][=====]<br>"
-                           "[S][==---][==---]"
-                           "</pre>"
-                         "</td>"
-                       "</tr>"
-                       "<tr>"
-                         "<td>&gt;P</td>"
-                         "<td>&lt;S</td>"
-                         "<td>Invalid</td>"
-                       "</tr>"
-                     "</tbody>"
-                   "</table>");
+      .description(samp_dur_description.str());
 
       param(std::string(c_sample_time_duration) + " - Visibility", m_bdd_args.sample_time_duration_visibility)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
@@ -236,59 +292,56 @@ namespace DUNE
       .values(Parameter::scopeValues())
       .description("Scoped of the '" + std::string(c_sample_time_duration) + "' parameter");
 
+      std::ostringstream perioditicity_description;
+      perioditicity_description << c_periodicity_data_sampling << " (P) in seconds. "
+                                << "This value must not be lower than "
+                                << c_sample_time_duration << " (S), otherwise, "
+                                << "task will be deactivated."
+                                << "<table border=\"1\">"
+                                <<   "<thead>"
+                                <<     "<tr>"
+                                <<       "<th>[S]</th>"
+                                <<       "<th>[P]</th>"
+                                <<       "<th>Description</th>"
+                                <<     "</tr>"
+                                <<   "</thead>"
+                                <<   "<tbody>"
+                                <<     "<tr>"
+                                <<       "<td>=P</td>"
+                                <<       "<td>=S</td>"
+                                <<       ((m_conf_samp_modes & ConfigurableSamplingSupportedModes::CSM_CONTINUOUS_SAMPLING) ?
+                                          c_continuous_sampling_desc :
+                                          c_not_supported_sampling_desc)
+                                <<     "</tr>"
+                                <<     "<tr>"
+                                <<       "<td>=0</td>"
+                                <<       "<td>&gt;0</td>"
+                                <<       ((m_conf_samp_modes & ConfigurableSamplingSupportedModes::CSM_PERIODIC_SINGLE_SAMPLING) ?
+                                          c_periodic_single_sample_desc :
+                                          c_not_supported_sampling_desc)
+                                <<     "</tr>"
+                                <<     "<tr>"
+                                <<       "<td>&lt;P</td>"
+                                <<       "<td>&gt;S</td>"
+                                <<       ((m_conf_samp_modes & ConfigurableSamplingSupportedModes::CSM_PERIODIC_SAMPLING) ?
+                                          c_periodic_sampling_desc :
+                                          c_not_supported_sampling_desc)
+                                <<     "</tr>"
+                                <<     "<tr>"
+                                <<       "<td>&gt;P</td>"
+                                <<       "<td>&lt;S</td>"
+                                <<       c_invalid_sampling_desc
+                                <<     "</tr>"
+                                <<   "</tbody>"
+                                << "</table>";
+
       param(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling)
       .scope(Tasks::Parameter::SCOPE_GLOBAL)
       .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
       .minimumValue("0.0")
       .defaultValue(uncastLexical(def_periodicity))
       .units(Units::Second)
-      .description(std::string(c_periodicity_data_sampling) + " (P) in seconds. "
-                   "This value must not be lower than " +
-                   std::string(c_sample_time_duration) + " (S), otherwise, "
-                   "task will be deactivated."
-                   "<table border=\"1\">"
-                     "<thead>"
-                       "<tr>"
-                         "<th>[S]</th>"
-                         "<th>[P]</th>"
-                         "<th>Description</th>"
-                       "</tr>"
-                     "</thead>"
-                     "<tbody>"
-                       "<tr>"
-                         "<td>=P</td>"
-                         "<td>=S</td>"
-                         "<td>Continuous sampling</td>"
-                       "</tr>"
-                       "<tr>"
-                         "<td>=0</td>"
-                         "<td>&gt;0</td>"
-                         "<td>"
-                           "Periodic single sample"
-                           "<pre style='font-family: Monospaced'>"
-                           "[P][=====][=====]<br>"
-                           "[S]|------|------"
-                           "</pre>"
-                         "</td>"
-                       "</tr>"
-                       "<tr>"
-                         "<td>&lt;P</td>"
-                         "<td>&gt;S</td>"
-                         "<td>"
-                           "Periodic sampling"
-                           "<pre style='font-family: Monospaced'>"
-                           "[P][=====][=====]<br>"
-                           "[S][==---][==---]"
-                           "</pre>"
-                         "</td>"
-                       "</tr>"
-                       "<tr>"
-                         "<td>&gt;P</td>"
-                         "<td>&lt;S</td>"
-                         "<td>Invalid</td>"
-                       "</tr>"
-                     "</tbody>"
-                   "</table>");
+      .description(perioditicity_description.str());
 
       param(std::string(c_periodicity_data_sampling) + " - Visibility", m_bdd_args.periodicity_data_sampling_visibility)
       .visibility(Parameter::VISIBILITY_DEVELOPER)
@@ -799,26 +852,31 @@ namespace DUNE
     void
     BasicDeviceDriver::setEntityStateSampling(bool state)
     {
-      const auto sample_period = getSamplePeriod();
-      const auto periodicity = getSamplePeriodicity();
       std::ostringstream description;
       description << "active";
-      if ((periodicity != sample_period))
+
+      switch (m_conf_samp_mode)
       {
-        if ((sample_period > 0.0f))
-        {
-          description << " | sampling: " << (state ? "on" : "off");
-          const auto time = Format::getTimeDHMS(state ? getSamplePeriodRemaining() : getSamplePeriodicityRemaining());
-          if (!time.empty())
-            description << " (r: " << time << ")";
-        }
-        else
-        {
-          const auto time = Format::getTimeDHMS(getSamplePeriodicity());
-          if (!time.empty())
-            description << " | doing a periodic sample every " << time;
-        }
-          
+      case ConfigurableSamplingSupportedModes::CSM_PERIODIC_SAMPLING:
+      {
+        description << " | sampling: " << (state ? "on" : "off");
+        const auto time = Format::getTimeDHMS(state ? getSamplePeriodRemaining() : getSamplePeriodicityRemaining());
+        if (!time.empty())
+          description << " (r: " << time << ")";
+        break;
+      }
+
+      case ConfigurableSamplingSupportedModes::CSM_PERIODIC_SINGLE_SAMPLING:
+      {
+        const auto time = Format::getTimeDHMS(getSamplePeriodicity());
+        if (!time.empty())
+          description << " | doing a periodic sample every " << time;
+        break;
+      }
+        
+      case ConfigurableSamplingSupportedModes::CSM_CONTINUOUS_SAMPLING:
+      default:
+        break;
       }
 
       setEntityState(IMC::EntityState::ESTA_NORMAL, description.str());
@@ -993,7 +1051,7 @@ namespace DUNE
           queueState(SM_ACT_SAMPLE);
 
           if (!m_honours_conf_samp ||
-              m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration)
+              (m_conf_samp_mode == ConfigurableSamplingSupportedModes::CSM_CONTINUOUS_SAMPLING))
             startSampling();
           else
             m_periodicity_timer.setTop(0.0f);
@@ -1003,7 +1061,7 @@ namespace DUNE
         // Read samples.
         case SM_ACT_SAMPLE:
           if (!m_honours_conf_samp ||
-              m_bdd_args.periodicity_data_sampling == m_bdd_args.sample_time_duration)
+              (m_conf_samp_mode == ConfigurableSamplingSupportedModes::CSM_CONTINUOUS_SAMPLING))
           {
             readSample();
           }
@@ -1012,7 +1070,7 @@ namespace DUNE
             startSampling();
             readSample();
 
-            if (m_bdd_args.sample_time_duration == 0.0f)
+            if (m_conf_samp_mode == ConfigurableSamplingSupportedModes::CSM_PERIODIC_SINGLE_SAMPLING)
             {
               stopSampling();
             }
