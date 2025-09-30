@@ -179,36 +179,43 @@ namespace DUNE
         m_read_mode = mode;
       }
 
-      if (mode == READ_MODE_LINE) {
-        if (m_bytes.size() > 0) { // if have bytes in queue, transfer to lines
-          getTask()->spew(
-                          "There are %d bytes in the queue bytes. Convert to queue of lines.",
+      if (mode == READ_MODE_LINE)
+      {
+        if (m_bytes.size() > 0)
+        { // if have bytes in queue, transfer to lines
+          getTask()->spew("There are %d bytes in the queue bytes. Convert to queue of lines.",
                           m_bytes.size());
-          while (m_bytes.size() > 0) {
+          while (m_bytes.size() > 0)
+          {
             uint8_t byte = 0;
             m_bytes.pop(byte);
             m_chars.push(byte);
           }
           std::string line = "";
-          while (!m_chars.empty()) {
+          while (!m_chars.empty())
+          {
             if (!processInput(line))
               continue;
 
             if (line.empty())
               continue;
 
-            if (!handleUnsolicited(line)) {
+            if (!handleUnsolicited(line))
+            {
               m_lines.push(line);
               line = "";
             }
           }
         }
-      } else {
-        if (m_lines.size()) {
-          getTask()->war(
-                         "[BasicModem]:There are %d lines in the queue. Convert to queue of bytes.",
+      }
+      else
+      {
+        if (m_lines.size())
+        {
+          getTask()->war("[BasicModem]:There are %d lines in the queue. Convert to queue of bytes.",
                          m_lines.size());
-          while (m_lines.size() > 0) {
+          while (m_lines.size() > 0)
+          {
             std::string line = m_lines.pop();
             getTask()->war("[BasicModem]:line: %s", line.c_str());
             for (size_t i = 0; i < line.size(); ++i)
