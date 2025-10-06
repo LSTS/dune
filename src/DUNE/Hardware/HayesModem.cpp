@@ -175,11 +175,22 @@ namespace DUNE
     }
 
     void
-    HayesModem::expect(const std::string& str)
+    HayesModem::expect(const std::string& str, const bool persistent)
     {
-      std::string rv = readLine();
-      if (rv != str)
-        throw UnexpectedReply(str, rv);
+      Time::Counter<double> timer(getTimeout());
+
+      do
+      {
+        std::string rv = readLine(timer);
+        if (rv == str)
+          return;
+        else if (!persistent)
+          throw UnexpectedReply(str, rv);
+      }
+      while (!timer.overflow());
+      
+      getTask()->war("[BasicModem]:timeout while reading line");
+      throw ReadTimeout();
     }
 
     void

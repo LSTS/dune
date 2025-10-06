@@ -108,7 +108,7 @@ namespace DUNE
       sendRaw(const uint8_t* data, unsigned data_size);
 
       void
-      expect(const std::string& str);
+      expect(const std::string& str, const bool persistent = true);
 
       void
       expectREADY(void);
