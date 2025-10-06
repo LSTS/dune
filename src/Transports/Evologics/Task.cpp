@@ -90,6 +90,8 @@ namespace Transports
       unsigned src_level_underwater;
       //! Name of the section with modem addresses.
       std::string addr_section;
+      //! Driver timeout.
+      double driver_timeout;
     };
 
     // Type definition for mapping addresses.
@@ -234,6 +236,13 @@ namespace Transports
         .defaultValue("Evologics Addresses")
         .description("Name of the configuration section with modem addresses");
 
+        param("Driver Timeout", m_args.driver_timeout)
+        .minimumValue("0.0")
+        .defaultValue("5.0")
+        .units(Units::Second)
+        .description("Driver timeout for command responses. If value is 0, "
+                     "the driver won't wait for responses.");
+
         m_medium.medium = IMC::VehicleMedium::VM_UNKNOWN;
 
         bind<IMC::DevDataText>(this);
@@ -295,6 +304,9 @@ namespace Transports
       {
         m_sound_speed = m_args.sound_speed_def;
         processEntityForSoundSpeed();
+
+        if (paramChanged(m_args.driver_timeout) && m_driver)
+          m_driver->setDriverTimeout(m_args.driver_timeout);
       }
 
       void
@@ -341,6 +353,7 @@ namespace Transports
         m_driver = new Driver(this, m_sock);
         m_driver->setLineTermIn("\r\n");
         m_driver->setLineTermOut("\n");
+        m_driver->setDriverTimeout(m_args.driver_timeout);
       }
 
       void
@@ -372,7 +385,10 @@ namespace Transports
         }
 
         if (m_simulating)
-          m_driver->setDriverTimeout(c_sim_timeout);
+        {
+          applyEntityParameter(m_args.driver_timeout, c_sim_timeout);
+          m_driver->setDriverTimeout(m_args.driver_timeout);
+        }
 
         if (!isActive())
           requestActivation();
