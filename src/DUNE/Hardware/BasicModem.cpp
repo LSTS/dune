@@ -368,7 +368,14 @@ namespace DUNE
     std::string
     BasicModem::readLine(Time::Counter<double>& timer)
     {
-      if (m_lines.waitForItems(timer.getRemaining()))
+      const auto remaining = timer.getRemaining();
+      if (remaining <= 0)
+      {
+        getTask()->war("[BasicModem]:timeout while reading line");
+        throw ReadTimeout();
+      }
+
+      if (m_lines.waitForItems(remaining))
       {
         std::string line = m_lines.pop();
         if (line != m_last_cmd)
