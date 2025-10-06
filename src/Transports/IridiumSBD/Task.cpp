@@ -98,6 +98,8 @@ namespace Transports
       size_t queue_max;
       //! Timeout in seconds for the general monitor
       double general_monitor_timeout;
+      //! Driver timeout.
+      double driver_timeout;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -234,6 +236,13 @@ namespace Transports
         .minimumValue("60.0")
         .description("Timeout in seconds for the general monitor");
 
+        param("Driver Timeout", m_args.driver_timeout)
+        .minimumValue("0.0")
+        .defaultValue("5.0")
+        .units(Units::Second)
+        .description("Driver timeout for command responses. If value is 0, "
+                     "the driver won't wait for responses.");
+
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
         bind<IMC::EntityState>(this);
@@ -287,6 +296,9 @@ namespace Transports
           trace("Setting general monitor timeout to %f seconds", m_args.general_monitor_timeout);
           m_general_monitor.setTop(m_args.general_monitor_timeout);
         }
+
+        if (paramChanged(m_args.driver_timeout) && m_driver)
+          m_driver->setDriverTimeout(m_args.driver_timeout);
       }
 
       //! Acquire resources.

@@ -268,6 +268,14 @@ namespace Transports
         return readValue("V");
       }
 
+      //! Set modem driver timeout
+      //! @param[in] timeout time to wait (seconds).
+      void
+      setDriverTimeout(double timeout)
+      {
+        setTimeout(timeout);
+      }
+
     private:
       //! Message buffer types.
       enum BufferType
