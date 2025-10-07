@@ -673,7 +673,7 @@ namespace Transports
       }
 
       bool
-      receptionSequence()
+      receptionSequence(void)
       {
         if (m_driver->hasRingAlert())
           m_driver->checkMailBoxAlert();
@@ -697,7 +697,7 @@ namespace Transports
       }
 
       bool
-      transmissionSequence()
+      transmissionSequence(void)
       {
         if (m_tx_request != NULL)
         {
