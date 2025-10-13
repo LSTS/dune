@@ -37,6 +37,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include "sb_mpc.hpp"
+#include "IntegralControl.hpp"
 
 namespace Control
 {
@@ -177,6 +178,8 @@ namespace Control
         //! Average factor.
         // int m_avg_zero, m_avg_one;
 
+        IntegralControl* m_integral_controller;
+
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx),
           m_sb_mpc(nullptr),
@@ -190,7 +193,8 @@ namespace Control
           m_timestamp_obst(0.0),
           m_cost(0.0),
           m_avg(0),
-          m_tx_req_id(0)
+          m_tx_req_id(0),
+          m_integral_controller(nullptr)
           // m_wind_dir(0.0),
           // m_wind_speed(0.0),
           // m_heave(0.0),
@@ -607,13 +611,18 @@ namespace Control
 
           // m_offsets = m_args.directions;
           // m_static_obst_state.resizeAndFill(m_offsets.size(), 3, 10000.0); //! Large values: initial m_cost is high.
+
+          m_integral_controller = new IntegralControl(this);
+          m_integral_controller->setGain(0.001);
+          m_integral_controller->setExecutionPeriod(300.0); // 5 minutes
+          m_integral_controller->setIntegralLimit(Math::c_half_pi); // Limit to 90 degrees
         }
 
           //! Release resources.
         void
         onResourceRelease(void)
         {
-
+          Memory::clear(m_integral_controller);
         }
 
         void
@@ -1208,6 +1217,9 @@ namespace Control
           //! LOS Navigation Law (called wrongly Pure Pursuit in Dune) - desired course is the LOS angle.
           m_des_heading.value = ts.los_angle;
           trace("LOS DESIRED COURSE: %f", Angles::degrees(m_des_heading.value));
+
+          //! Integral controller (to correct for current and wind).
+          m_des_heading.value -= m_integral_controller->update(ts.track_pos.y);
 
           //! Nothing is enabled.
           if(!m_args.en_cas /* && !m_args.en_antiground */)
