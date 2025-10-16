@@ -60,8 +60,6 @@ namespace Control
           IMC::SetServoPosition m_servo;
           //! Task Arguments.
           Arguments m_args;
-          //! Current Log name.
-          std::string m_log_name;
           //! Log state
           uint8_t m_log_state;
           //! True if using the analog thrust
@@ -82,7 +80,7 @@ namespace Control
             addActionButton("Decelerate");
             addActionButton("Stop");
             addActionButton("PowerOff");
-            addActionButton("Restart Log");
+            // addActionButton("Restart Log"); // Moved to Logging task
             // addActionButton("Toggle SPOT");
             addActionButton("Arm");
             addActionButton("Disarm");
@@ -96,7 +94,6 @@ namespace Control
             m_thruster.value = m_servo.value = 0;
             m_analog_thrust = true;
 
-            bind<IMC::LoggingControl>(this);
             bind<IMC::RemoteActions>(this, &Task::onAdditionalActions);
           }
 
@@ -131,14 +128,6 @@ namespace Control
           }
 
           void
-          consume(const IMC::LoggingControl* msg)
-          {
-            // save current log.
-            m_log_name = getLogName(msg->name);
-            m_log_state = msg->op;
-          }
-
-          void
           onAdditionalActions(const IMC::RemoteActions* msg)
           {
             TupleList tuples(msg->actions);
@@ -146,9 +135,6 @@ namespace Control
 
             if (tuples.get("PowerOff", 0))
               sendPowerOff();
-
-            else if (tuples.get("Restart Log", 0))
-              restartLog();
 
             else if (tuples.get("Arm", 0))
             {
@@ -242,26 +228,6 @@ namespace Control
               err(DTR("failed to execute poweroff command"));
               result = std::system("systemctl poweroff");
             }
-          }
-
-          //! Get log name.
-          std::string
-          getLogName(const std::string& name)
-          {
-            size_t pos = name.find('_');
-            if (pos == std::string::npos)
-              return {};  // return empty string
-
-            return name.substr(pos + 1);
-          }
-
-          void
-          restartLog(void)
-          {
-            IMC::LoggingControl lc;
-            lc.name = m_log_name;
-            lc.op = LoggingControl::COP_REQUEST_START;
-            dispatch(lc);
           }
 
           void
