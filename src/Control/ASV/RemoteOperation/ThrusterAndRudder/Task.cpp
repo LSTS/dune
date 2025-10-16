@@ -82,8 +82,8 @@ namespace Control
             addActionButton("PowerOff");
             // addActionButton("Restart Log"); // Moved to Logging task
             // addActionButton("Toggle SPOT");
-            addActionButton("Arm");
-            addActionButton("Disarm");
+            // addActionButton("Arm"); // Moved to Autonaut task
+            // addActionButton("Disarm"); // Moved to Autonaut task
             addActionButton("Enable CAS");
             addActionButton("Disable CAS");
             addActionAxis("Heading");
@@ -135,19 +135,6 @@ namespace Control
 
             if (tuples.get("PowerOff", 0))
               sendPowerOff();
-
-            else if (tuples.get("Arm", 0))
-            {
-              IMC::ArmingState as;
-              as.state = ArmingState::StateEnum::MOTORS_ARMED;
-              dispatch(as);
-            }
-            else if (tuples.get("Disarm", 0))
-            {
-              IMC::ArmingState as;
-              as.state = ArmingState::StateEnum::MOTORS_DISARMED;
-              dispatch(as);
-            }
 
             else if (tuples.get("Enable CAS", 0))
               enableCAS(true);
