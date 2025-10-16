@@ -48,8 +48,6 @@ namespace Control
         {
           //! Thrust scaling.
           double scale;
-          //! Entity label of CAS entity
-          std::string cas_label;
         };
 
         struct Task: public DUNE::Control::BasicRemoteOperation
@@ -71,10 +69,6 @@ namespace Control
             param("Thrust Scale", m_args.scale)
               .defaultValue("1.0");
 
-            param("Entity Label - CAS", m_args.cas_label)
-              .defaultValue("")
-              .description("Entity label of CAS entity");
-
             // Add remote actions.
             addActionButton("Accelerate");
             addActionButton("Decelerate");
@@ -84,8 +78,8 @@ namespace Control
             // addActionButton("Toggle SPOT");
             // addActionButton("Arm"); // Moved to Autonaut task
             // addActionButton("Disarm"); // Moved to Autonaut task
-            addActionButton("Enable CAS");
-            addActionButton("Disable CAS");
+            // addActionButton("Enable CAS"); // Moved to CAS task
+            // addActionButton("Disable CAS"); // Moved to CAS task
             addActionAxis("Heading");
             addActionAxis("Thrust");
 
@@ -135,11 +129,6 @@ namespace Control
 
             if (tuples.get("PowerOff", 0))
               sendPowerOff();
-
-            else if (tuples.get("Enable CAS", 0))
-              enableCAS(true);
-            else if (tuples.get("Disable CAS", 0))
-              enableCAS(false);
 
             else if (tuples.get("Toggle SPOT", 0))
               toggleSpot();
@@ -234,24 +223,6 @@ namespace Control
 
             dispatch(m_thruster);
             dispatch(m_servo);
-          }
-
-          void
-          enableCAS(bool enable)
-          {
-            if (m_args.cas_label.empty())
-            {
-              war("CAS label not set");
-              return;
-            }
-
-            IMC::SetEntityParameters ep;
-            ep.name = m_args.cas_label;
-            IMC::EntityParameter ea;
-            ea.name = "Enable Collision Avoidance";
-            ea.value = enable ? "true" : "false";
-            ep.params.push_back(ea);
-            dispatch(ep);
           }
         };
       }
