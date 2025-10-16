@@ -129,6 +129,7 @@ namespace Transports
         bind<IMC::LoggingControl>(this);
         bind<IMC::PowerOperation>(this);
         bind<IMC::EntityInfo>(this);
+        bind<IMC::RemoteActions>(this);
       }
 
       ~Task(void)
@@ -160,6 +161,12 @@ namespace Transports
         inf(DTR("DUNE Private Version: %s"), version_info.version.c_str());
         version_info.description = "DUNE Private Version Information";
         dispatch(version_info);
+
+        // Add button for log restart.
+        IMC::RemoteActionsRequest action_register;
+        action_register.op = IMC::RemoteActionsRequest::OP_REGISTER;
+        action_register.actions = "Restart Log=Button";
+        dispatch(action_register);
 
         // Initialize entity state.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -251,6 +258,21 @@ namespace Transports
         // Only log messages we requested
         if (msg->getDestinationEntity() == getEntityId())
           logMessage(msg);
+      }
+
+      void
+      consume(const IMC::RemoteActions* msg)
+      {
+        TupleList tuples(msg->actions);
+        if (tuples.get("Restart Log", 0))
+        {
+          inf(DTR("Manually requested log restart"));
+
+          IMC::LoggingControl lc;
+          lc.name = m_label;
+          lc.op = LoggingControl::COP_REQUEST_START;
+          dispatch(lc, DF_LOOP_BACK);
+        }
       }
 
       void
