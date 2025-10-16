@@ -88,6 +88,7 @@ namespace Control
             m_thruster.value = m_servo.value = 0;
             m_analog_thrust = true;
 
+            bind<IMC::LoggingControl>(this);
             bind<IMC::RemoteActions>(this, &Task::onAdditionalActions);
           }
 
@@ -132,6 +133,12 @@ namespace Control
 
             else if (tuples.get("Toggle SPOT", 0))
               toggleSpot();
+          }
+
+          void
+          consume(const IMC::LoggingControl* msg)
+          {
+            m_log_state = msg->op;
           }
 
           void
