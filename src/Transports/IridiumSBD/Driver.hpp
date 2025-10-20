@@ -48,7 +48,7 @@ namespace Transports
     using DUNE_NAMESPACES;
 
     //! Default AT command timeout.
-    static const double c_timeout = 5.0;
+    static const double c_at_cmd_timeout = 5.0;
     //! Maximum number of revision lines.
     static const unsigned c_max_rev_lines = 10;
 
