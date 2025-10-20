@@ -193,12 +193,14 @@ namespace Transports
         else
           writeBufferMO(&data[0], data.size());
 
-        if (alert_reply)
-          sendAT("+SBDIXA");
-        else
-          sendAT("+SBDIX");
+        std::string sbdix;
 
-        setBusy(true);
+        if (alert_reply)
+          sbdix = readValue("+SBDIXA", "+SBDIX", c_default_timeout_sbdix);
+        else
+          sbdix = readValue("+SBDIX", "+SBDIX", c_default_timeout_sbdix);
+
+        handleSBDIX(sbdix);
       }
 
       //! Retrieve the result of the last SBD session. The function
@@ -344,8 +346,6 @@ namespace Transports
           handleCIEV(str);
         else if (String::startsWith(str, "+AREG"))
           handleAREG(str);
-        else if (String::startsWith(str, "+SBDIX"))
-          handleSBDIX(str);
         else
           return false;
 
@@ -402,10 +402,6 @@ namespace Transports
               m_length_msg_9523 = m_session_result.getLengthMT();
           }
         }
-
-        setSkipLine("OK");
-
-        setBusy(false);
       }
 
       //! Enable or disable radio activity.
