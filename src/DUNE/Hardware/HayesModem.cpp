@@ -157,6 +157,27 @@ namespace DUNE
       return str;
     }
 
+    std::string
+    HayesModem::waitForReply(const std::string& rly, const double tmt)
+    {
+      Time::Counter<double> timer(tmt);
+      std::string str;
+
+      do
+      {
+        str = readLine(timer);
+
+        if (Utils::String::startsWith(str, rly))
+          return str;
+      }
+      while(!timer.overflow());
+
+      if (str.empty())
+        throw ReadTimeout();
+      else
+        throw UnexpectedReply(rly, str);
+    }
+
     void
     HayesModem::sendAT(const std::string& str)
     {

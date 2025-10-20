@@ -129,6 +129,13 @@ namespace DUNE
       std::string
       readValue(const std::string& cmd);
 
+      //! Wait for a specific reply.
+      //! @param[in] rly expected reply start.
+      //! @param[in] tmt maximum time to wait for a reply.
+      //! @return full reply string.
+      std::string
+      waitForReply(const std::string& rly, const double tmt = c_timeout);
+
     private:
       //! Last RSSI value.
       IMC::RSSI m_rssi;
