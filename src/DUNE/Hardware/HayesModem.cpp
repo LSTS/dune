@@ -158,6 +158,15 @@ namespace DUNE
     }
 
     std::string
+    HayesModem::readValue(const std::string& cmd, const std::string& rly, const double tmt)
+    {
+      sendAT(cmd);
+      std::string str = waitForReply(rly, tmt);
+      expectOK();
+      return str;
+    }
+
+    std::string
     HayesModem::waitForReply(const std::string& rly, const double tmt)
     {
       Time::Counter<double> timer(tmt);

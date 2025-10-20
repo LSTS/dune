@@ -129,6 +129,9 @@ namespace DUNE
       std::string
       readValue(const std::string& cmd);
 
+      std::string
+      readValue(const std::string& cmd, const std::string& rly, const double tmt = c_timeout);
+
       //! Wait for a specific reply.
       //! @param[in] rly expected reply start.
       //! @param[in] tmt maximum time to wait for a reply.
