@@ -96,7 +96,7 @@ namespace Transports
       unsigned
       getMOMSN(void)
       {
-        std::string value = readValue("+SBDS");
+        std::string value = readValue("+SBDS", "+SBDS", c_at_cmd_timeout);
         unsigned momsn = 0;
         if (std::sscanf(value.c_str(), "+SBDS:%*u,%u,%*u,%*u", &momsn) != 1)
           throw DUNE::Hardware::InvalidFormat(value);
@@ -452,17 +452,13 @@ namespace Transports
       void
       clearMessageBuffer(BufferType type)
       {
-        std::string rv = readValue(String::str("+SBDD%u", type));
-        if (rv != "0")
-          throw std::runtime_error(DTR("error ocurred while clearing buffer"));
+        readValue(String::str("+SBDD%u", type), "0", c_at_cmd_timeout);
       }
 
       void
       clearSequenceNumber(void)
       {
-        std::string rv = readValue("+SBDC");
-        if (rv != "0")
-          throw std::runtime_error(DTR("error ocurred while clearing the MOMSN"));
+        readValue("+SBDC", "0", c_at_cmd_timeout);
       }
 
       void
@@ -586,12 +582,7 @@ namespace Transports
         if (!m_rssi_wdog.overflow())
           return;
 
-        sendAT("+CSQ");
-
-        // Needs a timeout bigger than the default 5 seconds.
-        Counter<double> timer(7.0);
-        std::string val = readLine(timer);
-        expectOK();
+        std::string val = readValue("+CSQ", "+CSQ", c_default_timeout_csq);
 
         unsigned rssi = 0;
         if (std::sscanf(val.c_str(), "+CSQ:%u", &rssi) != 1)
