@@ -53,6 +53,8 @@ namespace Transports
     static const unsigned c_max_rev_lines = 10;
     //! Default timeout for CSQ command.
     static constexpr double c_default_timeout_csq = 7.0;
+    //! Default timeout for SBDIX command.
+    static constexpr double c_default_timeout_sbdix = 20.0;
 
     class Driver: public HayesModem
     {
