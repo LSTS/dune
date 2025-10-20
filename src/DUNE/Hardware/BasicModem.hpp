@@ -102,6 +102,9 @@ namespace DUNE
       setBusy(bool value);
 
     protected:
+      //! Default command timeout.
+      static constexpr double c_timeout = 5.0;
+
       //! Read mode.
       enum ReadMode
       {

@@ -45,8 +45,6 @@ namespace DUNE
 {
   namespace Hardware
   {
-    //! Default command timeout.
-    static const double c_timeout = 5.0;
     //! Default input line termination.
     static std::string c_line_term_in = "\r\n";
     //! Default output line termination.
