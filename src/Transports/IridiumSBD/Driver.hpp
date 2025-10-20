@@ -228,18 +228,14 @@ namespace Transports
       void
       clearBufferMO(void)
       {
-        std::string rv = readValue("+SBDD0");
-        if (rv != "0")
-          throw std::runtime_error(DTR("error ocurred while clearing MO buffer"));
+        clearMessageBuffer(BFR_TYPE_ORIGINATED);
       }
 
       //! Clear MT SBD message buffer.
       void
       clearBufferMT(void)
       {
-        std::string rv = readValue("+SBDD1");
-        if (rv != "0")
-          throw std::runtime_error(DTR("error ocurred while clearing MT buffer"));
+        clearMessageBuffer(BFR_TYPE_TERMINATED);
       }
 
       //! Check if a ring alert was received.
@@ -480,7 +476,7 @@ namespace Transports
       {
         if (data_size == 0)
         {
-          clearMessageBuffer(BFR_TYPE_ORIGINATED);
+          clearBufferMO();
           return;
         }
 
