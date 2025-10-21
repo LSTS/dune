@@ -177,49 +177,62 @@ namespace DUNE
         m_read_mode = mode;
       }
 
-      if (mode == READ_MODE_LINE)
+      switch (mode)
       {
-        if (m_bytes.size() > 0)
-        { // if have bytes in queue, transfer to lines
-          getTask()->spew("There are %d bytes in the queue bytes. Convert to queue of lines.",
-                          m_bytes.size());
-          while (m_bytes.size() > 0)
-          {
-            uint8_t byte = 0;
-            m_bytes.pop(byte);
-            m_chars.push(byte);
-          }
-          std::string line = "";
-          while (!m_chars.empty())
-          {
-            if (!processInput(line))
-              continue;
-
-            if (line.empty())
-              continue;
-
-            if (!handleUnsolicited(line))
-            {
-              m_lines.push(line);
-              line = "";
-            }
-          }
-        }
-      }
-      else
+      case READ_MODE_LINE:
       {
-        if (m_lines.size())
+        if (m_bytes.size() <= 0)
+          break;
+
+        // if have bytes in queue, transfer to lines
+        getTask()->spew("There are %d bytes in the queue bytes. Convert to queue of lines.",
+                        m_bytes.size());
+        while (m_bytes.size() > 0)
         {
-          getTask()->war("[BasicModem]:There are %d lines in the queue. Convert to queue of bytes.",
-                         m_lines.size());
-          while (m_lines.size() > 0)
+          uint8_t byte = 0;
+          m_bytes.pop(byte);
+          m_chars.push(byte);
+        }
+        std::string line = "";
+        while (!m_chars.empty())
+        {
+          if (!processInput(line))
+            continue;
+
+          if (line.empty())
+            continue;
+
+          if (!handleUnsolicited(line))
           {
-            std::string line = m_lines.pop();
-            getTask()->war("[BasicModem]:line: %s", line.c_str());
-            for (size_t i = 0; i < line.size(); ++i)
-              m_bytes.push(line[i]);
+            m_lines.push(line);
+            line = "";
           }
         }
+
+        break;
+      }
+        
+
+      case READ_MODE_RAW:
+      {
+        if (m_lines.size() <= 0)
+          break;
+
+        getTask()->war("[BasicModem]:There are %d lines in the queue. Convert to queue of bytes.",
+                        m_lines.size());
+        while (m_lines.size() > 0)
+        {
+          std::string line = m_lines.pop();
+          getTask()->war("[BasicModem]:line: %s", line.c_str());
+          for (size_t i = 0; i < line.size(); ++i)
+            m_bytes.push(line[i]);
+        }
+
+        break;
+      }
+      
+      default:
+        break;
       }
     }
 
