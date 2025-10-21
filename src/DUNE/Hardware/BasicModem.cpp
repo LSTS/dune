@@ -425,7 +425,9 @@ namespace DUNE
         try
         {
           rv = m_handle->read(bfr, sizeof(bfr));
-        } catch (std::runtime_error &e) {
+        }
+        catch (std::runtime_error& e)
+        {
           m_task->war("[BasicModem]:%s: %s", Status::getString(Status::CODE_IO_ERROR), e.what());
           break;
         }
