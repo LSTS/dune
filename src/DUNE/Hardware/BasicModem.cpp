@@ -193,21 +193,9 @@ namespace DUNE
           m_bytes.pop(byte);
           m_chars.push(byte);
         }
-        std::string line = "";
-        while (!m_chars.empty())
-        {
-          if (!processInput(line))
-            continue;
-
-          if (line.empty())
-            continue;
-
-          if (!handleUnsolicited(line))
-          {
-            m_lines.push(line);
-            line = "";
-          }
-        }
+        
+        std::string line;
+        handleIncomingCharacters(line);
 
         break;
       }
@@ -405,6 +393,24 @@ namespace DUNE
     }
 
     void
+    BasicModem::handleIncomingCharacters(std::string& str)
+    {
+      while (!m_chars.empty())
+      {
+        if (!processInput(str))
+          continue;
+
+        if (str.empty())
+          continue;
+
+        if (!handleUnsolicited(str))
+          m_lines.push(str);
+
+        str = "";
+      }
+    }
+
+    void
     BasicModem::run(void)
     {
       char bfr[512];
@@ -450,17 +456,7 @@ namespace DUNE
             m_chars.push(bfr[i]);
           }
 
-          while (!m_chars.empty())
-          {
-            if (!processInput(line))
-              continue;
-
-            if (line.empty())
-              continue;
-
-            if (!handleUnsolicited(line))
-              m_lines.push(line);
-          }
+          handleIncomingCharacters(line);
         }
       }
     }

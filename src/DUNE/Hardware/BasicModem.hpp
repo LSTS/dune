@@ -226,6 +226,9 @@ namespace DUNE
       //! True to trim white-space.
       bool m_line_trim;
 
+      void
+      handleIncomingCharacters(std::string& str);
+
       bool
       processInput(std::string& str);
 
