@@ -443,22 +443,33 @@ namespace DUNE
           break;
         }
 
-        if (getReadMode() == READ_MODE_RAW)
+        const auto mode = getReadMode();
+
+        switch (mode)
+        {
+        case READ_MODE_RAW:
         {
           for (size_t i = 0; i < rv; ++i)
             m_bytes.push(bfr[i]);
+
+          break;
         }
-        else
+
+        case READ_MODE_LINE:
         {
           bfr[rv] = 0;
           m_task->spew("%s", Streams::sanitize(bfr).c_str());
 
           for (size_t i = 0; i < rv; ++i)
-          {
             m_chars.push(bfr[i]);
-          }
 
           handleIncomingCharacters(line);
+
+          break;
+        }
+        
+        default:
+          break;
         }
       }
     }
