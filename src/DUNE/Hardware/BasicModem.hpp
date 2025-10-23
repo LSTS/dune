@@ -116,6 +116,8 @@ namespace DUNE
 
       //! Concurrency lock.
       Concurrency::Mutex m_mutex;
+      //! Lock for data ingestion.
+      Concurrency::Mutex m_ingestion_mtx;
 
       //! Handle unsolicited or asynchronous commands.
       //! @param[in] str command string.
@@ -226,6 +228,8 @@ namespace DUNE
       //! True to trim white-space.
       bool m_line_trim;
 
+
+
       void
       handleIncomingCharacters(std::string& str);
 
@@ -234,6 +238,18 @@ namespace DUNE
 
       void
       ingestIncomingDataLine(const char* data, const size_t len);
+
+      void
+      pushLine(const std::string& line);
+
+      bool
+      incomingCharsQueueEmpty(void);
+
+      bool
+      converBytesToLines(void);
+
+      bool
+      convertLinesToBytes(void);
 
       bool
       processInput(std::string& str);

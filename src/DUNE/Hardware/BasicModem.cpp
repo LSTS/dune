@@ -185,42 +185,17 @@ namespace DUNE
       {
       case READ_MODE_LINE:
       {
-        if (m_bytes.size() <= 0)
+        if (!converBytesToLines())
           break;
-
-        // if have bytes in queue, transfer to lines
-        getTask()->spew("There are %d bytes in the queue bytes. Convert to queue of lines.",
-                        m_bytes.size());
-        while (m_bytes.size() > 0)
-        {
-          uint8_t byte = 0;
-          m_bytes.pop(byte);
-          m_chars.push(byte);
-        }
         
         std::string line;
         handleIncomingCharacters(line);
-
         break;
       }
 
       case READ_MODE_RAW:
-      {
-        if (m_lines.size() <= 0)
-          break;
-
-        getTask()->war("[BasicModem]:There are %d lines in the queue. Convert to queue of bytes.",
-                        m_lines.size());
-        while (m_lines.size() > 0)
-        {
-          std::string line = m_lines.pop();
-          getTask()->war("[BasicModem]:line: %s", line.c_str());
-          for (size_t i = 0; i < line.size(); ++i)
-            m_bytes.push(line[i]);
-        }
-
+        convertLinesToBytes();
         break;
-      }
       
       default:
         break;
@@ -297,6 +272,8 @@ namespace DUNE
     bool
     BasicModem::processInput(std::string& str)
     {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+
       bool got_line = false;
 
       while (!m_chars.empty())
@@ -398,7 +375,7 @@ namespace DUNE
     void
     BasicModem::handleIncomingCharacters(std::string& str)
     {
-      while (!m_chars.empty())
+      while (!incomingCharsQueueEmpty())
       {
         if (!processInput(str))
           continue;
@@ -407,7 +384,7 @@ namespace DUNE
           continue;
 
         if (!handleUnsolicited(str))
-          m_lines.push(str);
+          pushLine(str);
 
         str = "";
       }
@@ -416,6 +393,7 @@ namespace DUNE
     void
     BasicModem::ingestIncomingDataRaw(const char* data, const size_t len)
     {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
       for (size_t i = 0; i < len; ++i)
         m_bytes.push(data[i]);
     }
@@ -423,8 +401,65 @@ namespace DUNE
     void
     BasicModem::ingestIncomingDataLine(const char* data, const size_t len)
     {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
       for (size_t i = 0; i < len; ++i)
         m_chars.push(data[i]);
+    }
+
+    void
+    BasicModem::pushLine(const std::string& line)
+    {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+      m_lines.push(line);
+    }
+
+    bool
+    BasicModem::incomingCharsQueueEmpty(void)
+    {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+      return m_chars.empty();
+    }
+
+    bool
+    BasicModem::converBytesToLines(void)
+    {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+
+      if (m_bytes.size() <= 0)
+        return false;
+
+      // if have bytes in queue, transfer to lines
+      getTask()->spew("There are %u bytes in the queue bytes. Convert to queue of lines.",
+                      m_bytes.size());
+      while (m_bytes.size() > 0)
+      {
+        uint8_t byte = 0;
+        m_bytes.pop(byte);
+        m_chars.push(byte);
+      }
+
+      return true;
+    }
+
+    bool
+    BasicModem::convertLinesToBytes(void)
+    {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+
+      if (m_lines.size() <= 0)
+        return false;
+
+      getTask()->war("[BasicModem]:There are %u lines in the queue. Convert to queue of bytes.",
+                      m_lines.size());
+      while (m_lines.size() > 0)
+      {
+        std::string line = m_lines.pop();
+        getTask()->war("[BasicModem]:line: %s", line.c_str());
+        for (const auto& c: line)
+          m_bytes.push(c);
+      }
+
+      return true;
     }
 
     void
