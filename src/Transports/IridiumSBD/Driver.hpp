@@ -55,6 +55,8 @@ namespace Transports
     static constexpr double c_default_timeout_csq = 7.0;
     //! Default timeout for SBDIX command.
     static constexpr double c_default_timeout_sbdix = 20.0;
+    //! Error reply string.
+    static constexpr char* c_error_reply = "ERROR";
 
     class Driver: public HayesModem
     {
@@ -71,6 +73,7 @@ namespace Transports
         m_use_9523 = use_9523N;
         m_wait_boot = wait_boot;
         setLineTrim(true);
+        addErrorReply(c_error_reply);
         m_rssi_wdog.setTop(rssi_time_check);
       }
 
