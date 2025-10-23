@@ -174,6 +174,10 @@ namespace DUNE
     {
       {
         Concurrency::ScopedMutex l(m_mutex);
+
+        if (m_read_mode == mode)
+          return;
+
         m_read_mode = mode;
       }
 
