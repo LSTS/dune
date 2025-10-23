@@ -229,6 +229,12 @@ namespace DUNE
       void
       handleIncomingCharacters(std::string& str);
 
+      void
+      ingestIncomingDataRaw(const char* data, const size_t len);
+
+      void
+      ingestIncomingDataLine(const char* data, const size_t len);
+
       bool
       processInput(std::string& str);
 

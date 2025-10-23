@@ -414,6 +414,20 @@ namespace DUNE
     }
 
     void
+    BasicModem::ingestIncomingDataRaw(const char* data, const size_t len)
+    {
+      for (size_t i = 0; i < len; ++i)
+        m_bytes.push(data[i]);
+    }
+
+    void
+    BasicModem::ingestIncomingDataLine(const char* data, const size_t len)
+    {
+      for (size_t i = 0; i < len; ++i)
+        m_chars.push(data[i]);
+    }
+
+    void
     BasicModem::run(void)
     {
       char bfr[512];
@@ -452,9 +466,7 @@ namespace DUNE
         {
         case READ_MODE_RAW:
         {
-          for (size_t i = 0; i < rv; ++i)
-            m_bytes.push(bfr[i]);
-
+          ingestIncomingDataRaw(bfr, rv);
           break;
         }
 
@@ -462,12 +474,8 @@ namespace DUNE
         {
           bfr[rv] = 0;
           m_task->spew("%s", Streams::sanitize(bfr).c_str());
-
-          for (size_t i = 0; i < rv; ++i)
-            m_chars.push(bfr[i]);
-
+          ingestIncomingDataLine(bfr, rv);
           handleIncomingCharacters(line);
-
           break;
         }
         
