@@ -214,7 +214,7 @@ namespace DUNE
         std::string rv = readLine(timer);
         if (rv == str)
           return;
-        else if (!persistent)
+        else if (!persistent || isErrorReply(rv))
           throw UnexpectedReply(str, rv);
       }
       while (!timer.overflow());
@@ -233,6 +233,18 @@ namespace DUNE
     HayesModem::expectREADY(void)
     {
       expect("READY");
+    }
+
+    bool
+    HayesModem::isErrorReply(const std::string& str)
+    {
+      return m_error_replies.find(str) != m_error_replies.end();
+    }
+
+    void
+    HayesModem::addErrorReply(const std::string& str)
+    {
+      m_error_replies.insert(str);
     }
   }
 }

@@ -32,6 +32,7 @@
 
 // ISO C++ 98 headers.
 #include <string>
+#include <unordered_set>
 
 // DUNE headers.
 #include <DUNE/Concurrency/Thread.hpp>
@@ -139,9 +140,17 @@ namespace DUNE
       std::string
       waitForReply(const std::string& rly, const double tmt = c_timeout);
 
+      void
+      addErrorReply(const std::string& str);
+
     private:
       //! Last RSSI value.
       IMC::RSSI m_rssi;
+      //! List of error command responses.
+      std::unordered_set<std::string> m_error_replies;
+
+      bool
+      isErrorReply(const std::string& str);
     };
   }
 }
