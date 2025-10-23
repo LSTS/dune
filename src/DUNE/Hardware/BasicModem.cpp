@@ -203,7 +203,6 @@ namespace DUNE
 
         break;
       }
-        
 
       case READ_MODE_RAW:
       {
