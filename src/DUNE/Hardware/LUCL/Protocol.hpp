@@ -31,16 +31,16 @@
 #define DUNE_HARDWARE_LUCL_PROTOCOL_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
-#include <string>
 #include <queue>
+#include <string>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
-#include <DUNE/Hardware/I2C.hpp>
-#include <DUNE/Hardware/SerialPort.hpp>
 #include <DUNE/FileSystem/Path.hpp>
-#include <DUNE/Hardware/LUCL/CommandType.hpp>
+#include <DUNE/Hardware/I2C.hpp>
 #include <DUNE/Hardware/LUCL/Command.hpp>
+#include <DUNE/Hardware/LUCL/CommandType.hpp>
+#include <DUNE/Hardware/SerialPort.hpp>
 
 namespace DUNE
 {
@@ -58,8 +58,20 @@ namespace DUNE
 
         ~Protocol(void);
 
+        IO::Handle*
+        openDevice(const std::string& device, bool canonicalInput = false);
+
+        IO::Handle*
+        openUART(const std::string& device, bool canonicalInput = false);
+
+        IO::Handle*
+        openSocketTCP(const std::string& device);
+
+        IO::Handle*
+        openUDPSocket(const std::string& device);
+
         void
-        setUART(const std::string& uart_dev);
+        setHandleURI(const std::string& uri);
 
         void
         setI2C(const std::string& i2c_dev, uint8_t addr);
@@ -70,7 +82,7 @@ namespace DUNE
         //! Open device.
         //! @param baud target baud rate for uart devices. 0 means auto-detect.
         void
-        open(int baud = 0);
+        open(void);
 
         bool
         isOpen(void);
@@ -158,7 +170,8 @@ namespace DUNE
                 if (m_sm_size == 3)
                   handler.onVersion(m_sm_data[0], m_sm_data[1], 0);
                 else if (m_sm_size == 2)
-                  handler.onVersion(0x07 & (m_sm_data[0] >> 5), 0x07 & (m_sm_data[0] >> 2), 0x03 & m_sm_data[0]);
+                  handler.onVersion(0x07 & (m_sm_data[0] >> 5), 0x07 & (m_sm_data[0] >> 2),
+                                    0x03 & m_sm_data[0]);
               }
               else
               {
@@ -189,7 +202,8 @@ namespace DUNE
         requestBaud(const std::string& device);
 
         std::string
-        searchNewFirmware(const FileSystem::Path& path, unsigned ver = 0, unsigned rev = 0, unsigned pat = 0, bool ver_fixed = false);
+        searchNewFirmware(const FileSystem::Path& path, unsigned ver = 0, unsigned rev = 0,
+                          unsigned pat = 0, bool ver_fixed = false);
 
         static const char*
         getErrorString(uint8_t error);
@@ -233,13 +247,13 @@ namespace DUNE
         //! Index of last error in c_error_strs.
         static const int c_error_last;
         //! Serial port handle.
-        SerialPort* m_uart;
+        IO::Handle* m_handle;
         //! I2C handle.
         I2C* m_i2c;
         //! I2C read pending.
         bool m_i2c_read_pend;
-        //! UART device.
-        std::string m_uart_dev;
+        //! Handle URI.
+        std::string m_handle_uri;
         //! I2C device.
         std::string m_i2c_dev;
         //! I2C address.
@@ -286,7 +300,8 @@ namespace DUNE
         detectBaudRate(const std::string& device);
 
         static bool
-        getFirmwareInfo(const std::string& file, std::string& name, unsigned& ver, unsigned& rev, unsigned& pat);
+        getFirmwareInfo(const std::string& file, std::string& name, unsigned& ver, unsigned& rev,
+                        unsigned& pat);
       };
     }
   }

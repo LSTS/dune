@@ -28,16 +28,19 @@
 //***************************************************************************
 
 // ISO C++ 98 headers.
-#include <string>
 #include <cstdio>
 #include <cstring>
+#include <string>
 
 // DUNE headers.
 #include <DUNE/Algorithms/XORChecksum.hpp>
+#include <DUNE/FileSystem/Path.hpp>
 #include <DUNE/Hardware/LUCL/Protocol.hpp>
+#include <DUNE/Memory.hpp>
+#include <DUNE/Network/TCPSocket.hpp>
+#include <DUNE/Network/UDPSocket.hpp>
 #include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Time/Delay.hpp>
-#include <DUNE/FileSystem/Path.hpp>
 #include <DUNE/Utils/String.hpp>
 
 using DUNE::FileSystem::Path;
@@ -48,23 +51,16 @@ namespace DUNE
   {
     namespace LUCL
     {
-      const char* Protocol::c_error_strs[] =
-      {
-        DTR_RT("invalid command"),
-        DTR_RT("lost synchronization"),
-        DTR_RT("parser error"),
-        DTR_RT("data overrun"),
-        DTR_RT("buffer overflow"),
-        DTR_RT("invalid checksum"),
-        DTR_RT("parser bug"),
-        DTR_RT("invalid command arguments"),
-        DTR_RT("unknown error")
+      const char* Protocol::c_error_strs[] = {
+        DTR_RT("invalid command"), DTR_RT("lost synchronization"),      DTR_RT("parser error"),
+        DTR_RT("data overrun"),    DTR_RT("buffer overflow"),           DTR_RT("invalid checksum"),
+        DTR_RT("parser bug"),      DTR_RT("invalid command arguments"), DTR_RT("unknown error")
       };
 
       const int Protocol::c_error_last = 8;
 
       Protocol::Protocol(void):
-        m_uart(0),
+        m_handle(nullptr),
         m_i2c(0),
         m_i2c_read_pend(false),
         m_open(false)
@@ -77,10 +73,102 @@ namespace DUNE
         close();
       }
 
-      void
-      Protocol::setUART(const std::string& uart_dev)
+      IO::Handle*
+      Protocol::openUART(const std::string& device, bool canonicalInput)
       {
-        m_uart_dev = uart_dev;
+        char uart[128] = { 0 };
+        unsigned baud = 0;
+
+        if (std::sscanf(device.c_str(), "uart://%[^:]:%u", uart, &baud) != 2)
+          return nullptr;
+
+        if (baud == 0)
+          baud = detectBaudRate(uart);
+
+        if (baud > 0)
+          DUNE_DBG("LUCL Protocol", "baud rate is " << baud);
+        else
+        {
+          DUNE_DBG("LUCL Protocol", "failed to detect baud rate, using default");
+          baud = c_baud_def;
+        }
+
+        SerialPort* uri = new SerialPort(uart, baud);
+        uri->setCanonicalInput(canonicalInput);
+
+        return uri;
+      }
+
+      IO::Handle*
+      Protocol::openSocketTCP(const std::string& device)
+      {
+        char addr[128] = { 0 };
+        unsigned port = 0;
+
+        if (std::sscanf(device.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return nullptr;
+
+        Network::TCPSocket* sock = nullptr;
+        try
+        {
+          sock = new Network::TCPSocket();
+          sock->setKeepAlive(true);
+          sock->setNoDelay(true);
+          sock->setSendTimeout(1.0);
+          sock->setReceiveTimeout(1.0);
+          sock->connect(addr, port);
+        }
+        catch (...)
+        {
+          Memory::clear(sock);
+          throw;
+        }
+        return sock;
+      }
+
+      IO::Handle*
+      Protocol::openUDPSocket(const std::string& device)
+      {
+        char addr[128] = { 0 };
+        unsigned port = 0;
+
+        if (std::sscanf(device.c_str(), "udp://%[^:]:%u", addr, &port) != 2)
+          return nullptr;
+
+        Network::UDPSocket* sock = nullptr;
+        try
+        {
+          sock = new Network::UDPSocket();
+          sock->bind();
+          sock->connect(addr, port);
+        }
+        catch (...)
+        {
+          Memory::clear(sock);
+          throw;
+        }
+        return sock;
+      }
+
+      IO::Handle*
+      Protocol::openDevice(const std::string& device, bool canonicalInput)
+      {
+        IO::Handle* handle = openUDPSocket(device);
+        if (handle == nullptr)
+          handle = openUART(device, canonicalInput);
+        else if (handle == nullptr)
+          handle = openSocketTCP(device);
+
+        if (handle != nullptr)
+          handle->flush();
+
+        return handle;
+      }
+
+      void
+      Protocol::setHandleURI(const std::string& uri)
+      {
+        m_handle_uri = uri;
       }
 
       void
@@ -100,31 +188,13 @@ namespace DUNE
       }
 
       void
-      Protocol::open(int baud)
+      Protocol::open(void)
       {
-        if (!m_uart_dev.empty())
+        if (!m_handle_uri.empty())
         {
-          if (!baud || !testBaudRate(m_uart_dev, baud))
-            baud = detectBaudRate(m_uart_dev);
-
-          if (baud > 0)
-          {
-            DUNE_DBG("LUCL Protocol", "baud rate is " << baud);
-            if (m_uart)
-              delete m_uart;
-            m_uart = new SerialPort(m_uart_dev, baud);
-            m_open = true;
-          }
-          else
-          {
-            DUNE_DBG("LUCL Protocol", "failed to detect baud rate, using default");
-            if (m_uart)
-              delete m_uart;
-            m_uart = new SerialPort(m_uart_dev, c_baud_def);
-            m_open = true;
-          }
-
-          return;
+          Memory::clear(m_handle);
+          m_handle = openDevice(m_handle_uri, false);
+          m_open = true;
         }
 
         if (!m_i2c_dev.empty())
@@ -150,10 +220,10 @@ namespace DUNE
       void
       Protocol::close(void)
       {
-        if (m_uart)
+        if (m_handle)
         {
-          delete m_uart;
-          m_uart = 0;
+          delete m_handle;
+          m_handle = nullptr;
         }
 
         if (m_i2c)
@@ -184,9 +254,9 @@ namespace DUNE
           { }
         }
 
-        if (m_uart)
+        if (m_handle)
         {
-          int rv = m_uart->read(bfr, bfr_len);
+          int rv = m_handle->read(bfr, bfr_len);
           if (rv <= 0)
             rv = 0;
           return rv;
@@ -210,8 +280,8 @@ namespace DUNE
           { }
         }
 
-        if (m_uart)
-          return m_uart->write(bfr, bfr_len);
+        if (m_handle)
+          return m_handle->write(bfr, bfr_len);
 
         return 0;
       }
@@ -225,10 +295,11 @@ namespace DUNE
         using Algorithms::XORChecksum;
 
         int size = 3 + data_size + 1;
-        uint8_t msg[32] = {c_sync, (uint8_t)(data_size + 1), cmd};
+        uint8_t msg[32] = { c_sync, (uint8_t)(data_size + 1), cmd };
 
         std::memcpy(msg + 3, data, data_size);
-        msg[size - 1] = XORChecksum::compute(data, data_size, c_sync ^ (data_size + 1) ^ cmd) | c_csum_msk;
+        msg[size - 1] =
+          XORChecksum::compute(data, data_size, c_sync ^ (data_size + 1) ^ cmd) | c_csum_msk;
 
         write(msg, size);
       }
@@ -441,7 +512,7 @@ namespace DUNE
       int
       Protocol::detectBaudRate(const std::string& device)
       {
-        int bauds[] = {115200, 57600, 38400, 19200, 0};
+        int bauds[] = { 115200, 57600, 38400, 19200, 0 };
         int* baud_p = bauds;
 
         while (*baud_p != 0)
@@ -463,13 +534,13 @@ namespace DUNE
       }
 
       bool
-      Protocol::getFirmwareInfo(const std::string& file, std::string& name, unsigned& ver, unsigned& rev, unsigned& pat)
+      Protocol::getFirmwareInfo(const std::string& file, std::string& name, unsigned& ver,
+                                unsigned& rev, unsigned& pat)
       {
-        char bfr[16] = {0};
+        char bfr[16] = { 0 };
         Path path = Path(file).basename();
 
-        int rv = std::sscanf(path.c_str(), "%16[^-]-firmware-%u.%u.%u.hex",
-                             bfr, &ver, &rev, &pat);
+        int rv = std::sscanf(path.c_str(), "%16[^-]-firmware-%u.%u.%u.hex", bfr, &ver, &rev, &pat);
 
         name = bfr;
 
@@ -477,7 +548,8 @@ namespace DUNE
       }
 
       std::string
-      Protocol::searchNewFirmware(const Path& path, unsigned ver, unsigned rev, unsigned pat, bool ver_fixed)
+      Protocol::searchNewFirmware(const Path& path, unsigned ver, unsigned rev, unsigned pat,
+                                  bool ver_fixed)
       {
         if (m_name_lo.empty())
           throw std::runtime_error("device name not set");
