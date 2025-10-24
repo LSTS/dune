@@ -195,6 +195,7 @@ namespace DUNE
           Memory::clear(m_handle);
           m_handle = openDevice(m_handle_uri, false);
           m_open = true;
+          return;
         }
 
         if (!m_i2c_dev.empty())
