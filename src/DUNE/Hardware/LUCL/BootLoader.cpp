@@ -93,9 +93,8 @@ namespace DUNE
   {
     namespace LUCL
     {
-      BootLoader::BootLoader(Protocol& proto, bool verbose, int baudrate):
+      BootLoader::BootLoader(Protocol& proto, bool verbose):
         m_proto(proto),
-        m_baud(baudrate),
         m_page_size(0),
         m_verbose(verbose)
       {
@@ -171,7 +170,7 @@ namespace DUNE
       BootLoader::open(void)
       {
         print("* Opening device...");
-        m_proto.open(m_baud);
+        m_proto.open();
       }
 
       bool

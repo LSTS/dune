@@ -50,7 +50,7 @@ namespace DUNE
       class BootLoader
       {
       public:
-        BootLoader(Protocol& proto, bool verbose = 0, int baudrate = 0);
+        BootLoader(Protocol& proto, bool verbose = 0);
 
         void
         flash(const std::string& ihex);
