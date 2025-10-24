@@ -101,8 +101,8 @@ namespace Sensors
       IMC::MagneticField m_magn;
       //! Temperature.
       IMC::Temperature m_temp;
-      //! Serial port device.
-      SerialPort* m_uart;
+      //! Device handle.
+      IO::Handle* m_handle;
       //! Control Interface.
       UCTK::Interface* m_ctl;
       //! UCTK parser.
@@ -134,7 +134,7 @@ namespace Sensors
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
-        m_uart(NULL),
+        m_handle(NULL),
         m_ctl(NULL),
         m_state_timer(1.0),
         m_sample_count(0),
@@ -220,11 +220,11 @@ namespace Sensors
       {
         try
         {
-          if (m_uart == NULL)
-            m_uart = static_cast<SerialPort*>(openUART(m_args.io_dev));
+          if (m_handle == NULL)
+            m_handle = openDeviceHandle(m_args.io_dev);
 
           if (m_ctl == NULL)
-            m_ctl = new UCTK::Interface(m_uart);
+            m_ctl = new UCTK::Interface(m_handle);
         }
         catch (std::runtime_error& e)
         {
@@ -245,7 +245,7 @@ namespace Sensors
       onResourceRelease(void)
       {
         Memory::clear(m_ctl);
-        Memory::clear(m_uart);
+        Memory::clear(m_handle);
       }
 
       //! Disconnect from device.
@@ -548,10 +548,10 @@ namespace Sensors
       void
       readInput(void)
       {
-        if (m_uart == NULL)
+        if (m_handle == NULL)
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         
-        size_t rv = m_uart->read(m_buffer, sizeof(m_buffer));
+        size_t rv = m_handle->read(m_buffer, sizeof(m_buffer));
         for (size_t i = 0; i < rv; ++i)
         {
           if (m_parser.parse(m_buffer[i], m_frame))
@@ -613,11 +613,11 @@ namespace Sensors
       bool
       onReadData() override
       {
-        if (m_uart == NULL)
+        if (m_handle == NULL)
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         
         bool got_data = false;
-        if (Poll::poll(*m_uart, 1.0))
+        if (Poll::poll(*m_handle, 1.0))
         {
           readInput();
           got_data = true;
