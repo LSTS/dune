@@ -119,8 +119,8 @@ namespace Actuators
 
     struct Arguments
     {
-      //! Serial port device.
-      std::string uart_dev;
+      //! IO device.
+      std::string io_dev;
       //! Period of state requests.
       double state_per;
       //! Numper of motor pole pairs
@@ -235,9 +235,10 @@ namespace Actuators
         m_setup_state(SS_VERSION_GET)
       {
         // Define configuration parameters.
-        param("Serial Port - Device", m_args.uart_dev)
-        .defaultValue("")
-        .description("Serial port device used to communicate with the sensor");
+        param("IO Port - Device", m_args.io_dev)
+          .defaultValue("")
+          .description("IO device URI in the form \"uart://DEVICE:BAUD\" or "
+                       "\"tcp://ADDRESS:PORT\" or \"udp://ADDRESS:PORT\"");
 
         param("State Sampling Frequency", m_args.state_per)
         .units(Units::Hertz)
@@ -385,7 +386,7 @@ namespace Actuators
       {
         try
         {
-          m_proto.setUART(m_args.uart_dev);
+          m_proto.setHandleURI(m_args.io_dev);
           m_proto.open();
           m_boot_timer.setTop(10.0);
         }
