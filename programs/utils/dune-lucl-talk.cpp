@@ -143,7 +143,7 @@ main(int argc, char** argv)
   if (is_i2c)
     proto.setI2C(sys_dev, i2c_addr);
   else
-    proto.setUART(sys_dev);
+    proto.setHandleURI(sys_dev);
 
   try
   {
