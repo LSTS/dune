@@ -142,6 +142,14 @@ namespace DUNE
       IO::Handle*
       openSocketTCP(const std::string& uri);
 
+      //! Create an I/O handle given a UDP port URI.
+      //!
+      //! @param[in] uri URI of the form: udp://HOST:PORT
+      //!
+      //! @return I/O handle.
+      IO::Handle*
+      openSocketUDP(const std::string& uri);
+
       //! Set the amount of time to wait before powering up the device.
       //! @param[in] value delay in second.
       void

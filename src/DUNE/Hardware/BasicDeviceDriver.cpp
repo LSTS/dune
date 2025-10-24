@@ -400,6 +400,8 @@ namespace DUNE
 
       if (handle != nullptr)
         handle->flush();
+      else
+        handle = openSocketUDP(device);
 
       return handle;
     }
@@ -452,6 +454,24 @@ namespace DUNE
         throw;
       }
 
+      return sock;
+    }
+
+    IO::Handle*
+    BasicDeviceDriver::openSocketUDP(const std::string &device)
+    {
+      char addr[128] = {0};
+      unsigned port = 0;
+
+      m_uri = device;
+      trace("[UDP] >> attempting URI: %s", device.c_str());
+
+      if (std::sscanf(device.c_str(), "udp://%[^:]:%u", addr, &port) != 2)
+        return nullptr;
+
+      UDPSocket* sock = new UDPSocket();
+      sock->bind(0, Address::Any, false);
+      sock->connect(addr, port);
       return sock;
     }
 
