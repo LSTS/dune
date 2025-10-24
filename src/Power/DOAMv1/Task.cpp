@@ -72,8 +72,8 @@ namespace Power
     //! %Task arguments.
     struct Arguments
     {
-      //! Serial port device.
-      std::string uart_dev;
+      //! IO device.
+      std::string io_dev;
       //! ADC voltage reference.
       double ref_volt;
       //! ADC conversion factors.
@@ -123,9 +123,10 @@ namespace Power
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
-        param("Serial Port - Device", m_args.uart_dev)
-        .defaultValue("")
-        .description("Serial port device used to communicate with the device");
+        param("IO Port - Device", m_args.io_dev)
+          .defaultValue("")
+          .description("IO device URI in the form \"uart://DEVICE:BAUD\" or "
+                       "\"tcp://ADDRESS:PORT\" or \"udp://ADDRESS:PORT\"");
 
         param("Power Channel - Name", m_args.pwr_name)
         .defaultValue("Camera Module")
@@ -224,7 +225,7 @@ namespace Power
       void
       onResourceAcquisition(void)
       {
-        m_proto.setUART(m_args.uart_dev);
+        m_proto.setHandleURI(m_args.io_dev);
         m_proto.open();
       }
 
