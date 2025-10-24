@@ -107,8 +107,8 @@ namespace Power
     //! %Task arguments.
     struct Arguments
     {
-      //! Serial port device.
-      std::string uart_dev;
+      //! IO device.
+      std::string io_dev;
       //! ADC voltage reference.
       double adc_ref;
       //! ADC Messages.
@@ -172,9 +172,10 @@ namespace Power
       {
         std::memset(m_adcs, 0, sizeof(m_adcs));
 
-        param("Serial Port - Device", m_args.uart_dev)
-        .defaultValue("")
-        .description("Serial port device used to communicate with the board");
+        param("IO Port - Device", m_args.io_dev)
+          .defaultValue("")
+          .description("IO device URI in the form \"uart://DEVICE:BAUD\" or "
+                       "\"tcp://ADDRESS:PORT\" or \"udp://ADDRESS:PORT\"");
 
         param("ADC Reference Voltage", m_args.adc_ref)
         .defaultValue("1.1")
@@ -341,7 +342,7 @@ namespace Power
       {
         try
         {
-          m_proto.setUART(m_args.uart_dev);
+          m_proto.setHandleURI(m_args.io_dev);
           m_proto.open();
         }
         catch (std::runtime_error& e)
