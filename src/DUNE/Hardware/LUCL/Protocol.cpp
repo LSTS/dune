@@ -127,7 +127,7 @@ namespace DUNE
       }
 
       IO::Handle*
-      Protocol::openUDPSocket(const std::string& device)
+      Protocol::openSocketUDP(const std::string& device)
       {
         char addr[128] = { 0 };
         unsigned port = 0;
@@ -153,11 +153,16 @@ namespace DUNE
       IO::Handle*
       Protocol::openDevice(const std::string& device, bool canonicalInput)
       {
-        IO::Handle* handle = openUDPSocket(device);
-        if (handle == nullptr)
+        IO::Handle* handle = nullptr;
+
+        if (Utils::String::startsWith(device, "uart"))
           handle = openUART(device, canonicalInput);
-        else if (handle == nullptr)
+        else if (Utils::String::startsWith(device, "udp"))
+          handle = openSocketUDP(device);
+        else if (Utils::String::startsWith(device, "tcp"))
           handle = openSocketTCP(device);
+        else
+          return nullptr;
 
         if (handle != nullptr)
           handle->flush();

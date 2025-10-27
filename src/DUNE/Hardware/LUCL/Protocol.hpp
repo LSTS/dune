@@ -68,7 +68,7 @@ namespace DUNE
         openSocketTCP(const std::string& device);
 
         IO::Handle*
-        openUDPSocket(const std::string& device);
+        openSocketUDP(const std::string& device);
 
         void
         setHandleURI(const std::string& uri);
