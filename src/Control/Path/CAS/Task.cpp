@@ -1119,14 +1119,10 @@ namespace Control
         void
         enableCAS(bool enable)
         {
-          // Should use applyEntityParameters instead of this function.
-          IMC::SetEntityParameters ep;
-          ep.name = getEntityLabel();
           IMC::EntityParameter ea;
           ea.name = "Enable Collision Avoidance";
           ea.value = enable ? "true" : "false";
-          ep.params.push_back(ea);
-          dispatch(ep, DF_LOOP_BACK);
+          setEntityParameter(ea);
         }
 
         // void
