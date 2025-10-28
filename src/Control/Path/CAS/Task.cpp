@@ -481,6 +481,7 @@ namespace Control
           // bind<IMC::CurrentProfile>(this);
           // bind<IMC::AbsoluteWind>(this);
           // bind<IMC::ENCAwareness>(this);
+          bind<IMC::RemoteActions>(this);
 
           // m_shallowest_current_cell.depth = 0.0;
           // m_shallowest_current_cell.vel = 0.0;
@@ -582,6 +583,12 @@ namespace Control
         void
         onResourceInitialization(void)
         {
+          // Add button for arm and disarm states.
+          IMC::RemoteActionsRequest action_register;
+          action_register.op = IMC::RemoteActionsRequest::OP_REGISTER;
+          action_register.actions = "Enable CAS=Button;Disable CAS=Button";
+          dispatch(action_register);
+
           if (m_sb_mpc == nullptr)
             return;
           
@@ -1097,6 +1104,25 @@ namespace Control
               trace("AIS5: %s %s %s %d %.3f %.3f %.3f %.3f %.3f", m_dyn_obst_vec[i].mmsi.c_str(), m_dyn_obst_vec[i].callsign.c_str(), m_dyn_obst_vec[i].name.c_str(), m_dyn_obst_vec[i].type_and_cargo, m_dyn_obst_vec[i].a, m_dyn_obst_vec[i].b, m_dyn_obst_vec[i].c, m_dyn_obst_vec[i].d, m_dyn_obst_vec[i].draught);
             }
           }
+        }
+
+        void
+        consume(const IMC::RemoteActions* msg)
+        {
+          TupleList tuples(msg->actions);
+          if (tuples.get("Enable CAS", 0))
+            enableCAS(true);
+          else if (tuples.get("Disable CAS", 0))
+            enableCAS(false);
+        }
+
+        void
+        enableCAS(bool enable)
+        {
+          IMC::EntityParameter ea;
+          ea.name = "Enable Collision Avoidance";
+          ea.value = enable ? "true" : "false";
+          setEntityParameter(ea);
         }
 
         // void

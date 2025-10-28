@@ -48,8 +48,6 @@ namespace Control
         {
           //! Thrust scaling.
           double scale;
-          //! Entity label of CAS entity
-          std::string cas_label;
         };
 
         struct Task: public DUNE::Control::BasicRemoteOperation
@@ -60,8 +58,6 @@ namespace Control
           IMC::SetServoPosition m_servo;
           //! Task Arguments.
           Arguments m_args;
-          //! Current Log name.
-          std::string m_log_name;
           //! Log state
           uint8_t m_log_state;
           //! True if using the analog thrust
@@ -73,21 +69,17 @@ namespace Control
             param("Thrust Scale", m_args.scale)
               .defaultValue("1.0");
 
-            param("Entity Label - CAS", m_args.cas_label)
-              .defaultValue("")
-              .description("Entity label of CAS entity");
-
             // Add remote actions.
             addActionButton("Accelerate");
             addActionButton("Decelerate");
             addActionButton("Stop");
             addActionButton("PowerOff");
-            addActionButton("Restart Log");
+            // addActionButton("Restart Log"); // Moved to Logging task
             // addActionButton("Toggle SPOT");
-            addActionButton("Arm");
-            addActionButton("Disarm");
-            addActionButton("Enable CAS");
-            addActionButton("Disable CAS");
+            // addActionButton("Arm"); // Moved to Autonaut task
+            // addActionButton("Disarm"); // Moved to Autonaut task
+            // addActionButton("Enable CAS"); // Moved to CAS task
+            // addActionButton("Disable CAS"); // Moved to CAS task
             addActionAxis("Heading");
             addActionAxis("Thrust");
 
@@ -131,14 +123,6 @@ namespace Control
           }
 
           void
-          consume(const IMC::LoggingControl* msg)
-          {
-            // save current log.
-            m_log_name = getLogName(msg->name);
-            m_log_state = msg->op;
-          }
-
-          void
           onAdditionalActions(const IMC::RemoteActions* msg)
           {
             TupleList tuples(msg->actions);
@@ -147,29 +131,14 @@ namespace Control
             if (tuples.get("PowerOff", 0))
               sendPowerOff();
 
-            else if (tuples.get("Restart Log", 0))
-              restartLog();
-
-            else if (tuples.get("Arm", 0))
-            {
-              IMC::ArmingState as;
-              as.state = ArmingState::StateEnum::MOTORS_ARMED;
-              dispatch(as);
-            }
-            else if (tuples.get("Disarm", 0))
-            {
-              IMC::ArmingState as;
-              as.state = ArmingState::StateEnum::MOTORS_DISARMED;
-              dispatch(as);
-            }
-
-            else if (tuples.get("Enable CAS", 0))
-              enableCAS(true);
-            else if (tuples.get("Disable CAS", 0))
-              enableCAS(false);
-
             else if (tuples.get("Toggle SPOT", 0))
               toggleSpot();
+          }
+
+          void
+          consume(const IMC::LoggingControl* msg)
+          {
+            m_log_state = msg->op;
           }
 
           void
@@ -244,26 +213,6 @@ namespace Control
             }
           }
 
-          //! Get log name.
-          std::string
-          getLogName(const std::string& name)
-          {
-            size_t pos = name.find('_');
-            if (pos == std::string::npos)
-              return {};  // return empty string
-
-            return name.substr(pos + 1);
-          }
-
-          void
-          restartLog(void)
-          {
-            IMC::LoggingControl lc;
-            lc.name = m_log_name;
-            lc.op = LoggingControl::COP_REQUEST_START;
-            dispatch(lc);
-          }
-
           void
           toggleSpot(void)
           {
@@ -281,24 +230,6 @@ namespace Control
 
             dispatch(m_thruster);
             dispatch(m_servo);
-          }
-
-          void
-          enableCAS(bool enable)
-          {
-            if (m_args.cas_label.empty())
-            {
-              war("CAS label not set");
-              return;
-            }
-
-            IMC::SetEntityParameters ep;
-            ep.name = m_args.cas_label;
-            IMC::EntityParameter ea;
-            ea.name = "Enable Collision Avoidance";
-            ea.value = enable ? "true" : "false";
-            ep.params.push_back(ea);
-            dispatch(ep);
           }
         };
       }
