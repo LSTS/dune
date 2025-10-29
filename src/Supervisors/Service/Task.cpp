@@ -117,8 +117,8 @@ namespace Supervisors
           .description(description);
 
           option = String::str("Maneuver %u - Position", i);
-          description = String::str("Lat, Lon position for maneuver %u in degrees, "
-                                    "if left empty the vehicle will execute the maneuver using its current position.", i);
+          description = String::str("Lat, Lon position for maneuver %u in degrees. "
+                                    "If left empty the vehicle will execute the maneuver using its current position.", i);
           param(option, m_args.man_config[i].position)
           .units(Units::Degree)
           .description(description);
@@ -183,6 +183,7 @@ namespace Supervisors
           m_armed = false;
       }
 
+      //! Get status message with armed state
       std::string
       getMessage(Status::Code code)
       {
@@ -203,6 +204,8 @@ namespace Supervisors
           disablePlan();
       }
 
+      
+      //! If the vehicle is armed and in service then execute fallback plan.
       void
       executePlan()
       {
@@ -232,24 +235,19 @@ namespace Supervisors
           std::string maneuver_name = String::str("service_maneuver_%u", i);
           if (spec.start_man_id.empty())
             spec.start_man_id = maneuver_name;
-
-          IMC::PlanManeuver pm;
-          pm.maneuver_id = maneuver_name;
           
+          IMC::Maneuver* maneuver(nullptr);
           if (m_args.man_config[i].type == "Goto")
           {
-            IMC::Goto goto_man = getGoto(i);
-            pm.data.set(goto_man);
+            maneuver = getGoto(i).clone();
           }
           else if (m_args.man_config[i].type == "Loiter")
           {
-            IMC::Loiter loiter_man = getLoiter(i);
-            pm.data.set(loiter_man);
+            maneuver = getLoiter(i).clone();
           }
           else if (m_args.man_config[i].type == "SK")
           {
-            IMC::StationKeeping sk_man = getStationKeeping(i);
-            pm.data.set(sk_man);
+            maneuver = getStationKeeping(i).clone();
           }
           else
           {
@@ -257,6 +255,9 @@ namespace Supervisors
             continue;
           }
 
+          IMC::PlanManeuver pm;
+          pm.maneuver_id = maneuver_name;
+          pm.data.set(maneuver);
           spec.maneuvers.push_back(pm);
           if (!last_man_name.empty())
           {
@@ -269,6 +270,7 @@ namespace Supervisors
           }
 
           last_man_name = maneuver_name;
+          Memory::clear(maneuver);
         }
 
         if (spec.maneuvers.empty())
@@ -284,6 +286,8 @@ namespace Supervisors
         dispatch(startPlan);
       }
 
+
+      //! If the vehicle is disarmed and executing fallback plan then stop plan.
       void
       disablePlan()
       {
@@ -293,7 +297,7 @@ namespace Supervisors
         if (m_pcs.plan_id != c_plan_name)
           return;
 
-        war("Vehicle disarmed -> Stopping Loiter plan...");
+        war("Vehicle disarmed -> Stopping fallback plan...");
         IMC::PlanControl stopPlan;
         stopPlan.type = IMC::PlanControl::PC_REQUEST;
         stopPlan.op = IMC::PlanControl::PC_STOP;
@@ -303,15 +307,15 @@ namespace Supervisors
         dispatch(stopPlan);
       }
 
+      //! Generate Loiter maneuver based on configuration
+      //! @param[in] i maneuver configuration index
+      //! @return Loiter maneuver
       IMC::Loiter
       getLoiter(const unsigned i)
       {
         IMC::Loiter loiter;
 
-        loiter.lat = 0.0;
-        loiter.lon = 0.0;
         getPosition(loiter.lat, loiter.lon, i);
-
         loiter.duration = m_args.man_config[i].duration;
         loiter.z = 0;
         loiter.z_units = ZUnits::Z_DEPTH;
@@ -322,15 +326,15 @@ namespace Supervisors
         return loiter;
       }
 
+      //! Generate Goto maneuver based on configuration
+      //! @param[in] i maneuver configuration index
+      //! @return Goto maneuver
       IMC::Goto
       getGoto(const unsigned i)
       {
         IMC::Goto goto_man;
 
-        goto_man.lat = 0.0;
-        goto_man.lon = 0.0;
         getPosition(goto_man.lat, goto_man.lon, i);
-
         goto_man.z = 0;
         goto_man.z_units = ZUnits::Z_DEPTH;
         goto_man.speed = m_args.man_config[i].speed;
@@ -338,15 +342,15 @@ namespace Supervisors
         return goto_man;
       }
 
+      //! Generate Station Keeping maneuver based on configuration
+      //! @param[in] i maneuver configuration index
+      //! @return Station Keeping maneuver
       IMC::StationKeeping
       getStationKeeping(const unsigned i)
       {
         IMC::StationKeeping sk_man;
-        
-        sk_man.lat = 0.0;
-        sk_man.lon = 0.0;
+    
         getPosition(sk_man.lat, sk_man.lon, i);
-
         sk_man.duration = m_args.man_config[i].duration;
         sk_man.z = 0;
         sk_man.z_units = ZUnits::Z_DEPTH;
@@ -356,6 +360,10 @@ namespace Supervisors
         return sk_man;
       }
 
+      //! Get maneuver position from configuration or current vehicle position
+      //! @param[out] lat latitude in radians
+      //! @param[out] lon longitude in radians
+      //! @param[in] i maneuver configuration index
       void
       getPosition(double& lat, double& lon, const unsigned i)
       {
