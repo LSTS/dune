@@ -34,7 +34,7 @@
 
 namespace Supervisors
 {
-  namespace Autonaut
+  namespace Service
   {
     using DUNE_NAMESPACES;
 
