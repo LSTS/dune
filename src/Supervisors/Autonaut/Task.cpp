@@ -38,23 +38,29 @@ namespace Supervisors
   {
     using DUNE_NAMESPACES;
 
+    //! Maximum maneuvers in a plan
+    static const unsigned int c_max_maneuvers = 5;
     //! Vehicle command description strings
-    static const std::string c_plan_name = "service_loiter";
-    //! Service Loiter maneuver name
-    static const std::string c_sl_man_name = "service_loiter";
-    //! Final loiter maneuver name
-    static const std::string c_fl_man_name = "final_loiter";
+    static const std::string c_plan_name = "service_plan";
+
+    // Maneuver configuration parameters
+    struct ManeuverConfig
+    {
+      //! Maneuver type
+      std::string type;
+      //! Radius
+      float radius;
+      //! Speed
+      float speed;
+      //! Duration of maneuver
+      uint16_t duration;
+      //! Final position (lat, lon) (degrees)
+      std::vector<double> position;
+    };
 
     struct Arguments
     {
-      //! Radius for loiter on service
-      float loiter_on_service_radius;
-      //! Speed for loiter on service
-      float loiter_on_service_speed;
-      //! Time for loiter on service
-      uint16_t loiter_on_service_time;
-      //! Final position (lat, lon) (degrees)
-      std::vector<double> final_position;
+      ManeuverConfig man_config[c_max_maneuvers];
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -76,29 +82,47 @@ namespace Supervisors
         Tasks::Periodic(name, ctx),
         m_armed(true)
       {
-        param("Loiter On Service -- Radius", m_args.loiter_on_service_radius)
+        for (unsigned i = 0; i < c_max_maneuvers; ++i)
+        {
+          std::string option = String::str("Maneuver %u - Type", i);
+          std::string description = String::str("Type of maneuver %u.", i);
+          param(option, m_args.man_config[i].type)
+          .defaultValue("None")
+          .values("None, Goto, SK, Loiter")
+          .description(description);
+
+          option = String::str("Maneuver %u - Radius", i);
+          description = String::str("Radius for maneuver %u in meters, only applies for SK and Loiter maneuvers.", i);
+          param(option, m_args.man_config[i].radius)
+          .units(Units::Meter)
           .defaultValue("30.0")
           .minimumValue("5.0")
-          .description("Radius for loiter on service option.");
+          .description(description);
 
-        param("Loiter On Service -- Speed", m_args.loiter_on_service_speed)
+          option = String::str("Maneuver %u - Speed", i);
+          description = String::str("Speed for maneuver %u in meters per second.", i);
+          param(option, m_args.man_config[i].speed)
+          .units(Units::MeterPerSecond)
           .defaultValue("0.5")
           .minimumValue("0.1")
-          .description("Speed for loiter on service option.");
+          .description(description);
 
-        param("Loiter On Service -- Time", m_args.loiter_on_service_time)
+          option = String::str("Maneuver %u - Duration", i);
+          description = String::str("Duration of maneuver %u in seconds, only applies for SK and Loiter maneuvers."
+                                    "If set to 0 the maneuver will not timeout and will continue until the vehicle is disarmed.", i);
+          param(option, m_args.man_config[i].duration)
+          .units(Units::Second)
           .defaultValue("0")
           .minimumValue("0")
-          .units(Units::Second)
-          .description("Time for loiter on service option. "
-                        "If set to 0.0, the loiter will not timeout and will "
-                        "continue until the vehicle is disarmed.");
+          .description(description);
 
-          param("Final Loiter -- Position", m_args.final_position)
-          .defaultValue("38.68765, -24.56268")
+          option = String::str("Maneuver %u - Position", i);
+          description = String::str("Lat, Lon position for maneuver %u in degrees, "
+                                    "if left empty the vehicle will execute the maneuver using its current position.", i);
+          param(option, m_args.man_config[i].position)
           .units(Units::Degree)
-          .size(2)
-          .description("Lat, Lon coordinates (degrees) for the final loiter maneuver.");
+          .description(description);
+        }
 
         bind<IMC::PlanControlState>(this);
         bind<IMC::VehicleState>(this);
@@ -174,80 +198,94 @@ namespace Supervisors
         setEntityState(IMC::EntityState::ESTA_NORMAL, getMessage(Status::CODE_ACTIVE).c_str());
 
         if (m_armed)
-          loiterOnService();
+          executePlan();
         else
-          disableLoiter();
+          disablePlan();
       }
 
       void
-      loiterOnService()
+      executePlan()
       {
         if (m_vs.op_mode != IMC::VehicleState::VS_SERVICE)
           return;
         
         if (!m_wdog.overflow())
           return;
-
         m_wdog.reset();
 
-        war("Vehicle in SERVICE -> Starting Loiter plan...");
+        war("Vehicle in SERVICE -> Executing fallback plan...");
         IMC::PlanControl startPlan;
         startPlan.type = IMC::PlanControl::PC_REQUEST;
         startPlan.op = IMC::PlanControl::PC_START;
         startPlan.plan_id = c_plan_name;
 
-        double lat = 0.0;
-        double lon = 0.0;
-        toWGS84(m_estate, lat, lon);
-        IMC::Loiter man_service = getLoiter(lat, lon, m_args.loiter_on_service_time);
-
-        IMC::PlanManeuver pm;
-        pm.data.set(man_service);
-        pm.maneuver_id = c_sl_man_name;
-
         IMC::PlanSpecification spec;
         spec.plan_id = c_plan_name;
-        spec.start_man_id = c_sl_man_name;
-        spec.maneuvers.push_back(pm);
 
-        //! If service loiter is infinite only send service loiter maneuver
-        if (m_args.loiter_on_service_time == 0.0)
+        std::string last_man_name;
+        for (unsigned i = 0; i < c_max_maneuvers; ++i)
         {
-          startPlan.arg.set(spec);
-          startPlan.request_id = 0;
-          startPlan.flags = 0;
-          startPlan.setDestination(m_ctx.resolver.id());
-          dispatch(startPlan);
-          return;
+          if (m_args.man_config[i].type == "None")
+            continue;
+
+          // Set initial maneuver id
+          std::string maneuver_name = String::str("service_maneuver_%u", i);
+          if (spec.start_man_id.empty())
+            spec.start_man_id = maneuver_name;
+
+          IMC::PlanManeuver pm;
+          pm.maneuver_id = maneuver_name;
+          
+          if (m_args.man_config[i].type == "Goto")
+          {
+            IMC::Goto goto_man = getGoto(i);
+            pm.data.set(goto_man);
+          }
+          else if (m_args.man_config[i].type == "Loiter")
+          {
+            IMC::Loiter loiter_man = getLoiter(i);
+            pm.data.set(loiter_man);
+          }
+          else if (m_args.man_config[i].type == "SK")
+          {
+            IMC::StationKeeping sk_man = getStationKeeping(i);
+            pm.data.set(sk_man);
+          }
+          else
+          {
+            war("Unknown maneuver type '%s' for maneuver %u, skipping...", m_args.man_config[i].type.c_str(), i);
+            continue;
+          }
+
+          spec.maneuvers.push_back(pm);
+          if (!last_man_name.empty())
+          {
+            // Add transition from previous maneuver
+            IMC::PlanTransition pt;
+            pt.source_man = last_man_name;
+            pt.dest_man = maneuver_name;
+            pt.conditions = "ManeuverIsDone";
+            spec.transitions.push_back(pt);
+          }
+
+          last_man_name = maneuver_name;
         }
 
-        // Otherwise, we need to add a final loiter maneuver
-        IMC::Loiter man_final = getLoiter(Angles::radians(m_args.final_position[0]),
-                                          Angles::radians(m_args.final_position[1]),
-                                          0); // No timeout for final loiter
-
-        pm.data.set(man_final);
-        pm.maneuver_id = c_fl_man_name;
-        
-        IMC::PlanTransition pt;
-        pt.source_man = c_sl_man_name;
-        pt.dest_man = c_fl_man_name;
-        pt.conditions = "ManeuverIsDone";
-
-        spec.maneuvers.push_back(pm);
-        spec.transitions.push_back(pt);
+        if (spec.maneuvers.empty())
+        {
+          war("No maneuvers defined in fallback plan.");
+          return;
+        }
 
         startPlan.arg.set(spec);
         startPlan.request_id = 0;
         startPlan.flags = 0;
         startPlan.setDestination(m_ctx.resolver.id());
         dispatch(startPlan);
-
-
       }
 
       void
-      disableLoiter()
+      disablePlan()
       {
         if (m_vs.op_mode != IMC::VehicleState::VS_MANEUVER)
           return;
@@ -266,19 +304,71 @@ namespace Supervisors
       }
 
       IMC::Loiter
-      getLoiter(const double lat, const double lon, const uint16_t duration)
+      getLoiter(const unsigned i)
       {
         IMC::Loiter loiter;
-        loiter.duration = duration; // No timeout
-        loiter.lat = lat;
-        loiter.lon = lon;
+
+        loiter.lat = 0.0;
+        loiter.lon = 0.0;
+        getPosition(loiter.lat, loiter.lon, i);
+
+        loiter.duration = m_args.man_config[i].duration;
         loiter.z = 0;
         loiter.z_units = ZUnits::Z_DEPTH;
-        loiter.speed = m_args.loiter_on_service_speed;
+        loiter.speed = m_args.man_config[i].speed;
         loiter.speed_units = SpeedUnits::SUNITS_METERS_PS;
         loiter.type = Loiter::LoiterTypeEnum::LT_DEFAULT;
-        loiter.radius = m_args.loiter_on_service_radius;
+        loiter.radius = m_args.man_config[i].radius;
         return loiter;
+      }
+
+      IMC::Goto
+      getGoto(const unsigned i)
+      {
+        IMC::Goto goto_man;
+
+        goto_man.lat = 0.0;
+        goto_man.lon = 0.0;
+        getPosition(goto_man.lat, goto_man.lon, i);
+
+        goto_man.z = 0;
+        goto_man.z_units = ZUnits::Z_DEPTH;
+        goto_man.speed = m_args.man_config[i].speed;
+        goto_man.speed_units = SpeedUnits::SUNITS_METERS_PS;
+        return goto_man;
+      }
+
+      IMC::StationKeeping
+      getStationKeeping(const unsigned i)
+      {
+        IMC::StationKeeping sk_man;
+        
+        sk_man.lat = 0.0;
+        sk_man.lon = 0.0;
+        getPosition(sk_man.lat, sk_man.lon, i);
+
+        sk_man.duration = m_args.man_config[i].duration;
+        sk_man.z = 0;
+        sk_man.z_units = ZUnits::Z_DEPTH;
+        sk_man.speed = m_args.man_config[i].speed;
+        sk_man.speed_units = SpeedUnits::SUNITS_METERS_PS;
+        sk_man.radius = m_args.man_config[i].radius;
+        return sk_man;
+      }
+
+      void
+      getPosition(double& lat, double& lon, const unsigned i)
+      {
+        if (m_args.man_config[i].position.size() != 2)
+        {
+          // Use current position
+          toWGS84(m_estate, lat, lon);
+        }
+        else
+        {
+          lat = Angles::radians(m_args.man_config[i].position[0]);
+          lon = Angles::radians(m_args.man_config[i].position[1]);
+        }
       }
     };
   }
