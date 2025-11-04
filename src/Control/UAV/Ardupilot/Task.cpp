@@ -132,6 +132,8 @@ namespace Control
         float alt;
         //! LoiterHere (default) radius
         float lradius;
+        //! Radius sent to AP during Goto, to come close
+        float lradius_min;
         //! Loitering tolerance
         int ltolerance;
         //! Has Power Module
@@ -312,6 +314,11 @@ namespace Control
           .defaultValue("-100.0")
           .units(Units::Meter)
           .description("Loiter radius used in LoiterHere (idle)");
+
+          param("Minimum loiter radius", m_args.lradius_min)
+          .defaultValue("3")
+          .units(Units::Meter)
+          .description("Radius sent to AP during Goto, to come close");
 
           param("Loitering tolerance", m_args.ltolerance)
           .defaultValue("10")
@@ -975,17 +982,23 @@ namespace Control
           //! Setting loiter radius parameter
           if (m_vehicle_type != VEHICLE_COPTER)
           {
+            //Set WP_LOITER_RAD to the desired radius if we are loitering
+            //if not, set it small so we will come close to the WP (before AP will start a loiter)
+            m_desired_radius = path->lradius ? (path->flags & DesiredPath::FL_CCLOCKW ? (-1 * path->lradius) : (path->lradius)) : m_args.lradius_min;
             mavlink_msg_param_set_pack(255, 0, &msg,
                                        m_sysid, //! target_system System ID
                                        0, //! target_component Component ID
                                        "WP_LOITER_RAD", //! Parameter name
-                                       path->lradius ? (path->flags & DesiredPath::FL_CCLOCKW ? (-1 * path->lradius) : (path->lradius)) : 10, //! Parameter value
+                                       m_desired_radius, //! Parameter value
                                        MAV_PARAM_TYPE_INT16); //! Parameter type
 
             n = mavlink_msg_to_send_buffer(buf, &msg);
             sendData(buf, n);
           }
-          m_desired_radius = (uint16_t) path->lradius;
+          else
+          {
+            m_desired_radius = (uint16_t) path->lradius;
+          }
 
           float alt = (path->end_z_units & IMC::Z_NONE) ? m_args.alt : (float)path->end_z;
 
