@@ -1,0 +1,10 @@
+dune_test_lib(GevApi GevCameraIsOpen)
+dune_test_lib(CorW32 _w32_init)
+dune_test_lib(turbojpeg tjInitCompress)
+
+if (DUNE_SYS_HAS_LIB_GEVAPI AND DUNE_SYS_HAS_LIB_CORW32 AND DUNE_SYS_HAS_LIB_TURBOJPEG)
+    set(DUNE_USING_GENIENANO 1 CACHE INTERNAL "Gev API")
+    list(APPEND DUNE_VENDOR_LIBS  GevApi CorW32)
+else()
+    set(DUNE_USING_GENIENANO 0 CACHE INTERNAL "Gev API")
+endif()
