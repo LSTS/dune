@@ -69,6 +69,9 @@ namespace DUNE
       connect(const Address& add, uint16_t port);
 
       void
+      closeSocket();
+
+      void
       listen(int backlog);
 
       TCPSocket*
