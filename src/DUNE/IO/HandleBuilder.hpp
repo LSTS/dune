@@ -10,6 +10,8 @@
 #ifndef DUNE_IO_URL_HPP_INCLUDED_
 #define DUNE_IO_URL_HPP_INCLUDED_
 
+#ifndef DUNE_LEGACY
+
 // ISO C++ 98 headers.
 #include <optional>
 #include <string>
@@ -59,5 +61,5 @@ namespace DUNE::IO
   IO::Handle*
   openFrom(const std::string& url, IOConfig cfg = {});
 }
-
-#endif
+#endif // DUNE_LEGACY
+#endif // DUNE_IO_URL_HPP_INCLUDED_
