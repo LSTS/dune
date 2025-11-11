@@ -7,6 +7,7 @@
 // Author: Tiago Sá Marques                                                 *
 //***************************************************************************
 
+#ifndef DUNE_LEGACY
 // DUNE headers.
 #include <DUNE/Hardware/SerialPort.hpp>
 #include <DUNE/IO/Handle.hpp>
@@ -102,3 +103,5 @@ namespace DUNE::IO
     return port;
   }
 }
+
+#endif // DUNE_LEGACY
