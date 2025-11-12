@@ -397,24 +397,52 @@ namespace Simulators
         debug("pier point B lat: %0.6f, lon: %0.6f", m_args.pier[2], m_args.pier[3]);
       }
 
+      std::string
+      pathFileBathymetry(void)
+      {
+        try
+        {
+          Path test_etc = m_ctx.dir_cfg / "simulation" / "bathymetry-" + m_args.location + ".ini";
+          inf("Loading bathymetry file for location %s from %s", m_args.location.c_str(), test_etc.c_str());
+          DUNE::Parsers::Config cfg_tmp(test_etc.c_str());
+          inf("Bathymetry file for location %s found in etc/simulation", m_args.location.c_str());
+          return test_etc.c_str();
+        }
+        catch(...)
+        {
+          war("Bathymetry file for location %s not found in private/etc/simulation. Trying etc/simulation", m_args.location.c_str());
+          try
+          {
+            Path test_etc = m_ctx.dir_cfg / "../../etc/simulation" / "bathymetry-" + m_args.location + ".ini";
+            inf("Loading bathymetry file for location %s from %s", m_args.location.c_str(), test_etc.c_str());
+            DUNE::Parsers::Config cfg_tmp(test_etc.c_str());
+            inf("Bathymetry file for location %s found in etc/simulation", m_args.location.c_str());
+            return test_etc.c_str();
+          }
+          catch(...)
+          {
+            err("Bathymetry file for location %s not found in etc/simulation. Cannot proceed.", m_args.location.c_str());
+          }
+        }
+        return "";
+      }
+
       void
       onResourceInitialization(void)
       {
         Utils::String::toLowerCase(m_args.location);
-        Path path = m_ctx.dir_cfg / "simulation" / ("bathymetry-" + m_args.location + ".ini");
+        Path path = pathFileBathymetry().c_str();
         DUNE::Parsers::Config cfg(path.c_str());
         std::vector<std::string> lines;
+
         cfg.get("Bathymetry", "Data", "", lines);
         cfg.get("Bathymetry", "Latitude (degrees)", "", m_ref_lat);
         cfg.get("Bathymetry", "Longitude (degrees)", "", m_ref_lon);
-
         debug("%s | %0.6f, %0.6f", m_args.location.c_str(), m_ref_lat, m_ref_lon);
         debug("%s | %s", m_args.location.c_str(), path.c_str());
         debug("%s | %lu %s", m_args.location.c_str(), (long unsigned int)lines.size(), "bathymetry values");
-
         m_ref_lat = Angles::radians(m_ref_lat);
         m_ref_lon = Angles::radians(m_ref_lon);
-
         std::vector<QuadTree::Item> data;
         QuadTree::Item item;
         Bounds* bounds = 0;
