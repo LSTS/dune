@@ -301,9 +301,20 @@ main(int argc, char** argv)
     }
     catch (std::runtime_error& e2)
     {
-      std::cerr << String::str("ERROR: %s\n", e.what()) << std::endl;
-      std::cerr << String::str("ERROR: %s\n", e2.what()) << std::endl;
-      return 1;
+      try
+      {
+        cfg_file = context.dir_pri_cfg / options.value("--config-file") + ".ini";
+        context.config.parseFile(cfg_file.c_str());
+        context.original_cfg.parseFile(cfg_file.c_str());
+        context.dir_cfg = context.dir_pri_cfg;
+      }
+      catch (std::runtime_error& e3)
+      {
+        std::cerr << String::str("ERROR: %s\n", e.what()) << std::endl;
+        std::cerr << String::str("ERROR: %s\n", e2.what()) << std::endl;
+        std::cerr << String::str("ERROR: %s\n", e3.what()) << std::endl;
+        return 1;
+      }
     }
   }
 
