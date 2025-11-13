@@ -157,6 +157,36 @@ namespace DUNE
       return str;
     }
 
+    std::string
+    HayesModem::readValue(const std::string& cmd, const std::string& rly, const double tmt)
+    {
+      sendAT(cmd);
+      std::string str = waitForReply(rly, tmt);
+      expectOK();
+      return str;
+    }
+
+    std::string
+    HayesModem::waitForReply(const std::string& rly, const double tmt)
+    {
+      Time::Counter<double> timer(tmt);
+      std::string str;
+
+      do
+      {
+        str = readLine(timer);
+
+        if (Utils::String::startsWith(str, rly))
+          return str;
+      }
+      while(!timer.overflow());
+
+      if (str.empty())
+        throw ReadTimeout();
+      else
+        throw UnexpectedReply(rly, str);
+    }
+
     void
     HayesModem::sendAT(const std::string& str)
     {
@@ -175,11 +205,22 @@ namespace DUNE
     }
 
     void
-    HayesModem::expect(const std::string& str)
+    HayesModem::expect(const std::string& str, const bool persistent)
     {
-      std::string rv = readLine();
-      if (rv != str)
-        throw UnexpectedReply(str, rv);
+      Time::Counter<double> timer(getTimeout());
+
+      do
+      {
+        std::string rv = readLine(timer);
+        if (rv == str)
+          return;
+        else if (!persistent || isErrorReply(rv))
+          throw UnexpectedReply(str, rv);
+      }
+      while (!timer.overflow());
+      
+      getTask()->war("[BasicModem]:timeout while reading line");
+      throw ReadTimeout();
     }
 
     void
@@ -192,6 +233,18 @@ namespace DUNE
     HayesModem::expectREADY(void)
     {
       expect("READY");
+    }
+
+    bool
+    HayesModem::isErrorReply(const std::string& str)
+    {
+      return m_error_replies.find(str) != m_error_replies.end();
+    }
+
+    void
+    HayesModem::addErrorReply(const std::string& str)
+    {
+      m_error_replies.insert(str);
     }
   }
 }

@@ -32,6 +32,7 @@
 
 // ISO C++ 98 headers.
 #include <string>
+#include <unordered_set>
 
 // DUNE headers.
 #include <DUNE/Concurrency/Thread.hpp>
@@ -108,7 +109,7 @@ namespace DUNE
       sendRaw(const uint8_t* data, unsigned data_size);
 
       void
-      expect(const std::string& str);
+      expect(const std::string& str, const bool persistent = true);
 
       void
       expectREADY(void);
@@ -129,9 +130,27 @@ namespace DUNE
       std::string
       readValue(const std::string& cmd);
 
+      std::string
+      readValue(const std::string& cmd, const std::string& rly, const double tmt = c_timeout);
+
+      //! Wait for a specific reply.
+      //! @param[in] rly expected reply start.
+      //! @param[in] tmt maximum time to wait for a reply.
+      //! @return full reply string.
+      std::string
+      waitForReply(const std::string& rly, const double tmt = c_timeout);
+
+      void
+      addErrorReply(const std::string& str);
+
     private:
       //! Last RSSI value.
       IMC::RSSI m_rssi;
+      //! List of error command responses.
+      std::unordered_set<std::string> m_error_replies;
+
+      bool
+      isErrorReply(const std::string& str);
     };
   }
 }

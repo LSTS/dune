@@ -48,9 +48,15 @@ namespace Transports
     using DUNE_NAMESPACES;
 
     //! Default AT command timeout.
-    static const double c_timeout = 5.0;
+    static const double c_at_cmd_timeout = 5.0;
     //! Maximum number of revision lines.
     static const unsigned c_max_rev_lines = 10;
+    //! Default timeout for CSQ command.
+    static constexpr double c_default_timeout_csq = 7.0;
+    //! Default timeout for SBDIX command.
+    static constexpr double c_default_timeout_sbdix = 20.0;
+    //! Error reply string.
+    static constexpr char* c_error_reply = "ERROR";
 
     class Driver: public HayesModem
     {
@@ -67,6 +73,7 @@ namespace Transports
         m_use_9523 = use_9523N;
         m_wait_boot = wait_boot;
         setLineTrim(true);
+        addErrorReply(c_error_reply);
         m_rssi_wdog.setTop(rssi_time_check);
       }
 
@@ -92,7 +99,7 @@ namespace Transports
       unsigned
       getMOMSN(void)
       {
-        std::string value = readValue("+SBDS");
+        std::string value = readValue("+SBDS", "+SBDS", c_at_cmd_timeout);
         unsigned momsn = 0;
         if (std::sscanf(value.c_str(), "+SBDS:%*u,%u,%*u,%*u", &momsn) != 1)
           throw DUNE::Hardware::InvalidFormat(value);
@@ -189,12 +196,14 @@ namespace Transports
         else
           writeBufferMO(&data[0], data.size());
 
-        if (alert_reply)
-          sendAT("+SBDIXA");
-        else
-          sendAT("+SBDIX");
+        std::string sbdix;
 
-        setBusy(true);
+        if (alert_reply)
+          sbdix = readValue("+SBDIXA", "+SBDIX", c_default_timeout_sbdix);
+        else
+          sbdix = readValue("+SBDIX", "+SBDIX", c_default_timeout_sbdix);
+
+        handleSBDIX(sbdix);
       }
 
       //! Retrieve the result of the last SBD session. The function
@@ -222,18 +231,14 @@ namespace Transports
       void
       clearBufferMO(void)
       {
-        std::string rv = readValue("+SBDD0");
-        if (rv != "0")
-          throw std::runtime_error(DTR("error ocurred while clearing MO buffer"));
+        clearMessageBuffer(BFR_TYPE_ORIGINATED);
       }
 
       //! Clear MT SBD message buffer.
       void
       clearBufferMT(void)
       {
-        std::string rv = readValue("+SBDD1");
-        if (rv != "0")
-          throw std::runtime_error(DTR("error ocurred while clearing MT buffer"));
+        clearMessageBuffer(BFR_TYPE_TERMINATED);
       }
 
       //! Check if a ring alert was received.
@@ -266,6 +271,14 @@ namespace Transports
       getFirmVersionLIDB(void)
       {
         return readValue("V");
+      }
+
+      //! Set modem driver timeout
+      //! @param[in] timeout time to wait (seconds).
+      void
+      setDriverTimeout(double timeout)
+      {
+        setTimeout(timeout);
       }
 
     private:
@@ -332,8 +345,6 @@ namespace Transports
           handleCIEV(str);
         else if (String::startsWith(str, "+AREG"))
           handleAREG(str);
-        else if (String::startsWith(str, "+SBDIX"))
-          handleSBDIX(str);
         else
           return false;
 
@@ -390,10 +401,6 @@ namespace Transports
               m_length_msg_9523 = m_session_result.getLengthMT();
           }
         }
-
-        setSkipLine("OK");
-
-        setBusy(false);
       }
 
       //! Enable or disable radio activity.
@@ -444,17 +451,13 @@ namespace Transports
       void
       clearMessageBuffer(BufferType type)
       {
-        std::string rv = readValue(String::str("+SBDD%u", type));
-        if (rv != "0")
-          throw std::runtime_error(DTR("error ocurred while clearing buffer"));
+        readValue(String::str("+SBDD%u", type), "0", c_at_cmd_timeout);
       }
 
       void
       clearSequenceNumber(void)
       {
-        std::string rv = readValue("+SBDC");
-        if (rv != "0")
-          throw std::runtime_error(DTR("error ocurred while clearing the MOMSN"));
+        readValue("+SBDC", "0", c_at_cmd_timeout);
       }
 
       void
@@ -476,7 +479,7 @@ namespace Transports
       {
         if (data_size == 0)
         {
-          clearMessageBuffer(BFR_TYPE_ORIGINATED);
+          clearBufferMO();
           return;
         }
 
@@ -578,12 +581,7 @@ namespace Transports
         if (!m_rssi_wdog.overflow())
           return;
 
-        sendAT("+CSQ");
-
-        // Needs a timeout bigger than the default 5 seconds.
-        Counter<double> timer(7.0);
-        std::string val = readLine(timer);
-        expectOK();
+        std::string val = readValue("+CSQ", "+CSQ", c_default_timeout_csq);
 
         unsigned rssi = 0;
         if (std::sscanf(val.c_str(), "+CSQ:%u", &rssi) != 1)

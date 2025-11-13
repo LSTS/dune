@@ -102,6 +102,9 @@ namespace DUNE
       setBusy(bool value);
 
     protected:
+      //! Default command timeout.
+      static constexpr double c_timeout = 5.0;
+
       //! Read mode.
       enum ReadMode
       {
@@ -113,6 +116,8 @@ namespace DUNE
 
       //! Concurrency lock.
       Concurrency::Mutex m_mutex;
+      //! Lock for data ingestion.
+      Concurrency::Mutex m_ingestion_mtx;
 
       //! Handle unsolicited or asynchronous commands.
       //! @param[in] str command string.
@@ -222,6 +227,29 @@ namespace DUNE
       std::string m_line_term_out;
       //! True to trim white-space.
       bool m_line_trim;
+
+
+
+      void
+      handleIncomingCharacters(std::string& str);
+
+      void
+      ingestIncomingDataRaw(const char* data, const size_t len);
+
+      void
+      ingestIncomingDataLine(const char* data, const size_t len);
+
+      void
+      pushLine(const std::string& line);
+
+      bool
+      incomingCharsQueueEmpty(void);
+
+      bool
+      converBytesToLines(void);
+
+      bool
+      convertLinesToBytes(void);
 
       bool
       processInput(std::string& str);
