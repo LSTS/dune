@@ -202,7 +202,6 @@ namespace UserInterfaces
         param("System Network Interfaces", m_args.network_interfaces)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
-        .defaultValue("Int:eth0,Zero:ztcfw4jwt3,GPRS:wwan0")
         .description("System network interfaces <name>:<interface>."
                      "For multiple interfaces, use comma ',' to seperate values.");
 
