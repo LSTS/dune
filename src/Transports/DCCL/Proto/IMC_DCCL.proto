@@ -64,6 +64,9 @@ enum ParameterName {
     SHUTTER_VALUE = 9;
     RANGE = 10;
     FREQUENCY = 11;
+    THRUSTER_ALWAYS_ON = 12;
+    SAMPLE_TIME_DURATION = 13;
+    PERIODICITY_OF_DATA_SAMPLING = 14;
 }
 
 // Enum Parameter Value string
@@ -82,7 +85,12 @@ enum EntityName {
     ACOUSTIC_MODEM = 3;
     SIDESCAN = 4;
     CAMERA = 5;
-    MULTIBEAM = 6;   
+    MULTIBEAM = 6; 
+    FLUOROMETERS = 7;
+    ADCP = 8;
+    DISSOLVED_OXYGEN = 9;  
+    CTD = 10;
+    HEADING_CONTROLLER = 11;
 }
 
 //Enum TransitionCondition 
