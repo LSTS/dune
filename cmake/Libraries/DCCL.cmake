@@ -29,7 +29,7 @@
 
 if(DCCL)
   find_package(Protobuf REQUIRED)
-  find_library(DCCL_LIBRARY NAMES dccl PATHS /usr/lib/)
+  find_library(DCCL_LIBRARY NAMES dccl)
   message(STATUS "DCCL Library found:  ${DCCL_LIBRARY}")
   if(${DCCL_LIBRARY} STRLESS "libdccl.so")
     # dccl present
@@ -41,7 +41,7 @@ if(DCCL)
     set(DUNE_SYS_HAS_DCCL 0 CACHE INTERNAL "DCCL library")
   endif()
 
-  find_library(PROTOBUF_LIBRARY NAMES protobuf PATHS /usr/lib/)
+  find_library(PROTOBUF_LIBRARY NAMES protobuf)
   message(STATUS "Protobuf Library found:  ${PROTOBUF_LIBRARY}")
   if(${PROTOBUF_LIBRARY} STRLESS "libprotobuf.so")
     # protobuf present
