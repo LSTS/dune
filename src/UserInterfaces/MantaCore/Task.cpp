@@ -684,7 +684,7 @@ namespace UserInterfaces
 
           IMC::EntityParameter p;
           p.name = modem.first;
-          p.value = modem.second ? "true" : "false";
+          p.value = uncastLexical(modem.second);
           sep.params.push_back(p);
         }
         dispatch(sep);
