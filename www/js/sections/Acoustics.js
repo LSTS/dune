@@ -44,7 +44,6 @@ function Acoustics(root_id)
   this.handleData = this.handleData.bind(this);
   this.requestData = this.requestData.bind(this);
   this.errorHandler = this.errorHandler.bind(this);
-  this.timeoutHandler = this.timeoutHandler.bind(this);
 };
   
 Acoustics.prototype = Object.create(BasicSection.prototype);
@@ -59,11 +58,6 @@ Acoustics.prototype.start = function()
   this.m_acoustic_targets = [];
   this.updateActionsSection();
   this.requestData();
-};
-
-Acoustics.prototype.timeoutHandler = function()
-{
-  this.remove();
 };
 
 Acoustics.prototype.errorHandler = function(status, status_text)

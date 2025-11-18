@@ -63,7 +63,6 @@ function Power(root_id)
   this.handleData = this.handleData.bind(this);
   this.requestData = this.requestData.bind(this);
   this.errorHandler = this.errorHandler.bind(this);
-  this.timeoutHandler = this.timeoutHandler.bind(this);
 };
 
 Power.prototype = Object.create(BasicSection.prototype);
@@ -73,11 +72,6 @@ Power.prototype.start = function()
 {
   this.requestData();
 }
-
-Power.prototype.timeoutHandler = function()
-{
-  this.remove();
-};
 
 Power.prototype.errorHandler = function(status, status_text)
 {

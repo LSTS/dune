@@ -28,7 +28,8 @@
 //***************************************************************************
 
 // Map sys_type to the corresponding system type name
-const sysTypeMap = {
+const sysTypeMap =
+{
   0: 'CCU',
   1: 'HUMANSENSOR',
   2: 'UUV',
@@ -37,7 +38,7 @@ const sysTypeMap = {
   5: 'UGV',
   6: 'STATICSENSOR',
   7: 'MOBILESENSOR',
-  8: 'WSN',
+  8: 'WSN'
 };
 
 function Announces(root_id)
@@ -53,7 +54,6 @@ function Announces(root_id)
   this.handleData = this.handleData.bind(this);
   this.requestData = this.requestData.bind(this);
   this.errorHandler = this.errorHandler.bind(this);
-  this.timeoutHandler = this.timeoutHandler.bind(this);
 }
 
 Announces.prototype = Object.create(BasicSection.prototype);
@@ -66,11 +66,6 @@ Announces.prototype.start = function()
   this.uniqueContexts = new Set();
 
   this.requestData();
-};
-
-Announces.prototype.timeoutHandler = function()
-{
-  this.remove();
 };
 
 Announces.prototype.errorHandler = function(status, status_text)

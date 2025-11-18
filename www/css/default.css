@@ -878,3 +878,8 @@ div#Sensors
 {
   background-color: var(--c-background);
 }
+
+.crossed-text
+{
+  text-decoration: line-through;
+}

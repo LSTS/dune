@@ -49,6 +49,7 @@ function Info(root_id)
 
   this.handleData = this.handleData.bind(this);
   this.requestData = this.requestData.bind(this);
+  this.errorHandler = this.errorHandler.bind(this);
 };
   
 Info.prototype = Object.create(BasicSection.prototype);
@@ -59,13 +60,9 @@ Info.prototype.start = function()
   this.requestData();
 }
 
-Info.prototype.timeoutHandler = function()
-{
-  setConnected(false);
-};
-
 Info.prototype.errorHandler = function(status, status_text)
 {
+  setConnected(false);
   this.timeoutHandler();
 };
 

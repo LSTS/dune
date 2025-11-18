@@ -65,11 +65,6 @@ Dummy.prototype.start = function()
 {
 };
 
-Dummy.prototype.timeoutHandler = function()
-{
-  this.remove();
-};
-
 Dummy.prototype.errorHandler = function(status, status_text)
 {
   this.timeoutHandler();

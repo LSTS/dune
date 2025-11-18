@@ -42,7 +42,6 @@ function Logbook(root_id)
   this.handleData = this.handleData.bind(this);
   this.requestData = this.requestData.bind(this);
   this.errorHandler = this.errorHandler.bind(this);
-  this.timeoutHandler = this.timeoutHandler.bind(this);
 };
 
 Logbook.prototype = Object.create(BasicSection.prototype);
@@ -55,11 +54,6 @@ Logbook.prototype.start = function()
   this.uniqueContexts = new Set();
 
   this.requestData();
-};
-
-Logbook.prototype.timeoutHandler = function()
-{
-  this.remove();
 };
 
 Logbook.prototype.errorHandler = function(status, status_text)

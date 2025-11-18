@@ -64,12 +64,30 @@ BasicSection.prototype.add = function()
     return;
 
   const menuItem = getMenuItem("button" + this.id());
-  if (menuItem)
-    menuItem.style.display = 'block';
+  if (menuItem == null)
+   return;
 
+  menuItem.style.display = 'block';
+  this.decrossButtonText(menuItem);
   this.m_used = true;
   this.element().style.display = 'block';
   this.init();
+};
+
+BasicSection.prototype.crossButtonText = function(button)
+{
+  if (button == null || button.classList == null)
+    return;
+
+  button.classList.add('crossed-text');
+};
+
+BasicSection.prototype.decrossButtonText = function(button)
+{
+  if (button == null || button.classList == null)
+    return;
+
+  button.classList.remove('crossed-text');
 };
 
 BasicSection.prototype.remove = function()
@@ -154,4 +172,9 @@ BasicSection.prototype.insertOrdered = function(element, key, array, map, root)
   }
 
   root.appendChild(element);
+};
+
+BasicSection.prototype.timeoutHandler = function()
+{
+  this.crossButtonText(getMenuItem("button" + this.id()));
 };

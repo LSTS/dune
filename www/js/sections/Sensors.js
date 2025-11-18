@@ -40,7 +40,6 @@ function Sensors(root_id)
   this.handleData = this.handleData.bind(this);
   this.requestData = this.requestData.bind(this);
   this.errorHandler = this.errorHandler.bind(this);
-  this.timeoutHandler = this.timeoutHandler.bind(this);
 };
   
 Sensors.prototype = Object.create(BasicSection.prototype);
@@ -49,11 +48,6 @@ Sensors.prototype.constructor = Sensors;
 Sensors.prototype.start = function()
 {
   this.requestData();
-};
-
-Sensors.prototype.timeoutHandler = function()
-{
-  this.remove();
 };
 
 Sensors.prototype.errorHandler = function(status, status_text)
