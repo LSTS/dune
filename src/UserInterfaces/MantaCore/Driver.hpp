@@ -135,7 +135,6 @@ namespace UserInterfaces
         sendCommand(m_cmd_text, false);
       }
 
-
       void
       requestFirmwareVersion(void)
       {
