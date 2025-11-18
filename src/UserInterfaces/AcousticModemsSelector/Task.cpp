@@ -305,7 +305,8 @@ namespace UserInterfaces
         {
           IMC::EntityParameter p;
           p.name = amodem.first;
-          p.value = (lst.find(amodem.first) != lst.end()) ? "true" : "false";
+          bool value = lst.find(amodem.first) != lst.end();
+          p.value =  uncastLexical(value);
           sep.params.push_back(p);
         }
 
@@ -352,7 +353,7 @@ namespace UserInterfaces
                   m_acoustic_modems[m_selected[type].name].selected = true;
                   IMC::EntityParameter p;
                   p.name = m_selected[type].name;
-                  p.value = m_acoustic_modems[m_selected[type].name].selected ? "true" : "false";
+                  p.value = uncastLexical(m_acoustic_modems[m_selected[type].name].selected);
                   sep.params.push_back(p);
                   m_amodems_state = false;
                 }
@@ -462,7 +463,7 @@ namespace UserInterfaces
 
           IMC::EntityParameter p;
           p.name = modem.first;
-          p.value = modem.second.selected ? "true" : "false";
+          p.value = uncastLexical(modem.second.selected);
           sep.params.push_back(p);
         }
 
@@ -498,7 +499,7 @@ namespace UserInterfaces
 
           IMC::EntityParameter p;
           p.name = modem.first;
-          p.value = modem.second.selected ? "true" : "false";
+          p.value = uncastLexical(modem.second.selected);
           params.params.push_back(p);
         }
 
