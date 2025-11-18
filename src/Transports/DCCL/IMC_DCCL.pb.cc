@@ -5,784 +5,711 @@
 
 #include <algorithm>
 
-#include <google/protobuf/stubs/common.h>
-#include <google/protobuf/stubs/port.h>
 #include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/wire_format_lite_inl.h>
+#include <google/protobuf/extension_set.h>
+#include <google/protobuf/wire_format_lite.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/generated_message_reflection.h>
 #include <google/protobuf/reflection_ops.h>
 #include <google/protobuf/wire_format.h>
-// This is a temporary google only hack
-#ifdef GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
-#include "third_party/protobuf/version.h"
-#endif
 // @@protoc_insertion_point(includes)
+#include <google/protobuf/port_def.inc>
 
-namespace protobuf_IMC_5fDCCL_2eproto {
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Goto;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Header;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Loiter;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_ManeuverID;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_ParameterValue;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_PathPoint;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_PlanVariable;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_StationKeeping;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_EntityParameter;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_EntityParameters;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_FollowPath;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_PlanTransition;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<3> scc_info_PlanManeuver;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_IMC_5fDCCL_2eproto ::google::protobuf::internal::SCCInfo<4> scc_info_Maneuver;
-}  // namespace protobuf_IMC_5fDCCL_2eproto
+PROTOBUF_PRAGMA_INIT_SEG
+
+namespace _pb = ::PROTOBUF_NAMESPACE_ID;
+namespace _pbi = _pb::internal;
+
 namespace IMC_DCCL {
-class EstimatedStateDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<EstimatedState>
-      _instance;
-} _EstimatedState_default_instance_;
-class GotoDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<Goto>
-      _instance;
-} _Goto_default_instance_;
-class StationKeepingDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<StationKeeping>
-      _instance;
-} _StationKeeping_default_instance_;
-class FollowPathDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<FollowPath>
-      _instance;
-} _FollowPath_default_instance_;
-class LoiterDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<Loiter>
-      _instance;
-} _Loiter_default_instance_;
-class PathPointDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<PathPoint>
-      _instance;
-} _PathPoint_default_instance_;
-class ManeuverDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<Maneuver>
-      _instance;
-  const ::IMC_DCCL::Goto* goto_maneuver_;
-  const ::IMC_DCCL::FollowPath* followpath_maneuver_;
-  const ::IMC_DCCL::Loiter* loiter_maneuver_;
-  const ::IMC_DCCL::StationKeeping* stationkeeping_maneuver_;
-} _Maneuver_default_instance_;
-class ParameterValueDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<ParameterValue>
-      _instance;
-  float value_number_;
-  int value_string_;
-} _ParameterValue_default_instance_;
-class EntityParameterDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<EntityParameter>
-      _instance;
-} _EntityParameter_default_instance_;
-class EntityParametersDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<EntityParameters>
-      _instance;
-} _EntityParameters_default_instance_;
-class ManeuverIDDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<ManeuverID>
-      _instance;
-} _ManeuverID_default_instance_;
-class PlanManeuverDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<PlanManeuver>
-      _instance;
-} _PlanManeuver_default_instance_;
-class PlanVariableDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<PlanVariable>
-      _instance;
-} _PlanVariable_default_instance_;
-class PlanTransitionDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<PlanTransition>
-      _instance;
-} _PlanTransition_default_instance_;
-class HeaderDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<Header>
-      _instance;
-} _Header_default_instance_;
-class PlanSpecificationDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<PlanSpecification>
-      _instance;
-} _PlanSpecification_default_instance_;
-}  // namespace IMC_DCCL
-namespace protobuf_IMC_5fDCCL_2eproto {
-static void InitDefaultsEstimatedState() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_EstimatedState_default_instance_;
-    new (ptr) ::IMC_DCCL::EstimatedState();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::EstimatedState::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_EstimatedState =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsEstimatedState}, {}};
-
-static void InitDefaultsGoto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_Goto_default_instance_;
-    new (ptr) ::IMC_DCCL::Goto();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::Goto::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_Goto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsGoto}, {}};
-
-static void InitDefaultsStationKeeping() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_StationKeeping_default_instance_;
-    new (ptr) ::IMC_DCCL::StationKeeping();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::StationKeeping::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_StationKeeping =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsStationKeeping}, {}};
-
-static void InitDefaultsFollowPath() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_FollowPath_default_instance_;
-    new (ptr) ::IMC_DCCL::FollowPath();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::FollowPath::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<1> scc_info_FollowPath =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsFollowPath}, {
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_PathPoint.base,}};
-
-static void InitDefaultsLoiter() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_Loiter_default_instance_;
-    new (ptr) ::IMC_DCCL::Loiter();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::Loiter::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_Loiter =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsLoiter}, {}};
-
-static void InitDefaultsPathPoint() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_PathPoint_default_instance_;
-    new (ptr) ::IMC_DCCL::PathPoint();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::PathPoint::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_PathPoint =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsPathPoint}, {}};
-
-static void InitDefaultsManeuver() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_Maneuver_default_instance_;
-    new (ptr) ::IMC_DCCL::Maneuver();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::Maneuver::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<4> scc_info_Maneuver =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 4, InitDefaultsManeuver}, {
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_Goto.base,
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_FollowPath.base,
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_Loiter.base,
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_StationKeeping.base,}};
-
-static void InitDefaultsParameterValue() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_ParameterValue_default_instance_;
-    new (ptr) ::IMC_DCCL::ParameterValue();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::ParameterValue::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_ParameterValue =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsParameterValue}, {}};
-
-static void InitDefaultsEntityParameter() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_EntityParameter_default_instance_;
-    new (ptr) ::IMC_DCCL::EntityParameter();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::EntityParameter::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<1> scc_info_EntityParameter =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsEntityParameter}, {
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_ParameterValue.base,}};
-
-static void InitDefaultsEntityParameters() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_EntityParameters_default_instance_;
-    new (ptr) ::IMC_DCCL::EntityParameters();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::EntityParameters::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<1> scc_info_EntityParameters =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsEntityParameters}, {
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_EntityParameter.base,}};
-
-static void InitDefaultsManeuverID() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_ManeuverID_default_instance_;
-    new (ptr) ::IMC_DCCL::ManeuverID();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::ManeuverID::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_ManeuverID =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsManeuverID}, {}};
-
-static void InitDefaultsPlanManeuver() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_PlanManeuver_default_instance_;
-    new (ptr) ::IMC_DCCL::PlanManeuver();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::PlanManeuver::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<3> scc_info_PlanManeuver =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 3, InitDefaultsPlanManeuver}, {
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_ManeuverID.base,
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_Maneuver.base,
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_EntityParameters.base,}};
-
-static void InitDefaultsPlanVariable() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_PlanVariable_default_instance_;
-    new (ptr) ::IMC_DCCL::PlanVariable();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::PlanVariable::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_PlanVariable =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsPlanVariable}, {}};
-
-static void InitDefaultsPlanTransition() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_PlanTransition_default_instance_;
-    new (ptr) ::IMC_DCCL::PlanTransition();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::PlanTransition::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<1> scc_info_PlanTransition =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsPlanTransition}, {
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_ManeuverID.base,}};
-
-static void InitDefaultsHeader() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_Header_default_instance_;
-    new (ptr) ::IMC_DCCL::Header();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::Header::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_Header =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsHeader}, {}};
-
-static void InitDefaultsPlanSpecification() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::IMC_DCCL::_PlanSpecification_default_instance_;
-    new (ptr) ::IMC_DCCL::PlanSpecification();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::IMC_DCCL::PlanSpecification::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<6> scc_info_PlanSpecification =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 6, InitDefaultsPlanSpecification}, {
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_ManeuverID.base,
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_PlanManeuver.base,
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_PlanTransition.base,
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_EntityParameters.base,
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_PlanVariable.base,
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_Header.base,}};
-
-void InitDefaults() {
-  ::google::protobuf::internal::InitSCC(&scc_info_EstimatedState.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_Goto.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_StationKeeping.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_FollowPath.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_Loiter.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_PathPoint.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_Maneuver.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_ParameterValue.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_EntityParameter.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_EntityParameters.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_ManeuverID.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_PlanManeuver.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_PlanVariable.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_PlanTransition.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_Header.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_PlanSpecification.base);
-}
-
-::google::protobuf::Metadata file_level_metadata[16];
-const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[11];
-
-const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, lat_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, lon_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, height_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, x_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, y_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, z_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, phi_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, theta_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, psi_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, u_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, v_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, w_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, vx_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, vy_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, vz_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, p_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, q_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, r_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, depth_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EstimatedState, altitude_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, timeout_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, lat_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, lon_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, z_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, z_units_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, speed_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, speed_units_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, roll_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, pitch_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Goto, yaw_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, lat_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, lon_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, z_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, z_units_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, radius_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, duration_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, speed_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::StationKeeping, speed_units_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::FollowPath, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::FollowPath, timeout_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::FollowPath, lat_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::FollowPath, lon_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::FollowPath, z_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::FollowPath, z_units_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::FollowPath, speed_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::FollowPath, speed_units_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::FollowPath, points_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, timeout_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, lat_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, lon_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, z_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, z_units_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, duration_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, speed_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, speed_units_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, type_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, radius_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, length_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, bearing_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Loiter, direction_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PathPoint, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PathPoint, x_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PathPoint, y_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PathPoint, z_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Maneuver, _internal_metadata_),
-  ~0u,  // no _extensions_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Maneuver, _oneof_case_[0]),
-  ~0u,  // no _weak_field_map_
-  offsetof(::IMC_DCCL::ManeuverDefaultTypeInternal, goto_maneuver_),
-  offsetof(::IMC_DCCL::ManeuverDefaultTypeInternal, followpath_maneuver_),
-  offsetof(::IMC_DCCL::ManeuverDefaultTypeInternal, loiter_maneuver_),
-  offsetof(::IMC_DCCL::ManeuverDefaultTypeInternal, stationkeeping_maneuver_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Maneuver, ManeuverUnion_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::ParameterValue, _internal_metadata_),
-  ~0u,  // no _extensions_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::ParameterValue, _oneof_case_[0]),
-  ~0u,  // no _weak_field_map_
-  offsetof(::IMC_DCCL::ParameterValueDefaultTypeInternal, value_number_),
-  offsetof(::IMC_DCCL::ParameterValueDefaultTypeInternal, value_string_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::ParameterValue, ParameterValueUnion_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EntityParameter, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EntityParameter, name_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EntityParameter, value_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EntityParameters, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EntityParameters, name_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::EntityParameters, params_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::ManeuverID, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::ManeuverID, maneuver_type_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::ManeuverID, maneuver_number_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanManeuver, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanManeuver, maneuver_id_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanManeuver, data_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanManeuver, start_actions_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanVariable, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanVariable, name_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanVariable, value_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanVariable, type_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanVariable, access_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanTransition, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanTransition, source_man_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanTransition, dest_man_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanTransition, conditions_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Header, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Header, src_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Header, src_ent_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Header, dst_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::Header, dst_ent_),
-  ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, plan_id_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, description_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, vnamespace_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, start_man_id_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, maneuvers_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, transitions_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, start_actions_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, variables_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, head_),
-};
-static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::IMC_DCCL::EstimatedState)},
-  { 25, -1, sizeof(::IMC_DCCL::Goto)},
-  { 40, -1, sizeof(::IMC_DCCL::StationKeeping)},
-  { 53, -1, sizeof(::IMC_DCCL::FollowPath)},
-  { 66, -1, sizeof(::IMC_DCCL::Loiter)},
-  { 84, -1, sizeof(::IMC_DCCL::PathPoint)},
-  { 92, -1, sizeof(::IMC_DCCL::Maneuver)},
-  { 102, -1, sizeof(::IMC_DCCL::ParameterValue)},
-  { 110, -1, sizeof(::IMC_DCCL::EntityParameter)},
-  { 117, -1, sizeof(::IMC_DCCL::EntityParameters)},
-  { 124, -1, sizeof(::IMC_DCCL::ManeuverID)},
-  { 131, -1, sizeof(::IMC_DCCL::PlanManeuver)},
-  { 139, -1, sizeof(::IMC_DCCL::PlanVariable)},
-  { 148, -1, sizeof(::IMC_DCCL::PlanTransition)},
-  { 156, -1, sizeof(::IMC_DCCL::Header)},
-  { 165, -1, sizeof(::IMC_DCCL::PlanSpecification)},
-};
-
-static ::google::protobuf::Message const * const file_default_instances[] = {
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_EstimatedState_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_Goto_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_StationKeeping_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_FollowPath_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_Loiter_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_PathPoint_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_Maneuver_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_ParameterValue_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_EntityParameter_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_EntityParameters_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_ManeuverID_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_PlanManeuver_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_PlanVariable_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_PlanTransition_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_Header_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::IMC_DCCL::_PlanSpecification_default_instance_),
-};
-
-void protobuf_AssignDescriptors() {
-  AddDescriptors();
-  AssignDescriptors(
-      "IMC_DCCL.proto", schemas, file_default_instances, TableStruct::offsets,
-      file_level_metadata, file_level_enum_descriptors, NULL);
-}
-
-void protobuf_AssignDescriptorsOnce() {
-  static ::google::protobuf::internal::once_flag once;
-  ::google::protobuf::internal::call_once(once, protobuf_AssignDescriptors);
-}
-
-void protobuf_RegisterTypes(const ::std::string&) GOOGLE_PROTOBUF_ATTRIBUTE_COLD;
-void protobuf_RegisterTypes(const ::std::string&) {
-  protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 16);
-}
-
-void AddDescriptorsImpl() {
-  InitDefaults();
-  static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\016IMC_DCCL.proto\022\010IMC_DCCL\032\034dccl/option_"
-      "extensions.proto\"\213\006\n\016EstimatedState\022$\n\003l"
-      "at\030\001 \001(\002B\027\242\?\024 \003)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n\003lon"
-      "\030\002 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\'\n\006heigh"
-      "t\030\003 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\217\3001\000\000\000\000\000X\273@\022\"\n\001x\030\004 "
-      "\001(\002B\027\242\?\024 \001)\000\000\000\000\000\210\323\3001\000\000\000\000\000\210\323@\022\"\n\001y\030\005 \001(\002B"
-      "\027\242\?\024 \001)\000\000\000\000\000\210\323\3001\000\000\000\000\000\210\323@\022\"\n\001z\030\006 \001(\002B\027\242\?\024"
-      " \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@\022$\n\003phi\030\007 \001(\002B\027\242\?\024 \003"
-      ")T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022&\n\005theta\030\010 \001(\002B\027\242\?\024 \003"
-      ")\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n\003psi\030\t \001(\002B\027\242\?\024 \003)T"
-      "\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001u\030\n \001(\002B\027\242\?\024 \001)\000\000\000\000\000"
-      "\000$\3001\000\000\000\000\000\000$@\022\"\n\001v\030\013 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001"
-      "\000\000\000\000\000\000$@\022\"\n\001w\030\014 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000"
-      "\000\000$@\022#\n\002vx\030\r \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$"
-      "@\022#\n\002vy\030\016 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@\022#"
-      "\n\002vz\030\017 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@\022\"\n\001p"
-      "\030\020 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001q\030\021 \001"
-      "(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001r\030\022 \001(\002B\027"
-      "\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022&\n\005depth\030\023 \001(\002B\027"
-      "\242\?\024 \001)\000\000\000\000\000\000\360\2771\000\000\000\000\000\000y@\022)\n\010altitude\030\024 \001("
-      "\002B\027\242\?\024 \001)\000\000\000\000\000\000\360\2771\000\000\000\000\000\210\263@:\n\242\?\007\010\336\002\020P(\004\"\225"
-      "\003\n\004Goto\022&\n\007timeout\030\001 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\0001\000"
-      "\000\000\000\340\377\357@\022$\n\003lat\030\002 \001(\002B\027\242\?\024 \n)\037\205\353Q\270\036\371\2771\037\205\353"
-      "Q\270\036\371\?\022$\n\003lon\030\003 \001(\002B\027\242\?\024 \n)T\343\245\233\304 \t\3001T\343\245\233\304"
-      " \t@\022\"\n\001z\030\004 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@\022"
-      "!\n\007z_units\030\005 \001(\0162\020.IMC_DCCL.ZUnits\022&\n\005sp"
-      "eed\030\006 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001\000\000\000\000\000@\237@\022)\n\013sp"
-      "eed_units\030\007 \001(\0162\024.IMC_DCCL.SpeedUnits\022%\n"
-      "\004roll\030\010 \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\360\2771o\022\203\300\312!\031@\022&\n\005"
-      "pitch\030\t \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\360\2771o\022\203\300\312!\031@\022$\n\003"
-      "yaw\030\n \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\360\2771o\022\203\300\312!\031@:\n\242\?\007\010"
-      "\302\003\020P(\004\"\324\002\n\016StationKeeping\022$\n\003lat\030\001 \001(\002B\027"
-      "\242\?\024 \n)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n\003lon\030\002 \001(\002B\027\242\?"
-      "\024 \n)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001z\030\003 \001(\002B\027\242\?\024 \001)"
-      "\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@\022!\n\007z_units\030\004 \001(\0162\020.IMC"
-      "_DCCL.ZUnits\022\'\n\006radius\030\005 \001(\002B\027\242\?\024 \001)\000\000\000\000"
-      "\000\000\360\?1\000\000\000\000\000j\370@\022\'\n\010duration\030\006 \001(\005B\025\242\?\022)\000\000\000"
-      "\000\000\000\000\0001\000\000\000\000\340\377\357@\022&\n\005speed\030\007 \001(\002B\027\242\?\024 \001)\000\000\000"
-      "\000\000@\237\3001\000\000\000\000\000@\237@\022)\n\013speed_units\030\010 \001(\0162\024.IM"
-      "C_DCCL.SpeedUnits:\n\242\?\007\010\315\003\020P(\004\"\323\002\n\nFollow"
-      "Path\022&\n\007timeout\030\001 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000"
-      "\340\377\357@\022$\n\003lat\030\002 \001(\002B\027\242\?\024 \003)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036"
-      "\371\?\022$\n\003lon\030\003 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@"
-      "\022\"\n\001z\030\004 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@\022!\n\007"
-      "z_units\030\005 \001(\0162\020.IMC_DCCL.ZUnits\022&\n\005speed"
-      "\030\006 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001\000\000\000\000\000@\237@\022)\n\013speed"
-      "_units\030\007 \001(\0162\024.IMC_DCCL.SpeedUnits\022*\n\006po"
-      "ints\030\010 \003(\0132\023.IMC_DCCL.PathPointB\005\242\?\002P\036:\013"
-      "\242\?\010\010\311\003\020\350\007(\004\"\230\004\n\006Loiter\022&\n\007timeout\030\001 \001(\005B"
-      "\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\340\377\357@\022$\n\003lat\030\002 \001(\002B\027\242\?\024"
-      " \003)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n\003lon\030\003 \001(\002B\027\242\?\024 \003"
-      ")T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001z\030\004 \001(\002B\027\242\?\024 \001)\000\000\000"
-      "\000\000\000y\3001\000\000\000\000\000\000y@\022!\n\007z_units\030\005 \001(\0162\020.IMC_DC"
-      "CL.ZUnits\022\'\n\010duration\030\006 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000"
-      "\0001\000\000\000\000\000\030\305@\022&\n\005speed\030\007 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237"
-      "\3001\000\000\000\000\000@\237@\022)\n\013speed_units\030\010 \001(\0162\024.IMC_DC"
-      "CL.SpeedUnits\022\"\n\004type\030\t \001(\0162\024.IMC_DCCL.L"
-      "oiterType\022\'\n\006radius\030\n \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000\360"
-      "\?1\000\000\000\000\000j\370@\022\'\n\006length\030\013 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000"
-      "\360\?1\000\000\000\000\000j\370@\022(\n\007bearing\030\014 \001(\002B\027\242\?\024 \003)\000\000\000\000"
-      "\000\000\000\0001o\022\203\300\312!\031@\022*\n\tdirection\030\r \001(\0162\027.IMC_D"
-      "CCL.DirectionType:\013\242\?\010\010\305\003\020\350\007(\004\"\203\001\n\tPathP"
-      "oint\022\"\n\001x\030\001 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\210\323\3001\000\000\000\000\000\210\323@"
-      "\022\"\n\001y\030\002 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\210\323\3001\000\000\000\000\000\210\323@\022\"\n\001"
-      "z\030\003 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@:\n\242\?\007\010\312\003"
-      "\020P(\004\"\357\001\n\010Maneuver\022\'\n\rgoto_maneuver\030\001 \001(\013"
-      "2\016.IMC_DCCL.GotoH\000\0223\n\023followpath_maneuve"
-      "r\030\002 \001(\0132\024.IMC_DCCL.FollowPathH\000\022+\n\017loite"
-      "r_maneuver\030\003 \001(\0132\020.IMC_DCCL.LoiterH\000\022;\n\027"
-      "stationkeeping_maneuver\030\004 \001(\0132\030.IMC_DCCL"
-      ".StationKeepingH\000:\n\242\?\007\010\001\020\254\002(\004B\017\n\rManeuve"
-      "rUnion\"\222\001\n\016ParameterValue\022/\n\014value_numbe"
-      "r\030\001 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\210\303@H\000\022,\n\014va"
-      "lue_string\030\002 \001(\0162\024.IMC_DCCL.ParamValueH\000"
-      ":\n\242\?\007\010\002\020\254\002(\004B\025\n\023ParameterValueUnion\"m\n\017E"
-      "ntityParameter\022%\n\004name\030\001 \001(\0162\027.IMC_DCCL."
-      "ParameterName\022\'\n\005value\030\002 \001(\0132\030.IMC_DCCL."
-      "ParameterValue:\n\242\?\007\010\241\006\020\024(\004\"t\n\020EntityPara"
-      "meters\022\"\n\004name\030\001 \001(\0162\024.IMC_DCCL.EntityNa"
-      "me\0220\n\006params\030\002 \003(\0132\031.IMC_DCCL.EntityPara"
-      "meterB\005\242\?\002P\n:\n\242\?\007\010\242\006\020((\004\"v\n\nManeuverID\022-"
-      "\n\rmaneuver_type\030\001 \001(\0162\026.IMC_DCCL.Maneuve"
-      "rType\022.\n\017maneuver_number\030\002 \001(\005B\025\242\?\022)\000\000\000\000"
-      "\000\000\000\0001\000\000\000\000\000\000I@:\t\242\?\006\010\003\020\036(\004\"\242\001\n\014PlanManeuve"
-      "r\022)\n\013maneuver_id\030\001 \001(\0132\024.IMC_DCCL.Maneuv"
-      "erID\022 \n\004data\030\002 \001(\0132\022.IMC_DCCL.Maneuver\0228"
-      "\n\rstart_actions\030\003 \003(\0132\032.IMC_DCCL.EntityP"
-      "arametersB\005\242\?\002P\017:\013\242\?\010\010\250\004\020\220\003(\004\"\212\001\n\014PlanVa"
-      "riable\022\023\n\004name\030\001 \001(\tB\005\242\?\002H\002\022\024\n\005value\030\002 \001"
-      "(\tB\005\242\?\002H\002\022\034\n\004type\030\003 \001(\0162\016.IMC_DCCL.Type\022"
-      "$\n\006access\030\004 \001(\0162\024.IMC_DCCL.AccessType:\013\242"
-      "\?\010\010\261\004\020\220\003(\004\"\242\001\n\016PlanTransition\022(\n\nsource_"
-      "man\030\001 \001(\0132\024.IMC_DCCL.ManeuverID\022&\n\010dest_"
-      "man\030\002 \001(\0132\024.IMC_DCCL.ManeuverID\0221\n\ncondi"
-      "tions\030\003 \001(\0162\035.IMC_DCCL.TransitionConditi"
-      "on:\013\242\?\010\010\251\004\020\220\003(\004\"\254\001\n\006Header\022\"\n\003src\030\001 \001(\005B"
-      "\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\000\000\364@\022&\n\007src_ent\030\002 \001(\005B"
-      "\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\000\340o@\022\"\n\003dst\030\003 \001(\005B\025\242\?\022"
-      ")\000\000\000\000\000\000\000\0001\000\000\000\000\000\000\364@\022&\n\007dst_ent\030\004 \001(\005B\025\242\?\022"
-      ")\000\000\000\000\000\000\000\0001\000\000\000\000\000\340o@:\n\242\?\007\010\004\020\220\003(\004\"\220\003\n\021PlanS"
-      "pecification\022\026\n\007plan_id\030\001 \001(\tB\005\242\?\002H\024\022\032\n\013"
-      "description\030\002 \001(\tB\005\242\?\002H\002\022\031\n\nvnamespace\030\003"
-      " \001(\tB\005\242\?\002H\002\022*\n\014start_man_id\030\004 \001(\0132\024.IMC_"
-      "DCCL.ManeuverID\0220\n\tmaneuvers\030\005 \003(\0132\026.IMC"
-      "_DCCL.PlanManeuverB\005\242\?\002P\036\0224\n\013transitions"
-      "\030\006 \003(\0132\030.IMC_DCCL.PlanTransitionB\005\242\?\002P\036\022"
-      "8\n\rstart_actions\030\007 \003(\0132\032.IMC_DCCL.Entity"
-      "ParametersB\005\242\?\002P\007\0220\n\tvariables\030\010 \003(\0132\026.I"
-      "MC_DCCL.PlanVariableB\005\242\?\002P\005\022\036\n\004head\030\t \001("
-      "\0132\020.IMC_DCCL.Header:\014\242\?\t\010\247\004\020\200\3520(\004*:\n\006ZUn"
-      "its\022\013\n\007NONE_ZU\020\000\022\t\n\005DEPTH\020\001\022\014\n\010ALTITUDE\020"
-      "\002\022\n\n\006HEIGHT\020\003*4\n\nSpeedUnits\022\r\n\tMETERS_PS"
-      "\020\000\022\007\n\003RPM\020\001\022\016\n\nPERCENTAGE\020\002*L\n\nLoiterTyp"
-      "e\022\013\n\007DEFAULT\020\000\022\014\n\010CIRCULAR\020\001\022\r\n\tRACETRAC"
-      "K\020\002\022\t\n\005EIGHT\020\003\022\t\n\005HOVER\020\004*A\n\rDirectionTy"
-      "pe\022\010\n\004VDEP\020\000\022\n\n\006CLOCKW\020\001\022\013\n\007CCLOCKW\020\002\022\r\n"
-      "\tIWINDCURR\020\003*H\n\014ManeuverType\022\010\n\004GOTO\020\000\022\016"
-      "\n\nFOLLOWPATH\020\001\022\n\n\006LOITER\020\002\022\022\n\016STATIONKEE"
-      "PING\020\003*\365\001\n\rParameterName\022\013\n\007NONE_PN\020\000\022\n\n"
-      "\006ACTIVE\020\001\022\036\n\032BOTTOM_TRACK_MINIMUM_DEPTH\020"
-      "\002\022\026\n\022HIGH_FREQ_CHANNELS\020\003\022\023\n\017HIGH_FREQ_R"
-      "ANGE\020\004\022\025\n\021LOW_FREQ_CHANNELS\020\005\022\022\n\016LOW_FRE"
-      "Q_RANGE\020\006\022\024\n\020RANGE_MULTIPLIER\020\007\022\020\n\014STROB"
-      "E_DELAY\020\010\022\021\n\rSHUTTER_VALUE\020\t\022\t\n\005RANGE\020\n\022"
-      "\r\n\tFREQUENCY\020\013*8\n\nParamValue\022\013\n\007NONE_PV\020"
-      "\000\022\010\n\004TRUE\020\001\022\t\n\005FALSE\020\002\022\010\n\004BOTH\020\003*t\n\nEnti"
-      "tyName\022\013\n\007NONE_EN\020\000\022\020\n\014PATH_CONTROL\020\001\022\n\n"
-      "\006RANGER\020\002\022\022\n\016ACOUSTIC_MODEM\020\003\022\014\n\010SIDESCA"
-      "N\020\004\022\n\n\006CAMERA\020\005\022\r\n\tMULTIBEAM\020\006*6\n\023Transi"
-      "tionCondition\022\013\n\007NONE_TC\020\000\022\022\n\016MANEUVERIS"
-      "DONE\020\001*6\n\004Type\022\013\n\007BOOLEAN\020\000\022\n\n\006NUMBER\020\001\022"
-      "\010\n\004TEXT\020\002\022\013\n\007MESSAGE\020\003*.\n\nAccessType\022\t\n\005"
-      "INPUT\020\000\022\n\n\006OUTPUT\020\001\022\t\n\005LOCAL\020\002b\006proto3"
+PROTOBUF_CONSTEXPR EstimatedState::EstimatedState(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.lat_)*/0
+  , /*decltype(_impl_.lon_)*/0
+  , /*decltype(_impl_.height_)*/0
+  , /*decltype(_impl_.x_)*/0
+  , /*decltype(_impl_.y_)*/0
+  , /*decltype(_impl_.z_)*/0
+  , /*decltype(_impl_.phi_)*/0
+  , /*decltype(_impl_.theta_)*/0
+  , /*decltype(_impl_.psi_)*/0
+  , /*decltype(_impl_.u_)*/0
+  , /*decltype(_impl_.v_)*/0
+  , /*decltype(_impl_.w_)*/0
+  , /*decltype(_impl_.vx_)*/0
+  , /*decltype(_impl_.vy_)*/0
+  , /*decltype(_impl_.vz_)*/0
+  , /*decltype(_impl_.p_)*/0
+  , /*decltype(_impl_.q_)*/0
+  , /*decltype(_impl_.r_)*/0
+  , /*decltype(_impl_.depth_)*/0
+  , /*decltype(_impl_.altitude_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct EstimatedStateDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR EstimatedStateDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~EstimatedStateDefaultTypeInternal() {}
+  union {
+    EstimatedState _instance;
   };
-  ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 5318);
-  ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
-    "IMC_DCCL.proto", &protobuf_RegisterTypes);
-  ::protobuf_dccl_2foption_5fextensions_2eproto::AddDescriptors();
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 EstimatedStateDefaultTypeInternal _EstimatedState_default_instance_;
+PROTOBUF_CONSTEXPR Goto::Goto(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.timeout_)*/0
+  , /*decltype(_impl_.lat_)*/0
+  , /*decltype(_impl_.lon_)*/0
+  , /*decltype(_impl_.z_)*/0
+  , /*decltype(_impl_.z_units_)*/0
+  , /*decltype(_impl_.speed_)*/0
+  , /*decltype(_impl_.speed_units_)*/0
+  , /*decltype(_impl_.roll_)*/0
+  , /*decltype(_impl_.pitch_)*/0
+  , /*decltype(_impl_.yaw_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct GotoDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR GotoDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~GotoDefaultTypeInternal() {}
+  union {
+    Goto _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 GotoDefaultTypeInternal _Goto_default_instance_;
+PROTOBUF_CONSTEXPR StationKeeping::StationKeeping(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.lat_)*/0
+  , /*decltype(_impl_.lon_)*/0
+  , /*decltype(_impl_.z_)*/0
+  , /*decltype(_impl_.z_units_)*/0
+  , /*decltype(_impl_.radius_)*/0
+  , /*decltype(_impl_.duration_)*/0
+  , /*decltype(_impl_.speed_)*/0
+  , /*decltype(_impl_.speed_units_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct StationKeepingDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR StationKeepingDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~StationKeepingDefaultTypeInternal() {}
+  union {
+    StationKeeping _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 StationKeepingDefaultTypeInternal _StationKeeping_default_instance_;
+PROTOBUF_CONSTEXPR FollowPath::FollowPath(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.points_)*/{}
+  , /*decltype(_impl_.timeout_)*/0
+  , /*decltype(_impl_.lat_)*/0
+  , /*decltype(_impl_.lon_)*/0
+  , /*decltype(_impl_.z_)*/0
+  , /*decltype(_impl_.z_units_)*/0
+  , /*decltype(_impl_.speed_)*/0
+  , /*decltype(_impl_.speed_units_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct FollowPathDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR FollowPathDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~FollowPathDefaultTypeInternal() {}
+  union {
+    FollowPath _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 FollowPathDefaultTypeInternal _FollowPath_default_instance_;
+PROTOBUF_CONSTEXPR Loiter::Loiter(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.timeout_)*/0
+  , /*decltype(_impl_.lat_)*/0
+  , /*decltype(_impl_.lon_)*/0
+  , /*decltype(_impl_.z_)*/0
+  , /*decltype(_impl_.z_units_)*/0
+  , /*decltype(_impl_.duration_)*/0
+  , /*decltype(_impl_.speed_)*/0
+  , /*decltype(_impl_.speed_units_)*/0
+  , /*decltype(_impl_.type_)*/0
+  , /*decltype(_impl_.radius_)*/0
+  , /*decltype(_impl_.length_)*/0
+  , /*decltype(_impl_.bearing_)*/0
+  , /*decltype(_impl_.direction_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct LoiterDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR LoiterDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~LoiterDefaultTypeInternal() {}
+  union {
+    Loiter _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 LoiterDefaultTypeInternal _Loiter_default_instance_;
+PROTOBUF_CONSTEXPR PathPoint::PathPoint(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.x_)*/0
+  , /*decltype(_impl_.y_)*/0
+  , /*decltype(_impl_.z_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct PathPointDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR PathPointDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~PathPointDefaultTypeInternal() {}
+  union {
+    PathPoint _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PathPointDefaultTypeInternal _PathPoint_default_instance_;
+PROTOBUF_CONSTEXPR Maneuver::Maneuver(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.ManeuverUnion_)*/{}
+  , /*decltype(_impl_._cached_size_)*/{}
+  , /*decltype(_impl_._oneof_case_)*/{}} {}
+struct ManeuverDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR ManeuverDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~ManeuverDefaultTypeInternal() {}
+  union {
+    Maneuver _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 ManeuverDefaultTypeInternal _Maneuver_default_instance_;
+PROTOBUF_CONSTEXPR ParameterValue::ParameterValue(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.ParameterValueUnion_)*/{}
+  , /*decltype(_impl_._cached_size_)*/{}
+  , /*decltype(_impl_._oneof_case_)*/{}} {}
+struct ParameterValueDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR ParameterValueDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~ParameterValueDefaultTypeInternal() {}
+  union {
+    ParameterValue _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 ParameterValueDefaultTypeInternal _ParameterValue_default_instance_;
+PROTOBUF_CONSTEXPR EntityParameter::EntityParameter(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.value_)*/nullptr
+  , /*decltype(_impl_.name_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct EntityParameterDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR EntityParameterDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~EntityParameterDefaultTypeInternal() {}
+  union {
+    EntityParameter _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 EntityParameterDefaultTypeInternal _EntityParameter_default_instance_;
+PROTOBUF_CONSTEXPR EntityParameters::EntityParameters(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.params_)*/{}
+  , /*decltype(_impl_.name_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct EntityParametersDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR EntityParametersDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~EntityParametersDefaultTypeInternal() {}
+  union {
+    EntityParameters _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 EntityParametersDefaultTypeInternal _EntityParameters_default_instance_;
+PROTOBUF_CONSTEXPR ManeuverID::ManeuverID(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.maneuver_type_)*/0
+  , /*decltype(_impl_.maneuver_number_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct ManeuverIDDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR ManeuverIDDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~ManeuverIDDefaultTypeInternal() {}
+  union {
+    ManeuverID _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 ManeuverIDDefaultTypeInternal _ManeuverID_default_instance_;
+PROTOBUF_CONSTEXPR PlanManeuver::PlanManeuver(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.start_actions_)*/{}
+  , /*decltype(_impl_.maneuver_id_)*/nullptr
+  , /*decltype(_impl_.data_)*/nullptr
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct PlanManeuverDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR PlanManeuverDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~PlanManeuverDefaultTypeInternal() {}
+  union {
+    PlanManeuver _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlanManeuverDefaultTypeInternal _PlanManeuver_default_instance_;
+PROTOBUF_CONSTEXPR PlanVariable::PlanVariable(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.name_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.value_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.type_)*/0
+  , /*decltype(_impl_.access_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct PlanVariableDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR PlanVariableDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~PlanVariableDefaultTypeInternal() {}
+  union {
+    PlanVariable _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlanVariableDefaultTypeInternal _PlanVariable_default_instance_;
+PROTOBUF_CONSTEXPR PlanTransition::PlanTransition(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.source_man_)*/nullptr
+  , /*decltype(_impl_.dest_man_)*/nullptr
+  , /*decltype(_impl_.conditions_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct PlanTransitionDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR PlanTransitionDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~PlanTransitionDefaultTypeInternal() {}
+  union {
+    PlanTransition _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlanTransitionDefaultTypeInternal _PlanTransition_default_instance_;
+PROTOBUF_CONSTEXPR Header::Header(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.src_)*/0
+  , /*decltype(_impl_.src_ent_)*/0
+  , /*decltype(_impl_.dst_)*/0
+  , /*decltype(_impl_.dst_ent_)*/0
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct HeaderDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR HeaderDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~HeaderDefaultTypeInternal() {}
+  union {
+    Header _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 HeaderDefaultTypeInternal _Header_default_instance_;
+PROTOBUF_CONSTEXPR PlanSpecification::PlanSpecification(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.maneuvers_)*/{}
+  , /*decltype(_impl_.transitions_)*/{}
+  , /*decltype(_impl_.start_actions_)*/{}
+  , /*decltype(_impl_.variables_)*/{}
+  , /*decltype(_impl_.plan_id_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.description_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.vnamespace_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.start_man_id_)*/nullptr
+  , /*decltype(_impl_.head_)*/nullptr
+  , /*decltype(_impl_._cached_size_)*/{}} {}
+struct PlanSpecificationDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR PlanSpecificationDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~PlanSpecificationDefaultTypeInternal() {}
+  union {
+    PlanSpecification _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlanSpecificationDefaultTypeInternal _PlanSpecification_default_instance_;
+}  // namespace IMC_DCCL
+static ::_pb::Metadata file_level_metadata_IMC_5fDCCL_2eproto[16];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_IMC_5fDCCL_2eproto[11];
+static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_IMC_5fDCCL_2eproto = nullptr;
+
+const uint32_t TableStruct_IMC_5fDCCL_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.lat_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.lon_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.height_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.x_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.y_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.z_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.phi_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.theta_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.psi_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.u_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.v_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.w_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.vx_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.vy_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.vz_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.p_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.q_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.r_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.depth_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EstimatedState, _impl_.altitude_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Goto, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Goto, _impl_.timeout_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Goto, _impl_.lat_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Goto, _impl_.lon_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Goto, _impl_.z_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Goto, _impl_.z_units_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Goto, _impl_.speed_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Goto, _impl_.speed_units_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Goto, _impl_.roll_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Goto, _impl_.pitch_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Goto, _impl_.yaw_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::StationKeeping, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::StationKeeping, _impl_.lat_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::StationKeeping, _impl_.lon_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::StationKeeping, _impl_.z_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::StationKeeping, _impl_.z_units_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::StationKeeping, _impl_.radius_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::StationKeeping, _impl_.duration_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::StationKeeping, _impl_.speed_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::StationKeeping, _impl_.speed_units_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::FollowPath, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::FollowPath, _impl_.timeout_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::FollowPath, _impl_.lat_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::FollowPath, _impl_.lon_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::FollowPath, _impl_.z_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::FollowPath, _impl_.z_units_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::FollowPath, _impl_.speed_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::FollowPath, _impl_.speed_units_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::FollowPath, _impl_.points_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.timeout_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.lat_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.lon_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.z_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.z_units_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.duration_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.speed_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.speed_units_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.type_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.radius_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.length_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.bearing_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Loiter, _impl_.direction_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PathPoint, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PathPoint, _impl_.x_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PathPoint, _impl_.y_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PathPoint, _impl_.z_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Maneuver, _internal_metadata_),
+  ~0u,  // no _extensions_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Maneuver, _impl_._oneof_case_[0]),
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  ::_pbi::kInvalidFieldOffsetTag,
+  ::_pbi::kInvalidFieldOffsetTag,
+  ::_pbi::kInvalidFieldOffsetTag,
+  ::_pbi::kInvalidFieldOffsetTag,
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Maneuver, _impl_.ManeuverUnion_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::ParameterValue, _internal_metadata_),
+  ~0u,  // no _extensions_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::ParameterValue, _impl_._oneof_case_[0]),
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  ::_pbi::kInvalidFieldOffsetTag,
+  ::_pbi::kInvalidFieldOffsetTag,
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::ParameterValue, _impl_.ParameterValueUnion_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EntityParameter, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EntityParameter, _impl_.name_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EntityParameter, _impl_.value_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EntityParameters, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EntityParameters, _impl_.name_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EntityParameters, _impl_.params_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::ManeuverID, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::ManeuverID, _impl_.maneuver_type_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::ManeuverID, _impl_.maneuver_number_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanManeuver, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanManeuver, _impl_.maneuver_id_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanManeuver, _impl_.data_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanManeuver, _impl_.start_actions_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanVariable, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanVariable, _impl_.name_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanVariable, _impl_.value_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanVariable, _impl_.type_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanVariable, _impl_.access_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanTransition, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanTransition, _impl_.source_man_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanTransition, _impl_.dest_man_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanTransition, _impl_.conditions_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Header, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Header, _impl_.src_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Header, _impl_.src_ent_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Header, _impl_.dst_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::Header, _impl_.dst_ent_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, _impl_.plan_id_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, _impl_.description_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, _impl_.vnamespace_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, _impl_.start_man_id_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, _impl_.maneuvers_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, _impl_.transitions_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, _impl_.start_actions_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, _impl_.variables_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanSpecification, _impl_.head_),
+};
+static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
+  { 0, -1, -1, sizeof(::IMC_DCCL::EstimatedState)},
+  { 26, -1, -1, sizeof(::IMC_DCCL::Goto)},
+  { 42, -1, -1, sizeof(::IMC_DCCL::StationKeeping)},
+  { 56, -1, -1, sizeof(::IMC_DCCL::FollowPath)},
+  { 70, -1, -1, sizeof(::IMC_DCCL::Loiter)},
+  { 89, -1, -1, sizeof(::IMC_DCCL::PathPoint)},
+  { 98, -1, -1, sizeof(::IMC_DCCL::Maneuver)},
+  { 109, -1, -1, sizeof(::IMC_DCCL::ParameterValue)},
+  { 118, -1, -1, sizeof(::IMC_DCCL::EntityParameter)},
+  { 126, -1, -1, sizeof(::IMC_DCCL::EntityParameters)},
+  { 134, -1, -1, sizeof(::IMC_DCCL::ManeuverID)},
+  { 142, -1, -1, sizeof(::IMC_DCCL::PlanManeuver)},
+  { 151, -1, -1, sizeof(::IMC_DCCL::PlanVariable)},
+  { 161, -1, -1, sizeof(::IMC_DCCL::PlanTransition)},
+  { 170, -1, -1, sizeof(::IMC_DCCL::Header)},
+  { 180, -1, -1, sizeof(::IMC_DCCL::PlanSpecification)},
+};
+
+static const ::_pb::Message* const file_default_instances[] = {
+  &::IMC_DCCL::_EstimatedState_default_instance_._instance,
+  &::IMC_DCCL::_Goto_default_instance_._instance,
+  &::IMC_DCCL::_StationKeeping_default_instance_._instance,
+  &::IMC_DCCL::_FollowPath_default_instance_._instance,
+  &::IMC_DCCL::_Loiter_default_instance_._instance,
+  &::IMC_DCCL::_PathPoint_default_instance_._instance,
+  &::IMC_DCCL::_Maneuver_default_instance_._instance,
+  &::IMC_DCCL::_ParameterValue_default_instance_._instance,
+  &::IMC_DCCL::_EntityParameter_default_instance_._instance,
+  &::IMC_DCCL::_EntityParameters_default_instance_._instance,
+  &::IMC_DCCL::_ManeuverID_default_instance_._instance,
+  &::IMC_DCCL::_PlanManeuver_default_instance_._instance,
+  &::IMC_DCCL::_PlanVariable_default_instance_._instance,
+  &::IMC_DCCL::_PlanTransition_default_instance_._instance,
+  &::IMC_DCCL::_Header_default_instance_._instance,
+  &::IMC_DCCL::_PlanSpecification_default_instance_._instance,
+};
+
+const char descriptor_table_protodef_IMC_5fDCCL_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
+  "\n\016IMC_DCCL.proto\022\010IMC_DCCL\032\034dccl/option_"
+  "extensions.proto\"\213\006\n\016EstimatedState\022$\n\003l"
+  "at\030\001 \001(\002B\027\242\?\024 \003)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n\003lon"
+  "\030\002 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\'\n\006heigh"
+  "t\030\003 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\217\3001\000\000\000\000\000X\273@\022\"\n\001x\030\004 "
+  "\001(\002B\027\242\?\024 \001)\000\000\000\000\000\210\323\3001\000\000\000\000\000\210\323@\022\"\n\001y\030\005 \001(\002B"
+  "\027\242\?\024 \001)\000\000\000\000\000\210\323\3001\000\000\000\000\000\210\323@\022\"\n\001z\030\006 \001(\002B\027\242\?\024"
+  " \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@\022$\n\003phi\030\007 \001(\002B\027\242\?\024 \003"
+  ")T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022&\n\005theta\030\010 \001(\002B\027\242\?\024 \003"
+  ")\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n\003psi\030\t \001(\002B\027\242\?\024 \003)T"
+  "\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001u\030\n \001(\002B\027\242\?\024 \001)\000\000\000\000\000"
+  "\000$\3001\000\000\000\000\000\000$@\022\"\n\001v\030\013 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001"
+  "\000\000\000\000\000\000$@\022\"\n\001w\030\014 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000"
+  "\000\000$@\022#\n\002vx\030\r \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$"
+  "@\022#\n\002vy\030\016 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@\022#"
+  "\n\002vz\030\017 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@\022\"\n\001p"
+  "\030\020 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001q\030\021 \001"
+  "(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001r\030\022 \001(\002B\027"
+  "\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022&\n\005depth\030\023 \001(\002B\027"
+  "\242\?\024 \001)\000\000\000\000\000\000\360\2771\000\000\000\000\000\000y@\022)\n\010altitude\030\024 \001("
+  "\002B\027\242\?\024 \001)\000\000\000\000\000\000\360\2771\000\000\000\000\000\210\263@:\n\242\?\007\010\336\002\020P(\004\"\225"
+  "\003\n\004Goto\022&\n\007timeout\030\001 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\0001\000"
+  "\000\000\000\340\377\357@\022$\n\003lat\030\002 \001(\002B\027\242\?\024 \n)\037\205\353Q\270\036\371\2771\037\205\353"
+  "Q\270\036\371\?\022$\n\003lon\030\003 \001(\002B\027\242\?\024 \n)T\343\245\233\304 \t\3001T\343\245\233\304"
+  " \t@\022\"\n\001z\030\004 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@\022"
+  "!\n\007z_units\030\005 \001(\0162\020.IMC_DCCL.ZUnits\022&\n\005sp"
+  "eed\030\006 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001\000\000\000\000\000@\237@\022)\n\013sp"
+  "eed_units\030\007 \001(\0162\024.IMC_DCCL.SpeedUnits\022%\n"
+  "\004roll\030\010 \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\360\2771o\022\203\300\312!\031@\022&\n\005"
+  "pitch\030\t \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\360\2771o\022\203\300\312!\031@\022$\n\003"
+  "yaw\030\n \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\360\2771o\022\203\300\312!\031@:\n\242\?\007\010"
+  "\302\003\020P(\004\"\324\002\n\016StationKeeping\022$\n\003lat\030\001 \001(\002B\027"
+  "\242\?\024 \n)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n\003lon\030\002 \001(\002B\027\242\?"
+  "\024 \n)T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001z\030\003 \001(\002B\027\242\?\024 \001)"
+  "\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@\022!\n\007z_units\030\004 \001(\0162\020.IMC"
+  "_DCCL.ZUnits\022\'\n\006radius\030\005 \001(\002B\027\242\?\024 \001)\000\000\000\000"
+  "\000\000\360\?1\000\000\000\000\000j\370@\022\'\n\010duration\030\006 \001(\005B\025\242\?\022)\000\000\000"
+  "\000\000\000\000\0001\000\000\000\000\340\377\357@\022&\n\005speed\030\007 \001(\002B\027\242\?\024 \001)\000\000\000"
+  "\000\000@\237\3001\000\000\000\000\000@\237@\022)\n\013speed_units\030\010 \001(\0162\024.IM"
+  "C_DCCL.SpeedUnits:\n\242\?\007\010\315\003\020P(\004\"\323\002\n\nFollow"
+  "Path\022&\n\007timeout\030\001 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000"
+  "\340\377\357@\022$\n\003lat\030\002 \001(\002B\027\242\?\024 \003)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036"
+  "\371\?\022$\n\003lon\030\003 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@"
+  "\022\"\n\001z\030\004 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@\022!\n\007"
+  "z_units\030\005 \001(\0162\020.IMC_DCCL.ZUnits\022&\n\005speed"
+  "\030\006 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001\000\000\000\000\000@\237@\022)\n\013speed"
+  "_units\030\007 \001(\0162\024.IMC_DCCL.SpeedUnits\022*\n\006po"
+  "ints\030\010 \003(\0132\023.IMC_DCCL.PathPointB\005\242\?\002P\036:\013"
+  "\242\?\010\010\311\003\020\350\007(\004\"\230\004\n\006Loiter\022&\n\007timeout\030\001 \001(\005B"
+  "\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\340\377\357@\022$\n\003lat\030\002 \001(\002B\027\242\?\024"
+  " \003)\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?\022$\n\003lon\030\003 \001(\002B\027\242\?\024 \003"
+  ")T\343\245\233\304 \t\3001T\343\245\233\304 \t@\022\"\n\001z\030\004 \001(\002B\027\242\?\024 \001)\000\000\000"
+  "\000\000\000y\3001\000\000\000\000\000\000y@\022!\n\007z_units\030\005 \001(\0162\020.IMC_DC"
+  "CL.ZUnits\022\'\n\010duration\030\006 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000"
+  "\0001\000\000\000\000\000\030\305@\022&\n\005speed\030\007 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237"
+  "\3001\000\000\000\000\000@\237@\022)\n\013speed_units\030\010 \001(\0162\024.IMC_DC"
+  "CL.SpeedUnits\022\"\n\004type\030\t \001(\0162\024.IMC_DCCL.L"
+  "oiterType\022\'\n\006radius\030\n \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000\360"
+  "\?1\000\000\000\000\000j\370@\022\'\n\006length\030\013 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000"
+  "\360\?1\000\000\000\000\000j\370@\022(\n\007bearing\030\014 \001(\002B\027\242\?\024 \003)\000\000\000\000"
+  "\000\000\000\0001o\022\203\300\312!\031@\022*\n\tdirection\030\r \001(\0162\027.IMC_D"
+  "CCL.DirectionType:\013\242\?\010\010\305\003\020\350\007(\004\"\203\001\n\tPathP"
+  "oint\022\"\n\001x\030\001 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\210\323\3001\000\000\000\000\000\210\323@"
+  "\022\"\n\001y\030\002 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\210\323\3001\000\000\000\000\000\210\323@\022\"\n\001"
+  "z\030\003 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@:\n\242\?\007\010\312\003"
+  "\020P(\004\"\357\001\n\010Maneuver\022\'\n\rgoto_maneuver\030\001 \001(\013"
+  "2\016.IMC_DCCL.GotoH\000\0223\n\023followpath_maneuve"
+  "r\030\002 \001(\0132\024.IMC_DCCL.FollowPathH\000\022+\n\017loite"
+  "r_maneuver\030\003 \001(\0132\020.IMC_DCCL.LoiterH\000\022;\n\027"
+  "stationkeeping_maneuver\030\004 \001(\0132\030.IMC_DCCL"
+  ".StationKeepingH\000:\n\242\?\007\010\001\020\254\002(\004B\017\n\rManeuve"
+  "rUnion\"\222\001\n\016ParameterValue\022/\n\014value_numbe"
+  "r\030\001 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\210\303@H\000\022,\n\014va"
+  "lue_string\030\002 \001(\0162\024.IMC_DCCL.ParamValueH\000"
+  ":\n\242\?\007\010\002\020\254\002(\004B\025\n\023ParameterValueUnion\"m\n\017E"
+  "ntityParameter\022%\n\004name\030\001 \001(\0162\027.IMC_DCCL."
+  "ParameterName\022\'\n\005value\030\002 \001(\0132\030.IMC_DCCL."
+  "ParameterValue:\n\242\?\007\010\241\006\020\024(\004\"t\n\020EntityPara"
+  "meters\022\"\n\004name\030\001 \001(\0162\024.IMC_DCCL.EntityNa"
+  "me\0220\n\006params\030\002 \003(\0132\031.IMC_DCCL.EntityPara"
+  "meterB\005\242\?\002P\n:\n\242\?\007\010\242\006\020((\004\"v\n\nManeuverID\022-"
+  "\n\rmaneuver_type\030\001 \001(\0162\026.IMC_DCCL.Maneuve"
+  "rType\022.\n\017maneuver_number\030\002 \001(\005B\025\242\?\022)\000\000\000\000"
+  "\000\000\000\0001\000\000\000\000\000\000I@:\t\242\?\006\010\003\020\036(\004\"\242\001\n\014PlanManeuve"
+  "r\022)\n\013maneuver_id\030\001 \001(\0132\024.IMC_DCCL.Maneuv"
+  "erID\022 \n\004data\030\002 \001(\0132\022.IMC_DCCL.Maneuver\0228"
+  "\n\rstart_actions\030\003 \003(\0132\032.IMC_DCCL.EntityP"
+  "arametersB\005\242\?\002P\017:\013\242\?\010\010\250\004\020\220\003(\004\"\212\001\n\014PlanVa"
+  "riable\022\023\n\004name\030\001 \001(\tB\005\242\?\002H\002\022\024\n\005value\030\002 \001"
+  "(\tB\005\242\?\002H\002\022\034\n\004type\030\003 \001(\0162\016.IMC_DCCL.Type\022"
+  "$\n\006access\030\004 \001(\0162\024.IMC_DCCL.AccessType:\013\242"
+  "\?\010\010\261\004\020\220\003(\004\"\242\001\n\016PlanTransition\022(\n\nsource_"
+  "man\030\001 \001(\0132\024.IMC_DCCL.ManeuverID\022&\n\010dest_"
+  "man\030\002 \001(\0132\024.IMC_DCCL.ManeuverID\0221\n\ncondi"
+  "tions\030\003 \001(\0162\035.IMC_DCCL.TransitionConditi"
+  "on:\013\242\?\010\010\251\004\020\220\003(\004\"\254\001\n\006Header\022\"\n\003src\030\001 \001(\005B"
+  "\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\000\000\364@\022&\n\007src_ent\030\002 \001(\005B"
+  "\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\000\340o@\022\"\n\003dst\030\003 \001(\005B\025\242\?\022"
+  ")\000\000\000\000\000\000\000\0001\000\000\000\000\000\000\364@\022&\n\007dst_ent\030\004 \001(\005B\025\242\?\022"
+  ")\000\000\000\000\000\000\000\0001\000\000\000\000\000\340o@:\n\242\?\007\010\004\020\220\003(\004\"\220\003\n\021PlanS"
+  "pecification\022\026\n\007plan_id\030\001 \001(\tB\005\242\?\002H\024\022\032\n\013"
+  "description\030\002 \001(\tB\005\242\?\002H\002\022\031\n\nvnamespace\030\003"
+  " \001(\tB\005\242\?\002H\002\022*\n\014start_man_id\030\004 \001(\0132\024.IMC_"
+  "DCCL.ManeuverID\0220\n\tmaneuvers\030\005 \003(\0132\026.IMC"
+  "_DCCL.PlanManeuverB\005\242\?\002P\036\0224\n\013transitions"
+  "\030\006 \003(\0132\030.IMC_DCCL.PlanTransitionB\005\242\?\002P\036\022"
+  "8\n\rstart_actions\030\007 \003(\0132\032.IMC_DCCL.Entity"
+  "ParametersB\005\242\?\002P\007\0220\n\tvariables\030\010 \003(\0132\026.I"
+  "MC_DCCL.PlanVariableB\005\242\?\002P\005\022\036\n\004head\030\t \001("
+  "\0132\020.IMC_DCCL.Header:\014\242\?\t\010\247\004\020\200\3520(\004*:\n\006ZUn"
+  "its\022\013\n\007NONE_ZU\020\000\022\t\n\005DEPTH\020\001\022\014\n\010ALTITUDE\020"
+  "\002\022\n\n\006HEIGHT\020\003*4\n\nSpeedUnits\022\r\n\tMETERS_PS"
+  "\020\000\022\007\n\003RPM\020\001\022\016\n\nPERCENTAGE\020\002*L\n\nLoiterTyp"
+  "e\022\013\n\007DEFAULT\020\000\022\014\n\010CIRCULAR\020\001\022\r\n\tRACETRAC"
+  "K\020\002\022\t\n\005EIGHT\020\003\022\t\n\005HOVER\020\004*A\n\rDirectionTy"
+  "pe\022\010\n\004VDEP\020\000\022\n\n\006CLOCKW\020\001\022\013\n\007CCLOCKW\020\002\022\r\n"
+  "\tIWINDCURR\020\003*H\n\014ManeuverType\022\010\n\004GOTO\020\000\022\016"
+  "\n\nFOLLOWPATH\020\001\022\n\n\006LOITER\020\002\022\022\n\016STATIONKEE"
+  "PING\020\003*\311\002\n\rParameterName\022\013\n\007NONE_PN\020\000\022\n\n"
+  "\006ACTIVE\020\001\022\036\n\032BOTTOM_TRACK_MINIMUM_DEPTH\020"
+  "\002\022\026\n\022HIGH_FREQ_CHANNELS\020\003\022\023\n\017HIGH_FREQ_R"
+  "ANGE\020\004\022\025\n\021LOW_FREQ_CHANNELS\020\005\022\022\n\016LOW_FRE"
+  "Q_RANGE\020\006\022\024\n\020RANGE_MULTIPLIER\020\007\022\020\n\014STROB"
+  "E_DELAY\020\010\022\021\n\rSHUTTER_VALUE\020\t\022\t\n\005RANGE\020\n\022"
+  "\r\n\tFREQUENCY\020\013\022\026\n\022THRUSTER_ALWAYS_ON\020\014\022\030"
+  "\n\024SAMPLE_TIME_DURATION\020\r\022 \n\034PERIODICITY_"
+  "OF_DATA_SAMPLING\020\016*8\n\nParamValue\022\013\n\007NONE"
+  "_PV\020\000\022\010\n\004TRUE\020\001\022\t\n\005FALSE\020\002\022\010\n\004BOTH\020\003*\307\001\n"
+  "\nEntityName\022\013\n\007NONE_EN\020\000\022\020\n\014PATH_CONTROL"
+  "\020\001\022\n\n\006RANGER\020\002\022\022\n\016ACOUSTIC_MODEM\020\003\022\014\n\010SI"
+  "DESCAN\020\004\022\n\n\006CAMERA\020\005\022\r\n\tMULTIBEAM\020\006\022\020\n\014F"
+  "LUOROMETERS\020\007\022\010\n\004ADCP\020\010\022\024\n\020DISSOLVED_OXY"
+  "GEN\020\t\022\007\n\003CTD\020\n\022\026\n\022HEADING_CONTROLLER\020\013*6"
+  "\n\023TransitionCondition\022\013\n\007NONE_TC\020\000\022\022\n\016MA"
+  "NEUVERISDONE\020\001*6\n\004Type\022\013\n\007BOOLEAN\020\000\022\n\n\006N"
+  "UMBER\020\001\022\010\n\004TEXT\020\002\022\013\n\007MESSAGE\020\003*.\n\nAccess"
+  "Type\022\t\n\005INPUT\020\000\022\n\n\006OUTPUT\020\001\022\t\n\005LOCAL\020\002b\006"
+  "proto3"
+  ;
+static const ::_pbi::DescriptorTable* const descriptor_table_IMC_5fDCCL_2eproto_deps[1] = {
+  &::descriptor_table_dccl_2foption_5fextensions_2eproto,
+};
+static ::_pbi::once_flag descriptor_table_IMC_5fDCCL_2eproto_once;
+const ::_pbi::DescriptorTable descriptor_table_IMC_5fDCCL_2eproto = {
+    false, false, 5486, descriptor_table_protodef_IMC_5fDCCL_2eproto,
+    "IMC_DCCL.proto",
+    &descriptor_table_IMC_5fDCCL_2eproto_once, descriptor_table_IMC_5fDCCL_2eproto_deps, 1, 16,
+    schemas, file_default_instances, TableStruct_IMC_5fDCCL_2eproto::offsets,
+    file_level_metadata_IMC_5fDCCL_2eproto, file_level_enum_descriptors_IMC_5fDCCL_2eproto,
+    file_level_service_descriptors_IMC_5fDCCL_2eproto,
+};
+PROTOBUF_ATTRIBUTE_WEAK const ::_pbi::DescriptorTable* descriptor_table_IMC_5fDCCL_2eproto_getter() {
+  return &descriptor_table_IMC_5fDCCL_2eproto;
 }
 
-void AddDescriptors() {
-  static ::google::protobuf::internal::once_flag once;
-  ::google::protobuf::internal::call_once(once, AddDescriptorsImpl);
-}
-// Force AddDescriptors() to be called at dynamic initialization time.
-struct StaticDescriptorInitializer {
-  StaticDescriptorInitializer() {
-    AddDescriptors();
-  }
-} static_descriptor_initializer;
-}  // namespace protobuf_IMC_5fDCCL_2eproto
+// Force running AddDescriptors() at dynamic initialization time.
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY2 static ::_pbi::AddDescriptorsRunner dynamic_init_dummy_IMC_5fDCCL_2eproto(&descriptor_table_IMC_5fDCCL_2eproto);
 namespace IMC_DCCL {
-const ::google::protobuf::EnumDescriptor* ZUnits_descriptor() {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[0];
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ZUnits_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[0];
 }
 bool ZUnits_IsValid(int value) {
   switch (value) {
@@ -796,9 +723,9 @@ bool ZUnits_IsValid(int value) {
   }
 }
 
-const ::google::protobuf::EnumDescriptor* SpeedUnits_descriptor() {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[1];
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* SpeedUnits_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[1];
 }
 bool SpeedUnits_IsValid(int value) {
   switch (value) {
@@ -811,9 +738,9 @@ bool SpeedUnits_IsValid(int value) {
   }
 }
 
-const ::google::protobuf::EnumDescriptor* LoiterType_descriptor() {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[2];
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* LoiterType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[2];
 }
 bool LoiterType_IsValid(int value) {
   switch (value) {
@@ -828,9 +755,9 @@ bool LoiterType_IsValid(int value) {
   }
 }
 
-const ::google::protobuf::EnumDescriptor* DirectionType_descriptor() {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[3];
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* DirectionType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[3];
 }
 bool DirectionType_IsValid(int value) {
   switch (value) {
@@ -844,9 +771,9 @@ bool DirectionType_IsValid(int value) {
   }
 }
 
-const ::google::protobuf::EnumDescriptor* ManeuverType_descriptor() {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[4];
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ManeuverType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[4];
 }
 bool ManeuverType_IsValid(int value) {
   switch (value) {
@@ -860,11 +787,54 @@ bool ManeuverType_IsValid(int value) {
   }
 }
 
-const ::google::protobuf::EnumDescriptor* ParameterName_descriptor() {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[5];
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ParameterName_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[5];
 }
 bool ParameterName_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ParamValue_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[6];
+}
+bool ParamValue_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityName_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[7];
+}
+bool EntityName_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
@@ -884,44 +854,9 @@ bool ParameterName_IsValid(int value) {
   }
 }
 
-const ::google::protobuf::EnumDescriptor* ParamValue_descriptor() {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[6];
-}
-bool ParamValue_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-      return true;
-    default:
-      return false;
-  }
-}
-
-const ::google::protobuf::EnumDescriptor* EntityName_descriptor() {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[7];
-}
-bool EntityName_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-      return true;
-    default:
-      return false;
-  }
-}
-
-const ::google::protobuf::EnumDescriptor* TransitionCondition_descriptor() {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[8];
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* TransitionCondition_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[8];
 }
 bool TransitionCondition_IsValid(int value) {
   switch (value) {
@@ -933,9 +868,9 @@ bool TransitionCondition_IsValid(int value) {
   }
 }
 
-const ::google::protobuf::EnumDescriptor* Type_descriptor() {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[9];
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* Type_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[9];
 }
 bool Type_IsValid(int value) {
   switch (value) {
@@ -949,9 +884,9 @@ bool Type_IsValid(int value) {
   }
 }
 
-const ::google::protobuf::EnumDescriptor* AccessType_descriptor() {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return protobuf_IMC_5fDCCL_2eproto::file_level_enum_descriptors[10];
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* AccessType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[10];
 }
 bool AccessType_IsValid(int value) {
   switch (value) {
@@ -967,621 +902,505 @@ bool AccessType_IsValid(int value) {
 
 // ===================================================================
 
-void EstimatedState::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int EstimatedState::kLatFieldNumber;
-const int EstimatedState::kLonFieldNumber;
-const int EstimatedState::kHeightFieldNumber;
-const int EstimatedState::kXFieldNumber;
-const int EstimatedState::kYFieldNumber;
-const int EstimatedState::kZFieldNumber;
-const int EstimatedState::kPhiFieldNumber;
-const int EstimatedState::kThetaFieldNumber;
-const int EstimatedState::kPsiFieldNumber;
-const int EstimatedState::kUFieldNumber;
-const int EstimatedState::kVFieldNumber;
-const int EstimatedState::kWFieldNumber;
-const int EstimatedState::kVxFieldNumber;
-const int EstimatedState::kVyFieldNumber;
-const int EstimatedState::kVzFieldNumber;
-const int EstimatedState::kPFieldNumber;
-const int EstimatedState::kQFieldNumber;
-const int EstimatedState::kRFieldNumber;
-const int EstimatedState::kDepthFieldNumber;
-const int EstimatedState::kAltitudeFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class EstimatedState::_Internal {
+ public:
+};
 
-EstimatedState::EstimatedState()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_EstimatedState.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.EstimatedState)
+EstimatedState::EstimatedState(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.EstimatedState)
 }
 EstimatedState::EstimatedState(const EstimatedState& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::memcpy(&lat_, &from.lat_,
-    static_cast<size_t>(reinterpret_cast<char*>(&altitude_) -
-    reinterpret_cast<char*>(&lat_)) + sizeof(altitude_));
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  EstimatedState* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.lat_){}
+    , decltype(_impl_.lon_){}
+    , decltype(_impl_.height_){}
+    , decltype(_impl_.x_){}
+    , decltype(_impl_.y_){}
+    , decltype(_impl_.z_){}
+    , decltype(_impl_.phi_){}
+    , decltype(_impl_.theta_){}
+    , decltype(_impl_.psi_){}
+    , decltype(_impl_.u_){}
+    , decltype(_impl_.v_){}
+    , decltype(_impl_.w_){}
+    , decltype(_impl_.vx_){}
+    , decltype(_impl_.vy_){}
+    , decltype(_impl_.vz_){}
+    , decltype(_impl_.p_){}
+    , decltype(_impl_.q_){}
+    , decltype(_impl_.r_){}
+    , decltype(_impl_.depth_){}
+    , decltype(_impl_.altitude_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.lat_, &from._impl_.lat_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.altitude_) -
+    reinterpret_cast<char*>(&_impl_.lat_)) + sizeof(_impl_.altitude_));
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.EstimatedState)
 }
 
-void EstimatedState::SharedCtor() {
-  ::memset(&lat_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&altitude_) -
-      reinterpret_cast<char*>(&lat_)) + sizeof(altitude_));
+inline void EstimatedState::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.lat_){0}
+    , decltype(_impl_.lon_){0}
+    , decltype(_impl_.height_){0}
+    , decltype(_impl_.x_){0}
+    , decltype(_impl_.y_){0}
+    , decltype(_impl_.z_){0}
+    , decltype(_impl_.phi_){0}
+    , decltype(_impl_.theta_){0}
+    , decltype(_impl_.psi_){0}
+    , decltype(_impl_.u_){0}
+    , decltype(_impl_.v_){0}
+    , decltype(_impl_.w_){0}
+    , decltype(_impl_.vx_){0}
+    , decltype(_impl_.vy_){0}
+    , decltype(_impl_.vz_){0}
+    , decltype(_impl_.p_){0}
+    , decltype(_impl_.q_){0}
+    , decltype(_impl_.r_){0}
+    , decltype(_impl_.depth_){0}
+    , decltype(_impl_.altitude_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 EstimatedState::~EstimatedState() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.EstimatedState)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void EstimatedState::SharedDtor() {
+inline void EstimatedState::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
 }
 
 void EstimatedState::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* EstimatedState::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const EstimatedState& EstimatedState::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_EstimatedState.base);
-  return *internal_default_instance();
-}
-
 
 void EstimatedState::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.EstimatedState)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&lat_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&altitude_) -
-      reinterpret_cast<char*>(&lat_)) + sizeof(altitude_));
-  _internal_metadata_.Clear();
+  ::memset(&_impl_.lat_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.altitude_) -
+      reinterpret_cast<char*>(&_impl_.lat_)) + sizeof(_impl_.altitude_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool EstimatedState::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.EstimatedState)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(16383u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* EstimatedState::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // float lat = 1 [(.dccl.field) = {
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(13u /* 13 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &lat_)));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 13)) {
+          _impl_.lat_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float lon = 2 [(.dccl.field) = {
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(21u /* 21 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &lon_)));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 21)) {
+          _impl_.lon_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float height = 3 [(.dccl.field) = {
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(29u /* 29 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &height_)));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 29)) {
+          _impl_.height_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float x = 4 [(.dccl.field) = {
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(37u /* 37 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &x_)));
-        } else {
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 37)) {
+          _impl_.x_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float y = 5 [(.dccl.field) = {
-      case 5: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(45u /* 45 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &y_)));
-        } else {
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 45)) {
+          _impl_.y_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float z = 6 [(.dccl.field) = {
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(53u /* 53 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &z_)));
-        } else {
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 53)) {
+          _impl_.z_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float phi = 7 [(.dccl.field) = {
-      case 7: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(61u /* 61 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &phi_)));
-        } else {
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 61)) {
+          _impl_.phi_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float theta = 8 [(.dccl.field) = {
-      case 8: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(69u /* 69 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &theta_)));
-        } else {
+      case 8:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 69)) {
+          _impl_.theta_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float psi = 9 [(.dccl.field) = {
-      case 9: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(77u /* 77 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &psi_)));
-        } else {
+      case 9:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 77)) {
+          _impl_.psi_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float u = 10 [(.dccl.field) = {
-      case 10: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(85u /* 85 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &u_)));
-        } else {
+      case 10:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 85)) {
+          _impl_.u_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float v = 11 [(.dccl.field) = {
-      case 11: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(93u /* 93 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &v_)));
-        } else {
+      case 11:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 93)) {
+          _impl_.v_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float w = 12 [(.dccl.field) = {
-      case 12: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(101u /* 101 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &w_)));
-        } else {
+      case 12:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 101)) {
+          _impl_.w_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float vx = 13 [(.dccl.field) = {
-      case 13: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(109u /* 109 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &vx_)));
-        } else {
+      case 13:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 109)) {
+          _impl_.vx_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float vy = 14 [(.dccl.field) = {
-      case 14: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(117u /* 117 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &vy_)));
-        } else {
+      case 14:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 117)) {
+          _impl_.vy_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float vz = 15 [(.dccl.field) = {
-      case 15: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(125u /* 125 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &vz_)));
-        } else {
+      case 15:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 125)) {
+          _impl_.vz_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float p = 16 [(.dccl.field) = {
-      case 16: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(133u /* 133 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &p_)));
-        } else {
+      case 16:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 133)) {
+          _impl_.p_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float q = 17 [(.dccl.field) = {
-      case 17: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(141u /* 141 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &q_)));
-        } else {
+      case 17:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 141)) {
+          _impl_.q_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float r = 18 [(.dccl.field) = {
-      case 18: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(149u /* 149 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &r_)));
-        } else {
+      case 18:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 149)) {
+          _impl_.r_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float depth = 19 [(.dccl.field) = {
-      case 19: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(157u /* 157 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &depth_)));
-        } else {
+      case 19:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 157)) {
+          _impl_.depth_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float altitude = 20 [(.dccl.field) = {
-      case 20: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(165u /* 165 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &altitude_)));
-        } else {
+      case 20:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 165)) {
+          _impl_.altitude_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.EstimatedState)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.EstimatedState)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void EstimatedState::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.EstimatedState)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // float lat = 1 [(.dccl.field) = {
-  if (this->lat() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(1, this->lat(), output);
-  }
-
-  // float lon = 2 [(.dccl.field) = {
-  if (this->lon() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(2, this->lon(), output);
-  }
-
-  // float height = 3 [(.dccl.field) = {
-  if (this->height() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(3, this->height(), output);
-  }
-
-  // float x = 4 [(.dccl.field) = {
-  if (this->x() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->x(), output);
-  }
-
-  // float y = 5 [(.dccl.field) = {
-  if (this->y() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(5, this->y(), output);
-  }
-
-  // float z = 6 [(.dccl.field) = {
-  if (this->z() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(6, this->z(), output);
-  }
-
-  // float phi = 7 [(.dccl.field) = {
-  if (this->phi() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(7, this->phi(), output);
-  }
-
-  // float theta = 8 [(.dccl.field) = {
-  if (this->theta() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(8, this->theta(), output);
-  }
-
-  // float psi = 9 [(.dccl.field) = {
-  if (this->psi() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(9, this->psi(), output);
-  }
-
-  // float u = 10 [(.dccl.field) = {
-  if (this->u() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(10, this->u(), output);
-  }
-
-  // float v = 11 [(.dccl.field) = {
-  if (this->v() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(11, this->v(), output);
-  }
-
-  // float w = 12 [(.dccl.field) = {
-  if (this->w() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(12, this->w(), output);
-  }
-
-  // float vx = 13 [(.dccl.field) = {
-  if (this->vx() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(13, this->vx(), output);
-  }
-
-  // float vy = 14 [(.dccl.field) = {
-  if (this->vy() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(14, this->vy(), output);
-  }
-
-  // float vz = 15 [(.dccl.field) = {
-  if (this->vz() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(15, this->vz(), output);
-  }
-
-  // float p = 16 [(.dccl.field) = {
-  if (this->p() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(16, this->p(), output);
-  }
-
-  // float q = 17 [(.dccl.field) = {
-  if (this->q() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(17, this->q(), output);
-  }
-
-  // float r = 18 [(.dccl.field) = {
-  if (this->r() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(18, this->r(), output);
-  }
-
-  // float depth = 19 [(.dccl.field) = {
-  if (this->depth() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(19, this->depth(), output);
-  }
-
-  // float altitude = 20 [(.dccl.field) = {
-  if (this->altitude() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(20, this->altitude(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.EstimatedState)
-}
-
-::google::protobuf::uint8* EstimatedState::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* EstimatedState::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.EstimatedState)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // float lat = 1 [(.dccl.field) = {
-  if (this->lat() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(1, this->lat(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = this->_internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(1, this->_internal_lat(), target);
   }
 
   // float lon = 2 [(.dccl.field) = {
-  if (this->lon() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(2, this->lon(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = this->_internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(2, this->_internal_lon(), target);
   }
 
   // float height = 3 [(.dccl.field) = {
-  if (this->height() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(3, this->height(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_height = this->_internal_height();
+  uint32_t raw_height;
+  memcpy(&raw_height, &tmp_height, sizeof(tmp_height));
+  if (raw_height != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(3, this->_internal_height(), target);
   }
 
   // float x = 4 [(.dccl.field) = {
-  if (this->x() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->x(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_x = this->_internal_x();
+  uint32_t raw_x;
+  memcpy(&raw_x, &tmp_x, sizeof(tmp_x));
+  if (raw_x != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(4, this->_internal_x(), target);
   }
 
   // float y = 5 [(.dccl.field) = {
-  if (this->y() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(5, this->y(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_y = this->_internal_y();
+  uint32_t raw_y;
+  memcpy(&raw_y, &tmp_y, sizeof(tmp_y));
+  if (raw_y != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(5, this->_internal_y(), target);
   }
 
   // float z = 6 [(.dccl.field) = {
-  if (this->z() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(6, this->z(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(6, this->_internal_z(), target);
   }
 
   // float phi = 7 [(.dccl.field) = {
-  if (this->phi() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(7, this->phi(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_phi = this->_internal_phi();
+  uint32_t raw_phi;
+  memcpy(&raw_phi, &tmp_phi, sizeof(tmp_phi));
+  if (raw_phi != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(7, this->_internal_phi(), target);
   }
 
   // float theta = 8 [(.dccl.field) = {
-  if (this->theta() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(8, this->theta(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_theta = this->_internal_theta();
+  uint32_t raw_theta;
+  memcpy(&raw_theta, &tmp_theta, sizeof(tmp_theta));
+  if (raw_theta != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(8, this->_internal_theta(), target);
   }
 
   // float psi = 9 [(.dccl.field) = {
-  if (this->psi() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(9, this->psi(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_psi = this->_internal_psi();
+  uint32_t raw_psi;
+  memcpy(&raw_psi, &tmp_psi, sizeof(tmp_psi));
+  if (raw_psi != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(9, this->_internal_psi(), target);
   }
 
   // float u = 10 [(.dccl.field) = {
-  if (this->u() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(10, this->u(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_u = this->_internal_u();
+  uint32_t raw_u;
+  memcpy(&raw_u, &tmp_u, sizeof(tmp_u));
+  if (raw_u != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(10, this->_internal_u(), target);
   }
 
   // float v = 11 [(.dccl.field) = {
-  if (this->v() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(11, this->v(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_v = this->_internal_v();
+  uint32_t raw_v;
+  memcpy(&raw_v, &tmp_v, sizeof(tmp_v));
+  if (raw_v != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(11, this->_internal_v(), target);
   }
 
   // float w = 12 [(.dccl.field) = {
-  if (this->w() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(12, this->w(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_w = this->_internal_w();
+  uint32_t raw_w;
+  memcpy(&raw_w, &tmp_w, sizeof(tmp_w));
+  if (raw_w != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(12, this->_internal_w(), target);
   }
 
   // float vx = 13 [(.dccl.field) = {
-  if (this->vx() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(13, this->vx(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_vx = this->_internal_vx();
+  uint32_t raw_vx;
+  memcpy(&raw_vx, &tmp_vx, sizeof(tmp_vx));
+  if (raw_vx != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(13, this->_internal_vx(), target);
   }
 
   // float vy = 14 [(.dccl.field) = {
-  if (this->vy() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(14, this->vy(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_vy = this->_internal_vy();
+  uint32_t raw_vy;
+  memcpy(&raw_vy, &tmp_vy, sizeof(tmp_vy));
+  if (raw_vy != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(14, this->_internal_vy(), target);
   }
 
   // float vz = 15 [(.dccl.field) = {
-  if (this->vz() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(15, this->vz(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_vz = this->_internal_vz();
+  uint32_t raw_vz;
+  memcpy(&raw_vz, &tmp_vz, sizeof(tmp_vz));
+  if (raw_vz != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(15, this->_internal_vz(), target);
   }
 
   // float p = 16 [(.dccl.field) = {
-  if (this->p() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(16, this->p(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_p = this->_internal_p();
+  uint32_t raw_p;
+  memcpy(&raw_p, &tmp_p, sizeof(tmp_p));
+  if (raw_p != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(16, this->_internal_p(), target);
   }
 
   // float q = 17 [(.dccl.field) = {
-  if (this->q() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(17, this->q(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_q = this->_internal_q();
+  uint32_t raw_q;
+  memcpy(&raw_q, &tmp_q, sizeof(tmp_q));
+  if (raw_q != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(17, this->_internal_q(), target);
   }
 
   // float r = 18 [(.dccl.field) = {
-  if (this->r() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(18, this->r(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_r = this->_internal_r();
+  uint32_t raw_r;
+  memcpy(&raw_r, &tmp_r, sizeof(tmp_r));
+  if (raw_r != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(18, this->_internal_r(), target);
   }
 
   // float depth = 19 [(.dccl.field) = {
-  if (this->depth() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(19, this->depth(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_depth = this->_internal_depth();
+  uint32_t raw_depth;
+  memcpy(&raw_depth, &tmp_depth, sizeof(tmp_depth));
+  if (raw_depth != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(19, this->_internal_depth(), target);
   }
 
   // float altitude = 20 [(.dccl.field) = {
-  if (this->altitude() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(20, this->altitude(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_altitude = this->_internal_altitude();
+  uint32_t raw_altitude;
+  memcpy(&raw_altitude, &tmp_altitude, sizeof(tmp_altitude));
+  if (raw_altitude != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(20, this->_internal_altitude(), target);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.EstimatedState)
   return target;
@@ -1591,205 +1410,349 @@ size_t EstimatedState::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.EstimatedState)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // float lat = 1 [(.dccl.field) = {
-  if (this->lat() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = this->_internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
     total_size += 1 + 4;
   }
 
   // float lon = 2 [(.dccl.field) = {
-  if (this->lon() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = this->_internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
     total_size += 1 + 4;
   }
 
   // float height = 3 [(.dccl.field) = {
-  if (this->height() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_height = this->_internal_height();
+  uint32_t raw_height;
+  memcpy(&raw_height, &tmp_height, sizeof(tmp_height));
+  if (raw_height != 0) {
     total_size += 1 + 4;
   }
 
   // float x = 4 [(.dccl.field) = {
-  if (this->x() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_x = this->_internal_x();
+  uint32_t raw_x;
+  memcpy(&raw_x, &tmp_x, sizeof(tmp_x));
+  if (raw_x != 0) {
     total_size += 1 + 4;
   }
 
   // float y = 5 [(.dccl.field) = {
-  if (this->y() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_y = this->_internal_y();
+  uint32_t raw_y;
+  memcpy(&raw_y, &tmp_y, sizeof(tmp_y));
+  if (raw_y != 0) {
     total_size += 1 + 4;
   }
 
   // float z = 6 [(.dccl.field) = {
-  if (this->z() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
     total_size += 1 + 4;
   }
 
   // float phi = 7 [(.dccl.field) = {
-  if (this->phi() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_phi = this->_internal_phi();
+  uint32_t raw_phi;
+  memcpy(&raw_phi, &tmp_phi, sizeof(tmp_phi));
+  if (raw_phi != 0) {
     total_size += 1 + 4;
   }
 
   // float theta = 8 [(.dccl.field) = {
-  if (this->theta() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_theta = this->_internal_theta();
+  uint32_t raw_theta;
+  memcpy(&raw_theta, &tmp_theta, sizeof(tmp_theta));
+  if (raw_theta != 0) {
     total_size += 1 + 4;
   }
 
   // float psi = 9 [(.dccl.field) = {
-  if (this->psi() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_psi = this->_internal_psi();
+  uint32_t raw_psi;
+  memcpy(&raw_psi, &tmp_psi, sizeof(tmp_psi));
+  if (raw_psi != 0) {
     total_size += 1 + 4;
   }
 
   // float u = 10 [(.dccl.field) = {
-  if (this->u() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_u = this->_internal_u();
+  uint32_t raw_u;
+  memcpy(&raw_u, &tmp_u, sizeof(tmp_u));
+  if (raw_u != 0) {
     total_size += 1 + 4;
   }
 
   // float v = 11 [(.dccl.field) = {
-  if (this->v() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_v = this->_internal_v();
+  uint32_t raw_v;
+  memcpy(&raw_v, &tmp_v, sizeof(tmp_v));
+  if (raw_v != 0) {
     total_size += 1 + 4;
   }
 
   // float w = 12 [(.dccl.field) = {
-  if (this->w() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_w = this->_internal_w();
+  uint32_t raw_w;
+  memcpy(&raw_w, &tmp_w, sizeof(tmp_w));
+  if (raw_w != 0) {
     total_size += 1 + 4;
   }
 
   // float vx = 13 [(.dccl.field) = {
-  if (this->vx() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_vx = this->_internal_vx();
+  uint32_t raw_vx;
+  memcpy(&raw_vx, &tmp_vx, sizeof(tmp_vx));
+  if (raw_vx != 0) {
     total_size += 1 + 4;
   }
 
   // float vy = 14 [(.dccl.field) = {
-  if (this->vy() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_vy = this->_internal_vy();
+  uint32_t raw_vy;
+  memcpy(&raw_vy, &tmp_vy, sizeof(tmp_vy));
+  if (raw_vy != 0) {
     total_size += 1 + 4;
   }
 
   // float vz = 15 [(.dccl.field) = {
-  if (this->vz() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_vz = this->_internal_vz();
+  uint32_t raw_vz;
+  memcpy(&raw_vz, &tmp_vz, sizeof(tmp_vz));
+  if (raw_vz != 0) {
     total_size += 1 + 4;
   }
 
   // float p = 16 [(.dccl.field) = {
-  if (this->p() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_p = this->_internal_p();
+  uint32_t raw_p;
+  memcpy(&raw_p, &tmp_p, sizeof(tmp_p));
+  if (raw_p != 0) {
     total_size += 2 + 4;
   }
 
   // float q = 17 [(.dccl.field) = {
-  if (this->q() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_q = this->_internal_q();
+  uint32_t raw_q;
+  memcpy(&raw_q, &tmp_q, sizeof(tmp_q));
+  if (raw_q != 0) {
     total_size += 2 + 4;
   }
 
   // float r = 18 [(.dccl.field) = {
-  if (this->r() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_r = this->_internal_r();
+  uint32_t raw_r;
+  memcpy(&raw_r, &tmp_r, sizeof(tmp_r));
+  if (raw_r != 0) {
     total_size += 2 + 4;
   }
 
   // float depth = 19 [(.dccl.field) = {
-  if (this->depth() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_depth = this->_internal_depth();
+  uint32_t raw_depth;
+  memcpy(&raw_depth, &tmp_depth, sizeof(tmp_depth));
+  if (raw_depth != 0) {
     total_size += 2 + 4;
   }
 
   // float altitude = 20 [(.dccl.field) = {
-  if (this->altitude() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_altitude = this->_internal_altitude();
+  uint32_t raw_altitude;
+  memcpy(&raw_altitude, &tmp_altitude, sizeof(tmp_altitude));
+  if (raw_altitude != 0) {
     total_size += 2 + 4;
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void EstimatedState::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.EstimatedState)
-  GOOGLE_DCHECK_NE(&from, this);
-  const EstimatedState* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const EstimatedState>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.EstimatedState)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.EstimatedState)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData EstimatedState::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    EstimatedState::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*EstimatedState::GetClassData() const { return &_class_data_; }
 
-void EstimatedState::MergeFrom(const EstimatedState& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.EstimatedState)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void EstimatedState::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<EstimatedState*>(&to_msg);
+  auto& from = static_cast<const EstimatedState&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.EstimatedState)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.lat() != 0) {
-    set_lat(from.lat());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = from._internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
+    _this->_internal_set_lat(from._internal_lat());
   }
-  if (from.lon() != 0) {
-    set_lon(from.lon());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = from._internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
+    _this->_internal_set_lon(from._internal_lon());
   }
-  if (from.height() != 0) {
-    set_height(from.height());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_height = from._internal_height();
+  uint32_t raw_height;
+  memcpy(&raw_height, &tmp_height, sizeof(tmp_height));
+  if (raw_height != 0) {
+    _this->_internal_set_height(from._internal_height());
   }
-  if (from.x() != 0) {
-    set_x(from.x());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_x = from._internal_x();
+  uint32_t raw_x;
+  memcpy(&raw_x, &tmp_x, sizeof(tmp_x));
+  if (raw_x != 0) {
+    _this->_internal_set_x(from._internal_x());
   }
-  if (from.y() != 0) {
-    set_y(from.y());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_y = from._internal_y();
+  uint32_t raw_y;
+  memcpy(&raw_y, &tmp_y, sizeof(tmp_y));
+  if (raw_y != 0) {
+    _this->_internal_set_y(from._internal_y());
   }
-  if (from.z() != 0) {
-    set_z(from.z());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = from._internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    _this->_internal_set_z(from._internal_z());
   }
-  if (from.phi() != 0) {
-    set_phi(from.phi());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_phi = from._internal_phi();
+  uint32_t raw_phi;
+  memcpy(&raw_phi, &tmp_phi, sizeof(tmp_phi));
+  if (raw_phi != 0) {
+    _this->_internal_set_phi(from._internal_phi());
   }
-  if (from.theta() != 0) {
-    set_theta(from.theta());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_theta = from._internal_theta();
+  uint32_t raw_theta;
+  memcpy(&raw_theta, &tmp_theta, sizeof(tmp_theta));
+  if (raw_theta != 0) {
+    _this->_internal_set_theta(from._internal_theta());
   }
-  if (from.psi() != 0) {
-    set_psi(from.psi());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_psi = from._internal_psi();
+  uint32_t raw_psi;
+  memcpy(&raw_psi, &tmp_psi, sizeof(tmp_psi));
+  if (raw_psi != 0) {
+    _this->_internal_set_psi(from._internal_psi());
   }
-  if (from.u() != 0) {
-    set_u(from.u());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_u = from._internal_u();
+  uint32_t raw_u;
+  memcpy(&raw_u, &tmp_u, sizeof(tmp_u));
+  if (raw_u != 0) {
+    _this->_internal_set_u(from._internal_u());
   }
-  if (from.v() != 0) {
-    set_v(from.v());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_v = from._internal_v();
+  uint32_t raw_v;
+  memcpy(&raw_v, &tmp_v, sizeof(tmp_v));
+  if (raw_v != 0) {
+    _this->_internal_set_v(from._internal_v());
   }
-  if (from.w() != 0) {
-    set_w(from.w());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_w = from._internal_w();
+  uint32_t raw_w;
+  memcpy(&raw_w, &tmp_w, sizeof(tmp_w));
+  if (raw_w != 0) {
+    _this->_internal_set_w(from._internal_w());
   }
-  if (from.vx() != 0) {
-    set_vx(from.vx());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_vx = from._internal_vx();
+  uint32_t raw_vx;
+  memcpy(&raw_vx, &tmp_vx, sizeof(tmp_vx));
+  if (raw_vx != 0) {
+    _this->_internal_set_vx(from._internal_vx());
   }
-  if (from.vy() != 0) {
-    set_vy(from.vy());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_vy = from._internal_vy();
+  uint32_t raw_vy;
+  memcpy(&raw_vy, &tmp_vy, sizeof(tmp_vy));
+  if (raw_vy != 0) {
+    _this->_internal_set_vy(from._internal_vy());
   }
-  if (from.vz() != 0) {
-    set_vz(from.vz());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_vz = from._internal_vz();
+  uint32_t raw_vz;
+  memcpy(&raw_vz, &tmp_vz, sizeof(tmp_vz));
+  if (raw_vz != 0) {
+    _this->_internal_set_vz(from._internal_vz());
   }
-  if (from.p() != 0) {
-    set_p(from.p());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_p = from._internal_p();
+  uint32_t raw_p;
+  memcpy(&raw_p, &tmp_p, sizeof(tmp_p));
+  if (raw_p != 0) {
+    _this->_internal_set_p(from._internal_p());
   }
-  if (from.q() != 0) {
-    set_q(from.q());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_q = from._internal_q();
+  uint32_t raw_q;
+  memcpy(&raw_q, &tmp_q, sizeof(tmp_q));
+  if (raw_q != 0) {
+    _this->_internal_set_q(from._internal_q());
   }
-  if (from.r() != 0) {
-    set_r(from.r());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_r = from._internal_r();
+  uint32_t raw_r;
+  memcpy(&raw_r, &tmp_r, sizeof(tmp_r));
+  if (raw_r != 0) {
+    _this->_internal_set_r(from._internal_r());
   }
-  if (from.depth() != 0) {
-    set_depth(from.depth());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_depth = from._internal_depth();
+  uint32_t raw_depth;
+  memcpy(&raw_depth, &tmp_depth, sizeof(tmp_depth));
+  if (raw_depth != 0) {
+    _this->_internal_set_depth(from._internal_depth());
   }
-  if (from.altitude() != 0) {
-    set_altitude(from.altitude());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_altitude = from._internal_altitude();
+  uint32_t raw_altitude;
+  memcpy(&raw_altitude, &tmp_altitude, sizeof(tmp_altitude));
+  if (raw_altitude != 0) {
+    _this->_internal_set_altitude(from._internal_altitude());
   }
-}
-
-void EstimatedState::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.EstimatedState)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void EstimatedState::CopyFrom(const EstimatedState& from) {
@@ -1803,414 +1766,316 @@ bool EstimatedState::IsInitialized() const {
   return true;
 }
 
-void EstimatedState::Swap(EstimatedState* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void EstimatedState::InternalSwap(EstimatedState* other) {
   using std::swap;
-  swap(lat_, other->lat_);
-  swap(lon_, other->lon_);
-  swap(height_, other->height_);
-  swap(x_, other->x_);
-  swap(y_, other->y_);
-  swap(z_, other->z_);
-  swap(phi_, other->phi_);
-  swap(theta_, other->theta_);
-  swap(psi_, other->psi_);
-  swap(u_, other->u_);
-  swap(v_, other->v_);
-  swap(w_, other->w_);
-  swap(vx_, other->vx_);
-  swap(vy_, other->vy_);
-  swap(vz_, other->vz_);
-  swap(p_, other->p_);
-  swap(q_, other->q_);
-  swap(r_, other->r_);
-  swap(depth_, other->depth_);
-  swap(altitude_, other->altitude_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(EstimatedState, _impl_.altitude_)
+      + sizeof(EstimatedState::_impl_.altitude_)
+      - PROTOBUF_FIELD_OFFSET(EstimatedState, _impl_.lat_)>(
+          reinterpret_cast<char*>(&_impl_.lat_),
+          reinterpret_cast<char*>(&other->_impl_.lat_));
 }
 
-::google::protobuf::Metadata EstimatedState::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata EstimatedState::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[0]);
 }
-
 
 // ===================================================================
 
-void Goto::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Goto::kTimeoutFieldNumber;
-const int Goto::kLatFieldNumber;
-const int Goto::kLonFieldNumber;
-const int Goto::kZFieldNumber;
-const int Goto::kZUnitsFieldNumber;
-const int Goto::kSpeedFieldNumber;
-const int Goto::kSpeedUnitsFieldNumber;
-const int Goto::kRollFieldNumber;
-const int Goto::kPitchFieldNumber;
-const int Goto::kYawFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class Goto::_Internal {
+ public:
+};
 
-Goto::Goto()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_Goto.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.Goto)
+Goto::Goto(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.Goto)
 }
 Goto::Goto(const Goto& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::memcpy(&timeout_, &from.timeout_,
-    static_cast<size_t>(reinterpret_cast<char*>(&yaw_) -
-    reinterpret_cast<char*>(&timeout_)) + sizeof(yaw_));
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  Goto* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.timeout_){}
+    , decltype(_impl_.lat_){}
+    , decltype(_impl_.lon_){}
+    , decltype(_impl_.z_){}
+    , decltype(_impl_.z_units_){}
+    , decltype(_impl_.speed_){}
+    , decltype(_impl_.speed_units_){}
+    , decltype(_impl_.roll_){}
+    , decltype(_impl_.pitch_){}
+    , decltype(_impl_.yaw_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.timeout_, &from._impl_.timeout_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.yaw_) -
+    reinterpret_cast<char*>(&_impl_.timeout_)) + sizeof(_impl_.yaw_));
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.Goto)
 }
 
-void Goto::SharedCtor() {
-  ::memset(&timeout_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&yaw_) -
-      reinterpret_cast<char*>(&timeout_)) + sizeof(yaw_));
+inline void Goto::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.timeout_){0}
+    , decltype(_impl_.lat_){0}
+    , decltype(_impl_.lon_){0}
+    , decltype(_impl_.z_){0}
+    , decltype(_impl_.z_units_){0}
+    , decltype(_impl_.speed_){0}
+    , decltype(_impl_.speed_units_){0}
+    , decltype(_impl_.roll_){0}
+    , decltype(_impl_.pitch_){0}
+    , decltype(_impl_.yaw_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 Goto::~Goto() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.Goto)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void Goto::SharedDtor() {
+inline void Goto::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
 }
 
 void Goto::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* Goto::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const Goto& Goto::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_Goto.base);
-  return *internal_default_instance();
-}
-
 
 void Goto::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.Goto)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&timeout_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&yaw_) -
-      reinterpret_cast<char*>(&timeout_)) + sizeof(yaw_));
-  _internal_metadata_.Clear();
+  ::memset(&_impl_.timeout_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.yaw_) -
+      reinterpret_cast<char*>(&_impl_.timeout_)) + sizeof(_impl_.yaw_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool Goto::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.Goto)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* Goto::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // int32 timeout = 1 [(.dccl.field) = {
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &timeout_)));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.timeout_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float lat = 2 [(.dccl.field) = {
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(21u /* 21 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &lat_)));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 21)) {
+          _impl_.lat_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float lon = 3 [(.dccl.field) = {
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(29u /* 29 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &lon_)));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 29)) {
+          _impl_.lon_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float z = 4 [(.dccl.field) = {
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(37u /* 37 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &z_)));
-        } else {
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 37)) {
+          _impl_.z_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.ZUnits z_units = 5;
-      case 5: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_z_units(static_cast< ::IMC_DCCL::ZUnits >(value));
-        } else {
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 40)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_z_units(static_cast<::IMC_DCCL::ZUnits>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float speed = 6 [(.dccl.field) = {
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(53u /* 53 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &speed_)));
-        } else {
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 53)) {
+          _impl_.speed_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.SpeedUnits speed_units = 7;
-      case 7: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(56u /* 56 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_speed_units(static_cast< ::IMC_DCCL::SpeedUnits >(value));
-        } else {
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 56)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_speed_units(static_cast<::IMC_DCCL::SpeedUnits>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float roll = 8 [(.dccl.field) = {
-      case 8: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(69u /* 69 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &roll_)));
-        } else {
+      case 8:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 69)) {
+          _impl_.roll_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float pitch = 9 [(.dccl.field) = {
-      case 9: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(77u /* 77 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &pitch_)));
-        } else {
+      case 9:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 77)) {
+          _impl_.pitch_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float yaw = 10 [(.dccl.field) = {
-      case 10: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(85u /* 85 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &yaw_)));
-        } else {
+      case 10:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 85)) {
+          _impl_.yaw_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.Goto)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.Goto)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void Goto::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.Goto)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // int32 timeout = 1 [(.dccl.field) = {
-  if (this->timeout() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->timeout(), output);
-  }
-
-  // float lat = 2 [(.dccl.field) = {
-  if (this->lat() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(2, this->lat(), output);
-  }
-
-  // float lon = 3 [(.dccl.field) = {
-  if (this->lon() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(3, this->lon(), output);
-  }
-
-  // float z = 4 [(.dccl.field) = {
-  if (this->z() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->z(), output);
-  }
-
-  // .IMC_DCCL.ZUnits z_units = 5;
-  if (this->z_units() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      5, this->z_units(), output);
-  }
-
-  // float speed = 6 [(.dccl.field) = {
-  if (this->speed() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(6, this->speed(), output);
-  }
-
-  // .IMC_DCCL.SpeedUnits speed_units = 7;
-  if (this->speed_units() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      7, this->speed_units(), output);
-  }
-
-  // float roll = 8 [(.dccl.field) = {
-  if (this->roll() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(8, this->roll(), output);
-  }
-
-  // float pitch = 9 [(.dccl.field) = {
-  if (this->pitch() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(9, this->pitch(), output);
-  }
-
-  // float yaw = 10 [(.dccl.field) = {
-  if (this->yaw() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(10, this->yaw(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.Goto)
-}
-
-::google::protobuf::uint8* Goto::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* Goto::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.Goto)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // int32 timeout = 1 [(.dccl.field) = {
-  if (this->timeout() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->timeout(), target);
+  if (this->_internal_timeout() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_timeout(), target);
   }
 
   // float lat = 2 [(.dccl.field) = {
-  if (this->lat() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(2, this->lat(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = this->_internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(2, this->_internal_lat(), target);
   }
 
   // float lon = 3 [(.dccl.field) = {
-  if (this->lon() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(3, this->lon(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = this->_internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(3, this->_internal_lon(), target);
   }
 
   // float z = 4 [(.dccl.field) = {
-  if (this->z() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->z(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(4, this->_internal_z(), target);
   }
 
   // .IMC_DCCL.ZUnits z_units = 5;
-  if (this->z_units() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      5, this->z_units(), target);
+  if (this->_internal_z_units() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      5, this->_internal_z_units(), target);
   }
 
   // float speed = 6 [(.dccl.field) = {
-  if (this->speed() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(6, this->speed(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = this->_internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(6, this->_internal_speed(), target);
   }
 
   // .IMC_DCCL.SpeedUnits speed_units = 7;
-  if (this->speed_units() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      7, this->speed_units(), target);
+  if (this->_internal_speed_units() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      7, this->_internal_speed_units(), target);
   }
 
   // float roll = 8 [(.dccl.field) = {
-  if (this->roll() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(8, this->roll(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_roll = this->_internal_roll();
+  uint32_t raw_roll;
+  memcpy(&raw_roll, &tmp_roll, sizeof(tmp_roll));
+  if (raw_roll != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(8, this->_internal_roll(), target);
   }
 
   // float pitch = 9 [(.dccl.field) = {
-  if (this->pitch() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(9, this->pitch(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_pitch = this->_internal_pitch();
+  uint32_t raw_pitch;
+  memcpy(&raw_pitch, &tmp_pitch, sizeof(tmp_pitch));
+  if (raw_pitch != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(9, this->_internal_pitch(), target);
   }
 
   // float yaw = 10 [(.dccl.field) = {
-  if (this->yaw() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(10, this->yaw(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_yaw = this->_internal_yaw();
+  uint32_t raw_yaw;
+  memcpy(&raw_yaw, &tmp_yaw, sizeof(tmp_yaw));
+  if (raw_yaw != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(10, this->_internal_yaw(), target);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.Goto)
   return target;
@@ -2220,129 +2085,167 @@ size_t Goto::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.Goto)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // int32 timeout = 1 [(.dccl.field) = {
-  if (this->timeout() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->timeout());
+  if (this->_internal_timeout() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_timeout());
   }
 
   // float lat = 2 [(.dccl.field) = {
-  if (this->lat() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = this->_internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
     total_size += 1 + 4;
   }
 
   // float lon = 3 [(.dccl.field) = {
-  if (this->lon() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = this->_internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
     total_size += 1 + 4;
   }
 
   // float z = 4 [(.dccl.field) = {
-  if (this->z() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
     total_size += 1 + 4;
   }
 
   // .IMC_DCCL.ZUnits z_units = 5;
-  if (this->z_units() != 0) {
+  if (this->_internal_z_units() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->z_units());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_z_units());
   }
 
   // float speed = 6 [(.dccl.field) = {
-  if (this->speed() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = this->_internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
     total_size += 1 + 4;
   }
 
   // .IMC_DCCL.SpeedUnits speed_units = 7;
-  if (this->speed_units() != 0) {
+  if (this->_internal_speed_units() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->speed_units());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_speed_units());
   }
 
   // float roll = 8 [(.dccl.field) = {
-  if (this->roll() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_roll = this->_internal_roll();
+  uint32_t raw_roll;
+  memcpy(&raw_roll, &tmp_roll, sizeof(tmp_roll));
+  if (raw_roll != 0) {
     total_size += 1 + 4;
   }
 
   // float pitch = 9 [(.dccl.field) = {
-  if (this->pitch() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_pitch = this->_internal_pitch();
+  uint32_t raw_pitch;
+  memcpy(&raw_pitch, &tmp_pitch, sizeof(tmp_pitch));
+  if (raw_pitch != 0) {
     total_size += 1 + 4;
   }
 
   // float yaw = 10 [(.dccl.field) = {
-  if (this->yaw() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_yaw = this->_internal_yaw();
+  uint32_t raw_yaw;
+  memcpy(&raw_yaw, &tmp_yaw, sizeof(tmp_yaw));
+  if (raw_yaw != 0) {
     total_size += 1 + 4;
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void Goto::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.Goto)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Goto* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const Goto>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.Goto)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.Goto)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData Goto::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    Goto::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*Goto::GetClassData() const { return &_class_data_; }
 
-void Goto::MergeFrom(const Goto& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.Goto)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void Goto::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<Goto*>(&to_msg);
+  auto& from = static_cast<const Goto&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.Goto)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.timeout() != 0) {
-    set_timeout(from.timeout());
+  if (from._internal_timeout() != 0) {
+    _this->_internal_set_timeout(from._internal_timeout());
   }
-  if (from.lat() != 0) {
-    set_lat(from.lat());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = from._internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
+    _this->_internal_set_lat(from._internal_lat());
   }
-  if (from.lon() != 0) {
-    set_lon(from.lon());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = from._internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
+    _this->_internal_set_lon(from._internal_lon());
   }
-  if (from.z() != 0) {
-    set_z(from.z());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = from._internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    _this->_internal_set_z(from._internal_z());
   }
-  if (from.z_units() != 0) {
-    set_z_units(from.z_units());
+  if (from._internal_z_units() != 0) {
+    _this->_internal_set_z_units(from._internal_z_units());
   }
-  if (from.speed() != 0) {
-    set_speed(from.speed());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = from._internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
+    _this->_internal_set_speed(from._internal_speed());
   }
-  if (from.speed_units() != 0) {
-    set_speed_units(from.speed_units());
+  if (from._internal_speed_units() != 0) {
+    _this->_internal_set_speed_units(from._internal_speed_units());
   }
-  if (from.roll() != 0) {
-    set_roll(from.roll());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_roll = from._internal_roll();
+  uint32_t raw_roll;
+  memcpy(&raw_roll, &tmp_roll, sizeof(tmp_roll));
+  if (raw_roll != 0) {
+    _this->_internal_set_roll(from._internal_roll());
   }
-  if (from.pitch() != 0) {
-    set_pitch(from.pitch());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_pitch = from._internal_pitch();
+  uint32_t raw_pitch;
+  memcpy(&raw_pitch, &tmp_pitch, sizeof(tmp_pitch));
+  if (raw_pitch != 0) {
+    _this->_internal_set_pitch(from._internal_pitch());
   }
-  if (from.yaw() != 0) {
-    set_yaw(from.yaw());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_yaw = from._internal_yaw();
+  uint32_t raw_yaw;
+  memcpy(&raw_yaw, &tmp_yaw, sizeof(tmp_yaw));
+  if (raw_yaw != 0) {
+    _this->_internal_set_yaw(from._internal_yaw());
   }
-}
-
-void Goto::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.Goto)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void Goto::CopyFrom(const Goto& from) {
@@ -2356,354 +2259,276 @@ bool Goto::IsInitialized() const {
   return true;
 }
 
-void Goto::Swap(Goto* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void Goto::InternalSwap(Goto* other) {
   using std::swap;
-  swap(timeout_, other->timeout_);
-  swap(lat_, other->lat_);
-  swap(lon_, other->lon_);
-  swap(z_, other->z_);
-  swap(z_units_, other->z_units_);
-  swap(speed_, other->speed_);
-  swap(speed_units_, other->speed_units_);
-  swap(roll_, other->roll_);
-  swap(pitch_, other->pitch_);
-  swap(yaw_, other->yaw_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(Goto, _impl_.yaw_)
+      + sizeof(Goto::_impl_.yaw_)
+      - PROTOBUF_FIELD_OFFSET(Goto, _impl_.timeout_)>(
+          reinterpret_cast<char*>(&_impl_.timeout_),
+          reinterpret_cast<char*>(&other->_impl_.timeout_));
 }
 
-::google::protobuf::Metadata Goto::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata Goto::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[1]);
 }
-
 
 // ===================================================================
 
-void StationKeeping::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int StationKeeping::kLatFieldNumber;
-const int StationKeeping::kLonFieldNumber;
-const int StationKeeping::kZFieldNumber;
-const int StationKeeping::kZUnitsFieldNumber;
-const int StationKeeping::kRadiusFieldNumber;
-const int StationKeeping::kDurationFieldNumber;
-const int StationKeeping::kSpeedFieldNumber;
-const int StationKeeping::kSpeedUnitsFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class StationKeeping::_Internal {
+ public:
+};
 
-StationKeeping::StationKeeping()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_StationKeeping.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.StationKeeping)
+StationKeeping::StationKeeping(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.StationKeeping)
 }
 StationKeeping::StationKeeping(const StationKeeping& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::memcpy(&lat_, &from.lat_,
-    static_cast<size_t>(reinterpret_cast<char*>(&speed_units_) -
-    reinterpret_cast<char*>(&lat_)) + sizeof(speed_units_));
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  StationKeeping* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.lat_){}
+    , decltype(_impl_.lon_){}
+    , decltype(_impl_.z_){}
+    , decltype(_impl_.z_units_){}
+    , decltype(_impl_.radius_){}
+    , decltype(_impl_.duration_){}
+    , decltype(_impl_.speed_){}
+    , decltype(_impl_.speed_units_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.lat_, &from._impl_.lat_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.speed_units_) -
+    reinterpret_cast<char*>(&_impl_.lat_)) + sizeof(_impl_.speed_units_));
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.StationKeeping)
 }
 
-void StationKeeping::SharedCtor() {
-  ::memset(&lat_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&speed_units_) -
-      reinterpret_cast<char*>(&lat_)) + sizeof(speed_units_));
+inline void StationKeeping::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.lat_){0}
+    , decltype(_impl_.lon_){0}
+    , decltype(_impl_.z_){0}
+    , decltype(_impl_.z_units_){0}
+    , decltype(_impl_.radius_){0}
+    , decltype(_impl_.duration_){0}
+    , decltype(_impl_.speed_){0}
+    , decltype(_impl_.speed_units_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 StationKeeping::~StationKeeping() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.StationKeeping)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void StationKeeping::SharedDtor() {
+inline void StationKeeping::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
 }
 
 void StationKeeping::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* StationKeeping::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const StationKeeping& StationKeeping::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_StationKeeping.base);
-  return *internal_default_instance();
-}
-
 
 void StationKeeping::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.StationKeeping)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&lat_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&speed_units_) -
-      reinterpret_cast<char*>(&lat_)) + sizeof(speed_units_));
-  _internal_metadata_.Clear();
+  ::memset(&_impl_.lat_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.speed_units_) -
+      reinterpret_cast<char*>(&_impl_.lat_)) + sizeof(_impl_.speed_units_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool StationKeeping::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.StationKeeping)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* StationKeeping::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // float lat = 1 [(.dccl.field) = {
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(13u /* 13 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &lat_)));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 13)) {
+          _impl_.lat_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float lon = 2 [(.dccl.field) = {
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(21u /* 21 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &lon_)));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 21)) {
+          _impl_.lon_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float z = 3 [(.dccl.field) = {
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(29u /* 29 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &z_)));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 29)) {
+          _impl_.z_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.ZUnits z_units = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_z_units(static_cast< ::IMC_DCCL::ZUnits >(value));
-        } else {
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 32)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_z_units(static_cast<::IMC_DCCL::ZUnits>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float radius = 5 [(.dccl.field) = {
-      case 5: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(45u /* 45 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &radius_)));
-        } else {
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 45)) {
+          _impl_.radius_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // int32 duration = 6 [(.dccl.field) = {
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &duration_)));
-        } else {
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 48)) {
+          _impl_.duration_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float speed = 7 [(.dccl.field) = {
-      case 7: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(61u /* 61 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &speed_)));
-        } else {
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 61)) {
+          _impl_.speed_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.SpeedUnits speed_units = 8;
-      case 8: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(64u /* 64 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_speed_units(static_cast< ::IMC_DCCL::SpeedUnits >(value));
-        } else {
+      case 8:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 64)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_speed_units(static_cast<::IMC_DCCL::SpeedUnits>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.StationKeeping)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.StationKeeping)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void StationKeeping::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.StationKeeping)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // float lat = 1 [(.dccl.field) = {
-  if (this->lat() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(1, this->lat(), output);
-  }
-
-  // float lon = 2 [(.dccl.field) = {
-  if (this->lon() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(2, this->lon(), output);
-  }
-
-  // float z = 3 [(.dccl.field) = {
-  if (this->z() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(3, this->z(), output);
-  }
-
-  // .IMC_DCCL.ZUnits z_units = 4;
-  if (this->z_units() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      4, this->z_units(), output);
-  }
-
-  // float radius = 5 [(.dccl.field) = {
-  if (this->radius() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(5, this->radius(), output);
-  }
-
-  // int32 duration = 6 [(.dccl.field) = {
-  if (this->duration() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->duration(), output);
-  }
-
-  // float speed = 7 [(.dccl.field) = {
-  if (this->speed() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(7, this->speed(), output);
-  }
-
-  // .IMC_DCCL.SpeedUnits speed_units = 8;
-  if (this->speed_units() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      8, this->speed_units(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.StationKeeping)
-}
-
-::google::protobuf::uint8* StationKeeping::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* StationKeeping::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.StationKeeping)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // float lat = 1 [(.dccl.field) = {
-  if (this->lat() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(1, this->lat(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = this->_internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(1, this->_internal_lat(), target);
   }
 
   // float lon = 2 [(.dccl.field) = {
-  if (this->lon() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(2, this->lon(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = this->_internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(2, this->_internal_lon(), target);
   }
 
   // float z = 3 [(.dccl.field) = {
-  if (this->z() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(3, this->z(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(3, this->_internal_z(), target);
   }
 
   // .IMC_DCCL.ZUnits z_units = 4;
-  if (this->z_units() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      4, this->z_units(), target);
+  if (this->_internal_z_units() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      4, this->_internal_z_units(), target);
   }
 
   // float radius = 5 [(.dccl.field) = {
-  if (this->radius() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(5, this->radius(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_radius = this->_internal_radius();
+  uint32_t raw_radius;
+  memcpy(&raw_radius, &tmp_radius, sizeof(tmp_radius));
+  if (raw_radius != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(5, this->_internal_radius(), target);
   }
 
   // int32 duration = 6 [(.dccl.field) = {
-  if (this->duration() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(6, this->duration(), target);
+  if (this->_internal_duration() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(6, this->_internal_duration(), target);
   }
 
   // float speed = 7 [(.dccl.field) = {
-  if (this->speed() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(7, this->speed(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = this->_internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(7, this->_internal_speed(), target);
   }
 
   // .IMC_DCCL.SpeedUnits speed_units = 8;
-  if (this->speed_units() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      8, this->speed_units(), target);
+  if (this->_internal_speed_units() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      8, this->_internal_speed_units(), target);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.StationKeeping)
   return target;
@@ -2713,113 +2538,135 @@ size_t StationKeeping::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.StationKeeping)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // float lat = 1 [(.dccl.field) = {
-  if (this->lat() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = this->_internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
     total_size += 1 + 4;
   }
 
   // float lon = 2 [(.dccl.field) = {
-  if (this->lon() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = this->_internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
     total_size += 1 + 4;
   }
 
   // float z = 3 [(.dccl.field) = {
-  if (this->z() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
     total_size += 1 + 4;
   }
 
   // .IMC_DCCL.ZUnits z_units = 4;
-  if (this->z_units() != 0) {
+  if (this->_internal_z_units() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->z_units());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_z_units());
   }
 
   // float radius = 5 [(.dccl.field) = {
-  if (this->radius() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_radius = this->_internal_radius();
+  uint32_t raw_radius;
+  memcpy(&raw_radius, &tmp_radius, sizeof(tmp_radius));
+  if (raw_radius != 0) {
     total_size += 1 + 4;
   }
 
   // int32 duration = 6 [(.dccl.field) = {
-  if (this->duration() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->duration());
+  if (this->_internal_duration() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_duration());
   }
 
   // float speed = 7 [(.dccl.field) = {
-  if (this->speed() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = this->_internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
     total_size += 1 + 4;
   }
 
   // .IMC_DCCL.SpeedUnits speed_units = 8;
-  if (this->speed_units() != 0) {
+  if (this->_internal_speed_units() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->speed_units());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_speed_units());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void StationKeeping::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.StationKeeping)
-  GOOGLE_DCHECK_NE(&from, this);
-  const StationKeeping* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const StationKeeping>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.StationKeeping)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.StationKeeping)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData StationKeeping::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    StationKeeping::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*StationKeeping::GetClassData() const { return &_class_data_; }
 
-void StationKeeping::MergeFrom(const StationKeeping& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.StationKeeping)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void StationKeeping::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<StationKeeping*>(&to_msg);
+  auto& from = static_cast<const StationKeeping&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.StationKeeping)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.lat() != 0) {
-    set_lat(from.lat());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = from._internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
+    _this->_internal_set_lat(from._internal_lat());
   }
-  if (from.lon() != 0) {
-    set_lon(from.lon());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = from._internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
+    _this->_internal_set_lon(from._internal_lon());
   }
-  if (from.z() != 0) {
-    set_z(from.z());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = from._internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    _this->_internal_set_z(from._internal_z());
   }
-  if (from.z_units() != 0) {
-    set_z_units(from.z_units());
+  if (from._internal_z_units() != 0) {
+    _this->_internal_set_z_units(from._internal_z_units());
   }
-  if (from.radius() != 0) {
-    set_radius(from.radius());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_radius = from._internal_radius();
+  uint32_t raw_radius;
+  memcpy(&raw_radius, &tmp_radius, sizeof(tmp_radius));
+  if (raw_radius != 0) {
+    _this->_internal_set_radius(from._internal_radius());
   }
-  if (from.duration() != 0) {
-    set_duration(from.duration());
+  if (from._internal_duration() != 0) {
+    _this->_internal_set_duration(from._internal_duration());
   }
-  if (from.speed() != 0) {
-    set_speed(from.speed());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = from._internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
+    _this->_internal_set_speed(from._internal_speed());
   }
-  if (from.speed_units() != 0) {
-    set_speed_units(from.speed_units());
+  if (from._internal_speed_units() != 0) {
+    _this->_internal_set_speed_units(from._internal_speed_units());
   }
-}
-
-void StationKeeping::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.StationKeeping)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void StationKeeping::CopyFrom(const StationKeeping& from) {
@@ -2833,359 +2680,281 @@ bool StationKeeping::IsInitialized() const {
   return true;
 }
 
-void StationKeeping::Swap(StationKeeping* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void StationKeeping::InternalSwap(StationKeeping* other) {
   using std::swap;
-  swap(lat_, other->lat_);
-  swap(lon_, other->lon_);
-  swap(z_, other->z_);
-  swap(z_units_, other->z_units_);
-  swap(radius_, other->radius_);
-  swap(duration_, other->duration_);
-  swap(speed_, other->speed_);
-  swap(speed_units_, other->speed_units_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(StationKeeping, _impl_.speed_units_)
+      + sizeof(StationKeeping::_impl_.speed_units_)
+      - PROTOBUF_FIELD_OFFSET(StationKeeping, _impl_.lat_)>(
+          reinterpret_cast<char*>(&_impl_.lat_),
+          reinterpret_cast<char*>(&other->_impl_.lat_));
 }
 
-::google::protobuf::Metadata StationKeeping::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata StationKeeping::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[2]);
 }
-
 
 // ===================================================================
 
-void FollowPath::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int FollowPath::kTimeoutFieldNumber;
-const int FollowPath::kLatFieldNumber;
-const int FollowPath::kLonFieldNumber;
-const int FollowPath::kZFieldNumber;
-const int FollowPath::kZUnitsFieldNumber;
-const int FollowPath::kSpeedFieldNumber;
-const int FollowPath::kSpeedUnitsFieldNumber;
-const int FollowPath::kPointsFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class FollowPath::_Internal {
+ public:
+};
 
-FollowPath::FollowPath()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_FollowPath.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.FollowPath)
+FollowPath::FollowPath(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.FollowPath)
 }
 FollowPath::FollowPath(const FollowPath& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      points_(from.points_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::memcpy(&timeout_, &from.timeout_,
-    static_cast<size_t>(reinterpret_cast<char*>(&speed_units_) -
-    reinterpret_cast<char*>(&timeout_)) + sizeof(speed_units_));
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  FollowPath* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.points_){from._impl_.points_}
+    , decltype(_impl_.timeout_){}
+    , decltype(_impl_.lat_){}
+    , decltype(_impl_.lon_){}
+    , decltype(_impl_.z_){}
+    , decltype(_impl_.z_units_){}
+    , decltype(_impl_.speed_){}
+    , decltype(_impl_.speed_units_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.timeout_, &from._impl_.timeout_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.speed_units_) -
+    reinterpret_cast<char*>(&_impl_.timeout_)) + sizeof(_impl_.speed_units_));
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.FollowPath)
 }
 
-void FollowPath::SharedCtor() {
-  ::memset(&timeout_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&speed_units_) -
-      reinterpret_cast<char*>(&timeout_)) + sizeof(speed_units_));
+inline void FollowPath::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.points_){arena}
+    , decltype(_impl_.timeout_){0}
+    , decltype(_impl_.lat_){0}
+    , decltype(_impl_.lon_){0}
+    , decltype(_impl_.z_){0}
+    , decltype(_impl_.z_units_){0}
+    , decltype(_impl_.speed_){0}
+    , decltype(_impl_.speed_units_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 FollowPath::~FollowPath() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.FollowPath)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void FollowPath::SharedDtor() {
+inline void FollowPath::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.points_.~RepeatedPtrField();
 }
 
 void FollowPath::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* FollowPath::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const FollowPath& FollowPath::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_FollowPath.base);
-  return *internal_default_instance();
-}
-
 
 void FollowPath::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.FollowPath)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  points_.Clear();
-  ::memset(&timeout_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&speed_units_) -
-      reinterpret_cast<char*>(&timeout_)) + sizeof(speed_units_));
-  _internal_metadata_.Clear();
+  _impl_.points_.Clear();
+  ::memset(&_impl_.timeout_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.speed_units_) -
+      reinterpret_cast<char*>(&_impl_.timeout_)) + sizeof(_impl_.speed_units_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool FollowPath::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.FollowPath)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* FollowPath::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // int32 timeout = 1 [(.dccl.field) = {
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &timeout_)));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.timeout_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float lat = 2 [(.dccl.field) = {
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(21u /* 21 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &lat_)));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 21)) {
+          _impl_.lat_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float lon = 3 [(.dccl.field) = {
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(29u /* 29 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &lon_)));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 29)) {
+          _impl_.lon_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float z = 4 [(.dccl.field) = {
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(37u /* 37 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &z_)));
-        } else {
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 37)) {
+          _impl_.z_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.ZUnits z_units = 5;
-      case 5: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_z_units(static_cast< ::IMC_DCCL::ZUnits >(value));
-        } else {
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 40)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_z_units(static_cast<::IMC_DCCL::ZUnits>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float speed = 6 [(.dccl.field) = {
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(53u /* 53 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &speed_)));
-        } else {
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 53)) {
+          _impl_.speed_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.SpeedUnits speed_units = 7;
-      case 7: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(56u /* 56 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_speed_units(static_cast< ::IMC_DCCL::SpeedUnits >(value));
-        } else {
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 56)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_speed_units(static_cast<::IMC_DCCL::SpeedUnits>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // repeated .IMC_DCCL.PathPoint points = 8 [(.dccl.field) = {
-      case 8: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(66u /* 66 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-                input, add_points()));
-        } else {
+      case 8:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 66)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_points(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<66>(ptr));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.FollowPath)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.FollowPath)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void FollowPath::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.FollowPath)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // int32 timeout = 1 [(.dccl.field) = {
-  if (this->timeout() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->timeout(), output);
-  }
-
-  // float lat = 2 [(.dccl.field) = {
-  if (this->lat() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(2, this->lat(), output);
-  }
-
-  // float lon = 3 [(.dccl.field) = {
-  if (this->lon() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(3, this->lon(), output);
-  }
-
-  // float z = 4 [(.dccl.field) = {
-  if (this->z() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->z(), output);
-  }
-
-  // .IMC_DCCL.ZUnits z_units = 5;
-  if (this->z_units() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      5, this->z_units(), output);
-  }
-
-  // float speed = 6 [(.dccl.field) = {
-  if (this->speed() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(6, this->speed(), output);
-  }
-
-  // .IMC_DCCL.SpeedUnits speed_units = 7;
-  if (this->speed_units() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      7, this->speed_units(), output);
-  }
-
-  // repeated .IMC_DCCL.PathPoint points = 8 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->points_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      8,
-      this->points(static_cast<int>(i)),
-      output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.FollowPath)
-}
-
-::google::protobuf::uint8* FollowPath::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* FollowPath::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.FollowPath)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // int32 timeout = 1 [(.dccl.field) = {
-  if (this->timeout() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->timeout(), target);
+  if (this->_internal_timeout() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_timeout(), target);
   }
 
   // float lat = 2 [(.dccl.field) = {
-  if (this->lat() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(2, this->lat(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = this->_internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(2, this->_internal_lat(), target);
   }
 
   // float lon = 3 [(.dccl.field) = {
-  if (this->lon() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(3, this->lon(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = this->_internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(3, this->_internal_lon(), target);
   }
 
   // float z = 4 [(.dccl.field) = {
-  if (this->z() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->z(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(4, this->_internal_z(), target);
   }
 
   // .IMC_DCCL.ZUnits z_units = 5;
-  if (this->z_units() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      5, this->z_units(), target);
+  if (this->_internal_z_units() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      5, this->_internal_z_units(), target);
   }
 
   // float speed = 6 [(.dccl.field) = {
-  if (this->speed() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(6, this->speed(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = this->_internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(6, this->_internal_speed(), target);
   }
 
   // .IMC_DCCL.SpeedUnits speed_units = 7;
-  if (this->speed_units() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      7, this->speed_units(), target);
+  if (this->_internal_speed_units() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      7, this->_internal_speed_units(), target);
   }
 
   // repeated .IMC_DCCL.PathPoint points = 8 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->points_size()); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        8, this->points(static_cast<int>(i)), deterministic, target);
+  for (unsigned i = 0,
+      n = static_cast<unsigned>(this->_internal_points_size()); i < n; i++) {
+    const auto& repfield = this->_internal_points(i);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+        InternalWriteMessage(8, repfield, repfield.GetCachedSize(), target, stream);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.FollowPath)
   return target;
@@ -3195,117 +2964,127 @@ size_t FollowPath::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.FollowPath)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // repeated .IMC_DCCL.PathPoint points = 8 [(.dccl.field) = {
-  {
-    unsigned int count = static_cast<unsigned int>(this->points_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->points(static_cast<int>(i)));
-    }
+  total_size += 1UL * this->_internal_points_size();
+  for (const auto& msg : this->_impl_.points_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
   // int32 timeout = 1 [(.dccl.field) = {
-  if (this->timeout() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->timeout());
+  if (this->_internal_timeout() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_timeout());
   }
 
   // float lat = 2 [(.dccl.field) = {
-  if (this->lat() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = this->_internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
     total_size += 1 + 4;
   }
 
   // float lon = 3 [(.dccl.field) = {
-  if (this->lon() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = this->_internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
     total_size += 1 + 4;
   }
 
   // float z = 4 [(.dccl.field) = {
-  if (this->z() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
     total_size += 1 + 4;
   }
 
   // .IMC_DCCL.ZUnits z_units = 5;
-  if (this->z_units() != 0) {
+  if (this->_internal_z_units() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->z_units());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_z_units());
   }
 
   // float speed = 6 [(.dccl.field) = {
-  if (this->speed() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = this->_internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
     total_size += 1 + 4;
   }
 
   // .IMC_DCCL.SpeedUnits speed_units = 7;
-  if (this->speed_units() != 0) {
+  if (this->_internal_speed_units() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->speed_units());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_speed_units());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void FollowPath::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.FollowPath)
-  GOOGLE_DCHECK_NE(&from, this);
-  const FollowPath* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const FollowPath>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.FollowPath)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.FollowPath)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData FollowPath::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    FollowPath::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*FollowPath::GetClassData() const { return &_class_data_; }
 
-void FollowPath::MergeFrom(const FollowPath& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.FollowPath)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void FollowPath::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<FollowPath*>(&to_msg);
+  auto& from = static_cast<const FollowPath&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.FollowPath)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  points_.MergeFrom(from.points_);
-  if (from.timeout() != 0) {
-    set_timeout(from.timeout());
+  _this->_impl_.points_.MergeFrom(from._impl_.points_);
+  if (from._internal_timeout() != 0) {
+    _this->_internal_set_timeout(from._internal_timeout());
   }
-  if (from.lat() != 0) {
-    set_lat(from.lat());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = from._internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
+    _this->_internal_set_lat(from._internal_lat());
   }
-  if (from.lon() != 0) {
-    set_lon(from.lon());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = from._internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
+    _this->_internal_set_lon(from._internal_lon());
   }
-  if (from.z() != 0) {
-    set_z(from.z());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = from._internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    _this->_internal_set_z(from._internal_z());
   }
-  if (from.z_units() != 0) {
-    set_z_units(from.z_units());
+  if (from._internal_z_units() != 0) {
+    _this->_internal_set_z_units(from._internal_z_units());
   }
-  if (from.speed() != 0) {
-    set_speed(from.speed());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = from._internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
+    _this->_internal_set_speed(from._internal_speed());
   }
-  if (from.speed_units() != 0) {
-    set_speed_units(from.speed_units());
+  if (from._internal_speed_units() != 0) {
+    _this->_internal_set_speed_units(from._internal_speed_units());
   }
-}
-
-void FollowPath::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.FollowPath)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void FollowPath::CopyFrom(const FollowPath& from) {
@@ -3319,483 +3098,369 @@ bool FollowPath::IsInitialized() const {
   return true;
 }
 
-void FollowPath::Swap(FollowPath* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void FollowPath::InternalSwap(FollowPath* other) {
   using std::swap;
-  CastToBase(&points_)->InternalSwap(CastToBase(&other->points_));
-  swap(timeout_, other->timeout_);
-  swap(lat_, other->lat_);
-  swap(lon_, other->lon_);
-  swap(z_, other->z_);
-  swap(z_units_, other->z_units_);
-  swap(speed_, other->speed_);
-  swap(speed_units_, other->speed_units_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  _impl_.points_.InternalSwap(&other->_impl_.points_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(FollowPath, _impl_.speed_units_)
+      + sizeof(FollowPath::_impl_.speed_units_)
+      - PROTOBUF_FIELD_OFFSET(FollowPath, _impl_.timeout_)>(
+          reinterpret_cast<char*>(&_impl_.timeout_),
+          reinterpret_cast<char*>(&other->_impl_.timeout_));
 }
 
-::google::protobuf::Metadata FollowPath::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata FollowPath::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[3]);
 }
-
 
 // ===================================================================
 
-void Loiter::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Loiter::kTimeoutFieldNumber;
-const int Loiter::kLatFieldNumber;
-const int Loiter::kLonFieldNumber;
-const int Loiter::kZFieldNumber;
-const int Loiter::kZUnitsFieldNumber;
-const int Loiter::kDurationFieldNumber;
-const int Loiter::kSpeedFieldNumber;
-const int Loiter::kSpeedUnitsFieldNumber;
-const int Loiter::kTypeFieldNumber;
-const int Loiter::kRadiusFieldNumber;
-const int Loiter::kLengthFieldNumber;
-const int Loiter::kBearingFieldNumber;
-const int Loiter::kDirectionFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class Loiter::_Internal {
+ public:
+};
 
-Loiter::Loiter()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_Loiter.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.Loiter)
+Loiter::Loiter(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.Loiter)
 }
 Loiter::Loiter(const Loiter& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::memcpy(&timeout_, &from.timeout_,
-    static_cast<size_t>(reinterpret_cast<char*>(&direction_) -
-    reinterpret_cast<char*>(&timeout_)) + sizeof(direction_));
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  Loiter* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.timeout_){}
+    , decltype(_impl_.lat_){}
+    , decltype(_impl_.lon_){}
+    , decltype(_impl_.z_){}
+    , decltype(_impl_.z_units_){}
+    , decltype(_impl_.duration_){}
+    , decltype(_impl_.speed_){}
+    , decltype(_impl_.speed_units_){}
+    , decltype(_impl_.type_){}
+    , decltype(_impl_.radius_){}
+    , decltype(_impl_.length_){}
+    , decltype(_impl_.bearing_){}
+    , decltype(_impl_.direction_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.timeout_, &from._impl_.timeout_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.direction_) -
+    reinterpret_cast<char*>(&_impl_.timeout_)) + sizeof(_impl_.direction_));
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.Loiter)
 }
 
-void Loiter::SharedCtor() {
-  ::memset(&timeout_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&direction_) -
-      reinterpret_cast<char*>(&timeout_)) + sizeof(direction_));
+inline void Loiter::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.timeout_){0}
+    , decltype(_impl_.lat_){0}
+    , decltype(_impl_.lon_){0}
+    , decltype(_impl_.z_){0}
+    , decltype(_impl_.z_units_){0}
+    , decltype(_impl_.duration_){0}
+    , decltype(_impl_.speed_){0}
+    , decltype(_impl_.speed_units_){0}
+    , decltype(_impl_.type_){0}
+    , decltype(_impl_.radius_){0}
+    , decltype(_impl_.length_){0}
+    , decltype(_impl_.bearing_){0}
+    , decltype(_impl_.direction_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 Loiter::~Loiter() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.Loiter)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void Loiter::SharedDtor() {
+inline void Loiter::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
 }
 
 void Loiter::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* Loiter::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const Loiter& Loiter::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_Loiter.base);
-  return *internal_default_instance();
-}
-
 
 void Loiter::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.Loiter)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&timeout_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&direction_) -
-      reinterpret_cast<char*>(&timeout_)) + sizeof(direction_));
-  _internal_metadata_.Clear();
+  ::memset(&_impl_.timeout_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.direction_) -
+      reinterpret_cast<char*>(&_impl_.timeout_)) + sizeof(_impl_.direction_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool Loiter::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.Loiter)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* Loiter::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // int32 timeout = 1 [(.dccl.field) = {
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &timeout_)));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.timeout_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float lat = 2 [(.dccl.field) = {
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(21u /* 21 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &lat_)));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 21)) {
+          _impl_.lat_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float lon = 3 [(.dccl.field) = {
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(29u /* 29 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &lon_)));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 29)) {
+          _impl_.lon_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float z = 4 [(.dccl.field) = {
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(37u /* 37 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &z_)));
-        } else {
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 37)) {
+          _impl_.z_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.ZUnits z_units = 5;
-      case 5: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_z_units(static_cast< ::IMC_DCCL::ZUnits >(value));
-        } else {
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 40)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_z_units(static_cast<::IMC_DCCL::ZUnits>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // int32 duration = 6 [(.dccl.field) = {
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &duration_)));
-        } else {
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 48)) {
+          _impl_.duration_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float speed = 7 [(.dccl.field) = {
-      case 7: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(61u /* 61 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &speed_)));
-        } else {
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 61)) {
+          _impl_.speed_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.SpeedUnits speed_units = 8;
-      case 8: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(64u /* 64 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_speed_units(static_cast< ::IMC_DCCL::SpeedUnits >(value));
-        } else {
+      case 8:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 64)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_speed_units(static_cast<::IMC_DCCL::SpeedUnits>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.LoiterType type = 9;
-      case 9: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(72u /* 72 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_type(static_cast< ::IMC_DCCL::LoiterType >(value));
-        } else {
+      case 9:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 72)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_type(static_cast<::IMC_DCCL::LoiterType>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float radius = 10 [(.dccl.field) = {
-      case 10: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(85u /* 85 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &radius_)));
-        } else {
+      case 10:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 85)) {
+          _impl_.radius_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float length = 11 [(.dccl.field) = {
-      case 11: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(93u /* 93 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &length_)));
-        } else {
+      case 11:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 93)) {
+          _impl_.length_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float bearing = 12 [(.dccl.field) = {
-      case 12: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(101u /* 101 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &bearing_)));
-        } else {
+      case 12:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 101)) {
+          _impl_.bearing_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.DirectionType direction = 13;
-      case 13: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(104u /* 104 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_direction(static_cast< ::IMC_DCCL::DirectionType >(value));
-        } else {
+      case 13:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 104)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_direction(static_cast<::IMC_DCCL::DirectionType>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.Loiter)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.Loiter)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void Loiter::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.Loiter)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // int32 timeout = 1 [(.dccl.field) = {
-  if (this->timeout() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->timeout(), output);
-  }
-
-  // float lat = 2 [(.dccl.field) = {
-  if (this->lat() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(2, this->lat(), output);
-  }
-
-  // float lon = 3 [(.dccl.field) = {
-  if (this->lon() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(3, this->lon(), output);
-  }
-
-  // float z = 4 [(.dccl.field) = {
-  if (this->z() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(4, this->z(), output);
-  }
-
-  // .IMC_DCCL.ZUnits z_units = 5;
-  if (this->z_units() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      5, this->z_units(), output);
-  }
-
-  // int32 duration = 6 [(.dccl.field) = {
-  if (this->duration() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->duration(), output);
-  }
-
-  // float speed = 7 [(.dccl.field) = {
-  if (this->speed() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(7, this->speed(), output);
-  }
-
-  // .IMC_DCCL.SpeedUnits speed_units = 8;
-  if (this->speed_units() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      8, this->speed_units(), output);
-  }
-
-  // .IMC_DCCL.LoiterType type = 9;
-  if (this->type() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      9, this->type(), output);
-  }
-
-  // float radius = 10 [(.dccl.field) = {
-  if (this->radius() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(10, this->radius(), output);
-  }
-
-  // float length = 11 [(.dccl.field) = {
-  if (this->length() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(11, this->length(), output);
-  }
-
-  // float bearing = 12 [(.dccl.field) = {
-  if (this->bearing() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(12, this->bearing(), output);
-  }
-
-  // .IMC_DCCL.DirectionType direction = 13;
-  if (this->direction() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      13, this->direction(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.Loiter)
-}
-
-::google::protobuf::uint8* Loiter::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* Loiter::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.Loiter)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // int32 timeout = 1 [(.dccl.field) = {
-  if (this->timeout() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->timeout(), target);
+  if (this->_internal_timeout() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_timeout(), target);
   }
 
   // float lat = 2 [(.dccl.field) = {
-  if (this->lat() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(2, this->lat(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = this->_internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(2, this->_internal_lat(), target);
   }
 
   // float lon = 3 [(.dccl.field) = {
-  if (this->lon() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(3, this->lon(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = this->_internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(3, this->_internal_lon(), target);
   }
 
   // float z = 4 [(.dccl.field) = {
-  if (this->z() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(4, this->z(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(4, this->_internal_z(), target);
   }
 
   // .IMC_DCCL.ZUnits z_units = 5;
-  if (this->z_units() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      5, this->z_units(), target);
+  if (this->_internal_z_units() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      5, this->_internal_z_units(), target);
   }
 
   // int32 duration = 6 [(.dccl.field) = {
-  if (this->duration() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(6, this->duration(), target);
+  if (this->_internal_duration() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(6, this->_internal_duration(), target);
   }
 
   // float speed = 7 [(.dccl.field) = {
-  if (this->speed() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(7, this->speed(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = this->_internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(7, this->_internal_speed(), target);
   }
 
   // .IMC_DCCL.SpeedUnits speed_units = 8;
-  if (this->speed_units() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      8, this->speed_units(), target);
+  if (this->_internal_speed_units() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      8, this->_internal_speed_units(), target);
   }
 
   // .IMC_DCCL.LoiterType type = 9;
-  if (this->type() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      9, this->type(), target);
+  if (this->_internal_type() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      9, this->_internal_type(), target);
   }
 
   // float radius = 10 [(.dccl.field) = {
-  if (this->radius() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(10, this->radius(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_radius = this->_internal_radius();
+  uint32_t raw_radius;
+  memcpy(&raw_radius, &tmp_radius, sizeof(tmp_radius));
+  if (raw_radius != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(10, this->_internal_radius(), target);
   }
 
   // float length = 11 [(.dccl.field) = {
-  if (this->length() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(11, this->length(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_length = this->_internal_length();
+  uint32_t raw_length;
+  memcpy(&raw_length, &tmp_length, sizeof(tmp_length));
+  if (raw_length != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(11, this->_internal_length(), target);
   }
 
   // float bearing = 12 [(.dccl.field) = {
-  if (this->bearing() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(12, this->bearing(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_bearing = this->_internal_bearing();
+  uint32_t raw_bearing;
+  memcpy(&raw_bearing, &tmp_bearing, sizeof(tmp_bearing));
+  if (raw_bearing != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(12, this->_internal_bearing(), target);
   }
 
   // .IMC_DCCL.DirectionType direction = 13;
-  if (this->direction() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      13, this->direction(), target);
+  if (this->_internal_direction() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      13, this->_internal_direction(), target);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.Loiter)
   return target;
@@ -3805,157 +3470,193 @@ size_t Loiter::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.Loiter)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // int32 timeout = 1 [(.dccl.field) = {
-  if (this->timeout() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->timeout());
+  if (this->_internal_timeout() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_timeout());
   }
 
   // float lat = 2 [(.dccl.field) = {
-  if (this->lat() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = this->_internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
     total_size += 1 + 4;
   }
 
   // float lon = 3 [(.dccl.field) = {
-  if (this->lon() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = this->_internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
     total_size += 1 + 4;
   }
 
   // float z = 4 [(.dccl.field) = {
-  if (this->z() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
     total_size += 1 + 4;
   }
 
   // .IMC_DCCL.ZUnits z_units = 5;
-  if (this->z_units() != 0) {
+  if (this->_internal_z_units() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->z_units());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_z_units());
   }
 
   // int32 duration = 6 [(.dccl.field) = {
-  if (this->duration() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->duration());
+  if (this->_internal_duration() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_duration());
   }
 
   // float speed = 7 [(.dccl.field) = {
-  if (this->speed() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = this->_internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
     total_size += 1 + 4;
   }
 
   // .IMC_DCCL.SpeedUnits speed_units = 8;
-  if (this->speed_units() != 0) {
+  if (this->_internal_speed_units() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->speed_units());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_speed_units());
   }
 
   // .IMC_DCCL.LoiterType type = 9;
-  if (this->type() != 0) {
+  if (this->_internal_type() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->type());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_type());
   }
 
   // float radius = 10 [(.dccl.field) = {
-  if (this->radius() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_radius = this->_internal_radius();
+  uint32_t raw_radius;
+  memcpy(&raw_radius, &tmp_radius, sizeof(tmp_radius));
+  if (raw_radius != 0) {
     total_size += 1 + 4;
   }
 
   // float length = 11 [(.dccl.field) = {
-  if (this->length() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_length = this->_internal_length();
+  uint32_t raw_length;
+  memcpy(&raw_length, &tmp_length, sizeof(tmp_length));
+  if (raw_length != 0) {
     total_size += 1 + 4;
   }
 
   // float bearing = 12 [(.dccl.field) = {
-  if (this->bearing() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_bearing = this->_internal_bearing();
+  uint32_t raw_bearing;
+  memcpy(&raw_bearing, &tmp_bearing, sizeof(tmp_bearing));
+  if (raw_bearing != 0) {
     total_size += 1 + 4;
   }
 
   // .IMC_DCCL.DirectionType direction = 13;
-  if (this->direction() != 0) {
+  if (this->_internal_direction() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->direction());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_direction());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void Loiter::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.Loiter)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Loiter* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const Loiter>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.Loiter)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.Loiter)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData Loiter::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    Loiter::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*Loiter::GetClassData() const { return &_class_data_; }
 
-void Loiter::MergeFrom(const Loiter& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.Loiter)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void Loiter::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<Loiter*>(&to_msg);
+  auto& from = static_cast<const Loiter&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.Loiter)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.timeout() != 0) {
-    set_timeout(from.timeout());
+  if (from._internal_timeout() != 0) {
+    _this->_internal_set_timeout(from._internal_timeout());
   }
-  if (from.lat() != 0) {
-    set_lat(from.lat());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lat = from._internal_lat();
+  uint32_t raw_lat;
+  memcpy(&raw_lat, &tmp_lat, sizeof(tmp_lat));
+  if (raw_lat != 0) {
+    _this->_internal_set_lat(from._internal_lat());
   }
-  if (from.lon() != 0) {
-    set_lon(from.lon());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_lon = from._internal_lon();
+  uint32_t raw_lon;
+  memcpy(&raw_lon, &tmp_lon, sizeof(tmp_lon));
+  if (raw_lon != 0) {
+    _this->_internal_set_lon(from._internal_lon());
   }
-  if (from.z() != 0) {
-    set_z(from.z());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = from._internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    _this->_internal_set_z(from._internal_z());
   }
-  if (from.z_units() != 0) {
-    set_z_units(from.z_units());
+  if (from._internal_z_units() != 0) {
+    _this->_internal_set_z_units(from._internal_z_units());
   }
-  if (from.duration() != 0) {
-    set_duration(from.duration());
+  if (from._internal_duration() != 0) {
+    _this->_internal_set_duration(from._internal_duration());
   }
-  if (from.speed() != 0) {
-    set_speed(from.speed());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_speed = from._internal_speed();
+  uint32_t raw_speed;
+  memcpy(&raw_speed, &tmp_speed, sizeof(tmp_speed));
+  if (raw_speed != 0) {
+    _this->_internal_set_speed(from._internal_speed());
   }
-  if (from.speed_units() != 0) {
-    set_speed_units(from.speed_units());
+  if (from._internal_speed_units() != 0) {
+    _this->_internal_set_speed_units(from._internal_speed_units());
   }
-  if (from.type() != 0) {
-    set_type(from.type());
+  if (from._internal_type() != 0) {
+    _this->_internal_set_type(from._internal_type());
   }
-  if (from.radius() != 0) {
-    set_radius(from.radius());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_radius = from._internal_radius();
+  uint32_t raw_radius;
+  memcpy(&raw_radius, &tmp_radius, sizeof(tmp_radius));
+  if (raw_radius != 0) {
+    _this->_internal_set_radius(from._internal_radius());
   }
-  if (from.length() != 0) {
-    set_length(from.length());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_length = from._internal_length();
+  uint32_t raw_length;
+  memcpy(&raw_length, &tmp_length, sizeof(tmp_length));
+  if (raw_length != 0) {
+    _this->_internal_set_length(from._internal_length());
   }
-  if (from.bearing() != 0) {
-    set_bearing(from.bearing());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_bearing = from._internal_bearing();
+  uint32_t raw_bearing;
+  memcpy(&raw_bearing, &tmp_bearing, sizeof(tmp_bearing));
+  if (raw_bearing != 0) {
+    _this->_internal_set_bearing(from._internal_bearing());
   }
-  if (from.direction() != 0) {
-    set_direction(from.direction());
+  if (from._internal_direction() != 0) {
+    _this->_internal_set_direction(from._internal_direction());
   }
-}
-
-void Loiter::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.Loiter)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void Loiter::CopyFrom(const Loiter& from) {
@@ -3969,226 +3670,184 @@ bool Loiter::IsInitialized() const {
   return true;
 }
 
-void Loiter::Swap(Loiter* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void Loiter::InternalSwap(Loiter* other) {
   using std::swap;
-  swap(timeout_, other->timeout_);
-  swap(lat_, other->lat_);
-  swap(lon_, other->lon_);
-  swap(z_, other->z_);
-  swap(z_units_, other->z_units_);
-  swap(duration_, other->duration_);
-  swap(speed_, other->speed_);
-  swap(speed_units_, other->speed_units_);
-  swap(type_, other->type_);
-  swap(radius_, other->radius_);
-  swap(length_, other->length_);
-  swap(bearing_, other->bearing_);
-  swap(direction_, other->direction_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(Loiter, _impl_.direction_)
+      + sizeof(Loiter::_impl_.direction_)
+      - PROTOBUF_FIELD_OFFSET(Loiter, _impl_.timeout_)>(
+          reinterpret_cast<char*>(&_impl_.timeout_),
+          reinterpret_cast<char*>(&other->_impl_.timeout_));
 }
 
-::google::protobuf::Metadata Loiter::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata Loiter::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[4]);
 }
-
 
 // ===================================================================
 
-void PathPoint::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int PathPoint::kXFieldNumber;
-const int PathPoint::kYFieldNumber;
-const int PathPoint::kZFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class PathPoint::_Internal {
+ public:
+};
 
-PathPoint::PathPoint()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_PathPoint.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.PathPoint)
+PathPoint::PathPoint(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.PathPoint)
 }
 PathPoint::PathPoint(const PathPoint& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::memcpy(&x_, &from.x_,
-    static_cast<size_t>(reinterpret_cast<char*>(&z_) -
-    reinterpret_cast<char*>(&x_)) + sizeof(z_));
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  PathPoint* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.x_){}
+    , decltype(_impl_.y_){}
+    , decltype(_impl_.z_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.x_, &from._impl_.x_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.z_) -
+    reinterpret_cast<char*>(&_impl_.x_)) + sizeof(_impl_.z_));
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.PathPoint)
 }
 
-void PathPoint::SharedCtor() {
-  ::memset(&x_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&z_) -
-      reinterpret_cast<char*>(&x_)) + sizeof(z_));
+inline void PathPoint::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.x_){0}
+    , decltype(_impl_.y_){0}
+    , decltype(_impl_.z_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 PathPoint::~PathPoint() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.PathPoint)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void PathPoint::SharedDtor() {
+inline void PathPoint::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
 }
 
 void PathPoint::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* PathPoint::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const PathPoint& PathPoint::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_PathPoint.base);
-  return *internal_default_instance();
-}
-
 
 void PathPoint::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.PathPoint)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&x_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&z_) -
-      reinterpret_cast<char*>(&x_)) + sizeof(z_));
-  _internal_metadata_.Clear();
+  ::memset(&_impl_.x_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.z_) -
+      reinterpret_cast<char*>(&_impl_.x_)) + sizeof(_impl_.z_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool PathPoint::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.PathPoint)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* PathPoint::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // float x = 1 [(.dccl.field) = {
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(13u /* 13 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &x_)));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 13)) {
+          _impl_.x_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float y = 2 [(.dccl.field) = {
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(21u /* 21 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &y_)));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 21)) {
+          _impl_.y_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // float z = 3 [(.dccl.field) = {
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(29u /* 29 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &z_)));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 29)) {
+          _impl_.z_ = ::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr);
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.PathPoint)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.PathPoint)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void PathPoint::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.PathPoint)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // float x = 1 [(.dccl.field) = {
-  if (this->x() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(1, this->x(), output);
-  }
-
-  // float y = 2 [(.dccl.field) = {
-  if (this->y() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(2, this->y(), output);
-  }
-
-  // float z = 3 [(.dccl.field) = {
-  if (this->z() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(3, this->z(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.PathPoint)
-}
-
-::google::protobuf::uint8* PathPoint::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* PathPoint::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.PathPoint)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // float x = 1 [(.dccl.field) = {
-  if (this->x() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(1, this->x(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_x = this->_internal_x();
+  uint32_t raw_x;
+  memcpy(&raw_x, &tmp_x, sizeof(tmp_x));
+  if (raw_x != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(1, this->_internal_x(), target);
   }
 
   // float y = 2 [(.dccl.field) = {
-  if (this->y() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(2, this->y(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_y = this->_internal_y();
+  uint32_t raw_y;
+  memcpy(&raw_y, &tmp_y, sizeof(tmp_y));
+  if (raw_y != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(2, this->_internal_y(), target);
   }
 
   // float z = 3 [(.dccl.field) = {
-  if (this->z() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(3, this->z(), target);
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(3, this->_internal_z(), target);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.PathPoint)
   return target;
@@ -4198,69 +3857,77 @@ size_t PathPoint::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.PathPoint)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // float x = 1 [(.dccl.field) = {
-  if (this->x() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_x = this->_internal_x();
+  uint32_t raw_x;
+  memcpy(&raw_x, &tmp_x, sizeof(tmp_x));
+  if (raw_x != 0) {
     total_size += 1 + 4;
   }
 
   // float y = 2 [(.dccl.field) = {
-  if (this->y() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_y = this->_internal_y();
+  uint32_t raw_y;
+  memcpy(&raw_y, &tmp_y, sizeof(tmp_y));
+  if (raw_y != 0) {
     total_size += 1 + 4;
   }
 
   // float z = 3 [(.dccl.field) = {
-  if (this->z() != 0) {
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = this->_internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
     total_size += 1 + 4;
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void PathPoint::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.PathPoint)
-  GOOGLE_DCHECK_NE(&from, this);
-  const PathPoint* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const PathPoint>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.PathPoint)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.PathPoint)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData PathPoint::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    PathPoint::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*PathPoint::GetClassData() const { return &_class_data_; }
 
-void PathPoint::MergeFrom(const PathPoint& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PathPoint)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void PathPoint::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<PathPoint*>(&to_msg);
+  auto& from = static_cast<const PathPoint&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PathPoint)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.x() != 0) {
-    set_x(from.x());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_x = from._internal_x();
+  uint32_t raw_x;
+  memcpy(&raw_x, &tmp_x, sizeof(tmp_x));
+  if (raw_x != 0) {
+    _this->_internal_set_x(from._internal_x());
   }
-  if (from.y() != 0) {
-    set_y(from.y());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_y = from._internal_y();
+  uint32_t raw_y;
+  memcpy(&raw_y, &tmp_y, sizeof(tmp_y));
+  if (raw_y != 0) {
+    _this->_internal_set_y(from._internal_y());
   }
-  if (from.z() != 0) {
-    set_z(from.z());
+  static_assert(sizeof(uint32_t) == sizeof(float), "Code assumes uint32_t and float are the same size.");
+  float tmp_z = from._internal_z();
+  uint32_t raw_z;
+  memcpy(&raw_z, &tmp_z, sizeof(tmp_z));
+  if (raw_z != 0) {
+    _this->_internal_set_z(from._internal_z());
   }
-}
-
-void PathPoint::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.PathPoint)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void PathPoint::CopyFrom(const PathPoint& from) {
@@ -4274,126 +3941,144 @@ bool PathPoint::IsInitialized() const {
   return true;
 }
 
-void PathPoint::Swap(PathPoint* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void PathPoint::InternalSwap(PathPoint* other) {
   using std::swap;
-  swap(x_, other->x_);
-  swap(y_, other->y_);
-  swap(z_, other->z_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(PathPoint, _impl_.z_)
+      + sizeof(PathPoint::_impl_.z_)
+      - PROTOBUF_FIELD_OFFSET(PathPoint, _impl_.x_)>(
+          reinterpret_cast<char*>(&_impl_.x_),
+          reinterpret_cast<char*>(&other->_impl_.x_));
 }
 
-::google::protobuf::Metadata PathPoint::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata PathPoint::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[5]);
 }
-
 
 // ===================================================================
 
-void Maneuver::InitAsDefaultInstance() {
-  ::IMC_DCCL::_Maneuver_default_instance_.goto_maneuver_ = const_cast< ::IMC_DCCL::Goto*>(
-      ::IMC_DCCL::Goto::internal_default_instance());
-  ::IMC_DCCL::_Maneuver_default_instance_.followpath_maneuver_ = const_cast< ::IMC_DCCL::FollowPath*>(
-      ::IMC_DCCL::FollowPath::internal_default_instance());
-  ::IMC_DCCL::_Maneuver_default_instance_.loiter_maneuver_ = const_cast< ::IMC_DCCL::Loiter*>(
-      ::IMC_DCCL::Loiter::internal_default_instance());
-  ::IMC_DCCL::_Maneuver_default_instance_.stationkeeping_maneuver_ = const_cast< ::IMC_DCCL::StationKeeping*>(
-      ::IMC_DCCL::StationKeeping::internal_default_instance());
+class Maneuver::_Internal {
+ public:
+  static const ::IMC_DCCL::Goto& goto_maneuver(const Maneuver* msg);
+  static const ::IMC_DCCL::FollowPath& followpath_maneuver(const Maneuver* msg);
+  static const ::IMC_DCCL::Loiter& loiter_maneuver(const Maneuver* msg);
+  static const ::IMC_DCCL::StationKeeping& stationkeeping_maneuver(const Maneuver* msg);
+};
+
+const ::IMC_DCCL::Goto&
+Maneuver::_Internal::goto_maneuver(const Maneuver* msg) {
+  return *msg->_impl_.ManeuverUnion_.goto_maneuver_;
+}
+const ::IMC_DCCL::FollowPath&
+Maneuver::_Internal::followpath_maneuver(const Maneuver* msg) {
+  return *msg->_impl_.ManeuverUnion_.followpath_maneuver_;
+}
+const ::IMC_DCCL::Loiter&
+Maneuver::_Internal::loiter_maneuver(const Maneuver* msg) {
+  return *msg->_impl_.ManeuverUnion_.loiter_maneuver_;
+}
+const ::IMC_DCCL::StationKeeping&
+Maneuver::_Internal::stationkeeping_maneuver(const Maneuver* msg) {
+  return *msg->_impl_.ManeuverUnion_.stationkeeping_maneuver_;
 }
 void Maneuver::set_allocated_goto_maneuver(::IMC_DCCL::Goto* goto_maneuver) {
-  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   clear_ManeuverUnion();
   if (goto_maneuver) {
-    ::google::protobuf::Arena* submessage_arena = NULL;
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(goto_maneuver);
     if (message_arena != submessage_arena) {
-      goto_maneuver = ::google::protobuf::internal::GetOwnedMessage(
+      goto_maneuver = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
           message_arena, goto_maneuver, submessage_arena);
     }
     set_has_goto_maneuver();
-    ManeuverUnion_.goto_maneuver_ = goto_maneuver;
+    _impl_.ManeuverUnion_.goto_maneuver_ = goto_maneuver;
   }
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.Maneuver.goto_maneuver)
 }
 void Maneuver::set_allocated_followpath_maneuver(::IMC_DCCL::FollowPath* followpath_maneuver) {
-  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   clear_ManeuverUnion();
   if (followpath_maneuver) {
-    ::google::protobuf::Arena* submessage_arena = NULL;
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(followpath_maneuver);
     if (message_arena != submessage_arena) {
-      followpath_maneuver = ::google::protobuf::internal::GetOwnedMessage(
+      followpath_maneuver = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
           message_arena, followpath_maneuver, submessage_arena);
     }
     set_has_followpath_maneuver();
-    ManeuverUnion_.followpath_maneuver_ = followpath_maneuver;
+    _impl_.ManeuverUnion_.followpath_maneuver_ = followpath_maneuver;
   }
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.Maneuver.followpath_maneuver)
 }
 void Maneuver::set_allocated_loiter_maneuver(::IMC_DCCL::Loiter* loiter_maneuver) {
-  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   clear_ManeuverUnion();
   if (loiter_maneuver) {
-    ::google::protobuf::Arena* submessage_arena = NULL;
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(loiter_maneuver);
     if (message_arena != submessage_arena) {
-      loiter_maneuver = ::google::protobuf::internal::GetOwnedMessage(
+      loiter_maneuver = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
           message_arena, loiter_maneuver, submessage_arena);
     }
     set_has_loiter_maneuver();
-    ManeuverUnion_.loiter_maneuver_ = loiter_maneuver;
+    _impl_.ManeuverUnion_.loiter_maneuver_ = loiter_maneuver;
   }
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.Maneuver.loiter_maneuver)
 }
 void Maneuver::set_allocated_stationkeeping_maneuver(::IMC_DCCL::StationKeeping* stationkeeping_maneuver) {
-  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
   clear_ManeuverUnion();
   if (stationkeeping_maneuver) {
-    ::google::protobuf::Arena* submessage_arena = NULL;
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(stationkeeping_maneuver);
     if (message_arena != submessage_arena) {
-      stationkeeping_maneuver = ::google::protobuf::internal::GetOwnedMessage(
+      stationkeeping_maneuver = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
           message_arena, stationkeeping_maneuver, submessage_arena);
     }
     set_has_stationkeeping_maneuver();
-    ManeuverUnion_.stationkeeping_maneuver_ = stationkeeping_maneuver;
+    _impl_.ManeuverUnion_.stationkeeping_maneuver_ = stationkeeping_maneuver;
   }
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.Maneuver.stationkeeping_maneuver)
 }
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Maneuver::kGotoManeuverFieldNumber;
-const int Maneuver::kFollowpathManeuverFieldNumber;
-const int Maneuver::kLoiterManeuverFieldNumber;
-const int Maneuver::kStationkeepingManeuverFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
-
-Maneuver::Maneuver()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_Maneuver.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.Maneuver)
+Maneuver::Maneuver(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.Maneuver)
 }
 Maneuver::Maneuver(const Maneuver& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  Maneuver* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.ManeuverUnion_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , /*decltype(_impl_._oneof_case_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   clear_has_ManeuverUnion();
   switch (from.ManeuverUnion_case()) {
     case kGotoManeuver: {
-      mutable_goto_maneuver()->::IMC_DCCL::Goto::MergeFrom(from.goto_maneuver());
+      _this->_internal_mutable_goto_maneuver()->::IMC_DCCL::Goto::MergeFrom(
+          from._internal_goto_maneuver());
       break;
     }
     case kFollowpathManeuver: {
-      mutable_followpath_maneuver()->::IMC_DCCL::FollowPath::MergeFrom(from.followpath_maneuver());
+      _this->_internal_mutable_followpath_maneuver()->::IMC_DCCL::FollowPath::MergeFrom(
+          from._internal_followpath_maneuver());
       break;
     }
     case kLoiterManeuver: {
-      mutable_loiter_maneuver()->::IMC_DCCL::Loiter::MergeFrom(from.loiter_maneuver());
+      _this->_internal_mutable_loiter_maneuver()->::IMC_DCCL::Loiter::MergeFrom(
+          from._internal_loiter_maneuver());
       break;
     }
     case kStationkeepingManeuver: {
-      mutable_stationkeeping_maneuver()->::IMC_DCCL::StationKeeping::MergeFrom(from.stationkeeping_maneuver());
+      _this->_internal_mutable_stationkeeping_maneuver()->::IMC_DCCL::StationKeeping::MergeFrom(
+          from._internal_stationkeeping_maneuver());
       break;
     }
     case MANEUVERUNION_NOT_SET: {
@@ -4403,225 +4088,181 @@ Maneuver::Maneuver(const Maneuver& from)
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.Maneuver)
 }
 
-void Maneuver::SharedCtor() {
+inline void Maneuver::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.ManeuverUnion_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , /*decltype(_impl_._oneof_case_)*/{}
+  };
   clear_has_ManeuverUnion();
 }
 
 Maneuver::~Maneuver() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.Maneuver)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void Maneuver::SharedDtor() {
+inline void Maneuver::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
   if (has_ManeuverUnion()) {
     clear_ManeuverUnion();
   }
 }
 
 void Maneuver::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* Maneuver::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const Maneuver& Maneuver::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_Maneuver.base);
-  return *internal_default_instance();
-}
-
 
 void Maneuver::clear_ManeuverUnion() {
 // @@protoc_insertion_point(one_of_clear_start:IMC_DCCL.Maneuver)
   switch (ManeuverUnion_case()) {
     case kGotoManeuver: {
-      delete ManeuverUnion_.goto_maneuver_;
+      if (GetArenaForAllocation() == nullptr) {
+        delete _impl_.ManeuverUnion_.goto_maneuver_;
+      }
       break;
     }
     case kFollowpathManeuver: {
-      delete ManeuverUnion_.followpath_maneuver_;
+      if (GetArenaForAllocation() == nullptr) {
+        delete _impl_.ManeuverUnion_.followpath_maneuver_;
+      }
       break;
     }
     case kLoiterManeuver: {
-      delete ManeuverUnion_.loiter_maneuver_;
+      if (GetArenaForAllocation() == nullptr) {
+        delete _impl_.ManeuverUnion_.loiter_maneuver_;
+      }
       break;
     }
     case kStationkeepingManeuver: {
-      delete ManeuverUnion_.stationkeeping_maneuver_;
+      if (GetArenaForAllocation() == nullptr) {
+        delete _impl_.ManeuverUnion_.stationkeeping_maneuver_;
+      }
       break;
     }
     case MANEUVERUNION_NOT_SET: {
       break;
     }
   }
-  _oneof_case_[0] = MANEUVERUNION_NOT_SET;
+  _impl_._oneof_case_[0] = MANEUVERUNION_NOT_SET;
 }
 
 
 void Maneuver::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.Maneuver)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   clear_ManeuverUnion();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool Maneuver::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.Maneuver)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* Maneuver::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // .IMC_DCCL.Goto goto_maneuver = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_goto_maneuver()));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          ptr = ctx->ParseMessage(_internal_mutable_goto_maneuver(), ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.FollowPath followpath_maneuver = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_followpath_maneuver()));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          ptr = ctx->ParseMessage(_internal_mutable_followpath_maneuver(), ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.Loiter loiter_maneuver = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_loiter_maneuver()));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+          ptr = ctx->ParseMessage(_internal_mutable_loiter_maneuver(), ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.StationKeeping stationkeeping_maneuver = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_stationkeeping_maneuver()));
-        } else {
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 34)) {
+          ptr = ctx->ParseMessage(_internal_mutable_stationkeeping_maneuver(), ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.Maneuver)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.Maneuver)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void Maneuver::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.Maneuver)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // .IMC_DCCL.Goto goto_maneuver = 1;
-  if (has_goto_maneuver()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1, this->_internal_goto_maneuver(), output);
-  }
-
-  // .IMC_DCCL.FollowPath followpath_maneuver = 2;
-  if (has_followpath_maneuver()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, this->_internal_followpath_maneuver(), output);
-  }
-
-  // .IMC_DCCL.Loiter loiter_maneuver = 3;
-  if (has_loiter_maneuver()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3, this->_internal_loiter_maneuver(), output);
-  }
-
-  // .IMC_DCCL.StationKeeping stationkeeping_maneuver = 4;
-  if (has_stationkeeping_maneuver()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      4, this->_internal_stationkeeping_maneuver(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.Maneuver)
-}
-
-::google::protobuf::uint8* Maneuver::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* Maneuver::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.Maneuver)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // .IMC_DCCL.Goto goto_maneuver = 1;
-  if (has_goto_maneuver()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        1, this->_internal_goto_maneuver(), deterministic, target);
+  if (_internal_has_goto_maneuver()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(1, _Internal::goto_maneuver(this),
+        _Internal::goto_maneuver(this).GetCachedSize(), target, stream);
   }
 
   // .IMC_DCCL.FollowPath followpath_maneuver = 2;
-  if (has_followpath_maneuver()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        2, this->_internal_followpath_maneuver(), deterministic, target);
+  if (_internal_has_followpath_maneuver()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(2, _Internal::followpath_maneuver(this),
+        _Internal::followpath_maneuver(this).GetCachedSize(), target, stream);
   }
 
   // .IMC_DCCL.Loiter loiter_maneuver = 3;
-  if (has_loiter_maneuver()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        3, this->_internal_loiter_maneuver(), deterministic, target);
+  if (_internal_has_loiter_maneuver()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(3, _Internal::loiter_maneuver(this),
+        _Internal::loiter_maneuver(this).GetCachedSize(), target, stream);
   }
 
   // .IMC_DCCL.StationKeeping stationkeeping_maneuver = 4;
-  if (has_stationkeeping_maneuver()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        4, this->_internal_stationkeeping_maneuver(), deterministic, target);
+  if (_internal_has_stationkeeping_maneuver()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(4, _Internal::stationkeeping_maneuver(this),
+        _Internal::stationkeeping_maneuver(this).GetCachedSize(), target, stream);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.Maneuver)
   return target;
@@ -4631,99 +4272,87 @@ size_t Maneuver::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.Maneuver)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   switch (ManeuverUnion_case()) {
     // .IMC_DCCL.Goto goto_maneuver = 1;
     case kGotoManeuver: {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          *ManeuverUnion_.goto_maneuver_);
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          *_impl_.ManeuverUnion_.goto_maneuver_);
       break;
     }
     // .IMC_DCCL.FollowPath followpath_maneuver = 2;
     case kFollowpathManeuver: {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          *ManeuverUnion_.followpath_maneuver_);
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          *_impl_.ManeuverUnion_.followpath_maneuver_);
       break;
     }
     // .IMC_DCCL.Loiter loiter_maneuver = 3;
     case kLoiterManeuver: {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          *ManeuverUnion_.loiter_maneuver_);
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          *_impl_.ManeuverUnion_.loiter_maneuver_);
       break;
     }
     // .IMC_DCCL.StationKeeping stationkeeping_maneuver = 4;
     case kStationkeepingManeuver: {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          *ManeuverUnion_.stationkeeping_maneuver_);
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          *_impl_.ManeuverUnion_.stationkeeping_maneuver_);
       break;
     }
     case MANEUVERUNION_NOT_SET: {
       break;
     }
   }
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void Maneuver::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.Maneuver)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Maneuver* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const Maneuver>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.Maneuver)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.Maneuver)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData Maneuver::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    Maneuver::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*Maneuver::GetClassData() const { return &_class_data_; }
 
-void Maneuver::MergeFrom(const Maneuver& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.Maneuver)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void Maneuver::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<Maneuver*>(&to_msg);
+  auto& from = static_cast<const Maneuver&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.Maneuver)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   switch (from.ManeuverUnion_case()) {
     case kGotoManeuver: {
-      mutable_goto_maneuver()->::IMC_DCCL::Goto::MergeFrom(from.goto_maneuver());
+      _this->_internal_mutable_goto_maneuver()->::IMC_DCCL::Goto::MergeFrom(
+          from._internal_goto_maneuver());
       break;
     }
     case kFollowpathManeuver: {
-      mutable_followpath_maneuver()->::IMC_DCCL::FollowPath::MergeFrom(from.followpath_maneuver());
+      _this->_internal_mutable_followpath_maneuver()->::IMC_DCCL::FollowPath::MergeFrom(
+          from._internal_followpath_maneuver());
       break;
     }
     case kLoiterManeuver: {
-      mutable_loiter_maneuver()->::IMC_DCCL::Loiter::MergeFrom(from.loiter_maneuver());
+      _this->_internal_mutable_loiter_maneuver()->::IMC_DCCL::Loiter::MergeFrom(
+          from._internal_loiter_maneuver());
       break;
     }
     case kStationkeepingManeuver: {
-      mutable_stationkeeping_maneuver()->::IMC_DCCL::StationKeeping::MergeFrom(from.stationkeeping_maneuver());
+      _this->_internal_mutable_stationkeeping_maneuver()->::IMC_DCCL::StationKeeping::MergeFrom(
+          from._internal_stationkeeping_maneuver());
       break;
     }
     case MANEUVERUNION_NOT_SET: {
       break;
     }
   }
-}
-
-void Maneuver::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.Maneuver)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void Maneuver::CopyFrom(const Maneuver& from) {
@@ -4737,53 +4366,48 @@ bool Maneuver::IsInitialized() const {
   return true;
 }
 
-void Maneuver::Swap(Maneuver* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void Maneuver::InternalSwap(Maneuver* other) {
   using std::swap;
-  swap(ManeuverUnion_, other->ManeuverUnion_);
-  swap(_oneof_case_[0], other->_oneof_case_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_.ManeuverUnion_, other->_impl_.ManeuverUnion_);
+  swap(_impl_._oneof_case_[0], other->_impl_._oneof_case_[0]);
 }
 
-::google::protobuf::Metadata Maneuver::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata Maneuver::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[6]);
 }
-
 
 // ===================================================================
 
-void ParameterValue::InitAsDefaultInstance() {
-  ::IMC_DCCL::_ParameterValue_default_instance_.value_number_ = 0;
-  ::IMC_DCCL::_ParameterValue_default_instance_.value_string_ = 0;
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int ParameterValue::kValueNumberFieldNumber;
-const int ParameterValue::kValueStringFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class ParameterValue::_Internal {
+ public:
+};
 
-ParameterValue::ParameterValue()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_ParameterValue.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.ParameterValue)
+ParameterValue::ParameterValue(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.ParameterValue)
 }
 ParameterValue::ParameterValue(const ParameterValue& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  ParameterValue* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.ParameterValueUnion_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , /*decltype(_impl_._oneof_case_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
   clear_has_ParameterValueUnion();
   switch (from.ParameterValueUnion_case()) {
     case kValueNumber: {
-      set_value_number(from.value_number());
+      _this->_internal_set_value_number(from._internal_value_number());
       break;
     }
     case kValueString: {
-      set_value_string(from.value_string());
+      _this->_internal_set_value_string(from._internal_value_string());
       break;
     }
     case PARAMETERVALUEUNION_NOT_SET: {
@@ -4793,34 +4417,37 @@ ParameterValue::ParameterValue(const ParameterValue& from)
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.ParameterValue)
 }
 
-void ParameterValue::SharedCtor() {
+inline void ParameterValue::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.ParameterValueUnion_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , /*decltype(_impl_._oneof_case_)*/{}
+  };
   clear_has_ParameterValueUnion();
 }
 
 ParameterValue::~ParameterValue() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.ParameterValue)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void ParameterValue::SharedDtor() {
+inline void ParameterValue::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
   if (has_ParameterValueUnion()) {
     clear_ParameterValueUnion();
   }
 }
 
 void ParameterValue::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* ParameterValue::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const ParameterValue& ParameterValue::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_ParameterValue.base);
-  return *internal_default_instance();
-}
-
 
 void ParameterValue::clear_ParameterValueUnion() {
 // @@protoc_insertion_point(one_of_clear_start:IMC_DCCL.ParameterValue)
@@ -4837,125 +4464,88 @@ void ParameterValue::clear_ParameterValueUnion() {
       break;
     }
   }
-  _oneof_case_[0] = PARAMETERVALUEUNION_NOT_SET;
+  _impl_._oneof_case_[0] = PARAMETERVALUEUNION_NOT_SET;
 }
 
 
 void ParameterValue::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.ParameterValue)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
   clear_ParameterValueUnion();
-  _internal_metadata_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool ParameterValue::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.ParameterValue)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* ParameterValue::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // float value_number = 1 [(.dccl.field) = {
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(13u /* 13 & 0xFF */)) {
-          clear_ParameterValueUnion();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &ParameterValueUnion_.value_number_)));
-          set_has_value_number();
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 13)) {
+          _internal_set_value_number(::PROTOBUF_NAMESPACE_ID::internal::UnalignedLoad<float>(ptr));
+          ptr += sizeof(float);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.ParamValue value_string = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_value_string(static_cast< ::IMC_DCCL::ParamValue >(value));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_value_string(static_cast<::IMC_DCCL::ParamValue>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.ParameterValue)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.ParameterValue)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void ParameterValue::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.ParameterValue)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // float value_number = 1 [(.dccl.field) = {
-  if (has_value_number()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(1, this->value_number(), output);
-  }
-
-  // .IMC_DCCL.ParamValue value_string = 2;
-  if (has_value_string()) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      2, this->value_string(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.ParameterValue)
-}
-
-::google::protobuf::uint8* ParameterValue::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* ParameterValue::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.ParameterValue)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // float value_number = 1 [(.dccl.field) = {
-  if (has_value_number()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(1, this->value_number(), target);
+  if (_internal_has_value_number()) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteFloatToArray(1, this->_internal_value_number(), target);
   }
 
   // .IMC_DCCL.ParamValue value_string = 2;
-  if (has_value_string()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      2, this->value_string(), target);
+  if (_internal_has_value_string()) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      2, this->_internal_value_string(), target);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.ParameterValue)
   return target;
@@ -4965,11 +4555,10 @@ size_t ParameterValue::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.ParameterValue)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   switch (ParameterValueUnion_case()) {
     // float value_number = 1 [(.dccl.field) = {
     case kValueNumber: {
@@ -4979,60 +4568,45 @@ size_t ParameterValue::ByteSizeLong() const {
     // .IMC_DCCL.ParamValue value_string = 2;
     case kValueString: {
       total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::EnumSize(this->value_string());
+        ::_pbi::WireFormatLite::EnumSize(this->_internal_value_string());
       break;
     }
     case PARAMETERVALUEUNION_NOT_SET: {
       break;
     }
   }
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void ParameterValue::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.ParameterValue)
-  GOOGLE_DCHECK_NE(&from, this);
-  const ParameterValue* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const ParameterValue>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.ParameterValue)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.ParameterValue)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData ParameterValue::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    ParameterValue::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*ParameterValue::GetClassData() const { return &_class_data_; }
 
-void ParameterValue::MergeFrom(const ParameterValue& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.ParameterValue)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void ParameterValue::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<ParameterValue*>(&to_msg);
+  auto& from = static_cast<const ParameterValue&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.ParameterValue)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   switch (from.ParameterValueUnion_case()) {
     case kValueNumber: {
-      set_value_number(from.value_number());
+      _this->_internal_set_value_number(from._internal_value_number());
       break;
     }
     case kValueString: {
-      set_value_string(from.value_string());
+      _this->_internal_set_value_string(from._internal_value_string());
       break;
     }
     case PARAMETERVALUEUNION_NOT_SET: {
       break;
     }
   }
-}
-
-void ParameterValue::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.ParameterValue)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void ParameterValue::CopyFrom(const ParameterValue& from) {
@@ -5046,202 +4620,164 @@ bool ParameterValue::IsInitialized() const {
   return true;
 }
 
-void ParameterValue::Swap(ParameterValue* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void ParameterValue::InternalSwap(ParameterValue* other) {
   using std::swap;
-  swap(ParameterValueUnion_, other->ParameterValueUnion_);
-  swap(_oneof_case_[0], other->_oneof_case_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_.ParameterValueUnion_, other->_impl_.ParameterValueUnion_);
+  swap(_impl_._oneof_case_[0], other->_impl_._oneof_case_[0]);
 }
 
-::google::protobuf::Metadata ParameterValue::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata ParameterValue::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[7]);
 }
-
 
 // ===================================================================
 
-void EntityParameter::InitAsDefaultInstance() {
-  ::IMC_DCCL::_EntityParameter_default_instance_._instance.get_mutable()->value_ = const_cast< ::IMC_DCCL::ParameterValue*>(
-      ::IMC_DCCL::ParameterValue::internal_default_instance());
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int EntityParameter::kNameFieldNumber;
-const int EntityParameter::kValueFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class EntityParameter::_Internal {
+ public:
+  static const ::IMC_DCCL::ParameterValue& value(const EntityParameter* msg);
+};
 
-EntityParameter::EntityParameter()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_EntityParameter.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.EntityParameter)
+const ::IMC_DCCL::ParameterValue&
+EntityParameter::_Internal::value(const EntityParameter* msg) {
+  return *msg->_impl_.value_;
+}
+EntityParameter::EntityParameter(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.EntityParameter)
 }
 EntityParameter::EntityParameter(const EntityParameter& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  if (from.has_value()) {
-    value_ = new ::IMC_DCCL::ParameterValue(*from.value_);
-  } else {
-    value_ = NULL;
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  EntityParameter* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.value_){nullptr}
+    , decltype(_impl_.name_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  if (from._internal_has_value()) {
+    _this->_impl_.value_ = new ::IMC_DCCL::ParameterValue(*from._impl_.value_);
   }
-  name_ = from.name_;
+  _this->_impl_.name_ = from._impl_.name_;
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.EntityParameter)
 }
 
-void EntityParameter::SharedCtor() {
-  ::memset(&value_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&name_) -
-      reinterpret_cast<char*>(&value_)) + sizeof(name_));
+inline void EntityParameter::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.value_){nullptr}
+    , decltype(_impl_.name_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 EntityParameter::~EntityParameter() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.EntityParameter)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void EntityParameter::SharedDtor() {
-  if (this != internal_default_instance()) delete value_;
+inline void EntityParameter::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  if (this != internal_default_instance()) delete _impl_.value_;
 }
 
 void EntityParameter::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* EntityParameter::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const EntityParameter& EntityParameter::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_EntityParameter.base);
-  return *internal_default_instance();
-}
-
 
 void EntityParameter::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.EntityParameter)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaNoVirtual() == NULL && value_ != NULL) {
-    delete value_;
+  if (GetArenaForAllocation() == nullptr && _impl_.value_ != nullptr) {
+    delete _impl_.value_;
   }
-  value_ = NULL;
-  name_ = 0;
-  _internal_metadata_.Clear();
+  _impl_.value_ = nullptr;
+  _impl_.name_ = 0;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool EntityParameter::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.EntityParameter)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* EntityParameter::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // .IMC_DCCL.ParameterName name = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_name(static_cast< ::IMC_DCCL::ParameterName >(value));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_name(static_cast<::IMC_DCCL::ParameterName>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.ParameterValue value = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_value()));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          ptr = ctx->ParseMessage(_internal_mutable_value(), ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.EntityParameter)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.EntityParameter)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void EntityParameter::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.EntityParameter)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // .IMC_DCCL.ParameterName name = 1;
-  if (this->name() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      1, this->name(), output);
-  }
-
-  // .IMC_DCCL.ParameterValue value = 2;
-  if (this->has_value()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, this->_internal_value(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.EntityParameter)
-}
-
-::google::protobuf::uint8* EntityParameter::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* EntityParameter::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.EntityParameter)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // .IMC_DCCL.ParameterName name = 1;
-  if (this->name() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      1, this->name(), target);
+  if (this->_internal_name() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      1, this->_internal_name(), target);
   }
 
   // .IMC_DCCL.ParameterValue value = 2;
-  if (this->has_value()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        2, this->_internal_value(), deterministic, target);
+  if (this->_internal_has_value()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(2, _Internal::value(this),
+        _Internal::value(this).GetCachedSize(), target, stream);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.EntityParameter)
   return target;
@@ -5251,64 +4787,49 @@ size_t EntityParameter::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.EntityParameter)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // .IMC_DCCL.ParameterValue value = 2;
-  if (this->has_value()) {
+  if (this->_internal_has_value()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::MessageSize(
-        *value_);
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.value_);
   }
 
   // .IMC_DCCL.ParameterName name = 1;
-  if (this->name() != 0) {
+  if (this->_internal_name() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->name());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_name());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void EntityParameter::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.EntityParameter)
-  GOOGLE_DCHECK_NE(&from, this);
-  const EntityParameter* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const EntityParameter>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.EntityParameter)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.EntityParameter)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData EntityParameter::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    EntityParameter::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*EntityParameter::GetClassData() const { return &_class_data_; }
 
-void EntityParameter::MergeFrom(const EntityParameter& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.EntityParameter)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void EntityParameter::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<EntityParameter*>(&to_msg);
+  auto& from = static_cast<const EntityParameter&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.EntityParameter)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.has_value()) {
-    mutable_value()->::IMC_DCCL::ParameterValue::MergeFrom(from.value());
+  if (from._internal_has_value()) {
+    _this->_internal_mutable_value()->::IMC_DCCL::ParameterValue::MergeFrom(
+        from._internal_value());
   }
-  if (from.name() != 0) {
-    set_name(from.name());
+  if (from._internal_name() != 0) {
+    _this->_internal_set_name(from._internal_name());
   }
-}
-
-void EntityParameter::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.EntityParameter)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void EntityParameter::CopyFrom(const EntityParameter& from) {
@@ -5322,194 +4843,163 @@ bool EntityParameter::IsInitialized() const {
   return true;
 }
 
-void EntityParameter::Swap(EntityParameter* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void EntityParameter::InternalSwap(EntityParameter* other) {
   using std::swap;
-  swap(value_, other->value_);
-  swap(name_, other->name_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(EntityParameter, _impl_.name_)
+      + sizeof(EntityParameter::_impl_.name_)
+      - PROTOBUF_FIELD_OFFSET(EntityParameter, _impl_.value_)>(
+          reinterpret_cast<char*>(&_impl_.value_),
+          reinterpret_cast<char*>(&other->_impl_.value_));
 }
 
-::google::protobuf::Metadata EntityParameter::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata EntityParameter::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[8]);
 }
-
 
 // ===================================================================
 
-void EntityParameters::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int EntityParameters::kNameFieldNumber;
-const int EntityParameters::kParamsFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class EntityParameters::_Internal {
+ public:
+};
 
-EntityParameters::EntityParameters()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_EntityParameters.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.EntityParameters)
+EntityParameters::EntityParameters(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.EntityParameters)
 }
 EntityParameters::EntityParameters(const EntityParameters& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      params_(from.params_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  name_ = from.name_;
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  EntityParameters* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.params_){from._impl_.params_}
+    , decltype(_impl_.name_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _this->_impl_.name_ = from._impl_.name_;
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.EntityParameters)
 }
 
-void EntityParameters::SharedCtor() {
-  name_ = 0;
+inline void EntityParameters::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.params_){arena}
+    , decltype(_impl_.name_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 EntityParameters::~EntityParameters() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.EntityParameters)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void EntityParameters::SharedDtor() {
+inline void EntityParameters::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.params_.~RepeatedPtrField();
 }
 
 void EntityParameters::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* EntityParameters::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const EntityParameters& EntityParameters::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_EntityParameters.base);
-  return *internal_default_instance();
-}
-
 
 void EntityParameters::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.EntityParameters)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  params_.Clear();
-  name_ = 0;
-  _internal_metadata_.Clear();
+  _impl_.params_.Clear();
+  _impl_.name_ = 0;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool EntityParameters::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.EntityParameters)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* EntityParameters::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // .IMC_DCCL.EntityName name = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_name(static_cast< ::IMC_DCCL::EntityName >(value));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_name(static_cast<::IMC_DCCL::EntityName>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // repeated .IMC_DCCL.EntityParameter params = 2 [(.dccl.field) = {
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-                input, add_params()));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_params(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<18>(ptr));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.EntityParameters)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.EntityParameters)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void EntityParameters::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.EntityParameters)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // .IMC_DCCL.EntityName name = 1;
-  if (this->name() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      1, this->name(), output);
-  }
-
-  // repeated .IMC_DCCL.EntityParameter params = 2 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->params_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2,
-      this->params(static_cast<int>(i)),
-      output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.EntityParameters)
-}
-
-::google::protobuf::uint8* EntityParameters::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* EntityParameters::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.EntityParameters)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // .IMC_DCCL.EntityName name = 1;
-  if (this->name() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      1, this->name(), target);
+  if (this->_internal_name() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      1, this->_internal_name(), target);
   }
 
   // repeated .IMC_DCCL.EntityParameter params = 2 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->params_size()); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        2, this->params(static_cast<int>(i)), deterministic, target);
+  for (unsigned i = 0,
+      n = static_cast<unsigned>(this->_internal_params_size()); i < n; i++) {
+    const auto& repfield = this->_internal_params(i);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+        InternalWriteMessage(2, repfield, repfield.GetCachedSize(), target, stream);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.EntityParameters)
   return target;
@@ -5519,66 +5009,46 @@ size_t EntityParameters::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.EntityParameters)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // repeated .IMC_DCCL.EntityParameter params = 2 [(.dccl.field) = {
-  {
-    unsigned int count = static_cast<unsigned int>(this->params_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->params(static_cast<int>(i)));
-    }
+  total_size += 1UL * this->_internal_params_size();
+  for (const auto& msg : this->_impl_.params_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
   // .IMC_DCCL.EntityName name = 1;
-  if (this->name() != 0) {
+  if (this->_internal_name() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->name());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_name());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void EntityParameters::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.EntityParameters)
-  GOOGLE_DCHECK_NE(&from, this);
-  const EntityParameters* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const EntityParameters>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.EntityParameters)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.EntityParameters)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData EntityParameters::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    EntityParameters::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*EntityParameters::GetClassData() const { return &_class_data_; }
 
-void EntityParameters::MergeFrom(const EntityParameters& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.EntityParameters)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void EntityParameters::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<EntityParameters*>(&to_msg);
+  auto& from = static_cast<const EntityParameters&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.EntityParameters)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  params_.MergeFrom(from.params_);
-  if (from.name() != 0) {
-    set_name(from.name());
+  _this->_impl_.params_.MergeFrom(from._impl_.params_);
+  if (from._internal_name() != 0) {
+    _this->_internal_set_name(from._internal_name());
   }
-}
-
-void EntityParameters::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.EntityParameters)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void EntityParameters::CopyFrom(const EntityParameters& from) {
@@ -5592,193 +5062,154 @@ bool EntityParameters::IsInitialized() const {
   return true;
 }
 
-void EntityParameters::Swap(EntityParameters* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void EntityParameters::InternalSwap(EntityParameters* other) {
   using std::swap;
-  CastToBase(&params_)->InternalSwap(CastToBase(&other->params_));
-  swap(name_, other->name_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  _impl_.params_.InternalSwap(&other->_impl_.params_);
+  swap(_impl_.name_, other->_impl_.name_);
 }
 
-::google::protobuf::Metadata EntityParameters::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata EntityParameters::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[9]);
 }
-
 
 // ===================================================================
 
-void ManeuverID::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int ManeuverID::kManeuverTypeFieldNumber;
-const int ManeuverID::kManeuverNumberFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class ManeuverID::_Internal {
+ public:
+};
 
-ManeuverID::ManeuverID()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_ManeuverID.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.ManeuverID)
+ManeuverID::ManeuverID(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.ManeuverID)
 }
 ManeuverID::ManeuverID(const ManeuverID& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::memcpy(&maneuver_type_, &from.maneuver_type_,
-    static_cast<size_t>(reinterpret_cast<char*>(&maneuver_number_) -
-    reinterpret_cast<char*>(&maneuver_type_)) + sizeof(maneuver_number_));
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  ManeuverID* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.maneuver_type_){}
+    , decltype(_impl_.maneuver_number_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.maneuver_type_, &from._impl_.maneuver_type_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.maneuver_number_) -
+    reinterpret_cast<char*>(&_impl_.maneuver_type_)) + sizeof(_impl_.maneuver_number_));
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.ManeuverID)
 }
 
-void ManeuverID::SharedCtor() {
-  ::memset(&maneuver_type_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&maneuver_number_) -
-      reinterpret_cast<char*>(&maneuver_type_)) + sizeof(maneuver_number_));
+inline void ManeuverID::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.maneuver_type_){0}
+    , decltype(_impl_.maneuver_number_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 ManeuverID::~ManeuverID() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.ManeuverID)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void ManeuverID::SharedDtor() {
+inline void ManeuverID::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
 }
 
 void ManeuverID::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* ManeuverID::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const ManeuverID& ManeuverID::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_ManeuverID.base);
-  return *internal_default_instance();
-}
-
 
 void ManeuverID::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.ManeuverID)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&maneuver_type_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&maneuver_number_) -
-      reinterpret_cast<char*>(&maneuver_type_)) + sizeof(maneuver_number_));
-  _internal_metadata_.Clear();
+  ::memset(&_impl_.maneuver_type_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.maneuver_number_) -
+      reinterpret_cast<char*>(&_impl_.maneuver_type_)) + sizeof(_impl_.maneuver_number_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool ManeuverID::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.ManeuverID)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* ManeuverID::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // .IMC_DCCL.ManeuverType maneuver_type = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_maneuver_type(static_cast< ::IMC_DCCL::ManeuverType >(value));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_maneuver_type(static_cast<::IMC_DCCL::ManeuverType>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // int32 maneuver_number = 2 [(.dccl.field) = {
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &maneuver_number_)));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.maneuver_number_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.ManeuverID)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.ManeuverID)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void ManeuverID::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.ManeuverID)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // .IMC_DCCL.ManeuverType maneuver_type = 1;
-  if (this->maneuver_type() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      1, this->maneuver_type(), output);
-  }
-
-  // int32 maneuver_number = 2 [(.dccl.field) = {
-  if (this->maneuver_number() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->maneuver_number(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.ManeuverID)
-}
-
-::google::protobuf::uint8* ManeuverID::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* ManeuverID::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.ManeuverID)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // .IMC_DCCL.ManeuverType maneuver_type = 1;
-  if (this->maneuver_type() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      1, this->maneuver_type(), target);
+  if (this->_internal_maneuver_type() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      1, this->_internal_maneuver_type(), target);
   }
 
   // int32 maneuver_number = 2 [(.dccl.field) = {
-  if (this->maneuver_number() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->maneuver_number(), target);
+  if (this->_internal_maneuver_number() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_maneuver_number(), target);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.ManeuverID)
   return target;
@@ -5788,64 +5219,46 @@ size_t ManeuverID::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.ManeuverID)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // .IMC_DCCL.ManeuverType maneuver_type = 1;
-  if (this->maneuver_type() != 0) {
+  if (this->_internal_maneuver_type() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->maneuver_type());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_maneuver_type());
   }
 
   // int32 maneuver_number = 2 [(.dccl.field) = {
-  if (this->maneuver_number() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->maneuver_number());
+  if (this->_internal_maneuver_number() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_maneuver_number());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void ManeuverID::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.ManeuverID)
-  GOOGLE_DCHECK_NE(&from, this);
-  const ManeuverID* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const ManeuverID>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.ManeuverID)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.ManeuverID)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData ManeuverID::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    ManeuverID::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*ManeuverID::GetClassData() const { return &_class_data_; }
 
-void ManeuverID::MergeFrom(const ManeuverID& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.ManeuverID)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void ManeuverID::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<ManeuverID*>(&to_msg);
+  auto& from = static_cast<const ManeuverID&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.ManeuverID)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.maneuver_type() != 0) {
-    set_maneuver_type(from.maneuver_type());
+  if (from._internal_maneuver_type() != 0) {
+    _this->_internal_set_maneuver_type(from._internal_maneuver_type());
   }
-  if (from.maneuver_number() != 0) {
-    set_maneuver_number(from.maneuver_number());
+  if (from._internal_maneuver_number() != 0) {
+    _this->_internal_set_maneuver_number(from._internal_maneuver_number());
   }
-}
-
-void ManeuverID::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.ManeuverID)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void ManeuverID::CopyFrom(const ManeuverID& from) {
@@ -5859,242 +5272,203 @@ bool ManeuverID::IsInitialized() const {
   return true;
 }
 
-void ManeuverID::Swap(ManeuverID* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void ManeuverID::InternalSwap(ManeuverID* other) {
   using std::swap;
-  swap(maneuver_type_, other->maneuver_type_);
-  swap(maneuver_number_, other->maneuver_number_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(ManeuverID, _impl_.maneuver_number_)
+      + sizeof(ManeuverID::_impl_.maneuver_number_)
+      - PROTOBUF_FIELD_OFFSET(ManeuverID, _impl_.maneuver_type_)>(
+          reinterpret_cast<char*>(&_impl_.maneuver_type_),
+          reinterpret_cast<char*>(&other->_impl_.maneuver_type_));
 }
 
-::google::protobuf::Metadata ManeuverID::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata ManeuverID::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[10]);
 }
-
 
 // ===================================================================
 
-void PlanManeuver::InitAsDefaultInstance() {
-  ::IMC_DCCL::_PlanManeuver_default_instance_._instance.get_mutable()->maneuver_id_ = const_cast< ::IMC_DCCL::ManeuverID*>(
-      ::IMC_DCCL::ManeuverID::internal_default_instance());
-  ::IMC_DCCL::_PlanManeuver_default_instance_._instance.get_mutable()->data_ = const_cast< ::IMC_DCCL::Maneuver*>(
-      ::IMC_DCCL::Maneuver::internal_default_instance());
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int PlanManeuver::kManeuverIdFieldNumber;
-const int PlanManeuver::kDataFieldNumber;
-const int PlanManeuver::kStartActionsFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class PlanManeuver::_Internal {
+ public:
+  static const ::IMC_DCCL::ManeuverID& maneuver_id(const PlanManeuver* msg);
+  static const ::IMC_DCCL::Maneuver& data(const PlanManeuver* msg);
+};
 
-PlanManeuver::PlanManeuver()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_PlanManeuver.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.PlanManeuver)
+const ::IMC_DCCL::ManeuverID&
+PlanManeuver::_Internal::maneuver_id(const PlanManeuver* msg) {
+  return *msg->_impl_.maneuver_id_;
+}
+const ::IMC_DCCL::Maneuver&
+PlanManeuver::_Internal::data(const PlanManeuver* msg) {
+  return *msg->_impl_.data_;
+}
+PlanManeuver::PlanManeuver(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.PlanManeuver)
 }
 PlanManeuver::PlanManeuver(const PlanManeuver& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      start_actions_(from.start_actions_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  if (from.has_maneuver_id()) {
-    maneuver_id_ = new ::IMC_DCCL::ManeuverID(*from.maneuver_id_);
-  } else {
-    maneuver_id_ = NULL;
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  PlanManeuver* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.start_actions_){from._impl_.start_actions_}
+    , decltype(_impl_.maneuver_id_){nullptr}
+    , decltype(_impl_.data_){nullptr}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  if (from._internal_has_maneuver_id()) {
+    _this->_impl_.maneuver_id_ = new ::IMC_DCCL::ManeuverID(*from._impl_.maneuver_id_);
   }
-  if (from.has_data()) {
-    data_ = new ::IMC_DCCL::Maneuver(*from.data_);
-  } else {
-    data_ = NULL;
+  if (from._internal_has_data()) {
+    _this->_impl_.data_ = new ::IMC_DCCL::Maneuver(*from._impl_.data_);
   }
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.PlanManeuver)
 }
 
-void PlanManeuver::SharedCtor() {
-  ::memset(&maneuver_id_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&data_) -
-      reinterpret_cast<char*>(&maneuver_id_)) + sizeof(data_));
+inline void PlanManeuver::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.start_actions_){arena}
+    , decltype(_impl_.maneuver_id_){nullptr}
+    , decltype(_impl_.data_){nullptr}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 PlanManeuver::~PlanManeuver() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.PlanManeuver)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void PlanManeuver::SharedDtor() {
-  if (this != internal_default_instance()) delete maneuver_id_;
-  if (this != internal_default_instance()) delete data_;
+inline void PlanManeuver::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.start_actions_.~RepeatedPtrField();
+  if (this != internal_default_instance()) delete _impl_.maneuver_id_;
+  if (this != internal_default_instance()) delete _impl_.data_;
 }
 
 void PlanManeuver::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* PlanManeuver::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const PlanManeuver& PlanManeuver::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_PlanManeuver.base);
-  return *internal_default_instance();
-}
-
 
 void PlanManeuver::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.PlanManeuver)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  start_actions_.Clear();
-  if (GetArenaNoVirtual() == NULL && maneuver_id_ != NULL) {
-    delete maneuver_id_;
+  _impl_.start_actions_.Clear();
+  if (GetArenaForAllocation() == nullptr && _impl_.maneuver_id_ != nullptr) {
+    delete _impl_.maneuver_id_;
   }
-  maneuver_id_ = NULL;
-  if (GetArenaNoVirtual() == NULL && data_ != NULL) {
-    delete data_;
+  _impl_.maneuver_id_ = nullptr;
+  if (GetArenaForAllocation() == nullptr && _impl_.data_ != nullptr) {
+    delete _impl_.data_;
   }
-  data_ = NULL;
-  _internal_metadata_.Clear();
+  _impl_.data_ = nullptr;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool PlanManeuver::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.PlanManeuver)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* PlanManeuver::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // .IMC_DCCL.ManeuverID maneuver_id = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_maneuver_id()));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          ptr = ctx->ParseMessage(_internal_mutable_maneuver_id(), ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.Maneuver data = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_data()));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          ptr = ctx->ParseMessage(_internal_mutable_data(), ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // repeated .IMC_DCCL.EntityParameters start_actions = 3 [(.dccl.field) = {
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-                input, add_start_actions()));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_start_actions(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<26>(ptr));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.PlanManeuver)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.PlanManeuver)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void PlanManeuver::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.PlanManeuver)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // .IMC_DCCL.ManeuverID maneuver_id = 1;
-  if (this->has_maneuver_id()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1, this->_internal_maneuver_id(), output);
-  }
-
-  // .IMC_DCCL.Maneuver data = 2;
-  if (this->has_data()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, this->_internal_data(), output);
-  }
-
-  // repeated .IMC_DCCL.EntityParameters start_actions = 3 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->start_actions_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      3,
-      this->start_actions(static_cast<int>(i)),
-      output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.PlanManeuver)
-}
-
-::google::protobuf::uint8* PlanManeuver::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* PlanManeuver::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.PlanManeuver)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // .IMC_DCCL.ManeuverID maneuver_id = 1;
-  if (this->has_maneuver_id()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        1, this->_internal_maneuver_id(), deterministic, target);
+  if (this->_internal_has_maneuver_id()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(1, _Internal::maneuver_id(this),
+        _Internal::maneuver_id(this).GetCachedSize(), target, stream);
   }
 
   // .IMC_DCCL.Maneuver data = 2;
-  if (this->has_data()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        2, this->_internal_data(), deterministic, target);
+  if (this->_internal_has_data()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(2, _Internal::data(this),
+        _Internal::data(this).GetCachedSize(), target, stream);
   }
 
   // repeated .IMC_DCCL.EntityParameters start_actions = 3 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->start_actions_size()); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        3, this->start_actions(static_cast<int>(i)), deterministic, target);
+  for (unsigned i = 0,
+      n = static_cast<unsigned>(this->_internal_start_actions_size()); i < n; i++) {
+    const auto& repfield = this->_internal_start_actions(i);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+        InternalWriteMessage(3, repfield, repfield.GetCachedSize(), target, stream);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.PlanManeuver)
   return target;
@@ -6104,77 +5478,59 @@ size_t PlanManeuver::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.PlanManeuver)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // repeated .IMC_DCCL.EntityParameters start_actions = 3 [(.dccl.field) = {
-  {
-    unsigned int count = static_cast<unsigned int>(this->start_actions_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->start_actions(static_cast<int>(i)));
-    }
+  total_size += 1UL * this->_internal_start_actions_size();
+  for (const auto& msg : this->_impl_.start_actions_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
   // .IMC_DCCL.ManeuverID maneuver_id = 1;
-  if (this->has_maneuver_id()) {
+  if (this->_internal_has_maneuver_id()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::MessageSize(
-        *maneuver_id_);
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.maneuver_id_);
   }
 
   // .IMC_DCCL.Maneuver data = 2;
-  if (this->has_data()) {
+  if (this->_internal_has_data()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::MessageSize(
-        *data_);
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.data_);
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void PlanManeuver::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.PlanManeuver)
-  GOOGLE_DCHECK_NE(&from, this);
-  const PlanManeuver* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const PlanManeuver>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.PlanManeuver)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.PlanManeuver)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData PlanManeuver::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    PlanManeuver::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*PlanManeuver::GetClassData() const { return &_class_data_; }
 
-void PlanManeuver::MergeFrom(const PlanManeuver& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PlanManeuver)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void PlanManeuver::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<PlanManeuver*>(&to_msg);
+  auto& from = static_cast<const PlanManeuver&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PlanManeuver)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  start_actions_.MergeFrom(from.start_actions_);
-  if (from.has_maneuver_id()) {
-    mutable_maneuver_id()->::IMC_DCCL::ManeuverID::MergeFrom(from.maneuver_id());
+  _this->_impl_.start_actions_.MergeFrom(from._impl_.start_actions_);
+  if (from._internal_has_maneuver_id()) {
+    _this->_internal_mutable_maneuver_id()->::IMC_DCCL::ManeuverID::MergeFrom(
+        from._internal_maneuver_id());
   }
-  if (from.has_data()) {
-    mutable_data()->::IMC_DCCL::Maneuver::MergeFrom(from.data());
+  if (from._internal_has_data()) {
+    _this->_internal_mutable_data()->::IMC_DCCL::Maneuver::MergeFrom(
+        from._internal_data());
   }
-}
-
-void PlanManeuver::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.PlanManeuver)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void PlanManeuver::CopyFrom(const PlanManeuver& from) {
@@ -6188,287 +5544,233 @@ bool PlanManeuver::IsInitialized() const {
   return true;
 }
 
-void PlanManeuver::Swap(PlanManeuver* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void PlanManeuver::InternalSwap(PlanManeuver* other) {
   using std::swap;
-  CastToBase(&start_actions_)->InternalSwap(CastToBase(&other->start_actions_));
-  swap(maneuver_id_, other->maneuver_id_);
-  swap(data_, other->data_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  _impl_.start_actions_.InternalSwap(&other->_impl_.start_actions_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(PlanManeuver, _impl_.data_)
+      + sizeof(PlanManeuver::_impl_.data_)
+      - PROTOBUF_FIELD_OFFSET(PlanManeuver, _impl_.maneuver_id_)>(
+          reinterpret_cast<char*>(&_impl_.maneuver_id_),
+          reinterpret_cast<char*>(&other->_impl_.maneuver_id_));
 }
 
-::google::protobuf::Metadata PlanManeuver::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata PlanManeuver::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[11]);
 }
-
 
 // ===================================================================
 
-void PlanVariable::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int PlanVariable::kNameFieldNumber;
-const int PlanVariable::kValueFieldNumber;
-const int PlanVariable::kTypeFieldNumber;
-const int PlanVariable::kAccessFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class PlanVariable::_Internal {
+ public:
+};
 
-PlanVariable::PlanVariable()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_PlanVariable.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.PlanVariable)
+PlanVariable::PlanVariable(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.PlanVariable)
 }
 PlanVariable::PlanVariable(const PlanVariable& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.name().size() > 0) {
-    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  PlanVariable* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.name_){}
+    , decltype(_impl_.value_){}
+    , decltype(_impl_.type_){}
+    , decltype(_impl_.access_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.name_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.name_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_name().empty()) {
+    _this->_impl_.name_.Set(from._internal_name(), 
+      _this->GetArenaForAllocation());
   }
-  value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.value().size() > 0) {
-    value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
+  _impl_.value_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.value_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_value().empty()) {
+    _this->_impl_.value_.Set(from._internal_value(), 
+      _this->GetArenaForAllocation());
   }
-  ::memcpy(&type_, &from.type_,
-    static_cast<size_t>(reinterpret_cast<char*>(&access_) -
-    reinterpret_cast<char*>(&type_)) + sizeof(access_));
+  ::memcpy(&_impl_.type_, &from._impl_.type_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.access_) -
+    reinterpret_cast<char*>(&_impl_.type_)) + sizeof(_impl_.access_));
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.PlanVariable)
 }
 
-void PlanVariable::SharedCtor() {
-  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&type_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&access_) -
-      reinterpret_cast<char*>(&type_)) + sizeof(access_));
+inline void PlanVariable::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.name_){}
+    , decltype(_impl_.value_){}
+    , decltype(_impl_.type_){0}
+    , decltype(_impl_.access_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+  _impl_.name_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.name_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.value_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.value_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 }
 
 PlanVariable::~PlanVariable() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.PlanVariable)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void PlanVariable::SharedDtor() {
-  name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  value_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline void PlanVariable::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.name_.Destroy();
+  _impl_.value_.Destroy();
 }
 
 void PlanVariable::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* PlanVariable::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const PlanVariable& PlanVariable::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_PlanVariable.base);
-  return *internal_default_instance();
-}
-
 
 void PlanVariable::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.PlanVariable)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&type_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&access_) -
-      reinterpret_cast<char*>(&type_)) + sizeof(access_));
-  _internal_metadata_.Clear();
+  _impl_.name_.ClearToEmpty();
+  _impl_.value_.ClearToEmpty();
+  ::memset(&_impl_.type_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.access_) -
+      reinterpret_cast<char*>(&_impl_.type_)) + sizeof(_impl_.access_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool PlanVariable::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.PlanVariable)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* PlanVariable::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // string name = 1 [(.dccl.field) = {
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_name()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->name().data(), static_cast<int>(this->name().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "IMC_DCCL.PlanVariable.name"));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          auto str = _internal_mutable_name();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanVariable.name"));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // string value = 2 [(.dccl.field) = {
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_value()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->value().data(), static_cast<int>(this->value().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "IMC_DCCL.PlanVariable.value"));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_value();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanVariable.value"));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.Type type = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_type(static_cast< ::IMC_DCCL::Type >(value));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_type(static_cast<::IMC_DCCL::Type>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.AccessType access = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_access(static_cast< ::IMC_DCCL::AccessType >(value));
-        } else {
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 32)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_access(static_cast<::IMC_DCCL::AccessType>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.PlanVariable)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.PlanVariable)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void PlanVariable::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.PlanVariable)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // string name = 1 [(.dccl.field) = {
-  if (this->name().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->name().data(), static_cast<int>(this->name().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "IMC_DCCL.PlanVariable.name");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      1, this->name(), output);
-  }
-
-  // string value = 2 [(.dccl.field) = {
-  if (this->value().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->value().data(), static_cast<int>(this->value().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "IMC_DCCL.PlanVariable.value");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      2, this->value(), output);
-  }
-
-  // .IMC_DCCL.Type type = 3;
-  if (this->type() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      3, this->type(), output);
-  }
-
-  // .IMC_DCCL.AccessType access = 4;
-  if (this->access() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      4, this->access(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.PlanVariable)
-}
-
-::google::protobuf::uint8* PlanVariable::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* PlanVariable::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.PlanVariable)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // string name = 1 [(.dccl.field) = {
-  if (this->name().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->name().data(), static_cast<int>(this->name().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+  if (!this->_internal_name().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_name().data(), static_cast<int>(this->_internal_name().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "IMC_DCCL.PlanVariable.name");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->name(), target);
+    target = stream->WriteStringMaybeAliased(
+        1, this->_internal_name(), target);
   }
 
   // string value = 2 [(.dccl.field) = {
-  if (this->value().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->value().data(), static_cast<int>(this->value().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+  if (!this->_internal_value().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_value().data(), static_cast<int>(this->_internal_value().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "IMC_DCCL.PlanVariable.value");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        2, this->value(), target);
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_value(), target);
   }
 
   // .IMC_DCCL.Type type = 3;
-  if (this->type() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      3, this->type(), target);
+  if (this->_internal_type() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      3, this->_internal_type(), target);
   }
 
   // .IMC_DCCL.AccessType access = 4;
-  if (this->access() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      4, this->access(), target);
+  if (this->_internal_access() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      4, this->_internal_access(), target);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.PlanVariable)
   return target;
@@ -6478,85 +5780,67 @@ size_t PlanVariable::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.PlanVariable)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // string name = 1 [(.dccl.field) = {
-  if (this->name().size() > 0) {
+  if (!this->_internal_name().empty()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->name());
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_name());
   }
 
   // string value = 2 [(.dccl.field) = {
-  if (this->value().size() > 0) {
+  if (!this->_internal_value().empty()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->value());
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_value());
   }
 
   // .IMC_DCCL.Type type = 3;
-  if (this->type() != 0) {
+  if (this->_internal_type() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->type());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_type());
   }
 
   // .IMC_DCCL.AccessType access = 4;
-  if (this->access() != 0) {
+  if (this->_internal_access() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->access());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_access());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void PlanVariable::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.PlanVariable)
-  GOOGLE_DCHECK_NE(&from, this);
-  const PlanVariable* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const PlanVariable>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.PlanVariable)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.PlanVariable)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData PlanVariable::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    PlanVariable::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*PlanVariable::GetClassData() const { return &_class_data_; }
 
-void PlanVariable::MergeFrom(const PlanVariable& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PlanVariable)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void PlanVariable::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<PlanVariable*>(&to_msg);
+  auto& from = static_cast<const PlanVariable&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PlanVariable)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.name().size() > 0) {
-
-    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+  if (!from._internal_name().empty()) {
+    _this->_internal_set_name(from._internal_name());
   }
-  if (from.value().size() > 0) {
-
-    value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
+  if (!from._internal_value().empty()) {
+    _this->_internal_set_value(from._internal_value());
   }
-  if (from.type() != 0) {
-    set_type(from.type());
+  if (from._internal_type() != 0) {
+    _this->_internal_set_type(from._internal_type());
   }
-  if (from.access() != 0) {
-    set_access(from.access());
+  if (from._internal_access() != 0) {
+    _this->_internal_set_access(from._internal_access());
   }
-}
-
-void PlanVariable::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.PlanVariable)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void PlanVariable::CopyFrom(const PlanVariable& from) {
@@ -6570,244 +5854,208 @@ bool PlanVariable::IsInitialized() const {
   return true;
 }
 
-void PlanVariable::Swap(PlanVariable* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void PlanVariable::InternalSwap(PlanVariable* other) {
   using std::swap;
-  name_.Swap(&other->name_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  value_.Swap(&other->value_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(type_, other->type_);
-  swap(access_, other->access_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.name_, lhs_arena,
+      &other->_impl_.name_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.value_, lhs_arena,
+      &other->_impl_.value_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(PlanVariable, _impl_.access_)
+      + sizeof(PlanVariable::_impl_.access_)
+      - PROTOBUF_FIELD_OFFSET(PlanVariable, _impl_.type_)>(
+          reinterpret_cast<char*>(&_impl_.type_),
+          reinterpret_cast<char*>(&other->_impl_.type_));
 }
 
-::google::protobuf::Metadata PlanVariable::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata PlanVariable::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[12]);
 }
-
 
 // ===================================================================
 
-void PlanTransition::InitAsDefaultInstance() {
-  ::IMC_DCCL::_PlanTransition_default_instance_._instance.get_mutable()->source_man_ = const_cast< ::IMC_DCCL::ManeuverID*>(
-      ::IMC_DCCL::ManeuverID::internal_default_instance());
-  ::IMC_DCCL::_PlanTransition_default_instance_._instance.get_mutable()->dest_man_ = const_cast< ::IMC_DCCL::ManeuverID*>(
-      ::IMC_DCCL::ManeuverID::internal_default_instance());
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int PlanTransition::kSourceManFieldNumber;
-const int PlanTransition::kDestManFieldNumber;
-const int PlanTransition::kConditionsFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class PlanTransition::_Internal {
+ public:
+  static const ::IMC_DCCL::ManeuverID& source_man(const PlanTransition* msg);
+  static const ::IMC_DCCL::ManeuverID& dest_man(const PlanTransition* msg);
+};
 
-PlanTransition::PlanTransition()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_PlanTransition.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.PlanTransition)
+const ::IMC_DCCL::ManeuverID&
+PlanTransition::_Internal::source_man(const PlanTransition* msg) {
+  return *msg->_impl_.source_man_;
+}
+const ::IMC_DCCL::ManeuverID&
+PlanTransition::_Internal::dest_man(const PlanTransition* msg) {
+  return *msg->_impl_.dest_man_;
+}
+PlanTransition::PlanTransition(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.PlanTransition)
 }
 PlanTransition::PlanTransition(const PlanTransition& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  if (from.has_source_man()) {
-    source_man_ = new ::IMC_DCCL::ManeuverID(*from.source_man_);
-  } else {
-    source_man_ = NULL;
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  PlanTransition* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.source_man_){nullptr}
+    , decltype(_impl_.dest_man_){nullptr}
+    , decltype(_impl_.conditions_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  if (from._internal_has_source_man()) {
+    _this->_impl_.source_man_ = new ::IMC_DCCL::ManeuverID(*from._impl_.source_man_);
   }
-  if (from.has_dest_man()) {
-    dest_man_ = new ::IMC_DCCL::ManeuverID(*from.dest_man_);
-  } else {
-    dest_man_ = NULL;
+  if (from._internal_has_dest_man()) {
+    _this->_impl_.dest_man_ = new ::IMC_DCCL::ManeuverID(*from._impl_.dest_man_);
   }
-  conditions_ = from.conditions_;
+  _this->_impl_.conditions_ = from._impl_.conditions_;
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.PlanTransition)
 }
 
-void PlanTransition::SharedCtor() {
-  ::memset(&source_man_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&conditions_) -
-      reinterpret_cast<char*>(&source_man_)) + sizeof(conditions_));
+inline void PlanTransition::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.source_man_){nullptr}
+    , decltype(_impl_.dest_man_){nullptr}
+    , decltype(_impl_.conditions_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 PlanTransition::~PlanTransition() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.PlanTransition)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void PlanTransition::SharedDtor() {
-  if (this != internal_default_instance()) delete source_man_;
-  if (this != internal_default_instance()) delete dest_man_;
+inline void PlanTransition::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  if (this != internal_default_instance()) delete _impl_.source_man_;
+  if (this != internal_default_instance()) delete _impl_.dest_man_;
 }
 
 void PlanTransition::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* PlanTransition::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const PlanTransition& PlanTransition::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_PlanTransition.base);
-  return *internal_default_instance();
-}
-
 
 void PlanTransition::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.PlanTransition)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  if (GetArenaNoVirtual() == NULL && source_man_ != NULL) {
-    delete source_man_;
+  if (GetArenaForAllocation() == nullptr && _impl_.source_man_ != nullptr) {
+    delete _impl_.source_man_;
   }
-  source_man_ = NULL;
-  if (GetArenaNoVirtual() == NULL && dest_man_ != NULL) {
-    delete dest_man_;
+  _impl_.source_man_ = nullptr;
+  if (GetArenaForAllocation() == nullptr && _impl_.dest_man_ != nullptr) {
+    delete _impl_.dest_man_;
   }
-  dest_man_ = NULL;
-  conditions_ = 0;
-  _internal_metadata_.Clear();
+  _impl_.dest_man_ = nullptr;
+  _impl_.conditions_ = 0;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool PlanTransition::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.PlanTransition)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* PlanTransition::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // .IMC_DCCL.ManeuverID source_man = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_source_man()));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          ptr = ctx->ParseMessage(_internal_mutable_source_man(), ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.ManeuverID dest_man = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_dest_man()));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          ptr = ctx->ParseMessage(_internal_mutable_dest_man(), ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.TransitionCondition conditions = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
-          int value;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_conditions(static_cast< ::IMC_DCCL::TransitionCondition >(value));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_conditions(static_cast<::IMC_DCCL::TransitionCondition>(val));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.PlanTransition)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.PlanTransition)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void PlanTransition::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.PlanTransition)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // .IMC_DCCL.ManeuverID source_man = 1;
-  if (this->has_source_man()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1, this->_internal_source_man(), output);
-  }
-
-  // .IMC_DCCL.ManeuverID dest_man = 2;
-  if (this->has_dest_man()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      2, this->_internal_dest_man(), output);
-  }
-
-  // .IMC_DCCL.TransitionCondition conditions = 3;
-  if (this->conditions() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      3, this->conditions(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.PlanTransition)
-}
-
-::google::protobuf::uint8* PlanTransition::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* PlanTransition::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.PlanTransition)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // .IMC_DCCL.ManeuverID source_man = 1;
-  if (this->has_source_man()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        1, this->_internal_source_man(), deterministic, target);
+  if (this->_internal_has_source_man()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(1, _Internal::source_man(this),
+        _Internal::source_man(this).GetCachedSize(), target, stream);
   }
 
   // .IMC_DCCL.ManeuverID dest_man = 2;
-  if (this->has_dest_man()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        2, this->_internal_dest_man(), deterministic, target);
+  if (this->_internal_has_dest_man()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(2, _Internal::dest_man(this),
+        _Internal::dest_man(this).GetCachedSize(), target, stream);
   }
 
   // .IMC_DCCL.TransitionCondition conditions = 3;
-  if (this->conditions() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
-      3, this->conditions(), target);
+  if (this->_internal_conditions() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      3, this->_internal_conditions(), target);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.PlanTransition)
   return target;
@@ -6817,74 +6065,60 @@ size_t PlanTransition::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.PlanTransition)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // .IMC_DCCL.ManeuverID source_man = 1;
-  if (this->has_source_man()) {
+  if (this->_internal_has_source_man()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::MessageSize(
-        *source_man_);
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.source_man_);
   }
 
   // .IMC_DCCL.ManeuverID dest_man = 2;
-  if (this->has_dest_man()) {
+  if (this->_internal_has_dest_man()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::MessageSize(
-        *dest_man_);
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.dest_man_);
   }
 
   // .IMC_DCCL.TransitionCondition conditions = 3;
-  if (this->conditions() != 0) {
+  if (this->_internal_conditions() != 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->conditions());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_conditions());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void PlanTransition::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.PlanTransition)
-  GOOGLE_DCHECK_NE(&from, this);
-  const PlanTransition* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const PlanTransition>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.PlanTransition)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.PlanTransition)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData PlanTransition::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    PlanTransition::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*PlanTransition::GetClassData() const { return &_class_data_; }
 
-void PlanTransition::MergeFrom(const PlanTransition& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PlanTransition)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void PlanTransition::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<PlanTransition*>(&to_msg);
+  auto& from = static_cast<const PlanTransition&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PlanTransition)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.has_source_man()) {
-    mutable_source_man()->::IMC_DCCL::ManeuverID::MergeFrom(from.source_man());
+  if (from._internal_has_source_man()) {
+    _this->_internal_mutable_source_man()->::IMC_DCCL::ManeuverID::MergeFrom(
+        from._internal_source_man());
   }
-  if (from.has_dest_man()) {
-    mutable_dest_man()->::IMC_DCCL::ManeuverID::MergeFrom(from.dest_man());
+  if (from._internal_has_dest_man()) {
+    _this->_internal_mutable_dest_man()->::IMC_DCCL::ManeuverID::MergeFrom(
+        from._internal_dest_man());
   }
-  if (from.conditions() != 0) {
-    set_conditions(from.conditions());
+  if (from._internal_conditions() != 0) {
+    _this->_internal_set_conditions(from._internal_conditions());
   }
-}
-
-void PlanTransition::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.PlanTransition)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void PlanTransition::CopyFrom(const PlanTransition& from) {
@@ -6898,241 +6132,188 @@ bool PlanTransition::IsInitialized() const {
   return true;
 }
 
-void PlanTransition::Swap(PlanTransition* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void PlanTransition::InternalSwap(PlanTransition* other) {
   using std::swap;
-  swap(source_man_, other->source_man_);
-  swap(dest_man_, other->dest_man_);
-  swap(conditions_, other->conditions_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(PlanTransition, _impl_.conditions_)
+      + sizeof(PlanTransition::_impl_.conditions_)
+      - PROTOBUF_FIELD_OFFSET(PlanTransition, _impl_.source_man_)>(
+          reinterpret_cast<char*>(&_impl_.source_man_),
+          reinterpret_cast<char*>(&other->_impl_.source_man_));
 }
 
-::google::protobuf::Metadata PlanTransition::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata PlanTransition::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[13]);
 }
-
 
 // ===================================================================
 
-void Header::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Header::kSrcFieldNumber;
-const int Header::kSrcEntFieldNumber;
-const int Header::kDstFieldNumber;
-const int Header::kDstEntFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class Header::_Internal {
+ public:
+};
 
-Header::Header()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_Header.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.Header)
+Header::Header(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.Header)
 }
 Header::Header(const Header& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::memcpy(&src_, &from.src_,
-    static_cast<size_t>(reinterpret_cast<char*>(&dst_ent_) -
-    reinterpret_cast<char*>(&src_)) + sizeof(dst_ent_));
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  Header* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.src_){}
+    , decltype(_impl_.src_ent_){}
+    , decltype(_impl_.dst_){}
+    , decltype(_impl_.dst_ent_){}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::memcpy(&_impl_.src_, &from._impl_.src_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.dst_ent_) -
+    reinterpret_cast<char*>(&_impl_.src_)) + sizeof(_impl_.dst_ent_));
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.Header)
 }
 
-void Header::SharedCtor() {
-  ::memset(&src_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&dst_ent_) -
-      reinterpret_cast<char*>(&src_)) + sizeof(dst_ent_));
+inline void Header::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.src_){0}
+    , decltype(_impl_.src_ent_){0}
+    , decltype(_impl_.dst_){0}
+    , decltype(_impl_.dst_ent_){0}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
 }
 
 Header::~Header() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.Header)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void Header::SharedDtor() {
+inline void Header::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
 }
 
 void Header::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* Header::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const Header& Header::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_Header.base);
-  return *internal_default_instance();
-}
-
 
 void Header::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.Header)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&src_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&dst_ent_) -
-      reinterpret_cast<char*>(&src_)) + sizeof(dst_ent_));
-  _internal_metadata_.Clear();
+  ::memset(&_impl_.src_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.dst_ent_) -
+      reinterpret_cast<char*>(&_impl_.src_)) + sizeof(_impl_.dst_ent_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool Header::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.Header)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* Header::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // int32 src = 1 [(.dccl.field) = {
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &src_)));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.src_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // int32 src_ent = 2 [(.dccl.field) = {
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &src_ent_)));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.src_ent_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // int32 dst = 3 [(.dccl.field) = {
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &dst_)));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
+          _impl_.dst_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // int32 dst_ent = 4 [(.dccl.field) = {
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &dst_ent_)));
-        } else {
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 32)) {
+          _impl_.dst_ent_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.Header)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.Header)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void Header::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.Header)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // int32 src = 1 [(.dccl.field) = {
-  if (this->src() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->src(), output);
-  }
-
-  // int32 src_ent = 2 [(.dccl.field) = {
-  if (this->src_ent() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->src_ent(), output);
-  }
-
-  // int32 dst = 3 [(.dccl.field) = {
-  if (this->dst() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->dst(), output);
-  }
-
-  // int32 dst_ent = 4 [(.dccl.field) = {
-  if (this->dst_ent() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->dst_ent(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.Header)
-}
-
-::google::protobuf::uint8* Header::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* Header::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.Header)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // int32 src = 1 [(.dccl.field) = {
-  if (this->src() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->src(), target);
+  if (this->_internal_src() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_src(), target);
   }
 
   // int32 src_ent = 2 [(.dccl.field) = {
-  if (this->src_ent() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->src_ent(), target);
+  if (this->_internal_src_ent() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(2, this->_internal_src_ent(), target);
   }
 
   // int32 dst = 3 [(.dccl.field) = {
-  if (this->dst() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->dst(), target);
+  if (this->_internal_dst() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(3, this->_internal_dst(), target);
   }
 
   // int32 dst_ent = 4 [(.dccl.field) = {
-  if (this->dst_ent() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(4, this->dst_ent(), target);
+  if (this->_internal_dst_ent() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(4, this->_internal_dst_ent(), target);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.Header)
   return target;
@@ -7142,85 +6323,61 @@ size_t Header::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.Header)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // int32 src = 1 [(.dccl.field) = {
-  if (this->src() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->src());
+  if (this->_internal_src() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_src());
   }
 
   // int32 src_ent = 2 [(.dccl.field) = {
-  if (this->src_ent() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->src_ent());
+  if (this->_internal_src_ent() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_src_ent());
   }
 
   // int32 dst = 3 [(.dccl.field) = {
-  if (this->dst() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->dst());
+  if (this->_internal_dst() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_dst());
   }
 
   // int32 dst_ent = 4 [(.dccl.field) = {
-  if (this->dst_ent() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->dst_ent());
+  if (this->_internal_dst_ent() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_dst_ent());
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void Header::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.Header)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Header* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const Header>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.Header)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.Header)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData Header::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    Header::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*Header::GetClassData() const { return &_class_data_; }
 
-void Header::MergeFrom(const Header& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.Header)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void Header::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<Header*>(&to_msg);
+  auto& from = static_cast<const Header&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.Header)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.src() != 0) {
-    set_src(from.src());
+  if (from._internal_src() != 0) {
+    _this->_internal_set_src(from._internal_src());
   }
-  if (from.src_ent() != 0) {
-    set_src_ent(from.src_ent());
+  if (from._internal_src_ent() != 0) {
+    _this->_internal_set_src_ent(from._internal_src_ent());
   }
-  if (from.dst() != 0) {
-    set_dst(from.dst());
+  if (from._internal_dst() != 0) {
+    _this->_internal_set_dst(from._internal_dst());
   }
-  if (from.dst_ent() != 0) {
-    set_dst_ent(from.dst_ent());
+  if (from._internal_dst_ent() != 0) {
+    _this->_internal_set_dst_ent(from._internal_dst_ent());
   }
-}
-
-void Header::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.Header)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void Header::CopyFrom(const Header& from) {
@@ -7234,475 +6391,386 @@ bool Header::IsInitialized() const {
   return true;
 }
 
-void Header::Swap(Header* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void Header::InternalSwap(Header* other) {
   using std::swap;
-  swap(src_, other->src_);
-  swap(src_ent_, other->src_ent_);
-  swap(dst_, other->dst_);
-  swap(dst_ent_, other->dst_ent_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(Header, _impl_.dst_ent_)
+      + sizeof(Header::_impl_.dst_ent_)
+      - PROTOBUF_FIELD_OFFSET(Header, _impl_.src_)>(
+          reinterpret_cast<char*>(&_impl_.src_),
+          reinterpret_cast<char*>(&other->_impl_.src_));
 }
 
-::google::protobuf::Metadata Header::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata Header::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[14]);
 }
-
 
 // ===================================================================
 
-void PlanSpecification::InitAsDefaultInstance() {
-  ::IMC_DCCL::_PlanSpecification_default_instance_._instance.get_mutable()->start_man_id_ = const_cast< ::IMC_DCCL::ManeuverID*>(
-      ::IMC_DCCL::ManeuverID::internal_default_instance());
-  ::IMC_DCCL::_PlanSpecification_default_instance_._instance.get_mutable()->head_ = const_cast< ::IMC_DCCL::Header*>(
-      ::IMC_DCCL::Header::internal_default_instance());
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int PlanSpecification::kPlanIdFieldNumber;
-const int PlanSpecification::kDescriptionFieldNumber;
-const int PlanSpecification::kVnamespaceFieldNumber;
-const int PlanSpecification::kStartManIdFieldNumber;
-const int PlanSpecification::kManeuversFieldNumber;
-const int PlanSpecification::kTransitionsFieldNumber;
-const int PlanSpecification::kStartActionsFieldNumber;
-const int PlanSpecification::kVariablesFieldNumber;
-const int PlanSpecification::kHeadFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+class PlanSpecification::_Internal {
+ public:
+  static const ::IMC_DCCL::ManeuverID& start_man_id(const PlanSpecification* msg);
+  static const ::IMC_DCCL::Header& head(const PlanSpecification* msg);
+};
 
-PlanSpecification::PlanSpecification()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_IMC_5fDCCL_2eproto::scc_info_PlanSpecification.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:IMC_DCCL.PlanSpecification)
+const ::IMC_DCCL::ManeuverID&
+PlanSpecification::_Internal::start_man_id(const PlanSpecification* msg) {
+  return *msg->_impl_.start_man_id_;
+}
+const ::IMC_DCCL::Header&
+PlanSpecification::_Internal::head(const PlanSpecification* msg) {
+  return *msg->_impl_.head_;
+}
+PlanSpecification::PlanSpecification(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.PlanSpecification)
 }
 PlanSpecification::PlanSpecification(const PlanSpecification& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      maneuvers_(from.maneuvers_),
-      transitions_(from.transitions_),
-      start_actions_(from.start_actions_),
-      variables_(from.variables_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  plan_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.plan_id().size() > 0) {
-    plan_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.plan_id_);
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  PlanSpecification* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.maneuvers_){from._impl_.maneuvers_}
+    , decltype(_impl_.transitions_){from._impl_.transitions_}
+    , decltype(_impl_.start_actions_){from._impl_.start_actions_}
+    , decltype(_impl_.variables_){from._impl_.variables_}
+    , decltype(_impl_.plan_id_){}
+    , decltype(_impl_.description_){}
+    , decltype(_impl_.vnamespace_){}
+    , decltype(_impl_.start_man_id_){nullptr}
+    , decltype(_impl_.head_){nullptr}
+    , /*decltype(_impl_._cached_size_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.plan_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_plan_id().empty()) {
+    _this->_impl_.plan_id_.Set(from._internal_plan_id(), 
+      _this->GetArenaForAllocation());
   }
-  description_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.description().size() > 0) {
-    description_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.description_);
+  _impl_.description_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.description_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_description().empty()) {
+    _this->_impl_.description_.Set(from._internal_description(), 
+      _this->GetArenaForAllocation());
   }
-  vnamespace_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.vnamespace().size() > 0) {
-    vnamespace_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.vnamespace_);
+  _impl_.vnamespace_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.vnamespace_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (!from._internal_vnamespace().empty()) {
+    _this->_impl_.vnamespace_.Set(from._internal_vnamespace(), 
+      _this->GetArenaForAllocation());
   }
-  if (from.has_start_man_id()) {
-    start_man_id_ = new ::IMC_DCCL::ManeuverID(*from.start_man_id_);
-  } else {
-    start_man_id_ = NULL;
+  if (from._internal_has_start_man_id()) {
+    _this->_impl_.start_man_id_ = new ::IMC_DCCL::ManeuverID(*from._impl_.start_man_id_);
   }
-  if (from.has_head()) {
-    head_ = new ::IMC_DCCL::Header(*from.head_);
-  } else {
-    head_ = NULL;
+  if (from._internal_has_head()) {
+    _this->_impl_.head_ = new ::IMC_DCCL::Header(*from._impl_.head_);
   }
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.PlanSpecification)
 }
 
-void PlanSpecification::SharedCtor() {
-  plan_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  description_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  vnamespace_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&start_man_id_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&head_) -
-      reinterpret_cast<char*>(&start_man_id_)) + sizeof(head_));
+inline void PlanSpecification::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.maneuvers_){arena}
+    , decltype(_impl_.transitions_){arena}
+    , decltype(_impl_.start_actions_){arena}
+    , decltype(_impl_.variables_){arena}
+    , decltype(_impl_.plan_id_){}
+    , decltype(_impl_.description_){}
+    , decltype(_impl_.vnamespace_){}
+    , decltype(_impl_.start_man_id_){nullptr}
+    , decltype(_impl_.head_){nullptr}
+    , /*decltype(_impl_._cached_size_)*/{}
+  };
+  _impl_.plan_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.description_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.description_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.vnamespace_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.vnamespace_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 }
 
 PlanSpecification::~PlanSpecification() {
   // @@protoc_insertion_point(destructor:IMC_DCCL.PlanSpecification)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
   SharedDtor();
 }
 
-void PlanSpecification::SharedDtor() {
-  plan_id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  description_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  vnamespace_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (this != internal_default_instance()) delete start_man_id_;
-  if (this != internal_default_instance()) delete head_;
+inline void PlanSpecification::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.maneuvers_.~RepeatedPtrField();
+  _impl_.transitions_.~RepeatedPtrField();
+  _impl_.start_actions_.~RepeatedPtrField();
+  _impl_.variables_.~RepeatedPtrField();
+  _impl_.plan_id_.Destroy();
+  _impl_.description_.Destroy();
+  _impl_.vnamespace_.Destroy();
+  if (this != internal_default_instance()) delete _impl_.start_man_id_;
+  if (this != internal_default_instance()) delete _impl_.head_;
 }
 
 void PlanSpecification::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
+  _impl_._cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* PlanSpecification::descriptor() {
-  ::protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const PlanSpecification& PlanSpecification::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_IMC_5fDCCL_2eproto::scc_info_PlanSpecification.base);
-  return *internal_default_instance();
-}
-
 
 void PlanSpecification::Clear() {
 // @@protoc_insertion_point(message_clear_start:IMC_DCCL.PlanSpecification)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  maneuvers_.Clear();
-  transitions_.Clear();
-  start_actions_.Clear();
-  variables_.Clear();
-  plan_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  description_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  vnamespace_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (GetArenaNoVirtual() == NULL && start_man_id_ != NULL) {
-    delete start_man_id_;
+  _impl_.maneuvers_.Clear();
+  _impl_.transitions_.Clear();
+  _impl_.start_actions_.Clear();
+  _impl_.variables_.Clear();
+  _impl_.plan_id_.ClearToEmpty();
+  _impl_.description_.ClearToEmpty();
+  _impl_.vnamespace_.ClearToEmpty();
+  if (GetArenaForAllocation() == nullptr && _impl_.start_man_id_ != nullptr) {
+    delete _impl_.start_man_id_;
   }
-  start_man_id_ = NULL;
-  if (GetArenaNoVirtual() == NULL && head_ != NULL) {
-    delete head_;
+  _impl_.start_man_id_ = nullptr;
+  if (GetArenaForAllocation() == nullptr && _impl_.head_ != nullptr) {
+    delete _impl_.head_;
   }
-  head_ = NULL;
-  _internal_metadata_.Clear();
+  _impl_.head_ = nullptr;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-bool PlanSpecification::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:IMC_DCCL.PlanSpecification)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+const char* PlanSpecification::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
       // string plan_id = 1 [(.dccl.field) = {
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_plan_id()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->plan_id().data(), static_cast<int>(this->plan_id().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "IMC_DCCL.PlanSpecification.plan_id"));
-        } else {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          auto str = _internal_mutable_plan_id();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanSpecification.plan_id"));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // string description = 2 [(.dccl.field) = {
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_description()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->description().data(), static_cast<int>(this->description().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "IMC_DCCL.PlanSpecification.description"));
-        } else {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_description();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanSpecification.description"));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // string vnamespace = 3 [(.dccl.field) = {
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_vnamespace()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->vnamespace().data(), static_cast<int>(this->vnamespace().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "IMC_DCCL.PlanSpecification.vnamespace"));
-        } else {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+          auto str = _internal_mutable_vnamespace();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanSpecification.vnamespace"));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.ManeuverID start_man_id = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_start_man_id()));
-        } else {
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 34)) {
+          ptr = ctx->ParseMessage(_internal_mutable_start_man_id(), ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // repeated .IMC_DCCL.PlanManeuver maneuvers = 5 [(.dccl.field) = {
-      case 5: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(42u /* 42 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-                input, add_maneuvers()));
-        } else {
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 42)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_maneuvers(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<42>(ptr));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // repeated .IMC_DCCL.PlanTransition transitions = 6 [(.dccl.field) = {
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(50u /* 50 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-                input, add_transitions()));
-        } else {
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 50)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_transitions(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<50>(ptr));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // repeated .IMC_DCCL.EntityParameters start_actions = 7 [(.dccl.field) = {
-      case 7: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(58u /* 58 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-                input, add_start_actions()));
-        } else {
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 58)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_start_actions(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<58>(ptr));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // repeated .IMC_DCCL.PlanVariable variables = 8 [(.dccl.field) = {
-      case 8: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(66u /* 66 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-                input, add_variables()));
-        } else {
+      case 8:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 66)) {
+          ptr -= 1;
+          do {
+            ptr += 1;
+            ptr = ctx->ParseMessage(_internal_add_variables(), ptr);
+            CHK_(ptr);
+            if (!ctx->DataAvailable(ptr)) break;
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<66>(ptr));
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
+        continue;
       // .IMC_DCCL.Header head = 9;
-      case 9: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(74u /* 74 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_head()));
-        } else {
+      case 9:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 74)) {
+          ptr = ctx->ParseMessage(_internal_mutable_head(), ptr);
+          CHK_(ptr);
+        } else
           goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
     }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:IMC_DCCL.PlanSpecification)
-  return true;
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
 failure:
-  // @@protoc_insertion_point(parse_failure:IMC_DCCL.PlanSpecification)
-  return false;
-#undef DO_
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
 }
 
-void PlanSpecification::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:IMC_DCCL.PlanSpecification)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // string plan_id = 1 [(.dccl.field) = {
-  if (this->plan_id().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->plan_id().data(), static_cast<int>(this->plan_id().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "IMC_DCCL.PlanSpecification.plan_id");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      1, this->plan_id(), output);
-  }
-
-  // string description = 2 [(.dccl.field) = {
-  if (this->description().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->description().data(), static_cast<int>(this->description().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "IMC_DCCL.PlanSpecification.description");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      2, this->description(), output);
-  }
-
-  // string vnamespace = 3 [(.dccl.field) = {
-  if (this->vnamespace().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->vnamespace().data(), static_cast<int>(this->vnamespace().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "IMC_DCCL.PlanSpecification.vnamespace");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      3, this->vnamespace(), output);
-  }
-
-  // .IMC_DCCL.ManeuverID start_man_id = 4;
-  if (this->has_start_man_id()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      4, this->_internal_start_man_id(), output);
-  }
-
-  // repeated .IMC_DCCL.PlanManeuver maneuvers = 5 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->maneuvers_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      5,
-      this->maneuvers(static_cast<int>(i)),
-      output);
-  }
-
-  // repeated .IMC_DCCL.PlanTransition transitions = 6 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->transitions_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      6,
-      this->transitions(static_cast<int>(i)),
-      output);
-  }
-
-  // repeated .IMC_DCCL.EntityParameters start_actions = 7 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->start_actions_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      7,
-      this->start_actions(static_cast<int>(i)),
-      output);
-  }
-
-  // repeated .IMC_DCCL.PlanVariable variables = 8 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->variables_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      8,
-      this->variables(static_cast<int>(i)),
-      output);
-  }
-
-  // .IMC_DCCL.Header head = 9;
-  if (this->has_head()) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      9, this->_internal_head(), output);
-  }
-
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
-  }
-  // @@protoc_insertion_point(serialize_end:IMC_DCCL.PlanSpecification)
-}
-
-::google::protobuf::uint8* PlanSpecification::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
+uint8_t* PlanSpecification::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
   // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.PlanSpecification)
-  ::google::protobuf::uint32 cached_has_bits = 0;
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
   // string plan_id = 1 [(.dccl.field) = {
-  if (this->plan_id().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->plan_id().data(), static_cast<int>(this->plan_id().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+  if (!this->_internal_plan_id().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_plan_id().data(), static_cast<int>(this->_internal_plan_id().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "IMC_DCCL.PlanSpecification.plan_id");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->plan_id(), target);
+    target = stream->WriteStringMaybeAliased(
+        1, this->_internal_plan_id(), target);
   }
 
   // string description = 2 [(.dccl.field) = {
-  if (this->description().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->description().data(), static_cast<int>(this->description().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+  if (!this->_internal_description().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_description().data(), static_cast<int>(this->_internal_description().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "IMC_DCCL.PlanSpecification.description");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        2, this->description(), target);
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_description(), target);
   }
 
   // string vnamespace = 3 [(.dccl.field) = {
-  if (this->vnamespace().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->vnamespace().data(), static_cast<int>(this->vnamespace().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+  if (!this->_internal_vnamespace().empty()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_vnamespace().data(), static_cast<int>(this->_internal_vnamespace().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "IMC_DCCL.PlanSpecification.vnamespace");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        3, this->vnamespace(), target);
+    target = stream->WriteStringMaybeAliased(
+        3, this->_internal_vnamespace(), target);
   }
 
   // .IMC_DCCL.ManeuverID start_man_id = 4;
-  if (this->has_start_man_id()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        4, this->_internal_start_man_id(), deterministic, target);
+  if (this->_internal_has_start_man_id()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(4, _Internal::start_man_id(this),
+        _Internal::start_man_id(this).GetCachedSize(), target, stream);
   }
 
   // repeated .IMC_DCCL.PlanManeuver maneuvers = 5 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->maneuvers_size()); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        5, this->maneuvers(static_cast<int>(i)), deterministic, target);
+  for (unsigned i = 0,
+      n = static_cast<unsigned>(this->_internal_maneuvers_size()); i < n; i++) {
+    const auto& repfield = this->_internal_maneuvers(i);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+        InternalWriteMessage(5, repfield, repfield.GetCachedSize(), target, stream);
   }
 
   // repeated .IMC_DCCL.PlanTransition transitions = 6 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->transitions_size()); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        6, this->transitions(static_cast<int>(i)), deterministic, target);
+  for (unsigned i = 0,
+      n = static_cast<unsigned>(this->_internal_transitions_size()); i < n; i++) {
+    const auto& repfield = this->_internal_transitions(i);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+        InternalWriteMessage(6, repfield, repfield.GetCachedSize(), target, stream);
   }
 
   // repeated .IMC_DCCL.EntityParameters start_actions = 7 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->start_actions_size()); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        7, this->start_actions(static_cast<int>(i)), deterministic, target);
+  for (unsigned i = 0,
+      n = static_cast<unsigned>(this->_internal_start_actions_size()); i < n; i++) {
+    const auto& repfield = this->_internal_start_actions(i);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+        InternalWriteMessage(7, repfield, repfield.GetCachedSize(), target, stream);
   }
 
   // repeated .IMC_DCCL.PlanVariable variables = 8 [(.dccl.field) = {
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->variables_size()); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        8, this->variables(static_cast<int>(i)), deterministic, target);
+  for (unsigned i = 0,
+      n = static_cast<unsigned>(this->_internal_variables_size()); i < n; i++) {
+    const auto& repfield = this->_internal_variables(i);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+        InternalWriteMessage(8, repfield, repfield.GetCachedSize(), target, stream);
   }
 
   // .IMC_DCCL.Header head = 9;
-  if (this->has_head()) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        9, this->_internal_head(), deterministic, target);
+  if (this->_internal_has_head()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(9, _Internal::head(this),
+        _Internal::head(this).GetCachedSize(), target, stream);
   }
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
   // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.PlanSpecification)
   return target;
@@ -7712,146 +6780,113 @@ size_t PlanSpecification::ByteSizeLong() const {
 // @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.PlanSpecification)
   size_t total_size = 0;
 
-  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
-  }
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
   // repeated .IMC_DCCL.PlanManeuver maneuvers = 5 [(.dccl.field) = {
-  {
-    unsigned int count = static_cast<unsigned int>(this->maneuvers_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->maneuvers(static_cast<int>(i)));
-    }
+  total_size += 1UL * this->_internal_maneuvers_size();
+  for (const auto& msg : this->_impl_.maneuvers_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
   // repeated .IMC_DCCL.PlanTransition transitions = 6 [(.dccl.field) = {
-  {
-    unsigned int count = static_cast<unsigned int>(this->transitions_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->transitions(static_cast<int>(i)));
-    }
+  total_size += 1UL * this->_internal_transitions_size();
+  for (const auto& msg : this->_impl_.transitions_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
   // repeated .IMC_DCCL.EntityParameters start_actions = 7 [(.dccl.field) = {
-  {
-    unsigned int count = static_cast<unsigned int>(this->start_actions_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->start_actions(static_cast<int>(i)));
-    }
+  total_size += 1UL * this->_internal_start_actions_size();
+  for (const auto& msg : this->_impl_.start_actions_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
   // repeated .IMC_DCCL.PlanVariable variables = 8 [(.dccl.field) = {
-  {
-    unsigned int count = static_cast<unsigned int>(this->variables_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->variables(static_cast<int>(i)));
-    }
+  total_size += 1UL * this->_internal_variables_size();
+  for (const auto& msg : this->_impl_.variables_) {
+    total_size +=
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(msg);
   }
 
   // string plan_id = 1 [(.dccl.field) = {
-  if (this->plan_id().size() > 0) {
+  if (!this->_internal_plan_id().empty()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->plan_id());
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_plan_id());
   }
 
   // string description = 2 [(.dccl.field) = {
-  if (this->description().size() > 0) {
+  if (!this->_internal_description().empty()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->description());
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_description());
   }
 
   // string vnamespace = 3 [(.dccl.field) = {
-  if (this->vnamespace().size() > 0) {
+  if (!this->_internal_vnamespace().empty()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->vnamespace());
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_vnamespace());
   }
 
   // .IMC_DCCL.ManeuverID start_man_id = 4;
-  if (this->has_start_man_id()) {
+  if (this->_internal_has_start_man_id()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::MessageSize(
-        *start_man_id_);
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.start_man_id_);
   }
 
   // .IMC_DCCL.Header head = 9;
-  if (this->has_head()) {
+  if (this->_internal_has_head()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::MessageSize(
-        *head_);
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.head_);
   }
 
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-void PlanSpecification::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:IMC_DCCL.PlanSpecification)
-  GOOGLE_DCHECK_NE(&from, this);
-  const PlanSpecification* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const PlanSpecification>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:IMC_DCCL.PlanSpecification)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:IMC_DCCL.PlanSpecification)
-    MergeFrom(*source);
-  }
-}
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData PlanSpecification::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    PlanSpecification::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*PlanSpecification::GetClassData() const { return &_class_data_; }
 
-void PlanSpecification::MergeFrom(const PlanSpecification& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PlanSpecification)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
+
+void PlanSpecification::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<PlanSpecification*>(&to_msg);
+  auto& from = static_cast<const PlanSpecification&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PlanSpecification)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  maneuvers_.MergeFrom(from.maneuvers_);
-  transitions_.MergeFrom(from.transitions_);
-  start_actions_.MergeFrom(from.start_actions_);
-  variables_.MergeFrom(from.variables_);
-  if (from.plan_id().size() > 0) {
-
-    plan_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.plan_id_);
+  _this->_impl_.maneuvers_.MergeFrom(from._impl_.maneuvers_);
+  _this->_impl_.transitions_.MergeFrom(from._impl_.transitions_);
+  _this->_impl_.start_actions_.MergeFrom(from._impl_.start_actions_);
+  _this->_impl_.variables_.MergeFrom(from._impl_.variables_);
+  if (!from._internal_plan_id().empty()) {
+    _this->_internal_set_plan_id(from._internal_plan_id());
   }
-  if (from.description().size() > 0) {
-
-    description_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.description_);
+  if (!from._internal_description().empty()) {
+    _this->_internal_set_description(from._internal_description());
   }
-  if (from.vnamespace().size() > 0) {
-
-    vnamespace_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.vnamespace_);
+  if (!from._internal_vnamespace().empty()) {
+    _this->_internal_set_vnamespace(from._internal_vnamespace());
   }
-  if (from.has_start_man_id()) {
-    mutable_start_man_id()->::IMC_DCCL::ManeuverID::MergeFrom(from.start_man_id());
+  if (from._internal_has_start_man_id()) {
+    _this->_internal_mutable_start_man_id()->::IMC_DCCL::ManeuverID::MergeFrom(
+        from._internal_start_man_id());
   }
-  if (from.has_head()) {
-    mutable_head()->::IMC_DCCL::Header::MergeFrom(from.head());
+  if (from._internal_has_head()) {
+    _this->_internal_mutable_head()->::IMC_DCCL::Header::MergeFrom(
+        from._internal_head());
   }
-}
-
-void PlanSpecification::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:IMC_DCCL.PlanSpecification)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
 void PlanSpecification::CopyFrom(const PlanSpecification& from) {
@@ -7865,86 +6900,109 @@ bool PlanSpecification::IsInitialized() const {
   return true;
 }
 
-void PlanSpecification::Swap(PlanSpecification* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
 void PlanSpecification::InternalSwap(PlanSpecification* other) {
   using std::swap;
-  CastToBase(&maneuvers_)->InternalSwap(CastToBase(&other->maneuvers_));
-  CastToBase(&transitions_)->InternalSwap(CastToBase(&other->transitions_));
-  CastToBase(&start_actions_)->InternalSwap(CastToBase(&other->start_actions_));
-  CastToBase(&variables_)->InternalSwap(CastToBase(&other->variables_));
-  plan_id_.Swap(&other->plan_id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  description_.Swap(&other->description_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  vnamespace_.Swap(&other->vnamespace_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(start_man_id_, other->start_man_id_);
-  swap(head_, other->head_);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  _impl_.maneuvers_.InternalSwap(&other->_impl_.maneuvers_);
+  _impl_.transitions_.InternalSwap(&other->_impl_.transitions_);
+  _impl_.start_actions_.InternalSwap(&other->_impl_.start_actions_);
+  _impl_.variables_.InternalSwap(&other->_impl_.variables_);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.plan_id_, lhs_arena,
+      &other->_impl_.plan_id_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.description_, lhs_arena,
+      &other->_impl_.description_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.vnamespace_, lhs_arena,
+      &other->_impl_.vnamespace_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(PlanSpecification, _impl_.head_)
+      + sizeof(PlanSpecification::_impl_.head_)
+      - PROTOBUF_FIELD_OFFSET(PlanSpecification, _impl_.start_man_id_)>(
+          reinterpret_cast<char*>(&_impl_.start_man_id_),
+          reinterpret_cast<char*>(&other->_impl_.start_man_id_));
 }
 
-::google::protobuf::Metadata PlanSpecification::GetMetadata() const {
-  protobuf_IMC_5fDCCL_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_IMC_5fDCCL_2eproto::file_level_metadata[kIndexInFileMessages];
+::PROTOBUF_NAMESPACE_ID::Metadata PlanSpecification::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[15]);
 }
-
 
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace IMC_DCCL
-namespace google {
-namespace protobuf {
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::EstimatedState* Arena::CreateMaybeMessage< ::IMC_DCCL::EstimatedState >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::EstimatedState >(arena);
+PROTOBUF_NAMESPACE_OPEN
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::EstimatedState*
+Arena::CreateMaybeMessage< ::IMC_DCCL::EstimatedState >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::EstimatedState >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::Goto* Arena::CreateMaybeMessage< ::IMC_DCCL::Goto >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::Goto >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::Goto*
+Arena::CreateMaybeMessage< ::IMC_DCCL::Goto >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::Goto >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::StationKeeping* Arena::CreateMaybeMessage< ::IMC_DCCL::StationKeeping >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::StationKeeping >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::StationKeeping*
+Arena::CreateMaybeMessage< ::IMC_DCCL::StationKeeping >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::StationKeeping >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::FollowPath* Arena::CreateMaybeMessage< ::IMC_DCCL::FollowPath >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::FollowPath >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::FollowPath*
+Arena::CreateMaybeMessage< ::IMC_DCCL::FollowPath >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::FollowPath >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::Loiter* Arena::CreateMaybeMessage< ::IMC_DCCL::Loiter >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::Loiter >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::Loiter*
+Arena::CreateMaybeMessage< ::IMC_DCCL::Loiter >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::Loiter >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::PathPoint* Arena::CreateMaybeMessage< ::IMC_DCCL::PathPoint >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::PathPoint >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::PathPoint*
+Arena::CreateMaybeMessage< ::IMC_DCCL::PathPoint >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::PathPoint >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::Maneuver* Arena::CreateMaybeMessage< ::IMC_DCCL::Maneuver >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::Maneuver >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::Maneuver*
+Arena::CreateMaybeMessage< ::IMC_DCCL::Maneuver >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::Maneuver >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::ParameterValue* Arena::CreateMaybeMessage< ::IMC_DCCL::ParameterValue >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::ParameterValue >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::ParameterValue*
+Arena::CreateMaybeMessage< ::IMC_DCCL::ParameterValue >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::ParameterValue >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::EntityParameter* Arena::CreateMaybeMessage< ::IMC_DCCL::EntityParameter >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::EntityParameter >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::EntityParameter*
+Arena::CreateMaybeMessage< ::IMC_DCCL::EntityParameter >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::EntityParameter >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::EntityParameters* Arena::CreateMaybeMessage< ::IMC_DCCL::EntityParameters >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::EntityParameters >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::EntityParameters*
+Arena::CreateMaybeMessage< ::IMC_DCCL::EntityParameters >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::EntityParameters >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::ManeuverID* Arena::CreateMaybeMessage< ::IMC_DCCL::ManeuverID >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::ManeuverID >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::ManeuverID*
+Arena::CreateMaybeMessage< ::IMC_DCCL::ManeuverID >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::ManeuverID >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::PlanManeuver* Arena::CreateMaybeMessage< ::IMC_DCCL::PlanManeuver >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::PlanManeuver >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::PlanManeuver*
+Arena::CreateMaybeMessage< ::IMC_DCCL::PlanManeuver >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::PlanManeuver >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::PlanVariable* Arena::CreateMaybeMessage< ::IMC_DCCL::PlanVariable >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::PlanVariable >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::PlanVariable*
+Arena::CreateMaybeMessage< ::IMC_DCCL::PlanVariable >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::PlanVariable >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::PlanTransition* Arena::CreateMaybeMessage< ::IMC_DCCL::PlanTransition >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::PlanTransition >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::PlanTransition*
+Arena::CreateMaybeMessage< ::IMC_DCCL::PlanTransition >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::PlanTransition >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::Header* Arena::CreateMaybeMessage< ::IMC_DCCL::Header >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::Header >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::Header*
+Arena::CreateMaybeMessage< ::IMC_DCCL::Header >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::Header >(arena);
 }
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::IMC_DCCL::PlanSpecification* Arena::CreateMaybeMessage< ::IMC_DCCL::PlanSpecification >(Arena* arena) {
-  return Arena::CreateInternal< ::IMC_DCCL::PlanSpecification >(arena);
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::PlanSpecification*
+Arena::CreateMaybeMessage< ::IMC_DCCL::PlanSpecification >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::PlanSpecification >(arena);
 }
-}  // namespace protobuf
-}  // namespace google
+PROTOBUF_NAMESPACE_CLOSE
 
 // @@protoc_insertion_point(global_scope)
+#include <google/protobuf/port_undef.inc>

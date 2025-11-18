@@ -611,6 +611,11 @@ namespace Transports
         else if (entity_name == "Sidescan") return IMC_DCCL::EntityName::SIDESCAN;
         else if (entity_name == "Camera") return IMC_DCCL::EntityName::CAMERA;
         else if (entity_name == "Multibeam") return IMC_DCCL::EntityName::MULTIBEAM;
+        else if (entity_name == "Fluorometers") return IMC_DCCL::EntityName::FLUOROMETERS;
+        else if (entity_name == "ADCP") return IMC_DCCL::EntityName::ADCP;
+        else if (entity_name == "Dissolved Oxygen") return IMC_DCCL::EntityName::DISSOLVED_OXYGEN;
+        else if (entity_name == "CTD") return IMC_DCCL::EntityName::CTD;
+        else if (entity_name == "Heading Controller") return IMC_DCCL::EntityName::HEADING_CONTROLLER;
         else {return IMC_DCCL::NONE_EN;}
       }
 
@@ -625,6 +630,11 @@ namespace Transports
         else if (imc_dccl_entity_name == IMC_DCCL::EntityName::SIDESCAN) name = "Sidescan";
         else if (imc_dccl_entity_name == IMC_DCCL::EntityName::CAMERA) name = "Camera";
         else if (imc_dccl_entity_name == IMC_DCCL::EntityName::MULTIBEAM) name = "Multibeam";
+        else if (imc_dccl_entity_name == IMC_DCCL::EntityName::FLUOROMETERS) name = "Fluorometers";
+        else if (imc_dccl_entity_name == IMC_DCCL::EntityName::ADCP) name = "ADCP";
+        else if (imc_dccl_entity_name == IMC_DCCL::EntityName::DISSOLVED_OXYGEN) name = "Dissolved Oxygen";
+        else if (imc_dccl_entity_name == IMC_DCCL::EntityName::CTD) name = "CTD";
+        else if (imc_dccl_entity_name == IMC_DCCL::EntityName::HEADING_CONTROLLER) name = "Heading Controller";
         else {name = "Unknown DCCL";}
 
         return name;
@@ -645,6 +655,9 @@ namespace Transports
         else if (param_name == "Shutter Value (ms)") return IMC_DCCL::ParameterName::SHUTTER_VALUE;
         else if (param_name == "Range") return IMC_DCCL::ParameterName::RANGE;
         else if (param_name == "Frequency") return IMC_DCCL::ParameterName::FREQUENCY;
+        else if (param_name == "Thruster Always On") return IMC_DCCL::ParameterName::THRUSTER_ALWAYS_ON;
+        else if (param_name == "Sample Time Duration") return IMC_DCCL::ParameterName::SAMPLE_TIME_DURATION;
+        else if (param_name == "Periodicity of Data Sampling") return IMC_DCCL::ParameterName::PERIODICITY_OF_DATA_SAMPLING;
         else {return IMC_DCCL::NONE_PN;}
       }
 
@@ -664,6 +677,9 @@ namespace Transports
         else if (imc_dccl_param_name == IMC_DCCL::ParameterName::SHUTTER_VALUE) name = "Shutter Value (ms)";
         else if (imc_dccl_param_name == IMC_DCCL::ParameterName::RANGE) name = "Range";
         else if (imc_dccl_param_name == IMC_DCCL::ParameterName::FREQUENCY) name = "Frequency";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::THRUSTER_ALWAYS_ON) name = "Thruster Always On";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::SAMPLE_TIME_DURATION) name = "Sample Time Duration";
+        else if (imc_dccl_param_name == IMC_DCCL::ParameterName::PERIODICITY_OF_DATA_SAMPLING) name = "Periodicity of Data Sampling";
         else {name = "Unknow DCCL";}
 
         return name;
