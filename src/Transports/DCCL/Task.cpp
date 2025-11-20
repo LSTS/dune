@@ -295,7 +295,7 @@ namespace Transports
           //std::vector<char> buffer(hex_string.begin(), hex_string.end());
           //size_t buffer_size = buffer.size();
 
-          sendTransmissionRequest("", encoded_bytes);
+          sendTransmissionRequestViaAcoustic("", encoded_bytes);
 
         }
       }
@@ -476,11 +476,11 @@ namespace Transports
 
       //! Create and send transmission request msg (broadcast, acoustic, raw)
       void
-      sendTransmissionRequest(const std::string& sys, std::string& encoded_msg){
+      sendTransmissionRequestViaAcoustic(const std::string& sys, std::string& encoded_msg){
 
         IMC::TransmissionRequest msg;
         msg.setDestination(getSystemId());
-        msg.destination     = sys; //broadcast
+        msg.destination     = "broadcast";
         msg.deadline        = Time::Clock::getSinceEpoch() + 60;
         msg.req_id          = createInternalId();
         msg.comm_mean       = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
