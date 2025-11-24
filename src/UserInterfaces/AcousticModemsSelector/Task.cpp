@@ -531,10 +531,12 @@ namespace UserInterfaces
       void
       updateSelectedAcousticModem(const std::string& selected)
       {
-        const std::string type = m_acoustic_modems[selected].type;
-        const std::string uri = m_acoustic_modems[selected].uri;
-        m_selected[type].name = selected;
-        m_selected[type].state = false;
+        const auto& modem = m_acoustic_modems[selected];
+        const std::string type = modem.type;
+        const std::string uri = modem.uri;
+        auto& s = m_selected[type];
+        s.name = selected;
+        s.state = false;
         debug("setting acoustic modem %s URI: %s", type.c_str(), uri.c_str());
         IMC::SetEntityParameters sep;
         sep.setDestination(getSystemId());
