@@ -524,6 +524,7 @@ namespace UserInterfaces
         case IMC::TransmissionStatus::TSTAT_RANGE_RECEIVED:
           m_driver->sendStatus(BYTE_STATUS, BYTE_RANGE, std::to_string(msg->range));
           break;
+        case IMC::TransmissionStatus::TSTAT_INV_ADDR:
         case IMC::TransmissionStatus::TSTAT_MAYBE_DELIVERED:
         case IMC::TransmissionStatus::TSTAT_INPUT_FAILURE:
         case IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE:
