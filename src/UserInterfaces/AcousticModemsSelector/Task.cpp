@@ -431,7 +431,7 @@ namespace UserInterfaces
             else if (parts[3] == "selection")
             {
               if (parts[4] == "save")
-                saveParameters();
+                saveEntityParameters();
               else
                 receivedAcousticModemsSelection(parts[4]);
             }
@@ -586,16 +586,6 @@ namespace UserInterfaces
         while (pos < modem.size() && !std::isdigit(modem[pos]))
           ++pos;
         return modem.substr(0, pos);
-      }
-
-      void
-      saveParameters(void)
-      {
-        debug("saving entity parameters");
-        IMC::SaveEntityParameters sp;
-        sp.setDestination(getSystemId());
-        sp.name = getEntityLabel();
-        dispatch(sp);
       }
 
       //! Main loop.
