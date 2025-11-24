@@ -127,10 +127,6 @@ namespace UserInterfaces
         .defaultValue("IO Port - Device")
         .description("Acoustic modems task URI parameter.");
 
-        param("Manta Core - Entity Label", m_args.manta_elabel)
-        .defaultValue("Manta Core")
-        .description("Manta Core entity label.");
-
         setSkipCheckInvalidParameterNames(true);
 
         bind<IMC::AcousticSystems>(this);
