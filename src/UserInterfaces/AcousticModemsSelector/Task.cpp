@@ -97,8 +97,6 @@ namespace UserInterfaces
       std::unordered_set<std::string> m_types;
       //! UAN acoustic modems configuration.
       std::unordered_set<std::string> m_uan_config;
-      //! New acoustic modems configuration state.
-      bool m_amodems_state;
       //! Targetable system names.
       std::unordered_set<std::string> m_sys;
       //! UAN Entity Id.
@@ -121,7 +119,6 @@ namespace UserInterfaces
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_amodems_state(false),
         m_uan_id(255),
         m_treqid(0),
         m_last_treqid(UINT16_MAX),
@@ -328,22 +325,10 @@ namespace UserInterfaces
       void
       receivedAcousticModemsSelection(std::string selection)
       {
-        IMC::SetEntityParameters sep;
-        sep.setDestination(getSystemId());
-        sep.name = getEntityLabel();
-
         std::unordered_set<std::string> lst;
         Utils::String::split(selection, "&", lst);
-        for (const auto& amodem: m_acoustic_modems)
-        {
-          IMC::EntityParameter p;
-          p.name = amodem.first;
-          bool value = lst.find(amodem.first) != lst.end();
-          p.value = uncastLexical(value);
-          sep.params.push_back(p);
-        }
-
-        dispatch(sep, DF_LOOP_BACK);
+        for (auto& amodem: m_acoustic_modems)
+          applyEntityParameter(amodem.second.selected, lst.find(amodem.first) != lst.end());
       }
 
       void
@@ -369,10 +354,6 @@ namespace UserInterfaces
         
         if (msg->name == m_args.uan_elabel)
         {
-          IMC::SetEntityParameters sep;
-          sep.setDestination(getSystemId());
-          sep.name = getEntityLabel();
-
           for (const auto& it: msg->params)
           {
             if (it->name == m_args.uan_modems_param)
@@ -383,20 +364,13 @@ namespace UserInterfaces
               {
                 if (m_types.find(type) != m_types.end())
                 {
-                  m_acoustic_modems[m_selected[type].name].selected = true;
-                  IMC::EntityParameter p;
-                  p.name = m_selected[type].name;
-                  p.value = "true";
-                  sep.params.push_back(p);
-                  m_amodems_state = false;
+                  const auto name = m_selected[type].name;
+                  applyEntityParameter(m_acoustic_modems[name].selected, true);
                 }
 
                 if (m_uan_config.find(type) != m_uan_config.end())
                   m_uan_config.insert(type);
               }
-
-              if (sep.params.size())
-                dispatch(sep, DF_LOOP_BACK);
 
               break;
             }
