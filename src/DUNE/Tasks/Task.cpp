@@ -64,7 +64,8 @@ namespace DUNE
       m_name(n),
       m_entity(NULL),
       m_debug_level(DEBUG_LEVEL_NONE),
-      m_honours_active(false)
+      m_honours_active(false),
+      m_skip_inv_pnames(false)
     {
       m_args.priority = 10;
       m_args.act_time = 0;
@@ -805,11 +806,7 @@ namespace DUNE
         if (pitr->first == "Enabled")
           continue;
 
-        // Ignore Supervisors.Delegator and UserInterfaces.AcousticModemsSelector sections
-        std::string section = getName();
-        std::string::size_type p = section.find('/');
-        if(!std::strcmp(section.substr(0,p).c_str(),"Supervisors.Delegator") ||
-           !std::strcmp(section.substr(0,p).c_str(),"UserInterfaces.AcousticModemsSelector"))
+        if (m_skip_inv_pnames)
           continue;
 
         if (m_params.find(pitr->first) == m_params.end())

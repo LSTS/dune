@@ -757,6 +757,12 @@ namespace DUNE
       onUpdateParameters(void)
       { }
 
+      inline void
+      setSkipCheckInvalidParameterNames(bool skip)
+      {
+        m_skip_inv_pnames = skip;
+      }
+
       //! Called when an external activation request is
       //! received. Derived classes that need to perform extra steps
       //! to prepare normal execution should replace the default
@@ -894,6 +900,8 @@ namespace DUNE
       bool m_honours_active;
       //! Name of parameter section editor.
       std::string m_param_editor;
+      //! Skip check for invalid parameter names.
+      bool m_skip_inv_pnames;
 
       //! Report current entity states by dispatching EntityState
       //! messages. This function will at least report the state of
