@@ -131,6 +131,8 @@ namespace UserInterfaces
         .defaultValue("Manta Core")
         .description("Manta Core entity label.");
 
+        setSkipCheckInvalidParameterNames(true);
+
         bind<IMC::AcousticSystems>(this);
         bind<IMC::EntityParameters>(this);
         bind<IMC::EntityState>(this);
