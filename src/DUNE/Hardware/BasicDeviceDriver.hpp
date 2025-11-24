@@ -97,6 +97,21 @@ namespace DUNE
       consume(const IMC::PowerChannelState* msg);
 
     protected:
+      //! Configurable Sampling Supported Modes.
+      enum ConfigurableSamplingSupportedModes : uint8_t
+      {
+        //! No Configurable Sampling.
+        CSM_NO_CONF_SAMP = 0x0,
+        //! Periodic Single Sampling.
+        CSM_PERIODIC_SINGLE_SAMPLING = 0x1,
+        //! Periodic Sampling.
+        CSM_PERIODIC_SAMPLING = 0x2,
+        //! Continuous Sampling.
+        CSM_CONTINUOUS_SAMPLING = 0x4,
+        //! All.
+        CSM_ALL = 0x7
+      };
+
       //! Create an I/O handle given an URI.
       //!
       //! @param[in] uri URI.
@@ -324,7 +339,8 @@ namespace DUNE
       onUpdateParameters(void) override;
 
       void
-      paramConfigurableSampling(Parameter::Scope def_scope = Parameter::SCOPE_GLOBAL,
+      paramConfigurableSampling(ConfigurableSamplingSupportedModes supported_modes = CSM_ALL,
+                                Parameter::Scope def_scope = Parameter::SCOPE_GLOBAL,
                                 Parameter::Visibility def_visibility = Parameter::VISIBILITY_DEVELOPER,
                                 double def_sampling = 0.0f,
                                 double def_periodicity = 0.0f);
@@ -437,6 +453,10 @@ namespace DUNE
       DUNE::Time::Counter<double> m_sample_timer;
       //! Periodicity timer.
       DUNE::Time::Counter<double> m_periodicity_timer;
+      //! Configurable Sampling Supported Modes.
+      uint8_t m_conf_samp_modes;
+      //! Current Configurable Sampling Mode.
+      uint8_t m_conf_samp_mode;
       //! Honours vertical profiles.
       bool m_honours_vp;
       //! Timer for Vertical Profiles.

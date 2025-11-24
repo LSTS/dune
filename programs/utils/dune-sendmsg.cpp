@@ -133,6 +133,32 @@ void logNumberOfMessages(unsigned short& count, char ** argv, int argc){
 
 }
 
+static uint16_t src_id = 0xFFF0-1;
+
+void sendMsg(IMC::Message* msg, Address dest, uint16_t port)
+{
+  uint8_t bfr[1024] = {0};
+  uint16_t rv = IMC::Packet::serialize(msg, bfr, sizeof(bfr));
+      
+  UDPSocket sock;
+  sock.bind();
+  sock.write(bfr, rv, dest, port);
+  msg->toText(std::cerr);
+}
+
+void sendAnnounce(Address dest, uint16_t port)
+{
+  static uint16_t uid = 0x0000; 
+  IMC::Announce msg;
+  msg.setSource(src_id);
+  msg.setTimeStamp();
+
+  msg.sys_name = "dune-sendmsg";
+  msg.services = "no;services";
+
+  sendMsg(&msg, dest, port);
+}
+
 int
 main(int argc, char** argv)
 {
@@ -175,13 +201,22 @@ main(int argc, char** argv)
     }
 
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "  %s <destination host> <destination port> <abbrev> [arguments]\n\n", argv[0]);
+    fprintf(stderr, "  %s <destination host>:<discovery port> <destination port> <abbrev> [arguments]\n\n", argv[0]);
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -l, --list                            Print list of acceptable messages\n\n\n");
     return 1;
   }
 
-  Address dest(argv[1]);
+  char addr[128] = {0};
+  int discovery_port = 30100;
+  if(sscanf(argv[1], "%[^:]:%u", addr, &discovery_port) != 2)
+  {
+    fprintf(stderr, "ERROR: invalid address:port argument '%s'\n", argv[1]);
+    fprintf(stderr, "       use <address>:<port>\n");
+    return 1;
+  }
+
+  Address dest(addr);
 
   // Parse port.
   unsigned port = 0;
@@ -200,6 +235,18 @@ main(int argc, char** argv)
   IMC::Message* msg = NULL;
   std::list<IMC::Message*>* msg_list = new std::list<IMC::Message*>();
 
+  // Send Announce to register IMC id
+  try
+  {
+    // Discovery Announces
+    for (size_t i = 0; i < 5; i++)
+      sendAnnounce(dest, discovery_port+i);
+  }
+  catch(const std::exception& e)
+  {
+    std::cerr << "ERROR: " << e.what() << std::endl;
+    return 1;
+  }
 
   if (strcmp(argv[3], "Abort") == 0)
   {
@@ -795,7 +842,8 @@ main(int argc, char** argv)
     IMC::SetServoPosition* tmsg = new IMC::SetServoPosition;
     msg = tmsg;
     tmsg->id = atoi(argv[4]);
-    tmsg->value = atof(argv[5]);
+    double val = atof(argv[5]);
+    tmsg->value = Angles::radians(val);
   }
 
   if (strcmp(argv[3], "SetThrusterActuation") == 0)
@@ -1309,6 +1357,7 @@ main(int argc, char** argv)
       msg_list->pop_front();
 
       aux->setTimeStamp();
+      aux->setSource(src_id);
 
       uint8_t bfr[1024] = {0};
       uint16_t rv = IMC::Packet::serialize(aux, bfr, sizeof(bfr));
@@ -1339,6 +1388,7 @@ main(int argc, char** argv)
 
 
   msg->setTimeStamp();
+  msg->setSource(src_id);
 
   uint8_t bfr[1024] = {0};
   uint16_t rv = IMC::Packet::serialize(msg, bfr, sizeof(bfr));

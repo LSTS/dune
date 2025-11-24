@@ -68,8 +68,6 @@ namespace Transports
     {
       //! IO device.
       std::string io_dev;
-      //! IO device 9523.
-      std::string io_dev_9523;
       //! Mailbox check periodicity.
       double mbox_check_per;
       //! Maximum transmission rate.
@@ -100,6 +98,8 @@ namespace Transports
       size_t queue_max;
       //! Timeout in seconds for the general monitor
       double general_monitor_timeout;
+      //! Driver timeout.
+      double driver_timeout;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -157,10 +157,6 @@ namespace Transports
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("IO Port - Device", m_args.io_dev)
-        .defaultValue("")
-        .description("IO Port - Device used to communicate with the modem");
-
-        param("IO Port - Device 9523", m_args.io_dev_9523)
         .defaultValue("")
         .description("IO Port - Device used to communicate with the modem");
 
@@ -240,6 +236,13 @@ namespace Transports
         .minimumValue("60.0")
         .description("Timeout in seconds for the general monitor");
 
+        param("Driver Timeout", m_args.driver_timeout)
+        .minimumValue("0.0")
+        .defaultValue("5.0")
+        .units(Units::Second)
+        .description("Driver timeout for command responses. If value is 0, "
+                     "the driver won't wait for responses.");
+
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
         bind<IMC::EntityState>(this);
@@ -293,6 +296,9 @@ namespace Transports
           trace("Setting general monitor timeout to %f seconds", m_args.general_monitor_timeout);
           m_general_monitor.setTop(m_args.general_monitor_timeout);
         }
+
+        if (paramChanged(m_args.driver_timeout) && m_driver)
+          m_driver->setDriverTimeout(m_args.driver_timeout);
       }
 
       //! Acquire resources.
@@ -313,16 +319,8 @@ namespace Transports
             Time::Delay::wait(1.0);
           }
 
-          if(m_args.use_9523)
-          {
-            inf("Opening serial port %s", m_args.io_dev_9523.c_str());
-            m_handle = openUART(m_args.io_dev_9523);
-          }
-          else
-          {
-            inf("Opening serial port %s", m_args.io_dev.c_str());
-            m_handle = openUART(m_args.io_dev);
-          }
+          inf("Opening serial port %s", m_args.io_dev.c_str());
+          m_handle = openUART(m_args.io_dev);
 
           IMC::VersionInfo vi;
           std::string version_model = "no libd-9523";
@@ -675,7 +673,7 @@ namespace Transports
       }
 
       bool
-      receptionSequence()
+      receptionSequence(void)
       {
         if (m_driver->hasRingAlert())
           m_driver->checkMailBoxAlert();
@@ -699,7 +697,7 @@ namespace Transports
       }
 
       bool
-      transmissionSequence()
+      transmissionSequence(void)
       {
         if (m_tx_request != NULL)
         {
@@ -770,7 +768,9 @@ namespace Transports
           default:
             m_prio = TxRxPriority::Tx;
             m_tx_window.setTop(m_args.tx_window);
+            break;
         }
+
         m_general_monitor.reset();
       }
 
@@ -783,10 +783,7 @@ namespace Transports
         else
           description =  "idle | ";
 
-        if(m_args.use_9523)
-          description += m_args.io_dev_9523 + " | ";
-        else
-          description += m_args.io_dev + " | ";
+        description += m_args.io_dev + " | ";
 
         //get rx and tx queue size
         unsigned rx_queue_size = m_driver->getQueuedMT();

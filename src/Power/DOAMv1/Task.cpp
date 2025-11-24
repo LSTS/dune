@@ -390,7 +390,7 @@ namespace Power
         m_slave_alive = false;
         setPowerChannelState(1);
         m_act_timer.setTop(getActivationTime());
-        spew("my getActivationTime() is %d", getActivationTime());
+        spew("my getActivationTime() is %.0f", getActivationTime());
       }
 
       void

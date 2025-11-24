@@ -227,6 +227,15 @@ namespace DUNE
         return ent;
       }
 
+      //! Retrieve the number of entities in the database.
+      //! @return number of entities.
+      uint16_t
+      size(void)
+      {
+        Concurrency::ScopedMutex l(m_lock);
+        return (uint16_t)m_by_id.size();
+      }
+
     private:
       //! Mutex for accessing the database.
       Concurrency::Mutex m_lock;

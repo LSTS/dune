@@ -103,7 +103,7 @@ namespace Supervisors
         bind<IMC::PlanControlState>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::EstimatedState>(this);
-        bind<IMC::ArmingState>(this);
+        bind<IMC::RemoteActions>(this);
       }
 
       void
@@ -120,7 +120,13 @@ namespace Supervisors
 
       void
       onResourceInitialization(void)
-      { 
+      {
+        // Add button for arm and disarm states.
+        IMC::RemoteActionsRequest action_register;
+        action_register.op = IMC::RemoteActionsRequest::OP_REGISTER;
+        action_register.actions = "Arm=Button;Disarm=Button";
+        dispatch(action_register);
+
         m_vs.op_mode = IMC::VehicleState::VS_BOOT;
         m_wdog.setTop(5.0);
       }
@@ -144,9 +150,13 @@ namespace Supervisors
       }
 
       void
-      consume(const IMC::ArmingState* msg)
+      consume(const IMC::RemoteActions* msg)
       {
-        m_armed = (msg->state == ArmingState::StateEnum::MOTORS_ARMED);
+        TupleList tuples(msg->actions);
+        if (tuples.get("Arm", 0))
+          m_armed = true;
+        else if (tuples.get("Disarm", 0))
+          m_armed = false;
       }
 
       std::string

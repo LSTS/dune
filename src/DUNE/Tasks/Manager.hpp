@@ -110,6 +110,9 @@ namespace DUNE
       void
       adjustPriorities(void);
 
+      uint32_t
+      getNumTasks(void);
+
     private:
       struct TaskCpuUsage
       {

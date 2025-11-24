@@ -255,6 +255,12 @@ namespace DUNE
       }
     }
 
+    uint32_t
+    Manager::getNumTasks(void)
+    {
+      return static_cast<uint32_t>(m_tasks.size());
+    }
+
     void
     Manager::lowerHogPriority(Task* task, int cpu_usage)
     {

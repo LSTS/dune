@@ -217,6 +217,12 @@ namespace Monitors
         inf("No AIS targets in the area.");
         setNavigationLight(m_args.light_state_no_targets);
       }
+
+      void
+      onResourceAcquisition(void) override
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, CODE_IDLE);
+      }
     };
   }
 }

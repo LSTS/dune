@@ -302,7 +302,7 @@ namespace DUNE
       spew("activate");
 
       if (m_honours_active)
-        m_params.set("Active", "true");
+        applyEntityParameter(m_args.active, true);
 
       spew("calling on activation");
       onActivation();
@@ -321,7 +321,7 @@ namespace DUNE
       spew("activation failed: %s", reason.c_str());
       
       if (m_honours_active)
-        m_params.set("Active", "false");
+        applyEntityParameter(m_args.active, false);
 
       m_entity->failActivation(reason);
     }
@@ -347,7 +347,7 @@ namespace DUNE
       spew("deactivate");
 
       if (m_honours_active)
-        m_params.set("Active", "false");
+        applyEntityParameter(m_args.active, false);
 
       spew("calling on deactivation");
       onDeactivation();
