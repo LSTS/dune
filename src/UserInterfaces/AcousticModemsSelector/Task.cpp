@@ -146,22 +146,26 @@ namespace UserInterfaces
           {
             if (m_acoustic_modems.find(modem.first) != m_acoustic_modems.end())
               continue;
-            
-            m_acoustic_modems[modem.first] = {getAcousticModemType(modem.first), modem.second, false};
-            m_types.insert(m_acoustic_modems[modem.first].type);
 
-            param(modem.first, m_acoustic_modems[modem.first].selected)
+            const auto type = getAcousticModemType(modem.first);
+            auto& acoustic_modem = m_acoustic_modems[modem.first];
+            acoustic_modem.type = type;
+            acoustic_modem.uri = modem.second;
+            acoustic_modem.selected = false;
+            m_types.insert(type);
+
+            param(modem.first, acoustic_modem.selected)
             .visibility(Tasks::Parameter::VISIBILITY_USER)
             .scope(Tasks::Parameter::SCOPE_GLOBAL)
             .defaultValue("false")
-            .description(DTR(String::str("True if acoustic modem %s is selected, false otherwise. "
+            .description(String::str(DTR("True if acoustic modem %s is selected, false otherwise. "
                                          "Only one modem of the type %s can be selected. "
                                          "If multiple modems of the same type are selected, "
-                                         "only the first, in alphabetical order, will be considered.",
+                                         "only the first, in alphabetical order, will be considered."),
                                           modem.first.c_str(),
-                                          m_acoustic_modems[modem.first].type.c_str()).c_str()));
+                                          acoustic_modem.type.c_str()));
           }
-          
+
           loadConfig();
         }
 
