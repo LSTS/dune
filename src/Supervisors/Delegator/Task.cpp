@@ -119,6 +119,8 @@ namespace Supervisors
         .defaultValue("None")
         .description("Name of the power channel of the surrogate system. Only use if PCC is for the payload's CPU.");
 
+        setSkipCheckInvalidParameterNames(true);
+
         // Register handler routines.
         bind<IMC::EntityInfo>(this);
         bind<IMC::EntityActivationState>(this);
