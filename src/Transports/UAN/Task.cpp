@@ -211,6 +211,12 @@ namespace Transports
         m_msg_send_timer.setTop(2);
       }
 
+      ~Task(void)
+      {
+        for (auto& modem: m_activate_modems)
+          Memory::clear(modem.second);
+      }
+
       void
       dispatchModems(void)
       {
@@ -672,7 +678,7 @@ namespace Transports
             m_activate_modems[modem]->params.push_back(ep);
             dispatch(m_activate_modems[modem]);
             m_sys.erase(modem);
-            delete m_activate_modems[modem];
+            Memory::clear(m_activate_modems[modem]);
             m_activate_modems.erase(modem);
           }
           catch (Entities::EntityDataBase::NonexistentLabel& e)
