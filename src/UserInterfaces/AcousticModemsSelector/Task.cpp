@@ -202,8 +202,6 @@ namespace UserInterfaces
             m_selected.erase(type);
             m_uan_config.erase(type);
           }
-
-          dispatchAcousticModems(type);
         }
 
         updateSelectedTypes(String::join(m_uan_config.begin(), m_uan_config.end(), ","));
@@ -509,12 +507,7 @@ namespace UserInterfaces
       std::string
       avoidTypeMultiSelection(const std::string& type)
       {
-        IMC::SetEntityParameters sep;
-        sep.setDestination(getSystemId());
-        sep.name = getEntityLabel();
-
         bool first = true;
-        bool needed = false;
         std::string result;
         for (auto& modem: m_acoustic_modems)
         {
@@ -531,20 +524,8 @@ namespace UserInterfaces
             continue;
           }
 
-          modem.second.selected = false;
-          needed = true;
-
-          IMC::EntityParameter p;
-          p.name = modem.first;
-          p.value = uncastLexical(modem.second.selected);
-          sep.params.push_back(p);
+          applyEntityParameter(modem.second.selected, false);
         }
-
-        if (needed)
-          dispatchAcousticModems(type);
-
-        if (sep.params.size())
-          dispatch(sep, DF_LOOP_BACK);
 
         return result;
       }
