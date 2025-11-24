@@ -48,6 +48,8 @@ namespace UserInterfaces
     constexpr const char* c_request_uri = "/dune/acoustics";
     //! Section id.
     constexpr const char* c_section_id = "Acoustics";
+    //! Acoustic Modem URI to identify it as simulator.
+    constexpr const char* c_modem_simulator_uri = "simulator";
 
     struct AcousticModemInfo
     {
@@ -537,6 +539,10 @@ namespace UserInterfaces
         auto& s = m_selected[type];
         s.name = selected;
         s.state = false;
+
+        if (uri == c_modem_simulator_uri)
+          return;
+
         debug("setting acoustic modem %s URI: %s", type.c_str(), uri.c_str());
         IMC::SetEntityParameters sep;
         sep.setDestination(getSystemId());
