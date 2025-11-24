@@ -50,6 +50,8 @@ namespace UserInterfaces
     constexpr const char* c_section_id = "Acoustics";
     //! Acoustic Modem URI to identify it as simulator.
     constexpr const char* c_modem_simulator_uri = "simulator";
+    //! Action timeout.
+    constexpr uint8_t c_action_timeout = 30; 
 
     struct AcousticModemInfo
     {
@@ -103,6 +105,16 @@ namespace UserInterfaces
       uint8_t m_uan_id;
       //! Id for TransmissionRequest IMC message.
       uint16_t m_treqid;
+      //! Id of last TransmissionRequest IMC message.
+      uint16_t m_last_treqid;
+      //! Timer for action timeout.
+      Counter<uint8_t> m_action_timeout;
+      //! Action success.
+      bool m_success;
+      //! Action fail.
+      bool m_fail;
+      //! Range.
+      fp32_t m_range;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -111,7 +123,12 @@ namespace UserInterfaces
         DUNE::Tasks::Task(name, ctx),
         m_amodems_state(false),
         m_uan_id(255),
-        m_treqid(0)
+        m_treqid(0),
+        m_last_treqid(UINT16_MAX),
+        m_action_timeout(0.0f),
+        m_success(false),
+        m_fail(false),
+        m_range(-1.0f)
       {
         param("Acoustic Modems List Label", m_args.am_list)
         .defaultValue("Acoustic Modems")
@@ -135,6 +152,7 @@ namespace UserInterfaces
         bind<IMC::EntityParameters>(this);
         bind<IMC::EntityState>(this);
         bind<IMC::HTTPAction>(this);
+        bind<IMC::TransmissionStatus>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -272,6 +290,14 @@ namespace UserInterfaces
           acoustic_modems[key] = value;
         }
 
+        if (!m_action_timeout.overflow())
+        {
+          auto& acoustic_actions = j["acoustic_actions"];
+          acoustic_actions["success"] = uncastLexical(m_success);
+          acoustic_actions["fail"] = uncastLexical(m_fail);
+          acoustic_actions["range"] = uncastLexical(m_range);
+        }
+
         return j.dump();
       }
 
@@ -288,12 +314,17 @@ namespace UserInterfaces
         IMC::TransmissionRequest treq;
         treq.setDestination(getSystemId());
         treq.comm_mean = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
-        treq.req_id = getInternalId();
+        m_last_treqid = treq.req_id = getInternalId();
         treq.destination = dest;
         treq.data_mode = (action == "ping") ?
                           IMC::TransmissionRequest::DMODE_RANGE:
                           IMC::TransmissionRequest::DMODE_ABORT;
         dispatch(treq);
+
+        m_range = -1.0f;
+        m_success = false;
+        m_fail = false;
+        m_action_timeout.setTop(c_action_timeout);
       }
 
       void
@@ -310,7 +341,7 @@ namespace UserInterfaces
           IMC::EntityParameter p;
           p.name = amodem.first;
           bool value = lst.find(amodem.first) != lst.end();
-          p.value =  uncastLexical(value);
+          p.value = uncastLexical(value);
           sep.params.push_back(p);
         }
 
@@ -357,7 +388,7 @@ namespace UserInterfaces
                   m_acoustic_modems[m_selected[type].name].selected = true;
                   IMC::EntityParameter p;
                   p.name = m_selected[type].name;
-                  p.value = uncastLexical(m_acoustic_modems[m_selected[type].name].selected);
+                  p.value = "true";
                   sep.params.push_back(p);
                   m_amodems_state = false;
                 }
@@ -433,6 +464,44 @@ namespace UserInterfaces
                 receivedAcousticModemsSelection(parts[4]);
             }
           }
+        }
+      }
+
+      void
+      consume(const IMC::TransmissionStatus* msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
+        
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        if (msg->req_id != m_last_treqid)
+          return;
+
+        switch (msg->status)
+        {
+        case IMC::TransmissionStatus::TSTAT_RANGE_RECEIVED:
+          m_range = msg->range;
+#if (DUNE_LEGACY)
+          /*FALLTHROUGH*/
+#else
+          [[fallthrough]];
+#endif
+        case IMC::TransmissionStatus::TSTAT_DELIVERED:
+          m_success = true;
+          break;
+        case IMC::TransmissionStatus::TSTAT_INV_ADDR:
+        case IMC::TransmissionStatus::TSTAT_MAYBE_DELIVERED:
+        case IMC::TransmissionStatus::TSTAT_INPUT_FAILURE:
+        case IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE:
+        case IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE:
+          m_fail = true;
+          break;
+        case IMC::TransmissionStatus::TSTAT_IN_PROGRESS:
+        case IMC::TransmissionStatus::TSTAT_SENT:
+        default:
+          break;
         }
       }
 
