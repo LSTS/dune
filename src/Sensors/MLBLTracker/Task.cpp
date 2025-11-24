@@ -263,23 +263,10 @@ namespace Sensors
       }
 
       void
-      dispatchURI(void)
-      {
-        IMC::EntityParameters params;
-        params.name = getEntityLabel();
-        IMC::EntityParameter p;
-        p.name = "IO Port - Device";
-        p.value = m_args.io_dev;
-        params.params.push_back(p);
-        dispatch(params);
-      }
-
-      void
       onUpdateParameters(void)
       {
         if (paramChanged(m_args.io_dev))
         {
-          dispatchURI();
           if (isActive())
             requestRestart();
         }
@@ -309,7 +296,7 @@ namespace Sensors
           }
 
           dispatchSystems();
-        } 
+        }
 
         // Input timeout.
         if (paramChanged(m_args.tout_input))
