@@ -56,7 +56,7 @@ namespace Transports
     //! Default timeout for SBDIX command.
     static constexpr double c_default_timeout_sbdix = 20.0;
     //! Error reply string.
-    static constexpr char* c_error_reply = "ERROR";
+    static constexpr const char* c_error_reply = "ERROR";
 
     class Driver: public HayesModem
     {
