@@ -391,7 +391,7 @@ namespace UserInterfaces
         return true;
       }
 
-      std::map<std::string, bool>
+      const std::map<std::string, bool>&
       getModemsConfig(void)
       {
         m_new_modems_config = false;

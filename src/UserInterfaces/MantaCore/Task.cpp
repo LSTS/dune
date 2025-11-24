@@ -668,7 +668,7 @@ namespace UserInterfaces
       }
 
       void
-      updateModemsConfig(std::map<std::string, bool> config)
+      updateModemsConfig(const std::map<std::string, bool>& config)
       {
         if (config.empty())
           return;
