@@ -391,6 +391,10 @@ namespace UserInterfaces
                 continue;
 
               const auto name = m_selected[type].name;
+
+              if (m_acoustic_modems.find(name) == m_acoustic_modems.end())
+                continue;
+
               applyEntityParameter(m_acoustic_modems[name].selected, true);
             }
 
