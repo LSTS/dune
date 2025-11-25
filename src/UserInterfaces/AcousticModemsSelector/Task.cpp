@@ -187,22 +187,37 @@ namespace UserInterfaces
           loadConfig();
         }
 
-        for (const auto& type: m_types)
+        if (selectionChanged())
         {
-          std::string selected = avoidTypeMultiSelection(type);
-          if (!selected.empty())
+          for (const auto& type: m_types)
           {
-            updateSelectedAcousticModem(selected);
-            m_uan_config.insert(type);
+            std::string selected = avoidTypeMultiSelection(type);
+            if (!selected.empty())
+            {
+              updateSelectedAcousticModem(selected);
+              m_uan_config.insert(type);
+            }
+            else
+            {
+              m_selected.erase(type);
+              m_uan_config.erase(type);
+            }
           }
-          else
-          {
-            m_selected.erase(type);
-            m_uan_config.erase(type);
-          }
+
+          updateSelectedTypes(String::join(m_uan_config.begin(), m_uan_config.end(), ","));
+        }
+      }
+
+      bool
+      selectionChanged(void)
+      {
+        for (auto& modem: m_acoustic_modems)
+        {
+          if (paramChanged(modem.second.selected))
+            return true;
         }
 
-        updateSelectedTypes(String::join(m_uan_config.begin(), m_uan_config.end(), ","));
+        return false;
       }
 
       //! Reserve entity identifiers.
