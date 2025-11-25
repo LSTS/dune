@@ -375,24 +375,26 @@ namespace UserInterfaces
         {
           for (const auto& it: msg->params)
           {
-            if (it->name == m_args.uan_modems_param)
+            if (it->name != m_args.uan_modems_param)
+              continue;
+
+            std::unordered_set<std::string> config;
+            String::split(it->value, ",", config);
+            for (const auto& type: config)
             {
-              std::unordered_set<std::string> config;
-              String::split(it->value, ",", config);
-              for (const auto& type: config)
-              {
-                if (m_types.find(type) != m_types.end())
-                {
-                  const auto name = m_selected[type].name;
-                  applyEntityParameter(m_acoustic_modems[name].selected, true);
-                }
+              if (m_types.find(type) == m_types.end())
+                continue;
 
-                if (m_uan_config.find(type) != m_uan_config.end())
-                  m_uan_config.insert(type);
-              }
+              m_uan_config.insert(type);
 
-              break;
+              if (m_selected.find(type) != m_selected.end())
+                continue;
+
+              const auto name = m_selected[type].name;
+              applyEntityParameter(m_acoustic_modems[name].selected, true);
             }
+
+            break;
           }
         }
       }
