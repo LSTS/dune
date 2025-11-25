@@ -157,6 +157,7 @@ namespace UserInterfaces
       void
       onUpdateParameters(void)
       {
+        bool modem_list_changed = false;
         if (paramChanged(m_args.am_list))
         {
           std::map<std::string, std::string> modems = m_ctx.config.getSection(m_args.am_list);
@@ -184,10 +185,11 @@ namespace UserInterfaces
                                           acoustic_modem.type.c_str()));
           }
 
-          loadConfig();
+          loadConfig(true);
+          modem_list_changed = true;
         }
 
-        if (selectionChanged())
+        if (selectionChanged() && !modem_list_changed)
         {
           for (const auto& type: m_types)
           {
