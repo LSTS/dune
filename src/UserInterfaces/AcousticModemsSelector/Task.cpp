@@ -236,6 +236,7 @@ namespace UserInterfaces
       onResourceInitialization(void)
       {
         registerWebpageSection();
+        queryEntityParameters(m_args.uan_elabel);
       }
 
       //! Release resources.
@@ -593,10 +594,6 @@ namespace UserInterfaces
       void
       onMain(void)
       {
-        queryEntityParameters(m_args.uan_elabel);
-        for (const auto& type: m_types)
-          queryEntityParameters(type);
-
         while (!stopping())
         {
           waitForMessages(1.0);
