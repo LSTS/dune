@@ -234,7 +234,7 @@ namespace DUNE
 
       //! Load parameters from context's configuration.
       void
-      loadConfig(void);
+      loadConfig(const bool skip_update_params = false);
 
       //! Set scheduling priority programatically. The priority of a
       //! task might change when configuration parameters are updated.

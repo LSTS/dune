@@ -789,7 +789,7 @@ namespace DUNE
     }
 
     void
-    Task::loadConfig(void)
+    Task::loadConfig(const bool skip_update_params)
     {
       std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
       for (; itr != m_params.end(); ++itr)
@@ -812,6 +812,9 @@ namespace DUNE
             err(DTR("invalid parameter '%s'"), pitr->first.c_str());
         }
       }
+
+      if (skip_update_params)
+        return;
 
       try
       {
