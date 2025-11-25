@@ -798,19 +798,19 @@ namespace DUNE
         m_params.set(itr->second->name(), value);
       }
 
-      // Check for invalid parameter names.
-      std::map<std::string, std::string> options = m_ctx.config.getSection(getName());
-      std::map<std::string, std::string>::const_iterator pitr = options.begin();
-      for (; pitr != options.end(); ++pitr)
+      if (!m_skip_inv_pnames)
       {
-        if (pitr->first == "Enabled")
-          continue;
+        // Check for invalid parameter names.
+        std::map<std::string, std::string> options = m_ctx.config.getSection(getName());
+        std::map<std::string, std::string>::const_iterator pitr = options.begin();
+        for (; pitr != options.end(); ++pitr)
+        {
+          if (pitr->first == "Enabled")
+            continue;
 
-        if (m_skip_inv_pnames)
-          continue;
-
-        if (m_params.find(pitr->first) == m_params.end())
-          err(DTR("invalid parameter '%s'"), pitr->first.c_str());
+          if (m_params.find(pitr->first) == m_params.end())
+            err(DTR("invalid parameter '%s'"), pitr->first.c_str());
+        }
       }
 
       try
