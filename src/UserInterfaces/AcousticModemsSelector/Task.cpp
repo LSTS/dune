@@ -128,6 +128,7 @@ namespace UserInterfaces
         m_range(-1.0f)
       {
         param("Acoustic Modems List Label", m_args.am_list)
+        .editable("false")
         .defaultValue("Acoustic Modems")
         .description("Label for the Acoustic Modems List");
 
