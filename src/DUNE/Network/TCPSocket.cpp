@@ -146,6 +146,16 @@ namespace DUNE
 #endif
     }
 
+    void TCPSocket::closeSocket()
+    {
+#if defined(DUNE_OS_POSIX)
+      shutdown(m_handle, SHUT_RDWR);
+      close(m_handle);
+#elif defined(DUNE_OS_WINDOWS)
+      closesocket(m_handle);
+#endif
+    }
+
     void
     TCPSocket::bind(uint16_t port, Address addr, bool reuse)
     {
