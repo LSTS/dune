@@ -254,6 +254,8 @@ namespace UserInterfaces
       {
         registerWebpageSection();
         queryEntityParameters(m_args.uan_elabel);
+        for (const auto& type: m_types)
+          queryEntityParameters(type);
       }
 
       //! Release resources.
