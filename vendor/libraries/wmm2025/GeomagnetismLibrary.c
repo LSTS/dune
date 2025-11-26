@@ -1292,9 +1292,13 @@ int MAG_readMagneticModel(char *filename, MAGtype_MagneticModel * MagneticModel)
     MagneticModel->Secular_Var_Coeff_G[0] = 0.0;
     
     char header_fmt[sizeof(c_str)];
-    snprintf(header_fmt, sizeof(header_fmt), "%%lf %%%ds %%%ds", sizeof(MagneticModel->ModelName), date_size);
+    snprintf(header_fmt, sizeof(header_fmt), "%%lf %%%lus %%%ds", sizeof(MagneticModel->ModelName), date_size);
 
-    fgets(c_str, sizeof(c_str), MAG_COF_File);
+    if (fgets(c_str, sizeof(c_str), MAG_COF_File) == NULL){
+        free(edit_date);
+        fclose(MAG_COF_File);
+        return FALSE;
+    }
     sscanf(c_str, header_fmt, &epoch, MagneticModel->ModelName, edit_date);
     
     MagneticModel->min_year = MAG_dtstr_to_dyear(edit_date);
@@ -1360,7 +1364,7 @@ int MAG_readMagneticModel_Large(char *filename, char *filenameSV, MAGtype_Magnet
     FILE *MAG_COFSV_File;
     char c_str[81], c_str2[81]; /* these strings are used to read a line from coefficient file */
     int i, m, n, index, a, b;
-    double epoch, gnm, hnm, dgnm, dhnm;
+    double epoch = 0.0, gnm, hnm, dgnm, dhnm;
     MAG_COF_File = fopen(filename, "r");
     MAG_COFSV_File = fopen(filenameSV, "r");
     if(MAG_COF_File == NULL || MAG_COFSV_File == NULL)
@@ -2131,13 +2135,13 @@ OUTPUT : UTMParameters : Pointer to data structure MAGtype_UTMParameters with th
 
     double Eps, Epssq;
     double Acoeff[8];
-    double Lam0, K0, falseE, falseN;
+    double Lam0 = 0.0, K0, falseE, falseN;
     double K0R4, K0R4oa;
     double Lambda, Phi;
     int XYonly;
     double X, Y, pscale, CoM;
-    int Zone;
-    char Hemisphere;
+    int Zone = 0;
+    char Hemisphere = '\0';
 
 
 
@@ -2854,7 +2858,7 @@ int MAG_PcupHigh(double *Pcup, double *dPcup, double x, int nMax)
  */
 {
     double pm2, pm1, pmm, plm, rescalem, z, scalef;
-    double *f1, *f2, *PreSqr;
+    double *f1 = NULL, *f2 = NULL, *PreSqr = NULL;
     int k, kstart, m, n, NumTerms;
 
     NumTerms = ((nMax + 1) * (nMax + 2) / 2);
