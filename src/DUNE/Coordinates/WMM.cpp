@@ -75,7 +75,7 @@ namespace DUNE
       // Initialization
       int result =
         MAG_robustReadMagModels(const_cast<char*>(wmmfile.c_str()),
-                                reinterpret_cast<MAGtype_MagneticModel*(*)[]>(&magnetic_model), 1);
+                                reinterpret_cast<MAGtype_MagneticModel**>(&magnetic_model), 1);
 
       if (result <= 0) {
         // Handle error - no models were read
