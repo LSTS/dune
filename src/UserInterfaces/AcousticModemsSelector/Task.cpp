@@ -171,7 +171,15 @@ namespace UserInterfaces
             acoustic_modem.type = type;
             acoustic_modem.uri = modem.second;
             acoustic_modem.selected = false;
+
             m_types.insert(type);
+
+            if (m_selected.find(type) == m_selected.end())
+            {
+              auto& selected = m_selected[type];
+              selected.name = modem.first;
+              selected.state = false;
+            }
 
             param(modem.first, acoustic_modem.selected)
             .visibility(Tasks::Parameter::VISIBILITY_USER)
@@ -190,24 +198,7 @@ namespace UserInterfaces
         }
 
         if (selectionChanged() && !modem_list_changed)
-        {
-          for (const auto& type: m_types)
-          {
-            std::string selected = avoidTypeMultiSelection(type);
-            if (!selected.empty())
-            {
-              updateSelectedAcousticModem(selected);
-              m_uan_config.insert(type);
-            }
-            else
-            {
-              m_selected.erase(type);
-              m_uan_config.erase(type);
-            }
-          }
-
-          updateSelectedTypes(String::join(m_uan_config.begin(), m_uan_config.end(), ","));
-        }
+          updateSelection();
       }
 
       bool
@@ -348,8 +339,22 @@ namespace UserInterfaces
       {
         std::unordered_set<std::string> lst;
         Utils::String::split(selection, "&", lst);
+        IMC::MessageList<IMC::EntityParameter> params;
+        IMC::EntityParameter param;
+        bool selected;
         for (auto& amodem: m_acoustic_modems)
-          applyEntityParameter(amodem.second.selected, lst.find(amodem.first) != lst.end());
+        {
+          selected = (lst.find(amodem.first) != lst.end());
+          if (amodem.second.selected == selected)
+            continue;
+
+          param.name = amodem.first;
+          param.value = uncastLexical(selected);
+          params.push_back(param);
+        }
+
+        if (!params.empty())
+          setEntityParameters(params);
       }
 
       void
@@ -372,16 +377,21 @@ namespace UserInterfaces
       {
         if (msg->getSource() != getSystemId())
           return;
-        
-        if (msg->name == m_args.uan_elabel)
+
+        const auto name = msg->name;
+        if (name == m_args.uan_elabel)
         {
           for (const auto& it: msg->params)
           {
             if (it->name != m_args.uan_modems_param)
               continue;
 
+            const auto old_config = m_uan_config;
+            m_uan_config.clear();
             std::unordered_set<std::string> config;
             String::split(it->value, ",", config);
+            IMC::MessageList<IMC::EntityParameter> params;
+            IMC::EntityParameter param;
             for (const auto& type: config)
             {
               if (m_types.find(type) == m_types.end())
@@ -389,15 +399,67 @@ namespace UserInterfaces
 
               m_uan_config.insert(type);
 
-              if (m_selected.find(type) != m_selected.end())
+              if (m_selected.find(type) == m_selected.end())
                 continue;
 
-              const auto name = m_selected[type].name;
+              const auto modem = m_selected[type].name;
 
-              if (m_acoustic_modems.find(name) == m_acoustic_modems.end())
+              if (m_acoustic_modems.find(modem) == m_acoustic_modems.end())
                 continue;
 
-              applyEntityParameter(m_acoustic_modems[name].selected, true);
+              param.name = modem;
+              param.value = "true";
+              params.push_back(param);
+            }
+
+            if (old_config != m_uan_config)
+            {
+              for (const auto& type: old_config)
+              {
+                if (m_uan_config.find(type) == m_uan_config.end())
+                {
+                  if (m_selected.find(type) == m_selected.end())
+                    continue;
+
+                  const auto modem = m_selected[type].name;
+
+                  if (m_acoustic_modems.find(modem) == m_acoustic_modems.end())
+                    continue;
+
+                  param.name = modem;
+                  param.value = "false";
+                  params.push_back(param);
+                }
+              }
+            }
+
+            if (!params.empty())
+              setEntityParameters(params);
+
+            break;
+          }
+        }
+        else if (m_types.find(name) != m_types.end())
+        {
+          for (const auto& it: msg->params)
+          {
+            const auto& param_name = it->name;
+            
+            if (param_name != m_args.am_uri_param)
+              continue;
+
+            const auto& param_value = it->value;
+            for (auto& modem: m_acoustic_modems)
+            {
+              if (modem.second.uri != param_value)
+                continue;
+
+              const auto& type = modem.second.type;
+              if (m_selected.find(type) == m_selected.end())
+                continue;
+              
+              m_selected[type].name = param_name;
+              break;
             }
 
             break;
@@ -408,23 +470,22 @@ namespace UserInterfaces
       void
       consume(const IMC::EntityState* msg)
       {
-        if (m_selected.empty())
-          return;
-        
         if (msg->getSource() != getSystemId())
           return;
 
         try
         {
-          for (auto& it: m_selected)
-          {
-            unsigned id = resolveEntity(it.first);
-            if (id == msg->getSourceEntity())
-              it.second.state = msg->state == IMC::EntityState::ESTA_NORMAL;
-          }
+          const auto name = resolveEntity(msg->getSourceEntity());
+
+          if (m_selected.find(name) == m_selected.end())
+            return;
+
+          m_selected[name].state = msg->state == IMC::EntityState::ESTA_NORMAL;
         }
-        catch(...)
-        { }
+        catch(const Entities::EntityDataBase::InvalidId& e)
+        {
+          war(DTR("%s"), e.what());
+        }
       }
 
       void
@@ -560,6 +621,24 @@ namespace UserInterfaces
 
         if (params.params.size() != 0)
           dispatch(params);
+      }
+
+      void
+      updateSelection(void)
+      {
+        std::unordered_set<std::string> new_config;
+        for (const auto& type: m_types)
+        {
+          std::string selected = avoidTypeMultiSelection(type);
+          if (!selected.empty())
+          {
+            updateSelectedAcousticModem(selected);
+            new_config.insert(type);
+          }
+        }
+
+        if (new_config != m_uan_config)
+          updateSelectedTypes(String::join(new_config.begin(), new_config.end(), ","));
       }
 
       //! Set UAN acoutics modems configuration.
