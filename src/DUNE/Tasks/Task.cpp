@@ -577,13 +577,13 @@ namespace DUNE
       if (msg->op != IMC::QueryTypedEntityParameters::OP_REQUEST)
         return;
 
-      if (!msg->entity_name.empty() && msg->entity_name.compare(std::string(getName())) != 0)
+      if (!msg->entity_name.empty() && msg->entity_name.compare(std::string(getEntityLabel())) != 0)
         return;
 
       IMC::QueryTypedEntityParameters reply;
       reply.op = IMC::QueryTypedEntityParameters::OP_REPLY;
       reply.request_id = msg->request_id;
-      reply.entity_name = std::string(getName());
+      reply.entity_name = std::string(getEntityLabel());
 
       std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
       for (; itr != m_params.end(); itr++)
