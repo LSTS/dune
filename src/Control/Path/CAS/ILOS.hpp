@@ -27,8 +27,8 @@
 // Author: Luis Venâncio                                                    *
 //***************************************************************************
 
-#ifndef DUNE_CONTROL_INTEGRAL_CONTROL_HPP_INCLUDED_
-#define DUNE_CONTROL_INTEGRAL_CONTROL_HPP_INCLUDED_
+#ifndef DUNE_CONTROL_ILOS_HPP_INCLUDED_
+#define DUNE_CONTROL_ILOS_HPP_INCLUDED_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -43,31 +43,29 @@ namespace Control
     namespace CAS
     {
       // Export DLL Symbol.
-      class DUNE_DLL_SYM IntegralControl;
+      class DUNE_DLL_SYM ILOS;
 
-      class IntegralControl
+      class ILOS
       {
       public:
         /// Constructor
-        IntegralControl(Tasks::Task* task, double execution_period = 300, double gain = 0.001,
-                        double integral_limit = Math::c_half_pi):
+        ILOS(Tasks::Task* task, double gain = 0.001,
+             double look_ahead_distance = 70.0,
+             double integral_limit = 50.0):
           m_task(task),
-          m_execution_period(execution_period),
           m_gain(gain),
           m_integral(0.0),
-          m_integral_limit(integral_limit)
-        {
-          m_timer.setTop(execution_period);
-        }
+          m_integral_limit(integral_limit),
+          m_look_ahead(look_ahead_distance)
+        { }
 
         /// Destructor
-        ~IntegralControl()
+        ~ILOS()
         { }
 
         void
         reset()
         {
-          m_timer.reset();
           m_integral = 0.0;
         }
 
@@ -75,13 +73,6 @@ namespace Control
         setGain(double gain)
         {
           m_gain = gain;
-        }
-
-        void
-        setExecutionPeriod(double period)
-        {
-          m_execution_period = period;
-          m_timer.setTop(period);
         }
 
         void
@@ -93,34 +84,41 @@ namespace Control
         double
         update(double error)
         {
-          if (!m_timer.overflow())
-            return m_integral;
+          double timestep = m_last_step.getDelta();
 
-          // Integrate
-          m_integral += m_gain * error;
-          m_timer.reset();
+          // Integrate using rectangle rule and clamp integral
+          m_integral += error * timestep;
+          m_integral = Math::trimValue(m_integral, -m_integral_limit, m_integral_limit);
 
-          // Limit total value
-          if (m_integral > m_integral_limit)
-            m_integral = m_integral_limit;
-          else if (m_integral < -m_integral_limit)
-            m_integral = -m_integral_limit;
+          double offset = - std::atan((error + m_gain * m_integral) / m_look_ahead);
 
-          m_task->war(DTR("Updated integral term: %f"), Angles::degrees(m_integral));
-          return m_integral;
+
+          m_task->war(DTR("Updated ILOS offset: %f | Integral: %f"), Angles::degrees(offset), m_integral);
+          m_debug_parcel.p = Angles::degrees(offset);
+          m_debug_parcel.i = m_integral;
+          m_task->dispatch(m_debug_parcel);
+          
+          return offset;
         }
 
       private:
+        //! Task handler
         Tasks::Task* m_task;
-        double m_execution_period;
-        Time::Counter<double> m_timer;
+        //! Time of last path controller step
+        Delta m_last_step;
+        //! Integral gain
         double m_gain;
+        //! Integral term
         double m_integral;
+        //! Integral limit
         double m_integral_limit;
+        //! Look ahead distance
+        double m_look_ahead;
+        IMC::ControlParcel m_debug_parcel;
 
       };
     }
   }
 }
 
-#endif /* AUTONAUT_HPP_ */
+#endif
