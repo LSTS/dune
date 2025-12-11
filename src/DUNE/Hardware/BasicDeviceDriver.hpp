@@ -225,7 +225,7 @@ namespace DUNE
       inline double
       getSamplePeriodRemaining(void)
       {
-        return m_sample_timer.getRemaining();
+        return std::max(0.0, m_bdd_args.sample_time_duration - m_periodicity_timer.getElapsed());
       }
 
       inline double
@@ -237,7 +237,7 @@ namespace DUNE
       inline double
       getSamplePeriodElapsed(void)
       {
-        return m_sample_timer.getElapsed();
+        return std::min(m_bdd_args.sample_time_duration, m_periodicity_timer.getElapsed());
       }
 
       virtual bool
@@ -443,8 +443,6 @@ namespace DUNE
       bool m_honours_conf_samp;
       //! Is sampling.
       bool m_is_sampling;
-      //! Sampling timer.
-      DUNE::Time::Counter<double> m_sample_timer;
       //! Periodicity timer.
       DUNE::Time::Counter<double> m_periodicity_timer;
       //! Configurable Sampling Supported Modes.

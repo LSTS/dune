@@ -86,7 +86,6 @@ namespace DUNE
       m_uri(),
       m_honours_conf_samp(false),
       m_is_sampling(false),
-      m_sample_timer(0.0f),
       m_periodicity_timer(0.0f),
       m_conf_samp_modes(CSM_NO_CONF_SAMP),
       m_conf_samp_mode(CSM_NO_CONF_SAMP),
@@ -1077,20 +1076,15 @@ namespace DUNE
             {
               stopSampling();
             }
-            else
-            {
-              m_sample_timer.setTop(m_bdd_args.sample_time_duration);
-            }
             
             m_periodicity_timer.setTop(m_bdd_args.periodicity_data_sampling);
           }
-          else if (!m_sample_timer.overflow())
-          {
-            readSample();
-          }
           else if (m_is_sampling)
           {
-            stopSampling();
+            if (m_periodicity_timer.getElapsed() < m_bdd_args.sample_time_duration)
+              readSample();
+            else
+              stopSampling();
           }
 
           break;
