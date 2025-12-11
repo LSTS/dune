@@ -63,24 +63,19 @@ namespace DUNE
 
       while (!stopping())
       {
+        task();
+        ++m_run_count;
+
+        now = Time::Clock::get();
+
         delay = (1.0 / m_frequency);
 
         if (next_inv > now)
-          Time::Delay::wait(next_inv - now);
+          waitForMessages(next_inv - now, true);
 
         next_inv += delay;
         now = Time::Clock::get();
         m_run_time = now;
-
-        // Perform job.
-        consumeMessages();
-        if (!stopping())
-        {
-          task();
-          ++m_run_count;
-        }
-
-        now = Time::Clock::get();
       }
     }
   }
