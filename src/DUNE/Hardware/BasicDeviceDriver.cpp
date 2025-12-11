@@ -1069,15 +1069,12 @@ namespace DUNE
           }
           else if (m_periodicity_timer.overflow())
           {
+            m_periodicity_timer.setTop(m_bdd_args.periodicity_data_sampling);
             startSampling();
             readSample();
 
             if (m_conf_samp_mode == ConfigurableSamplingSupportedModes::CSM_PERIODIC_SINGLE_SAMPLING)
-            {
               stopSampling();
-            }
-            
-            m_periodicity_timer.setTop(m_bdd_args.periodicity_data_sampling);
           }
           else if (m_is_sampling)
           {
