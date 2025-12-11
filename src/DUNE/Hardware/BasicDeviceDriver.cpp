@@ -67,6 +67,8 @@ namespace DUNE
     static const char* c_invalid_sampling_desc = "<td>Invalid</td>";
     //! Not supported Sampling description.
     static const char* c_not_supported_sampling_desc = "<td>Not supported</td>";
+    //! Entity state dispatch period (s).
+    static constexpr uint8_t c_entity_state_dispatch_period = 5; 
 
     BasicDeviceDriver::BasicDeviceDriver( const std::string &name, Tasks::Context &ctx ):
       Tasks::Task(name, ctx),
@@ -89,7 +91,8 @@ namespace DUNE
       m_conf_samp_modes(CSM_NO_CONF_SAMP),
       m_conf_samp_mode(CSM_NO_CONF_SAMP),
       m_honours_vp(false),
-      m_vp_timer(0.0f)
+      m_vp_timer(0.0f),
+      m_state_timer(c_entity_state_dispatch_period)
     {
       paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                   Tasks::Parameter::VISIBILITY_DEVELOPER, 
@@ -1090,9 +1093,6 @@ namespace DUNE
             stopSampling();
           }
 
-          if (m_honours_conf_samp)
-            setEntityStateSampling(m_is_sampling);
-
           break;
 
         // Start deactivation procedure.
@@ -1223,6 +1223,12 @@ namespace DUNE
         consumeMessages();
       
       updateStateMachine();
+
+      if (m_honours_conf_samp && m_state_timer.overflow())
+      {
+        setEntityStateSampling(m_is_sampling);
+        m_state_timer.reset();
+      }
     }
 
     void

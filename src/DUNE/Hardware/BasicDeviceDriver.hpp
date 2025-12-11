@@ -455,6 +455,8 @@ namespace DUNE
       bool m_honours_vp;
       //! Timer for Vertical Profiles.
       DUNE::Time::Counter<double> m_vp_timer;
+      //! Entity state dispatch timer.
+      DUNE::Time::Counter<uint8_t> m_state_timer;
 
       void
       onResourceRelease(void) override;
