@@ -424,8 +424,8 @@ namespace Sensors
       void
       dispatchMessage(IMC::Message& msg)
       {
-        msg.setTimeStamp(m_ts);
-        dispatch(msg, DF_KEEP_TIME);
+        // msg.setTimeStamp(m_ts);
+        dispatch(msg);
         m_msg_count++;
       }
 
