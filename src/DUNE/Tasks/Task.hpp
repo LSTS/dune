@@ -56,6 +56,7 @@
 #include <DUNE/Tasks/ParameterTable.hpp>
 #include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Entities/StatefulEntity.hpp>
+#include <DUNE/Time/Counter.hpp>
 
 #if defined(DUNE_SHARED)
 #  define DUNE_TASK_EXPORT(class, mangled)                              \
@@ -498,11 +499,21 @@ namespace DUNE
       //! Wait for the receiving queue to contain at least one message
       //! and then call the consumer functions for all the messages
       //! currently in it.
+      //! If persistent is true, the function will wait until the
+      //! timeout expires, otherwise it will return as soon as one
+      //! message is received.
       //! @param[in] timeout wait for timeout seconds.
+      //! @param[in] persistent if true, wait until the end of timeout.
       void
-      waitForMessages(double timeout)
+      waitForMessages(double timeout, const bool persistent = false)
       {
-        m_recipient->waitForMessages(timeout);
+        DUNE::Time::Counter<double> timer(timeout);
+
+        do
+        {
+          m_recipient->waitForMessages(timer.getRemaining());
+        }
+        while (!stopping() && !timer.overflow() && persistent);
       }
 
       //! Call the consumers of all messages currently in the
