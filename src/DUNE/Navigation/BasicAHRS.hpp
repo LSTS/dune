@@ -24,26 +24,95 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: José Braga                                                       *
+// Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_NAVIGATION_HPP_INCLUDED_
-#define DUNE_NAVIGATION_HPP_INCLUDED_
+#ifndef DUNE_NAVIGATION_BASIC_AHRS_HPP_INCLUDED_
+#define DUNE_NAVIGATION_BASIC_AHRS_HPP_INCLUDED_
+
+// ISO C++ 98 headers.
+
+// DUNE headers.
+#include <DUNE/Tasks/Periodic.hpp>
+#include <DUNE/IMC/AddressResolver.hpp>
 
 namespace DUNE
 {
-  //! %Navigation related routines and classes.
   namespace Navigation
-  { }
-}
+  {
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM BasicAHRS;
 
-#include <DUNE/Navigation/BasicAHRS.hpp>
-#include <DUNE/Navigation/BasicNavigation.hpp>
-#include <DUNE/Navigation/BeamFilter.hpp>
-#include <DUNE/Navigation/CompassCalibration.hpp>
-#include <DUNE/Navigation/KalmanFilter.hpp>
-#include <DUNE/Navigation/Ranging.hpp>
-#include <DUNE/Navigation/StreamEstimator.hpp>
-#include <DUNE/Navigation/UsblTools.hpp>
+    struct BasicAHRSArguments
+    {
+      //! Acceleration entity label.
+      std::string acc_elabel;
+      //! Angular Velocity entity label.
+      std::string gyro_elabel;
+      //! Magnetic Field entity label.
+      std::string mag_elabel;
+    };
+
+    class BasicAHRS: public Tasks::Periodic
+    {
+    public:
+      //! Constructor.
+      //! @param[in] name name.
+      //! @param[in] ctx context.
+      BasicAHRS(const std::string& name, Tasks::Context& ctx);
+
+      //! Destructor.
+      ~BasicAHRS(void);
+
+      void
+      onEntityResolution(void) override;
+
+      void
+      onActivation(void) override
+      {
+        if (m_attempted_entity_resolution && !m_entities_resolved)
+          requestDeactivation();
+      }
+
+      void
+      consume(const IMC::Acceleration* msg);
+
+      void
+      consume(const IMC::AngularVelocity* msg);
+
+      void
+      consume(const IMC::MagneticField* msg);
+
+      void
+      task(void) override;
+
+    private:
+      virtual void
+      onAcceleration(const DUNE::IMC::Acceleration& msg) = 0;
+
+      virtual void
+      onAngularVelocity(const DUNE::IMC::AngularVelocity& msg) = 0;
+
+      virtual void
+      onMagneticField(const DUNE::IMC::MagneticField& msg) = 0;
+
+      virtual void
+      step(void) = 0;
+
+      //! Basic AHRS arguments.
+      BasicAHRSArguments m_args;
+      //! Entity id for acceleration messages.
+      unsigned m_acc_eid;
+      //! Entity id for angular velocity messages.
+      unsigned m_gyro_eid;
+      //! Entity id for magnetic field messages.
+      unsigned m_mag_eid;
+      //! Attempted to resolve entities.
+      bool m_attempted_entity_resolution;
+      //! Entities resolved flag.
+      bool m_entities_resolved;
+    };
+  }
+}
 
 #endif
