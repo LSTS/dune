@@ -40,7 +40,8 @@ namespace DUNE
       m_gyro_eid(IMC::AddressResolver::invalid()),
       m_mag_eid(IMC::AddressResolver::invalid()),
       m_attempted_entity_resolution(false),
-      m_entities_resolved(false)
+      m_entities_resolved(false),
+      m_data(c_axes_count, 1)
     {
       paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                   Tasks::Parameter::VISIBILITY_USER,
@@ -58,6 +59,11 @@ namespace DUNE
       .editable("false")
       .description("Entity id for Magnetic Field messages.");
 
+      param("Rotation Matrix", m_args.rotation_mx)
+      .defaultValue("1, 0, 0, 0, 1, 0, 0, 0, 1")
+      .size(9)
+      .description("Rotation matrix which is dependent of the mounting position");
+
       bind<IMC::Acceleration>(this);
       bind<IMC::AngularVelocity>(this);
       bind<IMC::MagneticField>(this);
@@ -65,6 +71,13 @@ namespace DUNE
 
     BasicAHRS::~BasicAHRS(void)
     { }
+
+    void
+    BasicAHRS::onUpdateParameters(void)
+    {
+      if (paramChanged(m_args.rotation_mx))
+        m_rotation.fill(c_axes_count, c_axes_count, &m_args.rotation_mx[0]);
+    }
 
     void
     BasicAHRS::onEntityResolution(void)
@@ -142,6 +155,27 @@ namespace DUNE
         return;
 
       onMagneticField(*msg);
+    }
+
+    void
+    BasicAHRS::updateData(double phi, double theta, double psi)
+    {
+      m_data(0) = phi;
+      m_data(1) = theta;
+      m_data(2) = psi;
+    }
+
+    void
+    BasicAHRS::dispatchData(void)
+    {
+      Math::Matrix r(c_axes_count, c_axes_count);
+      r = m_data.toDCM() * transpose(m_rotation);
+
+      m_euler.phi = std::atan2(r(2, 1), r(2, 2));
+      m_euler.theta = std::asin(-r(2, 0));
+      m_euler.psi = std::atan2(r(1, 0), r(0, 0));
+      m_euler.psi_magnetic = m_euler.psi;
+      dispatch(m_euler);
     }
 
     void

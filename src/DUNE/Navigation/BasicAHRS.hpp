@@ -35,6 +35,7 @@
 // DUNE headers.
 #include <DUNE/Tasks/Periodic.hpp>
 #include <DUNE/IMC/AddressResolver.hpp>
+#include <DUNE/Math/Matrix.hpp>
 
 namespace DUNE
 {
@@ -51,7 +52,18 @@ namespace DUNE
       std::string gyro_elabel;
       //! Magnetic Field entity label.
       std::string mag_elabel;
+      //! Rotation matrix values.
+      std::vector<double> rotation_mx;
     };
+
+    struct SensorData
+    {
+      double x, y, z;
+      bool new_data;
+    };
+
+    //! Number of axes.
+    constexpr unsigned c_axes_count = 3;
 
     class BasicAHRS: public Tasks::Periodic
     {
@@ -65,6 +77,9 @@ namespace DUNE
       ~BasicAHRS(void);
 
       void
+      onUpdateParameters(void) override;
+
+      void
       onEntityResolution(void) override;
 
       void
@@ -72,6 +87,15 @@ namespace DUNE
       {
         if (m_attempted_entity_resolution && !m_entities_resolved)
           requestDeactivation();
+
+        m_data(0) = 0;
+        m_data(1) = 0;
+        m_data(2) = 0;
+
+        m_euler.phi = 0;
+        m_euler.theta = 0;
+        m_euler.psi = 0;
+        m_euler.psi_magnetic = 0;
       }
 
       void
@@ -85,6 +109,13 @@ namespace DUNE
 
       void
       task(void) override;
+
+    protected:
+      void
+      updateData(double phi, double theta, double psi);
+
+      void
+      dispatchData(void);
 
     private:
       virtual void
@@ -111,6 +142,12 @@ namespace DUNE
       bool m_attempted_entity_resolution;
       //! Entities resolved flag.
       bool m_entities_resolved;
+      //! Rotation Matrix to correct mounting position.
+      Math::Matrix m_rotation;
+      //! Data matrix.
+      Math::Matrix m_data;
+      //! Euler Angles message.
+      IMC::EulerAngles m_euler;
     };
   }
 }
