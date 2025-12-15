@@ -70,6 +70,12 @@ namespace Control
         double corridor;
         //! Entry angle
         double entry_angle;
+        //! ILOS - Lookahead distance
+        double ilos_lookahead_distance;
+        //! ILOS - Integral gain
+        double ilos_ki;
+        //! ILOS - Integral Limit
+        double ilos_integral_limit;
 
         //! Enable anti-grounding.
         // bool en_antiground;
@@ -425,6 +431,22 @@ namespace Control
           .units(Units::Degree)
           .description("Attack angle when lateral track error equals corridor width");
 
+
+          param("ILOS -- Lookahead Distance", m_args.ilos_lookahead_distance)
+          .defaultValue("100.0")
+          .units(Units::Meter)
+          .description("ILOS Lookahead Distance.");
+
+          param("ILOS -- Integral Gain", m_args.ilos_ki)
+          .minimumValue("0.0")
+          .defaultValue("0.5")
+          .description("ILOS Integral Gain.");
+
+          param("ILOS -- Integral Limit", m_args.ilos_integral_limit)
+          .defaultValue("100.0")
+          .units(Units::Meter)
+          .description("ILOS Integral Limit.");
+
           // param("Entity Label - Wind", m_args.elabel_ws)
           // .description("Entity label of 'AbsoluteWind' message");
           
@@ -582,6 +604,14 @@ namespace Control
             m_sb_mpc->setAngRange(m_args.COURSE_RANGE);
           if (paramChanged(m_args.GRANULARITY))
             m_sb_mpc->setGran(m_args.GRANULARITY);
+
+
+          if (paramChanged(m_args.ilos_ki) && m_integral_controller != nullptr)
+            m_integral_controller->setGain(m_args.ilos_ki);
+          if (paramChanged(m_args.ilos_integral_limit) && m_integral_controller != nullptr)
+            m_integral_controller->setIntegralLimit(m_args.ilos_integral_limit);
+          if (paramChanged(m_args.ilos_lookahead_distance) && m_integral_controller != nullptr)
+            m_integral_controller->setLookAheadDistance(m_args.ilos_lookahead_distance);
         }
 
         void
@@ -613,8 +643,9 @@ namespace Control
           // m_static_obst_state.resizeAndFill(m_offsets.size(), 3, 10000.0); //! Large values: initial m_cost is high.
 
           m_integral_controller = new ILOS(this);
-          m_integral_controller->setGain(0.5);
-          m_integral_controller->setIntegralLimit(100); // Limit to 90 degrees
+          m_integral_controller->setGain(m_args.ilos_ki);
+          m_integral_controller->setLookAheadDistance(m_args.ilos_lookahead_distance);
+          m_integral_controller->setIntegralLimit(m_args.ilos_integral_limit);
         }
 
           //! Release resources.
