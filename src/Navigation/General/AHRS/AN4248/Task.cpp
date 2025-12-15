@@ -65,6 +65,8 @@ namespace Navigation
           Data m_mag;
           //! Rotation Matrix to correct mounting position.
           Math::Matrix m_rotation;
+          //! Euler Angles message.
+          IMC::EulerAngles m_euler;
 
           Task(const std::string& name, Tasks::Context& ctx):
             DUNE::Navigation::BasicAHRS(name, ctx)
@@ -87,6 +89,11 @@ namespace Navigation
           {
             m_acc = {0.0, 0.0, 0.0, false};
             m_mag = {0.0, 0.0, 0.0, false};
+
+            m_euler.phi = 0;
+            m_euler.theta = 0;
+            m_euler.psi = 0;
+            m_euler.psi_magnetic = 0;
           }
 
           void
@@ -137,13 +144,12 @@ namespace Navigation
 
             Matrix r(c_axes_count, c_axes_count);
             r = data.toDCM() * transpose(m_rotation);
-            
-            IMC::EulerAngles euler;
-            euler.phi = std::atan2(r(2, 1), r(2, 2));
-            euler.theta = std::asin(-r(2, 0));
-            euler.psi = std::atan2(r(1, 0), r(0, 0));
-            euler.psi_magnetic = euler.psi;
-            dispatch(euler);
+
+            m_euler.phi = std::atan2(r(2, 1), r(2, 2));
+            m_euler.theta = std::asin(-r(2, 0));
+            m_euler.psi = std::atan2(r(1, 0), r(0, 0));
+            m_euler.psi_magnetic = m_euler.psi;
+            dispatch(m_euler);
 
             m_acc.new_data = false;
             m_mag.new_data = false;
