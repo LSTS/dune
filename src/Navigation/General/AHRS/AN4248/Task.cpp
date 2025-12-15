@@ -43,6 +43,7 @@ namespace Navigation
         struct Data
         {
           double x, y, z;
+          bool new_data;
         };
 
         struct Arguments
@@ -62,17 +63,11 @@ namespace Navigation
           Data m_acc;
           //! Magnetic field data.
           Data m_mag;
-          //! Have valid Acceleration data flag.
-          bool m_have_data_acc;
-          //! Have valid Magnetometer data flag.
-          bool m_have_data_mag;
           //! Rotation Matrix to correct mounting position.
           Math::Matrix m_rotation;
 
           Task(const std::string& name, Tasks::Context& ctx):
-            DUNE::Navigation::BasicAHRS(name, ctx),
-            m_have_data_acc(false),
-            m_have_data_mag(false)
+            DUNE::Navigation::BasicAHRS(name, ctx)
           {
             param("Rotation Matrix", m_args.rotation_mx)
             .defaultValue("1, 0, 0, 0, 1, 0, 0, 0, 1")
@@ -88,12 +83,19 @@ namespace Navigation
           }
 
           void
+          onActivation(void) override
+          {
+            m_acc = {0.0, 0.0, 0.0, false};
+            m_mag = {0.0, 0.0, 0.0, false};
+          }
+
+          void
           onAcceleration(const DUNE::IMC::Acceleration& msg) override
           {
-            m_have_data_acc = true;
             m_acc.x = -msg.x;
             m_acc.y = -msg.y;
             m_acc.z = -msg.z;
+            m_acc.new_data = true;
           }
 
           void
@@ -105,16 +107,16 @@ namespace Navigation
           void
           onMagneticField(const DUNE::IMC::MagneticField& msg) override
           {
-            m_have_data_mag = true;
             m_mag.x = msg.x;
             m_mag.y = msg.y;
             m_mag.z = msg.z;
+            m_mag.new_data = true;
           }
 
           void
           step(void) override
           {
-            if (!m_have_data_acc || !m_have_data_mag)
+            if (!m_acc.new_data || !m_mag.new_data)
               return;
 
             double phi = std::atan2(m_acc.y, std::sqrt(m_acc.x * m_acc.x + m_acc.z * m_acc.z));
@@ -143,8 +145,8 @@ namespace Navigation
             euler.psi_magnetic = euler.psi;
             dispatch(euler);
 
-            m_have_data_acc = false;
-            m_have_data_mag = false;
+            m_acc.new_data = false;
+            m_mag.new_data = false;
           }
         };
       }
