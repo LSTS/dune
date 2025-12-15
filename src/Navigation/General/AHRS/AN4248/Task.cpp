@@ -40,60 +40,24 @@ namespace Navigation
       {
         using DUNE_NAMESPACES;
 
-        struct Data
-        {
-          double x, y, z;
-          bool new_data;
-        };
-
-        struct Arguments
-        {
-          //! Rotation matrix values.
-          std::vector<double> rotation_mx;
-        };
-
-        //! Number of axes.
-        constexpr unsigned c_axes_count = 3;
-
         struct Task: public DUNE::Navigation::BasicAHRS
         {
-          //! Arguments.
-          Arguments m_args;
           //! Acceleration data.
-          Data m_acc;
+          SensorData m_acc;
           //! Magnetic field data.
-          Data m_mag;
-          //! Rotation Matrix to correct mounting position.
-          Math::Matrix m_rotation;
-          //! Euler Angles message.
-          IMC::EulerAngles m_euler;
+          SensorData m_mag;
 
           Task(const std::string& name, Tasks::Context& ctx):
             DUNE::Navigation::BasicAHRS(name, ctx)
-          {
-            param("Rotation Matrix", m_args.rotation_mx)
-            .defaultValue("1, 0, 0, 0, 1, 0, 0, 0, 1")
-            .size(9)
-            .description("Rotation matrix which is dependent of the mounting position");
-          }
-
-          void
-          onUpdateParameters(void) override
-          {
-            if (paramChanged(m_args.rotation_mx))
-              m_rotation.fill(c_axes_count, c_axes_count, &m_args.rotation_mx[0]);
-          }
+          { }
 
           void
           onActivation(void) override
           {
+            BasicAHRS::onActivation();
+
             m_acc = {0.0, 0.0, 0.0, false};
             m_mag = {0.0, 0.0, 0.0, false};
-
-            m_euler.phi = 0;
-            m_euler.theta = 0;
-            m_euler.psi = 0;
-            m_euler.psi_magnetic = 0;
           }
 
           void
@@ -137,19 +101,8 @@ namespace Navigation
                                     + m_mag.y * sin_theta * sin_phi
                                     + m_mag.z * sin_theta * cos_phi);
 
-            Math::Matrix data(c_axes_count, 1);
-            data(0) = phi;
-            data(1) = theta;
-            data(2) = psi;
-
-            Matrix r(c_axes_count, c_axes_count);
-            r = data.toDCM() * transpose(m_rotation);
-
-            m_euler.phi = std::atan2(r(2, 1), r(2, 2));
-            m_euler.theta = std::asin(-r(2, 0));
-            m_euler.psi = std::atan2(r(1, 0), r(0, 0));
-            m_euler.psi_magnetic = m_euler.psi;
-            dispatch(m_euler);
+            updateData(phi, theta, psi);
+            dispatchData();
 
             m_acc.new_data = false;
             m_mag.new_data = false;
