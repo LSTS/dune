@@ -36,6 +36,7 @@
 
 #include "ModelDataStreamGenerator.hpp"
 #include "StreamGenerator.hpp"
+#include "SinusoidalStreamGenerator.hpp"
 
 namespace Simulators
 {
@@ -46,13 +47,14 @@ namespace Simulators
       //! Factory method for the stream velocity source.
       //! @param[in] config structure with configuration fields
       //! @return handle to the stream velocity source.
-      template<typename Configuration>
+      template <typename Configuration>
       std::unique_ptr<StreamGenerator>
       factory(Configuration const& config)
       {
         if (config.type == "Constant")
-          return std::make_unique<StreamGenerator>(
-              config.default_wx, config.default_wy, config.default_wz);
+          return std::make_unique<StreamGenerator>(config.default_wx, config.default_wy,
+                                                   config.default_wz);
+        
         if (config.type == "Gridded 2D Model Data")
         {
           GriddedModelDataConfig mdcfg;
@@ -71,13 +73,23 @@ namespace Simulators
           mdcfg.grid_path = "grid";
 
           return std::make_unique<Gridded2DModelDataStreamGenerator>(
-              mdcfg, config.default_wx, config.default_wy, config.default_wz);
+            mdcfg, config.default_wx, config.default_wy, config.default_wz);
         }
-        else
-          throw std::runtime_error(DTR("Unknown stream velocity source type."));
+
+        if(config.type == "Sinusoidal")
+        {
+          double amplitude = 1.0; // m/s
+          double period = 3600.0; // seconds
+          double phase = 0.0;     // radians
+
+          return std::make_unique<SinusoidalStreamGenerator>(
+            amplitude, period, phase);
+        }
+
+        throw std::runtime_error(DTR("Unknown stream velocity source type."));
       }
-    }    // namespace StreamGenerator
-  }      // namespace StreamVelocity
-}    // namespace Simulators
+    }  // namespace StreamGenerator
+  }  // namespace StreamVelocity
+}  // namespace Simulators
 
 #endif
