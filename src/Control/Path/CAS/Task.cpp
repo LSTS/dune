@@ -443,9 +443,10 @@ namespace Control
           .description("ILOS Integral Gain.");
 
           param("ILOS -- Integral Limit", m_args.ilos_integral_limit)
+          .minimumValue("0.0")
           .defaultValue("100.0")
           .units(Units::Meter)
-          .description("ILOS Integral Limit.");
+          .description("ILOS Integral Limit. Zero means unbounded.");
 
           // param("Entity Label - Wind", m_args.elabel_ws)
           // .description("Entity label of 'AbsoluteWind' message");
