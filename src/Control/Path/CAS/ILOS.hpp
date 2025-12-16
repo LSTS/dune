@@ -76,6 +76,12 @@ namespace Control
         }
 
         void
+        setLookAheadDistance(double look_ahead_distance)
+        {
+          m_look_ahead = look_ahead_distance;
+        }
+
+        void
         setIntegralLimit(double limit)
         {
           m_integral_limit = limit;
@@ -88,10 +94,10 @@ namespace Control
 
           // Integrate using rectangle rule and clamp integral
           m_integral += error * timestep;
-          m_integral = Math::trimValue(m_integral, -m_integral_limit, m_integral_limit);
+          if (m_integral_limit > 0.0)
+            m_integral = Math::trimValue(m_integral, -m_integral_limit, m_integral_limit);
 
           double offset = - std::atan((error + m_gain * m_integral) / m_look_ahead);
-
 
           m_task->war(DTR("Updated ILOS offset: %f | Integral: %f"), Angles::degrees(offset), m_integral);
           m_debug_parcel.p = Angles::degrees(offset);
