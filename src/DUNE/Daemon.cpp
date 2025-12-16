@@ -260,6 +260,7 @@ namespace DUNE
        << " system=\"" << getSystemName() << "\""
        << " i18n=\"" << I18N::getLanguage() << "\">\n";
 
+    Task::writeParamsXML(os);
     m_tman->writeParamsXML(os);
 
     os << "</config>\n";

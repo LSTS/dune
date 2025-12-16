@@ -40,6 +40,7 @@
 #include <DUNE/Time/Counter.hpp>
 #include <DUNE/Coordinates.hpp>
 #include <DUNE/IMC/Definitions.hpp>
+#include <DUNE/Parsers/NMEASentence.hpp>
 
 namespace DUNE
 {
@@ -355,6 +356,49 @@ namespace DUNE
           fix.z = z + usbl.d;
 
         return fix;
+      }
+
+      //! Convert a UsbFixExtended into a BLUEFIN LBL CTD
+      //! nmea string
+      //! @param m UsbFixExtended imc message
+      //! @param age Data age in seconds
+      //! @param stats Statistics: Latitude std deviation, Longitude std deviation,
+      //! Lat-Lon covariance, depth std deviation
+      //! @return nmea sentence
+      static Parsers::NMEASentence
+      toLblCTD(const IMC::UsblFixExtended& m, double age, const std::array<double, 4>& stats)
+      {
+        Parsers::NMEASentence ss;
+        ss.setCode("BFUSBL");
+
+        int lat_degs, lon_degs;
+        double lat_mins, lon_mins;
+
+        Math::Angles::convertDecimalToDM(Math::Angles::degrees(m.lat), lat_degs, lat_mins);
+        Math::Angles::convertDecimalToDM(Math::Angles::degrees(m.lon), lon_degs, lon_mins);
+
+        // Latitude degrees minutes
+        ss.setField(0, "%02d%02.4f%", std::abs(lat_degs), lat_mins);
+        // 'N' or 'S'
+        ss.setField(1, "%c", (lat_degs >= 0 ? 'N' : 'S'));
+        // Longitude degrees minutes
+        ss.setField(2, "%03d%02.4f%", std::abs(lon_degs), lon_mins);
+        // 'E' or 'W'
+        ss.setField(3, "%c", (lon_degs >= 0 ? 'E' : 'W'));
+        // Depth with + or - sign
+        ss.setField(4, "%c%f", m.z >= 0 ? '+' : '-', m.z);
+        // Latitude standard deviation
+        ss.setField(5, "%f", stats[0]);
+        // Longitude standard deviation
+        ss.setField(6, "%f", stats[1]);
+        // Latitude-longitude covariance
+        ss.setField(7, "%f", stats[2]);
+        // Depth standard deviation
+        ss.setField(8, "%f", stats[3]);
+        // Data age
+        ss.setField(9, "%f", age);
+
+        return ss;
       }
 
       //! USBL tools node (that actively requests fixes from USBL modem).

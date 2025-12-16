@@ -193,6 +193,18 @@ namespace DUNE
       .minimumValue("5")
       .description("Number of moving average samples to smooth maximum GPS HACC.");
 
+      param("DVL Rejection Moving Average Samples", m_avg_dvl_rej_samples)
+      .defaultValue("40")
+      .minimumValue("5")
+      .description("Moving average samples for DVL outlier detection.");
+
+      param("DVL Outlier Rejection Threshold Percentage", m_dvl_outlier_rej_thresh)
+      .defaultValue("80.0")
+      .minimumValue("10.0")
+      .maximumValue("90.0")
+      .description("DVL outlier rejection threshold percentage."
+                   " If rejection percentage is above this threshold then reset innovation check.");
+
       param("Entity Label - Depth", m_elabel_depth)
       .defaultValue("Depth Sensor")
       .description("Entity label of 'Depth' messages");
@@ -294,6 +306,10 @@ namespace DUNE
       m_usbl_filter = new UsblTools::Filter(m_usbl_avg_samples, m_usbl_k_std);
       m_avg_heave = new Math::MovingAverage<double>(m_avg_heave_samples);
       m_avg_gps = new Math::MovingAverage<double>(m_avg_gps_samples);
+      m_avg_gvx_rej = new Math::MovingAverage<float>(m_avg_dvl_rej_samples);
+      m_avg_gvy_rej = new Math::MovingAverage<float>(m_avg_dvl_rej_samples);
+      m_avg_wvelx_rej = new Math::MovingAverage<float>(m_avg_dvl_rej_samples);
+      m_avg_wvely_rej = new Math::MovingAverage<float>(m_avg_dvl_rej_samples);
       reset();
     }
 
@@ -347,6 +363,10 @@ namespace DUNE
       Memory::clear(m_origin);
       Memory::clear(m_avg_heave);
       Memory::clear(m_avg_gps);
+      Memory::clear(m_avg_gvx_rej);
+      Memory::clear(m_avg_gvy_rej);
+      Memory::clear(m_avg_wvelx_rej);
+      Memory::clear(m_avg_wvely_rej);
       Memory::clear(m_usbl_filter);
     }
 
@@ -661,6 +681,18 @@ namespace DUNE
           m_dvl_rej.value = std::abs(m_gvel.x - m_gvel_previous.x);
           m_dvl_rej.timestep = tstep;
           dispatch(m_dvl_rej, DF_KEEP_TIME);
+
+          float mean = m_avg_gvx_rej->update(1);
+          if (m_avg_gvx_rej->sampleSize() < m_avg_dvl_rej_samples)
+            return;
+
+          if (mean * 100 > m_dvl_outlier_rej_thresh)
+          {
+            war(DTR("DVL Ground Velocity X outlier rejection mean is %0.2f%% > %0.2f%% -> resetting"),
+                mean * 100, m_dvl_outlier_rej_thresh);
+            m_gvel_previous = m_gvel;
+            m_avg_gvx_rej->clear();
+          }
           return;
         }
 
@@ -671,6 +703,18 @@ namespace DUNE
           m_dvl_rej.value = std::abs(m_gvel.y - m_gvel_previous.y);
           m_dvl_rej.timestep = tstep;
           dispatch(m_dvl_rej, DF_KEEP_TIME);
+          
+          float mean = m_avg_gvy_rej->update(1);
+          if (m_avg_gvy_rej->sampleSize() < m_avg_dvl_rej_samples)
+            return;
+
+          if (mean * 100 > m_dvl_outlier_rej_thresh)
+          {
+            war(DTR("DVL Ground Velocity Y outlier rejection mean is %0.2f%% > %0.2f%% -> resetting"),
+                mean * 100, m_dvl_outlier_rej_thresh);
+            m_gvel_previous = m_gvel;
+            m_avg_gvy_rej->clear();
+          }
           return;
         }
       }
@@ -695,6 +739,8 @@ namespace DUNE
       }
 
       m_time_without_dvl.reset();
+      m_avg_gvx_rej->update(0);
+      m_avg_gvy_rej->update(0);
       m_valid_gv = true;
 
       // Store accepted msg.
@@ -814,6 +860,18 @@ namespace DUNE
           m_dvl_rej.value = std::abs(m_wvel.x - m_wvel_previous.x);
           m_dvl_rej.timestep = tstep;
           dispatch(m_dvl_rej, DF_KEEP_TIME);
+
+          float mean = m_avg_wvelx_rej->update(1);
+          if (m_avg_wvelx_rej->sampleSize() < m_avg_dvl_rej_samples)
+            return;
+
+          if (mean * 100 > m_dvl_outlier_rej_thresh)
+          {
+            war(DTR("DVL Water Velocity X outlier rejection mean is %0.2f%% > %0.2f%% -> resetting"),
+                mean * 100, m_dvl_outlier_rej_thresh);
+            m_gvel_previous = m_gvel;
+            m_avg_wvelx_rej->clear();
+          }
           return;
         }
 
@@ -824,6 +882,18 @@ namespace DUNE
           m_dvl_rej.value = std::abs(m_wvel.y - m_wvel_previous.y);
           m_dvl_rej.timestep = tstep;
           dispatch(m_dvl_rej, DF_KEEP_TIME);
+
+          float mean = m_avg_wvely_rej->update(1);
+          if (m_avg_wvely_rej->sampleSize() < m_avg_dvl_rej_samples)
+            return;
+
+          if (mean * 100 > m_dvl_outlier_rej_thresh)
+          {
+            war(DTR("DVL Water Velocity Y outlier rejection mean is %0.2f%% > %0.2f%% -> resetting"),
+                mean * 100, m_dvl_outlier_rej_thresh);
+            m_gvel_previous = m_gvel;
+            m_avg_wvely_rej->clear();
+          }
           return;
         }
       }
@@ -848,6 +918,8 @@ namespace DUNE
       }
 
       m_time_without_dvl.reset();
+      m_avg_wvelx_rej->update(0);
+      m_avg_wvely_rej->update(0);
       m_valid_wv = true;
 
       // Store accepted msg.

@@ -38,6 +38,7 @@ namespace DUNE
 }
 
 #include <DUNE/IO/Handle.hpp>
+#include <DUNE/IO/HandleBuilder.hpp>
 #include <DUNE/IO/Poll.hpp>
 
 #endif
