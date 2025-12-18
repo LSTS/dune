@@ -27,8 +27,8 @@
 // Author: Luis Venâncio                                                    *
 //***************************************************************************
 
+#include <cmath>
 #include "DUNE/Math/Constants.hpp"
-
 #include "SinusoidalStreamGenerator.hpp"
 
 namespace Simulators
@@ -39,17 +39,21 @@ namespace Simulators
     {
       SinusoidalStreamGenerator::SinusoidalStreamGenerator(double amplitude,
                                                            double period,
-                                                           double phase) :
+                                                           double phase,
+                                                           double slope) :
         StreamGenerator(0.0, 0.0, 0.0),
         m_amplitude(amplitude),
         m_omega(DUNE::Math::c_two_pi / period),
-        m_phase(phase)
+        m_phase(phase),
+        m_slope(slope)
       {}
 
       std::array<double, 3>
       SinusoidalStreamGenerator::getVelocity(double, double, double, double time) const
       {
-        return {1.0, 2.0, 3.0};
+        const double angle = m_omega * time + m_phase;
+        const double amplitude = m_amplitude * std::sin(angle);
+        return {amplitude * std::cos(m_slope), amplitude * std::sin(m_slope), 0.0};
       }
     }    // namespace StreamGenerator
   }      // namespace StreamVelocity

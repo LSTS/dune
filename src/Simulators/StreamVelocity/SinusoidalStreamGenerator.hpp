@@ -41,12 +41,12 @@ namespace Simulators
   {
     namespace StreamGenerator
     {
-      //! Sinusoidal rotating current with constant magnitude
+      //! Sinusoidal current generator.
+      //! Generates a sinusoidal stream velocity pattern projected onto a slope,
+      //! according to:
       //!
-      //! vx = A cos(wt + φ)
-      //! vy = A sin(wt + φ)
-      //!
-      //! |v| = A (constant)
+      //! vx = A sin(wt + phi) cos(slope)
+      //! vy = A sin(wt + phi) sin(slope)
       class SinusoidalStreamGenerator : public StreamGenerator
       {
       public:
@@ -58,7 +58,8 @@ namespace Simulators
         //! @param[in] wz default stream speed in the Down direction (m/s).
         SinusoidalStreamGenerator(double amplitude,
                                   double period,
-                                  double phase = 0.0);
+                                  double phase = 0.0,
+                                  double slope = 0.0);
 
         ~SinusoidalStreamGenerator() = default;
 
@@ -72,6 +73,7 @@ namespace Simulators
         double m_amplitude;
         double m_omega;
         double m_phase;
+        double m_slope;
       };
     }    // namespace StreamGenerator
   }      // namespace StreamVelocity
