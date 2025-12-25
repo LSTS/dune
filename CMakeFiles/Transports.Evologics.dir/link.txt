@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.Evologics.a  CMakeFiles/Transports.Evologics.dir/src/Transports/Evologics/Task.cpp.o
+/usr/bin/ranlib libTransports.Evologics.a

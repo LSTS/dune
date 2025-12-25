@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/fuel_replay.dir/programs/fuel_replay.cpp.o  -o fuel_replay libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

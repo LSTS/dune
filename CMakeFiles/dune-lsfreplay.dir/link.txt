@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-lsfreplay.dir/programs/utils/dune-lsfreplay.cpp.o  -o dune-lsfreplay libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSupervisors.Delegator.a  CMakeFiles/Supervisors.Delegator.dir/src/Supervisors/Delegator/Task.cpp.o
+/usr/bin/ranlib libSupervisors.Delegator.a

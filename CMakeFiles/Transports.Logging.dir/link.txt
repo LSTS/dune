@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.Logging.a  CMakeFiles/Transports.Logging.dir/src/Transports/Logging/Task.cpp.o
+/usr/bin/ranlib libTransports.Logging.a
