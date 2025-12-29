@@ -27,6 +27,8 @@
 // Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
+let m_action_requested = false;
+
 function Acoustics(root_id)
 {
   this.m_timer = null;
@@ -189,7 +191,7 @@ Acoustics.prototype.updateChooseModemsSection = function()
     return;
 
   let selection = [];
-  const modemRows = modemsList.querySelectorAll(".acoustic-modem-row");
+  const modemRows = modemsList.querySelectorAll(".acoustics-modem-row");
   if (modemRows == null)
     return;
   modemRows.forEach(r =>
@@ -208,7 +210,7 @@ Acoustics.prototype.fillAcousticsModemsList = function(modemsList, selection)
   this.m_acoustic_modems.forEach((state, modemName) =>
   {
     const row = document.createElement("div");
-    row.className = "acoustic-modem-row";
+    row.className = "acoustics-modem-row";
     row.style.display = "flex";
     row.style.alignItems = "center";
     row.style.justifyContent = "space-between";
@@ -248,7 +250,7 @@ Acoustics.prototype.fillAcousticsModemsList = function(modemsList, selection)
 
     selectCheckbox.onclick = () =>
     {
-      const modemRows = modemsList.querySelectorAll(".acoustic-modem-row");
+      const modemRows = modemsList.querySelectorAll(".acoustics-modem-row");
       modemRows.forEach(r =>
       {
         if (r.dataset.modemType === modemType && r !== row)
@@ -343,6 +345,33 @@ Acoustics.prototype.update = function(data)
     this.m_acoustic_targets = [];
     this.updateActionsSection();
   }
+
+  if (data.acoustic_actions)
+  {
+    const request = document.getElementById("acoustics-request");
+    if (request)
+    {
+      if (data.acoustic_actions.fail > 0)
+        console.log("fail");
+      else if (data.acoustic_actions.success > 0)
+        console.log("sucess");
+      else if (data.acoustic_actions.range >= 0)
+        console.log("range :" + data.acoustic_actions.range);
+    }
+  }
+  else
+  {
+    m_action_requested = false;
+
+    const actions = document.getElementById("acoustics-actions");
+    const request = document.getElementById("acoustics-request");
+    actions.removeChild(request);
+
+    const ping = document.getElementById("acoustics-button-ping");
+    ping.disabled = false;
+    const abort = document.getElementById("acoustics-button-abort");
+    abort.disabled = false;
+  }
 };
 
 function submitAction(action, target, event)
@@ -352,6 +381,23 @@ function submitAction(action, target, event)
 
   if (event)
     event.preventDefault();
+
+  if (m_action_requested)
+    return;
+
+  m_action_requested = true;
+
+  const actions = document.getElementById("acoustics-actions");
+
+  const loading = document.createElement("div");
+  loading.id = "acoustics-request";
+  loading.className = "loader"
+  actions.appendChild(loading);
+
+  const ping = document.getElementById("acoustics-button-ping");
+  ping.disabled = true;
+  const abort = document.getElementById("acoustics-button-abort");
+  abort.disabled = true;
 
   const url = 'dune/acoustics/' + action + '/' + target;
   HTTP.post(url);
@@ -367,7 +413,7 @@ function submitAcousticModemsSelection(event)
   if (modemsList == null)
     return;
 
-  const modemRows = modemsList.querySelectorAll(".acoustic-modem-row");
+  const modemRows = modemsList.querySelectorAll(".acoustics-modem-row");
   if (modemRows == null)
     return;
 
