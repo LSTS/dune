@@ -269,5 +269,22 @@ namespace DUNE
       return 0;
 #endif
     }
+
+    void
+    I2C::scan(std::unordered_set<uint8_t>& lst)
+    {
+      lst.clear();
+      for (uint8_t addr = 1; addr <= 127; addr++)
+      {
+        try
+        {
+          connect(addr);
+          write({}, 0);
+          lst.insert(addr);
+        }
+        catch(...)
+        { }
+      }
+    }
   }
 }

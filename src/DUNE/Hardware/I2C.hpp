@@ -87,6 +87,9 @@ namespace DUNE
       unsigned
       write(const uint8_t* bfr, unsigned bfr_len);
 
+      void
+      scan(std::unordered_set<uint8_t>& lst);
+
     private:
       //! Maximum size of an i2c frame.
       static const uint8_t c_max_data_len = 64;
