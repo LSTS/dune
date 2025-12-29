@@ -324,21 +324,11 @@ namespace DUNE
     return os.str();
   }
 
-  template <>
+  template <typename T>
   inline std::string
-  uncastLexical(std::vector<std::string>& var)
+  uncastLexical(std::vector<T>& var)
   {
-    std::ostringstream os;
-
-    if (!var.empty())
-    {
-      os << var[0];
-
-      for (unsigned i = 0; i < var.size(); ++i)
-        os << ", " << var[i];
-    }
-
-    return os.str();
+    return Utils::String::join(var.begin(), var.end(), ",");
   }
 }
 
