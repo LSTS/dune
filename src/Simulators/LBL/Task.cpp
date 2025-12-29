@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <iomanip>
+#include <unordered_set>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -76,6 +77,8 @@ namespace Simulators
       int prng_seed;
       //! Wait for incoming request;
       bool wait_uam;
+      //! Name of the sections with modem addresses.
+      std::vector<std::string> addr_sections;
     };
 
     //! %LBL simulator task.
@@ -95,6 +98,8 @@ namespace Simulators
       Random::Generator* m_prng;
       //! Task arguments.
       Arguments m_args;
+      //! List of targetable systems.
+      std::unordered_set<std::string> m_sys;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -140,6 +145,9 @@ namespace Simulators
         .description("When this parameter is active, the task will wait for"
                      "ping requests from other entities");
 
+        param("Address Sections", m_args.addr_sections)
+        .description("Name of the configuration sections with modem addresses");
+
         // Register consumers.
         bind<IMC::LblConfig>(this);
         bind<IMC::GpsFix>(this);
@@ -153,6 +161,22 @@ namespace Simulators
       {
         if (paramChanged(m_args.ping_delay))
           m_pinger.setTop(m_args.ping_delay);
+
+        if (paramChanged(m_args.addr_sections))
+        {
+          const auto old_sys = m_sys;
+          m_sys.clear();
+          std::string agent = getSystemName();
+          for (const auto& section: m_args.addr_sections)
+          {
+            std::vector<std::string> addrs = m_ctx.config.options(section);
+            for (auto& name: addrs)
+              m_sys.insert(name);
+          }
+
+          if (old_sys != m_sys)
+            dispatchSystems();
+        }
       }
 
       //! Acquire resources.
@@ -170,6 +194,18 @@ namespace Simulators
         Memory::clear(m_prng);
         Memory::clear(m_gps);
         Memory::clear(m_lbl_cfg);
+      }
+
+      void
+      dispatchSystems(bool force = false)
+      {
+        if (!isActive() && !force)
+          return;
+
+        IMC::AcousticSystems acsys;
+        acsys.setDestination(getSystemId());
+        acsys.list = String::join(m_sys.begin(), m_sys.end(), ",");
+        dispatch(acsys);
       }
 
       //! Check LBL is defined.
@@ -280,6 +316,7 @@ namespace Simulators
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         m_pinger.reset();
+        dispatchSystems(true);
       }
 
       void
