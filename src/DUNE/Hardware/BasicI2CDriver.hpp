@@ -24,41 +24,91 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_HPP_INCLUDED_
-#define DUNE_HARDWARE_HPP_INCLUDED_
+#ifndef DUNE_HARDWARE_BASIC_I2C_DRIVER_HPP_INCLUDED_
+#define DUNE_HARDWARE_BASIC_I2C_DRIVER_HPP_INCLUDED_
+
+// Local headers.
+#include <DUNE/Tasks/Periodic.hpp>
 
 namespace DUNE
 {
-  //! Low level hardware drivers.
   namespace Hardware
-  { }
-}
+  {
+    // Export DLL Symbol.
+    class DUNE_DLL_SYM BasicI2CDriver;
 
-#include <DUNE/Hardware/SerialPort.hpp>
-#include <DUNE/Hardware/I2C.hpp>
-#include <DUNE/Hardware/IOPort.hpp>
-#include <DUNE/Hardware/GPIO.hpp>
-#include <DUNE/Hardware/Buttons.hpp>
-#include <DUNE/Hardware/ESCC.hpp>
-#include <DUNE/Hardware/IntelHEX.hpp>
-#include <DUNE/Hardware/BasicModem.hpp>
-#include <DUNE/Hardware/HayesModem.hpp>
-#include <DUNE/Hardware/BasicDeviceDriver.hpp>
-#include <DUNE/Hardware/BasicI2CDriver.hpp>
-#include <DUNE/Hardware/Exceptions.hpp>
-#include <DUNE/Hardware/UCTK/Constants.hpp>
-#include <DUNE/Hardware/UCTK/Errors.hpp>
-#include <DUNE/Hardware/UCTK/Parser.hpp>
-#include <DUNE/Hardware/UCTK/Bootloader.hpp>
-#include <DUNE/Hardware/LUCL/Protocol.hpp>
-#include <DUNE/Hardware/LUCL/ProtocolParser.hpp>
-#include <DUNE/Hardware/LUCL/BootLoader.hpp>
-#include <DUNE/Hardware/STM/Interface.hpp>
-#include <DUNE/Hardware/STM/FirmwareUpdate.hpp>
-#include <DUNE/Hardware/PWM.hpp>
-#include <DUNE/Hardware/SocketCAN.hpp>
+    struct BasicI2CArguments
+    {
+      //! Entity label of I2C handle.
+      std::string i2c_handle_elabel;
+      //! Device address.
+      uint16_t address;
+    };
+    
+    //! Default timeout to wait for a reply.
+    constexpr uint8_t c_default_timeout = 5;
+
+    //! Periodic task.
+    class BasicI2CDriver: public DUNE::Tasks::Periodic
+    {
+    public:
+      //! Constructor.
+      BasicI2CDriver(const std::string& name, DUNE::Tasks::Context& ctx);
+
+      //! Destructor.
+      virtual
+      ~BasicI2CDriver(void)
+      { }
+
+      void
+      onEntityResolution(void) override;
+
+      void
+      consume(const IMC::I2CAction* msg);
+
+      void
+      task(void) override;
+
+    protected:
+      bool
+      read(const uint8_t address, const uint16_t size = 1, const bool wait = false, const uint8_t timeout = c_default_timeout);
+
+      bool
+      write(const uint8_t address, const uint8_t data, const bool wait = false, const uint8_t timeout = c_default_timeout);
+
+      bool
+      write(const uint8_t address, const std::vector<uint8_t>& data, const bool wait = false, const uint8_t timeout = c_default_timeout);
+
+    private:
+      virtual bool
+      filterI2CAction(const IMC::I2CAction& msg);
+
+      virtual void
+      onI2CAction(const IMC::I2CAction& msg) = 0;
+
+      bool
+      waitForReply(const uint32_t id, const uint8_t timeout);
+
+      virtual void
+      step(void) = 0;
+
+      //! Arguments.
+      BasicI2CArguments m_i2c_args;
+      //! Request.
+      IMC::I2CAction m_request;
+      //! Entity id of I2C handle.
+      unsigned m_i2c_handle_eid;
+      //! Wait for reply timeout.
+      Time::Counter<uint8_t> m_rpl_timeout;
+      //! Last reply id.
+      uint32_t m_last_rpl_id;
+      //! Last reply success.
+      bool m_last_rpl_success;
+    };
+  }
+}
 
 #endif
