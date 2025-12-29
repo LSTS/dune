@@ -409,6 +409,10 @@ namespace DUNE
           }
 
           onMain();
+
+          if (m_honours_active && (isActivating() || isActive()))
+            requestDeactivation();
+
           releaseResources();
         }
         catch (RestartNeeded& e)
