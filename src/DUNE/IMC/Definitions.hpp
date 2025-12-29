@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 23a262146c5f6e7c1f5cb7c7d0d41d98                            *
+// IMC XML MD5: 6d65434664d8dc5d446df90c7d06832d                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -27759,6 +27759,201 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! HTTP Action.
+    class HTTPAction: public Message
+    {
+    public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Resquest.
+        OP_REQUEST = 0,
+        //! Reply.
+        OP_REPLY = 1,
+        //! Register.
+        OP_REGISTER = 2,
+        //! Unregister.
+        OP_UNREGISTER = 3
+      };
+
+      //! Id.
+      uint32_t id;
+      //! Operation.
+      uint8_t op;
+      //! Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2023;
+      }
+
+      HTTPAction(void);
+
+      HTTPAction*
+      clone(void) const
+      {
+        return new HTTPAction(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return HTTPAction::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "HTTPAction";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 5;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(data);
+      }
+
+      uint16_t
+      getSubId(void) const;
+
+      void
+      setSubId(uint16_t subid);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! I2C Action.
+    class I2CAction: public Message
+    {
+    public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Read.
+        OP_READ = 0,
+        //! Write.
+        OP_WRITE = 1
+      };
+
+      //! Status.
+      enum StatusEnum
+      {
+        //! Success.
+        STAT_SUCCESS = 0,
+        //! Temporary Error.
+        STAT_TEMPORARY_ERROR = 1,
+        //! Permanent Error.
+        STAT_PERMANENT_ERROR = 2,
+        //! Invalid Address.
+        STAT_INV_ADDR = 3
+      };
+
+      //! Id.
+      uint32_t id;
+      //! Address.
+      uint16_t address;
+      //! Lenght.
+      uint16_t length;
+      //! Operation.
+      uint8_t op;
+      //! Data.
+      std::vector<char> data;
+      //! Status.
+      uint8_t status;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2024;
+      }
+
+      I2CAction(void);
+
+      I2CAction*
+      clone(void) const
+      {
+        return new I2CAction(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return I2CAction::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "I2CAction";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 10;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(data);
+      }
+
+      uint16_t
+      getSubId(void) const;
+
+      void
+      setSubId(uint16_t subid);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;

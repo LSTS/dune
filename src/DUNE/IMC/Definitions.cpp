@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 23a262146c5f6e7c1f5cb7c7d0d41d98                            *
+// IMC XML MD5: 6d65434664d8dc5d446df90c7d06832d                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -29337,6 +29337,184 @@ namespace DUNE
     TotalHeading::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    HTTPAction::HTTPAction(void)
+    {
+      m_header.mgid = 2023;
+      clear();
+    }
+
+    void
+    HTTPAction::clear(void)
+    {
+      id = 0;
+      op = 0;
+      data.clear();
+    }
+
+    bool
+    HTTPAction::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::HTTPAction& other__ = static_cast<const HTTPAction&>(msg__);
+      if (id != other__.id) return false;
+      if (op != other__.op) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    HTTPAction::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    HTTPAction::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(id, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    HTTPAction::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    HTTPAction::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    HTTPAction::getSubId(void) const
+    {
+      return id;
+    }
+
+    void
+    HTTPAction::setSubId(uint16_t subid)
+    {
+      id = (uint32_t)subid;
+    }
+
+    void
+    HTTPAction::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "id", id, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    I2CAction::I2CAction(void)
+    {
+      m_header.mgid = 2024;
+      clear();
+    }
+
+    void
+    I2CAction::clear(void)
+    {
+      id = 0;
+      address = 0;
+      length = 0;
+      op = 0;
+      data.clear();
+      status = 0;
+    }
+
+    bool
+    I2CAction::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::I2CAction& other__ = static_cast<const I2CAction&>(msg__);
+      if (id != other__.id) return false;
+      if (address != other__.address) return false;
+      if (length != other__.length) return false;
+      if (op != other__.op) return false;
+      if (data != other__.data) return false;
+      if (status != other__.status) return false;
+      return true;
+    }
+
+    int
+    I2CAction::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    I2CAction::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(id, ptr__);
+      ptr__ += IMC::serialize(address, ptr__);
+      ptr__ += IMC::serialize(length, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      ptr__ += IMC::serialize(status, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    I2CAction::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(address, bfr__, size__);
+      bfr__ += IMC::deserialize(length, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    I2CAction::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(address, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(length, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    I2CAction::getSubId(void) const
+    {
+      return id;
+    }
+
+    void
+    I2CAction::setSubId(uint16_t subid)
+    {
+      id = (uint32_t)subid;
+    }
+
+    void
+    I2CAction::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "id", id, nindent__);
+      IMC::toJSON(os__, "address", address, nindent__);
+      IMC::toJSON(os__, "length", length, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+      IMC::toJSON(os__, "status", status, nindent__);
     }
   }
 }
