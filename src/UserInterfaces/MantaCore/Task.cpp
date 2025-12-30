@@ -671,7 +671,6 @@ namespace UserInterfaces
       void
       consume(const IMC::QueryPowerChannelState* msg)
       {
-        (void)msg; // to avoid compile warning, use [[maybe_unused]] after c++17
         for (auto& pwr_ch: m_pwr_chs)
           dispatchReply(*msg, pwr_ch.second->state);
       }
@@ -679,7 +678,7 @@ namespace UserInterfaces
       void
       onMain(void) override
       {
-        while(!stopping())
+        while (!stopping())
         {
           waitForMessages(1.0);
 
