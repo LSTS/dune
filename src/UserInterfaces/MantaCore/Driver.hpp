@@ -130,7 +130,7 @@ namespace UserInterfaces
       void
       notifyBoardAboutDisconnect(void)
       {
-        m_task->inf("notify board about disconnect");
+        m_task->spew("notify board about disconnect");
         sprintf(m_cmd_text, "%c,%c,%c%c", BYTE_PREAMBLE, BYTE_CPU, BYTE_CPU_DISCONNECT, '\0');
         sendCommand(m_cmd_text, false);
       }
