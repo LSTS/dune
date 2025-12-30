@@ -685,8 +685,7 @@ namespace UserInterfaces
         if (msg->getDestination() != getSystemId())
           return;
 
-        if (msg->op == IMC::PowerOperation::POP_PWR_DOWN_IP)
-          m_is_power_off = true;
+        m_is_power_off = (msg->op == IMC::PowerOperation::POP_PWR_DOWN_IP);
       }
 
       void
