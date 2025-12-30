@@ -107,9 +107,9 @@ namespace UserInterfaces
         .minimumValue("0.0")
         .description("Input timeout");
 
-        param("Firmware version", m_args.firm_version)
-        .defaultValue("")
-        .description("Compatible Firmware Version.");
+        // param("Firmware version", m_args.firm_version)
+        // .defaultValue("")
+        // .description("Compatible Firmware Version.");
 
         param("UAN - Entity Label", m_args.uan_elabel)
         .defaultValue("Acoustic Access Controller")

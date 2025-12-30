@@ -163,7 +163,7 @@ namespace UserInterfaces
       //! Input timeout in seconds.
       float inp_tout;
       //! Compatible Firmware Version.
-      std::string firm_version;
+      // std::string firm_version;
       //! UAN entity label.
       std::string uan_elabel;
       //! Acoustic Modems Selector entity label.
