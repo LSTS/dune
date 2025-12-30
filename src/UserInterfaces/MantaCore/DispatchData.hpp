@@ -96,7 +96,8 @@ namespace UserInterfaces
           }
           init_step_volt++;
         }
-        if (m_driver->newBqDataType(POWER_REMAINING_CAP, -1) && m_driver->newBqDataType(POWER_FULL_CAP, -1))
+        if (m_driver->newBqDataType(POWER_REMAINING_CAP, -1) && m_driver->newBqDataType(POWER_FULL_CAP, -1)
+            && m_args->dispatch_fuel_level && m_bqDataToDispatch.f_cap > 0 && m_bqDataToDispatch.r_cap >= 0)
         {
           m_imc->m_fuel.setTimeStamp(m_tstamp);
           m_fuel_level = (int)((m_bqDataToDispatch.r_cap * 100) / m_bqDataToDispatch.f_cap);
