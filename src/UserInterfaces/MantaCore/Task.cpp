@@ -42,7 +42,7 @@ namespace UserInterfaces
   {
     using DUNE_NAMESPACES;
 
-    struct Task: public Hardware::BasicDeviceDriver
+    struct Task: public DUNE::Tasks::Task
     {
       //! Task arguments.
       Arguments m_args;
@@ -86,7 +86,7 @@ namespace UserInterfaces
       std::map<std::string, std::string> m_network_ips;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Hardware::BasicDeviceDriver(name, ctx),
+        DUNE::Tasks::Task(name, ctx),
         m_driver(NULL),
         m_reader(NULL),
         m_handle(NULL),
@@ -97,11 +97,6 @@ namespace UserInterfaces
         m_amodems_set(false),
         m_uan_id(AddressResolver::invalid())
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\".");
@@ -205,8 +200,6 @@ namespace UserInterfaces
         .description("System network interfaces <name>:<interface>."
                      "For multiple interfaces, use comma ',' to seperate values.");
 
-        setWaitForMessages(1.0);
-
         bind<IMC::AcousticSystems>(this);
         bind<IMC::DevDataText>(this);
         bind<IMC::EntityParameters>(this);
@@ -218,44 +211,8 @@ namespace UserInterfaces
         bind<IMC::TransmissionStatus>(this);
       }
 
-      ~Task(void)
-      {
-        onDisconnect();
-      }
-
       void
-      onIdle(void) override
-      {
-        if (m_wdog_con.overflow() && m_wdog_con.getTop() > 0.0f)
-        {
-          m_wdog_con.setTop(0.0f);
-          requestActivation();
-        }
-      }
-
-      //! Try to connect to the device.
-      //! @return true if connection was established, false otherwise.
-      bool
-      onConnect() override
-      {
-        try
-        {
-          m_handle = openDeviceHandle(m_args.io_dev, true);
-          m_reader = new Reader(this, m_handle);
-          m_reader->start();
-        }
-        catch (...)
-        {
-          war("Failed to connect to device: %s [retrying]", m_args.io_dev.c_str());
-          m_wdog_con.setTop(static_cast<float>(getActivationTime()));
-          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-        }
-        return true;
-      }
-
-      //! Disconnect from device.
-      void
-      onDisconnect() override
+      onResourceRelease(void) override
       {
         if (m_reader != NULL)
         {
@@ -263,7 +220,7 @@ namespace UserInterfaces
           Memory::clear(m_reader);
         }
 
-        if(m_driver != NULL)
+        if (m_driver != NULL)
         {
           m_driver->notifyBoardAboutDisconnect();
           Memory::clear(m_driver);
@@ -275,63 +232,78 @@ namespace UserInterfaces
       }
 
       void
-      waitForReplies(void)
+      onUpdateParameters(void) override
       {
-        while(!m_driver->emptyQueue() && !stopping())
+        if (paramChanged(m_args.am_list))
         {
-          if (m_wdog.overflow())
+          std::map<std::string, std::string> modems = m_ctx.config.getSection(m_args.am_list);
+          for (auto& modem: modems)
+            m_types.insert(getAcousticModemType(modem.first));
+
+          IMC::QueryEntityParameters qep;
+          qep.setDestination(getSystemId());
+          qep.name = m_args.ams_elabel;
+          dispatch(qep);
+        }
+
+        for (unsigned i = 0; i < MantaCore::c_max_power_channels; ++i)
+        {
+          if (String::startsWith(m_args.power_channels_names[i], "N/C"))
+            continue;
+
+          bool new_pc = m_pwr_chs.find(m_args.power_channels_names[i]) == m_pwr_chs.end();
+
+          PowerChannel* pc;
+          if (new_pc)
+            pc = new PowerChannel;
+          else
+            pc = m_pwr_chs[m_args.power_channels_names[i]];
+            
+          pc->id = i;
+
+          if (paramChanged(m_args.power_channels_names[i]) || new_pc)
+            pc->state.name = m_args.power_channels_names[i];
+
+          if (paramChanged(m_args.power_channels_states[i]) || new_pc)
           {
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+            pc->state.state = m_args.power_channels_states[i]?
+                              IMC::PowerChannelState::PCS_ON:
+                              IMC::PowerChannelState::PCS_OFF;
+            if (m_driver != NULL)
+              m_driver->setPowerChannelState(pc->state.name, pc->state.state, pc->id);
           }
 
-          waitForMessages(1.0);
-          m_driver->checkCommandQueue();
+          if (new_pc)
+            m_pwr_chs[pc->state.name] = pc;
+        }
+
+        if (m_driver != NULL && paramChanged(m_args.get_data))
+        {
+          m_driver->requestDataPower(m_args.get_data);
+        }
+
+        if (paramChanged(m_args.network_interfaces))
+        {
+          std::vector<std::string> entries;
+          String::split(m_args.network_interfaces, ",", entries);
+          m_network_ips.clear();
+          for (const auto& entry: entries)
+          {
+            std::vector<std::string> interfaces;
+            String::split(entry, ":", interfaces);
+            if (interfaces.size() != 2)
+              continue;
+            
+            m_network_ips[interfaces[0]] = interfaces[1];
+          }
+          
+          if (m_driver != NULL)
+            m_driver->setNetworkIps(m_network_ips);
         }
       }
 
       void
-      setupBoard(void)
-      {
-        m_driver->requestConnectionToBoard();
-        m_driver->requestFirmwareVersion();
-        m_driver->setNumberCells();
-        m_driver->requestDataPower(m_args.get_data);
-
-        for (auto& pwr_ch: m_pwr_chs)
-          m_driver->setPowerChannelState(pwr_ch.second->state.name,
-                                         pwr_ch.second->state.state,
-                                         pwr_ch.second->id);
-
-        waitForReplies();
-      }
-
-      //! Initialize device.
-      void
-      onInitializeDevice() override
-      {
-        inf("initializing board");
-        m_driver = new Driver(this, m_handle, m_args.number_cell, getSystemName(), m_args.ams_elabel, m_network_ips);
-        m_dispatch = new DispatchData(this, m_driver, &m_args, &m_imc);
-        m_wdog.setTop(m_args.inp_tout);
-        setupBoard();
-
-        // if (m_args.firm_version != m_driver->firmwareVersion())
-        // {
-        //   err(DTR("incompatible firmware version"));
-        //   requestDeactivation();
-        //   return;
-        // }
-
-        inf("firmware version: %s", m_driver->firmwareVersion().c_str());
-        inf("initializing board: done");
-        inf("start acquiring data");
-        m_wdog_free_text.reset();
-      }
-
-      //! Reserve entity identifiers.
-      void
-      onEntityReservation(void)
+      onEntityReservation(void) override
       {
         // ltc
         m_imc.m_volt[IMC_TYPE_BAT_VOLT].setSourceEntity(getEid("Batteries"));
@@ -367,6 +339,63 @@ namespace UserInterfaces
         }
       }
 
+      void
+      onEntityResolution(void) override
+      {
+        try
+        {
+          m_uan_id = resolveEntity(m_args.uan_elabel);
+        }
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
+        {
+          war(DTR("%s"), e.what());
+        }
+      }
+
+      void
+      onResourceAcquisition(void) override
+      {
+        try
+        {
+          char uart[128] = {0};
+          unsigned baud = 0;
+          if (std::sscanf(m_args.io_dev.c_str(), "uart://%[^:]:%u", uart, &baud) != 2)
+            throw std::runtime_error(String::str("Invalid IO device URI: %s", m_args.io_dev.c_str()));
+
+          m_handle = new SerialPort(uart, baud);;
+          m_reader = new Reader(this, m_handle);
+          m_reader->start();
+        }
+        catch (...)
+        {
+          war("Failed to connect to device: %s [retrying]", m_args.io_dev.c_str());
+          m_wdog_con.setTop(static_cast<float>(getActivationTime()));
+          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+        }
+      }
+
+      void
+      onResourceInitialization(void) override
+      {
+        inf("initializing board");
+        m_driver = new Driver(this, m_handle, m_args.number_cell, getSystemName(), m_args.ams_elabel, m_network_ips);
+        m_dispatch = new DispatchData(this, m_driver, &m_args, &m_imc);
+        m_wdog.setTop(m_args.inp_tout);
+        setupBoard();
+
+        // if (m_args.firm_version != m_driver->firmwareVersion())
+        // {
+        //   err(DTR("incompatible firmware version"));
+        //   requestDeactivation();
+        //   return;
+        // }
+
+        inf("firmware version: %s", m_driver->firmwareVersion().c_str());
+        inf("initializing board: done");
+        inf("start acquiring data");
+        m_wdog_free_text.reset();
+      }
+
       unsigned
       getEid(std::string label)
       {
@@ -385,19 +414,6 @@ namespace UserInterfaces
       }
 
       void
-      onEntityResolution(void)
-      {
-        try
-        {
-          m_uan_id = resolveEntity(m_args.uan_elabel);
-        }
-        catch (Entities::EntityDataBase::NonexistentLabel& e)
-        {
-          war(DTR("%s"), e.what());
-        }
-      }
-
-      void
       setTargetableSystems(void)
       {
         if (m_driver == NULL)
@@ -410,25 +426,100 @@ namespace UserInterfaces
       }
 
       void
+      setKnownAcousticModems(void)
+      {
+        if (m_driver == NULL)
+          return;
+
+        m_driver->setKnownModems(m_amodems);
+        m_amodems_set = true;
+      }
+
+      void
+      waitForReplies(void)
+      {
+        while (!m_driver->emptyQueue() && !stopping())
+        {
+          if (m_wdog.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          }
+
+          waitForMessages(1.0);
+          m_driver->checkCommandQueue();
+        }
+      }
+
+      void
+      setupBoard(void)
+      {
+        m_driver->requestConnectionToBoard();
+        m_driver->requestFirmwareVersion();
+        m_driver->setNumberCells();
+        m_driver->requestDataPower(m_args.get_data);
+
+        for (auto& pwr_ch: m_pwr_chs)
+          m_driver->setPowerChannelState(pwr_ch.second->state.name,
+                                         pwr_ch.second->state.state,
+                                         pwr_ch.second->id);
+
+        waitForReplies();
+      }
+
+      std::string
+      getAcousticModemType(const std::string& modem)
+      {
+        size_t pos = 0;
+        while (pos < modem.size() && !std::isdigit(modem[pos]))
+          ++pos;
+        return modem.substr(0, pos);
+      }
+
+      void
+      updateModemsConfig(const std::map<std::string, bool>& config)
+      {
+        if (config.empty())
+          return;
+        
+        IMC::SetEntityParameters sep;
+        sep.setDestination(getSystemId());
+        sep.name = m_args.ams_elabel;
+        for (const auto& modem: config)
+        {
+          if (m_amodems[modem.first] == modem.second)
+            continue;
+
+          m_amodems[modem.first] = modem.second;
+
+          IMC::EntityParameter p;
+          p.name = modem.first;
+          p.value = uncastLexical(modem.second);
+          sep.params.push_back(p);
+        }
+        dispatch(sep);
+      }
+
+      void
       consume(const IMC::EntityParameters* msg)
       {
         if (msg->getSource() != getSystemId())
           return;
         
-        if (msg->name == m_args.ams_elabel)
+        if (msg->name != m_args.ams_elabel)
+          return;
+
+        for (const auto& it: msg->params)
         {
-          for (const auto& it: msg->params)
-          {
-            std::string type = getAcousticModemType(it->name);
-            if (m_types.find(type) == m_types.end())
-              continue;
+          std::string type = getAcousticModemType(it->name);
+          if (m_types.find(type) == m_types.end())
+            continue;
 
-            m_amodems[it->name] = it->value == "true";
-          }
-
-          if (m_amodems.size() > 0)
-            m_amodems_set = false;
+          m_amodems[it->name] = castLexical<bool>(it->value);
         }
+
+        if (m_amodems.size() > 0)
+          m_amodems_set = false;
       }
 
       void
@@ -585,159 +676,45 @@ namespace UserInterfaces
           dispatchReply(*msg, pwr_ch.second->state);
       }
 
-      //! Update parameters.
       void
-      onUpdateParameters(void)
+      onMain(void) override
       {
-        if (paramChanged(m_args.am_list))
+        while(!stopping())
         {
-          std::map<std::string, std::string> modems = m_ctx.config.getSection(m_args.am_list);
-          for (auto& modem: modems)
-            m_types.insert(getAcousticModemType(modem.first));
+          waitForMessages(1.0);
 
-          IMC::QueryEntityParameters qep;
-          qep.setDestination(getSystemId());
-          qep.name = m_args.ams_elabel;
-          dispatch(qep);
-        }
-
-        for (unsigned i = 0; i < MantaCore::c_max_power_channels; ++i)
-        {
-          if (String::startsWith(m_args.power_channels_names[i], "N/C"))
+          if (m_is_power_off)
             continue;
 
-          bool new_pc = m_pwr_chs.find(m_args.power_channels_names[i]) == m_pwr_chs.end();
+          if (m_driver == NULL)
+            throw RestartNeeded("device driver is invalid", 5);
 
-          PowerChannel* pc;
-          if (new_pc)
-            pc = new PowerChannel;
-          else
-            pc = m_pwr_chs[m_args.power_channels_names[i]];
-            
-          pc->id = i;
-
-          if (paramChanged(m_args.power_channels_names[i]) || new_pc)
-            pc->state.name = m_args.power_channels_names[i];
-
-          if (paramChanged(m_args.power_channels_states[i]) || new_pc)
-          {
-            pc->state.state = m_args.power_channels_states[i]?
-                              IMC::PowerChannelState::PCS_ON:
-                              IMC::PowerChannelState::PCS_OFF;
-            if (m_driver != NULL)
-              m_driver->setPowerChannelState(pc->state.name, pc->state.state, pc->id);
-          }
-
-          if (new_pc)
-            m_pwr_chs[pc->state.name] = pc;
-        }
-
-        if (m_driver != NULL && paramChanged(m_args.get_data))
-        {
-          m_driver->requestDataPower(m_args.get_data);
-        }
-
-        if (paramChanged(m_args.network_interfaces))
-        {
-          std::vector<std::string> entries;
-          String::split(m_args.network_interfaces, ",", entries);
-          m_network_ips.clear();
-          for (const auto& entry: entries)
-          {
-            std::vector<std::string> interfaces;
-            String::split(entry, ":", interfaces);
-            if (interfaces.size() != 2)
-              continue;
-            
-            m_network_ips[interfaces[0]] = interfaces[1];
-          }
+          if (m_driver->boardBooted())
+            throw RestartNeeded("board rebooted", 5);
           
-          if (m_driver != NULL)
-            m_driver->setNetworkIps(m_network_ips);
+          if (m_wdog_free_text.overflow())
+          {
+            m_wdog_free_text.reset();
+            m_driver->updateFreeText();
+          }
+
+          if (!m_targets_set)
+            setTargetableSystems();
+
+          if (!m_amodems_set)
+            setKnownAcousticModems();
+
+          if (m_driver->m_new_modems_config)
+            updateModemsConfig(m_driver->getModemsConfig());
+
+          m_driver->checkCommandQueue();
+
+          if (m_wdog.overflow())
+          {
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
+            throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          }
         }
-      }
-
-      //! Get acoustic modem type.
-      std::string
-      getAcousticModemType(const std::string& modem)
-      {
-        size_t pos = 0;
-        while (pos < modem.size() && !std::isdigit(modem[pos]))
-          ++pos;
-        return modem.substr(0, pos);
-      }
-
-      void
-      updateModemsConfig(const std::map<std::string, bool>& config)
-      {
-        if (config.empty())
-          return;
-        
-        IMC::SetEntityParameters sep;
-        sep.setDestination(getSystemId());
-        sep.name = m_args.ams_elabel;
-        for (const auto& modem: config)
-        {
-          if (m_amodems[modem.first] == modem.second)
-            continue;
-
-          m_amodems[modem.first] = modem.second;
-
-          IMC::EntityParameter p;
-          p.name = modem.first;
-          p.value = uncastLexical(modem.second);
-          sep.params.push_back(p);
-        }
-        dispatch(sep);
-      }
-
-      //! Get data from device.
-      //! @return true if data was received, false otherwise.
-      bool
-      onReadData() override
-      {
-        if (m_is_power_off)
-          return false;
-
-        if (m_driver == NULL)
-        {
-          requestDeactivation();
-          return false;
-        }
-
-        if (m_driver->boardBooted())
-        {
-          requestRestart();
-          return false;
-        }
-        
-        if (m_wdog_free_text.overflow())
-        {
-          m_wdog_free_text.reset();
-          m_driver->updateFreeText();
-        }
-
-        if (!m_targets_set)
-          setTargetableSystems();
-
-        if (!m_amodems_set)
-        {
-          m_driver->setKnownModems(m_amodems);
-          m_amodems_set = true;
-        }
-
-        if (m_driver->m_new_modems_config)
-          updateModemsConfig(m_driver->getModemsConfig());
-
-        m_driver->checkCommandQueue();
-
-        if (m_wdog.overflow())
-        {
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
-          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
-        }
-
-        return true;
       }
     };
   }
