@@ -56,13 +56,12 @@ namespace UserInterfaces
       //! Acoustic modems config changed flag.
       bool m_new_modems_config;
 
-      Driver(Tasks::Task* task, IO::Handle* handle, int numberCell, std::string system_name, std::string ams_elabel, std::map<std::string, std::string> network_ips):
+      Driver(Tasks::Task* task, IO::Handle* handle, int numberCell, std::string ams_elabel, std::map<std::string, std::string> network_ips):
         m_query_systems(false),
         m_new_modems_config(false),
         m_task(task),
         m_handle(handle),
         m_number_cells(numberCell),
-        m_sys_name(system_name),
         m_send_cmd_state(CMD_IDLE),
         m_parser_state(PARSER_PREAMBLE),
         m_free_text_state(0),
@@ -72,7 +71,7 @@ namespace UserInterfaces
         m_networks_free_text_it(m_network_ips.end()),
         m_amodems_free_text_it(m_amodems.end())
       {
-        m_system_name_free_text = String::str("System: %s%c", m_sys_name.c_str(), '\0');
+        m_system_name_free_text = String::str("System: %s", task->getSystemName());
         querySystems(true);
         m_handle->flush();
       }
@@ -570,8 +569,6 @@ namespace UserInterfaces
       IO::Handle* m_handle;
       //! Number of cell to read.
       int m_number_cells;
-      //! System name.
-      std::string m_sys_name;
       //! System ip.
       std::string m_sys_ip;
       //! Send command state.
