@@ -196,6 +196,8 @@ namespace UserInterfaces
       bool get_data;
       //! Network interfaces.
       std::string network_interfaces;
+      //! GPS entity label.
+      std::string gps_elabel;
     };
 
     struct BQData

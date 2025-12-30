@@ -84,6 +84,8 @@ namespace UserInterfaces
       std::unordered_set<std::string> m_types;
       //! Network interfaces IPv4 addresses.
       std::map<std::string, std::string> m_network_ips;
+       //! GPS Entity Id.
+      uint8_t m_gps_id;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -95,7 +97,8 @@ namespace UserInterfaces
         m_sat(0),
         m_targets_set(false),
         m_amodems_set(false),
-        m_uan_id(AddressResolver::invalid())
+        m_uan_id(AddressResolver::invalid()),
+        m_gps_id(AddressResolver::invalid())
       {
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
@@ -199,6 +202,9 @@ namespace UserInterfaces
         .scope(Tasks::Parameter::SCOPE_GLOBAL)
         .description("System network interfaces <name>:<interface>."
                      "For multiple interfaces, use comma ',' to seperate values.");
+
+        param("GPS - Entity Label", m_args.gps_elabel)
+        .description("GPS Entity Label.");
 
         bind<IMC::AcousticSystems>(this);
         bind<IMC::DevDataText>(this);
@@ -345,6 +351,15 @@ namespace UserInterfaces
         try
         {
           m_uan_id = resolveEntity(m_args.uan_elabel);
+        }
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
+        {
+          war(DTR("%s"), e.what());
+        }
+
+        try
+        {
+          m_gps_id = resolveEntity(m_args.gps_elabel);
         }
         catch (Entities::EntityDataBase::NonexistentLabel& e)
         {
@@ -632,6 +647,12 @@ namespace UserInterfaces
       void
       consume(const IMC::GpsFix* msg)
       {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getSourceEntity() != m_gps_id)
+          return;
+
         if (msg->type == IMC::GpsFix::GFT_MANUAL_INPUT)
           return;
 
