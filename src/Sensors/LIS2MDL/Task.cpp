@@ -49,8 +49,6 @@ namespace Sensors
       uint8_t rate;
       //! Enable low power filter.
       bool lp_filter;
-      //! Enable self test.
-      bool self_test;
     };
 
     //! Chip id.
@@ -116,10 +114,6 @@ namespace Sensors
         param("Enable low power filter", m_args.lp_filter)
         .defaultValue("false")
         .description("Enable low power filter.");
-
-        param("Enable self test", m_args.self_test)
-        .defaultValue("false")
-        .description("Enable self test mode.");
       }
 
       void
@@ -147,16 +141,6 @@ namespace Sensors
 
         if (change_b)
           setConfig(REGISTER_MAP::CFG_REG_B, m_cfg_b);
-
-        bool change_c = false;
-        if (paramChanged(m_args.self_test))
-        {
-          change_c = true;
-          enableSelfTest();
-        }
-
-        if (change_c)
-          setConfig(REGISTER_MAP::CFG_REG_C, m_cfg_c);
       }
 
       void
@@ -233,12 +217,6 @@ namespace Sensors
       }
 
       void
-      enableSelfTest(void)
-      {
-        m_cfg_c = (m_cfg_c & ~(1u << 1)) | (static_cast<uint8_t>(m_args.self_test) << 1);
-      }
-
-      void
       init(void)
       {
         reset();
@@ -249,7 +227,6 @@ namespace Sensors
         setDataRate();
         startMeasurements();
         enableLowPassFilter();
-        enableSelfTest();
         enableBDU();
         setConfig(REGISTER_MAP::CFG_REG_A, m_cfg_a);
         setConfig(REGISTER_MAP::CFG_REG_B, m_cfg_b);
