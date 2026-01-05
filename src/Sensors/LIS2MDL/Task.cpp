@@ -148,6 +148,7 @@ namespace Sensors
       {
         if (!verifyIdentity())
         {
+          err("failed to verify device identity");
           requestDeactivation();
           return;
         }
