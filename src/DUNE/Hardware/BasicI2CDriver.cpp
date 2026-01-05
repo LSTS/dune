@@ -99,6 +99,9 @@ namespace DUNE
     bool
     BasicI2CDriver::read(const uint8_t address, const uint16_t size, const bool wait, const uint8_t timeout)
     {
+      m_last_rpl_id = UINT32_MAX;
+      m_last_rpl_success = false;
+
       m_request.op = IMC::I2CAction::OP_READ;
       m_request.length = size;
       m_request.data.assign(1, static_cast<char>(address));
@@ -113,6 +116,9 @@ namespace DUNE
     bool
     BasicI2CDriver::write(const uint8_t address, const uint8_t data, const bool wait, const uint8_t timeout)
     {
+      m_last_rpl_id = UINT32_MAX;
+      m_last_rpl_success = false;
+
       m_request.op = IMC::I2CAction::OP_WRITE;
       m_request.data.clear();
       m_request.data.reserve(2);
@@ -130,6 +136,9 @@ namespace DUNE
     bool
     BasicI2CDriver::write(const uint8_t address, const std::vector<uint8_t>& data, const bool wait, const uint8_t timeout)
     {
+      m_last_rpl_id = UINT32_MAX;
+      m_last_rpl_success = false;
+
       m_request.op = IMC::I2CAction::OP_WRITE;
       m_request.data.clear();
       m_request.data.reserve(1 + data.size());
