@@ -75,6 +75,11 @@ namespace Simulators
         unsigned minutes_fwd;
         unsigned seconds_fwd;
       } date;
+
+      double sinusoidal_amplitude;
+      double sinusoidal_period;
+      double sinusoidal_phase;
+      double sinusoidal_slope;
     };
 
     struct Task : public DUNE::Tasks::Periodic
@@ -145,6 +150,27 @@ namespace Simulators
             .description(
                 "Number of seconds to advance the simulation by, relative to "
                 "the time of the first datapoint.");
+
+        param("Sinusoidal -- Amplitude", m_args.sinusoidal_amplitude)
+            .units(Units::MeterPerSecond)
+            .defaultValue("0.5")
+            .description("Amplitude of the sinusoidal stream velocity (m/s).");
+
+        param("Sinusoidal -- Period", m_args.sinusoidal_period)
+            .units(Units::Second)
+            .defaultValue("3600.0")
+            .description("Period of the sinusoidal stream velocity (s).");
+
+        param("Sinusoidal -- Phase", m_args.sinusoidal_phase)
+            .units(Units::Degree)
+            .defaultValue("0.0")
+            .description("Phase of the sinusoidal stream velocity (s).");
+
+        param("Sinusoidal -- Slope", m_args.sinusoidal_slope)
+            .units(Units::Degree)
+            .defaultValue("0.0")
+            .description("Slope onto which the sinusoidal stream velocity is projected "
+                         "(deg).");
       }
 
       //! Initialize resources.
