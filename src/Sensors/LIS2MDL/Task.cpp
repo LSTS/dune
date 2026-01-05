@@ -358,12 +358,6 @@ namespace Sensors
         if (!read(REGISTER_MAP::OUTX_L_REG, temperature ? 8 : 6, true))
           return;
 
-        if (temperature)
-          war("data read > 0 0x%02x 1 0x%02x 2 0x%02x 3 0x%02x 4 0x%02x 5 0x%02x 6 0x%02x 7 0x%02x",
-              m_read_buffer[0], m_read_buffer[1], m_read_buffer[2],
-              m_read_buffer[3], m_read_buffer[4], m_read_buffer[5],
-              m_read_buffer[6], m_read_buffer[7]);
-
         auto decode = [&](int idx, float sensitivity)
         {
           int16_t t = (int16_t)
