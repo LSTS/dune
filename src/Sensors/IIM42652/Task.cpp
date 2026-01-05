@@ -68,6 +68,10 @@ namespace Sensors
     //! Gyroscope full scale to sensitivity map (dps/LSB).
     const std::map<uint8_t, float> c_gyro_sens_map = {{0x0, 1 / 16.4f}, {0x1, 1 / 32.8f}, {0x2, 1 / 65.5f}, {0x3, 1 / 131.0f},
                                                       {0x4, 1 / 262.0f}, {0x5, 1 / 524.3f}, {0x6, 1 / 1048.6f}, {0x7, 1 / 2097.2f}};
+    //! Temperature factory offset.
+    constexpr float c_temp_factory_offset = 25.0f;
+    //! Temperature sensitivity.
+    constexpr float c_temp_sensitivity = 1 / 132.48f;
 
     struct Task: public DUNE::Hardware::BasicI2CDriver
     {
@@ -382,7 +386,7 @@ namespace Sensors
         if (!read(temperature ? REGISTER_MAP_0::TEMP_DATA1 : REGISTER_MAP_0::ACCEL_DATA_X1, temperature ? 14 : 12, true))
           return;
 
-        auto decode = [&](int idx, float sensitivity = 1.0f)
+        auto decode = [&](int idx, float sensitivity)
         {
           int16_t t = (int16_t)
           (
@@ -396,9 +400,7 @@ namespace Sensors
         switch (m_read_buffer.size())
         {
         case 14:
-          m_temp.value = decode(0);
-          m_temp.value /= 132.48;
-          m_temp.value += 25;
+          m_temp.value = decode(0, c_temp_sensitivity) + c_temp_factory_offset;
           dispatch(m_temp); // TODO: add timestamp
           spew("temperature > %.2f", m_temp.value);
           temp_offset = 2;
