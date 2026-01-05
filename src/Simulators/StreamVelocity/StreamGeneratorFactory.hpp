@@ -78,12 +78,8 @@ namespace Simulators
 
         if(config.type == "Sinusoidal")
         {
-          double amplitude = 1.0; // m/s
-          double period = 3600.0; // seconds
-          double phase = 0.0;     // radians
-
           return std::make_unique<SinusoidalStreamGenerator>(
-            amplitude, period, phase);
+                 config.sinusoidal_amplitude, config.sinusoidal_period, config.sinusoidal_phase, config.sinusoidal_slope);
         }
 
         throw std::runtime_error(DTR("Unknown stream velocity source type."));
