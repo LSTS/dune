@@ -267,7 +267,7 @@ namespace Sensors
             (uint16_t)m_read_buffer[idx + 1] << 8 |
             (uint16_t)m_read_buffer[idx]
           );
-          return t * c_mag_sensitivity * 0.1f;
+          return t * c_mag_sensitivity * 0.001f;
         };
 
         float hi_x = decode(0);
@@ -283,7 +283,7 @@ namespace Sensors
 
         auto encode = [&](float v)
         {
-          int16_t t = static_cast<int16_t>(v / (c_mag_sensitivity * 0.1f));
+          int16_t t = static_cast<int16_t>(v / (c_mag_sensitivity * 0.001f));
           m_write_buffer.push_back(t & 0xFF);
           m_write_buffer.push_back((t >> 8) & 0xFF);
         };
@@ -359,9 +359,9 @@ namespace Sensors
           [[fallthrough]];
 #endif
         case 6:
-          m_mag.x = decode(0, c_mag_sensitivity) * 0.1;
-          m_mag.y = decode(2, c_mag_sensitivity) * 0.1;
-          m_mag.z = decode(4, c_mag_sensitivity) * 0.1;
+          m_mag.x = decode(0, c_mag_sensitivity) * 0.001f;
+          m_mag.y = decode(2, c_mag_sensitivity) * 0.001f;
+          m_mag.z = decode(4, c_mag_sensitivity) * 0.001f;
           dispatch(m_mag); // TODO: add timestamp
           spew("magnetic field > x: %.2f y: %.2f z: %.2f", m_mag.x, m_mag.y, m_mag.z);
           break;
