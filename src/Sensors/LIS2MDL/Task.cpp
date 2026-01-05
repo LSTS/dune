@@ -44,7 +44,7 @@ namespace Sensors
     struct Arguments
     {
       //! Get temperature period.
-      uint8_t temp_period;
+      int8_t temp_period;
       //! Output data rate.
       uint8_t rate;
       //! Enable low power filter.
@@ -81,7 +81,7 @@ namespace Sensors
       //! Magnetic Field message.
       IMC::MagneticField m_mag;
       //! Get temperature timer.
-      Counter<uint8_t> m_temp_timer;
+      Counter<int8_t> m_temp_timer;
       //! Current config A.
       uint8_t m_cfg_a;
       //! Current config B.
@@ -101,11 +101,11 @@ namespace Sensors
         m_cfg_c(c_default_cfg_c)
       {
         param("Get temperature period", m_args.temp_period)
-        .minimumValue("0")
+        .minimumValue("-1")
         .maximumValue("127")
-        .defaultValue("1")
+        .defaultValue("0")
         .units(Units::Second)
-        .description("Period between temperature readings.");
+        .description("Period between temperature readings. Set to -1 to disable temperature readings.");
 
         param("Output data rate", m_args.rate)
         .values("10,20,50,100")
@@ -429,7 +429,7 @@ namespace Sensors
       void
       step(void) override
       {
-        getData(m_temp_timer.overflow());
+        getData(m_temp_timer.overflow() && m_args.temp_period != -1);
       }
     };
   }
