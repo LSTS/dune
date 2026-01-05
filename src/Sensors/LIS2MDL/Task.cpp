@@ -53,8 +53,10 @@ namespace Sensors
 
     //! Chip id.
     constexpr uint8_t c_id = 0x40;
-    //! Sensor temperature sensitivity (Celsius degrees/LSB).
-    constexpr float c_temp_sensitivity = 0.125;
+    //! Sensor temperature sensitivity.
+    constexpr float c_temp_sensitivity = 1 / 256.0f;
+    //! Temperature factory offset.
+    constexpr float c_temp_factory_offset = 25.0f;
     //! Sensor magnetic field sensitivity for 50 gauss full scale (mgauss/LSB).
     constexpr float c_mag_sensitivity = 1.5;
     //! Output data rate map.
@@ -349,7 +351,7 @@ namespace Sensors
         switch (m_read_buffer.size())
         {
         case 8:
-          m_temp.value = decode(6, c_temp_sensitivity);
+          m_temp.value = decode(6, c_temp_sensitivity) + c_temp_factory_offset;
           dispatch(m_temp); // TODO: add timestamp
           spew("temperature > %.2f", m_temp.value);
           m_temp_timer.setTop(m_args.temp_period);
