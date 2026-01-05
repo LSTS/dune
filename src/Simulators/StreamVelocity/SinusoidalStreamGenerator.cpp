@@ -29,6 +29,7 @@
 
 #include <cmath>
 #include "DUNE/Math/Constants.hpp"
+#include "DUNE/Math/Angles.hpp"
 #include "SinusoidalStreamGenerator.hpp"
 
 namespace Simulators
@@ -45,7 +46,7 @@ namespace Simulators
         m_amplitude(amplitude),
         m_omega(DUNE::Math::c_two_pi / period),
         m_phase(phase),
-        m_slope(slope)
+        m_slope(DUNE::Math::Angles::radians(slope))
       {}
 
       std::array<double, 3>
