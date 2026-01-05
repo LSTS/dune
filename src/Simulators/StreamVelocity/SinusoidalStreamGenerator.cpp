@@ -45,7 +45,7 @@ namespace Simulators
         StreamGenerator(0.0, 0.0, 0.0),
         m_amplitude(amplitude),
         m_omega(DUNE::Math::c_two_pi / period),
-        m_phase(phase),
+        m_phase(DUNE::Math::Angles::radians(phase)),
         m_slope(DUNE::Math::Angles::radians(slope))
       {}
 
