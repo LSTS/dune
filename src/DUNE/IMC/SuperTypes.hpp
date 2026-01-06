@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: e3cbea913e74a45c4c632a599783c376                            *
+// IMC XML MD5: 8843584cef24468b60bec4fc699ea937                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_SUPERTYPES_HPP_INCLUDED_
@@ -53,6 +53,11 @@ namespace DUNE
 
     //! Super type RemoteData.
     class RemoteData: public Message
+    {
+    };
+
+    //! Super type TypedEntityParametersOptions.
+    class TypedEntityParametersOptions: public Message
     {
     };
   }

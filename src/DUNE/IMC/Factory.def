@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: e3cbea913e74a45c4c632a599783c376                            *
+// IMC XML MD5: 8843584cef24468b60bec4fc699ea937                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -329,6 +329,7 @@ MESSAGE(851, SoiPlan)
 MESSAGE(852, SoiCommand)
 MESSAGE(853, SoiState)
 MESSAGE(877, MessagePart)
+MESSAGE(878, MessagePartControl)
 MESSAGE(888, NeptusBlob)
 MESSAGE(889, Aborted)
 MESSAGE(890, UsblAngles)
@@ -351,9 +352,15 @@ MESSAGE(906, ApmStatus)
 MESSAGE(907, SadcReadings)
 MESSAGE(908, DmsDetection)
 MESSAGE(909, HomePosition)
+MESSAGE(911, AbsoluteWind)
+MESSAGE(912, AisInfo)
+MESSAGE(913, ENCAwareness)
+MESSAGE(915, Displacement)
 MESSAGE(1014, CurrentProfile)
 MESSAGE(1015, CurrentProfileCell)
 MESSAGE(1016, ADCPBeam)
+MESSAGE(1017, Frequency)
+MESSAGE(1018, WaveSpectrumParameters)
 MESSAGE(2000, GpioState)
 MESSAGE(2001, GpioStateGet)
 MESSAGE(2002, GpioStateSet)
@@ -361,9 +368,10 @@ MESSAGE(2003, ColoredDissolvedOrganicMatter)
 MESSAGE(2004, FluorescentDissolvedOrganicMatter)
 MESSAGE(2006, TotalMagIntensity)
 MESSAGE(2010, CommRestriction)
-MESSAGE(2021, VersionInfo)
 MESSAGE(2016, QueryTypedEntityParameters)
 MESSAGE(2017, TypedEntityParameter)
 MESSAGE(2018, ValuesIf)
+MESSAGE(2021, VersionInfo)
 MESSAGE(2022, TotalHeading)
+MESSAGE(2036, TypedEntityParameterEditor)
 #undef MESSAGE

@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: e3cbea913e74a45c4c632a599783c376                            *
+// IMC XML MD5: 8843584cef24468b60bec4fc699ea937                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -630,6 +630,8 @@
 #define DUNE_IMC_SOISTATE 853
 //! MessagePart identification number.
 #define DUNE_IMC_MESSAGEPART 877
+//! MessagePartControl identification number.
+#define DUNE_IMC_MESSAGEPARTCONTROL 878
 //! NeptusBlob identification number.
 #define DUNE_IMC_NEPTUSBLOB 888
 //! Aborted identification number.
@@ -674,12 +676,24 @@
 #define DUNE_IMC_DMSDETECTION 908
 //! HomePosition identification number.
 #define DUNE_IMC_HOMEPOSITION 909
+//! AbsoluteWind identification number.
+#define DUNE_IMC_ABSOLUTEWIND 911
+//! AisInfo identification number.
+#define DUNE_IMC_AISINFO 912
+//! ENCAwareness identification number.
+#define DUNE_IMC_ENCAWARENESS 913
+//! Displacement identification number.
+#define DUNE_IMC_DISPLACEMENT 915
 //! CurrentProfile identification number.
 #define DUNE_IMC_CURRENTPROFILE 1014
 //! CurrentProfileCell identification number.
 #define DUNE_IMC_CURRENTPROFILECELL 1015
 //! ADCPBeam identification number.
 #define DUNE_IMC_ADCPBEAM 1016
+//! Frequency identification number.
+#define DUNE_IMC_FREQUENCY 1017
+//! WaveSpectrumParameters identification number.
+#define DUNE_IMC_WAVESPECTRUMPARAMETERS 1018
 //! GpioState identification number.
 #define DUNE_IMC_GPIOSTATE 2000
 //! GpioStateGet identification number.
@@ -694,15 +708,17 @@
 #define DUNE_IMC_TOTALMAGINTENSITY 2006
 //! CommRestriction identification number.
 #define DUNE_IMC_COMMRESTRICTION 2010
-//! VersionInfo identification number.
-#define DUNE_IMC_VERSIONINFO 2021
 //! QueryTypedEntityParameters identification number.
 #define DUNE_IMC_QUERYTYPEDENTITYPARAMETERS 2016
 //! TypedEntityParameter identification number.
 #define DUNE_IMC_TYPEDENTITYPARAMETER 2017
 //! ValuesIf identification number.
 #define DUNE_IMC_VALUESIF 2018
+//! VersionInfo identification number.
+#define DUNE_IMC_VERSIONINFO 2021
 //! TotalHeading identification number.
 #define DUNE_IMC_TOTALHEADING 2022
+//! TypedEntityParameterEditor identification number.
+#define DUNE_IMC_TYPEDENTITYPARAMETEREDITOR 2036
 
 #endif
