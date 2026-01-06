@@ -51,6 +51,8 @@ namespace Control
         double ext_gain;
         double ext_trgain;
         double cc_lookahead;
+        double plos_pp_gain;
+        double plos_los_gain;
       };
 
       struct Task: public DUNE::Control::PathController
@@ -92,7 +94,7 @@ namespace Control
           .description("Turn rate gain for extended control");
 
           param("Loiter Algorithm", m_args.loiter_algorithm)
-          .values("VectorField, CarrotChasing")
+          .values("VectorField, CarrotChasing, PLOS")
           .defaultValue("CarrotChasing")
           .description("Algorithm used for loiter control.");
 
@@ -100,6 +102,14 @@ namespace Control
           .defaultValue("10.0")
           .units(Units::Degree)
           .description("Lookahead angle for carrot chasing loiter");
+
+          param("PLOS -- Pure Persuit Gain", m_args.plos_pp_gain)
+          .defaultValue("10.0")
+          .description("PLOS Pure Persuit Gain (k1)");
+
+          param("PLOS -- LOS Gain", m_args.plos_los_gain)
+          .defaultValue("10.0")
+          .description("PLOS LOS Gain (k2)");
         }
 
         void
@@ -185,6 +195,8 @@ namespace Control
             loiterVectorField(state, ts);
           else if (m_args.loiter_algorithm == "CarrotChasing")
             loiterCarrotChase(state, ts);
+          else if (m_args.loiter_algorithm == "PLOS")
+            loiterPLOS(state, ts);
           else
           {
             err("Unknown loiter algorithm '%s'. Defaulting to CarrotChasing.",
@@ -233,7 +245,34 @@ namespace Control
           // Dispatch heading reference
           m_heading.value = Angles::normalizeRadian(psi_d);
           dispatch(m_heading);
-          war("This is running carrot chasing loiter control!");
+        }
+
+        void
+        loiterPLOS(const IMC::EstimatedState& state, const TrackingState& ts)
+        {
+          // Vector from center to vehicle
+          const double dx = state.x - ts.loiter.center.x;
+          const double dy = state.y - ts.loiter.center.y;
+
+          // Compute cross-track error
+          const double d = Math::norm(dx, dy) - ts.loiter.radius;
+
+          // Compute current loiter angle
+          const double phi = std::atan2(dy, dx);
+
+          // Desired tangential heading
+          const double lambda = ts.loiter.clockwise ? 1.0 : -1.0;
+          const double psi_p = phi + lambda * Math::c_half_pi;
+
+          // Heading error relative to tangent
+          const double e_psi = Angles::normalizeRadian(state.psi - psi_p);
+
+          // PLOS guidance law (Algorithm 6)
+          const double psi_d = psi_p - m_args.plos_pp_gain * e_psi + m_args.plos_los_gain * d;
+
+          // Dispatch heading reference
+          m_heading.value = Angles::normalizeRadian(psi_d);
+          dispatch(m_heading);
         }
       };
     }
