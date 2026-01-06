@@ -292,6 +292,12 @@ namespace DUNE
         return *this;
       }
 
+      bool
+      editable(void) const
+      {
+        return m_editable;
+      }
+
       void
       writeXML(std::ostream& os) const;
 
