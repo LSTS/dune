@@ -585,6 +585,13 @@ namespace DUNE
       reply.request_id = msg->request_id;
       reply.entity_name = std::string(getEntityLabel());
 
+      if (!m_param_editor.empty())
+      {
+        IMC::TypedEntityParameterEditor editor;
+        editor.value = m_param_editor;
+        reply.parameters.push_back(editor);
+      }
+
       std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
       for (; itr != m_params.end(); itr++)
       {
@@ -615,7 +622,12 @@ namespace DUNE
         param.list_min_size = p->minimumSize() == UINT_MAX ? 
                               0 : p->minimumSize();
         param.list_max_size = p->maximumSize();
+
+        // if parameter is not editable set visibility accordingly
         param.visibility = p->getVisibility();
+        if (!p->editable())
+          param.visibility += 2;
+        
         param.scope = p->getScope();
 
         auto values_if = p->valuesIf();
