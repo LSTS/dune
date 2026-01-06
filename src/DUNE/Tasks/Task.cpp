@@ -600,7 +600,7 @@ namespace DUNE
         {
           throw std::runtime_error("invalid parameter type: " + p->getType()); 
         }
-        param.default_value = p->defaultValue();
+        param.default_value = p->value().empty() ? p->defaultValue() : p->value();
         param.units = Units::getAbbrev(p->units());
         param.description = p->description();
         param.values_list = p->values();
