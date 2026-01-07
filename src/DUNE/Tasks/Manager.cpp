@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -214,8 +214,23 @@ namespace DUNE
     Manager::writeParamsXML(std::ostream& os) const
     {
       std::map<std::string, Task*>::const_iterator itr = m_tasks.begin();
+      std::map<std::string, std::string> label2section;
+      std::set<std::string> labels;
+      // Create an ordered set of tasks
       for ( ; itr != m_tasks.end(); ++itr)
-        itr->second->writeParamsXML(os);
+      {
+        std::string label = itr->second->getEntityLabel();
+        label2section[label] = itr->first;
+        labels.insert(label);
+      }
+
+      // Write task parameters in order of labels
+      std::set<std::string>::const_iterator litr = labels.begin();
+      for ( ; litr != labels.end(); ++litr)
+      {
+        std::string section = label2section.at(*litr);
+        m_tasks.at(section)->writeParamsXML(os);
+      }
     }
 
     void
