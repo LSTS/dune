@@ -45,27 +45,55 @@ namespace Power
     static constexpr uint8_t c_cmd_timeout = 2;
     //! Max no reply count before reporting error.
     static constexpr uint8_t c_max_no_rpl_cnt = 5;
-    //! Command head character.
-    static constexpr char c_cmd_head = '$';
-    //! Command tail character.
-    static constexpr char c_cmd_tail = '\n';
-    //! Command argument separator.
-    static constexpr char c_cmd_arg_sep = ',';
-    //! Command argument end separator.
-    static constexpr char c_cmd_arg_end = '*';
-    //! Command to get data.
+    //! Hearbeat period (seconds).
+    static constexpr uint8_t c_hb_period = 1;
+    //! Data command id.
     static constexpr char c_cmd_data = 'D';
-    //! Command to control power channel.
+    //! Control power channel command id.
     static constexpr char c_cmd_power_ctl = 'P';
+    //! Acknowledge command id.
+    static constexpr char c_cmd_ack = 'A';
+    //! Not cknowledge command id.
+    static constexpr char c_cmd_nack = 'N';
+    //! Synchronize command id.
+    static constexpr char c_cmd_sync = 'S';
+    //! Shutdown command id.
+    static constexpr char c_cmd_shdn = 'X';
+    //! Heartbeat command id.
+    static constexpr char c_cmd_hb = 'H';
+    //! 5V power channel label.
+    static constexpr const char* c_pwr_ch_5v_label = "+5 V";
+    //! 12V power channel label.
+    static constexpr const char* c_pwr_ch_12v_label = "+12 V";
+    //! 5V power channel id.
+    static constexpr uint8_t c_pwr_ch_5v_id = 0;
+    //! 12V power channel id.
+    static constexpr uint8_t c_pwr_ch_12v_id = 1;
 
     //! Task arguments.
     struct Arguments
     {
       //! IO port device.
       std::string io_dev;
+      //! 5V power channel state.
+      bool pwr_ch_5v_state;
+      //! 12V power channel state.
+      bool pwr_ch_12v_state;
+      //! Output data rate.
+      uint8_t odr;
     };
 
-    struct Task: public Tasks::Periodic
+    struct PowerChannel
+    {
+      //! Power channel id.
+      uint8_t id;
+      //! Power channel state.
+      IMC::PowerChannelState pcs;
+      //! Initial state.
+      bool init_state;
+    };
+
+    struct Task: public Tasks::Task
     {
       //! Task arguments.
       Arguments m_args;
@@ -75,24 +103,76 @@ namespace Power
       char m_buffer[128];
       //! No reply counter.
       uint8_t m_no_rpl_cnt;
+      //! Power Channels <label, power channel>.
+      std::map<std::string, PowerChannel> m_pwr_chs;
+      //! Synced with device.
+      bool m_synced;
+      //! Version info.
+      IMC::VersionInfo m_vi;
+      //! Input data timeout.
+      Time::Counter<double> m_inp_tmt;
+      //! Shutdown was requested.
+      bool m_shdn_req;
+      //! Heartbeat timer.
+      Time::Counter<double> m_hb_timer;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Periodic(name, ctx),
+        Tasks::Task(name, ctx),
         m_handle(NULL),
-        m_no_rpl_cnt(0)
+        m_no_rpl_cnt(0),
+        m_synced(false),
+        m_shdn_req(false),
+        m_hb_timer(c_hb_period)
       {
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
 
+        param("Power Channel 5V - State", m_args.pwr_ch_5v_state)
+        .defaultValue("false")
+        .description("State of 5V power channel.");
+
+        param("Power Channel 12V - State", m_args.pwr_ch_12v_state)
+        .defaultValue("false")
+        .description("State of 12V power channel.");
+
+        param("Output Data Rate", m_args.odr)
+        .defaultValue("1")
+        .minimumValue("0")
+        .maximumValue("255")
+        .units(Units::Hertz)
+        .description("Rate of data output from device. "
+                     "If 0, no data will be outputed.");
+
+        m_vi.op = VersionInfo::OP_REPLY;
+
+        bind<IMC::VersionInfo>(this);
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::QueryPowerChannelState>(this);
+      }
+
+      void
+      onUpdateParameters(void) override
+      {
+        if (!m_synced)
+          return;
+
+        if (paramChanged(m_args.odr))
+          setDataRate(m_args.odr);
+
+        if (paramChanged(m_args.pwr_ch_5v_state))
+          setPowerChannel(c_pwr_ch_5v_label, m_args.pwr_ch_5v_state);
+
+        if (paramChanged(m_args.pwr_ch_12v_state))
+          setPowerChannel(c_pwr_ch_12v_label, m_args.pwr_ch_12v_state);
       }
 
       void
       onResourceRelease(void) override
       {
         Memory::clear(m_handle);
+        m_pwr_chs.clear();
+        m_synced = false;
       }
 
       void
@@ -109,6 +189,17 @@ namespace Power
           throw RestartNeeded("invalid UART URI", 5);
 
         m_handle = new Hardware::SerialPort(uart, baud);
+
+        m_pwr_chs.clear();
+        auto& pwr_ch_5v = m_pwr_chs[c_pwr_ch_5v_label];
+        pwr_ch_5v.id = c_pwr_ch_5v_id;
+        pwr_ch_5v.pcs.name = c_pwr_ch_5v_label;
+        pwr_ch_5v.init_state = false;
+        auto& pwr_ch_12v = m_pwr_chs[c_pwr_ch_12v_label];
+        pwr_ch_12v.id = c_pwr_ch_12v_id;
+        pwr_ch_12v.init_state = false;
+
+        m_synced = false;
       }
 
       void
@@ -120,81 +211,145 @@ namespace Power
         m_no_rpl_cnt = 0;
         m_handle->setCanonicalInput(true);
         m_handle->flush();
+
+        m_shdn_req = false;
+
+        m_synced = false;
+
+        if (!synchronize())
+          throw RestartNeeded("unable to synchronize with device", 5);
+
+        if (m_shdn_req)
+          return;
+
+        m_synced = true;
+
+        if (!setDataRate(m_args.odr, true))
+          throw RestartNeeded("unable to set output data rate", 5);
+
+        if (!setPowerChannel(c_pwr_ch_5v_label, m_args.pwr_ch_5v_state, true))
+          throw RestartNeeded("unable to set 5V power channel initial state", 5);
+
+        m_pwr_chs[c_pwr_ch_5v_label].init_state = m_args.pwr_ch_5v_state;
+
+        if (!setPowerChannel(c_pwr_ch_12v_label, m_args.pwr_ch_12v_state, true))
+          throw RestartNeeded("unable to set 12V power channel initial state", 5);
+
+        m_pwr_chs[c_pwr_ch_12v_label].init_state = m_args.pwr_ch_12v_state;
       }
 
       void
       consume(const IMC::PowerChannelControl* msg)
       {
+        if (!m_synced)
+          return;
+
         if (msg->getDestination() != getSystemId())
           return;
+
+        if (m_pwr_chs.find(msg->name) == m_pwr_chs.end())
+          return;
+
+        switch (msg->op)
+        {
+        case PowerChannelControl::PCC_OP_TURN_ON:
+          setPowerChannel(msg->name, true);
+          break;
+
+        case PowerChannelControl::PCC_OP_TURN_OFF:
+          setPowerChannel(msg->name, false);
+          break;
+
+        case PowerChannelControl::PCC_OP_TOGGLE:
+          setPowerChannel(msg->name, m_pwr_chs[msg->name].pcs.state != PowerChannelState::PCS_ON);
+          break;
+
+        case PowerChannelControl::PCC_OP_RESTART:
+          setPowerChannel(msg->name, m_pwr_chs[msg->name].init_state);
+          break;
+        
+        default:
+          break;
+        }
       }
 
       void
       consume(const IMC::QueryPowerChannelState* msg)
       {
+        if (!m_synced)
+          return;
+
         if (msg->getDestination() != getSystemId())
           return;
+
+        for (auto& pwr_ch: m_pwr_chs)
+          dispatchReply(*msg, pwr_ch.second.pcs);
       }
 
-      uint8_t
-      computeChecksum(const std::string& str)
+      void
+      consume(const IMC::VersionInfo* msg)
       {
-        size_t hid = str.find(c_cmd_head);
-        size_t eid = str.find(c_cmd_arg_end);
-        if (hid == std::string::npos || eid == std::string::npos || eid <= hid)
-          return 0;
+        if (!m_synced)
+          return;
 
-        uint8_t cksum = 0;
-        for (size_t i = hid + 1; i < eid; ++i)
-          cksum ^= static_cast<uint8_t>(str[i]);
+        if (msg->getDestination() != getSystemId())
+          return;
 
-        return cksum;
+        if (msg->getDestinationEntity() != getEntityId())
+          return;
+
+        dispatchReply(*msg, m_vi);
       }
 
       char
       processInput(const std::string input)
       {
-        if (input.size() < /* 5 */ 4)
-          return '\0';
-
-        if (input.front() != c_cmd_head || input.back() != c_cmd_tail)
-          return '\0';
-
-        auto arg_end = input.find(c_cmd_arg_end);
-        if (arg_end == std::string::npos)
-          return '\0';
-
-        std::string payload = input.substr(1, arg_end);
-        uint8_t rcsum = static_cast<uint8_t>(input[arg_end + 1]);
-        uint8_t cksum = computeChecksum(payload);
-        if (rcsum != cksum)
-          return '\0';
-
-        payload.pop_back();
-        std::vector<std::string> data;
-        String::split(payload, std::string(1, c_cmd_arg_sep), data);
-        return interpretInput(data);
+        char res = '\0';
+        try
+        {
+          NMEAReader reader(input);
+          res = interpretInput(reader);
+        }
+        catch(const DUNE::Parsers::Error& e)
+        {
+          war("error parsing input : %s", e.what());
+        }
+        
+        return res;
       }
 
       char
-      interpretInput(const std::vector<std::string>& data)
+      interpretInput(NMEAReader& reader)
       {
-        if (data.size() < 1)
+        const auto code = reader.code();
+        if (strlen(code) != 1)
           return '\0';
 
-        if (data[0].size() != 1)
-          return '\0';
-
-        const char cmd_id = data[0][0];
+        const char cmd_id = code[0];
         switch (cmd_id)
         {
         case c_cmd_data:
-          // TODO: process data message
+          interpretData(reader);
           break;
-        
-        case c_cmd_power_ctl:
-          // TODO: process power control reply
+
+        case c_cmd_ack:
+        case c_cmd_nack:
           break;
+
+        case c_cmd_sync:
+          interpretSynchronize(reader);
+          break;
+
+        case c_cmd_shdn:
+        {
+          inf("shutdown has been requested");
+          IMC::PowerOperation pop;
+          pop.setDestination(getSystemId());
+          pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+          dispatch(pop);
+          m_shdn_req = true;
+          break;
+        }
 
         default:
           return '\0';
@@ -204,22 +359,44 @@ namespace Power
       }
 
       void
-      sendCommand(const char cmd_id, const std::vector<std::string>& args = {}, const char cmd_reply = '\0')
+      interpretData(NMEAReader& reader)
+      {
+        // TODO: update for valid data format.
+        float voltage, current;
+        reader >> voltage >> current;
+        spew("v: %.2f c: %.2f", voltage, current);
+        m_inp_tmt.reset();
+      }
+
+      void
+      interpretSynchronize(NMEAReader& reader)
+      {
+        unsigned major, minor, patch;
+        reader >> major >> minor >> patch;
+        m_vi.version = String::str("%u.%u.%u", major, minor, patch);
+        dispatch(m_vi);
+        trace("firmware version: %s", m_vi.version.c_str());
+        m_synced = true;
+      }
+
+      void
+      sendCommand(const char cmd_id, const char cmd_reply = '\0', const bool persistent = false, const std::vector<uint8_t>& args = {})
       {
         if (m_handle == NULL)
           throw RestartNeeded("device handle is null", 5);
 
-        std::string cmd(1, c_cmd_head);
-        cmd += cmd_id;
-        if (args.size() > 0)
-          cmd += c_cmd_arg_sep + String::join(args.begin(), args.end(), std::string(1, c_cmd_arg_sep));
-        cmd += c_cmd_arg_end;
-        cmd += static_cast<char>(computeChecksum(cmd));
-        cmd += c_cmd_tail;
-        m_handle->write(cmd.c_str(), cmd.size());
+        do
+        {
+          NMEAWriter cmd(std::string(1, cmd_id));
+          for (const auto& arg: args)
+            cmd << uncastLexical(arg);
+          m_handle->writeString(cmd.sentence().c_str());
+          m_hb_timer.reset();
 
-        if (cmd_reply != 0)
-          waitForCommand(cmd_reply);
+          if (cmd_reply == '\0')
+            return;
+        }
+        while (!stopping() && !waitForCommand(cmd_reply) && persistent && !m_shdn_req);
       }
 
       char
@@ -232,51 +409,139 @@ namespace Power
           return processInput(m_buffer);
         }
         
-        return 0;
+        return '\0';
       }
 
-      void
+      bool
       waitForCommand(const char cmd_id, const uint8_t timeout = c_cmd_timeout)
       {
         if (m_handle == NULL)
           throw RestartNeeded("device handle is null", 5);
 
-        Time::Counter<uint8_t> timer(timeout);
+        Time::Counter<unsigned> timer(timeout);
+
         do
         {
           if (Poll::poll(*m_handle, timer.getRemaining()))
           {
-            if (cmd_id == readInput())
+            const auto in = readInput();
+
+            if (in == c_cmd_nack)
+              throw std::invalid_argument("invalid command");
+
+            if (in == cmd_id)
             {
               m_no_rpl_cnt = 0;
-              return;
+              return true;
             }
           }
+
+          if (m_shdn_req)
+            return true;
 
           if (timer.overflow())
           {
             m_no_rpl_cnt++;
             if (m_no_rpl_cnt >= c_max_no_rpl_cnt)
-              throw RestartNeeded("reached maximum no reply count", 5);
+              throw std::runtime_error("reached maximum no reply count");
             else
               war("no reply from device (%u/%u)", m_no_rpl_cnt, c_max_no_rpl_cnt);
 
-            return;
+            return false;
           }
         }
         while (!stopping());
+
+        return false;
+      }
+
+      bool
+      synchronize(void)
+      {
+        try
+        {
+          debug("trying to sync with device : setting heartbeat period to %u", c_hb_period);
+          sendCommand(c_cmd_sync, c_cmd_sync, true, {c_hb_period});
+          inf("synced with device : heartbeat period was set to %u", c_hb_period);
+          return true;
+        }
+        catch(const std::exception& e)
+        {
+          err("failed synchronization : %s", e.what());
+          return false;
+        }
+      }
+      
+      void
+      heartbeat(void)
+      {
+        spew("heartbeat");
+        sendCommand(c_cmd_hb);
+      }
+
+      bool
+      setDataRate(const uint8_t rate, const bool persistent = false)
+      {
+        try
+        {
+          debug("trying to set data rate to %u Hz", rate);
+          sendCommand(c_cmd_data, c_cmd_ack, persistent, {rate});
+          debug("data rate set to %u Hz", rate);
+
+          if (rate > 0)
+            m_inp_tmt.setTop(2.0 / rate);
+
+          return true;
+        }
+        catch(const std::exception& e)
+        {
+          err("failed to set data rate : %s", e.what());
+          return false;
+        }
+      }
+
+      bool
+      setPowerChannel(const std::string& label, const bool state, const bool persistent = false)
+      {
+        try
+        {
+          auto& pwr_ch = m_pwr_chs.at(label);
+          debug("trying to turn %s power channel \"%s\"", state ? "on" : "off", label.c_str());
+          sendCommand(c_cmd_power_ctl, c_cmd_ack, persistent, {pwr_ch.id, static_cast<uint8_t>(state)});
+          pwr_ch.pcs.state = state;
+          dispatch(m_pwr_chs[c_pwr_ch_12v_label].pcs);
+          spew("power channel \"%s\" is %s", label.c_str(), state ? "on" : "off");
+          return true;
+        }
+        catch(const std::exception& e)
+        {
+          err("failed to set power channel : %s", e.what());
+          return false;
+        }
       }
 
       void
-      getData(void)
+      onMain(void) override
       {
-        sendCommand(c_cmd_data, {}, c_cmd_data);
-      }
+        while (!stopping())
+        {
+          if (m_hb_timer.overflow())
+            heartbeat();
 
-      void
-      task(void) override
-      {
-        getData();
+          if (m_shdn_req)
+          {
+            waitForMessages(1.0);
+            continue;
+          }
+
+          if (Poll::poll(*m_handle, 1.0))
+            readInput();
+
+          consumeMessages();
+
+          if (m_inp_tmt.overflow() && m_args.odr > 0)
+            throw RestartNeeded(String::str("no valid data for the last %.2f seconds", m_inp_tmt.getElapsed()), 5);
+        }
       }
     };
   }
