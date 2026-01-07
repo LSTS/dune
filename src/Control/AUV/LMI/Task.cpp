@@ -127,7 +127,6 @@ namespace Control
 
           param("Force Pitch At Surface", m_args.force_pitch)
           .defaultValue("false")
-          .units(Units::Meter)
           .description("Force pitching up at the surface");
 
           param("Gain Matrix", m_args.k_gain)
