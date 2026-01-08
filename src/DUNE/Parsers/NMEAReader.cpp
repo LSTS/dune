@@ -32,10 +32,10 @@
 #include <sstream>
 #include <cstdio>
 #include <iostream>
+#include <algorithm>
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
-#include <DUNE/Parsers/Exceptions.hpp>
 #include <DUNE/Parsers/NMEAReader.hpp>
 
 //! Characters to ignore in the beginning and end of a string.
@@ -97,176 +97,98 @@ namespace DUNE
 
       //! Initialize input string stream.
       m_stream.str(proper);
+      m_total = std::count(proper.begin(), proper.end(), ',');
 
       //! Extract code.
-      m_bfr = new char[m_length];
-      m_stream.get(m_bfr, m_length, ',');
-      if (m_stream.gcount() <= 0)
-        throw InvalidCode();
-      ++m_field;
-
-      m_code = m_bfr;
+      (*this) >> m_code;
     }
 
-    NMEAReader::~NMEAReader(void)
-    {
-      delete [] m_bfr;
-    }
-
-    NMEAReader&
+    void
     NMEAReader::skip(void)
     {
-      checkFieldStart();
-
-      m_stream.get(m_bfr, m_length, ',');
-
-      if (m_stream.fail())
-        throw ConversionError("discard type", m_field);
-
-      ++m_field;
-
-      return *this;
-    }
-
-    NMEAReader&
-    NMEAReader::operator>>(bool& value)
-    {
-      checkFieldStart();
-
-      if (m_stream.peek() == ',')
-      {
-        ++m_field;
-        throw ConversionError("boolean", m_field);
-      }
-
-      m_stream >> value;
-      if (m_stream.fail())
-        throw ConversionError("boolean", m_field);
-
-      ++m_field;
-
-      return *this;
-    }
-
-    NMEAReader&
-    NMEAReader::operator>>(int& value)
-    {
-      checkFieldStart();
-
-      if (m_stream.peek() == ',')
-      {
-        ++m_field;
-        throw ConversionError("int", m_field);
-      }
-
-      m_stream >> value;
-      if (m_stream.fail())
-        throw ConversionError("integer", m_field);
-
-      ++m_field;
-
-      return *this;
-    }
-
-    NMEAReader&
-    NMEAReader::operator>>(unsigned& value)
-    {
-      checkFieldStart();
-
-      if (m_stream.peek() == ',')
-      {
-        ++m_field;
-        throw ConversionError("unsigned", m_field);
-      }
-
-      m_stream >> value;
-      if (m_stream.fail())
-        throw ConversionError("unsigned", m_field);
-
-      ++m_field;
-
-      return *this;
-    }
-
-    NMEAReader&
-    NMEAReader::operator>>(float& value)
-    {
-      checkFieldStart();
-
-      if (m_stream.peek() == ',')
-      {
-        ++m_field;
-        throw ConversionError("float", m_field);
-      }
-
-      m_stream >> value;
-      if (m_stream.fail())
-        throw ConversionError("float", m_field);
-
-      ++m_field;
-
-      return *this;
-    }
-
-    NMEAReader&
-    NMEAReader::operator>>(double& value)
-    {
-      checkFieldStart();
-
-      if (m_stream.peek() == ',')
-      {
-        ++m_field;
-        throw ConversionError("double", m_field);
-      }
-
-      m_stream >> value;
-      if (m_stream.fail())
-        throw ConversionError("double", m_field);
-
-      ++m_field;
-
-      return *this;
+      Optional::optional<int> dummy;
+      (*this) >> dummy;
     }
 
     NMEAReader&
     NMEAReader::operator>>(std::string& value)
     {
-      checkFieldStart();
+      fieldStart();
 
-      if (m_stream.peek() == ',')
+      if (eos())
+        throw ReaderError("trying to extract fields past the end of the sentence");
+
+      value.clear();
+      while (m_stream.peek() != ',' && !m_stream.eof())
       {
-        value = "";
+        char c;
+        m_stream.get(c);
+        value.push_back(c);
       }
-      else
+
+      if (value.empty())
       {
-        m_bfr[0] = 0;
-        m_stream.get(m_bfr, m_length, ',');
-        if (m_stream.fail() && !m_stream.eof())
-          throw ConversionError("string", m_field);
-        value.assign(m_bfr);
+        if (m_field == 0)
+          throw InvalidCode();
+        else
+          throw EmptyField(m_field);
       }
+
+      if (m_stream.fail())
+        throw ConversionError(m_field);
 
       ++m_field;
+      return *this;
+    }
 
+    NMEAReader&
+    NMEAReader::operator>>(Optional::optional<std::string>& value)
+    {
+      fieldStart();
+
+      if (eos())
+        throw ReaderError("trying to extract fields past the end of the sentence");
+      
+      std::string tmp;
+      while (m_stream.peek() != ',' && !m_stream.eof())
+      {
+        char c;
+        m_stream.get(c);
+        tmp.push_back(c);
+      }
+
+      if (m_stream.fail())
+        throw ConversionError(m_field);
+
+      if (tmp.empty())
+        value.reset();
+      else
+        value = tmp;
+
+      ++m_field;
       return *this;
     }
 
     bool
     NMEAReader::eos(void)
     {
-      return (m_stream.eof() || m_stream.peek() == EOF);
+      return (m_stream.eof() || m_field > m_total);
     }
 
     void
-    NMEAReader::checkFieldStart(void)
+    NMEAReader::fieldStart(void)
     {
+      if (m_field == 0)
+        return;
+
       int c = m_stream.get();
+      while (c != ',')
+      {
+        if (eos())
+          throw ReaderError("trying to extract fields past the end of the sentence");
 
-      if (m_stream.eof())
-        throw ReaderError("trying to extract fields past the end of the sentence");
-
-      if (c != ',')
-        throw ReaderError(Utils::String::str("expecting ',' but got '%c'", c));
+        c = m_stream.get();
+      }
     }
 
     unsigned char
@@ -292,6 +214,12 @@ namespace DUNE
       }
 
       return result;
+    }
+
+    const char*
+    NMEAReader::print(void)
+    {
+      return DUNE::Utils::String::str("%s | %s | %u | %u", m_stream.str().c_str(), m_code.c_str(), m_length, m_field).c_str();
     }
   }
 }
