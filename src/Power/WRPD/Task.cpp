@@ -197,6 +197,7 @@ namespace Power
         pwr_ch_5v.init_state = false;
         auto& pwr_ch_12v = m_pwr_chs[c_pwr_ch_12v_label];
         pwr_ch_12v.id = c_pwr_ch_12v_id;
+        pwr_ch_12v.pcs.name = c_pwr_ch_12v_label;
         pwr_ch_12v.init_state = false;
 
         m_synced = false;
