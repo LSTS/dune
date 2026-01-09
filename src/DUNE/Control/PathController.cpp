@@ -790,18 +790,21 @@ namespace DUNE
         }
         else
         {
-          double lat = m_estate.lat;
-          double lon = m_estate.lon;
+          // double lat = m_estate.lat;
+          // double lon = m_estate.lon;
           // Check if we are within the radius of final point
-          WGS84::displace(m_estate.x, m_estate.y,
-                          &lat, &lon);
+          // WGS84::displace(m_estate.x, m_estate.y,
+          //                 &lat, &lon);
 
-          double x = 0.0;
-          double y = 0.0;
-          WGS84::displacement(lat, lon, 0,
-                              m_ts.lat_en, m_ts.lon_en, 0,
-                              &x, &y);
-          
+          // double x = 0.0;
+          // double y = 0.0;
+          // WGS84::displacement(lat, lon, 0,
+          //                     m_ts.lat_en, m_ts.lon_en, 0,
+          //                     &x, &y);
+
+          // Distance to end point
+          double x = m_ts.end.x - m_estate.x;
+          double y = m_ts.end.y - m_estate.y;
           if (!m_ts.nearby && Math::norm(x, y) <= m_end_radius)
           {
             m_ts.eta = 0;
