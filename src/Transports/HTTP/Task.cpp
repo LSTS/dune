@@ -460,6 +460,14 @@ namespace Transports
           pcc.op = IMC::PowerChannelControl::PCC_OP_SCHED_OFF;
           pcc.sched_time = sched_time;
         }
+        else if (parts[0] == "reset")
+        {
+          pcc.op = IMC::PowerChannelControl::PCC_OP_SCHED_RESET;
+        }
+        else if (parts[0] == "toggle")
+        {
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TOGGLE;
+        }
 
         sendResponse200(sock);
         dispatch(pcc);
