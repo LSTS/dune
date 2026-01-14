@@ -53,7 +53,7 @@ namespace Power
     static constexpr char c_cmd_power_ctl = 'P';
     //! Acknowledge command id.
     static constexpr char c_cmd_ack = 'A';
-    //! Not cknowledge command id.
+    //! Not acknowledge command id.
     static constexpr char c_cmd_nack = 'N';
     //! Synchronize command id.
     static constexpr char c_cmd_sync = 'S';
@@ -61,24 +61,30 @@ namespace Power
     static constexpr char c_cmd_shdn = 'X';
     //! Heartbeat command id.
     static constexpr char c_cmd_hb = 'H';
-    //! 5V power channel label.
-    static constexpr const char* c_pwr_ch_5v_label = "+5 V";
     //! 12V power channel label.
     static constexpr const char* c_pwr_ch_12v_label = "+12 V";
-    //! 5V power channel id.
-    static constexpr uint8_t c_pwr_ch_5v_id = 0;
+    //! 5V power channel label.
+    static constexpr const char* c_pwr_ch_5v_label = "+5 V";
     //! 12V power channel id.
-    static constexpr uint8_t c_pwr_ch_12v_id = 1;
+    static constexpr uint8_t c_pwr_ch_12v_id = 0;
+    //! 5V power channel id.
+    static constexpr uint8_t c_pwr_ch_5v_id = 1;
 
     //! Task arguments.
     struct Arguments
     {
       //! IO port device.
       std::string io_dev;
-      //! 5V power channel state.
-      bool pwr_ch_5v_state;
+      //! ESC data entity label.
+      std::string esc_elabel;
+      //! +12V channel data entity label.
+      std::string channel_12v_elabel;
+      //! +5V channel data entity label.
+      std::string channel_5v_elabel;
       //! 12V power channel state.
       bool pwr_ch_12v_state;
+      //! 5V power channel state.
+      bool pwr_ch_5v_state;
       //! Output data rate.
       uint8_t odr;
     };
@@ -115,6 +121,18 @@ namespace Power
       bool m_shdn_req;
       //! Heartbeat timer.
       Time::Counter<double> m_hb_timer;
+      //! ESC Voltage.
+      IMC::Voltage m_esc_voltage;
+      //! ESC Current.
+      IMC::Current m_esc_current;
+      //! +5V Channel Voltage.
+      IMC::Voltage m_5v_voltage;
+      //! +5V Channel Current.
+      IMC::Current m_5v_current;
+      //! +12V Channel Voltage.
+      IMC::Voltage m_12v_voltage;
+      //! +12V Channel Current.
+      IMC::Current m_12v_current;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -128,13 +146,28 @@ namespace Power
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
 
-        param("Power Channel 5V - State", m_args.pwr_ch_5v_state)
-        .defaultValue("false")
-        .description("State of 5V power channel.");
+        param("ESC Data - Entity Label", m_args.esc_elabel)
+        .editable("false")
+        .defaultValue("ESC")
+        .description("Entity Label for ESC data.");
+
+        param("12V Channel Data - Entity Label", m_args.channel_12v_elabel)
+        .editable("false")
+        .defaultValue("12V Channel")
+        .description("Entity Label for 12V Channel data.");
+
+        param("5V Channel Data - Entity Label", m_args.channel_5v_elabel)
+        .editable("false")
+        .defaultValue("5V Channel")
+        .description("Entity Label for 5V Channel data.");
 
         param("Power Channel 12V - State", m_args.pwr_ch_12v_state)
         .defaultValue("false")
         .description("State of 12V power channel.");
+
+        param("Power Channel 5V - State", m_args.pwr_ch_5v_state)
+        .defaultValue("false")
+        .description("State of 5V power channel.");
 
         param("Output Data Rate", m_args.odr)
         .defaultValue("1")
@@ -160,11 +193,11 @@ namespace Power
         if (paramChanged(m_args.odr))
           setDataRate(m_args.odr);
 
-        if (paramChanged(m_args.pwr_ch_5v_state))
-          setPowerChannel(c_pwr_ch_5v_label, m_args.pwr_ch_5v_state);
-
         if (paramChanged(m_args.pwr_ch_12v_state))
           setPowerChannel(c_pwr_ch_12v_label, m_args.pwr_ch_12v_state);
+
+        if (paramChanged(m_args.pwr_ch_5v_state))
+          setPowerChannel(c_pwr_ch_5v_label, m_args.pwr_ch_5v_state);
       }
 
       void
@@ -173,6 +206,26 @@ namespace Power
         Memory::clear(m_handle);
         m_pwr_chs.clear();
         m_synced = false;
+      }
+
+      void
+      onEntityReservation(void) override
+      {
+        auto esc_eid = reserveEntity(m_args.esc_elabel);
+        m_esc_voltage.setSource(getSystemId());
+        m_esc_voltage.setSourceEntity(esc_eid);
+        m_esc_current.setSource(getSystemId());
+        m_esc_current.setSourceEntity(esc_eid);
+        auto channel_12v_eid = reserveEntity(m_args.channel_12v_elabel);
+        m_12v_voltage.setSource(getSystemId());
+        m_12v_voltage.setSourceEntity(channel_12v_eid);
+        m_12v_current.setSource(getSystemId());
+        m_12v_current.setSourceEntity(channel_12v_eid);
+        auto channel_5v_eid = reserveEntity(m_args.channel_5v_elabel);
+        m_5v_voltage.setSource(getSystemId());
+        m_5v_voltage.setSourceEntity(channel_5v_eid);
+        m_5v_current.setSource(getSystemId());
+        m_5v_current.setSourceEntity(channel_5v_eid);
       }
 
       void
@@ -191,14 +244,14 @@ namespace Power
         m_handle = new Hardware::SerialPort(uart, baud);
 
         m_pwr_chs.clear();
-        auto& pwr_ch_5v = m_pwr_chs[c_pwr_ch_5v_label];
-        pwr_ch_5v.id = c_pwr_ch_5v_id;
-        pwr_ch_5v.pcs.name = c_pwr_ch_5v_label;
-        pwr_ch_5v.init_state = false;
         auto& pwr_ch_12v = m_pwr_chs[c_pwr_ch_12v_label];
         pwr_ch_12v.id = c_pwr_ch_12v_id;
         pwr_ch_12v.pcs.name = c_pwr_ch_12v_label;
         pwr_ch_12v.init_state = false;
+        auto& pwr_ch_5v = m_pwr_chs[c_pwr_ch_5v_label];
+        pwr_ch_5v.id = c_pwr_ch_5v_id;
+        pwr_ch_5v.pcs.name = c_pwr_ch_5v_label;
+        pwr_ch_5v.init_state = false;
 
         m_synced = false;
       }
@@ -228,15 +281,15 @@ namespace Power
         if (!setDataRate(m_args.odr, true))
           throw RestartNeeded("unable to set output data rate", 5);
 
-        if (!setPowerChannel(c_pwr_ch_5v_label, m_args.pwr_ch_5v_state, true))
-          throw RestartNeeded("unable to set 5V power channel initial state", 5);
-
-        m_pwr_chs[c_pwr_ch_5v_label].init_state = m_args.pwr_ch_5v_state;
-
         if (!setPowerChannel(c_pwr_ch_12v_label, m_args.pwr_ch_12v_state, true))
           throw RestartNeeded("unable to set 12V power channel initial state", 5);
 
         m_pwr_chs[c_pwr_ch_12v_label].init_state = m_args.pwr_ch_12v_state;
+
+        if (!setPowerChannel(c_pwr_ch_5v_label, m_args.pwr_ch_5v_state, true))
+          throw RestartNeeded("unable to set 5V power channel initial state", 5);
+
+        m_pwr_chs[c_pwr_ch_5v_label].init_state = m_args.pwr_ch_5v_state;
       }
 
       void
@@ -245,8 +298,8 @@ namespace Power
         if (!m_synced)
           return;
 
-        if (msg->getDestination() != getSystemId())
-          return;
+        // if (msg->getDestination() != getSystemId())
+        //   return;
 
         if (m_pwr_chs.find(msg->name) == m_pwr_chs.end())
           return;
@@ -280,8 +333,8 @@ namespace Power
         if (!m_synced)
           return;
 
-        if (msg->getDestination() != getSystemId())
-          return;
+        // if (msg->getDestination() != getSystemId())
+        //   return;
 
         for (auto& pwr_ch: m_pwr_chs)
           dispatchReply(*msg, pwr_ch.second.pcs);
@@ -362,10 +415,25 @@ namespace Power
       void
       interpretData(NMEAReader& reader)
       {
-        // TODO: update for valid data format.
-        float voltage, current;
-        reader >> voltage >> current;
-        spew("v: %.2f c: %.2f", voltage, current);
+        float voltage[3] = {0};
+        float current[3] = {0};
+        reader >> voltage[0] >> current[0] >> voltage[1] >> current[1] >> voltage[2] >> current[2];
+        m_esc_voltage.value = voltage[0];
+        m_esc_current.value = current[0];
+        m_12v_voltage.value = voltage[1];
+        m_12v_current.value = current[1];
+        m_5v_voltage.value = voltage[2];
+        m_5v_current.value = current[2];
+        //! TODO: add timestamp.
+        dispatch(m_esc_voltage, DF_KEEP_SRC_EID);
+        dispatch(m_esc_current, DF_KEEP_SRC_EID);
+        dispatch(m_12v_voltage, DF_KEEP_SRC_EID);
+        dispatch(m_12v_current, DF_KEEP_SRC_EID);
+        dispatch(m_5v_voltage, DF_KEEP_SRC_EID);
+        dispatch(m_5v_current, DF_KEEP_SRC_EID);
+        spew("esc -> v: %.2f V i: %.2f A | +12 -> v: %.2f V i: %.2f A | +5 -> v: %.2f V i: %.2f A", voltage[0], current[0],
+                                                                                                    voltage[1], current[1],
+                                                                                                    voltage[2], current[2]);
         m_inp_tmt.reset();
       }
 
@@ -426,9 +494,6 @@ namespace Power
           if (Poll::poll(*m_handle, timer.getRemaining()))
           {
             const auto in = readInput();
-
-            if (in == c_cmd_nack)
-              throw std::invalid_argument("invalid command");
 
             if (in == cmd_id)
             {
