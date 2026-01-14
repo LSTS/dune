@@ -575,7 +575,7 @@ namespace Power
           debug("trying to turn %s power channel \"%s\"", state ? "on" : "off", label.c_str());
           sendCommand(c_cmd_power_ctl, c_cmd_ack, persistent, {pwr_ch.id, static_cast<uint8_t>(state)});
           pwr_ch.pcs.state = state;
-          dispatch(m_pwr_chs[c_pwr_ch_12v_label].pcs);
+          dispatch(m_pwr_chs[label].pcs);
           spew("power channel \"%s\" is %s", label.c_str(), state ? "on" : "off");
           return true;
         }
