@@ -675,9 +675,25 @@ namespace DUNE
         WGS84::displacement(lat, lon, 0,
                             m_pcs.start_lat, m_pcs.start_lon, 0,
                             &m_ts.start.x, &m_ts.start.y);
-        WGS84::displacement(lat, lon, 0,
-                            m_pcs.end_lat, m_pcs.end_lon, 0,
-                            &m_ts.end.x, &m_ts.end.y);
+        
+        // Loiter approach
+        if (!m_ts.loitering && m_ts.loiter.radius > 0)
+        {
+          double prev_lat_end = prev_estate.lat;
+          double prev_lon_end = prev_estate.lon;
+          WGS84::displace(m_ts.end.x, m_ts.end.y,
+                          &prev_lat_end, &prev_lon_end);
+          WGS84::displacement(lat, lon, 0,
+                              prev_lat_end, prev_lon_end, 0,
+                              &m_ts.end.x, &m_ts.end.y);
+
+        }
+        else
+        {
+          WGS84::displacement(lat, lon, 0,
+                              m_pcs.end_lat, m_pcs.end_lon, 0,
+                              &m_ts.end.x, &m_ts.end.y);
+        }
       }
 
       const double now = Clock::get();
