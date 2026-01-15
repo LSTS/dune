@@ -76,6 +76,10 @@ namespace Control
         double ilos_ki;
         //! ILOS - Integral Limit
         double ilos_integral_limit;
+        //! ILOS - Maximum Cross Track Heading
+        double ilos_max_cross_track_heading;
+        //! ILOS - Enabled
+        bool ilos_enabled;
 
         //! Enable anti-grounding.
         // bool en_antiground;
@@ -432,6 +436,10 @@ namespace Control
           .description("Attack angle when lateral track error equals corridor width");
 
 
+          param("ILOS -- Enabled", m_args.ilos_enabled)
+          .defaultValue("true")
+          .description("Enable ILOS.");
+
           param("ILOS -- Lookahead Distance", m_args.ilos_lookahead_distance)
           .defaultValue("100.0")
           .units(Units::Meter)
@@ -442,11 +450,12 @@ namespace Control
           .defaultValue("0.5")
           .description("ILOS Integral Gain.");
 
-          param("ILOS -- Integral Limit", m_args.ilos_integral_limit)
-          .minimumValue("0.0")
-          .defaultValue("100.0")
-          .units(Units::Meter)
-          .description("ILOS Integral Limit. Zero means unbounded.");
+          param("ILOS -- Maximum Cross Track Heading", m_args.ilos_max_cross_track_heading)
+          .minimumValue("45.0")
+          .maximumValue("85.0")
+          .defaultValue("75.0")
+          .units(Units::Degree)
+          .description("Maximum desired heading possible, relative to track bearing.");
 
           // param("Entity Label - Wind", m_args.elabel_ws)
           // .description("Entity label of 'AbsoluteWind' message");
@@ -609,10 +618,10 @@ namespace Control
 
           if (paramChanged(m_args.ilos_ki) && m_integral_controller != nullptr)
             m_integral_controller->setGain(m_args.ilos_ki);
-          if (paramChanged(m_args.ilos_integral_limit) && m_integral_controller != nullptr)
-            m_integral_controller->setIntegralLimit(m_args.ilos_integral_limit);
           if (paramChanged(m_args.ilos_lookahead_distance) && m_integral_controller != nullptr)
             m_integral_controller->setLookAheadDistance(m_args.ilos_lookahead_distance);
+          if (paramChanged(m_args.ilos_max_cross_track_heading) && m_integral_controller != nullptr)
+            m_integral_controller->setMaxCrossTrackHeading(Angles::radians(m_args.ilos_max_cross_track_heading));
         }
 
         void
@@ -646,7 +655,7 @@ namespace Control
           m_integral_controller = new ILOS(this);
           m_integral_controller->setGain(m_args.ilos_ki);
           m_integral_controller->setLookAheadDistance(m_args.ilos_lookahead_distance);
-          m_integral_controller->setIntegralLimit(m_args.ilos_integral_limit);
+          m_integral_controller->setMaxCrossTrackHeading(Angles::radians(m_args.ilos_max_cross_track_heading));
         }
 
           //! Release resources.
@@ -704,6 +713,19 @@ namespace Control
           //! Deactivate Heading & Speed controller.
           disableControlLoops(IMC::CL_YAW);
           disableControlLoops(IMC::CL_SPEED);
+        }
+
+        void
+        onPathStartup(const IMC::EstimatedState& state, const TrackingState& ts)
+        {
+          (void)state;
+          (void)ts;
+
+          if (m_integral_controller != nullptr)
+          {
+            m_integral_controller->reset();
+            m_integral_controller->setTrackBearing(ts.track_bearing);
+          }
         }
 
         // void
@@ -1245,12 +1267,18 @@ namespace Control
         {
           updateEstimatedState(state);
 
-          //! LOS Navigation Law (called wrongly Pure Pursuit in Dune) - desired course is the LOS angle.
-          m_des_heading.value = ts.los_angle;
-          trace("LOS DESIRED COURSE: %f", Angles::degrees(m_des_heading.value));
-
-          //! Integral controller (to correct for current and wind).
-          m_des_heading.value += m_integral_controller->update(ts.track_pos.y);
+          //! ILOS Guidance.
+          //! Use ILOS when enabled
+          if(m_args.ilos_enabled && ts.track_pos.x <= ts.track_length)
+          {
+            m_des_heading.value = m_integral_controller->update(ts.track_pos.y, ts.los_angle);
+            trace("ILOS DESIRED COURSE: %f", Angles::degrees(m_des_heading.value));
+          }
+          else // Use LOS when ILOS is not enabled or the vehicle has overshot the waypoint.
+          {
+            m_des_heading.value = ts.los_angle;
+            trace("LOS DESIRED COURSE: %f", Angles::degrees(m_des_heading.value));
+          }
 
           //! Nothing is enabled.
           if(!m_args.en_cas /* && !m_args.en_antiground */)
