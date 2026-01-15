@@ -61,7 +61,6 @@ Announces.prototype.constructor = Announces;
 
 Announces.prototype.start = function()
 {
-  this.m_logbook = [];
   this.selectedContext = 'all';
   this.uniqueContexts = new Set();
 
