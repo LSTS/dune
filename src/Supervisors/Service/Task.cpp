@@ -92,15 +92,14 @@ namespace Supervisors
           .description(description);
 
           option = String::str("Maneuver %u - Radius", i);
-          description = String::str("Radius for maneuver %u in meters, only applies for SK and Loiter maneuvers.", i);
+          description = String::str("Radius for maneuver %u, in meters, only applies for SK and Loiter maneuvers.", i);
           param(option, m_args.man_config[i].radius)
           .units(Units::Meter)
           .defaultValue("30.0")
-          .minimumValue("5.0")
           .description(description);
 
           option = String::str("Maneuver %u - Speed", i);
-          description = String::str("Speed for maneuver %u in meters per second.", i);
+          description = String::str("Speed for maneuver %u, in meters per second.", i);
           param(option, m_args.man_config[i].speed)
           .units(Units::MeterPerSecond)
           .defaultValue("0.5")
@@ -108,7 +107,7 @@ namespace Supervisors
           .description(description);
 
           option = String::str("Maneuver %u - Duration", i);
-          description = String::str("Duration of maneuver %u in seconds, only applies for SK and Loiter maneuvers."
+          description = String::str("Duration of maneuver %u, in seconds, only applies for SK and Loiter maneuvers."
                                     "If set to 0 the maneuver will not timeout and will continue until the vehicle is disarmed.", i);
           param(option, m_args.man_config[i].duration)
           .units(Units::Second)
@@ -117,8 +116,8 @@ namespace Supervisors
           .description(description);
 
           option = String::str("Maneuver %u - Position", i);
-          description = String::str("Lat, Lon position for maneuver %u in degrees. "
-                                    "If left empty the vehicle will execute the maneuver using its current position.", i);
+          description = String::str("Lat, Lon position for maneuver %u, in degrees. "
+                                    "If left empty the vehicle will execute the maneuver using the previous maneuver position.", i);
           param(option, m_args.man_config[i].position)
           .units(Units::Degree)
           .description(description);
@@ -361,16 +360,26 @@ namespace Supervisors
       }
 
       //! Get maneuver position from configuration or current vehicle position
+      //! In case no position is configured for the maneuver, the previous maneuver position is used
       //! @param[out] lat latitude in radians
       //! @param[out] lon longitude in radians
       //! @param[in] i maneuver configuration index
       void
       getPosition(double& lat, double& lon, const unsigned i)
       {
+        if (m_args.man_config[i].type == "None")
+        {
+          getPosition(lat, lon, i - 1);
+          return;
+        }
+
         if (m_args.man_config[i].position.size() != 2)
         {
           // Use current position
-          toWGS84(m_estate, lat, lon);
+          if (i == 0)
+            toWGS84(m_estate, lat, lon);
+          else // Use previous maneuver position
+            getPosition(lat, lon, i - 1);
         }
         else
         {
