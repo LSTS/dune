@@ -39,11 +39,11 @@ namespace Simulators
 {
   //! Simulates an Acoustic Modem.
   //!
-  //! Receives UamTxFrame messages, encapsulates in SimAcousticMessages and sends over
-  //! UDP multicast.
+  //! Receives UamTxFrame/UamRxRange messages, encapsulates in SimAcousticMessages and
+  //! sends over UDP multicast.
   //! Receives SimAcousticMessages, simulates message travel time and data loss (based
   //! on a Gaussian distribution of distance and message size) and sends
-  //! corresponding UamRxFrame.
+  //! corresponding UamRxFrame / UamRxFrame.
   //! @author Luis Venancio
   namespace AcousticModem
   {
@@ -69,6 +69,8 @@ namespace Simulators
     {
       //! Modem operation arguments.
       DriverArguments driver_args;
+      //! Acoustic systems lists
+      std::vector<std::string> systems;
     };
 
     struct Task: public Tasks::Task
@@ -83,6 +85,8 @@ namespace Simulators
       Driver* m_driver;
       //! Simulated state.
       IMC::SimulatedState* m_sstate;
+      //! Pending frames to be transmitted.
+      IMC::UamTxFrame* m_pending;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -91,7 +95,8 @@ namespace Simulators
         Tasks::Task(name, ctx),
         m_ticket(nullptr),
         m_driver(nullptr),
-        m_sstate(nullptr)
+        m_sstate(nullptr),
+        m_pending(nullptr)
       {
         param("UDP Communications -- Multicast Address", m_args.driver_args.udp_maddr)
         .defaultValue("225.0.2.1")
@@ -107,6 +112,13 @@ namespace Simulators
         param("Transmission Speed", m_args.driver_args.tx_speed)
         .description("Modem transmission speed (bps)");
 
+        param("Fixed CTS Time", m_args.driver_args.cts_time)
+        .description("Modem Clear To Send (CTS) time")
+        .units(DUNE::Units::Second)
+        .minimumValue("0")
+        .maximumValue("10")
+        .defaultValue("1");
+        
         param("Distance Standard Deviation", m_args.driver_args.dst_peak_width)
         .defaultValue("750");
 
@@ -119,12 +131,23 @@ namespace Simulators
         param("PRNG Seed", m_args.driver_args.prng_seed)
         .defaultValue("-1");
 
+        param("Dispatch Acoustic Messages", m_args.driver_args.dispatch_acoustic_msgs)
+        .defaultValue("false")
+        .description("Dispatch acoustic messages to bus");
+        
+        param("Acoustic Systems", m_args.systems)
+        .defaultValue("")
+        .description("List of acoustic systems");
+
         // Register consumers.
         bind<IMC::GpsFix>(this);
         bind<IMC::SimulatedState>(this);
+        bind<IMC::EstimatedState>(this);
         bind<IMC::UamTxFrame>(this);
+        bind<IMC::UamTxRange>(this);
         bind<IMC::DevDataText>(this);
         bind<IMC::SimAcousticMessage>(this);
+        bind<IMC::AcousticSystemsQuery>(this);
       }
 
       //! Initialize resources.
@@ -137,6 +160,14 @@ namespace Simulators
 
         //Deactivate until SimulatedState message is received
         requestDeactivation();
+      }
+
+      //! On activation
+      void
+      onActivation() override
+      {
+        spew("on activation");
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       //! Release resources.
@@ -153,6 +184,14 @@ namespace Simulators
         clearTicket(IMC::UamTxStatus::UTS_CANCELED);
       }
 
+      //! On deactivation
+      void
+      onDeactivation() override
+      {
+        spew("on deactivation");
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
       //! Clear ticket and send status.
       //! @param[in] reason status to send.
       //! @param[in] error error message, if available.
@@ -161,6 +200,7 @@ namespace Simulators
       {
         if (m_ticket != nullptr)
         {
+          debug("Clearing ticket: %d / '%s'", reason, error.c_str());
           sendTxStatus(*m_ticket, reason, error);
           Memory::clear(m_ticket);
         }
@@ -196,12 +236,18 @@ namespace Simulators
 
       void
       consume(const IMC::UamTxFrame* msg)
-      {
+      {        
         if (msg->getSource() != getSystemId())
+        {
+          war("UamTxFrame is not addressed to this system");
           return;
-
+        }
+          
         if (msg->getDestinationEntity() != 255 && msg->getDestinationEntity() != getEntityId())
+        {
+          war("UamTxFrame is not addressed to this entity");
           return;
+        }
 
         // Create and fill new ticket.
         Ticket ticket;
@@ -212,16 +258,63 @@ namespace Simulators
 
         if (msg->sys_dst == getSystemName())
         {
+          debug("Destination is this system.");
           sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
           return;
         }
 
         if (m_driver->isBusy())
         {
+          Memory::replace(m_pending, new IMC::UamTxFrame(*msg));
+          debug("Modem is busy.");
           sendTxStatus(ticket, IMC::UamTxStatus::UTS_BUSY);
           return;
         }
 
+        debug("Transmitting message.");
+        m_driver->transmit(*msg);
+
+        replaceTicket(&ticket);
+        sendTxStatus(ticket, IMC::UamTxStatus::UTS_IP);
+      }
+
+      void
+      consume(const IMC::UamTxRange* msg)
+      {
+        if (msg->getSource() != getSystemId())
+        {
+          war("UamTxRange is not addressed to this system");
+          return;
+        }
+          
+        if (msg->getDestinationEntity() != 255 && msg->getDestinationEntity() != getEntityId())
+        {
+          war("UamTxRange is not addressed to this entity");
+          return;
+        }
+        
+        // Create and fill new ticket.
+        Ticket ticket;
+        ticket.imc_sid  = msg->getSource();
+        ticket.imc_eid  = msg->getSourceEntity();
+        ticket.seq      = msg->seq;
+        ticket.ack      = IMC::UamTxFrame::UTF_ACK;
+
+        if (msg->sys_dst == getSystemName())
+        {
+          debug("Destination is this system.");
+          sendTxStatus(ticket, IMC::UamTxStatus::UTS_INV_ADDR);
+          return;
+        }
+
+        if (m_driver->isBusy())
+        {
+          debug("Modem is busy.");
+          sendTxStatus(ticket, IMC::UamTxStatus::UTS_BUSY);
+          return;
+        }
+
+        debug("Transmitting range.");
         m_driver->transmit(*msg);
 
         replaceTicket(&ticket);
@@ -306,8 +399,28 @@ namespace Simulators
       {
         if(!isActive())
           requestActivation();
+        double lat, lon;
+        Coordinates::toWGS84(*msg, lat, lon);
+        m_driver->set_position(lat, lon, msg->z);
+      }
 
-        *m_sstate = *msg;
+      void
+      consume(const IMC::EstimatedState* msg)
+      {
+        if(!isActive())
+          requestActivation();
+        double lat, lon;
+        Coordinates::toWGS84(*msg, lat, lon);
+        m_driver->set_position(lat, lon, msg->depth);
+      }
+
+      void
+      consume(const IMC::AcousticSystemsQuery* msg)
+      {
+        IMC::AcousticSystems response;
+        response.list = String::join(m_args.systems.begin(), m_args.systems.end(), ",");
+        response.setDestination(msg->getSource());
+        dispatch(response);
       }
 
       //! Parse SimAcousticMessage into UamRxFrame and send.
@@ -352,7 +465,10 @@ namespace Simulators
           return;
 
         if (m_ticket->ack && m_timeout.overflow())
-          clearTicket(IMC::UamTxStatus::UTS_FAILED);
+        {
+          inf("Timeout");
+          clearTicket(IMC::UamTxStatus::UTS_FAILED, "Timeout");
+        }
       }
 
       void
@@ -360,11 +476,13 @@ namespace Simulators
       {
         while (!stopping())
         {
-          //Reference: Sensors/GPS Reader.hpp
           checkTimeout();
-          // m_driver->run();
-
           waitForMessages(0.1);
+          if (m_pending != nullptr && !m_driver->isBusy())
+          {
+            dispatch(m_pending, DF_LOOP_BACK);
+            Memory::clear(m_pending);
+          }          
         }
       }
     };

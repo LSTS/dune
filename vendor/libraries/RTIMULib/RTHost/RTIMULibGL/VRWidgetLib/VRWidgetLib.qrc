@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Images/Compass.png</file>
+        <file>Images/CompassNeedle.png</file>
+        <file>Images/RedShade.png</file>
+        <file>Images/BlueShade.png</file>
+        <file>Images/GreenShade.png</file>
+    </qresource>
+</RCC>

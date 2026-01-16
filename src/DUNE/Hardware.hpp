@@ -59,5 +59,6 @@ namespace DUNE
 #include <DUNE/Hardware/STM/FirmwareUpdate.hpp>
 #include <DUNE/Hardware/PWM.hpp>
 #include <DUNE/Hardware/SocketCAN.hpp>
+#include <DUNE/Hardware/SPI.hpp>
 
 #endif

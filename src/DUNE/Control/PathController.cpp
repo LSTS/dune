@@ -698,11 +698,25 @@ namespace DUNE
         WGS84::displacement(lat, lon, 0,
                             m_pcs.start_lat, m_pcs.start_lon, 0,
                             &m_ts.start.x, &m_ts.start.y);
-        WGS84::displacement(lat, lon, 0,
-                            m_pcs.end_lat, m_pcs.end_lon, 0,
-                            &m_ts.end.x, &m_ts.end.y);
-        Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
-                                        &m_ts.track_bearing, &m_ts.track_length);
+        
+        // Loiter approach
+        if (!m_ts.loitering && m_ts.loiter.radius > 0)
+        {
+          double prev_lat_end = prev_estate.lat;
+          double prev_lon_end = prev_estate.lon;
+          WGS84::displace(m_ts.end.x, m_ts.end.y,
+                          &prev_lat_end, &prev_lon_end);
+          WGS84::displacement(lat, lon, 0,
+                              prev_lat_end, prev_lon_end, 0,
+                              &m_ts.end.x, &m_ts.end.y);
+
+        }
+        else
+        {
+          WGS84::displacement(lat, lon, 0,
+                              m_pcs.end_lat, m_pcs.end_lon, 0,
+                              &m_ts.end.x, &m_ts.end.y);
+        }
       }
 
       const double now = Clock::get();
@@ -815,19 +829,7 @@ namespace DUNE
         }
         else
         {
-          double lat = m_estate.lat;
-          double lon = m_estate.lon;
-          // Check if we are within the radius of final point
-          WGS84::displace(m_estate.x, m_estate.y,
-                          &lat, &lon);
-
-          double x = 0.0;
-          double y = 0.0;
-          WGS84::displacement(lat, lon, 0,
-                              m_ts.lat_en, m_ts.lon_en, 0,
-                              &x, &y);
-          
-          if (!m_ts.nearby && Math::norm(x, y) <= m_end_radius)
+          if (!m_ts.nearby && m_ts.range <= m_end_radius)
           {
             m_ts.eta = 0;
             m_ts.nearby = true;

@@ -250,6 +250,16 @@ main(int argc, char** argv)
     return 1;
   }
 
+  if (!options.value("--vehicle").empty())
+  {
+    std::string vehicle = options.value("--vehicle");
+    
+    uint16_t crc = Algorithms::CRC16::compute((uint8_t *)vehicle.c_str(), vehicle.length());
+    printf("Using imc id %2X for vehicle: %s\n", crc, vehicle.c_str());
+    context.resolver.insert(vehicle, crc);
+    context.config.set("General", "Vehicle", vehicle);
+  }
+
   // If requested, lock memory.
   if (!options.value("--lock-memory").empty())
   {
