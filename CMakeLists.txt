@@ -117,7 +117,6 @@ dune_option(EXIV2 "Enable support for Exiv2")
 dune_option(NO_RTTI "Disable support for RTTI")
 dune_option(UEYE "Enable support for IDS uEye cameras")
 dune_option(H5CPP "Enable support for hdf5 format i/o using the h5cpp library")
-dune_option(ELLIPSOIDAL "Enable ellipsoidal coordinates in (WGS84) displace")
 dune_option(DUNELEGACY "Disable compilation of C++17 features")
 
 # Internationalization.
@@ -280,11 +279,6 @@ else(DUNE_SHARED)
 endif(DUNE_SHARED)
 
 add_dependencies(dune-core dune-version)
-
-# WGS84 Coordinate Type
-if(ELLIPSOIDAL)
-  add_definitions(-DDUNE_ELLIPSOIDAL_DISPLACE)
-endif(ELLIPSOIDAL)
 
 ##########################################################################
 #                          Tasks                                         #
