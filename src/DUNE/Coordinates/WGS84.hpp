@@ -176,7 +176,8 @@ namespace DUNE
       template <typename Ta, typename Tb, typename Tc, typename Td>
       static void
       displace(Ta n, Ta e, Tb d,
-               Tc* lat, Tc* lon, Td* hae)
+               Tc* lat, Tc* lon, Td* hae,
+               bool use_elliptical = false)
       {
         // Convert reference to ECEF coordinates
         double x;
@@ -186,14 +187,18 @@ namespace DUNE
 
         // Compute Geocentric latitude
         double p = std::sqrt(x * x + y * y);
-#if defined(DUNE_ELLIPSOIDAL_DISPLACE)
-        // Use elliptical coordinates
-        double N = computeRn(*lat);
-        double phi = std::atan2(z,p*(1 - c_wgs84_e2 * N / (N + *hae)));
-#else
-        // Use spherical coordinates
-        double phi = std::atan2(z,p);
-#endif
+        double phi;
+        if (use_elliptical)
+        {
+          // Use elliptical coordinates
+          double N = computeRn(*lat);
+          phi = std::atan2(z,p*(1 - c_wgs84_e2 * N / (N + *hae)));
+        }
+        else
+        {
+          // Use spherical coordinates
+          phi = std::atan2(z,p);
+        }
 
         // Compute all needed sine and cosine terms for conversion.
         double slon = std::sin(*lon);
