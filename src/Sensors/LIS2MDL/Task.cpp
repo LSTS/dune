@@ -49,6 +49,8 @@ namespace Sensors
       uint8_t rate;
       //! Enable low power filter.
       bool lp_filter;
+      //! Compass Calibration entity label.
+      std::string calib_elabel;
     };
 
     //! Chip id.
@@ -90,6 +92,8 @@ namespace Sensors
       uint8_t m_cfg_c;
       //! Device initialization done.
       bool m_init_done;
+      //! Compass Calibration entity id.
+      unsigned m_calib_eid;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -99,7 +103,8 @@ namespace Sensors
         m_cfg_a(c_default_cfg_a),
         m_cfg_b(c_default_cfg_b),
         m_cfg_c(c_default_cfg_c),
-        m_init_done(false)
+        m_init_done(false),
+        m_calib_eid(AddressResolver::invalid())
       {
         param("Get temperature period", m_args.temp_period)
         .minimumValue("-1")
@@ -117,6 +122,12 @@ namespace Sensors
         param("Enable low power filter", m_args.lp_filter)
         .defaultValue("false")
         .description("Enable low power filter.");
+
+        param("Compass Calibration - Entity Label", m_args.calib_elabel)
+        .editable("false")
+        .description("Entity label of Compass Calibration task to receive hard iron corrections from.");
+
+        bind<IMC::MagneticField>(this);
       }
 
       void
@@ -166,6 +177,21 @@ namespace Sensors
       {
         deinit();
         getConfig();
+      }
+
+      void
+      onEntityResolution(void) override
+      {
+        DUNE::Hardware::BasicI2CDriver::onEntityResolution();
+
+        try
+        {
+          m_calib_eid = resolveEntity(m_args.calib_elabel);
+        }
+        catch(const std::exception& e)
+        {
+          war("failed to resolve Compass Calibration entity : %s", e.what());
+        }
       }
 
       void
@@ -399,6 +425,21 @@ namespace Sensors
         default:
           break;
         }
+      }
+
+      void
+      consume(const IMC::MagneticField* msg)
+      {
+        if (!isActive())
+          return;
+
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getSourceEntity() != m_calib_eid)
+          return;
+
+        setHardIron(msg->x, msg->y, msg->z);
       }
 
       void
