@@ -367,25 +367,20 @@ namespace Supervisors
       void
       getPosition(double& lat, double& lon, const unsigned i)
       {
-        if (m_args.man_config[i].type == "None")
+        for (unsigned j = i; j >= 0; --j)
         {
-          getPosition(lat, lon, i - 1);
-          return;
+          if (m_args.man_config[j].type == "None")
+            continue;
+
+          if (m_args.man_config[j].position.size() == 2)
+          {
+            lat = Angles::radians(m_args.man_config[j].position[0]);
+            lon = Angles::radians(m_args.man_config[j].position[1]);
+            return;
+          }
         }
 
-        if (m_args.man_config[i].position.size() != 2)
-        {
-          // Use current position
-          if (i == 0)
-            toWGS84(m_estate, lat, lon);
-          else // Use previous maneuver position
-            getPosition(lat, lon, i - 1);
-        }
-        else
-        {
-          lat = Angles::radians(m_args.man_config[i].position[0]);
-          lon = Angles::radians(m_args.man_config[i].position[1]);
-        }
+        toWGS84(m_estate, lat, lon);
       }
     };
   }
