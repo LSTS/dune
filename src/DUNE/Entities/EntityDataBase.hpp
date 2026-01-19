@@ -159,6 +159,9 @@ namespace DUNE
       unsigned int
       resolve(const std::string& label)
       {
+        if (label.empty())
+          throw InvalidLabel();
+
         Concurrency::ScopedMutex l(m_lock);
 
         EntitiesByLabel::iterator itr = m_by_label.find(label);
