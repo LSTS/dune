@@ -367,7 +367,10 @@ namespace Supervisors
       void
       getPosition(double& lat, double& lon, const unsigned i)
       {
-        for (unsigned j = i; j >= 0; --j)
+        if ( i >= c_max_maneuvers )
+          throw std::out_of_range("Maneuver index out of range");
+
+        for (int j = i; j >= 0; --j)
         {
           if (m_args.man_config[j].type == "None")
             continue;
