@@ -98,7 +98,8 @@ namespace Sensors
         DUNE::Hardware::BasicI2CDriver(name, ctx),
         m_cfg_a(c_default_cfg_a),
         m_cfg_b(c_default_cfg_b),
-        m_cfg_c(c_default_cfg_c)
+        m_cfg_c(c_default_cfg_c),
+        m_init_done(false)
       {
         param("Get temperature period", m_args.temp_period)
         .minimumValue("-1")
