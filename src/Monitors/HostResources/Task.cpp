@@ -114,7 +114,9 @@ namespace Monitors
         DUNE::Tasks::Task(name, ctx),
         m_tstamp(0)
       {
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL, Tasks::Parameter::VISIBILITY_USER);
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER);
+
         m_num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
         if (m_num_cpus <= 0 || m_num_cpus > c_max_cpu)
         {
@@ -130,6 +132,7 @@ namespace Monitors
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
+      //! Reserve entity identifiers.
       void
       onEntityReservation(void)
       {
@@ -493,20 +496,117 @@ namespace Monitors
       {
         while (!stopping())
         {
-          try
-          {
-            waitForMessages(0.01);
-          }
-          catch (...)
-          {
-            war("waitForMessages error");
-          }
+          waitForMessages(0.01);
+
           if (!isActive())
             continue;
 
-          if (m_reads_check.overflow())
+          if (m_ram_check.overflow())
           {
-            m_reads_check.reset();
+            m_ram_check.reset();
+            m_tstamp = Clock::get();
+            uint8_t cpu = 0;
+            try
+            {
+              cpu = (uint8_t)getDUNECPUUsage();
+              if(m_num_cpus > 1 && cpu > 0)
+                cpu /= m_num_cpus;
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to get CPU usage: %s", e.what());
+              cpu = 0;
+            }
+            catch (...)
+            {
+              war("Failed to get CPU usage: unknown error");
+              cpu = 0;
+            }
+
+            double ram = 0.0;
+            try
+            {
+              ram = getDUNERAMUsage();
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to get RAM usage: %s", e.what());
+              ram = 0;
+            }
+            catch (...)
+            {
+              war("Failed to get RAM usage: unknown error");
+              ram = 0;
+            }
+
+            double swap = 0.0;
+            try
+            {
+              swap = getDUNESwapUsage();
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to get Swap usage: %s", e.what());
+              swap = 0;
+            }
+            catch (...)
+            {
+              war("Failed to get Swap usage: unknown error");
+              swap = 0;
+            }
+
+            //dispatch CPU and RAM usage
+            try{
+              m_dune_cpu_usage[m_num_cpus].value = cpu;
+              m_dune_cpu_usage[m_num_cpus].setTimeStamp(m_tstamp);
+              dispatch(m_dune_cpu_usage[m_num_cpus]);
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to dispatch CPU usage: %s", e.what());
+            }
+            catch (...)
+            {
+              war("Failed to dispatch CPU usage: unknown error");
+            }
+#if IMC_RAM_USAGE_MESSAGE_EXISTS
+            try{
+              m_dune_ram_usage[0].value = ram * 1024.0f; // KB -> MB
+              m_dune_ram_usage[0].setTimeStamp(m_tstamp);
+              dispatch(m_dune_ram_usage[0]);
+              m_dune_ram_usage[1].value = swap * 1024.0f; // KB -> MB
+              m_dune_ram_usage[1].setTimeStamp(m_tstamp);
+              dispatch(m_dune_ram_usage[1]);
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to dispatch RAM usage: %s", e.what());
+            }
+            catch (...)
+            {
+              war("Failed to dispatch RAM usage: unknown error");
+            }
+#endif
+            try{
+              //check if m_buffer_cpu_entity is empty
+              const char* entity = m_buffer_cpu_entity.empty() ? "unknown" : m_buffer_cpu_entity.c_str();
+              //set entity state with CPU, RAM and Swap usage
+              trace("DUNE Process: CPU: %d%%, RAM: %.1fMB, Swap: %.1fMB | %s", cpu, ram, swap, entity);
+              std::string msg = String::str("%s | DUNE (C:%d%%, R:%.1fMB, S:%.1fMB)", entity, cpu, ram, swap);
+              setEntityState(IMC::EntityState::ESTA_NORMAL, msg);
+            }
+            catch (std::exception& e)
+            {
+              war("Failed to set entity state: %s", e.what());
+            }
+            catch (...)
+            {
+              war("Failed to set entity state: unknown error");
+            }
+          }
+          else if (m_cpu_check.overflow())
+          {
+            m_cpu_check.reset();
             m_tstamp = Clock::getSinceEpoch();
             getDuneUsageResources(m_tstamp);
             getUsageOfCPU(m_tstamp);

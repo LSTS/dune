@@ -107,13 +107,13 @@ namespace Monitors
         if (msg->name != m_args.light_entity)
           return;
 
-        for (const auto& p: msg->params)
+        for (const auto& param : msg->params)
         {
-          if (p->name == m_args.light_parameter_label)
+          if (param->name == m_args.light_parameter_label)
           {
             try
             {
-              castLexical(p->value, m_state);
+              castLexical(param->value, m_state);
               if (!isActive())
                 m_idle_state = m_state;
             }
@@ -216,12 +216,6 @@ namespace Monitors
 
         inf("No AIS targets in the area.");
         setNavigationLight(m_args.light_state_no_targets);
-      }
-
-      void
-      onResourceAcquisition(void) override
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, CODE_IDLE);
       }
     };
   }
