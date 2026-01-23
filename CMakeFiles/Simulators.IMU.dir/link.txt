@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.IMU.a  CMakeFiles/Simulators.IMU.dir/src/Simulators/IMU/Task.cpp.o
+/usr/bin/ranlib libSimulators.IMU.a

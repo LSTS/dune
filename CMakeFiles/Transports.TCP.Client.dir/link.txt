@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.TCP.Client.a  CMakeFiles/Transports.TCP.Client.dir/src/Transports/TCP/Client/Task.cpp.o
+/usr/bin/ranlib libTransports.TCP.Client.a

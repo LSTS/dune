@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.ThermalZone.a  CMakeFiles/Sensors.ThermalZone.dir/src/Sensors/ThermalZone/Task.cpp.o
+/usr/bin/ranlib libSensors.ThermalZone.a

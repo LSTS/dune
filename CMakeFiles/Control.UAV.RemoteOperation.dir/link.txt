@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.UAV.RemoteOperation.a  CMakeFiles/Control.UAV.RemoteOperation.dir/src/Control/UAV/RemoteOperation/Task.cpp.o
+/usr/bin/ranlib libControl.UAV.RemoteOperation.a

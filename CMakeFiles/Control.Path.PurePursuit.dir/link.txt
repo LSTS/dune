@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.Path.PurePursuit.a  CMakeFiles/Control.Path.PurePursuit.dir/src/Control/Path/PurePursuit/Task.cpp.o
+/usr/bin/ranlib libControl.Path.PurePursuit.a

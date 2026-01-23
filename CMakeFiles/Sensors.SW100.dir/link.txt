@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.SW100.a  CMakeFiles/Sensors.SW100.dir/src/Sensors/SW100/Driver.cpp.o CMakeFiles/Sensors.SW100.dir/src/Sensors/SW100/Task.cpp.o
+/usr/bin/ranlib libSensors.SW100.a

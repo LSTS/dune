@@ -1,0 +1,2 @@
+/usr/bin/ar qc libPower.CPMBH.a  CMakeFiles/Power.CPMBH.dir/src/Power/CPMBH/Task.cpp.o
+/usr/bin/ranlib libPower.CPMBH.a

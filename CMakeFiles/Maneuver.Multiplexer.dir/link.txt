@@ -1,0 +1,2 @@
+/usr/bin/ar qc libManeuver.Multiplexer.a  CMakeFiles/Maneuver.Multiplexer.dir/src/Maneuver/Multiplexer/Task.cpp.o
+/usr/bin/ranlib libManeuver.Multiplexer.a

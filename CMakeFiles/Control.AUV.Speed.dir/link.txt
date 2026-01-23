@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.AUV.Speed.a  CMakeFiles/Control.AUV.Speed.dir/src/Control/AUV/Speed/Task.cpp.o
+/usr/bin/ranlib libControl.AUV.Speed.a

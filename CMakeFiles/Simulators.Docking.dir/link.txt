@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.Docking.a  CMakeFiles/Simulators.Docking.dir/src/Simulators/Docking/Task.cpp.o
+/usr/bin/ranlib libSimulators.Docking.a

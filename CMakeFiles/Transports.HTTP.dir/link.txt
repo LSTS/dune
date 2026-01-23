@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.HTTP.a  CMakeFiles/Transports.HTTP.dir/src/Transports/HTTP/MessageMonitor.cpp.o CMakeFiles/Transports.HTTP.dir/src/Transports/HTTP/RequestHandler.cpp.o CMakeFiles/Transports.HTTP.dir/src/Transports/HTTP/Server.cpp.o CMakeFiles/Transports.HTTP.dir/src/Transports/HTTP/Task.cpp.o
+/usr/bin/ranlib libTransports.HTTP.a

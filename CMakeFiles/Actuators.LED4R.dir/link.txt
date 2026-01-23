@@ -1,0 +1,2 @@
+/usr/bin/ar qc libActuators.LED4R.a  CMakeFiles/Actuators.LED4R.dir/src/Actuators/LED4R/Task.cpp.o
+/usr/bin/ranlib libActuators.LED4R.a

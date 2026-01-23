@@ -1,0 +1,2 @@
+/usr/bin/ar qc libActuators.MCD4R.a  CMakeFiles/Actuators.MCD4R.dir/src/Actuators/MCD4R/Task.cpp.o
+/usr/bin/ranlib libActuators.MCD4R.a

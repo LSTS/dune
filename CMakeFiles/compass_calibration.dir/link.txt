@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/compass_calibration.dir/programs/compass_calibration.cpp.o  -o compass_calibration libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

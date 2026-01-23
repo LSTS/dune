@@ -1,0 +1,2 @@
+/usr/bin/ar qc libPower.OPCON.a  CMakeFiles/Power.OPCON.dir/src/Power/OPCON/Task.cpp.o
+/usr/bin/ranlib libPower.OPCON.a

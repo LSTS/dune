@@ -1,0 +1,2 @@
+/usr/bin/ar qc libUserInterfaces.Buttons.a  CMakeFiles/UserInterfaces.Buttons.dir/src/UserInterfaces/Buttons/Task.cpp.o
+/usr/bin/ranlib libUserInterfaces.Buttons.a

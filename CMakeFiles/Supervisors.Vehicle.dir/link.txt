@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSupervisors.Vehicle.a  CMakeFiles/Supervisors.Vehicle.dir/src/Supervisors/Vehicle/Task.cpp.o
+/usr/bin/ranlib libSupervisors.Vehicle.a

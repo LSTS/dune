@@ -1,0 +1,2 @@
+/usr/bin/ar qc libNavigation.AUV.Navigation.a  CMakeFiles/Navigation.AUV.Navigation.dir/src/Navigation/AUV/Navigation/Task.cpp.o
+/usr/bin/ranlib libNavigation.AUV.Navigation.a

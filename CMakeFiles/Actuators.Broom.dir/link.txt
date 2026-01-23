@@ -1,0 +1,2 @@
+/usr/bin/ar qc libActuators.Broom.a  CMakeFiles/Actuators.Broom.dir/src/Actuators/Broom/Task.cpp.o
+/usr/bin/ranlib libActuators.Broom.a

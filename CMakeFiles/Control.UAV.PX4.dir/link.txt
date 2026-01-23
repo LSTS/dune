@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.UAV.PX4.a  CMakeFiles/Control.UAV.PX4.dir/src/Control/UAV/PX4/Task.cpp.o
+/usr/bin/ranlib libControl.UAV.PX4.a

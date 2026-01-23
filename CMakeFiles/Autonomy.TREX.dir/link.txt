@@ -1,0 +1,2 @@
+/usr/bin/ar qc libAutonomy.TREX.a  CMakeFiles/Autonomy.TREX.dir/src/Autonomy/TREX/Task.cpp.o
+/usr/bin/ranlib libAutonomy.TREX.a

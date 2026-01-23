@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.XchangeSV.a  CMakeFiles/Sensors.XchangeSV.dir/src/Sensors/XchangeSV/Task.cpp.o
+/usr/bin/ranlib libSensors.XchangeSV.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libVision.PointGrey.a  CMakeFiles/Vision.PointGrey.dir/src/Vision/PointGrey/Task.cpp.o
+/usr/bin/ranlib libVision.PointGrey.a
