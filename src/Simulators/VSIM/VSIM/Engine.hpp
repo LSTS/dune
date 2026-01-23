@@ -105,7 +105,7 @@ namespace Simulators
       //! Engine's actuation.
       double m_act;
       //! Engine's orientation.
-      double m_act_orientation[3];
+      double m_act_orientation[2];
       //! Engine Maximum Force.
       float m_engine_max_force;
     };
