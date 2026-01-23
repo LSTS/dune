@@ -97,11 +97,11 @@ namespace DUNE
       m_entity = new Entities::StatefulEntity(this, m_ctx);
       m_entities.push_back(m_entity);
 
-      bindUnfiltered<IMC::QueryEntityParameters>(this);
-      bindUnfiltered<IMC::SetEntityParameters>(this);
-      bindUnfiltered<IMC::PushEntityParameters>(this);
-      bindUnfiltered<IMC::PopEntityParameters>(this);
-      bindUnfiltered<IMC::QueryEntityState>(this);
+      bind<IMC::QueryEntityParameters>(this);
+      bind<IMC::SetEntityParameters>(this);
+      bind<IMC::PushEntityParameters>(this);
+      bind<IMC::PopEntityParameters>(this);
+      bind<IMC::QueryEntityState>(this);
     }
 
     unsigned int
