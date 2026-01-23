@@ -120,10 +120,10 @@ namespace Supervisors
         .description("Name of the power channel of the surrogate system. Only use if PCC is for the payload's CPU.");
 
         // Register handler routines.
-        bindUnfiltered<IMC::EntityInfo>(this);
-        bind<IMC::EntityActivationState>(this, &Task::consume, &Task::isFromSurrogate);
-        bind<IMC::EntityState>(this, &Task::consume, &Task::isFromSurrogate);
-        bind<IMC::EntityParameters>(this, &Task::consume, &Task::isFromSurrogate);
+        bind<IMC::EntityInfo>(this);
+        bind<IMC::EntityActivationState>(this);
+        bind<IMC::EntityState>(this);
+        bind<IMC::EntityParameters>(this);
         bind<IMC::PowerChannelState>(this);
       }
 
@@ -180,6 +180,9 @@ namespace Supervisors
       consume(const IMC::EntityParameters* msg)
       {
         if (msg->name != getEntityLabel())
+          return;
+
+        if (!isFromSurrogate(msg))
           return;
 
         relayFrom(msg);
@@ -288,9 +291,8 @@ namespace Supervisors
           sendActiveParameter("false");
       }
 
-      template <typename M>
       bool
-      isFromSurrogate(const M* msg)
+      isFromSurrogate(const IMC::Message* msg)
       {
         return (msg->getSource() == m_sid) && (msg->getSourceEntity() == m_eid);
       }
@@ -323,6 +325,9 @@ namespace Supervisors
       void
       consume(const IMC::EntityState* msg)
       {
+        if (!isFromSurrogate(msg))
+          return;
+
         setEntityState((DUNE::IMC::EntityState::StateEnum)msg->state, msg->description);
         m_estate = *msg;
       }
@@ -330,6 +335,9 @@ namespace Supervisors
       void
       consume(const IMC::EntityActivationState* msg)
       {
+        if (!isFromSurrogate(msg))
+          return;
+
         // send activation state also.
         relayFrom(msg);
 
