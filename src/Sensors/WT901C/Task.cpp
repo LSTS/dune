@@ -49,7 +49,8 @@ namespace Sensors
     PACKET_GYROSCOPE = 0x52,
     PACKET_ANGLE = 0x53,
     PACKET_MAGNETOMETER = 0x54,
-    PACKET_QUATERNION = 0x59
+    PACKET_QUATERNION = 0x59,
+    PACKET_READ_ADDRESS = 0x5f
   };
 
   //! Map of packet types to their sizes.
@@ -58,7 +59,8 @@ namespace Sensors
     { PACKET_GYROSCOPE, 8 },      // Gyroscope data packet
     { PACKET_ANGLE, 8 },          // Angle data packet
     { PACKET_MAGNETOMETER, 8 },   // Magnetometer data packet
-    { PACKET_QUATERNION, 8 }     // Quaternion data packet
+    { PACKET_QUATERNION, 8 },     // Quaternion data packet
+    { PACKET_READ_ADDRESS, 8}
   };
 
   //! Command address map.
@@ -71,6 +73,8 @@ namespace Sensors
     CMD_ADDR_HYOFFSET = 0x0c,
     CMD_ADDR_HZOFFSET = 0x0d,
     CMD_ADDR_SLEEP = 0x22,
+    CMD_ADDR_READADDR = 0x27,
+    CMD_ADDR_VERSION = 0x2e,
     CMD_ADDR_KEY = 0x69
   };
 
@@ -142,6 +146,15 @@ namespace Sensors
       std::vector<uint8_t> input;
 
       uint8_t checksum;
+
+      inline void
+      clear(void)
+      {
+        header = 0;
+        type = 0;
+        input.clear();
+        checksum = 0;
+      }
     };
 
     class Command
@@ -295,6 +308,7 @@ namespace Sensors
       void
       onInitializeDevice(void) override
       {
+        getVersion();
         setOutputContents();
         setOutputRate(m_args.odr);
 
@@ -310,7 +324,7 @@ namespace Sensors
       waitHeader(void)
       {
         uint8_t byte;
-        m_ts = readFromDevice(&byte, 1);
+        m_ts = readFromDevice(&byte, 1, m_args.odr > 0 ? (2.0f / m_args.odr) : 0.1f);
 
         // Wait for header byte.
         if (byte != c_packet_header)
@@ -433,6 +447,15 @@ namespace Sensors
       }
 
       void
+      onVersion(void)
+      {
+        uint16_t version;
+        std::memcpy(&version, &m_packet.input[0], 2);
+        inf("WT901C version: 0x%04x", version);
+        m_packet.clear();
+      }
+
+      void
       onAcceleration(void)
       {
         uint16_t ax, ay, az;
@@ -450,8 +473,8 @@ namespace Sensors
         acc.z = f_az / 9.8f;
 
         dispatchMessage(acc);
-
         trace("accel: x=%f, y=%f, z=%f (m/s/s)", acc.x, acc.y, acc.z);
+        m_packet.clear();
       }
 
       void
@@ -472,8 +495,8 @@ namespace Sensors
         gyro.z = Angles::radians(f_gz);
 
         dispatchMessage(gyro);
-
         trace("gyro: x=%f, y=%f, z=%f (rad/s)", gyro.x, gyro.y, gyro.z);
+        m_packet.clear();
       }
 
       void
@@ -494,8 +517,8 @@ namespace Sensors
         mag.z = f_mz * 0.01f;
 
         dispatchMessage(mag);
-
         trace("mag: x=%f, y=%f, z=%f (G)", mag.x, mag.y, mag.z);
+        m_packet.clear();
       }
 
       void
@@ -517,9 +540,9 @@ namespace Sensors
         euler.psi_magnetic = euler.psi;
 
         dispatchMessage(euler);
-
         trace("angles: roll=%f, pitch=%f, yaw=%f (deg)", Angles::degrees(euler.phi),
               Angles::degrees(euler.theta), Angles::degrees(euler.psi));
+        m_packet.clear();
       }
 
       void
@@ -530,7 +553,7 @@ namespace Sensors
         m_msg_count++;
       }
 
-      void
+      bool
       process(void)
       {
         try
@@ -539,16 +562,18 @@ namespace Sensors
           readType();
           readInput();
           onChecksum();
+          return true;
         }
         catch (const WaitingForHeader&)
         {
           spew("Waiting for header byte...");
-          return;
         }
         catch (const std::exception& e)
         {
           err("Err: %s", e.what());
         }
+
+        return false;
       }
 
       void
@@ -561,6 +586,13 @@ namespace Sensors
 
         if (save)
           m_handle->write(c_save.cmd(), 5);
+      }
+
+      void
+      getVersion(void)
+      {
+        if (readAddress(CMD_ADDR_VERSION))
+          onVersion();
       }
 
       void
@@ -613,6 +645,27 @@ namespace Sensors
       {
         Command cmd(CMD_ADDR_SLEEP, 0x01);
         sendCommand(cmd);
+      }
+
+      bool
+      readAddress(uint8_t address, float timeout = 5.0f)
+      {
+        Command cmd(CMD_ADDR_READADDR, address);
+        sendCommand(cmd);
+        if (timeout <= 0.0)
+          return true;
+
+        Counter<float> timer(timeout);
+        while (!stopping() && !timer.overflow())
+        {
+          if (process())
+          {
+            if (m_packet.type == PACKET_READ_ADDRESS)
+              return true;
+          }
+        }
+
+        return false;
       }
 
       bool
