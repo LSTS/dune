@@ -570,16 +570,6 @@ namespace DUNE
         return msg->getSource() == getSystemId();
       }
 
-      //! Bind a message to a default consumer method, with a costum filter.
-      //! @param task_obj consumer task.
-      //! @param filter filter method.
-      template <typename M, typename T>
-      void
-      bindUnfiltered(T* task_obj, void (T::* consumer)(const M*) = &T::consume)
-      {
-        bind(task_obj, consumer, static_cast<bool (T::*)(const M*)>(nullptr));
-      }
-
       //! Bind a message to a consumer method, with an optional filter.
       //! @param task_obj consumer task.
       //! @param consumer consumer method.
@@ -587,7 +577,7 @@ namespace DUNE
       template <typename M, typename T>
       void
       bind(T* task_obj, void (T::* consumer)(const M*) = &T::consume, 
-           bool (T::* filter)(const M*) = reinterpret_cast<bool (T::*)(const M*)>(&Task::filterSelf))
+           bool (T::* filter)(const M*) = nullptr)
       {
         if (filter == nullptr)
           bind(M::getIdStatic(), new Consumer<T, M>(*task_obj, consumer));
