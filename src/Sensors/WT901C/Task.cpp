@@ -34,6 +34,14 @@ namespace Sensors
 {
   //! Packet header.
   static uint8_t c_packet_header = 0x55;
+  //! Return contents (output: acceleration, angular velocity, magnetic field and euler angles).
+  constexpr uint16_t c_return_contents = 0x001e;
+  //! Command headers.
+  constexpr uint8_t c_command_header_0 = 0xff;
+  constexpr uint8_t c_command_header_1 = 0xaa;
+  //! Command unlock bytes.
+  constexpr uint8_t c_command_unlock_byteL = 0x88;
+  constexpr uint8_t c_command_unlock_byteH = 0xb5;
 
   enum PacketType
   {
@@ -50,8 +58,33 @@ namespace Sensors
     { PACKET_GYROSCOPE, 8 },      // Gyroscope data packet
     { PACKET_ANGLE, 8 },          // Angle data packet
     { PACKET_MAGNETOMETER, 8 },   // Magnetometer data packet
-    { PACKET_QUATERNION, 8 },     // Quaternion data packet
+    { PACKET_QUATERNION, 8 }     // Quaternion data packet
   };
+
+  //! Command address map.
+  enum CommandAddress : uint8_t
+  {
+    CMD_ADDR_SAVE = 0x00,
+    CMD_ADDR_RSW = 0x02,
+    CMD_ADDR_RRATE = 0x03,
+    CMD_ADDR_HXOFFSET = 0x0b,
+    CMD_ADDR_HYOFFSET = 0x0c,
+    CMD_ADDR_HZOFFSET = 0x0d,
+    CMD_ADDR_SLEEP = 0x22,
+    CMD_ADDR_KEY = 0x69
+  };
+
+  //! Return rate map.
+  const std::map<float, uint8_t> c_rate_map = {{ 0.2f, 0x01 },
+                                               { 0.5f, 0x02 },
+                                               { 1.0f, 0x03 },
+                                               { 2.0f, 0x04 },
+                                               { 5.0f, 0x05 },
+                                               { 10.0f, 0x06 },
+                                               { 20.0f, 0x07 },
+                                               { 50.0f, 0x08 },
+                                               { 100.0f, 0x09 },
+                                               { 200.0f, 0x0b }};
 
   //! Insert short task description here.
   //!
@@ -65,8 +98,10 @@ namespace Sensors
     {
       //! I/O device handle.
       std::string io_handle;
-      //! Input timeout.
-      float inp_tout;
+      //! Output data rate in Hz.
+      float odr;
+      //! Compass Calibration entity label.
+      std::string calib_elabel;
     };
 
     class WaitingForHeader: public std::exception
@@ -109,6 +144,28 @@ namespace Sensors
       uint8_t checksum;
     };
 
+    class Command
+    {
+    public:
+      Command(uint8_t address, uint8_t dataL = 0x00, uint8_t dataH = 0x00)
+      {
+        data[0] = c_command_header_0;
+        data[1] = c_command_header_1;
+        data[2] = address;
+        data[3] = dataL;
+        data[4] = dataH;
+      }
+
+      inline const uint8_t*
+      cmd(void) const
+      {
+        return data.data();
+      }
+
+    private:
+      std::array<uint8_t, 5> data;
+    };
+
     struct Task: public Hardware::BasicDeviceDriver
     {
       //! I/O handle.
@@ -127,6 +184,12 @@ namespace Sensors
       unsigned m_msg_count;
       //! Task arguments.
       Arguments m_args;
+      //! Compass Calibration entity id.
+      unsigned m_calib_eid;
+      //! Key to unlock commands.
+      const Command c_key;
+      //! Command to save configuration.
+      const Command c_save;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -134,29 +197,71 @@ namespace Sensors
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
         m_handle(nullptr),
-        m_freq_avg(10)
+        m_freq_avg(10),
+        m_calib_eid(AddressResolver::invalid()),
+        c_key(CMD_ADDR_KEY, c_command_unlock_byteL, c_command_unlock_byteH),
+        c_save(CMD_ADDR_SAVE)
       {
         // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL, Tasks::Parameter::VISIBILITY_DEVELOPER, true);
-        paramConfigurableSampling();
-
         param("IO Port - Device", m_args.io_handle)
-          .defaultValue("uart://ttyUSB0:115200")
-          .description("I/O handle to use for communication with the device.");
+        .editable("false")
+        .description("I/O handle to use for communication with the device.");
 
-        param("Input Timeout", m_args.inp_tout)
-          .units(Units::Second)
-          .defaultValue("4.0")
-          .minimumValue("0.0")
-          .description("Input timeout");
+        param("Output Data Rate", m_args.odr)
+        .units(Units::Hertz)
+        .defaultValue("10.0")
+        .values("0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0")
+        .description("Output data rate in Hz.");
+
+        param("Compass Calibration - Entity Label", m_args.calib_elabel)
+        .editable("false")
+        .description("Entity label of Compass Calibration task to receive hard iron corrections from.");
+
+        bind<IMC::MagneticField>(this);
       }
 
       //! Update internal state with new parameter values.
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.inp_tout))
-          m_wdog.setTop(m_args.inp_tout);
+        DUNE::Hardware::BasicDeviceDriver::onUpdateParameters();
+
+        if (!isActive())
+          return;
+
+        if (paramChanged(m_args.odr) && m_args.odr > 0)
+          m_wdog.setTop(2 * 1 / m_args.odr);
+      }
+
+      void
+      onEntityResolution(void) override
+      {
+        try
+        {
+          m_calib_eid = resolveEntity(m_args.calib_elabel);
+        }
+        catch(const std::exception& e)
+        {
+          war("failed to resolve Compass Calibration entity : %s", e.what());
+        }
+      }
+
+      void
+      consume(const IMC::MagneticField* msg)
+      {
+        if (!isActive())
+          return;
+
+        if (!AddressResolver::isValid(m_calib_eid))
+          return;
+
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getSourceEntity() != m_calib_eid)
+          return;
+
+        setHardIronFactors(msg->x, msg->y, msg->z);
       }
 
       //! Connect to the device.
@@ -182,6 +287,7 @@ namespace Sensors
       void
       onDisconnect(void) override
       {
+        setSleep();
         Memory::clear(m_handle);
       }
 
@@ -189,7 +295,12 @@ namespace Sensors
       void
       onInitializeDevice(void) override
       {
-        m_wdog.setTop(m_args.inp_tout);
+        setOutputContents();
+        setOutputRate(m_args.odr);
+
+        if (m_args.odr > 0)
+          m_wdog.setTop(2 * 1 / m_args.odr);
+
         m_msg_count = 0;
         m_freq_counter.setTop(1.0);
       }
@@ -329,19 +440,18 @@ namespace Sensors
         std::memcpy(&ay, &m_packet.input[2], 2);
         std::memcpy(&az, &m_packet.input[4], 2);
 
-        float f_ax = ax / 32768.0f * 16.0f;
-        float f_ay = ay / 32768.0f * 16.0f;
-        float f_az = az / 32768.0f * 16.0f;
+        float f_ax = static_cast<float>(ax) / 32768.0f * 16.0f;
+        float f_ay = static_cast<float>(ay) / 32768.0f * 16.0f;
+        float f_az = static_cast<float>(az) / 32768.0f * 16.0f;
 
         Acceleration acc;
-        acc.x = Angles::normalizeRadian(Angles::radians(f_ax));
-        acc.y = Angles::normalizeRadian(Angles::radians(f_ay));
-        acc.z = Angles::normalizeRadian(Angles::radians(f_az));
+        acc.x = f_ax / 9.8f;
+        acc.y = f_ay / 9.8f;
+        acc.z = f_az / 9.8f;
 
         dispatchMessage(acc);
 
-        trace("angles: roll=%f, pitch=%f, yaw=%f", Angles::degrees(acc.x), Angles::degrees(acc.y),
-              Angles::degrees(acc.z));
+        trace("accel: x=%f, y=%f, z=%f (m/s/s)", acc.x, acc.y, acc.z);
       }
 
       void
@@ -352,19 +462,18 @@ namespace Sensors
         std::memcpy(&gy, &m_packet.input[2], 2);
         std::memcpy(&gz, &m_packet.input[4], 2);
 
-        float f_gx = gx / 32768.0f * 2000.0f;  // Scale factor for gyroscope
-        float f_gy = gy / 32768.0f * 2000.0f;
-        float f_gz = gz / 32768.0f * 2000.0f;
+        float f_gx = static_cast<float>(gx) / 32768.0f * 2000.0f;
+        float f_gy = static_cast<float>(gy) / 32768.0f * 2000.0f;
+        float f_gz = static_cast<float>(gz) / 32768.0f * 2000.0f;
 
         AngularVelocity gyro;
-        gyro.x = Angles::normalizeRadian(Angles::radians(f_gx));
-        gyro.y = Angles::normalizeRadian(Angles::radians(f_gy));
-        gyro.z = Angles::normalizeRadian(Angles::radians(f_gz));
+        gyro.x = Angles::radians(f_gx);
+        gyro.y = Angles::radians(f_gy);
+        gyro.z = Angles::radians(f_gz);
 
         dispatchMessage(gyro);
 
-        trace("gyroscope: x=%f, y=%f, z=%f", Angles::degrees(gyro.x), Angles::degrees(gyro.y),
-              Angles::degrees(gyro.z));
+        trace("gyro: x=%f, y=%f, z=%f (rad/s)", gyro.x, gyro.y, gyro.z);
       }
 
       void
@@ -375,14 +484,18 @@ namespace Sensors
         std::memcpy(&my, &m_packet.input[2], 2);
         std::memcpy(&mz, &m_packet.input[4], 2);
 
+        float f_mx = static_cast<float>(mx) * 0.15f;
+        float f_my = static_cast<float>(my) * 0.15f;
+        float f_mz = static_cast<float>(mz) * 0.15f;
+
         MagneticField mag;
-        mag.x = mx;
-        mag.y = my;
-        mag.z = mz;
+        mag.x = f_mx * 0.01f;
+        mag.y = f_my * 0.01f;
+        mag.z = f_mz * 0.01f;
 
         dispatchMessage(mag);
 
-        trace("magnetometer: x=%f, y=%f, z=%f (uT)", mag.x, mag.y, mag.z);
+        trace("mag: x=%f, y=%f, z=%f (G)", mag.x, mag.y, mag.z);
       }
 
       void
@@ -405,7 +518,7 @@ namespace Sensors
 
         dispatchMessage(euler);
 
-        trace("angles: roll=%f, pitch=%f, yaw=%f", Angles::degrees(euler.phi),
+        trace("angles: roll=%f, pitch=%f, yaw=%f (deg)", Angles::degrees(euler.phi),
               Angles::degrees(euler.theta), Angles::degrees(euler.psi));
       }
 
@@ -438,25 +551,89 @@ namespace Sensors
         }
       }
 
+      void
+      sendCommand(const Command& cmd, bool save = false)
+      {
+        m_handle->write(c_key.cmd(), 5);
+        Delay::waitMsec(100);
+        m_handle->write(cmd.cmd(), 5);
+        Delay::waitMsec(100);
+
+        if (save)
+          m_handle->write(c_save.cmd(), 5);
+      }
+
+      void
+      setOutputContents(void)
+      {
+        uint8_t valL = c_return_contents & 0x00FF;
+        uint8_t valH = (c_return_contents >> 8) & 0x00FF;
+        Command cmd(CMD_ADDR_RSW, valL, valH);
+        sendCommand(cmd, true);
+      }
+
+      void
+      setOutputRate(float rate)
+      {
+        if (c_rate_map.find(rate) == c_rate_map.end())
+        {
+          err("Invalid rate: %f Hz", rate);
+          return;
+        }
+
+        uint8_t val = c_rate_map.at(rate);
+        Command cmd(CMD_ADDR_RRATE, val);
+        sendCommand(cmd, true);
+      }
+
+      void
+      setHardIronFactors(float x, float y, float z)
+      {
+        int16_t aux = static_cast<int16_t>(x * 100 / 0.15f);
+        uint8_t auxL = aux & 0x00FF;
+        uint8_t auxH = (aux >> 8) & 0x00FF;
+        Command cmd_x(CMD_ADDR_HXOFFSET, auxL, auxH);
+        sendCommand(cmd_x);
+
+        aux = static_cast<int16_t>(y * 100 / 0.15f);
+        auxL = aux & 0x00FF;
+        auxH = (aux >> 8) & 0x00FF;
+        Command cmd_y(CMD_ADDR_HYOFFSET, auxL, auxH);
+        sendCommand(cmd_y);
+
+        aux = static_cast<int16_t>(z * 100 / 0.15f);
+        auxL = aux & 0x00FF;
+        auxH = (aux >> 8) & 0x00FF;
+        Command cmd_z(CMD_ADDR_HZOFFSET, auxL, auxH);
+        sendCommand(cmd_z);
+      }
+
+      void
+      setSleep(void)
+      {
+        Command cmd(CMD_ADDR_SLEEP, 0x01);
+        sendCommand(cmd);
+      }
+
       bool
       onReadData(void) override
       {
+        process();
+
+        if (m_freq_counter.overflow())
+        {
+          m_freq_avg.update(m_msg_count);
+          m_freq_counter.reset();
+          std::string description = String::str("active | frequency: %.1f Hz", m_freq_avg.mean() / 4);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, description);
+          m_msg_count = 0;
+        }
+
         if (m_wdog.overflow())
         {
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
-
-        // If read frequency != 0, this value will not be very accurate.
-        if (m_freq_counter.overflow())
-        {
-          m_freq_avg.update(m_msg_count);
-          m_freq_counter.reset();
-          debug("Frequency: %f Hz : Last second %d", m_freq_avg.mean(), m_msg_count);
-          m_msg_count = 0;
-        }
-
-        process();
 
         return true;
       }
