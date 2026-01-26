@@ -121,6 +121,8 @@ namespace Maneuver
         std::string fallback_maneuver;
         //! Position for fallback maneuver.
         std::vector<double> fallback_position;
+        //! Name of the section with participant addresses.
+        std::string addr_section;
       };
 
       struct Task: public DUNE::Maneuvers::BasicSwarm
@@ -273,6 +275,10 @@ namespace Maneuver
           .size(2)
           .description("Position for fallback maneuver.");
 
+          param("Address Section", m_args.addr_section)
+          .defaultValue("Swarm Addresses")
+          .description("Name of the configuration section with participant addresses");
+
 
           bind<IMC::UamRxFrame>(this);
         }
@@ -293,7 +299,18 @@ namespace Maneuver
         onResourceInitialization(void)
         {
           Maneuver::onResourceInitialization();
-          m_wcomms = new WifiProtocol(this, m_args.udp_maddr, m_args.udp_port);
+
+
+          // Process modem addresses.
+          std::vector<Address> addresses;
+          std::vector<std::string> addrs = m_ctx.config.options(m_args.addr_section);
+          for (unsigned i = 0; i < addrs.size(); ++i)
+          {
+            Address addr;
+            m_ctx.config.get(m_args.addr_section, addrs[i], "0.0.0.0", addr);
+            addresses.push_back(addr);
+          }
+          m_wcomms = new WifiProtocol(this, m_args.udp_maddr, m_args.udp_port, addresses);
         }
 
         void
