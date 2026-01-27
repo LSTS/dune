@@ -51,6 +51,8 @@ namespace Sensors
       std::string m_led_dev;
       //! Send IMU data.
       bool m_send_imu_data;
+      //! Euler Angles entity label.
+      std::string euler_elabel;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -85,6 +87,8 @@ namespace Sensors
       IMC::RelativeHumidity m_rh;
       //! Task arguments.
       Arguments m_args;
+      //! Euler Angles entity id.
+      unsigned int m_euler_eid;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -95,7 +99,8 @@ namespace Sensors
         m_settings(nullptr),
         m_imu(nullptr),
         m_pressure(nullptr),
-        m_humidity(nullptr)
+        m_humidity(nullptr),
+        m_euler_eid(AddressResolver::invalid())
       {
         param("RTIMU lib config", m_args.m_lib_config)
           .defaultValue("/root/RTEllipsoidFit/RTIMULib.ini")
@@ -108,6 +113,11 @@ namespace Sensors
         param("Send IMU data", m_args.m_send_imu_data)
         .defaultValue("true")
         .description("Send IMU data to bus.");
+
+        param("Euler Angles - Entity Label", m_args.euler_elabel)
+        .description("Entity label for Euler Angles messages.");
+
+        bind<IMC::EulerAngles>(this);
       }
 
       //! Update internal state with new parameter values.
@@ -123,7 +133,18 @@ namespace Sensors
       //! Resolve entity names.
       void
       onEntityResolution(void)
-      { }
+      {
+        try
+        {
+          m_euler_eid = resolveEntity(m_args.euler_elabel);
+        }
+        catch(const std::exception& e)
+        {
+          war("Could not resolve Euler Angles entity label '%s': %s",
+              m_args.euler_elabel.c_str(), e.what());
+        }
+        
+      }
 
       //! Acquire resources.
       void
@@ -224,9 +245,7 @@ namespace Sensors
         m_euler.phi = Angles::normalizeRadian(fusionPose.y());
         m_euler.psi = Angles::normalizeRadian(fusionPose.z());
         m_euler.psi_magnetic = m_euler.psi;
-
-        dispatch(m_euler);
-
+        dispatch(m_euler, DF_LOOP_BACK);
         spew("Yaw: %.2f°, Pitch: %.2f°, Roll: %.2f°", Angles::degrees(m_euler.psi),
              Angles::degrees(m_euler.theta), Angles::degrees(m_euler.phi));
       }
@@ -238,23 +257,20 @@ namespace Sensors
         m_av.x = gyro.x();
         m_av.y = gyro.y();
         m_av.z = gyro.z();
-
         dispatch(m_av);
-
-        spew("Gyro: X: %.2f, Y: %.2f, Z: %.2f", m_av.x, m_av.y, m_av.z);
+        spew("Gyro: X: %.2f, Y: %.2f, Z: %.2f (rad/s)", m_av.x, m_av.y, m_av.z);
       }
 
       //! Read Accelerometer data.
       void
       readAccel(const RTVector3& accel)
       {
-        m_acc.x = accel.x();
-        m_acc.y = accel.y();
-        m_acc.z = accel.z();
-
+        // convert g to m/s/s
+        m_acc.x = accel.x() / 9.8;
+        m_acc.y = accel.y() / 9.8;
+        m_acc.z = accel.z() / 9.8;
         dispatch(m_acc);
-
-        spew("Accel: X: %.2f, Y: %.2f, Z: %.2f", m_acc.x, m_acc.y, m_acc.z);
+        spew("Accel: X: %.2f, Y: %.2f, Z: %.2f (m/s/s)", m_acc.x, m_acc.y, m_acc.z);
       }
 
       //! Read Compass data.
@@ -265,8 +281,8 @@ namespace Sensors
         m_mag.x = compass.x() * 0.01;
         m_mag.y = compass.y() * 0.01;
         m_mag.z = compass.z() * 0.01;
-
         dispatch(m_mag);
+        spew("Mag: X: %.2f, Y: %.2f, Z: %.2f (G)", m_mag.x, m_mag.y, m_mag.z);
       }
 
       //! Read IMU data.
@@ -330,6 +346,26 @@ namespace Sensors
         m_led->setMatrix(m_dirs[dir]);
       }
 
+      void
+      consume(const IMC::EulerAngles* msg)
+      {
+        if (!AddressResolver::isValid(m_euler_eid))
+          return;
+
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getSourceEntity() != m_euler_eid)
+          return;
+
+        double north = Angles::degrees(msg->psi);
+        if (north < 0)
+          north += 360;
+
+        int dir = Math::roundToInteger(north / 45.0) % 8;
+        updateScreen(dir);
+      }
+
       //! Main loop.
       void
       onMain(void)
@@ -344,23 +380,11 @@ namespace Sensors
           if (!wdog.overflow())
             continue;
 
-          if (m_args.m_send_imu_data)
-            readIMUData();
           readPressure();
           readHumidity();
 
-          // Display arrow on LED matrix
-          double hd = Angles::degrees(atan2(m_mag.y, m_mag.x));  // from -180 to 180
-
-          // North rotation
-          double north = 0 - hd;
-
-          if (north < 0)
-            north += 360;
-
-          int dir = Math::roundToInteger(north / 45.0) % 8;
-
-          updateScreen(dir);
+          if (m_args.m_send_imu_data)
+            readIMUData();
         }
       }
     };
