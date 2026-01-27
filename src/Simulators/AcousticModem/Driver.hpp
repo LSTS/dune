@@ -119,6 +119,8 @@ namespace Simulators
 
         //Initialize random number generator
         m_prng = Random::Factory::create(m_args->prng_type, m_args->prng_seed);
+
+        (void)a_sstate;
       }
 
       //! Destructor.
