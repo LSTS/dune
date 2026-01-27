@@ -190,17 +190,9 @@ namespace DUNE
     }
 
     const char*
-    Address::c_str(void)
+    Address::c_str(void) const
     {
-#if defined(DUNE_SYS_HAS_INET_NTOP)
-      inet_ntop(AF_INET, &m_ia, m_buffer, sizeof(m_buffer));
-
-#elif defined(DUNE_SYS_HAS_INET_NTOA)
-      const char* addr = inet_ntoa(m_ia);
-      std::strcpy(m_buffer, addr);
-#endif
-
-      return m_buffer;
+      return str().c_str();
     }
 
     bool

@@ -119,7 +119,7 @@ namespace DUNE
       str(void) const;
 
       const char*
-      c_str(void);
+      c_str(void) const;
 
       bool
       resolve(void);
@@ -139,7 +139,6 @@ namespace DUNE
       std::string m_host;
       in_addr m_ia;
       bool m_resolved;
-      char m_buffer[32];
     };
 
     //! Input stream extractor.
