@@ -118,7 +118,8 @@ namespace Transports
       onResourceAcquisition(void)
       {
         // Initialize and dispatch AnnounceService.
-        std::vector<Interface> itfs = Interface::get();
+        std::vector<Interface> itfs;
+        Interface::get(itfs);
         std::set<Address> addrs;
         uint16_t port = 0;
         for (unsigned i = 0; i < itfs.size(); ++i)

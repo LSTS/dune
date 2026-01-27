@@ -78,17 +78,16 @@ namespace DUNE
       m_features(0)
     { }
 
-    std::vector<Interface>
-    Interface::get(void)
+    void
+    Interface::get(std::vector<Interface>& itfs)
     {
-      std::vector<Interface> itfs;
-
+      // POSIX implementation.
 #if defined(DUNE_SYS_HAS_IFADDRS_H)
       struct ifaddrs* ifa = nullptr;
 
       // Check if getifaddrs fails
       if (getifaddrs(&ifa) != 0 || ifa == nullptr)
-        return itfs;
+        return;
 
       for (struct ifaddrs* next = ifa; next != nullptr; next = next->ifa_next)
       {
@@ -130,7 +129,7 @@ namespace DUNE
       if (rv != ERROR_SUCCESS)
       {
         std::free(adps);
-        return itfs;
+        return;
       }
 
       PIP_ADAPTER_ADDRESSES padp = adps;
@@ -154,7 +153,7 @@ namespace DUNE
       std::free(adps);
 #endif
 
-      return itfs;
+      return;
     }
 
     bool

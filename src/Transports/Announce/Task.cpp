@@ -231,7 +231,8 @@ namespace Transports
         char domain[128] = {0};
         std::sscanf(msg->service.c_str(), "%*[^/]//%[^:]:", domain);
 
-        std::vector<Interface> interfaces = Interface::get();
+        std::vector<Interface> interfaces;
+        Interface::get(interfaces);
         for (unsigned i = 0; i < m_args.ignored_interfaces.size(); ++i)
         {
           for (unsigned j = 0; j < interfaces.size(); ++j)
@@ -370,7 +371,8 @@ namespace Transports
             m_dsts.push_back(dst);
           }
 
-          std::vector<Interface> itfs = Interface::get();
+          std::vector<Interface> itfs;
+          Interface::get(itfs);
           for (unsigned i = 0; i < itfs.size(); ++i)
           {
             // Discard loopback addresses.

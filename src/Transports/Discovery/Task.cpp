@@ -95,7 +95,8 @@ namespace Transports
         m_sock.setMulticastLoop(false);
         m_sock.enableBroadcast(true);
 
-        std::vector<Interface> itfs = Interface::get();
+        std::vector<Interface> itfs;
+        Interface::get(itfs);
         for (unsigned i = 0; i < itfs.size(); ++i)
           m_sock.joinMulticastGroup(m_args.addr_mcast, itfs[i].address());
 
@@ -174,7 +175,8 @@ namespace Transports
 
         // Check if the message was sent from our computer.
         bool m_local = false;
-        std::vector<Interface> itfs = Interface::get();
+        std::vector<Interface> itfs;
+        Interface::get(itfs);
         for (unsigned i = 0; i < itfs.size(); ++i)
         {
           if (itfs[i].address() == addr)

@@ -56,9 +56,9 @@ namespace DUNE
       };
 
       //! Retrieve list with all active network interfaces.
-      //! @return list with all currently active network interfaces.
-      static std::vector<Interface>
-      get(void);
+      //! @param itfs vector to store the interfaces.
+      static void
+      get(std::vector<Interface>& itfs);
 
       //! Constructor.
       Interface(void);

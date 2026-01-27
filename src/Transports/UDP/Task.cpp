@@ -278,7 +278,8 @@ namespace Transports
         if (m_args.announce_service)
         {
           // Initialize and dispatch AnnounceService.
-          std::vector<Interface> itfs = Interface::get();
+          std::vector<Interface> itfs;
+          Interface::get(itfs);
           for (unsigned i = 0; i < itfs.size(); ++i)
           {
             std::stringstream os;

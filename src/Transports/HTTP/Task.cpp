@@ -128,7 +128,8 @@ namespace Transports
             m_server = new Server(port, m_args.threads, *this);
 
             // Initialize and dispatch AnnounceService.
-            std::vector<Interface> itfs = Interface::get();
+            std::vector<Interface> itfs;
+            Interface::get(itfs);
             for (unsigned i = 0; i < itfs.size(); ++i)
             {
               std::stringstream os;

@@ -382,7 +382,8 @@ namespace Transports
       bool
       isConnected(Address* address = NULL)
       {
-        std::vector<Interface> interfaces = Interface::get();
+        std::vector<Interface> interfaces;
+        Interface::get(interfaces);
         for (size_t i = 0; i < interfaces.size(); ++i)
         {
           if (interfaces[i].name() == m_args.ppp_interface)
