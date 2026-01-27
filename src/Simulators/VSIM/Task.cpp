@@ -61,6 +61,8 @@ namespace Simulators
     //! %Task arguments.
     struct Arguments
     {
+      //! Initial heading of the vehicle.
+      double initial_heading;
       //! Entity label of the stream velocity source.
       std::string svlabel;
       //! Simulation time multiplier
@@ -86,6 +88,11 @@ namespace Simulators
         m_vehicle(NULL),
         m_world(NULL)
       {
+        param("Initial Heading", m_args.initial_heading)
+            .units(Units::Degree)
+            .defaultValue("0.0")
+            .description("Initial heading of the vehicle.");
+
         param("Time Multiplier", m_args.time_multiplier)
         .defaultValue("1.0")
         .description("Simulation time multiplier");
@@ -150,7 +157,8 @@ namespace Simulators
 
         // We assume vehicle starts at sea surface.
         m_vehicle->setPosition(0, 0, 0);
-        m_vehicle->setOrientation(0, 0, msg->cog);
+        // m_vehicle->setOrientation(0, 0, msg->cog);
+        m_vehicle->setOrientation(0, 0, Angles::radians(m_args.initial_heading));
 
         // Define vehicle origin.
         m_sstate.lat = msg->lat;

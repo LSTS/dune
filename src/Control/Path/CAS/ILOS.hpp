@@ -49,14 +49,15 @@ namespace Control
       {
       public:
         /// Constructor
-        ILOS(Tasks::Task* task, double gain = 0.001,
-             double look_ahead_distance = 70.0,
-             double integral_limit = 50.0):
+        ILOS(Tasks::Task* task, double gain = 0.1,
+             double look_ahead_distance = 200.0,
+             double max_ct_heading = Angles::radians(75.0)):
           m_task(task),
           m_gain(gain),
           m_integral(0.0),
-          m_integral_limit(integral_limit),
-          m_look_ahead(look_ahead_distance)
+          m_look_ahead(look_ahead_distance),
+          m_max_ct_heading(max_ct_heading),
+          m_track_bearing(0.0)
         { }
 
         /// Destructor
@@ -67,44 +68,73 @@ namespace Control
         reset()
         {
           m_integral = 0.0;
+          m_last_step.reset();
         }
 
+        //! Set integral gain
+        //! @param gain integral gain
         void
-        setGain(double gain)
+        setGain(const double gain)
         {
           m_gain = gain;
         }
 
+        // Set look ahead distance
+        //! @param look_ahead_distance look ahead distance (in meters)
         void
-        setLookAheadDistance(double look_ahead_distance)
+        setLookAheadDistance(const double look_ahead_distance)
         {
           m_look_ahead = look_ahead_distance;
         }
 
+        //! Set maximum cross track heading
+        //! @param limit maximum cross track heading (radians)
         void
-        setIntegralLimit(double limit)
+        setMaxCrossTrackHeading(const double limit)
         {
-          m_integral_limit = limit;
+          m_max_ct_heading = limit;
+        }
+
+        //! Set track bearing
+        //! @param bearing track bearing (radians)
+        void
+        setTrackBearing(const double bearing)
+        {
+          m_track_bearing = bearing;
         }
 
         double
-        update(double error)
+        update(const double error, const double los_angle)
         {
-          double timestep = m_last_step.getDelta();
+          // Compute new integral term
+          const double timestep = m_last_step.getDelta();
+          const double new_integral = m_integral + getIntegralSlope(error, m_integral) * timestep;
 
-          // Integrate using rectangle rule and clamp integral
-          m_integral += error * timestep;
-          if (m_integral_limit > 0.0)
-            m_integral = Math::trimValue(m_integral, -m_integral_limit, m_integral_limit);
+          // Compute new heading
+          double offset = - std::atan((error + m_gain * new_integral) / m_look_ahead);
+          double new_heading = los_angle + offset;
 
-          double offset = - std::atan((error + m_gain * m_integral) / m_look_ahead);
+          // Prevent backwards movement
+          double heading_diff = Angles::normalizeRadian(new_heading - m_track_bearing);
+          if (std::fabs(heading_diff) > m_max_ct_heading)
+          {
+            heading_diff = Math::trimValue(heading_diff, -m_max_ct_heading, m_max_ct_heading);
+            new_heading = m_track_bearing + heading_diff;
+            offset = Angles::normalizeRadian(new_heading - los_angle);
+            m_task->trace(DTR("[Saturated] Updated ILOS offset: %f | Integral: %f"), Angles::degrees(offset), m_integral);
+          }
+          // Update integral term only if no saturation occurred
+          else
+          {
+            m_integral = new_integral;
+            m_task->trace(DTR("[Unsaturated] Updated ILOS offset: %f | Integral: %f"), Angles::degrees(offset), m_integral);
+          }
 
-          m_task->war(DTR("Updated ILOS offset: %f | Integral: %f"), Angles::degrees(offset), m_integral);
           m_debug_parcel.p = Angles::degrees(offset);
           m_debug_parcel.i = m_integral;
           m_task->dispatch(m_debug_parcel);
           
-          return offset;
+          return new_heading;
         }
 
       private:
@@ -116,12 +146,23 @@ namespace Control
         double m_gain;
         //! Integral term
         double m_integral;
-        //! Integral limit
-        double m_integral_limit;
         //! Look ahead distance
         double m_look_ahead;
+        //! Maximum cross track heading 
+        //!< (maximum angle possible, relative to track bearing)
+        double m_max_ct_heading;
+        //! Track bearing
+        double m_track_bearing;
+        //! Debug parcel
         IMC::ControlParcel m_debug_parcel;
 
+        double
+        getIntegralSlope(const double error, const double integral)
+        {
+          return  (m_look_ahead * error) /
+                  ((error + m_gain * integral) * (error + m_gain * integral) +
+                    m_look_ahead * m_look_ahead);
+        }
       };
     }
   }
