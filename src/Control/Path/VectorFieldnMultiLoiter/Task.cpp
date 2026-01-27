@@ -50,7 +50,10 @@ namespace Control
         bool ext_control;
         double ext_gain;
         double ext_trgain;
-        double cc_lookahead;
+        // Carrot Chasing lookahead distance
+        double cc_lookahead_distance;
+        // Carrot Chasing lookahead angle
+        double cc_lookahead_angle;
         double plos_pp_gain;
         double plos_los_gain;
       };
@@ -67,38 +70,44 @@ namespace Control
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx)
         {
-          param("Corridor -- Width", m_args.corridor)
+          param("Loiter Algorithm", m_args.loiter_algorithm)
+          .values("VectorField, CarrotChasing, PLOS")
+          .defaultValue("VectorField")
+          .description("Algorithm used for loiter control.");
+
+          param("VectorField -- Corridor Width", m_args.corridor)
           .minimumValue("1.0")
           .maximumValue("50.0")
           .defaultValue("5.0")
           .units(Units::Meter)
           .description("Width of corridor for attack entry angle");
 
-          param("Corridor -- Entry Angle", m_args.entry_angle)
+          param("VectorField -- Corridor Entry Angle", m_args.entry_angle)
           .minimumValue("2")
           .maximumValue("45")
           .defaultValue("15")
           .units(Units::Degree)
           .description("Attack angle when lateral track error equals corridor width");
 
-          param("Extended Control -- Enabled", m_args.ext_control)
+          param("VectorField -- Extended Control Enabled", m_args.ext_control)
           .defaultValue("false")
           .description("Enable extended (refined) corridor control");
 
-          param("Extended Control -- Controller Gain", m_args.ext_gain)
+          param("VectorField -- Extended Control Controller Gain", m_args.ext_gain)
           .defaultValue("1.0")
           .description("Gain for extended control");
 
-          param("Extended Control -- Turn Rate Gain", m_args.ext_trgain)
+          param("VectorField -- Extended Control Turn Rate Gain", m_args.ext_trgain)
           .defaultValue("1.0")
           .description("Turn rate gain for extended control");
 
-          param("Loiter Algorithm", m_args.loiter_algorithm)
-          .values("VectorField, CarrotChasing, PLOS")
-          .defaultValue("CarrotChasing")
-          .description("Algorithm used for loiter control.");
+          param("Carrot Chasing -- Lookahead Distance", m_args.cc_lookahead_distance)
+          .minimumValue("1.0")
+          .defaultValue("3.0")
+          .units(Units::Meter)
+          .description("Lookahead distance for carrot chasing step");
 
-          param("Carrot Chasing -- Lookahead Angle", m_args.cc_lookahead)
+          param("Carrot Chasing -- Lookahead Angle", m_args.cc_lookahead_angle)
           .defaultValue("10.0")
           .units(Units::Degree)
           .description("Lookahead angle for carrot chasing loiter");
@@ -140,6 +149,47 @@ namespace Control
         //! From base class PathController
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
+        {
+          if (m_args.loiter_algorithm == "VectorField")
+            stepVectorField(state, ts);
+          else if (m_args.loiter_algorithm == "CarrotChasing")
+            stepCarrotChasing(state, ts);
+          else
+          {
+            err("Unknown algorithm '%s'. Defaulting to VectorField.",
+                m_args.loiter_algorithm.c_str());
+            stepVectorField(state, ts);
+          }
+        }
+
+        void
+        stepCarrotChasing(const IMC::EstimatedState& state, const TrackingState& ts)
+        {
+          // Path direction
+          const double chi = ts.track_bearing;
+          const double cchi = std::cos(chi);
+          const double schi = std::sin(chi);
+
+          // Projection point on the path (q)
+          const double qx = ts.start.x + ts.track_pos.x * cchi;
+          const double qy = ts.start.y + ts.track_pos.x * schi;
+
+          // Virtual target point (carrot)
+          const double sx = qx + m_args.cc_lookahead_distance * cchi;
+          const double sy = qy + m_args.cc_lookahead_distance * schi;
+
+          // Desired heading toward carrot
+          const double psi_d = std::atan2(sy - state.y, sx - state.x);
+
+          // Dispatch heading reference
+          m_heading.value = Angles::normalizeRadian(psi_d);
+          dispatch(m_heading);
+          war("Carrot Chasing Heading: %.2f",
+              Angles::degrees(m_heading.value));
+        }
+
+        void
+        stepVectorField(const IMC::EstimatedState& state, const TrackingState& ts)
         {
           // Note:
           // cross-track position (lateral error) = ts.track_pos.y
@@ -199,9 +249,9 @@ namespace Control
             loiterPLOS(state, ts);
           else
           {
-            err("Unknown loiter algorithm '%s'. Defaulting to CarrotChasing.",
+            err("Unknown loiter algorithm '%s'. Defaulting to VectorField.",
                 m_args.loiter_algorithm.c_str());
-            loiterCarrotChase(state, ts);
+            loiterVectorField(state, ts);
           }
         }
 
@@ -235,7 +285,7 @@ namespace Control
 
           // Compute virtual point
           const double lambda = ts.loiter.clockwise ? 1.0 : -1.0;
-          const double phi_s = phi + lambda * Angles::radians(m_args.cc_lookahead);
+          const double phi_s = phi + lambda * Angles::radians(m_args.cc_lookahead_angle);
           const double sx = ts.loiter.center.x + ts.loiter.radius * std::cos(phi_s);
           const double sy = ts.loiter.center.y + ts.loiter.radius * std::sin(phi_s);
 
