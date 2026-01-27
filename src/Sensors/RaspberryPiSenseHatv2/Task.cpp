@@ -36,10 +36,10 @@
 
 namespace Sensors
 {
-  //! Device driver for RPi Sense HAT.
+  //! Device driver for RPi Sense HAT v2.
   //!
   //! @author João Bogas
-  namespace PiHat
+  namespace RaspberryPiSenseHatv2
   {
     using DUNE_NAMESPACES;
 

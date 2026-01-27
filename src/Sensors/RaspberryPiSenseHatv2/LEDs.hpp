@@ -46,7 +46,7 @@
 
 namespace Sensors
 {
-  namespace PiHat
+  namespace RaspberryPiSenseHatv2
   {
     //! Class to control the LED matrix on the PiHat.
     class LEDMatrix
