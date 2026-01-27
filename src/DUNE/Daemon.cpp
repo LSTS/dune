@@ -79,7 +79,7 @@ namespace DUNE
 
     // Register system name.
     std::string sys_name;
-    m_ctx.config.get("General", "Vehicle", "unknown", sys_name);
+    m_ctx.config.get("General", "Vehicle", IMC::AddressResolver::c_unknown, sys_name);
     m_ctx.resolver.name(sys_name);
     unsigned id = resolveSystemName(sys_name);
     m_ctx.resolver.id(id);
