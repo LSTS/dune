@@ -35,9 +35,6 @@ namespace DUNE
 {
   namespace IMC
   {
-    //! Name of the unknown address.
-    static const char* c_unknown = "unknown";
-
     AddressResolver::AddressResolver(void):
       m_name(c_unknown),
       m_id(invalid())

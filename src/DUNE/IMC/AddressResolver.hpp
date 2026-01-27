@@ -48,6 +48,8 @@ namespace DUNE
     class AddressResolver
     {
     public:
+      static constexpr const char* c_unknown = "unknown";
+
       //! Default constructor.
       AddressResolver(void);
 
