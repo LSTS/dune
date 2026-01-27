@@ -56,7 +56,7 @@ namespace DUNE
     std::vector<std::string> addrs = m_ctx.config.options("IMC Addresses");
     for (unsigned i = 0; i < addrs.size(); ++i)
     {
-      unsigned id = IMC::AddressResolver::invalid();
+      unsigned id;
       m_ctx.config.get("IMC Addresses", addrs[i], "", id);
       m_ctx.resolver.insert(addrs[i], id);
     }
