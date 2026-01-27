@@ -68,11 +68,6 @@ namespace DUNE
       unsigned
       id(void);
 
-      //! Set the address id of this instance.
-      //! @param id the address id of this instance.
-      void
-      id(unsigned id);
-
       void
       insert(const std::string& name, unsigned id);
 
@@ -128,6 +123,9 @@ namespace DUNE
       unsigned m_id;
       //! Mutex used for safe concurrent accesses.
       Concurrency::Mutex m_mutex;
+
+      unsigned
+      generateIMCAddress(void);
     };
   }
 }

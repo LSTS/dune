@@ -81,8 +81,6 @@ namespace DUNE
     std::string sys_name;
     m_ctx.config.get("General", "Vehicle", IMC::AddressResolver::c_unknown, sys_name);
     m_ctx.resolver.name(sys_name);
-    unsigned id = resolveSystemName(sys_name);
-    m_ctx.resolver.id(id);
     setEntityLabel("Daemon");
     reserveEntities();
 
@@ -118,7 +116,7 @@ namespace DUNE
       err("%s", e.what());
     }
 
-    inf(DTR("system name: '%s' (%u)"), sys_name.c_str(), id);
+    inf(DTR("system name: '%s' (0x%04x)"), sys_name.c_str(), getSystemId());
     inf(DTR("registered tasks: %d"), Tasks::Factory::getRegisteredCount());
     inf(DTR("base folder: '%s'"), ctx.dir_app.c_str());
     inf(DTR("configuration folder: '%s'"), ctx.dir_cfg.c_str());
