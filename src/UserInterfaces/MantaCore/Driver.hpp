@@ -74,6 +74,11 @@ namespace UserInterfaces
         m_system_name_free_text = String::str("System: %s", task->getSystemName());
         querySystems(true);
         m_handle->flush();
+
+        std::vector<Interface> itfs;
+        Interface::get(itfs);
+        for (const auto& itf : itfs)
+          m_networks_ips[itf.name()] = itf.address().str();
       }
 
       uint16_t
@@ -226,10 +231,11 @@ namespace UserInterfaces
           m_free_text_state++;
           return false;
         }
-        
-        std::string ip;
-        const auto result = getInterfaceIP(m_networks_free_text_it->second, ip);
-        text = String::str("%s IP: %s", m_networks_free_text_it->first.c_str(), result ? ip.c_str() : "fail");
+
+        auto it = m_network_ips.find(m_networks_free_text_it->first);
+        text = m_networks_free_text_it->first.c_str();
+        text += " IP: ";
+        text += (it == m_network_ips.end()) ? "fail" : it->second;
         m_networks_free_text_it++;
         return true;
       }
@@ -601,6 +607,8 @@ namespace UserInterfaces
       std::map<std::string, std::string>::iterator m_networks_free_text_it;
       //! Acoustic Modems free text iterator.
       std::map<std::string, bool>::iterator m_amodems_free_text_it;
+      //! Network interfaces map of names to ip.
+      std::map<std::string, std::string> m_networks_ips;
 
       uint16_t
       getInternalId(void)

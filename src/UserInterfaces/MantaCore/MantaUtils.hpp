@@ -311,39 +311,6 @@ namespace UserInterfaces
       else
         return name_io;
     }
-
-    bool
-    getInterfaceIP(const std::string& interfaceName, std::string& ipAddress)
-    {
-      struct ifaddrs* ifaddr = nullptr;
-      if (getifaddrs(&ifaddr) == -1)
-        return false;
-  
-      bool found = false;
-      for (struct ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next)
-      {
-        if (ifa->ifa_addr == nullptr)
-          continue;
-        
-        if (interfaceName != ifa->ifa_name)
-          continue;
-        
-        if (ifa->ifa_addr->sa_family == AF_INET)
-        {
-          char host[INET_ADDRSTRLEN] = {0};
-          void* addrPtr = &((struct sockaddr_in*)ifa->ifa_addr)->sin_addr;
-          if (inet_ntop(AF_INET, addrPtr, host, sizeof(host)) != nullptr)
-          {
-            ipAddress = host;
-            found = true;
-            break;
-          }
-        }
-      }
-  
-      freeifaddrs(ifaddr);
-      return found;
-    }
   }
 }
 
