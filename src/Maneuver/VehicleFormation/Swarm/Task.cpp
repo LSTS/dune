@@ -929,6 +929,7 @@ namespace Maneuver
           if (elapsed > 1.0f)
             elapsed = 1.0f;
           // return 1 + (1 - m_speed_ref / original_speed) * elapsed;
+          (void) original_speed;
           return 1;
         }
 
