@@ -936,8 +936,8 @@ private:
         {
           uint8_t tx_data[2] = {static_cast<uint8_t>(reg | READ_FLAG), 0};
           std::vector<uint8_t> rx_data(count);
-          m_spi->transfer(tx_data, (uint8_t*) rx_data[0], count);
-          dest = &rx_data[1];
+          m_spi->transfer(tx_data, rx_data.data(), count);
+          std::memcpy(dest, &rx_data[1], count - 1);
         }
       }
 
