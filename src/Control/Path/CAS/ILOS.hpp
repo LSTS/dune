@@ -56,8 +56,7 @@ namespace Control
           m_gain(gain),
           m_integral(0.0),
           m_look_ahead(look_ahead_distance),
-          m_max_ct_heading(max_ct_heading),
-          m_track_bearing(0.0)
+          m_max_ct_heading(max_ct_heading)
         { }
 
         /// Destructor
@@ -95,16 +94,8 @@ namespace Control
           m_max_ct_heading = limit;
         }
 
-        //! Set track bearing
-        //! @param bearing track bearing (radians)
-        void
-        setTrackBearing(const double bearing)
-        {
-          m_track_bearing = bearing;
-        }
-
         double
-        update(const double error, const double los_angle)
+        update(const double error, const double los_angle, const double track_bearing)
         {
           // Compute new integral term
           const double timestep = m_last_step.getDelta();
@@ -115,11 +106,11 @@ namespace Control
           double new_heading = los_angle + offset;
 
           // Prevent backwards movement
-          double heading_diff = Angles::normalizeRadian(new_heading - m_track_bearing);
+          double heading_diff = Angles::normalizeRadian(new_heading - track_bearing);
           if (std::fabs(heading_diff) > m_max_ct_heading)
           {
             heading_diff = Math::trimValue(heading_diff, -m_max_ct_heading, m_max_ct_heading);
-            new_heading = m_track_bearing + heading_diff;
+            new_heading = track_bearing + heading_diff;
             offset = Angles::normalizeRadian(new_heading - los_angle);
             m_task->trace(DTR("[Saturated] Updated ILOS offset: %f | Integral: %f"), Angles::degrees(offset), m_integral);
           }
@@ -151,8 +142,6 @@ namespace Control
         //! Maximum cross track heading 
         //!< (maximum angle possible, relative to track bearing)
         double m_max_ct_heading;
-        //! Track bearing
-        double m_track_bearing;
         //! Debug parcel
         IMC::ControlParcel m_debug_parcel;
 

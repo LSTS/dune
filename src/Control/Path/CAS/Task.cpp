@@ -722,10 +722,7 @@ namespace Control
           (void)ts;
 
           if (m_integral_controller != nullptr)
-          {
             m_integral_controller->reset();
-            m_integral_controller->setTrackBearing(ts.track_bearing);
-          }
         }
 
         // void
@@ -1267,33 +1264,13 @@ namespace Control
         {
           updateEstimatedState(state);
 
-          //! ILOS Guidance.
-          //! Use ILOS when enabled
-          if(m_args.ilos_enabled && ts.track_pos.x <= ts.track_length)
-          {
-            m_des_heading.value = m_integral_controller->update(ts.track_pos.y, ts.los_angle);
-            trace("ILOS DESIRED COURSE: %f", Angles::degrees(m_des_heading.value));
-          }
-          else // Use LOS when ILOS is not enabled or the vehicle has overshot the waypoint.
-          {
-            m_des_heading.value = ts.los_angle;
-            trace("LOS DESIRED COURSE: %f", Angles::degrees(m_des_heading.value));
-          }
-
-          //! Nothing is enabled.
-          if(!m_args.en_cas /* && !m_args.en_antiground */)
-          {
-            dispatch(m_des_heading);
-            return;
-          }
-
           //! Something might be enabled, but no data available.
-          if(m_dyn_obst_vec.size() == 0 /* && m_dangers.rows() == 0 && m_depths.rows() == 0 */)
-          {
-            trace("CAS or anti-grounding are enabled, but their tables are empty!");
-            dispatch(m_des_heading);
-            return;
-          }
+          // if(m_dyn_obst_vec.size() == 0 /* && m_dangers.rows() == 0 && m_depths.rows() == 0 */)
+          // {
+          //   trace("CAS or anti-grounding are enabled, but their tables are empty!");
+          //   dispatch(m_des_heading);
+          //   return;
+          // }
 
           if(m_args.en_cas /* || m_args.en_antiground */)
             createWPs(ts);
@@ -1391,16 +1368,13 @@ namespace Control
             //   debug("Anti-grounding and anti-collision situation!");
 
             obstacle* obs_vessel = nullptr;
-            m_sb_mpc->getBestControlOffset(m_u_os, m_psi_os, m_asv_state[3], m_des_heading.value, m_asv_state, m_waypoints, m_dyn_obst_state, {}/* m_static_obst_state */, m_cost, obs_vessel);
-
-            //! New desired course and course offset.
-            m_des_heading.value += m_psi_os;
+            m_sb_mpc->getBestControlOffset(m_u_os, m_psi_os, m_asv_state[3], ts.los_angle, m_asv_state, m_waypoints, m_dyn_obst_state, {}/* m_static_obst_state */, m_cost, obs_vessel);
 
             if(m_psi_os == 0)
-              debug("Course offset is 0, same desired course %.3f", Angles::degrees(m_des_heading.value));
+              debug("Course offset is 0");
             else
             {
-              debug("Course offset is %.0f, new desired course %.3f", Angles::degrees(m_psi_os), Angles::degrees(m_des_heading.value));
+              debug("Course offset is %.0f", Angles::degrees(m_psi_os));
               
               // Find closest vessel - hypothetically it is the one we try to avoid.
               // std::vector<IMC::AisInfo>::const_iterator itr;
@@ -1445,15 +1419,54 @@ namespace Control
                 dispatch(tr);
               }
             }
-
-            //! Normalize angle
-            m_des_heading.value = Angles::normalizeRadian(m_des_heading.value);
-
-            debug("OFFSET: %.0f - NEW COURSE NORMALIZED %.3f",Angles::degrees(m_psi_os),Angles::degrees(m_des_heading.value));
-
-            dispatch(m_des_heading);
             m_timestamp_prev = m_timestamp_new;
           }
+
+          // CAS and ILOS off
+          if (!m_args.en_cas && !m_args.ilos_enabled)
+          {
+            m_des_heading.value = ts.los_angle;
+          }
+          // CAS on, ILOS off
+          else if (m_args.en_cas && !m_args.ilos_enabled)
+          {
+            m_des_heading.value = ts.los_angle + m_psi_os;
+          }
+          // CAS off, ILOS on
+          else if (!m_args.en_cas && m_args.ilos_enabled)
+          {
+            if (ts.track_pos.x <= ts.track_length)
+              m_des_heading.value = m_integral_controller->update(ts.track_pos.y, ts.los_angle, ts.track_bearing);
+            else
+              m_des_heading.value = ts.los_angle;
+          }
+          // CAS and ILOS on
+          else
+          {
+            if (ts.track_pos.x <= ts.track_length)
+            {
+              if (m_psi_os == 0.0)
+              {
+                m_des_heading.value = m_integral_controller->update(ts.track_pos.y, ts.los_angle, ts.track_bearing);
+              }
+              else
+              {
+                m_des_heading.value = m_integral_controller->update(0.0, 
+                                                                    Angles::normalizeRadian(ts.los_angle + m_psi_os), 
+                                                                    Angles::normalizeRadian(ts.los_angle + m_psi_os));
+                war("[Avoiding]");
+              }
+            }
+            else
+            {
+              m_des_heading.value = ts.los_angle + m_psi_os;
+            }
+          }
+
+          //! Normalize angle
+          m_des_heading.value = Angles::normalizeRadian(m_des_heading.value);
+          debug("CAS OFFSET: %.0f - NEW COURSE NORMALIZED %.3f", Angles::degrees(m_psi_os), Angles::degrees(m_des_heading.value));
+          dispatch(m_des_heading);
         }
 
         //! Execute a loiter control step
