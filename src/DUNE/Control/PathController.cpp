@@ -236,11 +236,6 @@ namespace DUNE
       m_ts.z_control = false;
     }
 
-    PathController::~PathController(void)
-    {
-      Memory::clear(m_btrack);
-    }
-
     void
     PathController::onUpdateParameters(void)
     {

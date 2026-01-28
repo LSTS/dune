@@ -57,10 +57,6 @@ namespace DUNE
       //! Constructor.
       PathController(std::string name, Tasks::Context& ctx);
 
-      //! Destructor.
-      virtual
-      ~PathController(void);
-
       //! Entity reservation callback.
       void
       onEntityReservation(void);
