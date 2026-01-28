@@ -31,6 +31,7 @@
 // ISO C++ 98 headers.
 #include <sstream>
 #include <cstddef>
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/IMC/Constants.hpp>
@@ -57,6 +58,19 @@ namespace DUNE
   {
     //! Maximum size of a log book entry message.
     const static size_t c_log_message_max_size = 1024;
+    //! String to data type map
+    static const std::map<std::string, IMC::TypedEntityParameter::TypeEnum> c_str_to_type = {
+      {"boolean",       IMC::TypedEntityParameter::TYPE_BOOL},
+      {"integer",       IMC::TypedEntityParameter::TYPE_INT},
+      {"real",          IMC::TypedEntityParameter::TYPE_FLOAT},
+      {"string",        IMC::TypedEntityParameter::TYPE_STRING},
+      {"ipv4-address",  IMC::TypedEntityParameter::TYPE_STRING},
+      {"list:boolean",  IMC::TypedEntityParameter::TYPE_LIST_BOOL},
+      {"list:integer",  IMC::TypedEntityParameter::TYPE_LIST_INT},
+      {"list:real",     IMC::TypedEntityParameter::TYPE_LIST_FLOAT},
+      {"list:string",   IMC::TypedEntityParameter::TYPE_LIST_STRING},
+      {"list:ipv4-address",  IMC::TypedEntityParameter::TYPE_LIST_STRING}
+    };
 
     Task::Task(const std::string& n, Context& ctx):
       m_ctx(ctx),
@@ -104,6 +118,7 @@ namespace DUNE
       bind<IMC::PopEntityParameters>(this);
       bind<IMC::QueryEntityState>(this);
       bind<IMC::RestartSystem>(this);
+      bind<IMC::QueryTypedEntityParameters>(this);
     }
 
     unsigned int
@@ -636,6 +651,87 @@ namespace DUNE
       IMC::SaveEntityParameters sp;
       sp.name = getEntityLabel();
       dispatch(sp, DF_LOOP_BACK);
+    }
+
+    void
+    Task::onQueryTypedEntityParameters(const IMC::QueryTypedEntityParameters* msg)
+    {
+      if (msg->op != IMC::QueryTypedEntityParameters::OP_REQUEST)
+        return;
+
+      if (!msg->entity_name.empty() && msg->entity_name.compare(std::string(getEntityLabel())) != 0)
+        return;
+
+      IMC::QueryTypedEntityParameters reply;
+      reply.op = IMC::QueryTypedEntityParameters::OP_REPLY;
+      reply.request_id = msg->request_id;
+      reply.entity_name = std::string(getEntityLabel());
+
+      if (!m_param_editor.empty())
+      {
+        IMC::TypedEntityParameterEditor editor;
+        editor.value = m_param_editor;
+        reply.parameters.push_back(editor);
+      }
+
+      std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
+      for (; itr != m_params.end(); itr++)
+      {
+        IMC::TypedEntityParameter param;
+
+        Parameter* p = itr->second;
+        param.name = p->name();
+        try
+        {
+          param.type = c_str_to_type.at(p->getType());
+        }
+        catch (const std::out_of_range& e)
+        {
+          throw std::runtime_error("invalid parameter type: " + p->getType()); 
+        }
+        param.default_value = p->value().empty() ? p->defaultValue() : p->value();
+        param.units = Units::getAbbrev(p->units());
+        param.description = p->description();
+        param.values_list = p->values();
+
+        param.min_value = p->minimumValue().empty() ?
+                          -std::numeric_limits<float>::max() :
+                          std::stof(p->minimumValue());
+        param.max_value = p->maximumValue().empty() ?
+                          std::numeric_limits<float>::max() :
+                          std::stof(p->maximumValue());
+
+        param.list_min_size = p->minimumSize() == UINT_MAX ? 
+                              0 : p->minimumSize();
+        param.list_max_size = p->maximumSize();
+
+        // if parameter is not editable set visibility accordingly
+        param.visibility = p->getVisibility();
+        if (!p->editable())
+          param.visibility += 2;
+        
+        param.scope = p->getScope();
+
+        auto values_if = p->valuesIf();
+        for (auto v : values_if)
+        {
+          IMC::ValuesIf value;
+          value.param = v->name;
+          value.value = v->equals;
+          value.values_list = v->values;
+          param.values_if_list.push_back(value);
+        }
+
+        reply.parameters.push_back(param);
+      }
+
+      dispatch(reply);
+    }
+
+    void
+    Task::consume(const IMC::QueryTypedEntityParameters* msg)
+    {
+      onQueryTypedEntityParameters(msg);
     }
 
     void
