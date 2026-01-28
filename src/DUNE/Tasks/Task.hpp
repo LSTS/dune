@@ -457,6 +457,17 @@ namespace DUNE
         return entity;
       }
 
+      //! Associate an entity label with an internally stored entity object.
+      template <typename E>
+      void
+      reserveEntity(const std::string& label, E* entity)
+      {
+        m_entities.push_back(static_cast<Entities::BasicEntity*>(entity));
+        entity->setLabel(label);
+        entity->setId(m_ctx.entities.reserve(label, getName()));
+        entity->setBindings(m_recipient);
+      }
+
       //! Retrieve pointer to a previously stored entity object
       //! object.
       //! @param[in] label entity name/label.
