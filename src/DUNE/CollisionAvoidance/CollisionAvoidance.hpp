@@ -34,19 +34,24 @@
 #include <DUNE/CollisionAvoidance/BasicCollisionAvoidanceEntity.hpp>
 #include <DUNE/Utils/String.hpp>
 
+// Local Headers.
+#include "AutonautCAS/CAS.hpp"
+
 namespace DUNE
 {
   namespace CollisionAvoidance
   {
     enum CollisionAvoidanceType : uint8_t
     {
-      CA_DISABLED = 0
+      CA_DISABLED = 0,
+      CA_AUTONAUTCAS
     };
 
     static constexpr const char* c_ca_disabled = "Disabled";
-    static const std::vector<std::string> c_ca_type_names = {c_ca_disabled};
+    static const std::vector<std::string> c_ca_type_names = {"Disabled","AutonautCAS"};
     static const std::string c_ca_type_names_str = Utils::String::join(c_ca_type_names.begin(), c_ca_type_names.end(), ",");
-    static const std::map<std::string, CollisionAvoidanceType> c_ca_types = {{c_ca_disabled, CA_DISABLED}};
+    static const std::map<std::string, CollisionAvoidanceType> c_ca_types = {{"Disabled", CA_DISABLED},
+                                                                             {"AutonautCAS", CA_AUTONAUTCAS}};
 
     class Factory
     {
@@ -63,6 +68,9 @@ namespace DUNE
         case CA_DISABLED:
           return nullptr;
 
+        case CA_AUTONAUTCAS:
+          return new AutonautCAS::CAS(owner, context);
+        
         default:
           throw std::runtime_error("CollisionAvoidance::Factory : not implemented Collision Avoidance type: " + type);
         }
