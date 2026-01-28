@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 23a262146c5f6e7c1f5cb7c7d0d41d98                            *
+// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -373,4 +373,5 @@ MESSAGE(2017, TypedEntityParameter)
 MESSAGE(2018, ValuesIf)
 MESSAGE(2021, VersionInfo)
 MESSAGE(2022, TotalHeading)
+MESSAGE(2036, TypedEntityParameterEditor)
 #undef MESSAGE

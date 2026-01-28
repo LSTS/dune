@@ -862,6 +862,9 @@ namespace DUNE
       onPopEntityParameters(const IMC::PopEntityParameters* msg);
 
       virtual void
+      onQueryTypedEntityParameters(const IMC::QueryTypedEntityParameters* msg);
+
+      virtual void
       onMain(void) = 0;
 
     private:
@@ -937,6 +940,9 @@ namespace DUNE
 
       void
       consume(const IMC::RestartSystem* msg);
+
+      void
+      consume(const IMC::QueryTypedEntityParameters* msg);
     };
   }
 }

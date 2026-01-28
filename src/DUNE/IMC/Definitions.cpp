@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 23a262146c5f6e7c1f5cb7c7d0d41d98                            *
+// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -10187,7 +10187,7 @@ namespace DUNE
     int
     PowerChannelControl::validate(void) const
     {
-      if (op > 6) return false;
+      if (op > 7) return false;
       return true;
     }
 
@@ -28871,6 +28871,111 @@ namespace DUNE
       IMC::toJSON(os__, "reason", reason, nindent__);
     }
 
+    QueryTypedEntityParameters::QueryTypedEntityParameters(void)
+    {
+      m_header.mgid = 2016;
+      clear();
+      parameters.setParent(this);
+    }
+
+    void
+    QueryTypedEntityParameters::clear(void)
+    {
+      op = 0;
+      request_id = 0;
+      entity_name.clear();
+      parameters.clear();
+    }
+
+    bool
+    QueryTypedEntityParameters::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::QueryTypedEntityParameters& other__ = static_cast<const QueryTypedEntityParameters&>(msg__);
+      if (op != other__.op) return false;
+      if (request_id != other__.request_id) return false;
+      if (entity_name != other__.entity_name) return false;
+      if (parameters != other__.parameters) return false;
+      return true;
+    }
+
+    int
+    QueryTypedEntityParameters::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    QueryTypedEntityParameters::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(request_id, ptr__);
+      ptr__ += IMC::serialize(entity_name, ptr__);
+      ptr__ += parameters.serialize(ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    QueryTypedEntityParameters::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(request_id, bfr__, size__);
+      bfr__ += IMC::deserialize(entity_name, bfr__, size__);
+      bfr__ += parameters.deserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    QueryTypedEntityParameters::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(request_id, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(entity_name, bfr__, size__);
+      bfr__ += parameters.reverseDeserialize(bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    QueryTypedEntityParameters::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "request_id", request_id, nindent__);
+      IMC::toJSON(os__, "entity_name", entity_name, nindent__);
+      parameters.toJSON(os__, "parameters", nindent__);
+    }
+
+    void
+    QueryTypedEntityParameters::setTimeStampNested(double value__)
+    {
+      parameters.setTimeStamp(value__);
+    }
+
+    void
+    QueryTypedEntityParameters::setSourceNested(uint16_t value__)
+    {
+      parameters.setSource(value__);
+    }
+
+    void
+    QueryTypedEntityParameters::setSourceEntityNested(uint8_t value__)
+    {
+      parameters.setSourceEntity(value__);
+    }
+
+    void
+    QueryTypedEntityParameters::setDestinationNested(uint16_t value__)
+    {
+      parameters.setDestination(value__);
+    }
+
+    void
+    QueryTypedEntityParameters::setDestinationEntityNested(uint8_t value__)
+    {
+      parameters.setDestinationEntity(value__);
+    }
+
     ValuesIf::ValuesIf(void)
     {
       m_header.mgid = 2018;
@@ -29098,111 +29203,6 @@ namespace DUNE
       values_if_list.setDestinationEntity(value__);
     }
 
-    QueryTypedEntityParameters::QueryTypedEntityParameters(void)
-    {
-      m_header.mgid = 2016;
-      clear();
-      parameters.setParent(this);
-    }
-
-    void
-    QueryTypedEntityParameters::clear(void)
-    {
-      op = 0;
-      request_id = 0;
-      entity_name.clear();
-      parameters.clear();
-    }
-
-    bool
-    QueryTypedEntityParameters::fieldsEqual(const Message& msg__) const
-    {
-      const IMC::QueryTypedEntityParameters& other__ = static_cast<const QueryTypedEntityParameters&>(msg__);
-      if (op != other__.op) return false;
-      if (request_id != other__.request_id) return false;
-      if (entity_name != other__.entity_name) return false;
-      if (parameters != other__.parameters) return false;
-      return true;
-    }
-
-    int
-    QueryTypedEntityParameters::validate(void) const
-    {
-      return true;
-    }
-
-    uint8_t*
-    QueryTypedEntityParameters::serializeFields(uint8_t* bfr__) const
-    {
-      uint8_t* ptr__ = bfr__;
-      ptr__ += IMC::serialize(op, ptr__);
-      ptr__ += IMC::serialize(request_id, ptr__);
-      ptr__ += IMC::serialize(entity_name, ptr__);
-      ptr__ += parameters.serialize(ptr__);
-      return ptr__;
-    }
-
-    uint16_t
-    QueryTypedEntityParameters::deserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(op, bfr__, size__);
-      bfr__ += IMC::deserialize(request_id, bfr__, size__);
-      bfr__ += IMC::deserialize(entity_name, bfr__, size__);
-      bfr__ += parameters.deserialize(bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    uint16_t
-    QueryTypedEntityParameters::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
-    {
-      const uint8_t* start__ = bfr__;
-      bfr__ += IMC::deserialize(op, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(request_id, bfr__, size__);
-      bfr__ += IMC::reverseDeserialize(entity_name, bfr__, size__);
-      bfr__ += parameters.reverseDeserialize(bfr__, size__);
-      return bfr__ - start__;
-    }
-
-    void
-    QueryTypedEntityParameters::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
-    {
-      IMC::toJSON(os__, "op", op, nindent__);
-      IMC::toJSON(os__, "request_id", request_id, nindent__);
-      IMC::toJSON(os__, "entity_name", entity_name, nindent__);
-      parameters.toJSON(os__, "parameters", nindent__);
-    }
-
-    void
-    QueryTypedEntityParameters::setTimeStampNested(double value__)
-    {
-      parameters.setTimeStamp(value__);
-    }
-
-    void
-    QueryTypedEntityParameters::setSourceNested(uint16_t value__)
-    {
-      parameters.setSource(value__);
-    }
-
-    void
-    QueryTypedEntityParameters::setSourceEntityNested(uint8_t value__)
-    {
-      parameters.setSourceEntity(value__);
-    }
-
-    void
-    QueryTypedEntityParameters::setDestinationNested(uint16_t value__)
-    {
-      parameters.setDestination(value__);
-    }
-
-    void
-    QueryTypedEntityParameters::setDestinationEntityNested(uint8_t value__)
-    {
-      parameters.setDestinationEntity(value__);
-    }
-
     VersionInfo::VersionInfo(void)
     {
       m_header.mgid = 2021;
@@ -29335,6 +29335,62 @@ namespace DUNE
 
     void
     TotalHeading::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    TypedEntityParameterEditor::TypedEntityParameterEditor(void)
+    {
+      m_header.mgid = 2036;
+      clear();
+    }
+
+    void
+    TypedEntityParameterEditor::clear(void)
+    {
+      value.clear();
+    }
+
+    bool
+    TypedEntityParameterEditor::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::TypedEntityParameterEditor& other__ = static_cast<const TypedEntityParameterEditor&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    TypedEntityParameterEditor::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    TypedEntityParameterEditor::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    TypedEntityParameterEditor::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    TypedEntityParameterEditor::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    TypedEntityParameterEditor::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
     }

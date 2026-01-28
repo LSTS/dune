@@ -32,6 +32,7 @@
 
 // ISO C++ 98 headers.
 #include <vector>
+#include <set>
 #include <string>
 #include <map>
 #include <sstream>
@@ -75,8 +76,15 @@ namespace DUNE
       void
       writeXML(std::ostream& os) const
       {
-        for (unsigned i = 0; i < m_params.size(); ++i)
-          m_params[i]->writeXML(os);
+        // Order parameters alphabetically by name
+        std::set<std::string> ordered_params;
+        std::map<std::string, Parameter*>::const_iterator itr = m_names.begin();
+        for (; itr != m_names.end(); ++itr)
+          ordered_params.insert(itr->first);
+        
+        std::set<std::string>::const_iterator oitr = ordered_params.begin();
+        for (; oitr != ordered_params.end(); ++oitr)
+          m_names.at(*oitr)->writeXML(os);
       }
 
       bool

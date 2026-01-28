@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 23a262146c5f6e7c1f5cb7c7d0d41d98                            *
+// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -27298,6 +27298,104 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Query Typed Entity Parameters.
+    class QueryTypedEntityParameters: public Message
+    {
+    public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Request.
+        OP_REQUEST = 0,
+        //! Reply.
+        OP_REPLY = 1
+      };
+
+      //! Operation.
+      uint8_t op;
+      //! Request identitier.
+      uint32_t request_id;
+      //! Entity Name.
+      std::string entity_name;
+      //! Parameters.
+      MessageList<TypedEntityParametersOptions> parameters;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2016;
+      }
+
+      QueryTypedEntityParameters(void);
+
+      QueryTypedEntityParameters*
+      clone(void) const
+      {
+        return new QueryTypedEntityParameters(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return QueryTypedEntityParameters::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "QueryTypedEntityParameters";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 5;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(entity_name) + parameters.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
+    };
+
     //! Values If.
     class ValuesIf: public Message
     {
@@ -27370,7 +27468,7 @@ namespace DUNE
     };
 
     //! Typed Entity Parameter.
-    class TypedEntityParameter: public Message
+    class TypedEntityParameter: public TypedEntityParametersOptions
     {
     public:
       //! Type.
@@ -27400,7 +27498,11 @@ namespace DUNE
         //! User.
         VISIBILITY_USER = 0,
         //! Developer.
-        VISIBILITY_DEVELOPER = 1
+        VISIBILITY_DEVELOPER = 1,
+        //! User - Not Editable.
+        VISIBILITY_USER_NOT_EDITABLE = 2,
+        //! Developer - Not Editable.
+        VISIBILITY_DEVELOPER_NOT_EDITABLE = 3
       };
 
       //! Scope.
@@ -27497,104 +27599,6 @@ namespace DUNE
       getVariableSerializationSize(void) const
       {
         return IMC::getSerializationSize(name) + IMC::getSerializationSize(default_value) + IMC::getSerializationSize(units) + IMC::getSerializationSize(description) + IMC::getSerializationSize(values_list) + values_if_list.getSerializationSize();
-      }
-
-      void
-      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
-
-    protected:
-      void
-      setTimeStampNested(double value__);
-
-      void
-      setSourceNested(uint16_t value__);
-
-      void
-      setSourceEntityNested(uint8_t value__);
-
-      void
-      setDestinationNested(uint16_t value__);
-
-      void
-      setDestinationEntityNested(uint8_t value__);
-    };
-
-    //! Query Typed Entity Parameters.
-    class QueryTypedEntityParameters: public Message
-    {
-    public:
-      //! Operation.
-      enum OperationEnum
-      {
-        //! Request.
-        OP_REQUEST = 0,
-        //! Reply.
-        OP_REPLY = 1
-      };
-
-      //! Operation.
-      uint8_t op;
-      //! Request identitier.
-      uint32_t request_id;
-      //! Entity Name.
-      std::string entity_name;
-      //! Parameters.
-      MessageList<TypedEntityParameter> parameters;
-
-      static uint16_t
-      getIdStatic(void)
-      {
-        return 2016;
-      }
-
-      QueryTypedEntityParameters(void);
-
-      QueryTypedEntityParameters*
-      clone(void) const
-      {
-        return new QueryTypedEntityParameters(*this);
-      }
-
-      void
-      clear(void);
-
-      bool
-      fieldsEqual(const Message& msg__) const;
-
-      int
-      validate(void) const;
-
-      uint8_t*
-      serializeFields(uint8_t* bfr__) const;
-
-      uint16_t
-      deserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
-
-      uint16_t
-      getId(void) const
-      {
-        return QueryTypedEntityParameters::getIdStatic();
-      }
-
-      const char*
-      getName(void) const
-      {
-        return "QueryTypedEntityParameters";
-      }
-
-      unsigned
-      getFixedSerializationSize(void) const
-      {
-        return 5;
-      }
-
-      unsigned
-      getVariableSerializationSize(void) const
-      {
-        return IMC::getSerializationSize(entity_name) + parameters.getSerializationSize();
       }
 
       void
@@ -27759,6 +27763,73 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Typed Entity Parameter Editor.
+    class TypedEntityParameterEditor: public TypedEntityParametersOptions
+    {
+    public:
+      //! Value.
+      std::string value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2036;
+      }
+
+      TypedEntityParameterEditor(void);
+
+      TypedEntityParameterEditor*
+      clone(void) const
+      {
+        return new TypedEntityParameterEditor(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return TypedEntityParameterEditor::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "TypedEntityParameterEditor";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 0;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(value);
+      }
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
