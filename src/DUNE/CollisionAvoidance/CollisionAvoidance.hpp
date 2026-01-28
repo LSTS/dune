@@ -36,6 +36,7 @@
 
 // Local Headers.
 #include "AutonautCAS/CAS.hpp"
+#include "SinglePointAvoidance/SPA.hpp"
 
 namespace DUNE
 {
@@ -44,14 +45,16 @@ namespace DUNE
     enum CollisionAvoidanceType : uint8_t
     {
       CA_DISABLED = 0,
-      CA_AUTONAUTCAS
+      CA_AUTONAUTCAS,
+      CA_SPA
     };
 
     static constexpr const char* c_ca_disabled = "Disabled";
-    static const std::vector<std::string> c_ca_type_names = {"Disabled","AutonautCAS"};
+    static const std::vector<std::string> c_ca_type_names = {"Disabled","AutonautCAS","SPA"};
     static const std::string c_ca_type_names_str = Utils::String::join(c_ca_type_names.begin(), c_ca_type_names.end(), ",");
     static const std::map<std::string, CollisionAvoidanceType> c_ca_types = {{"Disabled", CA_DISABLED},
-                                                                             {"AutonautCAS", CA_AUTONAUTCAS}};
+                                                                             {"AutonautCAS", CA_AUTONAUTCAS},
+                                                                             {"SPA", CA_SPA}};
 
     class Factory
     {
@@ -70,6 +73,9 @@ namespace DUNE
 
         case CA_AUTONAUTCAS:
           return new AutonautCAS::CAS(owner, context);
+
+        case CA_SPA:
+          return new SinglePointAvoidance::SPA(owner, context);
         
         default:
           throw std::runtime_error("CollisionAvoidance::Factory : not implemented Collision Avoidance type: " + type);
