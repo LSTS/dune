@@ -24,27 +24,35 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Alberto Dallolio                                                 *
+// Author: Alberto Dallolio (legacy Control.Path.CAS)                       *
+// Author: Bernardo Gabriel (migration to Collision Avoidance Entity)       *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <cmath>
-#include <vector>
-#include <sstream>
-#include <cstring>
-#include <string>
+#ifndef DUNE_COLLISION_AVOIDANCE_AUTONAUTCAS_CAS_HPP_INCLUDED_
+#define DUNE_COLLISION_AVOIDANCE_AUTONAUTCAS_CAS_HPP_INCLUDED_
 
-// DUNE headers.
-#include <DUNE/DUNE.hpp>
+// DUNE Headers.
+#include <DUNE/CollisionAvoidance/BasicCollisionAvoidanceEntity.hpp>
+#include <DUNE/Coordinates/WGS84.hpp>
+#include <DUNE/Math/Angles.hpp>
+#include <DUNE/IMC/Message.hpp>
+#include <DUNE/Time/Clock.hpp>
+#include <DUNE/Control/TrackingState.hpp>
 #include "sb_mpc.hpp"
 
-namespace Control
+namespace DUNE
 {
-  namespace Path
+  namespace CollisionAvoidance
   {
-    namespace CAS
+    namespace AutonautCAS
     {
-      using DUNE_NAMESPACES;
+      using namespace DUNE::Entities;
+      using namespace DUNE::Tasks;
+      using namespace DUNE::Coordinates;
+      using namespace DUNE::Math;
+      using namespace DUNE::IMC;
+      using namespace DUNE::Time;
+      using namespace DUNE::Control;
 
       struct Arguments
       {
@@ -62,13 +70,6 @@ namespace Control
         double GRANULARITY;
         // Amount of time after which a disappeared obstacle is removed from the list.
         double kill_obst;
-        //! Enable collision avoidance.
-        bool en_cas;
-        //! Vector field parameters for loiter
-        //! Corridor width
-        double corridor;
-        //! Entry angle
-        double entry_angle;
 
         //! Enable anti-grounding.
         // bool en_antiground;
@@ -96,30 +97,15 @@ namespace Control
         // std::vector<double> K_ENV;
       };
 
-      // struct SingleCurrentCell
-      // {
-      //   //! Latitude WGS-84.
-      //   fp64_t lat;
-      //   //! Longitude WGS-84.
-      //   fp64_t lon;
-      //   //! Cell Depth.
-      //   fp64_t depth;
-      //   //! Water Velocity.
-      //   fp64_t vel;
-      //   //! Direction.
-      //   fp64_t dir;
-      // };
-
-      struct Task: public DUNE::Control::PathController
+      class CAS: public BasicCollisionAvoidanceEntity
       {
+      public:
         //! Task arguments.
         Arguments m_args;
         //! m_sb_mpc object.
         simulationBasedMpc* m_sb_mpc;
         //! List of asv states
         std::vector<double> m_asv_state;
-        //! Desired heading message.
-        IMC::DesiredHeading m_des_heading;
         //! Vector of obstacles
         std::vector<IMC::AisInfo> m_dyn_obst_vec;
         // Create matrix with past, current and next waypoint.
@@ -142,8 +128,6 @@ namespace Control
         std::vector<double> m_last_update;
         //! Cost <Output from CAS>
         double m_cost;
-        //! Vehicle Estimated State
-        IMC::EstimatedState m_estate;
         //! Average factor.
         int m_avg;
         //! Dynamic obstacles state matrix.
@@ -151,34 +135,8 @@ namespace Control
         //! Transmission request id.
         uint16_t m_tx_req_id;
 
-        //! Course offsets for contours.
-        // std::vector<double> m_offsets;
-        //! Cost function for grounding
-        // Math::Matrix m_static_obst_state; //Eigen::Matrix<double,-1,3>
-        // Math::Matrix m_dangers, m_depths;
-        //! Average last velocity value.
-        // double m_beam_velocity_zero_avg_last, m_beam_velocity_one_avg_last;
-        //! Average velocity value.
-        // double m_beam_velocity_zero_avg, m_beam_velocity_one_avg;
-        //! Information about the shallowest current cell.
-        // SingleCurrentCell m_shallowest_current_cell;
-        //! Absolute wind direction and speed.
-        // double m_wind_dir, m_wind_speed;
-        //! USV heave amplitude.
-        // double m_heave;
-        //! Estimated wave encounter frequency.
-        // double m_wave_freq;
-        //! Wind entity eid.
-        // int m_ws_eid;
-        //! Heave entity eid.
-        // int m_gnss_eid;
-        //! Wave frequency entity eid.
-        // int m_es_eid;
-        //! Average factor.
-        // int m_avg_zero, m_avg_one;
-
-        Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Control::PathController(name, ctx),
+        CAS(AbstractTask* owner, Context& context):
+          BasicCollisionAvoidanceEntity(owner, context),
           m_sb_mpc(nullptr),
           m_asv_state(6, 0.0),
           m_u_os(0.0),
@@ -196,11 +154,6 @@ namespace Control
           // m_heave(0.0),
           // m_wave_freq(0.0)
         {
-          param("Enable Collision Avoidance", m_args.en_cas)
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .defaultValue("true")
-          .description("Enable collision avoidance algorithm");
-          
           param("Maximum Obstacle Surveillance Range", m_args.out_of_range)
           .units(Units::Meter)
           .minimumValue("0.0")
@@ -407,20 +360,6 @@ namespace Control
           .defaultValue("15.0")
           .description("Portions of positive angle range in degrees");
 
-          param("Corridor -- Width", m_args.corridor)
-          .minimumValue("1.0")
-          .maximumValue("50.0")
-          .defaultValue("5.0")
-          .units(Units::Meter)
-          .description("Width of corridor for attack entry angle");
-
-          param("Corridor -- Entry Angle", m_args.entry_angle)
-          .minimumValue("2")
-          .maximumValue("45")
-          .defaultValue("15")
-          .units(Units::Degree)
-          .description("Attack angle when lateral track error equals corridor width");
-
           // param("Entity Label - Wind", m_args.elabel_ws)
           // .description("Entity label of 'AbsoluteWind' message");
           
@@ -450,57 +389,47 @@ namespace Control
           // .description("Course offsets for contours surroundings");
                     
           // param("Correlation Limit", m_args.corr_lim)
-          //     .defaultValue("50")
-          //     .maximumValue("100")
-          //     .minimumValue("0")
-          //     .description("Correlation above which measurement is discarded.");
+          // .defaultValue("50")
+          // .maximumValue("100")
+          // .minimumValue("0")
+          // .description("Correlation above which measurement is discarded.");
 
           // param("Amplitude Limit", m_args.ampl_lim)
-          //     .defaultValue("0")
-          //     .units(Units::Decibel)
-          //     .description("Amplitude above which measurement is discarded.");
+          // .defaultValue("0")
+          // .units(Units::Decibel)
+          // .description("Amplitude above which measurement is discarded.");
           
           // param("Vehicle Pitch Rate Limit", m_args.pitch_rate)
-          //     .defaultValue("0")
-          //     .description("Pitching rate above which measurement is discarded.");
+          // .defaultValue("0")
+          // .description("Pitching rate above which measurement is discarded.");
 
           // param("Vehicle Roll Rate Limit", m_args.roll_rate)
-          //     .defaultValue("0")
-          //     .description("Roll rate above which measurement is discarded.");
+          // .defaultValue("0")
+          // .description("Roll rate above which measurement is discarded.");
 
           // param("Weights environmental factors", m_args.K_ENV)
           // .minimumValue("0.0, 0.0, 0.0, 0.0, 0.0")
           // .defaultValue("10.0, 10.0, 10.0, 10.0, 10.0")
           // .description("Weights on environmental factors.");
-
-          setParameterScope("Bottom Track -- Minimum Depth", Parameter::SCOPE_GLOBAL);
-          setParameterVisbility("Bottom Track -- Minimum Depth", Parameter::VISIBILITY_DEVELOPER);
-
-          // Register handler routines.
-          bind<IMC::AisInfo>(this);
-          // bind<IMC::CurrentProfile>(this);
-          // bind<IMC::AbsoluteWind>(this);
-          // bind<IMC::ENCAwareness>(this);
-          bind<IMC::RemoteActions>(this);
-
-          // m_shallowest_current_cell.depth = 0.0;
-          // m_shallowest_current_cell.vel = 0.0;
-          // m_shallowest_current_cell.dir = 0.0;
         }
 
         void
-        onUpdateParameters(void)
+        setBindings(Tasks::Recipient* recipient) override
         {
-          PathController::onUpdateParameters();
+          ParameterizedEntity::setBindings(recipient);
+          bind<IMC::AisInfo, CAS>(recipient, this);
+          // bind<IMC::CurrentProfile, CAS>(recipient, this);
+          // bind<IMC::AbsoluteWind, CAS>(recipient, this);
+          // bind<IMC::ENCAwareness, CAS>(recipient, this);
+          // bind<IMC::Frequency, CAS>(recipient, this);
+          // bind<IMC::Displacement, CAS>(recipient, this);
+        }
 
-          if (paramChanged(m_args.en_cas))
-          {
-            if (m_args.en_cas)
-            {
-              spew("Clearing dynamic obstacles");
-              m_dyn_obst_vec.clear();
-            }
-          }
+        void
+        onUpdateParameters(void) override
+        {
+          if (m_sb_mpc == nullptr)
+            return;
 
           // if (paramChanged(m_args.en_antiground))
           // {
@@ -513,9 +442,6 @@ namespace Control
 
           // if (paramChanged(m_args.directions))
           //   m_offsets = m_args.directions;
-
-          if (m_sb_mpc == nullptr)
-            return;
 
           // T and DT cannot be changed online. If changed, re-create the object.
           if (paramChanged(m_args.T) || paramChanged(m_args.DT))
@@ -581,89 +507,133 @@ namespace Control
         }
 
         void
-        onResourceInitialization(void)
+        consume(const IMC::AisInfo* msg)
         {
-          // Add button for arm and disarm states.
-          IMC::RemoteActionsRequest action_register;
-          action_register.op = IMC::RemoteActionsRequest::OP_REGISTER;
-          action_register.actions = "Enable CAS=Button;Disable CAS=Button";
-          dispatch(action_register);
-
-          if (m_sb_mpc == nullptr)
+          // Check if AutoNaut is Simulator is booting before you compute displacement.
+          if (m_lat_asv == 0.0 && m_lon_asv == 0.0)
             return;
-          
-          m_sb_mpc->create(m_args.T, m_args.DT, m_args.T_STAT, m_args.P, m_args.P_G, m_args.Q, m_args.D_CLOSE,
-                           m_args.D_SAFE, m_args.D_SAFE_LAND, m_args.K_COLL, m_args.PHI_AH, m_args.PHI_OT, m_args.PHI_HO, m_args.PHI_CR,
-                           m_args.KAPPA, m_args.KAPPA_TC, m_args.K_P, m_args.K_CHI, m_args.K_DP, m_args.K_DCHI_SB,
-                           m_args.K_DCHI_P, m_args.K_CHI_SB, m_args.K_CHI_P, m_args.D_INIT, m_args.COURSE_RANGE, m_args.GRANULARITY,
-                           m_args.WP_R, m_args.LOS_LA_DIST, m_args.LOS_KI, m_args.GUIDANCE_STRATEGY);
-        }
 
-        //! Acquire resources.
-        void
-        onResourceAcquisition(void)
-        {
-          m_sb_mpc = new simulationBasedMpc(this);
+          m_timestamp_obst = msg->getTimeStamp();
 
-          // m_offsets = m_args.directions;
-          // m_static_obst_state.resizeAndFill(m_offsets.size(), 3, 10000.0); //! Large values: initial m_cost is high.
-        }
+          // trace("CAS - MSG TYPE: %s", msg->msg_type.c_str());
 
-          //! Release resources.
-        void
-        onResourceRelease(void)
-        {
-
-        }
-
-        void
-        onEntityReservation(void)
-        {
-          //! Called to ensure unique identifiers by reserving entity identifiers.
-          PathController::onEntityReservation();
-        }
-
-        void
-        onEntityResolution(void)
-        {
-          // m_ws_eid = getEid(m_args.elabel_ws);
-          // m_gnss_eid = getEid(m_args.elabel_gnss);
-          // m_es_eid = getEid(m_args.elabel_es);
-        }
-
-        //! Get entity id of label
-        //! Returns UINT16_MAX in case of missing label
-        unsigned int
-        getEid(const std::string& label)
-        {
-          unsigned int id = UINT16_MAX;
-          try
+          if (msg->msg_type.compare("1") == 0 || msg->msg_type.compare("2") == 0 || msg->msg_type.compare("3") == 0)
           {
-            id = resolveEntity(label);
+            // Distance between ASV - Obstacle
+            double distance = WGS84::distance(m_lat_asv, m_lon_asv, 0, msg->lat, msg->lon, 0);
+
+            // spew("Distance from obstacle %s is %0.1f",msg->mmsi.c_str(), distance);
+            m_owner->trace("Received Obstacle from AIS with MMSI: %s, latitude %f and longitude %f, distance: %0.1f", msg->mmsi.c_str(),
+                           Angles::degrees(msg->lat),
+                           Angles::degrees(msg->lon),
+                           distance);
+
+            bool obs_exists = false;
+            // Obstacle vector: UPDATE/REMOVE.
+            // Create a list with indexed for later removal, invert order
+            std::vector<unsigned int> to_remove;
+            for (unsigned int i = 0; i < m_dyn_obst_vec.size(); i++)
+            {
+              // spew("Update Obstacle vector: Source: %d Vector size: %d", m_dyn_obst_vec[i].getSource(), m_dyn_obst_vec.size());
+              std::string temp_mmsi = m_dyn_obst_vec[i].mmsi;
+              if (temp_mmsi.compare(msg->mmsi) == 0) // s1.compare(s2)
+              {
+                obs_exists = true;
+
+                if (distance < m_args.out_of_range)
+                {                                     // Obstacle exists & inside range - Update
+                  m_dyn_obst_vec[i].mmsi = msg->mmsi; // should have already been set!
+                  m_dyn_obst_vec[i].lon = msg->lon;
+                  m_dyn_obst_vec[i].lat = msg->lat;
+                  m_dyn_obst_vec[i].course = msg->course;
+                  m_dyn_obst_vec[i].nav_status = msg->nav_status;
+                  m_dyn_obst_vec[i].speed = msg->speed;
+                  m_dyn_obst_vec[i].dist = distance;
+
+                  m_last_update[i] = m_timestamp_obst;
+
+                  m_owner->debug("Obstacle with MMSI %s is CLOSER than %0.1f m and is UPDATED - OBST VECT SIZE %lu - LAT %.3f, LON %.3f, COURSE %.3f deg, NAV_STATUS %d, SOG %.3f m/s, distance %.3f m", m_dyn_obst_vec[i].mmsi.c_str(), m_args.out_of_range, m_dyn_obst_vec.size(), Angles::degrees(m_dyn_obst_vec[i].lat), Angles::degrees(m_dyn_obst_vec[i].lon), Angles::degrees(m_dyn_obst_vec[i].course), m_dyn_obst_vec[i].nav_status, m_dyn_obst_vec[i].speed, distance);
+                }
+                else
+                {
+                  // Obstacle Outside range - Remove Obstacle
+                  m_owner->debug("Obstacle with MMSI %s REMOVED - Outside range, obstacle vector size is now: %lu",
+                        m_dyn_obst_vec[i].mmsi.c_str(), m_dyn_obst_vec.size() - 1);
+                  to_remove.push_back(i);
+                }
+              }
+              if (m_timestamp_obst - m_last_update[i] > m_args.kill_obst)
+              {
+                obs_exists = true; // but now is going to be killed!
+                // Obstacle disappeared - Remove Obstacle
+                m_owner->debug("Obstacle with MMSI %s is DISAPPEARED and REMOVED - obstacle vector size is now: %lu",
+                      m_dyn_obst_vec[i].mmsi.c_str(), m_dyn_obst_vec.size() - 1);
+                // check first if already marked for removal
+                if (std::find(to_remove.begin(), to_remove.end(), i) == to_remove.end())
+                {
+                  to_remove.push_back(i);
+                }
+              }
+            }
+
+            // Remove obstacles that are marked for removal, in reverse order
+            for (auto it = to_remove.rbegin(); it != to_remove.rend(); ++it)
+            {
+              try
+              {
+                m_dyn_obst_vec.erase(m_dyn_obst_vec.begin() + *it);
+                m_last_update.erase(m_last_update.begin() + *it);
+              }
+              catch(const std::exception& e)
+              {
+                m_owner->war("Failed to remove obstacle with index: %d", *it);
+              }
+            }
+
+            // Obstacle vector: ADD new obstacle.
+            if (obs_exists == false && (distance < m_args.out_of_range))
+            {
+              // Create timestamp for this new vehicle.
+              m_last_update.push_back(m_timestamp_obst);
+
+              IMC::AisInfo obst_temp;
+              // Temp obstacle for storage.
+              obst_temp.mmsi = msg->mmsi;
+              obst_temp.lon = msg->lon;
+              obst_temp.lat = msg->lat;
+              obst_temp.course = msg->course;
+              obst_temp.nav_status = msg->nav_status;
+              obst_temp.speed = msg->speed * 0.514;
+              obst_temp.dist = msg->dist;
+
+              m_dyn_obst_vec.push_back(obst_temp);
+              m_owner->trace("New Obstacle Added from msg_type 1/2/3: MMSI %s, obstacle vector size: %lu",
+                    obst_temp.mmsi.c_str(), m_dyn_obst_vec.size());
+            }
           }
-          catch (const std::exception& e)
+          else if (msg->msg_type.compare("5") == 0)
           {
-            war(DTR("can not resolve %s (%s), is there a task failure or a configuration error?"),
-                label.c_str(), e.what());
+            // Add Static/Voyage information only to vehicles already in the list.
+            for (unsigned int i = 0; i < m_dyn_obst_vec.size(); i++)
+            {
+              std::string temp_mmsi = m_dyn_obst_vec[i].mmsi;
+              if (temp_mmsi.compare(msg->mmsi) != 0)
+                continue;
+                
+              // MMSI exists in the list, add static/voyage related data.
+              m_dyn_obst_vec[i].mmsi = msg->mmsi;
+              m_dyn_obst_vec[i].callsign = msg->callsign;
+              m_dyn_obst_vec[i].name = msg->name;
+              m_dyn_obst_vec[i].type_and_cargo = msg->type_and_cargo;
+              m_dyn_obst_vec[i].a = msg->a;
+              m_dyn_obst_vec[i].b = msg->b;
+              m_dyn_obst_vec[i].c = msg->c;
+              m_dyn_obst_vec[i].d = msg->d;
+              m_dyn_obst_vec[i].draught = msg->draught;
+
+              m_owner->trace("AIS5: %s %s %s %d %.3f %.3f %.3f %.3f %.3f", m_dyn_obst_vec[i].mmsi.c_str(), m_dyn_obst_vec[i].callsign.c_str(), m_dyn_obst_vec[i].name.c_str(), m_dyn_obst_vec[i].type_and_cargo, m_dyn_obst_vec[i].a, m_dyn_obst_vec[i].b, m_dyn_obst_vec[i].c, m_dyn_obst_vec[i].d, m_dyn_obst_vec[i].draught);
+            }
           }
-
-          return id;
-        }
-
-        void
-        onPathActivation(void)
-        {
-          //! Activate Heading & Speed controller.
-          enableControlLoops(IMC::CL_YAW);
-          enableControlLoops(IMC::CL_SPEED);
-        }
-
-        void
-        onPathDeactivation(void)
-        {
-          //! Deactivate Heading & Speed controller.
-          disableControlLoops(IMC::CL_YAW);
-          disableControlLoops(IMC::CL_SPEED);
         }
 
         // void
@@ -807,324 +777,6 @@ namespace Control
         //   }
         // }
 
-        Math::Matrix
-        analyseENC(std::string enc)
-        {
-          Math::Matrix enc_mat;
-          Math::Matrix enc_mat_single = Math::Matrix(1,3,0);
-          size_t pos = enc.find(";");
-          std::string strNew = enc;
-          
-          while(pos != std::string::npos)
-          {
-            unsigned first = enc.find("=");
-            std::string whatis = enc.substr(0,first).c_str();
-            unsigned last = enc.find(";");
-            strNew = enc.substr(first+1,last-first-1);
-            //debug("STR NEW %s",strNew.c_str());
-
-            //! Extract values.
-            std::stringstream stream(strNew);
-            int i = 0;
-            while(stream.good())
-            {
-              std::string substr;
-              getline(stream, substr, ',');
-              if(whatis == "lats")
-              {
-                enc_mat_single(0,0) = std::atof(substr.c_str()); //lats.push_back(std::atof(substr.c_str()));
-                enc_mat.vertCat(enc_mat_single);
-              }
-              else if(whatis == "lons")
-                enc_mat(i,1) = std::atof(substr.c_str()); //lons.push_back(std::atof(substr.c_str()));
-              else
-                enc_mat(i,2) = std::atof(substr.c_str()); //depths.push_back(std::atof(substr.c_str()));
-
-              i++;
-              //debug("Values parsed: %f",std::atof(substr.c_str()));
-            }
-            pos = enc.find(";", pos + 1);
-            enc = enc.erase(0,last + 1);
-          }
-          //debug("Received %d (lat,lon) locations.", enc_mat.rows());
-          return enc_mat;
-        }
-
-        // void
-        // buildENCforCAS()
-        // {
-        //   debug("buildENCforCAS");
-        //   int offset = 5;
-        //   Math::Matrix course_off_ranges(m_offsets.size(),2);
-
-        //   for (size_t f = 0; f < m_offsets.size(); f++)
-        //   {
-        //     debug("Desired Heading %f",Angles::degrees(m_des_heading.value));
-        //     course_off_ranges(f,0) = m_des_heading.value + Angles::radians(m_offsets[f] - offset);
-        //     course_off_ranges(f,1) = m_des_heading.value + Angles::radians(m_offsets[f] + offset);
-        //     if(course_off_ranges(f,0)<0)
-        //       course_off_ranges(f,0) = Angles::radians(360) + course_off_ranges(f,0);
-        //     if(course_off_ranges(f,1)<0)
-        //       course_off_ranges(f,1) = Angles::radians(360) + course_off_ranges(f,1);
-            
-        //     m_static_obst_state(f,0) = Angles::radians(m_offsets[f]);
-        //     debug("RANGES %f %f for offset %.0f",Angles::degrees(course_off_ranges(f,0)),Angles::degrees(course_off_ranges(f,1)),m_offsets[f]);
-        //   }
-        //   //debug("%d course_off_ranges",course_off_ranges.rows());
-
-        //   //! Treat depth contours.
-        //   if(m_depths.rows() > 0)
-        //   {
-        //     for(int j=0; j<course_off_ranges.rows(); j++)
-        //     {
-        //       std::vector<double> single_distances;
-        //       for(int i=0; i<m_depths.rows(); i++)
-        //       {
-        //         double bearing,range;
-        //         WGS84::getNEBearingAndRange(m_lat_asv, m_lon_asv, m_depths(i,0), m_depths(i,1), &bearing, &range);
-        //         //debug("bearing %f and range %f",Angles::degrees(bearing),range);
-
-        //         if(bearing>=course_off_ranges(j,0) && bearing<=course_off_ranges(j,1))
-        //           single_distances.push_back(range);
-        //       }
-        //       if(!single_distances.empty())
-        //       {
-        //         std::vector<double>::iterator itr = std::min_element(single_distances.begin(), single_distances.end());
-        //         int int_idx = std::distance(single_distances.begin(), itr);
-        //         m_static_obst_state(j,1) = single_distances[int_idx];
-        //         debug("Shallow contour location (%f,%f) for offset %.0f and range %f.",Angles::degrees(m_depths(int_idx,0)),Angles::degrees(m_depths(int_idx,1)),m_offsets[j],single_distances[int_idx]);
-        //       }
-        //       //debug("%f %f", Angles::degrees(m_static_obst_state(j,0)), m_static_obst_state(j,1));
-        //     }
-        //   }
-
-        //   //! Treat dangers.
-        //   if(m_dangers.rows() > 0)
-        //   {
-        //     double R = 6371; //Radius of the Earth
-        //     for(int i=0;i<m_dangers.rows();i++)
-        //     {
-        //       double bearing,range;
-        //       WGS84::getNEBearingAndRange(m_lat_asv, m_lon_asv, m_dangers(i,0), m_dangers(i,1), &bearing, &range); // Angles::radians(63.45419383),Angles::radians(10.37723485)
-        //       debug("Static danger at (%f,%f), bearing %f and range %f",Angles::degrees(m_dangers(i,0)),Angles::degrees(m_dangers(i,1)),Angles::degrees(bearing),range);
-
-        //       //! Check if static object is actually a threat.
-        //       if(bearing > m_des_heading.value + Angles::radians(m_offsets.back()) && bearing < m_des_heading.value + Angles::radians(m_offsets[0]))
-        //       {
-        //         //! Static object can be a threat.
-        //         for (size_t j = 1; j < m_offsets.size(); j++)
-        //         {
-        //           std::vector<double> offset_neighbors;
-        //           offset_neighbors.push_back(m_des_heading.value + Angles::radians(m_offsets[j]));
-        //           offset_neighbors.push_back(m_des_heading.value + Angles::radians(m_offsets[j-1]));
-        //           if(bearing>offset_neighbors[0] && bearing<offset_neighbors[1])
-        //           {
-        //             std::vector<double> dsts,lats2,lons2;
-        //             for (size_t k = 0; k < offset_neighbors.size(); k++)
-        //             {
-        //               //! Check if the static objec is a threat.
-        //               //! Find location (lat2,lon2) given a course and range applied to location (lat1,lon1).
-        //               double range_ext = (range+50)/1000;
-        //               double lat2 = std::asin(std::sin(m_lat_asv)*std::cos(range_ext/R) +
-        //                   std::cos(m_lat_asv)*std::sin(range_ext/R)*std::cos(offset_neighbors[k]));
-        //               double lon2 = m_lon_asv + std::atan2(std::sin(offset_neighbors[k])*std::sin(range_ext/R)*std::cos(m_lat_asv),
-        //                           std::cos(range_ext/R)-std::sin(m_lat_asv)*std::sin(lat2));
-        //               //lats2.push_back(lat2);
-        //               //lons2.push_back(lon2);
-
-        //               double ct_dxt,at_dxt;
-        //               Coordinates::WGS84::getCtAndAtDistance(m_dangers(i,0), m_dangers(i,1), m_lat_asv, m_lon_asv, lat2, lon2, &ct_dxt, &at_dxt);
-        //               //dsts.push_back(std::fabs(ct_dxt));
-        //               double dst = std::fabs(ct_dxt);
-        //               if(dst < m_args.radius_around_threat*2)
-        //               {
-        //                 debug("COG offset %.0f - Path ending up at (%f,%f) reports CT distance of %f meters.",m_offsets[j],Angles::degrees(lat2),Angles::degrees(lon2),dst);
-        //                 if(m_static_obst_state(j,1) == 10000.0)
-        //                 {
-        //                   m_static_obst_state(j,1) = range - m_args.radius_around_threat;
-        //                   debug("Inserting static threat for COG offset %.0f!",m_offsets[j]);
-        //                 } else if(range < m_static_obst_state(j,1)) //! it means that a depth contours already assigned to this course offset.
-        //                 {//! if the range to the danger < range to the depth contour, replace the second with the first.
-        //                   m_static_obst_state(j,1) = range - m_args.radius_around_threat;
-        //                   debug("Replacing depth contour threat with static threat for COG offset %.0f!",m_offsets[j]);
-        //                 }
-
-        //                 if(k==1 && j != (size_t)m_static_obst_state.rows())
-        //                 {
-        //                   if(m_static_obst_state(j-1,1) == 10000.0)
-        //                   {
-        //                     m_static_obst_state(j-1,1) = range - m_args.radius_around_threat;
-        //                     debug("Inserting static threat also for PREVIOUS (!!) COG offset %.0f!",m_offsets[j-1]);
-        //                   } else if(range < m_static_obst_state(j+1,1)) //! it means that a depth contours already assigned to this course offset.
-        //                   {//! if the range to the danger < range to the depth contour, replace the second with the first.
-        //                     m_static_obst_state(j-1,1) = range - m_args.radius_around_threat;
-        //                     debug("Replacing depth contour threat with static threat also for PREVIOUS (!!) COG offset %.0f!",m_offsets[j-1]);
-        //                   }
-        //                 }
-        //               }
-        //               //debug("dst %f for offset neighbor %.0f",std::fabs(ct_dxt),Angles::degrees(offset_neighbors[k]));
-        //             }
-        //           }
-        //         }
-        //       }
-        //     }
-        //   }
-        // }
-
-        void
-        consume(const IMC::AisInfo* msg)
-        {
-          trace("CAS: Receiving AisInfo");
-
-          if (!m_args.en_cas)
-            return;
-
-          // Check if AutoNaut is Simulator is booting before you compute displacement.
-          if (m_lat_asv == 0.0 && m_lon_asv == 0.0)
-            return;
-
-          m_timestamp_obst = msg->getTimeStamp();
-
-          // trace("CAS - MSG TYPE: %s", msg->msg_type.c_str());
-
-          if (msg->msg_type.compare("1") == 0 || msg->msg_type.compare("2") == 0 || msg->msg_type.compare("3") == 0)
-          {
-            // Distance between ASV - Obstacle
-            double distance = WGS84::distance(m_lat_asv, m_lon_asv, 0, msg->lat, msg->lon, 0);
-
-            // spew("Distance from obstacle %s is %0.1f",msg->mmsi.c_str(), distance);
-            trace("Received Obstacle from AIS with MMSI: %s, latitude %f and longitude %f, distance: %0.1f", msg->mmsi.c_str(),
-                  Angles::degrees(msg->lat),
-                  Angles::degrees(msg->lon),
-                  distance);
-
-            bool obs_exists = false;
-            // Obstacle vector: UPDATE/REMOVE.
-            // Create a list with indexed for later removal, invert order
-            std::vector<unsigned int> to_remove;
-            for (unsigned int i = 0; i < m_dyn_obst_vec.size(); i++)
-            {
-              // spew("Update Obstacle vector: Source: %d Vector size: %d", m_dyn_obst_vec[i].getSource(), m_dyn_obst_vec.size());
-              std::string temp_mmsi = m_dyn_obst_vec[i].mmsi;
-              if (temp_mmsi.compare(msg->mmsi) == 0) // s1.compare(s2)
-              {
-                obs_exists = true;
-
-                if (distance < m_args.out_of_range)
-                {                                     // Obstacle exists & inside range - Update
-                  m_dyn_obst_vec[i].mmsi = msg->mmsi; // should have already been set!
-                  m_dyn_obst_vec[i].lon = msg->lon;
-                  m_dyn_obst_vec[i].lat = msg->lat;
-                  m_dyn_obst_vec[i].course = msg->course;
-                  m_dyn_obst_vec[i].nav_status = msg->nav_status;
-                  m_dyn_obst_vec[i].speed = msg->speed;
-                  m_dyn_obst_vec[i].dist = distance;
-
-                  m_last_update[i] = m_timestamp_obst;
-
-                  debug("Obstacle with MMSI %s is CLOSER than %0.1f m and is UPDATED - OBST VECT SIZE %lu - LAT %.3f, LON %.3f, COURSE %.3f deg, NAV_STATUS %d, SOG %.3f m/s, distance %.3f m", m_dyn_obst_vec[i].mmsi.c_str(), m_args.out_of_range, m_dyn_obst_vec.size(), Angles::degrees(m_dyn_obst_vec[i].lat), Angles::degrees(m_dyn_obst_vec[i].lon), Angles::degrees(m_dyn_obst_vec[i].course), m_dyn_obst_vec[i].nav_status, m_dyn_obst_vec[i].speed, distance);
-                }
-                else
-                {
-                  // Obstacle Outside range - Remove Obstacle
-                  debug("Obstacle with MMSI %s REMOVED - Outside range, obstacle vector size is now: %lu",
-                        m_dyn_obst_vec[i].mmsi.c_str(), m_dyn_obst_vec.size() - 1);
-                  to_remove.push_back(i);
-                }
-              }
-              if (m_timestamp_obst - m_last_update[i] > m_args.kill_obst)
-              {
-                obs_exists = true; // but now is going to be killed!
-                // Obstacle disappeared - Remove Obstacle
-                debug("Obstacle with MMSI %s is DISAPPEARED and REMOVED - obstacle vector size is now: %lu",
-                      m_dyn_obst_vec[i].mmsi.c_str(), m_dyn_obst_vec.size() - 1);
-                // check first if already marked for removal
-                if (std::find(to_remove.begin(), to_remove.end(), i) == to_remove.end())
-                {
-                  to_remove.push_back(i);
-                }
-              }
-            }
-
-            // Remove obstacles that are marked for removal, in reverse order
-            for (auto it = to_remove.rbegin(); it != to_remove.rend(); ++it)
-            {
-              try
-              {
-                m_dyn_obst_vec.erase(m_dyn_obst_vec.begin() + *it);
-                m_last_update.erase(m_last_update.begin() + *it);
-              }
-              catch(const std::exception& e)
-              {
-                war("Failed to remove obstacle with index: %d", *it);
-              }
-            }
-
-            // Obstacle vector: ADD new obstacle.
-            if (obs_exists == false && (distance < m_args.out_of_range))
-            {
-              // Create timestamp for this new vehicle.
-              m_last_update.push_back(m_timestamp_obst);
-
-              IMC::AisInfo obst_temp;
-              // Temp obstacle for storage.
-              obst_temp.mmsi = msg->mmsi;
-              obst_temp.lon = msg->lon;
-              obst_temp.lat = msg->lat;
-              obst_temp.course = msg->course;
-              obst_temp.nav_status = msg->nav_status;
-              obst_temp.speed = msg->speed * 0.514;
-              obst_temp.dist = msg->dist;
-
-              m_dyn_obst_vec.push_back(obst_temp);
-              trace("New Obstacle Added from msg_type 1/2/3: MMSI %s, obstacle vector size: %lu",
-                    obst_temp.mmsi.c_str(), m_dyn_obst_vec.size());
-            }
-          }
-          else if (msg->msg_type.compare("5") == 0)
-          {
-            // Add Static/Voyage information only to vehicles already in the list.
-            for (unsigned int i = 0; i < m_dyn_obst_vec.size(); i++)
-            {
-              std::string temp_mmsi = m_dyn_obst_vec[i].mmsi;
-              if (temp_mmsi.compare(msg->mmsi) != 0)
-                continue;
-                
-              // MMSI exists in the list, add static/voyage related data.
-              m_dyn_obst_vec[i].mmsi = msg->mmsi;
-              m_dyn_obst_vec[i].callsign = msg->callsign;
-              m_dyn_obst_vec[i].name = msg->name;
-              m_dyn_obst_vec[i].type_and_cargo = msg->type_and_cargo;
-              m_dyn_obst_vec[i].a = msg->a;
-              m_dyn_obst_vec[i].b = msg->b;
-              m_dyn_obst_vec[i].c = msg->c;
-              m_dyn_obst_vec[i].d = msg->d;
-              m_dyn_obst_vec[i].draught = msg->draught;
-
-              trace("AIS5: %s %s %s %d %.3f %.3f %.3f %.3f %.3f", m_dyn_obst_vec[i].mmsi.c_str(), m_dyn_obst_vec[i].callsign.c_str(), m_dyn_obst_vec[i].name.c_str(), m_dyn_obst_vec[i].type_and_cargo, m_dyn_obst_vec[i].a, m_dyn_obst_vec[i].b, m_dyn_obst_vec[i].c, m_dyn_obst_vec[i].d, m_dyn_obst_vec[i].draught);
-            }
-          }
-        }
-
-        void
-        consume(const IMC::RemoteActions* msg)
-        {
-          TupleList tuples(msg->actions);
-          if (tuples.get("Enable CAS", 0))
-            enableCAS(true);
-          else if (tuples.get("Disable CAS", 0))
-            enableCAS(false);
-        }
-
-        void
-        enableCAS(bool enable)
-        {
-          IMC::EntityParameter ea;
-          ea.name = "Enable Collision Avoidance";
-          ea.value = enable ? "true" : "false";
-          setEntityParameter(ea);
-        }
-
         // void
         // groundingCost(void)
         // {
@@ -1148,9 +800,8 @@ namespace Control
         // }
 
         void
-        createWPs(const TrackingState& ts)
+        createWPs(const DUNE::Control::TrackingState& ts)
         {
-          debug("createWPs");
           // Create and fill waypoints matrix.
           double wp0_dx = 0.0; // displ between asv and wp0
           double wp0_dy = 0.0;
@@ -1170,64 +821,42 @@ namespace Control
                           wp1_dx, wp1_dy,  // waypoint we are heading to
                           wp2_dx, wp2_dy;  // next waypoint
 
-            trace("Displacements: wp0 (%0.1f,%0.1f) - wp1 (%0.1f,%0.1f) - wp2 (%0.1f,%0.1f)", wp0_dx, wp0_dy, wp1_dx, wp1_dy, wp2_dx, wp2_dy);
+            m_owner->trace("Displacements: wp0 (%0.1f,%0.1f) - wp1 (%0.1f,%0.1f) - wp2 (%0.1f,%0.1f)", wp0_dx, wp0_dy, wp1_dx, wp1_dy, wp2_dx, wp2_dy);
           } else
           { // otherwise send wp1 twice.
             m_waypoints << wp0_dx, wp0_dy, // starting waypoint
                           wp1_dx, wp1_dy,  // waypoint we are heading to
                           wp1_dx, wp1_dy;  // repeat 2nd wp for m_sb_mpc
 
-            trace("Displacements: wp0 (%0.1f,%0.1f) - wp1 (%0.1f,%0.1f)", wp0_dx, wp0_dy, wp1_dx, wp1_dy);
+            m_owner->trace("Displacements: wp0 (%0.1f,%0.1f) - wp1 (%0.1f,%0.1f)", wp0_dx, wp0_dy, wp1_dx, wp1_dy);
           }
         }
 
-        void
-        updateEstimatedState(const IMC::EstimatedState msg)
+        double
+        getHeadingOffset(const double desired_heading, const IMC::EstimatedState* es, const DUNE::Control::TrackingState& ts) override
         {
-          m_estate = msg;
-
-          m_lat_asv = m_estate.lat;
-          m_lon_asv = m_estate.lon;
-          WGS84::displace(m_estate.x, m_estate.y, &m_lat_asv, &m_lon_asv);
-
+          m_lat_asv = es->lat;
+          m_lon_asv = es->lon;
+          WGS84::displace(es->x, es->y, &m_lat_asv, &m_lon_asv);
           m_asv_state[0] = 0.0; // ASV assumed to be centered, (0,0)
           m_asv_state[1] = 0.0;
-          m_asv_state[2] = m_estate.psi;
-          m_asv_state[3] = std::sqrt(std::pow(m_estate.vx, 2) + std::pow(m_estate.vy, 2));
+          m_asv_state[2] = es->psi;
+          m_asv_state[3] = std::sqrt(std::pow(es->vx, 2) + std::pow(es->vy, 2));
           m_asv_state[4] = 0.0; //! Assume zero sideslip
           m_asv_state[5] = 0.0; //! Assume zero.
-
-          m_timestamp_new = msg.getTimeStamp();
-        }
-
-        void
-        step(const IMC::EstimatedState& state, const TrackingState& ts)
-        {
-          updateEstimatedState(state);
-
-          //! LOS Navigation Law (called wrongly Pure Pursuit in Dune) - desired course is the LOS angle.
-          m_des_heading.value = ts.los_angle;
-          trace("LOS DESIRED COURSE: %f", Angles::degrees(m_des_heading.value));
-
-          //! Nothing is enabled.
-          if(!m_args.en_cas /* && !m_args.en_antiground */)
-          {
-            dispatch(m_des_heading);
-            return;
-          }
+          m_timestamp_new = es->getTimeStamp();
 
           //! Something might be enabled, but no data available.
           if(m_dyn_obst_vec.size() == 0 /* && m_dangers.rows() == 0 && m_depths.rows() == 0 */)
           {
-            trace("CAS or anti-grounding are enabled, but their tables are empty!");
-            dispatch(m_des_heading);
-            return;
+            m_owner->trace("CAS or anti-grounding are enabled, but their tables are empty!");
+            return 0;
           }
 
-          if(m_args.en_cas /* || m_args.en_antiground */)
-            createWPs(ts);
+          // if (m_args.en_antiground)
+          createWPs(ts);
 
-          bool C_CAS = m_args.en_cas && m_dyn_obst_vec.size() > 0;
+          bool C_CAS = m_dyn_obst_vec.size() > 0;
           // bool C_AG = m_args.en_antiground && (m_dangers.rows() > 0 || m_depths.rows() > 0);
 
           //! Compute dynamic obst. matrix for m_sb_mpc if CAS is enabled and there are dynamic obstacles in range.
@@ -1247,7 +876,7 @@ namespace Control
               double dist_y = 0.0;
               WGS84::displacement(m_lat_asv, m_lon_asv, 0, m_dyn_obst_vec[i].lat, m_dyn_obst_vec[i].lon, 0, &dist_x, &dist_y);
 
-              trace("North offset x-coordinate in NED = %0.1f, East offset y-coordinate in NED = %0.1f", dist_x, dist_y);
+              m_owner->trace("North offset x-coordinate in NED = %0.1f, East offset y-coordinate in NED = %0.1f", dist_x, dist_y);
 
               //! Update Obstacle states to fit input of CAS (m_sb_mpc)
               m_dyn_obst_state(i, 0) = dist_x; // north
@@ -1315,21 +944,16 @@ namespace Control
             // if(!C_CAS && C_AG)
             //   debug("Anti-grounding situation!");
             // else if(C_CAS && !C_AG)
-              debug("Anti-collision situation!");
+            m_owner->debug("Anti-collision situation!");
             // else if(C_CAS && C_AG) // both, this is an anti-grounding and anti-collision scenario!
             //   debug("Anti-grounding and anti-collision situation!");
 
             obstacle* obs_vessel = nullptr;
-            m_sb_mpc->getBestControlOffset(m_u_os, m_psi_os, m_asv_state[3], m_des_heading.value, m_asv_state, m_waypoints, m_dyn_obst_state, {}/* m_static_obst_state */, m_cost, obs_vessel);
+            m_sb_mpc->getBestControlOffset(m_u_os, m_psi_os, m_asv_state[3], desired_heading, m_asv_state, m_waypoints, m_dyn_obst_state, {}/* m_static_obst_state */, m_cost, obs_vessel);
 
-            //! New desired course and course offset.
-            m_des_heading.value += m_psi_os;
-
-            if(m_psi_os == 0)
-              debug("Course offset is 0, same desired course %.3f", Angles::degrees(m_des_heading.value));
-            else
+            if(m_psi_os != 0)
             {
-              debug("Course offset is %.0f, new desired course %.3f", Angles::degrees(m_psi_os), Angles::degrees(m_des_heading.value));
+              m_owner->debug("Course offset is %.0f, new desired course %.3f", Angles::degrees(m_psi_os), Angles::degrees(desired_heading));
               
               // Find closest vessel - hypothetically it is the one we try to avoid.
               // std::vector<IMC::AisInfo>::const_iterator itr;
@@ -1364,49 +988,24 @@ namespace Control
                 }
 
                 TransmissionRequest tr;
-                tr.setDestination(getSystemId());
+                tr.setDestination(m_ctx.resolver.id());
                 tr.req_id = m_tx_req_id++;
                 tr.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
                 tr.data_mode = TransmissionRequest::DMODE_INLINEMSG;
                 tr.msg_data.set(*ais_vessel);
                 tr.deadline = Clock::getSinceEpoch() + 60;
-
                 dispatch(tr);
               }
             }
-
-            //! Normalize angle
-            m_des_heading.value = Angles::normalizeRadian(m_des_heading.value);
-
-            debug("OFFSET: %.0f - NEW COURSE NORMALIZED %.3f",Angles::degrees(m_psi_os),Angles::degrees(m_des_heading.value));
-
-            dispatch(m_des_heading);
-            m_timestamp_prev = m_timestamp_new;
+            else
+              m_owner->debug("Course offset is 0, same desired course %.3f", Angles::degrees(desired_heading));
           }
-        }
 
-        //! Execute a loiter control step
-        //! From base class PathController
-        void
-        loiter(const IMC::EstimatedState& state, const TrackingState& ts)
-        {
-          updateEstimatedState(state);
-          
-          double gain = std::tan(Angles::radians(m_args.entry_angle)) / m_args.corridor;
-          double ref = DUNE::Math::c_half_pi + std::atan(2 * gain * (ts.range - ts.loiter.radius));
-
-          if (!ts.loiter.clockwise)
-            ref = -ref;
-
-          ref += DUNE::Math::c_pi + ts.los_angle;
-
-          // Dispatch heading reference
-          m_des_heading.value = Angles::normalizeRadian(ref);
-          dispatch(m_des_heading);
+          return m_psi_os;
         }
       };
     }
   }
 }
 
-DUNE_TASK
+#endif
