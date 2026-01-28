@@ -40,6 +40,7 @@
 #include <DUNE/Time.hpp>
 #include <DUNE/Control/BottomTracker.hpp>
 #include <DUNE/Control/TrackingState.hpp>
+#include <DUNE/CollisionAvoidance/CollisionAvoidance.hpp>
 
 namespace DUNE
 {
@@ -154,6 +155,18 @@ namespace DUNE
         (void)ts;
       }
 
+      double
+      getCollisionAvoidanceOffset(const double desired_heading, const IMC::EstimatedState* es, const DUNE::Control::TrackingState& ts)
+      {
+        if (m_ca == nullptr)
+          return 0.0;
+
+        if (!m_en_ca)
+          return 0.0;
+        
+        return m_ca->getHeadingOffset(desired_heading, es, ts);
+      }
+
       //! Abstract method for controller step that must be provided by subclasses.
       //! @param state navigation state
       //! @param ts tracking state information
@@ -233,9 +246,21 @@ namespace DUNE
         return es->getSource() != getSystemId();
       }
 
+      bool
+      onWriteParamsXML(std::ostream& os) const override
+      {
+        if (m_ca != nullptr)
+          m_ca->writeParamsXML(os);
+
+        return false;
+      }
+
       //! Task method.
       void
       onMain(void);
+
+    protected:
+      CollisionAvoidance::BasicCollisionAvoidanceEntity* m_ca;
 
     private:
       //! Update entity state
@@ -441,6 +466,12 @@ namespace DUNE
       bool m_use_radius_to_endpoint;
       //! Radius to endpoint
       double m_end_radius;
+      //! Collision avoidance type.
+      std::string m_ca_type;
+      //! Collision avoidance entity label.
+      std::string m_ca_elabel;
+      //! Enable collision avoidance.
+      bool m_en_ca;
     };
   }
 }

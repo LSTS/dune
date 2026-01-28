@@ -61,6 +61,7 @@ namespace DUNE
 
     PathController::PathController(std::string name, Tasks::Context& ctx):
       Task(name, ctx),
+      m_ca(nullptr),
       m_bt_entity(NULL),
       m_running_monitors(true),
       m_error(false),
@@ -221,6 +222,22 @@ namespace DUNE
       .defaultValue("5")
       .description("Radius around endpoint to consider maneuver as done.");
 
+      param("Collision Avoidance -- Type", m_ca_type)
+      .defaultValue(CollisionAvoidance::c_ca_disabled)
+      .editable("false")
+      .values(CollisionAvoidance::c_ca_type_names_str)
+      .description("Type of collision avoidance algorithm to use.");
+
+      param("Collision Avoidance -- Entity Label", m_ca_elabel)
+      .defaultValue("")
+      .editable("false")
+      .description("Entity Label for collision avoidance entity.");
+
+      param("Collision Avoidance -- Enabled", m_en_ca)
+      .visibility(Tasks::Parameter::VISIBILITY_USER)
+      .defaultValue("false")
+      .description("Enable collision avoidance algorithm");
+
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);
       bind<IMC::DesiredPath>(this);
@@ -304,6 +321,32 @@ namespace DUNE
     {
       m_bt_entity = reserveEntity<DUNE::Entities::BasicEntity>(Utils::String::str("%s - Bottom Track", getEntityLabel()));
       m_btd.args.entity = m_bt_entity;
+
+      if (!m_ca_elabel.empty())
+      {
+        try
+        {
+          m_ca = CollisionAvoidance::Factory::produce(this, m_ctx, m_ca_type);
+          if (m_ca == nullptr)
+          {
+            war("Although Collision Avoidance entity label is set, type is set to 'Disabled'");
+            applyEntityParameter(m_en_ca, false);
+          }
+          else
+          {
+            reserveEntity(m_ca_elabel, m_ca);
+            m_ca->loadConfig();
+          }
+        }
+        catch(const std::exception& e)
+        {
+          war("Failed to create Collision Avoidance entity: %s", e.what());
+          Memory::clear(m_ca);
+          applyEntityParameter(m_en_ca, false);
+        }
+      }
+      else
+        applyEntityParameter(m_en_ca, false);
     }
 
     void
