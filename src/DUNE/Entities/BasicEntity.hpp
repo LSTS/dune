@@ -100,7 +100,7 @@ namespace DUNE
 
       //! Set the entity label.
       //! @param[in] label entity label.
-      void
+      virtual void
       setLabel(const std::string& label);
 
       //! Retrieve the entity identifier.
