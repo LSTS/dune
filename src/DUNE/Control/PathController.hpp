@@ -39,6 +39,7 @@
 #include <DUNE/IMC.hpp>
 #include <DUNE/Time.hpp>
 #include <DUNE/Control/BottomTracker.hpp>
+#include <DUNE/Control/TrackingState.hpp>
 
 namespace DUNE
 {
@@ -139,89 +140,6 @@ namespace DUNE
       virtual void
       onPathDeactivation(void)
       { }
-
-      //! All data regarding the vehicle's state while tracking the path
-      struct TrackingState
-      {
-        //! current time (wall clock).
-        double now;
-        //! time since last control step invocation.
-        double delta;
-        //! start time (wall clock).
-        double start_time;
-        //! end time (wall clock).
-        double end_time;
-        //! eta estimate.
-        double eta;
-
-        //! start, end waypoints.
-        struct Coord
-        {
-          double x;
-          double y;
-          double z;
-          uint8_t z_units;
-        } start, end;
-
-        //! bearing from start to end.
-        double track_bearing;
-        //! distance from start to end.
-        double track_length;
-        //! range from current position to end.
-        double range;
-        //! angle from current position to end (line-of-sight angle).
-        double los_angle;
-        //! current ground course if course control enabled, yaw otherwise.
-        double course;
-        //! current ground speed if course control enabled,
-        //! body-fixed frame u speed otherwise.
-        double speed;
-        //! Vertical speed.
-        double vertical_speed;
-        //! course error in relation to track bearing.
-        double course_error;
-        //! Start lat.
-        double lat_st;
-        //! Start lon.
-        double lon_st;
-        //! End lat.
-        double lat_en;
-        //! End lon.
-        double lon_en;
-        //! Plan Waypoints.
-        Math::Matrix waypoints;
-
-        //! Track position & velocity.
-        struct TrackCoord
-        {
-          //! Along track.
-          double x;
-          //! Cross track.
-          double y;
-          //! Vertical track.
-          double z;
-        } track_pos, track_vel;
-
-        //! Loiter data.
-        struct LoiterData
-        {
-          //! Center coordinates.
-          Coord center;
-          //! Loiter radius.
-          double radius;
-          //! Direction.
-          bool clockwise;
-        } loiter;
-
-        //! Set if altitude control is defined.
-        bool z_control : 1;
-        //! Set if loitering.
-        bool loitering : 1;
-        //! Set if near endpoint
-        bool nearby : 1;
-        //! Set if course control is enabled.
-        bool cc : 1;
-      };
 
       //! Handler for the startup of a new path.
       //! The default handler does nothing and can be overriden.
