@@ -40,6 +40,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Control/ProxyPathController.hpp>
 
 namespace Control
 {

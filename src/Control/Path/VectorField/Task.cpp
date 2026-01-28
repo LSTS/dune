@@ -40,6 +40,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Control/PathController.hpp>
 
 using DUNE_NAMESPACES;
 
