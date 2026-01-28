@@ -85,6 +85,8 @@ namespace Control
           if (ts.cc)
             m_heading.value = Angles::normalizeRadian(m_heading.value + state.psi - ts.course);
 
+          m_heading.value += getCollisionAvoidanceOffset(m_heading.value, &state, ts);
+
           dispatch(m_heading);
         }
       };
