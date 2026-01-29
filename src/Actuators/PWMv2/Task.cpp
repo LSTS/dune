@@ -68,6 +68,7 @@ namespace Actuators
         DUNE::Tasks::Task(name, ctx)
       {
         param("PWM", m_args.channels)
+        .editable("false")
         .description("List of <Index>:<PWM chip>:<Channel>:<Period>:<Duty Cycle>");
 
         bind<IMC::SetPWM>(this);
