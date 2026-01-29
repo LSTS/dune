@@ -46,7 +46,7 @@ namespace Power
     //! Max no reply count before reporting error.
     static constexpr uint8_t c_max_no_rpl_cnt = 5;
     //! Hearbeat period (seconds).
-    static constexpr uint8_t c_hb_period = 1;
+    static constexpr uint8_t c_hb_period = 5;
     //! Data command id.
     static constexpr char c_cmd_data = 'D';
     //! Control power channel command id.
