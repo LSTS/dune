@@ -154,12 +154,30 @@ namespace Control
             stepVectorField(state, ts);
           else if (m_args.loiter_algorithm == "CarrotChasing")
             stepCarrotChasing(state, ts);
+          else if (m_args.loiter_algorithm == "PLOS")
+            stepPLOS(state, ts);
           else
           {
             err("Unknown algorithm '%s'. Defaulting to VectorField.",
                 m_args.loiter_algorithm.c_str());
             stepVectorField(state, ts);
           }
+        }
+
+        void
+        stepPLOS(const IMC::EstimatedState& state, const TrackingState& ts)
+        {
+          // Heading error relative to path
+          const double e_psi = Angles::normalizeRadian(state.psi - ts.los_angle);
+
+          // PLOS guidance law
+          const double psi_d = ts.los_angle
+                               - m_args.plos_pp_gain * e_psi
+                               - m_args.plos_los_gain * ts.track_pos.y;
+
+          // Dispatch heading reference
+          m_heading.value = Angles::normalizeRadian(psi_d);
+          dispatch(m_heading);
         }
 
         void
@@ -184,8 +202,6 @@ namespace Control
           // Dispatch heading reference
           m_heading.value = Angles::normalizeRadian(psi_d);
           dispatch(m_heading);
-          war("Carrot Chasing Heading: %.2f",
-              Angles::degrees(m_heading.value));
         }
 
         void
