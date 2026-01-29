@@ -206,6 +206,7 @@ namespace Power
         Memory::clear(m_handle);
         m_pwr_chs.clear();
         m_synced = false;
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
@@ -290,6 +291,7 @@ namespace Power
           throw RestartNeeded("unable to set 5V power channel initial state", 5);
 
         m_pwr_chs[c_pwr_ch_5v_label].init_state = m_args.pwr_ch_5v_state;
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
