@@ -40,11 +40,11 @@ namespace Actuators
   //! This task requires dtoverlay=pwm-2chan for Raspberry Pi.
   //! For RaspberryPi 5, /boot/config.txt or equivalent must have:
   //!  - dtoverlay=pwm-2chan,pin=12,func=4,pin2=13,func2=4 (to use GPIO12 and GPIO13)
-  //!    - Task Argument: PWM = 2:0:period:duty_cycle, 2:1:period:duty_cycle
+  //!    - Task Argument: PWM = index:2:0:period:duty_cycle, index:2:1:period:duty_cycle
   //!  - dtoverlay=pwm-2chan,pin=18,func=2,pin2=19,func2=2 (to use GPIO18 and GPIO19)
-  //!    - Task Argument: PWM = 0:0:period:duty_cycle, 0:1:period:duty_cycle
+  //!    - Task Argument: PWM = index:0:0:period:duty_cycle, index:0:1:period:duty_cycle
   //! @author João Bogas
-  namespace PWMv2
+  namespace RaspberryPiPWM
   {
     using DUNE_NAMESPACES;
 
