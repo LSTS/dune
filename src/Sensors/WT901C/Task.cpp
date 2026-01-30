@@ -90,6 +90,9 @@ namespace Sensors
                                                { 100.0f, 0x09 },
                                                { 200.0f, 0x0b }};
 
+  //! Number of axes.
+  static constexpr unsigned c_axes_count = 3;
+
   //! Insert short task description here.
   //!
   //! Insert explanation on task behaviour here.
@@ -106,6 +109,10 @@ namespace Sensors
       float odr;
       //! Compass Calibration entity label.
       std::string calib_elabel;
+      //! Hard-iron correction factors.
+      std::vector<double> hard_iron;
+      //! Calibration time stamp
+      std::string calib_time;
     };
 
     class WaitingForHeader: public std::exception
@@ -203,6 +210,8 @@ namespace Sensors
       const Command c_key;
       //! Command to save configuration.
       const Command c_save;
+      //! Rotated hard-iron calibration parameters.
+      std::vector<double> m_hard_iron;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -213,7 +222,8 @@ namespace Sensors
         m_freq_avg(10),
         m_calib_eid(AddressResolver::invalid()),
         c_key(CMD_ADDR_KEY, c_command_unlock_byteL, c_command_unlock_byteH),
-        c_save(CMD_ADDR_SAVE)
+        c_save(CMD_ADDR_SAVE),
+        m_hard_iron(c_axes_count, 0.0)
       {
         // Define configuration parameters.
         param("IO Port - Device", m_args.io_handle)
@@ -230,6 +240,17 @@ namespace Sensors
         .editable("false")
         .description("Entity label of Compass Calibration task to receive hard iron corrections from.");
 
+        param("Hard-Iron Calibration", m_args.hard_iron)
+        .units(Units::Gauss)
+        .size(c_axes_count)
+        .description("Hard-Iron calibration parameters");
+
+        param("Last Calibration Time", m_args.calib_time)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .editable("false")
+        .defaultValue("N/A")
+        .description("Date of last successful calibration");
+
         bind<IMC::MagneticField>(this);
       }
 
@@ -241,6 +262,9 @@ namespace Sensors
 
         if (!isActive())
           return;
+
+        if (paramChanged(m_args.hard_iron))
+          setHardIronFactors(m_args.hard_iron[0], m_args.hard_iron[1], m_args.hard_iron[2]);
 
         if (paramChanged(m_args.odr) && m_args.odr > 0)
           m_wdog.setTop(2 * 1 / m_args.odr);
@@ -311,6 +335,7 @@ namespace Sensors
         getVersion();
         setOutputContents();
         setOutputRate(m_args.odr);
+        setHardIronFactors(m_args.hard_iron[0], m_args.hard_iron[1], m_args.hard_iron[2]);
 
         if (m_args.odr > 0)
           m_wdog.setTop(2 * 1 / m_args.odr);
@@ -456,6 +481,20 @@ namespace Sensors
       }
 
       void
+      onHardIronFactors(void)
+      {
+        int16_t hx, hy, hz;
+        std::memcpy(&hx, &m_packet.input[0], 2);
+        std::memcpy(&hy, &m_packet.input[2], 2);
+        std::memcpy(&hz, &m_packet.input[4], 2);
+        m_hard_iron[0] = static_cast<float>(hx) * 0.15f * 0.01f;
+        m_hard_iron[1] = static_cast<float>(hy) * 0.15f * 0.01f;
+        m_hard_iron[2] = static_cast<float>(hz) * 0.15f * 0.01f;
+        debug("hard iron factors: x=%f G y=%f G z=%f G", m_hard_iron[0], m_hard_iron[1], m_hard_iron[2]);
+        m_packet.clear();
+      }
+
+      void
       onAcceleration(void)
       {
         uint16_t ax, ay, az;
@@ -589,6 +628,13 @@ namespace Sensors
       }
 
       void
+      getHardIronFactors(void)
+      {
+        if (readAddress(CMD_ADDR_HXOFFSET))
+          onHardIronFactors();
+      }
+
+      void
       getVersion(void)
       {
         if (readAddress(CMD_ADDR_VERSION))
@@ -619,8 +665,18 @@ namespace Sensors
       }
 
       void
-      setHardIronFactors(float x, float y, float z)
+      setHardIronFactors(double x, double y, double z)
       {
+        getHardIronFactors();
+
+        if ((std::fabs(m_hard_iron[0] - x) < 1e-3) &&
+            (std::fabs(m_hard_iron[1] - y) < 1e-3) &&
+            (std::fabs(m_hard_iron[2] - z) < 1e-3))
+        {
+          spew("no change in hard-iron parameters");
+          return;
+        }
+
         int16_t aux = static_cast<int16_t>(x * 100 / 0.15f);
         uint8_t auxL = aux & 0x00FF;
         uint8_t auxH = (aux >> 8) & 0x00FF;
@@ -638,6 +694,21 @@ namespace Sensors
         auxH = (aux >> 8) & 0x00FF;
         Command cmd_z(CMD_ADDR_HZOFFSET, auxL, auxH);
         sendCommand(cmd_z);
+
+        getHardIronFactors();
+
+        if ((std::fabs(m_hard_iron[0] - x) >= 1e-3) ||
+            (std::fabs(m_hard_iron[1] - y) >= 1e-3) ||
+            (std::fabs(m_hard_iron[2] - z) >= 1e-3))
+          throw RestartNeeded("Failed to set hard-iron parameters", 5.0);
+        else
+          inf("Hard-iron parameters set to x=%f G y=%f G z=%f G", m_hard_iron[0], m_hard_iron[1], m_hard_iron[2]);
+
+        applyEntityParameter(m_args.hard_iron, m_hard_iron, true);
+        Time::BrokenDown bdt(Time::Clock::getSinceEpochMsec() / 1000);
+        std::string timestamp = Utils::String::str("%04d-%02d-%02d %02d:%02d:%02d",
+                                             bdt.year, bdt.month, bdt.day, bdt.hour);
+        applyEntityParameter(m_args.calib_time, timestamp, true);
       }
 
       void
