@@ -162,6 +162,15 @@ namespace Control
         //! Transmission request id.
         uint16_t m_tx_req_id;
 
+        //! Previous heading offset.
+        double m_prev_psi_os;
+        //! Track start point when CAS offset changes.
+        TrackingState::Coord m_new_track_start;
+        //! Virtual track end point when CAS offset changes.
+        TrackingState::Coord m_new_track_end;
+        //! Track bearing when CAS offset changes.
+        double m_new_track_bearing;
+
         //! Course offsets for contours.
         // std::vector<double> m_offsets;
         //! Cost function for grounding
@@ -1422,6 +1431,7 @@ namespace Control
             m_timestamp_prev = m_timestamp_new;
           }
 
+          double ilos_offset = 0.0;
           // CAS and ILOS off
           if (!m_args.en_cas && !m_args.ilos_enabled)
           {
@@ -1436,7 +1446,10 @@ namespace Control
           else if (!m_args.en_cas && m_args.ilos_enabled)
           {
             if (ts.track_pos.x <= ts.track_length)
-              m_des_heading.value = m_integral_controller->update(ts.track_pos.y, ts.los_angle, ts.track_bearing);
+            {
+              ilos_offset = m_integral_controller->update(ts.track_pos.y, ts.los_angle, ts.track_bearing);
+              m_des_heading.value = ts.los_angle + ilos_offset;
+            }
             else
               m_des_heading.value = ts.los_angle;
           }
@@ -1447,13 +1460,35 @@ namespace Control
             {
               if (m_psi_os == 0.0)
               {
-                m_des_heading.value = m_integral_controller->update(ts.track_pos.y, ts.los_angle, ts.track_bearing);
+                m_prev_psi_os = 0.0;
+                ilos_offset = m_integral_controller->update(ts.track_pos.y, ts.los_angle, ts.track_bearing);
+                m_des_heading.value = ts.los_angle + ilos_offset;
               }
               else
               {
-                m_des_heading.value = m_integral_controller->update(0.0, 
-                                                                    Angles::normalizeRadian(ts.los_angle + m_psi_os), 
-                                                                    Angles::normalizeRadian(ts.los_angle + m_psi_os));
+                if (m_psi_os != m_prev_psi_os)
+                {
+                  // Set virtual new track start.
+                  m_new_track_start.x = state.x;
+                  m_new_track_start.y = state.y;
+                  // Recalculate bearing given the new course offset
+                  m_new_track_bearing = Angles::normalizeRadian(ts.los_angle + m_psi_os);
+                  // Set virtual track end point 2000m ahead in the new direction
+                  setBearingAndRange(m_new_track_start, m_new_track_bearing, 2000, m_new_track_end);
+
+                  m_prev_psi_os = m_psi_os;
+                }
+
+                // Recalculate range and LOS angle to destination
+                double new_range;
+                double new_los_angle;
+                getBearingAndRange(state, m_new_track_end, &new_los_angle, &new_range);
+                // Recalculate track position
+                TrackingState::TrackCoord new_track_pos;
+                Coordinates::getTrackPosition(m_new_track_start, m_new_track_bearing, state, &new_track_pos.x, &new_track_pos.y);
+
+                ilos_offset = m_integral_controller->update(new_track_pos.y, new_los_angle, m_new_track_bearing);
+                m_des_heading.value = new_los_angle + ilos_offset;
                 war("[Avoiding]");
               }
             }
@@ -1465,7 +1500,7 @@ namespace Control
 
           //! Normalize angle
           m_des_heading.value = Angles::normalizeRadian(m_des_heading.value);
-          debug("CAS OFFSET: %.0f - NEW COURSE NORMALIZED %.3f", Angles::degrees(m_psi_os), Angles::degrees(m_des_heading.value));
+          debug("CAS OFFSET: %.0f | ILOS OFFSET: %.3f | NEW COURSE NORMALIZED %.3f", Angles::degrees(m_psi_os), Angles::degrees(ilos_offset), Angles::degrees(m_des_heading.value));
           dispatch(m_des_heading);
         }
 

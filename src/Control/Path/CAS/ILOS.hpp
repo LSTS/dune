@@ -125,7 +125,7 @@ namespace Control
           m_debug_parcel.i = m_integral;
           m_task->dispatch(m_debug_parcel);
           
-          return new_heading;
+          return offset;
         }
 
       private:
