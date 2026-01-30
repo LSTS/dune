@@ -103,12 +103,11 @@ namespace Sensors
         m_euler_eid(AddressResolver::invalid())
       {
         param("RTIMU lib config", m_args.m_lib_config)
-          .defaultValue("/root/RTEllipsoidFit/RTIMULib.ini")
-          .description("RTIMU lib config file");
+        .description("RTIMU lib config file");
 
         param("LED matrix device", m_args.m_led_dev)
-          .defaultValue("/dev/fb0")
-          .description("LED matrix device file");
+        .defaultValue("/dev/fb0")
+        .description("LED matrix device file");
 
         param("Send IMU data", m_args.m_send_imu_data)
         .defaultValue("true")
