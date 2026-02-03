@@ -42,22 +42,23 @@ namespace Transports
     class TransmissionFragments
     {
     public:
-      TransmissionFragments(const IMC::TransmissionRequest* request_, uint32_t max_payload_size, uint32_t ttl_) :
+      TransmissionFragments(const IMC::TransmissionRequest* request, uint32_t max_payload_size, uint32_t valid_retransmission_time) :
         req_id(0),
         comm_mean(0),
         destination(""),
         deadline(0.0),
         fragments(nullptr)
       {
-        if (request_->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
+        if (request->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
           return;
 
-        req_id = request_->req_id;
-        comm_mean = request_->comm_mean;
-        destination = request_->destination;
-        deadline = request_->deadline;
-        ttl.setTop(ttl_);
-        fragments = createFragments(request_->msg_data.get(), max_payload_size);
+        req_id = request->req_id;
+        comm_mean = request->comm_mean;
+        destination = request->destination;
+        deadline = request->deadline;
+        ttl = deadline - request->getTimeStamp();
+        retransmission_timer.setTop(valid_retransmission_time);
+        fragments = createFragments(request->msg_data.get(), max_payload_size);
       }
 
       ~TransmissionFragments()
@@ -66,15 +67,15 @@ namespace Transports
       }
 
       void
-      resetTTL()
+      resetRetransmissionTimer()
       {
-        ttl.reset();
+        retransmission_timer.reset();
       }
 
       bool
       isExpired()
       {
-        return ttl.overflow();
+        return retransmission_timer.overflow();
       }
 
       std::vector<IMC::TransmissionRequest>
@@ -123,8 +124,7 @@ namespace Transports
           tx_req.req_id = req_id;
           tx_req.comm_mean = comm_mean;
           tx_req.destination = destination;
-          // This must be a new deadline based on the time of the retransmission request and the original deadline, but for now we keep the original one.
-          tx_req.deadline = deadline;
+          tx_req.deadline = Clock::getSinceEpoch() + ttl;
           tx_req.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
           tx_req.msg_data.set(*part);
 
@@ -168,10 +168,12 @@ namespace Transports
       std::string destination;
       //! Deadline.
       fp64_t deadline;
+      //! Message ttl
+      fp64_t ttl;
       //! Fragments.
       Network::Fragments* fragments;
-      //! Fragment retransmission ttl.
-      Time::Counter<uint32_t> ttl;
+      //! Fragment retransmission timer.
+      Time::Counter<uint32_t> retransmission_timer;
 
       Network::Fragments*
       createFragments(const IMC::Message* msg, const uint32_t max_payload_size)
