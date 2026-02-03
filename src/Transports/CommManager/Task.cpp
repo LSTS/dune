@@ -37,6 +37,7 @@
 
 // Local headers.
 #include "Router.hpp"
+#include "TransmissionFragments.hpp"
 
 namespace Transports
 {
@@ -60,6 +61,10 @@ namespace Transports
       std::string acoustic_addr_section;
       //! Send Iridium text messages as plain text
       bool iridium_plain_texts;
+      //! Payload size for iridium transmissions
+      uint32_t iridium_payload_size;
+      //! Fragment storage time to live (seconds)
+      uint32_t fragment_storage_time;
     };
 
     //! Config section from where to fetch emergency sms number
@@ -88,6 +93,9 @@ namespace Transports
 
       std::map<uint16_t, IMC::AcousticOperation*> m_acoustic_requests;
 
+      //! Fragments map
+      std::map<uint8_t, TransmissionFragments*> m_fragments_map;
+
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_pstate(NULL),
@@ -101,6 +109,10 @@ namespace Transports
         param("Iridium - Entity Label", m_args.iridium_label)
             .defaultValue("GSM")
             .description("Entity label of Iridium modem");
+
+        param("Iridium - Payload Size", m_args.iridium_payload_size)
+            .defaultValue("259")
+            .description("Maximum size of iridium payload messages in bytes.");
 
         param("GSM - Entity Label", m_args.gsm_label)
             .defaultValue("Iridium Modem")
@@ -125,6 +137,13 @@ namespace Transports
         param("Send Iridium plain texts", m_args.iridium_plain_texts)
             .description("Send Iridium text messages as plain text (and not IMC)")
             .defaultValue("1");
+
+        param("Fragment Storage Time", m_args.fragment_storage_time)
+            .minimumValue("0")
+            .defaultValue("1800")
+            .units(Units::Second)
+            .description("Represents the amount of time a message is valid for retransmission. "
+                        "If set to 0, retransmission requests are not allowed.");
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticStatus>(this);
@@ -155,6 +174,10 @@ namespace Transports
         Memory::clear(m_vstate);
         Memory::clear(m_estate);
         Memory::clear(m_vmedium);
+
+        for (auto& it : m_fragments_map)
+          Memory::clear(it.second);
+        m_fragments_map.clear();
       }
 
       //! Initialize resources and configure modem
@@ -684,7 +707,11 @@ namespace Transports
         switch (msg->comm_mean)
         {
           case (IMC::TransmissionRequest::CMEAN_SATELLITE):
-            m_router.sendViaSatellite(msg, m_args.iridium_plain_texts);
+            {
+              std::vector<IMC::TransmissionRequest> tx_list = fragmentMessage(msg, m_args.iridium_payload_size);
+              for (auto tx_msg : tx_list)
+                m_router.sendViaSatellite(&tx_msg, m_args.iridium_plain_texts);
+            }
             break;
           case (IMC::TransmissionRequest::CMEAN_GSM):
             if (msg->destination.empty() || msg->destination == "broadcast") 
@@ -838,6 +865,41 @@ namespace Transports
         dispatch(report);
       }
 
+      std::vector<IMC::TransmissionRequest>
+      fragmentMessage(const IMC::TransmissionRequest* msg, uint32_t payload_size)
+      {
+        if (!TransmissionFragments::needsFragmentation(msg, payload_size))
+          return std::vector<IMC::TransmissionRequest>{*msg};
+        
+        TransmissionFragments* tx_frag = new TransmissionFragments(msg, payload_size, m_args.fragment_storage_time);
+        std::vector<IMC::TransmissionRequest> transmission_list = tx_frag->getTransmissionList();
+        if (m_args.fragment_storage_time > 0)
+        {
+          m_fragments_map[tx_frag->getFragmentsId()] = tx_frag;
+          return transmission_list;
+        }
+
+        delete tx_frag;
+        return transmission_list;
+      }
+
+      void
+      clearFragments()
+      {
+        std::vector<uint8_t> to_delete;
+        for (auto& it : m_fragments_map)
+        {
+          if (it.second->isExpired())
+          {
+            to_delete.push_back(it.first);
+            Memory::clear(it.second);
+          }
+        }
+
+        for (auto& id : to_delete)
+          m_fragments_map.erase(id);
+      }
+
       IMC::StateReport*
       produceReport()
       {
@@ -930,6 +992,8 @@ namespace Transports
             m_router.clearTimeouts();
             m_clean_timer.reset();
           }
+
+          clearFragments();
 
           if (m_args.iridium_period > 0 && m_iridium_timer.overflow())
           {
