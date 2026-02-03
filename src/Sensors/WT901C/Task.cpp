@@ -42,6 +42,8 @@ namespace Sensors
   //! Command unlock bytes.
   constexpr uint8_t c_command_unlock_byteL = 0x88;
   constexpr uint8_t c_command_unlock_byteH = 0xb5;
+  //! Hard Iron factors delta threshold.
+  constexpr float c_hard_iron_delta_threshold = 0.01f;
 
   enum PacketType
   {
@@ -669,11 +671,11 @@ namespace Sensors
       {
         getHardIronFactors();
 
-        if ((std::fabs(m_hard_iron[0] - x) < 1e-3) &&
-            (std::fabs(m_hard_iron[1] - y) < 1e-3) &&
-            (std::fabs(m_hard_iron[2] - z) < 1e-3))
+        if ((std::fabs(m_hard_iron[0] - x) < c_hard_iron_delta_threshold) &&
+            (std::fabs(m_hard_iron[1] - y) < c_hard_iron_delta_threshold) &&
+            (std::fabs(m_hard_iron[2] - z) < c_hard_iron_delta_threshold))
         {
-          spew("no change in hard-iron parameters");
+          debug("no change in hard-iron parameters");
           return;
         }
 
@@ -697,9 +699,9 @@ namespace Sensors
 
         getHardIronFactors();
 
-        if ((std::fabs(m_hard_iron[0] - x) >= 1e-3) ||
-            (std::fabs(m_hard_iron[1] - y) >= 1e-3) ||
-            (std::fabs(m_hard_iron[2] - z) >= 1e-3))
+        if ((std::fabs(m_hard_iron[0] - x) >= c_hard_iron_delta_threshold) ||
+            (std::fabs(m_hard_iron[1] - y) >= c_hard_iron_delta_threshold) ||
+            (std::fabs(m_hard_iron[2] - z) >= c_hard_iron_delta_threshold))
           throw RestartNeeded("Failed to set hard-iron parameters", 5.0);
         else
           inf("Hard-iron parameters set to x=%f G y=%f G z=%f G", m_hard_iron[0], m_hard_iron[1], m_hard_iron[2]);
