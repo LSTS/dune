@@ -1,0 +1,219 @@
+//***************************************************************************
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
+// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+//***************************************************************************
+// This file is part of DUNE: Unified Navigation Environment.               *
+//                                                                          *
+// Commercial Licence Usage                                                 *
+// Licencees holding valid commercial DUNE licences may use this file in    *
+// accordance with the commercial licence agreement provided with the       *
+// Software or, alternatively, in accordance with the terms contained in a  *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
+//                                                                          *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// included in the packaging of this file. You may not use this work        *
+// except in compliance with the Licence. Unless required by applicable     *
+// law or agreed to in writing, software distributed under the Licence is   *
+// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
+// ANY KIND, either express or implied. See the Licence for the specific    *
+// language governing permissions and limitations at                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
+//***************************************************************************
+// Author: Luis Venancio                                                    *
+//***************************************************************************
+
+#ifndef SRC_TRANSPORTS_COMMMANAGER_TRANSMISSION_FRAGMENTS_HPP_
+#define SRC_TRANSPORTS_COMMMANAGER_TRANSMISSION_FRAGMENTS_HPP_
+
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+#include <DUNE/Network/Fragments.hpp>
+
+namespace Transports
+{
+  namespace CommManager
+  {
+
+    using DUNE_NAMESPACES;
+
+    class TransmissionFragments
+    {
+    public:
+      TransmissionFragments(const IMC::TransmissionRequest* request_, uint32_t max_payload_size, uint32_t ttl_) :
+        req_id(0),
+        comm_mean(0),
+        destination(""),
+        deadline(0.0),
+        fragments(nullptr)
+      {
+        if (request_->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
+          return;
+
+        req_id = request_->req_id;
+        comm_mean = request_->comm_mean;
+        destination = request_->destination;
+        deadline = request_->deadline;
+        ttl.setTop(ttl_);
+        fragments = createFragments(request_->msg_data.get(), max_payload_size);
+      }
+
+      ~TransmissionFragments()
+      { 
+        Memory::clear(fragments);
+      }
+
+      void
+      resetTTL()
+      {
+        ttl.reset();
+      }
+
+      bool
+      isExpired()
+      {
+        return ttl.overflow();
+      }
+
+      std::vector<IMC::TransmissionRequest>
+      getTransmissionList(void)
+      {
+        std::vector<IMC::TransmissionRequest> tx_list;
+
+        if (fragments == nullptr)
+          return tx_list;
+
+        int n_frags = fragments->getNumberOfFragments();
+
+        for (int i = 0; i < n_frags; i++)
+        {
+          IMC::MessagePart* part = fragments->getFragment(i);
+          IMC::TransmissionRequest tx_req;
+
+          tx_req.req_id = req_id;
+          tx_req.comm_mean = comm_mean;
+          tx_req.destination = destination;
+          tx_req.deadline = deadline;
+          tx_req.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+          tx_req.msg_data.set(*part);
+
+          tx_list.push_back(tx_req);
+        }
+
+        return tx_list;
+      }
+
+      std::vector<IMC::TransmissionRequest>
+      getRetransmissionList(const std::string& request)
+      {
+        std::vector<IMC::TransmissionRequest> tx_list;
+
+        if (fragments == nullptr)
+          return tx_list;
+
+        std::unordered_set<int> frag_ids = getRetransmissionIds(request);
+
+        for(auto& frag_id : frag_ids)
+        {
+          IMC::MessagePart* part = fragments->getFragment(frag_id);
+          IMC::TransmissionRequest tx_req;
+
+          tx_req.req_id = req_id;
+          tx_req.comm_mean = comm_mean;
+          tx_req.destination = destination;
+          // This must be a new deadline based on the time of the retransmission request and the original deadline, but for now we keep the original one.
+          tx_req.deadline = deadline;
+          tx_req.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+          tx_req.msg_data.set(*part);
+
+          tx_list.push_back(tx_req);
+        }
+
+        return tx_list;
+      }
+
+      uint8_t
+      getFragmentsId(void) const
+      {
+        if (fragments == nullptr)
+          return 0;
+
+        return fragments->getFragment(0)->uid;
+      }
+
+      static bool
+      needsFragmentation(const IMC::Message* msg, const uint32_t max_payload_size)
+      {
+        return msg->getPayloadSerializationSize() > max_payload_size;
+      }
+
+      static bool
+      needsFragmentation(const IMC::TransmissionRequest* msg, const uint32_t max_payload_size)
+      {
+        if (msg->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
+          return false;
+
+        const IMC::Message* inline_msg = msg->msg_data.get();
+        return needsFragmentation(inline_msg, max_payload_size);
+      }
+
+    private:
+      //! Request id.
+      uint16_t req_id;
+      //! Communication Mean.
+      uint8_t comm_mean;
+      //! Destination System.
+      std::string destination;
+      //! Deadline.
+      fp64_t deadline;
+      //! Fragments.
+      Network::Fragments* fragments;
+      //! Fragment retransmission ttl.
+      Time::Counter<uint32_t> ttl;
+
+      Network::Fragments*
+      createFragments(const IMC::Message* msg, const uint32_t max_payload_size)
+      {
+        if (max_payload_size == 0.0)
+          return nullptr;
+
+        if (!needsFragmentation(msg, max_payload_size))
+          return nullptr;
+
+        Network::Fragments* frags = new Network::Fragments(const_cast<IMC::Message*>(msg), max_payload_size);
+
+        return frags;
+      }
+
+      std::unordered_set<int>
+      getRetransmissionIds(const std::string& request)
+      {
+        if (request.empty())
+          return {};
+
+        auto frag_list = request;
+        auto negation = frag_list.front() == '!';
+        if (negation)
+          frag_list.erase(0, 1);
+
+        std::vector<int> frag_ids;
+        Utils::String::split(frag_list, ",", frag_ids);
+
+        if (!negation)
+          return std::unordered_set<int>(frag_ids.begin(), frag_ids.end());
+
+        std::vector<int> temp(fragments->getNumberOfFragments()); 
+        std::iota(temp.begin(), temp.end(), 0);
+        std::unordered_set<int> result(temp.begin(), temp.end());
+        for (const auto& id : frag_ids)
+          result.erase(id);
+
+        return result;
+      }
+    };
+  }
+}
+
+#endif
