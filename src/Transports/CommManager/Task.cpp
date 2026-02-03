@@ -151,6 +151,7 @@ namespace Transports
         bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::IridiumTxStatus>(this);
+        bind<IMC::MessagePartControl>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::PlanSpecification>(this);
         bind<IMC::RSSI>(this);
@@ -696,6 +697,44 @@ namespace Transports
               break;
           }
         }
+      }
+
+      void
+      consume(const IMC::MessagePartControl* msg)
+      {
+        // if (msg->getSource() == getSystemId())
+        // {
+        //   switch (msg->op)
+        //   {
+        //   case IMC::MessagePartControl::OP_REQUEST_RETRANSMIT:
+        //     sendIridiumMsg(msg);
+        //     break;
+          
+        //   default:
+        //     break;
+        //   }
+          
+        //   return;
+        // }
+
+        if (msg->op != IMC::MessagePartControl::OP_REQUEST_RETRANSMIT)
+          return;
+
+        if (m_args.fragment_storage_time == 0)
+          return;
+
+        if (msg->frag_ids.empty())
+          return;
+
+        std::map<uint8_t, TransmissionFragments*>::iterator it = m_fragments_map.find(msg->uid);
+        if (it == m_fragments_map.end())
+          return;
+
+        std::vector<IMC::TransmissionRequest> frags = it->second->getRetransmissionList(msg->frag_ids);
+
+        for (const auto& frag: frags)
+          consume(&frag);
+        it->second->resetRetransmissionTimer();
       }
 
       void
