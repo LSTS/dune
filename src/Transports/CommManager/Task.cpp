@@ -697,8 +697,8 @@ namespace Transports
               {
                 req.destination = recipient;
                 req.req_id = m_router.createInternalId();
+                m_router.sendViaGSM(&req);
               }
-              m_router.sendViaGSM(&req);
             }
             else
               m_router.sendViaGSM(msg);
