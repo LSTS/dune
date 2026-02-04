@@ -246,13 +246,20 @@ namespace Transports
         double time = Time::Clock::getSinceEpoch();
         auto it = m_transmission_requests.begin();
 
+        std::set<uint16_t> answered_req_ids;
+
         while (it != m_transmission_requests.end())
         {
           if (it->second->deadline <= time)
           {
-            m_parent->inf("Transmission Request %d is expired by %f seconds", it->second->req_id, it->second->deadline - time);
-            answer(it->second, "Transmission timed out.",
-                   IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            if (answered_req_ids.find(it->second->req_id) == answered_req_ids.end())
+            {
+              m_parent->inf("Transmission Request %d is expired by %f seconds", it->second->req_id, it->second->deadline - time);
+              answer(it->second, "Transmission timed out.",
+                IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+                
+              answered_req_ids.insert(it->second->req_id);
+            }
             Memory::clear(it->second);
             m_transmission_requests.erase(it++);
           }
