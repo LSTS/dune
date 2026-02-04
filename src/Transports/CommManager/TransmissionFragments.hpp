@@ -73,7 +73,7 @@ namespace Transports
       }
 
       bool
-      isExpired()
+      isRetransmissionExpired()
       {
         return retransmission_timer.overflow();
       }

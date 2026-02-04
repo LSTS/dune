@@ -928,7 +928,7 @@ namespace Transports
         std::vector<uint8_t> to_delete;
         for (auto& it : m_fragments_map)
         {
-          if (it.second->isExpired())
+          if (it.second->isRetransmissionExpired())
           {
             to_delete.push_back(it.first);
             Memory::clear(it.second);
