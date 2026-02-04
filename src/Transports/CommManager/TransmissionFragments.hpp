@@ -116,6 +116,9 @@ namespace Transports
 
         std::unordered_set<int> frag_ids = getRetransmissionIds(request);
 
+        // Change deadline based on current time and ttl
+        deadline = Clock::getSinceEpoch() + ttl;
+
         for(auto& frag_id : frag_ids)
         {
           IMC::MessagePart* part = fragments->getFragment(frag_id);
@@ -124,7 +127,7 @@ namespace Transports
           tx_req.req_id = req_id;
           tx_req.comm_mean = comm_mean;
           tx_req.destination = destination;
-          tx_req.deadline = Clock::getSinceEpoch() + ttl;
+          tx_req.deadline = deadline;
           tx_req.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
           tx_req.msg_data.set(*part);
 
