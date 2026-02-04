@@ -45,8 +45,12 @@ namespace Power
     static constexpr uint8_t c_cmd_timeout = 2;
     //! Max no reply count before reporting error.
     static constexpr uint8_t c_max_no_rpl_cnt = 5;
+    //! Default data timeout (seconds).
+    static constexpr double c_default_data_tmt = 5.0;
     //! Hearbeat period (seconds).
-    static constexpr uint8_t c_hb_period = 5;
+    static constexpr uint8_t c_hb_period = 2;
+    //! Max expected hearbeat timeout (seconds).
+    static constexpr uint8_t c_hb_max_tmt = 5;
     //! Data command id.
     static constexpr char c_cmd_data = 'D';
     //! Control power channel command id.
@@ -528,9 +532,9 @@ namespace Power
       {
         try
         {
-          debug("trying to sync with device : setting heartbeat period to %u", c_hb_period);
-          sendCommand(c_cmd_sync, c_cmd_sync, true, {c_hb_period});
-          inf("synced with device : heartbeat period was set to %u", c_hb_period);
+          debug("trying to sync with device : setting max expected heartbeat timeout : %u seconds", c_hb_max_tmt);
+          sendCommand(c_cmd_sync, c_cmd_sync, true, {c_hb_max_tmt});
+          inf("synced with device : set max expected heartbeat timeout : %u seconds", c_hb_max_tmt);
           return true;
         }
         catch(const std::exception& e)
@@ -557,7 +561,7 @@ namespace Power
           debug("data rate set to %u Hz", rate);
 
           if (rate > 0)
-            m_inp_tmt.setTop(2.0 / rate);
+            m_inp_tmt.setTop(std::max(2.0 / rate, c_default_data_tmt));
 
           return true;
         }
