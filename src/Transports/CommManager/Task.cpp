@@ -340,38 +340,101 @@ namespace Transports
           if (req->comm_mean != IMC::TransmissionRequest::CMEAN_SATELLITE)
             return;
 
-          switch (msg->status)
+          // Check if its fragmented message
+          uint8_t frag_id, frag_num;
+          if (isKnownFragment(req, frag_id, frag_num))
           {
-            case (IMC::IridiumTxStatus::TXSTATUS_QUEUED):
-              m_router.answer(
-                  req, "Message has been queued for Satellite transmission.",
-                  IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
-              break;
-            case (IMC::IridiumTxStatus::TXSTATUS_TRANSMIT):
-              m_router.answer(req, "Message is being transmitted.",
-                              IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
-              break;
-            case (IMC::IridiumTxStatus::TXSTATUS_OK):
-              m_router.answer(req, "Message has been sent via Iridium.",
-                              IMC::TransmissionStatus::TSTAT_SENT);
-              Memory::clear(req);
-              tr_list.erase(msg->req_id);
-              break;
-            case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
-              m_router.answer(req, "Error while trying to transmit message.",
-                              IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              m_retransmission_list.push_back(req->clone());
-              Memory::clear(req);
-              tr_list.erase(msg->req_id);
-              break;
-            case (IMC::IridiumTxStatus::TXSTATUS_EXPIRED):
-              m_router.answer(req, "Timeout while trying to transmit message.",
-                              IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              Memory::clear(req);
-              tr_list.erase(msg->req_id);
-              break;
-            default:
-              break;
+            // Collect fragment status
+            TransmissionFragments* fragments = m_fragments_map[frag_id];
+
+            switch (msg->status)
+            {
+              case (IMC::IridiumTxStatus::TXSTATUS_QUEUED):
+                fragments->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+
+                if (fragments->isTransmissionInProgress())
+                {
+                  m_router.answer(
+                      req, "All fragments have been queued for Satellite transmission.",
+                      IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+                }
+                
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_TRANSMIT):
+                fragments->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+
+                if (fragments->isTransmissionInProgress())
+                {
+                  m_router.answer(
+                      req, "All fragments have been queued for Satellite transmission.",
+                      IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+                }
+
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_OK):
+                fragments->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_SENT);
+
+                if (fragments->isTransmissionComplete())
+                {
+                  m_router.answer(req, "All fragments have been sent via Iridium.",
+                                  IMC::TransmissionStatus::TSTAT_SENT);
+                  Memory::clear(fragments);
+                  m_fragments_map.erase(frag_id);
+                }
+
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
+                fragments->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+                m_retransmission_list.push_back(req->clone());
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_EXPIRED):
+                fragments->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              default:
+                break;
+            }
+          }
+          else
+          {
+            switch (msg->status)
+            {
+              case (IMC::IridiumTxStatus::TXSTATUS_QUEUED):
+                m_router.answer(
+                    req, "Message has been queued for Satellite transmission.",
+                    IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_TRANSMIT):
+                m_router.answer(req, "Message is being transmitted.",
+                                IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_OK):
+                m_router.answer(req, "Message has been sent via Iridium.",
+                                IMC::TransmissionStatus::TSTAT_SENT);
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
+                m_router.answer(req, "Error while trying to transmit message.",
+                                IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+                m_retransmission_list.push_back(req->clone());
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_EXPIRED):
+                m_router.answer(req, "Timeout while trying to transmit message.",
+                                IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              default:
+                break;
+            }
           }
         }
       }
@@ -920,6 +983,31 @@ namespace Transports
 
         delete tx_frag;
         return transmission_list;
+      }
+
+      bool
+      isKnownFragment(const IMC::TransmissionRequest* msg, uint8_t& frag_id, uint8_t& frag_num)
+      {
+        if (m_fragments_map.empty())
+          return false;
+        
+        if (msg->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
+          return false;
+          
+        const IMC::Message* inline_msg = msg->msg_data.get();
+        if (inline_msg != nullptr && inline_msg->getId() == DUNE_IMC_MESSAGEPART)
+        {
+          const IMC::MessagePart* frags_msg = static_cast<const IMC::MessagePart*>(inline_msg);
+          auto it = m_fragments_map.find(frags_msg->uid);
+          if (it != m_fragments_map.end())
+          {
+            frag_id = frags_msg->uid;
+            frag_num = frags_msg->frag_number;
+            return true;
+          }
+        }
+
+        return false;
       }
 
       void

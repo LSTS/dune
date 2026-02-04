@@ -39,6 +39,8 @@ namespace Transports
 
     using DUNE_NAMESPACES;
 
+    const uint8_t c_unknown_frag_state = 0xFF;
+
     class TransmissionFragments
     {
     public:
@@ -59,6 +61,7 @@ namespace Transports
         ttl = deadline - request->getTimeStamp();
         retransmission_timer.setTop(valid_retransmission_time);
         fragments = createFragments(request->msg_data.get(), max_payload_size);
+        transmission_states.resize(fragments->getNumberOfFragments(), c_unknown_frag_state);
       }
 
       ~TransmissionFragments()
@@ -76,6 +79,57 @@ namespace Transports
       isRetransmissionExpired()
       {
         return retransmission_timer.overflow();
+      }
+
+      bool
+      isDeadlineExpired() const
+      {
+        return Clock::getSinceEpoch() >= deadline;
+      }
+
+      void
+      setFragmentStatus(uint8_t frag_num, uint8_t status)
+      {
+        if (frag_num >= static_cast<uint8_t>(transmission_states.size()))
+          return;
+
+        transmission_states[frag_num] = status;
+      }
+
+      bool
+      isTransmissionComplete() const
+      {
+        for (const auto& state : transmission_states)
+        {
+          if (state != IMC::TransmissionStatus::TSTAT_DELIVERED)
+            return false;
+        }
+        return true;
+      }
+
+      bool
+      isTransmissionInProgress() const
+      {
+        for (const auto& state : transmission_states)
+        {
+          if (state != IMC::TransmissionStatus::TSTAT_IN_PROGRESS)
+            return false;
+        }
+        return true;
+      }
+
+      bool
+      isTransmissionFailed() const
+      {
+        for (const auto& state : transmission_states)
+        {
+          if (state == IMC::TransmissionStatus::TSTAT_INPUT_FAILURE ||
+              state == IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE ||
+              state == IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE ||
+              state == IMC::TransmissionStatus::TSTAT_INV_ADDR)
+            return true;
+        }
+        return false;
       }
 
       std::vector<IMC::TransmissionRequest>
@@ -177,7 +231,10 @@ namespace Transports
       Network::Fragments* fragments;
       //! Fragment retransmission timer.
       Time::Counter<uint32_t> retransmission_timer;
+      //! Fragments transmission states.
+      std::vector<uint8_t> transmission_states;
 
+      //! Create fragments for a given message.
       Network::Fragments*
       createFragments(const IMC::Message* msg, const uint32_t max_payload_size)
       {
