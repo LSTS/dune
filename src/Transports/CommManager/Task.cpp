@@ -38,6 +38,7 @@
 // Local headers.
 #include "Router.hpp"
 #include "TransmissionFragments.hpp"
+#include "TransmissionSender.hpp"
 
 namespace Transports
 {
@@ -795,8 +796,9 @@ namespace Transports
 
         std::vector<IMC::TransmissionRequest> frags = it->second->getRetransmissionList(msg->frag_ids);
 
-        for (const auto& frag: frags)
-          consume(&frag);
+        // Resent fragments have new TransmissionRequest IDs so use TransmissionSender
+        for (auto& frag: frags)
+          TransmissionSender::dispatch(this, frag, DF_LOOP_BACK);
         it->second->resetRetransmissionTimer();
       }
 
