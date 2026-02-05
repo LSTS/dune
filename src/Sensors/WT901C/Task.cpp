@@ -44,6 +44,8 @@ namespace Sensors
   constexpr uint8_t c_command_unlock_byteH = 0xb5;
   //! Hard Iron factors delta threshold.
   constexpr float c_hard_iron_delta_threshold = 0.01f;
+  //! Baud rate.
+  static constexpr unsigned c_baud_rate = 115200;
 
   enum PacketType
   {
@@ -71,6 +73,7 @@ namespace Sensors
     CMD_ADDR_SAVE = 0x00,
     CMD_ADDR_RSW = 0x02,
     CMD_ADDR_RRATE = 0x03,
+    CMD_ADDR_BAUD = 0x04,
     CMD_ADDR_HXOFFSET = 0x0b,
     CMD_ADDR_HYOFFSET = 0x0c,
     CMD_ADDR_HZOFFSET = 0x0d,
@@ -91,6 +94,14 @@ namespace Sensors
                                                { 50.0f, 0x08 },
                                                { 100.0f, 0x09 },
                                                { 200.0f, 0x0b }};
+
+  //! Baud rate map.
+  const std::map<uint32_t, uint8_t> c_baud_map = {{ 4800, 0x01 },
+                                                  { 9600, 0x02 },
+                                                  { 19200, 0x03 },
+                                                  { 38400, 0x04 },
+                                                  { 57600, 0x05 },
+                                                  { 115200, 0x06 }};
 
   //! Number of axes.
   static constexpr unsigned c_axes_count = 3;
@@ -115,6 +126,10 @@ namespace Sensors
       std::vector<double> hard_iron;
       //! Calibration time stamp
       std::string calib_time;
+      //! Restart device flag.
+      bool restart_device;
+      //! Factory reset device flag.
+      bool factory_reset_device;
     };
 
     class WaitingForHeader: public std::exception
@@ -191,7 +206,7 @@ namespace Sensors
     struct Task: public Hardware::BasicDeviceDriver
     {
       //! I/O handle.
-      IO::Handle* m_handle;
+      SerialPort* m_handle;
       //! Input watchdog.
       Counter<double> m_wdog;
       //! Current packet.
@@ -212,6 +227,10 @@ namespace Sensors
       const Command c_key;
       //! Command to save configuration.
       const Command c_save;
+      //! Command to reboot the device.
+      const Command c_restart;
+      //! Command to facotory reset the device.
+      const Command c_factory_reset;
       //! Rotated hard-iron calibration parameters.
       std::vector<double> m_hard_iron;
 
@@ -225,12 +244,14 @@ namespace Sensors
         m_calib_eid(AddressResolver::invalid()),
         c_key(CMD_ADDR_KEY, c_command_unlock_byteL, c_command_unlock_byteH),
         c_save(CMD_ADDR_SAVE),
+        c_restart(CMD_ADDR_SAVE, 0xff),
+        c_factory_reset(CMD_ADDR_SAVE, 0x01),
         m_hard_iron(c_axes_count, 0.0)
       {
         // Define configuration parameters.
         param("IO Port - Device", m_args.io_handle)
         .editable("false")
-        .description("I/O handle to use for communication with the device.");
+        .description("I/O handle to use for communication with the device (uart://uri).");
 
         param("Output Data Rate", m_args.odr)
         .units(Units::Hertz)
@@ -253,6 +274,14 @@ namespace Sensors
         .defaultValue("N/A")
         .description("Date of last successful calibration");
 
+        param("Restart Device", m_args.restart_device)
+        .defaultValue("false")
+        .description("Restart the device by sending the reboot command.");
+
+        param("Factory Reset Device", m_args.factory_reset_device)
+        .defaultValue("false")
+        .description("Factory reset the device by sending the factory reset command.");
+
         bind<IMC::MagneticField>(this);
       }
 
@@ -270,6 +299,12 @@ namespace Sensors
 
         if (paramChanged(m_args.odr) && m_args.odr > 0)
           m_wdog.setTop(2 * 1 / m_args.odr);
+
+        if (paramChanged(m_args.restart_device) && m_args.restart_device)
+          restartDevice();
+
+        if (paramChanged(m_args.factory_reset_device) && m_args.factory_reset_device)
+          factoryResetDevice();
       }
 
       void
@@ -308,18 +343,45 @@ namespace Sensors
       bool
       onConnect(void) override
       {
-        try
+        char uart[128] = {0};
+        trace("[UART] >> attempting URI: %s", m_args.io_handle.c_str());
+
+        if (std::sscanf(m_args.io_handle.c_str(), "uart://%[^:]", uart) == 1)
+          m_handle = new SerialPort(uart, c_baud_rate);
+        else
+          throw FormattedError("invalid I/O handle format: %s", m_args.io_handle.c_str());
+
+        if (testBaudRate())
         {
-          m_handle = openDeviceHandle(m_args.io_handle);
-        }
-        catch (...)
-        {
-          throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
+          if (m_args.restart_device)
+            restartDevice();
+
+          if (m_args.factory_reset_device)
+            factoryResetDevice();
+
+          inf("connected to device with baud rate: %u", c_baud_rate);
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          return true;
         }
 
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        for (const auto& it : c_baud_map)
+        {
+          if (!testBaudRate(it.first))
+            continue;
 
-        return true;
+          if (m_args.restart_device)
+            restartDevice();
+
+          if (m_args.factory_reset_device)
+            factoryResetDevice();
+
+          debug("found valid baud rate: %u", it.first);
+          setBaudRate();
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+          return true;
+        }
+
+        throw RestartNeeded("unable to set baud rate: %u", c_baud_rate);
       }
 
       //! Disconnect from device.
@@ -334,7 +396,6 @@ namespace Sensors
       void
       onInitializeDevice(void) override
       {
-        getVersion();
         setOutputContents();
         setOutputRate(m_args.odr);
         setHardIronFactors(m_args.hard_iron[0], m_args.hard_iron[1], m_args.hard_iron[2]);
@@ -574,7 +635,7 @@ namespace Sensors
         float _pitch = Angles::normalizeRadian(Angles::radians(pitch / 32768.0f * 180.0f));
         float _yaw = Angles::normalizeRadian(Angles::radians(yaw / 32768.0f * 180.0f));
 
-// Convert to DUNE convention (NED, right-handed, x forward, y right, z down).
+        // Convert to DUNE convention (NED, right-handed, x forward, y right, z down).
         // WT901C convention is right-handed, x forward, y left, z up.
         // according to WT901C mounting position in Waverider system
         EulerAngles euler;
@@ -614,7 +675,7 @@ namespace Sensors
         }
         catch (const std::exception& e)
         {
-          err("Err: %s", e.what());
+          trace("Err: %s", e.what());
         }
 
         return false;
@@ -623,13 +684,76 @@ namespace Sensors
       void
       sendCommand(const Command& cmd, bool save = false)
       {
+        if (m_handle == nullptr)
+          throw RestartNeeded("Device handle not available", 5);
+
         m_handle->write(c_key.cmd(), 5);
         Delay::waitMsec(100);
         m_handle->write(cmd.cmd(), 5);
         Delay::waitMsec(100);
 
         if (save)
-          m_handle->write(c_save.cmd(), 5);
+          saveConfiguration();
+      }
+
+      void
+      saveConfiguration(void)
+      {
+        debug("saving configuration");
+
+        if (m_handle == nullptr)
+          throw RestartNeeded("Device handle not available", 5);
+          
+        m_handle->write(c_save.cmd(), 5);
+        Delay::waitMsec(100);
+      }
+
+      void
+      restartDevice(void)
+      {
+        inf("restarting device");
+
+        if (m_handle == nullptr)
+          throw RestartNeeded("Device handle not available", 5);
+
+        sendCommand(c_restart);
+        applyEntityParameter(m_args.restart_device, false);
+        throw RestartNeeded("Restarting device", 5, false);
+      }
+
+      void
+      factoryResetDevice(void)
+      {
+        inf("factory resetting device");
+
+        sendCommand(c_factory_reset);
+        applyEntityParameter(m_args.factory_reset_device, false);
+        throw RestartNeeded("Factory resetting device", 5, false);
+      }
+
+      bool
+      testBaudRate(uint32_t baud = c_baud_rate)
+      {
+        debug("testing baud rate: %u", baud);
+        m_handle->setBaudRate(baud);
+        return getVersion();
+      }
+
+      void
+      setBaudRate(void)
+      {
+        if (c_baud_map.find(c_baud_rate) == c_baud_map.end())
+        {
+          err("Invalid baud rate: %u", c_baud_rate);
+          return;
+        }
+
+        uint8_t val = c_baud_map.at(c_baud_rate);
+        Command cmd(CMD_ADDR_BAUD, val);
+        sendCommand(cmd, true);
+        Delay::wait(1);
+        m_handle->setBaudRate(c_baud_rate);
+        inf("baud rate set to: %u", c_baud_rate);
       }
 
       void
@@ -639,11 +763,14 @@ namespace Sensors
           onHardIronFactors();
       }
 
-      void
+      bool
       getVersion(void)
       {
-        if (readAddress(CMD_ADDR_VERSION))
-          onVersion();
+        if (!readAddress(CMD_ADDR_VERSION, 1.0f))
+          return false;
+
+        onVersion();
+        return true;
       }
 
       void
