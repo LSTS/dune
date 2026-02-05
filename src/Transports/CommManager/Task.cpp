@@ -377,8 +377,6 @@ namespace Transports
                 {
                   m_router.answer(req, "All fragments have been sent via Iridium.",
                                   IMC::TransmissionStatus::TSTAT_SENT);
-                  Memory::clear(fragments);
-                  m_fragments_map.erase(frag_id);
                 }
 
                 Memory::clear(req);
