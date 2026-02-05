@@ -202,6 +202,9 @@ namespace Transports
       static bool
       needsFragmentation(const IMC::Message* msg, const uint32_t max_payload_size)
       {
+        if (max_payload_size == 0)
+          return false;
+        
         return msg->getPayloadSerializationSize() > max_payload_size;
       }
 
