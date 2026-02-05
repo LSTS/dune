@@ -86,7 +86,6 @@ namespace Transports
       IMC::VehicleState* m_vstate;
       IMC::VehicleMedium* m_vmedium;
       Time::Counter<float> m_iridium_timer;
-      Time::Counter<float> m_clean_timer;
       Time::Counter<float> m_retransmission_timer;
       std::list<IMC::TransmissionRequest*> m_retransmission_list;
       int m_plan_chksum;
@@ -164,7 +163,6 @@ namespace Transports
         bind<IMC::VehicleMedium>(this);
         bind<IMC::StateReport>(this);
 
-        m_clean_timer.setTop(3);
         m_retransmission_timer.setTop(1);
       }
 
@@ -1103,7 +1101,11 @@ namespace Transports
       {
         while (!stopping())
         {
+          m_router.clearTimeouts();
+          clearFragments();
+
           waitForMessages(1.0);
+
 
           if (m_retransmission_timer.overflow())
           {
@@ -1115,14 +1117,6 @@ namespace Transports
             }
             m_retransmission_timer.reset();
           }
-
-          if (m_clean_timer.overflow())
-          {
-            m_router.clearTimeouts();
-            m_clean_timer.reset();
-          }
-
-          clearFragments();
 
           if (m_args.iridium_period > 0 && m_iridium_timer.overflow())
           {
