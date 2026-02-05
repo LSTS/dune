@@ -570,14 +570,17 @@ namespace Sensors
         std::memcpy(&pitch, &m_packet.input[2], 2);
         std::memcpy(&yaw, &m_packet.input[4], 2);
 
-        float f_roll = roll / 32768.0f * 180.0f;
-        float f_pitch = pitch / 32768.0f * 180.0f;
-        float f_yaw = yaw / 32768.0f * 180.0f;
+        float _roll = Angles::normalizeRadian(Angles::radians(roll / 32768.0f * 180.0f));
+        float _pitch = Angles::normalizeRadian(Angles::radians(pitch / 32768.0f * 180.0f));
+        float _yaw = Angles::normalizeRadian(Angles::radians(yaw / 32768.0f * 180.0f));
 
+// Convert to DUNE convention (NED, right-handed, x forward, y right, z down).
+        // WT901C convention is right-handed, x forward, y left, z up.
+        // according to WT901C mounting position in Waverider system
         EulerAngles euler;
-        euler.phi = Angles::normalizeRadian(Angles::radians(f_roll));
-        euler.theta = Angles::normalizeRadian(Angles::radians(f_pitch));
-        euler.psi = Angles::normalizeRadian(Angles::radians(f_yaw));
+        euler.phi = Angles::normalizeRadian(-_pitch);
+        euler.theta = Angles::normalizeRadian(_roll + c_pi);
+        euler.psi = Angles::normalizeRadian(-_yaw - c_pi);
         euler.psi_magnetic = euler.psi;
 
         dispatchMessage(euler);
