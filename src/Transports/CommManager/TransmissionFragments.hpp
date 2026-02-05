@@ -45,19 +45,16 @@ namespace Transports
     {
     public:
       TransmissionFragments(const IMC::TransmissionRequest* request, uint32_t max_payload_size, uint32_t valid_retransmission_time) :
-        req_id(0),
-        comm_mean(0),
-        destination(""),
-        deadline(0.0),
+        destination_id(request->getDestination()),
+        req_id(request->req_id),
+        comm_mean(request->comm_mean),
+        destination(request->destination),
+        deadline(request->deadline),
         fragments(nullptr)
       {
         if (request->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
           return;
 
-        req_id = request->req_id;
-        comm_mean = request->comm_mean;
-        destination = request->destination;
-        deadline = request->deadline;
         ttl = deadline - request->getTimeStamp();
         retransmission_timer.setTop(valid_retransmission_time);
         fragments = createFragments(request->msg_data.get(), max_payload_size);
@@ -147,6 +144,7 @@ namespace Transports
           IMC::MessagePart* part = fragments->getFragment(i);
           IMC::TransmissionRequest tx_req;
 
+          tx_req.setDestination(destination_id);
           tx_req.req_id = req_id;
           tx_req.comm_mean = comm_mean;
           tx_req.destination = destination;
@@ -178,6 +176,7 @@ namespace Transports
           IMC::MessagePart* part = fragments->getFragment(frag_id);
           IMC::TransmissionRequest tx_req;
 
+          tx_req.setDestination(destination_id);
           tx_req.req_id = req_id;
           tx_req.comm_mean = comm_mean;
           tx_req.destination = destination;
@@ -217,6 +216,8 @@ namespace Transports
       }
 
     private:
+      //! Destination id.
+      uint16_t destination_id;
       //! Request id.
       uint16_t req_id;
       //! Communication Mean.
