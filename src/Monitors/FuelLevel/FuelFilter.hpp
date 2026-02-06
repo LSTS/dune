@@ -151,6 +151,15 @@ namespace Monitors
       {
         m_bdata = new BatteryData(m_args->avg_win);
         m_bdata->setEntities(eids);
+
+        m_models_configured = true;
+        for (unsigned i = 0; i < MDL_TOTAL; ++i)
+        {
+          if ((m_args->models[i].voltage.size() == 1 && m_args->models[i].voltage[0] == 0.0f) ||
+              (m_args->models[i].energy.size() == 1 && m_args->models[i].energy[0] == 0.0f) ||
+              m_args->models[i].current == 0.0f || m_args->models[i].temp == 0.0f)
+            m_models_configured = false;
+        }
       }
 
       ~FuelFilter(void)
@@ -160,37 +169,39 @@ namespace Monitors
 
       //! On Voltage message
       //! @param[in] msg pointer to Voltage message
-      void
+      //! @return true if value was updated, false otherwise
+      bool
       onVoltage(const IMC::Voltage* msg)
       {
         m_redo_timer.update(msg->getTimeStamp());
         m_sane_timer.update(msg->getTimeStamp());
 
-        // If value was changed
-        if (m_bdata->update(msg))
+        if (!m_bdata->update(msg))
+          return false;
+
+        ++m_total_samples;
+
+        if (m_total_samples % m_args->avg_win[BatteryData::BM_VOLTAGE] == 0)
         {
-          ++m_total_samples;
-
-          if (m_total_samples % m_args->avg_win[BatteryData::BM_VOLTAGE] == 0)
+          if (m_last_time < 0.0)
           {
-            if (m_last_time < 0.0)
-            {
-              m_last_time = msg->getTimeStamp();
-              return;
-            }
-
-            double delta = msg->getTimeStamp() - m_last_time;
             m_last_time = msg->getTimeStamp();
-
-            // Check if we have a valid time delta.
-            if (delta < 0 || delta > c_max_delta)
-              return;
-
-            // integrate energy consumed even if there is no estimate yet
-            // take energy from estimated entities into account
-            m_energy_consumed += m_bdata->getEnergyDrop(delta) + m_est_rate * delta;
+            return true;
           }
+
+          double delta = msg->getTimeStamp() - m_last_time;
+          m_last_time = msg->getTimeStamp();
+
+          // Check if we have a valid time delta.
+          if (delta < 0 || delta > c_max_delta)
+            return true;
+
+          // integrate energy consumed even if there is no estimate yet
+          // take energy from estimated entities into account
+          m_energy_consumed += m_bdata->getEnergyDrop(delta) + m_est_rate * delta;
         }
+
+        return true;
       }
 
       //! On Current message
@@ -270,6 +281,9 @@ namespace Monitors
       bool
       update(void)
       {
+        if (!m_models_configured)
+          return false;
+
         // check if we are still waiting for the first measurements
         if (!m_bdata->gotMeasurements())
           return false;
@@ -761,6 +775,8 @@ namespace Monitors
       float m_est_rate;
       //! Pointer to typename T (which could be class Task)
       Tasks::Task* m_task;
+      //! Flag to indicate if models are configured.
+      bool m_models_configured;
     };
   }
 }
