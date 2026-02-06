@@ -310,6 +310,9 @@ namespace Sensors
       void
       onEntityResolution(void) override
       {
+        if (m_args.calib_elabel.empty())
+          return;
+
         try
         {
           m_calib_eid = resolveEntity(m_args.calib_elabel);
