@@ -98,7 +98,7 @@ namespace Transports
       {
         for (const auto& state : transmission_states)
         {
-          if (state != IMC::TransmissionStatus::TSTAT_DELIVERED)
+          if (state != IMC::TransmissionStatus::TSTAT_SENT)
             return false;
         }
         return true;
