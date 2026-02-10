@@ -86,24 +86,35 @@ namespace DUNE
       m_args.active = false;
 
       param(DTR_RT("Entity Label"), m_args.elabel)
-      .defaultValue("")
+      .editable(false)
       .description(DTR("Main entity label"));
 
       param(DTR_RT("Execution Priority"), m_args.priority)
+.editable(false)
       .defaultValue("10")
       .description(DTR("Execution priority"));
 
       param(DTR_RT("Activation Time"), m_args.act_time)
-      .defaultValue("0");
+.editable(false)
+      .defaultValue("0")
+      .minimumValue("0")
+      .units(Units::Second)
+      .description(DTR("Expected activation time in seconds."));
 
       param(DTR_RT("Deactivation Time"), m_args.deact_time)
-      .defaultValue("0");
+.editable(false)
+      .defaultValue("0")
+      .minimumValue("0")
+      .units(Units::Second)
+      .description(DTR("Expected deactivation time in seconds."));
 
       param(DTR_RT("Debug Level"), m_debug_level_string)
       .defaultValue("None")
-      .values("None, Debug, Trace, Spew");
+      .values("None, Debug, Trace, Spew")
+      .description(DTR("Debug level for human-readable messages"));
 
       param(DTR_RT("Loopback Internal Messages"), m_args.loopback)
+.editable(false)
       .defaultValue("false")
       .description("Loopback internal messages, such as EntityState"
                    " and EntityParameters");
