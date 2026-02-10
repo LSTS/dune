@@ -95,6 +95,12 @@ namespace DUNE
       DEBUG_LEVEL_SPEW = 3
     };
 
+    //! Debug level string to enum map.
+    static const std::map<std::string, DebugLevel> c_debug_level_str_to_enum = {{"None", DEBUG_LEVEL_NONE},
+                                                                                {"Debug", DEBUG_LEVEL_DEBUG},
+                                                                                {"Trace", DEBUG_LEVEL_TRACE},
+                                                                                {"Spew", DEBUG_LEVEL_SPEW}};
+
     //! Flags to change dispatching behaviour.
     enum DispatchFlags
     {

@@ -90,19 +90,19 @@ namespace DUNE
       .description(DTR("Main entity label"));
 
       param(DTR_RT("Execution Priority"), m_args.priority)
-.editable(false)
+      .editable(false)
       .defaultValue("10")
       .description(DTR("Execution priority"));
 
       param(DTR_RT("Activation Time"), m_args.act_time)
-.editable(false)
+      .editable(false)
       .defaultValue("0")
       .minimumValue("0")
       .units(Units::Second)
       .description(DTR("Expected activation time in seconds."));
 
       param(DTR_RT("Deactivation Time"), m_args.deact_time)
-.editable(false)
+      .editable(false)
       .defaultValue("0")
       .minimumValue("0")
       .units(Units::Second)
@@ -114,7 +114,7 @@ namespace DUNE
       .description(DTR("Debug level for human-readable messages"));
 
       param(DTR_RT("Loopback Internal Messages"), m_args.loopback)
-.editable(false)
+      .editable(false)
       .defaultValue("false")
       .description("Loopback internal messages, such as EntityState"
                    " and EntityParameters");
@@ -266,14 +266,11 @@ namespace DUNE
       m_entity->setLoopback(m_args.loopback);
       m_entity->reportInfo();
 
-      if (m_debug_level_string == "Debug")
-        m_debug_level = DEBUG_LEVEL_DEBUG;
-      else if (m_debug_level_string == "Trace")
-        m_debug_level = DEBUG_LEVEL_TRACE;
-      else if (m_debug_level_string == "Spew")
-        m_debug_level = DEBUG_LEVEL_SPEW;
-      else
-        m_debug_level = DEBUG_LEVEL_NONE;
+      if (paramChanged(m_debug_level_string))
+      {
+        const auto it = c_debug_level_str_to_enum.find(m_debug_level_string);
+        m_debug_level = (it != c_debug_level_str_to_enum.end()) ? it->second : DEBUG_LEVEL_NONE;
+      }
 
       onUpdateParameters();
 
