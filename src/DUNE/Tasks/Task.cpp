@@ -258,14 +258,6 @@ namespace DUNE
     void
     Task::updateParameters(bool act_deact)
     {
-      if (m_entity->getLabel().empty())
-        m_entity->setLabel(m_args.elabel);
-      if (m_args.elabel != m_entity->getLabel())
-        m_params.set(DTR_RT("Entity Label"), m_entity->getLabel());
-      m_entity->setActTimes(m_args.act_time, m_args.deact_time);
-      m_entity->setLoopback(m_args.loopback);
-      m_entity->reportInfo();
-
       if (paramChanged(m_debug_level_string))
       {
         const auto it = c_debug_level_str_to_enum.find(m_debug_level_string);
@@ -921,6 +913,16 @@ namespace DUNE
 
       try
       {
+        if (m_entity->getLabel().empty())
+          m_entity->setLabel(m_args.elabel);
+        else
+          m_params.apply(&m_args.elabel, m_entity->getLabel());
+
+        m_entity->setActTimes(m_args.act_time, m_args.deact_time);
+        m_entity->reportInfo();
+
+        m_entity->setLoopback(m_args.loopback);
+
         updateParameters(false);
       }
       catch (RestartNeeded& e)
