@@ -76,15 +76,8 @@ namespace DUNE
       void
       writeXML(std::ostream& os) const
       {
-        // Order parameters alphabetically by name
-        std::set<std::string> ordered_params;
-        std::map<std::string, Parameter*>::const_iterator itr = m_names.begin();
-        for (; itr != m_names.end(); ++itr)
-          ordered_params.insert(itr->first);
-        
-        std::set<std::string>::const_iterator oitr = ordered_params.begin();
-        for (; oitr != ordered_params.end(); ++oitr)
-          m_names.at(*oitr)->writeXML(os);
+        for (const auto& param: m_names)
+          param.second->writeXML(os);
       }
 
       bool
