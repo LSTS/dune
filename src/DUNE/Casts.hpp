@@ -309,6 +309,12 @@ namespace DUNE
   }
 
   inline std::string
+  uncastLexical(bool var)
+  {
+    return var ? "true" : "false";
+  }
+
+  inline std::string
   uncastLexical(int8_t var)
   {
     std::ostringstream os;
