@@ -74,8 +74,9 @@ namespace DUNE
         if (!Factory::exists(getTaskName(vec[i])))
         {
           // We use '.' here to ignore configuration sections (such as General
-          // or Addresses)
-          if (getTaskName(vec[i]).find('.') != std::string::npos)
+          // or Addresses) and ':' to ignore parameterized entities configuration sections.
+          if (getTaskName(vec[i]).find('.') != std::string::npos &&
+              getTaskName(vec[i]).find(':') == std::string::npos)
           {
             std::string invalid = "Invalid task name: " + getTaskName(vec[i]);
             DUNE_WRN("Manager", DTR(invalid.c_str()));
