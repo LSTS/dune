@@ -292,9 +292,16 @@ namespace DUNE
       scope(const std::string a_scope);
 
       Parameter&
-      editable(std::string a_editable)
+      editable(const std::string& a_editable)
       {
         castLexical(a_editable, m_editable);
+        return *this;
+      }
+
+      Parameter&
+      editable(bool a_editable)
+      {
+        m_editable = a_editable;
         return *this;
       }
 
