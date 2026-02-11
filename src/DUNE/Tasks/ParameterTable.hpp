@@ -91,6 +91,16 @@ namespace DUNE
       }
 
       void
+      setChanged(void* param, bool enabled)
+      {
+        const auto itr = m_pointers.find(param);
+        if (itr == m_pointers.end())
+          throw std::runtime_error(DTR("variable does not exist"));
+
+        itr->second->setChanged(enabled);
+      }
+
+      void
       setChanged(bool enabled)
       {
         std::map<void*, Parameter*>::iterator itr = m_pointers.begin();
