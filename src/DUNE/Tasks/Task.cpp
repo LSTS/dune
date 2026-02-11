@@ -885,17 +885,51 @@ namespace DUNE
     }
 
     void
+    Task::setParameterAttributes(const std::string& name)
+    {
+      try
+      {
+        auto itr = m_params.find(name);
+        if (itr == m_params.end())
+          throw std::runtime_error("invalid parameter name: '" + name + "'");
+
+        std::string section = getName();
+        auto attributes = m_ctx.config.attributes(section, name);
+
+        std::string scope = attributes.get<std::string>(Parameter::c_scope_str, "");
+        if (!scope.empty())
+          itr->second->scope(Parameter::scopeFromString(scope));
+
+        std::string visibility = attributes.get<std::string>(Parameter::c_visibility_str, "");
+        if (!visibility.empty())
+          itr->second->visibility(Parameter::visibilityFromString(visibility));
+
+        std::string editable = attributes.get<std::string>(Parameter::c_editable_str, "");
+        if (!editable.empty())
+          itr->second->editable(editable);
+      }
+      catch(Parsers::Config::OptionAttributeEmpty& e)
+      { }
+      catch(const std::exception& e)
+      {
+        war("unbale to set parameter attributes: %s", e.what());
+      }
+    }
+
+    void
     Task::loadConfig(void)
     {
+      std::string name = getName();
       std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
       for (; itr != m_params.end(); ++itr)
       {
-        std::string value = m_ctx.config.get(getName(), itr->second->name());
+        setParameterAttributes(itr->second->name());
+        std::string value = m_ctx.config.get(name, itr->second->name());
         m_params.set(itr->second->name(), value);
       }
 
       // Check for invalid parameter names.
-      std::map<std::string, std::string> options = m_ctx.config.getSection(getName());
+      std::map<std::string, std::string> options = m_ctx.config.getSection(name);
       std::map<std::string, std::string>::const_iterator pitr = options.begin();
       for (; pitr != options.end(); ++pitr)
       {
@@ -903,7 +937,7 @@ namespace DUNE
           continue;
 
         // Ignore Supervisors.Delegator sections
-        std::string section = getName();
+        std::string section = name;
         std::string::size_type p = section.find('/');
         if(!std::strcmp(section.substr(0,p).c_str(),"Supervisors.Delegator"))
           continue;

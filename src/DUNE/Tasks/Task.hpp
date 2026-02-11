@@ -950,6 +950,9 @@ namespace DUNE
 
       void
       consume(const IMC::QueryTypedEntityParameters* msg);
+
+      void
+      setParameterAttributes(const std::string& name);
     };
   }
 }
