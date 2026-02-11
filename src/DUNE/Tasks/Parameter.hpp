@@ -83,6 +83,10 @@ namespace DUNE
         std::string values;
       };
 
+      static constexpr const char* c_visibility_str = "visibility";
+      static constexpr const char* c_scope_str = "scope";
+      static constexpr const char* c_editable_str = "editable";
+
       static Visibility
       visibilityFromString(const std::string& v);
 
