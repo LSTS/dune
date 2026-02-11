@@ -192,18 +192,6 @@ namespace DUNE
           else
             m_periodicity_timer.setTop(0.0f);
         }
-
-        if (paramChanged(m_bdd_args.sample_time_duration_visibility))
-          setParameterVisibility(c_sample_time_duration, m_bdd_args.sample_time_duration_visibility);
-
-        if (paramChanged(m_bdd_args.sample_time_duration_scope))
-          setParameterScope(c_sample_time_duration, m_bdd_args.sample_time_duration_scope);
-
-        if (paramChanged(m_bdd_args.periodicity_data_sampling_visibility))
-          setParameterVisibility(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_visibility);
-
-        if (paramChanged(m_bdd_args.periodicity_data_sampling_scope))
-          setParameterScope(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_scope);
       }
 
       if (m_honours_vp)
@@ -280,20 +268,6 @@ namespace DUNE
       .units(Units::Second)
       .description(samp_dur_description.str());
 
-      param(std::string(c_sample_time_duration) + " - Visibility", m_bdd_args.sample_time_duration_visibility)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue("developer")
-      .values(Parameter::visibilityValues())
-      .description("Visibility of the '" + std::string(c_sample_time_duration) + "' parameter");
-
-      param(std::string(c_sample_time_duration) + " - Scope", m_bdd_args.sample_time_duration_scope)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue("global")
-      .values(Parameter::scopeValues())
-      .description("Scoped of the '" + std::string(c_sample_time_duration) + "' parameter");
-
       std::ostringstream perioditicity_description;
       perioditicity_description << c_periodicity_data_sampling << " (P) in seconds. "
                                 << "This value must not be lower than "
@@ -344,20 +318,6 @@ namespace DUNE
       .defaultValue(uncastLexical(def_periodicity))
       .units(Units::Second)
       .description(perioditicity_description.str());
-
-      param(std::string(c_periodicity_data_sampling) + " - Visibility", m_bdd_args.periodicity_data_sampling_visibility)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue("developer")
-      .values(Parameter::visibilityValues())
-      .description("Visibility of the '" + std::string(c_periodicity_data_sampling) + "' parameter");
-
-      param(std::string(c_periodicity_data_sampling) + " - Scope", m_bdd_args.periodicity_data_sampling_scope)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue("global")
-      .values(Parameter::scopeValues())
-      .description("Scoped of the '" + std::string(c_periodicity_data_sampling) + "' parameter");
     }
 
     void

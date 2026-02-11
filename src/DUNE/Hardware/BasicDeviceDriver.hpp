@@ -55,16 +55,8 @@ namespace DUNE
       double post_pwr_on_delay;
       //! Sample Time Duration.
       double sample_time_duration;
-      //! Sample Time Duration visibility.
-      std::string sample_time_duration_visibility;
-      //! Sample Time Duration scope.
-      std::string sample_time_duration_scope;
       //! Periodicity of Data Sampling.
       double periodicity_data_sampling;
-      //! Periodicity of Data Sampling visibility.
-      std::string periodicity_data_sampling_visibility;
-      //! Periodicity of Data Sampling scope.
-      std::string periodicity_data_sampling_scope;
       //! Vertical Profile Periodicity.
       double vp_periodicity;
     };
