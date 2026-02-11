@@ -55,6 +55,10 @@ namespace DUNE
 
     //! Maximum buffer size.
     static const size_t c_max_bfr_size = 1024;
+    //! Options attributes opener.
+    static constexpr char c_attr_open = '{';
+    //! Options attributes closer.
+    static constexpr char c_attr_close = '}';
 
     //! Retrieve option and respective value from a line.
     //! @param[in] line line.
@@ -62,15 +66,36 @@ namespace DUNE
     //! @param[out] value option value.
     //! @return true if line is an option assignment, false otherwise.
     static bool
-    getOptionAndValue(const char* line, char* option, char* value)
+    getOptionAndValueAndAttributes(const char* line, char* option, char* value, std::string& attributes)
     {
+      attributes.clear();
+      option[0] = '\0';
+      value[0] = '\0';
       char equal[2] = {0};
       int rv = std::sscanf(line, " %[^=] %1[=] %[^;|#] ", option, equal, value);
+
+      if (rv < 1)
+        return false;
+
+      char* open = std::strchr(option, c_attr_open);
+      if (open)
+      {
+        char* close = std::strchr(open + 1, c_attr_close);
+        if (close)
+          attributes.assign(open + 1, close - (open + 1));
+
+        *open = '\0';
+      }
+
+      String::rightTrimInPlace(option);
+
       if (rv < 2 || rv > 3)
         return false;
 
       if (rv == 2)
         value[0] = '\0';
+      else
+        String::rightTrimInPlace(value);
 
       return true;
     }
@@ -83,7 +108,7 @@ namespace DUNE
     void
     Config::parseFile(const char* fname)
     {
-      Concurrency::ScopedRWLock(m_data_lock, false);
+      Concurrency::ScopedRWLock(m_data_lock, true);
 
       char line[c_max_bfr_size] = {0};
       char section[c_max_bfr_size] = {0};
@@ -99,7 +124,6 @@ namespace DUNE
       if (fd == 0)
         throw FileOpenError(fname, System::Error::getLastMessage());
 
-      bool remove = false;
       while (std::fscanf(fd, " %1023[^\n] ", line) == 1)
       {
         ++line_count;
@@ -108,6 +132,8 @@ namespace DUNE
         if (line[0] == ';' || line[0] == '#')
           continue;
 
+        bool remove = false;
+        std::string attributes;
         // Section name.
         if (std::sscanf(line, "[%[^]]] ", section) == 1)
         {
@@ -135,13 +161,20 @@ namespace DUNE
           ++section_count;
         }
         // Option and value.
-        else if (getOptionAndValue(line, option, arg))
+        else if (getOptionAndValueAndAttributes(line, option, arg, attributes))
         {
           if (section_count == 0)
             throw SyntaxError(fname, line_count);
 
-          String::rightTrimInPlace(option);
-          String::rightTrimInPlace(arg);
+          if (!attributes.empty())
+          {
+            auto& section_attributes = m_attributes[section];
+            auto option_itr = section_attributes.find(option);
+            if (option_itr != section_attributes.end())
+              option_itr->second << attributes;
+            else
+              section_attributes[option] = Utils::TupleList(attributes, ":", ",", true);
+          }
 
           bool append = false;
           if (String::endsWith(String::str(option), "+"))
@@ -191,6 +224,16 @@ namespace DUNE
             throw InvalidReference(arg);
 
           m_data[section][option] = m_data[isec][iopt];
+        }
+        // Option with attributes but no value.
+        else if (!attributes.empty())
+        {
+          auto& section_attributes = m_attributes[section];
+          auto option_itr = section_attributes.find(option);
+          if (option_itr != section_attributes.end())
+            option_itr->second << attributes;
+          else
+            section_attributes[option] = Utils::TupleList(attributes, ":", ",", true);
         }
         // Multiline argument.
         else if (std::sscanf(line, " %[^;|#] ", arg) == 1)
@@ -265,6 +308,22 @@ namespace DUNE
         opts.push_back(itr->first);
       return opts;
     }
+
+    Utils::TupleList
+    Config::attributes(const std::string& section, const std::string& option)
+    {
+      Concurrency::ScopedRWLock(m_data_lock, false);
+
+      auto sitr = m_attributes.find(section);
+      if (sitr == m_attributes.end())
+        throw OptionAttributeEmpty(String::str("no attributes found in section '%s'", section.c_str()));
+      
+      auto oitr = sitr->second.find(option);
+      if (oitr == sitr->second.end())
+        throw OptionAttributeEmpty(String::str("no attributes found for option '%s' in section '%s'", option.c_str(), section.c_str()));
+
+      return m_attributes[section].at(option);
+    } 
 
     std::ostream&
     operator<<(std::ostream& os, const Config& cfg)

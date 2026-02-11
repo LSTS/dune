@@ -41,6 +41,7 @@
 // DUNE headers.
 #include <DUNE/Config.hpp>
 #include <DUNE/Utils/String.hpp>
+#include <DUNE/Utils/TupleList.hpp>
 #include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Casts.hpp>
 
@@ -69,6 +70,14 @@ namespace DUNE
       //! Create the parser and parse a configuration file.
       //! @param fname name of the configuration file to parse.
       Config(const char* fname);
+
+      class OptionAttributeEmpty: public std::runtime_error
+      {
+      public:
+        OptionAttributeEmpty(const std::string& message):
+          std::runtime_error(message)
+        { }
+      };
 
       //! Parse a configuration file.
       //! @param fname name of the configuration file to parse.
@@ -192,6 +201,9 @@ namespace DUNE
       std::vector<std::string>
       options(const std::string& section);
 
+      Utils::TupleList
+      attributes(const std::string& section, const std::string& option);
+
       //! Write the current configuration to a stream.
       //! @param[in] os output stream.
       //! @param[in] cfg Config instance.
@@ -203,6 +215,8 @@ namespace DUNE
       typedef std::map<std::string, Section> Sections;
       //! Representation of the configuration file as a map.
       Sections m_data;
+      //! Options attributes map: <section, <option, attributes>>.
+      std::map<std::string, std::map<std::string, Utils::TupleList>> m_attributes;
       //! List of parsed files.
       std::vector<std::string> m_files;
 
