@@ -232,22 +232,6 @@ namespace DUNE
     {
       m_honours_active = true;
 
-      std::string scope_str = Parameter::scopeToString(def_scope);
-      param(DTR_RT("Active - Scope"), m_args.active_scope)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue(scope_str)
-      .values(Parameter::scopeValues())
-      .description(DTR("Scoped of the 'Active' parameter"));
-
-      std::string visibility_str = Parameter::visibilityToString(def_visibility);
-      param(DTR_RT("Active - Visibility"), m_args.active_visibility)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue(visibility_str)
-      .values(Parameter::visibilityValues())
-      .description(DTR("Visibility of the 'Active' parameter"));
-
       param(DTR_RT("Active"), m_args.active)
       .visibility(def_visibility)
       .scope(def_scope)
@@ -266,30 +250,19 @@ namespace DUNE
 
       onUpdateParameters();
 
-      if (m_honours_active)
+      if (m_honours_active && act_deact)
       {
-        std::map<std::string, Parameter*>::iterator itr = m_params.find("Active");
-
-        if (paramChanged(m_args.active_scope))
-          itr->second->scope(m_args.active_scope);
-
-        if (paramChanged(m_args.active_visibility))
-          itr->second->visibility(m_args.active_visibility);
-
-        if (act_deact)
+        if (paramChanged(m_args.active))
         {
-          if (paramChanged(m_args.active))
-          {
-            war("due to params active change, requesting %s", m_args.active ? "activation" : "deactivation");
-            if (m_args.active)
-              requestActivation();
-            else
-              requestDeactivation();
-          }
+          war("due to params active change, requesting %s", m_args.active ? "activation" : "deactivation");
+          if (m_args.active)
+            requestActivation();
           else
-          {
-            m_entity->reportActivationState();
-          }
+            requestDeactivation();
+        }
+        else
+        {
+          m_entity->reportActivationState();
         }
       }
 
@@ -417,7 +390,7 @@ namespace DUNE
 
           if (m_honours_active)
           {
-            Parameter::Scope active_scope = Parameter::scopeFromString(m_args.active_scope);
+            Parameter::Scope active_scope = getParameterScope(&m_args.active);
             if (m_args.active && ((active_scope == Parameter::SCOPE_GLOBAL) || (active_scope == Parameter::SCOPE_IDLE)))
               requestActivation();
           }

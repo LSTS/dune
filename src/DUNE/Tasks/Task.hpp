@@ -613,8 +613,7 @@ namespace DUNE
         return m_params.changed(&var);
       }
 
-      //! Declare parameter 'Active' and associated parameters 'Active
-      //! - Scope' and 'Active - Visibility'. These parameters allows
+      //! Declare parameter 'Active'. This parameter allows
       //! the task to be activated/deactivated using the message
       //! SetEntityParameters.
       //! @param[in] def_scope default scope of 'Active' parameter.
@@ -903,10 +902,6 @@ namespace DUNE
         unsigned int priority;
         //! True if task is active.
         bool active;
-        //! Scope of 'Active' parameter.
-        std::string active_scope;
-        //! Visibility of 'Active' parameter.
-        std::string active_visibility;
         //! Loopback internal messages
         bool loopback;
       };
