@@ -58,7 +58,10 @@ namespace Transports
       Concurrency::ScopedMutex m(s_transmission_sender_mutex);
 
       if (s_transmission_sender_uid == 0xFFFF)
+      {
         s_transmission_sender_uid = 0;
+        return s_transmission_sender_uid;
+      }
 
       return s_transmission_sender_uid++;
     }
