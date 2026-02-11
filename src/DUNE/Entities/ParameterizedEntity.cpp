@@ -89,7 +89,7 @@ namespace DUNE
 
           auto p = m_params.apply(&(pit->second), (*itr)->value);
           params.params.push_back(p);
-          m_ctx.config.set(m_owner->getName(), (*itr)->name, (*itr)->value);
+          m_ctx.config.set(m_section, (*itr)->name, (*itr)->value);
         }
         catch (std::runtime_error& e)
         {
