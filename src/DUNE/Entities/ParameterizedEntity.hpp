@@ -108,35 +108,51 @@ namespace DUNE
 
     protected:
       void
-      setParameterScope(const std::string& name, const std::string& scope)
-      {
-        std::map<std::string, Tasks::Parameter*>::iterator itr = m_params.find(name);
-        if (itr != m_params.end())
-          itr->second->scope(scope);
-      }
-
-      void
       setParameterScope(const std::string& name, const Tasks::Parameter::Scope& scope)
       {
-        std::map<std::string, Tasks::Parameter*>::iterator itr = m_params.find(name);
-        if (itr != m_params.end())
-          itr->second->scope(scope);
+        m_params.setScope(name, scope);
       }
 
       void
-      setParameterVisbility(const std::string& name, const std::string& visibility)
+      setParameterScope(void* ptr, const Tasks::Parameter::Scope& scope)
       {
-        std::map<std::string, Tasks::Parameter*>::iterator itr = m_params.find(name);
-        if (itr != m_params.end())
-          itr->second->visibility(visibility);
+        m_params.setScope(ptr, scope);
+      }
+
+      Tasks::Parameter::Scope
+      getParameterScope(const std::string& name)
+      {
+        return m_params.getScope(name);
+      }
+
+      Tasks::Parameter::Scope
+      getParameterScope(void* ptr)
+      {
+        return m_params.getScope(ptr);
       }
 
       void
-      setParameterVisbility(const std::string& name, const Tasks::Parameter::Visibility& visibility)
+      setParameterVisibility(const std::string& name, const Tasks::Parameter::Visibility& visibility)
       {
-        std::map<std::string, Tasks::Parameter*>::iterator itr = m_params.find(name);
-        if (itr != m_params.end())
-          itr->second->visibility(visibility);
+        m_params.setVisibility(name, visibility);
+      }
+
+      void
+      setParameterVisibility(void* ptr, const Tasks::Parameter::Visibility& visibility)
+      {
+        m_params.setVisibility(ptr, visibility);
+      }
+
+      Tasks::Parameter::Visibility
+      getParameterVisibility(const std::string& name)
+      {
+        return m_params.getVisibility(name);
+      }
+
+      Tasks::Parameter::Visibility
+      getParameterVisibility(void* ptr)
+      {
+        return m_params.getVisibility(ptr);
       }
 
       //! Declare a configuration parameter that can be parsed using
@@ -174,8 +190,7 @@ namespace DUNE
         return m_params.changed(&var);
       }
 
-      //! Declare parameter 'Active' and associated parameters 'Active
-      //! - Scope' and 'Active - Visibility'. These parameters allows
+      //! Declare parameter 'Active'. This parameter allows
       //! the task to be activated/deactivated using the message
       //! SetEntityParameters.
       //! @param[in] def_scope default scope of 'Active' parameter.
