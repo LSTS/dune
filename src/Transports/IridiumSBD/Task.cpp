@@ -669,7 +669,7 @@ namespace Transports
         war("Queue cleared");
 
         // Reset clear queue flag
-        applyEntityParameter(m_args.clear_queue, false);
+        applyEntityParameter(&m_args.clear_queue, false);
       }
 
       bool

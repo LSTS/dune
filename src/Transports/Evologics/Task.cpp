@@ -386,7 +386,7 @@ namespace Transports
 
         if (m_simulating)
         {
-          applyEntityParameter(m_args.driver_timeout, c_sim_timeout);
+          applyEntityParameter(&m_args.driver_timeout, c_sim_timeout);
           m_driver->setDriverTimeout(m_args.driver_timeout);
         }
 

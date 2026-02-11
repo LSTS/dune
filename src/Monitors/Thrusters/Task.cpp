@@ -209,7 +209,7 @@ namespace Monitors
           if (m_args.force_restart)
           {
             tryRestartThruster();
-            applyEntityParameter(m_args.force_restart, false);
+            applyEntityParameter(&m_args.force_restart, false);
           }
         }
       }
