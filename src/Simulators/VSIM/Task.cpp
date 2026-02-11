@@ -80,19 +80,21 @@ namespace Simulators
       Arguments m_args;
       //! Stream velocity.
       double m_svel[3];
+      //! Entity id of the stream velocity source.
+      unsigned m_sv_eid;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Periodic(name, ctx),
         m_vehicle(NULL),
-        m_world(NULL)
+        m_world(NULL),
+        m_sv_eid(AddressResolver::invalid())
       {
         param("Time Multiplier", m_args.time_multiplier)
         .defaultValue("1.0")
         .description("Simulation time multiplier");
 
         param("Entity Label - Stream Velocity Source", m_args.svlabel)
-            .defaultValue("Stream Velocity Simulator")
-            .description("Entity label of the stream velocity source.");
+        .description("Entity label of the stream velocity source.");
 
         // Register handler routines.
         bind<IMC::GpsFix>(this);
@@ -117,6 +119,22 @@ namespace Simulators
       {
         Memory::clear(m_vehicle);
         Memory::clear(m_world);
+      }
+
+      void
+      onEntityResolution(void)
+      {
+        if (m_args.svlabel.empty())
+          return;
+
+        try
+        {
+          m_sv_eid = resolveEntity(m_args.svlabel);
+        }
+        catch(const std::exception& e)
+        {
+          war("unable to resolve Stream Velocity Source entity: %s", e.what());
+        }
       }
 
       //! Initialize resources and add vehicle to the world.
@@ -183,7 +201,7 @@ namespace Simulators
       {
         // Filter valid messages.
         if (msg->getSource() != getSystemId() ||
-            resolveEntity(msg->getSourceEntity()) != m_args.svlabel)
+            msg->getSourceEntity() != m_sv_eid)
           return;
 
         m_svel[0] = msg->x;
