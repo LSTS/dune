@@ -531,35 +531,51 @@ namespace DUNE
       }
 
       void
-      setParameterScope(const std::string& name, const std::string& scope)
-      {
-        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
-        if (itr != m_params.end())
-          itr->second->scope(scope);
-      }
-
-      void
       setParameterScope(const std::string& name, const Parameter::Scope& scope)
       {
-        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
-        if (itr != m_params.end())
-          itr->second->scope(scope);
+        m_params.setScope(name, scope);
       }
 
       void
-      setParameterVisbility(const std::string& name, const std::string& visibility)
+      setParameterScope(void* ptr, const Parameter::Scope& scope)
       {
-        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
-        if (itr != m_params.end())
-          itr->second->visibility(visibility);
+        m_params.setScope(ptr, scope);
+      }
+
+      Parameter::Scope
+      getParameterScope(const std::string& name)
+      {
+        return m_params.getScope(name);
+      }
+
+      Parameter::Scope
+      getParameterScope(void* ptr)
+      {
+        return m_params.getScope(ptr);
       }
 
       void
-      setParameterVisbility(const std::string& name, const Parameter::Visibility& visibility)
+      setParameterVisibility(const std::string& name, const Parameter::Visibility& visibility)
       {
-        std::map<std::string, Parameter*>::iterator itr = m_params.find(name);
-        if (itr != m_params.end())
-          itr->second->visibility(visibility);
+        m_params.setVisibility(name, visibility);
+      }
+
+      void
+      setParameterVisibility(void* ptr, const Parameter::Visibility& visibility)
+      {
+        m_params.setVisibility(ptr, visibility);
+      }
+
+      Parameter::Visibility
+      getParameterVisibility(const std::string& name)
+      {
+        return m_params.getVisibility(name);
+      }
+
+      Parameter::Visibility
+      getParameterVisibility(void* ptr)
+      {
+        return m_params.getVisibility(ptr);
       }
 
       //! Declare a configuration parameter that can be parsed using

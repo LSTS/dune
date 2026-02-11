@@ -194,13 +194,13 @@ namespace DUNE
         }
 
         if (paramChanged(m_bdd_args.sample_time_duration_visibility))
-          setParameterVisbility(c_sample_time_duration, m_bdd_args.sample_time_duration_visibility);
+          setParameterVisibility(c_sample_time_duration, m_bdd_args.sample_time_duration_visibility);
 
         if (paramChanged(m_bdd_args.sample_time_duration_scope))
           setParameterScope(c_sample_time_duration, m_bdd_args.sample_time_duration_scope);
 
         if (paramChanged(m_bdd_args.periodicity_data_sampling_visibility))
-          setParameterVisbility(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_visibility);
+          setParameterVisibility(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_visibility);
 
         if (paramChanged(m_bdd_args.periodicity_data_sampling_scope))
           setParameterScope(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_scope);
