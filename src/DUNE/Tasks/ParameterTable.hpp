@@ -135,7 +135,8 @@ namespace DUNE
           throw std::runtime_error(DTR("variable does not exist"));
 
         itr->second->read(value);
-        itr->second->commit();
+        if (itr->second->commit())
+          itr->second->setChanged();
 
         IMC::EntityParameter p;
         p.name = itr->second->name();
