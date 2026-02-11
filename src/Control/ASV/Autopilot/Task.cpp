@@ -273,6 +273,7 @@ namespace Control
 
           param("Maximum Rudder Actuation", m_args.act_max)
           .defaultValue("1.0")
+          .units(Units::Radian)
           .description("Maximum Rudder Command");
 
           param("Course PID Gains Turning", m_args.course_gains_turn)
