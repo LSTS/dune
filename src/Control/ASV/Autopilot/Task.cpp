@@ -182,7 +182,7 @@ namespace Control
         //! Desired speed.
         double m_desired_speed;
         // Flag to control PathControlState.
-        uint8_t m_pcs_flag_sate;
+        uint8_t m_pcs_flag_state;
 
         //! Low-pass filter for wave filtering.
         // FilterEstimator lpf;
@@ -526,7 +526,7 @@ namespace Control
           if (!m_active)
             return;
 
-          m_pcs_flag_sate = msg->flags;
+          m_pcs_flag_state = msg->flags;
         }
 
         //! Reset PIDs and actuation references.
@@ -800,7 +800,7 @@ namespace Control
         dispatchThrust(void)
         {
           double value = 0.0f;
-          if (m_pcs_flag_sate != IMC::PathControlState::FL_NEAR)
+          if (m_pcs_flag_state != IMC::PathControlState::FL_NEAR)
           {
             if (m_args.force_thrust_assist)
             {
