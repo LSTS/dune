@@ -83,10 +83,11 @@ namespace DUNE
       {
         try
         {
-          m_params.set((*itr)->name, (*itr)->value);
-          IMC::EntityParameter p;
-          p.name = (*itr)->name;
-          p.value = (*itr)->value;
+          const auto pit = m_params.find((*itr)->name);
+          if (pit == m_params.end())
+            throw std::runtime_error("invalid parameter");
+
+          auto p = m_params.apply(&(pit->second), (*itr)->value);
           params.params.push_back(p);
           m_ctx.config.set(m_owner->getName(), (*itr)->name, (*itr)->value);
         }
