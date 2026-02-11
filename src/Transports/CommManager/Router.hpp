@@ -56,7 +56,7 @@ namespace Transports
         m_medium(4),
         m_gsm_entity_id(-1),
         m_iridium_entity_id(-1),
-        m_reqid(0),
+        m_reqid(0xFFFF),
         c_wifi_timeout(15)
       { }
 
