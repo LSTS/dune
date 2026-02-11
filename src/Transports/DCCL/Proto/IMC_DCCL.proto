@@ -10,120 +10,323 @@ import "dccl/option_extensions.proto";
 
 // Enum Z Units
 enum ZUnits {
-    NONE_ZU = 0;
-    DEPTH = 1;
-    ALTITUDE = 2;
-    HEIGHT = 3;
+    Z_NONE = 0;
+    Z_DEPTH = 1;
+    Z_ALTITUDE = 2;
+    Z_HEIGHT = 3;
+    Z_UNKNOWN = 4;
 }
 
 // Enum Speed Units
 enum SpeedUnits {
-    METERS_PS = 0;
-    RPM = 1;
-    PERCENTAGE = 2;
-}
-
-// Enum Loiter Type
-enum LoiterType {
-    DEFAULT = 0;
-    CIRCULAR = 1;
-    RACETRACK = 2;
-    EIGHT = 3;
-    HOVER = 4;
-}
-
-// Enum Direction Type
-enum DirectionType {
-    VDEP = 0;
-    CLOCKW = 1;
-    CCLOCKW = 2;
-    IWINDCURR = 3;
+    SUNITS_METERS_PS = 0;
+    SUNITS_RPM = 1;
+    SUNITS_PERCENTAGE = 2;   
+    SUNITS_UNKNOWN = 3;
 }
 
 // Enum Maneuver Type
 enum ManeuverType {
     GOTO = 0;
-    FOLLOWPATH = 1;
-    LOITER = 2;
+    LOITER = 1;
+    FOLLOWPATH = 2;
     STATIONKEEPING = 3;
-    //Teleoperation
-    //YoYo
+    MT_UNKNOWN = 4;
+}
+
+enum ParamValue {
+    TRUE = 0;
+    FALSE = 1;
+    BOTH = 2;  
+    PV_UNKNOWN = 3;
+}
+
+enum TransitionConditionEnum {
+    MANEUVERISDONE = 0;
+    TC_UNKNOWN = 1;   
 }
 
 // Enum Entity Parameter Name
 enum ParameterName {
-    NONE_PN = 0;
-    ACTIVE = 1;
-    BOTTOM_TRACK_MINIMUM_DEPTH = 2;
-    HIGH_FREQ_CHANNELS = 3;
-    HIGH_FREQ_RANGE = 4;
-    LOW_FREQ_CHANNELS = 5;
-    LOW_FREQ_RANGE = 6;
-    RANGE_MULTIPLIER = 7;
-    STROBE_DELAY = 8;
-    SHUTTER_VALUE = 9;
-    RANGE = 10;
-    FREQUENCY = 11;
-    THRUSTER_ALWAYS_ON = 12;
-    SAMPLE_TIME_DURATION = 13;
-    PERIODICITY_OF_DATA_SAMPLING = 14;
+    ACTIVE = 0;
+    ARDUPILOT_TRACKER = 1;
+    BATHYMETRY_CHANNEL_AVAILABLE = 2;
+    BOTTOM_TRACK_MINIMUM_DEPTH = 3;
+    DATA_BITS = 4;
+    FLIR_DUO_R = 5;
+    FORMATION_FLIGHT = 6;
+    FORMATION_POSITIONS = 7;
+    FORMATION_REFERENCE_FRAME = 8;
+    FREQUENCY = 9;
+    HIGH_FREQUENCY_CHANNEL = 10;
+    HIGH_FREQUENCY_CHANNELS = 11;
+    HIGH_FREQUENCY_RANGE = 12;
+    LOW_FREQUENCY_BATHYMETRY_CHANNEL = 13;
+    LOW_FREQUENCY_CHANNEL = 14;
+    LOW_FREQUENCY_CHANNELS = 15;
+    LOW_FREQUENCY_RANGE = 16;
+    ONBOARD_CAMERA = 17;
+    OPTIMIZE_FOR_THIS_SPEED = 18;
+    PERIODICITY_OF_DATA_SAMPLING = 19;
+    PROFILE_MODE = 20;
+    RANGE = 21;
+    RANGE_MULTIPLIER = 22;
+    SAMPLE_TIME_DURATION = 23;
+    SCALE_FACTOR = 24;
+    SECTOR_WIDTH = 25;
+    SHUTTER_VALUE_MS = 26;
+    STEP_SIZE = 27;
+    STROBE_DELAY_US = 28;
+    THRUSTER_ALWAYS_ON = 29;
+    TRANSITION_TO_FW = 30;
+    TRANSITION_TO_MC = 31;
+    USE_CONTROLLER = 32;
+    VEHICLE_LIST = 33;
 }
 
-// Enum Parameter Value string
-enum ParamValue {
-    NONE_PV = 0;
-    TRUE = 1;
-    FALSE = 2;
-    BOTH = 3;
-}
 
 //Enum EntityName 
 enum EntityName {
-    NONE_EN = 0;
-    PATH_CONTROL = 1;
-    RANGER = 2; 
+    CAMERA = 0;
+    ADCP = 1;
+    AUTOPILOT = 2;
     ACOUSTIC_MODEM = 3;
-    SIDESCAN = 4;
-    CAMERA = 5;
-    MULTIBEAM = 6; 
-    FLUOROMETERS = 7;
-    ADCP = 8;
-    DISSOLVED_OXYGEN = 9;  
-    CTD = 10;
-    HEADING_CONTROLLER = 11;
+    CTD = 4;
+    DISSOLVED_OXYGEN = 5;
+    FLUOROMETERS = 6;
+    FORMATION_COORDINATOR = 7;
+    HEADING_CONTROLLER = 8;
+    HEIGHT_CONTROL = 9;
+    LBL = 10;
+    MOTOR_CONTROLLER_CHANNEL_0 = 11;
+    MOTOR_CONTROLLER_CHANNEL_1 = 12;
+    MULTIBEAM = 13;
+    PATH_CONTROL = 14;
+    PATH_CONTROL_LEADER = 15;
+    PENCIL_BEAM = 16;
+    PHOTO_TRIGGER = 17;
+    RANGER = 18;
+    REMOTE_CONTROL = 19;
+    REMOTE_OPERATION = 20;
+    SIDESCAN = 21;
+    SLAVE_CPU = 22;
+    UAVCAMERA = 23;
 }
 
-//Enum TransitionCondition 
-enum TransitionCondition {
-    NONE_TC = 0;
-    MANEUVERISDONE = 1;
-    //Others?
+// Profile Sample
+message ProfileSample {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 80};
+    int32 depth = 1 [(dccl.field) = { min: 0 max: 2000 precision: 1 }];
+    float avg = 2 [(dccl.field) = { min: -1000 max: 1000 precision: 2 }];
 }
 
-//Enum Type 
-enum Type {
-    BOOLEAN = 0;
-    NUMBER = 1;
-    TEXT = 2;
-    MESSAGE = 3;
+
+// StationKeeping Maneuver
+message StationKeeping {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 80};
+    float lat = 1 [(dccl.field) = { min: -1.570 max: 1.570 precision: 10 }];
+    float lon = 2 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    float z = 3 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    ZUnits z_units = 4;  
+    float radius = 5 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
+    int32 duration = 6 [(dccl.field) = { min: 0 max: 65535}];
+    float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    SpeedUnits speed_units = 8;
+    //TODO: costum field > enum with possible string
 }
 
-//Enum AccessType 
-enum AccessType {
-    INPUT = 0;
-    OUTPUT = 1;
-    LOCAL = 2;
+// FollowPath Maneuver
+message FollowPath {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 1000};
+    int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
+    float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
+    float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    ZUnits z_units = 5;
+    float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    SpeedUnits speed_units = 7;
+    repeated PathPoint points = 8 [(dccl.field) = { max_repeat: 30 }];
+    //TODO: costum field > enum with possible string
 }
 
+// Goto Maneuver
+message Goto {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 80};
+    int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
+    float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
+    float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    ZUnits z_units = 5;
+    float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    SpeedUnits speed_units = 7;
+    float roll = 8 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
+    float pitch = 9 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
+    float yaw = 10 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
+}
+
+// ParameterValue
+message ParameterValue{   
+    option (dccl.msg) = { codec_version: 4 max_bytes: 300};
+    oneof ParameterValueUnion{
+        float param_number = 1 [(dccl.field) = { min: -400 max: 10000 precision: 1 }];
+        ParamValue param_enum = 2;
+        string param_string = 3 [(dccl.field).max_length = 20];
+    }
+}
+
+// PathPoint 
+message PathPoint {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 80};
+    float x = 1 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
+    float y = 2 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
+    float z = 3 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
+}
+
+// Maneuver - message group
+message Maneuver{   
+    option (dccl.msg) = { codec_version: 4 max_bytes: 300};
+    oneof ManeuverUnion{
+        Goto goto_maneuver = 1 ;
+        FollowPath followpath_maneuver = 2;
+        Loiter loiter_maneuver = 3;
+        StationKeeping stationkeeping_maneuver = 4;
+        //TODO: Insert here other maneuvers from Message-Group Maneuver
+    }
+}
+
+// EntityParameter
+message EntityParameter {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 20};
+    ParameterName name = 1;
+    ParameterValue value = 2;
+}
+
+//SetEntityParameters
+message SetEntityParameters {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 40};
+    EntityName name = 1; 
+    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 10 }];
+}
+
+// ManeuverIDCombined (composed by maneuver_type and maneuver_number (max number in the maneuver name = 50))
+message ManeuverIDCombined {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 30};
+    ManeuverType maneuver_type = 1;
+    int32 maneuver_number = 2 [(dccl.field) = { min: 0 max: 50}];
+}
+
+// ManeuverID (composed by maneuver_type and maneuver_number (max number in the maneuver name = 50))
+message ManeuverID {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 30};
+    oneof ManeuverIDUnion{
+        ManeuverIDCombined id_combined = 1;
+        string id_string = 2 [(dccl.field).max_length = 20];
+    }
+}
+
+message TransitionCondition {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 30};
+    oneof TransitionConditionUnion{
+        TransitionConditionEnum condition_enum = 1;
+        string condition_string = 2 [(dccl.field).max_length = 20];
+    }
+}
+
+// Loiter Maneuver
+message Loiter {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 1000};
+    int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
+    float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
+    float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    ZUnits z_units = 5;
+    int32 duration = 6 [(dccl.field) = { min: 0 max: 10800}];
+    float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    SpeedUnits speed_units = 8;
+  
+    enum LoiterTypeEnum {
+        LT_DEFAULT = 0;
+        LT_CIRCULAR = 1;
+        LT_RACETRACK = 2;
+        LT_EIGHT = 3;
+        LT_HOVER = 4;
+        LT_UNKNOWN = 5;
+    }
+    LoiterTypeEnum type = 9;
+    float radius = 10 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
+    float length = 11 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
+    float bearing = 12 [(dccl.field) = { min: 0 max: 6.283 precision: 3 }];
+
+    enum DirectionEnum
+    {
+        LD_VDEP = 0;
+        LD_CLOCKW = 1;
+        LD_CCLOCKW = 2;
+        LD_IWINDCURR = 3;
+        LD_UNKNOWN = 4;
+    }
+
+    DirectionEnum direction = 13;
+}
+
+message PlanManeuverStartActionsUnion {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
+    oneof PlanManeuverStartActionsUnion_{
+        SetEntityParameters ep = 1;
+    }
+}
+
+
+// PlanManeuver 
+message PlanManeuver {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 400};
+    ManeuverID maneuver_id = 1;
+    Maneuver data = 2;
+    repeated PlanManeuverStartActionsUnion start_actions = 3 [(dccl.field) = { max_repeat: 15 }];
+}
+
+
+// PlanTransition 
+message PlanTransition {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 400};
+    ManeuverID source_man = 1;
+    ManeuverID dest_man = 2;
+    TransitionCondition conditions = 3;
+}
+
+
+// Principal Messages --------------------------------------------------------------------------------------------------------
+
+// Vertical Profile
+message VerticalProfile {
+    option (dccl.msg) = { codec_version: 4 id: 111 max_bytes: 80};
+
+    enum ParameterEnum
+    {
+        PROF_TEMPERATURE = 0;
+        PROF_SALINITY = 1;
+        PROF_CONDUCTIVITY = 2;
+        PROF_PH = 3;
+        PROF_REDOX = 4;
+        PROF_CHLOROPHYLL = 5;
+        PROF_TURBIDITY = 6;
+    }
+
+    ParameterEnum parameter = 1;
+    int32 numsamples = 2 [(dccl.field) = { min: 0 max: 255 precision: 1 }];
+    repeated ProfileSample samples = 3 [(dccl.field) = { max_repeat: 70 }];
+    float lat = 4 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
+    float lon = 5 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+}
 
 // Estimated State
 message EstimatedState {
     option (dccl.msg) = { codec_version: 4 id: 350 max_bytes: 80};
-    float lat = 1 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
-    float lon = 2 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
+    float lat = 1 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
+    float lon = 2 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
     float height = 3 [(dccl.field) = { min: -1000 max: 7000  precision: 1 }];
-    float x = 4 [(dccl.field) = { min: -20000  max: 20000  precision: 1  }];
-    float y = 5 [(dccl.field) = { min: -20000 max: 20000  precision: 1 }];
+    float x = 4 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
+    float y = 5 [(dccl.field) = { min: -2000 max: 2000  precision: 1 }];
     float z = 6 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
     float phi = 7 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
     float theta = 8 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
@@ -137,161 +340,10 @@ message EstimatedState {
     float p = 16 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
     float q = 17 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
     float r = 18 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
-    float depth = 19 [(dccl.field) = { min: -1 max: 400 precision: 1 }];
-    float altitude = 20 [(dccl.field) = { min: -1 max: 5000 precision: 1 }];
+    float depth = 19 [(dccl.field) = { min: -1 max: 400 precision: 2 }];
+    float alt = 20 [(dccl.field) = { min: -1 max: 5000 precision: 2 }];
 }
 
-// Goto Maneuver
-message Goto {
-    option (dccl.msg) = { codec_version: 4 id: 450 max_bytes: 80};
-    int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
-    float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 10 }];
-    float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 10 }];
-    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
-    ZUnits z_units = 5;
-    float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
-    SpeedUnits speed_units = 7;
-    float roll = 8 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
-    float pitch = 9 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
-    float yaw = 10 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
-    //TODO: costum field > enum with possible string
-}
-
-// StationKeeping Maneuver
-message StationKeeping {
-    option (dccl.msg) = { codec_version: 4 id: 461 max_bytes: 80};
-    float lat = 1 [(dccl.field) = { min: -1.570 max: 1.570 precision: 10 }];
-    float lon = 2 [(dccl.field) = { min: -3.141 max: 3.141 precision: 10 }];
-    float z = 3 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
-    ZUnits z_units = 4;  
-    float radius = 5 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
-    int32 duration = 6 [(dccl.field) = { min: 0 max: 65535}];
-    float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
-    SpeedUnits speed_units = 8;
-    //TODO: costum field > enum with possible string
-}
-
-// FollowPath Maneuver
-message FollowPath {
-    option (dccl.msg) = { codec_version: 4 id: 457 max_bytes: 1000};
-    int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
-    float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
-    float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
-    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
-    ZUnits z_units = 5;
-    float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
-    SpeedUnits speed_units = 7;
-    repeated PathPoint points = 8 [(dccl.field) = { max_repeat: 30 }];
-    //TODO: costum field > enum with possible string
-}
-
-// Loiter Maneuver
-message Loiter {
-    option (dccl.msg) = { codec_version: 4 id: 453 max_bytes: 1000};
-    int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
-    float lat = 2 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
-    float lon = 3 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
-    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
-    ZUnits z_units = 5;
-    int32 duration = 6 [(dccl.field) = { min: 0 max: 10800}];
-    float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
-    SpeedUnits speed_units = 8;
-    LoiterType type = 9;
-    float radius = 10 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
-    float length = 11 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
-    float bearing = 12 [(dccl.field) = { min: 0 max: 6.283 precision: 3 }];
-    DirectionType direction = 13;
-}
-
-// PathPoint 
-message PathPoint {
-    option (dccl.msg) = { codec_version: 4 id: 458 max_bytes: 80};
-    float x = 1 [(dccl.field) = { min: -20000  max: 20000  precision: 1  }];
-    float y = 2 [(dccl.field) = { min: -20000 max: 20000  precision: 1 }];
-    float z = 3 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
-}
-
-// Maneuver - message group
-message Maneuver{   
-    option (dccl.msg) = { codec_version: 4 id: 1 max_bytes: 300};
-    oneof ManeuverUnion{
-        Goto goto_maneuver = 1 ;
-        FollowPath followpath_maneuver = 2;
-        Loiter loiter_maneuver = 3;
-        StationKeeping stationkeeping_maneuver = 4;
-        //TODO: Insert here other maneuvers from Message-Group Maneuver
-    }
-}
-
-// ParameterValue
-message ParameterValue{   
-    option (dccl.msg) = { codec_version: 4 id: 2 max_bytes: 300};
-    oneof ParameterValueUnion{
-        float value_number = 1 [(dccl.field) = { min: -400 max: 10000 precision: 1 }];
-        ParamValue value_string = 2;
-    }
-}
-
-
-// EntityParameter
-message EntityParameter {
-    option (dccl.msg) = { codec_version: 4 id: 801 max_bytes: 20};
-    ParameterName name = 1;
-    ParameterValue value = 2;
-}
-
-//EntityParameters
-message EntityParameters {
-    option (dccl.msg) = { codec_version: 4 id: 802 max_bytes: 40};
-    EntityName name = 1; 
-    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 10 }];
-}
-
-// ManeuverID (composed by maneuver_type and maneuver_number (max number in the maneuver name = 50))
-message ManeuverID {
-    option (dccl.msg) = { codec_version: 4 id: 3 max_bytes: 30};
-    ManeuverType maneuver_type = 1;
-    int32 maneuver_number = 2 [(dccl.field) = { min: 0 max: 50}];
-}
-
-
-// PlanManeuver 
-message PlanManeuver {
-    option (dccl.msg) = { codec_version: 4 id: 552 max_bytes: 400};
-    ManeuverID maneuver_id = 1;
-    Maneuver data = 2;
-    repeated EntityParameters start_actions = 3 [(dccl.field) = { max_repeat: 15 }];
-    //end action
-}
-
-
-// PlanVariable
-message PlanVariable {
-    option (dccl.msg) = { codec_version: 4 id: 561 max_bytes: 400};
-    string name = 1 [(dccl.field).max_length = 2]; 
-    string value = 2 [(dccl.field).max_length = 2]; 
-    Type type = 3;
-    AccessType access = 4;
-}
-
-
-// PlanTransition 
-message PlanTransition {
-    option (dccl.msg) = { codec_version: 4 id: 553 max_bytes: 400};
-    ManeuverID source_man = 1;
-    ManeuverID dest_man = 2;
-    TransitionCondition conditions = 3;
-    //TransitionActions repeated field
-}
-
-// Header
-message Header {
-    option (dccl.msg) = { codec_version: 4 id: 4 max_bytes: 400};
-    int32 src = 1 [(dccl.field) = { min: 0 max: 81920}];
-    int32 src_ent = 2 [(dccl.field) = { min: 0 max: 255}];
-    int32 dst = 3 [(dccl.field) = { min: 0 max: 81920}];
-    int32 dst_ent = 4 [(dccl.field) = { min: 0 max: 255}];
-}
 
 // PlanSpecification 
 message PlanSpecification {
@@ -302,11 +354,61 @@ message PlanSpecification {
     ManeuverID start_man_id = 4;
     repeated PlanManeuver maneuvers = 5 [(dccl.field) = { max_repeat: 30 }];
     repeated PlanTransition transitions = 6 [(dccl.field) = { max_repeat: 30 }];
-    repeated EntityParameters start_actions = 7 [(dccl.field) = { max_repeat: 7 }];
-    repeated PlanVariable variables = 8 [(dccl.field) = { max_repeat: 5 }];
-    Header head = 9;
-    //end_actions
+    repeated PlanSpecificationStartActionsUnion start_actions = 7 [(dccl.field) = { max_repeat: 7 }];
+    repeated PlanSpecificationEndActionsUnion end_actions = 8 [(dccl.field) = { max_repeat: 7 }];
 }
 
 
+// PlanDB 
+message PlanDB {
+    option (dccl.msg) = { codec_version: 4 id: 556 max_bytes: 800000};
 
+    enum TypeEnum
+    {
+        DBT_REQUEST = 0;
+        DBT_SUCCESS = 1;
+        DBT_FAILURE = 2;
+        DBT_IN_PROGRESS = 3;
+    }
+
+    enum OperationEnum
+    {
+        DBOP_SET = 0;
+        DBOP_DEL = 1;
+        DBOP_GET = 2;
+        DBOP_GET_INFO = 3;
+        DBOP_CLEAR = 4;
+        DBOP_GET_STATE = 5;
+        DBOP_GET_DSTATE = 6;
+        DBOP_BOOT = 7;
+    }
+    
+    TypeEnum type = 1;
+    OperationEnum op = 2;
+    int32 request_id = 3 [(dccl.field) = { min: 0 max: 255 precision: 1 }];
+    string plan_id = 4 [(dccl.field).max_length = 20]; 
+    PlanDBArgUnion arg = 5;
+    string info = 6 [(dccl.field).max_length = 40]; 
+}
+
+message PlanDBArgUnion {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
+    oneof PlanDBArgUnion_{
+        PlanSpecification ps_arg = 1;
+        //PlanControl pc_arg = 2;
+    }
+}
+
+message PlanSpecificationStartActionsUnion {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
+    oneof PlanSpecificationStartActionsUnion_{
+        SetEntityParameters ep = 1;
+    }
+}
+
+message PlanSpecificationEndActionsUnion {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
+    oneof PlanSpecificationEndActionsUnion_{
+        SetEntityParameters ep = 1;
+    }
+}

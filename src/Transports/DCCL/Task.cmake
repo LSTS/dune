@@ -6,7 +6,8 @@ if(DUNE_SYS_HAS_DCCL AND DUNE_SYS_HAS_PROTOBUF)
     file(TO_NATIVE_PATH ${proto} proto_native)
     #execute_process(COMMAND "/usr/local/include" --proto_path=${PROTOMODEL_PATH}  --cpp_out=${PROTOBINDING_PATH} ${proto_native} RESULT_VARIABLE rv)
     execute_process(COMMAND ${Protobuf_PROTOC_EXECUTABLE} --proto_path=${PROTOMODEL_PATH} --proto_path=/usr/local/include --cpp_out=${PROTOBINDING_PATH} ${proto_native} RESULT_VARIABLE rv)
-    #oss: /usr/local/include if this is the exact location of this file
+    #oss: /usr/local/include if this is the exact location of this file IMC_DCCL_Converter.cpp
+    #qui ci sara riga che genere automaticamente 
     if(${rv})
       message(SEND_ERROR "Generation of data model returned ${rv} for proto ${proto_native}")
     endif()
