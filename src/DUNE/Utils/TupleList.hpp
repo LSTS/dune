@@ -50,6 +50,8 @@ namespace DUNE
     class TupleList
     {
     public:
+      TupleList(void) = default;
+
       TupleList(std::string str, std::string sep = "=", std::string tuple_sep = ";", bool ignore_case = false):
         m_sep(sep),
         m_tuple_sep(tuple_sep),
