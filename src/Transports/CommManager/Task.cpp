@@ -143,7 +143,7 @@ namespace Transports
             .defaultValue("1800")
             .units(Units::Second)
             .description("Represents the amount of time a message is valid for retransmission. "
-                        "If set to 0, retransmission requests are not allowed.");
+                         "If set to 0, retransmission requests are not allowed.");
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticStatus>(this);
@@ -789,7 +789,6 @@ namespace Transports
         std::map<uint8_t, TransmissionFragments*>::iterator it = m_fragments_map.find(msg->uid);
         if (it == m_fragments_map.end())
           return;
-
         std::vector<IMC::TransmissionRequest> frags = it->second->getRetransmissionList(msg->frag_ids);
 
         // Resent fragments have new TransmissionRequest IDs so use TransmissionSender
@@ -979,7 +978,7 @@ namespace Transports
           return transmission_list;
         }
 
-        delete tx_frag;
+        Memory::clear(tx_frag);
         return transmission_list;
       }
 
@@ -1023,6 +1022,57 @@ namespace Transports
 
         for (auto& id : to_delete)
           m_fragments_map.erase(id);
+      }
+
+      void
+      clearTimeouts()
+      {
+        double time = Time::Clock::getSinceEpoch();
+        std::map<uint16_t, IMC::TransmissionRequest*>& tr_list = m_router.getList();
+        auto it = tr_list.begin();
+
+        while (it != tr_list.end())
+        {
+          if (it->second->deadline <= time)
+          {
+            uint8_t frag_id, frag_num;
+            if (isKnownFragment(it->second, frag_id, frag_num))
+            {
+              // If it is a fragment then timeout the entire transmission
+              TransmissionFragments* tx_frag = m_fragments_map[frag_id];
+              if (!tx_frag->isTransmissionTimedOut())
+              {
+                // Set timedout fragments status
+                tx_frag->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+                std::vector<uint8_t> failed_frags = tx_frag->setTransmissionAsTimedout();
+
+                // Handle failed fragments information
+                std::string info = "Fragments {";
+                for (const auto& frag : failed_frags)
+                  info += String::str("%d ", frag);
+                info += String::str("} of %d of Transmission Request %d are expired by %f seconds.", tx_frag->getNumberOfFragments(), 
+                                                                                                     it->second->req_id, 
+                                                                                                     it->second->deadline - time);
+                
+                // Send reply
+                inf("%s", info.c_str());
+                m_router.answer(it->second, info,
+                  IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+              }
+            }
+            else
+            {
+              // If its not a fragment just treat it as a standalone message
+              inf("Transmission Request %d is expired by %f seconds", it->second->req_id, it->second->deadline - time);
+              m_router.answer(it->second, "Transmission timed out.",
+                IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            }
+            Memory::clear(it->second);
+            tr_list.erase(it++);
+          }
+          else
+            ++it;
+        }
       }
 
       IMC::StateReport*
@@ -1099,7 +1149,7 @@ namespace Transports
       {
         while (!stopping())
         {
-          m_router.clearTimeouts();
+          clearTimeouts();
           clearFragments();
 
           waitForMessages(1.0);

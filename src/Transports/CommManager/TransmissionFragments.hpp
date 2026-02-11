@@ -50,7 +50,8 @@ namespace Transports
         comm_mean(request->comm_mean),
         destination(request->destination),
         deadline(request->deadline),
-        fragments(nullptr)
+        fragments(nullptr),
+        transmission_timedout(false)
       {
         if (request->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
           return;
@@ -82,6 +83,36 @@ namespace Transports
       isDeadlineExpired() const
       {
         return Clock::getSinceEpoch() >= deadline;
+      }
+
+      bool
+      isTransmissionTimedOut() const
+      {
+        return transmission_timedout;
+      }
+
+      std::vector<uint8_t>
+      setTransmissionAsTimedout()
+      {
+        DUNE_WRN("TransmissionFragments", String::str("Transmission timed out for request %u.", req_id));
+
+        // Set all "IN_PROGRESS" states to "TEMPORARY_FAILURE"
+        for (auto& state : transmission_states)
+        {
+          if (state == c_unknown_frag_state ||
+              state == IMC::TransmissionStatus::TSTAT_IN_PROGRESS)
+            state = IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE;
+        }
+
+        // Mark as timed out
+        transmission_timedout = true;
+
+        // Return temporary failure frag ids
+        std::vector<uint8_t> failed_frags;
+        for (uint8_t i = 0; i < transmission_states.size(); ++i)
+          if (transmission_states[i] == IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE)
+            failed_frags.push_back(i);
+        return failed_frags;
       }
 
       void
@@ -199,6 +230,15 @@ namespace Transports
         return fragments->getFragment(0)->uid;
       }
 
+      uint8_t
+      getNumberOfFragments(void) const
+      {
+        if (fragments == nullptr)
+          return 0;
+
+        return fragments->getNumberOfFragments();
+      }
+
       static bool
       needsFragmentation(const IMC::Message* msg, const uint32_t max_payload_size)
       {
@@ -237,6 +277,8 @@ namespace Transports
       Time::Counter<uint32_t> retransmission_timer;
       //! Fragments transmission states.
       std::vector<uint8_t> transmission_states;
+      //! Transmission timed out (deadline reached)
+      bool transmission_timedout;
 
       //! Create fragments for a given message.
       Network::Fragments*
