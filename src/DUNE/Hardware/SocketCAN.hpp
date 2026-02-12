@@ -91,7 +91,7 @@ namespace DUNE
       IO::NativeHandle
       doGetNative(void) const
       {
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_OS_LINUX) || defined(DUNE_OS_OPENBSD)
         return m_can_socket; // Makes Poll::poll work
 #else
         return nullptr;
