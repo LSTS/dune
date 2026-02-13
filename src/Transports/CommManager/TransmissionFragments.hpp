@@ -91,11 +91,9 @@ namespace Transports
         return transmission_timedout;
       }
 
-      std::vector<uint8_t>
+      void
       setTransmissionAsTimedout()
       {
-        DUNE_WRN("TransmissionFragments", String::str("Transmission timed out for request %u.", req_id));
-
         // Set all "IN_PROGRESS" states to "TEMPORARY_FAILURE"
         for (auto& state : transmission_states)
         {
@@ -106,13 +104,6 @@ namespace Transports
 
         // Mark as timed out
         transmission_timedout = true;
-
-        // Return temporary failure frag ids
-        std::vector<uint8_t> failed_frags;
-        for (uint8_t i = 0; i < transmission_states.size(); ++i)
-          if (transmission_states[i] == IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE)
-            failed_frags.push_back(i);
-        return failed_frags;
       }
 
       void
@@ -160,6 +151,24 @@ namespace Transports
         return false;
       }
 
+      std::string
+      getFailedFragments()
+      {
+        // Return failed frag ids as string
+        std::string failed_frags_str;
+        for (unsigned i = 0; i < transmission_states.size(); ++i)
+          if (transmission_states[i] == IMC::TransmissionStatus::TSTAT_INPUT_FAILURE ||
+              transmission_states[i] == IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE ||
+              transmission_states[i] == IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE ||
+              transmission_states[i] == IMC::TransmissionStatus::TSTAT_INV_ADDR)
+            failed_frags_str += String::str(i) + " ";
+
+        if (!failed_frags_str.empty())
+          failed_frags_str.pop_back(); // Remove trailing space
+        
+        return failed_frags_str;
+      }
+
       std::vector<IMC::TransmissionRequest>
       getTransmissionList(void)
       {
@@ -199,9 +208,20 @@ namespace Transports
 
         std::unordered_set<int> frag_ids = getRetransmissionIds(request);
 
-        // Change deadline based on current time and ttl
-        deadline = Clock::getSinceEpoch() + ttl;
+        // Set status of requested fragments to "UNKNOWN" and remaining to "DELIVERED"
+        for (unsigned i = 0; i < transmission_states.size(); i++)
+        {
+          if (frag_ids.find(i) != frag_ids.end())
+            setFragmentStatus(i, c_unknown_frag_state);
+          else
+            setFragmentStatus(i, IMC::TransmissionStatus::TSTAT_DELIVERED);
+        }
 
+        // New deadline for retransmission
+        double new_deadline = Clock::getSinceEpoch() + ttl;
+        // transmission_timedout = false;
+
+        // Create transmission requests for requested fragments
         for(auto& frag_id : frag_ids)
         {
           IMC::MessagePart* part = fragments->getFragment(frag_id);
@@ -211,7 +231,7 @@ namespace Transports
           tx_req.req_id = req_id;
           tx_req.comm_mean = comm_mean;
           tx_req.destination = destination;
-          tx_req.deadline = deadline;
+          tx_req.deadline = new_deadline;
           tx_req.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
           tx_req.msg_data.set(*part);
 
@@ -219,6 +239,12 @@ namespace Transports
         }
 
         return tx_list;
+      }
+
+      uint16_t
+      getOriginalTransmissionId() const
+      {
+        return req_id;
       }
 
       uint8_t
