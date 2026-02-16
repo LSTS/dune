@@ -93,8 +93,11 @@ namespace Transports
 
       std::map<uint16_t, IMC::AcousticOperation*> m_acoustic_requests;
 
-      //! Fragments map
-      std::map<uint8_t, TransmissionFragments*> m_fragments_map;
+      //! Map of Transmission Request ID to its corresponding fragments and states
+      std::map<uint16_t, TransmissionFragments*> m_fragments_map;
+      //! Map of fragment id to Transmission Request ID
+      std::map<uint8_t, uint16_t> m_frag_id_to_req_id;
+
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -340,11 +343,11 @@ namespace Transports
             return;
 
           // Check if its fragmented message
-          uint8_t frag_id, frag_num;
-          if (isKnownFragment(req, &frag_id, &frag_num))
+          if (isKnownFragment(req))
           {
             // Collect fragment status
-            TransmissionFragments* fragments = m_fragments_map[frag_id];
+            TransmissionFragments* fragments = m_fragments_map[req->req_id];
+            uint8_t frag_num = getFragmentNumber(req);
 
             switch (msg->status)
             {
@@ -353,9 +356,9 @@ namespace Transports
 
                 if (fragments->isTransmissionInProgress())
                 {
-                  m_router.answer(
-                      req, "All fragments have been queued for Satellite transmission.",
-                      IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+                  m_router.answer(fragments->getOriginalTransmissionRequest(), 
+                                  "All fragments have been queued for Satellite transmission.",
+                                  IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
                 }
                 
                 break;
@@ -364,9 +367,9 @@ namespace Transports
 
                 if (fragments->isTransmissionInProgress())
                 {
-                  m_router.answer(
-                      req, "All fragments have been queued for Satellite transmission.",
-                      IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+                  m_router.answer(fragments->getOriginalTransmissionRequest(),
+                                  "All fragments have been queued for Satellite transmission.",
+                                  IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
                 }
 
                 break;
@@ -375,7 +378,8 @@ namespace Transports
 
                 if (fragments->isTransmissionComplete())
                 {
-                  m_router.answer(req, "All fragments have been sent via Iridium.",
+                  m_router.answer(fragments->getOriginalTransmissionRequest(),
+                                  "All fragments have been sent via Iridium.",
                                   IMC::TransmissionStatus::TSTAT_SENT);
                 }
 
@@ -786,15 +790,18 @@ namespace Transports
         if (msg->frag_ids.empty())
           return;
 
-        std::map<uint8_t, TransmissionFragments*>::iterator it = m_fragments_map.find(msg->uid);
+        std::map<uint8_t, uint16_t>::iterator frag_it = m_frag_id_to_req_id.find(msg->uid);
+        if (frag_it == m_frag_id_to_req_id.end())
+          return;
+        std::map<uint16_t, TransmissionFragments*>::iterator it = m_fragments_map.find(frag_it->second);
         if (it == m_fragments_map.end())
           return;
         std::vector<IMC::TransmissionRequest> frags = it->second->getRetransmissionList(msg->frag_ids);
 
-        // Resent fragments have new TransmissionRequest IDs so use TransmissionSender
+        // Resent fragments keep original message ID
         for (auto& frag: frags)
-          TransmissionSender::dispatch(this, frag, DF_LOOP_BACK);
-        it->second->resetRetransmissionTimer();
+          consume(&frag);
+        it->second->resetExpirationTimer();
       }
 
       void
@@ -974,7 +981,8 @@ namespace Transports
         std::vector<IMC::TransmissionRequest> transmission_list = tx_frag->getTransmissionList();
         if (m_args.fragment_storage_time > 0)
         {
-          m_fragments_map[tx_frag->getFragmentsId()] = tx_frag;
+          m_fragments_map[msg->req_id] = tx_frag;
+          m_frag_id_to_req_id[tx_frag->getFragmentsId()] = msg->req_id;
           return transmission_list;
         }
 
@@ -982,52 +990,75 @@ namespace Transports
         return transmission_list;
       }
 
+      uint8_t
+      getFragmentNumber(const IMC::TransmissionRequest* msg)
+      {
+        if (m_fragments_map.empty())
+          throw std::runtime_error("No fragments stored.");
+        
+        if (msg->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
+          throw std::runtime_error("Message data mode is not inline message.");
+
+        const IMC::Message* inline_msg = msg->msg_data.get();
+        if (inline_msg == nullptr)
+          throw std::runtime_error("Message does not contain a MessagePart inline message.");
+        if (inline_msg->getId() != DUNE_IMC_MESSAGEPART)
+          throw std::runtime_error("Message does not contain a MessagePart inline message.");
+
+        const IMC::MessagePart* frags_msg = static_cast<const IMC::MessagePart*>(inline_msg);
+        return frags_msg->frag_number;
+      }
+
       bool
-      isKnownFragment(const IMC::TransmissionRequest* msg, uint8_t* frag_id = nullptr, uint8_t* frag_num = nullptr)
+      isKnownFragment(const IMC::TransmissionRequest* msg)
       {
         if (m_fragments_map.empty())
           return false;
         
         if (msg->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
           return false;
-          
-        const IMC::Message* inline_msg = msg->msg_data.get();
-        if (inline_msg != nullptr && inline_msg->getId() == DUNE_IMC_MESSAGEPART)
-        {
-          const IMC::MessagePart* frags_msg = static_cast<const IMC::MessagePart*>(inline_msg);
-          auto it = m_fragments_map.find(frags_msg->uid);
-          if (it != m_fragments_map.end())
-          {
-            if (frag_id != nullptr)
-              *frag_id = frags_msg->uid;
-            if (frag_num != nullptr)
-              *frag_num = frags_msg->frag_number;
-            return true;
-          }
-        }
 
-        return false;
+        std::map<uint16_t, TransmissionFragments*>::iterator it = m_fragments_map.find(msg->req_id);
+
+        return it != m_fragments_map.end();
       }
 
       void
-      clearFragments()
+      clearFragmentsTimeouts()
       {
-        std::vector<uint8_t> to_delete;
-        for (auto& it : m_fragments_map)
+        auto it = m_fragments_map.begin();
+        while (it != m_fragments_map.end())
         {
-          if (it.second->isRetransmissionExpired())
+          if (!it->second->isTransmissionTimedOut() && it->second->isDeadlineExpired())
           {
-            to_delete.push_back(it.first);
-            Memory::clear(it.second);
-          }
-        }
+            it->second->setTransmissionAsTimedout();
 
-        for (auto& id : to_delete)
-          m_fragments_map.erase(id);
+            if (it->second->isTransmissionFailed())
+            {
+              const IMC::TransmissionRequest* original_request = it->second->getOriginalTransmissionRequest();
+              const std::string failed_fragments_str = it->second->getFailedFragments();
+              std::string info = String::str("Fragments {%s} of Transmission Request %d are expired by %f seconds.", 
+                                              failed_fragments_str.c_str(), 
+                                              original_request->req_id, 
+                                              original_request->deadline - Clock::getSinceEpoch());
+              inf("%s", info.c_str());
+              m_router.answer(original_request, String::str("Fragments {%s} timedout", failed_fragments_str.c_str()), IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            }
+          }
+
+          if (it->second->areFragmentsExpired())
+          {
+            m_frag_id_to_req_id.erase(it->second->getFragmentsId());
+            Memory::clear(it->second);
+            it = m_fragments_map.erase(it);
+          }
+          else
+            ++it;
+        }
       }
 
       void
-      clearTimeouts()
+      clearTransmissionTimeouts()
       {
         double time = Time::Clock::getSinceEpoch();
         std::map<uint16_t, IMC::TransmissionRequest*>& tr_list = m_router.getList();
@@ -1037,51 +1068,17 @@ namespace Transports
         {
           if (it->second->deadline <= time)
           {
-            std::string info, reply;
-            uint8_t frag_id, frag_num;
-            if (isKnownFragment(it->second, &frag_id, &frag_num))
+            // If it is a known fragment do not reply
+            // Fragment deadline is handled in clearFragmentsTimeout() method
+            if (!isKnownFragment(it->second))
             {
-              // Set fragment status as expired
-              TransmissionFragments* tx_frag = m_fragments_map[frag_id];
-              tx_frag->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-
-              // If it is a known fragment but req_id doesn't match the one in fragments map, 
-              // it means it is a requested retransmission
-              if (it->second->req_id != tx_frag->getOriginalTransmissionId())
-              {
-                tx_frag->setTransmissionAsTimedout();
-                info = String::str("Retransmission of fragment %d is expired by %f seconds", frag_num, it->second->deadline - time);
-                reply = String::str("Retransmission of fragment %d timed out.", frag_num);
-              }
-              // Otherwise treat it as part of the original transmission
-              else if (!tx_frag->isTransmissionTimedOut())
-              {
-                tx_frag->setTransmissionAsTimedout();
-                // Get list of failed fragments for reply information
-                info = "Fragments {" + tx_frag->getFailedFragments() + "} ";
-                info += String::str("of %d of Transmission Request %d are expired by %f seconds.", tx_frag->getNumberOfFragments(), 
-                                                                                                     it->second->req_id, 
-                                                                                                     it->second->deadline - time);
-                reply = info;
-              }
-            }
-            else
-            {
-              // If its not a fragment just treat it as a standalone message
-              info = String::str("Transmission Request %d is expired by %f seconds", it->second->req_id, it->second->deadline - time);
-              reply = "Transmission timed out.";
+              inf("Transmission Request %d is expired by %f seconds", it->second->req_id, it->second->deadline - time);
+              m_router.answer(it->second, "Transmission timed out.",
+                              IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
             }
 
-            // Send reply if applicable
-            if (!info.empty())
-              inf("%s", info.c_str());
-            if (!reply.empty())
-              m_router.answer(it->second, reply,
-                IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-
-            // Clear request from list
             Memory::clear(it->second);
-            tr_list.erase(it++);
+            it = tr_list.erase(it);
           }
           else
             ++it;
@@ -1162,8 +1159,9 @@ namespace Transports
       {
         while (!stopping())
         {
-          clearTimeouts();
-          clearFragments();
+          // Clear timeouts for pending transmissions and fragments
+          clearTransmissionTimeouts();
+          clearFragmentsTimeouts();
 
           waitForMessages(1.0);
 
@@ -1171,7 +1169,8 @@ namespace Transports
           {
             while (!m_retransmission_list.empty())
             {
-              consume(m_retransmission_list.front());
+              if (m_retransmission_list.front()->deadline > Time::Clock::getSinceEpoch())
+                consume(m_retransmission_list.front());
               delete m_retransmission_list.front();
               m_retransmission_list.pop_front();
             }

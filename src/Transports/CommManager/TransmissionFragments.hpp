@@ -44,58 +44,54 @@ namespace Transports
     class TransmissionFragments
     {
     public:
-      TransmissionFragments(const IMC::TransmissionRequest* request, uint32_t max_payload_size, uint32_t valid_retransmission_time) :
-        destination_id(request->getDestination()),
-        req_id(request->req_id),
-        comm_mean(request->comm_mean),
-        destination(request->destination),
-        deadline(request->deadline),
-        fragments(nullptr),
-        transmission_timedout(false)
+      TransmissionFragments(const IMC::TransmissionRequest* request, uint32_t max_payload_size, uint32_t expiration_time) :
+        m_original_request(*request),
+        m_fragments(nullptr),
+        m_transmission_timedout(false)
       {
         if (request->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
           return;
 
-        ttl = deadline - request->getTimeStamp();
-        retransmission_timer.setTop(valid_retransmission_time);
-        fragments = createFragments(request->msg_data.get(), max_payload_size);
-        transmission_states.resize(fragments->getNumberOfFragments(), c_unknown_frag_state);
+        m_ttl = m_original_request.deadline - m_original_request.getTimeStamp();
+        m_expiration_timer.setTop(expiration_time);
+        m_fragments = createFragments(request->msg_data.get(), max_payload_size);
+        m_transmission_states.resize(m_fragments->getNumberOfFragments(), c_unknown_frag_state);
       }
 
       ~TransmissionFragments()
       { 
-        Memory::clear(fragments);
+        Memory::clear(m_fragments);
       }
 
       void
-      resetRetransmissionTimer()
+      resetExpirationTimer()
       {
-        retransmission_timer.reset();
+        m_expiration_timer.reset();
       }
 
       bool
-      isRetransmissionExpired()
+      areFragmentsExpired()
       {
-        return retransmission_timer.overflow();
+        return m_expiration_timer.overflow();
       }
 
       bool
       isDeadlineExpired() const
       {
-        return Clock::getSinceEpoch() >= deadline;
+        return Clock::getSinceEpoch() >= m_original_request.deadline;
       }
 
       bool
       isTransmissionTimedOut() const
       {
-        return transmission_timedout;
+        return m_transmission_timedout;
       }
 
       void
       setTransmissionAsTimedout()
       {
         // Set all "IN_PROGRESS" states to "TEMPORARY_FAILURE"
-        for (auto& state : transmission_states)
+        for (auto& state : m_transmission_states)
         {
           if (state == c_unknown_frag_state ||
               state == IMC::TransmissionStatus::TSTAT_IN_PROGRESS)
@@ -103,22 +99,22 @@ namespace Transports
         }
 
         // Mark as timed out
-        transmission_timedout = true;
+        m_transmission_timedout = true;
       }
 
       void
       setFragmentStatus(uint8_t frag_num, uint8_t status)
       {
-        if (frag_num >= static_cast<uint8_t>(transmission_states.size()))
+        if (frag_num >= static_cast<uint8_t>(m_transmission_states.size()))
           return;
 
-        transmission_states[frag_num] = status;
+        m_transmission_states[frag_num] = status;
       }
 
       bool
       isTransmissionComplete() const
       {
-        for (const auto& state : transmission_states)
+        for (const auto& state : m_transmission_states)
         {
           if (state != IMC::TransmissionStatus::TSTAT_SENT)
             return false;
@@ -129,7 +125,7 @@ namespace Transports
       bool
       isTransmissionInProgress() const
       {
-        for (const auto& state : transmission_states)
+        for (const auto& state : m_transmission_states)
         {
           if (state != IMC::TransmissionStatus::TSTAT_IN_PROGRESS)
             return false;
@@ -140,7 +136,7 @@ namespace Transports
       bool
       isTransmissionFailed() const
       {
-        for (const auto& state : transmission_states)
+        for (const auto& state : m_transmission_states)
         {
           if (state == IMC::TransmissionStatus::TSTAT_INPUT_FAILURE ||
               state == IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE ||
@@ -156,11 +152,11 @@ namespace Transports
       {
         // Return failed frag ids as string
         std::string failed_frags_str;
-        for (unsigned i = 0; i < transmission_states.size(); ++i)
-          if (transmission_states[i] == IMC::TransmissionStatus::TSTAT_INPUT_FAILURE ||
-              transmission_states[i] == IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE ||
-              transmission_states[i] == IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE ||
-              transmission_states[i] == IMC::TransmissionStatus::TSTAT_INV_ADDR)
+        for (unsigned i = 0; i < m_transmission_states.size(); ++i)
+          if (m_transmission_states[i] == IMC::TransmissionStatus::TSTAT_INPUT_FAILURE ||
+              m_transmission_states[i] == IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE ||
+              m_transmission_states[i] == IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE ||
+              m_transmission_states[i] == IMC::TransmissionStatus::TSTAT_INV_ADDR)
             failed_frags_str += String::str(i) + " ";
 
         if (!failed_frags_str.empty())
@@ -174,22 +170,15 @@ namespace Transports
       {
         std::vector<IMC::TransmissionRequest> tx_list;
 
-        if (fragments == nullptr)
+        if (m_fragments == nullptr)
           return tx_list;
 
-        int n_frags = fragments->getNumberOfFragments();
+        int n_frags = m_fragments->getNumberOfFragments();
 
         for (int i = 0; i < n_frags; i++)
         {
-          IMC::MessagePart* part = fragments->getFragment(i);
-          IMC::TransmissionRequest tx_req;
-
-          tx_req.setDestination(destination_id);
-          tx_req.req_id = req_id;
-          tx_req.comm_mean = comm_mean;
-          tx_req.destination = destination;
-          tx_req.deadline = deadline;
-          tx_req.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+          IMC::MessagePart* part = m_fragments->getFragment(i);
+          IMC::TransmissionRequest tx_req = m_original_request;
           tx_req.msg_data.set(*part);
 
           tx_list.push_back(tx_req);
@@ -203,13 +192,13 @@ namespace Transports
       {
         std::vector<IMC::TransmissionRequest> tx_list;
 
-        if (fragments == nullptr)
+        if (m_fragments == nullptr)
           return tx_list;
 
         std::unordered_set<int> frag_ids = getRetransmissionIds(request);
 
         // Set status of requested fragments to "UNKNOWN" and remaining to "DELIVERED"
-        for (unsigned i = 0; i < transmission_states.size(); i++)
+        for (unsigned i = 0; i < m_transmission_states.size(); i++)
         {
           if (frag_ids.find(i) != frag_ids.end())
             setFragmentStatus(i, c_unknown_frag_state);
@@ -217,21 +206,13 @@ namespace Transports
             setFragmentStatus(i, IMC::TransmissionStatus::TSTAT_DELIVERED);
         }
 
-        // New deadline for retransmission
-        double new_deadline = Clock::getSinceEpoch() + ttl;
-        // transmission_timedout = false;
-
         // Create transmission requests for requested fragments
         for(auto& frag_id : frag_ids)
         {
-          IMC::MessagePart* part = fragments->getFragment(frag_id);
-          IMC::TransmissionRequest tx_req;
+          IMC::MessagePart* part = m_fragments->getFragment(frag_id);
+          IMC::TransmissionRequest tx_req = m_original_request;
 
-          tx_req.setDestination(destination_id);
-          tx_req.req_id = req_id;
-          tx_req.comm_mean = comm_mean;
-          tx_req.destination = destination;
-          tx_req.deadline = new_deadline;
+          tx_req.deadline = Clock::getSinceEpoch() + m_ttl;
           tx_req.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
           tx_req.msg_data.set(*part);
 
@@ -241,28 +222,28 @@ namespace Transports
         return tx_list;
       }
 
-      uint16_t
-      getOriginalTransmissionId() const
+      const IMC::TransmissionRequest*
+      getOriginalTransmissionRequest() const
       {
-        return req_id;
+        return &m_original_request;
       }
 
       uint8_t
       getFragmentsId(void) const
       {
-        if (fragments == nullptr)
+        if (m_fragments == nullptr)
           return 0;
 
-        return fragments->getFragment(0)->uid;
+        return m_fragments->getFragment(0)->uid;
       }
 
       uint8_t
       getNumberOfFragments(void) const
       {
-        if (fragments == nullptr)
+        if (m_fragments == nullptr)
           return 0;
 
-        return fragments->getNumberOfFragments();
+        return m_fragments->getNumberOfFragments();
       }
 
       static bool
@@ -285,26 +266,18 @@ namespace Transports
       }
 
     private:
-      //! Destination id.
-      uint16_t destination_id;
-      //! Request id.
-      uint16_t req_id;
-      //! Communication Mean.
-      uint8_t comm_mean;
-      //! Destination System.
-      std::string destination;
-      //! Deadline.
-      fp64_t deadline;
+      //! Original request
+      IMC::TransmissionRequest m_original_request;
       //! Message ttl
-      fp64_t ttl;
+      fp64_t m_ttl;
       //! Fragments.
-      Network::Fragments* fragments;
-      //! Fragment retransmission timer.
-      Time::Counter<uint32_t> retransmission_timer;
+      Network::Fragments* m_fragments;
+      //! Fragments expiration timer.
+      Time::Counter<uint32_t> m_expiration_timer;
       //! Fragments transmission states.
-      std::vector<uint8_t> transmission_states;
+      std::vector<uint8_t> m_transmission_states;
       //! Transmission timed out (deadline reached)
-      bool transmission_timedout;
+      bool m_transmission_timedout;
 
       //! Create fragments for a given message.
       Network::Fragments*
@@ -338,7 +311,7 @@ namespace Transports
         if (!negation)
           return std::unordered_set<int>(frag_ids.begin(), frag_ids.end());
 
-        std::vector<int> temp(fragments->getNumberOfFragments()); 
+        std::vector<int> temp(m_fragments->getNumberOfFragments()); 
         std::iota(temp.begin(), temp.end(), 0);
         std::unordered_set<int> result(temp.begin(), temp.end());
         for (const auto& id : frag_ids)
