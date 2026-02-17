@@ -32,7 +32,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <Transports/CommManager/TransmissionSender.hpp>
+#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 // Local headers.
 #include "Storage.hpp"
@@ -278,10 +278,11 @@ namespace Monitors
 
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
         tr.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+        tr.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
         tr.deadline = Clock::getSinceEpoch() + m_args.ttl;
         tr.msg_data.set(*msg);
 
-        Transports::CommManager::TransmissionSender::dispatch(this, tr);
+        dispatch(tr);
         trace("Sent message (%d) %s as inline", tr.req_id, msg->getName());
       }
 
