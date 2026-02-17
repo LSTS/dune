@@ -1085,6 +1085,33 @@ namespace Transports
         }
       }
 
+      void
+      sendRetransmissions()
+      {
+        double time = Time::Clock::getSinceEpoch();
+        for (auto& transm : m_retransmission_list)
+        {
+          // clear expired transmissions
+          if (transm->deadline <= time)
+          {
+            if (!isKnownFragment(transm))
+            {
+              inf("Transmission Request %d is expired by %f seconds", transm->req_id, transm->deadline - time);
+              m_router.answer(transm, "Retransmission timed out.",
+                              IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            }
+          }
+          else
+          {
+            // send retransmission
+            consume(transm);
+          }
+
+          delete transm;
+        }
+        m_retransmission_list.clear();
+      }
+
       IMC::StateReport*
       produceReport()
       {
@@ -1159,23 +1186,14 @@ namespace Transports
       {
         while (!stopping())
         {
+          waitForMessages(1.0);
+
           // Clear timeouts for pending transmissions and fragments
           clearTransmissionTimeouts();
           clearFragmentsTimeouts();
 
-          waitForMessages(1.0);
-
-          if (m_retransmission_timer.overflow())
-          {
-            while (!m_retransmission_list.empty())
-            {
-              if (m_retransmission_list.front()->deadline > Time::Clock::getSinceEpoch())
-                consume(m_retransmission_list.front());
-              delete m_retransmission_list.front();
-              m_retransmission_list.pop_front();
-            }
-            m_retransmission_timer.reset();
-          }
+          // Send retransmissions
+          sendRetransmissions();
 
           if (m_args.iridium_period > 0 && m_iridium_timer.overflow())
           {
