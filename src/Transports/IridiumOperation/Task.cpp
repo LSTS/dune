@@ -32,7 +32,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <Transports/CommManager/TransmissionSender.hpp>
+#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 #include "PersistentMessage.hpp"
 
@@ -494,6 +494,7 @@ namespace Transports
 
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
         tr.data_mode = IMC::TransmissionRequest::DMODE_RAW;
+        tr.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
         tr.deadline = Clock::getSinceEpoch() + m_args.ttl;
 
         uint8_t bfr[DUNE_IMC_CONST_MAX_SIZE];
@@ -503,7 +504,7 @@ namespace Transports
         uint16_t len = ir_msg.serialize(bfr);
         tr.raw_data.assign(bfr, bfr + len);
 
-        Transports::CommManager::TransmissionSender::dispatch(this, tr);
+        dispatch(tr);
         trace("Sent message (%d) %s as raw", tr.req_id, msg->getName());
       }
 
@@ -543,12 +544,13 @@ namespace Transports
 
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
         tr.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+        tr.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
         tr.deadline = Clock::getSinceEpoch() + m_args.ttl;
         tr.msg_data.set(*msg);
 
-        uint16_t id = Transports::CommManager::TransmissionSender::dispatch(this, tr);
-        trace("request message (%d) %s as inline", id, msg->getName());
-        return id;
+        dispatch(tr);
+        trace("request message (%d) %s as inline", tr.req_id, msg->getName());
+        return tr.req_id;
       }
 
       void
