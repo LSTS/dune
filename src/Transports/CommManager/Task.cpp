@@ -829,7 +829,7 @@ namespace Transports
               for(auto recipient : recipients)
               {
                 req.destination = recipient;
-                req.req_id = m_router.createInternalId();
+                req.req_id = TransmissionIdGenerator::createId();
                 m_router.sendViaGSM(&req);
               }
             }
@@ -1212,7 +1212,7 @@ namespace Transports
                 request.deadline = Time::Clock::getSinceEpoch() + ttl;
                 request.destination = "broadcast";
                 request.msg_data.set(msg);
-                request.req_id = m_router.createInternalId();
+                request.req_id = TransmissionIdGenerator::createId();
                 dispatch(request, DF_LOOP_BACK);
 
                 Memory::clear(msg);
