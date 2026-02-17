@@ -25,8 +25,8 @@
 // Author: Luis Venancio                                                    *
 //***************************************************************************
 
-#ifndef SRC_TRANSPORTS_COMMMANAGER_TRANSMISSION_SENDER_HPP_
-#define SRC_TRANSPORTS_COMMMANAGER_TRANSMISSION_SENDER_HPP_
+#ifndef SRC_TRANSPORTS_COMMMANAGER_TRANSMISSION_ID_GENERATOR_HPP_
+#define SRC_TRANSPORTS_COMMMANAGER_TRANSMISSION_ID_GENERATOR_HPP_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -37,43 +37,24 @@ namespace Transports
   {
     using DUNE_NAMESPACES;
 
-    //! The class provides dispatch methods for TransmissionRequest messages
-    //! with unique sequential identifiers.
-    //! All Tasks/Entities must use this class to dispatch TransmissionRequest
-    //! messages to ensure unique request identifiers.
+    //! The class provides dispatch methods for generating unique request identifiers.
+    //! All Tasks/Entities must use this class to generate unique request identifiers.
     //! @author Luis Venancio
-    class TransmissionSender
+    class TransmissionIdGenerator
     {
     public:
       //! Do not allow instances.
-      TransmissionSender(void) = delete;
-
-      //! Dispatch TransmissionRequest messages with sequential ids.
-      //! @param[in] task Task pointer to dispatch the message.
-      //! @param[in] request TransmissionRequest message pointer to be sent.
-      //! @param[in] flags Dispatch flags.
-      //! @return Assigned request identifier.
-      static uint16_t
-      dispatch(Tasks::Task* task, IMC::TransmissionRequest* request, unsigned int flags = 0);
-
-      //! Dispatch TransmissionRequest messages with sequential ids.
-      //! @param[in] task Task pointer to dispatch the message.
-      //! @param[in] request TransmissionRequest message reference to be sent.
-      //! @param[in] flags Dispatch flags.
-      //! @return Assigned request identifier.
-      static uint16_t
-      dispatch(Tasks::Task* task, IMC::TransmissionRequest& request, unsigned int flags = 0);
-
-    private:
+      TransmissionIdGenerator(void) = delete;
       
       //! Create a unique identifier for TransmissionRequest.
       static uint16_t
       createId(void);
       
+    private:
       //! Unique identifier lock.
-      static Concurrency::Mutex s_transmission_sender_mutex;
+      static Concurrency::Mutex s_transmission_id_generator_mutex;
       //! Unique identifier.
-      static uint16_t s_transmission_sender_uid;
+      static uint16_t s_transmission_id_generator_uid;
     };
   }
 }

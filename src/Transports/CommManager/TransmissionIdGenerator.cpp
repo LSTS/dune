@@ -26,44 +26,27 @@
 //***************************************************************************
 
 // Local headers.
-#include <Transports/CommManager/TransmissionSender.hpp>
+#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 namespace Transports
 {
   namespace CommManager
   {
-    Concurrency::Mutex TransmissionSender::s_transmission_sender_mutex = Concurrency::Mutex();
-    uint16_t TransmissionSender::s_transmission_sender_uid = 0;
-
-
-    uint16_t
-    TransmissionSender::dispatch(Tasks::Task* task, IMC::TransmissionRequest* request, unsigned int flags)
-    {
-      request->req_id = TransmissionSender::createId();
-      task->dispatch(request, flags);
-      return request->req_id;
-    }
+    Concurrency::Mutex TransmissionIdGenerator::s_transmission_id_generator_mutex = Concurrency::Mutex();
+    uint16_t TransmissionIdGenerator::s_transmission_id_generator_uid = 0;
 
     uint16_t
-    TransmissionSender::dispatch(Tasks::Task* task, IMC::TransmissionRequest& request, unsigned int flags)
+    TransmissionIdGenerator::createId(void)
     {
-      request.req_id = TransmissionSender::createId();
-      task->dispatch(request, flags);
-      return request.req_id;
-    }
+      Concurrency::ScopedMutex m(s_transmission_id_generator_mutex);
 
-    uint16_t
-    TransmissionSender::createId(void)
-    {
-      Concurrency::ScopedMutex m(s_transmission_sender_mutex);
-
-      if (s_transmission_sender_uid == 0xFFFF)
+      if (s_transmission_id_generator_uid == 0xFFFF)
       {
-        s_transmission_sender_uid = 0;
-        return s_transmission_sender_uid;
+        s_transmission_id_generator_uid = 0;
+        return s_transmission_id_generator_uid;
       }
 
-      return s_transmission_sender_uid++;
+      return s_transmission_id_generator_uid++;
     }
 
   }
