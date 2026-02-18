@@ -36,6 +36,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include <Supervisors/Reporter/Client.hpp>
+#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 namespace Monitors
 {
@@ -63,8 +64,6 @@ namespace Monitors
     {
       //! True if executing plan.
       bool m_in_mission;
-      //! Iridium request identifier.
-      unsigned m_req;
       //! Lost communications timer.
       Counter<double> m_lost_coms_timer;
       //! Medium handler.
@@ -79,7 +78,6 @@ namespace Monitors
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
         m_in_mission(false),
-        m_req(0),
         m_reporter(NULL),
         m_emsg(nullptr)
       {
@@ -280,9 +278,9 @@ namespace Monitors
 
         if (ird)
         {
-          msg.comm_mean=IMC::TransmissionRequest::CMEAN_SATELLITE;
+          msg.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
           msg.deadline = Time::Clock::getSinceEpoch() + timeout + 30;
-          msg.req_id=m_req++;
+          msg.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
           dispatch(msg);
 
           inf(DTR("sending IridiumMsg (t:%u) to %s: %s"),
@@ -299,7 +297,7 @@ namespace Monitors
             for(auto rec : m_args.recipients)
             {
               msg.destination = rec;
-              msg.req_id=m_req++;
+              msg.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
               dispatch(msg);
               inf(DTR("sending SMS (t:%u) to %s: %s"),
                         timeout, msg.destination.c_str(), msg.txt_data.c_str());
@@ -309,7 +307,7 @@ namespace Monitors
           {
             msg.destination = recipient;
             Utils::String::toLowerCase(msg.destination);
-            msg.req_id=m_req++;
+            msg.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
             dispatch(msg);
             inf(DTR("sending SMS (t:%u) to %s: %s"),
                       timeout, msg.destination.c_str(), msg.txt_data.c_str());
