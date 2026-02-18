@@ -419,7 +419,7 @@ namespace Transports
 
         IMC::HistoricData* data = m_store.pollSamples(1000);
 
-        uint16_t newId = m_router.createInternalId();
+        uint16_t newId = Transports::CommManager::TransmissionIdGenerator::createId();
 
         TransmissionRequest tr;
         tr.setSource(getSystemId());
