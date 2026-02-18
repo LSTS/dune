@@ -29,6 +29,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 #include <DUNE/IMC/IridiumMessageDefinitions.hpp>
 #include <DUNE/Math/Random.hpp>
 
@@ -61,12 +62,10 @@ namespace Transports
       bool m_announce_pool_empty;
       int m_dev_update_req_id;
       int m_announce_req_id;
-      uint16_t req_id;
 
       IMC::FuelLevel m_fuel_state;
       IMC::PlanControlState m_plan_state;
       IMC::VehicleState m_vehicle_state;
-      Random::Generator* m_rnd;
       Arguments m_args;
 
       Task(const std::string& name, Tasks::Context& ctx):
@@ -76,9 +75,7 @@ namespace Transports
         m_update_pool_empty(true),
         m_announce_pool_empty(true),
         m_dev_update_req_id(10),
-        m_announce_req_id(75),
-        req_id(0),
-        m_rnd(NULL)
+        m_announce_req_id(75)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -103,7 +100,7 @@ namespace Transports
 
         bind<IMC::Announce>(this);
         bind<IMC::IridiumMsgRx>(this);
-        bind<IMC::IridiumTxStatus>(this);
+        bind<IMC::TransmissionStatus>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::FuelLevel>(this);
       }
@@ -111,7 +108,6 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
-        m_rnd = Random::Factory::create("drand48", -1);
       }
 
       void
@@ -126,7 +122,6 @@ namespace Transports
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_rnd);
       }
 
       void
@@ -320,30 +315,30 @@ namespace Transports
       }
 
       void
-      consume(const IMC::IridiumTxStatus* msg)
+      consume(const IMC::TransmissionStatus* msg)
       {
         if (msg->req_id == m_dev_update_req_id) {
-          if (msg->status == IridiumTxStatus::TXSTATUS_OK)
+          if (msg->status == IMC::TransmissionStatus::TSTAT_SENT)
           {
             debug("Device Updates just got sent.");
             m_last_dev_update_time = Clock::get();
           }
 
           m_update_pool_empty =
-          msg->status == IridiumTxStatus::TXSTATUS_OK
-          || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
+          msg->status == IMC::TransmissionStatus::TSTAT_SENT
+          || msg->status == IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE;
         }
 
         if (msg->req_id == m_announce_req_id) {
-          if (msg->status == IridiumTxStatus::TXSTATUS_OK)
+          if (msg->status == IMC::TransmissionStatus::TSTAT_SENT)
           {
             debug("Announce just got sent.");
             m_last_announce_time = Clock::get();
           }
 
           m_announce_pool_empty =
-          msg->status == IridiumTxStatus::TXSTATUS_OK
-          || msg->status == IridiumTxStatus::TXSTATUS_EXPIRED;
+          msg->status == IMC::TransmissionStatus::TSTAT_SENT
+          || msg->status == IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE;
         }
       }
 
@@ -426,7 +421,7 @@ namespace Transports
         IMC::TransmissionRequest tr;
         tr.data_mode     = IMC::TransmissionRequest::DMODE_RAW;
         tr.comm_mean     = IMC::TransmissionRequest::CMEAN_SATELLITE;
-        tr.req_id        = req_id++;
+        tr.req_id        = Transports::CommManager::TransmissionIdGenerator::createId();
         tr.deadline      = Time::Clock::getSinceEpoch() + 60;
         uint8_t buffer[65535];
         int len = msg->serialize(buffer);
@@ -447,7 +442,7 @@ namespace Transports
         IMC::TransmissionRequest tr;
         tr.data_mode     = IMC::TransmissionRequest::DMODE_INLINEMSG;
         tr.comm_mean     = IMC::TransmissionRequest::CMEAN_SATELLITE;
-        tr.req_id        = req_id++;
+        tr.req_id        = Transports::CommManager::TransmissionIdGenerator::createId();
         tr.msg_data.set(msg->clone());
         tr.deadline      = Time::Clock::getSinceEpoch() + 60;
 
