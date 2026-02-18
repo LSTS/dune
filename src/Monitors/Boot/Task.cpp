@@ -29,6 +29,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 namespace Monitors
 {
@@ -149,7 +150,7 @@ namespace Monitors
         request.deadline = Time::Clock::getSinceEpoch() + m_args.ttl;
         request.destination = "broadcast";
         request.msg_data.set(msg);
-        request.req_id = 0;
+        request.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
 
         dispatch(request);
         war("EntityState sent");
@@ -174,7 +175,7 @@ namespace Monitors
         request.deadline = Time::Clock::getSinceEpoch() + m_args.ttl;
         request.destination = "broadcast";
         request.txt_data = msg;
-        request.req_id = 0;
+        request.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
 
         dispatch(request);
       }
@@ -226,11 +227,10 @@ namespace Monitors
           return;
         }
 
-        request.req_id = 0;
         for (auto recipient : recipients)
         {
           request.destination = recipient;
-          request.req_id++;
+          request.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
           dispatch(request);
         }
       }
