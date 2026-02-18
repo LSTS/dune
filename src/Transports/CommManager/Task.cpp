@@ -1088,6 +1088,12 @@ namespace Transports
       void
       sendRetransmissions()
       {
+        if (m_retransmission_list.empty())
+          return;
+
+        if (!m_retransmission_timer.overflow())
+          return;
+        
         double time = Time::Clock::getSinceEpoch();
         for (auto& transm : m_retransmission_list)
         {
@@ -1110,6 +1116,7 @@ namespace Transports
           delete transm;
         }
         m_retransmission_list.clear();
+        m_retransmission_timer.reset();
       }
 
       IMC::StateReport*
