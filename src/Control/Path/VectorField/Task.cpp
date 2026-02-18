@@ -53,6 +53,8 @@ namespace Control
       {
         double corridor;
         double entry_angle;
+        double corridor_loiter;
+        double entry_angle_loiter;
         bool ext_control;
         double ext_gain;
         double ext_trgain;
@@ -62,6 +64,8 @@ namespace Control
       {
         //! Controller gain.
         double m_gain;
+        //! Controller gain for loiter.
+        double m_gain_loiter;
         //! Outgoing desired heading message.
         IMC::DesiredHeading m_heading;
         //! Task arguments.
@@ -84,6 +88,20 @@ namespace Control
           .units(Units::Degree)
           .description("Attack angle when lateral track error equals corridor width");
 
+          param("Corridor Loiter -- Width", m_args.corridor_loiter)
+          .minimumValue("1.0")
+          .maximumValue("50.0")
+          .defaultValue("5.0")
+          .units(Units::Meter)
+          .description("Width of corridor for loiter entry angle");
+
+          param("Corridor Loiter -- Entry Angle", m_args.entry_angle_loiter)
+          .minimumValue("2")
+          .maximumValue("45")
+          .defaultValue("15")
+          .units(Units::Degree)
+          .description("Loiter attack angle when lateral track error equals corridor width");
+
           param("Extended Control -- Enabled", m_args.ext_control)
           .defaultValue("false")
           .description("Enable extended (refined) corridor control");
@@ -105,7 +123,11 @@ namespace Control
           if (paramChanged(m_args.entry_angle))
             m_args.entry_angle = Angles::radians(m_args.entry_angle);
 
+          if (paramChanged(m_args.entry_angle_loiter))
+            m_args.entry_angle_loiter = Angles::radians(m_args.entry_angle_loiter);
+
           m_gain = std::tan(m_args.entry_angle) / m_args.corridor;
+          m_gain_loiter = std::tan(m_args.entry_angle_loiter) / m_args.corridor_loiter;
         }
 
         void
@@ -176,7 +198,7 @@ namespace Control
         void
         loiter(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          double ref = DUNE::Math::c_half_pi + std::atan(2 * m_gain * (ts.range - ts.loiter.radius));
+          double ref = DUNE::Math::c_half_pi + std::atan(2 * m_gain_loiter * (ts.range - ts.loiter.radius));
 
           if (!ts.loiter.clockwise)
             ref = -ref;
