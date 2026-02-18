@@ -29,6 +29,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 namespace Monitors
 {
@@ -152,7 +153,7 @@ namespace Monitors
         tr.setSourceEntity(getEntityId());
         tr.destination = "broadcast";
         tr.deadline = Time::Clock::getSinceEpoch() + c_timeout_tx_request;  // seconds
-        tr.req_id = std::rand() % 0xFFFF;
+        tr.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
         tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
         tr.data_mode = IMC::TransmissionRequest::DMODE_TEXT;
         std::string msg = std::string(getName()) + " - " + message;
