@@ -32,6 +32,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 // Local headers.
 #include "DeviceState.hpp"
@@ -90,8 +91,6 @@ namespace Navigation
         unsigned int m_dist_eid;
         //! Timeout for invalid altitude.
         Counter<float> m_alt_timer;
-        //! Transmission request id
-        int m_reqid;
         //! Estimated state.
         IMC::EstimatedState m_estate;
         //! Origin reference.
@@ -118,7 +117,6 @@ namespace Navigation
           m_ang_eid(AddressResolver::invalid()),
           m_dist_eid(AddressResolver::invalid()),
           m_alt_timer(c_alt_timeout),
-          m_reqid(0),
           m_origin(nullptr),
           m_last_cog(0.0f)
         {
@@ -462,7 +460,7 @@ namespace Navigation
           req.data_mode = TransmissionRequest::DMODE_TEXT;
           req.txt_data = msg;
           req.deadline = Clock::getSinceEpoch() + 60;
-          req.req_id = ++m_reqid;
+          req.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
 
           req.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
           req.destination = "";
