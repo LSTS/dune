@@ -48,8 +48,6 @@ namespace Transports
 
     struct Arguments
     {
-      //! Period, in seconds, between state report transmissions over iridium
-      int iridium_period;
       //! Enable CommManager to process and convert legacy message -> AcousticOperation
       bool enable_acoustic;
       //! Addresses Number - modem
@@ -72,23 +70,14 @@ namespace Transports
     const std::string c_sms_section = "Monitors.Emergency";
     //! Config field from where to fetch emergency sms number
     const std::string c_sms_field = "SMS Recipient Number";
-    //! Minimum period for iridium messages, in seconds
-    const int c_minimum_iridium_period = 300;
 
     struct Task: public DUNE::Tasks::Task
     {
       // Task arguments.
       Arguments m_args;
 
-      IMC::PlanControlState* m_pstate;
-      IMC::FuelLevel* m_fuel;
-      IMC::EstimatedState* m_estate;
-      IMC::VehicleState* m_vstate;
-      IMC::VehicleMedium* m_vmedium;
-      Time::Counter<float> m_iridium_timer;
       Time::Counter<float> m_retransmission_timer;
       std::list<IMC::TransmissionRequest*> m_retransmission_list;
-      int m_plan_chksum;
       Router m_router;
 
       std::map<uint16_t, IMC::AcousticOperation*> m_acoustic_requests;
@@ -101,12 +90,6 @@ namespace Transports
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_pstate(NULL),
-        m_fuel(NULL),
-        m_estate(NULL),
-        m_vstate(NULL),
-        m_vmedium(NULL),
-        m_plan_chksum(0),
         m_router(this)
       {
         param("Iridium - Entity Label", m_args.iridium_label)
@@ -129,10 +112,6 @@ namespace Transports
             .defaultValue("Evologics Addresses")
             .description("Name of the configuration section with acoustic modem addresses");
 
-        param("Iridium Reports Period", m_args.iridium_period)
-            .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
-            .defaultValue("300");
-
         param("Process AcousticOperation Messages", m_args.enable_acoustic)
             .description("Enable CommManager to process and convert legacy message -> AcousticOperation")
             .defaultValue("true");
@@ -151,20 +130,14 @@ namespace Transports
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticStatus>(this);
         bind<IMC::Announce>(this);
-        bind<IMC::EstimatedState>(this);
-        bind<IMC::FuelLevel>(this);
         bind<IMC::IridiumTxStatus>(this);
         bind<IMC::MessagePartControl>(this);
-        bind<IMC::PlanControlState>(this);
-        bind<IMC::PlanSpecification>(this);
         bind<IMC::RSSI>(this);
         bind<IMC::Sms>(this);
         bind<IMC::SmsStatus>(this);
         bind<IMC::TCPStatus>(this);
         bind<IMC::TransmissionRequest>(this);
-        bind<IMC::VehicleState>(this);
         bind<IMC::VehicleMedium>(this);
-        bind<IMC::StateReport>(this);
 
         m_retransmission_timer.setTop(1);
       }
@@ -172,12 +145,6 @@ namespace Transports
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_fuel);
-        Memory::clear(m_pstate);
-        Memory::clear(m_vstate);
-        Memory::clear(m_estate);
-        Memory::clear(m_vmedium);
-
         for (auto& it : m_fragments_map)
           Memory::clear(it.second);
         m_fragments_map.clear();
@@ -246,47 +213,6 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        if(paramChanged(m_args.iridium_period))
-          m_iridium_timer.setTop(0);
-      }
-
-      void
-      consume(const IMC::PlanControlState* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        Memory::replace(m_pstate, new IMC::PlanControlState(*msg));
-
-        std::string str = msg->plan_id + "|Man:" + msg->man_id;
-        m_plan_chksum = CRC16::compute((uint8_t*)str.data(), str.size());
-      }
-
-      void
-      consume(const IMC::FuelLevel* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        Memory::replace(m_fuel, new IMC::FuelLevel(*msg));
-      }
-
-      void
-      consume(const IMC::EstimatedState* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        Memory::replace(m_estate, new IMC::EstimatedState(*msg));
-      }
-
-      void
-      consume(const IMC::VehicleState* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        Memory::replace(m_vstate, new IMC::VehicleState(*msg));
       }
 
       void
@@ -294,20 +220,7 @@ namespace Transports
       {
         if (msg->getSource() != getSystemId())
           return;
-
-        Memory::replace(m_vmedium, new IMC::VehicleMedium(*msg));
         m_router.process(msg);
-      }
-
-      void
-      consume(const IMC::PlanSpecification* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        std::string str = msg->plan_id + "|Man:" + msg->start_man_id;
-        m_plan_chksum = CRC16::compute((uint8_t*)str.data(), str.size());
-
       }
 
       void
@@ -932,31 +845,6 @@ namespace Transports
         dispatch(tx);
       }
 
-      //Conversion from AcousticOperation to AcousticRequest Message
-      void
-      consume(const IMC::StateReport* msg)
-      {
-        if (msg->getSource() == getSystemId())
-          return;
-
-        IMC::AssetReport report;
-        report.name = resolveSystemId(msg->getSource());
-
-        if (report.name == "unknown")
-          return;
-
-        report.report_time = msg->stime;
-        report.medium = IMC::AssetReport::RM_SATELLITE;
-        report.lat = msg->latitude;
-        report.lon = msg->longitude;
-        report.depth = msg->depth == 0xFFFF ? -1 : msg->depth / 10.0;
-        report.alt = msg->altitude == 0xFFFF ? -1 : msg->altitude / 10.0;
-        report.sog = msg->speed / 100.0;
-        report.cog = msg->heading / 65535.0 * Math::c_two_pi;
-
-        dispatch(report);
-      }
-
       std::vector<IMC::TransmissionRequest>
       fragmentMessage(const IMC::TransmissionRequest* msg, uint32_t payload_size)
       {
@@ -1005,7 +893,6 @@ namespace Transports
           return false;
 
         std::map<uint16_t, TransmissionFragments*>::iterator it = m_fragments_map.find(msg->req_id);
-
         return it != m_fragments_map.end();
       }
 
@@ -1105,75 +992,6 @@ namespace Transports
         m_retransmission_timer.reset();
       }
 
-      IMC::StateReport*
-      produceReport()
-      {
-        if (m_vstate == NULL || m_estate == NULL)
-          return NULL;
-
-        IMC::EstimatedState* estate = new IMC::EstimatedState(*m_estate);
-        IMC::VehicleState* vstate = new IMC::VehicleState(*m_vstate);
-
-        IMC::StateReport* report = new IMC::StateReport();
-        report->stime = (int)Clock::getSinceEpoch();
-
-        // get current position
-        double lat = estate->lat, lon = estate->lon;
-        WGS84::displace(estate->x, estate->y, &lat, &lon);
-        lat = Angles::degrees(lat);
-        lon = Angles::degrees(lon);
-
-        report->latitude = (fp32_t)lat;
-        report->longitude = (fp32_t)lon;
-
-        if (estate->depth != -1)
-          report->depth = Math::roundToInteger(estate->depth * 10.0f);
-        else
-          report->depth = 0xFFFF;
-
-        if (estate->alt != -1)
-          report->altitude = Math::roundToInteger(estate->alt * 10.0f);
-        else
-          report->altitude = 0xFFFF;
-
-        report->speed = Math::roundToInteger(estate->u * 100.0f);
-
-        double ang = Angles::normalizeRadian(estate->psi);
-        if (ang < 0)
-          ang += Math::c_two_pi;
-        report->heading = Math::roundToInteger((ang / c_two_pi) * 65535);
-
-        if (m_fuel != NULL)
-          report->fuel = Math::roundToInteger(m_fuel->value);
-
-        switch (vstate->op_mode)
-        {
-          case VehicleState::VS_SERVICE:
-            report->exec_state = -1;
-            break;
-          case VehicleState::VS_BOOT:
-            report->exec_state = -2;
-            break;
-          case VehicleState::VS_CALIBRATION:
-            report->exec_state = -3;
-            report->plan_checksum = m_plan_chksum;
-            break;
-          default:
-            if (m_pstate != NULL)
-            {
-              report->exec_state = Math::roundToInteger(m_pstate->plan_progress);
-              report->plan_checksum = m_plan_chksum;
-            }
-            else
-              report->exec_state = -2;
-            break;
-        }
-
-        Memory::clear(vstate);
-        Memory::clear(estate);
-        return report;
-      }
-
       void
       onMain(void)
       {
@@ -1187,32 +1005,6 @@ namespace Transports
 
           // Send retransmissions
           sendRetransmissions();
-
-          if (m_args.iridium_period > 0 && m_iridium_timer.overflow())
-          {
-            if (m_vmedium != NULL && m_vmedium->medium == IMC::VehicleMedium::VM_WATER)
-            {
-              IMC::StateReport* msg = produceReport();
-              if (msg != NULL)
-              {
-                dispatch(msg);
-                inf("Requesting report transmission over Iridium.");
-                IMC::TransmissionRequest request;
-                request.setDestination (getSystemId());
-                request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
-                request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
-                fp64_t ttl = std::max(c_minimum_iridium_period, m_args.iridium_period);
-                request.deadline = Time::Clock::getSinceEpoch() + ttl;
-                request.destination = "broadcast";
-                request.msg_data.set(msg);
-                request.req_id = TransmissionIdGenerator::createId();
-                dispatch(request, DF_LOOP_BACK);
-
-                Memory::clear(msg);
-                m_iridium_timer.setTop(m_args.iridium_period);
-              }
-            }
-          }
         }
       }
     };
