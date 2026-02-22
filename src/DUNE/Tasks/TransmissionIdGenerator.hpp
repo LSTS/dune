@@ -25,31 +25,30 @@
 // Author: Luis Venancio                                                    *
 //***************************************************************************
 
-#ifndef SRC_TRANSPORTS_COMMMANAGER_TRANSMISSION_ID_GENERATOR_HPP_
-#define SRC_TRANSPORTS_COMMMANAGER_TRANSMISSION_ID_GENERATOR_HPP_
+#ifndef SRC_DUNE_TASKS_TRANSMISSION_ID_GENERATOR_HPP_
+#define SRC_DUNE_TASKS_TRANSMISSION_ID_GENERATOR_HPP_
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Transports
+namespace DUNE
 {
-  namespace CommManager
+  namespace Tasks
   {
     using DUNE_NAMESPACES;
 
-    //! The class provides dispatch methods for generating unique request identifiers.
-    //! All Tasks/Entities must use this class to generate unique request identifiers.
+    //! The class provides methods for generating unique request identifiers.
     //! @author Luis Venancio
     class TransmissionIdGenerator
     {
     public:
       //! Do not allow instances.
       TransmissionIdGenerator(void) = delete;
-      
+
       //! Create a unique identifier for TransmissionRequest.
       static uint16_t
       createId(void);
-      
+
     private:
       //! Unique identifier lock.
       static Concurrency::Mutex s_transmission_id_generator_mutex;

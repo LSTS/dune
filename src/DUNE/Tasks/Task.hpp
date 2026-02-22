@@ -316,11 +316,26 @@ namespace DUNE
       void
       dispatch(IMC::Message* msg, unsigned int flags = 0);
 
+      //! Dispatch transmission request message to the message bus.
+      //! @param[in] msg message pointer.
+      //! @param[in] flags bitfield with flags (see DispatchFlags).
+      void
+      dispatch(IMC::TransmissionRequest* msg, unsigned int flags = 0);
+
       //! Dispatch message to the message bus.
       //! @param[in] msg message reference.
       //! @param[in] flags bitfield with flags (see DispatchFlags).
       void
       dispatch(IMC::Message& msg, unsigned int flags = 0)
+      {
+        dispatch(&msg, flags);
+      }
+
+      //! Dispatch transmission request message to the message bus.
+      //! @param[in] msg message reference.
+      //! @param[in] flags bitfield with flags (see DispatchFlags).
+      void
+      dispatch(IMC::TransmissionRequest& msg, unsigned int flags = 0)
       {
         dispatch(&msg, flags);
       }

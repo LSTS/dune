@@ -47,6 +47,7 @@
 #include <DUNE/Utils/String.hpp>
 #include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Entities/EntityUtils.hpp>
+#include <DUNE/Tasks/TransmissionIdGenerator.hpp>
 
 #if defined(DUNE_OS_LINUX)
 #  include <sys/prctl.h>
@@ -464,6 +465,12 @@ namespace DUNE
           err(DTR("task died with uncaught exception: %s: restarting"), e.what());
         }
       }
+    }
+
+    void
+    Task::dispatch(IMC::TransmissionRequest* msg, unsigned int flags)
+    {
+      dispatch(static_cast<IMC::Message*>(msg), flags);
     }
 
     void

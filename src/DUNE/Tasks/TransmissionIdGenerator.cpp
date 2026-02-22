@@ -26,11 +26,11 @@
 //***************************************************************************
 
 // Local headers.
-#include <Transports/CommManager/TransmissionIdGenerator.hpp>
+#include <DUNE/Tasks/TransmissionIdGenerator.hpp>
 
-namespace Transports
+namespace DUNE
 {
-  namespace CommManager
+  namespace Tasks
   {
     Concurrency::Mutex TransmissionIdGenerator::s_transmission_id_generator_mutex = Concurrency::Mutex();
     uint16_t TransmissionIdGenerator::s_transmission_id_generator_uid = 0;
@@ -48,6 +48,5 @@ namespace Transports
 
       return s_transmission_id_generator_uid++;
     }
-
   }
 }
