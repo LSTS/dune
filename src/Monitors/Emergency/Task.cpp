@@ -36,7 +36,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include <Supervisors/Reporter/Client.hpp>
-#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 namespace Monitors
 {
@@ -280,7 +279,6 @@ namespace Monitors
         {
           msg.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
           msg.deadline = Time::Clock::getSinceEpoch() + timeout + 30;
-          msg.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
           dispatch(msg);
 
           inf(DTR("sending IridiumMsg (t:%u) to %s: %s"),
@@ -297,7 +295,6 @@ namespace Monitors
             for(auto rec : m_args.recipients)
             {
               msg.destination = rec;
-              msg.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
               dispatch(msg);
               inf(DTR("sending SMS (t:%u) to %s: %s"),
                         timeout, msg.destination.c_str(), msg.txt_data.c_str());
@@ -307,7 +304,6 @@ namespace Monitors
           {
             msg.destination = recipient;
             Utils::String::toLowerCase(msg.destination);
-            msg.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
             dispatch(msg);
             inf(DTR("sending SMS (t:%u) to %s: %s"),
                       timeout, msg.destination.c_str(), msg.txt_data.c_str());

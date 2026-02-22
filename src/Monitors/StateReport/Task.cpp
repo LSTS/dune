@@ -29,7 +29,6 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 namespace Monitors
 {
@@ -299,7 +298,6 @@ namespace Monitors
               // request.destination = "broadcast";
               request.destination = "lauv-noptilus-3";
               request.msg_data.set(msg);
-              request.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
               dispatch(request, DF_LOOP_BACK);
 
               Memory::clear(msg);

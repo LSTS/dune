@@ -38,7 +38,6 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 // Local headers.
 #include "Command.hpp"
@@ -308,7 +307,6 @@ namespace UserInterfaces
         tr.setDestination(getSystemId());
         tr.destination     = sys;
         tr.deadline =  Time::Clock::getSinceEpoch() + 10;
-        tr.req_id          = Transports::CommManager::TransmissionIdGenerator::createId();
         tr.comm_mean       = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
         tr.data_mode       = code;
 

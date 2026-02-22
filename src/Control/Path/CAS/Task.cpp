@@ -36,7 +36,6 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 #include "sb_mpc.hpp"
 
 namespace Control
@@ -1363,7 +1362,6 @@ namespace Control
 
                 TransmissionRequest tr;
                 tr.setDestination(getSystemId());
-                tr.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
                 tr.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
                 tr.data_mode = TransmissionRequest::DMODE_INLINEMSG;
                 tr.msg_data.set(*ais_vessel);

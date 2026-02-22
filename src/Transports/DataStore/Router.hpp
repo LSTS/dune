@@ -33,7 +33,6 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 namespace Transports
 {
@@ -212,7 +211,6 @@ namespace Transports
         msg.comm_mean         = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
         msg.data_mode         = IMC::TransmissionRequest::DMODE_INLINEMSG;
         msg.destination       = destination;
-        msg.req_id            = Transports::CommManager::TransmissionIdGenerator::createId();
         msg.msg_data.set(hist);
 
         return msg;
@@ -230,7 +228,6 @@ namespace Transports
         tr.data_mode            = IMC::TransmissionRequest::DMODE_INLINEMSG;
         tr.msg_data.set(data->clone());
         tr.deadline             = Time::Clock::getSinceEpoch() + 120;
-        tr.req_id               = Transports::CommManager::TransmissionIdGenerator::createId();
         m_parent->inf("Requesting upload of %u samples via Iridium.", (uint32_t) data->data.size());
         m_parent->dispatch(tr);
         Memory::clear(data);        

@@ -38,7 +38,6 @@
 // Local headers.
 #include "Router.hpp"
 #include "TransmissionFragments.hpp"
-#include "TransmissionIdGenerator.hpp"
 
 namespace Transports
 {

@@ -29,7 +29,6 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 #include <DUNE/IMC/IridiumMessageDefinitions.hpp>
 #include <DUNE/Math/Random.hpp>
 
@@ -421,15 +420,13 @@ namespace Transports
         IMC::TransmissionRequest tr;
         tr.data_mode     = IMC::TransmissionRequest::DMODE_RAW;
         tr.comm_mean     = IMC::TransmissionRequest::CMEAN_SATELLITE;
-        tr.req_id        = Transports::CommManager::TransmissionIdGenerator::createId();
         tr.deadline      = Time::Clock::getSinceEpoch() + 60;
         uint8_t buffer[65535];
         int len = msg->serialize(buffer);
         tr.raw_data.assign(buffer, buffer + len);
 
-        m_dev_update_req_id = tr.req_id;
-
         dispatch(tr);
+        m_dev_update_req_id = tr.req_id;
         std::stringstream ss;
         tr.toText(ss);
         spew("sent the following message: %s", ss.str().c_str());
@@ -442,13 +439,11 @@ namespace Transports
         IMC::TransmissionRequest tr;
         tr.data_mode     = IMC::TransmissionRequest::DMODE_INLINEMSG;
         tr.comm_mean     = IMC::TransmissionRequest::CMEAN_SATELLITE;
-        tr.req_id        = Transports::CommManager::TransmissionIdGenerator::createId();
         tr.msg_data.set(msg->clone());
         tr.deadline      = Time::Clock::getSinceEpoch() + 60;
 
-        m_announce_req_id= tr.req_id;
-
         dispatch(tr);
+        m_announce_req_id = tr.req_id;
         std::stringstream ss;
         tr.toText(ss);
         spew("sent the following message: %s", ss.str().c_str());

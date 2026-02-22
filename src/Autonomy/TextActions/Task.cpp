@@ -32,7 +32,6 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 namespace Autonomy
 {
@@ -394,7 +393,6 @@ namespace Autonomy
         req.data_mode = TransmissionRequest::DMODE_TEXT;
         req.txt_data = text;
         req.deadline = Clock::getSinceEpoch() + m_args.reply_timeout;
-        req.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
 
         // if request was sent over sms
         if (origin.find("+") == 0)

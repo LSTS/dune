@@ -32,7 +32,6 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
-#include <Transports/CommManager/TransmissionIdGenerator.hpp>
 
 // Local headers.
 #include "DeviceState.hpp"
@@ -460,7 +459,6 @@ namespace Navigation
           req.data_mode = TransmissionRequest::DMODE_TEXT;
           req.txt_data = msg;
           req.deadline = Clock::getSinceEpoch() + 60;
-          req.req_id = Transports::CommManager::TransmissionIdGenerator::createId();
 
           req.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
           req.destination = "";
