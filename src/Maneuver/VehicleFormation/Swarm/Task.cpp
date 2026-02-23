@@ -115,6 +115,8 @@ namespace Maneuver
         Address udp_maddr;
         //! UDP port.
         uint16_t udp_port;
+        //! Use only Wi-Fi communications.
+        bool use_wifi_only;
         //! TDMA time per slot.
         double tdma_time_per_slot;
         //! Fallback maneuver type.
@@ -248,6 +250,10 @@ namespace Maneuver
           .defaultValue("8022")
           .description("UDP port for wifi communications");
 
+          param("Use Wifi Only", m_args.use_wifi_only)
+          .defaultValue("false")
+          .description("Disable acoustic data exchange and use Wi-Fi for all swarm communications");
+
           param("Acoustic Communications -- TDMA Time Per Slot", m_args.tdma_time_per_slot)
           .units(Units::Second)
           .defaultValue("15.0")
@@ -325,8 +331,15 @@ namespace Maneuver
         {
           if (!m_wcomms->validate(data))
             return;
-          
-          switch (data[5])
+
+          std::vector<uint8_t> packet = m_wcomms->getData(data);
+          if (packet.empty())
+          {
+            debug("Invalid wifi packet size");
+            return;
+          }
+
+          switch (packet[0])
           {
             case CommsProtocol::Codes::CODE_ACK:
               recvAck(data);
@@ -340,8 +353,16 @@ namespace Maneuver
             case CommsProtocol::Codes::CODE_START:
               recvStart(data);
               break;
+            case CommsProtocol::Codes::CODE_POS:
+              if (m_args.use_wifi_only)
+                recvPos(data);
+              break;
+            case CommsProtocol::Codes::CODE_PARTICIPANT:
+              if (m_args.use_wifi_only)
+                recvParticipant(data);
+              break;
             default:
-              debug("Invalid wifi code: %u", data[5]);
+              debug("Invalid wifi code: %u", packet[0]);
               break;
           }
         }
@@ -349,6 +370,9 @@ namespace Maneuver
         void
         consume(const IMC::UamRxFrame* msg)
         {
+          if (m_args.use_wifi_only)
+            return;
+
           if (!m_acomms.validate(msg))
             return;
 
@@ -427,6 +451,68 @@ namespace Maneuver
 
           trace("Received code START from: %s.", resolveSystemId(m_leader_id));
           m_flag_start = true;
+        }
+
+        void
+        recvPos(const std::vector<uint8_t>& data)
+        {
+          uint16_t src_id = m_wcomms->getSource(data);
+          if (m_leader_id != src_id)
+            return;
+
+          std::vector<uint8_t> packet = m_wcomms->getData(data);
+          if (packet.size() < sizeof(m_leader_pos) + 1)
+          {
+            war("Received code POS from %u with invalid data size", src_id);
+            return;
+          }
+
+          //! Leader only broadcasts position after Start,
+          //! thus if Pos has been received, but Start has not been received, Start
+          if (!m_flag_start)
+            m_flag_start = true;
+
+          m_leader_ref_timer.setTop(m_args.leader_reference_timeout);
+          std::memcpy(&m_leader_pos, &packet[1], sizeof(m_leader_pos));
+
+          trace("Received code POS from: %s | waypoint index: %u lat : %f lon: %f speed %f",
+                resolveSystemId(src_id),
+                m_leader_pos.waypoint_idx,
+                m_leader_pos.lat,
+                m_leader_pos.lon,
+                m_leader_pos.speed);
+
+          updateSpeed();
+        }
+
+        void
+        recvParticipant(const std::vector<uint8_t>& data)
+        {
+          uint16_t src_id = m_wcomms->getSource(data);
+          if (m_leader_id != src_id)
+            return;
+
+          //! Only update participant if moving
+          if (m_state != SM_MOVING)
+            return;
+
+          std::vector<uint8_t> packet = m_wcomms->getData(data);
+          if (packet.size() < sizeof(CommsProtocol::ParticipantPackage) + 1)
+          {
+            war("Received code PARTICIPANT from %u with invalid data size", src_id);
+            return;
+          }
+
+          CommsProtocol::ParticipantPackage part;
+          std::memcpy(&part, &packet[1], sizeof(part));
+          trace("Received code PARTICIPANT from: %s | vid: %u off_x : %f off_y: %f off_z %f",
+                resolveSystemId(src_id),
+                part.vid,
+                part.off_x,
+                part.off_y,
+                part.off_z);
+
+          updateParticipant(part.vid, part.off_x, part.off_y, part.off_z);
         }
 
         void
@@ -984,7 +1070,10 @@ namespace Maneuver
           {
             double lat, lon;
             fromLocalCoordinates(m_estate.x, m_estate.y, &lat, &lon);
-            m_acomms.sendPos("broadcast", m_curr, lat, lon, m_estate.u);
+            if (m_args.use_wifi_only)
+              m_wcomms->sendPos("broadcast", m_curr, lat, lon, m_estate.u);
+            else
+              m_acomms.sendPos("broadcast", m_curr, lat, lon, m_estate.u);
             m_send_pos_timer.reset();
           }
         }
@@ -1038,7 +1127,10 @@ namespace Maneuver
             // Update leader participants
             updateParticipant((*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
             // Broadcast new offsets to participants
-            m_acomms.sendParticipant("broadcast", (*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
+            if (m_args.use_wifi_only)
+              m_wcomms->sendParticipant("broadcast", (*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
+            else
+              m_acomms.sendParticipant("broadcast", (*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
             // Wait until sending next update
             // This is blocking!!
             waitWithConsume(1.0f);
@@ -1131,7 +1223,8 @@ namespace Maneuver
           }
 
           // Acoustic communications
-          m_acomms.run();
+          if (!m_args.use_wifi_only)
+            m_acomms.run();
 
           // Wifi communications
           if (m_wcomms)
