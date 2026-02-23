@@ -470,6 +470,7 @@ namespace DUNE
     void
     Task::dispatch(IMC::TransmissionRequest* msg, unsigned int flags)
     {
+      msg->req_id = TransmissionIdGenerator::createId();
       dispatch(static_cast<IMC::Message*>(msg), flags);
     }
 
