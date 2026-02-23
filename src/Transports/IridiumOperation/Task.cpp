@@ -352,43 +352,45 @@ namespace Transports
           return;
 
         spew("new status (%d) for message %d", msg->status, msg->req_id);
+        PersistentPtr pmsg = it->second;
 
         switch (msg->status)
         {
           case IMC::TransmissionStatus::TSTAT_SENT:
+          case IMC::TransmissionStatus::TSTAT_DELIVERED:
+          case IMC::TransmissionStatus::TSTAT_MAYBE_DELIVERED:
           {
             trace("message ack %d", msg->req_id);
-            PersistentPtr& pmsg = it->second;
-            if (!pmsg->onSuccess(msg->req_id))
-              return;
-
-            spew("all messages sent for %d", msg->req_id);
-            // Remove message from map and all its IDs.
-            std::set<uint16_t> ids = pmsg->getIDs();
-            for (uint16_t id : ids)
-              m_ack_map.erase(id);
+            spew("message delivered for %d", msg->req_id);
+            m_ack_map.erase(it);
           }
           break;
 
           case IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE:
           {
-            PersistentPtr& pmsg = it->second;
             // Check if message should be resent.
-            const IMC::Message* retry = pmsg->onFailure(msg->req_id);
+            const IMC::Message* retry = pmsg->onFailure();
             if (retry)
             {
-              trace("resending message (%d) %s", msg->req_id, retry->getName());
-              // Resend message with new id.
-              dispatchRequest(retry);
+              const uint16_t old_id = msg->req_id;
+              const uint16_t new_id = dispatchRequest(retry);
+              trace("resending message (%d -> %d) %s", old_id, new_id, retry->getName());
+              m_ack_map.erase(it);
+              m_ack_map[new_id] = pmsg;
               return;
             }
 
             spew("message failed %d - deleting ...", msg->req_id);
+            m_ack_map.erase(it);
+          }
+          break;
 
-            // Delete message from map and all its IDs.
-            std::set<uint16_t> ids = pmsg->getIDs();
-            for (uint16_t id : ids)
-              m_ack_map.erase(id);
+          case IMC::TransmissionStatus::TSTAT_INPUT_FAILURE:
+          case IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE:
+          case IMC::TransmissionStatus::TSTAT_INV_ADDR:
+          {
+            war("received terminal status %d for message %d", msg->status, msg->req_id);
+            m_ack_map.erase(it);
           }
           break;
 
@@ -527,13 +529,12 @@ namespace Transports
           return;
 
         PersistentPtr pmsg = std::make_shared<PersistentMessage>(msg);
-        pmsg->addMessage(id, msg);
         m_ack_map[id] = pmsg;
       }
 
       //! Dispatch Transmission request message.
       //! @param[in] msg message to send.
-      //! @param[in] id request id.
+      //! @return generated transmission request id.
       uint16_t
       dispatchRequest(const IMC::Message* msg)
       {
