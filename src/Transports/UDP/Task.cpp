@@ -383,7 +383,7 @@ namespace Transports
           return;
 
         if (m_args.trace_out)
-          inf("outgoing: %s", msg->getName());
+          DUNE_MSG(getName(), "outgoing: " + std::string(msg->getName()));
 
         uint16_t rv;
         try
