@@ -246,12 +246,14 @@ namespace Transports
         for (unsigned int i = 0; i < m_args.destinations.size(); ++i)
           m_static_dsts.insert(NodeAddress(m_args.destinations[i]));
 
-        // Process rate limiters.
-        m_filter.setupRates(m_args.rate_lims);
-        // Process filtered entities.
-        m_filter.setupEntities(m_args.entities_flt, this);
+        if (paramChanged(m_args.rate_lims))
+          m_filter.setupRates(m_args.rate_lims);
+        
+        if (paramChanged(m_args.entities_flt))
+          m_filter.setupEntities(m_args.entities_flt, this);
 
-        m_underwater_comms = m_args.underwater_comms;
+        if (paramChanged(m_args.underwater_comms))
+          m_underwater_comms = m_args.underwater_comms;
 
         // Initialize communication limitations parameters.
         if (m_ctx.profiles.isSelected("Simulation") && m_args.comm_range > 0)
