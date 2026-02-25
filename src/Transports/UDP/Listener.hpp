@@ -135,7 +135,7 @@ namespace Transports
             uint16_t rv = m_sock.read(bfr, c_bfr_size, &addr);
             IMC::Message* msg = IMC::Packet::deserialize(bfr, rv);
             if (m_trace)
-              m_task.inf("incomming: %s", msg->getName());
+              DUNE_MSG(m_task.getName(), "incoming: " + std::string(msg->getName()));
 
             if (m_lcomms->isActive())
             {
