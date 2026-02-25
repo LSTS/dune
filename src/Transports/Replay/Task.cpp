@@ -47,34 +47,36 @@ namespace Transports
       std::string startup_file;
       std::vector<std::string> msgs;
       std::vector<std::string> ents;
+      std::vector<std::string> ents_flt;
       double time_multiplier;
       double initial_log_skip_seconds;
     };
 
-    static const int c_stats_period = 10;
+    static constexpr int c_stats_period = 10;
 
     struct Task: public DUNE::Tasks::Task
     {
       Arguments m_args;
 
-      typedef std::map<std::string, uint8_t> Name2Eid;
+      using Name2Eid = std::map<std::string, uint8_t>;
+      using Eid2Name = std::map<uint8_t, std::string>;
+      using Eid2Eid = std::map<uint8_t, uint8_t>;
+
+      //! Mapping %Replay entities names to entities ids.
       Name2Eid m_name2eid;
-
-      typedef std::map<uint8_t, std::string> Eid2Name;
+      //! Mapping %Replay entities ids to entities names.
       Eid2Name m_eid2name;
-
-      typedef std::map<uint8_t, uint8_t> Eid2Eid;
+      //! List of IMC message IDs that are filtered by a unique and provided entity name.
+      Eid2Name m_ents_filter;
+      //! Mapping entities ids with the same entity name between replay session and original log.
       Eid2Eid m_eid2eid;
-
-      typedef std::map<std::string, bool> ReplayMsg;
-      ReplayMsg m_replay;
 
       double m_ts_delta;
       double m_start_time;
 
-      // Replay file handle
+      //! Replay file handle
       std::istream* m_is;
-      // last state from replay file
+      //! Last state from replay file
       IMC::EstimatedState m_estate;
 
       struct Stats
@@ -88,7 +90,7 @@ namespace Transports
         double sumsq;
       };
 
-      typedef std::map<std::string, Stats> StatsMap;
+      using StatsMap = std::map<std::string, Stats>;
 
       StatsMap m_sstats; // State stats
       StatsMap m_tstats; // Timing stats
@@ -98,7 +100,7 @@ namespace Transports
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
-        m_is(0)
+        m_is(nullptr)
       {
         param("Load At Start", m_args.startup_file)
         .defaultValue("")
@@ -112,6 +114,10 @@ namespace Transports
         .defaultValue("")
         .description("Entities for which state should be reported");
 
+        param("Filter By Entities", m_args.ents_flt)
+        .description("List of <Message>:<Entity> that define the unique accepted source entity for a given message."
+                     " The desired goal is to filter out outliers from undesired entities, e.g, cached `GpsFix`");
+
         param("Time Multiplier", m_args.time_multiplier)
         .defaultValue("1.0")
         .description("Time multiplier for fast replay.");
@@ -121,16 +127,14 @@ namespace Transports
         .defaultValue("0")
         .description("Number of seconds to skip in the beginning of the log");
 
+
         bind<IMC::ReplayControl>(this);
       }
 
       void
       onUpdateParameters(void)
       {
-        for (unsigned i = 0; i < m_args.msgs.size(); ++i)
-          m_replay[m_args.msgs[i]] = true;
-
-        if (m_replay.find("EstimatedState") == m_replay.end())
+        if (std::find(m_args.msgs.begin(), m_args.msgs.end(), "EstimatedState") == m_args.msgs.end())
           bind<IMC::EstimatedState>(this);
 
         reset();
@@ -139,6 +143,23 @@ namespace Transports
         {
           Time::Clock::setTimeMultiplier(m_args.time_multiplier);
           war("Using time multiplier: x%.2f", Time::Clock::getTimeMultiplier());
+        }
+
+        // Setup messages filtered by entities.
+        m_ents_filter.clear();
+        for (unsigned int i = 0; i < m_args.ents_flt.size(); ++i)
+        {
+          std::vector<std::string> parts;
+          Utils::String::split(m_args.ents_flt[i], ":", parts);
+
+          if (parts.size() == 2)
+          {
+            uint32_t id = IMC::Factory::getIdFromAbbrev(parts[0]);
+            m_ents_filter[id] = parts[1];
+            continue;
+          }
+
+          throw std::runtime_error(Utils::String::str(DTR("invalid filter: %s"), m_args.ents_flt[i].c_str()));
         }
       }
 
@@ -201,10 +222,10 @@ namespace Transports
       }
 
       uint8_t
-      mapEntity(uint8_t eid)
+      mapEntity(uint8_t eid) const
       {
         // Convert ent. id read from file to local context
-        Eid2Eid::iterator itr = m_eid2eid.find(eid);
+        const auto itr = m_eid2eid.find(eid);
 
         if (itr == m_eid2eid.end())
           return DUNE_IMC_CONST_UNK_EID;
@@ -216,7 +237,7 @@ namespace Transports
       updateEntityMap(IMC::Message* m)
       {
         IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(m);
-        Name2Eid::iterator itr = m_name2eid.find(ei->label);
+        const auto itr = m_name2eid.find(ei->label);
 
         if (itr != m_name2eid.end())
         {
@@ -318,7 +339,7 @@ namespace Transports
       IMC::Message*
       getFirstMessageAfterSkip(double time_to_skip)
       {
-        IMC::Message* m = 0;
+        IMC::Message* m = nullptr;
         double time_origin = m_ts_delta;
         m = IMC::Packet::deserialize(*m_is);
         while (m)
@@ -336,7 +357,7 @@ namespace Transports
           if(getDebugLevel() >= DEBUG_LEVEL_SPEW)
             m->toText(std::cout);
         }
-        return NULL;
+        return nullptr;
       }
 
       void
@@ -359,8 +380,8 @@ namespace Transports
       {
         displayStats(m_tgstats, "Globally", "ms", 1e+03);
 
-        for (StatsMap::iterator itr = m_tstats.begin(); itr != m_tstats.end(); ++itr)
-          displayStats(itr->second, itr->first, "ms", 1e+03);
+        for (auto itr : m_tstats)
+          displayStats(itr.second, itr.first, "ms", 1e+03);
 
         if (!m_sstats.empty())
         {
@@ -383,12 +404,8 @@ namespace Transports
       reset(void)
       {
         requestDeactivation();
+        Memory::clear(m_is);
 
-        if (m_is)
-        {
-          delete m_is;
-          m_is = 0;
-        }
         m_eid2eid.clear();
         m_tstats.clear();
         m_tgstats = Stats();
@@ -446,7 +463,6 @@ namespace Transports
       void
       onMain(void)
       {
-
         if (!m_args.startup_file.empty())
           startReplay(m_args.startup_file);
 
@@ -463,7 +479,7 @@ namespace Transports
           if (!isActive())
             continue;
 
-          IMC::Message* m = 0;
+          IMC::Message* m = nullptr;
 
           while (!stopping() && (m = DUNE::IMC::Packet::deserialize(*m_is)) != 0 && !m_is->eof())
           {
@@ -479,19 +495,51 @@ namespace Transports
               updateEntityMap(m);
             }
 
+            // Some messages should only be accepted if coming from an authorized provider.
+            if (m_ents_filter.find(m->getId()) != m_ents_filter.end())
+            {
+              // We know we have to check Source Entity for the current message. We know the accepted source name.
+              // We have to retrieve the entity id matching the source name and then, track it back to the entity
+              // id in the original log - this way we can properly validate its source name.
+              const auto eid = m_name2eid.find(m_ents_filter[m->getId()])->second;
+              bool accept = true;
+
+              for (auto it : m_eid2eid)
+              {
+                // Found matching entity id for current session. Original entity id
+                // must match the message source entity.
+                if (it.second == eid && it.first != m->getSourceEntity())
+                {
+                  accept = false;
+                  continue;
+                }
+              }
+
+              // Filter out this one.
+              if (!accept)
+              {
+                delete m;
+                continue;
+              }
+            }
+
             m->setSourceEntity(mapEntity(m->getSourceEntity()));
             m->setDestinationEntity(mapEntity(m->getDestinationEntity()));
 
-            if ((m->getId() == DUNE_IMC_ENTITYSTATE && m->getSourceEntity() != DUNE_IMC_CONST_UNK_EID) || m_replay.find(m->getName()) != m_replay.end())
+            if ((m->getId() == DUNE_IMC_ENTITYSTATE && m->getSourceEntity() != DUNE_IMC_CONST_UNK_EID)
+                || std::find(m_args.msgs.begin(), m_args.msgs.end(), m->getName()) != m_args.msgs.end())
             {
               dispatchWithNewTime(m);
             }
+
+            delete m;
           }
 
           stopReplay();
 
           // Clean up
-          delete m;
+          if (m)
+            delete m;
         }
       }
 
