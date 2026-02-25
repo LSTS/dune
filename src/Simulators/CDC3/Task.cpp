@@ -258,7 +258,7 @@ namespace Simulators
         Algorithms::CRC8 crc(c_poly);
 
         std::vector<char> frame;
-        frame.reserve(data.size());
+        frame.reserve(data.size() + 2);
 
         frame.push_back(c_sync);
         crc.putByte(c_sync);
