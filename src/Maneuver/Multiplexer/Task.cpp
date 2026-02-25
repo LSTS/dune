@@ -143,9 +143,9 @@ namespace Maneuver
       //! Array of entity ids
       unsigned m_ents[TYPE_TOTAL];
       //! Vector of supported maneuver IDs
-      std::vector<uint32_t> m_supported;
+      std::vector<uint16_t> m_supported;
       //! Map of message id to maneuver type
-      typedef std::map<uint32_t, uint8_t> MultiplexMap;
+      typedef std::map<uint16_t, uint8_t> MultiplexMap;
       MultiplexMap m_map;
       //! Array of AbstractMuxes
       AbstractMux* m_maneuvers[TYPE_TOTAL];
@@ -353,8 +353,8 @@ namespace Maneuver
 
             if (itr == m_args.unsupported.end())
             {
-              uint32_t id = IMC::Factory::getIdFromAbbrev(c_names[i]);
-              m_map.insert(std::pair<uint32_t, uint8_t>(id, i));
+              uint16_t id = IMC::Factory::getIdFromAbbrev(c_names[i]);
+              m_map.insert(std::pair<uint16_t, uint8_t>(id, i));
               m_supported.push_back(id);
             }
           }

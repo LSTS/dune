@@ -32,7 +32,7 @@
 
 // ISO C++ 98 headers.
 #include <map>
-#include <vector>
+#include <unordered_set>
 
 // DUNE headers.
 #include <DUNE/Concurrency/TSQueue.hpp>
@@ -65,7 +65,10 @@ namespace DUNE
       put(const IMC::Message*);
 
       void
-      bind(uint32_t id, AbstractConsumer* c);
+      unbind(uint16_t id, AbstractConsumer* c);
+
+      void
+      bind(uint16_t id, AbstractConsumer* c);
 
       void
       waitForMessages(double timeout);
@@ -78,8 +81,10 @@ namespace DUNE
       AbstractTask* m_task;
       //! Context.
       Context& m_ctx;
+      //! Type definition for consumer list.
+      typedef std::unordered_set<AbstractConsumer*> ConsumerList;
       //! Callbacks.
-      std::map<uint32_t, std::vector<AbstractConsumer*> > m_cbacks;
+      std::map<uint16_t, ConsumerList> m_cbacks;
       //! Message queue.
       Concurrency::TSQueue<IMC::Message*> m_mqueue;
     };

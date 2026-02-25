@@ -52,7 +52,7 @@ namespace DUNE
       //! @param key message identification number.
       //! @return message object allocated on the heap.
       static Message*
-      produce(uint32_t key);
+      produce(uint16_t key);
 
       //! Produce a message object by name.
       //! @param name message name.
@@ -68,27 +68,27 @@ namespace DUNE
       //! Retrieve all message identification numbers.
       //! @param v output vector
       static void
-      getIds(std::vector<uint32_t>& v);
+      getIds(std::vector<uint16_t>& v);
 
       //! Retrieve message identification numbers for a list of
       //! message abbreviations.
       //! @param list comma separated list of abbreviations
       //! @param v output vector
       static void
-      getIds(std::string list, std::vector<uint32_t>& v);
+      getIds(std::string list, std::vector<uint16_t>& v);
 
       //! Retrieve the corresponding message abbreviation from the
       //! identification number.
       //! @param id identification number.
       //! @return abbreviation.
       static std::string
-      getAbbrevFromId(uint32_t id);
+      getAbbrevFromId(uint16_t id);
 
       //! Retrieve the corresponding message identification number from the
       //! abbreviation.
       //! @param name abbreviation.
       //! @return identification number.
-      static uint32_t
+      static uint16_t
       getIdFromAbbrev(const std::string& name);
     };
   }

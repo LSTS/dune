@@ -55,33 +55,33 @@ namespace DUNE
       return new Type();
     }
 
-    static std::pair<uint32_t, std::string> pairs_id_abbrev[] =
+    static std::pair<uint16_t, std::string> pairs_id_abbrev[] =
     {
 #define MESSAGE(id, abbrev)                             \
-      std::pair<uint32_t, std::string>(id, #abbrev),
+      std::pair<uint16_t, std::string>(id, #abbrev),
 #include <DUNE/IMC/Factory.def>
     };
 
-    static std::pair<std::string, uint32_t> pairs_abbrev_id[] =
+    static std::pair<std::string, uint16_t> pairs_abbrev_id[] =
     {
 #define MESSAGE(id, abbrev)                             \
-      std::pair<std::string, uint32_t>(#abbrev, id),
+      std::pair<std::string, uint16_t>(#abbrev, id),
 #include <DUNE/IMC/Factory.def>
     };
 
-    static std::pair<int, Creator> creator_pairs_id[] =
+    static std::pair<uint16_t, Creator> creator_pairs_id[] =
     {
 #define MESSAGE(id, abbrev)                                     \
-      std::pair<int, Creator>(id, &create<abbrev>),
+      std::pair<uint16_t, Creator>(id, &create<abbrev>),
 #include <DUNE/IMC/Factory.def>
     };
 
-    DUNE_DECLARE_STATIC_MAP(creators_by_id, int, Creator, creator_pairs_id);
-    DUNE_DECLARE_STATIC_MAP(map_id_abbrev, uint32_t, std::string, pairs_id_abbrev);
-    DUNE_DECLARE_STATIC_MAP(map_abbrev_id, std::string, uint32_t, pairs_abbrev_id);
+    DUNE_DECLARE_STATIC_MAP(creators_by_id, uint16_t, Creator, creator_pairs_id);
+    DUNE_DECLARE_STATIC_MAP(map_id_abbrev, uint16_t, std::string, pairs_id_abbrev);
+    DUNE_DECLARE_STATIC_MAP(map_abbrev_id, std::string, uint16_t, pairs_abbrev_id);
 
     Message*
-    Factory::produce(uint32_t id)
+    Factory::produce(uint16_t id)
     {
       if (creators_by_id[id])
         return creators_by_id[id]();
@@ -93,15 +93,15 @@ namespace DUNE
     Message*
     Factory::produce(const std::string& name)
     {
-      uint32_t id = getIdFromAbbrev(name);
+      uint16_t id = getIdFromAbbrev(name);
 
       return produce(id);
     }
 
     std::string
-    Factory::getAbbrevFromId(uint32_t id)
+    Factory::getAbbrevFromId(uint16_t id)
     {
-      std::map<uint32_t, std::string>::iterator itr = map_id_abbrev.find(id);
+      std::map<uint16_t, std::string>::iterator itr = map_id_abbrev.find(id);
 
       if (itr == map_id_abbrev.end())
         throw InvalidMessageId(id);
@@ -109,10 +109,10 @@ namespace DUNE
       return itr->second;
     }
 
-    uint32_t
+    uint16_t
     Factory::getIdFromAbbrev(const std::string& name)
     {
-      std::map<std::string, uint32_t>::iterator itr = map_abbrev_id.find(name);
+      std::map<std::string, uint16_t>::iterator itr = map_abbrev_id.find(name);
 
       if (itr == map_abbrev_id.end())
         throw InvalidMessageAbbrev(name);
@@ -123,7 +123,7 @@ namespace DUNE
     void
     Factory::getAbbrevs(std::vector<std::string>& v)
     {
-      for(std::map<std::string, uint32_t>::iterator itr = map_abbrev_id.begin();
+      for(std::map<std::string, uint16_t>::iterator itr = map_abbrev_id.begin();
           itr != map_abbrev_id.end(); itr++)
       {
         v.push_back(itr->first);
@@ -131,16 +131,16 @@ namespace DUNE
 
     }
     void
-    Factory::getIds(std::vector<uint32_t>& v)
+    Factory::getIds(std::vector<uint16_t>& v)
     {
-      for(std::map<std::string, uint32_t>::iterator itr = map_abbrev_id.begin();
+      for(std::map<std::string, uint16_t>::iterator itr = map_abbrev_id.begin();
           itr != map_abbrev_id.end(); itr++)
       {
         v.push_back(itr->second);
       }
     }
     void
-    Factory::getIds(std::string list, std::vector<uint32_t>& v)
+    Factory::getIds(std::string list, std::vector<uint16_t>& v)
     {
       std::vector<std::string> l;
       DUNE::Utils::String::split(list, ",", l);

@@ -123,7 +123,7 @@ namespace DUNE
 
       template <typename T>
       void
-      bindToManeuvers(T* task_obj, const std::vector<uint32_t>& list)
+      bindToManeuvers(T* task_obj, const std::vector<uint16_t>& list)
       {
         void (Maneuver::* startfunc)(const IMC::Maneuver*) = &Maneuver::startManeuver<T, IMC::Maneuver>;
 

@@ -635,50 +635,57 @@ namespace DUNE
 
       //! Bind a message to a consumer method.
       //! @param task_obj consumer task.
-      //! @param consumer consumer method.
+      //! @param consumer consumer method, if not specified,
+      //! will use default consumer method.
       template <typename M, typename T>
-      void
+      AbstractConsumer*
       bind(T* task_obj, void (T::* consumer)(const M*) = &T::consume)
       {
-        bind(M::getIdStatic(), new Consumer<T, M>(*task_obj, consumer));
-      }
-
-      //! Bind multiple messages to a default consumer method.
-      //! @param task_obj consumer object.
-      //! @param list list of message identifiers.
-      template <typename T>
-      void
-      bind(T* task_obj, const std::vector<uint32_t>& list)
-      {
-        void (T::* func)(const IMC::Message*) = &T::consume;
-        for (unsigned int i = 0; i < list.size(); ++i)
-          bind(list[i], new Consumer<T, IMC::Message>(*task_obj, func));
+        AbstractConsumer* c = new Consumer<T, M>(*task_obj, consumer);
+        bind(M::getIdStatic(), c);
+        return c;
       }
 
       //! Bind multiple messages to a consumer method.
       //! @param task_obj consumer object.
       //! @param list list of message identifiers.
-      //! @param consumer consumer method.
+      //! @param consumer consumer method, if not specified,
+      //! will use default consumer method.
       template <typename T, typename M>
-      void
-      bind(T* task_obj, const std::vector<uint32_t>& list,
+      const std::map<uint16_t, AbstractConsumer*>
+      bind(T* task_obj, const std::vector<uint16_t>& list,
            void (T::* consumer)(const M*) = &T::consume)
       {
+        std::map<uint16_t, AbstractConsumer*> result;
         for (unsigned int i = 0; i < list.size(); ++i)
-          bind(list[i], new Consumer<T, M>(*task_obj, consumer));
+        {
+          uint16_t id = list[i];
+          AbstractConsumer* c = new Consumer<T, M>(*task_obj, consumer);
+          bind(id, c);
+          result[id] = c;
+        }
+        return result;
       }
 
-      //! Bind multiple messages to a default consumer method.
+      //! Bind multiple messages to a consumer method.
       //! @param task_obj consumer task.
       //! @param list list of message abbreviations.
+      //! @param consumer consumer method, if not specified,
+      //! will use default consumer method.
       template <typename T>
-      void
-      bind(T* task_obj, const std::vector<std::string>& list)
+      const std::map<uint16_t, AbstractConsumer*>
+      bind(T* task_obj, const std::vector<std::string>& list,
+           void (T::* consumer)(const IMC::Message*) = &T::consume)
       {
-        void (T::* func)(const IMC::Message*) = &T::consume;
+        std::map<uint16_t, AbstractConsumer*> result;
         for (unsigned int i = 0; i < list.size(); ++i)
-          bind(IMC::Factory::getIdFromAbbrev(list[i]),
-               new Consumer<T, IMC::Message>(*task_obj, func));
+        {
+          uint16_t id = IMC::Factory::getIdFromAbbrev(list[i]);
+          AbstractConsumer* c = new Consumer<T, IMC::Message>(*task_obj, consumer);
+          bind(id, c);
+          result[id] = c;
+        }
+        return result;
       }
 
       //! Register a consumer for a given message identifier.
@@ -690,6 +697,17 @@ namespace DUNE
         spew("registering consumer for '%s'",
              IMC::Factory::getAbbrevFromId(message_id).c_str());
         m_recipient->bind(message_id, consumer);
+      }
+
+      //! Unregister a consumer for a given message identifier.
+      //! @param[in] message_id message identifier.
+      //! @param[in] consumer consumer object.
+      void
+      unbind(unsigned int message_id, AbstractConsumer* consumer)
+      {
+        spew("unregistering consumer for '%s'",
+             IMC::Factory::getAbbrevFromId(message_id).c_str());
+        m_recipient->unbind(message_id, consumer);
       }
 
       //! Request task to start/resume normal execution.

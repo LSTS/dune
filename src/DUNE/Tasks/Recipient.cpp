@@ -60,27 +60,43 @@ namespace DUNE
     void
     Recipient::unbindAll(void)
     {
-      std::map<uint32_t, std::vector<AbstractConsumer*> >::iterator itr = m_cbacks.begin();
+      std::map<uint16_t, ConsumerList>::iterator itr = m_cbacks.begin();
 
       for (; itr != m_cbacks.end(); ++itr)
       {
         m_ctx.mbus.unregisterRecipient(m_task, itr->first);
 
-        for (size_t i = 0; i < itr->second.size(); ++i)
-          delete itr->second[i];
+        for (ConsumerList::iterator c = itr->second.begin(); c != itr->second.end(); ++c)
+          delete *c;
 
         itr->second.clear();
       }
     }
 
     void
-    Recipient::bind(uint32_t id, AbstractConsumer* consumer)
+    Recipient::unbind(uint16_t id, AbstractConsumer* consumer)
     {
-      std::map<uint32_t, std::vector<AbstractConsumer*> >::iterator itr = m_cbacks.find(id);
+      std::map<uint16_t, ConsumerList>::iterator itr = m_cbacks.find(id);
+      if (itr == m_cbacks.end())
+        return;
+
+      m_cbacks[id].erase(consumer);
+      if (m_cbacks[id].empty())
+      {
+        m_ctx.mbus.unregisterRecipient(m_task, id);
+        m_cbacks.erase(id);
+      }
+      delete consumer;
+    }
+    
+    void
+    Recipient::bind(uint16_t id, AbstractConsumer* consumer)
+    {
+      std::map<uint16_t, ConsumerList>::iterator itr = m_cbacks.find(id);
       if (itr == m_cbacks.end())
         m_ctx.mbus.registerRecipient(m_task, id);
 
-      m_cbacks[id].push_back(consumer);
+      m_cbacks[id].insert(consumer);
     }
 
     void
@@ -107,8 +123,12 @@ namespace DUNE
         if (msg)
         {
           uint32_t id = msg->getId();
-          for (size_t j = 0; j < m_cbacks[id].size(); ++j)
-            m_cbacks[id][j]->consume(msg);
+          std::map<uint16_t, ConsumerList>::iterator itr = m_cbacks.find(id);
+          if (itr != m_cbacks.end())
+          {
+            for (ConsumerList::iterator c = itr->second.begin(); c != itr->second.end(); ++c)
+              (*c)->consume(msg);
+          }
           delete msg;
         }
       }
