@@ -63,7 +63,7 @@ namespace DUNE
 
       //! tablename = depthmapRad
       std::string c_stmt = "select Depth from " + tablename + " where Lat = " + std::to_string(Lat) + " and Lon = " + std::to_string(Lon) + ";";
-      
+
       try
       {
         Database::Statement* iterator_stmt = new Database::Statement(c_stmt.c_str(), *db_connection);
@@ -72,7 +72,7 @@ namespace DUNE
         while(iterator_stmt->execute())
         {
           *iterator_stmt >> DBDepth;
-          
+
           if(std::get<0>(DBDepth))
           {
             iterator_stmt->reset();
@@ -91,7 +91,7 @@ namespace DUNE
       ENCManager::DepthSoundingVector four_closest = getClosestDepths(Lat, Lon, grid_size, tablename);
       for(ENCManager::DepthSoundingVector::iterator itr = four_closest.begin(); itr != four_closest.end(); ++itr)
       {
-        //std::cout << itr->Lat << " " << itr->Lon << "\n";        
+        //std::cout << itr->Lat << " " << itr->Lon << "\n";
         Coordinates::WGS84::getNEBearingAndRange(Lat,Lon, itr->Lat, itr->Lon, &bearing, &range);
         ranges.push_back(std::fabs(range));
         bearings.push_back(bearing);
@@ -110,10 +110,10 @@ namespace DUNE
     {
       double disp = 2*grid_size;
       std::string c_stmt = "select min(Lat+Lon), Lat, Lon, Depth from (select Lat, Lon, Depth from " + tablename + " where " + this->makeSquareWhereClause(Lat, Lon, disp) + ") where Lat >= " + std::to_string(Lat) + " and Lon >= " + std::to_string(Lon) +
-      " union select max(Lat+Lon), Lat, Lon, Depth from (select Lat, Lon, Depth from " + tablename + " where " + this->makeSquareWhereClause(Lat, Lon, disp) + ") where Lat <= " + std::to_string(Lat) + " and Lon <= " + std::to_string(Lon) + 
-      " union select min(Lat-Lon), Lat, Lon, Depth from (select Lat, Lon, Depth from " + tablename + " where " + this->makeSquareWhereClause(Lat, Lon, disp) + ") where Lat >= " + std::to_string(Lat) + " and Lon <= " + std::to_string(Lon) + 
+      " union select max(Lat+Lon), Lat, Lon, Depth from (select Lat, Lon, Depth from " + tablename + " where " + this->makeSquareWhereClause(Lat, Lon, disp) + ") where Lat <= " + std::to_string(Lat) + " and Lon <= " + std::to_string(Lon) +
+      " union select min(Lat-Lon), Lat, Lon, Depth from (select Lat, Lon, Depth from " + tablename + " where " + this->makeSquareWhereClause(Lat, Lon, disp) + ") where Lat >= " + std::to_string(Lat) + " and Lon <= " + std::to_string(Lon) +
       " union select max(Lat-Lon), Lat, Lon, Depth from (select Lat, Lon, Depth from " + tablename + " where " + this->makeSquareWhereClause(Lat, Lon, disp) + ") where Lat <= " + std::to_string(Lat) + " and Lon >= " + std::to_string(Lon) + ";";
-      
+
       //std::cout << c_stmt << "\n";
       ENCManager::DepthSoundingVector returnMap;
       try{
@@ -141,13 +141,13 @@ namespace DUNE
       //select * from depthmapRad where depth > 20 and Lat between 1.1 and 1.101
       // tablename = depthmapRad
       //std::string c_stmt = "select Lat, Lon, Depth from " + tablename + " where Depth > " + std::to_string(minDepth_m) + " and " + this->makeSquareWhereClause(Lat, Lon, half_size) + ";";
-      
+
       std::string start;
       if(tablename == "depthmapRad")
         start = "select Lat, Lon, Depth from ";
       else
         start = "select DISTINCT Lat, Lon from ";
-      
+
       std::string c_stmt;
       if(tablename == "DEPARE")
         c_stmt = start + tablename + " where DRVAL2=" +std::to_string(drval2) + " and " + this->makeSquareWhereClause(Lat, Lon, half_size) + ";";
@@ -155,7 +155,7 @@ namespace DUNE
         c_stmt = start + tablename + " where " + this->makeSquareWhereClause(Lat, Lon, half_size) + ";";
 
       //std::cout << "TABLENAME: " << tablename << " --- " << c_stmt << std::endl;
-      
+
       ENCManager::DepthSoundingVector returnMap;
       try{
         Database::Statement* iterator_stmt = new Database::Statement(c_stmt.c_str(), *db_connection);
@@ -181,14 +181,14 @@ namespace DUNE
       } catch(std::runtime_error& e) {
         throw Error("Problem while executing statement \"" + c_stmt + "\": ", System::Error::getLastMessage());
       }
-      //std::cout << " SIZE OF RETURN " << returnMap.size() << "\n";  
+      //std::cout << " SIZE OF RETURN " << returnMap.size() << "\n";
       return returnMap;
     }
 
     ENCManager::DepthSoundingVector ENCManager::getWithinRadius(double Lat, double Lon, double radius, double drval2, std::string tablename) {
       ENCManager::DepthSoundingVector returnVector = ENCManager::DepthSoundingVector();
       ENCManager::DepthSoundingVector square = this->getSquare(Lat, Lon, radius, drval2, tablename);
-      
+
       for(ENCManager::DepthSoundingVector::iterator itr = square.begin(); itr != square.end(); ++itr)
       {
         double distance = Coordinates::WGS84::distance(Lat, Lon, 0, itr->Lat, itr->Lon, 0);
@@ -207,7 +207,7 @@ namespace DUNE
       float stepLon = (endLon-startLon)/steps;
       ENCManager::DepthSoundingVector groundingPositions = ENCManager::DepthSoundingVector();
       ENCManager::DepthSoundingVector returnVector = ENCManager::DepthSoundingVector();
-      
+
       // Iterate through points on line between start- and end-position
       for(unsigned int step=0; step<steps;step++) {
 
@@ -223,7 +223,7 @@ namespace DUNE
           ENCManager::DepthSoundingContainer_t closest= ENCManager::DepthSoundingContainer_t();
           for (ENCManager::DepthSoundingVector::iterator itr = fourClosest.begin(); itr != fourClosest.end(); ++itr) {
             distance = Coordinates::WGS84::distance(startLat+step*stepLat, startLon+step*stepLon,0, itr->Lat, itr->Lon,0);
-            if (distance < closest_distance or closest_distance < 0.0) {
+            if (distance < closest_distance || closest_distance < 0.0) {
               closest_distance=distance;
               closest = *itr;
             }
@@ -265,7 +265,7 @@ namespace DUNE
               known_lons.push_back(itr->Lon);
               returnDepthSoundingVector.push_back(ENCManager::DepthSoundingContainer_t(itr->Lat, itr->Lon, 0.0));
               //returnDepthSoundingVector.insert(returnDepthSoundingVector.end(), squareAroundCurrentStep.begin(), squareAroundCurrentStep.end());
-              //std::cout << " SIZE OF KNOWN LATS " << known_lats.size() << "\n"; 
+              //std::cout << " SIZE OF KNOWN LATS " << known_lats.size() << "\n";
               std::cout << "Inserting " << Angles::degrees(itr->Lat) << " AND " << Angles::degrees(itr->Lon) << std::endl;
             }
           }
