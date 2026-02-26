@@ -62,7 +62,7 @@ namespace Transports
       Arguments m_args;
       uint16_t m_reqid;
       dccl::Codec m_dccl;     //DCCL CODEC
-      IMCDCCL::CodecDCCL m_codecdcll; //DCCL LIB
+      DUNE::Encoders::DCCL::CodecDCCL m_codecdcll; //DCCL LIB
       //! Message Filter
       MessageFilter m_filter;
    

@@ -15,34 +15,37 @@
 
 //! This Class menages the DCCL encoding and decoding of corresponding IMC messages 
 
-namespace IMCDCCL
+namespace DUNE
 {
-
-    class CodecDCCL
+  namespace Encoders
+  {
+    namespace DCCL
     {
+      class CodecDCCL
+      {
         public:
-            explicit CodecDCCL(dccl::Codec& codec)
-                : m_codec(codec)
+        explicit CodecDCCL(dccl::Codec& codec)
+          : m_codec(codec)
         {
         }
-        
+
         ~CodecDCCL() = default;
 
-        DUNE::IMC::Message* 
+        DUNE::IMC::Message*
         decodeDCCL(std::string& encoded_string)
         {
-            return dispatchDecode(encoded_string); 
+          return dispatchDecode(encoded_string);
         }
 
-        std::string 
+        std::string
         encodeDCCL(const DUNE::IMC::Message* imc_msg)
         {
-            return dispatchEncode(imc_msg); 
+          return dispatchEncode(imc_msg);
         }
 
         //dccl::Codec dccl_codec;      //DCCL codec , TODO: automatically generate this from the .proto
 
-        enum  MsgID {
+        enum MsgID {
             PLAN_SPECIFICATION = 551,
             ESTIMATED_STATE    = 350,
             PLAN_DB = 556,
@@ -167,11 +170,9 @@ namespace IMCDCCL
                     throw std::runtime_error("DCCL:CodecDCCL: Encoding not available for this Msg");
             }
         }
-
-
-    };
-
-
+      };
+    }
+  }
 }
   
 

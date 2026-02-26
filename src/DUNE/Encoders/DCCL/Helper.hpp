@@ -5,32 +5,41 @@
 #include <cctype>
 #include <regex>
 
-namespace Helper {
+namespace DUNE
+{
+  namespace Encoders
+  {
+    namespace DCCL
+    {
+      namespace Helper
+      {
 
-    // Finds numbers in a string
-    inline std::string findDigits(const std::string& s) {
-        std::string out;
-        for (char c : s) {
-            if (std::isdigit(c)) out += c;
+        // Finds numbers in a string
+        inline std::string findDigits(const std::string& s) {
+            std::string out;
+            for (char c : s) {
+                if (std::isdigit(c)) out += c;
+            }
+            return out;
         }
-        return out;
-    }
 
-    // Finds letters in a string
-    inline std::string findLetters(const std::string& s) {
-        std::string out;
-        for (char c : s) {
-            if (std::isalpha(c)) out += c;
+        // Finds letters in a string
+        inline std::string findLetters(const std::string& s) {
+            std::string out;
+            for (char c : s) {
+                if (std::isalpha(c)) out += c;
+            }
+            return out;
         }
-        return out;
-    }
-    
 
-    inline bool containsJustDigits(const std::string& s) {
-        static const std::regex number_regex(R"(^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$)");
-        return std::regex_match(s, number_regex);
-    }
+        inline bool containsJustDigits(const std::string& s) {
+            static const std::regex number_regex(R"(^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$)");
+            return std::regex_match(s, number_regex);
+        }
 
-} // namespace Helper
+      } // namespace Helper
+    } // namespace DCCL
+  } // namespace Encoders
+} // namespace DUNE
 
 #endif // HELPER_HPP
