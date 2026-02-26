@@ -33,8 +33,7 @@
 // Dccl headers.
 #include "dccl.h"
 //#include "dcclMsg.pb.h"
-#include "IMC_DCCL.pb.cc"
-#include "CodecDCCL.hpp"
+#include <DUNE/Encoders/DCCL/CodecDCCL.hpp>
 
 namespace Transports
 {

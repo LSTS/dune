@@ -28,31 +28,35 @@
 ############################################################################
 
 if(DCCL)
-  find_package(Protobuf REQUIRED)
+  find_package(Protobuf QUIET)
   find_library(DCCL_LIBRARY NAMES dccl)
-  message(STATUS "DCCL Library found:  ${DCCL_LIBRARY}")
-  if(${DCCL_LIBRARY} STRLESS "libdccl.so")
-    # dccl present
+
+  if(DCCL_LIBRARY)
+    message(STATUS "DCCL library found: ${DCCL_LIBRARY}")
     set(DUNE_SYS_HAS_DCCL 1 CACHE INTERNAL "DCCL library")
     dune_add_lib(dccl)
   else()
-    # dccl not found on the system.
-    message(SEND_ERROR "DCCL not found on the system.")
+    message(STATUS "DCCL library not found.")
     set(DUNE_SYS_HAS_DCCL 0 CACHE INTERNAL "DCCL library")
   endif()
 
-  find_library(PROTOBUF_LIBRARY NAMES protobuf)
-  message(STATUS "Protobuf Library found:  ${PROTOBUF_LIBRARY}")
-  if(${PROTOBUF_LIBRARY} STRLESS "libprotobuf.so")
-    # protobuf present
+  if(Protobuf_FOUND AND Protobuf_PROTOC_EXECUTABLE)
+    message(STATUS "Protobuf found: ${Protobuf_LIBRARIES}")
+    message(STATUS "Protobuf protoc: ${Protobuf_PROTOC_EXECUTABLE}")
     set(DUNE_SYS_HAS_PROTOBUF 1 CACHE INTERNAL "Protobuf library")
     dune_add_lib(protobuf)
   else()
-    # protobuf not found on the system.
-    message(SEND_ERROR "Protobuf not found on the system.")
+    message(STATUS "Protobuf library and/or protoc not found.")
     set(DUNE_SYS_HAS_PROTOBUF 0 CACHE INTERNAL "Protobuf library")
-  endif() 
+  endif()
+
+  if(DUNE_SYS_HAS_DCCL AND DUNE_SYS_HAS_PROTOBUF)
+    set(DUNE_USING_DCCL 1 CACHE INTERNAL "DCCL library")
+  else()
+    set(DUNE_USING_DCCL 0 CACHE INTERNAL "DCCL library")
+  endif()
 else(DCCL)
   set(DUNE_SYS_HAS_DCCL 0 CACHE INTERNAL "DCCL library")
   set(DUNE_SYS_HAS_PROTOBUF 0 CACHE INTERNAL "Protobuf library")
+  set(DUNE_USING_DCCL 0 CACHE INTERNAL "DCCL library")
 endif(DCCL)
