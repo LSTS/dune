@@ -1,5 +1,6 @@
-#ifndef HELPER_HPP
-#define HELPER_HPP
+#ifndef DUNE_ENCODERS_DCCL_HELPER_HPP_INCLUDED_
+#define DUNE_ENCODERS_DCCL_HELPER_HPP_INCLUDED_
+
 
 #include <string>
 #include <cctype>
