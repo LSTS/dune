@@ -52,6 +52,7 @@ if(DCCL)
 
   if(DUNE_SYS_HAS_DCCL AND DUNE_SYS_HAS_PROTOBUF)
     set(DUNE_USING_DCCL 1 CACHE INTERNAL "DCCL library")
+    add_definitions(-DDUNE_USING_DCCL)
   else()
     set(DUNE_USING_DCCL 0 CACHE INTERNAL "DCCL library")
   endif()
