@@ -3,7 +3,10 @@
 
 #include <string>
 #include <stdexcept>
-#include <DUNE/DUNE.hpp>
+
+// DUNE headers.
+#include <DUNE/IMC/Message.hpp>
+#include <DUNE/IMC/Definitions.hpp>
 
 #include "dccl.h"
 #include "EnumCodec.hpp"

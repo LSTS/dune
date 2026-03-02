@@ -1,7 +1,6 @@
 // AUTO-GENERATED DECODER FOR NESTED MESSAGES (FROM DCCL TO IMC)
 
 #include "NestedCodec.hpp"
-#include <DUNE/DUNE.hpp>
 #include "Helper.hpp"
 
 namespace DUNE

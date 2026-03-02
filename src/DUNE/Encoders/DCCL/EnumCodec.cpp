@@ -1,7 +1,5 @@
 // AUTO-GENERATED ENUM CODEC (ENCODER + DECODER)
-#include "EnumCodec.hpp" 
-
-#include <DUNE/DUNE.hpp>
+#include "EnumCodec.hpp"
 
 namespace DUNE
 {

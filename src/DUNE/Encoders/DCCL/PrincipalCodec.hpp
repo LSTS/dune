@@ -6,7 +6,8 @@
 #include "IMC_DCCL.pb.h"
 #include "EnumCodec.hpp"
 #include "NestedCodec.hpp"
-#include <DUNE/DUNE.hpp>
+#include <DUNE/IMC/Message.hpp>
+#include <DUNE/IMC/Definitions.hpp>
 
 namespace DUNE
 {

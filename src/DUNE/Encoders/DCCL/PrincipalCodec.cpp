@@ -1,7 +1,6 @@
 // AUTO-GENERATED DECODER FOR PRINCIPAL MESSAGES (FROM DCCL TO IMC)
 
 #include "PrincipalCodec.hpp"
-#include <DUNE/DUNE.hpp>
 
 namespace DUNE
 {

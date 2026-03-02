@@ -4,7 +4,8 @@
 // AUTO-GENERATED ENUM CODEC (ENCODER + DECODER)
 
 #include "IMC_DCCL.pb.h"
-#include <DUNE/DUNE.hpp>
+#include <DUNE/IMC/Message.hpp>
+#include <DUNE/IMC/Definitions.hpp>
 
 namespace DUNE
 {
