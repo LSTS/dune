@@ -261,18 +261,24 @@ namespace DUNE
       int m_fidx; //!< Formation index.
       double m_rlat; // Reference latitude set.
       double m_rlon; // Reference longitude set.
-      double m_cstep_time; //! time of last control step
       IMC::DesiredPath m_path;
       IMC::DesiredZ m_depth;
       double m_speed;
       uint8_t m_speed_units;
       bool m_leader;
+      bool m_adjust_speed;
 
       bool
       initParticipants(const IMC::VehicleFormation*);
 
       bool
       initTrajectory(const IMC::VehicleFormation*);
+
+      double
+      pathDistance(size_t f_index);
+
+      double
+      longestParticipantDistance(void);
     };
   }
 }

@@ -28,8 +28,10 @@
 //***************************************************************************
 
 #include <DUNE/Math/Angles.hpp>
+#include <DUNE/Math/General.hpp>
 #include <DUNE/Coordinates.hpp>
 #include <DUNE/Maneuvers/BasicSwarm.hpp>
+#include <cmath>
 
 
 namespace DUNE
@@ -41,10 +43,13 @@ namespace DUNE
     BasicSwarm::BasicSwarm(const std::string& name, Tasks::Context& ctx):
       Maneuver(name, ctx)
     {
-      // Control step period is ignored if negative
       param("Leader", m_leader)
       .defaultValue("false")
       .description("True if this vehicle is the formation leader");
+      
+      param("Adjust Speed Based On Distance", m_adjust_speed)
+      .defaultValue("false")
+      .description("If this flag is true leader will adjust plan speed based on the longest distance a participant transects.");
 
       bindToManeuver<BasicSwarm, IMC::VehicleFormation>();
       bind<IMC::EstimatedState>(this, true);
@@ -162,6 +167,14 @@ namespace DUNE
       m_path.end_z_units = msg->z_units;
       m_speed = msg->speed;
       m_speed_units = msg->speed_units;
+
+      if (m_adjust_speed && m_leader)
+      {
+        double longest_distance = longestParticipantDistance();
+        double leader_distance = pathDistance(m_fidx);
+        m_speed *= leader_distance / longest_distance;
+        inf("Adjusting plan speed based on longest participant path distance: %.2f m (leader: %.2f m) | Plan speed is now %.2f", longest_distance, leader_distance, m_speed);
+      }
 
       onInit(msg);
     }
@@ -305,6 +318,48 @@ namespace DUNE
       }
 
       return p;
+    }
+
+    double
+    BasicSwarm::pathDistance(size_t f_index)
+    {
+      if (trajectory_points() < 2)
+        return 0.0;
+
+      int idx = static_cast<int>(f_index);
+      TPoint prev = point(0, idx);
+      double distance = 0.0;
+
+      for (size_t i = 1; i < trajectory_points(); ++i)
+      {
+        TPoint curr = point(static_cast<int>(i), idx);
+        distance += Math::norm(curr.x - prev.x, curr.y - prev.y);
+        prev = curr;
+      }
+
+      return distance;
+    }
+
+    double
+    BasicSwarm::longestParticipantDistance(void)
+    {
+      if (participants() == 0)
+        return 0.0;
+
+      size_t longest_index = 0;
+      double longest_distance = pathDistance(longest_index);
+
+      for (size_t i = 1; i < participants(); ++i)
+      {
+        double distance = pathDistance(i);
+        if (distance > longest_distance)
+        {
+          longest_distance = distance;
+          longest_index = i;
+        }
+      }
+
+      return longest_distance;
     }
   }
 }
