@@ -357,10 +357,6 @@ namespace Maneuver
               if (m_args.use_wifi_only)
                 recvPos(data);
               break;
-            case CommsProtocol::Codes::CODE_PARTICIPANT:
-              if (m_args.use_wifi_only)
-                recvParticipant(data);
-              break;
             default:
               debug("Invalid wifi code: %u", packet[0]);
               break;
@@ -380,9 +376,6 @@ namespace Maneuver
           {
             case CommsProtocol::Codes::CODE_POS:
               recvPos(msg);
-              break;
-            case CommsProtocol::Codes::CODE_PARTICIPANT:
-              recvParticipant(msg);
               break;
             default:
               debug("Invalid acoustic code: %u", msg->data[1]);
@@ -486,36 +479,6 @@ namespace Maneuver
         }
 
         void
-        recvParticipant(const std::vector<uint8_t>& data)
-        {
-          uint16_t src_id = m_wcomms->getSource(data);
-          if (m_leader_id != src_id)
-            return;
-
-          //! Only update participant if moving
-          if (m_state != SM_MOVING)
-            return;
-
-          std::vector<uint8_t> packet = m_wcomms->getData(data);
-          if (packet.size() < sizeof(CommsProtocol::ParticipantPackage) + 1)
-          {
-            war("Received code PARTICIPANT from %u with invalid data size", src_id);
-            return;
-          }
-
-          CommsProtocol::ParticipantPackage part;
-          std::memcpy(&part, &packet[1], sizeof(part));
-          trace("Received code PARTICIPANT from: %s | vid: %u off_x : %f off_y: %f off_z %f",
-                resolveSystemId(src_id),
-                part.vid,
-                part.off_x,
-                part.off_y,
-                part.off_z);
-
-          updateParticipant(part.vid, part.off_x, part.off_y, part.off_z);
-        }
-
-        void
         recvPos(const IMC::UamRxFrame* msg)
         {
           trace("Received code POS from: %s | waypoint index: %u lat : %f lon: %f speed %f", msg->sys_src.c_str(),
@@ -537,26 +500,6 @@ namespace Maneuver
           std::memcpy(&m_leader_pos, &msg->data[2], sizeof(m_leader_pos));
           
           updateSpeed();
-        }
-
-        void
-        recvParticipant(const IMC::UamRxFrame* msg)
-        {
-          if (m_leader_id != resolveSystemName(msg->sys_src))
-            return;
-          
-          //! Only update participant if moving
-          if (m_state != SM_MOVING)
-            return;
-          
-          AcousticProtocol::ParticipantPackage part;
-          std::memcpy(&part, &msg->data[2], sizeof(part));
-          trace("Received code PARTICIPANT from: %s | vid: %u off_x : %f off_y: %f off_z %f", msg->sys_src.c_str(),
-                                                                                              part.vid,
-                                                                                              part.off_x,
-                                                                                              part.off_y,
-                                                                                              part.off_z);
-          updateParticipant(part.vid, part.off_x, part.off_y, part.off_z);
         }
 
         void
@@ -1107,37 +1050,6 @@ namespace Maneuver
         }
 
         void
-        onUpdateParticipants(const IMC::VehicleFormation* msg) override
-        {
-          if (!isLeader())
-            return;
-
-          if (m_state != SM_MOVING)
-          {
-            war("Not in MOVING state, ignoring update participants");
-            return;
-          }
-
-          war("New participant list received, reforming swarm");
-          // Update participants
-          const IMC::MessageList<IMC::VehicleFormationParticipant>* list = &msg->participants;
-          IMC::MessageList<IMC::VehicleFormationParticipant>::const_iterator itr;
-          for(itr = list->begin(); itr != list->end(); itr++)
-          {
-            // Update leader participants
-            updateParticipant((*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
-            // Broadcast new offsets to participants
-            if (m_args.use_wifi_only)
-              m_wcomms->sendParticipant("broadcast", (*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
-            else
-              m_acomms.sendParticipant("broadcast", (*itr)->vid, (*itr)->off_x, (*itr)->off_y, (*itr)->off_z);
-            // Wait until sending next update
-            // This is blocking!!
-            waitWithConsume(1.0f);
-          }
-        }
-
-        void
         sendFallbackManeuver(void)
         {
           if (m_args.fallback_maneuver == c_fallback_maneuvers[FO_AUTO])
@@ -1236,13 +1148,6 @@ namespace Maneuver
           
         }
 
-        void
-        waitWithConsume(const double timeout)
-        {
-          Time::Counter<double> wait_timer(timeout);
-          while (!wait_timer.overflow())
-            waitForMessages(wait_timer.getRemaining());
-        }
       };
     }
   }
