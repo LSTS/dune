@@ -110,13 +110,19 @@ namespace DUNE
     }
 
     void
+    DiscretePID::disableParcels(void)
+    {
+      m_task = NULL;
+      m_parcel = NULL;
+      m_debug = false;
+    }
+
+    void
     DiscretePID::enableParcels(Tasks::Task* t, IMC::ControlParcel* p)
     {
       m_task = t;
       m_parcel = p;
-
-      if ((t != NULL) && (p != NULL))
-        m_debug = true;
+      m_debug = (t != NULL) && (p != NULL);
     }
 
     float
