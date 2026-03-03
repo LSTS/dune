@@ -30,7 +30,6 @@
 #include <DUNE/Math/Angles.hpp>
 #include <DUNE/Coordinates.hpp>
 #include <DUNE/Maneuvers/BasicSwarm.hpp>
-#include <DUNE/Utils/String.hpp>
 
 
 namespace DUNE
@@ -154,26 +153,17 @@ namespace DUNE
     void
     BasicSwarm::consume(const IMC::VehicleFormation* msg)
     {
-      if (!m_init)
-      {
-        if (!initParticipants(msg) || !initTrajectory(msg))
-          return;
-  
-        if (msg->z_units != Z_DEPTH)
-          signalError(DTR("Unsuported z units"));
-        
-        m_path.end_z_units = msg->z_units;
-        m_speed = msg->speed;
-        m_speed_units = msg->speed_units;
-  
-        onInit(msg);
-      }
-      else
-      {
-        onUpdateParticipants(msg);
-      }
+      if (!initParticipants(msg) || !initTrajectory(msg))
+        return;
 
-      m_init = true;
+      if (msg->z_units != Z_DEPTH)
+        signalError(DTR("Unsuported z units"));
+      
+      m_path.end_z_units = msg->z_units;
+      m_speed = msg->speed;
+      m_speed_units = msg->speed_units;
+
+      onInit(msg);
     }
 
     void
@@ -237,7 +227,6 @@ namespace DUNE
       onReset();
 
       m_approach = false;
-      m_init = false;
       m_traj.clear();
       m_participants.clear();
       m_addr2idx.clear();
@@ -316,29 +305,6 @@ namespace DUNE
       }
 
       return p;
-    }
-
-
-    void
-    BasicSwarm::updateParticipant(const uint16_t vid, const double off_x, const double off_y, const double off_z)
-    {
-      Participant* p;
-      try
-      {
-        p = &m_participants[m_addr2idx.at(vid)];
-      }
-      catch(const std::exception& e)
-      {
-        signalError(DUNE::Utils::String::str("Participant with id %u not found in formation.", vid));
-        return;
-      }
-
-      p->x = off_x;
-      p->y = off_y;
-      p->z = off_z;
-
-      war("Participant %s updated: x=%.2f, y=%.2f, z=%.2f",
-          resolveSystemId(vid), off_x, off_y, off_z);
     }
   }
 }
