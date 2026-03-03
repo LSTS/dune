@@ -40,16 +40,30 @@ namespace DUNE
     {
       m_uid = createId();
       m_num_frags = 0;
+
+      Utils::ByteBuffer buff;
+      int size = IMC::Packet::serialize(msg, buff);
+      const uint8_t* buffer = buff.getBuffer();
+      fragmentBuffer(buffer, size, mtu);
+    }
+
+    Fragments::Fragments(const std::vector<char>& data, int mtu)
+    {
+      m_uid = createId();
+      m_num_frags = 0;
+      const uint8_t* buffer = reinterpret_cast<const uint8_t*>(data.data());
+      fragmentBuffer(buffer, static_cast<int>(data.size()), mtu);
+    }
+
+    void
+    Fragments::fragmentBuffer(const uint8_t* buffer, int size, int mtu)
+    {
       int frag_size = mtu - DUNE_IMC_CONST_HEADER_SIZE - 5 - DUNE_IMC_CONST_FOOTER_SIZE;
       if (frag_size <= 0)
       {
         DUNE_ERR("Fragments", "MTU is too small");
         return;
       }
-
-      Utils::ByteBuffer buff;
-      int size = IMC::Packet::serialize(msg, buff);
-      uint8_t* buffer = buff.getBuffer();
 
       int part = 0, pos = 0;
       m_num_frags = (int)std::ceil((float)size / (float)frag_size);
