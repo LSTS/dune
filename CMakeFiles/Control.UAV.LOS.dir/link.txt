@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.UAV.LOS.a  CMakeFiles/Control.UAV.LOS.dir/src/Control/UAV/LOS/Task.cpp.o
+/usr/bin/ranlib libControl.UAV.LOS.a

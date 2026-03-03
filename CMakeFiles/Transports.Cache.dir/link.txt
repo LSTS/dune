@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.Cache.a  CMakeFiles/Transports.Cache.dir/src/Transports/Cache/Task.cpp.o
+/usr/bin/ranlib libTransports.Cache.a
