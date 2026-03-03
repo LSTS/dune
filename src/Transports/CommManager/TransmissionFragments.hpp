@@ -289,7 +289,7 @@ namespace Transports
         if (!needsFragmentation(msg, max_payload_size))
           return nullptr;
 
-        Network::Fragments* frags = new Network::Fragments(const_cast<IMC::Message*>(msg), max_payload_size);
+        Network::Fragments* frags = new Network::Fragments(msg, max_payload_size);
 
         return frags;
       }
