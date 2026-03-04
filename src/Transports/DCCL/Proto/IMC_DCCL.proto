@@ -116,21 +116,21 @@ enum EntityName {
 // Profile Sample
 message ProfileSample {
     option (dccl.msg) = { codec_version: 4 max_bytes: 80};
-    int32 depth = 1 [(dccl.field) = { min: 0 max: 2000 precision: 1 }];
-    float avg = 2 [(dccl.field) = { min: -1000 max: 1000 precision: 2 }];
+    optional int32 depth = 1 [(dccl.field) = { min: 0 max: 2000 precision: 1 }];
+    optional float avg = 2 [(dccl.field) = { min: -1000 max: 1000 precision: 2 }];
 }
 
 
 // StationKeeping Maneuver
 message StationKeeping {
     option (dccl.msg) = { codec_version: 4 max_bytes: 80};
-    float lat = 1 [(dccl.field) = { min: -1.570 max: 1.570 precision: 10 }];
-    float lon = 2 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
-    float z = 3 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    optional float lat = 1 [(dccl.field) = { min: -1.570 max: 1.570 precision: 10 }];
+    optional float lon = 2 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    optional float z = 3 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
     ZUnits z_units = 4;  
-    float radius = 5 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
-    int32 duration = 6 [(dccl.field) = { min: 0 max: 65535}];
-    float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    optional float radius = 5 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
+    optional int32 duration = 6 [(dccl.field) = { min: 0 max: 65535}];
+    optional float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
     SpeedUnits speed_units = 8;
     //TODO: costum field > enum with possible string
 }
@@ -138,12 +138,12 @@ message StationKeeping {
 // FollowPath Maneuver
 message FollowPath {
     option (dccl.msg) = { codec_version: 4 max_bytes: 1000};
-    int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
-    float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
-    float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
-    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    optional int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
+    optional float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
+    optional float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    optional float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
     ZUnits z_units = 5;
-    float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    optional float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
     SpeedUnits speed_units = 7;
     repeated PathPoint points = 8 [(dccl.field) = { max_repeat: 30 }];
     //TODO: costum field > enum with possible string
@@ -152,16 +152,16 @@ message FollowPath {
 // Goto Maneuver
 message Goto {
     option (dccl.msg) = { codec_version: 4 max_bytes: 80};
-    int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
-    float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
-    float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
-    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    optional int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
+    optional float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
+    optional float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    optional float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
     ZUnits z_units = 5;
-    float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    optional float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1  }];
     SpeedUnits speed_units = 7;
-    float roll = 8 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
-    float pitch = 9 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
-    float yaw = 10 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
+    optional float roll = 8 [(dccl.field) = { min: -1 max: 6.283 precision: 3}];
+    optional float pitch = 9 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
+    optional float yaw = 10 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
 }
 
 // ParameterValue
@@ -177,9 +177,9 @@ message ParameterValue{
 // PathPoint 
 message PathPoint {
     option (dccl.msg) = { codec_version: 4 max_bytes: 80};
-    float x = 1 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
-    float y = 2 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
-    float z = 3 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
+    optional float x = 1 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
+    optional float y = 2 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
+    optional float z = 3 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
 }
 
 // Maneuver - message group
@@ -235,12 +235,12 @@ message TransitionCondition {
 // Loiter Maneuver
 message Loiter {
     option (dccl.msg) = { codec_version: 4 max_bytes: 1000};
-    int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
-    float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
-    float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
-    float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    optional int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
+    optional float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
+    optional float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    optional float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
     ZUnits z_units = 5;
-    int32 duration = 6 [(dccl.field) = { min: 0 max: 10800}];
+    optional int32 duration = 6 [(dccl.field) = { min: 0 max: 10800}];
     float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
     SpeedUnits speed_units = 8;
   
@@ -253,9 +253,9 @@ message Loiter {
         LT_UNKNOWN = 5;
     }
     LoiterTypeEnum type = 9;
-    float radius = 10 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
-    float length = 11 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
-    float bearing = 12 [(dccl.field) = { min: 0 max: 6.283 precision: 3 }];
+    optional float radius = 10 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
+    optional float length = 11 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
+    optional float bearing = 12 [(dccl.field) = { min: 0 max: 6.283 precision: 3 }];
 
     enum DirectionEnum
     {
@@ -313,44 +313,44 @@ message VerticalProfile {
     }
 
     ParameterEnum parameter = 1;
-    int32 numsamples = 2 [(dccl.field) = { min: 0 max: 255 precision: 1 }];
+    optional int32 numsamples = 2 [(dccl.field) = { min: 0 max: 255 precision: 1 }];
     repeated ProfileSample samples = 3 [(dccl.field) = { max_repeat: 70 }];
-    float lat = 4 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
-    float lon = 5 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    optional float lat = 4 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
+    optional float lon = 5 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
 }
 
 // Estimated State
 message EstimatedState {
     option (dccl.msg) = { codec_version: 4 id: 350 max_bytes: 80};
-    float lat = 1 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
-    float lon = 2 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
-    float height = 3 [(dccl.field) = { min: -1000 max: 7000  precision: 1 }];
-    float x = 4 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
-    float y = 5 [(dccl.field) = { min: -2000 max: 2000  precision: 1 }];
-    float z = 6 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
-    float phi = 7 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
-    float theta = 8 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
-    float psi = 9 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
-    float u = 10 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
-    float v = 11 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
-    float w = 12 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
-    float vx = 13 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
-    float vy = 14 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
-    float vz = 15 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
-    float p = 16 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
-    float q = 17 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
-    float r = 18 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
-    float depth = 19 [(dccl.field) = { min: -1 max: 400 precision: 2 }];
-    float alt = 20 [(dccl.field) = { min: -1 max: 5000 precision: 2 }];
+    optional float lat = 1 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
+    optional float lon = 2 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    optional float height = 3 [(dccl.field) = { min: -1000 max: 7000  precision: 1 }];
+    optional float x = 4 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
+    optional float y = 5 [(dccl.field) = { min: -2000 max: 2000  precision: 1 }];
+    optional float z = 6 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
+    optional float phi = 7 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
+    optional float theta = 8 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
+    optional float psi = 9 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
+    optional float u = 10 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    optional float v = 11 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    optional float w = 12 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    optional float vx = 13 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    optional float vy = 14 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    optional float vz = 15 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
+    optional float p = 16 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
+    optional float q = 17 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
+    optional float r = 18 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
+    optional float depth = 19 [(dccl.field) = { min: -1 max: 400 precision: 2 }];
+    optional float alt = 20 [(dccl.field) = { min: -1 max: 5000 precision: 2 }];
 }
 
 
 // PlanSpecification 
 message PlanSpecification {
     option (dccl.msg) = { codec_version: 4 id: 551 max_bytes: 800000};
-    string plan_id = 1 [(dccl.field).max_length = 20]; 
-    string description = 2 [(dccl.field).max_length = 2]; 
-    string vnamespace = 3 [(dccl.field).max_length = 2]; 
+    optional string plan_id = 1 [(dccl.field).max_length = 20]; 
+    optional string description = 2 [(dccl.field).max_length = 2]; 
+    optional string vnamespace = 3 [(dccl.field).max_length = 2]; 
     ManeuverID start_man_id = 4;
     repeated PlanManeuver maneuvers = 5 [(dccl.field) = { max_repeat: 30 }];
     repeated PlanTransition transitions = 6 [(dccl.field) = { max_repeat: 30 }];
@@ -385,17 +385,42 @@ message PlanDB {
     
     TypeEnum type = 1;
     OperationEnum op = 2;
-    int32 request_id = 3 [(dccl.field) = { min: 0 max: 255 precision: 1 }];
-    string plan_id = 4 [(dccl.field).max_length = 20]; 
+    optional int32 request_id = 3 [(dccl.field) = { min: 0 max: 10000 precision: 1 }];
+    optional string plan_id = 4 [(dccl.field).max_length = 20]; 
     PlanDBArgUnion arg = 5;
-    string info = 6 [(dccl.field).max_length = 40]; 
+    optional string info = 6 [(dccl.field).max_length = 40]; 
+}
+
+// PlanSpecification 
+message PlanDBState {
+    option (dccl.msg) = { codec_version: 4 id: 557 max_bytes: 800000};
+    optional int32 plan_count = 1 [(dccl.field) = { min: 0 max: 100000 precision: 1 }];
+    optional int32 plan_size = 2 [(dccl.field) = { min: 0 max: 1 precision: 1 }];
+    optional float change_time = 3 [(dccl.field) = { min: 0 max: 1835634114 precision: 2 }];
+    optional int32 change_sid = 4 [(dccl.field) = { min: 0 max: 50000 precision: 1 }];
+    optional string change_sname = 5 [(dccl.field).max_length = 40]; 
+    optional string md5 = 6 [(dccl.field).max_length = 40]; 
+    repeated PlanDBInformation plans_info = 7 [(dccl.field) = { max_repeat: 100 }];
+}
+
+
+// PlanSpecification 
+message PlanDBInformation {
+    option (dccl.msg) = { codec_version: 4 id: 558 max_bytes: 800000};
+    optional string plan_id = 1 [(dccl.field).max_length = 20]; 
+    optional int32 plan_size = 2 [(dccl.field) = { min: 0 max: 5000 precision: 1 }];
+    optional float change_time = 3 [(dccl.field) = { min: 0 max: 1835634114 precision: 2 }];
+    optional int32 change_sid = 4 [(dccl.field) = { min: 0 max: 50000 precision: 1 }];
+    optional string change_sname = 5 [(dccl.field).max_length = 40]; 
+    optional string md5 = 6 [(dccl.field).max_length = 40]; 
 }
 
 message PlanDBArgUnion {
     option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
     oneof PlanDBArgUnion_{
         PlanSpecification ps_arg = 1;
-        //PlanControl pc_arg = 2;
+        PlanDBInformation pi_arg = 2;
+        PlanDBState pc_arg = 3;
     }
 }
 

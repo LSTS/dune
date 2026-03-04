@@ -83,6 +83,12 @@ extern PlanDBDefaultTypeInternal _PlanDB_default_instance_;
 class PlanDBArgUnion;
 struct PlanDBArgUnionDefaultTypeInternal;
 extern PlanDBArgUnionDefaultTypeInternal _PlanDBArgUnion_default_instance_;
+class PlanDBInformation;
+struct PlanDBInformationDefaultTypeInternal;
+extern PlanDBInformationDefaultTypeInternal _PlanDBInformation_default_instance_;
+class PlanDBState;
+struct PlanDBStateDefaultTypeInternal;
+extern PlanDBStateDefaultTypeInternal _PlanDBState_default_instance_;
 class PlanManeuver;
 struct PlanManeuverDefaultTypeInternal;
 extern PlanManeuverDefaultTypeInternal _PlanManeuver_default_instance_;
@@ -130,6 +136,8 @@ template<> ::IMC_DCCL::ParameterValue* Arena::CreateMaybeMessage<::IMC_DCCL::Par
 template<> ::IMC_DCCL::PathPoint* Arena::CreateMaybeMessage<::IMC_DCCL::PathPoint>(Arena*);
 template<> ::IMC_DCCL::PlanDB* Arena::CreateMaybeMessage<::IMC_DCCL::PlanDB>(Arena*);
 template<> ::IMC_DCCL::PlanDBArgUnion* Arena::CreateMaybeMessage<::IMC_DCCL::PlanDBArgUnion>(Arena*);
+template<> ::IMC_DCCL::PlanDBInformation* Arena::CreateMaybeMessage<::IMC_DCCL::PlanDBInformation>(Arena*);
+template<> ::IMC_DCCL::PlanDBState* Arena::CreateMaybeMessage<::IMC_DCCL::PlanDBState>(Arena*);
 template<> ::IMC_DCCL::PlanManeuver* Arena::CreateMaybeMessage<::IMC_DCCL::PlanManeuver>(Arena*);
 template<> ::IMC_DCCL::PlanManeuverStartActionsUnion* Arena::CreateMaybeMessage<::IMC_DCCL::PlanManeuverStartActionsUnion>(Arena*);
 template<> ::IMC_DCCL::PlanSpecification* Arena::CreateMaybeMessage<::IMC_DCCL::PlanSpecification>(Arena*);
@@ -654,7 +662,11 @@ class ProfileSample final :
     kDepthFieldNumber = 1,
     kAvgFieldNumber = 2,
   };
-  // int32 depth = 1 [(.dccl.field) = {
+  // optional int32 depth = 1 [(.dccl.field) = {
+  bool has_depth() const;
+  private:
+  bool _internal_has_depth() const;
+  public:
   void clear_depth();
   int32_t depth() const;
   void set_depth(int32_t value);
@@ -663,7 +675,11 @@ class ProfileSample final :
   void _internal_set_depth(int32_t value);
   public:
 
-  // float avg = 2 [(.dccl.field) = {
+  // optional float avg = 2 [(.dccl.field) = {
+  bool has_avg() const;
+  private:
+  bool _internal_has_avg() const;
+  public:
   void clear_avg();
   float avg() const;
   void set_avg(float value);
@@ -680,9 +696,10 @@ class ProfileSample final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     int32_t depth_;
     float avg_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -819,7 +836,11 @@ class StationKeeping final :
     kSpeedFieldNumber = 7,
     kSpeedUnitsFieldNumber = 8,
   };
-  // float lat = 1 [(.dccl.field) = {
+  // optional float lat = 1 [(.dccl.field) = {
+  bool has_lat() const;
+  private:
+  bool _internal_has_lat() const;
+  public:
   void clear_lat();
   float lat() const;
   void set_lat(float value);
@@ -828,7 +849,11 @@ class StationKeeping final :
   void _internal_set_lat(float value);
   public:
 
-  // float lon = 2 [(.dccl.field) = {
+  // optional float lon = 2 [(.dccl.field) = {
+  bool has_lon() const;
+  private:
+  bool _internal_has_lon() const;
+  public:
   void clear_lon();
   float lon() const;
   void set_lon(float value);
@@ -837,7 +862,11 @@ class StationKeeping final :
   void _internal_set_lon(float value);
   public:
 
-  // float z = 3 [(.dccl.field) = {
+  // optional float z = 3 [(.dccl.field) = {
+  bool has_z() const;
+  private:
+  bool _internal_has_z() const;
+  public:
   void clear_z();
   float z() const;
   void set_z(float value);
@@ -855,7 +884,11 @@ class StationKeeping final :
   void _internal_set_z_units(::IMC_DCCL::ZUnits value);
   public:
 
-  // float radius = 5 [(.dccl.field) = {
+  // optional float radius = 5 [(.dccl.field) = {
+  bool has_radius() const;
+  private:
+  bool _internal_has_radius() const;
+  public:
   void clear_radius();
   float radius() const;
   void set_radius(float value);
@@ -864,7 +897,11 @@ class StationKeeping final :
   void _internal_set_radius(float value);
   public:
 
-  // int32 duration = 6 [(.dccl.field) = {
+  // optional int32 duration = 6 [(.dccl.field) = {
+  bool has_duration() const;
+  private:
+  bool _internal_has_duration() const;
+  public:
   void clear_duration();
   int32_t duration() const;
   void set_duration(int32_t value);
@@ -873,7 +910,11 @@ class StationKeeping final :
   void _internal_set_duration(int32_t value);
   public:
 
-  // float speed = 7 [(.dccl.field) = {
+  // optional float speed = 7 [(.dccl.field) = {
+  bool has_speed() const;
+  private:
+  bool _internal_has_speed() const;
+  public:
   void clear_speed();
   float speed() const;
   void set_speed(float value);
@@ -899,6 +940,8 @@ class StationKeeping final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     float lat_;
     float lon_;
     float z_;
@@ -907,7 +950,6 @@ class StationKeeping final :
     int32_t duration_;
     float speed_;
     int speed_units_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -1062,7 +1104,11 @@ class FollowPath final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PathPoint >&
       points() const;
 
-  // int32 timeout = 1 [(.dccl.field) = {
+  // optional int32 timeout = 1 [(.dccl.field) = {
+  bool has_timeout() const;
+  private:
+  bool _internal_has_timeout() const;
+  public:
   void clear_timeout();
   int32_t timeout() const;
   void set_timeout(int32_t value);
@@ -1071,7 +1117,11 @@ class FollowPath final :
   void _internal_set_timeout(int32_t value);
   public:
 
-  // float lat = 2 [(.dccl.field) = {
+  // optional float lat = 2 [(.dccl.field) = {
+  bool has_lat() const;
+  private:
+  bool _internal_has_lat() const;
+  public:
   void clear_lat();
   float lat() const;
   void set_lat(float value);
@@ -1080,7 +1130,11 @@ class FollowPath final :
   void _internal_set_lat(float value);
   public:
 
-  // float lon = 3 [(.dccl.field) = {
+  // optional float lon = 3 [(.dccl.field) = {
+  bool has_lon() const;
+  private:
+  bool _internal_has_lon() const;
+  public:
   void clear_lon();
   float lon() const;
   void set_lon(float value);
@@ -1089,7 +1143,11 @@ class FollowPath final :
   void _internal_set_lon(float value);
   public:
 
-  // float z = 4 [(.dccl.field) = {
+  // optional float z = 4 [(.dccl.field) = {
+  bool has_z() const;
+  private:
+  bool _internal_has_z() const;
+  public:
   void clear_z();
   float z() const;
   void set_z(float value);
@@ -1107,7 +1165,11 @@ class FollowPath final :
   void _internal_set_z_units(::IMC_DCCL::ZUnits value);
   public:
 
-  // float speed = 6 [(.dccl.field) = {
+  // optional float speed = 6 [(.dccl.field) = {
+  bool has_speed() const;
+  private:
+  bool _internal_has_speed() const;
+  public:
   void clear_speed();
   float speed() const;
   void set_speed(float value);
@@ -1133,6 +1195,8 @@ class FollowPath final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PathPoint > points_;
     int32_t timeout_;
     float lat_;
@@ -1141,7 +1205,6 @@ class FollowPath final :
     int z_units_;
     float speed_;
     int speed_units_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -1280,7 +1343,11 @@ class Goto final :
     kPitchFieldNumber = 9,
     kYawFieldNumber = 10,
   };
-  // int32 timeout = 1 [(.dccl.field) = {
+  // optional int32 timeout = 1 [(.dccl.field) = {
+  bool has_timeout() const;
+  private:
+  bool _internal_has_timeout() const;
+  public:
   void clear_timeout();
   int32_t timeout() const;
   void set_timeout(int32_t value);
@@ -1289,7 +1356,11 @@ class Goto final :
   void _internal_set_timeout(int32_t value);
   public:
 
-  // float lat = 2 [(.dccl.field) = {
+  // optional float lat = 2 [(.dccl.field) = {
+  bool has_lat() const;
+  private:
+  bool _internal_has_lat() const;
+  public:
   void clear_lat();
   float lat() const;
   void set_lat(float value);
@@ -1298,7 +1369,11 @@ class Goto final :
   void _internal_set_lat(float value);
   public:
 
-  // float lon = 3 [(.dccl.field) = {
+  // optional float lon = 3 [(.dccl.field) = {
+  bool has_lon() const;
+  private:
+  bool _internal_has_lon() const;
+  public:
   void clear_lon();
   float lon() const;
   void set_lon(float value);
@@ -1307,7 +1382,11 @@ class Goto final :
   void _internal_set_lon(float value);
   public:
 
-  // float z = 4 [(.dccl.field) = {
+  // optional float z = 4 [(.dccl.field) = {
+  bool has_z() const;
+  private:
+  bool _internal_has_z() const;
+  public:
   void clear_z();
   float z() const;
   void set_z(float value);
@@ -1325,7 +1404,11 @@ class Goto final :
   void _internal_set_z_units(::IMC_DCCL::ZUnits value);
   public:
 
-  // float speed = 6 [(.dccl.field) = {
+  // optional float speed = 6 [(.dccl.field) = {
+  bool has_speed() const;
+  private:
+  bool _internal_has_speed() const;
+  public:
   void clear_speed();
   float speed() const;
   void set_speed(float value);
@@ -1343,7 +1426,11 @@ class Goto final :
   void _internal_set_speed_units(::IMC_DCCL::SpeedUnits value);
   public:
 
-  // float roll = 8 [(.dccl.field) = {
+  // optional float roll = 8 [(.dccl.field) = {
+  bool has_roll() const;
+  private:
+  bool _internal_has_roll() const;
+  public:
   void clear_roll();
   float roll() const;
   void set_roll(float value);
@@ -1352,7 +1439,11 @@ class Goto final :
   void _internal_set_roll(float value);
   public:
 
-  // float pitch = 9 [(.dccl.field) = {
+  // optional float pitch = 9 [(.dccl.field) = {
+  bool has_pitch() const;
+  private:
+  bool _internal_has_pitch() const;
+  public:
   void clear_pitch();
   float pitch() const;
   void set_pitch(float value);
@@ -1361,7 +1452,11 @@ class Goto final :
   void _internal_set_pitch(float value);
   public:
 
-  // float yaw = 10 [(.dccl.field) = {
+  // optional float yaw = 10 [(.dccl.field) = {
+  bool has_yaw() const;
+  private:
+  bool _internal_has_yaw() const;
+  public:
   void clear_yaw();
   float yaw() const;
   void set_yaw(float value);
@@ -1378,6 +1473,8 @@ class Goto final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     int32_t timeout_;
     float lat_;
     float lon_;
@@ -1388,7 +1485,6 @@ class Goto final :
     float roll_;
     float pitch_;
     float yaw_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -1728,7 +1824,11 @@ class PathPoint final :
     kYFieldNumber = 2,
     kZFieldNumber = 3,
   };
-  // float x = 1 [(.dccl.field) = {
+  // optional float x = 1 [(.dccl.field) = {
+  bool has_x() const;
+  private:
+  bool _internal_has_x() const;
+  public:
   void clear_x();
   float x() const;
   void set_x(float value);
@@ -1737,7 +1837,11 @@ class PathPoint final :
   void _internal_set_x(float value);
   public:
 
-  // float y = 2 [(.dccl.field) = {
+  // optional float y = 2 [(.dccl.field) = {
+  bool has_y() const;
+  private:
+  bool _internal_has_y() const;
+  public:
   void clear_y();
   float y() const;
   void set_y(float value);
@@ -1746,7 +1850,11 @@ class PathPoint final :
   void _internal_set_y(float value);
   public:
 
-  // float z = 3 [(.dccl.field) = {
+  // optional float z = 3 [(.dccl.field) = {
+  bool has_z() const;
+  private:
+  bool _internal_has_z() const;
+  public:
   void clear_z();
   float z() const;
   void set_z(float value);
@@ -1763,10 +1871,11 @@ class PathPoint final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     float x_;
     float y_;
     float z_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -3104,7 +3213,11 @@ class Loiter final :
     kBearingFieldNumber = 12,
     kDirectionFieldNumber = 13,
   };
-  // int32 timeout = 1 [(.dccl.field) = {
+  // optional int32 timeout = 1 [(.dccl.field) = {
+  bool has_timeout() const;
+  private:
+  bool _internal_has_timeout() const;
+  public:
   void clear_timeout();
   int32_t timeout() const;
   void set_timeout(int32_t value);
@@ -3113,7 +3226,11 @@ class Loiter final :
   void _internal_set_timeout(int32_t value);
   public:
 
-  // float lat = 2 [(.dccl.field) = {
+  // optional float lat = 2 [(.dccl.field) = {
+  bool has_lat() const;
+  private:
+  bool _internal_has_lat() const;
+  public:
   void clear_lat();
   float lat() const;
   void set_lat(float value);
@@ -3122,7 +3239,11 @@ class Loiter final :
   void _internal_set_lat(float value);
   public:
 
-  // float lon = 3 [(.dccl.field) = {
+  // optional float lon = 3 [(.dccl.field) = {
+  bool has_lon() const;
+  private:
+  bool _internal_has_lon() const;
+  public:
   void clear_lon();
   float lon() const;
   void set_lon(float value);
@@ -3131,7 +3252,11 @@ class Loiter final :
   void _internal_set_lon(float value);
   public:
 
-  // float z = 4 [(.dccl.field) = {
+  // optional float z = 4 [(.dccl.field) = {
+  bool has_z() const;
+  private:
+  bool _internal_has_z() const;
+  public:
   void clear_z();
   float z() const;
   void set_z(float value);
@@ -3149,7 +3274,11 @@ class Loiter final :
   void _internal_set_z_units(::IMC_DCCL::ZUnits value);
   public:
 
-  // int32 duration = 6 [(.dccl.field) = {
+  // optional int32 duration = 6 [(.dccl.field) = {
+  bool has_duration() const;
+  private:
+  bool _internal_has_duration() const;
+  public:
   void clear_duration();
   int32_t duration() const;
   void set_duration(int32_t value);
@@ -3185,7 +3314,11 @@ class Loiter final :
   void _internal_set_type(::IMC_DCCL::Loiter_LoiterTypeEnum value);
   public:
 
-  // float radius = 10 [(.dccl.field) = {
+  // optional float radius = 10 [(.dccl.field) = {
+  bool has_radius() const;
+  private:
+  bool _internal_has_radius() const;
+  public:
   void clear_radius();
   float radius() const;
   void set_radius(float value);
@@ -3194,7 +3327,11 @@ class Loiter final :
   void _internal_set_radius(float value);
   public:
 
-  // float length = 11 [(.dccl.field) = {
+  // optional float length = 11 [(.dccl.field) = {
+  bool has_length() const;
+  private:
+  bool _internal_has_length() const;
+  public:
   void clear_length();
   float length() const;
   void set_length(float value);
@@ -3203,7 +3340,11 @@ class Loiter final :
   void _internal_set_length(float value);
   public:
 
-  // float bearing = 12 [(.dccl.field) = {
+  // optional float bearing = 12 [(.dccl.field) = {
+  bool has_bearing() const;
+  private:
+  bool _internal_has_bearing() const;
+  public:
   void clear_bearing();
   float bearing() const;
   void set_bearing(float value);
@@ -3229,6 +3370,8 @@ class Loiter final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     int32_t timeout_;
     float lat_;
     float lon_;
@@ -3242,7 +3385,6 @@ class Loiter final :
     float length_;
     float bearing_;
     int direction_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -4011,7 +4153,11 @@ class VerticalProfile final :
   void _internal_set_parameter(::IMC_DCCL::VerticalProfile_ParameterEnum value);
   public:
 
-  // int32 numsamples = 2 [(.dccl.field) = {
+  // optional int32 numsamples = 2 [(.dccl.field) = {
+  bool has_numsamples() const;
+  private:
+  bool _internal_has_numsamples() const;
+  public:
   void clear_numsamples();
   int32_t numsamples() const;
   void set_numsamples(int32_t value);
@@ -4020,7 +4166,11 @@ class VerticalProfile final :
   void _internal_set_numsamples(int32_t value);
   public:
 
-  // float lat = 4 [(.dccl.field) = {
+  // optional float lat = 4 [(.dccl.field) = {
+  bool has_lat() const;
+  private:
+  bool _internal_has_lat() const;
+  public:
   void clear_lat();
   float lat() const;
   void set_lat(float value);
@@ -4029,7 +4179,11 @@ class VerticalProfile final :
   void _internal_set_lat(float value);
   public:
 
-  // float lon = 5 [(.dccl.field) = {
+  // optional float lon = 5 [(.dccl.field) = {
+  bool has_lon() const;
+  private:
+  bool _internal_has_lon() const;
+  public:
   void clear_lon();
   float lon() const;
   void set_lon(float value);
@@ -4046,12 +4200,13 @@ class VerticalProfile final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::ProfileSample > samples_;
     int parameter_;
     int32_t numsamples_;
     float lat_;
     float lon_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -4200,7 +4355,11 @@ class EstimatedState final :
     kDepthFieldNumber = 19,
     kAltFieldNumber = 20,
   };
-  // float lat = 1 [(.dccl.field) = {
+  // optional float lat = 1 [(.dccl.field) = {
+  bool has_lat() const;
+  private:
+  bool _internal_has_lat() const;
+  public:
   void clear_lat();
   float lat() const;
   void set_lat(float value);
@@ -4209,7 +4368,11 @@ class EstimatedState final :
   void _internal_set_lat(float value);
   public:
 
-  // float lon = 2 [(.dccl.field) = {
+  // optional float lon = 2 [(.dccl.field) = {
+  bool has_lon() const;
+  private:
+  bool _internal_has_lon() const;
+  public:
   void clear_lon();
   float lon() const;
   void set_lon(float value);
@@ -4218,7 +4381,11 @@ class EstimatedState final :
   void _internal_set_lon(float value);
   public:
 
-  // float height = 3 [(.dccl.field) = {
+  // optional float height = 3 [(.dccl.field) = {
+  bool has_height() const;
+  private:
+  bool _internal_has_height() const;
+  public:
   void clear_height();
   float height() const;
   void set_height(float value);
@@ -4227,7 +4394,11 @@ class EstimatedState final :
   void _internal_set_height(float value);
   public:
 
-  // float x = 4 [(.dccl.field) = {
+  // optional float x = 4 [(.dccl.field) = {
+  bool has_x() const;
+  private:
+  bool _internal_has_x() const;
+  public:
   void clear_x();
   float x() const;
   void set_x(float value);
@@ -4236,7 +4407,11 @@ class EstimatedState final :
   void _internal_set_x(float value);
   public:
 
-  // float y = 5 [(.dccl.field) = {
+  // optional float y = 5 [(.dccl.field) = {
+  bool has_y() const;
+  private:
+  bool _internal_has_y() const;
+  public:
   void clear_y();
   float y() const;
   void set_y(float value);
@@ -4245,7 +4420,11 @@ class EstimatedState final :
   void _internal_set_y(float value);
   public:
 
-  // float z = 6 [(.dccl.field) = {
+  // optional float z = 6 [(.dccl.field) = {
+  bool has_z() const;
+  private:
+  bool _internal_has_z() const;
+  public:
   void clear_z();
   float z() const;
   void set_z(float value);
@@ -4254,7 +4433,11 @@ class EstimatedState final :
   void _internal_set_z(float value);
   public:
 
-  // float phi = 7 [(.dccl.field) = {
+  // optional float phi = 7 [(.dccl.field) = {
+  bool has_phi() const;
+  private:
+  bool _internal_has_phi() const;
+  public:
   void clear_phi();
   float phi() const;
   void set_phi(float value);
@@ -4263,7 +4446,11 @@ class EstimatedState final :
   void _internal_set_phi(float value);
   public:
 
-  // float theta = 8 [(.dccl.field) = {
+  // optional float theta = 8 [(.dccl.field) = {
+  bool has_theta() const;
+  private:
+  bool _internal_has_theta() const;
+  public:
   void clear_theta();
   float theta() const;
   void set_theta(float value);
@@ -4272,7 +4459,11 @@ class EstimatedState final :
   void _internal_set_theta(float value);
   public:
 
-  // float psi = 9 [(.dccl.field) = {
+  // optional float psi = 9 [(.dccl.field) = {
+  bool has_psi() const;
+  private:
+  bool _internal_has_psi() const;
+  public:
   void clear_psi();
   float psi() const;
   void set_psi(float value);
@@ -4281,7 +4472,11 @@ class EstimatedState final :
   void _internal_set_psi(float value);
   public:
 
-  // float u = 10 [(.dccl.field) = {
+  // optional float u = 10 [(.dccl.field) = {
+  bool has_u() const;
+  private:
+  bool _internal_has_u() const;
+  public:
   void clear_u();
   float u() const;
   void set_u(float value);
@@ -4290,7 +4485,11 @@ class EstimatedState final :
   void _internal_set_u(float value);
   public:
 
-  // float v = 11 [(.dccl.field) = {
+  // optional float v = 11 [(.dccl.field) = {
+  bool has_v() const;
+  private:
+  bool _internal_has_v() const;
+  public:
   void clear_v();
   float v() const;
   void set_v(float value);
@@ -4299,7 +4498,11 @@ class EstimatedState final :
   void _internal_set_v(float value);
   public:
 
-  // float w = 12 [(.dccl.field) = {
+  // optional float w = 12 [(.dccl.field) = {
+  bool has_w() const;
+  private:
+  bool _internal_has_w() const;
+  public:
   void clear_w();
   float w() const;
   void set_w(float value);
@@ -4308,7 +4511,11 @@ class EstimatedState final :
   void _internal_set_w(float value);
   public:
 
-  // float vx = 13 [(.dccl.field) = {
+  // optional float vx = 13 [(.dccl.field) = {
+  bool has_vx() const;
+  private:
+  bool _internal_has_vx() const;
+  public:
   void clear_vx();
   float vx() const;
   void set_vx(float value);
@@ -4317,7 +4524,11 @@ class EstimatedState final :
   void _internal_set_vx(float value);
   public:
 
-  // float vy = 14 [(.dccl.field) = {
+  // optional float vy = 14 [(.dccl.field) = {
+  bool has_vy() const;
+  private:
+  bool _internal_has_vy() const;
+  public:
   void clear_vy();
   float vy() const;
   void set_vy(float value);
@@ -4326,7 +4537,11 @@ class EstimatedState final :
   void _internal_set_vy(float value);
   public:
 
-  // float vz = 15 [(.dccl.field) = {
+  // optional float vz = 15 [(.dccl.field) = {
+  bool has_vz() const;
+  private:
+  bool _internal_has_vz() const;
+  public:
   void clear_vz();
   float vz() const;
   void set_vz(float value);
@@ -4335,7 +4550,11 @@ class EstimatedState final :
   void _internal_set_vz(float value);
   public:
 
-  // float p = 16 [(.dccl.field) = {
+  // optional float p = 16 [(.dccl.field) = {
+  bool has_p() const;
+  private:
+  bool _internal_has_p() const;
+  public:
   void clear_p();
   float p() const;
   void set_p(float value);
@@ -4344,7 +4563,11 @@ class EstimatedState final :
   void _internal_set_p(float value);
   public:
 
-  // float q = 17 [(.dccl.field) = {
+  // optional float q = 17 [(.dccl.field) = {
+  bool has_q() const;
+  private:
+  bool _internal_has_q() const;
+  public:
   void clear_q();
   float q() const;
   void set_q(float value);
@@ -4353,7 +4576,11 @@ class EstimatedState final :
   void _internal_set_q(float value);
   public:
 
-  // float r = 18 [(.dccl.field) = {
+  // optional float r = 18 [(.dccl.field) = {
+  bool has_r() const;
+  private:
+  bool _internal_has_r() const;
+  public:
   void clear_r();
   float r() const;
   void set_r(float value);
@@ -4362,7 +4589,11 @@ class EstimatedState final :
   void _internal_set_r(float value);
   public:
 
-  // float depth = 19 [(.dccl.field) = {
+  // optional float depth = 19 [(.dccl.field) = {
+  bool has_depth() const;
+  private:
+  bool _internal_has_depth() const;
+  public:
   void clear_depth();
   float depth() const;
   void set_depth(float value);
@@ -4371,7 +4602,11 @@ class EstimatedState final :
   void _internal_set_depth(float value);
   public:
 
-  // float alt = 20 [(.dccl.field) = {
+  // optional float alt = 20 [(.dccl.field) = {
+  bool has_alt() const;
+  private:
+  bool _internal_has_alt() const;
+  public:
   void clear_alt();
   float alt() const;
   void set_alt(float value);
@@ -4388,6 +4623,8 @@ class EstimatedState final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     float lat_;
     float lon_;
     float height_;
@@ -4408,7 +4645,6 @@ class EstimatedState final :
     float r_;
     float depth_;
     float alt_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -4617,7 +4853,11 @@ class PlanSpecification final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanSpecificationEndActionsUnion >&
       end_actions() const;
 
-  // string plan_id = 1 [(.dccl.field) = {
+  // optional string plan_id = 1 [(.dccl.field) = {
+  bool has_plan_id() const;
+  private:
+  bool _internal_has_plan_id() const;
+  public:
   void clear_plan_id();
   const std::string& plan_id() const;
   template <typename ArgT0 = const std::string&, typename... ArgT>
@@ -4631,7 +4871,11 @@ class PlanSpecification final :
   std::string* _internal_mutable_plan_id();
   public:
 
-  // string description = 2 [(.dccl.field) = {
+  // optional string description = 2 [(.dccl.field) = {
+  bool has_description() const;
+  private:
+  bool _internal_has_description() const;
+  public:
   void clear_description();
   const std::string& description() const;
   template <typename ArgT0 = const std::string&, typename... ArgT>
@@ -4645,7 +4889,11 @@ class PlanSpecification final :
   std::string* _internal_mutable_description();
   public:
 
-  // string vnamespace = 3 [(.dccl.field) = {
+  // optional string vnamespace = 3 [(.dccl.field) = {
+  bool has_vnamespace() const;
+  private:
+  bool _internal_has_vnamespace() const;
+  public:
   void clear_vnamespace();
   const std::string& vnamespace() const;
   template <typename ArgT0 = const std::string&, typename... ArgT>
@@ -4685,6 +4933,8 @@ class PlanSpecification final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanManeuver > maneuvers_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanTransition > transitions_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanSpecificationStartActionsUnion > start_actions_;
@@ -4693,7 +4943,6 @@ class PlanSpecification final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr description_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr vnamespace_;
     ::IMC_DCCL::ManeuverID* start_man_id_;
-    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -4904,7 +5153,11 @@ class PlanDB final :
     kOpFieldNumber = 2,
     kRequestIdFieldNumber = 3,
   };
-  // string plan_id = 4 [(.dccl.field) = {
+  // optional string plan_id = 4 [(.dccl.field) = {
+  bool has_plan_id() const;
+  private:
+  bool _internal_has_plan_id() const;
+  public:
   void clear_plan_id();
   const std::string& plan_id() const;
   template <typename ArgT0 = const std::string&, typename... ArgT>
@@ -4918,7 +5171,11 @@ class PlanDB final :
   std::string* _internal_mutable_plan_id();
   public:
 
-  // string info = 6 [(.dccl.field) = {
+  // optional string info = 6 [(.dccl.field) = {
+  bool has_info() const;
+  private:
+  bool _internal_has_info() const;
+  public:
   void clear_info();
   const std::string& info() const;
   template <typename ArgT0 = const std::string&, typename... ArgT>
@@ -4968,7 +5225,11 @@ class PlanDB final :
   void _internal_set_op(::IMC_DCCL::PlanDB_OperationEnum value);
   public:
 
-  // int32 request_id = 3 [(.dccl.field) = {
+  // optional int32 request_id = 3 [(.dccl.field) = {
+  bool has_request_id() const;
+  private:
+  bool _internal_has_request_id() const;
+  public:
   void clear_request_id();
   int32_t request_id() const;
   void set_request_id(int32_t value);
@@ -4985,13 +5246,515 @@ class PlanDB final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr plan_id_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr info_;
     ::IMC_DCCL::PlanDBArgUnion* arg_;
     int type_;
     int op_;
     int32_t request_id_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class PlanDBState final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanDBState) */ {
+ public:
+  inline PlanDBState() : PlanDBState(nullptr) {}
+  ~PlanDBState() override;
+  explicit PROTOBUF_CONSTEXPR PlanDBState(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  PlanDBState(const PlanDBState& from);
+  PlanDBState(PlanDBState&& from) noexcept
+    : PlanDBState() {
+    *this = ::std::move(from);
+  }
+
+  inline PlanDBState& operator=(const PlanDBState& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline PlanDBState& operator=(PlanDBState&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const PlanDBState& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const PlanDBState* internal_default_instance() {
+    return reinterpret_cast<const PlanDBState*>(
+               &_PlanDBState_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    20;
+
+  friend void swap(PlanDBState& a, PlanDBState& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(PlanDBState* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(PlanDBState* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  PlanDBState* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<PlanDBState>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const PlanDBState& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const PlanDBState& from) {
+    PlanDBState::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(PlanDBState* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.PlanDBState";
+  }
+  protected:
+  explicit PlanDBState(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kPlansInfoFieldNumber = 7,
+    kChangeSnameFieldNumber = 5,
+    kMd5FieldNumber = 6,
+    kPlanCountFieldNumber = 1,
+    kPlanSizeFieldNumber = 2,
+    kChangeTimeFieldNumber = 3,
+    kChangeSidFieldNumber = 4,
+  };
+  // repeated .IMC_DCCL.PlanDBInformation plans_info = 7 [(.dccl.field) = {
+  int plans_info_size() const;
+  private:
+  int _internal_plans_info_size() const;
+  public:
+  void clear_plans_info();
+  ::IMC_DCCL::PlanDBInformation* mutable_plans_info(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanDBInformation >*
+      mutable_plans_info();
+  private:
+  const ::IMC_DCCL::PlanDBInformation& _internal_plans_info(int index) const;
+  ::IMC_DCCL::PlanDBInformation* _internal_add_plans_info();
+  public:
+  const ::IMC_DCCL::PlanDBInformation& plans_info(int index) const;
+  ::IMC_DCCL::PlanDBInformation* add_plans_info();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanDBInformation >&
+      plans_info() const;
+
+  // optional string change_sname = 5 [(.dccl.field) = {
+  bool has_change_sname() const;
+  private:
+  bool _internal_has_change_sname() const;
+  public:
+  void clear_change_sname();
+  const std::string& change_sname() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_change_sname(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_change_sname();
+  PROTOBUF_NODISCARD std::string* release_change_sname();
+  void set_allocated_change_sname(std::string* change_sname);
+  private:
+  const std::string& _internal_change_sname() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_change_sname(const std::string& value);
+  std::string* _internal_mutable_change_sname();
+  public:
+
+  // optional string md5 = 6 [(.dccl.field) = {
+  bool has_md5() const;
+  private:
+  bool _internal_has_md5() const;
+  public:
+  void clear_md5();
+  const std::string& md5() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_md5(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_md5();
+  PROTOBUF_NODISCARD std::string* release_md5();
+  void set_allocated_md5(std::string* md5);
+  private:
+  const std::string& _internal_md5() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_md5(const std::string& value);
+  std::string* _internal_mutable_md5();
+  public:
+
+  // optional int32 plan_count = 1 [(.dccl.field) = {
+  bool has_plan_count() const;
+  private:
+  bool _internal_has_plan_count() const;
+  public:
+  void clear_plan_count();
+  int32_t plan_count() const;
+  void set_plan_count(int32_t value);
+  private:
+  int32_t _internal_plan_count() const;
+  void _internal_set_plan_count(int32_t value);
+  public:
+
+  // optional int32 plan_size = 2 [(.dccl.field) = {
+  bool has_plan_size() const;
+  private:
+  bool _internal_has_plan_size() const;
+  public:
+  void clear_plan_size();
+  int32_t plan_size() const;
+  void set_plan_size(int32_t value);
+  private:
+  int32_t _internal_plan_size() const;
+  void _internal_set_plan_size(int32_t value);
+  public:
+
+  // optional float change_time = 3 [(.dccl.field) = {
+  bool has_change_time() const;
+  private:
+  bool _internal_has_change_time() const;
+  public:
+  void clear_change_time();
+  float change_time() const;
+  void set_change_time(float value);
+  private:
+  float _internal_change_time() const;
+  void _internal_set_change_time(float value);
+  public:
+
+  // optional int32 change_sid = 4 [(.dccl.field) = {
+  bool has_change_sid() const;
+  private:
+  bool _internal_has_change_sid() const;
+  public:
+  void clear_change_sid();
+  int32_t change_sid() const;
+  void set_change_sid(int32_t value);
+  private:
+  int32_t _internal_change_sid() const;
+  void _internal_set_change_sid(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanDBState)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanDBInformation > plans_info_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr change_sname_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr md5_;
+    int32_t plan_count_;
+    int32_t plan_size_;
+    float change_time_;
+    int32_t change_sid_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class PlanDBInformation final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanDBInformation) */ {
+ public:
+  inline PlanDBInformation() : PlanDBInformation(nullptr) {}
+  ~PlanDBInformation() override;
+  explicit PROTOBUF_CONSTEXPR PlanDBInformation(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  PlanDBInformation(const PlanDBInformation& from);
+  PlanDBInformation(PlanDBInformation&& from) noexcept
+    : PlanDBInformation() {
+    *this = ::std::move(from);
+  }
+
+  inline PlanDBInformation& operator=(const PlanDBInformation& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline PlanDBInformation& operator=(PlanDBInformation&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const PlanDBInformation& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const PlanDBInformation* internal_default_instance() {
+    return reinterpret_cast<const PlanDBInformation*>(
+               &_PlanDBInformation_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    21;
+
+  friend void swap(PlanDBInformation& a, PlanDBInformation& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(PlanDBInformation* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(PlanDBInformation* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  PlanDBInformation* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<PlanDBInformation>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const PlanDBInformation& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const PlanDBInformation& from) {
+    PlanDBInformation::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(PlanDBInformation* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.PlanDBInformation";
+  }
+  protected:
+  explicit PlanDBInformation(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kPlanIdFieldNumber = 1,
+    kChangeSnameFieldNumber = 5,
+    kMd5FieldNumber = 6,
+    kPlanSizeFieldNumber = 2,
+    kChangeTimeFieldNumber = 3,
+    kChangeSidFieldNumber = 4,
+  };
+  // optional string plan_id = 1 [(.dccl.field) = {
+  bool has_plan_id() const;
+  private:
+  bool _internal_has_plan_id() const;
+  public:
+  void clear_plan_id();
+  const std::string& plan_id() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_plan_id(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_plan_id();
+  PROTOBUF_NODISCARD std::string* release_plan_id();
+  void set_allocated_plan_id(std::string* plan_id);
+  private:
+  const std::string& _internal_plan_id() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_plan_id(const std::string& value);
+  std::string* _internal_mutable_plan_id();
+  public:
+
+  // optional string change_sname = 5 [(.dccl.field) = {
+  bool has_change_sname() const;
+  private:
+  bool _internal_has_change_sname() const;
+  public:
+  void clear_change_sname();
+  const std::string& change_sname() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_change_sname(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_change_sname();
+  PROTOBUF_NODISCARD std::string* release_change_sname();
+  void set_allocated_change_sname(std::string* change_sname);
+  private:
+  const std::string& _internal_change_sname() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_change_sname(const std::string& value);
+  std::string* _internal_mutable_change_sname();
+  public:
+
+  // optional string md5 = 6 [(.dccl.field) = {
+  bool has_md5() const;
+  private:
+  bool _internal_has_md5() const;
+  public:
+  void clear_md5();
+  const std::string& md5() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_md5(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_md5();
+  PROTOBUF_NODISCARD std::string* release_md5();
+  void set_allocated_md5(std::string* md5);
+  private:
+  const std::string& _internal_md5() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_md5(const std::string& value);
+  std::string* _internal_mutable_md5();
+  public:
+
+  // optional int32 plan_size = 2 [(.dccl.field) = {
+  bool has_plan_size() const;
+  private:
+  bool _internal_has_plan_size() const;
+  public:
+  void clear_plan_size();
+  int32_t plan_size() const;
+  void set_plan_size(int32_t value);
+  private:
+  int32_t _internal_plan_size() const;
+  void _internal_set_plan_size(int32_t value);
+  public:
+
+  // optional float change_time = 3 [(.dccl.field) = {
+  bool has_change_time() const;
+  private:
+  bool _internal_has_change_time() const;
+  public:
+  void clear_change_time();
+  float change_time() const;
+  void set_change_time(float value);
+  private:
+  float _internal_change_time() const;
+  void _internal_set_change_time(float value);
+  public:
+
+  // optional int32 change_sid = 4 [(.dccl.field) = {
+  bool has_change_sid() const;
+  private:
+  bool _internal_has_change_sid() const;
+  public:
+  void clear_change_sid();
+  int32_t change_sid() const;
+  void set_change_sid(int32_t value);
+  private:
+  int32_t _internal_change_sid() const;
+  void _internal_set_change_sid(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanDBInformation)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr plan_id_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr change_sname_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr md5_;
+    int32_t plan_size_;
+    float change_time_;
+    int32_t change_sid_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -5043,6 +5806,8 @@ class PlanDBArgUnion final :
   }
   enum PlanDBArgUnionCase {
     kPsArg = 1,
+    kPiArg = 2,
+    kPcArg = 3,
     PLANDBARGUNION__NOT_SET = 0,
   };
 
@@ -5051,7 +5816,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    22;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -5125,6 +5890,8 @@ class PlanDBArgUnion final :
 
   enum : int {
     kPsArgFieldNumber = 1,
+    kPiArgFieldNumber = 2,
+    kPcArgFieldNumber = 3,
   };
   // .IMC_DCCL.PlanSpecification ps_arg = 1;
   bool has_ps_arg() const;
@@ -5144,12 +5911,50 @@ class PlanDBArgUnion final :
       ::IMC_DCCL::PlanSpecification* ps_arg);
   ::IMC_DCCL::PlanSpecification* unsafe_arena_release_ps_arg();
 
+  // .IMC_DCCL.PlanDBInformation pi_arg = 2;
+  bool has_pi_arg() const;
+  private:
+  bool _internal_has_pi_arg() const;
+  public:
+  void clear_pi_arg();
+  const ::IMC_DCCL::PlanDBInformation& pi_arg() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::PlanDBInformation* release_pi_arg();
+  ::IMC_DCCL::PlanDBInformation* mutable_pi_arg();
+  void set_allocated_pi_arg(::IMC_DCCL::PlanDBInformation* pi_arg);
+  private:
+  const ::IMC_DCCL::PlanDBInformation& _internal_pi_arg() const;
+  ::IMC_DCCL::PlanDBInformation* _internal_mutable_pi_arg();
+  public:
+  void unsafe_arena_set_allocated_pi_arg(
+      ::IMC_DCCL::PlanDBInformation* pi_arg);
+  ::IMC_DCCL::PlanDBInformation* unsafe_arena_release_pi_arg();
+
+  // .IMC_DCCL.PlanDBState pc_arg = 3;
+  bool has_pc_arg() const;
+  private:
+  bool _internal_has_pc_arg() const;
+  public:
+  void clear_pc_arg();
+  const ::IMC_DCCL::PlanDBState& pc_arg() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::PlanDBState* release_pc_arg();
+  ::IMC_DCCL::PlanDBState* mutable_pc_arg();
+  void set_allocated_pc_arg(::IMC_DCCL::PlanDBState* pc_arg);
+  private:
+  const ::IMC_DCCL::PlanDBState& _internal_pc_arg() const;
+  ::IMC_DCCL::PlanDBState* _internal_mutable_pc_arg();
+  public:
+  void unsafe_arena_set_allocated_pc_arg(
+      ::IMC_DCCL::PlanDBState* pc_arg);
+  ::IMC_DCCL::PlanDBState* unsafe_arena_release_pc_arg();
+
   void clear_PlanDBArgUnion_();
   PlanDBArgUnionCase PlanDBArgUnion__case() const;
   // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanDBArgUnion)
  private:
   class _Internal;
   void set_has_ps_arg();
+  void set_has_pi_arg();
+  void set_has_pc_arg();
 
   inline bool has_PlanDBArgUnion_() const;
   inline void clear_has_PlanDBArgUnion_();
@@ -5162,6 +5967,8 @@ class PlanDBArgUnion final :
       constexpr PlanDBArgUnionUnion() : _constinit_{} {}
         ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
       ::IMC_DCCL::PlanSpecification* ps_arg_;
+      ::IMC_DCCL::PlanDBInformation* pi_arg_;
+      ::IMC_DCCL::PlanDBState* pc_arg_;
     } PlanDBArgUnion__;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     uint32_t _oneof_case_[1];
@@ -5225,7 +6032,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    23;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -5399,7 +6206,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    24;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -5529,9 +6336,17 @@ class PlanSpecificationEndActionsUnion final :
 #endif  // __GNUC__
 // ProfileSample
 
-// int32 depth = 1 [(.dccl.field) = {
+// optional int32 depth = 1 [(.dccl.field) = {
+inline bool ProfileSample::_internal_has_depth() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool ProfileSample::has_depth() const {
+  return _internal_has_depth();
+}
 inline void ProfileSample::clear_depth() {
   _impl_.depth_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline int32_t ProfileSample::_internal_depth() const {
   return _impl_.depth_;
@@ -5541,7 +6356,7 @@ inline int32_t ProfileSample::depth() const {
   return _internal_depth();
 }
 inline void ProfileSample::_internal_set_depth(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.depth_ = value;
 }
 inline void ProfileSample::set_depth(int32_t value) {
@@ -5549,9 +6364,17 @@ inline void ProfileSample::set_depth(int32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.ProfileSample.depth)
 }
 
-// float avg = 2 [(.dccl.field) = {
+// optional float avg = 2 [(.dccl.field) = {
+inline bool ProfileSample::_internal_has_avg() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool ProfileSample::has_avg() const {
+  return _internal_has_avg();
+}
 inline void ProfileSample::clear_avg() {
   _impl_.avg_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline float ProfileSample::_internal_avg() const {
   return _impl_.avg_;
@@ -5561,7 +6384,7 @@ inline float ProfileSample::avg() const {
   return _internal_avg();
 }
 inline void ProfileSample::_internal_set_avg(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.avg_ = value;
 }
 inline void ProfileSample::set_avg(float value) {
@@ -5573,9 +6396,17 @@ inline void ProfileSample::set_avg(float value) {
 
 // StationKeeping
 
-// float lat = 1 [(.dccl.field) = {
+// optional float lat = 1 [(.dccl.field) = {
+inline bool StationKeeping::_internal_has_lat() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool StationKeeping::has_lat() const {
+  return _internal_has_lat();
+}
 inline void StationKeeping::clear_lat() {
   _impl_.lat_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline float StationKeeping::_internal_lat() const {
   return _impl_.lat_;
@@ -5585,7 +6416,7 @@ inline float StationKeeping::lat() const {
   return _internal_lat();
 }
 inline void StationKeeping::_internal_set_lat(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.lat_ = value;
 }
 inline void StationKeeping::set_lat(float value) {
@@ -5593,9 +6424,17 @@ inline void StationKeeping::set_lat(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.lat)
 }
 
-// float lon = 2 [(.dccl.field) = {
+// optional float lon = 2 [(.dccl.field) = {
+inline bool StationKeeping::_internal_has_lon() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool StationKeeping::has_lon() const {
+  return _internal_has_lon();
+}
 inline void StationKeeping::clear_lon() {
   _impl_.lon_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline float StationKeeping::_internal_lon() const {
   return _impl_.lon_;
@@ -5605,7 +6444,7 @@ inline float StationKeeping::lon() const {
   return _internal_lon();
 }
 inline void StationKeeping::_internal_set_lon(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.lon_ = value;
 }
 inline void StationKeeping::set_lon(float value) {
@@ -5613,9 +6452,17 @@ inline void StationKeeping::set_lon(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.lon)
 }
 
-// float z = 3 [(.dccl.field) = {
+// optional float z = 3 [(.dccl.field) = {
+inline bool StationKeeping::_internal_has_z() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool StationKeeping::has_z() const {
+  return _internal_has_z();
+}
 inline void StationKeeping::clear_z() {
   _impl_.z_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline float StationKeeping::_internal_z() const {
   return _impl_.z_;
@@ -5625,7 +6472,7 @@ inline float StationKeeping::z() const {
   return _internal_z();
 }
 inline void StationKeeping::_internal_set_z(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.z_ = value;
 }
 inline void StationKeeping::set_z(float value) {
@@ -5653,9 +6500,17 @@ inline void StationKeeping::set_z_units(::IMC_DCCL::ZUnits value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.z_units)
 }
 
-// float radius = 5 [(.dccl.field) = {
+// optional float radius = 5 [(.dccl.field) = {
+inline bool StationKeeping::_internal_has_radius() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool StationKeeping::has_radius() const {
+  return _internal_has_radius();
+}
 inline void StationKeeping::clear_radius() {
   _impl_.radius_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline float StationKeeping::_internal_radius() const {
   return _impl_.radius_;
@@ -5665,7 +6520,7 @@ inline float StationKeeping::radius() const {
   return _internal_radius();
 }
 inline void StationKeeping::_internal_set_radius(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.radius_ = value;
 }
 inline void StationKeeping::set_radius(float value) {
@@ -5673,9 +6528,17 @@ inline void StationKeeping::set_radius(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.radius)
 }
 
-// int32 duration = 6 [(.dccl.field) = {
+// optional int32 duration = 6 [(.dccl.field) = {
+inline bool StationKeeping::_internal_has_duration() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool StationKeeping::has_duration() const {
+  return _internal_has_duration();
+}
 inline void StationKeeping::clear_duration() {
   _impl_.duration_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline int32_t StationKeeping::_internal_duration() const {
   return _impl_.duration_;
@@ -5685,7 +6548,7 @@ inline int32_t StationKeeping::duration() const {
   return _internal_duration();
 }
 inline void StationKeeping::_internal_set_duration(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.duration_ = value;
 }
 inline void StationKeeping::set_duration(int32_t value) {
@@ -5693,9 +6556,17 @@ inline void StationKeeping::set_duration(int32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.duration)
 }
 
-// float speed = 7 [(.dccl.field) = {
+// optional float speed = 7 [(.dccl.field) = {
+inline bool StationKeeping::_internal_has_speed() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  return value;
+}
+inline bool StationKeeping::has_speed() const {
+  return _internal_has_speed();
+}
 inline void StationKeeping::clear_speed() {
   _impl_.speed_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000020u;
 }
 inline float StationKeeping::_internal_speed() const {
   return _impl_.speed_;
@@ -5705,7 +6576,7 @@ inline float StationKeeping::speed() const {
   return _internal_speed();
 }
 inline void StationKeeping::_internal_set_speed(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.speed_ = value;
 }
 inline void StationKeeping::set_speed(float value) {
@@ -5737,9 +6608,17 @@ inline void StationKeeping::set_speed_units(::IMC_DCCL::SpeedUnits value) {
 
 // FollowPath
 
-// int32 timeout = 1 [(.dccl.field) = {
+// optional int32 timeout = 1 [(.dccl.field) = {
+inline bool FollowPath::_internal_has_timeout() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool FollowPath::has_timeout() const {
+  return _internal_has_timeout();
+}
 inline void FollowPath::clear_timeout() {
   _impl_.timeout_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline int32_t FollowPath::_internal_timeout() const {
   return _impl_.timeout_;
@@ -5749,7 +6628,7 @@ inline int32_t FollowPath::timeout() const {
   return _internal_timeout();
 }
 inline void FollowPath::_internal_set_timeout(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.timeout_ = value;
 }
 inline void FollowPath::set_timeout(int32_t value) {
@@ -5757,9 +6636,17 @@ inline void FollowPath::set_timeout(int32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.FollowPath.timeout)
 }
 
-// float lat = 2 [(.dccl.field) = {
+// optional float lat = 2 [(.dccl.field) = {
+inline bool FollowPath::_internal_has_lat() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool FollowPath::has_lat() const {
+  return _internal_has_lat();
+}
 inline void FollowPath::clear_lat() {
   _impl_.lat_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline float FollowPath::_internal_lat() const {
   return _impl_.lat_;
@@ -5769,7 +6656,7 @@ inline float FollowPath::lat() const {
   return _internal_lat();
 }
 inline void FollowPath::_internal_set_lat(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.lat_ = value;
 }
 inline void FollowPath::set_lat(float value) {
@@ -5777,9 +6664,17 @@ inline void FollowPath::set_lat(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.FollowPath.lat)
 }
 
-// float lon = 3 [(.dccl.field) = {
+// optional float lon = 3 [(.dccl.field) = {
+inline bool FollowPath::_internal_has_lon() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool FollowPath::has_lon() const {
+  return _internal_has_lon();
+}
 inline void FollowPath::clear_lon() {
   _impl_.lon_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline float FollowPath::_internal_lon() const {
   return _impl_.lon_;
@@ -5789,7 +6684,7 @@ inline float FollowPath::lon() const {
   return _internal_lon();
 }
 inline void FollowPath::_internal_set_lon(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.lon_ = value;
 }
 inline void FollowPath::set_lon(float value) {
@@ -5797,9 +6692,17 @@ inline void FollowPath::set_lon(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.FollowPath.lon)
 }
 
-// float z = 4 [(.dccl.field) = {
+// optional float z = 4 [(.dccl.field) = {
+inline bool FollowPath::_internal_has_z() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool FollowPath::has_z() const {
+  return _internal_has_z();
+}
 inline void FollowPath::clear_z() {
   _impl_.z_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline float FollowPath::_internal_z() const {
   return _impl_.z_;
@@ -5809,7 +6712,7 @@ inline float FollowPath::z() const {
   return _internal_z();
 }
 inline void FollowPath::_internal_set_z(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.z_ = value;
 }
 inline void FollowPath::set_z(float value) {
@@ -5837,9 +6740,17 @@ inline void FollowPath::set_z_units(::IMC_DCCL::ZUnits value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.FollowPath.z_units)
 }
 
-// float speed = 6 [(.dccl.field) = {
+// optional float speed = 6 [(.dccl.field) = {
+inline bool FollowPath::_internal_has_speed() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool FollowPath::has_speed() const {
+  return _internal_has_speed();
+}
 inline void FollowPath::clear_speed() {
   _impl_.speed_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline float FollowPath::_internal_speed() const {
   return _impl_.speed_;
@@ -5849,7 +6760,7 @@ inline float FollowPath::speed() const {
   return _internal_speed();
 }
 inline void FollowPath::_internal_set_speed(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.speed_ = value;
 }
 inline void FollowPath::set_speed(float value) {
@@ -5921,9 +6832,17 @@ FollowPath::points() const {
 
 // Goto
 
-// int32 timeout = 1 [(.dccl.field) = {
+// optional int32 timeout = 1 [(.dccl.field) = {
+inline bool Goto::_internal_has_timeout() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool Goto::has_timeout() const {
+  return _internal_has_timeout();
+}
 inline void Goto::clear_timeout() {
   _impl_.timeout_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline int32_t Goto::_internal_timeout() const {
   return _impl_.timeout_;
@@ -5933,7 +6852,7 @@ inline int32_t Goto::timeout() const {
   return _internal_timeout();
 }
 inline void Goto::_internal_set_timeout(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.timeout_ = value;
 }
 inline void Goto::set_timeout(int32_t value) {
@@ -5941,9 +6860,17 @@ inline void Goto::set_timeout(int32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.timeout)
 }
 
-// float lat = 2 [(.dccl.field) = {
+// optional float lat = 2 [(.dccl.field) = {
+inline bool Goto::_internal_has_lat() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool Goto::has_lat() const {
+  return _internal_has_lat();
+}
 inline void Goto::clear_lat() {
   _impl_.lat_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline float Goto::_internal_lat() const {
   return _impl_.lat_;
@@ -5953,7 +6880,7 @@ inline float Goto::lat() const {
   return _internal_lat();
 }
 inline void Goto::_internal_set_lat(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.lat_ = value;
 }
 inline void Goto::set_lat(float value) {
@@ -5961,9 +6888,17 @@ inline void Goto::set_lat(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.lat)
 }
 
-// float lon = 3 [(.dccl.field) = {
+// optional float lon = 3 [(.dccl.field) = {
+inline bool Goto::_internal_has_lon() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool Goto::has_lon() const {
+  return _internal_has_lon();
+}
 inline void Goto::clear_lon() {
   _impl_.lon_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline float Goto::_internal_lon() const {
   return _impl_.lon_;
@@ -5973,7 +6908,7 @@ inline float Goto::lon() const {
   return _internal_lon();
 }
 inline void Goto::_internal_set_lon(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.lon_ = value;
 }
 inline void Goto::set_lon(float value) {
@@ -5981,9 +6916,17 @@ inline void Goto::set_lon(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.lon)
 }
 
-// float z = 4 [(.dccl.field) = {
+// optional float z = 4 [(.dccl.field) = {
+inline bool Goto::_internal_has_z() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool Goto::has_z() const {
+  return _internal_has_z();
+}
 inline void Goto::clear_z() {
   _impl_.z_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline float Goto::_internal_z() const {
   return _impl_.z_;
@@ -5993,7 +6936,7 @@ inline float Goto::z() const {
   return _internal_z();
 }
 inline void Goto::_internal_set_z(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.z_ = value;
 }
 inline void Goto::set_z(float value) {
@@ -6021,9 +6964,17 @@ inline void Goto::set_z_units(::IMC_DCCL::ZUnits value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.z_units)
 }
 
-// float speed = 6 [(.dccl.field) = {
+// optional float speed = 6 [(.dccl.field) = {
+inline bool Goto::_internal_has_speed() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool Goto::has_speed() const {
+  return _internal_has_speed();
+}
 inline void Goto::clear_speed() {
   _impl_.speed_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline float Goto::_internal_speed() const {
   return _impl_.speed_;
@@ -6033,7 +6984,7 @@ inline float Goto::speed() const {
   return _internal_speed();
 }
 inline void Goto::_internal_set_speed(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.speed_ = value;
 }
 inline void Goto::set_speed(float value) {
@@ -6061,9 +7012,17 @@ inline void Goto::set_speed_units(::IMC_DCCL::SpeedUnits value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.speed_units)
 }
 
-// float roll = 8 [(.dccl.field) = {
+// optional float roll = 8 [(.dccl.field) = {
+inline bool Goto::_internal_has_roll() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  return value;
+}
+inline bool Goto::has_roll() const {
+  return _internal_has_roll();
+}
 inline void Goto::clear_roll() {
   _impl_.roll_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000020u;
 }
 inline float Goto::_internal_roll() const {
   return _impl_.roll_;
@@ -6073,7 +7032,7 @@ inline float Goto::roll() const {
   return _internal_roll();
 }
 inline void Goto::_internal_set_roll(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.roll_ = value;
 }
 inline void Goto::set_roll(float value) {
@@ -6081,9 +7040,17 @@ inline void Goto::set_roll(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.roll)
 }
 
-// float pitch = 9 [(.dccl.field) = {
+// optional float pitch = 9 [(.dccl.field) = {
+inline bool Goto::_internal_has_pitch() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000040u) != 0;
+  return value;
+}
+inline bool Goto::has_pitch() const {
+  return _internal_has_pitch();
+}
 inline void Goto::clear_pitch() {
   _impl_.pitch_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000040u;
 }
 inline float Goto::_internal_pitch() const {
   return _impl_.pitch_;
@@ -6093,7 +7060,7 @@ inline float Goto::pitch() const {
   return _internal_pitch();
 }
 inline void Goto::_internal_set_pitch(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000040u;
   _impl_.pitch_ = value;
 }
 inline void Goto::set_pitch(float value) {
@@ -6101,9 +7068,17 @@ inline void Goto::set_pitch(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.pitch)
 }
 
-// float yaw = 10 [(.dccl.field) = {
+// optional float yaw = 10 [(.dccl.field) = {
+inline bool Goto::_internal_has_yaw() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000080u) != 0;
+  return value;
+}
+inline bool Goto::has_yaw() const {
+  return _internal_has_yaw();
+}
 inline void Goto::clear_yaw() {
   _impl_.yaw_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000080u;
 }
 inline float Goto::_internal_yaw() const {
   return _impl_.yaw_;
@@ -6113,7 +7088,7 @@ inline float Goto::yaw() const {
   return _internal_yaw();
 }
 inline void Goto::_internal_set_yaw(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000080u;
   _impl_.yaw_ = value;
 }
 inline void Goto::set_yaw(float value) {
@@ -6291,9 +7266,17 @@ inline ParameterValue::ParameterValueUnionCase ParameterValue::ParameterValueUni
 
 // PathPoint
 
-// float x = 1 [(.dccl.field) = {
+// optional float x = 1 [(.dccl.field) = {
+inline bool PathPoint::_internal_has_x() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool PathPoint::has_x() const {
+  return _internal_has_x();
+}
 inline void PathPoint::clear_x() {
   _impl_.x_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline float PathPoint::_internal_x() const {
   return _impl_.x_;
@@ -6303,7 +7286,7 @@ inline float PathPoint::x() const {
   return _internal_x();
 }
 inline void PathPoint::_internal_set_x(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.x_ = value;
 }
 inline void PathPoint::set_x(float value) {
@@ -6311,9 +7294,17 @@ inline void PathPoint::set_x(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.PathPoint.x)
 }
 
-// float y = 2 [(.dccl.field) = {
+// optional float y = 2 [(.dccl.field) = {
+inline bool PathPoint::_internal_has_y() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool PathPoint::has_y() const {
+  return _internal_has_y();
+}
 inline void PathPoint::clear_y() {
   _impl_.y_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline float PathPoint::_internal_y() const {
   return _impl_.y_;
@@ -6323,7 +7314,7 @@ inline float PathPoint::y() const {
   return _internal_y();
 }
 inline void PathPoint::_internal_set_y(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.y_ = value;
 }
 inline void PathPoint::set_y(float value) {
@@ -6331,9 +7322,17 @@ inline void PathPoint::set_y(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.PathPoint.y)
 }
 
-// float z = 3 [(.dccl.field) = {
+// optional float z = 3 [(.dccl.field) = {
+inline bool PathPoint::_internal_has_z() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool PathPoint::has_z() const {
+  return _internal_has_z();
+}
 inline void PathPoint::clear_z() {
   _impl_.z_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline float PathPoint::_internal_z() const {
   return _impl_.z_;
@@ -6343,7 +7342,7 @@ inline float PathPoint::z() const {
   return _internal_z();
 }
 inline void PathPoint::_internal_set_z(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.z_ = value;
 }
 inline void PathPoint::set_z(float value) {
@@ -7178,9 +8177,17 @@ inline TransitionCondition::TransitionConditionUnionCase TransitionCondition::Tr
 
 // Loiter
 
-// int32 timeout = 1 [(.dccl.field) = {
+// optional int32 timeout = 1 [(.dccl.field) = {
+inline bool Loiter::_internal_has_timeout() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool Loiter::has_timeout() const {
+  return _internal_has_timeout();
+}
 inline void Loiter::clear_timeout() {
   _impl_.timeout_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline int32_t Loiter::_internal_timeout() const {
   return _impl_.timeout_;
@@ -7190,7 +8197,7 @@ inline int32_t Loiter::timeout() const {
   return _internal_timeout();
 }
 inline void Loiter::_internal_set_timeout(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.timeout_ = value;
 }
 inline void Loiter::set_timeout(int32_t value) {
@@ -7198,9 +8205,17 @@ inline void Loiter::set_timeout(int32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.timeout)
 }
 
-// float lat = 2 [(.dccl.field) = {
+// optional float lat = 2 [(.dccl.field) = {
+inline bool Loiter::_internal_has_lat() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool Loiter::has_lat() const {
+  return _internal_has_lat();
+}
 inline void Loiter::clear_lat() {
   _impl_.lat_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline float Loiter::_internal_lat() const {
   return _impl_.lat_;
@@ -7210,7 +8225,7 @@ inline float Loiter::lat() const {
   return _internal_lat();
 }
 inline void Loiter::_internal_set_lat(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.lat_ = value;
 }
 inline void Loiter::set_lat(float value) {
@@ -7218,9 +8233,17 @@ inline void Loiter::set_lat(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.lat)
 }
 
-// float lon = 3 [(.dccl.field) = {
+// optional float lon = 3 [(.dccl.field) = {
+inline bool Loiter::_internal_has_lon() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool Loiter::has_lon() const {
+  return _internal_has_lon();
+}
 inline void Loiter::clear_lon() {
   _impl_.lon_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline float Loiter::_internal_lon() const {
   return _impl_.lon_;
@@ -7230,7 +8253,7 @@ inline float Loiter::lon() const {
   return _internal_lon();
 }
 inline void Loiter::_internal_set_lon(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.lon_ = value;
 }
 inline void Loiter::set_lon(float value) {
@@ -7238,9 +8261,17 @@ inline void Loiter::set_lon(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.lon)
 }
 
-// float z = 4 [(.dccl.field) = {
+// optional float z = 4 [(.dccl.field) = {
+inline bool Loiter::_internal_has_z() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool Loiter::has_z() const {
+  return _internal_has_z();
+}
 inline void Loiter::clear_z() {
   _impl_.z_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline float Loiter::_internal_z() const {
   return _impl_.z_;
@@ -7250,7 +8281,7 @@ inline float Loiter::z() const {
   return _internal_z();
 }
 inline void Loiter::_internal_set_z(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.z_ = value;
 }
 inline void Loiter::set_z(float value) {
@@ -7278,9 +8309,17 @@ inline void Loiter::set_z_units(::IMC_DCCL::ZUnits value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.z_units)
 }
 
-// int32 duration = 6 [(.dccl.field) = {
+// optional int32 duration = 6 [(.dccl.field) = {
+inline bool Loiter::_internal_has_duration() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool Loiter::has_duration() const {
+  return _internal_has_duration();
+}
 inline void Loiter::clear_duration() {
   _impl_.duration_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline int32_t Loiter::_internal_duration() const {
   return _impl_.duration_;
@@ -7290,7 +8329,7 @@ inline int32_t Loiter::duration() const {
   return _internal_duration();
 }
 inline void Loiter::_internal_set_duration(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.duration_ = value;
 }
 inline void Loiter::set_duration(int32_t value) {
@@ -7358,9 +8397,17 @@ inline void Loiter::set_type(::IMC_DCCL::Loiter_LoiterTypeEnum value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.type)
 }
 
-// float radius = 10 [(.dccl.field) = {
+// optional float radius = 10 [(.dccl.field) = {
+inline bool Loiter::_internal_has_radius() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  return value;
+}
+inline bool Loiter::has_radius() const {
+  return _internal_has_radius();
+}
 inline void Loiter::clear_radius() {
   _impl_.radius_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000020u;
 }
 inline float Loiter::_internal_radius() const {
   return _impl_.radius_;
@@ -7370,7 +8417,7 @@ inline float Loiter::radius() const {
   return _internal_radius();
 }
 inline void Loiter::_internal_set_radius(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.radius_ = value;
 }
 inline void Loiter::set_radius(float value) {
@@ -7378,9 +8425,17 @@ inline void Loiter::set_radius(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.radius)
 }
 
-// float length = 11 [(.dccl.field) = {
+// optional float length = 11 [(.dccl.field) = {
+inline bool Loiter::_internal_has_length() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000040u) != 0;
+  return value;
+}
+inline bool Loiter::has_length() const {
+  return _internal_has_length();
+}
 inline void Loiter::clear_length() {
   _impl_.length_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000040u;
 }
 inline float Loiter::_internal_length() const {
   return _impl_.length_;
@@ -7390,7 +8445,7 @@ inline float Loiter::length() const {
   return _internal_length();
 }
 inline void Loiter::_internal_set_length(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000040u;
   _impl_.length_ = value;
 }
 inline void Loiter::set_length(float value) {
@@ -7398,9 +8453,17 @@ inline void Loiter::set_length(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.length)
 }
 
-// float bearing = 12 [(.dccl.field) = {
+// optional float bearing = 12 [(.dccl.field) = {
+inline bool Loiter::_internal_has_bearing() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000080u) != 0;
+  return value;
+}
+inline bool Loiter::has_bearing() const {
+  return _internal_has_bearing();
+}
 inline void Loiter::clear_bearing() {
   _impl_.bearing_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000080u;
 }
 inline float Loiter::_internal_bearing() const {
   return _impl_.bearing_;
@@ -7410,7 +8473,7 @@ inline float Loiter::bearing() const {
   return _internal_bearing();
 }
 inline void Loiter::_internal_set_bearing(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000080u;
   _impl_.bearing_ = value;
 }
 inline void Loiter::set_bearing(float value) {
@@ -8047,9 +9110,17 @@ inline void VerticalProfile::set_parameter(::IMC_DCCL::VerticalProfile_Parameter
   // @@protoc_insertion_point(field_set:IMC_DCCL.VerticalProfile.parameter)
 }
 
-// int32 numsamples = 2 [(.dccl.field) = {
+// optional int32 numsamples = 2 [(.dccl.field) = {
+inline bool VerticalProfile::_internal_has_numsamples() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool VerticalProfile::has_numsamples() const {
+  return _internal_has_numsamples();
+}
 inline void VerticalProfile::clear_numsamples() {
   _impl_.numsamples_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline int32_t VerticalProfile::_internal_numsamples() const {
   return _impl_.numsamples_;
@@ -8059,7 +9130,7 @@ inline int32_t VerticalProfile::numsamples() const {
   return _internal_numsamples();
 }
 inline void VerticalProfile::_internal_set_numsamples(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.numsamples_ = value;
 }
 inline void VerticalProfile::set_numsamples(int32_t value) {
@@ -8107,9 +9178,17 @@ VerticalProfile::samples() const {
   return _impl_.samples_;
 }
 
-// float lat = 4 [(.dccl.field) = {
+// optional float lat = 4 [(.dccl.field) = {
+inline bool VerticalProfile::_internal_has_lat() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool VerticalProfile::has_lat() const {
+  return _internal_has_lat();
+}
 inline void VerticalProfile::clear_lat() {
   _impl_.lat_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline float VerticalProfile::_internal_lat() const {
   return _impl_.lat_;
@@ -8119,7 +9198,7 @@ inline float VerticalProfile::lat() const {
   return _internal_lat();
 }
 inline void VerticalProfile::_internal_set_lat(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.lat_ = value;
 }
 inline void VerticalProfile::set_lat(float value) {
@@ -8127,9 +9206,17 @@ inline void VerticalProfile::set_lat(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.VerticalProfile.lat)
 }
 
-// float lon = 5 [(.dccl.field) = {
+// optional float lon = 5 [(.dccl.field) = {
+inline bool VerticalProfile::_internal_has_lon() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool VerticalProfile::has_lon() const {
+  return _internal_has_lon();
+}
 inline void VerticalProfile::clear_lon() {
   _impl_.lon_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline float VerticalProfile::_internal_lon() const {
   return _impl_.lon_;
@@ -8139,7 +9226,7 @@ inline float VerticalProfile::lon() const {
   return _internal_lon();
 }
 inline void VerticalProfile::_internal_set_lon(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.lon_ = value;
 }
 inline void VerticalProfile::set_lon(float value) {
@@ -8151,9 +9238,17 @@ inline void VerticalProfile::set_lon(float value) {
 
 // EstimatedState
 
-// float lat = 1 [(.dccl.field) = {
+// optional float lat = 1 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_lat() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_lat() const {
+  return _internal_has_lat();
+}
 inline void EstimatedState::clear_lat() {
   _impl_.lat_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline float EstimatedState::_internal_lat() const {
   return _impl_.lat_;
@@ -8163,7 +9258,7 @@ inline float EstimatedState::lat() const {
   return _internal_lat();
 }
 inline void EstimatedState::_internal_set_lat(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.lat_ = value;
 }
 inline void EstimatedState::set_lat(float value) {
@@ -8171,9 +9266,17 @@ inline void EstimatedState::set_lat(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.lat)
 }
 
-// float lon = 2 [(.dccl.field) = {
+// optional float lon = 2 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_lon() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_lon() const {
+  return _internal_has_lon();
+}
 inline void EstimatedState::clear_lon() {
   _impl_.lon_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline float EstimatedState::_internal_lon() const {
   return _impl_.lon_;
@@ -8183,7 +9286,7 @@ inline float EstimatedState::lon() const {
   return _internal_lon();
 }
 inline void EstimatedState::_internal_set_lon(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.lon_ = value;
 }
 inline void EstimatedState::set_lon(float value) {
@@ -8191,9 +9294,17 @@ inline void EstimatedState::set_lon(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.lon)
 }
 
-// float height = 3 [(.dccl.field) = {
+// optional float height = 3 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_height() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_height() const {
+  return _internal_has_height();
+}
 inline void EstimatedState::clear_height() {
   _impl_.height_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline float EstimatedState::_internal_height() const {
   return _impl_.height_;
@@ -8203,7 +9314,7 @@ inline float EstimatedState::height() const {
   return _internal_height();
 }
 inline void EstimatedState::_internal_set_height(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.height_ = value;
 }
 inline void EstimatedState::set_height(float value) {
@@ -8211,9 +9322,17 @@ inline void EstimatedState::set_height(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.height)
 }
 
-// float x = 4 [(.dccl.field) = {
+// optional float x = 4 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_x() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_x() const {
+  return _internal_has_x();
+}
 inline void EstimatedState::clear_x() {
   _impl_.x_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline float EstimatedState::_internal_x() const {
   return _impl_.x_;
@@ -8223,7 +9342,7 @@ inline float EstimatedState::x() const {
   return _internal_x();
 }
 inline void EstimatedState::_internal_set_x(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.x_ = value;
 }
 inline void EstimatedState::set_x(float value) {
@@ -8231,9 +9350,17 @@ inline void EstimatedState::set_x(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.x)
 }
 
-// float y = 5 [(.dccl.field) = {
+// optional float y = 5 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_y() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_y() const {
+  return _internal_has_y();
+}
 inline void EstimatedState::clear_y() {
   _impl_.y_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline float EstimatedState::_internal_y() const {
   return _impl_.y_;
@@ -8243,7 +9370,7 @@ inline float EstimatedState::y() const {
   return _internal_y();
 }
 inline void EstimatedState::_internal_set_y(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.y_ = value;
 }
 inline void EstimatedState::set_y(float value) {
@@ -8251,9 +9378,17 @@ inline void EstimatedState::set_y(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.y)
 }
 
-// float z = 6 [(.dccl.field) = {
+// optional float z = 6 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_z() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_z() const {
+  return _internal_has_z();
+}
 inline void EstimatedState::clear_z() {
   _impl_.z_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000020u;
 }
 inline float EstimatedState::_internal_z() const {
   return _impl_.z_;
@@ -8263,7 +9398,7 @@ inline float EstimatedState::z() const {
   return _internal_z();
 }
 inline void EstimatedState::_internal_set_z(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.z_ = value;
 }
 inline void EstimatedState::set_z(float value) {
@@ -8271,9 +9406,17 @@ inline void EstimatedState::set_z(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.z)
 }
 
-// float phi = 7 [(.dccl.field) = {
+// optional float phi = 7 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_phi() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000040u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_phi() const {
+  return _internal_has_phi();
+}
 inline void EstimatedState::clear_phi() {
   _impl_.phi_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000040u;
 }
 inline float EstimatedState::_internal_phi() const {
   return _impl_.phi_;
@@ -8283,7 +9426,7 @@ inline float EstimatedState::phi() const {
   return _internal_phi();
 }
 inline void EstimatedState::_internal_set_phi(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000040u;
   _impl_.phi_ = value;
 }
 inline void EstimatedState::set_phi(float value) {
@@ -8291,9 +9434,17 @@ inline void EstimatedState::set_phi(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.phi)
 }
 
-// float theta = 8 [(.dccl.field) = {
+// optional float theta = 8 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_theta() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000080u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_theta() const {
+  return _internal_has_theta();
+}
 inline void EstimatedState::clear_theta() {
   _impl_.theta_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000080u;
 }
 inline float EstimatedState::_internal_theta() const {
   return _impl_.theta_;
@@ -8303,7 +9454,7 @@ inline float EstimatedState::theta() const {
   return _internal_theta();
 }
 inline void EstimatedState::_internal_set_theta(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000080u;
   _impl_.theta_ = value;
 }
 inline void EstimatedState::set_theta(float value) {
@@ -8311,9 +9462,17 @@ inline void EstimatedState::set_theta(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.theta)
 }
 
-// float psi = 9 [(.dccl.field) = {
+// optional float psi = 9 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_psi() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000100u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_psi() const {
+  return _internal_has_psi();
+}
 inline void EstimatedState::clear_psi() {
   _impl_.psi_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000100u;
 }
 inline float EstimatedState::_internal_psi() const {
   return _impl_.psi_;
@@ -8323,7 +9482,7 @@ inline float EstimatedState::psi() const {
   return _internal_psi();
 }
 inline void EstimatedState::_internal_set_psi(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000100u;
   _impl_.psi_ = value;
 }
 inline void EstimatedState::set_psi(float value) {
@@ -8331,9 +9490,17 @@ inline void EstimatedState::set_psi(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.psi)
 }
 
-// float u = 10 [(.dccl.field) = {
+// optional float u = 10 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_u() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000200u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_u() const {
+  return _internal_has_u();
+}
 inline void EstimatedState::clear_u() {
   _impl_.u_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000200u;
 }
 inline float EstimatedState::_internal_u() const {
   return _impl_.u_;
@@ -8343,7 +9510,7 @@ inline float EstimatedState::u() const {
   return _internal_u();
 }
 inline void EstimatedState::_internal_set_u(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000200u;
   _impl_.u_ = value;
 }
 inline void EstimatedState::set_u(float value) {
@@ -8351,9 +9518,17 @@ inline void EstimatedState::set_u(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.u)
 }
 
-// float v = 11 [(.dccl.field) = {
+// optional float v = 11 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_v() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000400u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_v() const {
+  return _internal_has_v();
+}
 inline void EstimatedState::clear_v() {
   _impl_.v_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000400u;
 }
 inline float EstimatedState::_internal_v() const {
   return _impl_.v_;
@@ -8363,7 +9538,7 @@ inline float EstimatedState::v() const {
   return _internal_v();
 }
 inline void EstimatedState::_internal_set_v(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000400u;
   _impl_.v_ = value;
 }
 inline void EstimatedState::set_v(float value) {
@@ -8371,9 +9546,17 @@ inline void EstimatedState::set_v(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.v)
 }
 
-// float w = 12 [(.dccl.field) = {
+// optional float w = 12 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_w() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000800u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_w() const {
+  return _internal_has_w();
+}
 inline void EstimatedState::clear_w() {
   _impl_.w_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000800u;
 }
 inline float EstimatedState::_internal_w() const {
   return _impl_.w_;
@@ -8383,7 +9566,7 @@ inline float EstimatedState::w() const {
   return _internal_w();
 }
 inline void EstimatedState::_internal_set_w(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000800u;
   _impl_.w_ = value;
 }
 inline void EstimatedState::set_w(float value) {
@@ -8391,9 +9574,17 @@ inline void EstimatedState::set_w(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.w)
 }
 
-// float vx = 13 [(.dccl.field) = {
+// optional float vx = 13 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_vx() const {
+  bool value = (_impl_._has_bits_[0] & 0x00001000u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_vx() const {
+  return _internal_has_vx();
+}
 inline void EstimatedState::clear_vx() {
   _impl_.vx_ = 0;
+  _impl_._has_bits_[0] &= ~0x00001000u;
 }
 inline float EstimatedState::_internal_vx() const {
   return _impl_.vx_;
@@ -8403,7 +9594,7 @@ inline float EstimatedState::vx() const {
   return _internal_vx();
 }
 inline void EstimatedState::_internal_set_vx(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00001000u;
   _impl_.vx_ = value;
 }
 inline void EstimatedState::set_vx(float value) {
@@ -8411,9 +9602,17 @@ inline void EstimatedState::set_vx(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.vx)
 }
 
-// float vy = 14 [(.dccl.field) = {
+// optional float vy = 14 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_vy() const {
+  bool value = (_impl_._has_bits_[0] & 0x00002000u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_vy() const {
+  return _internal_has_vy();
+}
 inline void EstimatedState::clear_vy() {
   _impl_.vy_ = 0;
+  _impl_._has_bits_[0] &= ~0x00002000u;
 }
 inline float EstimatedState::_internal_vy() const {
   return _impl_.vy_;
@@ -8423,7 +9622,7 @@ inline float EstimatedState::vy() const {
   return _internal_vy();
 }
 inline void EstimatedState::_internal_set_vy(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00002000u;
   _impl_.vy_ = value;
 }
 inline void EstimatedState::set_vy(float value) {
@@ -8431,9 +9630,17 @@ inline void EstimatedState::set_vy(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.vy)
 }
 
-// float vz = 15 [(.dccl.field) = {
+// optional float vz = 15 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_vz() const {
+  bool value = (_impl_._has_bits_[0] & 0x00004000u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_vz() const {
+  return _internal_has_vz();
+}
 inline void EstimatedState::clear_vz() {
   _impl_.vz_ = 0;
+  _impl_._has_bits_[0] &= ~0x00004000u;
 }
 inline float EstimatedState::_internal_vz() const {
   return _impl_.vz_;
@@ -8443,7 +9650,7 @@ inline float EstimatedState::vz() const {
   return _internal_vz();
 }
 inline void EstimatedState::_internal_set_vz(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00004000u;
   _impl_.vz_ = value;
 }
 inline void EstimatedState::set_vz(float value) {
@@ -8451,9 +9658,17 @@ inline void EstimatedState::set_vz(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.vz)
 }
 
-// float p = 16 [(.dccl.field) = {
+// optional float p = 16 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_p() const {
+  bool value = (_impl_._has_bits_[0] & 0x00008000u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_p() const {
+  return _internal_has_p();
+}
 inline void EstimatedState::clear_p() {
   _impl_.p_ = 0;
+  _impl_._has_bits_[0] &= ~0x00008000u;
 }
 inline float EstimatedState::_internal_p() const {
   return _impl_.p_;
@@ -8463,7 +9678,7 @@ inline float EstimatedState::p() const {
   return _internal_p();
 }
 inline void EstimatedState::_internal_set_p(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00008000u;
   _impl_.p_ = value;
 }
 inline void EstimatedState::set_p(float value) {
@@ -8471,9 +9686,17 @@ inline void EstimatedState::set_p(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.p)
 }
 
-// float q = 17 [(.dccl.field) = {
+// optional float q = 17 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_q() const {
+  bool value = (_impl_._has_bits_[0] & 0x00010000u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_q() const {
+  return _internal_has_q();
+}
 inline void EstimatedState::clear_q() {
   _impl_.q_ = 0;
+  _impl_._has_bits_[0] &= ~0x00010000u;
 }
 inline float EstimatedState::_internal_q() const {
   return _impl_.q_;
@@ -8483,7 +9706,7 @@ inline float EstimatedState::q() const {
   return _internal_q();
 }
 inline void EstimatedState::_internal_set_q(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00010000u;
   _impl_.q_ = value;
 }
 inline void EstimatedState::set_q(float value) {
@@ -8491,9 +9714,17 @@ inline void EstimatedState::set_q(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.q)
 }
 
-// float r = 18 [(.dccl.field) = {
+// optional float r = 18 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_r() const {
+  bool value = (_impl_._has_bits_[0] & 0x00020000u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_r() const {
+  return _internal_has_r();
+}
 inline void EstimatedState::clear_r() {
   _impl_.r_ = 0;
+  _impl_._has_bits_[0] &= ~0x00020000u;
 }
 inline float EstimatedState::_internal_r() const {
   return _impl_.r_;
@@ -8503,7 +9734,7 @@ inline float EstimatedState::r() const {
   return _internal_r();
 }
 inline void EstimatedState::_internal_set_r(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00020000u;
   _impl_.r_ = value;
 }
 inline void EstimatedState::set_r(float value) {
@@ -8511,9 +9742,17 @@ inline void EstimatedState::set_r(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.r)
 }
 
-// float depth = 19 [(.dccl.field) = {
+// optional float depth = 19 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_depth() const {
+  bool value = (_impl_._has_bits_[0] & 0x00040000u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_depth() const {
+  return _internal_has_depth();
+}
 inline void EstimatedState::clear_depth() {
   _impl_.depth_ = 0;
+  _impl_._has_bits_[0] &= ~0x00040000u;
 }
 inline float EstimatedState::_internal_depth() const {
   return _impl_.depth_;
@@ -8523,7 +9762,7 @@ inline float EstimatedState::depth() const {
   return _internal_depth();
 }
 inline void EstimatedState::_internal_set_depth(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00040000u;
   _impl_.depth_ = value;
 }
 inline void EstimatedState::set_depth(float value) {
@@ -8531,9 +9770,17 @@ inline void EstimatedState::set_depth(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EstimatedState.depth)
 }
 
-// float alt = 20 [(.dccl.field) = {
+// optional float alt = 20 [(.dccl.field) = {
+inline bool EstimatedState::_internal_has_alt() const {
+  bool value = (_impl_._has_bits_[0] & 0x00080000u) != 0;
+  return value;
+}
+inline bool EstimatedState::has_alt() const {
+  return _internal_has_alt();
+}
 inline void EstimatedState::clear_alt() {
   _impl_.alt_ = 0;
+  _impl_._has_bits_[0] &= ~0x00080000u;
 }
 inline float EstimatedState::_internal_alt() const {
   return _impl_.alt_;
@@ -8543,7 +9790,7 @@ inline float EstimatedState::alt() const {
   return _internal_alt();
 }
 inline void EstimatedState::_internal_set_alt(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00080000u;
   _impl_.alt_ = value;
 }
 inline void EstimatedState::set_alt(float value) {
@@ -8555,9 +9802,17 @@ inline void EstimatedState::set_alt(float value) {
 
 // PlanSpecification
 
-// string plan_id = 1 [(.dccl.field) = {
+// optional string plan_id = 1 [(.dccl.field) = {
+inline bool PlanSpecification::_internal_has_plan_id() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool PlanSpecification::has_plan_id() const {
+  return _internal_has_plan_id();
+}
 inline void PlanSpecification::clear_plan_id() {
   _impl_.plan_id_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline const std::string& PlanSpecification::plan_id() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanSpecification.plan_id)
@@ -8566,7 +9821,7 @@ inline const std::string& PlanSpecification::plan_id() const {
 template <typename ArgT0, typename... ArgT>
 inline PROTOBUF_ALWAYS_INLINE
 void PlanSpecification::set_plan_id(ArgT0&& arg0, ArgT... args) {
- 
+ _impl_._has_bits_[0] |= 0x00000001u;
  _impl_.plan_id_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanSpecification.plan_id)
 }
@@ -8579,22 +9834,32 @@ inline const std::string& PlanSpecification::_internal_plan_id() const {
   return _impl_.plan_id_.Get();
 }
 inline void PlanSpecification::_internal_set_plan_id(const std::string& value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.plan_id_.Set(value, GetArenaForAllocation());
 }
 inline std::string* PlanSpecification::_internal_mutable_plan_id() {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   return _impl_.plan_id_.Mutable(GetArenaForAllocation());
 }
 inline std::string* PlanSpecification::release_plan_id() {
   // @@protoc_insertion_point(field_release:IMC_DCCL.PlanSpecification.plan_id)
-  return _impl_.plan_id_.Release();
+  if (!_internal_has_plan_id()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.plan_id_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.plan_id_.IsDefault()) {
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
 }
 inline void PlanSpecification::set_allocated_plan_id(std::string* plan_id) {
   if (plan_id != nullptr) {
-    
+    _impl_._has_bits_[0] |= 0x00000001u;
   } else {
-    
+    _impl_._has_bits_[0] &= ~0x00000001u;
   }
   _impl_.plan_id_.SetAllocated(plan_id, GetArenaForAllocation());
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
@@ -8605,9 +9870,17 @@ inline void PlanSpecification::set_allocated_plan_id(std::string* plan_id) {
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanSpecification.plan_id)
 }
 
-// string description = 2 [(.dccl.field) = {
+// optional string description = 2 [(.dccl.field) = {
+inline bool PlanSpecification::_internal_has_description() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool PlanSpecification::has_description() const {
+  return _internal_has_description();
+}
 inline void PlanSpecification::clear_description() {
   _impl_.description_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline const std::string& PlanSpecification::description() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanSpecification.description)
@@ -8616,7 +9889,7 @@ inline const std::string& PlanSpecification::description() const {
 template <typename ArgT0, typename... ArgT>
 inline PROTOBUF_ALWAYS_INLINE
 void PlanSpecification::set_description(ArgT0&& arg0, ArgT... args) {
- 
+ _impl_._has_bits_[0] |= 0x00000002u;
  _impl_.description_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanSpecification.description)
 }
@@ -8629,22 +9902,32 @@ inline const std::string& PlanSpecification::_internal_description() const {
   return _impl_.description_.Get();
 }
 inline void PlanSpecification::_internal_set_description(const std::string& value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.description_.Set(value, GetArenaForAllocation());
 }
 inline std::string* PlanSpecification::_internal_mutable_description() {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   return _impl_.description_.Mutable(GetArenaForAllocation());
 }
 inline std::string* PlanSpecification::release_description() {
   // @@protoc_insertion_point(field_release:IMC_DCCL.PlanSpecification.description)
-  return _impl_.description_.Release();
+  if (!_internal_has_description()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  auto* p = _impl_.description_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.description_.IsDefault()) {
+    _impl_.description_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
 }
 inline void PlanSpecification::set_allocated_description(std::string* description) {
   if (description != nullptr) {
-    
+    _impl_._has_bits_[0] |= 0x00000002u;
   } else {
-    
+    _impl_._has_bits_[0] &= ~0x00000002u;
   }
   _impl_.description_.SetAllocated(description, GetArenaForAllocation());
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
@@ -8655,9 +9938,17 @@ inline void PlanSpecification::set_allocated_description(std::string* descriptio
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanSpecification.description)
 }
 
-// string vnamespace = 3 [(.dccl.field) = {
+// optional string vnamespace = 3 [(.dccl.field) = {
+inline bool PlanSpecification::_internal_has_vnamespace() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool PlanSpecification::has_vnamespace() const {
+  return _internal_has_vnamespace();
+}
 inline void PlanSpecification::clear_vnamespace() {
   _impl_.vnamespace_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline const std::string& PlanSpecification::vnamespace() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanSpecification.vnamespace)
@@ -8666,7 +9957,7 @@ inline const std::string& PlanSpecification::vnamespace() const {
 template <typename ArgT0, typename... ArgT>
 inline PROTOBUF_ALWAYS_INLINE
 void PlanSpecification::set_vnamespace(ArgT0&& arg0, ArgT... args) {
- 
+ _impl_._has_bits_[0] |= 0x00000004u;
  _impl_.vnamespace_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanSpecification.vnamespace)
 }
@@ -8679,22 +9970,32 @@ inline const std::string& PlanSpecification::_internal_vnamespace() const {
   return _impl_.vnamespace_.Get();
 }
 inline void PlanSpecification::_internal_set_vnamespace(const std::string& value) {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.vnamespace_.Set(value, GetArenaForAllocation());
 }
 inline std::string* PlanSpecification::_internal_mutable_vnamespace() {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   return _impl_.vnamespace_.Mutable(GetArenaForAllocation());
 }
 inline std::string* PlanSpecification::release_vnamespace() {
   // @@protoc_insertion_point(field_release:IMC_DCCL.PlanSpecification.vnamespace)
-  return _impl_.vnamespace_.Release();
+  if (!_internal_has_vnamespace()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000004u;
+  auto* p = _impl_.vnamespace_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.vnamespace_.IsDefault()) {
+    _impl_.vnamespace_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
 }
 inline void PlanSpecification::set_allocated_vnamespace(std::string* vnamespace) {
   if (vnamespace != nullptr) {
-    
+    _impl_._has_bits_[0] |= 0x00000004u;
   } else {
-    
+    _impl_._has_bits_[0] &= ~0x00000004u;
   }
   _impl_.vnamespace_.SetAllocated(vnamespace, GetArenaForAllocation());
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
@@ -8999,9 +10300,17 @@ inline void PlanDB::set_op(::IMC_DCCL::PlanDB_OperationEnum value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDB.op)
 }
 
-// int32 request_id = 3 [(.dccl.field) = {
+// optional int32 request_id = 3 [(.dccl.field) = {
+inline bool PlanDB::_internal_has_request_id() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool PlanDB::has_request_id() const {
+  return _internal_has_request_id();
+}
 inline void PlanDB::clear_request_id() {
   _impl_.request_id_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline int32_t PlanDB::_internal_request_id() const {
   return _impl_.request_id_;
@@ -9011,7 +10320,7 @@ inline int32_t PlanDB::request_id() const {
   return _internal_request_id();
 }
 inline void PlanDB::_internal_set_request_id(int32_t value) {
-  
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.request_id_ = value;
 }
 inline void PlanDB::set_request_id(int32_t value) {
@@ -9019,9 +10328,17 @@ inline void PlanDB::set_request_id(int32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDB.request_id)
 }
 
-// string plan_id = 4 [(.dccl.field) = {
+// optional string plan_id = 4 [(.dccl.field) = {
+inline bool PlanDB::_internal_has_plan_id() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool PlanDB::has_plan_id() const {
+  return _internal_has_plan_id();
+}
 inline void PlanDB::clear_plan_id() {
   _impl_.plan_id_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
 }
 inline const std::string& PlanDB::plan_id() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDB.plan_id)
@@ -9030,7 +10347,7 @@ inline const std::string& PlanDB::plan_id() const {
 template <typename ArgT0, typename... ArgT>
 inline PROTOBUF_ALWAYS_INLINE
 void PlanDB::set_plan_id(ArgT0&& arg0, ArgT... args) {
- 
+ _impl_._has_bits_[0] |= 0x00000001u;
  _impl_.plan_id_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDB.plan_id)
 }
@@ -9043,22 +10360,32 @@ inline const std::string& PlanDB::_internal_plan_id() const {
   return _impl_.plan_id_.Get();
 }
 inline void PlanDB::_internal_set_plan_id(const std::string& value) {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.plan_id_.Set(value, GetArenaForAllocation());
 }
 inline std::string* PlanDB::_internal_mutable_plan_id() {
-  
+  _impl_._has_bits_[0] |= 0x00000001u;
   return _impl_.plan_id_.Mutable(GetArenaForAllocation());
 }
 inline std::string* PlanDB::release_plan_id() {
   // @@protoc_insertion_point(field_release:IMC_DCCL.PlanDB.plan_id)
-  return _impl_.plan_id_.Release();
+  if (!_internal_has_plan_id()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.plan_id_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.plan_id_.IsDefault()) {
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
 }
 inline void PlanDB::set_allocated_plan_id(std::string* plan_id) {
   if (plan_id != nullptr) {
-    
+    _impl_._has_bits_[0] |= 0x00000001u;
   } else {
-    
+    _impl_._has_bits_[0] &= ~0x00000001u;
   }
   _impl_.plan_id_.SetAllocated(plan_id, GetArenaForAllocation());
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
@@ -9159,9 +10486,17 @@ inline void PlanDB::set_allocated_arg(::IMC_DCCL::PlanDBArgUnion* arg) {
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanDB.arg)
 }
 
-// string info = 6 [(.dccl.field) = {
+// optional string info = 6 [(.dccl.field) = {
+inline bool PlanDB::_internal_has_info() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool PlanDB::has_info() const {
+  return _internal_has_info();
+}
 inline void PlanDB::clear_info() {
   _impl_.info_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline const std::string& PlanDB::info() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDB.info)
@@ -9170,7 +10505,7 @@ inline const std::string& PlanDB::info() const {
 template <typename ArgT0, typename... ArgT>
 inline PROTOBUF_ALWAYS_INLINE
 void PlanDB::set_info(ArgT0&& arg0, ArgT... args) {
- 
+ _impl_._has_bits_[0] |= 0x00000002u;
  _impl_.info_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDB.info)
 }
@@ -9183,22 +10518,32 @@ inline const std::string& PlanDB::_internal_info() const {
   return _impl_.info_.Get();
 }
 inline void PlanDB::_internal_set_info(const std::string& value) {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.info_.Set(value, GetArenaForAllocation());
 }
 inline std::string* PlanDB::_internal_mutable_info() {
-  
+  _impl_._has_bits_[0] |= 0x00000002u;
   return _impl_.info_.Mutable(GetArenaForAllocation());
 }
 inline std::string* PlanDB::release_info() {
   // @@protoc_insertion_point(field_release:IMC_DCCL.PlanDB.info)
-  return _impl_.info_.Release();
+  if (!_internal_has_info()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  auto* p = _impl_.info_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.info_.IsDefault()) {
+    _impl_.info_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
 }
 inline void PlanDB::set_allocated_info(std::string* info) {
   if (info != nullptr) {
-    
+    _impl_._has_bits_[0] |= 0x00000002u;
   } else {
-    
+    _impl_._has_bits_[0] &= ~0x00000002u;
   }
   _impl_.info_.SetAllocated(info, GetArenaForAllocation());
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
@@ -9207,6 +10552,590 @@ inline void PlanDB::set_allocated_info(std::string* info) {
   }
 #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanDB.info)
+}
+
+// -------------------------------------------------------------------
+
+// PlanDBState
+
+// optional int32 plan_count = 1 [(.dccl.field) = {
+inline bool PlanDBState::_internal_has_plan_count() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool PlanDBState::has_plan_count() const {
+  return _internal_has_plan_count();
+}
+inline void PlanDBState::clear_plan_count() {
+  _impl_.plan_count_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline int32_t PlanDBState::_internal_plan_count() const {
+  return _impl_.plan_count_;
+}
+inline int32_t PlanDBState::plan_count() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBState.plan_count)
+  return _internal_plan_count();
+}
+inline void PlanDBState::_internal_set_plan_count(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_.plan_count_ = value;
+}
+inline void PlanDBState::set_plan_count(int32_t value) {
+  _internal_set_plan_count(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.plan_count)
+}
+
+// optional int32 plan_size = 2 [(.dccl.field) = {
+inline bool PlanDBState::_internal_has_plan_size() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool PlanDBState::has_plan_size() const {
+  return _internal_has_plan_size();
+}
+inline void PlanDBState::clear_plan_size() {
+  _impl_.plan_size_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008u;
+}
+inline int32_t PlanDBState::_internal_plan_size() const {
+  return _impl_.plan_size_;
+}
+inline int32_t PlanDBState::plan_size() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBState.plan_size)
+  return _internal_plan_size();
+}
+inline void PlanDBState::_internal_set_plan_size(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_.plan_size_ = value;
+}
+inline void PlanDBState::set_plan_size(int32_t value) {
+  _internal_set_plan_size(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.plan_size)
+}
+
+// optional float change_time = 3 [(.dccl.field) = {
+inline bool PlanDBState::_internal_has_change_time() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool PlanDBState::has_change_time() const {
+  return _internal_has_change_time();
+}
+inline void PlanDBState::clear_change_time() {
+  _impl_.change_time_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000010u;
+}
+inline float PlanDBState::_internal_change_time() const {
+  return _impl_.change_time_;
+}
+inline float PlanDBState::change_time() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBState.change_time)
+  return _internal_change_time();
+}
+inline void PlanDBState::_internal_set_change_time(float value) {
+  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_.change_time_ = value;
+}
+inline void PlanDBState::set_change_time(float value) {
+  _internal_set_change_time(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.change_time)
+}
+
+// optional int32 change_sid = 4 [(.dccl.field) = {
+inline bool PlanDBState::_internal_has_change_sid() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  return value;
+}
+inline bool PlanDBState::has_change_sid() const {
+  return _internal_has_change_sid();
+}
+inline void PlanDBState::clear_change_sid() {
+  _impl_.change_sid_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000020u;
+}
+inline int32_t PlanDBState::_internal_change_sid() const {
+  return _impl_.change_sid_;
+}
+inline int32_t PlanDBState::change_sid() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBState.change_sid)
+  return _internal_change_sid();
+}
+inline void PlanDBState::_internal_set_change_sid(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000020u;
+  _impl_.change_sid_ = value;
+}
+inline void PlanDBState::set_change_sid(int32_t value) {
+  _internal_set_change_sid(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.change_sid)
+}
+
+// optional string change_sname = 5 [(.dccl.field) = {
+inline bool PlanDBState::_internal_has_change_sname() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool PlanDBState::has_change_sname() const {
+  return _internal_has_change_sname();
+}
+inline void PlanDBState::clear_change_sname() {
+  _impl_.change_sname_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& PlanDBState::change_sname() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBState.change_sname)
+  return _internal_change_sname();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanDBState::set_change_sname(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.change_sname_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.change_sname)
+}
+inline std::string* PlanDBState::mutable_change_sname() {
+  std::string* _s = _internal_mutable_change_sname();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanDBState.change_sname)
+  return _s;
+}
+inline const std::string& PlanDBState::_internal_change_sname() const {
+  return _impl_.change_sname_.Get();
+}
+inline void PlanDBState::_internal_set_change_sname(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.change_sname_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanDBState::_internal_mutable_change_sname() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.change_sname_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanDBState::release_change_sname() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanDBState.change_sname)
+  if (!_internal_has_change_sname()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.change_sname_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.change_sname_.IsDefault()) {
+    _impl_.change_sname_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanDBState::set_allocated_change_sname(std::string* change_sname) {
+  if (change_sname != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.change_sname_.SetAllocated(change_sname, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.change_sname_.IsDefault()) {
+    _impl_.change_sname_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanDBState.change_sname)
+}
+
+// optional string md5 = 6 [(.dccl.field) = {
+inline bool PlanDBState::_internal_has_md5() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool PlanDBState::has_md5() const {
+  return _internal_has_md5();
+}
+inline void PlanDBState::clear_md5() {
+  _impl_.md5_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline const std::string& PlanDBState::md5() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBState.md5)
+  return _internal_md5();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanDBState::set_md5(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000002u;
+ _impl_.md5_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.md5)
+}
+inline std::string* PlanDBState::mutable_md5() {
+  std::string* _s = _internal_mutable_md5();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanDBState.md5)
+  return _s;
+}
+inline const std::string& PlanDBState::_internal_md5() const {
+  return _impl_.md5_.Get();
+}
+inline void PlanDBState::_internal_set_md5(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.md5_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanDBState::_internal_mutable_md5() {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  return _impl_.md5_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanDBState::release_md5() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanDBState.md5)
+  if (!_internal_has_md5()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  auto* p = _impl_.md5_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.md5_.IsDefault()) {
+    _impl_.md5_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanDBState::set_allocated_md5(std::string* md5) {
+  if (md5 != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+  _impl_.md5_.SetAllocated(md5, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.md5_.IsDefault()) {
+    _impl_.md5_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanDBState.md5)
+}
+
+// repeated .IMC_DCCL.PlanDBInformation plans_info = 7 [(.dccl.field) = {
+inline int PlanDBState::_internal_plans_info_size() const {
+  return _impl_.plans_info_.size();
+}
+inline int PlanDBState::plans_info_size() const {
+  return _internal_plans_info_size();
+}
+inline void PlanDBState::clear_plans_info() {
+  _impl_.plans_info_.Clear();
+}
+inline ::IMC_DCCL::PlanDBInformation* PlanDBState::mutable_plans_info(int index) {
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanDBState.plans_info)
+  return _impl_.plans_info_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanDBInformation >*
+PlanDBState::mutable_plans_info() {
+  // @@protoc_insertion_point(field_mutable_list:IMC_DCCL.PlanDBState.plans_info)
+  return &_impl_.plans_info_;
+}
+inline const ::IMC_DCCL::PlanDBInformation& PlanDBState::_internal_plans_info(int index) const {
+  return _impl_.plans_info_.Get(index);
+}
+inline const ::IMC_DCCL::PlanDBInformation& PlanDBState::plans_info(int index) const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBState.plans_info)
+  return _internal_plans_info(index);
+}
+inline ::IMC_DCCL::PlanDBInformation* PlanDBState::_internal_add_plans_info() {
+  return _impl_.plans_info_.Add();
+}
+inline ::IMC_DCCL::PlanDBInformation* PlanDBState::add_plans_info() {
+  ::IMC_DCCL::PlanDBInformation* _add = _internal_add_plans_info();
+  // @@protoc_insertion_point(field_add:IMC_DCCL.PlanDBState.plans_info)
+  return _add;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanDBInformation >&
+PlanDBState::plans_info() const {
+  // @@protoc_insertion_point(field_list:IMC_DCCL.PlanDBState.plans_info)
+  return _impl_.plans_info_;
+}
+
+// -------------------------------------------------------------------
+
+// PlanDBInformation
+
+// optional string plan_id = 1 [(.dccl.field) = {
+inline bool PlanDBInformation::_internal_has_plan_id() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool PlanDBInformation::has_plan_id() const {
+  return _internal_has_plan_id();
+}
+inline void PlanDBInformation::clear_plan_id() {
+  _impl_.plan_id_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& PlanDBInformation::plan_id() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBInformation.plan_id)
+  return _internal_plan_id();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanDBInformation::set_plan_id(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.plan_id_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBInformation.plan_id)
+}
+inline std::string* PlanDBInformation::mutable_plan_id() {
+  std::string* _s = _internal_mutable_plan_id();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanDBInformation.plan_id)
+  return _s;
+}
+inline const std::string& PlanDBInformation::_internal_plan_id() const {
+  return _impl_.plan_id_.Get();
+}
+inline void PlanDBInformation::_internal_set_plan_id(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.plan_id_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanDBInformation::_internal_mutable_plan_id() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.plan_id_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanDBInformation::release_plan_id() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanDBInformation.plan_id)
+  if (!_internal_has_plan_id()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.plan_id_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.plan_id_.IsDefault()) {
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanDBInformation::set_allocated_plan_id(std::string* plan_id) {
+  if (plan_id != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.plan_id_.SetAllocated(plan_id, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.plan_id_.IsDefault()) {
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanDBInformation.plan_id)
+}
+
+// optional int32 plan_size = 2 [(.dccl.field) = {
+inline bool PlanDBInformation::_internal_has_plan_size() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool PlanDBInformation::has_plan_size() const {
+  return _internal_has_plan_size();
+}
+inline void PlanDBInformation::clear_plan_size() {
+  _impl_.plan_size_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008u;
+}
+inline int32_t PlanDBInformation::_internal_plan_size() const {
+  return _impl_.plan_size_;
+}
+inline int32_t PlanDBInformation::plan_size() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBInformation.plan_size)
+  return _internal_plan_size();
+}
+inline void PlanDBInformation::_internal_set_plan_size(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_.plan_size_ = value;
+}
+inline void PlanDBInformation::set_plan_size(int32_t value) {
+  _internal_set_plan_size(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBInformation.plan_size)
+}
+
+// optional float change_time = 3 [(.dccl.field) = {
+inline bool PlanDBInformation::_internal_has_change_time() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool PlanDBInformation::has_change_time() const {
+  return _internal_has_change_time();
+}
+inline void PlanDBInformation::clear_change_time() {
+  _impl_.change_time_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000010u;
+}
+inline float PlanDBInformation::_internal_change_time() const {
+  return _impl_.change_time_;
+}
+inline float PlanDBInformation::change_time() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBInformation.change_time)
+  return _internal_change_time();
+}
+inline void PlanDBInformation::_internal_set_change_time(float value) {
+  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_.change_time_ = value;
+}
+inline void PlanDBInformation::set_change_time(float value) {
+  _internal_set_change_time(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBInformation.change_time)
+}
+
+// optional int32 change_sid = 4 [(.dccl.field) = {
+inline bool PlanDBInformation::_internal_has_change_sid() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  return value;
+}
+inline bool PlanDBInformation::has_change_sid() const {
+  return _internal_has_change_sid();
+}
+inline void PlanDBInformation::clear_change_sid() {
+  _impl_.change_sid_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000020u;
+}
+inline int32_t PlanDBInformation::_internal_change_sid() const {
+  return _impl_.change_sid_;
+}
+inline int32_t PlanDBInformation::change_sid() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBInformation.change_sid)
+  return _internal_change_sid();
+}
+inline void PlanDBInformation::_internal_set_change_sid(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000020u;
+  _impl_.change_sid_ = value;
+}
+inline void PlanDBInformation::set_change_sid(int32_t value) {
+  _internal_set_change_sid(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBInformation.change_sid)
+}
+
+// optional string change_sname = 5 [(.dccl.field) = {
+inline bool PlanDBInformation::_internal_has_change_sname() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool PlanDBInformation::has_change_sname() const {
+  return _internal_has_change_sname();
+}
+inline void PlanDBInformation::clear_change_sname() {
+  _impl_.change_sname_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline const std::string& PlanDBInformation::change_sname() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBInformation.change_sname)
+  return _internal_change_sname();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanDBInformation::set_change_sname(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000002u;
+ _impl_.change_sname_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBInformation.change_sname)
+}
+inline std::string* PlanDBInformation::mutable_change_sname() {
+  std::string* _s = _internal_mutable_change_sname();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanDBInformation.change_sname)
+  return _s;
+}
+inline const std::string& PlanDBInformation::_internal_change_sname() const {
+  return _impl_.change_sname_.Get();
+}
+inline void PlanDBInformation::_internal_set_change_sname(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.change_sname_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanDBInformation::_internal_mutable_change_sname() {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  return _impl_.change_sname_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanDBInformation::release_change_sname() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanDBInformation.change_sname)
+  if (!_internal_has_change_sname()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  auto* p = _impl_.change_sname_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.change_sname_.IsDefault()) {
+    _impl_.change_sname_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanDBInformation::set_allocated_change_sname(std::string* change_sname) {
+  if (change_sname != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+  _impl_.change_sname_.SetAllocated(change_sname, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.change_sname_.IsDefault()) {
+    _impl_.change_sname_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanDBInformation.change_sname)
+}
+
+// optional string md5 = 6 [(.dccl.field) = {
+inline bool PlanDBInformation::_internal_has_md5() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool PlanDBInformation::has_md5() const {
+  return _internal_has_md5();
+}
+inline void PlanDBInformation::clear_md5() {
+  _impl_.md5_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline const std::string& PlanDBInformation::md5() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBInformation.md5)
+  return _internal_md5();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanDBInformation::set_md5(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000004u;
+ _impl_.md5_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBInformation.md5)
+}
+inline std::string* PlanDBInformation::mutable_md5() {
+  std::string* _s = _internal_mutable_md5();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanDBInformation.md5)
+  return _s;
+}
+inline const std::string& PlanDBInformation::_internal_md5() const {
+  return _impl_.md5_.Get();
+}
+inline void PlanDBInformation::_internal_set_md5(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_.md5_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanDBInformation::_internal_mutable_md5() {
+  _impl_._has_bits_[0] |= 0x00000004u;
+  return _impl_.md5_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanDBInformation::release_md5() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanDBInformation.md5)
+  if (!_internal_has_md5()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000004u;
+  auto* p = _impl_.md5_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.md5_.IsDefault()) {
+    _impl_.md5_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanDBInformation::set_allocated_md5(std::string* md5) {
+  if (md5 != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000004u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000004u;
+  }
+  _impl_.md5_.SetAllocated(md5, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.md5_.IsDefault()) {
+    _impl_.md5_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanDBInformation.md5)
 }
 
 // -------------------------------------------------------------------
@@ -9284,6 +11213,154 @@ inline ::IMC_DCCL::PlanSpecification* PlanDBArgUnion::_internal_mutable_ps_arg()
 inline ::IMC_DCCL::PlanSpecification* PlanDBArgUnion::mutable_ps_arg() {
   ::IMC_DCCL::PlanSpecification* _msg = _internal_mutable_ps_arg();
   // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanDBArgUnion.ps_arg)
+  return _msg;
+}
+
+// .IMC_DCCL.PlanDBInformation pi_arg = 2;
+inline bool PlanDBArgUnion::_internal_has_pi_arg() const {
+  return PlanDBArgUnion__case() == kPiArg;
+}
+inline bool PlanDBArgUnion::has_pi_arg() const {
+  return _internal_has_pi_arg();
+}
+inline void PlanDBArgUnion::set_has_pi_arg() {
+  _impl_._oneof_case_[0] = kPiArg;
+}
+inline void PlanDBArgUnion::clear_pi_arg() {
+  if (_internal_has_pi_arg()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PlanDBArgUnion__.pi_arg_;
+    }
+    clear_has_PlanDBArgUnion_();
+  }
+}
+inline ::IMC_DCCL::PlanDBInformation* PlanDBArgUnion::release_pi_arg() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanDBArgUnion.pi_arg)
+  if (_internal_has_pi_arg()) {
+    clear_has_PlanDBArgUnion_();
+    ::IMC_DCCL::PlanDBInformation* temp = _impl_.PlanDBArgUnion__.pi_arg_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PlanDBArgUnion__.pi_arg_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::PlanDBInformation& PlanDBArgUnion::_internal_pi_arg() const {
+  return _internal_has_pi_arg()
+      ? *_impl_.PlanDBArgUnion__.pi_arg_
+      : reinterpret_cast< ::IMC_DCCL::PlanDBInformation&>(::IMC_DCCL::_PlanDBInformation_default_instance_);
+}
+inline const ::IMC_DCCL::PlanDBInformation& PlanDBArgUnion::pi_arg() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBArgUnion.pi_arg)
+  return _internal_pi_arg();
+}
+inline ::IMC_DCCL::PlanDBInformation* PlanDBArgUnion::unsafe_arena_release_pi_arg() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.PlanDBArgUnion.pi_arg)
+  if (_internal_has_pi_arg()) {
+    clear_has_PlanDBArgUnion_();
+    ::IMC_DCCL::PlanDBInformation* temp = _impl_.PlanDBArgUnion__.pi_arg_;
+    _impl_.PlanDBArgUnion__.pi_arg_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void PlanDBArgUnion::unsafe_arena_set_allocated_pi_arg(::IMC_DCCL::PlanDBInformation* pi_arg) {
+  clear_PlanDBArgUnion_();
+  if (pi_arg) {
+    set_has_pi_arg();
+    _impl_.PlanDBArgUnion__.pi_arg_ = pi_arg;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.PlanDBArgUnion.pi_arg)
+}
+inline ::IMC_DCCL::PlanDBInformation* PlanDBArgUnion::_internal_mutable_pi_arg() {
+  if (!_internal_has_pi_arg()) {
+    clear_PlanDBArgUnion_();
+    set_has_pi_arg();
+    _impl_.PlanDBArgUnion__.pi_arg_ = CreateMaybeMessage< ::IMC_DCCL::PlanDBInformation >(GetArenaForAllocation());
+  }
+  return _impl_.PlanDBArgUnion__.pi_arg_;
+}
+inline ::IMC_DCCL::PlanDBInformation* PlanDBArgUnion::mutable_pi_arg() {
+  ::IMC_DCCL::PlanDBInformation* _msg = _internal_mutable_pi_arg();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanDBArgUnion.pi_arg)
+  return _msg;
+}
+
+// .IMC_DCCL.PlanDBState pc_arg = 3;
+inline bool PlanDBArgUnion::_internal_has_pc_arg() const {
+  return PlanDBArgUnion__case() == kPcArg;
+}
+inline bool PlanDBArgUnion::has_pc_arg() const {
+  return _internal_has_pc_arg();
+}
+inline void PlanDBArgUnion::set_has_pc_arg() {
+  _impl_._oneof_case_[0] = kPcArg;
+}
+inline void PlanDBArgUnion::clear_pc_arg() {
+  if (_internal_has_pc_arg()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PlanDBArgUnion__.pc_arg_;
+    }
+    clear_has_PlanDBArgUnion_();
+  }
+}
+inline ::IMC_DCCL::PlanDBState* PlanDBArgUnion::release_pc_arg() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanDBArgUnion.pc_arg)
+  if (_internal_has_pc_arg()) {
+    clear_has_PlanDBArgUnion_();
+    ::IMC_DCCL::PlanDBState* temp = _impl_.PlanDBArgUnion__.pc_arg_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PlanDBArgUnion__.pc_arg_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::PlanDBState& PlanDBArgUnion::_internal_pc_arg() const {
+  return _internal_has_pc_arg()
+      ? *_impl_.PlanDBArgUnion__.pc_arg_
+      : reinterpret_cast< ::IMC_DCCL::PlanDBState&>(::IMC_DCCL::_PlanDBState_default_instance_);
+}
+inline const ::IMC_DCCL::PlanDBState& PlanDBArgUnion::pc_arg() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBArgUnion.pc_arg)
+  return _internal_pc_arg();
+}
+inline ::IMC_DCCL::PlanDBState* PlanDBArgUnion::unsafe_arena_release_pc_arg() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.PlanDBArgUnion.pc_arg)
+  if (_internal_has_pc_arg()) {
+    clear_has_PlanDBArgUnion_();
+    ::IMC_DCCL::PlanDBState* temp = _impl_.PlanDBArgUnion__.pc_arg_;
+    _impl_.PlanDBArgUnion__.pc_arg_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void PlanDBArgUnion::unsafe_arena_set_allocated_pc_arg(::IMC_DCCL::PlanDBState* pc_arg) {
+  clear_PlanDBArgUnion_();
+  if (pc_arg) {
+    set_has_pc_arg();
+    _impl_.PlanDBArgUnion__.pc_arg_ = pc_arg;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.PlanDBArgUnion.pc_arg)
+}
+inline ::IMC_DCCL::PlanDBState* PlanDBArgUnion::_internal_mutable_pc_arg() {
+  if (!_internal_has_pc_arg()) {
+    clear_PlanDBArgUnion_();
+    set_has_pc_arg();
+    _impl_.PlanDBArgUnion__.pc_arg_ = CreateMaybeMessage< ::IMC_DCCL::PlanDBState >(GetArenaForAllocation());
+  }
+  return _impl_.PlanDBArgUnion__.pc_arg_;
+}
+inline ::IMC_DCCL::PlanDBState* PlanDBArgUnion::mutable_pc_arg() {
+  ::IMC_DCCL::PlanDBState* _msg = _internal_mutable_pc_arg();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanDBArgUnion.pc_arg)
   return _msg;
 }
 
@@ -9473,6 +11550,10 @@ inline PlanSpecificationEndActionsUnion::PlanSpecificationEndActionsUnionCase Pl
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

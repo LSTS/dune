@@ -8,8 +8,8 @@
 
 #include "dccl.h"
 #include "EnumCodec.hpp"
-#include "NestedCodec.hpp"
-#include "PrincipalCodec.hpp"
+#include "MsgOnlyProtoCodec.hpp"
+#include "MsgCodec.hpp"
 
 
 
@@ -56,8 +56,10 @@ namespace IMCDCCL
         getMsgID(std::string& encoded_string)
         {
             int id = m_codec.id(encoded_string);
+
             switch(id){
                 case PLAN_SPECIFICATION: 
+                case PLAN_DB: 
                 case ESTIMATED_STATE:
                     return static_cast<MsgID>(id);
                 default:
@@ -74,7 +76,6 @@ namespace IMCDCCL
             switch(id){
                 case PLAN_SPECIFICATION:
                 {
-                    std::cout << "DispatchDecode - PlanSpecification";
                     m_codec.load<IMC_DCCL::PlanSpecification>();
                     IMC_DCCL::PlanSpecification src_dccl;
                     m_codec.decode(encoded_string, &src_dccl);
@@ -86,7 +87,6 @@ namespace IMCDCCL
 
                 case ESTIMATED_STATE:
                 {
-                    std::cout << "DispatchDecode - EstimatedState";
                     m_codec.load<IMC_DCCL::EstimatedState>();
                     IMC_DCCL::EstimatedState src_dccl;
                     m_codec.decode(encoded_string, &src_dccl);
@@ -97,7 +97,6 @@ namespace IMCDCCL
 
                 case PLAN_DB:
                 {
-                    std::cout << "DispatchDecode - PlanDB";
                     m_codec.load<IMC_DCCL::PlanDB>();
                     IMC_DCCL::PlanDB src_dccl;
                     m_codec.decode(encoded_string, &src_dccl);
@@ -119,8 +118,6 @@ namespace IMCDCCL
             switch(id){
                 case PLAN_SPECIFICATION:
                 {
-                    std::string test = "DispatchEncode - PlanSpecification msg !!!!!";
-                    std::cout << test<< std::endl;
                     const DUNE::IMC::PlanSpecification* src_imc = dynamic_cast<const DUNE::IMC::PlanSpecification*>(imc_msg);
                     m_codec.load<IMC_DCCL::PlanSpecification>();
                     IMC_DCCL::PlanSpecification dst_dccl;
@@ -133,8 +130,6 @@ namespace IMCDCCL
 
                 case ESTIMATED_STATE:
                 {
-                    std::string test = "DispatchEncode - Estimated state msg !!!!!";
-                    std::cout << test<< std::endl;
                     const DUNE::IMC::EstimatedState* src_imc = dynamic_cast<const DUNE::IMC::EstimatedState*>(imc_msg);
 
                     m_codec.load<IMC_DCCL::EstimatedState>();
@@ -149,8 +144,6 @@ namespace IMCDCCL
 
                 case PLAN_DB:
                 {
-                    std::string test = "DispatchEncode - PlanDB state msg !!!!!";
-                    std::cout << test<< std::endl;
                     const DUNE::IMC::PlanDB* src_imc = dynamic_cast<const DUNE::IMC::PlanDB*>(imc_msg);
 
                     m_codec.load<IMC_DCCL::PlanDB>();
