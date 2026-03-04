@@ -37,9 +37,9 @@ namespace Control
 {
   namespace ASV
   {
-    namespace RemoteOperation
+    namespace Differential
     {
-      namespace DifferentialThrust
+      namespace RemoteOperation
       {
         using DUNE_NAMESPACES;
 
