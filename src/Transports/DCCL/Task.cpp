@@ -87,6 +87,7 @@ namespace Transports
 
         bind<IMC::PlanSpecification>(this);
         bind<IMC::UamRxFrame>(this);
+        //bind<IMC::PlanDB>(this);
         //bind<IMC::EstimatedState>(this);
       }
 
@@ -134,13 +135,39 @@ namespace Transports
       void
       consume(const IMC::PlanSpecification* msg)
       {
+        
+
         if(m_args.trigger_dccl){
+
+          msg->toJSON(std::cout);
 
           ////////////////////////////////////////////////////////////// DCCL LIB
           std::string encoded_string = m_codecdcll.encodeDCCL(msg);
           ////////////////////////////////////////////////////////////// DCCL LIB
 
-          std::cout << "Sent via Acoustic"<< std::endl;
+          std::cout << "Send via Acoustic"<< std::endl;
+          sendTransmissionRequestViaAcoustic("", encoded_string);
+
+        }
+      }
+
+      void
+      consume(const IMC::PlanDB* msg)
+      {
+        
+
+        if(m_args.trigger_dccl){
+
+          if (m_filter.filter(msg))
+            return;
+          
+          msg->toJSON(std::cout);
+
+          ////////////////////////////////////////////////////////////// DCCL LIB
+          std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          ////////////////////////////////////////////////////////////// DCCL LIB
+
+          std::cout << "Send via Acoustic PlanDB"<< std::endl;
           sendTransmissionRequestViaAcoustic("", encoded_string);
 
         }
@@ -153,43 +180,16 @@ namespace Transports
       {
        if(m_args.trigger_dccl){
 
+          msg->toJSON(std::cout);
+
           if (m_filter.filter(msg))
             return;
-          
-
-            inf("ESTIMATEDSTATE To be ENCODED");
             
-            std::cout<< "lat: " << msg->lat<< std::endl; 
-            std::cout<< "lon: " << msg->lon<< std::endl; 
-            std::cout<< "height: " << msg->height<< std::endl; 
-
-            std::cout<< "x: " << msg->x<< std::endl; 
-            std::cout<< "y: " << msg->y<< std::endl; 
-            std::cout<< "z: " << msg->z<< std::endl; 
-
-            std::cout<< "phi: " << msg->phi<< std::endl; 
-            std::cout<< "theta: " << msg->theta<< std::endl; 
-            std::cout<< "psi: " << msg->psi<< std::endl; 
-
-            std::cout<< "u: " << msg->u<< std::endl; 
-            std::cout<< "v: " << msg->v<< std::endl; 
-            std::cout<< "w: " << msg->w<< std::endl; 
-
-            std::cout<< "vx: " << msg->vx<< std::endl; 
-            std::cout<< "vy: " << msg->vy<< std::endl; 
-            std::cout<< "vz: " << msg->vz<< std::endl; 
-
-            std::cout<< "p: " << msg->p<< std::endl; 
-            std::cout<< "q: " << msg->q<< std::endl; 
-            std::cout<< "r: " << msg->r<< std::endl; 
-
-            std::cout<< "depth: " << msg->depth<< std::endl; 
-            std::cout<< "alt: " << msg->alt<< std::endl; 
           ////////////////////////////////////////////////////////////// DCCL LIB
           std::string encoded_string = m_codecdcll.encodeDCCL(msg);
           ////////////////////////////////////////////////////////////// DCCL LIB
 
-          std::cout << "Sent via Acoustic"<< std::endl;
+          std::cout << "Send via Acoustic"<< std::endl;
           sendTransmissionRequestViaAcoustic("", encoded_string);
           
       }
@@ -201,102 +201,75 @@ namespace Transports
      consume(const IMC::UamRxFrame* msg)
      {
        //Check source
-
-       uint16_t imc_addr_src = 0;
-       try
-       {
-         imc_addr_src = resolveSystemName(msg->sys_src);
-       }
-       catch (...)
-       {
-         debug("unknown system name: %s", msg->sys_src.c_str());
-         return;
-       }
-
-       //Check dest
-       uint16_t imc_addr_dst = 0;
-       try
-       {
-         imc_addr_dst = resolveSystemName(msg->sys_dst);
-       }
-       catch (...)
-       {
-         debug("unknown system name: %s", msg->sys_dst.c_str());
-         return;
-       }
-
-       //Check to be sure it's not A1
-       if ((uint8_t)msg->data[0] != c_sync)
-       {             
-          //Check if msg is DCCL encoded
-          std::string encoded_bytes(msg->data.begin(), msg->data.end());
-          inf("Received hex string %s", encoded_bytes.c_str());
-
-          std::string msgNoHex = String::fromHex(encoded_bytes);
-
-          ////////////////////////////////////////////////////////////// DCCL LIB
-          auto decode_msg = m_codecdcll.decodeDCCL(msgNoHex);
-          ////////////////////////////////////////////////////////////// DCCL LIB
-          //in here > dispatch the msg on the right topic
-          
-          //Just for debug 
-          if (auto planSpec = dynamic_cast<DUNE::IMC::PlanSpecification*>(decode_msg))
+       if(!m_args.trigger_dccl){
+          uint16_t imc_addr_src = 0;
+          try
           {
-              inf("PLANSPECIFICAITION decoded");
-              IMC::PlanControl load_plan_dccl;
-              load_plan_dccl.type = IMC::PlanControl::PC_REQUEST;
-              load_plan_dccl.op = IMC::PlanControl::PC_LOAD;
-
-
-              load_plan_dccl.plan_id = planSpec->plan_id;
-              load_plan_dccl.arg.set(planSpec);
-              load_plan_dccl.request_id = 0;
-              load_plan_dccl.flags = 0;
-              dispatch(load_plan_dccl);
-
-              //dispatch PlanSpecification 
-              dispatch(planSpec);
+            imc_addr_src = resolveSystemName(msg->sys_src);
           }
-          else if (auto estState = dynamic_cast<DUNE::IMC::EstimatedState*>(decode_msg))
+          catch (...)
           {
-              inf("ESTIMATEDSTATE decoded");
+            debug("unknown system name: %s", msg->sys_src.c_str());
+            return;
+          }
+
+          //Check dest
+          uint16_t imc_addr_dst = 0;
+          try
+          {
+            imc_addr_dst = resolveSystemName(msg->sys_dst);
+          }
+          catch (...)
+          {
+            debug("unknown system name: %s", msg->sys_dst.c_str());
+            return;
+          }
+
+          //Check to be sure it's not A1
+          if ((uint8_t)msg->data[0] != c_sync)
+          {             
+              //Check if msg is DCCL encoded
+              std::string encoded_bytes(msg->data.begin(), msg->data.end());
+              inf("Received hex string %s", encoded_bytes.c_str());
+
+              std::string msgNoHex = String::fromHex(encoded_bytes);
+
+              ////////////////////////////////////////////////////////////// DCCL LIB
+              auto decode_msg = m_codecdcll.decodeDCCL(msgNoHex);
+              ////////////////////////////////////////////////////////////// DCCL LIB
+
               
-              std::cout<< "lat: " << estState->lat<< std::endl; 
-              std::cout<< "lon: " << estState->lon<< std::endl; 
-              std::cout<< "height: " << estState->height<< std::endl; 
+              //Just for debug
+              if (auto planSpec = dynamic_cast<DUNE::IMC::PlanSpecification*>(decode_msg))
+              {
+                  inf("PLANSPECIFICAITION decoded");
+                  planSpec->toJSON(std::cout);
 
-              std::cout<< "x: " << estState->x<< std::endl; 
-              std::cout<< "y: " << estState->y<< std::endl; 
-              std::cout<< "z: " << estState->z<< std::endl; 
+              }
+              else if (auto estState = dynamic_cast<DUNE::IMC::EstimatedState*>(decode_msg))
+              {
+                  inf("ESTIMATEDSTATE decoded");
+                  
+                  estState->toJSON(std::cout);
 
-              std::cout<< "phi: " << estState->phi<< std::endl; 
-              std::cout<< "theta: " << estState->theta<< std::endl; 
-              std::cout<< "psi: " << estState->psi<< std::endl; 
+              }
+              else if (auto plandb = dynamic_cast<DUNE::IMC::PlanDB*>(decode_msg))
+              {
+                  inf("PlanDB decoded");
+                  
+                  plandb->toJSON(std::cout);
+                  
+              }
+              else
+              {
+                  std::cout << "UNKOWN MSG decoded\n";
+              }     
 
-              std::cout<< "u: " << estState->u<< std::endl; 
-              std::cout<< "v: " << estState->v<< std::endl; 
-              std::cout<< "w: " << estState->w<< std::endl; 
-
-              std::cout<< "vx: " << estState->vx<< std::endl; 
-              std::cout<< "vy: " << estState->vy<< std::endl; 
-              std::cout<< "vz: " << estState->vz<< std::endl; 
-
-              std::cout<< "p: " << estState->p<< std::endl; 
-              std::cout<< "q: " << estState->q<< std::endl; 
-              std::cout<< "r: " << estState->r<< std::endl; 
-
-              std::cout<< "depth: " << estState->depth<< std::endl; 
-              std::cout<< "alt: " << estState->alt<< std::endl; 
 
           }
-          else
-          {
-              std::cout << "UNKOWN MSG decoded\n";
-          }     
-
 
        }
-      
+     
       }
 
 
