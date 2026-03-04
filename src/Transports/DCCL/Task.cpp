@@ -87,7 +87,7 @@ namespace Transports
 
         bind<IMC::PlanSpecification>(this);
         bind<IMC::UamRxFrame>(this);
-        //bind<IMC::PlanDB>(this);
+        bind<IMC::PlanDB>(this);
         //bind<IMC::EstimatedState>(this);
       }
 

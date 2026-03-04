@@ -69,6 +69,8 @@ DUNE::IMC::Maneuver* decodeManeuver(const IMC_DCCL::Maneuver& dccl)
             decodeStationKeeping(dccl.stationkeeping_maneuver(), *tmp);
             return tmp;
     }
+
+    return nullptr;
 }
 
 
@@ -210,6 +212,8 @@ DUNE::IMC::Message* decodePlanControlArgUnion(const IMC_DCCL::PlanControlArgUnio
             decodePlanStatistics(dccl.stat_arg(), *tmp);
             return tmp;
     }
+
+    return nullptr;
 }
 
 
@@ -264,6 +268,8 @@ DUNE::IMC::Message* decodePlanDBArgUnion(const IMC_DCCL::PlanDBArgUnion& dccl)
             decodePlanDBState(dccl.pc_arg(), *tmp);
             return tmp;
     }
+
+    return nullptr;
 }
 
 
@@ -290,6 +296,8 @@ DUNE::IMC::Message* decodePlanManeuverStartActionsUnion(const IMC_DCCL::PlanMane
             decodeSetEntityParameters(dccl.ep(), *tmp);
             return tmp;
     }
+
+    return nullptr;
 }
 
 
@@ -316,6 +324,8 @@ DUNE::IMC::Message* decodePlanSpecificationEndActionsUnion(const IMC_DCCL::PlanS
             decodeSetEntityParameters(dccl.ep(), *tmp);
             return tmp;
     }
+
+    return nullptr;
 }
 
 
@@ -342,6 +352,8 @@ DUNE::IMC::Message* decodePlanSpecificationStartActionsUnion(const IMC_DCCL::Pla
             decodeSetEntityParameters(dccl.ep(), *tmp);
             return tmp;
     }
+
+    return nullptr;
 }
 
 
