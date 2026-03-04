@@ -37,9 +37,9 @@ namespace Control
 {
   namespace ASV
   {
-    namespace RemoteOperation
+    namespace Conventional
     {
-      namespace ThrusterAndRudder
+      namespace RemoteOperation
       {
         using DUNE_NAMESPACES;
 
