@@ -161,6 +161,58 @@ void decodeParameterValue(const IMC_DCCL::ParameterValue& dccl, std::string& imc
 }
 
 
+// ================ PlanControlArgUnion Message ================
+void encodePlanControlArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanControlArgUnion& dccl)
+{
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanSpecification*>(&imc))
+    {
+            IMC_DCCL::PlanSpecification* dccl_tmp = new IMC_DCCL::PlanSpecification();
+            encodePlanSpecification(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_ps_arg(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::Maneuver*>(&imc))
+    {
+            IMC_DCCL::Maneuver* dccl_tmp = new IMC_DCCL::Maneuver();
+            encodeManeuver(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_man_arg(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanStatistics*>(&imc))
+    {
+            IMC_DCCL::PlanStatistics* dccl_tmp = new IMC_DCCL::PlanStatistics();
+            encodePlanStatistics(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_stat_arg(dccl_tmp);
+            return;
+    }
+}
+
+
+// ================ PlanControlArgUnion Message ================
+DUNE::IMC::Message* decodePlanControlArgUnion(const IMC_DCCL::PlanControlArgUnion& dccl)
+{
+    
+    if (dccl.has_ps_arg()){
+            auto* tmp = new DUNE::IMC::PlanSpecification();
+            decodePlanSpecification(dccl.ps_arg(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_man_arg()){
+            return decodeManeuver(dccl.man_arg());
+    }
+    
+    if (dccl.has_stat_arg()){
+            auto* tmp = new DUNE::IMC::PlanStatistics();
+            decodePlanStatistics(dccl.stat_arg(), *tmp);
+            return tmp;
+    }
+}
+
+
 // ================ PlanDBArgUnion Message ================
 void encodePlanDBArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanDBArgUnion& dccl)
 {

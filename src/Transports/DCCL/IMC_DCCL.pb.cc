@@ -415,6 +415,46 @@ struct PlanDBInformationDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlanDBInformationDefaultTypeInternal _PlanDBInformation_default_instance_;
+PROTOBUF_CONSTEXPR PlanControl::PlanControl(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_._has_bits_)*/{}
+  , /*decltype(_impl_._cached_size_)*/{}
+  , /*decltype(_impl_.plan_id_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.info_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.arg_)*/nullptr
+  , /*decltype(_impl_.type_)*/0
+  , /*decltype(_impl_.op_)*/0
+  , /*decltype(_impl_.request_id_)*/0
+  , /*decltype(_impl_.flags_)*/0} {}
+struct PlanControlDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR PlanControlDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~PlanControlDefaultTypeInternal() {}
+  union {
+    PlanControl _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlanControlDefaultTypeInternal _PlanControl_default_instance_;
+PROTOBUF_CONSTEXPR PlanStatistics::PlanStatistics(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_._has_bits_)*/{}
+  , /*decltype(_impl_._cached_size_)*/{}
+  , /*decltype(_impl_.plan_id_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.durations_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.distances_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.actions_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.fuel_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.type_)*/0
+  , /*decltype(_impl_.properties_)*/0} {}
+struct PlanStatisticsDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR PlanStatisticsDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~PlanStatisticsDefaultTypeInternal() {}
+  union {
+    PlanStatistics _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlanStatisticsDefaultTypeInternal _PlanStatistics_default_instance_;
 PROTOBUF_CONSTEXPR PlanDBArgUnion::PlanDBArgUnion(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.PlanDBArgUnion__)*/{}
@@ -457,9 +497,23 @@ struct PlanSpecificationEndActionsUnionDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlanSpecificationEndActionsUnionDefaultTypeInternal _PlanSpecificationEndActionsUnion_default_instance_;
+PROTOBUF_CONSTEXPR PlanControlArgUnion::PlanControlArgUnion(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.PlanDBArgUnion__)*/{}
+  , /*decltype(_impl_._cached_size_)*/{}
+  , /*decltype(_impl_._oneof_case_)*/{}} {}
+struct PlanControlArgUnionDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR PlanControlArgUnionDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~PlanControlArgUnionDefaultTypeInternal() {}
+  union {
+    PlanControlArgUnion _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlanControlArgUnionDefaultTypeInternal _PlanControlArgUnion_default_instance_;
 }  // namespace IMC_DCCL
-static ::_pb::Metadata file_level_metadata_IMC_5fDCCL_2eproto[25];
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_IMC_5fDCCL_2eproto[12];
+static ::_pb::Metadata file_level_metadata_IMC_5fDCCL_2eproto[28];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_IMC_5fDCCL_2eproto[15];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_IMC_5fDCCL_2eproto = nullptr;
 
 const uint32_t TableStruct_IMC_5fDCCL_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
@@ -816,6 +870,46 @@ const uint32_t TableStruct_IMC_5fDCCL_2eproto::offsets[] PROTOBUF_SECTION_VARIAB
   5,
   1,
   2,
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControl, _impl_._has_bits_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControl, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControl, _impl_.type_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControl, _impl_.op_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControl, _impl_.request_id_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControl, _impl_.plan_id_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControl, _impl_.flags_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControl, _impl_.arg_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControl, _impl_.info_),
+  ~0u,
+  ~0u,
+  2,
+  0,
+  3,
+  ~0u,
+  1,
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanStatistics, _impl_._has_bits_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanStatistics, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanStatistics, _impl_.plan_id_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanStatistics, _impl_.type_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanStatistics, _impl_.properties_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanStatistics, _impl_.durations_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanStatistics, _impl_.distances_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanStatistics, _impl_.actions_),
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanStatistics, _impl_.fuel_),
+  0,
+  ~0u,
+  5,
+  1,
+  2,
+  3,
+  4,
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanDBArgUnion, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -842,6 +936,16 @@ const uint32_t TableStruct_IMC_5fDCCL_2eproto::offsets[] PROTOBUF_SECTION_VARIAB
   ~0u,  // no _inlined_string_donated_
   ::_pbi::kInvalidFieldOffsetTag,
   PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanSpecificationEndActionsUnion, _impl_.PlanSpecificationEndActionsUnion__),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControlArgUnion, _internal_metadata_),
+  ~0u,  // no _extensions_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControlArgUnion, _impl_._oneof_case_[0]),
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  ::_pbi::kInvalidFieldOffsetTag,
+  ::_pbi::kInvalidFieldOffsetTag,
+  ::_pbi::kInvalidFieldOffsetTag,
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PlanControlArgUnion, _impl_.PlanDBArgUnion__),
 };
 static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, 8, -1, sizeof(::IMC_DCCL::ProfileSample)},
@@ -866,9 +970,12 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 297, 309, -1, sizeof(::IMC_DCCL::PlanDB)},
   { 315, 328, -1, sizeof(::IMC_DCCL::PlanDBState)},
   { 335, 347, -1, sizeof(::IMC_DCCL::PlanDBInformation)},
-  { 353, -1, -1, sizeof(::IMC_DCCL::PlanDBArgUnion)},
-  { 363, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationStartActionsUnion)},
-  { 371, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationEndActionsUnion)},
+  { 353, 366, -1, sizeof(::IMC_DCCL::PlanControl)},
+  { 373, 386, -1, sizeof(::IMC_DCCL::PlanStatistics)},
+  { 393, -1, -1, sizeof(::IMC_DCCL::PlanDBArgUnion)},
+  { 403, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationStartActionsUnion)},
+  { 411, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationEndActionsUnion)},
+  { 419, -1, -1, sizeof(::IMC_DCCL::PlanControlArgUnion)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -894,9 +1001,12 @@ static const ::_pb::Message* const file_default_instances[] = {
   &::IMC_DCCL::_PlanDB_default_instance_._instance,
   &::IMC_DCCL::_PlanDBState_default_instance_._instance,
   &::IMC_DCCL::_PlanDBInformation_default_instance_._instance,
+  &::IMC_DCCL::_PlanControl_default_instance_._instance,
+  &::IMC_DCCL::_PlanStatistics_default_instance_._instance,
   &::IMC_DCCL::_PlanDBArgUnion_default_instance_._instance,
   &::IMC_DCCL::_PlanSpecificationStartActionsUnion_default_instance_._instance,
   &::IMC_DCCL::_PlanSpecificationEndActionsUnion_default_instance_._instance,
+  &::IMC_DCCL::_PlanControlArgUnion_default_instance_._instance,
 };
 
 const char descriptor_table_protodef_IMC_5fDCCL_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
@@ -1083,69 +1193,97 @@ const char descriptor_table_protodef_IMC_5fDCCL_2eproto[] PROTOBUF_SECTION_VARIA
   "\001\001\022 \n\014change_sname\030\005 \001(\tB\005\242\?\002H(H\004\210\001\001\022\027\n\003"
   "md5\030\006 \001(\tB\005\242\?\002H(H\005\210\001\001:\014\242\?\t\010\256\004\020\200\3520(\004B\n\n\010_"
   "plan_idB\014\n\n_plan_sizeB\016\n\014_change_timeB\r\n"
-  "\013_change_sidB\017\n\r_change_snameB\006\n\004_md5\"\265\001"
-  "\n\016PlanDBArgUnion\022-\n\006ps_arg\030\001 \001(\0132\033.IMC_D"
-  "CCL.PlanSpecificationH\000\022-\n\006pi_arg\030\002 \001(\0132"
-  "\033.IMC_DCCL.PlanDBInformationH\000\022\'\n\006pc_arg"
-  "\030\003 \001(\0132\025.IMC_DCCL.PlanDBStateH\000:\t\242\?\006\020\200\3520"
-  "(\004B\021\n\017PlanDBArgUnion_\"\203\001\n\"PlanSpecificat"
-  "ionStartActionsUnion\022+\n\002ep\030\001 \001(\0132\035.IMC_D"
-  "CCL.SetEntityParametersH\000:\t\242\?\006\020\200\3520(\004B%\n#"
-  "PlanSpecificationStartActionsUnion_\"\177\n P"
-  "lanSpecificationEndActionsUnion\022+\n\002ep\030\001 "
-  "\001(\0132\035.IMC_DCCL.SetEntityParametersH\000:\t\242\?"
-  "\006\020\200\3520(\004B#\n!PlanSpecificationEndActionsUn"
-  "ion_*N\n\006ZUnits\022\n\n\006Z_NONE\020\000\022\013\n\007Z_DEPTH\020\001\022"
-  "\016\n\nZ_ALTITUDE\020\002\022\014\n\010Z_HEIGHT\020\003\022\r\n\tZ_UNKNO"
-  "WN\020\004*]\n\nSpeedUnits\022\024\n\020SUNITS_METERS_PS\020\000"
-  "\022\016\n\nSUNITS_RPM\020\001\022\025\n\021SUNITS_PERCENTAGE\020\002\022"
-  "\022\n\016SUNITS_UNKNOWN\020\003*X\n\014ManeuverType\022\010\n\004G"
-  "OTO\020\000\022\n\n\006LOITER\020\001\022\016\n\nFOLLOWPATH\020\002\022\022\n\016STA"
-  "TIONKEEPING\020\003\022\016\n\nMT_UNKNOWN\020\004*;\n\nParamVa"
-  "lue\022\010\n\004TRUE\020\000\022\t\n\005FALSE\020\001\022\010\n\004BOTH\020\002\022\016\n\nPV"
-  "_UNKNOWN\020\003*=\n\027TransitionConditionEnum\022\022\n"
-  "\016MANEUVERISDONE\020\000\022\016\n\nTC_UNKNOWN\020\001*\241\006\n\rPa"
-  "rameterName\022\n\n\006ACTIVE\020\000\022\025\n\021ARDUPILOT_TRA"
-  "CKER\020\001\022 \n\034BATHYMETRY_CHANNEL_AVAILABLE\020\002"
-  "\022\036\n\032BOTTOM_TRACK_MINIMUM_DEPTH\020\003\022\r\n\tDATA"
-  "_BITS\020\004\022\016\n\nFLIR_DUO_R\020\005\022\024\n\020FORMATION_FLI"
-  "GHT\020\006\022\027\n\023FORMATION_POSITIONS\020\007\022\035\n\031FORMAT"
-  "ION_REFERENCE_FRAME\020\010\022\r\n\tFREQUENCY\020\t\022\032\n\026"
-  "HIGH_FREQUENCY_CHANNEL\020\n\022\033\n\027HIGH_FREQUEN"
-  "CY_CHANNELS\020\013\022\030\n\024HIGH_FREQUENCY_RANGE\020\014\022"
-  "$\n LOW_FREQUENCY_BATHYMETRY_CHANNEL\020\r\022\031\n"
-  "\025LOW_FREQUENCY_CHANNEL\020\016\022\032\n\026LOW_FREQUENC"
-  "Y_CHANNELS\020\017\022\027\n\023LOW_FREQUENCY_RANGE\020\020\022\022\n"
-  "\016ONBOARD_CAMERA\020\021\022\033\n\027OPTIMIZE_FOR_THIS_S"
-  "PEED\020\022\022 \n\034PERIODICITY_OF_DATA_SAMPLING\020\023"
-  "\022\020\n\014PROFILE_MODE\020\024\022\t\n\005RANGE\020\025\022\024\n\020RANGE_M"
-  "ULTIPLIER\020\026\022\030\n\024SAMPLE_TIME_DURATION\020\027\022\020\n"
-  "\014SCALE_FACTOR\020\030\022\020\n\014SECTOR_WIDTH\020\031\022\024\n\020SHU"
-  "TTER_VALUE_MS\020\032\022\r\n\tSTEP_SIZE\020\033\022\023\n\017STROBE"
-  "_DELAY_US\020\034\022\026\n\022THRUSTER_ALWAYS_ON\020\035\022\024\n\020T"
-  "RANSITION_TO_FW\020\036\022\024\n\020TRANSITION_TO_MC\020\037\022"
-  "\022\n\016USE_CONTROLLER\020 \022\020\n\014VEHICLE_LIST\020!*\306\003"
-  "\n\nEntityName\022\n\n\006CAMERA\020\000\022\010\n\004ADCP\020\001\022\r\n\tAU"
-  "TOPILOT\020\002\022\022\n\016ACOUSTIC_MODEM\020\003\022\007\n\003CTD\020\004\022\024"
-  "\n\020DISSOLVED_OXYGEN\020\005\022\020\n\014FLUOROMETERS\020\006\022\031"
-  "\n\025FORMATION_COORDINATOR\020\007\022\026\n\022HEADING_CON"
-  "TROLLER\020\010\022\022\n\016HEIGHT_CONTROL\020\t\022\007\n\003LBL\020\n\022\036"
-  "\n\032MOTOR_CONTROLLER_CHANNEL_0\020\013\022\036\n\032MOTOR_"
-  "CONTROLLER_CHANNEL_1\020\014\022\r\n\tMULTIBEAM\020\r\022\020\n"
-  "\014PATH_CONTROL\020\016\022\027\n\023PATH_CONTROL_LEADER\020\017"
-  "\022\017\n\013PENCIL_BEAM\020\020\022\021\n\rPHOTO_TRIGGER\020\021\022\n\n\006"
-  "RANGER\020\022\022\022\n\016REMOTE_CONTROL\020\023\022\024\n\020REMOTE_O"
-  "PERATION\020\024\022\014\n\010SIDESCAN\020\025\022\r\n\tSLAVE_CPU\020\026\022"
-  "\r\n\tUAVCAMERA\020\027b\006proto3"
+  "\013_change_sidB\017\n\r_change_snameB\006\n\004_md5\"\377\003"
+  "\n\013PlanControl\022,\n\004type\030\001 \001(\0162\036.IMC_DCCL.P"
+  "lanControl.TypeEnum\022/\n\002op\030\002 \001(\0162#.IMC_DC"
+  "CL.PlanControl.OperationEnum\0220\n\nrequest_"
+  "id\030\003 \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000\210\263@H\000\210\001\001\022\033"
+  "\n\007plan_id\030\004 \001(\tB\005\242\?\002H\024H\001\210\001\001\022+\n\005flags\030\005 \001"
+  "(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000\210\263@H\002\210\001\001\022*\n\003arg\030"
+  "\006 \001(\0132\035.IMC_DCCL.PlanControlArgUnion\022\030\n\004"
+  "info\030\007 \001(\tB\005\242\?\002H\024H\003\210\001\001\"N\n\010TypeEnum\022\016\n\nPC"
+  "_REQUEST\020\000\022\016\n\nPC_SUCCESS\020\001\022\016\n\nPC_FAILURE"
+  "\020\002\022\022\n\016PC_IN_PROGRESS\020\003\"C\n\rOperationEnum\022"
+  "\014\n\010PC_START\020\000\022\013\n\007PC_STOP\020\001\022\013\n\007PC_LOAD\020\002\022"
+  "\n\n\006PC_GET\020\003:\014\242\?\t\010\257\004\020\200\3520(\004B\r\n\013_request_id"
+  "B\n\n\010_plan_idB\010\n\006_flagsB\007\n\005_info\"\233\003\n\016Plan"
+  "Statistics\022\033\n\007plan_id\030\001 \001(\tB\005\242\?\002H\024H\000\210\001\001\022"
+  "/\n\004type\030\002 \001(\0162!.IMC_DCCL.PlanStatistics."
+  "TypeEnum\0220\n\nproperties\030\003 \001(\005B\027\242\?\024 \001)\000\000\000\000"
+  "\000\000\000\0001\000\000\000\000\000\210\263@H\001\210\001\001\022\035\n\tdurations\030\004 \001(\tB\005\242"
+  "\?\002HPH\002\210\001\001\022\035\n\tdistances\030\005 \001(\tB\005\242\?\002HPH\003\210\001\001"
+  "\022\033\n\007actions\030\006 \001(\tB\005\242\?\002HPH\004\210\001\001\022\030\n\004fuel\030\007 "
+  "\001(\tB\005\242\?\002HPH\005\210\001\001\":\n\010TypeEnum\022\016\n\nTP_PREPLA"
+  "N\020\000\022\r\n\tTP_INPLAN\020\001\022\017\n\013TP_POSTPLAN\020\002:\014\242\?\t"
+  "\010\264\004\020\200\3520(\004B\n\n\010_plan_idB\r\n\013_propertiesB\014\n\n"
+  "_durationsB\014\n\n_distancesB\n\n\010_actionsB\007\n\005"
+  "_fuel\"\265\001\n\016PlanDBArgUnion\022-\n\006ps_arg\030\001 \001(\013"
+  "2\033.IMC_DCCL.PlanSpecificationH\000\022-\n\006pi_ar"
+  "g\030\002 \001(\0132\033.IMC_DCCL.PlanDBInformationH\000\022\'"
+  "\n\006pc_arg\030\003 \001(\0132\025.IMC_DCCL.PlanDBStateH\000:"
+  "\t\242\?\006\020\200\3520(\004B\021\n\017PlanDBArgUnion_\"\203\001\n\"PlanSp"
+  "ecificationStartActionsUnion\022+\n\002ep\030\001 \001(\013"
+  "2\035.IMC_DCCL.SetEntityParametersH\000:\t\242\?\006\020\200"
+  "\3520(\004B%\n#PlanSpecificationStartActionsUni"
+  "on_\"\177\n PlanSpecificationEndActionsUnion\022"
+  "+\n\002ep\030\001 \001(\0132\035.IMC_DCCL.SetEntityParamete"
+  "rsH\000:\t\242\?\006\020\200\3520(\004B#\n!PlanSpecificationEndA"
+  "ctionsUnion_\"\267\001\n\023PlanControlArgUnion\022-\n\006"
+  "ps_arg\030\001 \001(\0132\033.IMC_DCCL.PlanSpecificatio"
+  "nH\000\022%\n\007man_arg\030\002 \001(\0132\022.IMC_DCCL.Maneuver"
+  "H\000\022,\n\010stat_arg\030\003 \001(\0132\030.IMC_DCCL.PlanStat"
+  "isticsH\000:\t\242\?\006\020\200\3520(\004B\021\n\017PlanDBArgUnion_*N"
+  "\n\006ZUnits\022\n\n\006Z_NONE\020\000\022\013\n\007Z_DEPTH\020\001\022\016\n\nZ_A"
+  "LTITUDE\020\002\022\014\n\010Z_HEIGHT\020\003\022\r\n\tZ_UNKNOWN\020\004*]"
+  "\n\nSpeedUnits\022\024\n\020SUNITS_METERS_PS\020\000\022\016\n\nSU"
+  "NITS_RPM\020\001\022\025\n\021SUNITS_PERCENTAGE\020\002\022\022\n\016SUN"
+  "ITS_UNKNOWN\020\003*X\n\014ManeuverType\022\010\n\004GOTO\020\000\022"
+  "\n\n\006LOITER\020\001\022\016\n\nFOLLOWPATH\020\002\022\022\n\016STATIONKE"
+  "EPING\020\003\022\016\n\nMT_UNKNOWN\020\004*;\n\nParamValue\022\010\n"
+  "\004TRUE\020\000\022\t\n\005FALSE\020\001\022\010\n\004BOTH\020\002\022\016\n\nPV_UNKNO"
+  "WN\020\003*=\n\027TransitionConditionEnum\022\022\n\016MANEU"
+  "VERISDONE\020\000\022\016\n\nTC_UNKNOWN\020\001*\241\006\n\rParamete"
+  "rName\022\n\n\006ACTIVE\020\000\022\025\n\021ARDUPILOT_TRACKER\020\001"
+  "\022 \n\034BATHYMETRY_CHANNEL_AVAILABLE\020\002\022\036\n\032BO"
+  "TTOM_TRACK_MINIMUM_DEPTH\020\003\022\r\n\tDATA_BITS\020"
+  "\004\022\016\n\nFLIR_DUO_R\020\005\022\024\n\020FORMATION_FLIGHT\020\006\022"
+  "\027\n\023FORMATION_POSITIONS\020\007\022\035\n\031FORMATION_RE"
+  "FERENCE_FRAME\020\010\022\r\n\tFREQUENCY\020\t\022\032\n\026HIGH_F"
+  "REQUENCY_CHANNEL\020\n\022\033\n\027HIGH_FREQUENCY_CHA"
+  "NNELS\020\013\022\030\n\024HIGH_FREQUENCY_RANGE\020\014\022$\n LOW"
+  "_FREQUENCY_BATHYMETRY_CHANNEL\020\r\022\031\n\025LOW_F"
+  "REQUENCY_CHANNEL\020\016\022\032\n\026LOW_FREQUENCY_CHAN"
+  "NELS\020\017\022\027\n\023LOW_FREQUENCY_RANGE\020\020\022\022\n\016ONBOA"
+  "RD_CAMERA\020\021\022\033\n\027OPTIMIZE_FOR_THIS_SPEED\020\022"
+  "\022 \n\034PERIODICITY_OF_DATA_SAMPLING\020\023\022\020\n\014PR"
+  "OFILE_MODE\020\024\022\t\n\005RANGE\020\025\022\024\n\020RANGE_MULTIPL"
+  "IER\020\026\022\030\n\024SAMPLE_TIME_DURATION\020\027\022\020\n\014SCALE"
+  "_FACTOR\020\030\022\020\n\014SECTOR_WIDTH\020\031\022\024\n\020SHUTTER_V"
+  "ALUE_MS\020\032\022\r\n\tSTEP_SIZE\020\033\022\023\n\017STROBE_DELAY"
+  "_US\020\034\022\026\n\022THRUSTER_ALWAYS_ON\020\035\022\024\n\020TRANSIT"
+  "ION_TO_FW\020\036\022\024\n\020TRANSITION_TO_MC\020\037\022\022\n\016USE"
+  "_CONTROLLER\020 \022\020\n\014VEHICLE_LIST\020!*\306\003\n\nEnti"
+  "tyName\022\022\n\016ACOUSTIC_MODEM\020\000\022\010\n\004ADCP\020\001\022\r\n\t"
+  "AUTOPILOT\020\002\022\n\n\006CAMERA\020\003\022\007\n\003CTD\020\004\022\024\n\020DISS"
+  "OLVED_OXYGEN\020\005\022\020\n\014FLUOROMETERS\020\006\022\031\n\025FORM"
+  "ATION_COORDINATOR\020\007\022\026\n\022HEADING_CONTROLLE"
+  "R\020\010\022\022\n\016HEIGHT_CONTROL\020\t\022\007\n\003LBL\020\n\022\036\n\032MOTO"
+  "R_CONTROLLER_CHANNEL_0\020\013\022\036\n\032MOTOR_CONTRO"
+  "LLER_CHANNEL_1\020\014\022\r\n\tMULTIBEAM\020\r\022\020\n\014PATH_"
+  "CONTROL\020\016\022\027\n\023PATH_CONTROL_LEADER\020\017\022\017\n\013PE"
+  "NCIL_BEAM\020\020\022\021\n\rPHOTO_TRIGGER\020\021\022\n\n\006RANGER"
+  "\020\022\022\022\n\016REMOTE_CONTROL\020\023\022\024\n\020REMOTE_OPERATI"
+  "ON\020\024\022\014\n\010SIDESCAN\020\025\022\r\n\tSLAVE_CPU\020\026\022\r\n\tUAV"
+  "CAMERA\020\027b\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_IMC_5fDCCL_2eproto_deps[1] = {
   &::descriptor_table_dccl_2foption_5fextensions_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_IMC_5fDCCL_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_IMC_5fDCCL_2eproto = {
-    false, false, 9462, descriptor_table_protodef_IMC_5fDCCL_2eproto,
+    false, false, 10576, descriptor_table_protodef_IMC_5fDCCL_2eproto,
     "IMC_DCCL.proto",
-    &descriptor_table_IMC_5fDCCL_2eproto_once, descriptor_table_IMC_5fDCCL_2eproto_deps, 1, 25,
+    &descriptor_table_IMC_5fDCCL_2eproto_once, descriptor_table_IMC_5fDCCL_2eproto_deps, 1, 28,
     schemas, file_default_instances, TableStruct_IMC_5fDCCL_2eproto::offsets,
     file_level_metadata_IMC_5fDCCL_2eproto, file_level_enum_descriptors_IMC_5fDCCL_2eproto,
     file_level_service_descriptors_IMC_5fDCCL_2eproto,
@@ -1302,9 +1440,82 @@ constexpr PlanDB_OperationEnum PlanDB::OperationEnum_MIN;
 constexpr PlanDB_OperationEnum PlanDB::OperationEnum_MAX;
 constexpr int PlanDB::OperationEnum_ARRAYSIZE;
 #endif  // (__cplusplus < 201703) && (!defined(_MSC_VER) || (_MSC_VER >= 1900 && _MSC_VER < 1912))
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ZUnits_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanControl_TypeEnum_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
   return file_level_enum_descriptors_IMC_5fDCCL_2eproto[5];
+}
+bool PlanControl_TypeEnum_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      return true;
+    default:
+      return false;
+  }
+}
+
+#if (__cplusplus < 201703) && (!defined(_MSC_VER) || (_MSC_VER >= 1900 && _MSC_VER < 1912))
+constexpr PlanControl_TypeEnum PlanControl::PC_REQUEST;
+constexpr PlanControl_TypeEnum PlanControl::PC_SUCCESS;
+constexpr PlanControl_TypeEnum PlanControl::PC_FAILURE;
+constexpr PlanControl_TypeEnum PlanControl::PC_IN_PROGRESS;
+constexpr PlanControl_TypeEnum PlanControl::TypeEnum_MIN;
+constexpr PlanControl_TypeEnum PlanControl::TypeEnum_MAX;
+constexpr int PlanControl::TypeEnum_ARRAYSIZE;
+#endif  // (__cplusplus < 201703) && (!defined(_MSC_VER) || (_MSC_VER >= 1900 && _MSC_VER < 1912))
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanControl_OperationEnum_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[6];
+}
+bool PlanControl_OperationEnum_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      return true;
+    default:
+      return false;
+  }
+}
+
+#if (__cplusplus < 201703) && (!defined(_MSC_VER) || (_MSC_VER >= 1900 && _MSC_VER < 1912))
+constexpr PlanControl_OperationEnum PlanControl::PC_START;
+constexpr PlanControl_OperationEnum PlanControl::PC_STOP;
+constexpr PlanControl_OperationEnum PlanControl::PC_LOAD;
+constexpr PlanControl_OperationEnum PlanControl::PC_GET;
+constexpr PlanControl_OperationEnum PlanControl::OperationEnum_MIN;
+constexpr PlanControl_OperationEnum PlanControl::OperationEnum_MAX;
+constexpr int PlanControl::OperationEnum_ARRAYSIZE;
+#endif  // (__cplusplus < 201703) && (!defined(_MSC_VER) || (_MSC_VER >= 1900 && _MSC_VER < 1912))
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanStatistics_TypeEnum_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[7];
+}
+bool PlanStatistics_TypeEnum_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+      return true;
+    default:
+      return false;
+  }
+}
+
+#if (__cplusplus < 201703) && (!defined(_MSC_VER) || (_MSC_VER >= 1900 && _MSC_VER < 1912))
+constexpr PlanStatistics_TypeEnum PlanStatistics::TP_PREPLAN;
+constexpr PlanStatistics_TypeEnum PlanStatistics::TP_INPLAN;
+constexpr PlanStatistics_TypeEnum PlanStatistics::TP_POSTPLAN;
+constexpr PlanStatistics_TypeEnum PlanStatistics::TypeEnum_MIN;
+constexpr PlanStatistics_TypeEnum PlanStatistics::TypeEnum_MAX;
+constexpr int PlanStatistics::TypeEnum_ARRAYSIZE;
+#endif  // (__cplusplus < 201703) && (!defined(_MSC_VER) || (_MSC_VER >= 1900 && _MSC_VER < 1912))
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ZUnits_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[8];
 }
 bool ZUnits_IsValid(int value) {
   switch (value) {
@@ -1321,7 +1532,7 @@ bool ZUnits_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* SpeedUnits_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
-  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[6];
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[9];
 }
 bool SpeedUnits_IsValid(int value) {
   switch (value) {
@@ -1337,7 +1548,7 @@ bool SpeedUnits_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ManeuverType_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
-  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[7];
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[10];
 }
 bool ManeuverType_IsValid(int value) {
   switch (value) {
@@ -1354,7 +1565,7 @@ bool ManeuverType_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ParamValue_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
-  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[8];
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[11];
 }
 bool ParamValue_IsValid(int value) {
   switch (value) {
@@ -1370,7 +1581,7 @@ bool ParamValue_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* TransitionConditionEnum_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
-  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[9];
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[12];
 }
 bool TransitionConditionEnum_IsValid(int value) {
   switch (value) {
@@ -1384,7 +1595,7 @@ bool TransitionConditionEnum_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ParameterName_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
-  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[10];
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[13];
 }
 bool ParameterName_IsValid(int value) {
   switch (value) {
@@ -1430,7 +1641,7 @@ bool ParameterName_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityName_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
-  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[11];
+  return file_level_enum_descriptors_IMC_5fDCCL_2eproto[14];
 }
 bool EntityName_IsValid(int value) {
   switch (value) {
@@ -9431,6 +9642,968 @@ void PlanDBInformation::InternalSwap(PlanDBInformation* other) {
 
 // ===================================================================
 
+class PlanControl::_Internal {
+ public:
+  using HasBits = decltype(std::declval<PlanControl>()._impl_._has_bits_);
+  static void set_has_request_id(HasBits* has_bits) {
+    (*has_bits)[0] |= 4u;
+  }
+  static void set_has_plan_id(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+  static void set_has_flags(HasBits* has_bits) {
+    (*has_bits)[0] |= 8u;
+  }
+  static const ::IMC_DCCL::PlanControlArgUnion& arg(const PlanControl* msg);
+  static void set_has_info(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
+};
+
+const ::IMC_DCCL::PlanControlArgUnion&
+PlanControl::_Internal::arg(const PlanControl* msg) {
+  return *msg->_impl_.arg_;
+}
+PlanControl::PlanControl(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.PlanControl)
+}
+PlanControl::PlanControl(const PlanControl& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  PlanControl* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_._has_bits_){from._impl_._has_bits_}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , decltype(_impl_.plan_id_){}
+    , decltype(_impl_.info_){}
+    , decltype(_impl_.arg_){nullptr}
+    , decltype(_impl_.type_){}
+    , decltype(_impl_.op_){}
+    , decltype(_impl_.request_id_){}
+    , decltype(_impl_.flags_){}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.plan_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_plan_id()) {
+    _this->_impl_.plan_id_.Set(from._internal_plan_id(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.info_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.info_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_info()) {
+    _this->_impl_.info_.Set(from._internal_info(), 
+      _this->GetArenaForAllocation());
+  }
+  if (from._internal_has_arg()) {
+    _this->_impl_.arg_ = new ::IMC_DCCL::PlanControlArgUnion(*from._impl_.arg_);
+  }
+  ::memcpy(&_impl_.type_, &from._impl_.type_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.flags_) -
+    reinterpret_cast<char*>(&_impl_.type_)) + sizeof(_impl_.flags_));
+  // @@protoc_insertion_point(copy_constructor:IMC_DCCL.PlanControl)
+}
+
+inline void PlanControl::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_._has_bits_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , decltype(_impl_.plan_id_){}
+    , decltype(_impl_.info_){}
+    , decltype(_impl_.arg_){nullptr}
+    , decltype(_impl_.type_){0}
+    , decltype(_impl_.op_){0}
+    , decltype(_impl_.request_id_){0}
+    , decltype(_impl_.flags_){0}
+  };
+  _impl_.plan_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.info_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.info_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+}
+
+PlanControl::~PlanControl() {
+  // @@protoc_insertion_point(destructor:IMC_DCCL.PlanControl)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void PlanControl::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.plan_id_.Destroy();
+  _impl_.info_.Destroy();
+  if (this != internal_default_instance()) delete _impl_.arg_;
+}
+
+void PlanControl::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void PlanControl::Clear() {
+// @@protoc_insertion_point(message_clear_start:IMC_DCCL.PlanControl)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
+    if (cached_has_bits & 0x00000001u) {
+      _impl_.plan_id_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000002u) {
+      _impl_.info_.ClearNonDefaultToEmpty();
+    }
+  }
+  if (GetArenaForAllocation() == nullptr && _impl_.arg_ != nullptr) {
+    delete _impl_.arg_;
+  }
+  _impl_.arg_ = nullptr;
+  ::memset(&_impl_.type_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.op_) -
+      reinterpret_cast<char*>(&_impl_.type_)) + sizeof(_impl_.op_));
+  if (cached_has_bits & 0x0000000cu) {
+    ::memset(&_impl_.request_id_, 0, static_cast<size_t>(
+        reinterpret_cast<char*>(&_impl_.flags_) -
+        reinterpret_cast<char*>(&_impl_.request_id_)) + sizeof(_impl_.flags_));
+  }
+  _impl_._has_bits_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* PlanControl::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // .IMC_DCCL.PlanControl.TypeEnum type = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_type(static_cast<::IMC_DCCL::PlanControl_TypeEnum>(val));
+        } else
+          goto handle_unusual;
+        continue;
+      // .IMC_DCCL.PlanControl.OperationEnum op = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_op(static_cast<::IMC_DCCL::PlanControl_OperationEnum>(val));
+        } else
+          goto handle_unusual;
+        continue;
+      // optional int32 request_id = 3 [(.dccl.field) = {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
+          _Internal::set_has_request_id(&has_bits);
+          _impl_.request_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional string plan_id = 4 [(.dccl.field) = {
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 34)) {
+          auto str = _internal_mutable_plan_id();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanControl.plan_id"));
+        } else
+          goto handle_unusual;
+        continue;
+      // optional int32 flags = 5 [(.dccl.field) = {
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 40)) {
+          _Internal::set_has_flags(&has_bits);
+          _impl_.flags_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // .IMC_DCCL.PlanControlArgUnion arg = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 50)) {
+          ptr = ctx->ParseMessage(_internal_mutable_arg(), ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional string info = 7 [(.dccl.field) = {
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 58)) {
+          auto str = _internal_mutable_info();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanControl.info"));
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  _impl_._has_bits_.Or(has_bits);
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* PlanControl::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.PlanControl)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .IMC_DCCL.PlanControl.TypeEnum type = 1;
+  if (this->_internal_type() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      1, this->_internal_type(), target);
+  }
+
+  // .IMC_DCCL.PlanControl.OperationEnum op = 2;
+  if (this->_internal_op() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      2, this->_internal_op(), target);
+  }
+
+  // optional int32 request_id = 3 [(.dccl.field) = {
+  if (_internal_has_request_id()) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(3, this->_internal_request_id(), target);
+  }
+
+  // optional string plan_id = 4 [(.dccl.field) = {
+  if (_internal_has_plan_id()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_plan_id().data(), static_cast<int>(this->_internal_plan_id().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "IMC_DCCL.PlanControl.plan_id");
+    target = stream->WriteStringMaybeAliased(
+        4, this->_internal_plan_id(), target);
+  }
+
+  // optional int32 flags = 5 [(.dccl.field) = {
+  if (_internal_has_flags()) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(5, this->_internal_flags(), target);
+  }
+
+  // .IMC_DCCL.PlanControlArgUnion arg = 6;
+  if (this->_internal_has_arg()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(6, _Internal::arg(this),
+        _Internal::arg(this).GetCachedSize(), target, stream);
+  }
+
+  // optional string info = 7 [(.dccl.field) = {
+  if (_internal_has_info()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_info().data(), static_cast<int>(this->_internal_info().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "IMC_DCCL.PlanControl.info");
+    target = stream->WriteStringMaybeAliased(
+        7, this->_internal_info(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.PlanControl)
+  return target;
+}
+
+size_t PlanControl::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.PlanControl)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
+    // optional string plan_id = 4 [(.dccl.field) = {
+    if (cached_has_bits & 0x00000001u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_plan_id());
+    }
+
+    // optional string info = 7 [(.dccl.field) = {
+    if (cached_has_bits & 0x00000002u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_info());
+    }
+
+  }
+  // .IMC_DCCL.PlanControlArgUnion arg = 6;
+  if (this->_internal_has_arg()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.arg_);
+  }
+
+  // .IMC_DCCL.PlanControl.TypeEnum type = 1;
+  if (this->_internal_type() != 0) {
+    total_size += 1 +
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_type());
+  }
+
+  // .IMC_DCCL.PlanControl.OperationEnum op = 2;
+  if (this->_internal_op() != 0) {
+    total_size += 1 +
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_op());
+  }
+
+  if (cached_has_bits & 0x0000000cu) {
+    // optional int32 request_id = 3 [(.dccl.field) = {
+    if (cached_has_bits & 0x00000004u) {
+      total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_request_id());
+    }
+
+    // optional int32 flags = 5 [(.dccl.field) = {
+    if (cached_has_bits & 0x00000008u) {
+      total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_flags());
+    }
+
+  }
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData PlanControl::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    PlanControl::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*PlanControl::GetClassData() const { return &_class_data_; }
+
+
+void PlanControl::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<PlanControl*>(&to_msg);
+  auto& from = static_cast<const PlanControl&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PlanControl)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  cached_has_bits = from._impl_._has_bits_[0];
+  if (cached_has_bits & 0x00000003u) {
+    if (cached_has_bits & 0x00000001u) {
+      _this->_internal_set_plan_id(from._internal_plan_id());
+    }
+    if (cached_has_bits & 0x00000002u) {
+      _this->_internal_set_info(from._internal_info());
+    }
+  }
+  if (from._internal_has_arg()) {
+    _this->_internal_mutable_arg()->::IMC_DCCL::PlanControlArgUnion::MergeFrom(
+        from._internal_arg());
+  }
+  if (from._internal_type() != 0) {
+    _this->_internal_set_type(from._internal_type());
+  }
+  if (from._internal_op() != 0) {
+    _this->_internal_set_op(from._internal_op());
+  }
+  if (cached_has_bits & 0x0000000cu) {
+    if (cached_has_bits & 0x00000004u) {
+      _this->_impl_.request_id_ = from._impl_.request_id_;
+    }
+    if (cached_has_bits & 0x00000008u) {
+      _this->_impl_.flags_ = from._impl_.flags_;
+    }
+    _this->_impl_._has_bits_[0] |= cached_has_bits;
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void PlanControl::CopyFrom(const PlanControl& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:IMC_DCCL.PlanControl)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool PlanControl::IsInitialized() const {
+  return true;
+}
+
+void PlanControl::InternalSwap(PlanControl* other) {
+  using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.plan_id_, lhs_arena,
+      &other->_impl_.plan_id_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.info_, lhs_arena,
+      &other->_impl_.info_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(PlanControl, _impl_.flags_)
+      + sizeof(PlanControl::_impl_.flags_)
+      - PROTOBUF_FIELD_OFFSET(PlanControl, _impl_.arg_)>(
+          reinterpret_cast<char*>(&_impl_.arg_),
+          reinterpret_cast<char*>(&other->_impl_.arg_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata PlanControl::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[22]);
+}
+
+// ===================================================================
+
+class PlanStatistics::_Internal {
+ public:
+  using HasBits = decltype(std::declval<PlanStatistics>()._impl_._has_bits_);
+  static void set_has_plan_id(HasBits* has_bits) {
+    (*has_bits)[0] |= 1u;
+  }
+  static void set_has_properties(HasBits* has_bits) {
+    (*has_bits)[0] |= 32u;
+  }
+  static void set_has_durations(HasBits* has_bits) {
+    (*has_bits)[0] |= 2u;
+  }
+  static void set_has_distances(HasBits* has_bits) {
+    (*has_bits)[0] |= 4u;
+  }
+  static void set_has_actions(HasBits* has_bits) {
+    (*has_bits)[0] |= 8u;
+  }
+  static void set_has_fuel(HasBits* has_bits) {
+    (*has_bits)[0] |= 16u;
+  }
+};
+
+PlanStatistics::PlanStatistics(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.PlanStatistics)
+}
+PlanStatistics::PlanStatistics(const PlanStatistics& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  PlanStatistics* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_._has_bits_){from._impl_._has_bits_}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , decltype(_impl_.plan_id_){}
+    , decltype(_impl_.durations_){}
+    , decltype(_impl_.distances_){}
+    , decltype(_impl_.actions_){}
+    , decltype(_impl_.fuel_){}
+    , decltype(_impl_.type_){}
+    , decltype(_impl_.properties_){}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  _impl_.plan_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_plan_id()) {
+    _this->_impl_.plan_id_.Set(from._internal_plan_id(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.durations_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.durations_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_durations()) {
+    _this->_impl_.durations_.Set(from._internal_durations(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.distances_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.distances_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_distances()) {
+    _this->_impl_.distances_.Set(from._internal_distances(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.actions_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.actions_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_actions()) {
+    _this->_impl_.actions_.Set(from._internal_actions(), 
+      _this->GetArenaForAllocation());
+  }
+  _impl_.fuel_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.fuel_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (from._internal_has_fuel()) {
+    _this->_impl_.fuel_.Set(from._internal_fuel(), 
+      _this->GetArenaForAllocation());
+  }
+  ::memcpy(&_impl_.type_, &from._impl_.type_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.properties_) -
+    reinterpret_cast<char*>(&_impl_.type_)) + sizeof(_impl_.properties_));
+  // @@protoc_insertion_point(copy_constructor:IMC_DCCL.PlanStatistics)
+}
+
+inline void PlanStatistics::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_._has_bits_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , decltype(_impl_.plan_id_){}
+    , decltype(_impl_.durations_){}
+    , decltype(_impl_.distances_){}
+    , decltype(_impl_.actions_){}
+    , decltype(_impl_.fuel_){}
+    , decltype(_impl_.type_){0}
+    , decltype(_impl_.properties_){0}
+  };
+  _impl_.plan_id_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.durations_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.durations_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.distances_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.distances_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.actions_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.actions_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  _impl_.fuel_.InitDefault();
+  #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+    _impl_.fuel_.Set("", GetArenaForAllocation());
+  #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+}
+
+PlanStatistics::~PlanStatistics() {
+  // @@protoc_insertion_point(destructor:IMC_DCCL.PlanStatistics)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void PlanStatistics::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  _impl_.plan_id_.Destroy();
+  _impl_.durations_.Destroy();
+  _impl_.distances_.Destroy();
+  _impl_.actions_.Destroy();
+  _impl_.fuel_.Destroy();
+}
+
+void PlanStatistics::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void PlanStatistics::Clear() {
+// @@protoc_insertion_point(message_clear_start:IMC_DCCL.PlanStatistics)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (cached_has_bits & 0x0000001fu) {
+    if (cached_has_bits & 0x00000001u) {
+      _impl_.plan_id_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000002u) {
+      _impl_.durations_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000004u) {
+      _impl_.distances_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000008u) {
+      _impl_.actions_.ClearNonDefaultToEmpty();
+    }
+    if (cached_has_bits & 0x00000010u) {
+      _impl_.fuel_.ClearNonDefaultToEmpty();
+    }
+  }
+  _impl_.type_ = 0;
+  _impl_.properties_ = 0;
+  _impl_._has_bits_.Clear();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* PlanStatistics::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  _Internal::HasBits has_bits{};
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // optional string plan_id = 1 [(.dccl.field) = {
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          auto str = _internal_mutable_plan_id();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanStatistics.plan_id"));
+        } else
+          goto handle_unusual;
+        continue;
+      // .IMC_DCCL.PlanStatistics.TypeEnum type = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_type(static_cast<::IMC_DCCL::PlanStatistics_TypeEnum>(val));
+        } else
+          goto handle_unusual;
+        continue;
+      // optional int32 properties = 3 [(.dccl.field) = {
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 24)) {
+          _Internal::set_has_properties(&has_bits);
+          _impl_.properties_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // optional string durations = 4 [(.dccl.field) = {
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 34)) {
+          auto str = _internal_mutable_durations();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanStatistics.durations"));
+        } else
+          goto handle_unusual;
+        continue;
+      // optional string distances = 5 [(.dccl.field) = {
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 42)) {
+          auto str = _internal_mutable_distances();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanStatistics.distances"));
+        } else
+          goto handle_unusual;
+        continue;
+      // optional string actions = 6 [(.dccl.field) = {
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 50)) {
+          auto str = _internal_mutable_actions();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanStatistics.actions"));
+        } else
+          goto handle_unusual;
+        continue;
+      // optional string fuel = 7 [(.dccl.field) = {
+      case 7:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 58)) {
+          auto str = _internal_mutable_fuel();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.PlanStatistics.fuel"));
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  _impl_._has_bits_.Or(has_bits);
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* PlanStatistics::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.PlanStatistics)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // optional string plan_id = 1 [(.dccl.field) = {
+  if (_internal_has_plan_id()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_plan_id().data(), static_cast<int>(this->_internal_plan_id().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "IMC_DCCL.PlanStatistics.plan_id");
+    target = stream->WriteStringMaybeAliased(
+        1, this->_internal_plan_id(), target);
+  }
+
+  // .IMC_DCCL.PlanStatistics.TypeEnum type = 2;
+  if (this->_internal_type() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      2, this->_internal_type(), target);
+  }
+
+  // optional int32 properties = 3 [(.dccl.field) = {
+  if (_internal_has_properties()) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(3, this->_internal_properties(), target);
+  }
+
+  // optional string durations = 4 [(.dccl.field) = {
+  if (_internal_has_durations()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_durations().data(), static_cast<int>(this->_internal_durations().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "IMC_DCCL.PlanStatistics.durations");
+    target = stream->WriteStringMaybeAliased(
+        4, this->_internal_durations(), target);
+  }
+
+  // optional string distances = 5 [(.dccl.field) = {
+  if (_internal_has_distances()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_distances().data(), static_cast<int>(this->_internal_distances().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "IMC_DCCL.PlanStatistics.distances");
+    target = stream->WriteStringMaybeAliased(
+        5, this->_internal_distances(), target);
+  }
+
+  // optional string actions = 6 [(.dccl.field) = {
+  if (_internal_has_actions()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_actions().data(), static_cast<int>(this->_internal_actions().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "IMC_DCCL.PlanStatistics.actions");
+    target = stream->WriteStringMaybeAliased(
+        6, this->_internal_actions(), target);
+  }
+
+  // optional string fuel = 7 [(.dccl.field) = {
+  if (_internal_has_fuel()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_fuel().data(), static_cast<int>(this->_internal_fuel().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "IMC_DCCL.PlanStatistics.fuel");
+    target = stream->WriteStringMaybeAliased(
+        7, this->_internal_fuel(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.PlanStatistics)
+  return target;
+}
+
+size_t PlanStatistics::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.PlanStatistics)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (cached_has_bits & 0x0000001fu) {
+    // optional string plan_id = 1 [(.dccl.field) = {
+    if (cached_has_bits & 0x00000001u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_plan_id());
+    }
+
+    // optional string durations = 4 [(.dccl.field) = {
+    if (cached_has_bits & 0x00000002u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_durations());
+    }
+
+    // optional string distances = 5 [(.dccl.field) = {
+    if (cached_has_bits & 0x00000004u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_distances());
+    }
+
+    // optional string actions = 6 [(.dccl.field) = {
+    if (cached_has_bits & 0x00000008u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_actions());
+    }
+
+    // optional string fuel = 7 [(.dccl.field) = {
+    if (cached_has_bits & 0x00000010u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_fuel());
+    }
+
+  }
+  // .IMC_DCCL.PlanStatistics.TypeEnum type = 2;
+  if (this->_internal_type() != 0) {
+    total_size += 1 +
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_type());
+  }
+
+  // optional int32 properties = 3 [(.dccl.field) = {
+  if (cached_has_bits & 0x00000020u) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_properties());
+  }
+
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData PlanStatistics::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    PlanStatistics::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*PlanStatistics::GetClassData() const { return &_class_data_; }
+
+
+void PlanStatistics::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<PlanStatistics*>(&to_msg);
+  auto& from = static_cast<const PlanStatistics&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PlanStatistics)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  cached_has_bits = from._impl_._has_bits_[0];
+  if (cached_has_bits & 0x0000001fu) {
+    if (cached_has_bits & 0x00000001u) {
+      _this->_internal_set_plan_id(from._internal_plan_id());
+    }
+    if (cached_has_bits & 0x00000002u) {
+      _this->_internal_set_durations(from._internal_durations());
+    }
+    if (cached_has_bits & 0x00000004u) {
+      _this->_internal_set_distances(from._internal_distances());
+    }
+    if (cached_has_bits & 0x00000008u) {
+      _this->_internal_set_actions(from._internal_actions());
+    }
+    if (cached_has_bits & 0x00000010u) {
+      _this->_internal_set_fuel(from._internal_fuel());
+    }
+  }
+  if (from._internal_type() != 0) {
+    _this->_internal_set_type(from._internal_type());
+  }
+  if (cached_has_bits & 0x00000020u) {
+    _this->_internal_set_properties(from._internal_properties());
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void PlanStatistics::CopyFrom(const PlanStatistics& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:IMC_DCCL.PlanStatistics)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool PlanStatistics::IsInitialized() const {
+  return true;
+}
+
+void PlanStatistics::InternalSwap(PlanStatistics* other) {
+  using std::swap;
+  auto* lhs_arena = GetArenaForAllocation();
+  auto* rhs_arena = other->GetArenaForAllocation();
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.plan_id_, lhs_arena,
+      &other->_impl_.plan_id_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.durations_, lhs_arena,
+      &other->_impl_.durations_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.distances_, lhs_arena,
+      &other->_impl_.distances_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.actions_, lhs_arena,
+      &other->_impl_.actions_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
+      &_impl_.fuel_, lhs_arena,
+      &other->_impl_.fuel_, rhs_arena
+  );
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(PlanStatistics, _impl_.properties_)
+      + sizeof(PlanStatistics::_impl_.properties_)
+      - PROTOBUF_FIELD_OFFSET(PlanStatistics, _impl_.type_)>(
+          reinterpret_cast<char*>(&_impl_.type_),
+          reinterpret_cast<char*>(&other->_impl_.type_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata PlanStatistics::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[23]);
+}
+
+// ===================================================================
+
 class PlanDBArgUnion::_Internal {
  public:
   static const ::IMC_DCCL::PlanSpecification& ps_arg(const PlanDBArgUnion* msg);
@@ -9789,7 +10962,7 @@ void PlanDBArgUnion::InternalSwap(PlanDBArgUnion* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanDBArgUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[22]);
+      file_level_metadata_IMC_5fDCCL_2eproto[24]);
 }
 
 // ===================================================================
@@ -10036,7 +11209,7 @@ void PlanSpecificationStartActionsUnion::InternalSwap(PlanSpecificationStartActi
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanSpecificationStartActionsUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[23]);
+      file_level_metadata_IMC_5fDCCL_2eproto[25]);
 }
 
 // ===================================================================
@@ -10283,7 +11456,370 @@ void PlanSpecificationEndActionsUnion::InternalSwap(PlanSpecificationEndActionsU
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanSpecificationEndActionsUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[24]);
+      file_level_metadata_IMC_5fDCCL_2eproto[26]);
+}
+
+// ===================================================================
+
+class PlanControlArgUnion::_Internal {
+ public:
+  static const ::IMC_DCCL::PlanSpecification& ps_arg(const PlanControlArgUnion* msg);
+  static const ::IMC_DCCL::Maneuver& man_arg(const PlanControlArgUnion* msg);
+  static const ::IMC_DCCL::PlanStatistics& stat_arg(const PlanControlArgUnion* msg);
+};
+
+const ::IMC_DCCL::PlanSpecification&
+PlanControlArgUnion::_Internal::ps_arg(const PlanControlArgUnion* msg) {
+  return *msg->_impl_.PlanDBArgUnion__.ps_arg_;
+}
+const ::IMC_DCCL::Maneuver&
+PlanControlArgUnion::_Internal::man_arg(const PlanControlArgUnion* msg) {
+  return *msg->_impl_.PlanDBArgUnion__.man_arg_;
+}
+const ::IMC_DCCL::PlanStatistics&
+PlanControlArgUnion::_Internal::stat_arg(const PlanControlArgUnion* msg) {
+  return *msg->_impl_.PlanDBArgUnion__.stat_arg_;
+}
+void PlanControlArgUnion::set_allocated_ps_arg(::IMC_DCCL::PlanSpecification* ps_arg) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  clear_PlanDBArgUnion_();
+  if (ps_arg) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(ps_arg);
+    if (message_arena != submessage_arena) {
+      ps_arg = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, ps_arg, submessage_arena);
+    }
+    set_has_ps_arg();
+    _impl_.PlanDBArgUnion__.ps_arg_ = ps_arg;
+  }
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanControlArgUnion.ps_arg)
+}
+void PlanControlArgUnion::set_allocated_man_arg(::IMC_DCCL::Maneuver* man_arg) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  clear_PlanDBArgUnion_();
+  if (man_arg) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(man_arg);
+    if (message_arena != submessage_arena) {
+      man_arg = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, man_arg, submessage_arena);
+    }
+    set_has_man_arg();
+    _impl_.PlanDBArgUnion__.man_arg_ = man_arg;
+  }
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanControlArgUnion.man_arg)
+}
+void PlanControlArgUnion::set_allocated_stat_arg(::IMC_DCCL::PlanStatistics* stat_arg) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  clear_PlanDBArgUnion_();
+  if (stat_arg) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+      ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(stat_arg);
+    if (message_arena != submessage_arena) {
+      stat_arg = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, stat_arg, submessage_arena);
+    }
+    set_has_stat_arg();
+    _impl_.PlanDBArgUnion__.stat_arg_ = stat_arg;
+  }
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanControlArgUnion.stat_arg)
+}
+PlanControlArgUnion::PlanControlArgUnion(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.PlanControlArgUnion)
+}
+PlanControlArgUnion::PlanControlArgUnion(const PlanControlArgUnion& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  PlanControlArgUnion* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.PlanDBArgUnion__){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , /*decltype(_impl_._oneof_case_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  clear_has_PlanDBArgUnion_();
+  switch (from.PlanDBArgUnion__case()) {
+    case kPsArg: {
+      _this->_internal_mutable_ps_arg()->::IMC_DCCL::PlanSpecification::MergeFrom(
+          from._internal_ps_arg());
+      break;
+    }
+    case kManArg: {
+      _this->_internal_mutable_man_arg()->::IMC_DCCL::Maneuver::MergeFrom(
+          from._internal_man_arg());
+      break;
+    }
+    case kStatArg: {
+      _this->_internal_mutable_stat_arg()->::IMC_DCCL::PlanStatistics::MergeFrom(
+          from._internal_stat_arg());
+      break;
+    }
+    case PLANDBARGUNION__NOT_SET: {
+      break;
+    }
+  }
+  // @@protoc_insertion_point(copy_constructor:IMC_DCCL.PlanControlArgUnion)
+}
+
+inline void PlanControlArgUnion::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.PlanDBArgUnion__){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , /*decltype(_impl_._oneof_case_)*/{}
+  };
+  clear_has_PlanDBArgUnion_();
+}
+
+PlanControlArgUnion::~PlanControlArgUnion() {
+  // @@protoc_insertion_point(destructor:IMC_DCCL.PlanControlArgUnion)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void PlanControlArgUnion::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  if (has_PlanDBArgUnion_()) {
+    clear_PlanDBArgUnion_();
+  }
+}
+
+void PlanControlArgUnion::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void PlanControlArgUnion::clear_PlanDBArgUnion_() {
+// @@protoc_insertion_point(one_of_clear_start:IMC_DCCL.PlanControlArgUnion)
+  switch (PlanDBArgUnion__case()) {
+    case kPsArg: {
+      if (GetArenaForAllocation() == nullptr) {
+        delete _impl_.PlanDBArgUnion__.ps_arg_;
+      }
+      break;
+    }
+    case kManArg: {
+      if (GetArenaForAllocation() == nullptr) {
+        delete _impl_.PlanDBArgUnion__.man_arg_;
+      }
+      break;
+    }
+    case kStatArg: {
+      if (GetArenaForAllocation() == nullptr) {
+        delete _impl_.PlanDBArgUnion__.stat_arg_;
+      }
+      break;
+    }
+    case PLANDBARGUNION__NOT_SET: {
+      break;
+    }
+  }
+  _impl_._oneof_case_[0] = PLANDBARGUNION__NOT_SET;
+}
+
+
+void PlanControlArgUnion::Clear() {
+// @@protoc_insertion_point(message_clear_start:IMC_DCCL.PlanControlArgUnion)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  clear_PlanDBArgUnion_();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* PlanControlArgUnion::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // .IMC_DCCL.PlanSpecification ps_arg = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          ptr = ctx->ParseMessage(_internal_mutable_ps_arg(), ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // .IMC_DCCL.Maneuver man_arg = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          ptr = ctx->ParseMessage(_internal_mutable_man_arg(), ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // .IMC_DCCL.PlanStatistics stat_arg = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+          ptr = ctx->ParseMessage(_internal_mutable_stat_arg(), ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* PlanControlArgUnion::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.PlanControlArgUnion)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .IMC_DCCL.PlanSpecification ps_arg = 1;
+  if (_internal_has_ps_arg()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(1, _Internal::ps_arg(this),
+        _Internal::ps_arg(this).GetCachedSize(), target, stream);
+  }
+
+  // .IMC_DCCL.Maneuver man_arg = 2;
+  if (_internal_has_man_arg()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(2, _Internal::man_arg(this),
+        _Internal::man_arg(this).GetCachedSize(), target, stream);
+  }
+
+  // .IMC_DCCL.PlanStatistics stat_arg = 3;
+  if (_internal_has_stat_arg()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(3, _Internal::stat_arg(this),
+        _Internal::stat_arg(this).GetCachedSize(), target, stream);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.PlanControlArgUnion)
+  return target;
+}
+
+size_t PlanControlArgUnion::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.PlanControlArgUnion)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  switch (PlanDBArgUnion__case()) {
+    // .IMC_DCCL.PlanSpecification ps_arg = 1;
+    case kPsArg: {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          *_impl_.PlanDBArgUnion__.ps_arg_);
+      break;
+    }
+    // .IMC_DCCL.Maneuver man_arg = 2;
+    case kManArg: {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          *_impl_.PlanDBArgUnion__.man_arg_);
+      break;
+    }
+    // .IMC_DCCL.PlanStatistics stat_arg = 3;
+    case kStatArg: {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+          *_impl_.PlanDBArgUnion__.stat_arg_);
+      break;
+    }
+    case PLANDBARGUNION__NOT_SET: {
+      break;
+    }
+  }
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData PlanControlArgUnion::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    PlanControlArgUnion::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*PlanControlArgUnion::GetClassData() const { return &_class_data_; }
+
+
+void PlanControlArgUnion::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<PlanControlArgUnion*>(&to_msg);
+  auto& from = static_cast<const PlanControlArgUnion&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.PlanControlArgUnion)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  switch (from.PlanDBArgUnion__case()) {
+    case kPsArg: {
+      _this->_internal_mutable_ps_arg()->::IMC_DCCL::PlanSpecification::MergeFrom(
+          from._internal_ps_arg());
+      break;
+    }
+    case kManArg: {
+      _this->_internal_mutable_man_arg()->::IMC_DCCL::Maneuver::MergeFrom(
+          from._internal_man_arg());
+      break;
+    }
+    case kStatArg: {
+      _this->_internal_mutable_stat_arg()->::IMC_DCCL::PlanStatistics::MergeFrom(
+          from._internal_stat_arg());
+      break;
+    }
+    case PLANDBARGUNION__NOT_SET: {
+      break;
+    }
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void PlanControlArgUnion::CopyFrom(const PlanControlArgUnion& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:IMC_DCCL.PlanControlArgUnion)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool PlanControlArgUnion::IsInitialized() const {
+  return true;
+}
+
+void PlanControlArgUnion::InternalSwap(PlanControlArgUnion* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_.PlanDBArgUnion__, other->_impl_.PlanDBArgUnion__);
+  swap(_impl_._oneof_case_[0], other->_impl_._oneof_case_[0]);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata PlanControlArgUnion::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[27]);
 }
 
 // @@protoc_insertion_point(namespace_scope)
@@ -10377,6 +11913,14 @@ template<> PROTOBUF_NOINLINE ::IMC_DCCL::PlanDBInformation*
 Arena::CreateMaybeMessage< ::IMC_DCCL::PlanDBInformation >(Arena* arena) {
   return Arena::CreateMessageInternal< ::IMC_DCCL::PlanDBInformation >(arena);
 }
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::PlanControl*
+Arena::CreateMaybeMessage< ::IMC_DCCL::PlanControl >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::PlanControl >(arena);
+}
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::PlanStatistics*
+Arena::CreateMaybeMessage< ::IMC_DCCL::PlanStatistics >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::PlanStatistics >(arena);
+}
 template<> PROTOBUF_NOINLINE ::IMC_DCCL::PlanDBArgUnion*
 Arena::CreateMaybeMessage< ::IMC_DCCL::PlanDBArgUnion >(Arena* arena) {
   return Arena::CreateMessageInternal< ::IMC_DCCL::PlanDBArgUnion >(arena);
@@ -10388,6 +11932,10 @@ Arena::CreateMaybeMessage< ::IMC_DCCL::PlanSpecificationStartActionsUnion >(Aren
 template<> PROTOBUF_NOINLINE ::IMC_DCCL::PlanSpecificationEndActionsUnion*
 Arena::CreateMaybeMessage< ::IMC_DCCL::PlanSpecificationEndActionsUnion >(Arena* arena) {
   return Arena::CreateMessageInternal< ::IMC_DCCL::PlanSpecificationEndActionsUnion >(arena);
+}
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::PlanControlArgUnion*
+Arena::CreateMaybeMessage< ::IMC_DCCL::PlanControlArgUnion >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::PlanControlArgUnion >(arena);
 }
 PROTOBUF_NAMESPACE_CLOSE
 

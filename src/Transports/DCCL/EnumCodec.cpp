@@ -131,7 +131,7 @@ std::string decodeEntityName(const uint8_t& dccl_src)
 // ------------------------------------------------------
 // Decode LoiterTypeEnum Enum
 // ------------------------------------------------------
-DUNE::IMC::Loiter::LoiterTypeEnum decodeLoiterTypeEnum(const uint8_t& dccl_src)
+DUNE::IMC::Loiter::LoiterTypeEnum decodeLoiterLoiterTypeEnum(const uint8_t& dccl_src)
 {
     if (dccl_src == IMC_DCCL::Loiter::LT_DEFAULT) return DUNE::IMC::Loiter::LoiterTypeEnum::LT_DEFAULT;
     if (dccl_src == IMC_DCCL::Loiter::LT_CIRCULAR) return DUNE::IMC::Loiter::LoiterTypeEnum::LT_CIRCULAR;
@@ -143,7 +143,7 @@ DUNE::IMC::Loiter::LoiterTypeEnum decodeLoiterTypeEnum(const uint8_t& dccl_src)
 // ------------------------------------------------------
 // Decode DirectionEnum Enum
 // ------------------------------------------------------
-DUNE::IMC::Loiter::DirectionEnum decodeDirectionEnum(const uint8_t& dccl_src)
+DUNE::IMC::Loiter::DirectionEnum decodeLoiterDirectionEnum(const uint8_t& dccl_src)
 {
     if (dccl_src == IMC_DCCL::Loiter::LD_VDEP) return DUNE::IMC::Loiter::DirectionEnum::LD_VDEP;
     if (dccl_src == IMC_DCCL::Loiter::LD_CLOCKW) return DUNE::IMC::Loiter::DirectionEnum::LD_CLOCKW;
@@ -154,7 +154,7 @@ DUNE::IMC::Loiter::DirectionEnum decodeDirectionEnum(const uint8_t& dccl_src)
 // ------------------------------------------------------
 // Decode ParameterEnum Enum
 // ------------------------------------------------------
-DUNE::IMC::VerticalProfile::ParameterEnum decodeParameterEnum(const uint8_t& dccl_src)
+DUNE::IMC::VerticalProfile::ParameterEnum decodeVerticalProfileParameterEnum(const uint8_t& dccl_src)
 {
     if (dccl_src == IMC_DCCL::VerticalProfile::PROF_TEMPERATURE) return DUNE::IMC::VerticalProfile::ParameterEnum::PROF_TEMPERATURE;
     if (dccl_src == IMC_DCCL::VerticalProfile::PROF_SALINITY) return DUNE::IMC::VerticalProfile::ParameterEnum::PROF_SALINITY;
@@ -168,7 +168,7 @@ DUNE::IMC::VerticalProfile::ParameterEnum decodeParameterEnum(const uint8_t& dcc
 // ------------------------------------------------------
 // Decode TypeEnum Enum
 // ------------------------------------------------------
-DUNE::IMC::PlanDB::TypeEnum decodeTypeEnum(const uint8_t& dccl_src)
+DUNE::IMC::PlanDB::TypeEnum decodePlanDBTypeEnum(const uint8_t& dccl_src)
 {
     if (dccl_src == IMC_DCCL::PlanDB::DBT_REQUEST) return DUNE::IMC::PlanDB::TypeEnum::DBT_REQUEST;
     if (dccl_src == IMC_DCCL::PlanDB::DBT_SUCCESS) return DUNE::IMC::PlanDB::TypeEnum::DBT_SUCCESS;
@@ -179,7 +179,7 @@ DUNE::IMC::PlanDB::TypeEnum decodeTypeEnum(const uint8_t& dccl_src)
 // ------------------------------------------------------
 // Decode OperationEnum Enum
 // ------------------------------------------------------
-DUNE::IMC::PlanDB::OperationEnum decodeOperationEnum(const uint8_t& dccl_src)
+DUNE::IMC::PlanDB::OperationEnum decodePlanDBOperationEnum(const uint8_t& dccl_src)
 {
     if (dccl_src == IMC_DCCL::PlanDB::DBOP_SET) return DUNE::IMC::PlanDB::OperationEnum::DBOP_SET;
     if (dccl_src == IMC_DCCL::PlanDB::DBOP_DEL) return DUNE::IMC::PlanDB::OperationEnum::DBOP_DEL;
@@ -189,6 +189,38 @@ DUNE::IMC::PlanDB::OperationEnum decodeOperationEnum(const uint8_t& dccl_src)
     if (dccl_src == IMC_DCCL::PlanDB::DBOP_GET_STATE) return DUNE::IMC::PlanDB::OperationEnum::DBOP_GET_STATE;
     if (dccl_src == IMC_DCCL::PlanDB::DBOP_GET_DSTATE) return DUNE::IMC::PlanDB::OperationEnum::DBOP_GET_DSTATE;
     if (dccl_src == IMC_DCCL::PlanDB::DBOP_BOOT) return DUNE::IMC::PlanDB::OperationEnum::DBOP_BOOT;
+}
+
+// ------------------------------------------------------
+// Decode TypeEnum Enum
+// ------------------------------------------------------
+DUNE::IMC::PlanControl::TypeEnum decodePlanControlTypeEnum(const uint8_t& dccl_src)
+{
+    if (dccl_src == IMC_DCCL::PlanControl::PC_REQUEST) return DUNE::IMC::PlanControl::TypeEnum::PC_REQUEST;
+    if (dccl_src == IMC_DCCL::PlanControl::PC_SUCCESS) return DUNE::IMC::PlanControl::TypeEnum::PC_SUCCESS;
+    if (dccl_src == IMC_DCCL::PlanControl::PC_FAILURE) return DUNE::IMC::PlanControl::TypeEnum::PC_FAILURE;
+    if (dccl_src == IMC_DCCL::PlanControl::PC_IN_PROGRESS) return DUNE::IMC::PlanControl::TypeEnum::PC_IN_PROGRESS;
+}
+
+// ------------------------------------------------------
+// Decode OperationEnum Enum
+// ------------------------------------------------------
+DUNE::IMC::PlanControl::OperationEnum decodePlanControlOperationEnum(const uint8_t& dccl_src)
+{
+    if (dccl_src == IMC_DCCL::PlanControl::PC_START) return DUNE::IMC::PlanControl::OperationEnum::PC_START;
+    if (dccl_src == IMC_DCCL::PlanControl::PC_STOP) return DUNE::IMC::PlanControl::OperationEnum::PC_STOP;
+    if (dccl_src == IMC_DCCL::PlanControl::PC_LOAD) return DUNE::IMC::PlanControl::OperationEnum::PC_LOAD;
+    if (dccl_src == IMC_DCCL::PlanControl::PC_GET) return DUNE::IMC::PlanControl::OperationEnum::PC_GET;
+}
+
+// ------------------------------------------------------
+// Decode TypeEnum Enum
+// ------------------------------------------------------
+DUNE::IMC::PlanStatistics::TypeEnum decodePlanStatisticsTypeEnum(const uint8_t& dccl_src)
+{
+    if (dccl_src == IMC_DCCL::PlanStatistics::TP_PREPLAN) return DUNE::IMC::PlanStatistics::TypeEnum::TP_PREPLAN;
+    if (dccl_src == IMC_DCCL::PlanStatistics::TP_INPLAN) return DUNE::IMC::PlanStatistics::TypeEnum::TP_INPLAN;
+    if (dccl_src == IMC_DCCL::PlanStatistics::TP_POSTPLAN) return DUNE::IMC::PlanStatistics::TypeEnum::TP_POSTPLAN;
 }
 
 
@@ -325,7 +357,7 @@ IMC_DCCL::EntityName encodeEntityName(const std::string& imc_src)
 // ------------------------------------------------------
 // Encode LoiterTypeEnum Enum
 // ------------------------------------------------------
-IMC_DCCL::Loiter::LoiterTypeEnum encodeLoiterTypeEnum(const uint8_t& imc_src)
+IMC_DCCL::Loiter::LoiterTypeEnum encodeLoiterLoiterTypeEnum(const uint8_t& imc_src)
 {
     if (imc_src == DUNE::IMC::Loiter::LoiterTypeEnum::LT_DEFAULT) return IMC_DCCL::Loiter::LT_DEFAULT;
     if (imc_src == DUNE::IMC::Loiter::LoiterTypeEnum::LT_CIRCULAR) return IMC_DCCL::Loiter::LT_CIRCULAR;
@@ -338,7 +370,7 @@ IMC_DCCL::Loiter::LoiterTypeEnum encodeLoiterTypeEnum(const uint8_t& imc_src)
 // ------------------------------------------------------
 // Encode DirectionEnum Enum
 // ------------------------------------------------------
-IMC_DCCL::Loiter::DirectionEnum encodeDirectionEnum(const uint8_t& imc_src)
+IMC_DCCL::Loiter::DirectionEnum encodeLoiterDirectionEnum(const uint8_t& imc_src)
 {
     if (imc_src == DUNE::IMC::Loiter::DirectionEnum::LD_VDEP) return IMC_DCCL::Loiter::LD_VDEP;
     if (imc_src == DUNE::IMC::Loiter::DirectionEnum::LD_CLOCKW) return IMC_DCCL::Loiter::LD_CLOCKW;
@@ -350,7 +382,7 @@ IMC_DCCL::Loiter::DirectionEnum encodeDirectionEnum(const uint8_t& imc_src)
 // ------------------------------------------------------
 // Encode ParameterEnum Enum
 // ------------------------------------------------------
-IMC_DCCL::VerticalProfile::ParameterEnum encodeParameterEnum(const uint8_t& imc_src)
+IMC_DCCL::VerticalProfile::ParameterEnum encodeVerticalProfileParameterEnum(const uint8_t& imc_src)
 {
     if (imc_src == DUNE::IMC::VerticalProfile::ParameterEnum::PROF_TEMPERATURE) return IMC_DCCL::VerticalProfile::PROF_TEMPERATURE;
     if (imc_src == DUNE::IMC::VerticalProfile::ParameterEnum::PROF_SALINITY) return IMC_DCCL::VerticalProfile::PROF_SALINITY;
@@ -364,7 +396,7 @@ IMC_DCCL::VerticalProfile::ParameterEnum encodeParameterEnum(const uint8_t& imc_
 // ------------------------------------------------------
 // Encode TypeEnum Enum
 // ------------------------------------------------------
-IMC_DCCL::PlanDB::TypeEnum encodeTypeEnum(const uint8_t& imc_src)
+IMC_DCCL::PlanDB::TypeEnum encodePlanDBTypeEnum(const uint8_t& imc_src)
 {
     if (imc_src == DUNE::IMC::PlanDB::TypeEnum::DBT_REQUEST) return IMC_DCCL::PlanDB::DBT_REQUEST;
     if (imc_src == DUNE::IMC::PlanDB::TypeEnum::DBT_SUCCESS) return IMC_DCCL::PlanDB::DBT_SUCCESS;
@@ -375,7 +407,7 @@ IMC_DCCL::PlanDB::TypeEnum encodeTypeEnum(const uint8_t& imc_src)
 // ------------------------------------------------------
 // Encode OperationEnum Enum
 // ------------------------------------------------------
-IMC_DCCL::PlanDB::OperationEnum encodeOperationEnum(const uint8_t& imc_src)
+IMC_DCCL::PlanDB::OperationEnum encodePlanDBOperationEnum(const uint8_t& imc_src)
 {
     if (imc_src == DUNE::IMC::PlanDB::OperationEnum::DBOP_SET) return IMC_DCCL::PlanDB::DBOP_SET;
     if (imc_src == DUNE::IMC::PlanDB::OperationEnum::DBOP_DEL) return IMC_DCCL::PlanDB::DBOP_DEL;
@@ -385,5 +417,37 @@ IMC_DCCL::PlanDB::OperationEnum encodeOperationEnum(const uint8_t& imc_src)
     if (imc_src == DUNE::IMC::PlanDB::OperationEnum::DBOP_GET_STATE) return IMC_DCCL::PlanDB::DBOP_GET_STATE;
     if (imc_src == DUNE::IMC::PlanDB::OperationEnum::DBOP_GET_DSTATE) return IMC_DCCL::PlanDB::DBOP_GET_DSTATE;
     if (imc_src == DUNE::IMC::PlanDB::OperationEnum::DBOP_BOOT) return IMC_DCCL::PlanDB::DBOP_BOOT;
+}
+
+// ------------------------------------------------------
+// Encode TypeEnum Enum
+// ------------------------------------------------------
+IMC_DCCL::PlanControl::TypeEnum encodePlanControlTypeEnum(const uint8_t& imc_src)
+{
+    if (imc_src == DUNE::IMC::PlanControl::TypeEnum::PC_REQUEST) return IMC_DCCL::PlanControl::PC_REQUEST;
+    if (imc_src == DUNE::IMC::PlanControl::TypeEnum::PC_SUCCESS) return IMC_DCCL::PlanControl::PC_SUCCESS;
+    if (imc_src == DUNE::IMC::PlanControl::TypeEnum::PC_FAILURE) return IMC_DCCL::PlanControl::PC_FAILURE;
+    if (imc_src == DUNE::IMC::PlanControl::TypeEnum::PC_IN_PROGRESS) return IMC_DCCL::PlanControl::PC_IN_PROGRESS;
+}
+
+// ------------------------------------------------------
+// Encode OperationEnum Enum
+// ------------------------------------------------------
+IMC_DCCL::PlanControl::OperationEnum encodePlanControlOperationEnum(const uint8_t& imc_src)
+{
+    if (imc_src == DUNE::IMC::PlanControl::OperationEnum::PC_START) return IMC_DCCL::PlanControl::PC_START;
+    if (imc_src == DUNE::IMC::PlanControl::OperationEnum::PC_STOP) return IMC_DCCL::PlanControl::PC_STOP;
+    if (imc_src == DUNE::IMC::PlanControl::OperationEnum::PC_LOAD) return IMC_DCCL::PlanControl::PC_LOAD;
+    if (imc_src == DUNE::IMC::PlanControl::OperationEnum::PC_GET) return IMC_DCCL::PlanControl::PC_GET;
+}
+
+// ------------------------------------------------------
+// Encode TypeEnum Enum
+// ------------------------------------------------------
+IMC_DCCL::PlanStatistics::TypeEnum encodePlanStatisticsTypeEnum(const uint8_t& imc_src)
+{
+    if (imc_src == DUNE::IMC::PlanStatistics::TypeEnum::TP_PREPLAN) return IMC_DCCL::PlanStatistics::TP_PREPLAN;
+    if (imc_src == DUNE::IMC::PlanStatistics::TypeEnum::TP_INPLAN) return IMC_DCCL::PlanStatistics::TP_INPLAN;
+    if (imc_src == DUNE::IMC::PlanStatistics::TypeEnum::TP_POSTPLAN) return IMC_DCCL::PlanStatistics::TP_POSTPLAN;
 }
 

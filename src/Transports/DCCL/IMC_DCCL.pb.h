@@ -77,6 +77,12 @@ extern ParameterValueDefaultTypeInternal _ParameterValue_default_instance_;
 class PathPoint;
 struct PathPointDefaultTypeInternal;
 extern PathPointDefaultTypeInternal _PathPoint_default_instance_;
+class PlanControl;
+struct PlanControlDefaultTypeInternal;
+extern PlanControlDefaultTypeInternal _PlanControl_default_instance_;
+class PlanControlArgUnion;
+struct PlanControlArgUnionDefaultTypeInternal;
+extern PlanControlArgUnionDefaultTypeInternal _PlanControlArgUnion_default_instance_;
 class PlanDB;
 struct PlanDBDefaultTypeInternal;
 extern PlanDBDefaultTypeInternal _PlanDB_default_instance_;
@@ -104,6 +110,9 @@ extern PlanSpecificationEndActionsUnionDefaultTypeInternal _PlanSpecificationEnd
 class PlanSpecificationStartActionsUnion;
 struct PlanSpecificationStartActionsUnionDefaultTypeInternal;
 extern PlanSpecificationStartActionsUnionDefaultTypeInternal _PlanSpecificationStartActionsUnion_default_instance_;
+class PlanStatistics;
+struct PlanStatisticsDefaultTypeInternal;
+extern PlanStatisticsDefaultTypeInternal _PlanStatistics_default_instance_;
 class PlanTransition;
 struct PlanTransitionDefaultTypeInternal;
 extern PlanTransitionDefaultTypeInternal _PlanTransition_default_instance_;
@@ -134,6 +143,8 @@ template<> ::IMC_DCCL::ManeuverID* Arena::CreateMaybeMessage<::IMC_DCCL::Maneuve
 template<> ::IMC_DCCL::ManeuverIDCombined* Arena::CreateMaybeMessage<::IMC_DCCL::ManeuverIDCombined>(Arena*);
 template<> ::IMC_DCCL::ParameterValue* Arena::CreateMaybeMessage<::IMC_DCCL::ParameterValue>(Arena*);
 template<> ::IMC_DCCL::PathPoint* Arena::CreateMaybeMessage<::IMC_DCCL::PathPoint>(Arena*);
+template<> ::IMC_DCCL::PlanControl* Arena::CreateMaybeMessage<::IMC_DCCL::PlanControl>(Arena*);
+template<> ::IMC_DCCL::PlanControlArgUnion* Arena::CreateMaybeMessage<::IMC_DCCL::PlanControlArgUnion>(Arena*);
 template<> ::IMC_DCCL::PlanDB* Arena::CreateMaybeMessage<::IMC_DCCL::PlanDB>(Arena*);
 template<> ::IMC_DCCL::PlanDBArgUnion* Arena::CreateMaybeMessage<::IMC_DCCL::PlanDBArgUnion>(Arena*);
 template<> ::IMC_DCCL::PlanDBInformation* Arena::CreateMaybeMessage<::IMC_DCCL::PlanDBInformation>(Arena*);
@@ -143,6 +154,7 @@ template<> ::IMC_DCCL::PlanManeuverStartActionsUnion* Arena::CreateMaybeMessage<
 template<> ::IMC_DCCL::PlanSpecification* Arena::CreateMaybeMessage<::IMC_DCCL::PlanSpecification>(Arena*);
 template<> ::IMC_DCCL::PlanSpecificationEndActionsUnion* Arena::CreateMaybeMessage<::IMC_DCCL::PlanSpecificationEndActionsUnion>(Arena*);
 template<> ::IMC_DCCL::PlanSpecificationStartActionsUnion* Arena::CreateMaybeMessage<::IMC_DCCL::PlanSpecificationStartActionsUnion>(Arena*);
+template<> ::IMC_DCCL::PlanStatistics* Arena::CreateMaybeMessage<::IMC_DCCL::PlanStatistics>(Arena*);
 template<> ::IMC_DCCL::PlanTransition* Arena::CreateMaybeMessage<::IMC_DCCL::PlanTransition>(Arena*);
 template<> ::IMC_DCCL::ProfileSample* Arena::CreateMaybeMessage<::IMC_DCCL::ProfileSample>(Arena*);
 template<> ::IMC_DCCL::SetEntityParameters* Arena::CreateMaybeMessage<::IMC_DCCL::SetEntityParameters>(Arena*);
@@ -296,6 +308,86 @@ inline bool PlanDB_OperationEnum_Parse(
     ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, PlanDB_OperationEnum* value) {
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<PlanDB_OperationEnum>(
     PlanDB_OperationEnum_descriptor(), name, value);
+}
+enum PlanControl_TypeEnum : int {
+  PlanControl_TypeEnum_PC_REQUEST = 0,
+  PlanControl_TypeEnum_PC_SUCCESS = 1,
+  PlanControl_TypeEnum_PC_FAILURE = 2,
+  PlanControl_TypeEnum_PC_IN_PROGRESS = 3,
+  PlanControl_TypeEnum_PlanControl_TypeEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  PlanControl_TypeEnum_PlanControl_TypeEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool PlanControl_TypeEnum_IsValid(int value);
+constexpr PlanControl_TypeEnum PlanControl_TypeEnum_TypeEnum_MIN = PlanControl_TypeEnum_PC_REQUEST;
+constexpr PlanControl_TypeEnum PlanControl_TypeEnum_TypeEnum_MAX = PlanControl_TypeEnum_PC_IN_PROGRESS;
+constexpr int PlanControl_TypeEnum_TypeEnum_ARRAYSIZE = PlanControl_TypeEnum_TypeEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanControl_TypeEnum_descriptor();
+template<typename T>
+inline const std::string& PlanControl_TypeEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, PlanControl_TypeEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function PlanControl_TypeEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    PlanControl_TypeEnum_descriptor(), enum_t_value);
+}
+inline bool PlanControl_TypeEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, PlanControl_TypeEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<PlanControl_TypeEnum>(
+    PlanControl_TypeEnum_descriptor(), name, value);
+}
+enum PlanControl_OperationEnum : int {
+  PlanControl_OperationEnum_PC_START = 0,
+  PlanControl_OperationEnum_PC_STOP = 1,
+  PlanControl_OperationEnum_PC_LOAD = 2,
+  PlanControl_OperationEnum_PC_GET = 3,
+  PlanControl_OperationEnum_PlanControl_OperationEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  PlanControl_OperationEnum_PlanControl_OperationEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool PlanControl_OperationEnum_IsValid(int value);
+constexpr PlanControl_OperationEnum PlanControl_OperationEnum_OperationEnum_MIN = PlanControl_OperationEnum_PC_START;
+constexpr PlanControl_OperationEnum PlanControl_OperationEnum_OperationEnum_MAX = PlanControl_OperationEnum_PC_GET;
+constexpr int PlanControl_OperationEnum_OperationEnum_ARRAYSIZE = PlanControl_OperationEnum_OperationEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanControl_OperationEnum_descriptor();
+template<typename T>
+inline const std::string& PlanControl_OperationEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, PlanControl_OperationEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function PlanControl_OperationEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    PlanControl_OperationEnum_descriptor(), enum_t_value);
+}
+inline bool PlanControl_OperationEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, PlanControl_OperationEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<PlanControl_OperationEnum>(
+    PlanControl_OperationEnum_descriptor(), name, value);
+}
+enum PlanStatistics_TypeEnum : int {
+  PlanStatistics_TypeEnum_TP_PREPLAN = 0,
+  PlanStatistics_TypeEnum_TP_INPLAN = 1,
+  PlanStatistics_TypeEnum_TP_POSTPLAN = 2,
+  PlanStatistics_TypeEnum_PlanStatistics_TypeEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  PlanStatistics_TypeEnum_PlanStatistics_TypeEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool PlanStatistics_TypeEnum_IsValid(int value);
+constexpr PlanStatistics_TypeEnum PlanStatistics_TypeEnum_TypeEnum_MIN = PlanStatistics_TypeEnum_TP_PREPLAN;
+constexpr PlanStatistics_TypeEnum PlanStatistics_TypeEnum_TypeEnum_MAX = PlanStatistics_TypeEnum_TP_POSTPLAN;
+constexpr int PlanStatistics_TypeEnum_TypeEnum_ARRAYSIZE = PlanStatistics_TypeEnum_TypeEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanStatistics_TypeEnum_descriptor();
+template<typename T>
+inline const std::string& PlanStatistics_TypeEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, PlanStatistics_TypeEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function PlanStatistics_TypeEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    PlanStatistics_TypeEnum_descriptor(), enum_t_value);
+}
+inline bool PlanStatistics_TypeEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, PlanStatistics_TypeEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<PlanStatistics_TypeEnum>(
+    PlanStatistics_TypeEnum_descriptor(), name, value);
 }
 enum ZUnits : int {
   Z_NONE = 0,
@@ -490,10 +582,10 @@ inline bool ParameterName_Parse(
     ParameterName_descriptor(), name, value);
 }
 enum EntityName : int {
-  CAMERA = 0,
+  ACOUSTIC_MODEM = 0,
   ADCP = 1,
   AUTOPILOT = 2,
-  ACOUSTIC_MODEM = 3,
+  CAMERA = 3,
   CTD = 4,
   DISSOLVED_OXYGEN = 5,
   FLUOROMETERS = 6,
@@ -518,7 +610,7 @@ enum EntityName : int {
   EntityName_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool EntityName_IsValid(int value);
-constexpr EntityName EntityName_MIN = CAMERA;
+constexpr EntityName EntityName_MIN = ACOUSTIC_MODEM;
 constexpr EntityName EntityName_MAX = UAVCAMERA;
 constexpr int EntityName_ARRAYSIZE = EntityName_MAX + 1;
 
@@ -5761,6 +5853,620 @@ class PlanDBInformation final :
 };
 // -------------------------------------------------------------------
 
+class PlanControl final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanControl) */ {
+ public:
+  inline PlanControl() : PlanControl(nullptr) {}
+  ~PlanControl() override;
+  explicit PROTOBUF_CONSTEXPR PlanControl(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  PlanControl(const PlanControl& from);
+  PlanControl(PlanControl&& from) noexcept
+    : PlanControl() {
+    *this = ::std::move(from);
+  }
+
+  inline PlanControl& operator=(const PlanControl& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline PlanControl& operator=(PlanControl&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const PlanControl& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const PlanControl* internal_default_instance() {
+    return reinterpret_cast<const PlanControl*>(
+               &_PlanControl_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    22;
+
+  friend void swap(PlanControl& a, PlanControl& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(PlanControl* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(PlanControl* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  PlanControl* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<PlanControl>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const PlanControl& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const PlanControl& from) {
+    PlanControl::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(PlanControl* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.PlanControl";
+  }
+  protected:
+  explicit PlanControl(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  typedef PlanControl_TypeEnum TypeEnum;
+  static constexpr TypeEnum PC_REQUEST =
+    PlanControl_TypeEnum_PC_REQUEST;
+  static constexpr TypeEnum PC_SUCCESS =
+    PlanControl_TypeEnum_PC_SUCCESS;
+  static constexpr TypeEnum PC_FAILURE =
+    PlanControl_TypeEnum_PC_FAILURE;
+  static constexpr TypeEnum PC_IN_PROGRESS =
+    PlanControl_TypeEnum_PC_IN_PROGRESS;
+  static inline bool TypeEnum_IsValid(int value) {
+    return PlanControl_TypeEnum_IsValid(value);
+  }
+  static constexpr TypeEnum TypeEnum_MIN =
+    PlanControl_TypeEnum_TypeEnum_MIN;
+  static constexpr TypeEnum TypeEnum_MAX =
+    PlanControl_TypeEnum_TypeEnum_MAX;
+  static constexpr int TypeEnum_ARRAYSIZE =
+    PlanControl_TypeEnum_TypeEnum_ARRAYSIZE;
+  static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
+  TypeEnum_descriptor() {
+    return PlanControl_TypeEnum_descriptor();
+  }
+  template<typename T>
+  static inline const std::string& TypeEnum_Name(T enum_t_value) {
+    static_assert(::std::is_same<T, TypeEnum>::value ||
+      ::std::is_integral<T>::value,
+      "Incorrect type passed to function TypeEnum_Name.");
+    return PlanControl_TypeEnum_Name(enum_t_value);
+  }
+  static inline bool TypeEnum_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
+      TypeEnum* value) {
+    return PlanControl_TypeEnum_Parse(name, value);
+  }
+
+  typedef PlanControl_OperationEnum OperationEnum;
+  static constexpr OperationEnum PC_START =
+    PlanControl_OperationEnum_PC_START;
+  static constexpr OperationEnum PC_STOP =
+    PlanControl_OperationEnum_PC_STOP;
+  static constexpr OperationEnum PC_LOAD =
+    PlanControl_OperationEnum_PC_LOAD;
+  static constexpr OperationEnum PC_GET =
+    PlanControl_OperationEnum_PC_GET;
+  static inline bool OperationEnum_IsValid(int value) {
+    return PlanControl_OperationEnum_IsValid(value);
+  }
+  static constexpr OperationEnum OperationEnum_MIN =
+    PlanControl_OperationEnum_OperationEnum_MIN;
+  static constexpr OperationEnum OperationEnum_MAX =
+    PlanControl_OperationEnum_OperationEnum_MAX;
+  static constexpr int OperationEnum_ARRAYSIZE =
+    PlanControl_OperationEnum_OperationEnum_ARRAYSIZE;
+  static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
+  OperationEnum_descriptor() {
+    return PlanControl_OperationEnum_descriptor();
+  }
+  template<typename T>
+  static inline const std::string& OperationEnum_Name(T enum_t_value) {
+    static_assert(::std::is_same<T, OperationEnum>::value ||
+      ::std::is_integral<T>::value,
+      "Incorrect type passed to function OperationEnum_Name.");
+    return PlanControl_OperationEnum_Name(enum_t_value);
+  }
+  static inline bool OperationEnum_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
+      OperationEnum* value) {
+    return PlanControl_OperationEnum_Parse(name, value);
+  }
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kPlanIdFieldNumber = 4,
+    kInfoFieldNumber = 7,
+    kArgFieldNumber = 6,
+    kTypeFieldNumber = 1,
+    kOpFieldNumber = 2,
+    kRequestIdFieldNumber = 3,
+    kFlagsFieldNumber = 5,
+  };
+  // optional string plan_id = 4 [(.dccl.field) = {
+  bool has_plan_id() const;
+  private:
+  bool _internal_has_plan_id() const;
+  public:
+  void clear_plan_id();
+  const std::string& plan_id() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_plan_id(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_plan_id();
+  PROTOBUF_NODISCARD std::string* release_plan_id();
+  void set_allocated_plan_id(std::string* plan_id);
+  private:
+  const std::string& _internal_plan_id() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_plan_id(const std::string& value);
+  std::string* _internal_mutable_plan_id();
+  public:
+
+  // optional string info = 7 [(.dccl.field) = {
+  bool has_info() const;
+  private:
+  bool _internal_has_info() const;
+  public:
+  void clear_info();
+  const std::string& info() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_info(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_info();
+  PROTOBUF_NODISCARD std::string* release_info();
+  void set_allocated_info(std::string* info);
+  private:
+  const std::string& _internal_info() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_info(const std::string& value);
+  std::string* _internal_mutable_info();
+  public:
+
+  // .IMC_DCCL.PlanControlArgUnion arg = 6;
+  bool has_arg() const;
+  private:
+  bool _internal_has_arg() const;
+  public:
+  void clear_arg();
+  const ::IMC_DCCL::PlanControlArgUnion& arg() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::PlanControlArgUnion* release_arg();
+  ::IMC_DCCL::PlanControlArgUnion* mutable_arg();
+  void set_allocated_arg(::IMC_DCCL::PlanControlArgUnion* arg);
+  private:
+  const ::IMC_DCCL::PlanControlArgUnion& _internal_arg() const;
+  ::IMC_DCCL::PlanControlArgUnion* _internal_mutable_arg();
+  public:
+  void unsafe_arena_set_allocated_arg(
+      ::IMC_DCCL::PlanControlArgUnion* arg);
+  ::IMC_DCCL::PlanControlArgUnion* unsafe_arena_release_arg();
+
+  // .IMC_DCCL.PlanControl.TypeEnum type = 1;
+  void clear_type();
+  ::IMC_DCCL::PlanControl_TypeEnum type() const;
+  void set_type(::IMC_DCCL::PlanControl_TypeEnum value);
+  private:
+  ::IMC_DCCL::PlanControl_TypeEnum _internal_type() const;
+  void _internal_set_type(::IMC_DCCL::PlanControl_TypeEnum value);
+  public:
+
+  // .IMC_DCCL.PlanControl.OperationEnum op = 2;
+  void clear_op();
+  ::IMC_DCCL::PlanControl_OperationEnum op() const;
+  void set_op(::IMC_DCCL::PlanControl_OperationEnum value);
+  private:
+  ::IMC_DCCL::PlanControl_OperationEnum _internal_op() const;
+  void _internal_set_op(::IMC_DCCL::PlanControl_OperationEnum value);
+  public:
+
+  // optional int32 request_id = 3 [(.dccl.field) = {
+  bool has_request_id() const;
+  private:
+  bool _internal_has_request_id() const;
+  public:
+  void clear_request_id();
+  int32_t request_id() const;
+  void set_request_id(int32_t value);
+  private:
+  int32_t _internal_request_id() const;
+  void _internal_set_request_id(int32_t value);
+  public:
+
+  // optional int32 flags = 5 [(.dccl.field) = {
+  bool has_flags() const;
+  private:
+  bool _internal_has_flags() const;
+  public:
+  void clear_flags();
+  int32_t flags() const;
+  void set_flags(int32_t value);
+  private:
+  int32_t _internal_flags() const;
+  void _internal_set_flags(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanControl)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr plan_id_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr info_;
+    ::IMC_DCCL::PlanControlArgUnion* arg_;
+    int type_;
+    int op_;
+    int32_t request_id_;
+    int32_t flags_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class PlanStatistics final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanStatistics) */ {
+ public:
+  inline PlanStatistics() : PlanStatistics(nullptr) {}
+  ~PlanStatistics() override;
+  explicit PROTOBUF_CONSTEXPR PlanStatistics(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  PlanStatistics(const PlanStatistics& from);
+  PlanStatistics(PlanStatistics&& from) noexcept
+    : PlanStatistics() {
+    *this = ::std::move(from);
+  }
+
+  inline PlanStatistics& operator=(const PlanStatistics& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline PlanStatistics& operator=(PlanStatistics&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const PlanStatistics& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const PlanStatistics* internal_default_instance() {
+    return reinterpret_cast<const PlanStatistics*>(
+               &_PlanStatistics_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    23;
+
+  friend void swap(PlanStatistics& a, PlanStatistics& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(PlanStatistics* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(PlanStatistics* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  PlanStatistics* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<PlanStatistics>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const PlanStatistics& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const PlanStatistics& from) {
+    PlanStatistics::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(PlanStatistics* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.PlanStatistics";
+  }
+  protected:
+  explicit PlanStatistics(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  typedef PlanStatistics_TypeEnum TypeEnum;
+  static constexpr TypeEnum TP_PREPLAN =
+    PlanStatistics_TypeEnum_TP_PREPLAN;
+  static constexpr TypeEnum TP_INPLAN =
+    PlanStatistics_TypeEnum_TP_INPLAN;
+  static constexpr TypeEnum TP_POSTPLAN =
+    PlanStatistics_TypeEnum_TP_POSTPLAN;
+  static inline bool TypeEnum_IsValid(int value) {
+    return PlanStatistics_TypeEnum_IsValid(value);
+  }
+  static constexpr TypeEnum TypeEnum_MIN =
+    PlanStatistics_TypeEnum_TypeEnum_MIN;
+  static constexpr TypeEnum TypeEnum_MAX =
+    PlanStatistics_TypeEnum_TypeEnum_MAX;
+  static constexpr int TypeEnum_ARRAYSIZE =
+    PlanStatistics_TypeEnum_TypeEnum_ARRAYSIZE;
+  static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
+  TypeEnum_descriptor() {
+    return PlanStatistics_TypeEnum_descriptor();
+  }
+  template<typename T>
+  static inline const std::string& TypeEnum_Name(T enum_t_value) {
+    static_assert(::std::is_same<T, TypeEnum>::value ||
+      ::std::is_integral<T>::value,
+      "Incorrect type passed to function TypeEnum_Name.");
+    return PlanStatistics_TypeEnum_Name(enum_t_value);
+  }
+  static inline bool TypeEnum_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
+      TypeEnum* value) {
+    return PlanStatistics_TypeEnum_Parse(name, value);
+  }
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kPlanIdFieldNumber = 1,
+    kDurationsFieldNumber = 4,
+    kDistancesFieldNumber = 5,
+    kActionsFieldNumber = 6,
+    kFuelFieldNumber = 7,
+    kTypeFieldNumber = 2,
+    kPropertiesFieldNumber = 3,
+  };
+  // optional string plan_id = 1 [(.dccl.field) = {
+  bool has_plan_id() const;
+  private:
+  bool _internal_has_plan_id() const;
+  public:
+  void clear_plan_id();
+  const std::string& plan_id() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_plan_id(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_plan_id();
+  PROTOBUF_NODISCARD std::string* release_plan_id();
+  void set_allocated_plan_id(std::string* plan_id);
+  private:
+  const std::string& _internal_plan_id() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_plan_id(const std::string& value);
+  std::string* _internal_mutable_plan_id();
+  public:
+
+  // optional string durations = 4 [(.dccl.field) = {
+  bool has_durations() const;
+  private:
+  bool _internal_has_durations() const;
+  public:
+  void clear_durations();
+  const std::string& durations() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_durations(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_durations();
+  PROTOBUF_NODISCARD std::string* release_durations();
+  void set_allocated_durations(std::string* durations);
+  private:
+  const std::string& _internal_durations() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_durations(const std::string& value);
+  std::string* _internal_mutable_durations();
+  public:
+
+  // optional string distances = 5 [(.dccl.field) = {
+  bool has_distances() const;
+  private:
+  bool _internal_has_distances() const;
+  public:
+  void clear_distances();
+  const std::string& distances() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_distances(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_distances();
+  PROTOBUF_NODISCARD std::string* release_distances();
+  void set_allocated_distances(std::string* distances);
+  private:
+  const std::string& _internal_distances() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_distances(const std::string& value);
+  std::string* _internal_mutable_distances();
+  public:
+
+  // optional string actions = 6 [(.dccl.field) = {
+  bool has_actions() const;
+  private:
+  bool _internal_has_actions() const;
+  public:
+  void clear_actions();
+  const std::string& actions() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_actions(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_actions();
+  PROTOBUF_NODISCARD std::string* release_actions();
+  void set_allocated_actions(std::string* actions);
+  private:
+  const std::string& _internal_actions() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_actions(const std::string& value);
+  std::string* _internal_mutable_actions();
+  public:
+
+  // optional string fuel = 7 [(.dccl.field) = {
+  bool has_fuel() const;
+  private:
+  bool _internal_has_fuel() const;
+  public:
+  void clear_fuel();
+  const std::string& fuel() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_fuel(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_fuel();
+  PROTOBUF_NODISCARD std::string* release_fuel();
+  void set_allocated_fuel(std::string* fuel);
+  private:
+  const std::string& _internal_fuel() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_fuel(const std::string& value);
+  std::string* _internal_mutable_fuel();
+  public:
+
+  // .IMC_DCCL.PlanStatistics.TypeEnum type = 2;
+  void clear_type();
+  ::IMC_DCCL::PlanStatistics_TypeEnum type() const;
+  void set_type(::IMC_DCCL::PlanStatistics_TypeEnum value);
+  private:
+  ::IMC_DCCL::PlanStatistics_TypeEnum _internal_type() const;
+  void _internal_set_type(::IMC_DCCL::PlanStatistics_TypeEnum value);
+  public:
+
+  // optional int32 properties = 3 [(.dccl.field) = {
+  bool has_properties() const;
+  private:
+  bool _internal_has_properties() const;
+  public:
+  void clear_properties();
+  int32_t properties() const;
+  void set_properties(int32_t value);
+  private:
+  int32_t _internal_properties() const;
+  void _internal_set_properties(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanStatistics)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr plan_id_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr durations_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr distances_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr actions_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr fuel_;
+    int type_;
+    int32_t properties_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class PlanDBArgUnion final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanDBArgUnion) */ {
  public:
@@ -5816,7 +6522,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    24;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -6032,7 +6738,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    25;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -6206,7 +6912,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    26;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -6318,6 +7024,224 @@ class PlanSpecificationEndActionsUnion final :
         ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
       ::IMC_DCCL::SetEntityParameters* ep_;
     } PlanSpecificationEndActionsUnion__;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    uint32_t _oneof_case_[1];
+
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class PlanControlArgUnion final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanControlArgUnion) */ {
+ public:
+  inline PlanControlArgUnion() : PlanControlArgUnion(nullptr) {}
+  ~PlanControlArgUnion() override;
+  explicit PROTOBUF_CONSTEXPR PlanControlArgUnion(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  PlanControlArgUnion(const PlanControlArgUnion& from);
+  PlanControlArgUnion(PlanControlArgUnion&& from) noexcept
+    : PlanControlArgUnion() {
+    *this = ::std::move(from);
+  }
+
+  inline PlanControlArgUnion& operator=(const PlanControlArgUnion& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline PlanControlArgUnion& operator=(PlanControlArgUnion&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const PlanControlArgUnion& default_instance() {
+    return *internal_default_instance();
+  }
+  enum PlanDBArgUnionCase {
+    kPsArg = 1,
+    kManArg = 2,
+    kStatArg = 3,
+    PLANDBARGUNION__NOT_SET = 0,
+  };
+
+  static inline const PlanControlArgUnion* internal_default_instance() {
+    return reinterpret_cast<const PlanControlArgUnion*>(
+               &_PlanControlArgUnion_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    27;
+
+  friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(PlanControlArgUnion* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(PlanControlArgUnion* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  PlanControlArgUnion* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<PlanControlArgUnion>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const PlanControlArgUnion& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const PlanControlArgUnion& from) {
+    PlanControlArgUnion::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(PlanControlArgUnion* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.PlanControlArgUnion";
+  }
+  protected:
+  explicit PlanControlArgUnion(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kPsArgFieldNumber = 1,
+    kManArgFieldNumber = 2,
+    kStatArgFieldNumber = 3,
+  };
+  // .IMC_DCCL.PlanSpecification ps_arg = 1;
+  bool has_ps_arg() const;
+  private:
+  bool _internal_has_ps_arg() const;
+  public:
+  void clear_ps_arg();
+  const ::IMC_DCCL::PlanSpecification& ps_arg() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::PlanSpecification* release_ps_arg();
+  ::IMC_DCCL::PlanSpecification* mutable_ps_arg();
+  void set_allocated_ps_arg(::IMC_DCCL::PlanSpecification* ps_arg);
+  private:
+  const ::IMC_DCCL::PlanSpecification& _internal_ps_arg() const;
+  ::IMC_DCCL::PlanSpecification* _internal_mutable_ps_arg();
+  public:
+  void unsafe_arena_set_allocated_ps_arg(
+      ::IMC_DCCL::PlanSpecification* ps_arg);
+  ::IMC_DCCL::PlanSpecification* unsafe_arena_release_ps_arg();
+
+  // .IMC_DCCL.Maneuver man_arg = 2;
+  bool has_man_arg() const;
+  private:
+  bool _internal_has_man_arg() const;
+  public:
+  void clear_man_arg();
+  const ::IMC_DCCL::Maneuver& man_arg() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::Maneuver* release_man_arg();
+  ::IMC_DCCL::Maneuver* mutable_man_arg();
+  void set_allocated_man_arg(::IMC_DCCL::Maneuver* man_arg);
+  private:
+  const ::IMC_DCCL::Maneuver& _internal_man_arg() const;
+  ::IMC_DCCL::Maneuver* _internal_mutable_man_arg();
+  public:
+  void unsafe_arena_set_allocated_man_arg(
+      ::IMC_DCCL::Maneuver* man_arg);
+  ::IMC_DCCL::Maneuver* unsafe_arena_release_man_arg();
+
+  // .IMC_DCCL.PlanStatistics stat_arg = 3;
+  bool has_stat_arg() const;
+  private:
+  bool _internal_has_stat_arg() const;
+  public:
+  void clear_stat_arg();
+  const ::IMC_DCCL::PlanStatistics& stat_arg() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::PlanStatistics* release_stat_arg();
+  ::IMC_DCCL::PlanStatistics* mutable_stat_arg();
+  void set_allocated_stat_arg(::IMC_DCCL::PlanStatistics* stat_arg);
+  private:
+  const ::IMC_DCCL::PlanStatistics& _internal_stat_arg() const;
+  ::IMC_DCCL::PlanStatistics* _internal_mutable_stat_arg();
+  public:
+  void unsafe_arena_set_allocated_stat_arg(
+      ::IMC_DCCL::PlanStatistics* stat_arg);
+  ::IMC_DCCL::PlanStatistics* unsafe_arena_release_stat_arg();
+
+  void clear_PlanDBArgUnion_();
+  PlanDBArgUnionCase PlanDBArgUnion__case() const;
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanControlArgUnion)
+ private:
+  class _Internal;
+  void set_has_ps_arg();
+  void set_has_man_arg();
+  void set_has_stat_arg();
+
+  inline bool has_PlanDBArgUnion_() const;
+  inline void clear_has_PlanDBArgUnion_();
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    union PlanDBArgUnionUnion {
+      constexpr PlanDBArgUnionUnion() : _constinit_{} {}
+        ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
+      ::IMC_DCCL::PlanSpecification* ps_arg_;
+      ::IMC_DCCL::Maneuver* man_arg_;
+      ::IMC_DCCL::PlanStatistics* stat_arg_;
+    } PlanDBArgUnion__;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     uint32_t _oneof_case_[1];
 
@@ -11140,6 +12064,724 @@ inline void PlanDBInformation::set_allocated_md5(std::string* md5) {
 
 // -------------------------------------------------------------------
 
+// PlanControl
+
+// .IMC_DCCL.PlanControl.TypeEnum type = 1;
+inline void PlanControl::clear_type() {
+  _impl_.type_ = 0;
+}
+inline ::IMC_DCCL::PlanControl_TypeEnum PlanControl::_internal_type() const {
+  return static_cast< ::IMC_DCCL::PlanControl_TypeEnum >(_impl_.type_);
+}
+inline ::IMC_DCCL::PlanControl_TypeEnum PlanControl::type() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControl.type)
+  return _internal_type();
+}
+inline void PlanControl::_internal_set_type(::IMC_DCCL::PlanControl_TypeEnum value) {
+  
+  _impl_.type_ = value;
+}
+inline void PlanControl::set_type(::IMC_DCCL::PlanControl_TypeEnum value) {
+  _internal_set_type(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanControl.type)
+}
+
+// .IMC_DCCL.PlanControl.OperationEnum op = 2;
+inline void PlanControl::clear_op() {
+  _impl_.op_ = 0;
+}
+inline ::IMC_DCCL::PlanControl_OperationEnum PlanControl::_internal_op() const {
+  return static_cast< ::IMC_DCCL::PlanControl_OperationEnum >(_impl_.op_);
+}
+inline ::IMC_DCCL::PlanControl_OperationEnum PlanControl::op() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControl.op)
+  return _internal_op();
+}
+inline void PlanControl::_internal_set_op(::IMC_DCCL::PlanControl_OperationEnum value) {
+  
+  _impl_.op_ = value;
+}
+inline void PlanControl::set_op(::IMC_DCCL::PlanControl_OperationEnum value) {
+  _internal_set_op(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanControl.op)
+}
+
+// optional int32 request_id = 3 [(.dccl.field) = {
+inline bool PlanControl::_internal_has_request_id() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool PlanControl::has_request_id() const {
+  return _internal_has_request_id();
+}
+inline void PlanControl::clear_request_id() {
+  _impl_.request_id_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline int32_t PlanControl::_internal_request_id() const {
+  return _impl_.request_id_;
+}
+inline int32_t PlanControl::request_id() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControl.request_id)
+  return _internal_request_id();
+}
+inline void PlanControl::_internal_set_request_id(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_.request_id_ = value;
+}
+inline void PlanControl::set_request_id(int32_t value) {
+  _internal_set_request_id(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanControl.request_id)
+}
+
+// optional string plan_id = 4 [(.dccl.field) = {
+inline bool PlanControl::_internal_has_plan_id() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool PlanControl::has_plan_id() const {
+  return _internal_has_plan_id();
+}
+inline void PlanControl::clear_plan_id() {
+  _impl_.plan_id_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& PlanControl::plan_id() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControl.plan_id)
+  return _internal_plan_id();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanControl::set_plan_id(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.plan_id_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanControl.plan_id)
+}
+inline std::string* PlanControl::mutable_plan_id() {
+  std::string* _s = _internal_mutable_plan_id();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanControl.plan_id)
+  return _s;
+}
+inline const std::string& PlanControl::_internal_plan_id() const {
+  return _impl_.plan_id_.Get();
+}
+inline void PlanControl::_internal_set_plan_id(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.plan_id_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanControl::_internal_mutable_plan_id() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.plan_id_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanControl::release_plan_id() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanControl.plan_id)
+  if (!_internal_has_plan_id()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.plan_id_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.plan_id_.IsDefault()) {
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanControl::set_allocated_plan_id(std::string* plan_id) {
+  if (plan_id != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.plan_id_.SetAllocated(plan_id, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.plan_id_.IsDefault()) {
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanControl.plan_id)
+}
+
+// optional int32 flags = 5 [(.dccl.field) = {
+inline bool PlanControl::_internal_has_flags() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool PlanControl::has_flags() const {
+  return _internal_has_flags();
+}
+inline void PlanControl::clear_flags() {
+  _impl_.flags_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008u;
+}
+inline int32_t PlanControl::_internal_flags() const {
+  return _impl_.flags_;
+}
+inline int32_t PlanControl::flags() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControl.flags)
+  return _internal_flags();
+}
+inline void PlanControl::_internal_set_flags(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_.flags_ = value;
+}
+inline void PlanControl::set_flags(int32_t value) {
+  _internal_set_flags(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanControl.flags)
+}
+
+// .IMC_DCCL.PlanControlArgUnion arg = 6;
+inline bool PlanControl::_internal_has_arg() const {
+  return this != internal_default_instance() && _impl_.arg_ != nullptr;
+}
+inline bool PlanControl::has_arg() const {
+  return _internal_has_arg();
+}
+inline void PlanControl::clear_arg() {
+  if (GetArenaForAllocation() == nullptr && _impl_.arg_ != nullptr) {
+    delete _impl_.arg_;
+  }
+  _impl_.arg_ = nullptr;
+}
+inline const ::IMC_DCCL::PlanControlArgUnion& PlanControl::_internal_arg() const {
+  const ::IMC_DCCL::PlanControlArgUnion* p = _impl_.arg_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::PlanControlArgUnion&>(
+      ::IMC_DCCL::_PlanControlArgUnion_default_instance_);
+}
+inline const ::IMC_DCCL::PlanControlArgUnion& PlanControl::arg() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControl.arg)
+  return _internal_arg();
+}
+inline void PlanControl::unsafe_arena_set_allocated_arg(
+    ::IMC_DCCL::PlanControlArgUnion* arg) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.arg_);
+  }
+  _impl_.arg_ = arg;
+  if (arg) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.PlanControl.arg)
+}
+inline ::IMC_DCCL::PlanControlArgUnion* PlanControl::release_arg() {
+  
+  ::IMC_DCCL::PlanControlArgUnion* temp = _impl_.arg_;
+  _impl_.arg_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::PlanControlArgUnion* PlanControl::unsafe_arena_release_arg() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanControl.arg)
+  
+  ::IMC_DCCL::PlanControlArgUnion* temp = _impl_.arg_;
+  _impl_.arg_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::PlanControlArgUnion* PlanControl::_internal_mutable_arg() {
+  
+  if (_impl_.arg_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::PlanControlArgUnion>(GetArenaForAllocation());
+    _impl_.arg_ = p;
+  }
+  return _impl_.arg_;
+}
+inline ::IMC_DCCL::PlanControlArgUnion* PlanControl::mutable_arg() {
+  ::IMC_DCCL::PlanControlArgUnion* _msg = _internal_mutable_arg();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanControl.arg)
+  return _msg;
+}
+inline void PlanControl::set_allocated_arg(::IMC_DCCL::PlanControlArgUnion* arg) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.arg_;
+  }
+  if (arg) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(arg);
+    if (message_arena != submessage_arena) {
+      arg = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, arg, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.arg_ = arg;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanControl.arg)
+}
+
+// optional string info = 7 [(.dccl.field) = {
+inline bool PlanControl::_internal_has_info() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool PlanControl::has_info() const {
+  return _internal_has_info();
+}
+inline void PlanControl::clear_info() {
+  _impl_.info_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline const std::string& PlanControl::info() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControl.info)
+  return _internal_info();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanControl::set_info(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000002u;
+ _impl_.info_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanControl.info)
+}
+inline std::string* PlanControl::mutable_info() {
+  std::string* _s = _internal_mutable_info();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanControl.info)
+  return _s;
+}
+inline const std::string& PlanControl::_internal_info() const {
+  return _impl_.info_.Get();
+}
+inline void PlanControl::_internal_set_info(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.info_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanControl::_internal_mutable_info() {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  return _impl_.info_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanControl::release_info() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanControl.info)
+  if (!_internal_has_info()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  auto* p = _impl_.info_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.info_.IsDefault()) {
+    _impl_.info_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanControl::set_allocated_info(std::string* info) {
+  if (info != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+  _impl_.info_.SetAllocated(info, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.info_.IsDefault()) {
+    _impl_.info_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanControl.info)
+}
+
+// -------------------------------------------------------------------
+
+// PlanStatistics
+
+// optional string plan_id = 1 [(.dccl.field) = {
+inline bool PlanStatistics::_internal_has_plan_id() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool PlanStatistics::has_plan_id() const {
+  return _internal_has_plan_id();
+}
+inline void PlanStatistics::clear_plan_id() {
+  _impl_.plan_id_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& PlanStatistics::plan_id() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.plan_id)
+  return _internal_plan_id();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanStatistics::set_plan_id(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.plan_id_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.plan_id)
+}
+inline std::string* PlanStatistics::mutable_plan_id() {
+  std::string* _s = _internal_mutable_plan_id();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanStatistics.plan_id)
+  return _s;
+}
+inline const std::string& PlanStatistics::_internal_plan_id() const {
+  return _impl_.plan_id_.Get();
+}
+inline void PlanStatistics::_internal_set_plan_id(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.plan_id_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanStatistics::_internal_mutable_plan_id() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.plan_id_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanStatistics::release_plan_id() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanStatistics.plan_id)
+  if (!_internal_has_plan_id()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.plan_id_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.plan_id_.IsDefault()) {
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanStatistics::set_allocated_plan_id(std::string* plan_id) {
+  if (plan_id != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.plan_id_.SetAllocated(plan_id, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.plan_id_.IsDefault()) {
+    _impl_.plan_id_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanStatistics.plan_id)
+}
+
+// .IMC_DCCL.PlanStatistics.TypeEnum type = 2;
+inline void PlanStatistics::clear_type() {
+  _impl_.type_ = 0;
+}
+inline ::IMC_DCCL::PlanStatistics_TypeEnum PlanStatistics::_internal_type() const {
+  return static_cast< ::IMC_DCCL::PlanStatistics_TypeEnum >(_impl_.type_);
+}
+inline ::IMC_DCCL::PlanStatistics_TypeEnum PlanStatistics::type() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.type)
+  return _internal_type();
+}
+inline void PlanStatistics::_internal_set_type(::IMC_DCCL::PlanStatistics_TypeEnum value) {
+  
+  _impl_.type_ = value;
+}
+inline void PlanStatistics::set_type(::IMC_DCCL::PlanStatistics_TypeEnum value) {
+  _internal_set_type(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.type)
+}
+
+// optional int32 properties = 3 [(.dccl.field) = {
+inline bool PlanStatistics::_internal_has_properties() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  return value;
+}
+inline bool PlanStatistics::has_properties() const {
+  return _internal_has_properties();
+}
+inline void PlanStatistics::clear_properties() {
+  _impl_.properties_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000020u;
+}
+inline int32_t PlanStatistics::_internal_properties() const {
+  return _impl_.properties_;
+}
+inline int32_t PlanStatistics::properties() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.properties)
+  return _internal_properties();
+}
+inline void PlanStatistics::_internal_set_properties(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000020u;
+  _impl_.properties_ = value;
+}
+inline void PlanStatistics::set_properties(int32_t value) {
+  _internal_set_properties(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.properties)
+}
+
+// optional string durations = 4 [(.dccl.field) = {
+inline bool PlanStatistics::_internal_has_durations() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool PlanStatistics::has_durations() const {
+  return _internal_has_durations();
+}
+inline void PlanStatistics::clear_durations() {
+  _impl_.durations_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline const std::string& PlanStatistics::durations() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.durations)
+  return _internal_durations();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanStatistics::set_durations(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000002u;
+ _impl_.durations_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.durations)
+}
+inline std::string* PlanStatistics::mutable_durations() {
+  std::string* _s = _internal_mutable_durations();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanStatistics.durations)
+  return _s;
+}
+inline const std::string& PlanStatistics::_internal_durations() const {
+  return _impl_.durations_.Get();
+}
+inline void PlanStatistics::_internal_set_durations(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.durations_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanStatistics::_internal_mutable_durations() {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  return _impl_.durations_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanStatistics::release_durations() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanStatistics.durations)
+  if (!_internal_has_durations()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  auto* p = _impl_.durations_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.durations_.IsDefault()) {
+    _impl_.durations_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanStatistics::set_allocated_durations(std::string* durations) {
+  if (durations != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+  _impl_.durations_.SetAllocated(durations, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.durations_.IsDefault()) {
+    _impl_.durations_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanStatistics.durations)
+}
+
+// optional string distances = 5 [(.dccl.field) = {
+inline bool PlanStatistics::_internal_has_distances() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool PlanStatistics::has_distances() const {
+  return _internal_has_distances();
+}
+inline void PlanStatistics::clear_distances() {
+  _impl_.distances_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline const std::string& PlanStatistics::distances() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.distances)
+  return _internal_distances();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanStatistics::set_distances(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000004u;
+ _impl_.distances_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.distances)
+}
+inline std::string* PlanStatistics::mutable_distances() {
+  std::string* _s = _internal_mutable_distances();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanStatistics.distances)
+  return _s;
+}
+inline const std::string& PlanStatistics::_internal_distances() const {
+  return _impl_.distances_.Get();
+}
+inline void PlanStatistics::_internal_set_distances(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_.distances_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanStatistics::_internal_mutable_distances() {
+  _impl_._has_bits_[0] |= 0x00000004u;
+  return _impl_.distances_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanStatistics::release_distances() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanStatistics.distances)
+  if (!_internal_has_distances()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000004u;
+  auto* p = _impl_.distances_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.distances_.IsDefault()) {
+    _impl_.distances_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanStatistics::set_allocated_distances(std::string* distances) {
+  if (distances != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000004u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000004u;
+  }
+  _impl_.distances_.SetAllocated(distances, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.distances_.IsDefault()) {
+    _impl_.distances_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanStatistics.distances)
+}
+
+// optional string actions = 6 [(.dccl.field) = {
+inline bool PlanStatistics::_internal_has_actions() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool PlanStatistics::has_actions() const {
+  return _internal_has_actions();
+}
+inline void PlanStatistics::clear_actions() {
+  _impl_.actions_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000008u;
+}
+inline const std::string& PlanStatistics::actions() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.actions)
+  return _internal_actions();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanStatistics::set_actions(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000008u;
+ _impl_.actions_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.actions)
+}
+inline std::string* PlanStatistics::mutable_actions() {
+  std::string* _s = _internal_mutable_actions();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanStatistics.actions)
+  return _s;
+}
+inline const std::string& PlanStatistics::_internal_actions() const {
+  return _impl_.actions_.Get();
+}
+inline void PlanStatistics::_internal_set_actions(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_.actions_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanStatistics::_internal_mutable_actions() {
+  _impl_._has_bits_[0] |= 0x00000008u;
+  return _impl_.actions_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanStatistics::release_actions() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanStatistics.actions)
+  if (!_internal_has_actions()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000008u;
+  auto* p = _impl_.actions_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.actions_.IsDefault()) {
+    _impl_.actions_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanStatistics::set_allocated_actions(std::string* actions) {
+  if (actions != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000008u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000008u;
+  }
+  _impl_.actions_.SetAllocated(actions, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.actions_.IsDefault()) {
+    _impl_.actions_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanStatistics.actions)
+}
+
+// optional string fuel = 7 [(.dccl.field) = {
+inline bool PlanStatistics::_internal_has_fuel() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool PlanStatistics::has_fuel() const {
+  return _internal_has_fuel();
+}
+inline void PlanStatistics::clear_fuel() {
+  _impl_.fuel_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000010u;
+}
+inline const std::string& PlanStatistics::fuel() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.fuel)
+  return _internal_fuel();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanStatistics::set_fuel(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000010u;
+ _impl_.fuel_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.fuel)
+}
+inline std::string* PlanStatistics::mutable_fuel() {
+  std::string* _s = _internal_mutable_fuel();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanStatistics.fuel)
+  return _s;
+}
+inline const std::string& PlanStatistics::_internal_fuel() const {
+  return _impl_.fuel_.Get();
+}
+inline void PlanStatistics::_internal_set_fuel(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_.fuel_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanStatistics::_internal_mutable_fuel() {
+  _impl_._has_bits_[0] |= 0x00000010u;
+  return _impl_.fuel_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanStatistics::release_fuel() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanStatistics.fuel)
+  if (!_internal_has_fuel()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000010u;
+  auto* p = _impl_.fuel_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.fuel_.IsDefault()) {
+    _impl_.fuel_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanStatistics::set_allocated_fuel(std::string* fuel) {
+  if (fuel != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000010u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000010u;
+  }
+  _impl_.fuel_.SetAllocated(fuel, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.fuel_.IsDefault()) {
+    _impl_.fuel_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanStatistics.fuel)
+}
+
+// -------------------------------------------------------------------
+
 // PlanDBArgUnion
 
 // .IMC_DCCL.PlanSpecification ps_arg = 1;
@@ -11547,9 +13189,250 @@ inline void PlanSpecificationEndActionsUnion::clear_has_PlanSpecificationEndActi
 inline PlanSpecificationEndActionsUnion::PlanSpecificationEndActionsUnionCase PlanSpecificationEndActionsUnion::PlanSpecificationEndActionsUnion__case() const {
   return PlanSpecificationEndActionsUnion::PlanSpecificationEndActionsUnionCase(_impl_._oneof_case_[0]);
 }
+// -------------------------------------------------------------------
+
+// PlanControlArgUnion
+
+// .IMC_DCCL.PlanSpecification ps_arg = 1;
+inline bool PlanControlArgUnion::_internal_has_ps_arg() const {
+  return PlanDBArgUnion__case() == kPsArg;
+}
+inline bool PlanControlArgUnion::has_ps_arg() const {
+  return _internal_has_ps_arg();
+}
+inline void PlanControlArgUnion::set_has_ps_arg() {
+  _impl_._oneof_case_[0] = kPsArg;
+}
+inline void PlanControlArgUnion::clear_ps_arg() {
+  if (_internal_has_ps_arg()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PlanDBArgUnion__.ps_arg_;
+    }
+    clear_has_PlanDBArgUnion_();
+  }
+}
+inline ::IMC_DCCL::PlanSpecification* PlanControlArgUnion::release_ps_arg() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanControlArgUnion.ps_arg)
+  if (_internal_has_ps_arg()) {
+    clear_has_PlanDBArgUnion_();
+    ::IMC_DCCL::PlanSpecification* temp = _impl_.PlanDBArgUnion__.ps_arg_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PlanDBArgUnion__.ps_arg_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::PlanSpecification& PlanControlArgUnion::_internal_ps_arg() const {
+  return _internal_has_ps_arg()
+      ? *_impl_.PlanDBArgUnion__.ps_arg_
+      : reinterpret_cast< ::IMC_DCCL::PlanSpecification&>(::IMC_DCCL::_PlanSpecification_default_instance_);
+}
+inline const ::IMC_DCCL::PlanSpecification& PlanControlArgUnion::ps_arg() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControlArgUnion.ps_arg)
+  return _internal_ps_arg();
+}
+inline ::IMC_DCCL::PlanSpecification* PlanControlArgUnion::unsafe_arena_release_ps_arg() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.PlanControlArgUnion.ps_arg)
+  if (_internal_has_ps_arg()) {
+    clear_has_PlanDBArgUnion_();
+    ::IMC_DCCL::PlanSpecification* temp = _impl_.PlanDBArgUnion__.ps_arg_;
+    _impl_.PlanDBArgUnion__.ps_arg_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void PlanControlArgUnion::unsafe_arena_set_allocated_ps_arg(::IMC_DCCL::PlanSpecification* ps_arg) {
+  clear_PlanDBArgUnion_();
+  if (ps_arg) {
+    set_has_ps_arg();
+    _impl_.PlanDBArgUnion__.ps_arg_ = ps_arg;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.PlanControlArgUnion.ps_arg)
+}
+inline ::IMC_DCCL::PlanSpecification* PlanControlArgUnion::_internal_mutable_ps_arg() {
+  if (!_internal_has_ps_arg()) {
+    clear_PlanDBArgUnion_();
+    set_has_ps_arg();
+    _impl_.PlanDBArgUnion__.ps_arg_ = CreateMaybeMessage< ::IMC_DCCL::PlanSpecification >(GetArenaForAllocation());
+  }
+  return _impl_.PlanDBArgUnion__.ps_arg_;
+}
+inline ::IMC_DCCL::PlanSpecification* PlanControlArgUnion::mutable_ps_arg() {
+  ::IMC_DCCL::PlanSpecification* _msg = _internal_mutable_ps_arg();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanControlArgUnion.ps_arg)
+  return _msg;
+}
+
+// .IMC_DCCL.Maneuver man_arg = 2;
+inline bool PlanControlArgUnion::_internal_has_man_arg() const {
+  return PlanDBArgUnion__case() == kManArg;
+}
+inline bool PlanControlArgUnion::has_man_arg() const {
+  return _internal_has_man_arg();
+}
+inline void PlanControlArgUnion::set_has_man_arg() {
+  _impl_._oneof_case_[0] = kManArg;
+}
+inline void PlanControlArgUnion::clear_man_arg() {
+  if (_internal_has_man_arg()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PlanDBArgUnion__.man_arg_;
+    }
+    clear_has_PlanDBArgUnion_();
+  }
+}
+inline ::IMC_DCCL::Maneuver* PlanControlArgUnion::release_man_arg() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanControlArgUnion.man_arg)
+  if (_internal_has_man_arg()) {
+    clear_has_PlanDBArgUnion_();
+    ::IMC_DCCL::Maneuver* temp = _impl_.PlanDBArgUnion__.man_arg_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PlanDBArgUnion__.man_arg_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::Maneuver& PlanControlArgUnion::_internal_man_arg() const {
+  return _internal_has_man_arg()
+      ? *_impl_.PlanDBArgUnion__.man_arg_
+      : reinterpret_cast< ::IMC_DCCL::Maneuver&>(::IMC_DCCL::_Maneuver_default_instance_);
+}
+inline const ::IMC_DCCL::Maneuver& PlanControlArgUnion::man_arg() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControlArgUnion.man_arg)
+  return _internal_man_arg();
+}
+inline ::IMC_DCCL::Maneuver* PlanControlArgUnion::unsafe_arena_release_man_arg() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.PlanControlArgUnion.man_arg)
+  if (_internal_has_man_arg()) {
+    clear_has_PlanDBArgUnion_();
+    ::IMC_DCCL::Maneuver* temp = _impl_.PlanDBArgUnion__.man_arg_;
+    _impl_.PlanDBArgUnion__.man_arg_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void PlanControlArgUnion::unsafe_arena_set_allocated_man_arg(::IMC_DCCL::Maneuver* man_arg) {
+  clear_PlanDBArgUnion_();
+  if (man_arg) {
+    set_has_man_arg();
+    _impl_.PlanDBArgUnion__.man_arg_ = man_arg;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.PlanControlArgUnion.man_arg)
+}
+inline ::IMC_DCCL::Maneuver* PlanControlArgUnion::_internal_mutable_man_arg() {
+  if (!_internal_has_man_arg()) {
+    clear_PlanDBArgUnion_();
+    set_has_man_arg();
+    _impl_.PlanDBArgUnion__.man_arg_ = CreateMaybeMessage< ::IMC_DCCL::Maneuver >(GetArenaForAllocation());
+  }
+  return _impl_.PlanDBArgUnion__.man_arg_;
+}
+inline ::IMC_DCCL::Maneuver* PlanControlArgUnion::mutable_man_arg() {
+  ::IMC_DCCL::Maneuver* _msg = _internal_mutable_man_arg();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanControlArgUnion.man_arg)
+  return _msg;
+}
+
+// .IMC_DCCL.PlanStatistics stat_arg = 3;
+inline bool PlanControlArgUnion::_internal_has_stat_arg() const {
+  return PlanDBArgUnion__case() == kStatArg;
+}
+inline bool PlanControlArgUnion::has_stat_arg() const {
+  return _internal_has_stat_arg();
+}
+inline void PlanControlArgUnion::set_has_stat_arg() {
+  _impl_._oneof_case_[0] = kStatArg;
+}
+inline void PlanControlArgUnion::clear_stat_arg() {
+  if (_internal_has_stat_arg()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PlanDBArgUnion__.stat_arg_;
+    }
+    clear_has_PlanDBArgUnion_();
+  }
+}
+inline ::IMC_DCCL::PlanStatistics* PlanControlArgUnion::release_stat_arg() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanControlArgUnion.stat_arg)
+  if (_internal_has_stat_arg()) {
+    clear_has_PlanDBArgUnion_();
+    ::IMC_DCCL::PlanStatistics* temp = _impl_.PlanDBArgUnion__.stat_arg_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PlanDBArgUnion__.stat_arg_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::PlanStatistics& PlanControlArgUnion::_internal_stat_arg() const {
+  return _internal_has_stat_arg()
+      ? *_impl_.PlanDBArgUnion__.stat_arg_
+      : reinterpret_cast< ::IMC_DCCL::PlanStatistics&>(::IMC_DCCL::_PlanStatistics_default_instance_);
+}
+inline const ::IMC_DCCL::PlanStatistics& PlanControlArgUnion::stat_arg() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControlArgUnion.stat_arg)
+  return _internal_stat_arg();
+}
+inline ::IMC_DCCL::PlanStatistics* PlanControlArgUnion::unsafe_arena_release_stat_arg() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.PlanControlArgUnion.stat_arg)
+  if (_internal_has_stat_arg()) {
+    clear_has_PlanDBArgUnion_();
+    ::IMC_DCCL::PlanStatistics* temp = _impl_.PlanDBArgUnion__.stat_arg_;
+    _impl_.PlanDBArgUnion__.stat_arg_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void PlanControlArgUnion::unsafe_arena_set_allocated_stat_arg(::IMC_DCCL::PlanStatistics* stat_arg) {
+  clear_PlanDBArgUnion_();
+  if (stat_arg) {
+    set_has_stat_arg();
+    _impl_.PlanDBArgUnion__.stat_arg_ = stat_arg;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.PlanControlArgUnion.stat_arg)
+}
+inline ::IMC_DCCL::PlanStatistics* PlanControlArgUnion::_internal_mutable_stat_arg() {
+  if (!_internal_has_stat_arg()) {
+    clear_PlanDBArgUnion_();
+    set_has_stat_arg();
+    _impl_.PlanDBArgUnion__.stat_arg_ = CreateMaybeMessage< ::IMC_DCCL::PlanStatistics >(GetArenaForAllocation());
+  }
+  return _impl_.PlanDBArgUnion__.stat_arg_;
+}
+inline ::IMC_DCCL::PlanStatistics* PlanControlArgUnion::mutable_stat_arg() {
+  ::IMC_DCCL::PlanStatistics* _msg = _internal_mutable_stat_arg();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanControlArgUnion.stat_arg)
+  return _msg;
+}
+
+inline bool PlanControlArgUnion::has_PlanDBArgUnion_() const {
+  return PlanDBArgUnion__case() != PLANDBARGUNION__NOT_SET;
+}
+inline void PlanControlArgUnion::clear_has_PlanDBArgUnion_() {
+  _impl_._oneof_case_[0] = PLANDBARGUNION__NOT_SET;
+}
+inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUnion__case() const {
+  return PlanControlArgUnion::PlanDBArgUnionCase(_impl_._oneof_case_[0]);
+}
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
@@ -11629,6 +13512,21 @@ template <> struct is_proto_enum< ::IMC_DCCL::PlanDB_OperationEnum> : ::std::tru
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::PlanDB_OperationEnum>() {
   return ::IMC_DCCL::PlanDB_OperationEnum_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::PlanControl_TypeEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::PlanControl_TypeEnum>() {
+  return ::IMC_DCCL::PlanControl_TypeEnum_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::PlanControl_OperationEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::PlanControl_OperationEnum>() {
+  return ::IMC_DCCL::PlanControl_OperationEnum_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::PlanStatistics_TypeEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::PlanStatistics_TypeEnum>() {
+  return ::IMC_DCCL::PlanStatistics_TypeEnum_descriptor();
 }
 template <> struct is_proto_enum< ::IMC_DCCL::ZUnits> : ::std::true_type {};
 template <>
