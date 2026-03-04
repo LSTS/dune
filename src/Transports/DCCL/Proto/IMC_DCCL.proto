@@ -87,10 +87,10 @@ enum ParameterName {
 
 //Enum EntityName 
 enum EntityName {
-    CAMERA = 0;
+    ACOUSTIC_MODEM = 0;
     ADCP = 1;
     AUTOPILOT = 2;
-    ACOUSTIC_MODEM = 3;
+    CAMERA = 3;
     CTD = 4;
     DISSOLVED_OXYGEN = 5;
     FLUOROMETERS = 6;
@@ -415,6 +415,53 @@ message PlanDBInformation {
     optional string md5 = 6 [(dccl.field).max_length = 40]; 
 }
 
+//PlanControl
+message PlanControl {
+    option (dccl.msg) = { codec_version: 4 id: 559 max_bytes: 800000};
+    enum TypeEnum
+    {
+        PC_REQUEST = 0;
+        PC_SUCCESS = 1;
+        PC_FAILURE = 2;
+        PC_IN_PROGRESS = 3;
+    }   
+  
+    enum OperationEnum
+    {
+        PC_START = 0;
+        PC_STOP = 1;
+        PC_LOAD = 2;
+        PC_GET = 3;
+    }  
+
+    TypeEnum type = 1;  
+    OperationEnum op = 2; 
+    optional int32 request_id = 3 [(dccl.field) = { min: 0 max: 5000 precision: 1 }];
+    optional string plan_id = 4 [(dccl.field).max_length = 20];
+    optional int32 flags = 5 [(dccl.field) = { min: 0 max: 5000 precision: 1 }];
+    PlanControlArgUnion arg = 6;
+    optional string info = 7 [(dccl.field).max_length = 20];
+}
+
+
+message PlanStatistics {
+    option (dccl.msg) = { codec_version: 4 id: 564 max_bytes: 800000};
+    optional string plan_id = 1 [(dccl.field).max_length = 20];
+    enum TypeEnum
+    {
+        TP_PREPLAN = 0;
+        TP_INPLAN = 1;
+        TP_POSTPLAN = 2;
+    }  
+    TypeEnum type = 2;  
+    optional int32 properties = 3 [(dccl.field) = { min: 0 max: 5000 precision: 1 }];
+    optional string durations = 4 [(dccl.field).max_length = 80];
+    optional string distances = 5 [(dccl.field).max_length = 80];
+    optional string actions = 6 [(dccl.field).max_length = 80];
+    optional string fuel = 7 [(dccl.field).max_length = 80];
+}
+
+
 message PlanDBArgUnion {
     option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
     oneof PlanDBArgUnion_{
@@ -435,5 +482,14 @@ message PlanSpecificationEndActionsUnion {
     option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
     oneof PlanSpecificationEndActionsUnion_{
         SetEntityParameters ep = 1;
+    }
+}
+
+message PlanControlArgUnion {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
+    oneof PlanDBArgUnion_{
+        PlanSpecification ps_arg = 1;
+        Maneuver man_arg = 2;
+        PlanStatistics stat_arg = 3;
     }
 }

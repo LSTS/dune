@@ -22,6 +22,10 @@ void encodeParameterValue(const std::string& imc, IMC_DCCL::ParameterValue& dccl
 
 void decodeParameterValue(const IMC_DCCL::ParameterValue& dccl, std::string& imc);
 
+void encodePlanControlArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanControlArgUnion& dccl);
+
+DUNE::IMC::Message* decodePlanControlArgUnion(const IMC_DCCL::PlanControlArgUnion& dccl);
+
 void encodePlanDBArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanDBArgUnion& dccl);
 
 DUNE::IMC::Message* decodePlanDBArgUnion(const IMC_DCCL::PlanDBArgUnion& dccl);
