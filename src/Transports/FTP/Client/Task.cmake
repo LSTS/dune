@@ -1,0 +1,3 @@
+if(NOT DUNE_SYS_HAS_CURL_CURL_H)
+	set(TASK_ENABLED FALSE)
+endif()
