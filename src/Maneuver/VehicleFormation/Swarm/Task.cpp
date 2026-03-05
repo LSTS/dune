@@ -237,8 +237,7 @@ namespace Maneuver
 
           param("Minimum Speed To Maintain Submerged", m_args.submerged_speed_min)
           .units(Units::MeterPerSecond)
-          .minimumValue("0.7")
-          .defaultValue("0.7")
+          .defaultValue("0.0")
           .maximumValue("1.0")
           .description("Minimum speed to maintain vehicle submerged");
 
