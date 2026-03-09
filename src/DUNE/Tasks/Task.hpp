@@ -857,17 +857,17 @@ namespace DUNE
 
       template<typename T>
       void
-      applyEntityParameter(void* param, const T& value, bool save = false)
+      applyEntityParameter(void* p, const T& value, bool save = false)
       {
         try
         {
-          auto p = m_params.apply(param, uncastLexical(value));
+          auto ep = m_params.apply(p, uncastLexical(value));
           IMC::EntityParameters eps;
           eps.name = getEntityLabel();
-          eps.params.push_back(p);
+          eps.params.push_back(ep);
           dispatch(eps);
-          m_params.setChanged(param, false);
-          m_ctx.config.set(getName(), p.name, p.value);
+          m_params.setChanged(p, false);
+          m_ctx.config.set(getName(), ep.name, ep.value);
 
           if (save)
             saveEntityParameters();

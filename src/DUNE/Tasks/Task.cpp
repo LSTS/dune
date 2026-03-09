@@ -650,40 +650,40 @@ namespace DUNE
       std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
       for (; itr != m_params.end(); itr++)
       {
-        IMC::TypedEntityParameter param;
+        IMC::TypedEntityParameter teparam;
 
         Parameter* p = itr->second;
-        param.name = p->name();
+        teparam.name = p->name();
         try
         {
-          param.type = c_str_to_type.at(p->getType());
+          teparam.type = c_str_to_type.at(p->getType());
         }
         catch (const std::out_of_range& e)
         {
           throw std::runtime_error("invalid parameter type: " + p->getType()); 
         }
-        param.default_value = p->value().empty() ? p->defaultValue() : p->value();
-        param.units = Units::getAbbrev(p->units());
-        param.description = p->description();
-        param.values_list = p->values();
+        teparam.default_value = p->value().empty() ? p->defaultValue() : p->value();
+        teparam.units = Units::getAbbrev(p->units());
+        teparam.description = p->description();
+        teparam.values_list = p->values();
 
-        param.min_value = p->minimumValue().empty() ?
+        teparam.min_value = p->minimumValue().empty() ?
                           -std::numeric_limits<float>::max() :
                           std::stof(p->minimumValue());
-        param.max_value = p->maximumValue().empty() ?
+        teparam.max_value = p->maximumValue().empty() ?
                           std::numeric_limits<float>::max() :
                           std::stof(p->maximumValue());
 
-        param.list_min_size = p->minimumSize() == UINT_MAX ? 
+        teparam.list_min_size = p->minimumSize() == UINT_MAX ? 
                               0 : p->minimumSize();
-        param.list_max_size = p->maximumSize();
+        teparam.list_max_size = p->maximumSize();
 
         // if parameter is not editable set visibility accordingly
-        param.visibility = p->getVisibility();
+        teparam.visibility = p->getVisibility();
         if (!p->editable())
-          param.visibility += 2;
+          teparam.visibility += 2;
         
-        param.scope = p->getScope();
+        teparam.scope = p->getScope();
 
         auto values_if = p->valuesIf();
         for (auto v : values_if)
@@ -692,10 +692,10 @@ namespace DUNE
           value.param = v->name;
           value.value = v->equals;
           value.values_list = v->values;
-          param.values_if_list.push_back(value);
+          teparam.values_if_list.push_back(value);
         }
 
-        reply.parameters.push_back(param);
+        reply.parameters.push_back(teparam);
       }
 
       dispatch(reply);
