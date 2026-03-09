@@ -107,13 +107,13 @@ namespace Monitors
         if (msg->name != m_args.light_entity)
           return;
 
-        for (const auto& param : msg->params)
+        for (const auto& p : msg->params)
         {
-          if (param->name == m_args.light_parameter_label)
+          if (p->name == m_args.light_parameter_label)
           {
             try
             {
-              castLexical(param->value, m_state);
+              castLexical(p->value, m_state);
               if (!isActive())
                 m_idle_state = m_state;
             }
