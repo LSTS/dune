@@ -127,23 +127,12 @@ namespace Transports
             inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), port);
             m_server = new Server(port, m_args.threads, *this);
 
-            // Initialize and dispatch AnnounceService.
-            std::vector<Interface> itfs = Interface::get();
-            for (unsigned i = 0; i < itfs.size(); ++i)
-            {
-              std::stringstream os;
-              os << "http://" << itfs[i].address().str() << ":" << port << "/dune";
-
-              IMC::AnnounceService announce;
-              announce.service = os.str();
-
-              if (itfs[i].address().isLoopback())
-                announce.service_type = IMC::AnnounceService::SRV_TYPE_LOCAL;
-              else
-                announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
-
-              dispatch(announce);
-            }
+            std::stringstream os;
+            os << "http://0.0.0.0:" << port << "/dune";
+            IMC::AnnounceService announce;
+            announce.service = os.str();
+            announce.service_type = 0;
+            dispatch(announce);
             return;
           }
           catch (std::runtime_error& e)
