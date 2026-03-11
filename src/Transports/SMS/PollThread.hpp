@@ -116,7 +116,7 @@ namespace Transports
                 {
                   m_bfr_rx[m_cnt_rx] = '\0';  // Null-terminate the buffer
                   std::string line(reinterpret_cast<char*>(m_bfr_rx), m_cnt_rx);
-                  m_task->debug("[PollThread]: Received response: %s", line.c_str());
+                  m_task->debug("[PollThread]: Received response: %s", sanitize(line).c_str());
                   m_driver->addRXLineReceived(line);
                   m_cnt_rx = 0;  // Reset counter after processing
                   m_bfr_rx[0] = '\0';  // Reset buffer

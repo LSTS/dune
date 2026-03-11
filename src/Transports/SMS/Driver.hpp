@@ -131,7 +131,7 @@ namespace Transports
       addRXLineReceived(const std::string& line)
       {
         m_rx_line = line;
-        m_task->debug("[Driver]:RX Line received: %s", m_rx_line.c_str());
+        m_task->debug("[Driver]:RX Line received: %s", sanitize(m_rx_line).c_str());
       }
 
       bool
@@ -264,7 +264,10 @@ namespace Transports
         if (m_handle != NULL && m_handle_is_open)
         {
           m_expectedResponse = expectedResponse;
-          m_task->trace("[Driver]:Sending command: %s | Expected: %s", command.c_str(), expectedResponse.c_str());
+          if (!expectedResponse.empty())
+            m_task->trace("[Driver]:Sending command: %s | Expected: %s", sanitize(command).c_str(), expectedResponse.c_str());
+          else
+            m_task->trace("[Driver]:Sending command: %s", sanitize(command).c_str());
           m_handle->flushOutput();
           m_handle->writeString(command.c_str());
           m_rx_timeout.reset();
@@ -272,9 +275,9 @@ namespace Transports
         else
         {
           if (m_handle == NULL)
-            m_task->inf("[Driver]:Handle is NULL, cannot send command: %s", command.c_str());
+            m_task->inf("[Driver]:Handle is NULL, cannot send command: %s", sanitize(command).c_str());
           else
-            m_task->inf("[Driver]:Handle is not open, cannot send command: %s", command.c_str());
+            m_task->inf("[Driver]:Handle is not open, cannot send command: %s", sanitize(command).c_str());
         }
       }
 
@@ -291,7 +294,7 @@ namespace Transports
         if (m_rx_line.empty() && !m_modem_sending_commands)
           return;
 
-        m_task->trace("[Driver]:Parsing incoming data: %s", m_rx_line.c_str());
+        m_task->trace("[Driver]:Parsing incoming data: %s", sanitize(m_rx_line).c_str());
         // Process the received line
         if (m_rx_line.find("+CSQ:") != std::string::npos)
         {
@@ -367,15 +370,15 @@ namespace Transports
         }
         else if (m_rx_line.find("OK") != std::string::npos)
         {
-          m_task->debug("[Driver]:Received OK response: %s", m_rx_line.c_str());
+          m_task->debug("[Driver]:Received OK response: %s", sanitize(m_rx_line).c_str());
         }
         else if (m_rx_line.find("ERROR") != std::string::npos)
         {
-          m_task->debug("[Driver]:Received ERROR response: %s", m_rx_line.c_str());
+          m_task->debug("[Driver]:Received ERROR response: %s", sanitize(m_rx_line).c_str());
         }
         else
         {
-          m_task->inf("[Driver]:Received line does not contain valid Header: %s", m_rx_line.c_str());
+          m_task->inf("[Driver]:Received line does not contain valid Header: %s", sanitize(m_rx_line).c_str());
         }
 
         m_rx_line.clear(); // Clear the line after processing
@@ -655,10 +658,10 @@ namespace Transports
         {
           if (!m_rx_line.empty())
           {
-            m_task->debug("[Driver]:Checking response: %s", m_rx_line.c_str());
+            m_task->debug("[Driver]:Checking response: %s", sanitize(m_rx_line).c_str());
             if (m_expectedResponse.empty() || m_rx_line.find(m_expectedResponse) != std::string::npos)
             {
-              m_task->debug("[Driver]:Response received: %s", m_rx_line.c_str());
+              m_task->debug("[Driver]:Response received: %s", sanitize(m_rx_line).c_str());
               if(delete_input)
                 m_rx_line.clear();
               m_counter_errors = 0; // Reset error counter on successful response
@@ -666,7 +669,7 @@ namespace Transports
             }
             else
             {
-              m_task->debug("[Driver]:Expected response not found in: %s", m_rx_line.c_str());
+              m_task->debug("[Driver]:Expected response not found in: %s", sanitize(m_rx_line).c_str());
             }
           }
           Time::Delay::waitMsec(100); // Wait for a short period before checking again
