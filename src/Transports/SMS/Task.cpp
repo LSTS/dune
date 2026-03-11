@@ -69,6 +69,8 @@ namespace Transports
       int consecutive_errors;
       //! Send SMS text messages.
       bool send_sms_text_messages;
+      //! Check device handle timeout in seconds.
+      float check_handle_timeout;
     };
 
     struct Task: public Hardware::BasicDeviceDriver
@@ -138,6 +140,13 @@ namespace Transports
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .description("Send SMS text messages. If false, only received SMS will be processed without sending any SMS text messages");
 
+        param("Check Device Handle Timeout", m_args.check_handle_timeout)
+        .minimumValue("0.0")
+        .defaultValue("1.0")
+        .editable("false")
+        .description("Time in seconds between device handle checks. "
+                     "If zero, the device handle will not be checked periodically.");
+        
         setWaitForMessages(0.1);
 
         bind<IMC::SmsRequest>(this);
@@ -286,7 +295,7 @@ namespace Transports
               m_poll_thread->stop();
               Memory::clear(m_poll_thread);
             }
-            m_poll_thread = new PollThread(this, m_handle, m_driver, m_args.io_dev);
+            m_poll_thread = new PollThread(this, m_handle, m_driver, m_args.io_dev, m_args.check_handle_timeout);
             m_poll_thread->start();
 
             setupModem();

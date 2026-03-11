@@ -62,19 +62,20 @@ namespace Transports
       public:
         //! Constructor.
         //! @param[in] task parent task.
-        PollThread(DUNE::Tasks::Task* task, IO::Handle* handle, Driver* driver, std::string io_dev):
+        PollThread(DUNE::Tasks::Task* task, IO::Handle* handle, Driver* driver, std::string io_dev, float check_handle_timeout):
           m_task(task),
           m_handle(handle),
           m_driver(driver),
-          m_io_dev(io_dev)
+          m_cnt_rx(0),
+          m_io_dev(io_dev),
+          m_is_handle_opened(true),
+          m_ls_timeout(check_handle_timeout),
+          m_new_line_timer(c_new_line_timeout),
+          m_is_handle_reset(false),
+          m_handle_reset_timer(check_handle_timeout)
         {
-          m_is_handle_opened = true;
-          m_driver->setHandleIsOpen(m_is_handle_opened);
-          m_cnt_rx = 0;
-          m_ls_timeout.setTop(c_ls_timeout_cmd);
-          m_new_line_timer.setTop(c_new_line_timeout);
-          m_is_handle_reset = false;
-          m_handle_reset_timer.setTop(c_handle_reset_time);
+          if (m_driver)
+            m_driver->setHandleIsOpen(m_is_handle_opened);
         }
 
         //! Destructor.
@@ -260,64 +261,63 @@ namespace Transports
         void
         checkHandle(void)
         {
-          if (m_ls_timeout.overflow())
+          if (m_ls_timeout.getTop() <= 0.0f)
+            return;
+
+          if (!m_ls_timeout.overflow())
+            return;
+
+          m_ls_timeout.reset();
+          // check if the device is available
+          if (!isAvailable())
           {
-            m_ls_timeout.reset();
-            // check if the device is available
-            if (!isAvailable())
+            if (m_is_handle_opened)
             {
-              if (m_is_handle_opened)
+              m_task->war("[PollThread]:Device not available, clossing m_handle");
+              // delete the driver and handle
+              if (m_handle != NULL)
               {
-                m_task->war("[PollThread]:Device not available, clossing m_handle");
-                // delete the driver and handle
-                if (m_handle != NULL)
-                {
-                  Memory::clear(m_handle);
-                  m_task->inf("[PollThread]:IO Handle deleted");
-                }
-                m_is_handle_opened = false;
-                m_driver->setHandleIsOpen(m_is_handle_opened);
+                Memory::clear(m_handle);
+                m_task->inf("[PollThread]:IO Handle deleted");
               }
-            }
-            else
-            {
-              if (!m_is_handle_opened)
-              {
-                m_task->inf("[PollThread]:Device available, opening m_handle");
-                // open the handle
-                if (m_handle == NULL)
-                {
-                  Time::Delay::waitMsec(1000);
-                  m_handle = openUART(m_io_dev);
-                  m_driver->updateHandle(m_handle);
-                  m_task->inf("[PollThread]:IO Handle opened");
-                  // Make some pool reads during 5 seconds, to clean/received init strings of modem
-                  int cnt_time = 0;
-                  while (m_handle != NULL && cnt_time < 500)
-                  {
-                    Poll::poll(*m_handle, 0.01);
-                    Time::Delay::waitMsec(10);
-                    cnt_time++;
-                  }
-                  if(m_handle == NULL)
-                  {
-                    m_task->err("[PollThread]: Failed to open IO handle");
-                    return;
-                  }
-                  m_handle->flushInput(); // Flush input buffer
-                  m_handle->flushOutput(); // Flush output buffer
-                  m_cnt_rx = 0; // Reset the RX counter
-                  m_bfr_rx[m_cnt_rx] = '\0';
-                  m_is_handle_opened = true;
-                  m_task->inf("[PollThread]:IO Handle flushed and ready");
-                  m_is_handle_reset = true; // Set the flag to indicate handle reset
-                }
-              }
+              m_is_handle_opened = false;
+              m_driver->setHandleIsOpen(m_is_handle_opened);
             }
           }
           else
           {
-            Time::Delay::waitMsec(100);
+            if (!m_is_handle_opened)
+            {
+              m_task->inf("[PollThread]:Device available, opening m_handle");
+              // open the handle
+              if (m_handle == NULL)
+              {
+                Time::Delay::waitMsec(1000);
+                m_handle = openUART(m_io_dev);
+                m_driver->updateHandle(m_handle);
+                m_task->inf("[PollThread]:IO Handle opened");
+                // Make some pool reads during 5 seconds, to clean/received init strings of modem
+                int cnt_time = 0;
+                while (m_handle != NULL && cnt_time < 500)
+                {
+                  Poll::poll(*m_handle, 0.01);
+                  Time::Delay::waitMsec(10);
+                  cnt_time++;
+                }
+                if(m_handle == NULL)
+                {
+                  m_task->err("[PollThread]: Failed to open IO handle");
+                  return;
+                }
+                m_handle->flushInput(); // Flush input buffer
+                m_handle->flushOutput(); // Flush output buffer
+                m_cnt_rx = 0; // Reset the RX counter
+                m_bfr_rx[m_cnt_rx] = '\0';
+                m_is_handle_opened = true;
+                m_task->inf("[PollThread]:IO Handle flushed and ready");
+                m_is_handle_reset = true; // Set the flag to indicate handle reset
+              }
+            }
           }
         }
     };
