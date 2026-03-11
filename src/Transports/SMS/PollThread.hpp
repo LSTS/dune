@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <string>
 #include <regex>
+#include <unistd.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -166,28 +167,19 @@ namespace Transports
             m_task->war("[PollThread]: Invalid device path format: %s", device.c_str());
             return false;
           }
-          // Prepare the command to check device existence, redirect stderr to /dev/null
-          std::string command = "ls -l " + device + " 2>/dev/null";
-          // Open pipe to execute command
-          FILE* fp = popen(command.c_str(), "r");
-          if (!fp)
+          
+          // For future reference, consider using invalid SerialPort read,
+          // instead of access, to check if the device is still available
+          if (access(device.c_str(), F_OK) == 0)
           {
-            m_task->war("[PollThread]: Failed to run command: %s", command.c_str());
+            m_task->debug("[PollThread]: Device exists");
+            return true;
+          }
+          else
+          {
+            m_task->war("[PollThread]: Device missing");
             return false;
           }
-          // Read the output from the command to check if device exists
-          char buffer[512];
-          bool hasOutput = false;
-          while (fgets(buffer, sizeof(buffer), fp) != nullptr)
-          {
-            m_task->debug("[PollThread]: Command output: %s", buffer);
-            hasOutput = true;
-            break;
-          }
-          // Close the pipe to avoid resource leaks
-          pclose(fp);
-          // Return true if output was received, false otherwise
-          return hasOutput;
         }
 
         //! Get IO handle.
