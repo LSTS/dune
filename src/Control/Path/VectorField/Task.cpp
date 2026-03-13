@@ -53,6 +53,7 @@ namespace Control
       {
         double corridor;
         double entry_angle;
+        bool loiter_gains_enabled;
         double corridor_loiter;
         double entry_angle_loiter;
         bool ext_control;
@@ -87,6 +88,11 @@ namespace Control
           .defaultValue("15")
           .units(Units::Degree)
           .description("Attack angle when lateral track error equals corridor width");
+
+          param("Use Loiter Gains -- Enabled", m_args.loiter_gains_enabled)
+          .defaultValue("false")
+          .description("Enable separate gains for loiter control."
+                       "If false, gains for path control are used for loiter control as well.");
 
           param("Corridor Loiter -- Width", m_args.corridor_loiter)
           .minimumValue("1.0")
@@ -127,7 +133,11 @@ namespace Control
             m_args.entry_angle_loiter = Angles::radians(m_args.entry_angle_loiter);
 
           m_gain = std::tan(m_args.entry_angle) / m_args.corridor;
-          m_gain_loiter = std::tan(m_args.entry_angle_loiter) / m_args.corridor_loiter;
+
+          if (m_args.loiter_gains_enabled)
+            m_gain_loiter = std::tan(m_args.entry_angle_loiter) / m_args.corridor_loiter;
+          else
+            m_gain_loiter = m_gain;
         }
 
         void
