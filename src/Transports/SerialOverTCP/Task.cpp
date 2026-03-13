@@ -148,6 +148,7 @@ namespace Transports
         m_sock->setNoDelay(true);
         m_poll.add(*m_sock);
         m_poll.add(*m_uart);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
