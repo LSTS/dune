@@ -931,6 +931,9 @@ namespace DUNE
         m_entity->setLoopback(m_args.loopback);
 
         updateParameters(false);
+
+        for (const auto& param : m_params)
+          m_ctx.config.set(name, param.second->name(), param.second->value());
       }
       catch (RestartNeeded& e)
       {
