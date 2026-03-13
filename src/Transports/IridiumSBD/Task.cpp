@@ -246,6 +246,7 @@ namespace Transports
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
         bind<IMC::EntityState>(this);
+        bind<IMC::VehicleMedium>(this);
         m_queued_mt = 0;
       }
 
@@ -796,6 +797,16 @@ namespace Transports
           description += String::str("queue: rx:%u, tx:%u", rx_queue_size, tx_queue_size);
           setEntityState(IMC::EntityState::ESTA_NORMAL, description);
         }
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
+          m_general_monitor.reset();
       }
 
       //! Main loop.
