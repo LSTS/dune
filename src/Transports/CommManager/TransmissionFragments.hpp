@@ -49,13 +49,19 @@ namespace Transports
         m_fragments(nullptr),
         m_transmission_timedout(false)
       {
-        if (request->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
+        if (request->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG &&
+            request->data_mode != IMC::TransmissionRequest::DMODE_RAW)
           return;
 
         m_ttl = m_original_request.deadline - m_original_request.getTimeStamp();
         m_expiration_timer.setTop(expiration_time);
-        m_fragments = createFragments(request->msg_data.get(), max_payload_size);
-        m_transmission_states.resize(m_fragments->getNumberOfFragments(), c_unknown_frag_state);
+        if (request->data_mode == IMC::TransmissionRequest::DMODE_INLINEMSG)
+          m_fragments = createFragments(request->msg_data.get(), max_payload_size);
+        else
+          m_fragments = createFragments(request->raw_data, max_payload_size);
+
+        if (m_fragments != nullptr)
+          m_transmission_states.resize(m_fragments->getNumberOfFragments(), c_unknown_frag_state);
       }
 
       ~TransmissionFragments()
@@ -179,6 +185,9 @@ namespace Transports
         {
           IMC::MessagePart* part = m_fragments->getFragment(i);
           IMC::TransmissionRequest tx_req = m_original_request;
+          tx_req.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+          tx_req.txt_data.clear();
+          tx_req.raw_data.clear();
           tx_req.msg_data.set(*part);
 
           tx_list.push_back(tx_req);
@@ -214,6 +223,8 @@ namespace Transports
 
           tx_req.deadline = Clock::getSinceEpoch() + m_ttl;
           tx_req.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+          tx_req.txt_data.clear();
+          tx_req.raw_data.clear();
           tx_req.msg_data.set(*part);
 
           tx_list.push_back(tx_req);
@@ -258,11 +269,16 @@ namespace Transports
       static bool
       needsFragmentation(const IMC::TransmissionRequest* msg, const uint32_t max_payload_size)
       {
-        if (msg->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
-          return false;
+        if (msg->data_mode == IMC::TransmissionRequest::DMODE_INLINEMSG)
+        {
+          const IMC::Message* inline_msg = msg->msg_data.get();
+          return inline_msg != nullptr && needsFragmentation(inline_msg, max_payload_size);
+        }
 
-        const IMC::Message* inline_msg = msg->msg_data.get();
-        return needsFragmentation(inline_msg, max_payload_size);
+        if (msg->data_mode == IMC::TransmissionRequest::DMODE_RAW)
+          return max_payload_size != 0 && msg->raw_data.size() > max_payload_size;
+
+        return false;
       }
 
     private:
@@ -290,6 +306,21 @@ namespace Transports
           return nullptr;
 
         Network::Fragments* frags = new Network::Fragments(msg, max_payload_size);
+
+        return frags;
+      }
+
+      //! Create fragments for raw data.
+      Network::Fragments*
+      createFragments(const std::vector<char>& data, const uint32_t max_payload_size)
+      {
+        if (max_payload_size == 0.0)
+          return nullptr;
+
+        if (data.size() <= max_payload_size)
+          return nullptr;
+
+        Network::Fragments* frags = new Network::Fragments(data, max_payload_size);
 
         return frags;
       }
