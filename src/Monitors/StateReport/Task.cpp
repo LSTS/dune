@@ -290,8 +290,7 @@ namespace Monitors
               inf("Requesting report transmission over Iridium.");
               IMC::TransmissionRequest request;
               request.setDestination(getSystemId());
-              // request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
-              request.comm_mean = IMC::TransmissionRequest::CMEAN_WIFI;
+              request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
               request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
               fp64_t ttl = std::max(c_minimum_iridium_period, m_args.report_period);
               request.deadline = Time::Clock::getSinceEpoch() + ttl;
