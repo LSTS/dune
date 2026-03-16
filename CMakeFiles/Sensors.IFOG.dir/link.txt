@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.IFOG.a  CMakeFiles/Sensors.IFOG.dir/src/Sensors/IFOG/Task.cpp.o
+/usr/bin/ranlib libSensors.IFOG.a

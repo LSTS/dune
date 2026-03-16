@@ -1,0 +1,2 @@
+/usr/bin/ar qc libUserInterfaces.LEDs.a  CMakeFiles/UserInterfaces.LEDs.dir/src/UserInterfaces/LEDs/Task.cpp.o
+/usr/bin/ranlib libUserInterfaces.LEDs.a

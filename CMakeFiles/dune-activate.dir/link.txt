@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-activate.dir/programs/utils/dune-activate.cpp.o  -o dune-activate libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

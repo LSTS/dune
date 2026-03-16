@@ -1,0 +1,2 @@
+/usr/bin/ar qc libManeuver.Teleoperation.a  CMakeFiles/Maneuver.Teleoperation.dir/src/Maneuver/Teleoperation/Task.cpp.o
+/usr/bin/ranlib libManeuver.Teleoperation.a
