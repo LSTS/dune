@@ -34,6 +34,9 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#if defined(DUNE_USING_DCCL)
+#include <DUNE/Encoders/DCCL/CodecDCCL.hpp>
+#endif
 
 // Local headers.
 #include "Router.hpp"
@@ -78,6 +81,10 @@ namespace Transports
       Time::Counter<float> m_retransmission_timer;
       std::list<IMC::TransmissionRequest*> m_retransmission_list;
       Router m_router;
+#if defined(DUNE_USING_DCCL)
+      dccl::Codec m_dccl;
+      DUNE::Encoders::DCCL::CodecDCCL m_codec_dccl;
+#endif
 
       std::map<uint16_t, IMC::AcousticOperation*> m_acoustic_requests;
 
@@ -90,6 +97,9 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_router(this)
+#if defined(DUNE_USING_DCCL)
+      , m_codec_dccl(m_dccl)
+#endif
       {
         param("Iridium - Entity Label", m_args.iridium_label)
             .defaultValue("GSM")
@@ -722,32 +732,38 @@ namespace Transports
         if (msg->getDestination() != getSystemId())
           return;
 
+        IMC::TransmissionRequest req = *msg;
+#if defined(DUNE_USING_DCCL)
+        if (needsCompression(&req))
+          req = compressMessage(&req);
+#endif
+
         switch (msg->comm_mean)
         {
           case (IMC::TransmissionRequest::CMEAN_SATELLITE):
             {
-              std::vector<IMC::TransmissionRequest> tx_list = fragmentMessage(msg, m_args.iridium_payload_size);
+              std::vector<IMC::TransmissionRequest> tx_list = fragmentMessage(&req, m_args.iridium_payload_size);
               for (auto tx_msg : tx_list)
                 m_router.sendViaSatellite(&tx_msg, m_args.iridium_plain_texts);
             }
             break;
           case (IMC::TransmissionRequest::CMEAN_GSM):
-              m_router.sendViaGSM(msg);
+              m_router.sendViaGSM(&req);
             break;
           case (IMC::TransmissionRequest::CMEAN_ACOUSTIC):
-            m_router.sendViaAcoustic(msg);
+            m_router.sendViaAcoustic(&req);
             break;
           case (IMC::TransmissionRequest::CMEAN_WIFI):
-            m_router.sendViaWifi(msg);
+            m_router.sendViaWifi(&req);
             break;
           case (IMC::TransmissionRequest::CMEAN_ANY):
-            m_router.sendViaAny(msg, m_args.iridium_plain_texts);
+            m_router.sendViaAny(&req, m_args.iridium_plain_texts);
             break;
           case (IMC::TransmissionRequest::CMEAN_ALL):
-            m_router.sendViaAll(msg, m_args.iridium_plain_texts);
+            m_router.sendViaAll(&req, m_args.iridium_plain_texts);
             break;
           default:
-            m_router.answer(msg, "Communication mean not implemented.",
+            m_router.answer(&req, "Communication mean not implemented.",
               IMC::TransmissionStatus::TSTAT_PERMANENT_FAILURE);
             break;
         }
@@ -842,6 +858,63 @@ namespace Transports
         //add to transmission_queue
         m_acoustic_requests[newId] = msg->clone();
         dispatch(tx);
+      }
+
+      bool
+      needsCompression(const IMC::TransmissionRequest* msg)
+      {
+#ifndef DUNE_USING_DCCL
+        return false;
+#endif
+
+        if (msg->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG_DCCL)
+          return false;
+
+        if (msg->comm_mean != IMC::TransmissionRequest::CMEAN_SATELLITE && 
+            msg->comm_mean != IMC::TransmissionRequest::CMEAN_ACOUSTIC)
+          return false;
+        
+        const IMC::Message* inlinemsg = msg->msg_data.get();
+        if (inlinemsg == NULL)
+          return false;
+
+        switch (inlinemsg->getId())
+        {
+          case (DUNE_IMC_ESTIMATEDSTATE):
+          case (DUNE_IMC_PLANSPECIFICATION):
+          case (DUNE_IMC_PLANDB):
+              return true;
+          default:
+            return false;
+        }
+      }
+
+      IMC::TransmissionRequest
+      compressMessage(const IMC::TransmissionRequest* msg)
+      {
+        if (!needsCompression(msg))
+          return *msg;
+
+#if defined(DUNE_USING_DCCL)
+        // Get message content
+        IMC::TransmissionRequest req = *msg;
+        IMC::Message* inlinemsg = req.msg_data.get();
+        
+        // Encode message using DCCL
+        std::string encoded_string = m_codec_dccl.encodeDCCL(inlinemsg);
+        encoded_string = Utils::String::toHex(encoded_string);
+        req.raw_data.assign(encoded_string.begin(), encoded_string.end());
+
+        // Remove original message content
+        req.msg_data.clear();
+
+        // Set data mode to raw data
+        req.data_mode = IMC::TransmissionRequest::DMODE_RAW;
+
+        return req;
+#else
+        return *msg;
+#endif
       }
 
       std::vector<IMC::TransmissionRequest>
