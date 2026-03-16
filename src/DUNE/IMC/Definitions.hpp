@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: a3dfd3c16ef86b9ba7c341427cc2ee19                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -18469,7 +18469,9 @@ namespace DUNE
         //! Range.
         DMODE_RANGE = 4,
         //! Reverse Range.
-        DMODE_REVERSE_RANGE = 5
+        DMODE_REVERSE_RANGE = 5,
+        //! Inline Message using DCCL Encoding.
+        DMODE_INLINEMSG_DCCL = 6
       };
 
       //! Request Identifier.
