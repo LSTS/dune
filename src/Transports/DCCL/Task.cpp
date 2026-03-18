@@ -43,7 +43,6 @@ namespace Transports
   namespace DCCL
   {
     using DUNE_NAMESPACES;
-    
     static const uint8_t c_sync = 0xA1; // Synchronization byte for A1 protocol
 
     //dccl::Codec codec;      //DCCL codec 
@@ -66,7 +65,7 @@ namespace Transports
       IMCDCCL::CodecDCCL m_codecdcll; //DCCL LIB
       //! Message Filter
       MessageFilter m_filter;
-   
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -87,7 +86,7 @@ namespace Transports
 
         bind<IMC::PlanSpecification>(this);
         bind<IMC::UamRxFrame>(this);
-        bind<IMC::PlanDB>(this);
+        //bind<IMC::PlanDB>(this);
         //bind<IMC::EstimatedState>(this);
       }
 
@@ -135,17 +134,18 @@ namespace Transports
       void
       consume(const IMC::PlanSpecification* msg)
       {
-        
 
         if(m_args.trigger_dccl){
 
           msg->toJSON(std::cout);
+          war("PlanSpecification with size %u received.", msg->getPayloadSerializationSize());
 
           ////////////////////////////////////////////////////////////// DCCL LIB
           std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          war("Compressed with size %u received.", encoded_string.size());
           ////////////////////////////////////////////////////////////// DCCL LIB
 
-          std::cout << "Send via Acoustic"<< std::endl;
+          std::cout << "Transmission request via Acoustic"<< std::endl;
           sendTransmissionRequestViaAcoustic("", encoded_string);
 
         }
@@ -161,7 +161,7 @@ namespace Transports
           if (m_filter.filter(msg))
             return;
           
-          msg->toJSON(std::cout);
+          //msg->toJSON(std::cout);
 
           ////////////////////////////////////////////////////////////// DCCL LIB
           std::string encoded_string = m_codecdcll.encodeDCCL(msg);
@@ -180,7 +180,7 @@ namespace Transports
       {
        if(m_args.trigger_dccl){
 
-          msg->toJSON(std::cout);
+          //msg->toJSON(std::cout);
 
           if (m_filter.filter(msg))
             return;
@@ -230,12 +230,12 @@ namespace Transports
           {             
               //Check if msg is DCCL encoded
               std::string encoded_bytes(msg->data.begin(), msg->data.end());
-              inf("Received hex string %s", encoded_bytes.c_str());
-
-              std::string msgNoHex = String::fromHex(encoded_bytes);
+              //inf("Received hex string %s", encoded_bytes.c_str());
+              //std::string msgNoHex = String::fromHex(encoded_bytes);
 
               ////////////////////////////////////////////////////////////// DCCL LIB
-              auto decode_msg = m_codecdcll.decodeDCCL(msgNoHex);
+              //auto decode_msg = m_codecdcll.decodeDCCL(msgNoHex);
+              auto decode_msg = m_codecdcll.decodeDCCL(encoded_bytes);
               ////////////////////////////////////////////////////////////// DCCL LIB
 
               
@@ -244,20 +244,21 @@ namespace Transports
               {
                   inf("PLANSPECIFICAITION decoded");
                   planSpec->toJSON(std::cout);
+                  //dispatch(planSpec);
 
               }
               else if (auto estState = dynamic_cast<DUNE::IMC::EstimatedState*>(decode_msg))
               {
                   inf("ESTIMATEDSTATE decoded");
                   
-                  estState->toJSON(std::cout);
+                  //estState->toJSON(std::cout);
 
               }
               else if (auto plandb = dynamic_cast<DUNE::IMC::PlanDB*>(decode_msg))
               {
                   inf("PlanDB decoded");
                   
-                  plandb->toJSON(std::cout);
+                  //plandb->toJSON(std::cout);
                   
               }
               else
@@ -287,11 +288,14 @@ namespace Transports
         msg.data_mode       = IMC::TransmissionRequest::DMODE_RAW;
         
         //new
-        std::string hex_str = Utils::String::toHex(encoded_msg);
-        inf("Encoded hex msg: %s", hex_str.c_str());
-        std::vector<char> buffer(hex_str.begin(), hex_str.end());
+        //std::string hex_str = Utils::String::toHex(encoded_msg);
+        //war("Hexstr with size %u received.", hex_str.size());
+        //inf("Encoded hex msg: %s", hex_str.c_str());
+        //std::vector<char> buffer(hex_str.begin(), hex_str.end());
+        //msg.raw_data = buffer;
         
-        msg.raw_data  = buffer;               
+        msg.raw_data.assign(encoded_msg.begin(), encoded_msg.end());
+        
         dispatch(&msg); 
       }
 
