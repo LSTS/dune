@@ -63,6 +63,7 @@ IMC_DCCL::PlanControl::OperationEnum encodePlanControlOperationEnum(const uint8_
         case DUNE::IMC::PlanControl::OperationEnum::PC_STOP: return IMC_DCCL::PlanControl::PC_STOP;
         case DUNE::IMC::PlanControl::OperationEnum::PC_LOAD: return IMC_DCCL::PlanControl::PC_LOAD;
         case DUNE::IMC::PlanControl::OperationEnum::PC_GET: return IMC_DCCL::PlanControl::PC_GET;
+        default: return IMC_DCCL::PlanControl::PCOE_UNKNOWN;
     }
 }
 
@@ -87,6 +88,7 @@ IMC_DCCL::PlanControl::TypeEnum encodePlanControlTypeEnum(const uint8_t& imc_src
         case DUNE::IMC::PlanControl::TypeEnum::PC_SUCCESS: return IMC_DCCL::PlanControl::PC_SUCCESS;
         case DUNE::IMC::PlanControl::TypeEnum::PC_FAILURE: return IMC_DCCL::PlanControl::PC_FAILURE;
         case DUNE::IMC::PlanControl::TypeEnum::PC_IN_PROGRESS: return IMC_DCCL::PlanControl::PC_IN_PROGRESS;
+        default: return IMC_DCCL::PlanControl::PCTE_UNKNOWN;
     }
 }
 
@@ -115,6 +117,7 @@ IMC_DCCL::PlanDB::OperationEnum encodePlanDBOperationEnum(const uint8_t& imc_src
         case DUNE::IMC::PlanDB::OperationEnum::DBOP_GET_STATE: return IMC_DCCL::PlanDB::DBOP_GET_STATE;
         case DUNE::IMC::PlanDB::OperationEnum::DBOP_GET_DSTATE: return IMC_DCCL::PlanDB::DBOP_GET_DSTATE;
         case DUNE::IMC::PlanDB::OperationEnum::DBOP_BOOT: return IMC_DCCL::PlanDB::DBOP_BOOT;
+        default: return IMC_DCCL::PlanDB::DBOP_UNKNOWN;
     }
 }
 
@@ -143,6 +146,7 @@ IMC_DCCL::PlanDB::TypeEnum encodePlanDBTypeEnum(const uint8_t& imc_src)
         case DUNE::IMC::PlanDB::TypeEnum::DBT_SUCCESS: return IMC_DCCL::PlanDB::DBT_SUCCESS;
         case DUNE::IMC::PlanDB::TypeEnum::DBT_FAILURE: return IMC_DCCL::PlanDB::DBT_FAILURE;
         case DUNE::IMC::PlanDB::TypeEnum::DBT_IN_PROGRESS: return IMC_DCCL::PlanDB::DBT_IN_PROGRESS;
+        default: return IMC_DCCL::PlanDB::DBT_UNKNOWN;
     }
 }
 
@@ -166,6 +170,7 @@ IMC_DCCL::PlanStatistics::TypeEnum encodePlanStatisticsTypeEnum(const uint8_t& i
         case DUNE::IMC::PlanStatistics::TypeEnum::TP_PREPLAN: return IMC_DCCL::PlanStatistics::TP_PREPLAN;
         case DUNE::IMC::PlanStatistics::TypeEnum::TP_INPLAN: return IMC_DCCL::PlanStatistics::TP_INPLAN;
         case DUNE::IMC::PlanStatistics::TypeEnum::TP_POSTPLAN: return IMC_DCCL::PlanStatistics::TP_POSTPLAN;
+        default: return IMC_DCCL::PlanStatistics::TP_UNKNOWN;
     }
 }
 
@@ -215,6 +220,7 @@ IMC_DCCL::VerticalProfile::ParameterEnum encodeVerticalProfileParameterEnum(cons
         case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_REDOX: return IMC_DCCL::VerticalProfile::PROF_REDOX;
         case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_CHLOROPHYLL: return IMC_DCCL::VerticalProfile::PROF_CHLOROPHYLL;
         case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_TURBIDITY: return IMC_DCCL::VerticalProfile::PROF_TURBIDITY;
+        default: return IMC_DCCL::VerticalProfile::PROF_UNKNOWN;
     }
 }
 
@@ -286,6 +292,7 @@ IMC_DCCL::EntityName encodeEntityName(const std::string& imc_src)
         if (imc_src == "Sidescan") return IMC_DCCL::EntityName::SIDESCAN;
         if (imc_src == "Slave CPU") return IMC_DCCL::EntityName::SLAVE_CPU;
         if (imc_src == "UAVCamera") return IMC_DCCL::EntityName::UAVCAMERA;
+        return IMC_DCCL::EntityName::EN_UNKNOWN;
 }
 
 
@@ -396,6 +403,7 @@ IMC_DCCL::ParameterName encodeParameterName(const std::string& imc_src)
         if (imc_src == "Transition to MC") return IMC_DCCL::ParameterName::TRANSITION_TO_MC;
         if (imc_src == "Use controller") return IMC_DCCL::ParameterName::USE_CONTROLLER;
         if (imc_src == "Vehicle List") return IMC_DCCL::ParameterName::VEHICLE_LIST;
+        return IMC_DCCL::ParameterName::PN_UNKNOWN;
 }
 
 
