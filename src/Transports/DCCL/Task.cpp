@@ -61,7 +61,6 @@ namespace Transports
       //! Task arguments.
       Arguments m_args;
       uint16_t m_reqid;
-      dccl::Codec m_dccl;     //DCCL CODEC
       IMCDCCL::CodecDCCL m_codecdcll; //DCCL LIB
       //! Message Filter
       MessageFilter m_filter;
@@ -71,7 +70,6 @@ namespace Transports
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_codecdcll(m_dccl),
         m_reqid(0)
       {
         param("DCCL Encoding", m_args.trigger_dccl)
