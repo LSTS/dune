@@ -322,10 +322,10 @@ std::string decodeEntityName(const uint8_t& dccl_src)
 // ================ ManeuverType Message ================
 IMC_DCCL::ManeuverType encodeManeuverType(const std::string& imc_src)
 {
-        if (imc_src == "goto") return IMC_DCCL::ManeuverType::GOTO;
-        if (imc_src == "loiter") return IMC_DCCL::ManeuverType::LOITER;
-        if (imc_src == "followpath") return IMC_DCCL::ManeuverType::FOLLOWPATH;
-        if (imc_src == "stationkeeping") return IMC_DCCL::ManeuverType::STATIONKEEPING;
+        if (imc_src == "Goto") return IMC_DCCL::ManeuverType::GOTO;
+        if (imc_src == "Loiter") return IMC_DCCL::ManeuverType::LOITER;
+        if (imc_src == "FollowPath") return IMC_DCCL::ManeuverType::FOLLOWPATH;
+        if (imc_src == "StationKeeping") return IMC_DCCL::ManeuverType::STATIONKEEPING;
         return IMC_DCCL::ManeuverType::MT_UNKNOWN;
 }
 
@@ -333,10 +333,10 @@ IMC_DCCL::ManeuverType encodeManeuverType(const std::string& imc_src)
 // ================ ManeuverType Message ================
 std::string decodeManeuverType(const uint8_t& dccl_src)
 {
-        if (dccl_src == IMC_DCCL::ManeuverType::GOTO) return "goto";
-        if (dccl_src == IMC_DCCL::ManeuverType::LOITER) return "loiter";
-        if (dccl_src == IMC_DCCL::ManeuverType::FOLLOWPATH) return "followpath";
-        if (dccl_src == IMC_DCCL::ManeuverType::STATIONKEEPING) return "stationkeeping";
+        if (dccl_src == IMC_DCCL::ManeuverType::GOTO) return "Goto";
+        if (dccl_src == IMC_DCCL::ManeuverType::LOITER) return "Loiter";
+        if (dccl_src == IMC_DCCL::ManeuverType::FOLLOWPATH) return "FollowPath";
+        if (dccl_src == IMC_DCCL::ManeuverType::STATIONKEEPING) return "StationKeeping";
 }
 
 

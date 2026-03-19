@@ -13,7 +13,6 @@ namespace Helper {
         return std::regex_match(s, number_regex);
     }
 
-    
     //True if default value
     template <typename T>
     inline bool is_default_value(const T& value) {

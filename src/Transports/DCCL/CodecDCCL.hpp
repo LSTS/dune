@@ -21,8 +21,7 @@ namespace IMCDCCL
     class CodecDCCL
     {
         public:
-            explicit CodecDCCL(dccl::Codec& codec)
-                : m_codec(codec)
+            CodecDCCL()
         {
         }
         
@@ -50,7 +49,7 @@ namespace IMCDCCL
 
         private: 
 
-        dccl::Codec& m_codec;
+        dccl::Codec m_codec;
 
         MsgID
         getMsgID(std::string& encoded_string)
