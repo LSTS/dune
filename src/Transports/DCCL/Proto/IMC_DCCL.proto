@@ -82,6 +82,7 @@ enum ParameterName {
     TRANSITION_TO_MC = 31;
     USE_CONTROLLER = 32;
     VEHICLE_LIST = 33;
+    PN_UNKNOWN = 34;
 }
 
 
@@ -111,6 +112,7 @@ enum EntityName {
     SIDESCAN = 21;
     SLAVE_CPU = 22;
     UAVCAMERA = 23;
+    EN_UNKNOWN = 24;
 }
 
 // Profile Sample
@@ -295,8 +297,6 @@ message PlanTransition {
 }
 
 
-// Principal Messages --------------------------------------------------------------------------------------------------------
-
 // Vertical Profile
 message VerticalProfile {
     option (dccl.msg) = { codec_version: 4 id: 111 max_bytes: 80};
@@ -310,6 +310,7 @@ message VerticalProfile {
         PROF_REDOX = 4;
         PROF_CHLOROPHYLL = 5;
         PROF_TURBIDITY = 6;
+        PROF_UNKNOWN = 7;
     }
 
     ParameterEnum parameter = 1;
@@ -369,6 +370,7 @@ message PlanDB {
         DBT_SUCCESS = 1;
         DBT_FAILURE = 2;
         DBT_IN_PROGRESS = 3;
+        DBT_UNKNOWN = 4;
     }
 
     enum OperationEnum
@@ -381,6 +383,7 @@ message PlanDB {
         DBOP_GET_STATE = 5;
         DBOP_GET_DSTATE = 6;
         DBOP_BOOT = 7;
+        DBOP_UNKNOWN = 8;
     }
     
     TypeEnum type = 1;
@@ -424,6 +427,7 @@ message PlanControl {
         PC_SUCCESS = 1;
         PC_FAILURE = 2;
         PC_IN_PROGRESS = 3;
+        PCTE_UNKNOWN = 4;
     }   
   
     enum OperationEnum
@@ -432,6 +436,7 @@ message PlanControl {
         PC_STOP = 1;
         PC_LOAD = 2;
         PC_GET = 3;
+        PCOE_UNKNOWN = 4;
     }  
 
     TypeEnum type = 1;  
@@ -452,6 +457,7 @@ message PlanStatistics {
         TP_PREPLAN = 0;
         TP_INPLAN = 1;
         TP_POSTPLAN = 2;
+        TP_UNKNOWN = 3;
     }  
     TypeEnum type = 2;  
     optional int32 properties = 3 [(dccl.field) = { min: 0 max: 5000 precision: 1 }];
