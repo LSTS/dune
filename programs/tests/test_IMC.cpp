@@ -25519,6 +25519,84 @@ main(void)
   }
 
   {
+    IMC::MessagePartControl msg;
+    msg.setTimeStamp(0.5445773006040167);
+    msg.setSource(18408U);
+    msg.setSourceEntity(151U);
+    msg.setDestination(5227U);
+    msg.setDestinationEntity(53U);
+    msg.uid = 102U;
+    msg.op = 21U;
+    msg.frag_ids.assign("EJAIYCQRMDOIQSRVGRGJUBYCUZAWBFKYSL");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("MessagePartControl #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::MessagePartControl msg;
+    msg.setTimeStamp(0.2016649592776648);
+    msg.setSource(56605U);
+    msg.setSourceEntity(115U);
+    msg.setDestination(49868U);
+    msg.setDestinationEntity(35U);
+    msg.uid = 181U;
+    msg.op = 185U;
+    msg.frag_ids.assign("SJPJQQOLNGEZWTJKHZLONPHUDIGBSKQNEFVITDXNYAJFWUJXLKKBYLCFEUQCDPHMUKBXSDTXIBFSOGRFMYBGKHLPGPSPRCGTUXOWUAFEZIURQLXCYUABVIEDDNFVRFKONDSJGVWSACRIKCIXWDVRGLJN");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("MessagePartControl #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::MessagePartControl msg;
+    msg.setTimeStamp(0.16282309535284867);
+    msg.setSource(21598U);
+    msg.setSourceEntity(106U);
+    msg.setDestination(57921U);
+    msg.setDestinationEntity(142U);
+    msg.uid = 138U;
+    msg.op = 153U;
+    msg.frag_ids.assign("BWSYQGFUEURXUGBHFSEKHWIUZQNDIATIYBTYKORFMATRMSDQHSREANJGRXMYPAQSGWWEPBYOWAYEHINHMGULVVIACWYSVM");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("MessagePartControl #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
     IMC::NeptusBlob msg;
     msg.setTimeStamp(0.999136038691824);
     msg.setSource(28670U);
@@ -27368,6 +27446,360 @@ main(void)
   }
 
   {
+    IMC::AbsoluteWind msg;
+    msg.setTimeStamp(0.1089139848463676);
+    msg.setSource(55566U);
+    msg.setSourceEntity(180U);
+    msg.setDestination(1140U);
+    msg.setDestinationEntity(122U);
+    msg.direction = 0.9115945518135403;
+    msg.speed = 0.1390563987940211;
+    msg.turbulence = 0.18026903508426562;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("AbsoluteWind #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::AbsoluteWind msg;
+    msg.setTimeStamp(0.9704196065882106);
+    msg.setSource(47300U);
+    msg.setSourceEntity(216U);
+    msg.setDestination(1268U);
+    msg.setDestinationEntity(191U);
+    msg.direction = 0.3949095744101291;
+    msg.speed = 0.42635771624666186;
+    msg.turbulence = 0.24796199628132565;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("AbsoluteWind #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::AbsoluteWind msg;
+    msg.setTimeStamp(0.7569170350798844);
+    msg.setSource(19605U);
+    msg.setSourceEntity(125U);
+    msg.setDestination(57074U);
+    msg.setDestinationEntity(59U);
+    msg.direction = 0.8567533254617377;
+    msg.speed = 0.0893807691484928;
+    msg.turbulence = 0.5978714663129889;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("AbsoluteWind #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::AisInfo msg;
+    msg.setTimeStamp(0.04901013923648356);
+    msg.setSource(61985U);
+    msg.setSourceEntity(170U);
+    msg.setDestination(50949U);
+    msg.setDestinationEntity(20U);
+    msg.msg_type.assign("IVSVGAYXHDJHAGDMGBASYFTTHNXWYEMNPZSUDFCWUAAJBYFIZXLJWZWUFCFOPRGPYKTKLNNHDPRCQTDLVKUIYNVAIDLEXQGT");
+    msg.sensor_class.assign("YPYFMSIFDBLHGMJRNBUVFLDXWGWXPOWOYYPKSBEEBUCZSWQZIMGTZMSBCTTUEEVYRSIKS");
+    msg.mmsi.assign("SJVFWHJSKISWKVVNZBSNUFYMUPQJVLUNYPYXIYYPFAQEZBXWQPLCHYBCFZGJHPMJCRTJJLRLAFNDEKPTADWVMUOSNKCRDQSVIOMNBKWGTMZCOUWNEOIRTWDNOXEUFHKFXJQFHGNYUEBAQDSVTNOQGGKPGAAAMXC");
+    msg.callsign.assign("ZCSYSUPXKMMXBYLTDWWROCVELTIUDXJ");
+    msg.name.assign("UTAHYDGWEKSETMKOVABLQDCDVXTHVOEDIAZRJSOVIKXDJUTGABADXMNZXHEAMLUJCGCMRHXWQBPJOZHFPXQIPLBAGY");
+    msg.nav_status = 161U;
+    msg.type_and_cargo = 116U;
+    msg.lat = 0.8624858447123172;
+    msg.lon = 0.587976862262832;
+    msg.course = 0.8510788216625496;
+    msg.speed = 0.5200755704610066;
+    msg.dist = 0.10794054722162838;
+    msg.a = 0.09471629395365955;
+    msg.b = 0.45108098291803655;
+    msg.c = 0.0010701817455098794;
+    msg.d = 0.17845908290960832;
+    msg.draught = 0.952215661510267;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("AisInfo #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::AisInfo msg;
+    msg.setTimeStamp(0.721245972582824);
+    msg.setSource(9679U);
+    msg.setSourceEntity(169U);
+    msg.setDestination(11644U);
+    msg.setDestinationEntity(154U);
+    msg.msg_type.assign("QNNRINWTGZCZNTGTYXVENTFJHMQZNGYLRRYXDTCGWCOHSTSUZLCKUVUAQATJWIPSBZJLYPOHRLAMYIVPRAZQADDWDYFRFOTJUOIWKFBKVGBBKPFAJGM");
+    msg.sensor_class.assign("KIXACJHMCYPEIXDVCNMXGBQDYOCEZHCYVDYQRHWLHINPPPMNWRPLOTTEQBBVACZYSXSUNSNTKBSVOGWQEJMSFWRGSTYGUMVDSFRFODDZKZCAXOKCNLBGAZVLNJQDAWJVGIHDYRYRTLHRVBUXPTZKVKWALBAVWHDOIUYXJPFUPZHZGXNQLBMEIZAOSPFRASNQUOAUIGTKQMGBJUMKFSRTJZHEFIBGQOEWMTLMUICNLUQDWFEXKCPTOWJXJJFELK");
+    msg.mmsi.assign("PUDUZZYSERZNXHJBKIWDWBECYHJPPTIJVZEKODUVPGNSVNWVRQGBNCBRDUVYBJGLTTSCONCIE");
+    msg.callsign.assign("IEYLHZJRDLQYCGPJUKVJXKUPBL");
+    msg.name.assign("BOQGSVHSFAYCMRNGPBXAQTPMKQWOMVKLYRMOFGOYACFJTDMZUNRWAYMSFKFNPSFOZVLDIDEJ");
+    msg.nav_status = 251U;
+    msg.type_and_cargo = 57U;
+    msg.lat = 0.8561783407236859;
+    msg.lon = 0.9025722189566387;
+    msg.course = 0.6455294321303491;
+    msg.speed = 0.7627303646823916;
+    msg.dist = 0.11216788027850699;
+    msg.a = 0.5566696962947596;
+    msg.b = 0.5880793259059981;
+    msg.c = 0.852875618264037;
+    msg.d = 0.8401145773507339;
+    msg.draught = 0.4601672549150553;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("AisInfo #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::AisInfo msg;
+    msg.setTimeStamp(0.14504108959880224);
+    msg.setSource(29839U);
+    msg.setSourceEntity(145U);
+    msg.setDestination(9327U);
+    msg.setDestinationEntity(233U);
+    msg.msg_type.assign("IVQOFZNRMUUZTWCFHYGBALEMAMZGXCUOGVBWXLLNXPIWEXYYHZWVLRQEYFPTLVTDSOPTOTPLNHPDRFQHUVXNSHLDJJXJDZTSHGMIAVKDBDJKMDKILUPOYXFESXLOQRTWTUMPCQVWWVRWJOW");
+    msg.sensor_class.assign("YEXKXSDFUPDJEGAZKHABMRAWVMHJUPOQVVQIFTQNAGZHOABTCBDIDZKFRMUEWSPLDPSNQYNBXQZKYZVWXXVRNJEWHIOJPOPZZGNFBIWUCVRCBIXEPPWOUKOTMKQLDVBTHMGWYLAYYHRKRZFZFRNWXFNSDESNRHUELAHCSKQUEMVDGRIADWJE");
+    msg.mmsi.assign("OIYSAXJEEYKUYCLIAUGBDXNVIRFDJZCDTRCNIWWSJXVGIGOKXHGKELEFTPMSTXJHTXYMEZZLIQADNMKYPIHSF");
+    msg.callsign.assign("QULZIQRMZAMXBAKFXRDONV");
+    msg.name.assign("XRBBVGPBLIZLTIZMYQZEWOFVSYHHSSPGKQLJAXTMZNLGTKWKMHFLJZXEETTLOCUFQZANEVAIMBTFAJYAFQFTHZUNMCVOMSVEJYZCMRYPHYYOVZGGXPKHDZJIORSGRBDWJJXRDRPECPMBKCNNVQLBEURMSUFJDHKWIPWGVAVDOGRPPACXOWOBSDSWVKDCUUXXKLRDYYFJULNCUJNQSWCDIYIWGORTAAXGNQKITFQBQCNXMENLDIASIBEQOF");
+    msg.nav_status = 45U;
+    msg.type_and_cargo = 158U;
+    msg.lat = 0.6317475822472679;
+    msg.lon = 0.6747892278654324;
+    msg.course = 0.641266346173811;
+    msg.speed = 0.7796275882112751;
+    msg.dist = 0.14983327164880522;
+    msg.a = 0.9036144625855161;
+    msg.b = 0.8341623157506796;
+    msg.c = 0.5137410523065176;
+    msg.d = 0.4646453461105092;
+    msg.draught = 0.08588530412760953;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("AisInfo #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ENCAwareness msg;
+    msg.setTimeStamp(0.7237701796441388);
+    msg.setSource(41165U);
+    msg.setSourceEntity(205U);
+    msg.setDestination(46616U);
+    msg.setDestinationEntity(140U);
+    msg.depth_at_loc.assign("YGIJWAGBHSHLAFEBHMIRWQPVDWUTKMJRRAYCCSAQWREJEQULMQPDLKOXJFOMTOGGQKLFKAWSOODVCPRYYYYBUNNKSGPEFRBTQSUK");
+    msg.danger.assign("FVTBKBRREEJWRDAXSEDNKWUIYVGGAGAJGOUBWPJHMLJZWZVPQJPXQYNSEHKHJVDZFBUQBZQZVENPPPVHEKWIQFZQTSHYTGZMHOQJXDRGHPCGRXBOMENMNXKTAACFCRLQNGSCRCTSOWUKSXSAMBLLYSXFFVLVCUIYZCONLIYWAWEVCIAQUMOCRILUSCKQIMJYFKKFXDVJBULZMOGJL");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ENCAwareness #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ENCAwareness msg;
+    msg.setTimeStamp(0.7697158511662524);
+    msg.setSource(9160U);
+    msg.setSourceEntity(244U);
+    msg.setDestination(16833U);
+    msg.setDestinationEntity(186U);
+    msg.depth_at_loc.assign("UDEUNENFOJOQOBXWTYYJIGKZ");
+    msg.danger.assign("SAYBUWRVEMYMXFKOJHIJSRTINMLNPOGTDDIACCHPWICBMBIEVYFXMEEYTJBJPLNUQEJCTRACAVIHZRZYGGOBVBVIWRHOILAZPHMIDNZVNVOFXQHXDCQEAQRQKFTVRHKNMDUVWMYZWDPLKNDMHDLXVSLK");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ENCAwareness #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ENCAwareness msg;
+    msg.setTimeStamp(0.9435315625097312);
+    msg.setSource(36003U);
+    msg.setSourceEntity(22U);
+    msg.setDestination(15291U);
+    msg.setDestinationEntity(220U);
+    msg.depth_at_loc.assign("WOPQVVNFWWTFGIODLJOBGMSFJDGKUZOLMZDGWANFQPZJPABLDWJQZPYTMCPSJHCYDNIHQEWYNCBDM");
+    msg.danger.assign("LHSHELWKKIFFYLXLNLDRWAFWQJAOBNGKXVOPKBHGSXRIGYHXUTESDNNYZYDFTFPWYKLYOUWXRBRVCMLQPCLDFVDZMMEOTEXEGCQJPERIVUNMTBDBMTAMNXVCLNWFEUHPAZVIAGVOYZGIOTJSNMZNHCGZRSDCBSCSEQYPRPFSTJWWGBAUTIUNQRUDPZZJHKMEXYODMORAPQMATJUBSXXCJBWFRIOTQIHIVVQCHUAUS");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ENCAwareness #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::Displacement msg;
+    msg.setTimeStamp(0.09434138212892373);
+    msg.setSource(52390U);
+    msg.setSourceEntity(2U);
+    msg.setDestination(33462U);
+    msg.setDestinationEntity(68U);
+    msg.time = 0.8935446711444425;
+    msg.x = 0.30226562557262215;
+    msg.y = 0.8612888283567515;
+    msg.z = 0.2782268552684072;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("Displacement #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::Displacement msg;
+    msg.setTimeStamp(0.8198292522468295);
+    msg.setSource(54306U);
+    msg.setSourceEntity(101U);
+    msg.setDestination(852U);
+    msg.setDestinationEntity(61U);
+    msg.time = 0.8751387592438783;
+    msg.x = 0.1040526979212939;
+    msg.y = 0.4209057433895874;
+    msg.z = 0.46388183639570346;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("Displacement #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::Displacement msg;
+    msg.setTimeStamp(0.8646969822129948);
+    msg.setSource(39264U);
+    msg.setSourceEntity(178U);
+    msg.setDestination(12493U);
+    msg.setDestinationEntity(109U);
+    msg.time = 0.4695988287246111;
+    msg.x = 0.6200258635480472;
+    msg.y = 0.09251669353346892;
+    msg.z = 0.7072879576107546;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("Displacement #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
     IMC::CurrentProfile msg;
     msg.setTimeStamp(0.4963911820392892);
     msg.setSource(48961U);
@@ -27594,6 +28026,228 @@ main(void)
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
       test.boolean("ADCPBeam #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::Frequency msg;
+    msg.setTimeStamp(0.06749664931304322);
+    msg.setSource(37880U);
+    msg.setSourceEntity(70U);
+    msg.setDestination(16055U);
+    msg.setDestinationEntity(156U);
+    msg.value = 0.8329932500027011;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("Frequency #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::Frequency msg;
+    msg.setTimeStamp(0.6006393136094701);
+    msg.setSource(51518U);
+    msg.setSourceEntity(2U);
+    msg.setDestination(12821U);
+    msg.setDestinationEntity(167U);
+    msg.value = 0.46886457306657214;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("Frequency #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::Frequency msg;
+    msg.setTimeStamp(0.1386280877260142);
+    msg.setSource(30939U);
+    msg.setSourceEntity(90U);
+    msg.setDestination(54395U);
+    msg.setDestinationEntity(94U);
+    msg.value = 0.5325205266017103;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("Frequency #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::WaveSpectrumParameters msg;
+    msg.setTimeStamp(0.30913877575325444);
+    msg.setSource(3290U);
+    msg.setSourceEntity(250U);
+    msg.setDestination(61638U);
+    msg.setDestinationEntity(222U);
+    msg.sig_wave_height_hm0 = 0.09286271863521178;
+    msg.wave_peak_direction = 0.2706031343848866;
+    msg.wave_peak_period = 0.7704697006211078;
+    msg.wave_height_wind_hm0 = 0.6531834297290706;
+    msg.wave_height_swell_hm0 = 0.4873872099397467;
+    msg.wave_peak_period_wind = 0.14224834665175679;
+    msg.wave_peak_period_swell = 0.13968500931675476;
+    msg.wave_peak_direction_wind = 0.6632359153725708;
+    msg.wave_peak_direction_swell = 0.5470459114053948;
+    msg.wave_mean_direction = 0.4150774523562003;
+    msg.wave_mean_period_tm02 = 0.043465415680220776;
+    msg.wave_height_hmax = 0.597779419422372;
+    msg.wave_height_crest = 0.013795439991346248;
+    msg.wave_height_trough = 0.352785333124255;
+    msg.wave_period_tmax = 0.5323836091529607;
+    msg.wave_period_tz = 0.13858214151004533;
+    msg.significant_wave_height_h1_3 = 0.8732354124399935;
+    msg.mean_spreading_angle = 0.08069433418540617;
+    msg.first_order_spread = 0.6989668077222193;
+    msg.long_crestedness_parameters = 0.17497705821245024;
+    msg.heading = 0.42490044484773437;
+    msg.pitch = 0.9177314832460871;
+    msg.roll = 0.0800372793548827;
+    msg.external_heading = 0.49075019070152104;
+    msg.stdev_heading = 0.6996202433025573;
+    msg.stdev_pitch = 0.057737484123924876;
+    msg.stdev_roll = 0.369637985197818;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("WaveSpectrumParameters #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::WaveSpectrumParameters msg;
+    msg.setTimeStamp(0.10979902572691635);
+    msg.setSource(25020U);
+    msg.setSourceEntity(46U);
+    msg.setDestination(26298U);
+    msg.setDestinationEntity(209U);
+    msg.sig_wave_height_hm0 = 0.4732945799405486;
+    msg.wave_peak_direction = 0.7037668344884722;
+    msg.wave_peak_period = 0.722193618875393;
+    msg.wave_height_wind_hm0 = 0.208046545843392;
+    msg.wave_height_swell_hm0 = 0.04200296835306694;
+    msg.wave_peak_period_wind = 0.4740429751574651;
+    msg.wave_peak_period_swell = 0.8362496464623529;
+    msg.wave_peak_direction_wind = 0.918642229488443;
+    msg.wave_peak_direction_swell = 0.6703596079132693;
+    msg.wave_mean_direction = 0.12097252781669188;
+    msg.wave_mean_period_tm02 = 0.8925709123723686;
+    msg.wave_height_hmax = 0.4359520193935108;
+    msg.wave_height_crest = 0.6223449982608351;
+    msg.wave_height_trough = 0.3431334660487486;
+    msg.wave_period_tmax = 0.3616259032781506;
+    msg.wave_period_tz = 0.7549334198374466;
+    msg.significant_wave_height_h1_3 = 0.6811300410030684;
+    msg.mean_spreading_angle = 0.477342171502655;
+    msg.first_order_spread = 0.33261098543518963;
+    msg.long_crestedness_parameters = 0.7786361527374807;
+    msg.heading = 0.31541120240555576;
+    msg.pitch = 0.005774120929071258;
+    msg.roll = 0.5823619282850645;
+    msg.external_heading = 0.6543506553498445;
+    msg.stdev_heading = 0.055514734150614364;
+    msg.stdev_pitch = 0.3189026979630868;
+    msg.stdev_roll = 0.19542350405678688;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("WaveSpectrumParameters #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::WaveSpectrumParameters msg;
+    msg.setTimeStamp(0.5072569175064201);
+    msg.setSource(16386U);
+    msg.setSourceEntity(176U);
+    msg.setDestination(22093U);
+    msg.setDestinationEntity(207U);
+    msg.sig_wave_height_hm0 = 0.7583109076449696;
+    msg.wave_peak_direction = 0.5247843219510976;
+    msg.wave_peak_period = 0.5419384913373811;
+    msg.wave_height_wind_hm0 = 0.022703770406082735;
+    msg.wave_height_swell_hm0 = 0.6364743392793083;
+    msg.wave_peak_period_wind = 0.6983283267849494;
+    msg.wave_peak_period_swell = 0.027278729476228003;
+    msg.wave_peak_direction_wind = 0.38920918182285447;
+    msg.wave_peak_direction_swell = 0.5562185913703628;
+    msg.wave_mean_direction = 0.32745499791444677;
+    msg.wave_mean_period_tm02 = 0.7581668419703159;
+    msg.wave_height_hmax = 0.7805970606186478;
+    msg.wave_height_crest = 0.7522386689800036;
+    msg.wave_height_trough = 0.10519022023795954;
+    msg.wave_period_tmax = 0.9617776457568099;
+    msg.wave_period_tz = 0.5140215447405694;
+    msg.significant_wave_height_h1_3 = 0.7462017690005023;
+    msg.mean_spreading_angle = 0.27017996493452834;
+    msg.first_order_spread = 0.7806574440796327;
+    msg.long_crestedness_parameters = 0.13857534294791274;
+    msg.heading = 0.7148277668911878;
+    msg.pitch = 0.15247125715515686;
+    msg.roll = 0.3968521658257974;
+    msg.external_heading = 0.3457347957352064;
+    msg.stdev_heading = 0.460102200937361;
+    msg.stdev_pitch = 0.9174372150805844;
+    msg.stdev_roll = 0.039848753758034205;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("WaveSpectrumParameters #2", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)
@@ -28185,6 +28839,150 @@ main(void)
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
       test.boolean("VersionInfo #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::TotalHeading msg;
+    msg.setTimeStamp(0.7151492986661168);
+    msg.setSource(23900U);
+    msg.setSourceEntity(158U);
+    msg.setDestination(49400U);
+    msg.setDestinationEntity(17U);
+    msg.value = 0.8833341970108348;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("TotalHeading #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::TotalHeading msg;
+    msg.setTimeStamp(0.9302371053580938);
+    msg.setSource(21256U);
+    msg.setSourceEntity(44U);
+    msg.setDestination(23865U);
+    msg.setDestinationEntity(34U);
+    msg.value = 0.9336506491179962;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("TotalHeading #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::TotalHeading msg;
+    msg.setTimeStamp(0.028906320221261717);
+    msg.setSource(14669U);
+    msg.setSourceEntity(117U);
+    msg.setDestination(60845U);
+    msg.setDestinationEntity(107U);
+    msg.value = 0.10511490074548535;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("TotalHeading #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::TypedEntityParameterEditor msg;
+    msg.setTimeStamp(0.1271140015313944);
+    msg.setSource(24935U);
+    msg.setSourceEntity(173U);
+    msg.setDestination(13808U);
+    msg.setDestinationEntity(150U);
+    msg.value.assign("UPOHKGSNXJTKVCDABHOOLWCWVFQRWVVGMSTPXXPMLUPOSRCTBGGXHCAGSZLPDFODCNFTXMDMWNCKAYJBEEGKLBJOWHRBQQUEQKOBPOLHHUAEJDDLHYYJZSRAQJSPFWLKMVVQILDATTINQYKYNYWGKXQUACBVLMXTQUXFHFVPNZZTWWIUWFNPMN");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("TypedEntityParameterEditor #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::TypedEntityParameterEditor msg;
+    msg.setTimeStamp(0.700761850428143);
+    msg.setSource(63860U);
+    msg.setSourceEntity(233U);
+    msg.setDestination(24581U);
+    msg.setDestinationEntity(207U);
+    msg.value.assign("SOLYNHZFCNMGKBRZPRWXTMZDICMDVQCXOZKHXMVNCYCYGZEKGUUEYTPJIUOAQXDDLYZBFVQUVHQSYALWHGINJTGXSZIEOKWRWAHPVDDJEPLLSVXYFRBBPSMKMWVFPJVY");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("TypedEntityParameterEditor #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::TypedEntityParameterEditor msg;
+    msg.setTimeStamp(0.436269831057299);
+    msg.setSource(27092U);
+    msg.setSourceEntity(19U);
+    msg.setDestination(28748U);
+    msg.setDestinationEntity(64U);
+    msg.value.assign("TTWKCMNNIPXHBGQYAVEQQFXGHKMKVOMBWYVQRCIUWRFDNJOLXPCDLLXCMJQYWHISJDHBLLJSTQZDZWKJUJKFWJNVSLBKHEFDEVE");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("TypedEntityParameterEditor #2", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)

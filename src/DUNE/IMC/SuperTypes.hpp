@@ -55,6 +55,11 @@ namespace DUNE
     class RemoteData: public Message
     {
     };
+
+    //! Super type TypedEntityParametersOptions.
+    class TypedEntityParametersOptions: public Message
+    {
+    };
   }
 }
 

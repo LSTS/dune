@@ -229,12 +229,13 @@ enum VerticalProfile_ParameterEnum : int {
   VerticalProfile_ParameterEnum_PROF_REDOX = 4,
   VerticalProfile_ParameterEnum_PROF_CHLOROPHYLL = 5,
   VerticalProfile_ParameterEnum_PROF_TURBIDITY = 6,
+  VerticalProfile_ParameterEnum_PROF_UNKNOWN = 7,
   VerticalProfile_ParameterEnum_VerticalProfile_ParameterEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   VerticalProfile_ParameterEnum_VerticalProfile_ParameterEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool VerticalProfile_ParameterEnum_IsValid(int value);
 constexpr VerticalProfile_ParameterEnum VerticalProfile_ParameterEnum_ParameterEnum_MIN = VerticalProfile_ParameterEnum_PROF_TEMPERATURE;
-constexpr VerticalProfile_ParameterEnum VerticalProfile_ParameterEnum_ParameterEnum_MAX = VerticalProfile_ParameterEnum_PROF_TURBIDITY;
+constexpr VerticalProfile_ParameterEnum VerticalProfile_ParameterEnum_ParameterEnum_MAX = VerticalProfile_ParameterEnum_PROF_UNKNOWN;
 constexpr int VerticalProfile_ParameterEnum_ParameterEnum_ARRAYSIZE = VerticalProfile_ParameterEnum_ParameterEnum_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* VerticalProfile_ParameterEnum_descriptor();
@@ -256,12 +257,13 @@ enum PlanDB_TypeEnum : int {
   PlanDB_TypeEnum_DBT_SUCCESS = 1,
   PlanDB_TypeEnum_DBT_FAILURE = 2,
   PlanDB_TypeEnum_DBT_IN_PROGRESS = 3,
+  PlanDB_TypeEnum_DBT_UNKNOWN = 4,
   PlanDB_TypeEnum_PlanDB_TypeEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   PlanDB_TypeEnum_PlanDB_TypeEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool PlanDB_TypeEnum_IsValid(int value);
 constexpr PlanDB_TypeEnum PlanDB_TypeEnum_TypeEnum_MIN = PlanDB_TypeEnum_DBT_REQUEST;
-constexpr PlanDB_TypeEnum PlanDB_TypeEnum_TypeEnum_MAX = PlanDB_TypeEnum_DBT_IN_PROGRESS;
+constexpr PlanDB_TypeEnum PlanDB_TypeEnum_TypeEnum_MAX = PlanDB_TypeEnum_DBT_UNKNOWN;
 constexpr int PlanDB_TypeEnum_TypeEnum_ARRAYSIZE = PlanDB_TypeEnum_TypeEnum_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanDB_TypeEnum_descriptor();
@@ -287,12 +289,13 @@ enum PlanDB_OperationEnum : int {
   PlanDB_OperationEnum_DBOP_GET_STATE = 5,
   PlanDB_OperationEnum_DBOP_GET_DSTATE = 6,
   PlanDB_OperationEnum_DBOP_BOOT = 7,
+  PlanDB_OperationEnum_DBOP_UNKNOWN = 8,
   PlanDB_OperationEnum_PlanDB_OperationEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   PlanDB_OperationEnum_PlanDB_OperationEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool PlanDB_OperationEnum_IsValid(int value);
 constexpr PlanDB_OperationEnum PlanDB_OperationEnum_OperationEnum_MIN = PlanDB_OperationEnum_DBOP_SET;
-constexpr PlanDB_OperationEnum PlanDB_OperationEnum_OperationEnum_MAX = PlanDB_OperationEnum_DBOP_BOOT;
+constexpr PlanDB_OperationEnum PlanDB_OperationEnum_OperationEnum_MAX = PlanDB_OperationEnum_DBOP_UNKNOWN;
 constexpr int PlanDB_OperationEnum_OperationEnum_ARRAYSIZE = PlanDB_OperationEnum_OperationEnum_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanDB_OperationEnum_descriptor();
@@ -314,12 +317,13 @@ enum PlanControl_TypeEnum : int {
   PlanControl_TypeEnum_PC_SUCCESS = 1,
   PlanControl_TypeEnum_PC_FAILURE = 2,
   PlanControl_TypeEnum_PC_IN_PROGRESS = 3,
+  PlanControl_TypeEnum_PCTE_UNKNOWN = 4,
   PlanControl_TypeEnum_PlanControl_TypeEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   PlanControl_TypeEnum_PlanControl_TypeEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool PlanControl_TypeEnum_IsValid(int value);
 constexpr PlanControl_TypeEnum PlanControl_TypeEnum_TypeEnum_MIN = PlanControl_TypeEnum_PC_REQUEST;
-constexpr PlanControl_TypeEnum PlanControl_TypeEnum_TypeEnum_MAX = PlanControl_TypeEnum_PC_IN_PROGRESS;
+constexpr PlanControl_TypeEnum PlanControl_TypeEnum_TypeEnum_MAX = PlanControl_TypeEnum_PCTE_UNKNOWN;
 constexpr int PlanControl_TypeEnum_TypeEnum_ARRAYSIZE = PlanControl_TypeEnum_TypeEnum_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanControl_TypeEnum_descriptor();
@@ -341,12 +345,13 @@ enum PlanControl_OperationEnum : int {
   PlanControl_OperationEnum_PC_STOP = 1,
   PlanControl_OperationEnum_PC_LOAD = 2,
   PlanControl_OperationEnum_PC_GET = 3,
+  PlanControl_OperationEnum_PCOE_UNKNOWN = 4,
   PlanControl_OperationEnum_PlanControl_OperationEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   PlanControl_OperationEnum_PlanControl_OperationEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool PlanControl_OperationEnum_IsValid(int value);
 constexpr PlanControl_OperationEnum PlanControl_OperationEnum_OperationEnum_MIN = PlanControl_OperationEnum_PC_START;
-constexpr PlanControl_OperationEnum PlanControl_OperationEnum_OperationEnum_MAX = PlanControl_OperationEnum_PC_GET;
+constexpr PlanControl_OperationEnum PlanControl_OperationEnum_OperationEnum_MAX = PlanControl_OperationEnum_PCOE_UNKNOWN;
 constexpr int PlanControl_OperationEnum_OperationEnum_ARRAYSIZE = PlanControl_OperationEnum_OperationEnum_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanControl_OperationEnum_descriptor();
@@ -367,12 +372,13 @@ enum PlanStatistics_TypeEnum : int {
   PlanStatistics_TypeEnum_TP_PREPLAN = 0,
   PlanStatistics_TypeEnum_TP_INPLAN = 1,
   PlanStatistics_TypeEnum_TP_POSTPLAN = 2,
+  PlanStatistics_TypeEnum_TP_UNKNOWN = 3,
   PlanStatistics_TypeEnum_PlanStatistics_TypeEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   PlanStatistics_TypeEnum_PlanStatistics_TypeEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool PlanStatistics_TypeEnum_IsValid(int value);
 constexpr PlanStatistics_TypeEnum PlanStatistics_TypeEnum_TypeEnum_MIN = PlanStatistics_TypeEnum_TP_PREPLAN;
-constexpr PlanStatistics_TypeEnum PlanStatistics_TypeEnum_TypeEnum_MAX = PlanStatistics_TypeEnum_TP_POSTPLAN;
+constexpr PlanStatistics_TypeEnum PlanStatistics_TypeEnum_TypeEnum_MAX = PlanStatistics_TypeEnum_TP_UNKNOWN;
 constexpr int PlanStatistics_TypeEnum_TypeEnum_ARRAYSIZE = PlanStatistics_TypeEnum_TypeEnum_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanStatistics_TypeEnum_descriptor();
@@ -559,12 +565,13 @@ enum ParameterName : int {
   TRANSITION_TO_MC = 31,
   USE_CONTROLLER = 32,
   VEHICLE_LIST = 33,
+  PN_UNKNOWN = 34,
   ParameterName_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   ParameterName_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool ParameterName_IsValid(int value);
 constexpr ParameterName ParameterName_MIN = ACTIVE;
-constexpr ParameterName ParameterName_MAX = VEHICLE_LIST;
+constexpr ParameterName ParameterName_MAX = PN_UNKNOWN;
 constexpr int ParameterName_ARRAYSIZE = ParameterName_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ParameterName_descriptor();
@@ -606,12 +613,13 @@ enum EntityName : int {
   SIDESCAN = 21,
   SLAVE_CPU = 22,
   UAVCAMERA = 23,
+  EN_UNKNOWN = 24,
   EntityName_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   EntityName_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool EntityName_IsValid(int value);
 constexpr EntityName EntityName_MIN = ACOUSTIC_MODEM;
-constexpr EntityName EntityName_MAX = UAVCAMERA;
+constexpr EntityName EntityName_MAX = EN_UNKNOWN;
 constexpr int EntityName_ARRAYSIZE = EntityName_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityName_descriptor();
@@ -4184,6 +4192,8 @@ class VerticalProfile final :
     VerticalProfile_ParameterEnum_PROF_CHLOROPHYLL;
   static constexpr ParameterEnum PROF_TURBIDITY =
     VerticalProfile_ParameterEnum_PROF_TURBIDITY;
+  static constexpr ParameterEnum PROF_UNKNOWN =
+    VerticalProfile_ParameterEnum_PROF_UNKNOWN;
   static inline bool ParameterEnum_IsValid(int value) {
     return VerticalProfile_ParameterEnum_IsValid(value);
   }
@@ -5168,6 +5178,8 @@ class PlanDB final :
     PlanDB_TypeEnum_DBT_FAILURE;
   static constexpr TypeEnum DBT_IN_PROGRESS =
     PlanDB_TypeEnum_DBT_IN_PROGRESS;
+  static constexpr TypeEnum DBT_UNKNOWN =
+    PlanDB_TypeEnum_DBT_UNKNOWN;
   static inline bool TypeEnum_IsValid(int value) {
     return PlanDB_TypeEnum_IsValid(value);
   }
@@ -5210,6 +5222,8 @@ class PlanDB final :
     PlanDB_OperationEnum_DBOP_GET_DSTATE;
   static constexpr OperationEnum DBOP_BOOT =
     PlanDB_OperationEnum_DBOP_BOOT;
+  static constexpr OperationEnum DBOP_UNKNOWN =
+    PlanDB_OperationEnum_DBOP_UNKNOWN;
   static inline bool OperationEnum_IsValid(int value) {
     return PlanDB_OperationEnum_IsValid(value);
   }
@@ -5980,6 +5994,8 @@ class PlanControl final :
     PlanControl_TypeEnum_PC_FAILURE;
   static constexpr TypeEnum PC_IN_PROGRESS =
     PlanControl_TypeEnum_PC_IN_PROGRESS;
+  static constexpr TypeEnum PCTE_UNKNOWN =
+    PlanControl_TypeEnum_PCTE_UNKNOWN;
   static inline bool TypeEnum_IsValid(int value) {
     return PlanControl_TypeEnum_IsValid(value);
   }
@@ -6014,6 +6030,8 @@ class PlanControl final :
     PlanControl_OperationEnum_PC_LOAD;
   static constexpr OperationEnum PC_GET =
     PlanControl_OperationEnum_PC_GET;
+  static constexpr OperationEnum PCOE_UNKNOWN =
+    PlanControl_OperationEnum_PCOE_UNKNOWN;
   static inline bool OperationEnum_IsValid(int value) {
     return PlanControl_OperationEnum_IsValid(value);
   }
@@ -6296,6 +6314,8 @@ class PlanStatistics final :
     PlanStatistics_TypeEnum_TP_INPLAN;
   static constexpr TypeEnum TP_POSTPLAN =
     PlanStatistics_TypeEnum_TP_POSTPLAN;
+  static constexpr TypeEnum TP_UNKNOWN =
+    PlanStatistics_TypeEnum_TP_UNKNOWN;
   static inline bool TypeEnum_IsValid(int value) {
     return PlanStatistics_TypeEnum_IsValid(value);
   }
