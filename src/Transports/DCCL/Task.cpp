@@ -82,8 +82,9 @@ namespace Transports
         param("Filtered Entities", m_args.entities_flt)
         .description("List of <Message>:<Entity>+<Entity> that define the source entities allowed to pass message of a specific message type.");
 
-        bind<IMC::PlanSpecification>(this);
+        //bind<IMC::PlanSpecification>(this);
         bind<IMC::UamRxFrame>(this);
+        bind<IMC::PlanControl>(this);
         //bind<IMC::PlanDB>(this);
         //bind<IMC::EstimatedState>(this);
       }
@@ -159,7 +160,7 @@ namespace Transports
           if (m_filter.filter(msg))
             return;
           
-          //msg->toJSON(std::cout);
+          msg->toJSON(std::cout);
 
           ////////////////////////////////////////////////////////////// DCCL LIB
           std::string encoded_string = m_codecdcll.encodeDCCL(msg);
@@ -172,13 +173,12 @@ namespace Transports
       }
 
       
-      // If DCCL active: Encode the Msg with DCCL lib and dispatch an Acoustic resquest transmission to send it over acoustic
       void
       consume(const IMC::EstimatedState* msg)
       {
        if(m_args.trigger_dccl){
 
-          //msg->toJSON(std::cout);
+          msg->toJSON(std::cout);
 
           if (m_filter.filter(msg))
             return;
@@ -188,6 +188,26 @@ namespace Transports
           ////////////////////////////////////////////////////////////// DCCL LIB
 
           std::cout << "Send via Acoustic"<< std::endl;
+          sendTransmissionRequestViaAcoustic("", encoded_string);
+          
+      }
+    }
+
+      void
+      consume(const IMC::PlanControl* msg)
+      {
+       if(m_args.trigger_dccl){
+
+          msg->toJSON(std::cout);
+
+          war("PlanControl with size %u received.", msg->getPayloadSerializationSize());
+
+          ////////////////////////////////////////////////////////////// DCCL LIB
+          std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          war("Compressed with size %u received.", encoded_string.size());
+          ////////////////////////////////////////////////////////////// DCCL LIB
+
+          std::cout << "Transmission request via Acoustic"<< std::endl;
           sendTransmissionRequestViaAcoustic("", encoded_string);
           
       }
@@ -226,44 +246,16 @@ namespace Transports
           //Check to be sure it's not A1
           if ((uint8_t)msg->data[0] != c_sync)
           {             
-              //Check if msg is DCCL encoded
+
               std::string encoded_bytes(msg->data.begin(), msg->data.end());
-              //inf("Received hex string %s", encoded_bytes.c_str());
-              //std::string msgNoHex = String::fromHex(encoded_bytes);
-
+              war("Received a compressed msg with size %u", encoded_bytes.size());
+ 
               ////////////////////////////////////////////////////////////// DCCL LIB
-              //auto decode_msg = m_codecdcll.decodeDCCL(msgNoHex);
               auto decode_msg = m_codecdcll.decodeDCCL(encoded_bytes);
+              war("Msg decompressed with size %u received.", decode_msg->getPayloadSerializationSize());
               ////////////////////////////////////////////////////////////// DCCL LIB
 
-              
-              //Just for debug
-              if (auto planSpec = dynamic_cast<DUNE::IMC::PlanSpecification*>(decode_msg))
-              {
-                  inf("PLANSPECIFICAITION decoded");
-                  planSpec->toJSON(std::cout);
-                  //dispatch(planSpec);
-
-              }
-              else if (auto estState = dynamic_cast<DUNE::IMC::EstimatedState*>(decode_msg))
-              {
-                  inf("ESTIMATEDSTATE decoded");
-                  
-                  //estState->toJSON(std::cout);
-
-              }
-              else if (auto plandb = dynamic_cast<DUNE::IMC::PlanDB*>(decode_msg))
-              {
-                  inf("PlanDB decoded");
-                  
-                  //plandb->toJSON(std::cout);
-                  
-              }
-              else
-              {
-                  std::cout << "UNKOWN MSG decoded\n";
-              }     
-
+              decode_msg->toJSON(std::cout);
 
           }
 
@@ -284,13 +276,6 @@ namespace Transports
         msg.req_id          = createInternalId();
         msg.comm_mean       = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
         msg.data_mode       = IMC::TransmissionRequest::DMODE_RAW;
-        
-        //new
-        //std::string hex_str = Utils::String::toHex(encoded_msg);
-        //war("Hexstr with size %u received.", hex_str.size());
-        //inf("Encoded hex msg: %s", hex_str.c_str());
-        //std::vector<char> buffer(hex_str.begin(), hex_str.end());
-        //msg.raw_data = buffer;
         
         msg.raw_data.assign(encoded_msg.begin(), encoded_msg.end());
         

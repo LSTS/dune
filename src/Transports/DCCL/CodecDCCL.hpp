@@ -39,12 +39,11 @@ namespace IMCDCCL
             return dispatchEncode(imc_msg); 
         }
 
-        //dccl::Codec dccl_codec;      //DCCL codec , TODO: automatically generate this from the .proto
-
         enum  MsgID {
             PLAN_SPECIFICATION = 551,
             ESTIMATED_STATE    = 350,
             PLAN_DB = 556,
+            PLAN_CONTROL = 559, 
         };
 
         private: 
@@ -60,6 +59,7 @@ namespace IMCDCCL
                 case PLAN_SPECIFICATION: 
                 case PLAN_DB: 
                 case ESTIMATED_STATE:
+                case PLAN_CONTROL:
                     return static_cast<MsgID>(id);
                 default:
                     throw std::invalid_argument("DCCL:CodecDCCL: MsgID Not Recognized");
@@ -101,6 +101,16 @@ namespace IMCDCCL
                     m_codec.decode(encoded_string, &src_dccl);
                     DUNE::IMC::PlanDB* dst_imc = new DUNE::IMC::PlanDB();
                     decodePlanDB(src_dccl, *dst_imc);
+                    return dst_imc;
+                }
+
+                case PLAN_CONTROL:
+                {
+                    m_codec.load<IMC_DCCL::PlanControl>();
+                    IMC_DCCL::PlanControl src_dccl;
+                    m_codec.decode(encoded_string, &src_dccl);
+                    DUNE::IMC::PlanControl* dst_imc = new DUNE::IMC::PlanControl();
+                    decodePlanControl(src_dccl, *dst_imc);
                     return dst_imc;
                 }
 
@@ -148,6 +158,20 @@ namespace IMCDCCL
                     m_codec.load<IMC_DCCL::PlanDB>();
                     IMC_DCCL::PlanDB dst_dccl;
                     encodePlanDB(*src_imc, dst_dccl);
+
+                    std::string encoded_bytes;
+                    m_codec.encode(&encoded_bytes, dst_dccl);
+                    
+                    return encoded_bytes;
+                }
+
+                case PLAN_CONTROL:
+                {
+                    const DUNE::IMC::PlanControl* src_imc = dynamic_cast<const DUNE::IMC::PlanControl*>(imc_msg);
+
+                    m_codec.load<IMC_DCCL::PlanControl>();
+                    IMC_DCCL::PlanControl dst_dccl;
+                    encodePlanControl(*src_imc, dst_dccl);
 
                     std::string encoded_bytes;
                     m_codec.encode(&encoded_bytes, dst_dccl);
