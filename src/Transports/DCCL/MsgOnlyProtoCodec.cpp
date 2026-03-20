@@ -136,9 +136,10 @@ void encodeManeuverIDCombined(const std::string& imc, IMC_DCCL::ManeuverIDCombin
                 numbers += c;
             }
     }
+
     dccl.set_maneuver_type(encodeManeuverType(letters));
     
-    dccl.set_maneuver_number(std::stoi(numbers));                         
+    if (!numbers.empty()) dccl.set_maneuver_number(std::stoi(numbers));                         
                               
                               
 }

@@ -132,6 +132,54 @@ DUNE::IMC::PlanControl::TypeEnum decodePlanControlTypeEnum(const uint8_t& dccl_s
 }
 
 
+// ================ PlanControlState.LastPlanOutcomeEnum Message ================
+IMC_DCCL::PlanControlState::LastPlanOutcomeEnum encodePlanControlStateLastPlanOutcomeEnum(const uint8_t& imc_src)
+{
+    switch (imc_src) {
+        case DUNE::IMC::PlanControlState::LastPlanOutcomeEnum::LPO_NONE: return IMC_DCCL::PlanControlState::LPO_NONE;
+        case DUNE::IMC::PlanControlState::LastPlanOutcomeEnum::LPO_SUCCESS: return IMC_DCCL::PlanControlState::LPO_SUCCESS;
+        case DUNE::IMC::PlanControlState::LastPlanOutcomeEnum::LPO_FAILURE: return IMC_DCCL::PlanControlState::LPO_FAILURE;
+        default: return IMC_DCCL::PlanControlState::LPO_UNKNOWN;
+    }
+}
+
+
+// ================ PlanControlState.LastPlanOutcomeEnum Message ================
+DUNE::IMC::PlanControlState::LastPlanOutcomeEnum decodePlanControlStateLastPlanOutcomeEnum(const uint8_t& dccl_src)
+{
+    switch (dccl_src) {
+        case IMC_DCCL::PlanControlState::LPO_NONE: return DUNE::IMC::PlanControlState::LastPlanOutcomeEnum::LPO_NONE;
+        case IMC_DCCL::PlanControlState::LPO_SUCCESS: return DUNE::IMC::PlanControlState::LastPlanOutcomeEnum::LPO_SUCCESS;
+        case IMC_DCCL::PlanControlState::LPO_FAILURE: return DUNE::IMC::PlanControlState::LastPlanOutcomeEnum::LPO_FAILURE;
+    }
+}
+
+
+// ================ PlanControlState.StateEnum Message ================
+IMC_DCCL::PlanControlState::StateEnum encodePlanControlStateStateEnum(const uint8_t& imc_src)
+{
+    switch (imc_src) {
+        case DUNE::IMC::PlanControlState::StateEnum::PCS_BLOCKED: return IMC_DCCL::PlanControlState::PCS_BLOCKED;
+        case DUNE::IMC::PlanControlState::StateEnum::PCS_READY: return IMC_DCCL::PlanControlState::PCS_READY;
+        case DUNE::IMC::PlanControlState::StateEnum::PCS_INITIALIZING: return IMC_DCCL::PlanControlState::PCS_INITIALIZING;
+        case DUNE::IMC::PlanControlState::StateEnum::PCS_EXECUTING: return IMC_DCCL::PlanControlState::PCS_EXECUTING;
+        default: return IMC_DCCL::PlanControlState::PCS_UNKNOWN;
+    }
+}
+
+
+// ================ PlanControlState.StateEnum Message ================
+DUNE::IMC::PlanControlState::StateEnum decodePlanControlStateStateEnum(const uint8_t& dccl_src)
+{
+    switch (dccl_src) {
+        case IMC_DCCL::PlanControlState::PCS_BLOCKED: return DUNE::IMC::PlanControlState::StateEnum::PCS_BLOCKED;
+        case IMC_DCCL::PlanControlState::PCS_READY: return DUNE::IMC::PlanControlState::StateEnum::PCS_READY;
+        case IMC_DCCL::PlanControlState::PCS_INITIALIZING: return DUNE::IMC::PlanControlState::StateEnum::PCS_INITIALIZING;
+        case IMC_DCCL::PlanControlState::PCS_EXECUTING: return DUNE::IMC::PlanControlState::StateEnum::PCS_EXECUTING;
+    }
+}
+
+
 // ================ PlanDB.OperationEnum Message ================
 IMC_DCCL::PlanDB::OperationEnum encodePlanDBOperationEnum(const uint8_t& imc_src)
 {
