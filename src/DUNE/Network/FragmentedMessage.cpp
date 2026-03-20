@@ -88,8 +88,6 @@ namespace DUNE
                       m_fragments[i].data.end());
         }
 
-        m_parent->war("Total_length %d | data.size() %zu", total_length, data.size());
-
         return data;
       }
       else
