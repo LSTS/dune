@@ -527,6 +527,34 @@ message EntityState {
     optional string description = 3 [(dccl.field).max_length = 500];
 }
 
+//PlanControlState
+message PlanControlState {
+    option (dccl.msg) = { codec_version: 4 id: 560 max_bytes: 800000};
+    enum StateEnum
+    {
+        PCS_BLOCKED = 0;
+        PCS_READY = 1;
+        PCS_INITIALIZING = 2;
+        PCS_EXECUTING = 3;
+        PCS_UNKNOWN = 4;
+    }  
+    StateEnum state = 1;  
+    optional string plan_id = 2 [(dccl.field).max_length = 500];
+    optional int32 plan_eta = 3 [(dccl.field) = { min: -1 max: 172800 precision: 1 }];
+    optional float plan_progress = 4 [(dccl.field) = { min: -100 max: 100 precision: 2 }];
+    ManeuverID man_id = 5;
+    optional int32 man_type = 6 [(dccl.field) = { min: 0 max: 50000 precision: 1 }];
+    optional int32 man_eta = 7 [(dccl.field) = { min: -1 max: 172800 precision: 1 }];
+    enum LastPlanOutcomeEnum
+    {
+        LPO_NONE = 0;
+        LPO_SUCCESS = 1;
+        LPO_FAILURE = 2;
+        LPO_UNKNOWN = 3;
+    }  
+    LastPlanOutcomeEnum last_outcome = 8; 
+}
+
 message PlanDBArgUnion {
     option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
     oneof PlanDBArgUnion_{

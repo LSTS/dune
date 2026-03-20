@@ -24,6 +24,14 @@ IMC_DCCL::PlanControl::TypeEnum encodePlanControlTypeEnum(const uint8_t& imc_src
 
 DUNE::IMC::PlanControl::TypeEnum decodePlanControlTypeEnum(const uint8_t& dccl_src);
 
+IMC_DCCL::PlanControlState::LastPlanOutcomeEnum encodePlanControlStateLastPlanOutcomeEnum(const uint8_t& imc_src);
+
+DUNE::IMC::PlanControlState::LastPlanOutcomeEnum decodePlanControlStateLastPlanOutcomeEnum(const uint8_t& dccl_src);
+
+IMC_DCCL::PlanControlState::StateEnum encodePlanControlStateStateEnum(const uint8_t& imc_src);
+
+DUNE::IMC::PlanControlState::StateEnum decodePlanControlStateStateEnum(const uint8_t& dccl_src);
+
 IMC_DCCL::PlanDB::OperationEnum encodePlanDBOperationEnum(const uint8_t& imc_src);
 
 DUNE::IMC::PlanDB::OperationEnum decodePlanDBOperationEnum(const uint8_t& dccl_src);
