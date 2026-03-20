@@ -129,6 +129,20 @@ struct ParameterNameDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 ParameterNameDefaultTypeInternal _ParameterName_default_instance_;
+PROTOBUF_CONSTEXPR EntityName::EntityName(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.EntityNameUnion_)*/{}
+  , /*decltype(_impl_._cached_size_)*/{}
+  , /*decltype(_impl_._oneof_case_)*/{}} {}
+struct EntityNameDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR EntityNameDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~EntityNameDefaultTypeInternal() {}
+  union {
+    EntityName _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 EntityNameDefaultTypeInternal _EntityName_default_instance_;
 PROTOBUF_CONSTEXPR PathPoint::PathPoint(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_._has_bits_)*/{}
@@ -176,7 +190,7 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORIT
 PROTOBUF_CONSTEXPR SetEntityParameters::SetEntityParameters(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.params_)*/{}
-  , /*decltype(_impl_.name_)*/0
+  , /*decltype(_impl_.name_)*/nullptr
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct SetEntityParametersDefaultTypeInternal {
   PROTOBUF_CONSTEXPR SetEntityParametersDefaultTypeInternal()
@@ -526,7 +540,7 @@ struct PlanControlArgUnionDefaultTypeInternal {
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlanControlArgUnionDefaultTypeInternal _PlanControlArgUnion_default_instance_;
 }  // namespace IMC_DCCL
-static ::_pb::Metadata file_level_metadata_IMC_5fDCCL_2eproto[29];
+static ::_pb::Metadata file_level_metadata_IMC_5fDCCL_2eproto[30];
 static const ::_pb::EnumDescriptor* file_level_enum_descriptors_IMC_5fDCCL_2eproto[15];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_IMC_5fDCCL_2eproto = nullptr;
 
@@ -630,6 +644,15 @@ const uint32_t TableStruct_IMC_5fDCCL_2eproto::offsets[] PROTOBUF_SECTION_VARIAB
   ::_pbi::kInvalidFieldOffsetTag,
   ::_pbi::kInvalidFieldOffsetTag,
   PROTOBUF_FIELD_OFFSET(::IMC_DCCL::ParameterName, _impl_.ParameterNameUnion_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EntityName, _internal_metadata_),
+  ~0u,  // no _extensions_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EntityName, _impl_._oneof_case_[0]),
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  ::_pbi::kInvalidFieldOffsetTag,
+  ::_pbi::kInvalidFieldOffsetTag,
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::EntityName, _impl_.EntityNameUnion_),
   PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PathPoint, _impl_._has_bits_),
   PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PathPoint, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -977,29 +1000,30 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 54, 70, -1, sizeof(::IMC_DCCL::Goto)},
   { 80, -1, -1, sizeof(::IMC_DCCL::ParameterValue)},
   { 90, -1, -1, sizeof(::IMC_DCCL::ParameterName)},
-  { 99, 108, -1, sizeof(::IMC_DCCL::PathPoint)},
-  { 111, -1, -1, sizeof(::IMC_DCCL::Maneuver)},
-  { 122, -1, -1, sizeof(::IMC_DCCL::EntityParameter)},
-  { 130, -1, -1, sizeof(::IMC_DCCL::SetEntityParameters)},
-  { 138, -1, -1, sizeof(::IMC_DCCL::ManeuverIDCombined)},
-  { 146, -1, -1, sizeof(::IMC_DCCL::ManeuverID)},
-  { 155, -1, -1, sizeof(::IMC_DCCL::TransitionCondition)},
-  { 164, 183, -1, sizeof(::IMC_DCCL::Loiter)},
-  { 196, -1, -1, sizeof(::IMC_DCCL::PlanManeuverStartActionsUnion)},
-  { 204, -1, -1, sizeof(::IMC_DCCL::PlanManeuver)},
-  { 213, -1, -1, sizeof(::IMC_DCCL::PlanTransition)},
-  { 222, 233, -1, sizeof(::IMC_DCCL::VerticalProfile)},
-  { 238, 264, -1, sizeof(::IMC_DCCL::EstimatedState)},
-  { 284, 298, -1, sizeof(::IMC_DCCL::PlanSpecification)},
-  { 306, 318, -1, sizeof(::IMC_DCCL::PlanDB)},
-  { 324, 337, -1, sizeof(::IMC_DCCL::PlanDBState)},
-  { 344, 356, -1, sizeof(::IMC_DCCL::PlanDBInformation)},
-  { 362, 375, -1, sizeof(::IMC_DCCL::PlanControl)},
-  { 382, 395, -1, sizeof(::IMC_DCCL::PlanStatistics)},
-  { 402, -1, -1, sizeof(::IMC_DCCL::PlanDBArgUnion)},
-  { 412, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationStartActionsUnion)},
-  { 420, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationEndActionsUnion)},
-  { 428, -1, -1, sizeof(::IMC_DCCL::PlanControlArgUnion)},
+  { 99, -1, -1, sizeof(::IMC_DCCL::EntityName)},
+  { 108, 117, -1, sizeof(::IMC_DCCL::PathPoint)},
+  { 120, -1, -1, sizeof(::IMC_DCCL::Maneuver)},
+  { 131, -1, -1, sizeof(::IMC_DCCL::EntityParameter)},
+  { 139, -1, -1, sizeof(::IMC_DCCL::SetEntityParameters)},
+  { 147, -1, -1, sizeof(::IMC_DCCL::ManeuverIDCombined)},
+  { 155, -1, -1, sizeof(::IMC_DCCL::ManeuverID)},
+  { 164, -1, -1, sizeof(::IMC_DCCL::TransitionCondition)},
+  { 173, 192, -1, sizeof(::IMC_DCCL::Loiter)},
+  { 205, -1, -1, sizeof(::IMC_DCCL::PlanManeuverStartActionsUnion)},
+  { 213, -1, -1, sizeof(::IMC_DCCL::PlanManeuver)},
+  { 222, -1, -1, sizeof(::IMC_DCCL::PlanTransition)},
+  { 231, 242, -1, sizeof(::IMC_DCCL::VerticalProfile)},
+  { 247, 273, -1, sizeof(::IMC_DCCL::EstimatedState)},
+  { 293, 307, -1, sizeof(::IMC_DCCL::PlanSpecification)},
+  { 315, 327, -1, sizeof(::IMC_DCCL::PlanDB)},
+  { 333, 346, -1, sizeof(::IMC_DCCL::PlanDBState)},
+  { 353, 365, -1, sizeof(::IMC_DCCL::PlanDBInformation)},
+  { 371, 384, -1, sizeof(::IMC_DCCL::PlanControl)},
+  { 391, 404, -1, sizeof(::IMC_DCCL::PlanStatistics)},
+  { 411, -1, -1, sizeof(::IMC_DCCL::PlanDBArgUnion)},
+  { 421, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationStartActionsUnion)},
+  { 429, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationEndActionsUnion)},
+  { 437, -1, -1, sizeof(::IMC_DCCL::PlanControlArgUnion)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -1009,6 +1033,7 @@ static const ::_pb::Message* const file_default_instances[] = {
   &::IMC_DCCL::_Goto_default_instance_._instance,
   &::IMC_DCCL::_ParameterValue_default_instance_._instance,
   &::IMC_DCCL::_ParameterName_default_instance_._instance,
+  &::IMC_DCCL::_EntityName_default_instance_._instance,
   &::IMC_DCCL::_PathPoint_default_instance_._instance,
   &::IMC_DCCL::_Maneuver_default_instance_._instance,
   &::IMC_DCCL::_EntityParameter_default_instance_._instance,
@@ -1080,7 +1105,10 @@ const char descriptor_table_protodef_IMC_5fDCCL_2eproto[] PROTOBUF_SECTION_VARIA
   "H\000:\010\242\?\005\020\254\002(\004B\025\n\023ParameterValueUnion\"y\n\rP"
   "arameterName\022)\n\nparam_enum\030\001 \001(\0162\023.IMC_D"
   "CCL.ParamNameH\000\022\035\n\014param_string\030\002 \001(\tB\005\242"
-  "\?\002H\024H\000:\010\242\?\005\020\254\002(\004B\024\n\022ParameterNameUnion\"\241"
+  "\?\002H2H\000:\010\242\?\005\020\254\002(\004B\024\n\022ParameterNameUnion\"v"
+  "\n\nEntityName\022-\n\tname_enum\030\001 \001(\0162\030.IMC_DC"
+  "CL.EntityNameEnumH\000\022\034\n\013name_string\030\002 \001(\t"
+  "B\005\242\?\002H2H\000:\010\242\?\005\020\254\002(\004B\021\n\017EntityNameUnion\"\241"
   "\001\n\tPathPoint\022\'\n\001x\030\001 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001"
   "\000\000\000\000\000@\237@H\000\210\001\001\022\'\n\001y\030\002 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\300"
   "1\000\000\000\000\000@\237@H\001\210\001\001\022\'\n\001z\030\003 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y"
@@ -1094,9 +1122,9 @@ const char descriptor_table_protodef_IMC_5fDCCL_2eproto[] PROTOBUF_SECTION_VARIA
   "on\"k\n\017EntityParameter\022%\n\004name\030\001 \001(\0132\027.IM"
   "C_DCCL.ParameterName\022\'\n\005value\030\002 \001(\0132\030.IM"
   "C_DCCL.ParameterValue:\010\242\?\005\020\254\002(\004\"x\n\023SetEn"
-  "tityParameters\022\"\n\004name\030\001 \001(\0162\024.IMC_DCCL."
+  "tityParameters\022\"\n\004name\030\001 \001(\0132\024.IMC_DCCL."
   "EntityName\0220\n\006params\030\002 \003(\0132\031.IMC_DCCL.En"
-  "tityParameterB\005\242\?\002P\n:\013\242\?\010\010\244\006\020\364\003(\004\"|\n\022Man"
+  "tityParameterB\005\242\?\002P\n:\013\242\?\010\010\244\006\020\240\006(\004\"|\n\022Man"
   "euverIDCombined\022-\n\rmaneuver_type\030\001 \001(\0162\026"
   ".IMC_DCCL.ManeuverType\022.\n\017maneuver_numbe"
   "r\030\002 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\000\000I@:\007\242\?\004\020\036(\004\""
@@ -1293,28 +1321,29 @@ const char descriptor_table_protodef_IMC_5fDCCL_2eproto[] PROTOBUF_SECTION_VARIA
   "\n\tSTEP_SIZE\020\033\022\023\n\017STROBE_DELAY_US\020\034\022\026\n\022TH"
   "RUSTER_ALWAYS_ON\020\035\022\024\n\020TRANSITION_TO_FW\020\036"
   "\022\024\n\020TRANSITION_TO_MC\020\037\022\022\n\016USE_CONTROLLER"
-  "\020 \022\020\n\014VEHICLE_LIST\020!\022\016\n\nPN_UNKNOWN\020\"*\326\003\n"
-  "\nEntityName\022\022\n\016ACOUSTIC_MODEM\020\000\022\010\n\004ADCP\020"
-  "\001\022\r\n\tAUTOPILOT\020\002\022\n\n\006CAMERA\020\003\022\007\n\003CTD\020\004\022\024\n"
-  "\020DISSOLVED_OXYGEN\020\005\022\020\n\014FLUOROMETERS\020\006\022\031\n"
-  "\025FORMATION_COORDINATOR\020\007\022\026\n\022HEADING_CONT"
-  "ROLLER\020\010\022\022\n\016HEIGHT_CONTROL\020\t\022\007\n\003LBL\020\n\022\036\n"
-  "\032MOTOR_CONTROLLER_CHANNEL_0\020\013\022\036\n\032MOTOR_C"
-  "ONTROLLER_CHANNEL_1\020\014\022\r\n\tMULTIBEAM\020\r\022\020\n\014"
-  "PATH_CONTROL\020\016\022\027\n\023PATH_CONTROL_LEADER\020\017\022"
-  "\017\n\013PENCIL_BEAM\020\020\022\021\n\rPHOTO_TRIGGER\020\021\022\n\n\006R"
-  "ANGER\020\022\022\022\n\016REMOTE_CONTROL\020\023\022\024\n\020REMOTE_OP"
-  "ERATION\020\024\022\014\n\010SIDESCAN\020\025\022\r\n\tSLAVE_CPU\020\026\022\r"
-  "\n\tUAVCAMERA\020\027\022\016\n\nEN_UNKNOWN\020\030b\006proto3"
+  "\020 \022\020\n\014VEHICLE_LIST\020!\022\016\n\nPN_UNKNOWN\020\"*\332\003\n"
+  "\016EntityNameEnum\022\022\n\016ACOUSTIC_MODEM\020\000\022\010\n\004A"
+  "DCP\020\001\022\r\n\tAUTOPILOT\020\002\022\n\n\006CAMERA\020\003\022\007\n\003CTD\020"
+  "\004\022\024\n\020DISSOLVED_OXYGEN\020\005\022\020\n\014FLUOROMETERS\020"
+  "\006\022\031\n\025FORMATION_COORDINATOR\020\007\022\026\n\022HEADING_"
+  "CONTROLLER\020\010\022\022\n\016HEIGHT_CONTROL\020\t\022\007\n\003LBL\020"
+  "\n\022\036\n\032MOTOR_CONTROLLER_CHANNEL_0\020\013\022\036\n\032MOT"
+  "OR_CONTROLLER_CHANNEL_1\020\014\022\r\n\tMULTIBEAM\020\r"
+  "\022\020\n\014PATH_CONTROL\020\016\022\027\n\023PATH_CONTROL_LEADE"
+  "R\020\017\022\017\n\013PENCIL_BEAM\020\020\022\021\n\rPHOTO_TRIGGER\020\021\022"
+  "\n\n\006RANGER\020\022\022\022\n\016REMOTE_CONTROL\020\023\022\024\n\020REMOT"
+  "E_OPERATION\020\024\022\014\n\010SIDESCAN\020\025\022\r\n\tSLAVE_CPU"
+  "\020\026\022\r\n\tUAVCAMERA\020\027\022\016\n\nEN_UNKNOWN\020\030b\006proto"
+  "3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_IMC_5fDCCL_2eproto_deps[1] = {
   &::descriptor_table_dccl_2foption_5fextensions_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_IMC_5fDCCL_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_IMC_5fDCCL_2eproto = {
-    false, false, 10837, descriptor_table_protodef_IMC_5fDCCL_2eproto,
+    false, false, 10961, descriptor_table_protodef_IMC_5fDCCL_2eproto,
     "IMC_DCCL.proto",
-    &descriptor_table_IMC_5fDCCL_2eproto_once, descriptor_table_IMC_5fDCCL_2eproto_deps, 1, 29,
+    &descriptor_table_IMC_5fDCCL_2eproto_once, descriptor_table_IMC_5fDCCL_2eproto_deps, 1, 30,
     schemas, file_default_instances, TableStruct_IMC_5fDCCL_2eproto::offsets,
     file_level_metadata_IMC_5fDCCL_2eproto, file_level_enum_descriptors_IMC_5fDCCL_2eproto,
     file_level_service_descriptors_IMC_5fDCCL_2eproto,
@@ -1683,11 +1712,11 @@ bool ParamName_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityName_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityNameEnum_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
   return file_level_enum_descriptors_IMC_5fDCCL_2eproto[14];
 }
-bool EntityName_IsValid(int value) {
+bool EntityNameEnum_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
@@ -3810,6 +3839,268 @@ void ParameterName::InternalSwap(ParameterName* other) {
 
 // ===================================================================
 
+class EntityName::_Internal {
+ public:
+};
+
+EntityName::EntityName(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.EntityName)
+}
+EntityName::EntityName(const EntityName& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  EntityName* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.EntityNameUnion_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , /*decltype(_impl_._oneof_case_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  clear_has_EntityNameUnion();
+  switch (from.EntityNameUnion_case()) {
+    case kNameEnum: {
+      _this->_internal_set_name_enum(from._internal_name_enum());
+      break;
+    }
+    case kNameString: {
+      _this->_internal_set_name_string(from._internal_name_string());
+      break;
+    }
+    case ENTITYNAMEUNION_NOT_SET: {
+      break;
+    }
+  }
+  // @@protoc_insertion_point(copy_constructor:IMC_DCCL.EntityName)
+}
+
+inline void EntityName::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.EntityNameUnion_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , /*decltype(_impl_._oneof_case_)*/{}
+  };
+  clear_has_EntityNameUnion();
+}
+
+EntityName::~EntityName() {
+  // @@protoc_insertion_point(destructor:IMC_DCCL.EntityName)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void EntityName::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  if (has_EntityNameUnion()) {
+    clear_EntityNameUnion();
+  }
+}
+
+void EntityName::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void EntityName::clear_EntityNameUnion() {
+// @@protoc_insertion_point(one_of_clear_start:IMC_DCCL.EntityName)
+  switch (EntityNameUnion_case()) {
+    case kNameEnum: {
+      // No need to clear
+      break;
+    }
+    case kNameString: {
+      _impl_.EntityNameUnion_.name_string_.Destroy();
+      break;
+    }
+    case ENTITYNAMEUNION_NOT_SET: {
+      break;
+    }
+  }
+  _impl_._oneof_case_[0] = ENTITYNAMEUNION_NOT_SET;
+}
+
+
+void EntityName::Clear() {
+// @@protoc_insertion_point(message_clear_start:IMC_DCCL.EntityName)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  clear_EntityNameUnion();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* EntityName::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // .IMC_DCCL.EntityNameEnum name_enum = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_name_enum(static_cast<::IMC_DCCL::EntityNameEnum>(val));
+        } else
+          goto handle_unusual;
+        continue;
+      // string name_string = 2 [(.dccl.field) = {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_name_string();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.EntityName.name_string"));
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* EntityName::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.EntityName)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .IMC_DCCL.EntityNameEnum name_enum = 1;
+  if (_internal_has_name_enum()) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      1, this->_internal_name_enum(), target);
+  }
+
+  // string name_string = 2 [(.dccl.field) = {
+  if (_internal_has_name_string()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_name_string().data(), static_cast<int>(this->_internal_name_string().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "IMC_DCCL.EntityName.name_string");
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_name_string(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.EntityName)
+  return target;
+}
+
+size_t EntityName::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.EntityName)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  switch (EntityNameUnion_case()) {
+    // .IMC_DCCL.EntityNameEnum name_enum = 1;
+    case kNameEnum: {
+      total_size += 1 +
+        ::_pbi::WireFormatLite::EnumSize(this->_internal_name_enum());
+      break;
+    }
+    // string name_string = 2 [(.dccl.field) = {
+    case kNameString: {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_name_string());
+      break;
+    }
+    case ENTITYNAMEUNION_NOT_SET: {
+      break;
+    }
+  }
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData EntityName::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    EntityName::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*EntityName::GetClassData() const { return &_class_data_; }
+
+
+void EntityName::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<EntityName*>(&to_msg);
+  auto& from = static_cast<const EntityName&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.EntityName)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  switch (from.EntityNameUnion_case()) {
+    case kNameEnum: {
+      _this->_internal_set_name_enum(from._internal_name_enum());
+      break;
+    }
+    case kNameString: {
+      _this->_internal_set_name_string(from._internal_name_string());
+      break;
+    }
+    case ENTITYNAMEUNION_NOT_SET: {
+      break;
+    }
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void EntityName::CopyFrom(const EntityName& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:IMC_DCCL.EntityName)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool EntityName::IsInitialized() const {
+  return true;
+}
+
+void EntityName::InternalSwap(EntityName* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_.EntityNameUnion_, other->_impl_.EntityNameUnion_);
+  swap(_impl_._oneof_case_[0], other->_impl_._oneof_case_[0]);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata EntityName::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[6]);
+}
+
+// ===================================================================
+
 class PathPoint::_Internal {
  public:
   using HasBits = decltype(std::declval<PathPoint>()._impl_._has_bits_);
@@ -4069,7 +4360,7 @@ void PathPoint::InternalSwap(PathPoint* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PathPoint::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[6]);
+      file_level_metadata_IMC_5fDCCL_2eproto[7]);
 }
 
 // ===================================================================
@@ -4490,7 +4781,7 @@ void Maneuver::InternalSwap(Maneuver* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata Maneuver::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[7]);
+      file_level_metadata_IMC_5fDCCL_2eproto[8]);
 }
 
 // ===================================================================
@@ -4729,15 +5020,20 @@ void EntityParameter::InternalSwap(EntityParameter* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata EntityParameter::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[8]);
+      file_level_metadata_IMC_5fDCCL_2eproto[9]);
 }
 
 // ===================================================================
 
 class SetEntityParameters::_Internal {
  public:
+  static const ::IMC_DCCL::EntityName& name(const SetEntityParameters* msg);
 };
 
+const ::IMC_DCCL::EntityName&
+SetEntityParameters::_Internal::name(const SetEntityParameters* msg) {
+  return *msg->_impl_.name_;
+}
 SetEntityParameters::SetEntityParameters(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
   : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
@@ -4749,11 +5045,13 @@ SetEntityParameters::SetEntityParameters(const SetEntityParameters& from)
   SetEntityParameters* const _this = this; (void)_this;
   new (&_impl_) Impl_{
       decltype(_impl_.params_){from._impl_.params_}
-    , decltype(_impl_.name_){}
+    , decltype(_impl_.name_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  _this->_impl_.name_ = from._impl_.name_;
+  if (from._internal_has_name()) {
+    _this->_impl_.name_ = new ::IMC_DCCL::EntityName(*from._impl_.name_);
+  }
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.SetEntityParameters)
 }
 
@@ -4763,7 +5061,7 @@ inline void SetEntityParameters::SharedCtor(
   (void)is_message_owned;
   new (&_impl_) Impl_{
       decltype(_impl_.params_){arena}
-    , decltype(_impl_.name_){0}
+    , decltype(_impl_.name_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -4780,6 +5078,7 @@ SetEntityParameters::~SetEntityParameters() {
 inline void SetEntityParameters::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
   _impl_.params_.~RepeatedPtrField();
+  if (this != internal_default_instance()) delete _impl_.name_;
 }
 
 void SetEntityParameters::SetCachedSize(int size) const {
@@ -4793,7 +5092,10 @@ void SetEntityParameters::Clear() {
   (void) cached_has_bits;
 
   _impl_.params_.Clear();
-  _impl_.name_ = 0;
+  if (GetArenaForAllocation() == nullptr && _impl_.name_ != nullptr) {
+    delete _impl_.name_;
+  }
+  _impl_.name_ = nullptr;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -4805,10 +5107,9 @@ const char* SetEntityParameters::_InternalParse(const char* ptr, ::_pbi::ParseCo
     switch (tag >> 3) {
       // .IMC_DCCL.EntityName name = 1;
       case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
-          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          ptr = ctx->ParseMessage(_internal_mutable_name(), ptr);
           CHK_(ptr);
-          _internal_set_name(static_cast<::IMC_DCCL::EntityName>(val));
         } else
           goto handle_unusual;
         continue;
@@ -4855,10 +5156,10 @@ uint8_t* SetEntityParameters::_InternalSerialize(
   (void) cached_has_bits;
 
   // .IMC_DCCL.EntityName name = 1;
-  if (this->_internal_name() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteEnumToArray(
-      1, this->_internal_name(), target);
+  if (this->_internal_has_name()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(1, _Internal::name(this),
+        _Internal::name(this).GetCachedSize(), target, stream);
   }
 
   // repeated .IMC_DCCL.EntityParameter params = 2 [(.dccl.field) = {
@@ -4893,9 +5194,10 @@ size_t SetEntityParameters::ByteSizeLong() const {
   }
 
   // .IMC_DCCL.EntityName name = 1;
-  if (this->_internal_name() != 0) {
+  if (this->_internal_has_name()) {
     total_size += 1 +
-      ::_pbi::WireFormatLite::EnumSize(this->_internal_name());
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.name_);
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -4917,8 +5219,9 @@ void SetEntityParameters::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, co
   (void) cached_has_bits;
 
   _this->_impl_.params_.MergeFrom(from._impl_.params_);
-  if (from._internal_name() != 0) {
-    _this->_internal_set_name(from._internal_name());
+  if (from._internal_has_name()) {
+    _this->_internal_mutable_name()->::IMC_DCCL::EntityName::MergeFrom(
+        from._internal_name());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -4944,7 +5247,7 @@ void SetEntityParameters::InternalSwap(SetEntityParameters* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SetEntityParameters::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[9]);
+      file_level_metadata_IMC_5fDCCL_2eproto[10]);
 }
 
 // ===================================================================
@@ -5158,7 +5461,7 @@ void ManeuverIDCombined::InternalSwap(ManeuverIDCombined* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata ManeuverIDCombined::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[10]);
+      file_level_metadata_IMC_5fDCCL_2eproto[11]);
 }
 
 // ===================================================================
@@ -5444,7 +5747,7 @@ void ManeuverID::InternalSwap(ManeuverID* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata ManeuverID::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[11]);
+      file_level_metadata_IMC_5fDCCL_2eproto[12]);
 }
 
 // ===================================================================
@@ -5706,7 +6009,7 @@ void TransitionCondition::InternalSwap(TransitionCondition* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata TransitionCondition::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[12]);
+      file_level_metadata_IMC_5fDCCL_2eproto[13]);
 }
 
 // ===================================================================
@@ -6270,7 +6573,7 @@ void Loiter::InternalSwap(Loiter* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata Loiter::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[13]);
+      file_level_metadata_IMC_5fDCCL_2eproto[14]);
 }
 
 // ===================================================================
@@ -6517,7 +6820,7 @@ void PlanManeuverStartActionsUnion::InternalSwap(PlanManeuverStartActionsUnion* 
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanManeuverStartActionsUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[14]);
+      file_level_metadata_IMC_5fDCCL_2eproto[15]);
 }
 
 // ===================================================================
@@ -6790,7 +7093,7 @@ void PlanManeuver::InternalSwap(PlanManeuver* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanManeuver::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[15]);
+      file_level_metadata_IMC_5fDCCL_2eproto[16]);
 }
 
 // ===================================================================
@@ -7070,7 +7373,7 @@ void PlanTransition::InternalSwap(PlanTransition* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanTransition::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[16]);
+      file_level_metadata_IMC_5fDCCL_2eproto[17]);
 }
 
 // ===================================================================
@@ -7396,7 +7699,7 @@ void VerticalProfile::InternalSwap(VerticalProfile* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata VerticalProfile::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[17]);
+      file_level_metadata_IMC_5fDCCL_2eproto[18]);
 }
 
 // ===================================================================
@@ -8156,7 +8459,7 @@ void EstimatedState::InternalSwap(EstimatedState* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata EstimatedState::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[18]);
+      file_level_metadata_IMC_5fDCCL_2eproto[19]);
 }
 
 // ===================================================================
@@ -8668,7 +8971,7 @@ void PlanSpecification::InternalSwap(PlanSpecification* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanSpecification::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[19]);
+      file_level_metadata_IMC_5fDCCL_2eproto[20]);
 }
 
 // ===================================================================
@@ -9083,7 +9386,7 @@ void PlanDB::InternalSwap(PlanDB* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanDB::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[20]);
+      file_level_metadata_IMC_5fDCCL_2eproto[21]);
 }
 
 // ===================================================================
@@ -9523,7 +9826,7 @@ void PlanDBState::InternalSwap(PlanDBState* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanDBState::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[21]);
+      file_level_metadata_IMC_5fDCCL_2eproto[22]);
 }
 
 // ===================================================================
@@ -9956,7 +10259,7 @@ void PlanDBInformation::InternalSwap(PlanDBInformation* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanDBInformation::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[22]);
+      file_level_metadata_IMC_5fDCCL_2eproto[23]);
 }
 
 // ===================================================================
@@ -10408,7 +10711,7 @@ void PlanControl::InternalSwap(PlanControl* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanControl::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[23]);
+      file_level_metadata_IMC_5fDCCL_2eproto[24]);
 }
 
 // ===================================================================
@@ -10918,7 +11221,7 @@ void PlanStatistics::InternalSwap(PlanStatistics* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanStatistics::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[24]);
+      file_level_metadata_IMC_5fDCCL_2eproto[25]);
 }
 
 // ===================================================================
@@ -11281,7 +11584,7 @@ void PlanDBArgUnion::InternalSwap(PlanDBArgUnion* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanDBArgUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[25]);
+      file_level_metadata_IMC_5fDCCL_2eproto[26]);
 }
 
 // ===================================================================
@@ -11528,7 +11831,7 @@ void PlanSpecificationStartActionsUnion::InternalSwap(PlanSpecificationStartActi
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanSpecificationStartActionsUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[26]);
+      file_level_metadata_IMC_5fDCCL_2eproto[27]);
 }
 
 // ===================================================================
@@ -11775,7 +12078,7 @@ void PlanSpecificationEndActionsUnion::InternalSwap(PlanSpecificationEndActionsU
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanSpecificationEndActionsUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[27]);
+      file_level_metadata_IMC_5fDCCL_2eproto[28]);
 }
 
 // ===================================================================
@@ -12138,7 +12441,7 @@ void PlanControlArgUnion::InternalSwap(PlanControlArgUnion* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanControlArgUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[28]);
+      file_level_metadata_IMC_5fDCCL_2eproto[29]);
 }
 
 // @@protoc_insertion_point(namespace_scope)
@@ -12167,6 +12470,10 @@ Arena::CreateMaybeMessage< ::IMC_DCCL::ParameterValue >(Arena* arena) {
 template<> PROTOBUF_NOINLINE ::IMC_DCCL::ParameterName*
 Arena::CreateMaybeMessage< ::IMC_DCCL::ParameterName >(Arena* arena) {
   return Arena::CreateMessageInternal< ::IMC_DCCL::ParameterName >(arena);
+}
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::EntityName*
+Arena::CreateMaybeMessage< ::IMC_DCCL::EntityName >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::EntityName >(arena);
 }
 template<> PROTOBUF_NOINLINE ::IMC_DCCL::PathPoint*
 Arena::CreateMaybeMessage< ::IMC_DCCL::PathPoint >(Arena* arena) {

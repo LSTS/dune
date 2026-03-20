@@ -47,6 +47,9 @@ struct TableStruct_IMC_5fDCCL_2eproto {
 };
 extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_IMC_5fDCCL_2eproto;
 namespace IMC_DCCL {
+class EntityName;
+struct EntityNameDefaultTypeInternal;
+extern EntityNameDefaultTypeInternal _EntityName_default_instance_;
 class EntityParameter;
 struct EntityParameterDefaultTypeInternal;
 extern EntityParameterDefaultTypeInternal _EntityParameter_default_instance_;
@@ -136,6 +139,7 @@ struct VerticalProfileDefaultTypeInternal;
 extern VerticalProfileDefaultTypeInternal _VerticalProfile_default_instance_;
 }  // namespace IMC_DCCL
 PROTOBUF_NAMESPACE_OPEN
+template<> ::IMC_DCCL::EntityName* Arena::CreateMaybeMessage<::IMC_DCCL::EntityName>(Arena*);
 template<> ::IMC_DCCL::EntityParameter* Arena::CreateMaybeMessage<::IMC_DCCL::EntityParameter>(Arena*);
 template<> ::IMC_DCCL::EstimatedState* Arena::CreateMaybeMessage<::IMC_DCCL::EstimatedState>(Arena*);
 template<> ::IMC_DCCL::FollowPath* Arena::CreateMaybeMessage<::IMC_DCCL::FollowPath>(Arena*);
@@ -592,7 +596,7 @@ inline bool ParamName_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<ParamName>(
     ParamName_descriptor(), name, value);
 }
-enum EntityName : int {
+enum EntityNameEnum : int {
   ACOUSTIC_MODEM = 0,
   ADCP = 1,
   AUTOPILOT = 2,
@@ -618,27 +622,27 @@ enum EntityName : int {
   SLAVE_CPU = 22,
   UAVCAMERA = 23,
   EN_UNKNOWN = 24,
-  EntityName_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  EntityName_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+  EntityNameEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  EntityNameEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
-bool EntityName_IsValid(int value);
-constexpr EntityName EntityName_MIN = ACOUSTIC_MODEM;
-constexpr EntityName EntityName_MAX = EN_UNKNOWN;
-constexpr int EntityName_ARRAYSIZE = EntityName_MAX + 1;
+bool EntityNameEnum_IsValid(int value);
+constexpr EntityNameEnum EntityNameEnum_MIN = ACOUSTIC_MODEM;
+constexpr EntityNameEnum EntityNameEnum_MAX = EN_UNKNOWN;
+constexpr int EntityNameEnum_ARRAYSIZE = EntityNameEnum_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityName_descriptor();
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityNameEnum_descriptor();
 template<typename T>
-inline const std::string& EntityName_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, EntityName>::value ||
+inline const std::string& EntityNameEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, EntityNameEnum>::value ||
     ::std::is_integral<T>::value,
-    "Incorrect type passed to function EntityName_Name.");
+    "Incorrect type passed to function EntityNameEnum_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    EntityName_descriptor(), enum_t_value);
+    EntityNameEnum_descriptor(), enum_t_value);
 }
-inline bool EntityName_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, EntityName* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<EntityName>(
-    EntityName_descriptor(), name, value);
+inline bool EntityNameEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, EntityNameEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<EntityNameEnum>(
+    EntityNameEnum_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -1994,6 +1998,197 @@ class ParameterName final :
 };
 // -------------------------------------------------------------------
 
+class EntityName final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.EntityName) */ {
+ public:
+  inline EntityName() : EntityName(nullptr) {}
+  ~EntityName() override;
+  explicit PROTOBUF_CONSTEXPR EntityName(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  EntityName(const EntityName& from);
+  EntityName(EntityName&& from) noexcept
+    : EntityName() {
+    *this = ::std::move(from);
+  }
+
+  inline EntityName& operator=(const EntityName& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline EntityName& operator=(EntityName&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const EntityName& default_instance() {
+    return *internal_default_instance();
+  }
+  enum EntityNameUnionCase {
+    kNameEnum = 1,
+    kNameString = 2,
+    ENTITYNAMEUNION_NOT_SET = 0,
+  };
+
+  static inline const EntityName* internal_default_instance() {
+    return reinterpret_cast<const EntityName*>(
+               &_EntityName_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    6;
+
+  friend void swap(EntityName& a, EntityName& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(EntityName* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(EntityName* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  EntityName* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<EntityName>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const EntityName& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const EntityName& from) {
+    EntityName::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(EntityName* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.EntityName";
+  }
+  protected:
+  explicit EntityName(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kNameEnumFieldNumber = 1,
+    kNameStringFieldNumber = 2,
+  };
+  // .IMC_DCCL.EntityNameEnum name_enum = 1;
+  bool has_name_enum() const;
+  private:
+  bool _internal_has_name_enum() const;
+  public:
+  void clear_name_enum();
+  ::IMC_DCCL::EntityNameEnum name_enum() const;
+  void set_name_enum(::IMC_DCCL::EntityNameEnum value);
+  private:
+  ::IMC_DCCL::EntityNameEnum _internal_name_enum() const;
+  void _internal_set_name_enum(::IMC_DCCL::EntityNameEnum value);
+  public:
+
+  // string name_string = 2 [(.dccl.field) = {
+  bool has_name_string() const;
+  private:
+  bool _internal_has_name_string() const;
+  public:
+  void clear_name_string();
+  const std::string& name_string() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_name_string(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_name_string();
+  PROTOBUF_NODISCARD std::string* release_name_string();
+  void set_allocated_name_string(std::string* name_string);
+  private:
+  const std::string& _internal_name_string() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_name_string(const std::string& value);
+  std::string* _internal_mutable_name_string();
+  public:
+
+  void clear_EntityNameUnion();
+  EntityNameUnionCase EntityNameUnion_case() const;
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.EntityName)
+ private:
+  class _Internal;
+  void set_has_name_enum();
+  void set_has_name_string();
+
+  inline bool has_EntityNameUnion() const;
+  inline void clear_has_EntityNameUnion();
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    union EntityNameUnionUnion {
+      constexpr EntityNameUnionUnion() : _constinit_{} {}
+        ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
+      int name_enum_;
+      ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_string_;
+    } EntityNameUnion_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    uint32_t _oneof_case_[1];
+
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class PathPoint final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PathPoint) */ {
  public:
@@ -2042,7 +2237,7 @@ class PathPoint final :
                &_PathPoint_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   friend void swap(PathPoint& a, PathPoint& b) {
     a.Swap(&b);
@@ -2233,7 +2428,7 @@ class Maneuver final :
                &_Maneuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    8;
 
   friend void swap(Maneuver& a, Maneuver& b) {
     a.Swap(&b);
@@ -2465,7 +2660,7 @@ class EntityParameter final :
                &_EntityParameter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   friend void swap(EntityParameter& a, EntityParameter& b) {
     a.Swap(&b);
@@ -2642,7 +2837,7 @@ class SetEntityParameters final :
                &_SetEntityParameters_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   friend void swap(SetEntityParameters& a, SetEntityParameters& b) {
     a.Swap(&b);
@@ -2737,13 +2932,22 @@ class SetEntityParameters final :
       params() const;
 
   // .IMC_DCCL.EntityName name = 1;
-  void clear_name();
-  ::IMC_DCCL::EntityName name() const;
-  void set_name(::IMC_DCCL::EntityName value);
+  bool has_name() const;
   private:
-  ::IMC_DCCL::EntityName _internal_name() const;
-  void _internal_set_name(::IMC_DCCL::EntityName value);
+  bool _internal_has_name() const;
   public:
+  void clear_name();
+  const ::IMC_DCCL::EntityName& name() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::EntityName* release_name();
+  ::IMC_DCCL::EntityName* mutable_name();
+  void set_allocated_name(::IMC_DCCL::EntityName* name);
+  private:
+  const ::IMC_DCCL::EntityName& _internal_name() const;
+  ::IMC_DCCL::EntityName* _internal_mutable_name();
+  public:
+  void unsafe_arena_set_allocated_name(
+      ::IMC_DCCL::EntityName* name);
+  ::IMC_DCCL::EntityName* unsafe_arena_release_name();
 
   // @@protoc_insertion_point(class_scope:IMC_DCCL.SetEntityParameters)
  private:
@@ -2754,7 +2958,7 @@ class SetEntityParameters final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::EntityParameter > params_;
-    int name_;
+    ::IMC_DCCL::EntityName* name_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -2810,7 +3014,7 @@ class ManeuverIDCombined final :
                &_ManeuverIDCombined_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   friend void swap(ManeuverIDCombined& a, ManeuverIDCombined& b) {
     a.Swap(&b);
@@ -2975,7 +3179,7 @@ class ManeuverID final :
                &_ManeuverID_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   friend void swap(ManeuverID& a, ManeuverID& b) {
     a.Swap(&b);
@@ -3171,7 +3375,7 @@ class TransitionCondition final :
                &_TransitionCondition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   friend void swap(TransitionCondition& a, TransitionCondition& b) {
     a.Swap(&b);
@@ -3356,7 +3560,7 @@ class Loiter final :
                &_Loiter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   friend void swap(Loiter& a, Loiter& b) {
     a.Swap(&b);
@@ -3748,7 +3952,7 @@ class PlanManeuverStartActionsUnion final :
                &_PlanManeuverStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    15;
 
   friend void swap(PlanManeuverStartActionsUnion& a, PlanManeuverStartActionsUnion& b) {
     a.Swap(&b);
@@ -3917,7 +4121,7 @@ class PlanManeuver final :
                &_PlanManeuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    16;
 
   friend void swap(PlanManeuver& a, PlanManeuver& b) {
     a.Swap(&b);
@@ -4114,7 +4318,7 @@ class PlanTransition final :
                &_PlanTransition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    17;
 
   friend void swap(PlanTransition& a, PlanTransition& b) {
     a.Swap(&b);
@@ -4311,7 +4515,7 @@ class VerticalProfile final :
                &_VerticalProfile_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    18;
 
   friend void swap(VerticalProfile& a, VerticalProfile& b) {
     a.Swap(&b);
@@ -4567,7 +4771,7 @@ class EstimatedState final :
                &_EstimatedState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    19;
 
   friend void swap(EstimatedState& a, EstimatedState& b) {
     a.Swap(&b);
@@ -5005,7 +5209,7 @@ class PlanSpecification final :
                &_PlanSpecification_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    20;
 
   friend void swap(PlanSpecification& a, PlanSpecification& b) {
     a.Swap(&b);
@@ -5303,7 +5507,7 @@ class PlanDB final :
                &_PlanDB_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    21;
 
   friend void swap(PlanDB& a, PlanDB& b) {
     a.Swap(&b);
@@ -5618,7 +5822,7 @@ class PlanDBState final :
                &_PlanDBState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    22;
 
   friend void swap(PlanDBState& a, PlanDBState& b) {
     a.Swap(&b);
@@ -5876,7 +6080,7 @@ class PlanDBInformation final :
                &_PlanDBInformation_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    23;
 
   friend void swap(PlanDBInformation& a, PlanDBInformation& b) {
     a.Swap(&b);
@@ -6119,7 +6323,7 @@ class PlanControl final :
                &_PlanControl_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    24;
 
   friend void swap(PlanControl& a, PlanControl& b) {
     a.Swap(&b);
@@ -6441,7 +6645,7 @@ class PlanStatistics final :
                &_PlanStatistics_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    25;
 
   friend void swap(PlanStatistics& a, PlanStatistics& b) {
     a.Swap(&b);
@@ -6746,7 +6950,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    26;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -6962,7 +7166,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    27;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -7136,7 +7340,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -7312,7 +7516,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    29;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -8540,6 +8744,134 @@ inline ParameterName::ParameterNameUnionCase ParameterName::ParameterNameUnion_c
 }
 // -------------------------------------------------------------------
 
+// EntityName
+
+// .IMC_DCCL.EntityNameEnum name_enum = 1;
+inline bool EntityName::_internal_has_name_enum() const {
+  return EntityNameUnion_case() == kNameEnum;
+}
+inline bool EntityName::has_name_enum() const {
+  return _internal_has_name_enum();
+}
+inline void EntityName::set_has_name_enum() {
+  _impl_._oneof_case_[0] = kNameEnum;
+}
+inline void EntityName::clear_name_enum() {
+  if (_internal_has_name_enum()) {
+    _impl_.EntityNameUnion_.name_enum_ = 0;
+    clear_has_EntityNameUnion();
+  }
+}
+inline ::IMC_DCCL::EntityNameEnum EntityName::_internal_name_enum() const {
+  if (_internal_has_name_enum()) {
+    return static_cast< ::IMC_DCCL::EntityNameEnum >(_impl_.EntityNameUnion_.name_enum_);
+  }
+  return static_cast< ::IMC_DCCL::EntityNameEnum >(0);
+}
+inline ::IMC_DCCL::EntityNameEnum EntityName::name_enum() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.EntityName.name_enum)
+  return _internal_name_enum();
+}
+inline void EntityName::_internal_set_name_enum(::IMC_DCCL::EntityNameEnum value) {
+  if (!_internal_has_name_enum()) {
+    clear_EntityNameUnion();
+    set_has_name_enum();
+  }
+  _impl_.EntityNameUnion_.name_enum_ = value;
+}
+inline void EntityName::set_name_enum(::IMC_DCCL::EntityNameEnum value) {
+  _internal_set_name_enum(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.EntityName.name_enum)
+}
+
+// string name_string = 2 [(.dccl.field) = {
+inline bool EntityName::_internal_has_name_string() const {
+  return EntityNameUnion_case() == kNameString;
+}
+inline bool EntityName::has_name_string() const {
+  return _internal_has_name_string();
+}
+inline void EntityName::set_has_name_string() {
+  _impl_._oneof_case_[0] = kNameString;
+}
+inline void EntityName::clear_name_string() {
+  if (_internal_has_name_string()) {
+    _impl_.EntityNameUnion_.name_string_.Destroy();
+    clear_has_EntityNameUnion();
+  }
+}
+inline const std::string& EntityName::name_string() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.EntityName.name_string)
+  return _internal_name_string();
+}
+template <typename ArgT0, typename... ArgT>
+inline void EntityName::set_name_string(ArgT0&& arg0, ArgT... args) {
+  if (!_internal_has_name_string()) {
+    clear_EntityNameUnion();
+    set_has_name_string();
+    _impl_.EntityNameUnion_.name_string_.InitDefault();
+  }
+  _impl_.EntityNameUnion_.name_string_.Set( static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.EntityName.name_string)
+}
+inline std::string* EntityName::mutable_name_string() {
+  std::string* _s = _internal_mutable_name_string();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.EntityName.name_string)
+  return _s;
+}
+inline const std::string& EntityName::_internal_name_string() const {
+  if (_internal_has_name_string()) {
+    return _impl_.EntityNameUnion_.name_string_.Get();
+  }
+  return ::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited();
+}
+inline void EntityName::_internal_set_name_string(const std::string& value) {
+  if (!_internal_has_name_string()) {
+    clear_EntityNameUnion();
+    set_has_name_string();
+    _impl_.EntityNameUnion_.name_string_.InitDefault();
+  }
+  _impl_.EntityNameUnion_.name_string_.Set(value, GetArenaForAllocation());
+}
+inline std::string* EntityName::_internal_mutable_name_string() {
+  if (!_internal_has_name_string()) {
+    clear_EntityNameUnion();
+    set_has_name_string();
+    _impl_.EntityNameUnion_.name_string_.InitDefault();
+  }
+  return _impl_.EntityNameUnion_.name_string_.Mutable(      GetArenaForAllocation());
+}
+inline std::string* EntityName::release_name_string() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.EntityName.name_string)
+  if (_internal_has_name_string()) {
+    clear_has_EntityNameUnion();
+    return _impl_.EntityNameUnion_.name_string_.Release();
+  } else {
+    return nullptr;
+  }
+}
+inline void EntityName::set_allocated_name_string(std::string* name_string) {
+  if (has_EntityNameUnion()) {
+    clear_EntityNameUnion();
+  }
+  if (name_string != nullptr) {
+    set_has_name_string();
+    _impl_.EntityNameUnion_.name_string_.InitAllocated(name_string, GetArenaForAllocation());
+  }
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.EntityName.name_string)
+}
+
+inline bool EntityName::has_EntityNameUnion() const {
+  return EntityNameUnion_case() != ENTITYNAMEUNION_NOT_SET;
+}
+inline void EntityName::clear_has_EntityNameUnion() {
+  _impl_._oneof_case_[0] = ENTITYNAMEUNION_NOT_SET;
+}
+inline EntityName::EntityNameUnionCase EntityName::EntityNameUnion_case() const {
+  return EntityName::EntityNameUnionCase(_impl_._oneof_case_[0]);
+}
+// -------------------------------------------------------------------
+
 // PathPoint
 
 // optional float x = 1 [(.dccl.field) = {
@@ -9124,23 +9456,93 @@ inline void EntityParameter::set_allocated_value(::IMC_DCCL::ParameterValue* val
 // SetEntityParameters
 
 // .IMC_DCCL.EntityName name = 1;
+inline bool SetEntityParameters::_internal_has_name() const {
+  return this != internal_default_instance() && _impl_.name_ != nullptr;
+}
+inline bool SetEntityParameters::has_name() const {
+  return _internal_has_name();
+}
 inline void SetEntityParameters::clear_name() {
-  _impl_.name_ = 0;
+  if (GetArenaForAllocation() == nullptr && _impl_.name_ != nullptr) {
+    delete _impl_.name_;
+  }
+  _impl_.name_ = nullptr;
 }
-inline ::IMC_DCCL::EntityName SetEntityParameters::_internal_name() const {
-  return static_cast< ::IMC_DCCL::EntityName >(_impl_.name_);
+inline const ::IMC_DCCL::EntityName& SetEntityParameters::_internal_name() const {
+  const ::IMC_DCCL::EntityName* p = _impl_.name_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::EntityName&>(
+      ::IMC_DCCL::_EntityName_default_instance_);
 }
-inline ::IMC_DCCL::EntityName SetEntityParameters::name() const {
+inline const ::IMC_DCCL::EntityName& SetEntityParameters::name() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.SetEntityParameters.name)
   return _internal_name();
 }
-inline void SetEntityParameters::_internal_set_name(::IMC_DCCL::EntityName value) {
-  
-  _impl_.name_ = value;
+inline void SetEntityParameters::unsafe_arena_set_allocated_name(
+    ::IMC_DCCL::EntityName* name) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.name_);
+  }
+  _impl_.name_ = name;
+  if (name) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.SetEntityParameters.name)
 }
-inline void SetEntityParameters::set_name(::IMC_DCCL::EntityName value) {
-  _internal_set_name(value);
-  // @@protoc_insertion_point(field_set:IMC_DCCL.SetEntityParameters.name)
+inline ::IMC_DCCL::EntityName* SetEntityParameters::release_name() {
+  
+  ::IMC_DCCL::EntityName* temp = _impl_.name_;
+  _impl_.name_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::EntityName* SetEntityParameters::unsafe_arena_release_name() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.SetEntityParameters.name)
+  
+  ::IMC_DCCL::EntityName* temp = _impl_.name_;
+  _impl_.name_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::EntityName* SetEntityParameters::_internal_mutable_name() {
+  
+  if (_impl_.name_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::EntityName>(GetArenaForAllocation());
+    _impl_.name_ = p;
+  }
+  return _impl_.name_;
+}
+inline ::IMC_DCCL::EntityName* SetEntityParameters::mutable_name() {
+  ::IMC_DCCL::EntityName* _msg = _internal_mutable_name();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.SetEntityParameters.name)
+  return _msg;
+}
+inline void SetEntityParameters::set_allocated_name(::IMC_DCCL::EntityName* name) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.name_;
+  }
+  if (name) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(name);
+    if (message_arena != submessage_arena) {
+      name = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, name, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.name_ = name;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.SetEntityParameters.name)
 }
 
 // repeated .IMC_DCCL.EntityParameter params = 2 [(.dccl.field) = {
@@ -13905,6 +14307,8 @@ inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUni
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -13982,10 +14386,10 @@ template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::ParamName>() {
   return ::IMC_DCCL::ParamName_descriptor();
 }
-template <> struct is_proto_enum< ::IMC_DCCL::EntityName> : ::std::true_type {};
+template <> struct is_proto_enum< ::IMC_DCCL::EntityNameEnum> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::EntityName>() {
-  return ::IMC_DCCL::EntityName_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::EntityNameEnum>() {
+  return ::IMC_DCCL::EntityNameEnum_descriptor();
 }
 
 PROTOBUF_NAMESPACE_CLOSE

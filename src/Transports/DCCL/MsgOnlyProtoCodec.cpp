@@ -4,6 +4,31 @@
 #include <DUNE/DUNE.hpp>
 #include "Helper.hpp"
 
+// ================ EntityName Message ================
+void encodeEntityName(const std::string& imc, IMC_DCCL::EntityName& dccl)
+{
+    
+    auto enum_val = encodeEntityNameEnum(imc);
+    if(enum_val != IMC_DCCL::EntityNameEnum::EN_UNKNOWN){
+            dccl.set_name_enum(enum_val);
+            return;
+    }
+    
+    dccl.set_name_string(imc);
+}
+
+
+// ================ EntityName Message ================
+void decodeEntityName(const IMC_DCCL::EntityName& dccl, std::string& imc)
+{
+    
+    if(dccl.has_name_enum()) imc = decodeEntityNameEnum(dccl.name_enum());
+    
+    
+    if(dccl.has_name_string()) imc = dccl.name_string();
+}
+
+
 // ================ Maneuver Message ================
 void encodeManeuver(const DUNE::IMC::Maneuver& imc, IMC_DCCL::Maneuver& dccl)
 {

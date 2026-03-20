@@ -6,6 +6,10 @@
 #include "EnumCodec.hpp"
 #include "MsgCodec.hpp"
 
+void encodeEntityName(const std::string& imc, IMC_DCCL::EntityName& dccl);
+
+void decodeEntityName(const IMC_DCCL::EntityName& dccl, std::string& imc);
+
 void encodeManeuver(const DUNE::IMC::Maneuver& imc, IMC_DCCL::Maneuver& dccl);
 
 DUNE::IMC::Maneuver* decodeManeuver(const IMC_DCCL::Maneuver& dccl)	;

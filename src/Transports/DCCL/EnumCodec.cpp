@@ -265,64 +265,64 @@ DUNE::IMC::ZUnits decodeZUnits(const uint8_t& dccl_src)
 }
 
 
-// ================ EntityName Message ================
-IMC_DCCL::EntityName encodeEntityName(const std::string& imc_src)
+// ================ EntityNameEnum Message ================
+IMC_DCCL::EntityNameEnum encodeEntityNameEnum(const std::string& imc_src)
 {
-        if (imc_src == "Acoustic Modem") return IMC_DCCL::EntityName::ACOUSTIC_MODEM;
-        if (imc_src == "ADCP") return IMC_DCCL::EntityName::ADCP;
-        if (imc_src == "Autopilot") return IMC_DCCL::EntityName::AUTOPILOT;
-        if (imc_src == "Camera") return IMC_DCCL::EntityName::CAMERA;
-        if (imc_src == "CTD") return IMC_DCCL::EntityName::CTD;
-        if (imc_src == "Dissolved Oxygen") return IMC_DCCL::EntityName::DISSOLVED_OXYGEN;
-        if (imc_src == "Fluorometers") return IMC_DCCL::EntityName::FLUOROMETERS;
-        if (imc_src == "Formation Coordinator") return IMC_DCCL::EntityName::FORMATION_COORDINATOR;
-        if (imc_src == "Heading Controller") return IMC_DCCL::EntityName::HEADING_CONTROLLER;
-        if (imc_src == "Height Control") return IMC_DCCL::EntityName::HEIGHT_CONTROL;
-        if (imc_src == "LBL") return IMC_DCCL::EntityName::LBL;
-        if (imc_src == "Motor Controller - Channel 0") return IMC_DCCL::EntityName::MOTOR_CONTROLLER_CHANNEL_0;
-        if (imc_src == "Motor Controller - Channel 1") return IMC_DCCL::EntityName::MOTOR_CONTROLLER_CHANNEL_1;
-        if (imc_src == "Multibeam") return IMC_DCCL::EntityName::MULTIBEAM;
-        if (imc_src == "Path Control") return IMC_DCCL::EntityName::PATH_CONTROL;
-        if (imc_src == "Path Control Leader") return IMC_DCCL::EntityName::PATH_CONTROL_LEADER;
-        if (imc_src == "Pencil Beam") return IMC_DCCL::EntityName::PENCIL_BEAM;
-        if (imc_src == "Photo Trigger") return IMC_DCCL::EntityName::PHOTO_TRIGGER;
-        if (imc_src == "Ranger") return IMC_DCCL::EntityName::RANGER;
-        if (imc_src == "Remote Control") return IMC_DCCL::EntityName::REMOTE_CONTROL;
-        if (imc_src == "Remote Operation") return IMC_DCCL::EntityName::REMOTE_OPERATION;
-        if (imc_src == "Sidescan") return IMC_DCCL::EntityName::SIDESCAN;
-        if (imc_src == "Slave CPU") return IMC_DCCL::EntityName::SLAVE_CPU;
-        if (imc_src == "UAVCamera") return IMC_DCCL::EntityName::UAVCAMERA;
-        return IMC_DCCL::EntityName::EN_UNKNOWN;
+        if (imc_src == "Acoustic Modem") return IMC_DCCL::EntityNameEnum::ACOUSTIC_MODEM;
+        if (imc_src == "ADCP") return IMC_DCCL::EntityNameEnum::ADCP;
+        if (imc_src == "Autopilot") return IMC_DCCL::EntityNameEnum::AUTOPILOT;
+        if (imc_src == "Camera") return IMC_DCCL::EntityNameEnum::CAMERA;
+        if (imc_src == "CTD") return IMC_DCCL::EntityNameEnum::CTD;
+        if (imc_src == "Dissolved Oxygen") return IMC_DCCL::EntityNameEnum::DISSOLVED_OXYGEN;
+        if (imc_src == "Fluorometers") return IMC_DCCL::EntityNameEnum::FLUOROMETERS;
+        if (imc_src == "Formation Coordinator") return IMC_DCCL::EntityNameEnum::FORMATION_COORDINATOR;
+        if (imc_src == "Heading Controller") return IMC_DCCL::EntityNameEnum::HEADING_CONTROLLER;
+        if (imc_src == "Height Control") return IMC_DCCL::EntityNameEnum::HEIGHT_CONTROL;
+        if (imc_src == "LBL") return IMC_DCCL::EntityNameEnum::LBL;
+        if (imc_src == "Motor Controller - Channel 0") return IMC_DCCL::EntityNameEnum::MOTOR_CONTROLLER_CHANNEL_0;
+        if (imc_src == "Motor Controller - Channel 1") return IMC_DCCL::EntityNameEnum::MOTOR_CONTROLLER_CHANNEL_1;
+        if (imc_src == "Multibeam") return IMC_DCCL::EntityNameEnum::MULTIBEAM;
+        if (imc_src == "Path Control") return IMC_DCCL::EntityNameEnum::PATH_CONTROL;
+        if (imc_src == "Path Control Leader") return IMC_DCCL::EntityNameEnum::PATH_CONTROL_LEADER;
+        if (imc_src == "Pencil Beam") return IMC_DCCL::EntityNameEnum::PENCIL_BEAM;
+        if (imc_src == "Photo Trigger") return IMC_DCCL::EntityNameEnum::PHOTO_TRIGGER;
+        if (imc_src == "Ranger") return IMC_DCCL::EntityNameEnum::RANGER;
+        if (imc_src == "Remote Control") return IMC_DCCL::EntityNameEnum::REMOTE_CONTROL;
+        if (imc_src == "Remote Operation") return IMC_DCCL::EntityNameEnum::REMOTE_OPERATION;
+        if (imc_src == "Sidescan") return IMC_DCCL::EntityNameEnum::SIDESCAN;
+        if (imc_src == "Slave CPU") return IMC_DCCL::EntityNameEnum::SLAVE_CPU;
+        if (imc_src == "UAVCamera") return IMC_DCCL::EntityNameEnum::UAVCAMERA;
+        return IMC_DCCL::EntityNameEnum::EN_UNKNOWN;
 }
 
 
-// ================ EntityName Message ================
-std::string decodeEntityName(const uint8_t& dccl_src)
+// ================ EntityNameEnum Message ================
+std::string decodeEntityNameEnum(const uint8_t& dccl_src)
 {
-        if (dccl_src == IMC_DCCL::EntityName::ACOUSTIC_MODEM) return "Acoustic Modem";
-        if (dccl_src == IMC_DCCL::EntityName::ADCP) return "ADCP";
-        if (dccl_src == IMC_DCCL::EntityName::AUTOPILOT) return "Autopilot";
-        if (dccl_src == IMC_DCCL::EntityName::CAMERA) return "Camera";
-        if (dccl_src == IMC_DCCL::EntityName::CTD) return "CTD";
-        if (dccl_src == IMC_DCCL::EntityName::DISSOLVED_OXYGEN) return "Dissolved Oxygen";
-        if (dccl_src == IMC_DCCL::EntityName::FLUOROMETERS) return "Fluorometers";
-        if (dccl_src == IMC_DCCL::EntityName::FORMATION_COORDINATOR) return "Formation Coordinator";
-        if (dccl_src == IMC_DCCL::EntityName::HEADING_CONTROLLER) return "Heading Controller";
-        if (dccl_src == IMC_DCCL::EntityName::HEIGHT_CONTROL) return "Height Control";
-        if (dccl_src == IMC_DCCL::EntityName::LBL) return "LBL";
-        if (dccl_src == IMC_DCCL::EntityName::MOTOR_CONTROLLER_CHANNEL_0) return "Motor Controller - Channel 0";
-        if (dccl_src == IMC_DCCL::EntityName::MOTOR_CONTROLLER_CHANNEL_1) return "Motor Controller - Channel 1";
-        if (dccl_src == IMC_DCCL::EntityName::MULTIBEAM) return "Multibeam";
-        if (dccl_src == IMC_DCCL::EntityName::PATH_CONTROL) return "Path Control";
-        if (dccl_src == IMC_DCCL::EntityName::PATH_CONTROL_LEADER) return "Path Control Leader";
-        if (dccl_src == IMC_DCCL::EntityName::PENCIL_BEAM) return "Pencil Beam";
-        if (dccl_src == IMC_DCCL::EntityName::PHOTO_TRIGGER) return "Photo Trigger";
-        if (dccl_src == IMC_DCCL::EntityName::RANGER) return "Ranger";
-        if (dccl_src == IMC_DCCL::EntityName::REMOTE_CONTROL) return "Remote Control";
-        if (dccl_src == IMC_DCCL::EntityName::REMOTE_OPERATION) return "Remote Operation";
-        if (dccl_src == IMC_DCCL::EntityName::SIDESCAN) return "Sidescan";
-        if (dccl_src == IMC_DCCL::EntityName::SLAVE_CPU) return "Slave CPU";
-        if (dccl_src == IMC_DCCL::EntityName::UAVCAMERA) return "UAVCamera";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::ACOUSTIC_MODEM) return "Acoustic Modem";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::ADCP) return "ADCP";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::AUTOPILOT) return "Autopilot";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::CAMERA) return "Camera";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::CTD) return "CTD";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::DISSOLVED_OXYGEN) return "Dissolved Oxygen";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::FLUOROMETERS) return "Fluorometers";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::FORMATION_COORDINATOR) return "Formation Coordinator";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::HEADING_CONTROLLER) return "Heading Controller";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::HEIGHT_CONTROL) return "Height Control";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::LBL) return "LBL";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::MOTOR_CONTROLLER_CHANNEL_0) return "Motor Controller - Channel 0";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::MOTOR_CONTROLLER_CHANNEL_1) return "Motor Controller - Channel 1";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::MULTIBEAM) return "Multibeam";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::PATH_CONTROL) return "Path Control";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::PATH_CONTROL_LEADER) return "Path Control Leader";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::PENCIL_BEAM) return "Pencil Beam";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::PHOTO_TRIGGER) return "Photo Trigger";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::RANGER) return "Ranger";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::REMOTE_CONTROL) return "Remote Control";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::REMOTE_OPERATION) return "Remote Operation";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::SIDESCAN) return "Sidescan";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::SLAVE_CPU) return "Slave CPU";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::UAVCAMERA) return "UAVCamera";
 }
 
 
