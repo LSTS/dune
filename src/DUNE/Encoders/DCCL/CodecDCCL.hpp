@@ -25,9 +25,8 @@ namespace DUNE
     {
       class CodecDCCL
       {
-        public:
-        explicit CodecDCCL(dccl::Codec& codec)
-          : m_codec(codec)
+      public:
+        CodecDCCL()
         {
         }
 
@@ -53,9 +52,8 @@ namespace DUNE
             PLAN_DB = 556,
         };
 
-        private: 
-
-        dccl::Codec& m_codec;
+      private:
+        dccl::Codec m_codec;
 
         MsgID
         getMsgID(std::string& encoded_string)
@@ -112,7 +110,7 @@ namespace DUNE
                 }
 
                 default:
-                    throw std::runtime_error("DCCL:CodecDCCL: Decoding not available for this Msg");
+                    return nullptr;
             }
         }
 
@@ -169,7 +167,7 @@ namespace DUNE
                 }
 
                 default:
-                    throw std::runtime_error("DCCL:CodecDCCL: Encoding not available for this Msg");
+                    return "";
             }
         }
       };
