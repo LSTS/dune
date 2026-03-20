@@ -82,7 +82,6 @@ namespace Transports
       std::list<IMC::TransmissionRequest*> m_retransmission_list;
       Router m_router;
 #if defined(DUNE_USING_DCCL)
-      dccl::Codec m_dccl;
       DUNE::Encoders::DCCL::CodecDCCL m_codec_dccl;
 #endif
 
@@ -97,9 +96,6 @@ namespace Transports
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
         m_router(this)
-#if defined(DUNE_USING_DCCL)
-      , m_codec_dccl(m_dccl)
-#endif
       {
         param("Iridium - Entity Label", m_args.iridium_label)
             .defaultValue("GSM")
