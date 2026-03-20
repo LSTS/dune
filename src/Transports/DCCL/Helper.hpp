@@ -9,6 +9,12 @@ namespace Helper {
 
     //True if the string contains just digitsCHANGE THAT using ::isdigit
     inline bool containsJustDigits(const std::string& s) {
+        //phone number check
+        static const std::regex phone_regex(R"(^\+\d{12}$)");
+        if (std::regex_match(s, phone_regex)) {
+            return false;
+        }
+
         static const std::regex number_regex(R"(^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$)");
         return std::regex_match(s, number_regex);
     }
