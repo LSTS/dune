@@ -510,6 +510,22 @@ message VehicleState {
     optional float last_error_time = 10 [(dccl.field) = { min: -1 max: 1835634114 precision: 2 }];
 }
 
+//EntityState
+message EntityState {
+    option (dccl.msg) = { codec_version: 4 id: 1 max_bytes: 800000};
+    enum StateEnum
+    {
+        ESTA_BOOT = 0;
+        ESTA_NORMAL = 1;
+        ESTA_FAULT= 2;
+        ESTA_ERROR = 3;
+        ESTA_FAILURE = 4;
+        ESTA_UNKNOWN = 5;
+    }  
+    StateEnum state = 1;  
+    optional int32 flags = 2 [(dccl.field) = { min: 0 max: 255 precision: 1 }];
+    optional string description = 3 [(dccl.field).max_length = 500];
+}
 
 message PlanDBArgUnion {
     option (dccl.msg) = { codec_version: 4 max_bytes: 800000};

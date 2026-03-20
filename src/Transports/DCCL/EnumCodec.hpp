@@ -4,6 +4,10 @@
 #include "IMC_DCCL.pb.h"
 #include <DUNE/DUNE.hpp>
 
+IMC_DCCL::EntityState::StateEnum encodeEntityStateStateEnum(const uint8_t& imc_src);
+
+DUNE::IMC::EntityState::StateEnum decodeEntityStateStateEnum(const uint8_t& dccl_src);
+
 IMC_DCCL::Loiter::DirectionEnum encodeLoiterDirectionEnum(const uint8_t& imc_src);
 
 DUNE::IMC::Loiter::DirectionEnum decodeLoiterDirectionEnum(const uint8_t& dccl_src);

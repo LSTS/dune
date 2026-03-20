@@ -53,6 +53,9 @@ extern EntityNameDefaultTypeInternal _EntityName_default_instance_;
 class EntityParameter;
 struct EntityParameterDefaultTypeInternal;
 extern EntityParameterDefaultTypeInternal _EntityParameter_default_instance_;
+class EntityState;
+struct EntityStateDefaultTypeInternal;
+extern EntityStateDefaultTypeInternal _EntityState_default_instance_;
 class EstimatedState;
 struct EstimatedStateDefaultTypeInternal;
 extern EstimatedStateDefaultTypeInternal _EstimatedState_default_instance_;
@@ -144,6 +147,7 @@ extern VerticalProfileDefaultTypeInternal _VerticalProfile_default_instance_;
 PROTOBUF_NAMESPACE_OPEN
 template<> ::IMC_DCCL::EntityName* Arena::CreateMaybeMessage<::IMC_DCCL::EntityName>(Arena*);
 template<> ::IMC_DCCL::EntityParameter* Arena::CreateMaybeMessage<::IMC_DCCL::EntityParameter>(Arena*);
+template<> ::IMC_DCCL::EntityState* Arena::CreateMaybeMessage<::IMC_DCCL::EntityState>(Arena*);
 template<> ::IMC_DCCL::EstimatedState* Arena::CreateMaybeMessage<::IMC_DCCL::EstimatedState>(Arena*);
 template<> ::IMC_DCCL::FollowPath* Arena::CreateMaybeMessage<::IMC_DCCL::FollowPath>(Arena*);
 template<> ::IMC_DCCL::Goto* Arena::CreateMaybeMessage<::IMC_DCCL::Goto>(Arena*);
@@ -436,6 +440,35 @@ inline bool VehicleState_OperationModeEnum_Parse(
     ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, VehicleState_OperationModeEnum* value) {
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<VehicleState_OperationModeEnum>(
     VehicleState_OperationModeEnum_descriptor(), name, value);
+}
+enum EntityState_StateEnum : int {
+  EntityState_StateEnum_ESTA_BOOT = 0,
+  EntityState_StateEnum_ESTA_NORMAL = 1,
+  EntityState_StateEnum_ESTA_FAULT = 2,
+  EntityState_StateEnum_ESTA_ERROR = 3,
+  EntityState_StateEnum_ESTA_FAILURE = 4,
+  EntityState_StateEnum_ESTA_UNKNOWN = 5,
+  EntityState_StateEnum_EntityState_StateEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  EntityState_StateEnum_EntityState_StateEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool EntityState_StateEnum_IsValid(int value);
+constexpr EntityState_StateEnum EntityState_StateEnum_StateEnum_MIN = EntityState_StateEnum_ESTA_BOOT;
+constexpr EntityState_StateEnum EntityState_StateEnum_StateEnum_MAX = EntityState_StateEnum_ESTA_UNKNOWN;
+constexpr int EntityState_StateEnum_StateEnum_ARRAYSIZE = EntityState_StateEnum_StateEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityState_StateEnum_descriptor();
+template<typename T>
+inline const std::string& EntityState_StateEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, EntityState_StateEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function EntityState_StateEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    EntityState_StateEnum_descriptor(), enum_t_value);
+}
+inline bool EntityState_StateEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, EntityState_StateEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<EntityState_StateEnum>(
+    EntityState_StateEnum_descriptor(), name, value);
 }
 enum ZUnits : int {
   Z_NONE = 0,
@@ -7263,6 +7296,228 @@ class VehicleState final :
 };
 // -------------------------------------------------------------------
 
+class EntityState final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.EntityState) */ {
+ public:
+  inline EntityState() : EntityState(nullptr) {}
+  ~EntityState() override;
+  explicit PROTOBUF_CONSTEXPR EntityState(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  EntityState(const EntityState& from);
+  EntityState(EntityState&& from) noexcept
+    : EntityState() {
+    *this = ::std::move(from);
+  }
+
+  inline EntityState& operator=(const EntityState& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline EntityState& operator=(EntityState&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const EntityState& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const EntityState* internal_default_instance() {
+    return reinterpret_cast<const EntityState*>(
+               &_EntityState_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    27;
+
+  friend void swap(EntityState& a, EntityState& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(EntityState* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(EntityState* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  EntityState* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<EntityState>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const EntityState& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const EntityState& from) {
+    EntityState::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(EntityState* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.EntityState";
+  }
+  protected:
+  explicit EntityState(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  typedef EntityState_StateEnum StateEnum;
+  static constexpr StateEnum ESTA_BOOT =
+    EntityState_StateEnum_ESTA_BOOT;
+  static constexpr StateEnum ESTA_NORMAL =
+    EntityState_StateEnum_ESTA_NORMAL;
+  static constexpr StateEnum ESTA_FAULT =
+    EntityState_StateEnum_ESTA_FAULT;
+  static constexpr StateEnum ESTA_ERROR =
+    EntityState_StateEnum_ESTA_ERROR;
+  static constexpr StateEnum ESTA_FAILURE =
+    EntityState_StateEnum_ESTA_FAILURE;
+  static constexpr StateEnum ESTA_UNKNOWN =
+    EntityState_StateEnum_ESTA_UNKNOWN;
+  static inline bool StateEnum_IsValid(int value) {
+    return EntityState_StateEnum_IsValid(value);
+  }
+  static constexpr StateEnum StateEnum_MIN =
+    EntityState_StateEnum_StateEnum_MIN;
+  static constexpr StateEnum StateEnum_MAX =
+    EntityState_StateEnum_StateEnum_MAX;
+  static constexpr int StateEnum_ARRAYSIZE =
+    EntityState_StateEnum_StateEnum_ARRAYSIZE;
+  static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
+  StateEnum_descriptor() {
+    return EntityState_StateEnum_descriptor();
+  }
+  template<typename T>
+  static inline const std::string& StateEnum_Name(T enum_t_value) {
+    static_assert(::std::is_same<T, StateEnum>::value ||
+      ::std::is_integral<T>::value,
+      "Incorrect type passed to function StateEnum_Name.");
+    return EntityState_StateEnum_Name(enum_t_value);
+  }
+  static inline bool StateEnum_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
+      StateEnum* value) {
+    return EntityState_StateEnum_Parse(name, value);
+  }
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kDescriptionFieldNumber = 3,
+    kStateFieldNumber = 1,
+    kFlagsFieldNumber = 2,
+  };
+  // optional string description = 3 [(.dccl.field) = {
+  bool has_description() const;
+  private:
+  bool _internal_has_description() const;
+  public:
+  void clear_description();
+  const std::string& description() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_description(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_description();
+  PROTOBUF_NODISCARD std::string* release_description();
+  void set_allocated_description(std::string* description);
+  private:
+  const std::string& _internal_description() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_description(const std::string& value);
+  std::string* _internal_mutable_description();
+  public:
+
+  // .IMC_DCCL.EntityState.StateEnum state = 1;
+  void clear_state();
+  ::IMC_DCCL::EntityState_StateEnum state() const;
+  void set_state(::IMC_DCCL::EntityState_StateEnum value);
+  private:
+  ::IMC_DCCL::EntityState_StateEnum _internal_state() const;
+  void _internal_set_state(::IMC_DCCL::EntityState_StateEnum value);
+  public:
+
+  // optional int32 flags = 2 [(.dccl.field) = {
+  bool has_flags() const;
+  private:
+  bool _internal_has_flags() const;
+  public:
+  void clear_flags();
+  int32_t flags() const;
+  void set_flags(int32_t value);
+  private:
+  int32_t _internal_flags() const;
+  void _internal_set_flags(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.EntityState)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr description_;
+    int state_;
+    int32_t flags_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class PlanDBArgUnion final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanDBArgUnion) */ {
  public:
@@ -7318,7 +7573,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -7534,7 +7789,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    29;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -7708,7 +7963,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    30;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -7884,7 +8139,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    31;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -14330,6 +14585,126 @@ inline void VehicleState::set_last_error_time(float value) {
 
 // -------------------------------------------------------------------
 
+// EntityState
+
+// .IMC_DCCL.EntityState.StateEnum state = 1;
+inline void EntityState::clear_state() {
+  _impl_.state_ = 0;
+}
+inline ::IMC_DCCL::EntityState_StateEnum EntityState::_internal_state() const {
+  return static_cast< ::IMC_DCCL::EntityState_StateEnum >(_impl_.state_);
+}
+inline ::IMC_DCCL::EntityState_StateEnum EntityState::state() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.EntityState.state)
+  return _internal_state();
+}
+inline void EntityState::_internal_set_state(::IMC_DCCL::EntityState_StateEnum value) {
+  
+  _impl_.state_ = value;
+}
+inline void EntityState::set_state(::IMC_DCCL::EntityState_StateEnum value) {
+  _internal_set_state(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.EntityState.state)
+}
+
+// optional int32 flags = 2 [(.dccl.field) = {
+inline bool EntityState::_internal_has_flags() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool EntityState::has_flags() const {
+  return _internal_has_flags();
+}
+inline void EntityState::clear_flags() {
+  _impl_.flags_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline int32_t EntityState::_internal_flags() const {
+  return _impl_.flags_;
+}
+inline int32_t EntityState::flags() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.EntityState.flags)
+  return _internal_flags();
+}
+inline void EntityState::_internal_set_flags(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.flags_ = value;
+}
+inline void EntityState::set_flags(int32_t value) {
+  _internal_set_flags(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.EntityState.flags)
+}
+
+// optional string description = 3 [(.dccl.field) = {
+inline bool EntityState::_internal_has_description() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool EntityState::has_description() const {
+  return _internal_has_description();
+}
+inline void EntityState::clear_description() {
+  _impl_.description_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& EntityState::description() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.EntityState.description)
+  return _internal_description();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void EntityState::set_description(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.description_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.EntityState.description)
+}
+inline std::string* EntityState::mutable_description() {
+  std::string* _s = _internal_mutable_description();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.EntityState.description)
+  return _s;
+}
+inline const std::string& EntityState::_internal_description() const {
+  return _impl_.description_.Get();
+}
+inline void EntityState::_internal_set_description(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.description_.Set(value, GetArenaForAllocation());
+}
+inline std::string* EntityState::_internal_mutable_description() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.description_.Mutable(GetArenaForAllocation());
+}
+inline std::string* EntityState::release_description() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.EntityState.description)
+  if (!_internal_has_description()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.description_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.description_.IsDefault()) {
+    _impl_.description_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void EntityState::set_allocated_description(std::string* description) {
+  if (description != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.description_.SetAllocated(description, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.description_.IsDefault()) {
+    _impl_.description_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.EntityState.description)
+}
+
+// -------------------------------------------------------------------
+
 // PlanDBArgUnion
 
 // .IMC_DCCL.PlanSpecification ps_arg = 1;
@@ -15035,6 +15410,8 @@ inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUni
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -15086,6 +15463,11 @@ template <> struct is_proto_enum< ::IMC_DCCL::VehicleState_OperationModeEnum> : 
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::VehicleState_OperationModeEnum>() {
   return ::IMC_DCCL::VehicleState_OperationModeEnum_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::EntityState_StateEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::EntityState_StateEnum>() {
+  return ::IMC_DCCL::EntityState_StateEnum_descriptor();
 }
 template <> struct is_proto_enum< ::IMC_DCCL::ZUnits> : ::std::true_type {};
 template <>
