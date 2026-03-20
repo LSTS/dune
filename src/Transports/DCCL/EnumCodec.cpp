@@ -3,6 +3,33 @@
 #include "EnumCodec.hpp"
 #include <DUNE/DUNE.hpp>
 
+// ================ EntityState.StateEnum Message ================
+IMC_DCCL::EntityState::StateEnum encodeEntityStateStateEnum(const uint8_t& imc_src)
+{
+    switch (imc_src) {
+        case DUNE::IMC::EntityState::StateEnum::ESTA_BOOT: return IMC_DCCL::EntityState::ESTA_BOOT;
+        case DUNE::IMC::EntityState::StateEnum::ESTA_NORMAL: return IMC_DCCL::EntityState::ESTA_NORMAL;
+        case DUNE::IMC::EntityState::StateEnum::ESTA_FAULT: return IMC_DCCL::EntityState::ESTA_FAULT;
+        case DUNE::IMC::EntityState::StateEnum::ESTA_ERROR: return IMC_DCCL::EntityState::ESTA_ERROR;
+        case DUNE::IMC::EntityState::StateEnum::ESTA_FAILURE: return IMC_DCCL::EntityState::ESTA_FAILURE;
+        default: return IMC_DCCL::EntityState::ESTA_UNKNOWN;
+    }
+}
+
+
+// ================ EntityState.StateEnum Message ================
+DUNE::IMC::EntityState::StateEnum decodeEntityStateStateEnum(const uint8_t& dccl_src)
+{
+    switch (dccl_src) {
+        case IMC_DCCL::EntityState::ESTA_BOOT: return DUNE::IMC::EntityState::StateEnum::ESTA_BOOT;
+        case IMC_DCCL::EntityState::ESTA_NORMAL: return DUNE::IMC::EntityState::StateEnum::ESTA_NORMAL;
+        case IMC_DCCL::EntityState::ESTA_FAULT: return DUNE::IMC::EntityState::StateEnum::ESTA_FAULT;
+        case IMC_DCCL::EntityState::ESTA_ERROR: return DUNE::IMC::EntityState::StateEnum::ESTA_ERROR;
+        case IMC_DCCL::EntityState::ESTA_FAILURE: return DUNE::IMC::EntityState::StateEnum::ESTA_FAILURE;
+    }
+}
+
+
 // ================ Loiter.DirectionEnum Message ================
 IMC_DCCL::Loiter::DirectionEnum encodeLoiterDirectionEnum(const uint8_t& imc_src)
 {

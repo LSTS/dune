@@ -86,7 +86,8 @@ namespace Transports
         bind<IMC::UamRxFrame>(this);
         //bind<IMC::PlanControl>(this);
         //bind<IMC::SetEntityParameters>(this);
-        bind<IMC::VehicleState>(this);
+        //bind<IMC::VehicleState>(this);
+        bind<IMC::EntityState>(this);
         //bind<IMC::PlanDB>(this);
         //bind<IMC::EstimatedState>(this);
       }
@@ -214,6 +215,30 @@ namespace Transports
           std::cout << "Send via Acoustic"<< std::endl;
 
           sendTransmissionRequestViaAcoustic("", encoded_string);
+          
+      }
+    }
+
+      void
+      consume(const IMC::EntityState* msg)
+      {
+       if(m_args.trigger_dccl){
+
+          if (m_filter.filter(msg))
+            return;
+          
+          msg->toJSON(std::cout);
+          
+          ////////////////////////////////////////////////////////////// DCCL LIB
+          std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          ////////////////////////////////////////////////////////////// DCCL LIB
+
+          war("[ENCODING] EntityState with size %u received.", msg->getPayloadSerializationSize());
+          war("[ENCODING] Compressed with size %u received.", encoded_string.size());
+          std::cout << "Send via Acoustic"<< std::endl;
+
+          sendTransmissionRequestViaAcoustic("", encoded_string);
+          
           
       }
     }

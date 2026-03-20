@@ -46,6 +46,7 @@ namespace IMCDCCL
             PLAN_CONTROL = 559, 
             SET_ENTITY_PARAMETERS = 804,
             VEHICLE_STATE = 500,
+            ENTITY_STATE = 1,
         };
 
         private: 
@@ -64,6 +65,7 @@ namespace IMCDCCL
                 case PLAN_CONTROL:
                 case SET_ENTITY_PARAMETERS:
                 case VEHICLE_STATE:
+                case ENTITY_STATE:
                     return static_cast<MsgID>(id);
                 default:
                     throw std::invalid_argument("DCCL:CodecDCCL: MsgID Not Recognized");
@@ -135,6 +137,16 @@ namespace IMCDCCL
                     m_codec.decode(encoded_string, &src_dccl);
                     DUNE::IMC::VehicleState* dst_imc = new DUNE::IMC::VehicleState();
                     decodeVehicleState(src_dccl, *dst_imc);
+                    return dst_imc;
+                }
+
+                case ENTITY_STATE:
+                {
+                    m_codec.load<IMC_DCCL::EntityState>();
+                    IMC_DCCL::EntityState src_dccl;
+                    m_codec.decode(encoded_string, &src_dccl);
+                    DUNE::IMC::EntityState* dst_imc = new DUNE::IMC::EntityState();
+                    decodeEntityState(src_dccl, *dst_imc);
                     return dst_imc;
                 }
 
@@ -224,6 +236,20 @@ namespace IMCDCCL
                     m_codec.load<IMC_DCCL::VehicleState>();
                     IMC_DCCL::VehicleState dst_dccl;
                     encodeVehicleState(*src_imc, dst_dccl);
+
+                    std::string encoded_bytes;
+                    m_codec.encode(&encoded_bytes, dst_dccl);
+                    
+                    return encoded_bytes;
+                }
+
+                case ENTITY_STATE:
+                {
+                    const DUNE::IMC::EntityState* src_imc = dynamic_cast<const DUNE::IMC::EntityState*>(imc_msg);
+
+                    m_codec.load<IMC_DCCL::EntityState>();
+                    IMC_DCCL::EntityState dst_dccl;
+                    encodeEntityState(*src_imc, dst_dccl);
 
                     std::string encoded_bytes;
                     m_codec.encode(&encoded_bytes, dst_dccl);
