@@ -52,13 +52,13 @@ IMC_DCCL::ManeuverType encodeManeuverType(const std::string& imc_src);
 
 std::string decodeManeuverType(const uint8_t& dccl_src);
 
+IMC_DCCL::ParamName encodeParamName(const std::string& imc_src);
+
+std::string decodeParamName(const uint8_t& dccl_src);
+
 IMC_DCCL::ParamValue encodeParamValue(const std::string& imc_src);
 
 std::string decodeParamValue(const uint8_t& dccl_src);
-
-IMC_DCCL::ParameterName encodeParameterName(const std::string& imc_src);
-
-std::string decodeParameterName(const uint8_t& dccl_src);
 
 IMC_DCCL::TransitionConditionEnum encodeTransitionConditionEnum(const std::string& imc_src);
 

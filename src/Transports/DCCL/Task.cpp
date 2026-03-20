@@ -85,6 +85,7 @@ namespace Transports
         //bind<IMC::PlanSpecification>(this);
         bind<IMC::UamRxFrame>(this);
         bind<IMC::PlanControl>(this);
+        bind<IMC::SetEntityParameters>(this);
         //bind<IMC::PlanDB>(this);
         //bind<IMC::EstimatedState>(this);
       }
@@ -137,11 +138,11 @@ namespace Transports
         if(m_args.trigger_dccl){
 
           msg->toJSON(std::cout);
-          war("PlanSpecification with size %u received.", msg->getPayloadSerializationSize());
+          war("[ENCODING] PlanSpecification with size %u received.", msg->getPayloadSerializationSize());
 
           ////////////////////////////////////////////////////////////// DCCL LIB
           std::string encoded_string = m_codecdcll.encodeDCCL(msg);
-          war("Compressed with size %u received.", encoded_string.size());
+          war("[ENCODING] Compressed with size %u received.", encoded_string.size());
           ////////////////////////////////////////////////////////////// DCCL LIB
 
           std::cout << "Transmission request via Acoustic"<< std::endl;
@@ -200,13 +201,34 @@ namespace Transports
 
           msg->toJSON(std::cout);
 
-          war("PlanControl with size %u received.", msg->getPayloadSerializationSize());
+          war("[ENCODING] PlanControl with size %u received.", msg->getPayloadSerializationSize());
 
           ////////////////////////////////////////////////////////////// DCCL LIB
           std::string encoded_string = m_codecdcll.encodeDCCL(msg);
-          war("Compressed with size %u received.", encoded_string.size());
+          war("[ENCODING] Compressed with size %u received.", encoded_string.size());
           ////////////////////////////////////////////////////////////// DCCL LIB
 
+          std::cout << "Transmission request via Acoustic"<< std::endl;
+          sendTransmissionRequestViaAcoustic("", encoded_string);
+          
+      }
+    }
+
+      void
+      consume(const IMC::SetEntityParameters* msg)
+      {
+       if(m_args.trigger_dccl){
+
+          msg->toJSON(std::cout);
+          std::cout<<"---------------------------------------------"<<std::endl;
+        
+          ////////////////////////////////////////////////////////////// DCCL LIB
+          std::string encoded_string = m_codecdcll.encodeDCCL(msg);          
+          ////////////////////////////////////////////////////////////// DCCL LIB
+
+          war("[ENCODING] SetEntityParameters with size %u received.", msg->getPayloadSerializationSize());
+          war("[ENCODING] Compressed with size %u received.", encoded_string.size());
+          
           std::cout << "Transmission request via Acoustic"<< std::endl;
           sendTransmissionRequestViaAcoustic("", encoded_string);
           
@@ -248,11 +270,11 @@ namespace Transports
           {             
 
               std::string encoded_bytes(msg->data.begin(), msg->data.end());
-              war("Received a compressed msg with size %u", encoded_bytes.size());
+              war("[DECODING] Compressed msg with size %u received", encoded_bytes.size());
  
               ////////////////////////////////////////////////////////////// DCCL LIB
               auto decode_msg = m_codecdcll.decodeDCCL(encoded_bytes);
-              war("Msg decompressed with size %u received.", decode_msg->getPayloadSerializationSize());
+              war("[DECODING] Original msg with size %u decompressed.", decode_msg->getPayloadSerializationSize());
               ////////////////////////////////////////////////////////////// DCCL LIB
 
               decode_msg->toJSON(std::cout);

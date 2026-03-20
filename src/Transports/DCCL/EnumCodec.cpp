@@ -347,6 +347,87 @@ std::string decodeManeuverType(const uint8_t& dccl_src)
 }
 
 
+// ================ ParamName Message ================
+IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
+{
+        if (imc_src == "Active") return IMC_DCCL::ParamName::ACTIVE;
+        if (imc_src == "Ardupilot Tracker") return IMC_DCCL::ParamName::ARDUPILOT_TRACKER;
+        if (imc_src == "Bathymetry Channel Available") return IMC_DCCL::ParamName::BATHYMETRY_CHANNEL_AVAILABLE;
+        if (imc_src == "Bottom Track -- Minimum Depth") return IMC_DCCL::ParamName::BOTTOM_TRACK_MINIMUM_DEPTH;
+        if (imc_src == "Data Bits") return IMC_DCCL::ParamName::DATA_BITS;
+        if (imc_src == "FLIR Duo R") return IMC_DCCL::ParamName::FLIR_DUO_R;
+        if (imc_src == "Formation Flight") return IMC_DCCL::ParamName::FORMATION_FLIGHT;
+        if (imc_src == "Formation Positions") return IMC_DCCL::ParamName::FORMATION_POSITIONS;
+        if (imc_src == "Formation Reference Frame") return IMC_DCCL::ParamName::FORMATION_REFERENCE_FRAME;
+        if (imc_src == "Frequency") return IMC_DCCL::ParamName::FREQUENCY;
+        if (imc_src == "High-Frequency Channel") return IMC_DCCL::ParamName::HIGH_FREQUENCY_CHANNEL;
+        if (imc_src == "High-Frequency Channels") return IMC_DCCL::ParamName::HIGH_FREQUENCY_CHANNELS;
+        if (imc_src == "High-Frequency Range") return IMC_DCCL::ParamName::HIGH_FREQUENCY_RANGE;
+        if (imc_src == "Low-Frequency Bathymetry Channel") return IMC_DCCL::ParamName::LOW_FREQUENCY_BATHYMETRY_CHANNEL;
+        if (imc_src == "Low-Frequency Channel") return IMC_DCCL::ParamName::LOW_FREQUENCY_CHANNEL;
+        if (imc_src == "Low-Frequency Channels") return IMC_DCCL::ParamName::LOW_FREQUENCY_CHANNELS;
+        if (imc_src == "Low-Frequency Range") return IMC_DCCL::ParamName::LOW_FREQUENCY_RANGE;
+        if (imc_src == "Onboard Camera") return IMC_DCCL::ParamName::ONBOARD_CAMERA;
+        if (imc_src == "Optimize for this Speed") return IMC_DCCL::ParamName::OPTIMIZE_FOR_THIS_SPEED;
+        if (imc_src == "Periodicity of Data Sampling") return IMC_DCCL::ParamName::PERIODICITY_OF_DATA_SAMPLING;
+        if (imc_src == "Profile Mode") return IMC_DCCL::ParamName::PROFILE_MODE;
+        if (imc_src == "Range") return IMC_DCCL::ParamName::RANGE;
+        if (imc_src == "Range Multiplier") return IMC_DCCL::ParamName::RANGE_MULTIPLIER;
+        if (imc_src == "Sample Time Duration") return IMC_DCCL::ParamName::SAMPLE_TIME_DURATION;
+        if (imc_src == "Scale Factor") return IMC_DCCL::ParamName::SCALE_FACTOR;
+        if (imc_src == "Sector Width") return IMC_DCCL::ParamName::SECTOR_WIDTH;
+        if (imc_src == "Shutter Value (ms)") return IMC_DCCL::ParamName::SHUTTER_VALUE_MS;
+        if (imc_src == "Step Size") return IMC_DCCL::ParamName::STEP_SIZE;
+        if (imc_src == "Strobe Delay (us)") return IMC_DCCL::ParamName::STROBE_DELAY_US;
+        if (imc_src == "Thruster Always On") return IMC_DCCL::ParamName::THRUSTER_ALWAYS_ON;
+        if (imc_src == "Transition to FW") return IMC_DCCL::ParamName::TRANSITION_TO_FW;
+        if (imc_src == "Transition to MC") return IMC_DCCL::ParamName::TRANSITION_TO_MC;
+        if (imc_src == "Use controller") return IMC_DCCL::ParamName::USE_CONTROLLER;
+        if (imc_src == "Vehicle List") return IMC_DCCL::ParamName::VEHICLE_LIST;
+        return IMC_DCCL::ParamName::PN_UNKNOWN;
+}
+
+
+// ================ ParamName Message ================
+std::string decodeParamName(const uint8_t& dccl_src)
+{
+        if (dccl_src == IMC_DCCL::ParamName::ACTIVE) return "Active";
+        if (dccl_src == IMC_DCCL::ParamName::ARDUPILOT_TRACKER) return "Ardupilot Tracker";
+        if (dccl_src == IMC_DCCL::ParamName::BATHYMETRY_CHANNEL_AVAILABLE) return "Bathymetry Channel Available";
+        if (dccl_src == IMC_DCCL::ParamName::BOTTOM_TRACK_MINIMUM_DEPTH) return "Bottom Track -- Minimum Depth";
+        if (dccl_src == IMC_DCCL::ParamName::DATA_BITS) return "Data Bits";
+        if (dccl_src == IMC_DCCL::ParamName::FLIR_DUO_R) return "FLIR Duo R";
+        if (dccl_src == IMC_DCCL::ParamName::FORMATION_FLIGHT) return "Formation Flight";
+        if (dccl_src == IMC_DCCL::ParamName::FORMATION_POSITIONS) return "Formation Positions";
+        if (dccl_src == IMC_DCCL::ParamName::FORMATION_REFERENCE_FRAME) return "Formation Reference Frame";
+        if (dccl_src == IMC_DCCL::ParamName::FREQUENCY) return "Frequency";
+        if (dccl_src == IMC_DCCL::ParamName::HIGH_FREQUENCY_CHANNEL) return "High-Frequency Channel";
+        if (dccl_src == IMC_DCCL::ParamName::HIGH_FREQUENCY_CHANNELS) return "High-Frequency Channels";
+        if (dccl_src == IMC_DCCL::ParamName::HIGH_FREQUENCY_RANGE) return "High-Frequency Range";
+        if (dccl_src == IMC_DCCL::ParamName::LOW_FREQUENCY_BATHYMETRY_CHANNEL) return "Low-Frequency Bathymetry Channel";
+        if (dccl_src == IMC_DCCL::ParamName::LOW_FREQUENCY_CHANNEL) return "Low-Frequency Channel";
+        if (dccl_src == IMC_DCCL::ParamName::LOW_FREQUENCY_CHANNELS) return "Low-Frequency Channels";
+        if (dccl_src == IMC_DCCL::ParamName::LOW_FREQUENCY_RANGE) return "Low-Frequency Range";
+        if (dccl_src == IMC_DCCL::ParamName::ONBOARD_CAMERA) return "Onboard Camera";
+        if (dccl_src == IMC_DCCL::ParamName::OPTIMIZE_FOR_THIS_SPEED) return "Optimize for this Speed";
+        if (dccl_src == IMC_DCCL::ParamName::PERIODICITY_OF_DATA_SAMPLING) return "Periodicity of Data Sampling";
+        if (dccl_src == IMC_DCCL::ParamName::PROFILE_MODE) return "Profile Mode";
+        if (dccl_src == IMC_DCCL::ParamName::RANGE) return "Range";
+        if (dccl_src == IMC_DCCL::ParamName::RANGE_MULTIPLIER) return "Range Multiplier";
+        if (dccl_src == IMC_DCCL::ParamName::SAMPLE_TIME_DURATION) return "Sample Time Duration";
+        if (dccl_src == IMC_DCCL::ParamName::SCALE_FACTOR) return "Scale Factor";
+        if (dccl_src == IMC_DCCL::ParamName::SECTOR_WIDTH) return "Sector Width";
+        if (dccl_src == IMC_DCCL::ParamName::SHUTTER_VALUE_MS) return "Shutter Value (ms)";
+        if (dccl_src == IMC_DCCL::ParamName::STEP_SIZE) return "Step Size";
+        if (dccl_src == IMC_DCCL::ParamName::STROBE_DELAY_US) return "Strobe Delay (us)";
+        if (dccl_src == IMC_DCCL::ParamName::THRUSTER_ALWAYS_ON) return "Thruster Always On";
+        if (dccl_src == IMC_DCCL::ParamName::TRANSITION_TO_FW) return "Transition to FW";
+        if (dccl_src == IMC_DCCL::ParamName::TRANSITION_TO_MC) return "Transition to MC";
+        if (dccl_src == IMC_DCCL::ParamName::USE_CONTROLLER) return "Use controller";
+        if (dccl_src == IMC_DCCL::ParamName::VEHICLE_LIST) return "Vehicle List";
+}
+
+
 // ================ ParamValue Message ================
 IMC_DCCL::ParamValue encodeParamValue(const std::string& imc_src)
 {
@@ -363,87 +444,6 @@ std::string decodeParamValue(const uint8_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamValue::TRUE) return "true";
         if (dccl_src == IMC_DCCL::ParamValue::FALSE) return "false";
         if (dccl_src == IMC_DCCL::ParamValue::BOTH) return "both";
-}
-
-
-// ================ ParameterName Message ================
-IMC_DCCL::ParameterName encodeParameterName(const std::string& imc_src)
-{
-        if (imc_src == "Active") return IMC_DCCL::ParameterName::ACTIVE;
-        if (imc_src == "Ardupilot Tracker") return IMC_DCCL::ParameterName::ARDUPILOT_TRACKER;
-        if (imc_src == "Bathymetry Channel Available") return IMC_DCCL::ParameterName::BATHYMETRY_CHANNEL_AVAILABLE;
-        if (imc_src == "Bottom Track -- Minimum Depth") return IMC_DCCL::ParameterName::BOTTOM_TRACK_MINIMUM_DEPTH;
-        if (imc_src == "Data Bits") return IMC_DCCL::ParameterName::DATA_BITS;
-        if (imc_src == "FLIR Duo R") return IMC_DCCL::ParameterName::FLIR_DUO_R;
-        if (imc_src == "Formation Flight") return IMC_DCCL::ParameterName::FORMATION_FLIGHT;
-        if (imc_src == "Formation Positions") return IMC_DCCL::ParameterName::FORMATION_POSITIONS;
-        if (imc_src == "Formation Reference Frame") return IMC_DCCL::ParameterName::FORMATION_REFERENCE_FRAME;
-        if (imc_src == "Frequency") return IMC_DCCL::ParameterName::FREQUENCY;
-        if (imc_src == "High-Frequency Channel") return IMC_DCCL::ParameterName::HIGH_FREQUENCY_CHANNEL;
-        if (imc_src == "High-Frequency Channels") return IMC_DCCL::ParameterName::HIGH_FREQUENCY_CHANNELS;
-        if (imc_src == "High-Frequency Range") return IMC_DCCL::ParameterName::HIGH_FREQUENCY_RANGE;
-        if (imc_src == "Low-Frequency Bathymetry Channel") return IMC_DCCL::ParameterName::LOW_FREQUENCY_BATHYMETRY_CHANNEL;
-        if (imc_src == "Low-Frequency Channel") return IMC_DCCL::ParameterName::LOW_FREQUENCY_CHANNEL;
-        if (imc_src == "Low-Frequency Channels") return IMC_DCCL::ParameterName::LOW_FREQUENCY_CHANNELS;
-        if (imc_src == "Low-Frequency Range") return IMC_DCCL::ParameterName::LOW_FREQUENCY_RANGE;
-        if (imc_src == "Onboard Camera") return IMC_DCCL::ParameterName::ONBOARD_CAMERA;
-        if (imc_src == "Optimize for this Speed") return IMC_DCCL::ParameterName::OPTIMIZE_FOR_THIS_SPEED;
-        if (imc_src == "Periodicity of Data Sampling") return IMC_DCCL::ParameterName::PERIODICITY_OF_DATA_SAMPLING;
-        if (imc_src == "Profile Mode") return IMC_DCCL::ParameterName::PROFILE_MODE;
-        if (imc_src == "Range") return IMC_DCCL::ParameterName::RANGE;
-        if (imc_src == "Range Multiplier") return IMC_DCCL::ParameterName::RANGE_MULTIPLIER;
-        if (imc_src == "Sample Time Duration") return IMC_DCCL::ParameterName::SAMPLE_TIME_DURATION;
-        if (imc_src == "Scale Factor") return IMC_DCCL::ParameterName::SCALE_FACTOR;
-        if (imc_src == "Sector Width") return IMC_DCCL::ParameterName::SECTOR_WIDTH;
-        if (imc_src == "Shutter Value (ms)") return IMC_DCCL::ParameterName::SHUTTER_VALUE_MS;
-        if (imc_src == "Step Size") return IMC_DCCL::ParameterName::STEP_SIZE;
-        if (imc_src == "Strobe Delay (us)") return IMC_DCCL::ParameterName::STROBE_DELAY_US;
-        if (imc_src == "Thruster Always On") return IMC_DCCL::ParameterName::THRUSTER_ALWAYS_ON;
-        if (imc_src == "Transition to FW") return IMC_DCCL::ParameterName::TRANSITION_TO_FW;
-        if (imc_src == "Transition to MC") return IMC_DCCL::ParameterName::TRANSITION_TO_MC;
-        if (imc_src == "Use controller") return IMC_DCCL::ParameterName::USE_CONTROLLER;
-        if (imc_src == "Vehicle List") return IMC_DCCL::ParameterName::VEHICLE_LIST;
-        return IMC_DCCL::ParameterName::PN_UNKNOWN;
-}
-
-
-// ================ ParameterName Message ================
-std::string decodeParameterName(const uint8_t& dccl_src)
-{
-        if (dccl_src == IMC_DCCL::ParameterName::ACTIVE) return "Active";
-        if (dccl_src == IMC_DCCL::ParameterName::ARDUPILOT_TRACKER) return "Ardupilot Tracker";
-        if (dccl_src == IMC_DCCL::ParameterName::BATHYMETRY_CHANNEL_AVAILABLE) return "Bathymetry Channel Available";
-        if (dccl_src == IMC_DCCL::ParameterName::BOTTOM_TRACK_MINIMUM_DEPTH) return "Bottom Track -- Minimum Depth";
-        if (dccl_src == IMC_DCCL::ParameterName::DATA_BITS) return "Data Bits";
-        if (dccl_src == IMC_DCCL::ParameterName::FLIR_DUO_R) return "FLIR Duo R";
-        if (dccl_src == IMC_DCCL::ParameterName::FORMATION_FLIGHT) return "Formation Flight";
-        if (dccl_src == IMC_DCCL::ParameterName::FORMATION_POSITIONS) return "Formation Positions";
-        if (dccl_src == IMC_DCCL::ParameterName::FORMATION_REFERENCE_FRAME) return "Formation Reference Frame";
-        if (dccl_src == IMC_DCCL::ParameterName::FREQUENCY) return "Frequency";
-        if (dccl_src == IMC_DCCL::ParameterName::HIGH_FREQUENCY_CHANNEL) return "High-Frequency Channel";
-        if (dccl_src == IMC_DCCL::ParameterName::HIGH_FREQUENCY_CHANNELS) return "High-Frequency Channels";
-        if (dccl_src == IMC_DCCL::ParameterName::HIGH_FREQUENCY_RANGE) return "High-Frequency Range";
-        if (dccl_src == IMC_DCCL::ParameterName::LOW_FREQUENCY_BATHYMETRY_CHANNEL) return "Low-Frequency Bathymetry Channel";
-        if (dccl_src == IMC_DCCL::ParameterName::LOW_FREQUENCY_CHANNEL) return "Low-Frequency Channel";
-        if (dccl_src == IMC_DCCL::ParameterName::LOW_FREQUENCY_CHANNELS) return "Low-Frequency Channels";
-        if (dccl_src == IMC_DCCL::ParameterName::LOW_FREQUENCY_RANGE) return "Low-Frequency Range";
-        if (dccl_src == IMC_DCCL::ParameterName::ONBOARD_CAMERA) return "Onboard Camera";
-        if (dccl_src == IMC_DCCL::ParameterName::OPTIMIZE_FOR_THIS_SPEED) return "Optimize for this Speed";
-        if (dccl_src == IMC_DCCL::ParameterName::PERIODICITY_OF_DATA_SAMPLING) return "Periodicity of Data Sampling";
-        if (dccl_src == IMC_DCCL::ParameterName::PROFILE_MODE) return "Profile Mode";
-        if (dccl_src == IMC_DCCL::ParameterName::RANGE) return "Range";
-        if (dccl_src == IMC_DCCL::ParameterName::RANGE_MULTIPLIER) return "Range Multiplier";
-        if (dccl_src == IMC_DCCL::ParameterName::SAMPLE_TIME_DURATION) return "Sample Time Duration";
-        if (dccl_src == IMC_DCCL::ParameterName::SCALE_FACTOR) return "Scale Factor";
-        if (dccl_src == IMC_DCCL::ParameterName::SECTOR_WIDTH) return "Sector Width";
-        if (dccl_src == IMC_DCCL::ParameterName::SHUTTER_VALUE_MS) return "Shutter Value (ms)";
-        if (dccl_src == IMC_DCCL::ParameterName::STEP_SIZE) return "Step Size";
-        if (dccl_src == IMC_DCCL::ParameterName::STROBE_DELAY_US) return "Strobe Delay (us)";
-        if (dccl_src == IMC_DCCL::ParameterName::THRUSTER_ALWAYS_ON) return "Thruster Always On";
-        if (dccl_src == IMC_DCCL::ParameterName::TRANSITION_TO_FW) return "Transition to FW";
-        if (dccl_src == IMC_DCCL::ParameterName::TRANSITION_TO_MC) return "Transition to MC";
-        if (dccl_src == IMC_DCCL::ParameterName::USE_CONTROLLER) return "Use controller";
-        if (dccl_src == IMC_DCCL::ParameterName::VEHICLE_LIST) return "Vehicle List";
 }
 
 

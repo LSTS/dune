@@ -115,6 +115,20 @@ struct ParameterValueDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 ParameterValueDefaultTypeInternal _ParameterValue_default_instance_;
+PROTOBUF_CONSTEXPR ParameterName::ParameterName(
+    ::_pbi::ConstantInitialized): _impl_{
+    /*decltype(_impl_.ParameterNameUnion_)*/{}
+  , /*decltype(_impl_._cached_size_)*/{}
+  , /*decltype(_impl_._oneof_case_)*/{}} {}
+struct ParameterNameDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR ParameterNameDefaultTypeInternal()
+      : _instance(::_pbi::ConstantInitialized{}) {}
+  ~ParameterNameDefaultTypeInternal() {}
+  union {
+    ParameterName _instance;
+  };
+};
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 ParameterNameDefaultTypeInternal _ParameterName_default_instance_;
 PROTOBUF_CONSTEXPR PathPoint::PathPoint(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_._has_bits_)*/{}
@@ -147,8 +161,8 @@ struct ManeuverDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 ManeuverDefaultTypeInternal _Maneuver_default_instance_;
 PROTOBUF_CONSTEXPR EntityParameter::EntityParameter(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.value_)*/nullptr
-  , /*decltype(_impl_.name_)*/0
+    /*decltype(_impl_.name_)*/nullptr
+  , /*decltype(_impl_.value_)*/nullptr
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct EntityParameterDefaultTypeInternal {
   PROTOBUF_CONSTEXPR EntityParameterDefaultTypeInternal()
@@ -512,7 +526,7 @@ struct PlanControlArgUnionDefaultTypeInternal {
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PlanControlArgUnionDefaultTypeInternal _PlanControlArgUnion_default_instance_;
 }  // namespace IMC_DCCL
-static ::_pb::Metadata file_level_metadata_IMC_5fDCCL_2eproto[28];
+static ::_pb::Metadata file_level_metadata_IMC_5fDCCL_2eproto[29];
 static const ::_pb::EnumDescriptor* file_level_enum_descriptors_IMC_5fDCCL_2eproto[15];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_IMC_5fDCCL_2eproto = nullptr;
 
@@ -607,6 +621,15 @@ const uint32_t TableStruct_IMC_5fDCCL_2eproto::offsets[] PROTOBUF_SECTION_VARIAB
   ::_pbi::kInvalidFieldOffsetTag,
   ::_pbi::kInvalidFieldOffsetTag,
   PROTOBUF_FIELD_OFFSET(::IMC_DCCL::ParameterValue, _impl_.ParameterValueUnion_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::ParameterName, _internal_metadata_),
+  ~0u,  // no _extensions_
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::ParameterName, _impl_._oneof_case_[0]),
+  ~0u,  // no _weak_field_map_
+  ~0u,  // no _inlined_string_donated_
+  ::_pbi::kInvalidFieldOffsetTag,
+  ::_pbi::kInvalidFieldOffsetTag,
+  PROTOBUF_FIELD_OFFSET(::IMC_DCCL::ParameterName, _impl_.ParameterNameUnion_),
   PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PathPoint, _impl_._has_bits_),
   PROTOBUF_FIELD_OFFSET(::IMC_DCCL::PathPoint, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -953,29 +976,30 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 32, 46, -1, sizeof(::IMC_DCCL::FollowPath)},
   { 54, 70, -1, sizeof(::IMC_DCCL::Goto)},
   { 80, -1, -1, sizeof(::IMC_DCCL::ParameterValue)},
-  { 90, 99, -1, sizeof(::IMC_DCCL::PathPoint)},
-  { 102, -1, -1, sizeof(::IMC_DCCL::Maneuver)},
-  { 113, -1, -1, sizeof(::IMC_DCCL::EntityParameter)},
-  { 121, -1, -1, sizeof(::IMC_DCCL::SetEntityParameters)},
-  { 129, -1, -1, sizeof(::IMC_DCCL::ManeuverIDCombined)},
-  { 137, -1, -1, sizeof(::IMC_DCCL::ManeuverID)},
-  { 146, -1, -1, sizeof(::IMC_DCCL::TransitionCondition)},
-  { 155, 174, -1, sizeof(::IMC_DCCL::Loiter)},
-  { 187, -1, -1, sizeof(::IMC_DCCL::PlanManeuverStartActionsUnion)},
-  { 195, -1, -1, sizeof(::IMC_DCCL::PlanManeuver)},
-  { 204, -1, -1, sizeof(::IMC_DCCL::PlanTransition)},
-  { 213, 224, -1, sizeof(::IMC_DCCL::VerticalProfile)},
-  { 229, 255, -1, sizeof(::IMC_DCCL::EstimatedState)},
-  { 275, 289, -1, sizeof(::IMC_DCCL::PlanSpecification)},
-  { 297, 309, -1, sizeof(::IMC_DCCL::PlanDB)},
-  { 315, 328, -1, sizeof(::IMC_DCCL::PlanDBState)},
-  { 335, 347, -1, sizeof(::IMC_DCCL::PlanDBInformation)},
-  { 353, 366, -1, sizeof(::IMC_DCCL::PlanControl)},
-  { 373, 386, -1, sizeof(::IMC_DCCL::PlanStatistics)},
-  { 393, -1, -1, sizeof(::IMC_DCCL::PlanDBArgUnion)},
-  { 403, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationStartActionsUnion)},
-  { 411, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationEndActionsUnion)},
-  { 419, -1, -1, sizeof(::IMC_DCCL::PlanControlArgUnion)},
+  { 90, -1, -1, sizeof(::IMC_DCCL::ParameterName)},
+  { 99, 108, -1, sizeof(::IMC_DCCL::PathPoint)},
+  { 111, -1, -1, sizeof(::IMC_DCCL::Maneuver)},
+  { 122, -1, -1, sizeof(::IMC_DCCL::EntityParameter)},
+  { 130, -1, -1, sizeof(::IMC_DCCL::SetEntityParameters)},
+  { 138, -1, -1, sizeof(::IMC_DCCL::ManeuverIDCombined)},
+  { 146, -1, -1, sizeof(::IMC_DCCL::ManeuverID)},
+  { 155, -1, -1, sizeof(::IMC_DCCL::TransitionCondition)},
+  { 164, 183, -1, sizeof(::IMC_DCCL::Loiter)},
+  { 196, -1, -1, sizeof(::IMC_DCCL::PlanManeuverStartActionsUnion)},
+  { 204, -1, -1, sizeof(::IMC_DCCL::PlanManeuver)},
+  { 213, -1, -1, sizeof(::IMC_DCCL::PlanTransition)},
+  { 222, 233, -1, sizeof(::IMC_DCCL::VerticalProfile)},
+  { 238, 264, -1, sizeof(::IMC_DCCL::EstimatedState)},
+  { 284, 298, -1, sizeof(::IMC_DCCL::PlanSpecification)},
+  { 306, 318, -1, sizeof(::IMC_DCCL::PlanDB)},
+  { 324, 337, -1, sizeof(::IMC_DCCL::PlanDBState)},
+  { 344, 356, -1, sizeof(::IMC_DCCL::PlanDBInformation)},
+  { 362, 375, -1, sizeof(::IMC_DCCL::PlanControl)},
+  { 382, 395, -1, sizeof(::IMC_DCCL::PlanStatistics)},
+  { 402, -1, -1, sizeof(::IMC_DCCL::PlanDBArgUnion)},
+  { 412, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationStartActionsUnion)},
+  { 420, -1, -1, sizeof(::IMC_DCCL::PlanSpecificationEndActionsUnion)},
+  { 428, -1, -1, sizeof(::IMC_DCCL::PlanControlArgUnion)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -984,6 +1008,7 @@ static const ::_pb::Message* const file_default_instances[] = {
   &::IMC_DCCL::_FollowPath_default_instance_._instance,
   &::IMC_DCCL::_Goto_default_instance_._instance,
   &::IMC_DCCL::_ParameterValue_default_instance_._instance,
+  &::IMC_DCCL::_ParameterName_default_instance_._instance,
   &::IMC_DCCL::_PathPoint_default_instance_._instance,
   &::IMC_DCCL::_Maneuver_default_instance_._instance,
   &::IMC_DCCL::_EntityParameter_default_instance_._instance,
@@ -1052,241 +1077,244 @@ const char descriptor_table_protodef_IMC_5fDCCL_2eproto[] PROTOBUF_SECTION_VARIA
   "\n\014param_number\030\001 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000"
   "\000\000\210\303@H\000\022*\n\nparam_enum\030\002 \001(\0162\024.IMC_DCCL.P"
   "aramValueH\000\022\035\n\014param_string\030\003 \001(\tB\005\242\?\002H\024"
-  "H\000:\010\242\?\005\020\254\002(\004B\025\n\023ParameterValueUnion\"\241\001\n\t"
-  "PathPoint\022\'\n\001x\030\001 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001\000\000\000"
-  "\000\000@\237@H\000\210\001\001\022\'\n\001y\030\002 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001\000\000"
-  "\000\000\000@\237@H\001\210\001\001\022\'\n\001z\030\003 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000"
-  "\000\000\000\000\000y@H\002\210\001\001:\007\242\?\004\020P(\004B\004\n\002_xB\004\n\002_yB\004\n\002_z\""
-  "\355\001\n\010Maneuver\022\'\n\rgoto_maneuver\030\001 \001(\0132\016.IM"
-  "C_DCCL.GotoH\000\0223\n\023followpath_maneuver\030\002 \001"
-  "(\0132\024.IMC_DCCL.FollowPathH\000\022+\n\017loiter_man"
-  "euver\030\003 \001(\0132\020.IMC_DCCL.LoiterH\000\022;\n\027stati"
-  "onkeeping_maneuver\030\004 \001(\0132\030.IMC_DCCL.Stat"
-  "ionKeepingH\000:\010\242\?\005\020\254\002(\004B\017\n\rManeuverUnion\""
-  "j\n\017EntityParameter\022%\n\004name\030\001 \001(\0162\027.IMC_D"
-  "CCL.ParameterName\022\'\n\005value\030\002 \001(\0132\030.IMC_D"
-  "CCL.ParameterValue:\007\242\?\004\020\024(\004\"t\n\023SetEntity"
-  "Parameters\022\"\n\004name\030\001 \001(\0162\024.IMC_DCCL.Enti"
-  "tyName\0220\n\006params\030\002 \003(\0132\031.IMC_DCCL.Entity"
-  "ParameterB\005\242\?\002P\n:\007\242\?\004\020((\004\"|\n\022ManeuverIDC"
-  "ombined\022-\n\rmaneuver_type\030\001 \001(\0162\026.IMC_DCC"
-  "L.ManeuverType\022.\n\017maneuver_number\030\002 \001(\005B"
-  "\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\000\000I@:\007\242\?\004\020\036(\004\"y\n\nManeu"
-  "verID\0223\n\013id_combined\030\001 \001(\0132\034.IMC_DCCL.Ma"
-  "neuverIDCombinedH\000\022\032\n\tid_string\030\002 \001(\tB\005\242"
-  "\?\002H\024H\000:\007\242\?\004\020\036(\004B\021\n\017ManeuverIDUnion\"\232\001\n\023T"
-  "ransitionCondition\022;\n\016condition_enum\030\001 \001"
-  "(\0162!.IMC_DCCL.TransitionConditionEnumH\000\022"
-  "!\n\020condition_string\030\002 \001(\tB\005\242\?\002H\024H\000:\007\242\?\004\020"
-  "\036(\004B\032\n\030TransitionConditionUnion\"\360\006\n\006Loit"
-  "er\022+\n\007timeout\030\001 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\340\377"
-  "\357@H\000\210\001\001\022)\n\003lat\030\002 \001(\002B\027\242\?\024 \006)z\000\213\374\372!\371\2771z\000\213"
-  "\374\372!\371\?H\001\210\001\001\022)\n\003lon\030\003 \001(\002B\027\242\?\024 \006)z\000\213\374\372!\t\3001"
-  "z\000\213\374\372!\t@H\002\210\001\001\022\'\n\001z\030\004 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\300"
-  "1\000\000\000\000\000\000y@H\003\210\001\001\022!\n\007z_units\030\005 \001(\0162\020.IMC_DC"
-  "CL.ZUnits\022,\n\010duration\030\006 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000"
-  "\0001\000\000\000\000\000\030\305@H\004\210\001\001\022&\n\005speed\030\007 \001(\002B\027\242\?\024 \001)\000\000"
-  "\000\000\000@\237\3001\000\000\000\000\000@\237@\022)\n\013speed_units\030\010 \001(\0162\024.I"
-  "MC_DCCL.SpeedUnits\022-\n\004type\030\t \001(\0162\037.IMC_D"
-  "CCL.Loiter.LoiterTypeEnum\022,\n\006radius\030\n \001("
-  "\002B\027\242\?\024 \001)\000\000\000\000\000\000\360\?1\000\000\000\000\000j\370@H\005\210\001\001\022,\n\006lengt"
-  "h\030\013 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000\360\?1\000\000\000\000\000j\370@H\006\210\001\001\022-\n"
-  "\007bearing\030\014 \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\000\0001o\022\203\300\312!\031@H"
-  "\007\210\001\001\0221\n\tdirection\030\r \001(\0162\036.IMC_DCCL.Loite"
-  "r.DirectionEnum\"o\n\016LoiterTypeEnum\022\016\n\nLT_"
-  "DEFAULT\020\000\022\017\n\013LT_CIRCULAR\020\001\022\020\n\014LT_RACETRA"
-  "CK\020\002\022\014\n\010LT_EIGHT\020\003\022\014\n\010LT_HOVER\020\004\022\016\n\nLT_U"
-  "NKNOWN\020\005\"]\n\rDirectionEnum\022\013\n\007LD_VDEP\020\000\022\r"
-  "\n\tLD_CLOCKW\020\001\022\016\n\nLD_CCLOCKW\020\002\022\020\n\014LD_IWIN"
-  "DCURR\020\003\022\016\n\nLD_UNKNOWN\020\004:\010\242\?\005\020\350\007(\004B\n\n\010_ti"
-  "meoutB\006\n\004_latB\006\n\004_lonB\004\n\002_zB\013\n\t_duration"
-  "B\t\n\007_radiusB\t\n\007_lengthB\n\n\010_bearing\"y\n\035Pl"
-  "anManeuverStartActionsUnion\022+\n\002ep\030\001 \001(\0132"
-  "\035.IMC_DCCL.SetEntityParametersH\000:\t\242\?\006\020\200\352"
-  "0(\004B \n\036PlanManeuverStartActionsUnion_\"\254\001"
-  "\n\014PlanManeuver\022)\n\013maneuver_id\030\001 \001(\0132\024.IM"
-  "C_DCCL.ManeuverID\022 \n\004data\030\002 \001(\0132\022.IMC_DC"
-  "CL.Maneuver\022E\n\rstart_actions\030\003 \003(\0132\'.IMC"
-  "_DCCL.PlanManeuverStartActionsUnionB\005\242\?\002"
-  "P\017:\010\242\?\005\020\220\003(\004\"\237\001\n\016PlanTransition\022(\n\nsourc"
-  "e_man\030\001 \001(\0132\024.IMC_DCCL.ManeuverID\022&\n\010des"
-  "t_man\030\002 \001(\0132\024.IMC_DCCL.ManeuverID\0221\n\ncon"
-  "ditions\030\003 \001(\0132\035.IMC_DCCL.TransitionCondi"
-  "tion:\010\242\?\005\020\220\003(\004\"\333\003\n\017VerticalProfile\022:\n\tpa"
-  "rameter\030\001 \001(\0162\'.IMC_DCCL.VerticalProfile"
-  ".ParameterEnum\0220\n\nnumsamples\030\002 \001(\005B\027\242\?\024 "
-  "\001)\000\000\000\000\000\000\000\0001\000\000\000\000\000\340o@H\000\210\001\001\022/\n\007samples\030\003 \003("
-  "\0132\027.IMC_DCCL.ProfileSampleB\005\242\?\002PF\022)\n\003lat"
-  "\030\004 \001(\002B\027\242\?\024 \006)z\000\213\374\372!\371\2771z\000\213\374\372!\371\?H\001\210\001\001\022)\n\003"
-  "lon\030\005 \001(\002B\027\242\?\024 \006)z\000\213\374\372!\t\3001z\000\213\374\372!\t@H\002\210\001\001\""
-  "\250\001\n\rParameterEnum\022\024\n\020PROF_TEMPERATURE\020\000\022"
-  "\021\n\rPROF_SALINITY\020\001\022\025\n\021PROF_CONDUCTIVITY\020"
-  "\002\022\013\n\007PROF_PH\020\003\022\016\n\nPROF_REDOX\020\004\022\024\n\020PROF_C"
-  "HLOROPHYLL\020\005\022\022\n\016PROF_TURBIDITY\020\006\022\020\n\014PROF"
-  "_UNKNOWN\020\007:\t\242\?\006\010o\020P(\004B\r\n\013_numsamplesB\006\n\004"
-  "_latB\006\n\004_lon\"\374\007\n\016EstimatedState\022)\n\003lat\030\001"
-  " \001(\002B\027\242\?\024 \006)z\000\213\374\372!\371\2771z\000\213\374\372!\371\?H\000\210\001\001\022)\n\003lo"
-  "n\030\002 \001(\002B\027\242\?\024 \006)z\000\213\374\372!\t\3001z\000\213\374\372!\t@H\001\210\001\001\022,\n"
-  "\006height\030\003 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\217\3001\000\000\000\000\000X\273@H\002"
-  "\210\001\001\022\'\n\001x\030\004 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001\000\000\000\000\000@\237@H"
-  "\003\210\001\001\022\'\n\001y\030\005 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001\000\000\000\000\000@\237@"
-  "H\004\210\001\001\022\'\n\001z\030\006 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\3001\000\000\000\000\000\000y"
-  "@H\005\210\001\001\022)\n\003phi\030\007 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233"
-  "\304 \t@H\006\210\001\001\022+\n\005theta\030\010 \001(\002B\027\242\?\024 \003)\037\205\353Q\270\036\371\277"
-  "1\037\205\353Q\270\036\371\?H\007\210\001\001\022)\n\003psi\030\t \001(\002B\027\242\?\024 \003)T\343\245\233\304"
-  " \t\3001T\343\245\233\304 \t@H\010\210\001\001\022\'\n\001u\030\n \001(\002B\027\242\?\024 \001)\000\000\000\000"
-  "\000\000$\3001\000\000\000\000\000\000$@H\t\210\001\001\022\'\n\001v\030\013 \001(\002B\027\242\?\024 \001)\000\000\000"
-  "\000\000\000$\3001\000\000\000\000\000\000$@H\n\210\001\001\022\'\n\001w\030\014 \001(\002B\027\242\?\024 \001)\000\000"
-  "\000\000\000\000$\3001\000\000\000\000\000\000$@H\013\210\001\001\022(\n\002vx\030\r \001(\002B\027\242\?\024 \001)"
-  "\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@H\014\210\001\001\022(\n\002vy\030\016 \001(\002B\027\242\?\024 "
-  "\001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@H\r\210\001\001\022(\n\002vz\030\017 \001(\002B\027\242\?"
-  "\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@H\016\210\001\001\022\'\n\001p\030\020 \001(\002B\027\242"
-  "\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@H\017\210\001\001\022\'\n\001q\030\021 \001(\002B\027"
-  "\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@H\020\210\001\001\022\'\n\001r\030\022 \001(\002B"
-  "\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@H\021\210\001\001\022+\n\005depth\030\023"
-  " \001(\002B\027\242\?\024 \002)\000\000\000\000\000\000\360\2771\000\000\000\000\000\000y@H\022\210\001\001\022)\n\003al"
-  "t\030\024 \001(\002B\027\242\?\024 \002)\000\000\000\000\000\000\360\2771\000\000\000\000\000\210\263@H\023\210\001\001:\n\242"
-  "\?\007\010\336\002\020P(\004B\006\n\004_latB\006\n\004_lonB\t\n\007_heightB\004\n\002"
-  "_xB\004\n\002_yB\004\n\002_zB\006\n\004_phiB\010\n\006_thetaB\006\n\004_psi"
-  "B\004\n\002_uB\004\n\002_vB\004\n\002_wB\005\n\003_vxB\005\n\003_vyB\005\n\003_vzB"
-  "\004\n\002_pB\004\n\002_qB\004\n\002_rB\010\n\006_depthB\006\n\004_alt\"\322\003\n\021"
-  "PlanSpecification\022\033\n\007plan_id\030\001 \001(\tB\005\242\?\002H"
-  "\024H\000\210\001\001\022\037\n\013description\030\002 \001(\tB\005\242\?\002H\002H\001\210\001\001\022"
-  "\036\n\nvnamespace\030\003 \001(\tB\005\242\?\002H\002H\002\210\001\001\022*\n\014start"
-  "_man_id\030\004 \001(\0132\024.IMC_DCCL.ManeuverID\0220\n\tm"
-  "aneuvers\030\005 \003(\0132\026.IMC_DCCL.PlanManeuverB\005"
-  "\242\?\002P\036\0224\n\013transitions\030\006 \003(\0132\030.IMC_DCCL.Pl"
-  "anTransitionB\005\242\?\002P\036\022J\n\rstart_actions\030\007 \003"
-  "(\0132,.IMC_DCCL.PlanSpecificationStartActi"
-  "onsUnionB\005\242\?\002P\007\022F\n\013end_actions\030\010 \003(\0132*.I"
-  "MC_DCCL.PlanSpecificationEndActionsUnion"
-  "B\005\242\?\002P\007:\014\242\?\t\010\247\004\020\200\3520(\004B\n\n\010_plan_idB\016\n\014_de"
-  "scriptionB\r\n\013_vnamespace\"\255\004\n\006PlanDB\022\'\n\004t"
-  "ype\030\001 \001(\0162\031.IMC_DCCL.PlanDB.TypeEnum\022*\n\002"
-  "op\030\002 \001(\0162\036.IMC_DCCL.PlanDB.OperationEnum"
-  "\0220\n\nrequest_id\030\003 \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000"
-  "\000\000\210\303@H\000\210\001\001\022\033\n\007plan_id\030\004 \001(\tB\005\242\?\002H\024H\001\210\001\001\022"
-  "%\n\003arg\030\005 \001(\0132\030.IMC_DCCL.PlanDBArgUnion\022\030"
-  "\n\004info\030\006 \001(\tB\005\242\?\002H(H\002\210\001\001\"c\n\010TypeEnum\022\017\n\013"
-  "DBT_REQUEST\020\000\022\017\n\013DBT_SUCCESS\020\001\022\017\n\013DBT_FA"
-  "ILURE\020\002\022\023\n\017DBT_IN_PROGRESS\020\003\022\017\n\013DBT_UNKN"
-  "OWN\020\004\"\246\001\n\rOperationEnum\022\014\n\010DBOP_SET\020\000\022\014\n"
-  "\010DBOP_DEL\020\001\022\014\n\010DBOP_GET\020\002\022\021\n\rDBOP_GET_IN"
-  "FO\020\003\022\016\n\nDBOP_CLEAR\020\004\022\022\n\016DBOP_GET_STATE\020\005"
-  "\022\023\n\017DBOP_GET_DSTATE\020\006\022\r\n\tDBOP_BOOT\020\007\022\020\n\014"
-  "DBOP_UNKNOWN\020\010:\014\242\?\t\010\254\004\020\200\3520(\004B\r\n\013_request"
-  "_idB\n\n\010_plan_idB\007\n\005_info\"\253\003\n\013PlanDBState"
-  "\0220\n\nplan_count\030\001 \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000"
-  "\000\000j\370@H\000\210\001\001\022/\n\tplan_size\030\002 \001(\005B\027\242\?\024 \001)\000\000\000"
-  "\000\000\000\000\0001\000\000\000\000\000\000\360\?H\001\210\001\001\0221\n\013change_time\030\003 \001(\002"
-  "B\027\242\?\024 \002)\000\000\000\000\000\000\000\0001\000\000\200pcZ\333AH\002\210\001\001\0220\n\nchange"
-  "_sid\030\004 \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000j\350@H\003\210\001\001"
-  "\022 \n\014change_sname\030\005 \001(\tB\005\242\?\002H(H\004\210\001\001\022\027\n\003md"
-  "5\030\006 \001(\tB\005\242\?\002H(H\005\210\001\001\0226\n\nplans_info\030\007 \003(\0132"
-  "\033.IMC_DCCL.PlanDBInformationB\005\242\?\002Pd:\014\242\?\t"
-  "\010\255\004\020\200\3520(\004B\r\n\013_plan_countB\014\n\n_plan_sizeB\016"
-  "\n\014_change_timeB\r\n\013_change_sidB\017\n\r_change"
-  "_snameB\006\n\004_md5\"\341\002\n\021PlanDBInformation\022\033\n\007"
-  "plan_id\030\001 \001(\tB\005\242\?\002H\024H\000\210\001\001\022/\n\tplan_size\030\002"
-  " \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000\210\263@H\001\210\001\001\0221\n\013ch"
-  "ange_time\030\003 \001(\002B\027\242\?\024 \002)\000\000\000\000\000\000\000\0001\000\000\200pcZ\333A"
-  "H\002\210\001\001\0220\n\nchange_sid\030\004 \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000"
-  "\0001\000\000\000\000\000j\350@H\003\210\001\001\022 \n\014change_sname\030\005 \001(\tB\005\242"
-  "\?\002H(H\004\210\001\001\022\027\n\003md5\030\006 \001(\tB\005\242\?\002H(H\005\210\001\001:\014\242\?\t\010"
-  "\256\004\020\200\3520(\004B\n\n\010_plan_idB\014\n\n_plan_sizeB\016\n\014_c"
-  "hange_timeB\r\n\013_change_sidB\017\n\r_change_sna"
-  "meB\006\n\004_md5\"\243\004\n\013PlanControl\022,\n\004type\030\001 \001(\016"
-  "2\036.IMC_DCCL.PlanControl.TypeEnum\022/\n\002op\030\002"
-  " \001(\0162#.IMC_DCCL.PlanControl.OperationEnu"
-  "m\0220\n\nrequest_id\030\003 \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000"
-  "\000\000\000\210\263@H\000\210\001\001\022\033\n\007plan_id\030\004 \001(\tB\005\242\?\002HdH\001\210\001\001"
-  "\022+\n\005flags\030\005 \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000\210\263@"
-  "H\002\210\001\001\022*\n\003arg\030\006 \001(\0132\035.IMC_DCCL.PlanContro"
-  "lArgUnion\022\030\n\004info\030\007 \001(\tB\005\242\?\002HdH\003\210\001\001\"`\n\010T"
-  "ypeEnum\022\016\n\nPC_REQUEST\020\000\022\016\n\nPC_SUCCESS\020\001\022"
-  "\016\n\nPC_FAILURE\020\002\022\022\n\016PC_IN_PROGRESS\020\003\022\020\n\014P"
-  "CTE_UNKNOWN\020\004\"U\n\rOperationEnum\022\014\n\010PC_STA"
-  "RT\020\000\022\013\n\007PC_STOP\020\001\022\013\n\007PC_LOAD\020\002\022\n\n\006PC_GET"
-  "\020\003\022\020\n\014PCOE_UNKNOWN\020\004:\014\242\?\t\010\257\004\020\200\3520(\004B\r\n\013_r"
-  "equest_idB\n\n\010_plan_idB\010\n\006_flagsB\007\n\005_info"
-  "\"\253\003\n\016PlanStatistics\022\033\n\007plan_id\030\001 \001(\tB\005\242\?"
-  "\002H\024H\000\210\001\001\022/\n\004type\030\002 \001(\0162!.IMC_DCCL.PlanSt"
-  "atistics.TypeEnum\0220\n\nproperties\030\003 \001(\005B\027\242"
-  "\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000\210\263@H\001\210\001\001\022\035\n\tdurations"
-  "\030\004 \001(\tB\005\242\?\002HdH\002\210\001\001\022\035\n\tdistances\030\005 \001(\tB\005\242"
-  "\?\002HdH\003\210\001\001\022\033\n\007actions\030\006 \001(\tB\005\242\?\002HdH\004\210\001\001\022\030"
-  "\n\004fuel\030\007 \001(\tB\005\242\?\002HdH\005\210\001\001\"J\n\010TypeEnum\022\016\n\n"
-  "TP_PREPLAN\020\000\022\r\n\tTP_INPLAN\020\001\022\017\n\013TP_POSTPL"
-  "AN\020\002\022\016\n\nTP_UNKNOWN\020\003:\014\242\?\t\010\264\004\020\200\3520(\004B\n\n\010_p"
-  "lan_idB\r\n\013_propertiesB\014\n\n_durationsB\014\n\n_"
-  "distancesB\n\n\010_actionsB\007\n\005_fuel\"\265\001\n\016PlanD"
-  "BArgUnion\022-\n\006ps_arg\030\001 \001(\0132\033.IMC_DCCL.Pla"
-  "nSpecificationH\000\022-\n\006pi_arg\030\002 \001(\0132\033.IMC_D"
-  "CCL.PlanDBInformationH\000\022\'\n\006pc_arg\030\003 \001(\0132"
-  "\025.IMC_DCCL.PlanDBStateH\000:\t\242\?\006\020\200\3520(\004B\021\n\017P"
-  "lanDBArgUnion_\"\203\001\n\"PlanSpecificationStar"
-  "tActionsUnion\022+\n\002ep\030\001 \001(\0132\035.IMC_DCCL.Set"
-  "EntityParametersH\000:\t\242\?\006\020\200\3520(\004B%\n#PlanSpe"
-  "cificationStartActionsUnion_\"\177\n PlanSpec"
-  "ificationEndActionsUnion\022+\n\002ep\030\001 \001(\0132\035.I"
-  "MC_DCCL.SetEntityParametersH\000:\t\242\?\006\020\200\3520(\004"
-  "B#\n!PlanSpecificationEndActionsUnion_\"\267\001"
-  "\n\023PlanControlArgUnion\022-\n\006ps_arg\030\001 \001(\0132\033."
-  "IMC_DCCL.PlanSpecificationH\000\022%\n\007man_arg\030"
-  "\002 \001(\0132\022.IMC_DCCL.ManeuverH\000\022,\n\010stat_arg\030"
-  "\003 \001(\0132\030.IMC_DCCL.PlanStatisticsH\000:\t\242\?\006\020\200"
-  "\3520(\004B\021\n\017PlanDBArgUnion_*N\n\006ZUnits\022\n\n\006Z_N"
-  "ONE\020\000\022\013\n\007Z_DEPTH\020\001\022\016\n\nZ_ALTITUDE\020\002\022\014\n\010Z_"
-  "HEIGHT\020\003\022\r\n\tZ_UNKNOWN\020\004*]\n\nSpeedUnits\022\024\n"
-  "\020SUNITS_METERS_PS\020\000\022\016\n\nSUNITS_RPM\020\001\022\025\n\021S"
-  "UNITS_PERCENTAGE\020\002\022\022\n\016SUNITS_UNKNOWN\020\003*X"
-  "\n\014ManeuverType\022\010\n\004GOTO\020\000\022\n\n\006LOITER\020\001\022\016\n\n"
-  "FOLLOWPATH\020\002\022\022\n\016STATIONKEEPING\020\003\022\016\n\nMT_U"
-  "NKNOWN\020\004*;\n\nParamValue\022\010\n\004TRUE\020\000\022\t\n\005FALS"
-  "E\020\001\022\010\n\004BOTH\020\002\022\016\n\nPV_UNKNOWN\020\003*=\n\027Transit"
-  "ionConditionEnum\022\022\n\016MANEUVERISDONE\020\000\022\016\n\n"
-  "TC_UNKNOWN\020\001*\261\006\n\rParameterName\022\n\n\006ACTIVE"
-  "\020\000\022\025\n\021ARDUPILOT_TRACKER\020\001\022 \n\034BATHYMETRY_"
-  "CHANNEL_AVAILABLE\020\002\022\036\n\032BOTTOM_TRACK_MINI"
-  "MUM_DEPTH\020\003\022\r\n\tDATA_BITS\020\004\022\016\n\nFLIR_DUO_R"
-  "\020\005\022\024\n\020FORMATION_FLIGHT\020\006\022\027\n\023FORMATION_PO"
-  "SITIONS\020\007\022\035\n\031FORMATION_REFERENCE_FRAME\020\010"
-  "\022\r\n\tFREQUENCY\020\t\022\032\n\026HIGH_FREQUENCY_CHANNE"
-  "L\020\n\022\033\n\027HIGH_FREQUENCY_CHANNELS\020\013\022\030\n\024HIGH"
-  "_FREQUENCY_RANGE\020\014\022$\n LOW_FREQUENCY_BATH"
-  "YMETRY_CHANNEL\020\r\022\031\n\025LOW_FREQUENCY_CHANNE"
-  "L\020\016\022\032\n\026LOW_FREQUENCY_CHANNELS\020\017\022\027\n\023LOW_F"
-  "REQUENCY_RANGE\020\020\022\022\n\016ONBOARD_CAMERA\020\021\022\033\n\027"
-  "OPTIMIZE_FOR_THIS_SPEED\020\022\022 \n\034PERIODICITY"
-  "_OF_DATA_SAMPLING\020\023\022\020\n\014PROFILE_MODE\020\024\022\t\n"
-  "\005RANGE\020\025\022\024\n\020RANGE_MULTIPLIER\020\026\022\030\n\024SAMPLE"
-  "_TIME_DURATION\020\027\022\020\n\014SCALE_FACTOR\020\030\022\020\n\014SE"
-  "CTOR_WIDTH\020\031\022\024\n\020SHUTTER_VALUE_MS\020\032\022\r\n\tST"
-  "EP_SIZE\020\033\022\023\n\017STROBE_DELAY_US\020\034\022\026\n\022THRUST"
-  "ER_ALWAYS_ON\020\035\022\024\n\020TRANSITION_TO_FW\020\036\022\024\n\020"
-  "TRANSITION_TO_MC\020\037\022\022\n\016USE_CONTROLLER\020 \022\020"
-  "\n\014VEHICLE_LIST\020!\022\016\n\nPN_UNKNOWN\020\"*\326\003\n\nEnt"
-  "ityName\022\022\n\016ACOUSTIC_MODEM\020\000\022\010\n\004ADCP\020\001\022\r\n"
-  "\tAUTOPILOT\020\002\022\n\n\006CAMERA\020\003\022\007\n\003CTD\020\004\022\024\n\020DIS"
-  "SOLVED_OXYGEN\020\005\022\020\n\014FLUOROMETERS\020\006\022\031\n\025FOR"
-  "MATION_COORDINATOR\020\007\022\026\n\022HEADING_CONTROLL"
-  "ER\020\010\022\022\n\016HEIGHT_CONTROL\020\t\022\007\n\003LBL\020\n\022\036\n\032MOT"
-  "OR_CONTROLLER_CHANNEL_0\020\013\022\036\n\032MOTOR_CONTR"
-  "OLLER_CHANNEL_1\020\014\022\r\n\tMULTIBEAM\020\r\022\020\n\014PATH"
-  "_CONTROL\020\016\022\027\n\023PATH_CONTROL_LEADER\020\017\022\017\n\013P"
-  "ENCIL_BEAM\020\020\022\021\n\rPHOTO_TRIGGER\020\021\022\n\n\006RANGE"
-  "R\020\022\022\022\n\016REMOTE_CONTROL\020\023\022\024\n\020REMOTE_OPERAT"
-  "ION\020\024\022\014\n\010SIDESCAN\020\025\022\r\n\tSLAVE_CPU\020\026\022\r\n\tUA"
-  "VCAMERA\020\027\022\016\n\nEN_UNKNOWN\020\030b\006proto3"
+  "H\000:\010\242\?\005\020\254\002(\004B\025\n\023ParameterValueUnion\"y\n\rP"
+  "arameterName\022)\n\nparam_enum\030\001 \001(\0162\023.IMC_D"
+  "CCL.ParamNameH\000\022\035\n\014param_string\030\002 \001(\tB\005\242"
+  "\?\002H\024H\000:\010\242\?\005\020\254\002(\004B\024\n\022ParameterNameUnion\"\241"
+  "\001\n\tPathPoint\022\'\n\001x\030\001 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001"
+  "\000\000\000\000\000@\237@H\000\210\001\001\022\'\n\001y\030\002 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\300"
+  "1\000\000\000\000\000@\237@H\001\210\001\001\022\'\n\001z\030\003 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y"
+  "\3001\000\000\000\000\000\000y@H\002\210\001\001:\007\242\?\004\020P(\004B\004\n\002_xB\004\n\002_yB\004\n\002"
+  "_z\"\355\001\n\010Maneuver\022\'\n\rgoto_maneuver\030\001 \001(\0132\016"
+  ".IMC_DCCL.GotoH\000\0223\n\023followpath_maneuver\030"
+  "\002 \001(\0132\024.IMC_DCCL.FollowPathH\000\022+\n\017loiter_"
+  "maneuver\030\003 \001(\0132\020.IMC_DCCL.LoiterH\000\022;\n\027st"
+  "ationkeeping_maneuver\030\004 \001(\0132\030.IMC_DCCL.S"
+  "tationKeepingH\000:\010\242\?\005\020\254\002(\004B\017\n\rManeuverUni"
+  "on\"k\n\017EntityParameter\022%\n\004name\030\001 \001(\0132\027.IM"
+  "C_DCCL.ParameterName\022\'\n\005value\030\002 \001(\0132\030.IM"
+  "C_DCCL.ParameterValue:\010\242\?\005\020\254\002(\004\"x\n\023SetEn"
+  "tityParameters\022\"\n\004name\030\001 \001(\0162\024.IMC_DCCL."
+  "EntityName\0220\n\006params\030\002 \003(\0132\031.IMC_DCCL.En"
+  "tityParameterB\005\242\?\002P\n:\013\242\?\010\010\244\006\020\364\003(\004\"|\n\022Man"
+  "euverIDCombined\022-\n\rmaneuver_type\030\001 \001(\0162\026"
+  ".IMC_DCCL.ManeuverType\022.\n\017maneuver_numbe"
+  "r\030\002 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000\0001\000\000\000\000\000\000I@:\007\242\?\004\020\036(\004\""
+  "y\n\nManeuverID\0223\n\013id_combined\030\001 \001(\0132\034.IMC"
+  "_DCCL.ManeuverIDCombinedH\000\022\032\n\tid_string\030"
+  "\002 \001(\tB\005\242\?\002H\024H\000:\007\242\?\004\020\036(\004B\021\n\017ManeuverIDUni"
+  "on\"\232\001\n\023TransitionCondition\022;\n\016condition_"
+  "enum\030\001 \001(\0162!.IMC_DCCL.TransitionConditio"
+  "nEnumH\000\022!\n\020condition_string\030\002 \001(\tB\005\242\?\002H\024"
+  "H\000:\007\242\?\004\020\036(\004B\032\n\030TransitionConditionUnion\""
+  "\360\006\n\006Loiter\022+\n\007timeout\030\001 \001(\005B\025\242\?\022)\000\000\000\000\000\000\000"
+  "\0001\000\000\000\000\340\377\357@H\000\210\001\001\022)\n\003lat\030\002 \001(\002B\027\242\?\024 \006)z\000\213\374"
+  "\372!\371\2771z\000\213\374\372!\371\?H\001\210\001\001\022)\n\003lon\030\003 \001(\002B\027\242\?\024 \006)z"
+  "\000\213\374\372!\t\3001z\000\213\374\372!\t@H\002\210\001\001\022\'\n\001z\030\004 \001(\002B\027\242\?\024 \001)"
+  "\000\000\000\000\000\000y\3001\000\000\000\000\000\000y@H\003\210\001\001\022!\n\007z_units\030\005 \001(\0162"
+  "\020.IMC_DCCL.ZUnits\022,\n\010duration\030\006 \001(\005B\025\242\?\022"
+  ")\000\000\000\000\000\000\000\0001\000\000\000\000\000\030\305@H\004\210\001\001\022&\n\005speed\030\007 \001(\002B\027"
+  "\242\?\024 \001)\000\000\000\000\000@\237\3001\000\000\000\000\000@\237@\022)\n\013speed_units\030\010"
+  " \001(\0162\024.IMC_DCCL.SpeedUnits\022-\n\004type\030\t \001(\016"
+  "2\037.IMC_DCCL.Loiter.LoiterTypeEnum\022,\n\006rad"
+  "ius\030\n \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000\360\?1\000\000\000\000\000j\370@H\005\210\001\001\022"
+  ",\n\006length\030\013 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000\360\?1\000\000\000\000\000j\370@"
+  "H\006\210\001\001\022-\n\007bearing\030\014 \001(\002B\027\242\?\024 \003)\000\000\000\000\000\000\000\0001o"
+  "\022\203\300\312!\031@H\007\210\001\001\0221\n\tdirection\030\r \001(\0162\036.IMC_DC"
+  "CL.Loiter.DirectionEnum\"o\n\016LoiterTypeEnu"
+  "m\022\016\n\nLT_DEFAULT\020\000\022\017\n\013LT_CIRCULAR\020\001\022\020\n\014LT"
+  "_RACETRACK\020\002\022\014\n\010LT_EIGHT\020\003\022\014\n\010LT_HOVER\020\004"
+  "\022\016\n\nLT_UNKNOWN\020\005\"]\n\rDirectionEnum\022\013\n\007LD_"
+  "VDEP\020\000\022\r\n\tLD_CLOCKW\020\001\022\016\n\nLD_CCLOCKW\020\002\022\020\n"
+  "\014LD_IWINDCURR\020\003\022\016\n\nLD_UNKNOWN\020\004:\010\242\?\005\020\350\007("
+  "\004B\n\n\010_timeoutB\006\n\004_latB\006\n\004_lonB\004\n\002_zB\013\n\t_"
+  "durationB\t\n\007_radiusB\t\n\007_lengthB\n\n\010_beari"
+  "ng\"y\n\035PlanManeuverStartActionsUnion\022+\n\002e"
+  "p\030\001 \001(\0132\035.IMC_DCCL.SetEntityParametersH\000"
+  ":\t\242\?\006\020\200\3520(\004B \n\036PlanManeuverStartActionsU"
+  "nion_\"\254\001\n\014PlanManeuver\022)\n\013maneuver_id\030\001 "
+  "\001(\0132\024.IMC_DCCL.ManeuverID\022 \n\004data\030\002 \001(\0132"
+  "\022.IMC_DCCL.Maneuver\022E\n\rstart_actions\030\003 \003"
+  "(\0132\'.IMC_DCCL.PlanManeuverStartActionsUn"
+  "ionB\005\242\?\002P\017:\010\242\?\005\020\220\003(\004\"\237\001\n\016PlanTransition\022"
+  "(\n\nsource_man\030\001 \001(\0132\024.IMC_DCCL.ManeuverI"
+  "D\022&\n\010dest_man\030\002 \001(\0132\024.IMC_DCCL.ManeuverI"
+  "D\0221\n\nconditions\030\003 \001(\0132\035.IMC_DCCL.Transit"
+  "ionCondition:\010\242\?\005\020\220\003(\004\"\333\003\n\017VerticalProfi"
+  "le\022:\n\tparameter\030\001 \001(\0162\'.IMC_DCCL.Vertica"
+  "lProfile.ParameterEnum\0220\n\nnumsamples\030\002 \001"
+  "(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000\340o@H\000\210\001\001\022/\n\007samp"
+  "les\030\003 \003(\0132\027.IMC_DCCL.ProfileSampleB\005\242\?\002P"
+  "F\022)\n\003lat\030\004 \001(\002B\027\242\?\024 \006)z\000\213\374\372!\371\2771z\000\213\374\372!\371\?H"
+  "\001\210\001\001\022)\n\003lon\030\005 \001(\002B\027\242\?\024 \006)z\000\213\374\372!\t\3001z\000\213\374\372!"
+  "\t@H\002\210\001\001\"\250\001\n\rParameterEnum\022\024\n\020PROF_TEMPER"
+  "ATURE\020\000\022\021\n\rPROF_SALINITY\020\001\022\025\n\021PROF_CONDU"
+  "CTIVITY\020\002\022\013\n\007PROF_PH\020\003\022\016\n\nPROF_REDOX\020\004\022\024"
+  "\n\020PROF_CHLOROPHYLL\020\005\022\022\n\016PROF_TURBIDITY\020\006"
+  "\022\020\n\014PROF_UNKNOWN\020\007:\t\242\?\006\010o\020P(\004B\r\n\013_numsam"
+  "plesB\006\n\004_latB\006\n\004_lon\"\374\007\n\016EstimatedState\022"
+  ")\n\003lat\030\001 \001(\002B\027\242\?\024 \006)z\000\213\374\372!\371\2771z\000\213\374\372!\371\?H\000\210"
+  "\001\001\022)\n\003lon\030\002 \001(\002B\027\242\?\024 \006)z\000\213\374\372!\t\3001z\000\213\374\372!\t@"
+  "H\001\210\001\001\022,\n\006height\030\003 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\217\3001\000\000"
+  "\000\000\000X\273@H\002\210\001\001\022\'\n\001x\030\004 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001\000"
+  "\000\000\000\000@\237@H\003\210\001\001\022\'\n\001y\030\005 \001(\002B\027\242\?\024 \001)\000\000\000\000\000@\237\3001"
+  "\000\000\000\000\000@\237@H\004\210\001\001\022\'\n\001z\030\006 \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000y\300"
+  "1\000\000\000\000\000\000y@H\005\210\001\001\022)\n\003phi\030\007 \001(\002B\027\242\?\024 \003)T\343\245\233\304"
+  " \t\3001T\343\245\233\304 \t@H\006\210\001\001\022+\n\005theta\030\010 \001(\002B\027\242\?\024 \003)"
+  "\037\205\353Q\270\036\371\2771\037\205\353Q\270\036\371\?H\007\210\001\001\022)\n\003psi\030\t \001(\002B\027\242\?\024"
+  " \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@H\010\210\001\001\022\'\n\001u\030\n \001(\002B\027\242\?"
+  "\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@H\t\210\001\001\022\'\n\001v\030\013 \001(\002B\027\242"
+  "\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@H\n\210\001\001\022\'\n\001w\030\014 \001(\002B\027"
+  "\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@H\013\210\001\001\022(\n\002vx\030\r \001(\002"
+  "B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@H\014\210\001\001\022(\n\002vy\030\016 \001"
+  "(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@H\r\210\001\001\022(\n\002vz\030\017"
+  " \001(\002B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@H\016\210\001\001\022\'\n\001p\030"
+  "\020 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@H\017\210\001\001\022\'\n\001q"
+  "\030\021 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@H\020\210\001\001\022\'\n\001"
+  "r\030\022 \001(\002B\027\242\?\024 \003)T\343\245\233\304 \t\3001T\343\245\233\304 \t@H\021\210\001\001\022+\n"
+  "\005depth\030\023 \001(\002B\027\242\?\024 \002)\000\000\000\000\000\000\360\2771\000\000\000\000\000\000y@H\022\210"
+  "\001\001\022)\n\003alt\030\024 \001(\002B\027\242\?\024 \002)\000\000\000\000\000\000\360\2771\000\000\000\000\000\210\263@"
+  "H\023\210\001\001:\n\242\?\007\010\336\002\020P(\004B\006\n\004_latB\006\n\004_lonB\t\n\007_he"
+  "ightB\004\n\002_xB\004\n\002_yB\004\n\002_zB\006\n\004_phiB\010\n\006_theta"
+  "B\006\n\004_psiB\004\n\002_uB\004\n\002_vB\004\n\002_wB\005\n\003_vxB\005\n\003_vy"
+  "B\005\n\003_vzB\004\n\002_pB\004\n\002_qB\004\n\002_rB\010\n\006_depthB\006\n\004_"
+  "alt\"\322\003\n\021PlanSpecification\022\033\n\007plan_id\030\001 \001"
+  "(\tB\005\242\?\002H\024H\000\210\001\001\022\037\n\013description\030\002 \001(\tB\005\242\?\002"
+  "H\002H\001\210\001\001\022\036\n\nvnamespace\030\003 \001(\tB\005\242\?\002H\002H\002\210\001\001\022"
+  "*\n\014start_man_id\030\004 \001(\0132\024.IMC_DCCL.Maneuve"
+  "rID\0220\n\tmaneuvers\030\005 \003(\0132\026.IMC_DCCL.PlanMa"
+  "neuverB\005\242\?\002P\036\0224\n\013transitions\030\006 \003(\0132\030.IMC"
+  "_DCCL.PlanTransitionB\005\242\?\002P\036\022J\n\rstart_act"
+  "ions\030\007 \003(\0132,.IMC_DCCL.PlanSpecificationS"
+  "tartActionsUnionB\005\242\?\002P\007\022F\n\013end_actions\030\010"
+  " \003(\0132*.IMC_DCCL.PlanSpecificationEndActi"
+  "onsUnionB\005\242\?\002P\007:\014\242\?\t\010\247\004\020\200\3520(\004B\n\n\010_plan_i"
+  "dB\016\n\014_descriptionB\r\n\013_vnamespace\"\255\004\n\006Pla"
+  "nDB\022\'\n\004type\030\001 \001(\0162\031.IMC_DCCL.PlanDB.Type"
+  "Enum\022*\n\002op\030\002 \001(\0162\036.IMC_DCCL.PlanDB.Opera"
+  "tionEnum\0220\n\nrequest_id\030\003 \001(\005B\027\242\?\024 \001)\000\000\000\000"
+  "\000\000\000\0001\000\000\000\000\000\210\303@H\000\210\001\001\022\033\n\007plan_id\030\004 \001(\tB\005\242\?\002"
+  "H\024H\001\210\001\001\022%\n\003arg\030\005 \001(\0132\030.IMC_DCCL.PlanDBAr"
+  "gUnion\022\030\n\004info\030\006 \001(\tB\005\242\?\002H(H\002\210\001\001\"c\n\010Type"
+  "Enum\022\017\n\013DBT_REQUEST\020\000\022\017\n\013DBT_SUCCESS\020\001\022\017"
+  "\n\013DBT_FAILURE\020\002\022\023\n\017DBT_IN_PROGRESS\020\003\022\017\n\013"
+  "DBT_UNKNOWN\020\004\"\246\001\n\rOperationEnum\022\014\n\010DBOP_"
+  "SET\020\000\022\014\n\010DBOP_DEL\020\001\022\014\n\010DBOP_GET\020\002\022\021\n\rDBO"
+  "P_GET_INFO\020\003\022\016\n\nDBOP_CLEAR\020\004\022\022\n\016DBOP_GET"
+  "_STATE\020\005\022\023\n\017DBOP_GET_DSTATE\020\006\022\r\n\tDBOP_BO"
+  "OT\020\007\022\020\n\014DBOP_UNKNOWN\020\010:\014\242\?\t\010\254\004\020\200\3520(\004B\r\n\013"
+  "_request_idB\n\n\010_plan_idB\007\n\005_info\"\253\003\n\013Pla"
+  "nDBState\0220\n\nplan_count\030\001 \001(\005B\027\242\?\024 \001)\000\000\000\000"
+  "\000\000\000\0001\000\000\000\000\000j\370@H\000\210\001\001\022/\n\tplan_size\030\002 \001(\005B\027\242"
+  "\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000\000\360\?H\001\210\001\001\0221\n\013change_ti"
+  "me\030\003 \001(\002B\027\242\?\024 \002)\000\000\000\000\000\000\000\0001\000\000\200pcZ\333AH\002\210\001\001\0220"
+  "\n\nchange_sid\030\004 \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000"
+  "j\350@H\003\210\001\001\022 \n\014change_sname\030\005 \001(\tB\005\242\?\002H(H\004\210"
+  "\001\001\022\027\n\003md5\030\006 \001(\tB\005\242\?\002H(H\005\210\001\001\0226\n\nplans_inf"
+  "o\030\007 \003(\0132\033.IMC_DCCL.PlanDBInformationB\005\242\?"
+  "\002Pd:\014\242\?\t\010\255\004\020\200\3520(\004B\r\n\013_plan_countB\014\n\n_pla"
+  "n_sizeB\016\n\014_change_timeB\r\n\013_change_sidB\017\n"
+  "\r_change_snameB\006\n\004_md5\"\341\002\n\021PlanDBInforma"
+  "tion\022\033\n\007plan_id\030\001 \001(\tB\005\242\?\002H\024H\000\210\001\001\022/\n\tpla"
+  "n_size\030\002 \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000\210\263@H\001\210"
+  "\001\001\0221\n\013change_time\030\003 \001(\002B\027\242\?\024 \002)\000\000\000\000\000\000\000\0001"
+  "\000\000\200pcZ\333AH\002\210\001\001\0220\n\nchange_sid\030\004 \001(\005B\027\242\?\024 \001"
+  ")\000\000\000\000\000\000\000\0001\000\000\000\000\000j\350@H\003\210\001\001\022 \n\014change_sname\030"
+  "\005 \001(\tB\005\242\?\002H(H\004\210\001\001\022\027\n\003md5\030\006 \001(\tB\005\242\?\002H(H\005\210"
+  "\001\001:\014\242\?\t\010\256\004\020\200\3520(\004B\n\n\010_plan_idB\014\n\n_plan_si"
+  "zeB\016\n\014_change_timeB\r\n\013_change_sidB\017\n\r_ch"
+  "ange_snameB\006\n\004_md5\"\243\004\n\013PlanControl\022,\n\004ty"
+  "pe\030\001 \001(\0162\036.IMC_DCCL.PlanControl.TypeEnum"
+  "\022/\n\002op\030\002 \001(\0162#.IMC_DCCL.PlanControl.Oper"
+  "ationEnum\0220\n\nrequest_id\030\003 \001(\005B\027\242\?\024 \001)\000\000\000"
+  "\000\000\000\000\0001\000\000\000\000\000\210\263@H\000\210\001\001\022\033\n\007plan_id\030\004 \001(\tB\005\242\?"
+  "\002HdH\001\210\001\001\022+\n\005flags\030\005 \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001"
+  "\000\000\000\000\000\210\263@H\002\210\001\001\022*\n\003arg\030\006 \001(\0132\035.IMC_DCCL.Pl"
+  "anControlArgUnion\022\030\n\004info\030\007 \001(\tB\005\242\?\002HdH\003"
+  "\210\001\001\"`\n\010TypeEnum\022\016\n\nPC_REQUEST\020\000\022\016\n\nPC_SU"
+  "CCESS\020\001\022\016\n\nPC_FAILURE\020\002\022\022\n\016PC_IN_PROGRES"
+  "S\020\003\022\020\n\014PCTE_UNKNOWN\020\004\"U\n\rOperationEnum\022\014"
+  "\n\010PC_START\020\000\022\013\n\007PC_STOP\020\001\022\013\n\007PC_LOAD\020\002\022\n"
+  "\n\006PC_GET\020\003\022\020\n\014PCOE_UNKNOWN\020\004:\014\242\?\t\010\257\004\020\200\3520"
+  "(\004B\r\n\013_request_idB\n\n\010_plan_idB\010\n\006_flagsB"
+  "\007\n\005_info\"\253\003\n\016PlanStatistics\022\033\n\007plan_id\030\001"
+  " \001(\tB\005\242\?\002H\024H\000\210\001\001\022/\n\004type\030\002 \001(\0162!.IMC_DCC"
+  "L.PlanStatistics.TypeEnum\0220\n\nproperties\030"
+  "\003 \001(\005B\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000\210\263@H\001\210\001\001\022\035\n\td"
+  "urations\030\004 \001(\tB\005\242\?\002HdH\002\210\001\001\022\035\n\tdistances\030"
+  "\005 \001(\tB\005\242\?\002HdH\003\210\001\001\022\033\n\007actions\030\006 \001(\tB\005\242\?\002H"
+  "dH\004\210\001\001\022\030\n\004fuel\030\007 \001(\tB\005\242\?\002HdH\005\210\001\001\"J\n\010Type"
+  "Enum\022\016\n\nTP_PREPLAN\020\000\022\r\n\tTP_INPLAN\020\001\022\017\n\013T"
+  "P_POSTPLAN\020\002\022\016\n\nTP_UNKNOWN\020\003:\014\242\?\t\010\264\004\020\200\3520"
+  "(\004B\n\n\010_plan_idB\r\n\013_propertiesB\014\n\n_durati"
+  "onsB\014\n\n_distancesB\n\n\010_actionsB\007\n\005_fuel\"\265"
+  "\001\n\016PlanDBArgUnion\022-\n\006ps_arg\030\001 \001(\0132\033.IMC_"
+  "DCCL.PlanSpecificationH\000\022-\n\006pi_arg\030\002 \001(\013"
+  "2\033.IMC_DCCL.PlanDBInformationH\000\022\'\n\006pc_ar"
+  "g\030\003 \001(\0132\025.IMC_DCCL.PlanDBStateH\000:\t\242\?\006\020\200\352"
+  "0(\004B\021\n\017PlanDBArgUnion_\"\203\001\n\"PlanSpecifica"
+  "tionStartActionsUnion\022+\n\002ep\030\001 \001(\0132\035.IMC_"
+  "DCCL.SetEntityParametersH\000:\t\242\?\006\020\200\3520(\004B%\n"
+  "#PlanSpecificationStartActionsUnion_\"\177\n "
+  "PlanSpecificationEndActionsUnion\022+\n\002ep\030\001"
+  " \001(\0132\035.IMC_DCCL.SetEntityParametersH\000:\t\242"
+  "\?\006\020\200\3520(\004B#\n!PlanSpecificationEndActionsU"
+  "nion_\"\267\001\n\023PlanControlArgUnion\022-\n\006ps_arg\030"
+  "\001 \001(\0132\033.IMC_DCCL.PlanSpecificationH\000\022%\n\007"
+  "man_arg\030\002 \001(\0132\022.IMC_DCCL.ManeuverH\000\022,\n\010s"
+  "tat_arg\030\003 \001(\0132\030.IMC_DCCL.PlanStatisticsH"
+  "\000:\t\242\?\006\020\200\3520(\004B\021\n\017PlanDBArgUnion_*N\n\006ZUnit"
+  "s\022\n\n\006Z_NONE\020\000\022\013\n\007Z_DEPTH\020\001\022\016\n\nZ_ALTITUDE"
+  "\020\002\022\014\n\010Z_HEIGHT\020\003\022\r\n\tZ_UNKNOWN\020\004*]\n\nSpeed"
+  "Units\022\024\n\020SUNITS_METERS_PS\020\000\022\016\n\nSUNITS_RP"
+  "M\020\001\022\025\n\021SUNITS_PERCENTAGE\020\002\022\022\n\016SUNITS_UNK"
+  "NOWN\020\003*X\n\014ManeuverType\022\010\n\004GOTO\020\000\022\n\n\006LOIT"
+  "ER\020\001\022\016\n\nFOLLOWPATH\020\002\022\022\n\016STATIONKEEPING\020\003"
+  "\022\016\n\nMT_UNKNOWN\020\004*;\n\nParamValue\022\010\n\004TRUE\020\000"
+  "\022\t\n\005FALSE\020\001\022\010\n\004BOTH\020\002\022\016\n\nPV_UNKNOWN\020\003*=\n"
+  "\027TransitionConditionEnum\022\022\n\016MANEUVERISDO"
+  "NE\020\000\022\016\n\nTC_UNKNOWN\020\001*\255\006\n\tParamName\022\n\n\006AC"
+  "TIVE\020\000\022\025\n\021ARDUPILOT_TRACKER\020\001\022 \n\034BATHYME"
+  "TRY_CHANNEL_AVAILABLE\020\002\022\036\n\032BOTTOM_TRACK_"
+  "MINIMUM_DEPTH\020\003\022\r\n\tDATA_BITS\020\004\022\016\n\nFLIR_D"
+  "UO_R\020\005\022\024\n\020FORMATION_FLIGHT\020\006\022\027\n\023FORMATIO"
+  "N_POSITIONS\020\007\022\035\n\031FORMATION_REFERENCE_FRA"
+  "ME\020\010\022\r\n\tFREQUENCY\020\t\022\032\n\026HIGH_FREQUENCY_CH"
+  "ANNEL\020\n\022\033\n\027HIGH_FREQUENCY_CHANNELS\020\013\022\030\n\024"
+  "HIGH_FREQUENCY_RANGE\020\014\022$\n LOW_FREQUENCY_"
+  "BATHYMETRY_CHANNEL\020\r\022\031\n\025LOW_FREQUENCY_CH"
+  "ANNEL\020\016\022\032\n\026LOW_FREQUENCY_CHANNELS\020\017\022\027\n\023L"
+  "OW_FREQUENCY_RANGE\020\020\022\022\n\016ONBOARD_CAMERA\020\021"
+  "\022\033\n\027OPTIMIZE_FOR_THIS_SPEED\020\022\022 \n\034PERIODI"
+  "CITY_OF_DATA_SAMPLING\020\023\022\020\n\014PROFILE_MODE\020"
+  "\024\022\t\n\005RANGE\020\025\022\024\n\020RANGE_MULTIPLIER\020\026\022\030\n\024SA"
+  "MPLE_TIME_DURATION\020\027\022\020\n\014SCALE_FACTOR\020\030\022\020"
+  "\n\014SECTOR_WIDTH\020\031\022\024\n\020SHUTTER_VALUE_MS\020\032\022\r"
+  "\n\tSTEP_SIZE\020\033\022\023\n\017STROBE_DELAY_US\020\034\022\026\n\022TH"
+  "RUSTER_ALWAYS_ON\020\035\022\024\n\020TRANSITION_TO_FW\020\036"
+  "\022\024\n\020TRANSITION_TO_MC\020\037\022\022\n\016USE_CONTROLLER"
+  "\020 \022\020\n\014VEHICLE_LIST\020!\022\016\n\nPN_UNKNOWN\020\"*\326\003\n"
+  "\nEntityName\022\022\n\016ACOUSTIC_MODEM\020\000\022\010\n\004ADCP\020"
+  "\001\022\r\n\tAUTOPILOT\020\002\022\n\n\006CAMERA\020\003\022\007\n\003CTD\020\004\022\024\n"
+  "\020DISSOLVED_OXYGEN\020\005\022\020\n\014FLUOROMETERS\020\006\022\031\n"
+  "\025FORMATION_COORDINATOR\020\007\022\026\n\022HEADING_CONT"
+  "ROLLER\020\010\022\022\n\016HEIGHT_CONTROL\020\t\022\007\n\003LBL\020\n\022\036\n"
+  "\032MOTOR_CONTROLLER_CHANNEL_0\020\013\022\036\n\032MOTOR_C"
+  "ONTROLLER_CHANNEL_1\020\014\022\r\n\tMULTIBEAM\020\r\022\020\n\014"
+  "PATH_CONTROL\020\016\022\027\n\023PATH_CONTROL_LEADER\020\017\022"
+  "\017\n\013PENCIL_BEAM\020\020\022\021\n\rPHOTO_TRIGGER\020\021\022\n\n\006R"
+  "ANGER\020\022\022\022\n\016REMOTE_CONTROL\020\023\022\024\n\020REMOTE_OP"
+  "ERATION\020\024\022\014\n\010SIDESCAN\020\025\022\r\n\tSLAVE_CPU\020\026\022\r"
+  "\n\tUAVCAMERA\020\027\022\016\n\nEN_UNKNOWN\020\030b\006proto3"
   ;
 static const ::_pbi::DescriptorTable* const descriptor_table_IMC_5fDCCL_2eproto_deps[1] = {
   &::descriptor_table_dccl_2foption_5fextensions_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_IMC_5fDCCL_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_IMC_5fDCCL_2eproto = {
-    false, false, 10713, descriptor_table_protodef_IMC_5fDCCL_2eproto,
+    false, false, 10837, descriptor_table_protodef_IMC_5fDCCL_2eproto,
     "IMC_DCCL.proto",
-    &descriptor_table_IMC_5fDCCL_2eproto_once, descriptor_table_IMC_5fDCCL_2eproto_deps, 1, 28,
+    &descriptor_table_IMC_5fDCCL_2eproto_once, descriptor_table_IMC_5fDCCL_2eproto_deps, 1, 29,
     schemas, file_default_instances, TableStruct_IMC_5fDCCL_2eproto::offsets,
     file_level_metadata_IMC_5fDCCL_2eproto, file_level_enum_descriptors_IMC_5fDCCL_2eproto,
     file_level_service_descriptors_IMC_5fDCCL_2eproto,
@@ -1608,11 +1636,11 @@ bool TransitionConditionEnum_IsValid(int value) {
   }
 }
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ParameterName_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ParamName_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_IMC_5fDCCL_2eproto);
   return file_level_enum_descriptors_IMC_5fDCCL_2eproto[13];
 }
-bool ParameterName_IsValid(int value) {
+bool ParamName_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:
@@ -3520,6 +3548,268 @@ void ParameterValue::InternalSwap(ParameterValue* other) {
 
 // ===================================================================
 
+class ParameterName::_Internal {
+ public:
+};
+
+ParameterName::ParameterName(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                         bool is_message_owned)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
+  SharedCtor(arena, is_message_owned);
+  // @@protoc_insertion_point(arena_constructor:IMC_DCCL.ParameterName)
+}
+ParameterName::ParameterName(const ParameterName& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  ParameterName* const _this = this; (void)_this;
+  new (&_impl_) Impl_{
+      decltype(_impl_.ParameterNameUnion_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , /*decltype(_impl_._oneof_case_)*/{}};
+
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  clear_has_ParameterNameUnion();
+  switch (from.ParameterNameUnion_case()) {
+    case kParamEnum: {
+      _this->_internal_set_param_enum(from._internal_param_enum());
+      break;
+    }
+    case kParamString: {
+      _this->_internal_set_param_string(from._internal_param_string());
+      break;
+    }
+    case PARAMETERNAMEUNION_NOT_SET: {
+      break;
+    }
+  }
+  // @@protoc_insertion_point(copy_constructor:IMC_DCCL.ParameterName)
+}
+
+inline void ParameterName::SharedCtor(
+    ::_pb::Arena* arena, bool is_message_owned) {
+  (void)arena;
+  (void)is_message_owned;
+  new (&_impl_) Impl_{
+      decltype(_impl_.ParameterNameUnion_){}
+    , /*decltype(_impl_._cached_size_)*/{}
+    , /*decltype(_impl_._oneof_case_)*/{}
+  };
+  clear_has_ParameterNameUnion();
+}
+
+ParameterName::~ParameterName() {
+  // @@protoc_insertion_point(destructor:IMC_DCCL.ParameterName)
+  if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
+  (void)arena;
+    return;
+  }
+  SharedDtor();
+}
+
+inline void ParameterName::SharedDtor() {
+  GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  if (has_ParameterNameUnion()) {
+    clear_ParameterNameUnion();
+  }
+}
+
+void ParameterName::SetCachedSize(int size) const {
+  _impl_._cached_size_.Set(size);
+}
+
+void ParameterName::clear_ParameterNameUnion() {
+// @@protoc_insertion_point(one_of_clear_start:IMC_DCCL.ParameterName)
+  switch (ParameterNameUnion_case()) {
+    case kParamEnum: {
+      // No need to clear
+      break;
+    }
+    case kParamString: {
+      _impl_.ParameterNameUnion_.param_string_.Destroy();
+      break;
+    }
+    case PARAMETERNAMEUNION_NOT_SET: {
+      break;
+    }
+  }
+  _impl_._oneof_case_[0] = PARAMETERNAMEUNION_NOT_SET;
+}
+
+
+void ParameterName::Clear() {
+// @@protoc_insertion_point(message_clear_start:IMC_DCCL.ParameterName)
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  clear_ParameterNameUnion();
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* ParameterName::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  while (!ctx->Done(&ptr)) {
+    uint32_t tag;
+    ptr = ::_pbi::ReadTag(ptr, &tag);
+    switch (tag >> 3) {
+      // .IMC_DCCL.ParamName param_enum = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_param_enum(static_cast<::IMC_DCCL::ParamName>(val));
+        } else
+          goto handle_unusual;
+        continue;
+      // string param_string = 2 [(.dccl.field) = {
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+          auto str = _internal_mutable_param_string();
+          ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(ptr);
+          CHK_(::_pbi::VerifyUTF8(str, "IMC_DCCL.ParameterName.param_string"));
+        } else
+          goto handle_unusual;
+        continue;
+      default:
+        goto handle_unusual;
+    }  // switch
+  handle_unusual:
+    if ((tag == 0) || ((tag & 7) == 4)) {
+      CHK_(ptr);
+      ctx->SetLastTag(tag);
+      goto message_done;
+    }
+    ptr = UnknownFieldParse(
+        tag,
+        _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+        ptr, ctx);
+    CHK_(ptr != nullptr);
+  }  // while
+message_done:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto message_done;
+#undef CHK_
+}
+
+uint8_t* ParameterName::_InternalSerialize(
+    uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:IMC_DCCL.ParameterName)
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .IMC_DCCL.ParamName param_enum = 1;
+  if (_internal_has_param_enum()) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteEnumToArray(
+      1, this->_internal_param_enum(), target);
+  }
+
+  // string param_string = 2 [(.dccl.field) = {
+  if (_internal_has_param_string()) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_param_string().data(), static_cast<int>(this->_internal_param_string().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "IMC_DCCL.ParameterName.param_string");
+    target = stream->WriteStringMaybeAliased(
+        2, this->_internal_param_string(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:IMC_DCCL.ParameterName)
+  return target;
+}
+
+size_t ParameterName::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:IMC_DCCL.ParameterName)
+  size_t total_size = 0;
+
+  uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  switch (ParameterNameUnion_case()) {
+    // .IMC_DCCL.ParamName param_enum = 1;
+    case kParamEnum: {
+      total_size += 1 +
+        ::_pbi::WireFormatLite::EnumSize(this->_internal_param_enum());
+      break;
+    }
+    // string param_string = 2 [(.dccl.field) = {
+    case kParamString: {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+          this->_internal_param_string());
+      break;
+    }
+    case PARAMETERNAMEUNION_NOT_SET: {
+      break;
+    }
+  }
+  return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
+}
+
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData ParameterName::_class_data_ = {
+    ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
+    ParameterName::MergeImpl
+};
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*ParameterName::GetClassData() const { return &_class_data_; }
+
+
+void ParameterName::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<ParameterName*>(&to_msg);
+  auto& from = static_cast<const ParameterName&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:IMC_DCCL.ParameterName)
+  GOOGLE_DCHECK_NE(&from, _this);
+  uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  switch (from.ParameterNameUnion_case()) {
+    case kParamEnum: {
+      _this->_internal_set_param_enum(from._internal_param_enum());
+      break;
+    }
+    case kParamString: {
+      _this->_internal_set_param_string(from._internal_param_string());
+      break;
+    }
+    case PARAMETERNAMEUNION_NOT_SET: {
+      break;
+    }
+  }
+  _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void ParameterName::CopyFrom(const ParameterName& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:IMC_DCCL.ParameterName)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool ParameterName::IsInitialized() const {
+  return true;
+}
+
+void ParameterName::InternalSwap(ParameterName* other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_.ParameterNameUnion_, other->_impl_.ParameterNameUnion_);
+  swap(_impl_._oneof_case_[0], other->_impl_._oneof_case_[0]);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata ParameterName::GetMetadata() const {
+  return ::_pbi::AssignDescriptors(
+      &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
+      file_level_metadata_IMC_5fDCCL_2eproto[5]);
+}
+
+// ===================================================================
+
 class PathPoint::_Internal {
  public:
   using HasBits = decltype(std::declval<PathPoint>()._impl_._has_bits_);
@@ -3779,7 +4069,7 @@ void PathPoint::InternalSwap(PathPoint* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PathPoint::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[5]);
+      file_level_metadata_IMC_5fDCCL_2eproto[6]);
 }
 
 // ===================================================================
@@ -4200,16 +4490,21 @@ void Maneuver::InternalSwap(Maneuver* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata Maneuver::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[6]);
+      file_level_metadata_IMC_5fDCCL_2eproto[7]);
 }
 
 // ===================================================================
 
 class EntityParameter::_Internal {
  public:
+  static const ::IMC_DCCL::ParameterName& name(const EntityParameter* msg);
   static const ::IMC_DCCL::ParameterValue& value(const EntityParameter* msg);
 };
 
+const ::IMC_DCCL::ParameterName&
+EntityParameter::_Internal::name(const EntityParameter* msg) {
+  return *msg->_impl_.name_;
+}
 const ::IMC_DCCL::ParameterValue&
 EntityParameter::_Internal::value(const EntityParameter* msg) {
   return *msg->_impl_.value_;
@@ -4224,15 +4519,17 @@ EntityParameter::EntityParameter(const EntityParameter& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
   EntityParameter* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.value_){nullptr}
-    , decltype(_impl_.name_){}
+      decltype(_impl_.name_){nullptr}
+    , decltype(_impl_.value_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  if (from._internal_has_name()) {
+    _this->_impl_.name_ = new ::IMC_DCCL::ParameterName(*from._impl_.name_);
+  }
   if (from._internal_has_value()) {
     _this->_impl_.value_ = new ::IMC_DCCL::ParameterValue(*from._impl_.value_);
   }
-  _this->_impl_.name_ = from._impl_.name_;
   // @@protoc_insertion_point(copy_constructor:IMC_DCCL.EntityParameter)
 }
 
@@ -4241,8 +4538,8 @@ inline void EntityParameter::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.value_){nullptr}
-    , decltype(_impl_.name_){0}
+      decltype(_impl_.name_){nullptr}
+    , decltype(_impl_.value_){nullptr}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -4258,6 +4555,7 @@ EntityParameter::~EntityParameter() {
 
 inline void EntityParameter::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
+  if (this != internal_default_instance()) delete _impl_.name_;
   if (this != internal_default_instance()) delete _impl_.value_;
 }
 
@@ -4271,11 +4569,14 @@ void EntityParameter::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  if (GetArenaForAllocation() == nullptr && _impl_.name_ != nullptr) {
+    delete _impl_.name_;
+  }
+  _impl_.name_ = nullptr;
   if (GetArenaForAllocation() == nullptr && _impl_.value_ != nullptr) {
     delete _impl_.value_;
   }
   _impl_.value_ = nullptr;
-  _impl_.name_ = 0;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -4287,10 +4588,9 @@ const char* EntityParameter::_InternalParse(const char* ptr, ::_pbi::ParseContex
     switch (tag >> 3) {
       // .IMC_DCCL.ParameterName name = 1;
       case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
-          uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+          ptr = ctx->ParseMessage(_internal_mutable_name(), ptr);
           CHK_(ptr);
-          _internal_set_name(static_cast<::IMC_DCCL::ParameterName>(val));
         } else
           goto handle_unusual;
         continue;
@@ -4332,10 +4632,10 @@ uint8_t* EntityParameter::_InternalSerialize(
   (void) cached_has_bits;
 
   // .IMC_DCCL.ParameterName name = 1;
-  if (this->_internal_name() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteEnumToArray(
-      1, this->_internal_name(), target);
+  if (this->_internal_has_name()) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(1, _Internal::name(this),
+        _Internal::name(this).GetCachedSize(), target, stream);
   }
 
   // .IMC_DCCL.ParameterValue value = 2;
@@ -4361,17 +4661,18 @@ size_t EntityParameter::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  // .IMC_DCCL.ParameterName name = 1;
+  if (this->_internal_has_name()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *_impl_.name_);
+  }
+
   // .IMC_DCCL.ParameterValue value = 2;
   if (this->_internal_has_value()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
         *_impl_.value_);
-  }
-
-  // .IMC_DCCL.ParameterName name = 1;
-  if (this->_internal_name() != 0) {
-    total_size += 1 +
-      ::_pbi::WireFormatLite::EnumSize(this->_internal_name());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -4392,12 +4693,13 @@ void EntityParameter::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const 
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from._internal_has_name()) {
+    _this->_internal_mutable_name()->::IMC_DCCL::ParameterName::MergeFrom(
+        from._internal_name());
+  }
   if (from._internal_has_value()) {
     _this->_internal_mutable_value()->::IMC_DCCL::ParameterValue::MergeFrom(
         from._internal_value());
-  }
-  if (from._internal_name() != 0) {
-    _this->_internal_set_name(from._internal_name());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -4417,17 +4719,17 @@ void EntityParameter::InternalSwap(EntityParameter* other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(EntityParameter, _impl_.name_)
-      + sizeof(EntityParameter::_impl_.name_)
-      - PROTOBUF_FIELD_OFFSET(EntityParameter, _impl_.value_)>(
-          reinterpret_cast<char*>(&_impl_.value_),
-          reinterpret_cast<char*>(&other->_impl_.value_));
+      PROTOBUF_FIELD_OFFSET(EntityParameter, _impl_.value_)
+      + sizeof(EntityParameter::_impl_.value_)
+      - PROTOBUF_FIELD_OFFSET(EntityParameter, _impl_.name_)>(
+          reinterpret_cast<char*>(&_impl_.name_),
+          reinterpret_cast<char*>(&other->_impl_.name_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata EntityParameter::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[7]);
+      file_level_metadata_IMC_5fDCCL_2eproto[8]);
 }
 
 // ===================================================================
@@ -4642,7 +4944,7 @@ void SetEntityParameters::InternalSwap(SetEntityParameters* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata SetEntityParameters::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[8]);
+      file_level_metadata_IMC_5fDCCL_2eproto[9]);
 }
 
 // ===================================================================
@@ -4856,7 +5158,7 @@ void ManeuverIDCombined::InternalSwap(ManeuverIDCombined* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata ManeuverIDCombined::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[9]);
+      file_level_metadata_IMC_5fDCCL_2eproto[10]);
 }
 
 // ===================================================================
@@ -5142,7 +5444,7 @@ void ManeuverID::InternalSwap(ManeuverID* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata ManeuverID::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[10]);
+      file_level_metadata_IMC_5fDCCL_2eproto[11]);
 }
 
 // ===================================================================
@@ -5404,7 +5706,7 @@ void TransitionCondition::InternalSwap(TransitionCondition* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata TransitionCondition::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[11]);
+      file_level_metadata_IMC_5fDCCL_2eproto[12]);
 }
 
 // ===================================================================
@@ -5968,7 +6270,7 @@ void Loiter::InternalSwap(Loiter* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata Loiter::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[12]);
+      file_level_metadata_IMC_5fDCCL_2eproto[13]);
 }
 
 // ===================================================================
@@ -6215,7 +6517,7 @@ void PlanManeuverStartActionsUnion::InternalSwap(PlanManeuverStartActionsUnion* 
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanManeuverStartActionsUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[13]);
+      file_level_metadata_IMC_5fDCCL_2eproto[14]);
 }
 
 // ===================================================================
@@ -6488,7 +6790,7 @@ void PlanManeuver::InternalSwap(PlanManeuver* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanManeuver::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[14]);
+      file_level_metadata_IMC_5fDCCL_2eproto[15]);
 }
 
 // ===================================================================
@@ -6768,7 +7070,7 @@ void PlanTransition::InternalSwap(PlanTransition* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanTransition::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[15]);
+      file_level_metadata_IMC_5fDCCL_2eproto[16]);
 }
 
 // ===================================================================
@@ -7094,7 +7396,7 @@ void VerticalProfile::InternalSwap(VerticalProfile* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata VerticalProfile::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[16]);
+      file_level_metadata_IMC_5fDCCL_2eproto[17]);
 }
 
 // ===================================================================
@@ -7854,7 +8156,7 @@ void EstimatedState::InternalSwap(EstimatedState* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata EstimatedState::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[17]);
+      file_level_metadata_IMC_5fDCCL_2eproto[18]);
 }
 
 // ===================================================================
@@ -8366,7 +8668,7 @@ void PlanSpecification::InternalSwap(PlanSpecification* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanSpecification::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[18]);
+      file_level_metadata_IMC_5fDCCL_2eproto[19]);
 }
 
 // ===================================================================
@@ -8781,7 +9083,7 @@ void PlanDB::InternalSwap(PlanDB* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanDB::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[19]);
+      file_level_metadata_IMC_5fDCCL_2eproto[20]);
 }
 
 // ===================================================================
@@ -9221,7 +9523,7 @@ void PlanDBState::InternalSwap(PlanDBState* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanDBState::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[20]);
+      file_level_metadata_IMC_5fDCCL_2eproto[21]);
 }
 
 // ===================================================================
@@ -9654,7 +9956,7 @@ void PlanDBInformation::InternalSwap(PlanDBInformation* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanDBInformation::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[21]);
+      file_level_metadata_IMC_5fDCCL_2eproto[22]);
 }
 
 // ===================================================================
@@ -10106,7 +10408,7 @@ void PlanControl::InternalSwap(PlanControl* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanControl::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[22]);
+      file_level_metadata_IMC_5fDCCL_2eproto[23]);
 }
 
 // ===================================================================
@@ -10616,7 +10918,7 @@ void PlanStatistics::InternalSwap(PlanStatistics* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanStatistics::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[23]);
+      file_level_metadata_IMC_5fDCCL_2eproto[24]);
 }
 
 // ===================================================================
@@ -10979,7 +11281,7 @@ void PlanDBArgUnion::InternalSwap(PlanDBArgUnion* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanDBArgUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[24]);
+      file_level_metadata_IMC_5fDCCL_2eproto[25]);
 }
 
 // ===================================================================
@@ -11226,7 +11528,7 @@ void PlanSpecificationStartActionsUnion::InternalSwap(PlanSpecificationStartActi
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanSpecificationStartActionsUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[25]);
+      file_level_metadata_IMC_5fDCCL_2eproto[26]);
 }
 
 // ===================================================================
@@ -11473,7 +11775,7 @@ void PlanSpecificationEndActionsUnion::InternalSwap(PlanSpecificationEndActionsU
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanSpecificationEndActionsUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[26]);
+      file_level_metadata_IMC_5fDCCL_2eproto[27]);
 }
 
 // ===================================================================
@@ -11836,7 +12138,7 @@ void PlanControlArgUnion::InternalSwap(PlanControlArgUnion* other) {
 ::PROTOBUF_NAMESPACE_ID::Metadata PlanControlArgUnion::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_IMC_5fDCCL_2eproto_getter, &descriptor_table_IMC_5fDCCL_2eproto_once,
-      file_level_metadata_IMC_5fDCCL_2eproto[27]);
+      file_level_metadata_IMC_5fDCCL_2eproto[28]);
 }
 
 // @@protoc_insertion_point(namespace_scope)
@@ -11861,6 +12163,10 @@ Arena::CreateMaybeMessage< ::IMC_DCCL::Goto >(Arena* arena) {
 template<> PROTOBUF_NOINLINE ::IMC_DCCL::ParameterValue*
 Arena::CreateMaybeMessage< ::IMC_DCCL::ParameterValue >(Arena* arena) {
   return Arena::CreateMessageInternal< ::IMC_DCCL::ParameterValue >(arena);
+}
+template<> PROTOBUF_NOINLINE ::IMC_DCCL::ParameterName*
+Arena::CreateMaybeMessage< ::IMC_DCCL::ParameterName >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::IMC_DCCL::ParameterName >(arena);
 }
 template<> PROTOBUF_NOINLINE ::IMC_DCCL::PathPoint*
 Arena::CreateMaybeMessage< ::IMC_DCCL::PathPoint >(Arena* arena) {
