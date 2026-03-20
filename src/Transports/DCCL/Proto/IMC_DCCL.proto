@@ -86,8 +86,8 @@ enum ParamName {
 }
 
 
-//Enum EntityName 
-enum EntityName {
+//Enum EntityNameEnum 
+enum EntityNameEnum {
     ACOUSTIC_MODEM = 0;
     ADCP = 1;
     AUTOPILOT = 2;
@@ -181,7 +181,16 @@ message ParameterName{
     option (dccl.msg) = { codec_version: 4 max_bytes: 300};
     oneof ParameterNameUnion{
         ParamName param_enum = 1;
-        string param_string = 2 [(dccl.field).max_length = 20];
+        string param_string = 2 [(dccl.field).max_length = 50];
+    }
+}
+
+// EntityName
+message EntityName{   
+    option (dccl.msg) = { codec_version: 4 max_bytes: 300};
+    oneof EntityNameUnion{
+        EntityNameEnum name_enum = 1;
+        string name_string = 2 [(dccl.field).max_length = 50];
     }
 }
 
@@ -214,7 +223,7 @@ message EntityParameter {
 
 //SetEntityParameters
 message SetEntityParameters {
-    option (dccl.msg) = { codec_version: 4 id: 804 max_bytes: 500};
+    option (dccl.msg) = { codec_version: 4 id: 804 max_bytes: 800};
     EntityName name = 1; 
     repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 10 }];
 }

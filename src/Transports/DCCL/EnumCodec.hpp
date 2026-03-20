@@ -44,9 +44,9 @@ IMC_DCCL::ZUnits encodeZUnits(const uint8_t& imc_src);
 
 DUNE::IMC::ZUnits decodeZUnits(const uint8_t& dccl_src);
 
-IMC_DCCL::EntityName encodeEntityName(const std::string& imc_src);
+IMC_DCCL::EntityNameEnum encodeEntityNameEnum(const std::string& imc_src);
 
-std::string decodeEntityName(const uint8_t& dccl_src);
+std::string decodeEntityNameEnum(const uint8_t& dccl_src);
 
 IMC_DCCL::ManeuverType encodeManeuverType(const std::string& imc_src);
 
