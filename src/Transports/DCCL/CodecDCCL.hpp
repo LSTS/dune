@@ -44,6 +44,7 @@ namespace IMCDCCL
             ESTIMATED_STATE    = 350,
             PLAN_DB = 556,
             PLAN_CONTROL = 559, 
+            SET_ENTITY_PARAMETERS = 804,
         };
 
         private: 
@@ -60,6 +61,7 @@ namespace IMCDCCL
                 case PLAN_DB: 
                 case ESTIMATED_STATE:
                 case PLAN_CONTROL:
+                case SET_ENTITY_PARAMETERS:
                     return static_cast<MsgID>(id);
                 default:
                     throw std::invalid_argument("DCCL:CodecDCCL: MsgID Not Recognized");
@@ -111,6 +113,16 @@ namespace IMCDCCL
                     m_codec.decode(encoded_string, &src_dccl);
                     DUNE::IMC::PlanControl* dst_imc = new DUNE::IMC::PlanControl();
                     decodePlanControl(src_dccl, *dst_imc);
+                    return dst_imc;
+                }
+
+                case SET_ENTITY_PARAMETERS:
+                {
+                    m_codec.load<IMC_DCCL::SetEntityParameters>();
+                    IMC_DCCL::SetEntityParameters src_dccl;
+                    m_codec.decode(encoded_string, &src_dccl);
+                    DUNE::IMC::SetEntityParameters* dst_imc = new DUNE::IMC::SetEntityParameters();
+                    decodeSetEntityParameters(src_dccl, *dst_imc);
                     return dst_imc;
                 }
 
@@ -172,6 +184,20 @@ namespace IMCDCCL
                     m_codec.load<IMC_DCCL::PlanControl>();
                     IMC_DCCL::PlanControl dst_dccl;
                     encodePlanControl(*src_imc, dst_dccl);
+
+                    std::string encoded_bytes;
+                    m_codec.encode(&encoded_bytes, dst_dccl);
+                    
+                    return encoded_bytes;
+                }
+
+                case SET_ENTITY_PARAMETERS:
+                {
+                    const DUNE::IMC::SetEntityParameters* src_imc = dynamic_cast<const DUNE::IMC::SetEntityParameters*>(imc_msg);
+
+                    m_codec.load<IMC_DCCL::SetEntityParameters>();
+                    IMC_DCCL::SetEntityParameters dst_dccl;
+                    encodeSetEntityParameters(*src_imc, dst_dccl);
 
                     std::string encoded_bytes;
                     m_codec.encode(&encoded_bytes, dst_dccl);

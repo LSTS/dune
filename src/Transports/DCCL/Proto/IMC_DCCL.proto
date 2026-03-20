@@ -47,7 +47,7 @@ enum TransitionConditionEnum {
 }
 
 // Enum Entity Parameter Name
-enum ParameterName {
+enum ParamName {
     ACTIVE = 0;
     ARDUPILOT_TRACKER = 1;
     BATHYMETRY_CHANNEL_AVAILABLE = 2;
@@ -176,6 +176,15 @@ message ParameterValue{
     }
 }
 
+// ParameterName
+message ParameterName{   
+    option (dccl.msg) = { codec_version: 4 max_bytes: 300};
+    oneof ParameterNameUnion{
+        ParamName param_enum = 1;
+        string param_string = 2 [(dccl.field).max_length = 20];
+    }
+}
+
 // PathPoint 
 message PathPoint {
     option (dccl.msg) = { codec_version: 4 max_bytes: 80};
@@ -198,14 +207,14 @@ message Maneuver{
 
 // EntityParameter
 message EntityParameter {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 20};
+    option (dccl.msg) = { codec_version: 4 max_bytes: 300};
     ParameterName name = 1;
     ParameterValue value = 2;
 }
 
 //SetEntityParameters
 message SetEntityParameters {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 40};
+    option (dccl.msg) = { codec_version: 4 id: 804 max_bytes: 500};
     EntityName name = 1; 
     repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 10 }];
 }

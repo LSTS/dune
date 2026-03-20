@@ -129,6 +129,31 @@ void decodeManeuverIDCombined(const IMC_DCCL::ManeuverIDCombined& dccl, std::str
 }
 
 
+// ================ ParameterName Message ================
+void encodeParameterName(const std::string& imc, IMC_DCCL::ParameterName& dccl)
+{
+    
+    auto enum_val = encodeParamName(imc);
+    if(enum_val != IMC_DCCL::ParamName::PN_UNKNOWN){
+            dccl.set_param_enum(enum_val);
+            return;
+    }
+    
+    dccl.set_param_string(imc);
+}
+
+
+// ================ ParameterName Message ================
+void decodeParameterName(const IMC_DCCL::ParameterName& dccl, std::string& imc)
+{
+    
+    if(dccl.has_param_enum()) imc = decodeParamName(dccl.param_enum());
+    
+    
+    if(dccl.has_param_string()) imc = dccl.param_string();
+}
+
+
 // ================ ParameterValue Message ================
 void encodeParameterValue(const std::string& imc, IMC_DCCL::ParameterValue& dccl)
 {

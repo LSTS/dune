@@ -71,6 +71,9 @@ extern ManeuverIDDefaultTypeInternal _ManeuverID_default_instance_;
 class ManeuverIDCombined;
 struct ManeuverIDCombinedDefaultTypeInternal;
 extern ManeuverIDCombinedDefaultTypeInternal _ManeuverIDCombined_default_instance_;
+class ParameterName;
+struct ParameterNameDefaultTypeInternal;
+extern ParameterNameDefaultTypeInternal _ParameterName_default_instance_;
 class ParameterValue;
 struct ParameterValueDefaultTypeInternal;
 extern ParameterValueDefaultTypeInternal _ParameterValue_default_instance_;
@@ -141,6 +144,7 @@ template<> ::IMC_DCCL::Loiter* Arena::CreateMaybeMessage<::IMC_DCCL::Loiter>(Are
 template<> ::IMC_DCCL::Maneuver* Arena::CreateMaybeMessage<::IMC_DCCL::Maneuver>(Arena*);
 template<> ::IMC_DCCL::ManeuverID* Arena::CreateMaybeMessage<::IMC_DCCL::ManeuverID>(Arena*);
 template<> ::IMC_DCCL::ManeuverIDCombined* Arena::CreateMaybeMessage<::IMC_DCCL::ManeuverIDCombined>(Arena*);
+template<> ::IMC_DCCL::ParameterName* Arena::CreateMaybeMessage<::IMC_DCCL::ParameterName>(Arena*);
 template<> ::IMC_DCCL::ParameterValue* Arena::CreateMaybeMessage<::IMC_DCCL::ParameterValue>(Arena*);
 template<> ::IMC_DCCL::PathPoint* Arena::CreateMaybeMessage<::IMC_DCCL::PathPoint>(Arena*);
 template<> ::IMC_DCCL::PlanControl* Arena::CreateMaybeMessage<::IMC_DCCL::PlanControl>(Arena*);
@@ -530,7 +534,7 @@ inline bool TransitionConditionEnum_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<TransitionConditionEnum>(
     TransitionConditionEnum_descriptor(), name, value);
 }
-enum ParameterName : int {
+enum ParamName : int {
   ACTIVE = 0,
   ARDUPILOT_TRACKER = 1,
   BATHYMETRY_CHANNEL_AVAILABLE = 2,
@@ -566,27 +570,27 @@ enum ParameterName : int {
   USE_CONTROLLER = 32,
   VEHICLE_LIST = 33,
   PN_UNKNOWN = 34,
-  ParameterName_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  ParameterName_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+  ParamName_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  ParamName_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
-bool ParameterName_IsValid(int value);
-constexpr ParameterName ParameterName_MIN = ACTIVE;
-constexpr ParameterName ParameterName_MAX = PN_UNKNOWN;
-constexpr int ParameterName_ARRAYSIZE = ParameterName_MAX + 1;
+bool ParamName_IsValid(int value);
+constexpr ParamName ParamName_MIN = ACTIVE;
+constexpr ParamName ParamName_MAX = PN_UNKNOWN;
+constexpr int ParamName_ARRAYSIZE = ParamName_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ParameterName_descriptor();
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ParamName_descriptor();
 template<typename T>
-inline const std::string& ParameterName_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, ParameterName>::value ||
+inline const std::string& ParamName_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, ParamName>::value ||
     ::std::is_integral<T>::value,
-    "Incorrect type passed to function ParameterName_Name.");
+    "Incorrect type passed to function ParamName_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    ParameterName_descriptor(), enum_t_value);
+    ParamName_descriptor(), enum_t_value);
 }
-inline bool ParameterName_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, ParameterName* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<ParameterName>(
-    ParameterName_descriptor(), name, value);
+inline bool ParamName_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, ParamName* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<ParamName>(
+    ParamName_descriptor(), name, value);
 }
 enum EntityName : int {
   ACOUSTIC_MODEM = 0,
@@ -1799,6 +1803,197 @@ class ParameterValue final :
 };
 // -------------------------------------------------------------------
 
+class ParameterName final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.ParameterName) */ {
+ public:
+  inline ParameterName() : ParameterName(nullptr) {}
+  ~ParameterName() override;
+  explicit PROTOBUF_CONSTEXPR ParameterName(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  ParameterName(const ParameterName& from);
+  ParameterName(ParameterName&& from) noexcept
+    : ParameterName() {
+    *this = ::std::move(from);
+  }
+
+  inline ParameterName& operator=(const ParameterName& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline ParameterName& operator=(ParameterName&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const ParameterName& default_instance() {
+    return *internal_default_instance();
+  }
+  enum ParameterNameUnionCase {
+    kParamEnum = 1,
+    kParamString = 2,
+    PARAMETERNAMEUNION_NOT_SET = 0,
+  };
+
+  static inline const ParameterName* internal_default_instance() {
+    return reinterpret_cast<const ParameterName*>(
+               &_ParameterName_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    5;
+
+  friend void swap(ParameterName& a, ParameterName& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(ParameterName* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(ParameterName* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  ParameterName* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<ParameterName>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const ParameterName& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const ParameterName& from) {
+    ParameterName::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ParameterName* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.ParameterName";
+  }
+  protected:
+  explicit ParameterName(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kParamEnumFieldNumber = 1,
+    kParamStringFieldNumber = 2,
+  };
+  // .IMC_DCCL.ParamName param_enum = 1;
+  bool has_param_enum() const;
+  private:
+  bool _internal_has_param_enum() const;
+  public:
+  void clear_param_enum();
+  ::IMC_DCCL::ParamName param_enum() const;
+  void set_param_enum(::IMC_DCCL::ParamName value);
+  private:
+  ::IMC_DCCL::ParamName _internal_param_enum() const;
+  void _internal_set_param_enum(::IMC_DCCL::ParamName value);
+  public:
+
+  // string param_string = 2 [(.dccl.field) = {
+  bool has_param_string() const;
+  private:
+  bool _internal_has_param_string() const;
+  public:
+  void clear_param_string();
+  const std::string& param_string() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_param_string(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_param_string();
+  PROTOBUF_NODISCARD std::string* release_param_string();
+  void set_allocated_param_string(std::string* param_string);
+  private:
+  const std::string& _internal_param_string() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_param_string(const std::string& value);
+  std::string* _internal_mutable_param_string();
+  public:
+
+  void clear_ParameterNameUnion();
+  ParameterNameUnionCase ParameterNameUnion_case() const;
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.ParameterName)
+ private:
+  class _Internal;
+  void set_has_param_enum();
+  void set_has_param_string();
+
+  inline bool has_ParameterNameUnion() const;
+  inline void clear_has_ParameterNameUnion();
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    union ParameterNameUnionUnion {
+      constexpr ParameterNameUnionUnion() : _constinit_{} {}
+        ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
+      int param_enum_;
+      ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr param_string_;
+    } ParameterNameUnion_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    uint32_t _oneof_case_[1];
+
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class PathPoint final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PathPoint) */ {
  public:
@@ -1847,7 +2042,7 @@ class PathPoint final :
                &_PathPoint_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    6;
 
   friend void swap(PathPoint& a, PathPoint& b) {
     a.Swap(&b);
@@ -2038,7 +2233,7 @@ class Maneuver final :
                &_Maneuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   friend void swap(Maneuver& a, Maneuver& b) {
     a.Swap(&b);
@@ -2270,7 +2465,7 @@ class EntityParameter final :
                &_EntityParameter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    8;
 
   friend void swap(EntityParameter& a, EntityParameter& b) {
     a.Swap(&b);
@@ -2343,9 +2538,27 @@ class EntityParameter final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kValueFieldNumber = 2,
     kNameFieldNumber = 1,
+    kValueFieldNumber = 2,
   };
+  // .IMC_DCCL.ParameterName name = 1;
+  bool has_name() const;
+  private:
+  bool _internal_has_name() const;
+  public:
+  void clear_name();
+  const ::IMC_DCCL::ParameterName& name() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::ParameterName* release_name();
+  ::IMC_DCCL::ParameterName* mutable_name();
+  void set_allocated_name(::IMC_DCCL::ParameterName* name);
+  private:
+  const ::IMC_DCCL::ParameterName& _internal_name() const;
+  ::IMC_DCCL::ParameterName* _internal_mutable_name();
+  public:
+  void unsafe_arena_set_allocated_name(
+      ::IMC_DCCL::ParameterName* name);
+  ::IMC_DCCL::ParameterName* unsafe_arena_release_name();
+
   // .IMC_DCCL.ParameterValue value = 2;
   bool has_value() const;
   private:
@@ -2364,15 +2577,6 @@ class EntityParameter final :
       ::IMC_DCCL::ParameterValue* value);
   ::IMC_DCCL::ParameterValue* unsafe_arena_release_value();
 
-  // .IMC_DCCL.ParameterName name = 1;
-  void clear_name();
-  ::IMC_DCCL::ParameterName name() const;
-  void set_name(::IMC_DCCL::ParameterName value);
-  private:
-  ::IMC_DCCL::ParameterName _internal_name() const;
-  void _internal_set_name(::IMC_DCCL::ParameterName value);
-  public:
-
   // @@protoc_insertion_point(class_scope:IMC_DCCL.EntityParameter)
  private:
   class _Internal;
@@ -2381,8 +2585,8 @@ class EntityParameter final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
+    ::IMC_DCCL::ParameterName* name_;
     ::IMC_DCCL::ParameterValue* value_;
-    int name_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -2438,7 +2642,7 @@ class SetEntityParameters final :
                &_SetEntityParameters_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   friend void swap(SetEntityParameters& a, SetEntityParameters& b) {
     a.Swap(&b);
@@ -2606,7 +2810,7 @@ class ManeuverIDCombined final :
                &_ManeuverIDCombined_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   friend void swap(ManeuverIDCombined& a, ManeuverIDCombined& b) {
     a.Swap(&b);
@@ -2771,7 +2975,7 @@ class ManeuverID final :
                &_ManeuverID_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   friend void swap(ManeuverID& a, ManeuverID& b) {
     a.Swap(&b);
@@ -2967,7 +3171,7 @@ class TransitionCondition final :
                &_TransitionCondition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   friend void swap(TransitionCondition& a, TransitionCondition& b) {
     a.Swap(&b);
@@ -3152,7 +3356,7 @@ class Loiter final :
                &_Loiter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   friend void swap(Loiter& a, Loiter& b) {
     a.Swap(&b);
@@ -3544,7 +3748,7 @@ class PlanManeuverStartActionsUnion final :
                &_PlanManeuverStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   friend void swap(PlanManeuverStartActionsUnion& a, PlanManeuverStartActionsUnion& b) {
     a.Swap(&b);
@@ -3713,7 +3917,7 @@ class PlanManeuver final :
                &_PlanManeuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    15;
 
   friend void swap(PlanManeuver& a, PlanManeuver& b) {
     a.Swap(&b);
@@ -3910,7 +4114,7 @@ class PlanTransition final :
                &_PlanTransition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    16;
 
   friend void swap(PlanTransition& a, PlanTransition& b) {
     a.Swap(&b);
@@ -4107,7 +4311,7 @@ class VerticalProfile final :
                &_VerticalProfile_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    17;
 
   friend void swap(VerticalProfile& a, VerticalProfile& b) {
     a.Swap(&b);
@@ -4363,7 +4567,7 @@ class EstimatedState final :
                &_EstimatedState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    18;
 
   friend void swap(EstimatedState& a, EstimatedState& b) {
     a.Swap(&b);
@@ -4801,7 +5005,7 @@ class PlanSpecification final :
                &_PlanSpecification_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    19;
 
   friend void swap(PlanSpecification& a, PlanSpecification& b) {
     a.Swap(&b);
@@ -5099,7 +5303,7 @@ class PlanDB final :
                &_PlanDB_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    20;
 
   friend void swap(PlanDB& a, PlanDB& b) {
     a.Swap(&b);
@@ -5414,7 +5618,7 @@ class PlanDBState final :
                &_PlanDBState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    21;
 
   friend void swap(PlanDBState& a, PlanDBState& b) {
     a.Swap(&b);
@@ -5672,7 +5876,7 @@ class PlanDBInformation final :
                &_PlanDBInformation_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    22;
 
   friend void swap(PlanDBInformation& a, PlanDBInformation& b) {
     a.Swap(&b);
@@ -5915,7 +6119,7 @@ class PlanControl final :
                &_PlanControl_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    23;
 
   friend void swap(PlanControl& a, PlanControl& b) {
     a.Swap(&b);
@@ -6237,7 +6441,7 @@ class PlanStatistics final :
                &_PlanStatistics_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    24;
 
   friend void swap(PlanStatistics& a, PlanStatistics& b) {
     a.Swap(&b);
@@ -6542,7 +6746,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    25;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -6758,7 +6962,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    26;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -6932,7 +7136,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    27;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -7108,7 +7312,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -8208,6 +8412,134 @@ inline ParameterValue::ParameterValueUnionCase ParameterValue::ParameterValueUni
 }
 // -------------------------------------------------------------------
 
+// ParameterName
+
+// .IMC_DCCL.ParamName param_enum = 1;
+inline bool ParameterName::_internal_has_param_enum() const {
+  return ParameterNameUnion_case() == kParamEnum;
+}
+inline bool ParameterName::has_param_enum() const {
+  return _internal_has_param_enum();
+}
+inline void ParameterName::set_has_param_enum() {
+  _impl_._oneof_case_[0] = kParamEnum;
+}
+inline void ParameterName::clear_param_enum() {
+  if (_internal_has_param_enum()) {
+    _impl_.ParameterNameUnion_.param_enum_ = 0;
+    clear_has_ParameterNameUnion();
+  }
+}
+inline ::IMC_DCCL::ParamName ParameterName::_internal_param_enum() const {
+  if (_internal_has_param_enum()) {
+    return static_cast< ::IMC_DCCL::ParamName >(_impl_.ParameterNameUnion_.param_enum_);
+  }
+  return static_cast< ::IMC_DCCL::ParamName >(0);
+}
+inline ::IMC_DCCL::ParamName ParameterName::param_enum() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.ParameterName.param_enum)
+  return _internal_param_enum();
+}
+inline void ParameterName::_internal_set_param_enum(::IMC_DCCL::ParamName value) {
+  if (!_internal_has_param_enum()) {
+    clear_ParameterNameUnion();
+    set_has_param_enum();
+  }
+  _impl_.ParameterNameUnion_.param_enum_ = value;
+}
+inline void ParameterName::set_param_enum(::IMC_DCCL::ParamName value) {
+  _internal_set_param_enum(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.ParameterName.param_enum)
+}
+
+// string param_string = 2 [(.dccl.field) = {
+inline bool ParameterName::_internal_has_param_string() const {
+  return ParameterNameUnion_case() == kParamString;
+}
+inline bool ParameterName::has_param_string() const {
+  return _internal_has_param_string();
+}
+inline void ParameterName::set_has_param_string() {
+  _impl_._oneof_case_[0] = kParamString;
+}
+inline void ParameterName::clear_param_string() {
+  if (_internal_has_param_string()) {
+    _impl_.ParameterNameUnion_.param_string_.Destroy();
+    clear_has_ParameterNameUnion();
+  }
+}
+inline const std::string& ParameterName::param_string() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.ParameterName.param_string)
+  return _internal_param_string();
+}
+template <typename ArgT0, typename... ArgT>
+inline void ParameterName::set_param_string(ArgT0&& arg0, ArgT... args) {
+  if (!_internal_has_param_string()) {
+    clear_ParameterNameUnion();
+    set_has_param_string();
+    _impl_.ParameterNameUnion_.param_string_.InitDefault();
+  }
+  _impl_.ParameterNameUnion_.param_string_.Set( static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.ParameterName.param_string)
+}
+inline std::string* ParameterName::mutable_param_string() {
+  std::string* _s = _internal_mutable_param_string();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.ParameterName.param_string)
+  return _s;
+}
+inline const std::string& ParameterName::_internal_param_string() const {
+  if (_internal_has_param_string()) {
+    return _impl_.ParameterNameUnion_.param_string_.Get();
+  }
+  return ::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited();
+}
+inline void ParameterName::_internal_set_param_string(const std::string& value) {
+  if (!_internal_has_param_string()) {
+    clear_ParameterNameUnion();
+    set_has_param_string();
+    _impl_.ParameterNameUnion_.param_string_.InitDefault();
+  }
+  _impl_.ParameterNameUnion_.param_string_.Set(value, GetArenaForAllocation());
+}
+inline std::string* ParameterName::_internal_mutable_param_string() {
+  if (!_internal_has_param_string()) {
+    clear_ParameterNameUnion();
+    set_has_param_string();
+    _impl_.ParameterNameUnion_.param_string_.InitDefault();
+  }
+  return _impl_.ParameterNameUnion_.param_string_.Mutable(      GetArenaForAllocation());
+}
+inline std::string* ParameterName::release_param_string() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.ParameterName.param_string)
+  if (_internal_has_param_string()) {
+    clear_has_ParameterNameUnion();
+    return _impl_.ParameterNameUnion_.param_string_.Release();
+  } else {
+    return nullptr;
+  }
+}
+inline void ParameterName::set_allocated_param_string(std::string* param_string) {
+  if (has_ParameterNameUnion()) {
+    clear_ParameterNameUnion();
+  }
+  if (param_string != nullptr) {
+    set_has_param_string();
+    _impl_.ParameterNameUnion_.param_string_.InitAllocated(param_string, GetArenaForAllocation());
+  }
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.ParameterName.param_string)
+}
+
+inline bool ParameterName::has_ParameterNameUnion() const {
+  return ParameterNameUnion_case() != PARAMETERNAMEUNION_NOT_SET;
+}
+inline void ParameterName::clear_has_ParameterNameUnion() {
+  _impl_._oneof_case_[0] = PARAMETERNAMEUNION_NOT_SET;
+}
+inline ParameterName::ParameterNameUnionCase ParameterName::ParameterNameUnion_case() const {
+  return ParameterName::ParameterNameUnionCase(_impl_._oneof_case_[0]);
+}
+// -------------------------------------------------------------------
+
 // PathPoint
 
 // optional float x = 1 [(.dccl.field) = {
@@ -8608,23 +8940,93 @@ inline Maneuver::ManeuverUnionCase Maneuver::ManeuverUnion_case() const {
 // EntityParameter
 
 // .IMC_DCCL.ParameterName name = 1;
+inline bool EntityParameter::_internal_has_name() const {
+  return this != internal_default_instance() && _impl_.name_ != nullptr;
+}
+inline bool EntityParameter::has_name() const {
+  return _internal_has_name();
+}
 inline void EntityParameter::clear_name() {
-  _impl_.name_ = 0;
+  if (GetArenaForAllocation() == nullptr && _impl_.name_ != nullptr) {
+    delete _impl_.name_;
+  }
+  _impl_.name_ = nullptr;
 }
-inline ::IMC_DCCL::ParameterName EntityParameter::_internal_name() const {
-  return static_cast< ::IMC_DCCL::ParameterName >(_impl_.name_);
+inline const ::IMC_DCCL::ParameterName& EntityParameter::_internal_name() const {
+  const ::IMC_DCCL::ParameterName* p = _impl_.name_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::ParameterName&>(
+      ::IMC_DCCL::_ParameterName_default_instance_);
 }
-inline ::IMC_DCCL::ParameterName EntityParameter::name() const {
+inline const ::IMC_DCCL::ParameterName& EntityParameter::name() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.EntityParameter.name)
   return _internal_name();
 }
-inline void EntityParameter::_internal_set_name(::IMC_DCCL::ParameterName value) {
-  
-  _impl_.name_ = value;
+inline void EntityParameter::unsafe_arena_set_allocated_name(
+    ::IMC_DCCL::ParameterName* name) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.name_);
+  }
+  _impl_.name_ = name;
+  if (name) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.EntityParameter.name)
 }
-inline void EntityParameter::set_name(::IMC_DCCL::ParameterName value) {
-  _internal_set_name(value);
-  // @@protoc_insertion_point(field_set:IMC_DCCL.EntityParameter.name)
+inline ::IMC_DCCL::ParameterName* EntityParameter::release_name() {
+  
+  ::IMC_DCCL::ParameterName* temp = _impl_.name_;
+  _impl_.name_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::ParameterName* EntityParameter::unsafe_arena_release_name() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.EntityParameter.name)
+  
+  ::IMC_DCCL::ParameterName* temp = _impl_.name_;
+  _impl_.name_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::ParameterName* EntityParameter::_internal_mutable_name() {
+  
+  if (_impl_.name_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::ParameterName>(GetArenaForAllocation());
+    _impl_.name_ = p;
+  }
+  return _impl_.name_;
+}
+inline ::IMC_DCCL::ParameterName* EntityParameter::mutable_name() {
+  ::IMC_DCCL::ParameterName* _msg = _internal_mutable_name();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.EntityParameter.name)
+  return _msg;
+}
+inline void EntityParameter::set_allocated_name(::IMC_DCCL::ParameterName* name) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.name_;
+  }
+  if (name) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(name);
+    if (message_arena != submessage_arena) {
+      name = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, name, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.name_ = name;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.EntityParameter.name)
 }
 
 // .IMC_DCCL.ParameterValue value = 2;
@@ -13501,6 +13903,8 @@ inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUni
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -13573,10 +13977,10 @@ template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::TransitionConditionEnum>() {
   return ::IMC_DCCL::TransitionConditionEnum_descriptor();
 }
-template <> struct is_proto_enum< ::IMC_DCCL::ParameterName> : ::std::true_type {};
+template <> struct is_proto_enum< ::IMC_DCCL::ParamName> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::ParameterName>() {
-  return ::IMC_DCCL::ParameterName_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::ParamName>() {
+  return ::IMC_DCCL::ParamName_descriptor();
 }
 template <> struct is_proto_enum< ::IMC_DCCL::EntityName> : ::std::true_type {};
 template <>
