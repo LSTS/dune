@@ -45,6 +45,7 @@ namespace IMCDCCL
             PLAN_DB = 556,
             PLAN_CONTROL = 559, 
             SET_ENTITY_PARAMETERS = 804,
+            VEHICLE_STATE = 500,
         };
 
         private: 
@@ -62,6 +63,7 @@ namespace IMCDCCL
                 case ESTIMATED_STATE:
                 case PLAN_CONTROL:
                 case SET_ENTITY_PARAMETERS:
+                case VEHICLE_STATE:
                     return static_cast<MsgID>(id);
                 default:
                     throw std::invalid_argument("DCCL:CodecDCCL: MsgID Not Recognized");
@@ -123,6 +125,16 @@ namespace IMCDCCL
                     m_codec.decode(encoded_string, &src_dccl);
                     DUNE::IMC::SetEntityParameters* dst_imc = new DUNE::IMC::SetEntityParameters();
                     decodeSetEntityParameters(src_dccl, *dst_imc);
+                    return dst_imc;
+                }
+
+                case VEHICLE_STATE:
+                {
+                    m_codec.load<IMC_DCCL::VehicleState>();
+                    IMC_DCCL::VehicleState src_dccl;
+                    m_codec.decode(encoded_string, &src_dccl);
+                    DUNE::IMC::VehicleState* dst_imc = new DUNE::IMC::VehicleState();
+                    decodeVehicleState(src_dccl, *dst_imc);
                     return dst_imc;
                 }
 
@@ -198,6 +210,20 @@ namespace IMCDCCL
                     m_codec.load<IMC_DCCL::SetEntityParameters>();
                     IMC_DCCL::SetEntityParameters dst_dccl;
                     encodeSetEntityParameters(*src_imc, dst_dccl);
+
+                    std::string encoded_bytes;
+                    m_codec.encode(&encoded_bytes, dst_dccl);
+                    
+                    return encoded_bytes;
+                }
+
+                case VEHICLE_STATE:
+                {
+                    const DUNE::IMC::VehicleState* src_imc = dynamic_cast<const DUNE::IMC::VehicleState*>(imc_msg);
+
+                    m_codec.load<IMC_DCCL::VehicleState>();
+                    IMC_DCCL::VehicleState dst_dccl;
+                    encodeVehicleState(*src_imc, dst_dccl);
 
                     std::string encoded_bytes;
                     m_codec.encode(&encoded_bytes, dst_dccl);

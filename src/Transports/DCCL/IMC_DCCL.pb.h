@@ -134,6 +134,9 @@ extern StationKeepingDefaultTypeInternal _StationKeeping_default_instance_;
 class TransitionCondition;
 struct TransitionConditionDefaultTypeInternal;
 extern TransitionConditionDefaultTypeInternal _TransitionCondition_default_instance_;
+class VehicleState;
+struct VehicleStateDefaultTypeInternal;
+extern VehicleStateDefaultTypeInternal _VehicleState_default_instance_;
 class VerticalProfile;
 struct VerticalProfileDefaultTypeInternal;
 extern VerticalProfileDefaultTypeInternal _VerticalProfile_default_instance_;
@@ -168,6 +171,7 @@ template<> ::IMC_DCCL::ProfileSample* Arena::CreateMaybeMessage<::IMC_DCCL::Prof
 template<> ::IMC_DCCL::SetEntityParameters* Arena::CreateMaybeMessage<::IMC_DCCL::SetEntityParameters>(Arena*);
 template<> ::IMC_DCCL::StationKeeping* Arena::CreateMaybeMessage<::IMC_DCCL::StationKeeping>(Arena*);
 template<> ::IMC_DCCL::TransitionCondition* Arena::CreateMaybeMessage<::IMC_DCCL::TransitionCondition>(Arena*);
+template<> ::IMC_DCCL::VehicleState* Arena::CreateMaybeMessage<::IMC_DCCL::VehicleState>(Arena*);
 template<> ::IMC_DCCL::VerticalProfile* Arena::CreateMaybeMessage<::IMC_DCCL::VerticalProfile>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace IMC_DCCL {
@@ -402,6 +406,36 @@ inline bool PlanStatistics_TypeEnum_Parse(
     ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, PlanStatistics_TypeEnum* value) {
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<PlanStatistics_TypeEnum>(
     PlanStatistics_TypeEnum_descriptor(), name, value);
+}
+enum VehicleState_OperationModeEnum : int {
+  VehicleState_OperationModeEnum_VS_SERVICE = 0,
+  VehicleState_OperationModeEnum_VS_CALIBRATION = 1,
+  VehicleState_OperationModeEnum_VS_ERROR = 2,
+  VehicleState_OperationModeEnum_VS_MANEUVER = 3,
+  VehicleState_OperationModeEnum_VS_EXTERNAL = 4,
+  VehicleState_OperationModeEnum_VS_BOOT = 5,
+  VehicleState_OperationModeEnum_VS_UNKNOWN = 6,
+  VehicleState_OperationModeEnum_VehicleState_OperationModeEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  VehicleState_OperationModeEnum_VehicleState_OperationModeEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool VehicleState_OperationModeEnum_IsValid(int value);
+constexpr VehicleState_OperationModeEnum VehicleState_OperationModeEnum_OperationModeEnum_MIN = VehicleState_OperationModeEnum_VS_SERVICE;
+constexpr VehicleState_OperationModeEnum VehicleState_OperationModeEnum_OperationModeEnum_MAX = VehicleState_OperationModeEnum_VS_UNKNOWN;
+constexpr int VehicleState_OperationModeEnum_OperationModeEnum_ARRAYSIZE = VehicleState_OperationModeEnum_OperationModeEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* VehicleState_OperationModeEnum_descriptor();
+template<typename T>
+inline const std::string& VehicleState_OperationModeEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, VehicleState_OperationModeEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function VehicleState_OperationModeEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    VehicleState_OperationModeEnum_descriptor(), enum_t_value);
+}
+inline bool VehicleState_OperationModeEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, VehicleState_OperationModeEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<VehicleState_OperationModeEnum>(
+    VehicleState_OperationModeEnum_descriptor(), name, value);
 }
 enum ZUnits : int {
   Z_NONE = 0,
@@ -6895,6 +6929,340 @@ class PlanStatistics final :
 };
 // -------------------------------------------------------------------
 
+class VehicleState final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.VehicleState) */ {
+ public:
+  inline VehicleState() : VehicleState(nullptr) {}
+  ~VehicleState() override;
+  explicit PROTOBUF_CONSTEXPR VehicleState(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  VehicleState(const VehicleState& from);
+  VehicleState(VehicleState&& from) noexcept
+    : VehicleState() {
+    *this = ::std::move(from);
+  }
+
+  inline VehicleState& operator=(const VehicleState& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline VehicleState& operator=(VehicleState&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const VehicleState& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const VehicleState* internal_default_instance() {
+    return reinterpret_cast<const VehicleState*>(
+               &_VehicleState_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    26;
+
+  friend void swap(VehicleState& a, VehicleState& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(VehicleState* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(VehicleState* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  VehicleState* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<VehicleState>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const VehicleState& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const VehicleState& from) {
+    VehicleState::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(VehicleState* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.VehicleState";
+  }
+  protected:
+  explicit VehicleState(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  typedef VehicleState_OperationModeEnum OperationModeEnum;
+  static constexpr OperationModeEnum VS_SERVICE =
+    VehicleState_OperationModeEnum_VS_SERVICE;
+  static constexpr OperationModeEnum VS_CALIBRATION =
+    VehicleState_OperationModeEnum_VS_CALIBRATION;
+  static constexpr OperationModeEnum VS_ERROR =
+    VehicleState_OperationModeEnum_VS_ERROR;
+  static constexpr OperationModeEnum VS_MANEUVER =
+    VehicleState_OperationModeEnum_VS_MANEUVER;
+  static constexpr OperationModeEnum VS_EXTERNAL =
+    VehicleState_OperationModeEnum_VS_EXTERNAL;
+  static constexpr OperationModeEnum VS_BOOT =
+    VehicleState_OperationModeEnum_VS_BOOT;
+  static constexpr OperationModeEnum VS_UNKNOWN =
+    VehicleState_OperationModeEnum_VS_UNKNOWN;
+  static inline bool OperationModeEnum_IsValid(int value) {
+    return VehicleState_OperationModeEnum_IsValid(value);
+  }
+  static constexpr OperationModeEnum OperationModeEnum_MIN =
+    VehicleState_OperationModeEnum_OperationModeEnum_MIN;
+  static constexpr OperationModeEnum OperationModeEnum_MAX =
+    VehicleState_OperationModeEnum_OperationModeEnum_MAX;
+  static constexpr int OperationModeEnum_ARRAYSIZE =
+    VehicleState_OperationModeEnum_OperationModeEnum_ARRAYSIZE;
+  static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
+  OperationModeEnum_descriptor() {
+    return VehicleState_OperationModeEnum_descriptor();
+  }
+  template<typename T>
+  static inline const std::string& OperationModeEnum_Name(T enum_t_value) {
+    static_assert(::std::is_same<T, OperationModeEnum>::value ||
+      ::std::is_integral<T>::value,
+      "Incorrect type passed to function OperationModeEnum_Name.");
+    return VehicleState_OperationModeEnum_Name(enum_t_value);
+  }
+  static inline bool OperationModeEnum_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
+      OperationModeEnum* value) {
+    return VehicleState_OperationModeEnum_Parse(name, value);
+  }
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kErrorEntsFieldNumber = 3,
+    kLastErrorFieldNumber = 9,
+    kOpModeFieldNumber = 1,
+    kErrorCountFieldNumber = 2,
+    kManeuverTypeFieldNumber = 4,
+    kManeuverStimeFieldNumber = 5,
+    kManeuverEtaFieldNumber = 6,
+    kControlLoopsFieldNumber = 7,
+    kFlagsFieldNumber = 8,
+    kLastErrorTimeFieldNumber = 10,
+  };
+  // optional string error_ents = 3 [(.dccl.field) = {
+  bool has_error_ents() const;
+  private:
+  bool _internal_has_error_ents() const;
+  public:
+  void clear_error_ents();
+  const std::string& error_ents() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_error_ents(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_error_ents();
+  PROTOBUF_NODISCARD std::string* release_error_ents();
+  void set_allocated_error_ents(std::string* error_ents);
+  private:
+  const std::string& _internal_error_ents() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_error_ents(const std::string& value);
+  std::string* _internal_mutable_error_ents();
+  public:
+
+  // optional string last_error = 9 [(.dccl.field) = {
+  bool has_last_error() const;
+  private:
+  bool _internal_has_last_error() const;
+  public:
+  void clear_last_error();
+  const std::string& last_error() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_last_error(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_last_error();
+  PROTOBUF_NODISCARD std::string* release_last_error();
+  void set_allocated_last_error(std::string* last_error);
+  private:
+  const std::string& _internal_last_error() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_last_error(const std::string& value);
+  std::string* _internal_mutable_last_error();
+  public:
+
+  // .IMC_DCCL.VehicleState.OperationModeEnum op_mode = 1;
+  void clear_op_mode();
+  ::IMC_DCCL::VehicleState_OperationModeEnum op_mode() const;
+  void set_op_mode(::IMC_DCCL::VehicleState_OperationModeEnum value);
+  private:
+  ::IMC_DCCL::VehicleState_OperationModeEnum _internal_op_mode() const;
+  void _internal_set_op_mode(::IMC_DCCL::VehicleState_OperationModeEnum value);
+  public:
+
+  // optional int32 error_count = 2 [(.dccl.field) = {
+  bool has_error_count() const;
+  private:
+  bool _internal_has_error_count() const;
+  public:
+  void clear_error_count();
+  int32_t error_count() const;
+  void set_error_count(int32_t value);
+  private:
+  int32_t _internal_error_count() const;
+  void _internal_set_error_count(int32_t value);
+  public:
+
+  // optional int32 maneuver_type = 4 [(.dccl.field) = {
+  bool has_maneuver_type() const;
+  private:
+  bool _internal_has_maneuver_type() const;
+  public:
+  void clear_maneuver_type();
+  int32_t maneuver_type() const;
+  void set_maneuver_type(int32_t value);
+  private:
+  int32_t _internal_maneuver_type() const;
+  void _internal_set_maneuver_type(int32_t value);
+  public:
+
+  // optional float maneuver_stime = 5 [(.dccl.field) = {
+  bool has_maneuver_stime() const;
+  private:
+  bool _internal_has_maneuver_stime() const;
+  public:
+  void clear_maneuver_stime();
+  float maneuver_stime() const;
+  void set_maneuver_stime(float value);
+  private:
+  float _internal_maneuver_stime() const;
+  void _internal_set_maneuver_stime(float value);
+  public:
+
+  // optional int32 maneuver_eta = 6 [(.dccl.field) = {
+  bool has_maneuver_eta() const;
+  private:
+  bool _internal_has_maneuver_eta() const;
+  public:
+  void clear_maneuver_eta();
+  int32_t maneuver_eta() const;
+  void set_maneuver_eta(int32_t value);
+  private:
+  int32_t _internal_maneuver_eta() const;
+  void _internal_set_maneuver_eta(int32_t value);
+  public:
+
+  // optional int32 control_loops = 7 [(.dccl.field) = {
+  bool has_control_loops() const;
+  private:
+  bool _internal_has_control_loops() const;
+  public:
+  void clear_control_loops();
+  int32_t control_loops() const;
+  void set_control_loops(int32_t value);
+  private:
+  int32_t _internal_control_loops() const;
+  void _internal_set_control_loops(int32_t value);
+  public:
+
+  // optional int32 flags = 8 [(.dccl.field) = {
+  bool has_flags() const;
+  private:
+  bool _internal_has_flags() const;
+  public:
+  void clear_flags();
+  int32_t flags() const;
+  void set_flags(int32_t value);
+  private:
+  int32_t _internal_flags() const;
+  void _internal_set_flags(int32_t value);
+  public:
+
+  // optional float last_error_time = 10 [(.dccl.field) = {
+  bool has_last_error_time() const;
+  private:
+  bool _internal_has_last_error_time() const;
+  public:
+  void clear_last_error_time();
+  float last_error_time() const;
+  void set_last_error_time(float value);
+  private:
+  float _internal_last_error_time() const;
+  void _internal_set_last_error_time(float value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.VehicleState)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr error_ents_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr last_error_;
+    int op_mode_;
+    int32_t error_count_;
+    int32_t maneuver_type_;
+    float maneuver_stime_;
+    int32_t maneuver_eta_;
+    int32_t control_loops_;
+    int32_t flags_;
+    float last_error_time_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class PlanDBArgUnion final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanDBArgUnion) */ {
  public:
@@ -6950,7 +7318,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    27;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -7166,7 +7534,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -7340,7 +7708,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    29;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -7516,7 +7884,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    30;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -13606,6 +13974,362 @@ inline void PlanStatistics::set_allocated_fuel(std::string* fuel) {
 
 // -------------------------------------------------------------------
 
+// VehicleState
+
+// .IMC_DCCL.VehicleState.OperationModeEnum op_mode = 1;
+inline void VehicleState::clear_op_mode() {
+  _impl_.op_mode_ = 0;
+}
+inline ::IMC_DCCL::VehicleState_OperationModeEnum VehicleState::_internal_op_mode() const {
+  return static_cast< ::IMC_DCCL::VehicleState_OperationModeEnum >(_impl_.op_mode_);
+}
+inline ::IMC_DCCL::VehicleState_OperationModeEnum VehicleState::op_mode() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.op_mode)
+  return _internal_op_mode();
+}
+inline void VehicleState::_internal_set_op_mode(::IMC_DCCL::VehicleState_OperationModeEnum value) {
+  
+  _impl_.op_mode_ = value;
+}
+inline void VehicleState::set_op_mode(::IMC_DCCL::VehicleState_OperationModeEnum value) {
+  _internal_set_op_mode(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.op_mode)
+}
+
+// optional int32 error_count = 2 [(.dccl.field) = {
+inline bool VehicleState::_internal_has_error_count() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool VehicleState::has_error_count() const {
+  return _internal_has_error_count();
+}
+inline void VehicleState::clear_error_count() {
+  _impl_.error_count_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline int32_t VehicleState::_internal_error_count() const {
+  return _impl_.error_count_;
+}
+inline int32_t VehicleState::error_count() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.error_count)
+  return _internal_error_count();
+}
+inline void VehicleState::_internal_set_error_count(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_.error_count_ = value;
+}
+inline void VehicleState::set_error_count(int32_t value) {
+  _internal_set_error_count(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.error_count)
+}
+
+// optional string error_ents = 3 [(.dccl.field) = {
+inline bool VehicleState::_internal_has_error_ents() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool VehicleState::has_error_ents() const {
+  return _internal_has_error_ents();
+}
+inline void VehicleState::clear_error_ents() {
+  _impl_.error_ents_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& VehicleState::error_ents() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.error_ents)
+  return _internal_error_ents();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void VehicleState::set_error_ents(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.error_ents_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.error_ents)
+}
+inline std::string* VehicleState::mutable_error_ents() {
+  std::string* _s = _internal_mutable_error_ents();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.VehicleState.error_ents)
+  return _s;
+}
+inline const std::string& VehicleState::_internal_error_ents() const {
+  return _impl_.error_ents_.Get();
+}
+inline void VehicleState::_internal_set_error_ents(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.error_ents_.Set(value, GetArenaForAllocation());
+}
+inline std::string* VehicleState::_internal_mutable_error_ents() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.error_ents_.Mutable(GetArenaForAllocation());
+}
+inline std::string* VehicleState::release_error_ents() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.VehicleState.error_ents)
+  if (!_internal_has_error_ents()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.error_ents_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.error_ents_.IsDefault()) {
+    _impl_.error_ents_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void VehicleState::set_allocated_error_ents(std::string* error_ents) {
+  if (error_ents != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.error_ents_.SetAllocated(error_ents, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.error_ents_.IsDefault()) {
+    _impl_.error_ents_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.VehicleState.error_ents)
+}
+
+// optional int32 maneuver_type = 4 [(.dccl.field) = {
+inline bool VehicleState::_internal_has_maneuver_type() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool VehicleState::has_maneuver_type() const {
+  return _internal_has_maneuver_type();
+}
+inline void VehicleState::clear_maneuver_type() {
+  _impl_.maneuver_type_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008u;
+}
+inline int32_t VehicleState::_internal_maneuver_type() const {
+  return _impl_.maneuver_type_;
+}
+inline int32_t VehicleState::maneuver_type() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.maneuver_type)
+  return _internal_maneuver_type();
+}
+inline void VehicleState::_internal_set_maneuver_type(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_.maneuver_type_ = value;
+}
+inline void VehicleState::set_maneuver_type(int32_t value) {
+  _internal_set_maneuver_type(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.maneuver_type)
+}
+
+// optional float maneuver_stime = 5 [(.dccl.field) = {
+inline bool VehicleState::_internal_has_maneuver_stime() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool VehicleState::has_maneuver_stime() const {
+  return _internal_has_maneuver_stime();
+}
+inline void VehicleState::clear_maneuver_stime() {
+  _impl_.maneuver_stime_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000010u;
+}
+inline float VehicleState::_internal_maneuver_stime() const {
+  return _impl_.maneuver_stime_;
+}
+inline float VehicleState::maneuver_stime() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.maneuver_stime)
+  return _internal_maneuver_stime();
+}
+inline void VehicleState::_internal_set_maneuver_stime(float value) {
+  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_.maneuver_stime_ = value;
+}
+inline void VehicleState::set_maneuver_stime(float value) {
+  _internal_set_maneuver_stime(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.maneuver_stime)
+}
+
+// optional int32 maneuver_eta = 6 [(.dccl.field) = {
+inline bool VehicleState::_internal_has_maneuver_eta() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  return value;
+}
+inline bool VehicleState::has_maneuver_eta() const {
+  return _internal_has_maneuver_eta();
+}
+inline void VehicleState::clear_maneuver_eta() {
+  _impl_.maneuver_eta_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000020u;
+}
+inline int32_t VehicleState::_internal_maneuver_eta() const {
+  return _impl_.maneuver_eta_;
+}
+inline int32_t VehicleState::maneuver_eta() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.maneuver_eta)
+  return _internal_maneuver_eta();
+}
+inline void VehicleState::_internal_set_maneuver_eta(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000020u;
+  _impl_.maneuver_eta_ = value;
+}
+inline void VehicleState::set_maneuver_eta(int32_t value) {
+  _internal_set_maneuver_eta(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.maneuver_eta)
+}
+
+// optional int32 control_loops = 7 [(.dccl.field) = {
+inline bool VehicleState::_internal_has_control_loops() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000040u) != 0;
+  return value;
+}
+inline bool VehicleState::has_control_loops() const {
+  return _internal_has_control_loops();
+}
+inline void VehicleState::clear_control_loops() {
+  _impl_.control_loops_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000040u;
+}
+inline int32_t VehicleState::_internal_control_loops() const {
+  return _impl_.control_loops_;
+}
+inline int32_t VehicleState::control_loops() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.control_loops)
+  return _internal_control_loops();
+}
+inline void VehicleState::_internal_set_control_loops(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000040u;
+  _impl_.control_loops_ = value;
+}
+inline void VehicleState::set_control_loops(int32_t value) {
+  _internal_set_control_loops(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.control_loops)
+}
+
+// optional int32 flags = 8 [(.dccl.field) = {
+inline bool VehicleState::_internal_has_flags() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000080u) != 0;
+  return value;
+}
+inline bool VehicleState::has_flags() const {
+  return _internal_has_flags();
+}
+inline void VehicleState::clear_flags() {
+  _impl_.flags_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000080u;
+}
+inline int32_t VehicleState::_internal_flags() const {
+  return _impl_.flags_;
+}
+inline int32_t VehicleState::flags() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.flags)
+  return _internal_flags();
+}
+inline void VehicleState::_internal_set_flags(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000080u;
+  _impl_.flags_ = value;
+}
+inline void VehicleState::set_flags(int32_t value) {
+  _internal_set_flags(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.flags)
+}
+
+// optional string last_error = 9 [(.dccl.field) = {
+inline bool VehicleState::_internal_has_last_error() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool VehicleState::has_last_error() const {
+  return _internal_has_last_error();
+}
+inline void VehicleState::clear_last_error() {
+  _impl_.last_error_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline const std::string& VehicleState::last_error() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.last_error)
+  return _internal_last_error();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void VehicleState::set_last_error(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000002u;
+ _impl_.last_error_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.last_error)
+}
+inline std::string* VehicleState::mutable_last_error() {
+  std::string* _s = _internal_mutable_last_error();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.VehicleState.last_error)
+  return _s;
+}
+inline const std::string& VehicleState::_internal_last_error() const {
+  return _impl_.last_error_.Get();
+}
+inline void VehicleState::_internal_set_last_error(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.last_error_.Set(value, GetArenaForAllocation());
+}
+inline std::string* VehicleState::_internal_mutable_last_error() {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  return _impl_.last_error_.Mutable(GetArenaForAllocation());
+}
+inline std::string* VehicleState::release_last_error() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.VehicleState.last_error)
+  if (!_internal_has_last_error()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  auto* p = _impl_.last_error_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.last_error_.IsDefault()) {
+    _impl_.last_error_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void VehicleState::set_allocated_last_error(std::string* last_error) {
+  if (last_error != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+  _impl_.last_error_.SetAllocated(last_error, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.last_error_.IsDefault()) {
+    _impl_.last_error_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.VehicleState.last_error)
+}
+
+// optional float last_error_time = 10 [(.dccl.field) = {
+inline bool VehicleState::_internal_has_last_error_time() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000100u) != 0;
+  return value;
+}
+inline bool VehicleState::has_last_error_time() const {
+  return _internal_has_last_error_time();
+}
+inline void VehicleState::clear_last_error_time() {
+  _impl_.last_error_time_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000100u;
+}
+inline float VehicleState::_internal_last_error_time() const {
+  return _impl_.last_error_time_;
+}
+inline float VehicleState::last_error_time() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.last_error_time)
+  return _internal_last_error_time();
+}
+inline void VehicleState::_internal_set_last_error_time(float value) {
+  _impl_._has_bits_[0] |= 0x00000100u;
+  _impl_.last_error_time_ = value;
+}
+inline void VehicleState::set_last_error_time(float value) {
+  _internal_set_last_error_time(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.last_error_time)
+}
+
+// -------------------------------------------------------------------
+
 // PlanDBArgUnion
 
 // .IMC_DCCL.PlanSpecification ps_arg = 1;
@@ -14309,6 +15033,8 @@ inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUni
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -14355,6 +15081,11 @@ template <> struct is_proto_enum< ::IMC_DCCL::PlanStatistics_TypeEnum> : ::std::
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::PlanStatistics_TypeEnum>() {
   return ::IMC_DCCL::PlanStatistics_TypeEnum_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::VehicleState_OperationModeEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::VehicleState_OperationModeEnum>() {
+  return ::IMC_DCCL::VehicleState_OperationModeEnum_descriptor();
 }
 template <> struct is_proto_enum< ::IMC_DCCL::ZUnits> : ::std::true_type {};
 template <>

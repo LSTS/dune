@@ -485,6 +485,31 @@ message PlanStatistics {
     optional string fuel = 7 [(dccl.field).max_length = 100];
 }
 
+//VehicleState
+message VehicleState {
+    option (dccl.msg) = { codec_version: 4 id: 500 max_bytes: 800000};
+    enum OperationModeEnum
+    {
+        VS_SERVICE = 0;
+        VS_CALIBRATION = 1;
+        VS_ERROR= 2;
+        VS_MANEUVER = 3;
+        VS_EXTERNAL = 4;
+        VS_BOOT = 5;
+        VS_UNKNOWN = 6;
+    }  
+    OperationModeEnum op_mode = 1;  
+    optional int32 error_count = 2 [(dccl.field) = { min: 0 max: 255 precision: 1 }];
+    optional string error_ents = 3 [(dccl.field).max_length = 500];
+    optional int32 maneuver_type = 4 [(dccl.field) = { min: 0 max: 65535 precision: 1 }];
+    optional float maneuver_stime = 5 [(dccl.field) = { min: -1 max: 1808764799 precision: 1 }];
+    optional int32 maneuver_eta = 6 [(dccl.field) = { min: 0 max: 86400 precision: 1 }];
+    optional int32 control_loops = 7 [(dccl.field) = { min: 0 max: 10000 precision: 1 }];
+    optional int32 flags = 8 [(dccl.field) = { min: 0 max: 10000 precision: 1 }];
+    optional string last_error = 9 [(dccl.field).max_length = 100];
+    optional float last_error_time = 10 [(dccl.field) = { min: -1 max: 1835634114 precision: 2 }];
+}
+
 
 message PlanDBArgUnion {
     option (dccl.msg) = { codec_version: 4 max_bytes: 800000};

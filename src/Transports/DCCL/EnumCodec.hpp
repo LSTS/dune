@@ -36,6 +36,10 @@ IMC_DCCL::SpeedUnits encodeSpeedUnits(const uint8_t& imc_src);
 
 DUNE::IMC::SpeedUnits decodeSpeedUnits(const uint8_t& dccl_src);
 
+IMC_DCCL::VehicleState::OperationModeEnum encodeVehicleStateOperationModeEnum(const uint8_t& imc_src);
+
+DUNE::IMC::VehicleState::OperationModeEnum decodeVehicleStateOperationModeEnum(const uint8_t& dccl_src);
+
 IMC_DCCL::VerticalProfile::ParameterEnum encodeVerticalProfileParameterEnum(const uint8_t& imc_src);
 
 DUNE::IMC::VerticalProfile::ParameterEnum decodeVerticalProfileParameterEnum(const uint8_t& dccl_src);
