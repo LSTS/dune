@@ -209,6 +209,35 @@ DUNE::IMC::SpeedUnits decodeSpeedUnits(const uint8_t& dccl_src)
 }
 
 
+// ================ VehicleState.OperationModeEnum Message ================
+IMC_DCCL::VehicleState::OperationModeEnum encodeVehicleStateOperationModeEnum(const uint8_t& imc_src)
+{
+    switch (imc_src) {
+        case DUNE::IMC::VehicleState::OperationModeEnum::VS_SERVICE: return IMC_DCCL::VehicleState::VS_SERVICE;
+        case DUNE::IMC::VehicleState::OperationModeEnum::VS_CALIBRATION: return IMC_DCCL::VehicleState::VS_CALIBRATION;
+        case DUNE::IMC::VehicleState::OperationModeEnum::VS_ERROR: return IMC_DCCL::VehicleState::VS_ERROR;
+        case DUNE::IMC::VehicleState::OperationModeEnum::VS_MANEUVER: return IMC_DCCL::VehicleState::VS_MANEUVER;
+        case DUNE::IMC::VehicleState::OperationModeEnum::VS_EXTERNAL: return IMC_DCCL::VehicleState::VS_EXTERNAL;
+        case DUNE::IMC::VehicleState::OperationModeEnum::VS_BOOT: return IMC_DCCL::VehicleState::VS_BOOT;
+        default: return IMC_DCCL::VehicleState::VS_UNKNOWN;
+    }
+}
+
+
+// ================ VehicleState.OperationModeEnum Message ================
+DUNE::IMC::VehicleState::OperationModeEnum decodeVehicleStateOperationModeEnum(const uint8_t& dccl_src)
+{
+    switch (dccl_src) {
+        case IMC_DCCL::VehicleState::VS_SERVICE: return DUNE::IMC::VehicleState::OperationModeEnum::VS_SERVICE;
+        case IMC_DCCL::VehicleState::VS_CALIBRATION: return DUNE::IMC::VehicleState::OperationModeEnum::VS_CALIBRATION;
+        case IMC_DCCL::VehicleState::VS_ERROR: return DUNE::IMC::VehicleState::OperationModeEnum::VS_ERROR;
+        case IMC_DCCL::VehicleState::VS_MANEUVER: return DUNE::IMC::VehicleState::OperationModeEnum::VS_MANEUVER;
+        case IMC_DCCL::VehicleState::VS_EXTERNAL: return DUNE::IMC::VehicleState::OperationModeEnum::VS_EXTERNAL;
+        case IMC_DCCL::VehicleState::VS_BOOT: return DUNE::IMC::VehicleState::OperationModeEnum::VS_BOOT;
+    }
+}
+
+
 // ================ VerticalProfile.ParameterEnum Message ================
 IMC_DCCL::VerticalProfile::ParameterEnum encodeVerticalProfileParameterEnum(const uint8_t& imc_src)
 {

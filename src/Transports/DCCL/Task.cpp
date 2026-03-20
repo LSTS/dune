@@ -84,8 +84,9 @@ namespace Transports
 
         //bind<IMC::PlanSpecification>(this);
         bind<IMC::UamRxFrame>(this);
-        bind<IMC::PlanControl>(this);
-        bind<IMC::SetEntityParameters>(this);
+        //bind<IMC::PlanControl>(this);
+        //bind<IMC::SetEntityParameters>(this);
+        bind<IMC::VehicleState>(this);
         //bind<IMC::PlanDB>(this);
         //bind<IMC::EstimatedState>(this);
       }
@@ -179,16 +180,39 @@ namespace Transports
       {
        if(m_args.trigger_dccl){
 
-          msg->toJSON(std::cout);
-
           if (m_filter.filter(msg))
             return;
             
+          msg->toJSON(std::cout);
+
           ////////////////////////////////////////////////////////////// DCCL LIB
           std::string encoded_string = m_codecdcll.encodeDCCL(msg);
           ////////////////////////////////////////////////////////////// DCCL LIB
 
           std::cout << "Send via Acoustic"<< std::endl;
+          sendTransmissionRequestViaAcoustic("", encoded_string);
+          
+      }
+    }
+
+      void
+      consume(const IMC::VehicleState* msg)
+      {
+       if(m_args.trigger_dccl){
+
+          if (m_filter.filter(msg))
+            return;
+          
+          msg->toJSON(std::cout);
+            
+          ////////////////////////////////////////////////////////////// DCCL LIB
+          std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          ////////////////////////////////////////////////////////////// DCCL LIB
+
+          war("[ENCODING] VehicleState with size %u received.", msg->getPayloadSerializationSize());
+          war("[ENCODING] Compressed with size %u received.", encoded_string.size());
+          std::cout << "Send via Acoustic"<< std::endl;
+
           sendTransmissionRequestViaAcoustic("", encoded_string);
           
       }
