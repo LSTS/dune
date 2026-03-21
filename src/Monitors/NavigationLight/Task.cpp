@@ -102,6 +102,12 @@ namespace Monitors
       }
 
       void
+      onResourceInitialization(void) override
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, CODE_IDLE);
+      }
+
+      void
       consume(const IMC::EntityParameters* msg)
       {
         if (msg->name != m_args.light_entity)
