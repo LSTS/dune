@@ -76,11 +76,12 @@ script = os.path.abspath(__file__).replace('.pyc', '.py')
 wrk_dir = os.path.dirname(script)
 top_dir = os.path.abspath(os.path.join(wrk_dir, '..', '..'))
 etc_dir = os.path.abspath(os.path.join(top_dir, 'etc'))
+priv_etc_dir = os.path.abspath(os.path.join(top_dir, 'private/etc'))
 i18n_dir = os.path.abspath(os.path.join(top_dir, 'i18n'))
 
 # Find config files.
 list_ini = []
-inis = glob.glob(os.path.join(etc_dir, '*.ini'))
+inis = glob.glob(os.path.join(etc_dir, '*.ini')) + glob.glob(os.path.join(priv_etc_dir, '*.ini'))
 if configs:
     for config in configs:
         for ini in inis: 
