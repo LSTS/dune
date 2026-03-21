@@ -720,7 +720,7 @@ namespace Sensors
           throw RestartNeeded("Device handle not available", 5);
 
         sendCommand(c_restart);
-        applyEntityParameter(m_args.restart_device, false);
+        applyEntityParameter(&m_args.restart_device, false);
         throw RestartNeeded("Restarting device", 5, false);
       }
 
@@ -730,7 +730,7 @@ namespace Sensors
         inf("factory resetting device");
 
         sendCommand(c_factory_reset);
-        applyEntityParameter(m_args.factory_reset_device, false);
+        applyEntityParameter(&m_args.factory_reset_device, false);
         throw RestartNeeded("Factory resetting device", 5, false);
       }
 
@@ -839,11 +839,11 @@ namespace Sensors
         else
           inf("Hard-iron parameters set to x=%f G y=%f G z=%f G", m_hard_iron[0], m_hard_iron[1], m_hard_iron[2]);
 
-        applyEntityParameter(m_args.hard_iron, m_hard_iron, true);
+        applyEntityParameter(&m_args.hard_iron, m_hard_iron, true);
         Time::BrokenDown bdt(Time::Clock::getSinceEpochMsec() / 1000);
         std::string timestamp = Utils::String::str("%04d-%02d-%02d %02d:%02d:%02d",
                                              bdt.year, bdt.month, bdt.day, bdt.hour);
-        applyEntityParameter(m_args.calib_time, timestamp, true);
+        applyEntityParameter(&m_args.calib_time, timestamp, true);
       }
 
       void
