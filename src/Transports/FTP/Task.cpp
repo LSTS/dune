@@ -117,6 +117,13 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
+        std::stringstream os;
+        os << "ftp://0.0.0.0:" << m_args.control_port << "/";
+        IMC::AnnounceService announce;
+        announce.service_type = 0;
+        announce.service = os.str();
+        dispatch(announce);
+
         // Initialize and dispatch AnnounceService.
         std::vector<Interface> itfs = Interface::get();
         std::set<Address> addrs;
@@ -133,19 +140,6 @@ namespace Transports
           TCPSocket* sock = createSocket(itfs[i].address(), port);
           m_poll.add(*sock);
           m_sockets.push_back(sock);
-
-          std::stringstream os;
-          os << "ftp://" << addr.str() << ":" << port << "/";
-
-          IMC::AnnounceService announce;
-          announce.service = os.str();
-
-          if (itfs[i].address().isLoopback())
-            announce.service_type = IMC::AnnounceService::SRV_TYPE_LOCAL;
-          else
-            announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
-
-          dispatch(announce);
         }
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);

@@ -95,10 +95,6 @@ namespace Power
       SerialPort* m_uart;
       //! Control Interface.
       UCTK::Interface* m_ctl;
-      //! Current.
-      IMC::Current m_current[c_adcs_count/2-1];
-      //! Voltage.
-      IMC::Voltage m_voltage[c_adcs_count/2];
       //! Task arguments.
       Arguments m_args;
 

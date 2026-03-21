@@ -44,6 +44,8 @@ namespace Navigation
     //! @author Ricardo Martins
     namespace GPSNavigation
     {
+      //! Maximum horizontal dilution of precision (HDOP)
+      static constexpr float c_max_hdop = 5.0f;
       struct Arguments
       {
         //! GPS entity label.
@@ -54,6 +56,8 @@ namespace Navigation
         std::string elabel_yaw;
         //! Convert height to geoid height (MSL)
         bool convert_msl;
+        //! Reference change distance
+        double ref_distance;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -70,6 +74,8 @@ namespace Navigation
         bool m_offset_flag;
         //! Estimated state.
         IMC::EstimatedState m_estate;
+        //! Origin reference.
+        IMC::GpsFix* m_origin;
         //! GPS fix rejection.
         IMC::GpsFixRejection m_gps_rej;
         //! Time without GPS.
@@ -78,7 +84,8 @@ namespace Navigation
         Arguments m_args;
 
         Task(const std::string& name, Tasks::Context& ctx):
-          DUNE::Tasks::Task(name, ctx)
+          DUNE::Tasks::Task(name, ctx),
+          m_origin(nullptr)
         {
           // Define configuration parameters.
           param("Entity Label - GPS", m_args.elabel_gps)
@@ -93,6 +100,12 @@ namespace Navigation
           param("Convert Height to Geoid Height", m_args.convert_msl)
           .defaultValue("false")
           .description("Convert WGS84 height to geoid height (mean sea level) height");
+
+          param("Reference Change Distance", m_args.ref_distance)
+          .units(Units::Meter)
+          .minimumValue("500")
+          .defaultValue("1000.0")
+          .description("Distance needed for reference change.");
 
           m_estate.clear();
           m_offset = 0.0f;
@@ -198,13 +211,34 @@ namespace Navigation
             return;
           }
 
+          if ((msg->validity & IMC::GpsFix::GFV_VALID_HDOP) == 0)
+          {
+            m_gps_rej.reason = IMC::GpsFixRejection::RR_INVALID;
+            dispatch(m_gps_rej, DF_KEEP_TIME);
+            return;
+          }
+
+          if (msg->hdop > c_max_hdop)
+          {
+            m_gps_rej.reason = IMC::GpsFixRejection::RR_ABOVE_MAX_HDOP;
+            dispatch(m_gps_rej, DF_KEEP_TIME);
+            return;
+          }
+
           // Received valid GPS data.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
           m_time_without_gps.reset();
 
-          m_estate.lat = msg->lat;
-          m_estate.lon = msg->lon;
+          if (!originIsSet())
+            setOrigin(msg);
+
+          if (originIsFar(msg))
+            setOrigin(msg);
+
+          m_estate.lat = m_origin->lat;
+          m_estate.lon = m_origin->lon;
+          m_estate.height = m_origin->height;
 
           if (m_args.convert_msl && !m_offset_flag)
           {
@@ -213,12 +247,15 @@ namespace Navigation
             m_offset = wmm.height(m_estate.lat, m_estate.lon);
           }
 
-          m_estate.height = msg->height - m_offset;
+          WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height, msg->lat, msg->lon,
+                              msg->height - m_offset, &m_estate.x, &m_estate.y, &m_estate.z);
 
           // Decompose velocity vector.
           m_estate.vx = std::cos(msg->cog) * msg->sog;
           m_estate.vy = std::sin(msg->cog) * msg->sog;
-          m_estate.u = msg->sog;
+          // m_estate.u = msg->sog;
+          m_estate.u = m_estate.vx * std::cos(m_estate.psi) + m_estate.vy * std::sin(m_estate.psi);
+          m_estate.v = -m_estate.vx * std::sin(m_estate.psi) + m_estate.vy * std::cos(m_estate.psi);
 
           if (msg->getSourceEntity() == m_imu_eid)
           {
@@ -230,6 +267,27 @@ namespace Navigation
             m_estate.psi = msg->cog;
 
           dispatch(m_estate);
+        }
+
+        bool
+        originIsSet()
+        {
+          return m_origin != nullptr;
+        }
+
+        void
+        setOrigin(const IMC::GpsFix* msg)
+        {
+          Memory::replace(m_origin, new IMC::GpsFix(*msg));
+        }
+
+        bool
+        originIsFar(const IMC::GpsFix* msg)
+        {
+          double distance = WGS84::distance(m_origin->lat, m_origin->lon, m_origin->height,
+                                            msg->lat, msg->lon, msg->height);
+
+          return distance > m_args.ref_distance;
         }
 
         void

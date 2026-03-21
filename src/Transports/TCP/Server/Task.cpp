@@ -123,24 +123,12 @@ namespace Transports
 
           if (m_args.announce)
           {
-            // Initialize and dispatch AnnounceService.
-            std::vector<Interface> itfs = Interface::get();
-
-            for (unsigned i = 0; i < itfs.size(); ++i)
-            {
-              std::stringstream os;
-              os << "imc+tcp://" << itfs[i].address().str() << ":" << m_args.port << "/";
-
-              IMC::AnnounceService announce;
-              announce.service = os.str();
-
-              if (itfs[i].address().isLoopback())
-                announce.service_type = IMC::AnnounceService::SRV_TYPE_LOCAL;
-              else
-                announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
-
-              dispatch(announce);
-            }
+            std::stringstream os;
+            os << "imc+tcp://0.0.0.0:" << m_args.port << "/";
+            IMC::AnnounceService announce;
+            announce.service = os.str();
+            announce.service_type = 0;
+            dispatch(announce);
           }
 
           updateEntityState(0);

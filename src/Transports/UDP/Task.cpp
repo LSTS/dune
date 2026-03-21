@@ -308,34 +308,24 @@ namespace Transports
 
         if (m_args.announce_service)
         {
-          // Initialize and dispatch AnnounceService.
-          std::vector<Interface> itfs = Interface::get();
-          for (unsigned i = 0; i < itfs.size(); ++i)
+          std::stringstream os;
+          std::string service = "imc+udp";
+
+          // if custom service type is enabled
+          if (m_args.custom_service != "")
           {
-            std::stringstream os;
-            std::string service = "imc+udp";
-
-            // if custom service type is enabled
-            if (m_args.custom_service != "")
-            {
-              std::stringstream cs;
-              cs << service << "+" << m_args.custom_service;
-              service = cs.str();
-            }
-
-            os << service << "://" << itfs[i].address().str() << ":" << m_args.port
-               << "/";
-
-            IMC::AnnounceService announce;
-            announce.service = os.str();
-
-            if (itfs[i].address().isLoopback())
-              announce.service_type = IMC::AnnounceService::SRV_TYPE_LOCAL;
-            else
-              announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
-
-            dispatch(announce);
+            std::stringstream cs;
+            cs << service << "+" << m_args.custom_service;
+            service = cs.str();
           }
+
+          os << service << "://0.0.0.0:" << m_args.port
+              << "/";
+
+          IMC::AnnounceService announce;
+          announce.service = os.str();
+          announce.service_type = 0;
+          dispatch(announce);
         }
 
         // Initialize limited comms object

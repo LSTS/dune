@@ -58,7 +58,9 @@ namespace Monitors
       float war_lvl;
       //! Level of battery below which an error will be thrown.
       float err_lvl;
-      //! Level of battery, in volts, below which an error will be thrown.
+      //! Battery voltage below which a warning will be thrown.
+      float war_lvl_volt;
+      //! Battery voltage below which an error will be thrown.
       float err_lvl_volt;
       //! Threshold Level of battery, to switch of error to active.
       float thr_err_lvl_volt;
@@ -82,8 +84,8 @@ namespace Monitors
       unsigned m_eids[BatteryData::BM_TOTAL];
       //! Flag to control state of voltage error level
       bool m_volt_error_level;
-      //! Volatage level of batteries
-      float m_volt_bat;
+      //! Flag to control state of voltage warning level
+      bool m_volt_warning_level;
       //! True if filter is ready and computing estimates
       bool m_filter_ready;
       //! Set to gather estimated power consumption of certain entities
@@ -101,7 +103,7 @@ namespace Monitors
         Periodic(name, ctx),
         m_fuel_filter(NULL),
         m_volt_error_level(false),
-        m_volt_bat(0),
+        m_volt_warning_level(false),
         m_filter_ready(false)
       {
         m_power_model = new Power::Model(&ctx.config);
@@ -136,22 +138,22 @@ namespace Monitors
         for (unsigned i = 0; i < FuelFilter::MDL_TOTAL; ++i)
         {
           param(c_model_names[i] + " Model Voltage", m_args.filter_args.models[i].voltage)
-          .defaultValue("")
+          .defaultValue("0.0")
           .units(Units::Volt)
           .description("Voltage values for " + c_model_names[i] + " model");
 
           param(c_model_names[i] + " Model Current", m_args.filter_args.models[i].current)
-          .defaultValue("")
+          .defaultValue("0.0")
           .units(Units::Ampere)
           .description("Current values for " + c_model_names[i] + " model");
 
           param(c_model_names[i] + " Model Energy", m_args.filter_args.models[i].energy)
-          .defaultValue("")
+          .defaultValue("0.0")
           .units(Units::WattHour)
           .description("Energy values for " + c_model_names[i] + " model");
 
           param(c_model_names[i] + " Model Temperature", m_args.filter_args.models[i].temp)
-          .defaultValue("")
+          .defaultValue("0.0")
           .units(Units::DegreeCelsius)
           .description("Temperature of the " + c_model_names[i] + " model.");
         }
@@ -170,10 +172,17 @@ namespace Monitors
         .units(Units::Percentage)
         .description("Level of battery below which an error will be thrown");
 
-        param("Voltage Error Level", m_args.err_lvl_volt)
-        .defaultValue("25.5")
+        param("Voltage Warning Level", m_args.war_lvl_volt)
+        .minimumValue("0.0")
+        .defaultValue("0.0")
         .units(Units::Volt)
-        .description("Level of battery, in voltage, below which an error will be thrown");
+        .description("Voltage of battery below which a warning will be thrown");
+
+        param("Voltage Error Level", m_args.err_lvl_volt)
+        .minimumValue("0.0")
+        .defaultValue("0.0")
+        .units(Units::Volt)
+        .description("Voltage of battery below which an error will be thrown");
 
         param("Voltage Threshold Error Level", m_args.thr_err_lvl_volt)
         .defaultValue("0.2")
@@ -295,20 +304,28 @@ namespace Monitors
       void
       consume(const IMC::Voltage* msg)
       {
-        if(msg->getSource() == getSystemId())
-        {
-          if(resolveEntity(msg->getSourceEntity()).compare(m_args.elb[0]) == 0)
-          {
-            if(m_args.err_lvl_volt >= 0)
-            {
-              if(msg->value < m_args.err_lvl_volt)
-                m_volt_error_level = true;
+        if (!m_fuel_filter->onVoltage(msg))
+          return;
 
-              m_volt_bat = msg->value;
-            }
-          }
+        if (m_args.err_lvl_volt > 0.0)
+        {
+          if (m_volt_error_level && (msg->value >= m_args.err_lvl_volt + m_args.thr_err_lvl_volt))
+            m_volt_error_level = false;
+          else if (!m_volt_error_level && msg->value < m_args.err_lvl_volt)
+            m_volt_error_level = true;
         }
-        m_fuel_filter->onVoltage(msg);
+        else
+          m_volt_error_level = false;
+
+        if (m_args.war_lvl_volt > 0.0)
+        {
+          if (m_volt_warning_level && (msg->value >= m_args.war_lvl_volt))
+            m_volt_warning_level = false;
+          else if (!m_volt_warning_level && (msg->value < m_args.war_lvl_volt))
+            m_volt_warning_level = true;
+        }
+        else
+          m_volt_warning_level = false;
       }
 
       void
@@ -344,31 +361,31 @@ namespace Monitors
       {
         // Update fuel filter
         if (!m_fuel_filter->update())
+        {
+          if (m_volt_error_level)
+            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_FUEL_RESERVE);
+          else if (m_volt_warning_level)
+            setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_FUEL_LOW);
+          else
+            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+
           return;
+        }
 
         if (!m_filter_ready)
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           m_filter_ready = true;
-        }
 
         // Fill fuel level message
         m_fuel_filter->fillMessage(m_fuel, m_op_labels, m_op_values);
 
-        if (m_fuel.value < m_args.err_lvl && !m_volt_error_level)
+        if (m_fuel.value < m_args.err_lvl || m_volt_error_level)
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_FUEL_RESERVE);
-        else if (m_fuel.value < m_args.war_lvl && !m_volt_error_level)
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_FUEL_LOW);
+        else if (m_fuel.value < m_args.war_lvl || m_volt_warning_level)
+          setEntityState(IMC::EntityState::ESTA_FAULT, Status::CODE_FUEL_LOW);
         else if (m_fuel.confidence < m_args.low_confidence && !m_volt_error_level)
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_FUEL_EST_UNRELIABLE);
-        else if (m_volt_error_level)
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_FUEL_RESERVE);
         else
-          if(!m_volt_error_level)
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-
-        if(m_volt_error_level && m_volt_bat > (m_args.err_lvl_volt + m_args.thr_err_lvl_volt))
-          m_volt_error_level = false;
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
 
         dispatch(m_fuel);
 

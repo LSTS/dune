@@ -96,6 +96,8 @@ namespace Transports
       IMC::Announce m_announce_ext;
       // Time of last announce.
       double m_last_announce;
+      // Registered services.
+      std::vector<IMC::AnnounceService> m_registered_services;
       // URIs of local services.
       std::set<std::string> m_uris_loc;
       // URIs of external services.
@@ -202,14 +204,14 @@ namespace Transports
         m_uris_loc.insert(imcvers.str());
         m_uris_ext.insert(imcvers.str());
 
-        generateServiceStrings();
-
         // Add additional services defined statically.
         for (unsigned i = 0; i < m_args.adi_services_loc.size(); ++i)
           m_uris_loc.insert(m_args.adi_services_loc[i]);
 
         for (unsigned i = 0; i < m_args.adi_services_ext.size(); ++i)
           m_uris_ext.insert(m_args.adi_services_ext[i]);
+
+        generateServiceStrings();
       }
 
       void
@@ -227,37 +229,115 @@ namespace Transports
       void
       consume(const IMC::AnnounceService* msg)
       {
-        // Check if we should ignore this announcement.
-        char domain[128] = {0};
-        std::sscanf(msg->service.c_str(), "%*[^/]//%[^:]:", domain);
+        m_registered_services.push_back(*msg);
+      }
 
-        std::vector<Interface> interfaces = Interface::get();
-        for (unsigned i = 0; i < m_args.ignored_interfaces.size(); ++i)
+      void
+      updateServices()
+      {
+        for (const IMC::AnnounceService &reg_srv : m_registered_services)
         {
-          for (unsigned j = 0; j < interfaces.size(); ++j)
+          auto parsed_services = parseService(reg_srv);
+          for (const IMC::AnnounceService &srv : parsed_services)
           {
-            if (m_args.ignored_interfaces[i] != interfaces[j].name())
-              continue;
+            if (srv.service.compare(0, 10, "imc+any://", 10) == 0)
+            {
+              m_uris_any.insert(srv.service.substr(10));
+            }
+            else
+            {
+              if (srv.service_type & IMC::AnnounceService::SRV_TYPE_LOCAL)
+                m_uris_loc.insert(srv.service);
 
-            if (interfaces[j].address() == domain)
-              return;
+              if (srv.service_type & IMC::AnnounceService::SRV_TYPE_EXTERNAL)
+                m_uris_ext.insert(srv.service);
+            }
           }
         }
 
-        if (msg->service.compare(0, 10, "imc+any://", 10) == 0)
-        {
-          m_uris_any.insert(msg->service.substr(10));
-        }
-        else
-        {
-          if (msg->service_type & IMC::AnnounceService::SRV_TYPE_LOCAL)
-            m_uris_loc.insert(msg->service);
-
-          if (msg->service_type & IMC::AnnounceService::SRV_TYPE_EXTERNAL)
-            m_uris_ext.insert(msg->service);
-        }
-
         generateServiceStrings();
+      }
+
+      std::vector<IMC::AnnounceService>
+      parseService(const IMC::AnnounceService& original_service)
+      {
+        // Information services are not parsed, since they are not expected to 
+        // contain any address to be replaced.
+        std::vector<IMC::AnnounceService> services;
+        if (original_service.service.compare(0, 11, "imc+info://", 11) == 0 ||
+            original_service.service.compare(0, 7, "dune://", 7) == 0)
+        {
+          services.push_back(original_service);
+          return services;
+        }
+
+        // Services that contain a valid address and service_type are not parsed.
+        size_t pos = original_service.service.find("0.0.0.0");
+        if (pos == std::string::npos && original_service.service_type != 0)
+        {
+          services.push_back(original_service);
+          return services;
+        }
+
+        auto isIgnored = [this](std::string interface_name) -> bool
+        {
+          for (const std::string &ignored : m_args.ignored_interfaces)
+          {
+            if (ignored == interface_name)
+              return true;
+          }
+          return false;
+        };
+
+        // Services that contain a valid address but don't have service_type set are parsed and their service_type is set according to the address they contain.
+        std::vector<Interface> interfaces = Interface::get();
+        if (pos == std::string::npos && original_service.service_type == 0)
+        {
+          IMC::AnnounceService service_copy = original_service;
+          char domain[128] = {0};
+          std::sscanf(service_copy.service.c_str(), "%*[^/]//%[^:]:", domain);
+
+          // If interface is ignored return empty services.
+          for (unsigned i = 0; i < interfaces.size(); ++i)
+          {
+            if (isIgnored(interfaces[i].name()))
+            {
+              if (interfaces[i].address() == domain)
+                return services;
+            }
+          }
+
+          Address addr(domain);
+          if (addr.isLoopback())
+            service_copy.service_type = IMC::AnnounceService::SRV_TYPE_LOCAL;
+          else
+            service_copy.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
+
+          services.push_back(service_copy);
+          return services;
+        }
+
+        // Services that contain a wildcard address are parsed.
+        for (unsigned i = 0; i < interfaces.size(); ++i)
+        {
+          if (isIgnored(interfaces[i].name()))
+            continue;
+
+          IMC::AnnounceService service_with_interface = original_service;
+          service_with_interface.service.replace(pos, 7, interfaces[i].address().str());
+          if (interfaces[i].address().isLoopback() && (original_service.service_type == 0 || original_service.service_type & IMC::AnnounceService::SRV_TYPE_LOCAL))
+          {
+            service_with_interface.service_type = IMC::AnnounceService::SRV_TYPE_LOCAL;
+            services.push_back(service_with_interface);
+          }
+          else if (!interfaces[i].address().isLoopback() && (original_service.service_type == 0 || original_service.service_type & IMC::AnnounceService::SRV_TYPE_EXTERNAL))
+          {
+            service_with_interface.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
+            services.push_back(service_with_interface);
+          }
+        }
+        
+        return services;
       }
 
       void
@@ -392,6 +472,8 @@ namespace Transports
       void
       announce(void)
       {
+        updateServices();
+
         if (m_estate)
         {
           float hae;

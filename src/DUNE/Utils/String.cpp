@@ -248,6 +248,17 @@ namespace DUNE
       return ss.str();
     }
 
+    std::string
+    String::bytesToHex(const std::vector<uint8_t>& bytes)
+    {
+      std::string result;
+
+      for (unsigned int i = 0; i < bytes.size(); i++)
+        result += toHex(bytes[i]);
+
+      return result;
+    }
+
     std::vector<uint8_t>
     String::hexToBytes(const std::string& hex)
     {

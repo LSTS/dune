@@ -30,14 +30,12 @@
 // DUNE headers.
 #include <DUNE/Concurrency/ScopedMutex.hpp>
 #include <DUNE/IMC/AddressResolver.hpp>
+#include <DUNE/Algorithms/CRC16.hpp>
 
 namespace DUNE
 {
   namespace IMC
   {
-    //! Name of the unknown address.
-    static const char* c_unknown = "unknown";
-
     AddressResolver::AddressResolver(void):
       m_name(c_unknown),
       m_id(invalid())
@@ -55,6 +53,8 @@ namespace DUNE
     {
       Concurrency::ScopedMutex m(m_mutex);
       m_name = a_name;
+      NameToId::const_iterator it = m_names.find(m_name);
+      m_id = (it != m_names.end()) ? it->second : generateIMCAddress();
     }
 
     unsigned
@@ -62,13 +62,6 @@ namespace DUNE
     {
       Concurrency::ScopedMutex m(m_mutex);
       return m_id;
-    }
-
-    void
-    AddressResolver::id(unsigned a_id)
-    {
-      Concurrency::ScopedMutex m(m_mutex);
-      m_id = a_id;
     }
 
     void
@@ -112,6 +105,18 @@ namespace DUNE
         return invalid();
 
       return itr->second;
+    }
+
+    unsigned
+    AddressResolver::generateIMCAddress(void)
+    {
+      if (m_name.empty() || m_name == c_unknown)
+        return invalid();
+
+      // generate an address based on the CRC16 of the name and in the 0b101 [15,14,13] IMC address selector range
+      // check IMC_Addressing_Scheme.txt for details
+      uint16_t crc = Algorithms::CRC16::compute(reinterpret_cast<const uint8_t*>(m_name.data()), m_name.size(), false) & 0x1fff;
+      return (1 << 15) | (1 << 13) | crc;
     }
   }
 }

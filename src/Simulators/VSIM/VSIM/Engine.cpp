@@ -35,13 +35,13 @@ namespace Simulators
 {
   namespace VSIM
   {
-    Engine::Engine(unsigned int engid, double aforce[3], double pos[3], double orient[3], float force)
+    Engine::Engine(unsigned int engid, double aforce[3], double pos[3], double orient[2], float force)
     {
       setEngine(engid, aforce, pos, orient, force);
     }
 
     void
-    Engine::setEngine(unsigned int engid, double force[3], double pos[3], double orient[3], float max_force)
+    Engine::setEngine(unsigned int engid, double force[3], double pos[3], double orient[2], float max_force)
     {
       m_act = 0;
       m_id = encodeId(engid);
@@ -49,7 +49,6 @@ namespace Simulators
       setPosition(pos[0], pos[1], pos[2], false);
       m_act_orientation[0] = orient[0];
       m_act_orientation[1] = orient[1];
-      m_act_orientation[2] = orient[2];
       m_engine_max_force = max_force;
     }
 

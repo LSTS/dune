@@ -125,6 +125,8 @@ namespace Control
         uint16_t m_rpm_eid[2];
         //! Control loops last reference
         uint32_t m_scope_ref;
+        //! Previous yaw error
+        float m_prev_err_yaw;
         //! Task arguments.
         Arguments m_args;
 
@@ -135,6 +137,8 @@ namespace Control
           m_scope_ref(0)
         {
           param("Maximum Thrust Actuation", m_args.act_max)
+          .minimumValue("0.0")
+          .maximumValue("1.0")
           .defaultValue("1.0")
           .description("Maximum Motor Command");
 
@@ -319,6 +323,8 @@ namespace Control
             m_last_act[i].value = 0.0;
             dispatch(m_act[i]);
           }
+
+          m_prev_err_yaw = 0;
         }
 
         //! Setup PIDs.
@@ -384,7 +390,8 @@ namespace Control
           float rpm = (m_rpm[0].value + m_rpm[1].value) / 2;
 
           // Yaw controller.
-          float thrust_diff = m_yaw_pid.step(tstep, err_yaw);
+          float thrust_diff = m_yaw_pid.step(tstep, err_yaw, Angles::normalizeRadian(err_yaw - m_prev_err_yaw) / tstep);
+          m_prev_err_yaw = err_yaw;
 
           // Thrust forward.
           if (thrustForward(err_yaw))
@@ -404,12 +411,12 @@ namespace Control
               default:
                 break;
             }
-
-            // Limit differential when thrusting forward.
-            thrust_diff = Math::trimValue(thrust_diff,
-                                          - m_args.act_diff_max,
-                                          m_args.act_diff_max);
           }
+
+          // Limit differential.
+          thrust_diff = Math::trimValue(thrust_diff,
+                                        - m_args.act_diff_max,
+                                        m_args.act_diff_max);
 
           m_act[0].value = thrust_com + thrust_diff;
           m_act[1].value = thrust_com - thrust_diff;

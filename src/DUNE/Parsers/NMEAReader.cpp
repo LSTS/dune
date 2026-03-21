@@ -35,6 +35,7 @@
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
+#include <DUNE/Streams.hpp>
 #include <DUNE/Parsers/Exceptions.hpp>
 #include <DUNE/Parsers/NMEAReader.hpp>
 
@@ -54,7 +55,7 @@ namespace DUNE
         throw InvalidSentence("blank sentence");
 
       if (sentence[lead_idx] != '$')
-        throw InvalidSentence("missing dollar sign", sentence.c_str());
+        throw InvalidSentence("missing dollar sign", DUNE::Streams::sanitize(sentence).c_str());
 
       // Clean sentence end.
       size_t trail_idx = sentence.find_last_not_of(c_blanks);

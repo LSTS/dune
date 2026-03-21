@@ -40,6 +40,7 @@ namespace DUNE
 #include <DUNE/Maneuvers/Maneuver.hpp>
 #include <DUNE/Maneuvers/FollowTrajectory.hpp>
 #include <DUNE/Maneuvers/VehicleFormation.hpp>
+#include <DUNE/Maneuvers/BasicSwarm.hpp>
 #include <DUNE/Maneuvers/RowsStages.hpp>
 #include <DUNE/Maneuvers/StationKeep.hpp>
 #include <DUNE/Maneuvers/AbstractLoiter.hpp>
