@@ -155,6 +155,9 @@ extern VerticalProfileDefaultTypeInternal _VerticalProfile_default_instance_;
 class Voltage;
 struct VoltageDefaultTypeInternal;
 extern VoltageDefaultTypeInternal _Voltage_default_instance_;
+class WindSpeed;
+struct WindSpeedDefaultTypeInternal;
+extern WindSpeedDefaultTypeInternal _WindSpeed_default_instance_;
 }  // namespace IMC_DCCL
 PROTOBUF_NAMESPACE_OPEN
 template<> ::IMC_DCCL::Current* Arena::CreateMaybeMessage<::IMC_DCCL::Current>(Arena*);
@@ -193,6 +196,7 @@ template<> ::IMC_DCCL::TransitionCondition* Arena::CreateMaybeMessage<::IMC_DCCL
 template<> ::IMC_DCCL::VehicleState* Arena::CreateMaybeMessage<::IMC_DCCL::VehicleState>(Arena*);
 template<> ::IMC_DCCL::VerticalProfile* Arena::CreateMaybeMessage<::IMC_DCCL::VerticalProfile>(Arena*);
 template<> ::IMC_DCCL::Voltage* Arena::CreateMaybeMessage<::IMC_DCCL::Voltage>(Arena*);
+template<> ::IMC_DCCL::WindSpeed* Arena::CreateMaybeMessage<::IMC_DCCL::WindSpeed>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace IMC_DCCL {
 
@@ -8431,6 +8435,189 @@ class FuelLevel final :
 };
 // -------------------------------------------------------------------
 
+class WindSpeed final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.WindSpeed) */ {
+ public:
+  inline WindSpeed() : WindSpeed(nullptr) {}
+  ~WindSpeed() override;
+  explicit PROTOBUF_CONSTEXPR WindSpeed(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  WindSpeed(const WindSpeed& from);
+  WindSpeed(WindSpeed&& from) noexcept
+    : WindSpeed() {
+    *this = ::std::move(from);
+  }
+
+  inline WindSpeed& operator=(const WindSpeed& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline WindSpeed& operator=(WindSpeed&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const WindSpeed& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const WindSpeed* internal_default_instance() {
+    return reinterpret_cast<const WindSpeed*>(
+               &_WindSpeed_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    32;
+
+  friend void swap(WindSpeed& a, WindSpeed& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(WindSpeed* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(WindSpeed* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  WindSpeed* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<WindSpeed>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const WindSpeed& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const WindSpeed& from) {
+    WindSpeed::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(WindSpeed* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.WindSpeed";
+  }
+  protected:
+  explicit WindSpeed(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kDirectionFieldNumber = 1,
+    kSpeedFieldNumber = 2,
+    kTurbulenceFieldNumber = 3,
+  };
+  // optional float direction = 1 [(.dccl.field) = {
+  bool has_direction() const;
+  private:
+  bool _internal_has_direction() const;
+  public:
+  void clear_direction();
+  float direction() const;
+  void set_direction(float value);
+  private:
+  float _internal_direction() const;
+  void _internal_set_direction(float value);
+  public:
+
+  // optional float speed = 2 [(.dccl.field) = {
+  bool has_speed() const;
+  private:
+  bool _internal_has_speed() const;
+  public:
+  void clear_speed();
+  float speed() const;
+  void set_speed(float value);
+  private:
+  float _internal_speed() const;
+  void _internal_set_speed(float value);
+  public:
+
+  // optional float turbulence = 3 [(.dccl.field) = {
+  bool has_turbulence() const;
+  private:
+  bool _internal_has_turbulence() const;
+  public:
+  void clear_turbulence();
+  float turbulence() const;
+  void set_turbulence(float value);
+  private:
+  float _internal_turbulence() const;
+  void _internal_set_turbulence(float value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.WindSpeed)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    float direction_;
+    float speed_;
+    float turbulence_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class PlanDBArgUnion final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanDBArgUnion) */ {
  public:
@@ -8486,7 +8673,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    33;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -8702,7 +8889,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    34;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -8876,7 +9063,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    34;
+    35;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -9052,7 +9239,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    35;
+    36;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -16124,6 +16311,94 @@ inline void FuelLevel::set_allocated_opmodes(std::string* opmodes) {
 
 // -------------------------------------------------------------------
 
+// WindSpeed
+
+// optional float direction = 1 [(.dccl.field) = {
+inline bool WindSpeed::_internal_has_direction() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool WindSpeed::has_direction() const {
+  return _internal_has_direction();
+}
+inline void WindSpeed::clear_direction() {
+  _impl_.direction_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline float WindSpeed::_internal_direction() const {
+  return _impl_.direction_;
+}
+inline float WindSpeed::direction() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.WindSpeed.direction)
+  return _internal_direction();
+}
+inline void WindSpeed::_internal_set_direction(float value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.direction_ = value;
+}
+inline void WindSpeed::set_direction(float value) {
+  _internal_set_direction(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.WindSpeed.direction)
+}
+
+// optional float speed = 2 [(.dccl.field) = {
+inline bool WindSpeed::_internal_has_speed() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool WindSpeed::has_speed() const {
+  return _internal_has_speed();
+}
+inline void WindSpeed::clear_speed() {
+  _impl_.speed_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline float WindSpeed::_internal_speed() const {
+  return _impl_.speed_;
+}
+inline float WindSpeed::speed() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.WindSpeed.speed)
+  return _internal_speed();
+}
+inline void WindSpeed::_internal_set_speed(float value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.speed_ = value;
+}
+inline void WindSpeed::set_speed(float value) {
+  _internal_set_speed(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.WindSpeed.speed)
+}
+
+// optional float turbulence = 3 [(.dccl.field) = {
+inline bool WindSpeed::_internal_has_turbulence() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool WindSpeed::has_turbulence() const {
+  return _internal_has_turbulence();
+}
+inline void WindSpeed::clear_turbulence() {
+  _impl_.turbulence_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline float WindSpeed::_internal_turbulence() const {
+  return _impl_.turbulence_;
+}
+inline float WindSpeed::turbulence() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.WindSpeed.turbulence)
+  return _internal_turbulence();
+}
+inline void WindSpeed::_internal_set_turbulence(float value) {
+  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_.turbulence_ = value;
+}
+inline void WindSpeed::set_turbulence(float value) {
+  _internal_set_turbulence(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.WindSpeed.turbulence)
+}
+
+// -------------------------------------------------------------------
+
 // PlanDBArgUnion
 
 // .IMC_DCCL.PlanSpecification ps_arg = 1;
@@ -16769,6 +17044,8 @@ inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUni
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

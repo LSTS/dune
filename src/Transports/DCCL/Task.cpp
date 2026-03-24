@@ -90,6 +90,7 @@ namespace Transports
         bind<IMC::Current>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::Voltage>(this);
+        bind<IMC::WindSpeed>(this);
         //bind<IMC::PlanControlState>(this);
         //bind<IMC::PlanControl>(this);
         //bind<IMC::SetEntityParameters>(this);
@@ -343,6 +344,25 @@ namespace Transports
           ////////////////////////////////////////////////////////////// DCCL LIB
 
           war("[ENCODING] FuelLevel with size %u received.", msg->getPayloadSerializationSize());
+          war("[ENCODING] Compressed with size %u received.", encoded_string.size());
+          std::cout << "Send via Acoustic"<< std::endl;
+
+          sendTransmissionRequestViaAcoustic("", encoded_string);   
+      }
+    }
+
+      void
+      consume(const IMC::WindSpeed* msg)
+      {
+       if(m_args.trigger_dccl){
+          
+          msg->toJSON(std::cout);
+          
+          ////////////////////////////////////////////////////////////// DCCL LIB
+          std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          ////////////////////////////////////////////////////////////// DCCL LIB
+
+          war("[ENCODING] WindSpeed with size %u received.", msg->getPayloadSerializationSize());
           war("[ENCODING] Compressed with size %u received.", encoded_string.size());
           std::cout << "Send via Acoustic"<< std::endl;
 

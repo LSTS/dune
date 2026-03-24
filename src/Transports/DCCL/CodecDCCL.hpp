@@ -52,6 +52,7 @@ namespace IMCDCCL
             VOLTAGE = 251, 
             FUEL_LEVEL = 279, 
             CURRENT = 252,
+            WIND_SPEED = 271,
         };
 
         private: 
@@ -76,6 +77,7 @@ namespace IMCDCCL
                 case VOLTAGE:
                 case FUEL_LEVEL:
                 case CURRENT:
+                case WIND_SPEED:
                     return static_cast<MsgID>(id);
                 default:
                     throw std::invalid_argument("DCCL:CodecDCCL: MsgID Not Recognized");
@@ -207,6 +209,16 @@ namespace IMCDCCL
                     m_codec.decode(encoded_string, &src_dccl);
                     DUNE::IMC::Current* dst_imc = new DUNE::IMC::Current();
                     decodeCurrent(src_dccl, *dst_imc);
+                    return dst_imc;
+                }
+
+                case WIND_SPEED:
+                {
+                    m_codec.load<IMC_DCCL::WindSpeed>();
+                    IMC_DCCL::WindSpeed src_dccl;
+                    m_codec.decode(encoded_string, &src_dccl);
+                    DUNE::IMC::WindSpeed* dst_imc = new DUNE::IMC::WindSpeed();
+                    decodeWindSpeed(src_dccl, *dst_imc);
                     return dst_imc;
                 }
 
@@ -380,6 +392,20 @@ namespace IMCDCCL
                     m_codec.load<IMC_DCCL::Current>();
                     IMC_DCCL::Current dst_dccl;
                     encodeCurrent(*src_imc, dst_dccl);
+
+                    std::string encoded_bytes;
+                    m_codec.encode(&encoded_bytes, dst_dccl);
+                    
+                    return encoded_bytes;
+                }
+
+                case WIND_SPEED:
+                {
+                    const DUNE::IMC::WindSpeed* src_imc = dynamic_cast<const DUNE::IMC::WindSpeed*>(imc_msg);
+
+                    m_codec.load<IMC_DCCL::WindSpeed>();
+                    IMC_DCCL::WindSpeed dst_dccl;
+                    encodeWindSpeed(*src_imc, dst_dccl);
 
                     std::string encoded_bytes;
                     m_codec.encode(&encoded_bytes, dst_dccl);

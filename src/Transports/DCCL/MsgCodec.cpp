@@ -4,428 +4,6 @@
 #include <DUNE/DUNE.hpp>
 #include "Helper.hpp"
 
-// ================ PlanTransition Message ================
-void encodePlanTransition(const DUNE::IMC::PlanTransition& imc, IMC_DCCL::PlanTransition& dccl)
-{
-    
-    IMC_DCCL::ManeuverID* source_man = new IMC_DCCL::ManeuverID();
-    encodeManeuverID(imc.source_man, *source_man);
-    dccl.set_allocated_source_man(source_man);	
-
-    
-    IMC_DCCL::ManeuverID* dest_man = new IMC_DCCL::ManeuverID();
-    encodeManeuverID(imc.dest_man, *dest_man);
-    dccl.set_allocated_dest_man(dest_man);	
-
-    
-    IMC_DCCL::TransitionCondition* conditions = new IMC_DCCL::TransitionCondition();
-    encodeTransitionCondition(imc.conditions, *conditions);
-    dccl.set_allocated_conditions(conditions);	
-
-}
-
-
-// ================ PlanTransition Message ================
-void decodePlanTransition(const IMC_DCCL::PlanTransition& dccl, DUNE::IMC::PlanTransition& imc)
-{
-    decodeManeuverID(dccl.source_man(), imc.source_man);
-
-    decodeManeuverID(dccl.dest_man(), imc.dest_man);
-
-    decodeTransitionCondition(dccl.conditions(), imc.conditions);
-
-}
-
-
-// ================ PlanStatistics Message ================
-void encodePlanStatistics(const DUNE::IMC::PlanStatistics& imc, IMC_DCCL::PlanStatistics& dccl)
-{
-    if(!Helper::is_default_value(imc.plan_id)) dccl.set_plan_id(imc.plan_id);
-
-    dccl.set_type(encodePlanStatisticsTypeEnum(imc.type));
-
-    if(!Helper::is_default_value(imc.properties)) dccl.set_properties(imc.properties);
-
-    if(!Helper::is_default_value(imc.durations)) dccl.set_durations(imc.durations);
-
-    if(!Helper::is_default_value(imc.distances)) dccl.set_distances(imc.distances);
-
-    if(!Helper::is_default_value(imc.actions)) dccl.set_actions(imc.actions);
-
-    if(!Helper::is_default_value(imc.fuel)) dccl.set_fuel(imc.fuel);
-
-}
-
-
-// ================ PlanStatistics Message ================
-void decodePlanStatistics(const IMC_DCCL::PlanStatistics& dccl, DUNE::IMC::PlanStatistics& imc)
-{
-    imc.plan_id = dccl.plan_id();
-
-    imc.type = decodePlanStatisticsTypeEnum(dccl.type());
-
-    imc.properties = dccl.properties();
-
-    imc.durations = dccl.durations();
-
-    imc.distances = dccl.distances();
-
-    imc.actions = dccl.actions();
-
-    imc.fuel = dccl.fuel();
-
-}
-
-
-// ================ Loiter Message ================
-void encodeLoiter(const DUNE::IMC::Loiter& imc, IMC_DCCL::Loiter& dccl)
-{
-    if(!Helper::is_default_value(imc.timeout)) dccl.set_timeout(imc.timeout);
-
-    if(!Helper::is_default_value(imc.lat)) dccl.set_lat(imc.lat);
-
-    if(!Helper::is_default_value(imc.lon)) dccl.set_lon(imc.lon);
-
-    if(!Helper::is_default_value(imc.z)) dccl.set_z(imc.z);
-
-    dccl.set_z_units(encodeZUnits(imc.z_units));
-
-    if(!Helper::is_default_value(imc.duration)) dccl.set_duration(imc.duration);
-
-    if(!Helper::is_default_value(imc.speed)) dccl.set_speed(imc.speed);
-
-    dccl.set_speed_units(encodeSpeedUnits(imc.speed_units));
-
-    dccl.set_type(encodeLoiterLoiterTypeEnum(imc.type));
-
-    if(!Helper::is_default_value(imc.radius)) dccl.set_radius(imc.radius);
-
-    if(!Helper::is_default_value(imc.length)) dccl.set_length(imc.length);
-
-    if(!Helper::is_default_value(imc.bearing)) dccl.set_bearing(imc.bearing);
-
-    dccl.set_direction(encodeLoiterDirectionEnum(imc.direction));
-
-}
-
-
-// ================ Loiter Message ================
-void decodeLoiter(const IMC_DCCL::Loiter& dccl, DUNE::IMC::Loiter& imc)
-{
-    imc.timeout = dccl.timeout();
-
-    imc.lat = dccl.lat();
-
-    imc.lon = dccl.lon();
-
-    imc.z = dccl.z();
-
-    imc.z_units = decodeZUnits(dccl.z_units());
-
-    imc.duration = dccl.duration();
-
-    imc.speed = dccl.speed();
-
-    imc.speed_units = decodeSpeedUnits(dccl.speed_units());
-
-    imc.type = decodeLoiterLoiterTypeEnum(dccl.type());
-
-    imc.radius = dccl.radius();
-
-    imc.length = dccl.length();
-
-    imc.bearing = dccl.bearing();
-
-    imc.direction = decodeLoiterDirectionEnum(dccl.direction());
-
-}
-
-
-// ================ EntityParameter Message ================
-void encodeEntityParameter(const DUNE::IMC::EntityParameter& imc, IMC_DCCL::EntityParameter& dccl)
-{
-    
-    IMC_DCCL::ParameterName* name = new IMC_DCCL::ParameterName();
-    encodeParameterName(imc.name, *name);
-    dccl.set_allocated_name(name);	
-
-    
-    IMC_DCCL::ParameterValue* value = new IMC_DCCL::ParameterValue();
-    encodeParameterValue(imc.value, *value);
-    dccl.set_allocated_value(value);	
-
-}
-
-
-// ================ EntityParameter Message ================
-void decodeEntityParameter(const IMC_DCCL::EntityParameter& dccl, DUNE::IMC::EntityParameter& imc)
-{
-    decodeParameterName(dccl.name(), imc.name);
-
-    decodeParameterValue(dccl.value(), imc.value);
-
-}
-
-
-// ================ PlanManeuver Message ================
-void encodePlanManeuver(const DUNE::IMC::PlanManeuver& imc, IMC_DCCL::PlanManeuver& dccl)
-{
-    
-    IMC_DCCL::ManeuverID* maneuver_id = new IMC_DCCL::ManeuverID();
-    encodeManeuverID(imc.maneuver_id, *maneuver_id);
-    dccl.set_allocated_maneuver_id(maneuver_id);	
-
-    
-    IMC_DCCL::Maneuver* tmp = new IMC_DCCL::Maneuver();
-    encodeManeuver(*imc.data.get(), *tmp);
-    dccl.set_allocated_data(tmp);
-
-    
-    for (const auto& elem_imc : imc.start_actions) {						
-    	if(!elem_imc) continue;
-    	auto* elem_dccl = dccl.add_start_actions();
-    	encodePlanManeuverStartActionsUnion(*elem_imc, *elem_dccl);
-    	}
-
-}
-
-
-// ================ PlanManeuver Message ================
-void decodePlanManeuver(const IMC_DCCL::PlanManeuver& dccl, DUNE::IMC::PlanManeuver& imc)
-{
-    decodeManeuverID(dccl.maneuver_id(), imc.maneuver_id);
-
-    
-    if(auto* tmp = decodeManeuver(dccl.data())){	
-        imc.data.set(*tmp);
-        delete tmp;
-    }
-
-    
-    for (unsigned int i=0; i < dccl.start_actions_size(); i++) {				
-    	if(auto* tmp = decodePlanManeuverStartActionsUnion(dccl.start_actions(i))){
-    		imc.start_actions.push_back(tmp);
-    		delete tmp;
-    	}
-    }
-
-}
-
-
-// ================ PlanDBInformation Message ================
-void encodePlanDBInformation(const DUNE::IMC::PlanDBInformation& imc, IMC_DCCL::PlanDBInformation& dccl)
-{
-    if(!Helper::is_default_value(imc.plan_id)) dccl.set_plan_id(imc.plan_id);
-
-    if(!Helper::is_default_value(imc.plan_size)) dccl.set_plan_size(imc.plan_size);
-
-    if(!Helper::is_default_value(imc.change_time)) dccl.set_change_time(imc.change_time);
-
-    if(!Helper::is_default_value(imc.change_sid)) dccl.set_change_sid(imc.change_sid);
-
-    if(!Helper::is_default_value(imc.change_sname)) dccl.set_change_sname(imc.change_sname);
-
-    dccl.set_md5(std::string(imc.md5.data(), imc.md5.size()));
-
-}
-
-
-// ================ PlanDBInformation Message ================
-void decodePlanDBInformation(const IMC_DCCL::PlanDBInformation& dccl, DUNE::IMC::PlanDBInformation& imc)
-{
-    imc.plan_id = dccl.plan_id();
-
-    imc.plan_size = dccl.plan_size();
-
-    imc.change_time = dccl.change_time();
-
-    imc.change_sid = dccl.change_sid();
-
-    imc.change_sname = dccl.change_sname();
-
-    
-    const std::string& bytes=dccl.md5();
-    imc.md5.assign(bytes.begin(), bytes.end());
-
-}
-
-
-// ================ FollowPath Message ================
-void encodeFollowPath(const DUNE::IMC::FollowPath& imc, IMC_DCCL::FollowPath& dccl)
-{
-    if(!Helper::is_default_value(imc.timeout)) dccl.set_timeout(imc.timeout);
-
-    if(!Helper::is_default_value(imc.lat)) dccl.set_lat(imc.lat);
-
-    if(!Helper::is_default_value(imc.lon)) dccl.set_lon(imc.lon);
-
-    if(!Helper::is_default_value(imc.z)) dccl.set_z(imc.z);
-
-    dccl.set_z_units(encodeZUnits(imc.z_units));
-
-    if(!Helper::is_default_value(imc.speed)) dccl.set_speed(imc.speed);
-
-    dccl.set_speed_units(encodeSpeedUnits(imc.speed_units));
-
-    
-    for (const auto& elem_imc : imc.points) {						
-    	if(!elem_imc) continue;
-    	if(auto* elem_imc_typed = dynamic_cast<const DUNE::IMC::PathPoint*>(elem_imc)){
-    		auto* elem_dccl = dccl.add_points();
-    		encodePathPoint(*elem_imc_typed, *elem_dccl);	
-    	    }
-        }
-
-}
-
-
-// ================ FollowPath Message ================
-void decodeFollowPath(const IMC_DCCL::FollowPath& dccl, DUNE::IMC::FollowPath& imc)
-{
-    imc.timeout = dccl.timeout();
-
-    imc.lat = dccl.lat();
-
-    imc.lon = dccl.lon();
-
-    imc.z = dccl.z();
-
-    imc.z_units = decodeZUnits(dccl.z_units());
-
-    imc.speed = dccl.speed();
-
-    imc.speed_units = decodeSpeedUnits(dccl.speed_units());
-
-    
-    for (unsigned int i=0; i < dccl.points_size(); i++) {				
-    	DUNE::IMC::PathPoint tmp;
-    	decodePathPoint(dccl.points(i), tmp);
-    	imc.points.push_back(tmp);
-    }
-
-}
-
-
-// ================ StationKeeping Message ================
-void encodeStationKeeping(const DUNE::IMC::StationKeeping& imc, IMC_DCCL::StationKeeping& dccl)
-{
-    if(!Helper::is_default_value(imc.lat)) dccl.set_lat(imc.lat);
-
-    if(!Helper::is_default_value(imc.lon)) dccl.set_lon(imc.lon);
-
-    if(!Helper::is_default_value(imc.z)) dccl.set_z(imc.z);
-
-    dccl.set_z_units(encodeZUnits(imc.z_units));
-
-    if(!Helper::is_default_value(imc.radius)) dccl.set_radius(imc.radius);
-
-    if(!Helper::is_default_value(imc.duration)) dccl.set_duration(imc.duration);
-
-    if(!Helper::is_default_value(imc.speed)) dccl.set_speed(imc.speed);
-
-    dccl.set_speed_units(encodeSpeedUnits(imc.speed_units));
-
-}
-
-
-// ================ StationKeeping Message ================
-void decodeStationKeeping(const IMC_DCCL::StationKeeping& dccl, DUNE::IMC::StationKeeping& imc)
-{
-    imc.lat = dccl.lat();
-
-    imc.lon = dccl.lon();
-
-    imc.z = dccl.z();
-
-    imc.z_units = decodeZUnits(dccl.z_units());
-
-    imc.radius = dccl.radius();
-
-    imc.duration = dccl.duration();
-
-    imc.speed = dccl.speed();
-
-    imc.speed_units = decodeSpeedUnits(dccl.speed_units());
-
-}
-
-
-// ================ Goto Message ================
-void encodeGoto(const DUNE::IMC::Goto& imc, IMC_DCCL::Goto& dccl)
-{
-    if(!Helper::is_default_value(imc.timeout)) dccl.set_timeout(imc.timeout);
-
-    if(!Helper::is_default_value(imc.lat)) dccl.set_lat(imc.lat);
-
-    if(!Helper::is_default_value(imc.lon)) dccl.set_lon(imc.lon);
-
-    if(!Helper::is_default_value(imc.z)) dccl.set_z(imc.z);
-
-    dccl.set_z_units(encodeZUnits(imc.z_units));
-
-    if(!Helper::is_default_value(imc.speed)) dccl.set_speed(imc.speed);
-
-    dccl.set_speed_units(encodeSpeedUnits(imc.speed_units));
-
-    if(!Helper::is_default_value(imc.roll)) dccl.set_roll(imc.roll);
-
-    if(!Helper::is_default_value(imc.pitch)) dccl.set_pitch(imc.pitch);
-
-    if(!Helper::is_default_value(imc.yaw)) dccl.set_yaw(imc.yaw);
-
-}
-
-
-// ================ Goto Message ================
-void decodeGoto(const IMC_DCCL::Goto& dccl, DUNE::IMC::Goto& imc)
-{
-    imc.timeout = dccl.timeout();
-
-    imc.lat = dccl.lat();
-
-    imc.lon = dccl.lon();
-
-    imc.z = dccl.z();
-
-    imc.z_units = decodeZUnits(dccl.z_units());
-
-    imc.speed = dccl.speed();
-
-    imc.speed_units = decodeSpeedUnits(dccl.speed_units());
-
-    imc.roll = dccl.roll();
-
-    imc.pitch = dccl.pitch();
-
-    imc.yaw = dccl.yaw();
-
-}
-
-
-// ================ FuelLevel Message ================
-void encodeFuelLevel(const DUNE::IMC::FuelLevel& imc, IMC_DCCL::FuelLevel& dccl)
-{
-    if(!Helper::is_default_value(imc.value)) dccl.set_value(imc.value);
-
-    if(!Helper::is_default_value(imc.confidence)) dccl.set_confidence(imc.confidence);
-
-    if(!Helper::is_default_value(imc.opmodes)) dccl.set_opmodes(imc.opmodes);
-
-}
-
-
-// ================ FuelLevel Message ================
-void decodeFuelLevel(const IMC_DCCL::FuelLevel& dccl, DUNE::IMC::FuelLevel& imc)
-{
-    imc.value = dccl.value();
-
-    imc.confidence = dccl.confidence();
-
-    imc.opmodes = dccl.opmodes();
-
-}
-
-
 // ================ PlanSpecification Message ================
 void encodePlanSpecification(const DUNE::IMC::PlanSpecification& imc, IMC_DCCL::PlanSpecification& dccl)
 {
@@ -519,6 +97,212 @@ void decodePlanSpecification(const IMC_DCCL::PlanSpecification& dccl, DUNE::IMC:
 }
 
 
+// ================ PlanDBInformation Message ================
+void encodePlanDBInformation(const DUNE::IMC::PlanDBInformation& imc, IMC_DCCL::PlanDBInformation& dccl)
+{
+    if(!Helper::is_default_value(imc.plan_id)) dccl.set_plan_id(imc.plan_id);
+
+    if(!Helper::is_default_value(imc.plan_size)) dccl.set_plan_size(imc.plan_size);
+
+    if(!Helper::is_default_value(imc.change_time)) dccl.set_change_time(imc.change_time);
+
+    if(!Helper::is_default_value(imc.change_sid)) dccl.set_change_sid(imc.change_sid);
+
+    if(!Helper::is_default_value(imc.change_sname)) dccl.set_change_sname(imc.change_sname);
+
+    dccl.set_md5(std::string(imc.md5.data(), imc.md5.size()));
+
+}
+
+
+// ================ PlanDBInformation Message ================
+void decodePlanDBInformation(const IMC_DCCL::PlanDBInformation& dccl, DUNE::IMC::PlanDBInformation& imc)
+{
+    imc.plan_id = dccl.plan_id();
+
+    imc.plan_size = dccl.plan_size();
+
+    imc.change_time = dccl.change_time();
+
+    imc.change_sid = dccl.change_sid();
+
+    imc.change_sname = dccl.change_sname();
+
+    
+    const std::string& bytes=dccl.md5();
+    imc.md5.assign(bytes.begin(), bytes.end());
+
+}
+
+
+// ================ Loiter Message ================
+void encodeLoiter(const DUNE::IMC::Loiter& imc, IMC_DCCL::Loiter& dccl)
+{
+    if(!Helper::is_default_value(imc.timeout)) dccl.set_timeout(imc.timeout);
+
+    if(!Helper::is_default_value(imc.lat)) dccl.set_lat(imc.lat);
+
+    if(!Helper::is_default_value(imc.lon)) dccl.set_lon(imc.lon);
+
+    if(!Helper::is_default_value(imc.z)) dccl.set_z(imc.z);
+
+    dccl.set_z_units(encodeZUnits(imc.z_units));
+
+    if(!Helper::is_default_value(imc.duration)) dccl.set_duration(imc.duration);
+
+    if(!Helper::is_default_value(imc.speed)) dccl.set_speed(imc.speed);
+
+    dccl.set_speed_units(encodeSpeedUnits(imc.speed_units));
+
+    dccl.set_type(encodeLoiterLoiterTypeEnum(imc.type));
+
+    if(!Helper::is_default_value(imc.radius)) dccl.set_radius(imc.radius);
+
+    if(!Helper::is_default_value(imc.length)) dccl.set_length(imc.length);
+
+    if(!Helper::is_default_value(imc.bearing)) dccl.set_bearing(imc.bearing);
+
+    dccl.set_direction(encodeLoiterDirectionEnum(imc.direction));
+
+}
+
+
+// ================ Loiter Message ================
+void decodeLoiter(const IMC_DCCL::Loiter& dccl, DUNE::IMC::Loiter& imc)
+{
+    imc.timeout = dccl.timeout();
+
+    imc.lat = dccl.lat();
+
+    imc.lon = dccl.lon();
+
+    imc.z = dccl.z();
+
+    imc.z_units = decodeZUnits(dccl.z_units());
+
+    imc.duration = dccl.duration();
+
+    imc.speed = dccl.speed();
+
+    imc.speed_units = decodeSpeedUnits(dccl.speed_units());
+
+    imc.type = decodeLoiterLoiterTypeEnum(dccl.type());
+
+    imc.radius = dccl.radius();
+
+    imc.length = dccl.length();
+
+    imc.bearing = dccl.bearing();
+
+    imc.direction = decodeLoiterDirectionEnum(dccl.direction());
+
+}
+
+
+// ================ PlanControl Message ================
+void encodePlanControl(const DUNE::IMC::PlanControl& imc, IMC_DCCL::PlanControl& dccl)
+{
+    dccl.set_type(encodePlanControlTypeEnum(imc.type));
+
+    dccl.set_op(encodePlanControlOperationEnum(imc.op));
+
+    if(!Helper::is_default_value(imc.request_id)) dccl.set_request_id(imc.request_id);
+
+    if(!Helper::is_default_value(imc.plan_id)) dccl.set_plan_id(imc.plan_id);
+
+    if(!Helper::is_default_value(imc.flags)) dccl.set_flags(imc.flags);
+
+    
+    IMC_DCCL::PlanControlArgUnion* tmp = new IMC_DCCL::PlanControlArgUnion();			
+    encodePlanControlArgUnion(*imc.arg, *tmp);
+    dccl.set_allocated_arg(tmp);
+
+    if(!Helper::is_default_value(imc.info)) dccl.set_info(imc.info);
+
+}
+
+
+// ================ PlanControl Message ================
+void decodePlanControl(const IMC_DCCL::PlanControl& dccl, DUNE::IMC::PlanControl& imc)
+{
+    imc.type = decodePlanControlTypeEnum(dccl.type());
+
+    imc.op = decodePlanControlOperationEnum(dccl.op());
+
+    imc.request_id = dccl.request_id();
+
+    imc.plan_id = dccl.plan_id();
+
+    imc.flags = dccl.flags();
+
+    
+    if(auto* tmp = decodePlanControlArgUnion(dccl.arg())){				
+    	imc.arg.set(*tmp);
+    	delete tmp;
+    }
+
+    imc.info = dccl.info();
+
+}
+
+
+// ================ FuelLevel Message ================
+void encodeFuelLevel(const DUNE::IMC::FuelLevel& imc, IMC_DCCL::FuelLevel& dccl)
+{
+    if(!Helper::is_default_value(imc.value)) dccl.set_value(imc.value);
+
+    if(!Helper::is_default_value(imc.confidence)) dccl.set_confidence(imc.confidence);
+
+    if(!Helper::is_default_value(imc.opmodes)) dccl.set_opmodes(imc.opmodes);
+
+}
+
+
+// ================ FuelLevel Message ================
+void decodeFuelLevel(const IMC_DCCL::FuelLevel& dccl, DUNE::IMC::FuelLevel& imc)
+{
+    imc.value = dccl.value();
+
+    imc.confidence = dccl.confidence();
+
+    imc.opmodes = dccl.opmodes();
+
+}
+
+
+// ================ PlanTransition Message ================
+void encodePlanTransition(const DUNE::IMC::PlanTransition& imc, IMC_DCCL::PlanTransition& dccl)
+{
+    
+    IMC_DCCL::ManeuverID* source_man = new IMC_DCCL::ManeuverID();
+    encodeManeuverID(imc.source_man, *source_man);
+    dccl.set_allocated_source_man(source_man);	
+
+    
+    IMC_DCCL::ManeuverID* dest_man = new IMC_DCCL::ManeuverID();
+    encodeManeuverID(imc.dest_man, *dest_man);
+    dccl.set_allocated_dest_man(dest_man);	
+
+    
+    IMC_DCCL::TransitionCondition* conditions = new IMC_DCCL::TransitionCondition();
+    encodeTransitionCondition(imc.conditions, *conditions);
+    dccl.set_allocated_conditions(conditions);	
+
+}
+
+
+// ================ PlanTransition Message ================
+void decodePlanTransition(const IMC_DCCL::PlanTransition& dccl, DUNE::IMC::PlanTransition& imc)
+{
+    decodeManeuverID(dccl.source_man(), imc.source_man);
+
+    decodeManeuverID(dccl.dest_man(), imc.dest_man);
+
+    decodeTransitionCondition(dccl.conditions(), imc.conditions);
+
+}
+
+
 // ================ PathPoint Message ================
 void encodePathPoint(const DUNE::IMC::PathPoint& imc, IMC_DCCL::PathPoint& dccl)
 {
@@ -539,6 +323,181 @@ void decodePathPoint(const IMC_DCCL::PathPoint& dccl, DUNE::IMC::PathPoint& imc)
     imc.y = dccl.y();
 
     imc.z = dccl.z();
+
+}
+
+
+// ================ Current Message ================
+void encodeCurrent(const DUNE::IMC::Current& imc, IMC_DCCL::Current& dccl)
+{
+    if(!Helper::is_default_value(imc.value)) dccl.set_value(imc.value);
+
+}
+
+
+// ================ Current Message ================
+void decodeCurrent(const IMC_DCCL::Current& dccl, DUNE::IMC::Current& imc)
+{
+    imc.value = dccl.value();
+
+}
+
+
+// ================ WindSpeed Message ================
+void encodeWindSpeed(const DUNE::IMC::WindSpeed& imc, IMC_DCCL::WindSpeed& dccl)
+{
+    if(!Helper::is_default_value(imc.direction)) dccl.set_direction(imc.direction);
+
+    if(!Helper::is_default_value(imc.speed)) dccl.set_speed(imc.speed);
+
+    if(!Helper::is_default_value(imc.turbulence)) dccl.set_turbulence(imc.turbulence);
+
+}
+
+
+// ================ WindSpeed Message ================
+void decodeWindSpeed(const IMC_DCCL::WindSpeed& dccl, DUNE::IMC::WindSpeed& imc)
+{
+    imc.direction = dccl.direction();
+
+    imc.speed = dccl.speed();
+
+    imc.turbulence = dccl.turbulence();
+
+}
+
+
+// ================ PlanDB Message ================
+void encodePlanDB(const DUNE::IMC::PlanDB& imc, IMC_DCCL::PlanDB& dccl)
+{
+    dccl.set_type(encodePlanDBTypeEnum(imc.type));
+
+    dccl.set_op(encodePlanDBOperationEnum(imc.op));
+
+    if(!Helper::is_default_value(imc.request_id)) dccl.set_request_id(imc.request_id);
+
+    if(!Helper::is_default_value(imc.plan_id)) dccl.set_plan_id(imc.plan_id);
+
+    
+    IMC_DCCL::PlanDBArgUnion* tmp = new IMC_DCCL::PlanDBArgUnion();			
+    encodePlanDBArgUnion(*imc.arg, *tmp);
+    dccl.set_allocated_arg(tmp);
+
+    if(!Helper::is_default_value(imc.info)) dccl.set_info(imc.info);
+
+}
+
+
+// ================ PlanDB Message ================
+void decodePlanDB(const IMC_DCCL::PlanDB& dccl, DUNE::IMC::PlanDB& imc)
+{
+    imc.type = decodePlanDBTypeEnum(dccl.type());
+
+    imc.op = decodePlanDBOperationEnum(dccl.op());
+
+    imc.request_id = dccl.request_id();
+
+    imc.plan_id = dccl.plan_id();
+
+    
+    if(auto* tmp = decodePlanDBArgUnion(dccl.arg())){				
+    	imc.arg.set(*tmp);
+    	delete tmp;
+    }
+
+    imc.info = dccl.info();
+
+}
+
+
+// ================ PlanStatistics Message ================
+void encodePlanStatistics(const DUNE::IMC::PlanStatistics& imc, IMC_DCCL::PlanStatistics& dccl)
+{
+    if(!Helper::is_default_value(imc.plan_id)) dccl.set_plan_id(imc.plan_id);
+
+    dccl.set_type(encodePlanStatisticsTypeEnum(imc.type));
+
+    if(!Helper::is_default_value(imc.properties)) dccl.set_properties(imc.properties);
+
+    if(!Helper::is_default_value(imc.durations)) dccl.set_durations(imc.durations);
+
+    if(!Helper::is_default_value(imc.distances)) dccl.set_distances(imc.distances);
+
+    if(!Helper::is_default_value(imc.actions)) dccl.set_actions(imc.actions);
+
+    if(!Helper::is_default_value(imc.fuel)) dccl.set_fuel(imc.fuel);
+
+}
+
+
+// ================ PlanStatistics Message ================
+void decodePlanStatistics(const IMC_DCCL::PlanStatistics& dccl, DUNE::IMC::PlanStatistics& imc)
+{
+    imc.plan_id = dccl.plan_id();
+
+    imc.type = decodePlanStatisticsTypeEnum(dccl.type());
+
+    imc.properties = dccl.properties();
+
+    imc.durations = dccl.durations();
+
+    imc.distances = dccl.distances();
+
+    imc.actions = dccl.actions();
+
+    imc.fuel = dccl.fuel();
+
+}
+
+
+// ================ Goto Message ================
+void encodeGoto(const DUNE::IMC::Goto& imc, IMC_DCCL::Goto& dccl)
+{
+    if(!Helper::is_default_value(imc.timeout)) dccl.set_timeout(imc.timeout);
+
+    if(!Helper::is_default_value(imc.lat)) dccl.set_lat(imc.lat);
+
+    if(!Helper::is_default_value(imc.lon)) dccl.set_lon(imc.lon);
+
+    if(!Helper::is_default_value(imc.z)) dccl.set_z(imc.z);
+
+    dccl.set_z_units(encodeZUnits(imc.z_units));
+
+    if(!Helper::is_default_value(imc.speed)) dccl.set_speed(imc.speed);
+
+    dccl.set_speed_units(encodeSpeedUnits(imc.speed_units));
+
+    if(!Helper::is_default_value(imc.roll)) dccl.set_roll(imc.roll);
+
+    if(!Helper::is_default_value(imc.pitch)) dccl.set_pitch(imc.pitch);
+
+    if(!Helper::is_default_value(imc.yaw)) dccl.set_yaw(imc.yaw);
+
+}
+
+
+// ================ Goto Message ================
+void decodeGoto(const IMC_DCCL::Goto& dccl, DUNE::IMC::Goto& imc)
+{
+    imc.timeout = dccl.timeout();
+
+    imc.lat = dccl.lat();
+
+    imc.lon = dccl.lon();
+
+    imc.z = dccl.z();
+
+    imc.z_units = decodeZUnits(dccl.z_units());
+
+    imc.speed = dccl.speed();
+
+    imc.speed_units = decodeSpeedUnits(dccl.speed_units());
+
+    imc.roll = dccl.roll();
+
+    imc.pitch = dccl.pitch();
+
+    imc.yaw = dccl.yaw();
 
 }
 
@@ -583,6 +542,425 @@ void decodeVerticalProfile(const IMC_DCCL::VerticalProfile& dccl, DUNE::IMC::Ver
     imc.lat = dccl.lat();
 
     imc.lon = dccl.lon();
+
+}
+
+
+// ================ FollowPath Message ================
+void encodeFollowPath(const DUNE::IMC::FollowPath& imc, IMC_DCCL::FollowPath& dccl)
+{
+    if(!Helper::is_default_value(imc.timeout)) dccl.set_timeout(imc.timeout);
+
+    if(!Helper::is_default_value(imc.lat)) dccl.set_lat(imc.lat);
+
+    if(!Helper::is_default_value(imc.lon)) dccl.set_lon(imc.lon);
+
+    if(!Helper::is_default_value(imc.z)) dccl.set_z(imc.z);
+
+    dccl.set_z_units(encodeZUnits(imc.z_units));
+
+    if(!Helper::is_default_value(imc.speed)) dccl.set_speed(imc.speed);
+
+    dccl.set_speed_units(encodeSpeedUnits(imc.speed_units));
+
+    
+    for (const auto& elem_imc : imc.points) {						
+    	if(!elem_imc) continue;
+    	if(auto* elem_imc_typed = dynamic_cast<const DUNE::IMC::PathPoint*>(elem_imc)){
+    		auto* elem_dccl = dccl.add_points();
+    		encodePathPoint(*elem_imc_typed, *elem_dccl);	
+    	    }
+        }
+
+}
+
+
+// ================ FollowPath Message ================
+void decodeFollowPath(const IMC_DCCL::FollowPath& dccl, DUNE::IMC::FollowPath& imc)
+{
+    imc.timeout = dccl.timeout();
+
+    imc.lat = dccl.lat();
+
+    imc.lon = dccl.lon();
+
+    imc.z = dccl.z();
+
+    imc.z_units = decodeZUnits(dccl.z_units());
+
+    imc.speed = dccl.speed();
+
+    imc.speed_units = decodeSpeedUnits(dccl.speed_units());
+
+    
+    for (unsigned int i=0; i < dccl.points_size(); i++) {				
+    	DUNE::IMC::PathPoint tmp;
+    	decodePathPoint(dccl.points(i), tmp);
+    	imc.points.push_back(tmp);
+    }
+
+}
+
+
+// ================ SetEntityParameters Message ================
+void encodeSetEntityParameters(const DUNE::IMC::SetEntityParameters& imc, IMC_DCCL::SetEntityParameters& dccl)
+{
+    
+    IMC_DCCL::EntityName* name = new IMC_DCCL::EntityName();
+    encodeEntityName(imc.name, *name);
+    dccl.set_allocated_name(name);	
+
+    
+    for (const auto& elem_imc : imc.params) {						
+    	if(!elem_imc) continue;
+    	if(auto* elem_imc_typed = dynamic_cast<const DUNE::IMC::EntityParameter*>(elem_imc)){
+    		auto* elem_dccl = dccl.add_params();
+    		encodeEntityParameter(*elem_imc_typed, *elem_dccl);	
+    	    }
+        }
+
+}
+
+
+// ================ SetEntityParameters Message ================
+void decodeSetEntityParameters(const IMC_DCCL::SetEntityParameters& dccl, DUNE::IMC::SetEntityParameters& imc)
+{
+    decodeEntityName(dccl.name(), imc.name);
+
+    
+    for (unsigned int i=0; i < dccl.params_size(); i++) {				
+    	DUNE::IMC::EntityParameter tmp;
+    	decodeEntityParameter(dccl.params(i), tmp);
+    	imc.params.push_back(tmp);
+    }
+
+}
+
+
+// ================ PlanManeuver Message ================
+void encodePlanManeuver(const DUNE::IMC::PlanManeuver& imc, IMC_DCCL::PlanManeuver& dccl)
+{
+    
+    IMC_DCCL::ManeuverID* maneuver_id = new IMC_DCCL::ManeuverID();
+    encodeManeuverID(imc.maneuver_id, *maneuver_id);
+    dccl.set_allocated_maneuver_id(maneuver_id);	
+
+    
+    IMC_DCCL::Maneuver* tmp = new IMC_DCCL::Maneuver();
+    encodeManeuver(*imc.data.get(), *tmp);
+    dccl.set_allocated_data(tmp);
+
+    
+    for (const auto& elem_imc : imc.start_actions) {						
+    	if(!elem_imc) continue;
+    	auto* elem_dccl = dccl.add_start_actions();
+    	encodePlanManeuverStartActionsUnion(*elem_imc, *elem_dccl);
+    	}
+
+}
+
+
+// ================ PlanManeuver Message ================
+void decodePlanManeuver(const IMC_DCCL::PlanManeuver& dccl, DUNE::IMC::PlanManeuver& imc)
+{
+    decodeManeuverID(dccl.maneuver_id(), imc.maneuver_id);
+
+    
+    if(auto* tmp = decodeManeuver(dccl.data())){	
+        imc.data.set(*tmp);
+        delete tmp;
+    }
+
+    
+    for (unsigned int i=0; i < dccl.start_actions_size(); i++) {				
+    	if(auto* tmp = decodePlanManeuverStartActionsUnion(dccl.start_actions(i))){
+    		imc.start_actions.push_back(tmp);
+    		delete tmp;
+    	}
+    }
+
+}
+
+
+// ================ PlanControlState Message ================
+void encodePlanControlState(const DUNE::IMC::PlanControlState& imc, IMC_DCCL::PlanControlState& dccl)
+{
+    dccl.set_state(encodePlanControlStateStateEnum(imc.state));
+
+    if(!Helper::is_default_value(imc.plan_id)) dccl.set_plan_id(imc.plan_id);
+
+    if(!Helper::is_default_value(imc.plan_eta)) dccl.set_plan_eta(imc.plan_eta);
+
+    if(!Helper::is_default_value(imc.plan_progress)) dccl.set_plan_progress(imc.plan_progress);
+
+    
+    IMC_DCCL::ManeuverID* man_id = new IMC_DCCL::ManeuverID();
+    encodeManeuverID(imc.man_id, *man_id);
+    dccl.set_allocated_man_id(man_id);	
+
+    if(!Helper::is_default_value(imc.man_type)) dccl.set_man_type(imc.man_type);
+
+    if(!Helper::is_default_value(imc.man_eta)) dccl.set_man_eta(imc.man_eta);
+
+    dccl.set_last_outcome(encodePlanControlStateLastPlanOutcomeEnum(imc.last_outcome));
+
+}
+
+
+// ================ PlanControlState Message ================
+void decodePlanControlState(const IMC_DCCL::PlanControlState& dccl, DUNE::IMC::PlanControlState& imc)
+{
+    imc.state = decodePlanControlStateStateEnum(dccl.state());
+
+    imc.plan_id = dccl.plan_id();
+
+    imc.plan_eta = dccl.plan_eta();
+
+    imc.plan_progress = dccl.plan_progress();
+
+    decodeManeuverID(dccl.man_id(), imc.man_id);
+
+    imc.man_type = dccl.man_type();
+
+    imc.man_eta = dccl.man_eta();
+
+    imc.last_outcome = decodePlanControlStateLastPlanOutcomeEnum(dccl.last_outcome());
+
+}
+
+
+// ================ EntityState Message ================
+void encodeEntityState(const DUNE::IMC::EntityState& imc, IMC_DCCL::EntityState& dccl)
+{
+    dccl.set_state(encodeEntityStateStateEnum(imc.state));
+
+    if(!Helper::is_default_value(imc.flags)) dccl.set_flags(imc.flags);
+
+    if(!Helper::is_default_value(imc.description)) dccl.set_description(imc.description);
+
+}
+
+
+// ================ EntityState Message ================
+void decodeEntityState(const IMC_DCCL::EntityState& dccl, DUNE::IMC::EntityState& imc)
+{
+    imc.state = decodeEntityStateStateEnum(dccl.state());
+
+    imc.flags = dccl.flags();
+
+    imc.description = dccl.description();
+
+}
+
+
+// ================ PlanDBState Message ================
+void encodePlanDBState(const DUNE::IMC::PlanDBState& imc, IMC_DCCL::PlanDBState& dccl)
+{
+    if(!Helper::is_default_value(imc.plan_count)) dccl.set_plan_count(imc.plan_count);
+
+    if(!Helper::is_default_value(imc.plan_size)) dccl.set_plan_size(imc.plan_size);
+
+    if(!Helper::is_default_value(imc.change_time)) dccl.set_change_time(imc.change_time);
+
+    if(!Helper::is_default_value(imc.change_sid)) dccl.set_change_sid(imc.change_sid);
+
+    if(!Helper::is_default_value(imc.change_sname)) dccl.set_change_sname(imc.change_sname);
+
+    dccl.set_md5(std::string(imc.md5.data(), imc.md5.size()));
+
+    
+    for (const auto& elem_imc : imc.plans_info) {						
+    	if(!elem_imc) continue;
+    	if(auto* elem_imc_typed = dynamic_cast<const DUNE::IMC::PlanDBInformation*>(elem_imc)){
+    		auto* elem_dccl = dccl.add_plans_info();
+    		encodePlanDBInformation(*elem_imc_typed, *elem_dccl);	
+    	    }
+        }
+
+}
+
+
+// ================ PlanDBState Message ================
+void decodePlanDBState(const IMC_DCCL::PlanDBState& dccl, DUNE::IMC::PlanDBState& imc)
+{
+    imc.plan_count = dccl.plan_count();
+
+    imc.plan_size = dccl.plan_size();
+
+    imc.change_time = dccl.change_time();
+
+    imc.change_sid = dccl.change_sid();
+
+    imc.change_sname = dccl.change_sname();
+
+    
+    const std::string& bytes=dccl.md5();
+    imc.md5.assign(bytes.begin(), bytes.end());
+
+    
+    for (unsigned int i=0; i < dccl.plans_info_size(); i++) {				
+    	DUNE::IMC::PlanDBInformation tmp;
+    	decodePlanDBInformation(dccl.plans_info(i), tmp);
+    	imc.plans_info.push_back(tmp);
+    }
+
+}
+
+
+// ================ StationKeeping Message ================
+void encodeStationKeeping(const DUNE::IMC::StationKeeping& imc, IMC_DCCL::StationKeeping& dccl)
+{
+    if(!Helper::is_default_value(imc.lat)) dccl.set_lat(imc.lat);
+
+    if(!Helper::is_default_value(imc.lon)) dccl.set_lon(imc.lon);
+
+    if(!Helper::is_default_value(imc.z)) dccl.set_z(imc.z);
+
+    dccl.set_z_units(encodeZUnits(imc.z_units));
+
+    if(!Helper::is_default_value(imc.radius)) dccl.set_radius(imc.radius);
+
+    if(!Helper::is_default_value(imc.duration)) dccl.set_duration(imc.duration);
+
+    if(!Helper::is_default_value(imc.speed)) dccl.set_speed(imc.speed);
+
+    dccl.set_speed_units(encodeSpeedUnits(imc.speed_units));
+
+}
+
+
+// ================ StationKeeping Message ================
+void decodeStationKeeping(const IMC_DCCL::StationKeeping& dccl, DUNE::IMC::StationKeeping& imc)
+{
+    imc.lat = dccl.lat();
+
+    imc.lon = dccl.lon();
+
+    imc.z = dccl.z();
+
+    imc.z_units = decodeZUnits(dccl.z_units());
+
+    imc.radius = dccl.radius();
+
+    imc.duration = dccl.duration();
+
+    imc.speed = dccl.speed();
+
+    imc.speed_units = decodeSpeedUnits(dccl.speed_units());
+
+}
+
+
+// ================ VehicleState Message ================
+void encodeVehicleState(const DUNE::IMC::VehicleState& imc, IMC_DCCL::VehicleState& dccl)
+{
+    dccl.set_op_mode(encodeVehicleStateOperationModeEnum(imc.op_mode));
+
+    if(!Helper::is_default_value(imc.error_count)) dccl.set_error_count(imc.error_count);
+
+    if(!Helper::is_default_value(imc.error_ents)) dccl.set_error_ents(imc.error_ents);
+
+    if(!Helper::is_default_value(imc.maneuver_type)) dccl.set_maneuver_type(imc.maneuver_type);
+
+    if(!Helper::is_default_value(imc.maneuver_stime)) dccl.set_maneuver_stime(imc.maneuver_stime);
+
+    if(!Helper::is_default_value(imc.maneuver_eta)) dccl.set_maneuver_eta(imc.maneuver_eta);
+
+    if(!Helper::is_default_value(imc.control_loops)) dccl.set_control_loops(imc.control_loops);
+
+    if(!Helper::is_default_value(imc.flags)) dccl.set_flags(imc.flags);
+
+    if(!Helper::is_default_value(imc.last_error)) dccl.set_last_error(imc.last_error);
+
+    if(!Helper::is_default_value(imc.last_error_time)) dccl.set_last_error_time(imc.last_error_time);
+
+}
+
+
+// ================ VehicleState Message ================
+void decodeVehicleState(const IMC_DCCL::VehicleState& dccl, DUNE::IMC::VehicleState& imc)
+{
+    imc.op_mode = decodeVehicleStateOperationModeEnum(dccl.op_mode());
+
+    imc.error_count = dccl.error_count();
+
+    imc.error_ents = dccl.error_ents();
+
+    imc.maneuver_type = dccl.maneuver_type();
+
+    imc.maneuver_stime = dccl.maneuver_stime();
+
+    imc.maneuver_eta = dccl.maneuver_eta();
+
+    imc.control_loops = dccl.control_loops();
+
+    imc.flags = dccl.flags();
+
+    imc.last_error = dccl.last_error();
+
+    imc.last_error_time = dccl.last_error_time();
+
+}
+
+
+// ================ ProfileSample Message ================
+void encodeProfileSample(const DUNE::IMC::ProfileSample& imc, IMC_DCCL::ProfileSample& dccl)
+{
+    if(!Helper::is_default_value(imc.depth)) dccl.set_depth(imc.depth);
+
+    if(!Helper::is_default_value(imc.avg)) dccl.set_avg(imc.avg);
+
+}
+
+
+// ================ ProfileSample Message ================
+void decodeProfileSample(const IMC_DCCL::ProfileSample& dccl, DUNE::IMC::ProfileSample& imc)
+{
+    imc.depth = dccl.depth();
+
+    imc.avg = dccl.avg();
+
+}
+
+
+// ================ EntityParameter Message ================
+void encodeEntityParameter(const DUNE::IMC::EntityParameter& imc, IMC_DCCL::EntityParameter& dccl)
+{
+    
+    IMC_DCCL::ParameterName* name = new IMC_DCCL::ParameterName();
+    encodeParameterName(imc.name, *name);
+    dccl.set_allocated_name(name);	
+
+    
+    IMC_DCCL::ParameterValue* value = new IMC_DCCL::ParameterValue();
+    encodeParameterValue(imc.value, *value);
+    dccl.set_allocated_value(value);	
+
+}
+
+
+// ================ EntityParameter Message ================
+void decodeEntityParameter(const IMC_DCCL::EntityParameter& dccl, DUNE::IMC::EntityParameter& imc)
+{
+    decodeParameterName(dccl.name(), imc.name);
+
+    decodeParameterValue(dccl.value(), imc.value);
+
+}
+
+
+// ================ Voltage Message ================
+void encodeVoltage(const DUNE::IMC::Voltage& imc, IMC_DCCL::Voltage& dccl)
+{
+    if(!Helper::is_default_value(imc.value)) dccl.set_value(imc.value);
+
+}
+
+
+// ================ Voltage Message ================
+void decodeVoltage(const IMC_DCCL::Voltage& dccl, DUNE::IMC::Voltage& imc)
+{
+    imc.value = dccl.value();
 
 }
 
@@ -675,360 +1053,6 @@ void decodeEstimatedState(const IMC_DCCL::EstimatedState& dccl, DUNE::IMC::Estim
     imc.depth = dccl.depth();
 
     imc.alt = dccl.alt();
-
-}
-
-
-// ================ PlanControl Message ================
-void encodePlanControl(const DUNE::IMC::PlanControl& imc, IMC_DCCL::PlanControl& dccl)
-{
-    dccl.set_type(encodePlanControlTypeEnum(imc.type));
-
-    dccl.set_op(encodePlanControlOperationEnum(imc.op));
-
-    if(!Helper::is_default_value(imc.request_id)) dccl.set_request_id(imc.request_id);
-
-    if(!Helper::is_default_value(imc.plan_id)) dccl.set_plan_id(imc.plan_id);
-
-    if(!Helper::is_default_value(imc.flags)) dccl.set_flags(imc.flags);
-
-    
-    IMC_DCCL::PlanControlArgUnion* tmp = new IMC_DCCL::PlanControlArgUnion();			
-    encodePlanControlArgUnion(*imc.arg, *tmp);
-    dccl.set_allocated_arg(tmp);
-
-    if(!Helper::is_default_value(imc.info)) dccl.set_info(imc.info);
-
-}
-
-
-// ================ PlanControl Message ================
-void decodePlanControl(const IMC_DCCL::PlanControl& dccl, DUNE::IMC::PlanControl& imc)
-{
-    imc.type = decodePlanControlTypeEnum(dccl.type());
-
-    imc.op = decodePlanControlOperationEnum(dccl.op());
-
-    imc.request_id = dccl.request_id();
-
-    imc.plan_id = dccl.plan_id();
-
-    imc.flags = dccl.flags();
-
-    
-    if(auto* tmp = decodePlanControlArgUnion(dccl.arg())){				
-    	imc.arg.set(*tmp);
-    	delete tmp;
-    }
-
-    imc.info = dccl.info();
-
-}
-
-
-// ================ PlanDBState Message ================
-void encodePlanDBState(const DUNE::IMC::PlanDBState& imc, IMC_DCCL::PlanDBState& dccl)
-{
-    if(!Helper::is_default_value(imc.plan_count)) dccl.set_plan_count(imc.plan_count);
-
-    if(!Helper::is_default_value(imc.plan_size)) dccl.set_plan_size(imc.plan_size);
-
-    if(!Helper::is_default_value(imc.change_time)) dccl.set_change_time(imc.change_time);
-
-    if(!Helper::is_default_value(imc.change_sid)) dccl.set_change_sid(imc.change_sid);
-
-    if(!Helper::is_default_value(imc.change_sname)) dccl.set_change_sname(imc.change_sname);
-
-    dccl.set_md5(std::string(imc.md5.data(), imc.md5.size()));
-
-    
-    for (const auto& elem_imc : imc.plans_info) {						
-    	if(!elem_imc) continue;
-    	if(auto* elem_imc_typed = dynamic_cast<const DUNE::IMC::PlanDBInformation*>(elem_imc)){
-    		auto* elem_dccl = dccl.add_plans_info();
-    		encodePlanDBInformation(*elem_imc_typed, *elem_dccl);	
-    	    }
-        }
-
-}
-
-
-// ================ PlanDBState Message ================
-void decodePlanDBState(const IMC_DCCL::PlanDBState& dccl, DUNE::IMC::PlanDBState& imc)
-{
-    imc.plan_count = dccl.plan_count();
-
-    imc.plan_size = dccl.plan_size();
-
-    imc.change_time = dccl.change_time();
-
-    imc.change_sid = dccl.change_sid();
-
-    imc.change_sname = dccl.change_sname();
-
-    
-    const std::string& bytes=dccl.md5();
-    imc.md5.assign(bytes.begin(), bytes.end());
-
-    
-    for (unsigned int i=0; i < dccl.plans_info_size(); i++) {				
-    	DUNE::IMC::PlanDBInformation tmp;
-    	decodePlanDBInformation(dccl.plans_info(i), tmp);
-    	imc.plans_info.push_back(tmp);
-    }
-
-}
-
-
-// ================ VehicleState Message ================
-void encodeVehicleState(const DUNE::IMC::VehicleState& imc, IMC_DCCL::VehicleState& dccl)
-{
-    dccl.set_op_mode(encodeVehicleStateOperationModeEnum(imc.op_mode));
-
-    if(!Helper::is_default_value(imc.error_count)) dccl.set_error_count(imc.error_count);
-
-    if(!Helper::is_default_value(imc.error_ents)) dccl.set_error_ents(imc.error_ents);
-
-    if(!Helper::is_default_value(imc.maneuver_type)) dccl.set_maneuver_type(imc.maneuver_type);
-
-    if(!Helper::is_default_value(imc.maneuver_stime)) dccl.set_maneuver_stime(imc.maneuver_stime);
-
-    if(!Helper::is_default_value(imc.maneuver_eta)) dccl.set_maneuver_eta(imc.maneuver_eta);
-
-    if(!Helper::is_default_value(imc.control_loops)) dccl.set_control_loops(imc.control_loops);
-
-    if(!Helper::is_default_value(imc.flags)) dccl.set_flags(imc.flags);
-
-    if(!Helper::is_default_value(imc.last_error)) dccl.set_last_error(imc.last_error);
-
-    if(!Helper::is_default_value(imc.last_error_time)) dccl.set_last_error_time(imc.last_error_time);
-
-}
-
-
-// ================ VehicleState Message ================
-void decodeVehicleState(const IMC_DCCL::VehicleState& dccl, DUNE::IMC::VehicleState& imc)
-{
-    imc.op_mode = decodeVehicleStateOperationModeEnum(dccl.op_mode());
-
-    imc.error_count = dccl.error_count();
-
-    imc.error_ents = dccl.error_ents();
-
-    imc.maneuver_type = dccl.maneuver_type();
-
-    imc.maneuver_stime = dccl.maneuver_stime();
-
-    imc.maneuver_eta = dccl.maneuver_eta();
-
-    imc.control_loops = dccl.control_loops();
-
-    imc.flags = dccl.flags();
-
-    imc.last_error = dccl.last_error();
-
-    imc.last_error_time = dccl.last_error_time();
-
-}
-
-
-// ================ Voltage Message ================
-void encodeVoltage(const DUNE::IMC::Voltage& imc, IMC_DCCL::Voltage& dccl)
-{
-    if(!Helper::is_default_value(imc.value)) dccl.set_value(imc.value);
-
-}
-
-
-// ================ Voltage Message ================
-void decodeVoltage(const IMC_DCCL::Voltage& dccl, DUNE::IMC::Voltage& imc)
-{
-    imc.value = dccl.value();
-
-}
-
-
-// ================ Current Message ================
-void encodeCurrent(const DUNE::IMC::Current& imc, IMC_DCCL::Current& dccl)
-{
-    if(!Helper::is_default_value(imc.value)) dccl.set_value(imc.value);
-
-}
-
-
-// ================ Current Message ================
-void decodeCurrent(const IMC_DCCL::Current& dccl, DUNE::IMC::Current& imc)
-{
-    imc.value = dccl.value();
-
-}
-
-
-// ================ PlanDB Message ================
-void encodePlanDB(const DUNE::IMC::PlanDB& imc, IMC_DCCL::PlanDB& dccl)
-{
-    dccl.set_type(encodePlanDBTypeEnum(imc.type));
-
-    dccl.set_op(encodePlanDBOperationEnum(imc.op));
-
-    if(!Helper::is_default_value(imc.request_id)) dccl.set_request_id(imc.request_id);
-
-    if(!Helper::is_default_value(imc.plan_id)) dccl.set_plan_id(imc.plan_id);
-
-    
-    IMC_DCCL::PlanDBArgUnion* tmp = new IMC_DCCL::PlanDBArgUnion();			
-    encodePlanDBArgUnion(*imc.arg, *tmp);
-    dccl.set_allocated_arg(tmp);
-
-    if(!Helper::is_default_value(imc.info)) dccl.set_info(imc.info);
-
-}
-
-
-// ================ PlanDB Message ================
-void decodePlanDB(const IMC_DCCL::PlanDB& dccl, DUNE::IMC::PlanDB& imc)
-{
-    imc.type = decodePlanDBTypeEnum(dccl.type());
-
-    imc.op = decodePlanDBOperationEnum(dccl.op());
-
-    imc.request_id = dccl.request_id();
-
-    imc.plan_id = dccl.plan_id();
-
-    
-    if(auto* tmp = decodePlanDBArgUnion(dccl.arg())){				
-    	imc.arg.set(*tmp);
-    	delete tmp;
-    }
-
-    imc.info = dccl.info();
-
-}
-
-
-// ================ EntityState Message ================
-void encodeEntityState(const DUNE::IMC::EntityState& imc, IMC_DCCL::EntityState& dccl)
-{
-    dccl.set_state(encodeEntityStateStateEnum(imc.state));
-
-    if(!Helper::is_default_value(imc.flags)) dccl.set_flags(imc.flags);
-
-    if(!Helper::is_default_value(imc.description)) dccl.set_description(imc.description);
-
-}
-
-
-// ================ EntityState Message ================
-void decodeEntityState(const IMC_DCCL::EntityState& dccl, DUNE::IMC::EntityState& imc)
-{
-    imc.state = decodeEntityStateStateEnum(dccl.state());
-
-    imc.flags = dccl.flags();
-
-    imc.description = dccl.description();
-
-}
-
-
-// ================ PlanControlState Message ================
-void encodePlanControlState(const DUNE::IMC::PlanControlState& imc, IMC_DCCL::PlanControlState& dccl)
-{
-    dccl.set_state(encodePlanControlStateStateEnum(imc.state));
-
-    if(!Helper::is_default_value(imc.plan_id)) dccl.set_plan_id(imc.plan_id);
-
-    if(!Helper::is_default_value(imc.plan_eta)) dccl.set_plan_eta(imc.plan_eta);
-
-    if(!Helper::is_default_value(imc.plan_progress)) dccl.set_plan_progress(imc.plan_progress);
-
-    
-    IMC_DCCL::ManeuverID* man_id = new IMC_DCCL::ManeuverID();
-    encodeManeuverID(imc.man_id, *man_id);
-    dccl.set_allocated_man_id(man_id);	
-
-    if(!Helper::is_default_value(imc.man_type)) dccl.set_man_type(imc.man_type);
-
-    if(!Helper::is_default_value(imc.man_eta)) dccl.set_man_eta(imc.man_eta);
-
-    dccl.set_last_outcome(encodePlanControlStateLastPlanOutcomeEnum(imc.last_outcome));
-
-}
-
-
-// ================ PlanControlState Message ================
-void decodePlanControlState(const IMC_DCCL::PlanControlState& dccl, DUNE::IMC::PlanControlState& imc)
-{
-    imc.state = decodePlanControlStateStateEnum(dccl.state());
-
-    imc.plan_id = dccl.plan_id();
-
-    imc.plan_eta = dccl.plan_eta();
-
-    imc.plan_progress = dccl.plan_progress();
-
-    decodeManeuverID(dccl.man_id(), imc.man_id);
-
-    imc.man_type = dccl.man_type();
-
-    imc.man_eta = dccl.man_eta();
-
-    imc.last_outcome = decodePlanControlStateLastPlanOutcomeEnum(dccl.last_outcome());
-
-}
-
-
-// ================ SetEntityParameters Message ================
-void encodeSetEntityParameters(const DUNE::IMC::SetEntityParameters& imc, IMC_DCCL::SetEntityParameters& dccl)
-{
-    
-    IMC_DCCL::EntityName* name = new IMC_DCCL::EntityName();
-    encodeEntityName(imc.name, *name);
-    dccl.set_allocated_name(name);	
-
-    
-    for (const auto& elem_imc : imc.params) {						
-    	if(!elem_imc) continue;
-    	if(auto* elem_imc_typed = dynamic_cast<const DUNE::IMC::EntityParameter*>(elem_imc)){
-    		auto* elem_dccl = dccl.add_params();
-    		encodeEntityParameter(*elem_imc_typed, *elem_dccl);	
-    	    }
-        }
-
-}
-
-
-// ================ SetEntityParameters Message ================
-void decodeSetEntityParameters(const IMC_DCCL::SetEntityParameters& dccl, DUNE::IMC::SetEntityParameters& imc)
-{
-    decodeEntityName(dccl.name(), imc.name);
-
-    
-    for (unsigned int i=0; i < dccl.params_size(); i++) {				
-    	DUNE::IMC::EntityParameter tmp;
-    	decodeEntityParameter(dccl.params(i), tmp);
-    	imc.params.push_back(tmp);
-    }
-
-}
-
-
-// ================ ProfileSample Message ================
-void encodeProfileSample(const DUNE::IMC::ProfileSample& imc, IMC_DCCL::ProfileSample& dccl)
-{
-    if(!Helper::is_default_value(imc.depth)) dccl.set_depth(imc.depth);
-
-    if(!Helper::is_default_value(imc.avg)) dccl.set_avg(imc.avg);
-
-}
-
-
-// ================ ProfileSample Message ================
-void decodeProfileSample(const IMC_DCCL::ProfileSample& dccl, DUNE::IMC::ProfileSample& imc)
-{
-    imc.depth = dccl.depth();
-
-    imc.avg = dccl.avg();
 
 }
 
