@@ -317,7 +317,7 @@ message PlanTransition {
 
 // Vertical Profile
 message VerticalProfile {
-    option (dccl.msg) = { codec_version: 4 id: 111 max_bytes: 80};
+    option (dccl.msg) = { codec_version: 4 id: 111 max_bytes: 400};
 
     enum ParameterEnum
     {
@@ -328,7 +328,13 @@ message VerticalProfile {
         PROF_REDOX = 4;
         PROF_CHLOROPHYLL = 5;
         PROF_TURBIDITY = 6;
-        PROF_UNKNOWN = 7;
+        PROF_CURRENT_VELOCITY_N = 7;
+        PROF_CURRENT_VELOCITY_E = 8;
+        PROF_ABSOLUTE_WIND_AVG = 9;
+        PROF_ABSOLUTE_WIND_MAX = 10;
+        PROF_DISS_ORGANIC_MATTER = 11;
+        PROF_DISS_OXYGEN = 12;
+        PROF_UNKNOWN = 13;
     }
 
     ParameterEnum parameter = 1;

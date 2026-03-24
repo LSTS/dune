@@ -48,6 +48,7 @@ namespace IMCDCCL
             VEHICLE_STATE = 500,
             ENTITY_STATE = 1,
             PLAN_CONTROL_STATE = 560,
+            VERTICAL_PROFILE = 111,
         };
 
         private: 
@@ -68,6 +69,7 @@ namespace IMCDCCL
                 case VEHICLE_STATE:
                 case ENTITY_STATE:
                 case PLAN_CONTROL_STATE:
+                case VERTICAL_PROFILE:
                     return static_cast<MsgID>(id);
                 default:
                     throw std::invalid_argument("DCCL:CodecDCCL: MsgID Not Recognized");
@@ -159,6 +161,16 @@ namespace IMCDCCL
                     m_codec.decode(encoded_string, &src_dccl);
                     DUNE::IMC::PlanControlState* dst_imc = new DUNE::IMC::PlanControlState();
                     decodePlanControlState(src_dccl, *dst_imc);
+                    return dst_imc;
+                }
+
+                case VERTICAL_PROFILE:
+                {
+                    m_codec.load<IMC_DCCL::VerticalProfile>();
+                    IMC_DCCL::VerticalProfile src_dccl;
+                    m_codec.decode(encoded_string, &src_dccl);
+                    DUNE::IMC::VerticalProfile* dst_imc = new DUNE::IMC::VerticalProfile();
+                    decodeVerticalProfile(src_dccl, *dst_imc);
                     return dst_imc;
                 }
 
@@ -276,6 +288,20 @@ namespace IMCDCCL
                     m_codec.load<IMC_DCCL::PlanControlState>();
                     IMC_DCCL::PlanControlState dst_dccl;
                     encodePlanControlState(*src_imc, dst_dccl);
+
+                    std::string encoded_bytes;
+                    m_codec.encode(&encoded_bytes, dst_dccl);
+                    
+                    return encoded_bytes;
+                }
+
+                case VERTICAL_PROFILE:
+                {
+                    const DUNE::IMC::VerticalProfile* src_imc = dynamic_cast<const DUNE::IMC::VerticalProfile*>(imc_msg);
+
+                    m_codec.load<IMC_DCCL::VerticalProfile>();
+                    IMC_DCCL::VerticalProfile dst_dccl;
+                    encodeVerticalProfile(*src_imc, dst_dccl);
 
                     std::string encoded_bytes;
                     m_codec.encode(&encoded_bytes, dst_dccl);

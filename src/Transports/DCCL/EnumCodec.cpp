@@ -324,6 +324,12 @@ IMC_DCCL::VerticalProfile::ParameterEnum encodeVerticalProfileParameterEnum(cons
         case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_REDOX: return IMC_DCCL::VerticalProfile::PROF_REDOX;
         case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_CHLOROPHYLL: return IMC_DCCL::VerticalProfile::PROF_CHLOROPHYLL;
         case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_TURBIDITY: return IMC_DCCL::VerticalProfile::PROF_TURBIDITY;
+        case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_CURRENT_VELOCITY_N: return IMC_DCCL::VerticalProfile::PROF_CURRENT_VELOCITY_N;
+        case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_CURRENT_VELOCITY_E: return IMC_DCCL::VerticalProfile::PROF_CURRENT_VELOCITY_E;
+        case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_ABSOLUTE_WIND_AVG: return IMC_DCCL::VerticalProfile::PROF_ABSOLUTE_WIND_AVG;
+        case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_ABSOLUTE_WIND_MAX: return IMC_DCCL::VerticalProfile::PROF_ABSOLUTE_WIND_MAX;
+        case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_DISS_ORGANIC_MATTER: return IMC_DCCL::VerticalProfile::PROF_DISS_ORGANIC_MATTER;
+        case DUNE::IMC::VerticalProfile::ParameterEnum::PROF_DISS_OXYGEN: return IMC_DCCL::VerticalProfile::PROF_DISS_OXYGEN;
         default: return IMC_DCCL::VerticalProfile::PROF_UNKNOWN;
     }
 }
@@ -340,6 +346,12 @@ DUNE::IMC::VerticalProfile::ParameterEnum decodeVerticalProfileParameterEnum(con
         case IMC_DCCL::VerticalProfile::PROF_REDOX: return DUNE::IMC::VerticalProfile::ParameterEnum::PROF_REDOX;
         case IMC_DCCL::VerticalProfile::PROF_CHLOROPHYLL: return DUNE::IMC::VerticalProfile::ParameterEnum::PROF_CHLOROPHYLL;
         case IMC_DCCL::VerticalProfile::PROF_TURBIDITY: return DUNE::IMC::VerticalProfile::ParameterEnum::PROF_TURBIDITY;
+        case IMC_DCCL::VerticalProfile::PROF_CURRENT_VELOCITY_N: return DUNE::IMC::VerticalProfile::ParameterEnum::PROF_CURRENT_VELOCITY_N;
+        case IMC_DCCL::VerticalProfile::PROF_CURRENT_VELOCITY_E: return DUNE::IMC::VerticalProfile::ParameterEnum::PROF_CURRENT_VELOCITY_E;
+        case IMC_DCCL::VerticalProfile::PROF_ABSOLUTE_WIND_AVG: return DUNE::IMC::VerticalProfile::ParameterEnum::PROF_ABSOLUTE_WIND_AVG;
+        case IMC_DCCL::VerticalProfile::PROF_ABSOLUTE_WIND_MAX: return DUNE::IMC::VerticalProfile::ParameterEnum::PROF_ABSOLUTE_WIND_MAX;
+        case IMC_DCCL::VerticalProfile::PROF_DISS_ORGANIC_MATTER: return DUNE::IMC::VerticalProfile::ParameterEnum::PROF_DISS_ORGANIC_MATTER;
+        case IMC_DCCL::VerticalProfile::PROF_DISS_OXYGEN: return DUNE::IMC::VerticalProfile::ParameterEnum::PROF_DISS_OXYGEN;
     }
 }
 
