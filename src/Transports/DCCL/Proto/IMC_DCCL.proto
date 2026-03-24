@@ -581,6 +581,15 @@ message FuelLevel {
     optional string opmodes = 3 [(dccl.field).max_length = 50];
 }
 
+//WindSpeed
+message WindSpeed {
+    option (dccl.msg) = { codec_version: 4 id: 271 max_bytes: 80};
+    optional float direction = 1 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6}];
+    optional float speed = 2 [(dccl.field) = { min: 0 max: 100 precision: 3 }];
+    optional float turbulence = 3 [(dccl.field) = { min: 0 max: 100 precision: 3 }];
+}
+
+
 message PlanDBArgUnion {
     option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
     oneof PlanDBArgUnion_{
