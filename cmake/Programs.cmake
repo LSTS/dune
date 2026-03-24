@@ -37,7 +37,7 @@ macro(dune_probe_programs)
 
   # Python
   message(STATUS "Looking for Python interpreter")
-  find_program(PYTHON_EXE NAMES python)
+  find_program(PYTHON_EXE NAMES python3 python)
   if(PYTHON_EXE)
     set(DUNE_PROGRAM_PYTHON ${PYTHON_EXE})
     message(STATUS "IMC code generation enabled")
