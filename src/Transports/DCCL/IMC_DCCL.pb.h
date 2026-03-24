@@ -249,7 +249,13 @@ enum VerticalProfile_ParameterEnum : int {
   VerticalProfile_ParameterEnum_PROF_REDOX = 4,
   VerticalProfile_ParameterEnum_PROF_CHLOROPHYLL = 5,
   VerticalProfile_ParameterEnum_PROF_TURBIDITY = 6,
-  VerticalProfile_ParameterEnum_PROF_UNKNOWN = 7,
+  VerticalProfile_ParameterEnum_PROF_CURRENT_VELOCITY_N = 7,
+  VerticalProfile_ParameterEnum_PROF_CURRENT_VELOCITY_E = 8,
+  VerticalProfile_ParameterEnum_PROF_ABSOLUTE_WIND_AVG = 9,
+  VerticalProfile_ParameterEnum_PROF_ABSOLUTE_WIND_MAX = 10,
+  VerticalProfile_ParameterEnum_PROF_DISS_ORGANIC_MATTER = 11,
+  VerticalProfile_ParameterEnum_PROF_DISS_OXYGEN = 12,
+  VerticalProfile_ParameterEnum_PROF_UNKNOWN = 13,
   VerticalProfile_ParameterEnum_VerticalProfile_ParameterEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   VerticalProfile_ParameterEnum_VerticalProfile_ParameterEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
@@ -4726,6 +4732,18 @@ class VerticalProfile final :
     VerticalProfile_ParameterEnum_PROF_CHLOROPHYLL;
   static constexpr ParameterEnum PROF_TURBIDITY =
     VerticalProfile_ParameterEnum_PROF_TURBIDITY;
+  static constexpr ParameterEnum PROF_CURRENT_VELOCITY_N =
+    VerticalProfile_ParameterEnum_PROF_CURRENT_VELOCITY_N;
+  static constexpr ParameterEnum PROF_CURRENT_VELOCITY_E =
+    VerticalProfile_ParameterEnum_PROF_CURRENT_VELOCITY_E;
+  static constexpr ParameterEnum PROF_ABSOLUTE_WIND_AVG =
+    VerticalProfile_ParameterEnum_PROF_ABSOLUTE_WIND_AVG;
+  static constexpr ParameterEnum PROF_ABSOLUTE_WIND_MAX =
+    VerticalProfile_ParameterEnum_PROF_ABSOLUTE_WIND_MAX;
+  static constexpr ParameterEnum PROF_DISS_ORGANIC_MATTER =
+    VerticalProfile_ParameterEnum_PROF_DISS_ORGANIC_MATTER;
+  static constexpr ParameterEnum PROF_DISS_OXYGEN =
+    VerticalProfile_ParameterEnum_PROF_DISS_OXYGEN;
   static constexpr ParameterEnum PROF_UNKNOWN =
     VerticalProfile_ParameterEnum_PROF_UNKNOWN;
   static inline bool ParameterEnum_IsValid(int value) {
