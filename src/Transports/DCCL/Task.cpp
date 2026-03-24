@@ -86,6 +86,10 @@ namespace Transports
         bind<IMC::UamRxFrame>(this);
 
         bind<IMC::PlanSpecification>(this);
+        bind<IMC::VerticalProfile>(this);
+        bind<IMC::Current>(this);
+        bind<IMC::FuelLevel>(this);
+        bind<IMC::Voltage>(this);
         //bind<IMC::PlanControlState>(this);
         //bind<IMC::PlanControl>(this);
         //bind<IMC::SetEntityParameters>(this);
@@ -267,6 +271,82 @@ namespace Transports
           sendTransmissionRequestViaAcoustic("", encoded_string);
           
           
+      }
+    }
+
+      void
+      consume(const IMC::VerticalProfile* msg)
+      {
+       if(m_args.trigger_dccl){
+          
+          msg->toJSON(std::cout);
+          
+          ////////////////////////////////////////////////////////////// DCCL LIB
+          std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          ////////////////////////////////////////////////////////////// DCCL LIB
+
+          war("[ENCODING] VerticalProfile with size %u received.", msg->getPayloadSerializationSize());
+          war("[ENCODING] Compressed with size %u received.", encoded_string.size());
+          std::cout << "Send via Acoustic"<< std::endl;
+
+          sendTransmissionRequestViaAcoustic("", encoded_string);   
+      }
+    }
+
+      void
+      consume(const IMC::Current* msg)
+      {
+       if(m_args.trigger_dccl){
+          
+          msg->toJSON(std::cout);
+          
+          ////////////////////////////////////////////////////////////// DCCL LIB
+          std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          ////////////////////////////////////////////////////////////// DCCL LIB
+
+          war("[ENCODING] Current with size %u received.", msg->getPayloadSerializationSize());
+          war("[ENCODING] Compressed with size %u received.", encoded_string.size());
+          std::cout << "Send via Acoustic"<< std::endl;
+
+          sendTransmissionRequestViaAcoustic("", encoded_string);   
+      }
+    }
+
+      void
+      consume(const IMC::Voltage* msg)
+      {
+       if(m_args.trigger_dccl){
+          
+          msg->toJSON(std::cout);
+          
+          ////////////////////////////////////////////////////////////// DCCL LIB
+          std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          ////////////////////////////////////////////////////////////// DCCL LIB
+
+          war("[ENCODING] Voltage with size %u received.", msg->getPayloadSerializationSize());
+          war("[ENCODING] Compressed with size %u received.", encoded_string.size());
+          std::cout << "Send via Acoustic"<< std::endl;
+
+          sendTransmissionRequestViaAcoustic("", encoded_string);   
+      }
+    }
+
+      void
+      consume(const IMC::FuelLevel* msg)
+      {
+       if(m_args.trigger_dccl){
+          
+          msg->toJSON(std::cout);
+          
+          ////////////////////////////////////////////////////////////// DCCL LIB
+          std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          ////////////////////////////////////////////////////////////// DCCL LIB
+
+          war("[ENCODING] FuelLevel with size %u received.", msg->getPayloadSerializationSize());
+          war("[ENCODING] Compressed with size %u received.", encoded_string.size());
+          std::cout << "Send via Acoustic"<< std::endl;
+
+          sendTransmissionRequestViaAcoustic("", encoded_string);   
       }
     }
 

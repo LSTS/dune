@@ -49,6 +49,9 @@ namespace IMCDCCL
             ENTITY_STATE = 1,
             PLAN_CONTROL_STATE = 560,
             VERTICAL_PROFILE = 111,
+            VOLTAGE = 251, 
+            FUEL_LEVEL = 279, 
+            CURRENT = 252,
         };
 
         private: 
@@ -70,6 +73,9 @@ namespace IMCDCCL
                 case ENTITY_STATE:
                 case PLAN_CONTROL_STATE:
                 case VERTICAL_PROFILE:
+                case VOLTAGE:
+                case FUEL_LEVEL:
+                case CURRENT:
                     return static_cast<MsgID>(id);
                 default:
                     throw std::invalid_argument("DCCL:CodecDCCL: MsgID Not Recognized");
@@ -171,6 +177,36 @@ namespace IMCDCCL
                     m_codec.decode(encoded_string, &src_dccl);
                     DUNE::IMC::VerticalProfile* dst_imc = new DUNE::IMC::VerticalProfile();
                     decodeVerticalProfile(src_dccl, *dst_imc);
+                    return dst_imc;
+                }
+
+                case VOLTAGE:
+                {
+                    m_codec.load<IMC_DCCL::Voltage>();
+                    IMC_DCCL::Voltage src_dccl;
+                    m_codec.decode(encoded_string, &src_dccl);
+                    DUNE::IMC::Voltage* dst_imc = new DUNE::IMC::Voltage();
+                    decodeVoltage(src_dccl, *dst_imc);
+                    return dst_imc;
+                }
+
+                case FUEL_LEVEL:
+                {
+                    m_codec.load<IMC_DCCL::FuelLevel>();
+                    IMC_DCCL::FuelLevel src_dccl;
+                    m_codec.decode(encoded_string, &src_dccl);
+                    DUNE::IMC::FuelLevel* dst_imc = new DUNE::IMC::FuelLevel();
+                    decodeFuelLevel(src_dccl, *dst_imc);
+                    return dst_imc;
+                }
+
+                case CURRENT:
+                {
+                    m_codec.load<IMC_DCCL::Current>();
+                    IMC_DCCL::Current src_dccl;
+                    m_codec.decode(encoded_string, &src_dccl);
+                    DUNE::IMC::Current* dst_imc = new DUNE::IMC::Current();
+                    decodeCurrent(src_dccl, *dst_imc);
                     return dst_imc;
                 }
 
@@ -302,6 +338,48 @@ namespace IMCDCCL
                     m_codec.load<IMC_DCCL::VerticalProfile>();
                     IMC_DCCL::VerticalProfile dst_dccl;
                     encodeVerticalProfile(*src_imc, dst_dccl);
+
+                    std::string encoded_bytes;
+                    m_codec.encode(&encoded_bytes, dst_dccl);
+                    
+                    return encoded_bytes;
+                }
+
+                case VOLTAGE:
+                {
+                    const DUNE::IMC::Voltage* src_imc = dynamic_cast<const DUNE::IMC::Voltage*>(imc_msg);
+
+                    m_codec.load<IMC_DCCL::Voltage>();
+                    IMC_DCCL::Voltage dst_dccl;
+                    encodeVoltage(*src_imc, dst_dccl);
+
+                    std::string encoded_bytes;
+                    m_codec.encode(&encoded_bytes, dst_dccl);
+                    
+                    return encoded_bytes;
+                }
+
+                case FUEL_LEVEL:
+                {
+                    const DUNE::IMC::FuelLevel* src_imc = dynamic_cast<const DUNE::IMC::FuelLevel*>(imc_msg);
+
+                    m_codec.load<IMC_DCCL::FuelLevel>();
+                    IMC_DCCL::FuelLevel dst_dccl;
+                    encodeFuelLevel(*src_imc, dst_dccl);
+
+                    std::string encoded_bytes;
+                    m_codec.encode(&encoded_bytes, dst_dccl);
+                    
+                    return encoded_bytes;
+                }
+
+                case CURRENT:
+                {
+                    const DUNE::IMC::Current* src_imc = dynamic_cast<const DUNE::IMC::Current*>(imc_msg);
+
+                    m_codec.load<IMC_DCCL::Current>();
+                    IMC_DCCL::Current dst_dccl;
+                    encodeCurrent(*src_imc, dst_dccl);
 
                     std::string encoded_bytes;
                     m_codec.encode(&encoded_bytes, dst_dccl);

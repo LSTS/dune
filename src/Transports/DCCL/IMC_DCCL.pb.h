@@ -47,6 +47,9 @@ struct TableStruct_IMC_5fDCCL_2eproto {
 };
 extern const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_IMC_5fDCCL_2eproto;
 namespace IMC_DCCL {
+class Current;
+struct CurrentDefaultTypeInternal;
+extern CurrentDefaultTypeInternal _Current_default_instance_;
 class EntityName;
 struct EntityNameDefaultTypeInternal;
 extern EntityNameDefaultTypeInternal _EntityName_default_instance_;
@@ -62,6 +65,9 @@ extern EstimatedStateDefaultTypeInternal _EstimatedState_default_instance_;
 class FollowPath;
 struct FollowPathDefaultTypeInternal;
 extern FollowPathDefaultTypeInternal _FollowPath_default_instance_;
+class FuelLevel;
+struct FuelLevelDefaultTypeInternal;
+extern FuelLevelDefaultTypeInternal _FuelLevel_default_instance_;
 class Goto;
 struct GotoDefaultTypeInternal;
 extern GotoDefaultTypeInternal _Goto_default_instance_;
@@ -146,13 +152,18 @@ extern VehicleStateDefaultTypeInternal _VehicleState_default_instance_;
 class VerticalProfile;
 struct VerticalProfileDefaultTypeInternal;
 extern VerticalProfileDefaultTypeInternal _VerticalProfile_default_instance_;
+class Voltage;
+struct VoltageDefaultTypeInternal;
+extern VoltageDefaultTypeInternal _Voltage_default_instance_;
 }  // namespace IMC_DCCL
 PROTOBUF_NAMESPACE_OPEN
+template<> ::IMC_DCCL::Current* Arena::CreateMaybeMessage<::IMC_DCCL::Current>(Arena*);
 template<> ::IMC_DCCL::EntityName* Arena::CreateMaybeMessage<::IMC_DCCL::EntityName>(Arena*);
 template<> ::IMC_DCCL::EntityParameter* Arena::CreateMaybeMessage<::IMC_DCCL::EntityParameter>(Arena*);
 template<> ::IMC_DCCL::EntityState* Arena::CreateMaybeMessage<::IMC_DCCL::EntityState>(Arena*);
 template<> ::IMC_DCCL::EstimatedState* Arena::CreateMaybeMessage<::IMC_DCCL::EstimatedState>(Arena*);
 template<> ::IMC_DCCL::FollowPath* Arena::CreateMaybeMessage<::IMC_DCCL::FollowPath>(Arena*);
+template<> ::IMC_DCCL::FuelLevel* Arena::CreateMaybeMessage<::IMC_DCCL::FuelLevel>(Arena*);
 template<> ::IMC_DCCL::Goto* Arena::CreateMaybeMessage<::IMC_DCCL::Goto>(Arena*);
 template<> ::IMC_DCCL::Loiter* Arena::CreateMaybeMessage<::IMC_DCCL::Loiter>(Arena*);
 template<> ::IMC_DCCL::Maneuver* Arena::CreateMaybeMessage<::IMC_DCCL::Maneuver>(Arena*);
@@ -181,6 +192,7 @@ template<> ::IMC_DCCL::StationKeeping* Arena::CreateMaybeMessage<::IMC_DCCL::Sta
 template<> ::IMC_DCCL::TransitionCondition* Arena::CreateMaybeMessage<::IMC_DCCL::TransitionCondition>(Arena*);
 template<> ::IMC_DCCL::VehicleState* Arena::CreateMaybeMessage<::IMC_DCCL::VehicleState>(Arena*);
 template<> ::IMC_DCCL::VerticalProfile* Arena::CreateMaybeMessage<::IMC_DCCL::VerticalProfile>(Arena*);
+template<> ::IMC_DCCL::Voltage* Arena::CreateMaybeMessage<::IMC_DCCL::Voltage>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace IMC_DCCL {
 
@@ -7925,6 +7937,500 @@ class PlanControlState final :
 };
 // -------------------------------------------------------------------
 
+class Voltage final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.Voltage) */ {
+ public:
+  inline Voltage() : Voltage(nullptr) {}
+  ~Voltage() override;
+  explicit PROTOBUF_CONSTEXPR Voltage(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  Voltage(const Voltage& from);
+  Voltage(Voltage&& from) noexcept
+    : Voltage() {
+    *this = ::std::move(from);
+  }
+
+  inline Voltage& operator=(const Voltage& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Voltage& operator=(Voltage&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const Voltage& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const Voltage* internal_default_instance() {
+    return reinterpret_cast<const Voltage*>(
+               &_Voltage_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    29;
+
+  friend void swap(Voltage& a, Voltage& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Voltage* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Voltage* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  Voltage* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<Voltage>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const Voltage& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const Voltage& from) {
+    Voltage::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Voltage* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.Voltage";
+  }
+  protected:
+  explicit Voltage(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kValueFieldNumber = 1,
+  };
+  // optional float value = 1 [(.dccl.field) = {
+  bool has_value() const;
+  private:
+  bool _internal_has_value() const;
+  public:
+  void clear_value();
+  float value() const;
+  void set_value(float value);
+  private:
+  float _internal_value() const;
+  void _internal_set_value(float value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.Voltage)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    float value_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class Current final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.Current) */ {
+ public:
+  inline Current() : Current(nullptr) {}
+  ~Current() override;
+  explicit PROTOBUF_CONSTEXPR Current(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  Current(const Current& from);
+  Current(Current&& from) noexcept
+    : Current() {
+    *this = ::std::move(from);
+  }
+
+  inline Current& operator=(const Current& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Current& operator=(Current&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const Current& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const Current* internal_default_instance() {
+    return reinterpret_cast<const Current*>(
+               &_Current_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    30;
+
+  friend void swap(Current& a, Current& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Current* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Current* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  Current* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<Current>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const Current& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const Current& from) {
+    Current::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Current* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.Current";
+  }
+  protected:
+  explicit Current(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kValueFieldNumber = 1,
+  };
+  // optional float value = 1 [(.dccl.field) = {
+  bool has_value() const;
+  private:
+  bool _internal_has_value() const;
+  public:
+  void clear_value();
+  float value() const;
+  void set_value(float value);
+  private:
+  float _internal_value() const;
+  void _internal_set_value(float value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.Current)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    float value_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class FuelLevel final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.FuelLevel) */ {
+ public:
+  inline FuelLevel() : FuelLevel(nullptr) {}
+  ~FuelLevel() override;
+  explicit PROTOBUF_CONSTEXPR FuelLevel(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  FuelLevel(const FuelLevel& from);
+  FuelLevel(FuelLevel&& from) noexcept
+    : FuelLevel() {
+    *this = ::std::move(from);
+  }
+
+  inline FuelLevel& operator=(const FuelLevel& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline FuelLevel& operator=(FuelLevel&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const FuelLevel& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const FuelLevel* internal_default_instance() {
+    return reinterpret_cast<const FuelLevel*>(
+               &_FuelLevel_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    31;
+
+  friend void swap(FuelLevel& a, FuelLevel& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(FuelLevel* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(FuelLevel* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  FuelLevel* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<FuelLevel>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const FuelLevel& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const FuelLevel& from) {
+    FuelLevel::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(FuelLevel* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.FuelLevel";
+  }
+  protected:
+  explicit FuelLevel(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kOpmodesFieldNumber = 3,
+    kValueFieldNumber = 1,
+    kConfidenceFieldNumber = 2,
+  };
+  // optional string opmodes = 3 [(.dccl.field) = {
+  bool has_opmodes() const;
+  private:
+  bool _internal_has_opmodes() const;
+  public:
+  void clear_opmodes();
+  const std::string& opmodes() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_opmodes(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_opmodes();
+  PROTOBUF_NODISCARD std::string* release_opmodes();
+  void set_allocated_opmodes(std::string* opmodes);
+  private:
+  const std::string& _internal_opmodes() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_opmodes(const std::string& value);
+  std::string* _internal_mutable_opmodes();
+  public:
+
+  // optional float value = 1 [(.dccl.field) = {
+  bool has_value() const;
+  private:
+  bool _internal_has_value() const;
+  public:
+  void clear_value();
+  float value() const;
+  void set_value(float value);
+  private:
+  float _internal_value() const;
+  void _internal_set_value(float value);
+  public:
+
+  // optional float confidence = 2 [(.dccl.field) = {
+  bool has_confidence() const;
+  private:
+  bool _internal_has_confidence() const;
+  public:
+  void clear_confidence();
+  float confidence() const;
+  void set_confidence(float value);
+  private:
+  float _internal_confidence() const;
+  void _internal_set_confidence(float value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.FuelLevel)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr opmodes_;
+    float value_;
+    float confidence_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class PlanDBArgUnion final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanDBArgUnion) */ {
  public:
@@ -7980,7 +8486,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    32;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -8196,7 +8702,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    33;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -8370,7 +8876,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    34;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -8546,7 +9052,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    35;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -15426,6 +15932,198 @@ inline void PlanControlState::set_last_outcome(::IMC_DCCL::PlanControlState_Last
 
 // -------------------------------------------------------------------
 
+// Voltage
+
+// optional float value = 1 [(.dccl.field) = {
+inline bool Voltage::_internal_has_value() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool Voltage::has_value() const {
+  return _internal_has_value();
+}
+inline void Voltage::clear_value() {
+  _impl_.value_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline float Voltage::_internal_value() const {
+  return _impl_.value_;
+}
+inline float Voltage::value() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Voltage.value)
+  return _internal_value();
+}
+inline void Voltage::_internal_set_value(float value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.value_ = value;
+}
+inline void Voltage::set_value(float value) {
+  _internal_set_value(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Voltage.value)
+}
+
+// -------------------------------------------------------------------
+
+// Current
+
+// optional float value = 1 [(.dccl.field) = {
+inline bool Current::_internal_has_value() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool Current::has_value() const {
+  return _internal_has_value();
+}
+inline void Current::clear_value() {
+  _impl_.value_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline float Current::_internal_value() const {
+  return _impl_.value_;
+}
+inline float Current::value() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Current.value)
+  return _internal_value();
+}
+inline void Current::_internal_set_value(float value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.value_ = value;
+}
+inline void Current::set_value(float value) {
+  _internal_set_value(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Current.value)
+}
+
+// -------------------------------------------------------------------
+
+// FuelLevel
+
+// optional float value = 1 [(.dccl.field) = {
+inline bool FuelLevel::_internal_has_value() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool FuelLevel::has_value() const {
+  return _internal_has_value();
+}
+inline void FuelLevel::clear_value() {
+  _impl_.value_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline float FuelLevel::_internal_value() const {
+  return _impl_.value_;
+}
+inline float FuelLevel::value() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.FuelLevel.value)
+  return _internal_value();
+}
+inline void FuelLevel::_internal_set_value(float value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.value_ = value;
+}
+inline void FuelLevel::set_value(float value) {
+  _internal_set_value(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.FuelLevel.value)
+}
+
+// optional float confidence = 2 [(.dccl.field) = {
+inline bool FuelLevel::_internal_has_confidence() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool FuelLevel::has_confidence() const {
+  return _internal_has_confidence();
+}
+inline void FuelLevel::clear_confidence() {
+  _impl_.confidence_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline float FuelLevel::_internal_confidence() const {
+  return _impl_.confidence_;
+}
+inline float FuelLevel::confidence() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.FuelLevel.confidence)
+  return _internal_confidence();
+}
+inline void FuelLevel::_internal_set_confidence(float value) {
+  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_.confidence_ = value;
+}
+inline void FuelLevel::set_confidence(float value) {
+  _internal_set_confidence(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.FuelLevel.confidence)
+}
+
+// optional string opmodes = 3 [(.dccl.field) = {
+inline bool FuelLevel::_internal_has_opmodes() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool FuelLevel::has_opmodes() const {
+  return _internal_has_opmodes();
+}
+inline void FuelLevel::clear_opmodes() {
+  _impl_.opmodes_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& FuelLevel::opmodes() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.FuelLevel.opmodes)
+  return _internal_opmodes();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void FuelLevel::set_opmodes(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.opmodes_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.FuelLevel.opmodes)
+}
+inline std::string* FuelLevel::mutable_opmodes() {
+  std::string* _s = _internal_mutable_opmodes();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.FuelLevel.opmodes)
+  return _s;
+}
+inline const std::string& FuelLevel::_internal_opmodes() const {
+  return _impl_.opmodes_.Get();
+}
+inline void FuelLevel::_internal_set_opmodes(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.opmodes_.Set(value, GetArenaForAllocation());
+}
+inline std::string* FuelLevel::_internal_mutable_opmodes() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.opmodes_.Mutable(GetArenaForAllocation());
+}
+inline std::string* FuelLevel::release_opmodes() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.FuelLevel.opmodes)
+  if (!_internal_has_opmodes()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.opmodes_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.opmodes_.IsDefault()) {
+    _impl_.opmodes_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void FuelLevel::set_allocated_opmodes(std::string* opmodes) {
+  if (opmodes != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.opmodes_.SetAllocated(opmodes, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.opmodes_.IsDefault()) {
+    _impl_.opmodes_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.FuelLevel.opmodes)
+}
+
+// -------------------------------------------------------------------
+
 // PlanDBArgUnion
 
 // .IMC_DCCL.PlanSpecification ps_arg = 1;
@@ -16071,6 +16769,12 @@ inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUni
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
