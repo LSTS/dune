@@ -561,6 +561,26 @@ message PlanControlState {
     LastPlanOutcomeEnum last_outcome = 8; 
 }
 
+//Voltage
+message Voltage {
+    option (dccl.msg) = { codec_version: 4 id: 251 max_bytes: 800000};
+    optional float value = 1 [(dccl.field) = { min: -100 max: 100 precision: 3 }];
+}
+
+//Current
+message Current {
+    option (dccl.msg) = { codec_version: 4 id: 252 max_bytes: 800000};
+    optional float value = 1 [(dccl.field) = { min: -100 max: 100 precision: 3 }];
+}
+
+//FuelLevel
+message FuelLevel {
+    option (dccl.msg) = { codec_version: 4 id: 279 max_bytes: 80};
+    optional float value = 1 [(dccl.field) = { min: 0 max: 100 precision: 4 }];
+    optional float confidence = 2 [(dccl.field) = { min: 0 max: 100 precision: 1 }];
+    optional string opmodes = 3 [(dccl.field).max_length = 50];
+}
+
 message PlanDBArgUnion {
     option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
     oneof PlanDBArgUnion_{
