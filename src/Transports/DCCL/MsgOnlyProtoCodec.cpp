@@ -163,7 +163,8 @@ void encodeParameterName(const std::string& imc, IMC_DCCL::ParameterName& dccl)
             dccl.set_param_enum(enum_val);
             return;
     }
-    
+    std::cout<<"ENUM_VAL stringaa:"<<std::endl;
+    std::cout<<enum_val<<std::endl;
     dccl.set_param_string(imc);
 }
 
