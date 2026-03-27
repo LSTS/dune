@@ -682,15 +682,23 @@ namespace Control
 
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
-        {
+        { 
+          war("3333333333");
+          inf("Final Lon: %f", finalPos.lon);
+          inf("Final Lat: %f", finalPos.lat);
           double curr_lat = state.lat;
           double curr_lon = state.lon;
           WGS84::displace(state.x, state.y, &curr_lat, &curr_lon);
+          war("2222222222");
+          inf("Final Lon: %f", finalPos.lon);
+          inf("Final Lat: %f", finalPos.lat);
 
-          finalPos = {Angles::degrees(ts.lon_en), Angles::degrees(ts.lat_en)}; 
+          finalPos = {Angles::degrees(ts.lon_en), Angles::degrees(ts.lat_en)}; //CORRIGIR ESTA PORCARIA QUE AUMENTA O VALOR A CADA ITERAÇÃO DA FUNÇÃO STEP() SOMEHOW
 
           war("----------------------------------------");
-          war("Final Position: %f %f", finalPos.lon, finalPos.lat);
+          war("1111111111");
+          inf("Final Lon: %f", finalPos.lon);
+          inf("Final Lat: %f", finalPos.lat);
           if (ts.nearby)
           {
             war("Nearby");
@@ -702,12 +710,13 @@ namespace Control
           
           currPos.lon = Angles::degrees(curr_lon);          //posição atual do veículo em coordenadas geográficas para fazer 
           currPos.lat = Angles::degrees(curr_lat);          //os cálculos com posição do obstáculo definidas em coordendas geográficas
-          
           m_path.start_lat = curr_lat;                      //guardar posição atual como inicial
           m_path.start_lon = curr_lon;                      //guardar posição atual como inicial
 
+
           m_path.end_lon = Angles::degrees(ts.lon_en);                       //guardar o destino original
           m_path.end_lat = Angles::degrees(ts.lat_en);                       //guardar o destino original
+
 
           m_path.speed = ts.speed;
           m_path.end_z = ts.end.z;
@@ -715,29 +724,26 @@ namespace Control
           /*******************************/
           currAvoidState = checkPosition(m_obstacles);
 
+
           if ( currAvoidState != oldAvoidState)
           {
-            m_ts.setEndPoint(m_path);
-
+            
             inf("Mudou de estado");
             
             m_path.end_lon = Angles::normalizeRadian(Angles::radians(m_path.end_lon));
             m_path.end_lat = Angles::normalizeRadian(Angles::radians(m_path.end_lat));
-
+            
             m_ts.nearby = false;
-
-            const_cast<TrackingState&>(ts).nearby = false;
-
+            
             dispatch(m_path, DF_LOOP_BACK);
-
+            
             oldAvoidState = currAvoidState;
           }
-          
+
+          setEndPoint(&m_path);
           /*******************************/
 
           //war("lat %f lon %f", curr_lat, curr_lon);
-          
-
 
           m_heading.value = ts.los_angle;
 

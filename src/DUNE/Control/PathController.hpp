@@ -322,6 +322,8 @@ namespace DUNE
     protected:
       //! Current tracking state
       TrackingState m_ts;
+      void
+      setEndPoint(const IMC::DesiredPath* dpath);
 
     private:
       //! Update entity state
@@ -341,8 +343,6 @@ namespace DUNE
       // Helper functions for consume(const IMC::DesiredPath*)
       bool
       setStartPoint(double now, const IMC::DesiredPath* dpath);
-      void
-      setEndPoint(const IMC::DesiredPath* dpath);
       void
       setControlLoops(const IMC::DesiredPath* dpath);
       void
