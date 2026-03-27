@@ -354,7 +354,7 @@ namespace DUNE
 
       if (m_max_track_length > 0 && m_ts.track_length > m_max_track_length)
       {
-        signalError(DTR("track length is too long"));
+        signalError(DTR("track length is too long") + std::to_string(m_ts.track_length));
         return;
       }
 

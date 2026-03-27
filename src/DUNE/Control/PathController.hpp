@@ -319,6 +319,10 @@ namespace DUNE
       void
       onMain(void);
 
+    protected:
+      //! Current tracking state
+      TrackingState m_ts;
+
     private:
       //! Update entity state
       //! @param[in] msg message text for error description
@@ -499,8 +503,6 @@ namespace DUNE
       double m_new_ref_timeout;
       //! Time of arrival factor
       float m_time_factor;
-      //! Current tracking state
-      TrackingState m_ts;
       //! Path control state message
       IMC::PathControlState m_pcs;
       //! Control loops message
