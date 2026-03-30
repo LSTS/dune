@@ -138,7 +138,6 @@ namespace DUNE
       buffer += DUNE::IMC::deserialize(mgid, buffer, length);
       buffer += DUNE::IMC::deserialize(timestamp, buffer, length);
       msg = DUNE::IMC::Factory::produce(mgid);
-      msg->setTimeStamp(timestamp);
 
       if (msg == NULL)
       {
@@ -146,6 +145,7 @@ namespace DUNE
         return 0;
       }
 
+      msg->setTimeStamp(timestamp);
       buffer += msg->deserializeFields(buffer, length);
 
       return buffer - start;
