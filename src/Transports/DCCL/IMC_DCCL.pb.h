@@ -50,6 +50,9 @@ namespace IMC_DCCL {
 class Current;
 struct CurrentDefaultTypeInternal;
 extern CurrentDefaultTypeInternal _Current_default_instance_;
+class EntityList;
+struct EntityListDefaultTypeInternal;
+extern EntityListDefaultTypeInternal _EntityList_default_instance_;
 class EntityName;
 struct EntityNameDefaultTypeInternal;
 extern EntityNameDefaultTypeInternal _EntityName_default_instance_;
@@ -164,6 +167,7 @@ extern WindSpeedDefaultTypeInternal _WindSpeed_default_instance_;
 }  // namespace IMC_DCCL
 PROTOBUF_NAMESPACE_OPEN
 template<> ::IMC_DCCL::Current* Arena::CreateMaybeMessage<::IMC_DCCL::Current>(Arena*);
+template<> ::IMC_DCCL::EntityList* Arena::CreateMaybeMessage<::IMC_DCCL::EntityList>(Arena*);
 template<> ::IMC_DCCL::EntityName* Arena::CreateMaybeMessage<::IMC_DCCL::EntityName>(Arena*);
 template<> ::IMC_DCCL::EntityParameter* Arena::CreateMaybeMessage<::IMC_DCCL::EntityParameter>(Arena*);
 template<> ::IMC_DCCL::EntityParameters* Arena::CreateMaybeMessage<::IMC_DCCL::EntityParameters>(Arena*);
@@ -204,6 +208,32 @@ template<> ::IMC_DCCL::WindSpeed* Arena::CreateMaybeMessage<::IMC_DCCL::WindSpee
 PROTOBUF_NAMESPACE_CLOSE
 namespace IMC_DCCL {
 
+enum EntityList_operationEnum : int {
+  EntityList_operationEnum_OP_REPORT = 0,
+  EntityList_operationEnum_OP_QUERY = 1,
+  EntityList_operationEnum_OP_RELOAD = 2,
+  EntityList_operationEnum_EntityList_operationEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  EntityList_operationEnum_EntityList_operationEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool EntityList_operationEnum_IsValid(int value);
+constexpr EntityList_operationEnum EntityList_operationEnum_operationEnum_MIN = EntityList_operationEnum_OP_REPORT;
+constexpr EntityList_operationEnum EntityList_operationEnum_operationEnum_MAX = EntityList_operationEnum_OP_RELOAD;
+constexpr int EntityList_operationEnum_operationEnum_ARRAYSIZE = EntityList_operationEnum_operationEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityList_operationEnum_descriptor();
+template<typename T>
+inline const std::string& EntityList_operationEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, EntityList_operationEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function EntityList_operationEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    EntityList_operationEnum_descriptor(), enum_t_value);
+}
+inline bool EntityList_operationEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, EntityList_operationEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<EntityList_operationEnum>(
+    EntityList_operationEnum_descriptor(), name, value);
+}
 enum Loiter_LoiterTypeEnum : int {
   Loiter_LoiterTypeEnum_LT_DEFAULT = 0,
   Loiter_LoiterTypeEnum_LT_CIRCULAR = 1,
@@ -4931,6 +4961,202 @@ class SetEntityParameters final :
 };
 // -------------------------------------------------------------------
 
+class EntityList final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.EntityList) */ {
+ public:
+  inline EntityList() : EntityList(nullptr) {}
+  ~EntityList() override;
+  explicit PROTOBUF_CONSTEXPR EntityList(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  EntityList(const EntityList& from);
+  EntityList(EntityList&& from) noexcept
+    : EntityList() {
+    *this = ::std::move(from);
+  }
+
+  inline EntityList& operator=(const EntityList& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline EntityList& operator=(EntityList&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const EntityList& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const EntityList* internal_default_instance() {
+    return reinterpret_cast<const EntityList*>(
+               &_EntityList_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    12;
+
+  friend void swap(EntityList& a, EntityList& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(EntityList* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(EntityList* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  EntityList* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<EntityList>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const EntityList& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const EntityList& from) {
+    EntityList::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(EntityList* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.EntityList";
+  }
+  protected:
+  explicit EntityList(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  typedef EntityList_operationEnum operationEnum;
+  static constexpr operationEnum OP_REPORT =
+    EntityList_operationEnum_OP_REPORT;
+  static constexpr operationEnum OP_QUERY =
+    EntityList_operationEnum_OP_QUERY;
+  static constexpr operationEnum OP_RELOAD =
+    EntityList_operationEnum_OP_RELOAD;
+  static inline bool operationEnum_IsValid(int value) {
+    return EntityList_operationEnum_IsValid(value);
+  }
+  static constexpr operationEnum operationEnum_MIN =
+    EntityList_operationEnum_operationEnum_MIN;
+  static constexpr operationEnum operationEnum_MAX =
+    EntityList_operationEnum_operationEnum_MAX;
+  static constexpr int operationEnum_ARRAYSIZE =
+    EntityList_operationEnum_operationEnum_ARRAYSIZE;
+  static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
+  operationEnum_descriptor() {
+    return EntityList_operationEnum_descriptor();
+  }
+  template<typename T>
+  static inline const std::string& operationEnum_Name(T enum_t_value) {
+    static_assert(::std::is_same<T, operationEnum>::value ||
+      ::std::is_integral<T>::value,
+      "Incorrect type passed to function operationEnum_Name.");
+    return EntityList_operationEnum_Name(enum_t_value);
+  }
+  static inline bool operationEnum_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
+      operationEnum* value) {
+    return EntityList_operationEnum_Parse(name, value);
+  }
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kListFieldNumber = 2,
+    kOpFieldNumber = 1,
+  };
+  // string list = 2 [(.dccl.field) = {
+  void clear_list();
+  const std::string& list() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_list(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_list();
+  PROTOBUF_NODISCARD std::string* release_list();
+  void set_allocated_list(std::string* list);
+  private:
+  const std::string& _internal_list() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_list(const std::string& value);
+  std::string* _internal_mutable_list();
+  public:
+
+  // .IMC_DCCL.EntityList.operationEnum op = 1;
+  void clear_op();
+  ::IMC_DCCL::EntityList_operationEnum op() const;
+  void set_op(::IMC_DCCL::EntityList_operationEnum value);
+  private:
+  ::IMC_DCCL::EntityList_operationEnum _internal_op() const;
+  void _internal_set_op(::IMC_DCCL::EntityList_operationEnum value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.EntityList)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr list_;
+    int op_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class ManeuverIDCombined final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.ManeuverIDCombined) */ {
  public:
@@ -4979,7 +5205,7 @@ class ManeuverIDCombined final :
                &_ManeuverIDCombined_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   friend void swap(ManeuverIDCombined& a, ManeuverIDCombined& b) {
     a.Swap(&b);
@@ -5144,7 +5370,7 @@ class ManeuverID final :
                &_ManeuverID_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   friend void swap(ManeuverID& a, ManeuverID& b) {
     a.Swap(&b);
@@ -5340,7 +5566,7 @@ class TransitionCondition final :
                &_TransitionCondition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    15;
 
   friend void swap(TransitionCondition& a, TransitionCondition& b) {
     a.Swap(&b);
@@ -5525,7 +5751,7 @@ class Loiter final :
                &_Loiter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    16;
 
   friend void swap(Loiter& a, Loiter& b) {
     a.Swap(&b);
@@ -5917,7 +6143,7 @@ class PlanManeuverStartActionsUnion final :
                &_PlanManeuverStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    17;
 
   friend void swap(PlanManeuverStartActionsUnion& a, PlanManeuverStartActionsUnion& b) {
     a.Swap(&b);
@@ -6086,7 +6312,7 @@ class PlanManeuver final :
                &_PlanManeuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    18;
 
   friend void swap(PlanManeuver& a, PlanManeuver& b) {
     a.Swap(&b);
@@ -6283,7 +6509,7 @@ class PlanTransition final :
                &_PlanTransition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    19;
 
   friend void swap(PlanTransition& a, PlanTransition& b) {
     a.Swap(&b);
@@ -6480,7 +6706,7 @@ class VerticalProfile final :
                &_VerticalProfile_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    20;
 
   friend void swap(VerticalProfile& a, VerticalProfile& b) {
     a.Swap(&b);
@@ -6748,7 +6974,7 @@ class EstimatedState final :
                &_EstimatedState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    21;
 
   friend void swap(EstimatedState& a, EstimatedState& b) {
     a.Swap(&b);
@@ -7186,7 +7412,7 @@ class PlanSpecification final :
                &_PlanSpecification_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    22;
 
   friend void swap(PlanSpecification& a, PlanSpecification& b) {
     a.Swap(&b);
@@ -7484,7 +7710,7 @@ class PlanDB final :
                &_PlanDB_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    23;
 
   friend void swap(PlanDB& a, PlanDB& b) {
     a.Swap(&b);
@@ -7799,7 +8025,7 @@ class PlanDBState final :
                &_PlanDBState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    24;
 
   friend void swap(PlanDBState& a, PlanDBState& b) {
     a.Swap(&b);
@@ -8057,7 +8283,7 @@ class PlanDBInformation final :
                &_PlanDBInformation_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    25;
 
   friend void swap(PlanDBInformation& a, PlanDBInformation& b) {
     a.Swap(&b);
@@ -8300,7 +8526,7 @@ class PlanControl final :
                &_PlanControl_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    26;
 
   friend void swap(PlanControl& a, PlanControl& b) {
     a.Swap(&b);
@@ -8622,7 +8848,7 @@ class PlanStatistics final :
                &_PlanStatistics_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    27;
 
   friend void swap(PlanStatistics& a, PlanStatistics& b) {
     a.Swap(&b);
@@ -8920,7 +9146,7 @@ class VehicleState final :
                &_VehicleState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   friend void swap(VehicleState& a, VehicleState& b) {
     a.Swap(&b);
@@ -9254,7 +9480,7 @@ class EntityState final :
                &_EntityState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    29;
 
   friend void swap(EntityState& a, EntityState& b) {
     a.Swap(&b);
@@ -9476,7 +9702,7 @@ class PlanControlState final :
                &_PlanControlState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    30;
 
   friend void swap(PlanControlState& a, PlanControlState& b) {
     a.Swap(&b);
@@ -9806,7 +10032,7 @@ class Voltage final :
                &_Voltage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    31;
 
   friend void swap(Voltage& a, Voltage& b) {
     a.Swap(&b);
@@ -9959,7 +10185,7 @@ class Current final :
                &_Current_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    32;
 
   friend void swap(Current& a, Current& b) {
     a.Swap(&b);
@@ -10112,7 +10338,7 @@ class FuelLevel final :
                &_FuelLevel_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    33;
 
   friend void swap(FuelLevel& a, FuelLevel& b) {
     a.Swap(&b);
@@ -10300,7 +10526,7 @@ class WindSpeed final :
                &_WindSpeed_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    34;
 
   friend void swap(WindSpeed& a, WindSpeed& b) {
     a.Swap(&b);
@@ -10490,7 +10716,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    34;
+    35;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -10706,7 +10932,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    35;
+    36;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -10880,7 +11106,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    36;
+    37;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -11056,7 +11282,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    37;
+    38;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -13257,6 +13483,80 @@ inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::EntityParame
 SetEntityParameters::params() const {
   // @@protoc_insertion_point(field_list:IMC_DCCL.SetEntityParameters.params)
   return _impl_.params_;
+}
+
+// -------------------------------------------------------------------
+
+// EntityList
+
+// .IMC_DCCL.EntityList.operationEnum op = 1;
+inline void EntityList::clear_op() {
+  _impl_.op_ = 0;
+}
+inline ::IMC_DCCL::EntityList_operationEnum EntityList::_internal_op() const {
+  return static_cast< ::IMC_DCCL::EntityList_operationEnum >(_impl_.op_);
+}
+inline ::IMC_DCCL::EntityList_operationEnum EntityList::op() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.EntityList.op)
+  return _internal_op();
+}
+inline void EntityList::_internal_set_op(::IMC_DCCL::EntityList_operationEnum value) {
+  
+  _impl_.op_ = value;
+}
+inline void EntityList::set_op(::IMC_DCCL::EntityList_operationEnum value) {
+  _internal_set_op(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.EntityList.op)
+}
+
+// string list = 2 [(.dccl.field) = {
+inline void EntityList::clear_list() {
+  _impl_.list_.ClearToEmpty();
+}
+inline const std::string& EntityList::list() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.EntityList.list)
+  return _internal_list();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void EntityList::set_list(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.list_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.EntityList.list)
+}
+inline std::string* EntityList::mutable_list() {
+  std::string* _s = _internal_mutable_list();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.EntityList.list)
+  return _s;
+}
+inline const std::string& EntityList::_internal_list() const {
+  return _impl_.list_.Get();
+}
+inline void EntityList::_internal_set_list(const std::string& value) {
+  
+  _impl_.list_.Set(value, GetArenaForAllocation());
+}
+inline std::string* EntityList::_internal_mutable_list() {
+  
+  return _impl_.list_.Mutable(GetArenaForAllocation());
+}
+inline std::string* EntityList::release_list() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.EntityList.list)
+  return _impl_.list_.Release();
+}
+inline void EntityList::set_allocated_list(std::string* list) {
+  if (list != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.list_.SetAllocated(list, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.list_.IsDefault()) {
+    _impl_.list_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.EntityList.list)
 }
 
 // -------------------------------------------------------------------
@@ -19069,6 +19369,8 @@ inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUni
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -19076,6 +19378,11 @@ inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUni
 
 PROTOBUF_NAMESPACE_OPEN
 
+template <> struct is_proto_enum< ::IMC_DCCL::EntityList_operationEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::EntityList_operationEnum>() {
+  return ::IMC_DCCL::EntityList_operationEnum_descriptor();
+}
 template <> struct is_proto_enum< ::IMC_DCCL::Loiter_LoiterTypeEnum> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::Loiter_LoiterTypeEnum>() {
