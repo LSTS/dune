@@ -1859,7 +1859,7 @@ message EntityParameter {
 
 // EntityParameters
 message EntityParameters {
-    option (dccl.msg) = { codec_version: 4 id: 802 max_bytes: 300};
+    option (dccl.msg) = { codec_version: 4 id: 802 max_bytes: 1000};
     EntityName name = 1;
     repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 10 }];
 }
@@ -1871,16 +1871,27 @@ message SetEntityParameters {
     repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 10 }];
 }
 
+message ItemList {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 60};
+    EntityName name = 1;
+    int32 number = 2 [(dccl.field) = { min: 0 max: 100}];
+}
+
+message ListCombined {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 6200};
+    repeated ItemList item = 1 [(dccl.field) = { max_repeat: 100}];
+}
+
 // EntityList
 message EntityList {
-    option (dccl.msg) = { codec_version: 4 id: 5 max_bytes: 300};
+    option (dccl.msg) = { codec_version: 4 id: 5 max_bytes: 8000};
     enum operationEnum {
         OP_REPORT = 0;
         OP_QUERY = 1;
         OP_RELOAD = 2;
     }
     operationEnum op = 1;
-    string list = 2 [(dccl.field).max_length = 80];
+    ListCombined list = 2;
 }
 
 // ManeuverIDCombined (composed by maneuver_type and maneuver_number (max number in the maneuver name = 50))

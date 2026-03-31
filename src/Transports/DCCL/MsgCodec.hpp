@@ -110,4 +110,13 @@ void encodePlanManeuver(const DUNE::IMC::PlanManeuver& imc, IMC_DCCL::PlanManeuv
 
 void decodePlanManeuver(const IMC_DCCL::PlanManeuver& dccl, DUNE::IMC::PlanManeuver& imc);
 
+void encodeEntityList(const DUNE::IMC::EntityList& imc, IMC_DCCL::EntityList& dccl);
+void encodeListCombined(const std::string& imc, IMC_DCCL::ListCombined& dccl);
+void encodeItemList(const std::string& imc, IMC_DCCL::ItemList& dccl);
+void decodeItemList(const IMC_DCCL::ItemList& dccl, std::string& imc);
+void decodeListCombined(const IMC_DCCL::ListCombined& dccl, std::string& imc);
+void decodeEntityList(const IMC_DCCL::EntityList& dccl, DUNE::IMC::EntityList& imc);
+
+
+
 #endif // MSGCODEC_HPP
