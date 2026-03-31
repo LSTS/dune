@@ -3,6 +3,25 @@
 #include "EnumCodec.hpp"
 #include <DUNE/DUNE.hpp>
 
+// ================ EntityList.operationEnum Message ================
+IMC_DCCL::EntityList::operationEnum encodeEntityListoperationEnum(const uint16_t& imc_src)
+{
+    switch (imc_src) {
+        case DUNE::IMC::EntityList::operationEnum::OP_REPORT: return IMC_DCCL::EntityList::OP_REPORT;
+        case DUNE::IMC::EntityList::operationEnum::OP_QUERY: return IMC_DCCL::EntityList::OP_QUERY;
+        case DUNE::IMC::EntityList::operationEnum::OP_RELOAD: return IMC_DCCL::EntityList::OP_RELOAD;
+    }
+}
+
+// ================ EntityList.operationEnum Message ================
+DUNE::IMC::EntityList::operationEnum decodeEntityListoperationEnum(const uint16_t& dccl_src)
+{
+    switch (dccl_src) {
+        case IMC_DCCL::EntityList::OP_REPORT: return DUNE::IMC::EntityList::operationEnum::OP_REPORT;
+        case IMC_DCCL::EntityList::OP_QUERY: return DUNE::IMC::EntityList::operationEnum::OP_QUERY;
+        case IMC_DCCL::EntityList::OP_RELOAD: return DUNE::IMC::EntityList::operationEnum::OP_RELOAD;
+    }
+}
 // ================ EntityState.StateEnum Message ================
 IMC_DCCL::EntityState::StateEnum encodeEntityStateStateEnum(const uint16_t& imc_src)
 {

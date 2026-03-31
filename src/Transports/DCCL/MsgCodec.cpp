@@ -4,6 +4,74 @@
 #include <DUNE/DUNE.hpp>
 #include "Helper.hpp"
 
+void encodeItemList(const std::string& imc, IMC_DCCL::ItemList& dccl)
+{
+    if (auto pos = imc.find('='); pos != std::string::npos)
+    {
+        std::string name_ = imc.substr(0, pos);
+        int number_ = std::stoi(imc.substr(pos + 1));
+
+        IMC_DCCL::EntityName* name = new IMC_DCCL::EntityName();
+        encodeEntityName(name_, *name);
+        dccl.set_allocated_name(name);	
+
+        if(!Helper::is_default_value(number_)) dccl.set_number(number_);
+        
+    }
+    
+}
+
+void decodeItemList(const IMC_DCCL::ItemList& dccl, std::string& imc)
+{
+    std::string name_;
+    decodeEntityName(dccl.name(), name_);
+
+    int number_ = dccl.number();
+
+    imc = name_ + "=" + std::to_string(number_);
+}
+
+// ================ ListCombined Message ================
+void encodeListCombined(const std::string& imc, IMC_DCCL::ListCombined& dccl)
+{
+    std::stringstream ss(imc);
+    for (std::string item; std::getline(ss, item, ';'); )
+    {
+        auto* elem_dccl = dccl.add_item();
+        encodeItemList(item, *elem_dccl);
+    }
+            
+}
+
+// ================ ListCombined Message ================
+void decodeListCombined(const IMC_DCCL::ListCombined& dccl, std::string& imc)
+{
+    for (unsigned int i=0; i < dccl.item_size(); i++) {	
+        std::string temp;
+        decodeItemList(dccl.item(i), temp);		
+    	imc += temp + ";";
+    }
+}
+
+// ================ EntityList Message ================
+void encodeEntityList(const DUNE::IMC::EntityList& imc, IMC_DCCL::EntityList& dccl)
+{
+    dccl.set_op(encodeEntityListoperationEnum(imc.op));
+
+    IMC_DCCL::ListCombined* list = new IMC_DCCL::ListCombined();
+    encodeListCombined(imc.list, *list);
+    dccl.set_allocated_list(list);	
+
+}
+
+// ================ EntityList Message ================
+void decodeEntityList(const IMC_DCCL::EntityList& dccl, DUNE::IMC::EntityList& imc)
+{
+    imc.op = decodeEntityListoperationEnum(dccl.op());
+
+    decodeListCombined(dccl.list(), imc.list);
+}
+
 // ================ PlanControl Message ================
 void encodePlanControl(const DUNE::IMC::PlanControl& imc, IMC_DCCL::PlanControl& dccl)
 {

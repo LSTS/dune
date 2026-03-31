@@ -4,6 +4,10 @@
 #include "IMC_DCCL.pb.h"
 #include <DUNE/DUNE.hpp>
 
+IMC_DCCL::EntityList::operationEnum encodeEntityListoperationEnum(const uint16_t& imc_src);
+
+DUNE::IMC::EntityList::operationEnum decodeEntityListoperationEnum(const uint16_t& dccl_src);
+
 IMC_DCCL::EntityState::StateEnum encodeEntityStateStateEnum(const uint16_t& imc_src);
 
 DUNE::IMC::EntityState::StateEnum decodeEntityStateStateEnum(const uint16_t& dccl_src);

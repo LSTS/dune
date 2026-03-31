@@ -85,13 +85,13 @@ namespace Transports
         
         bind<IMC::UamRxFrame>(this);
 
-        bind<IMC::PlanSpecification>(this);
-        bind<IMC::VerticalProfile>(this);
-        bind<IMC::Current>(this);
-        bind<IMC::FuelLevel>(this);
-        bind<IMC::Voltage>(this);
-        bind<IMC::WindSpeed>(this);
-        bind<IMC::EntityParameters>(this);
+        //bind<IMC::PlanSpecification>(this);
+        //bind<IMC::VerticalProfile>(this);
+        //bind<IMC::Current>(this);
+        //bind<IMC::FuelLevel>(this);
+        //bind<IMC::Voltage>(this);
+        //bind<IMC::WindSpeed>(this);
+        //bind<IMC::EntityParameters>(this);
         bind<IMC::EntityList>(this);
         //bind<IMC::PlanControlState>(this);
         //bind<IMC::PlanControl>(this);
@@ -288,14 +288,14 @@ namespace Transports
           msg->toJSON(std::cout);
           
           ////////////////////////////////////////////////////////////// DCCL LIB
-          //std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          std::string encoded_string = m_codecdcll.encodeDCCL(msg);
           ////////////////////////////////////////////////////////////// DCCL LIB
 
           war("[ENCODING] EntityList with size %u received.", msg->getPayloadSerializationSize());
-          //war("[ENCODING] Compressed with size %u received.", encoded_string.size());
+          war("[ENCODING] Compressed with size %u received.", encoded_string.size());
           //std::cout << "Send via Acoustic"<< std::endl;
 
-          //sendTransmissionRequestViaAcoustic("", encoded_string);
+          sendTransmissionRequestViaAcoustic("", encoded_string);
           
           
       }

@@ -77,6 +77,12 @@ extern FuelLevelDefaultTypeInternal _FuelLevel_default_instance_;
 class Goto;
 struct GotoDefaultTypeInternal;
 extern GotoDefaultTypeInternal _Goto_default_instance_;
+class ItemList;
+struct ItemListDefaultTypeInternal;
+extern ItemListDefaultTypeInternal _ItemList_default_instance_;
+class ListCombined;
+struct ListCombinedDefaultTypeInternal;
+extern ListCombinedDefaultTypeInternal _ListCombined_default_instance_;
 class Loiter;
 struct LoiterDefaultTypeInternal;
 extern LoiterDefaultTypeInternal _Loiter_default_instance_;
@@ -176,6 +182,8 @@ template<> ::IMC_DCCL::EstimatedState* Arena::CreateMaybeMessage<::IMC_DCCL::Est
 template<> ::IMC_DCCL::FollowPath* Arena::CreateMaybeMessage<::IMC_DCCL::FollowPath>(Arena*);
 template<> ::IMC_DCCL::FuelLevel* Arena::CreateMaybeMessage<::IMC_DCCL::FuelLevel>(Arena*);
 template<> ::IMC_DCCL::Goto* Arena::CreateMaybeMessage<::IMC_DCCL::Goto>(Arena*);
+template<> ::IMC_DCCL::ItemList* Arena::CreateMaybeMessage<::IMC_DCCL::ItemList>(Arena*);
+template<> ::IMC_DCCL::ListCombined* Arena::CreateMaybeMessage<::IMC_DCCL::ListCombined>(Arena*);
 template<> ::IMC_DCCL::Loiter* Arena::CreateMaybeMessage<::IMC_DCCL::Loiter>(Arena*);
 template<> ::IMC_DCCL::Maneuver* Arena::CreateMaybeMessage<::IMC_DCCL::Maneuver>(Arena*);
 template<> ::IMC_DCCL::ManeuverID* Arena::CreateMaybeMessage<::IMC_DCCL::ManeuverID>(Arena*);
@@ -4961,6 +4969,331 @@ class SetEntityParameters final :
 };
 // -------------------------------------------------------------------
 
+class ItemList final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.ItemList) */ {
+ public:
+  inline ItemList() : ItemList(nullptr) {}
+  ~ItemList() override;
+  explicit PROTOBUF_CONSTEXPR ItemList(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  ItemList(const ItemList& from);
+  ItemList(ItemList&& from) noexcept
+    : ItemList() {
+    *this = ::std::move(from);
+  }
+
+  inline ItemList& operator=(const ItemList& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline ItemList& operator=(ItemList&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const ItemList& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const ItemList* internal_default_instance() {
+    return reinterpret_cast<const ItemList*>(
+               &_ItemList_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    12;
+
+  friend void swap(ItemList& a, ItemList& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(ItemList* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(ItemList* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  ItemList* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<ItemList>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const ItemList& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const ItemList& from) {
+    ItemList::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ItemList* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.ItemList";
+  }
+  protected:
+  explicit ItemList(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kNameFieldNumber = 1,
+    kNumberFieldNumber = 2,
+  };
+  // .IMC_DCCL.EntityName name = 1;
+  bool has_name() const;
+  private:
+  bool _internal_has_name() const;
+  public:
+  void clear_name();
+  const ::IMC_DCCL::EntityName& name() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::EntityName* release_name();
+  ::IMC_DCCL::EntityName* mutable_name();
+  void set_allocated_name(::IMC_DCCL::EntityName* name);
+  private:
+  const ::IMC_DCCL::EntityName& _internal_name() const;
+  ::IMC_DCCL::EntityName* _internal_mutable_name();
+  public:
+  void unsafe_arena_set_allocated_name(
+      ::IMC_DCCL::EntityName* name);
+  ::IMC_DCCL::EntityName* unsafe_arena_release_name();
+
+  // int32 number = 2 [(.dccl.field) = {
+  void clear_number();
+  int32_t number() const;
+  void set_number(int32_t value);
+  private:
+  int32_t _internal_number() const;
+  void _internal_set_number(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.ItemList)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::IMC_DCCL::EntityName* name_;
+    int32_t number_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class ListCombined final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.ListCombined) */ {
+ public:
+  inline ListCombined() : ListCombined(nullptr) {}
+  ~ListCombined() override;
+  explicit PROTOBUF_CONSTEXPR ListCombined(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  ListCombined(const ListCombined& from);
+  ListCombined(ListCombined&& from) noexcept
+    : ListCombined() {
+    *this = ::std::move(from);
+  }
+
+  inline ListCombined& operator=(const ListCombined& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline ListCombined& operator=(ListCombined&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const ListCombined& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const ListCombined* internal_default_instance() {
+    return reinterpret_cast<const ListCombined*>(
+               &_ListCombined_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    13;
+
+  friend void swap(ListCombined& a, ListCombined& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(ListCombined* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(ListCombined* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  ListCombined* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<ListCombined>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const ListCombined& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const ListCombined& from) {
+    ListCombined::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ListCombined* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.ListCombined";
+  }
+  protected:
+  explicit ListCombined(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kItemFieldNumber = 1,
+  };
+  // repeated .IMC_DCCL.ItemList item = 1 [(.dccl.field) = {
+  int item_size() const;
+  private:
+  int _internal_item_size() const;
+  public:
+  void clear_item();
+  ::IMC_DCCL::ItemList* mutable_item(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::ItemList >*
+      mutable_item();
+  private:
+  const ::IMC_DCCL::ItemList& _internal_item(int index) const;
+  ::IMC_DCCL::ItemList* _internal_add_item();
+  public:
+  const ::IMC_DCCL::ItemList& item(int index) const;
+  ::IMC_DCCL::ItemList* add_item();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::ItemList >&
+      item() const;
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.ListCombined)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::ItemList > item_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class EntityList final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.EntityList) */ {
  public:
@@ -5009,7 +5342,7 @@ class EntityList final :
                &_EntityList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    14;
 
   friend void swap(EntityList& a, EntityList& b) {
     a.Swap(&b);
@@ -5117,19 +5450,23 @@ class EntityList final :
     kListFieldNumber = 2,
     kOpFieldNumber = 1,
   };
-  // string list = 2 [(.dccl.field) = {
-  void clear_list();
-  const std::string& list() const;
-  template <typename ArgT0 = const std::string&, typename... ArgT>
-  void set_list(ArgT0&& arg0, ArgT... args);
-  std::string* mutable_list();
-  PROTOBUF_NODISCARD std::string* release_list();
-  void set_allocated_list(std::string* list);
+  // .IMC_DCCL.ListCombined list = 2;
+  bool has_list() const;
   private:
-  const std::string& _internal_list() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_list(const std::string& value);
-  std::string* _internal_mutable_list();
+  bool _internal_has_list() const;
   public:
+  void clear_list();
+  const ::IMC_DCCL::ListCombined& list() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::ListCombined* release_list();
+  ::IMC_DCCL::ListCombined* mutable_list();
+  void set_allocated_list(::IMC_DCCL::ListCombined* list);
+  private:
+  const ::IMC_DCCL::ListCombined& _internal_list() const;
+  ::IMC_DCCL::ListCombined* _internal_mutable_list();
+  public:
+  void unsafe_arena_set_allocated_list(
+      ::IMC_DCCL::ListCombined* list);
+  ::IMC_DCCL::ListCombined* unsafe_arena_release_list();
 
   // .IMC_DCCL.EntityList.operationEnum op = 1;
   void clear_op();
@@ -5148,7 +5485,7 @@ class EntityList final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr list_;
+    ::IMC_DCCL::ListCombined* list_;
     int op_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -5205,7 +5542,7 @@ class ManeuverIDCombined final :
                &_ManeuverIDCombined_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    15;
 
   friend void swap(ManeuverIDCombined& a, ManeuverIDCombined& b) {
     a.Swap(&b);
@@ -5370,7 +5707,7 @@ class ManeuverID final :
                &_ManeuverID_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    16;
 
   friend void swap(ManeuverID& a, ManeuverID& b) {
     a.Swap(&b);
@@ -5566,7 +5903,7 @@ class TransitionCondition final :
                &_TransitionCondition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    17;
 
   friend void swap(TransitionCondition& a, TransitionCondition& b) {
     a.Swap(&b);
@@ -5751,7 +6088,7 @@ class Loiter final :
                &_Loiter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    18;
 
   friend void swap(Loiter& a, Loiter& b) {
     a.Swap(&b);
@@ -6143,7 +6480,7 @@ class PlanManeuverStartActionsUnion final :
                &_PlanManeuverStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    19;
 
   friend void swap(PlanManeuverStartActionsUnion& a, PlanManeuverStartActionsUnion& b) {
     a.Swap(&b);
@@ -6312,7 +6649,7 @@ class PlanManeuver final :
                &_PlanManeuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    20;
 
   friend void swap(PlanManeuver& a, PlanManeuver& b) {
     a.Swap(&b);
@@ -6509,7 +6846,7 @@ class PlanTransition final :
                &_PlanTransition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    21;
 
   friend void swap(PlanTransition& a, PlanTransition& b) {
     a.Swap(&b);
@@ -6706,7 +7043,7 @@ class VerticalProfile final :
                &_VerticalProfile_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    22;
 
   friend void swap(VerticalProfile& a, VerticalProfile& b) {
     a.Swap(&b);
@@ -6974,7 +7311,7 @@ class EstimatedState final :
                &_EstimatedState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    23;
 
   friend void swap(EstimatedState& a, EstimatedState& b) {
     a.Swap(&b);
@@ -7412,7 +7749,7 @@ class PlanSpecification final :
                &_PlanSpecification_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    24;
 
   friend void swap(PlanSpecification& a, PlanSpecification& b) {
     a.Swap(&b);
@@ -7710,7 +8047,7 @@ class PlanDB final :
                &_PlanDB_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    25;
 
   friend void swap(PlanDB& a, PlanDB& b) {
     a.Swap(&b);
@@ -8025,7 +8362,7 @@ class PlanDBState final :
                &_PlanDBState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    26;
 
   friend void swap(PlanDBState& a, PlanDBState& b) {
     a.Swap(&b);
@@ -8283,7 +8620,7 @@ class PlanDBInformation final :
                &_PlanDBInformation_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    27;
 
   friend void swap(PlanDBInformation& a, PlanDBInformation& b) {
     a.Swap(&b);
@@ -8526,7 +8863,7 @@ class PlanControl final :
                &_PlanControl_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    28;
 
   friend void swap(PlanControl& a, PlanControl& b) {
     a.Swap(&b);
@@ -8848,7 +9185,7 @@ class PlanStatistics final :
                &_PlanStatistics_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    29;
 
   friend void swap(PlanStatistics& a, PlanStatistics& b) {
     a.Swap(&b);
@@ -9146,7 +9483,7 @@ class VehicleState final :
                &_VehicleState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    30;
 
   friend void swap(VehicleState& a, VehicleState& b) {
     a.Swap(&b);
@@ -9480,7 +9817,7 @@ class EntityState final :
                &_EntityState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    31;
 
   friend void swap(EntityState& a, EntityState& b) {
     a.Swap(&b);
@@ -9702,7 +10039,7 @@ class PlanControlState final :
                &_PlanControlState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    32;
 
   friend void swap(PlanControlState& a, PlanControlState& b) {
     a.Swap(&b);
@@ -10032,7 +10369,7 @@ class Voltage final :
                &_Voltage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    33;
 
   friend void swap(Voltage& a, Voltage& b) {
     a.Swap(&b);
@@ -10185,7 +10522,7 @@ class Current final :
                &_Current_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    34;
 
   friend void swap(Current& a, Current& b) {
     a.Swap(&b);
@@ -10338,7 +10675,7 @@ class FuelLevel final :
                &_FuelLevel_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    35;
 
   friend void swap(FuelLevel& a, FuelLevel& b) {
     a.Swap(&b);
@@ -10526,7 +10863,7 @@ class WindSpeed final :
                &_WindSpeed_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    34;
+    36;
 
   friend void swap(WindSpeed& a, WindSpeed& b) {
     a.Swap(&b);
@@ -10716,7 +11053,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    35;
+    37;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -10932,7 +11269,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    36;
+    38;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -11106,7 +11443,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    37;
+    39;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -11282,7 +11619,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    38;
+    40;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -13487,6 +13824,164 @@ SetEntityParameters::params() const {
 
 // -------------------------------------------------------------------
 
+// ItemList
+
+// .IMC_DCCL.EntityName name = 1;
+inline bool ItemList::_internal_has_name() const {
+  return this != internal_default_instance() && _impl_.name_ != nullptr;
+}
+inline bool ItemList::has_name() const {
+  return _internal_has_name();
+}
+inline void ItemList::clear_name() {
+  if (GetArenaForAllocation() == nullptr && _impl_.name_ != nullptr) {
+    delete _impl_.name_;
+  }
+  _impl_.name_ = nullptr;
+}
+inline const ::IMC_DCCL::EntityName& ItemList::_internal_name() const {
+  const ::IMC_DCCL::EntityName* p = _impl_.name_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::EntityName&>(
+      ::IMC_DCCL::_EntityName_default_instance_);
+}
+inline const ::IMC_DCCL::EntityName& ItemList::name() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.ItemList.name)
+  return _internal_name();
+}
+inline void ItemList::unsafe_arena_set_allocated_name(
+    ::IMC_DCCL::EntityName* name) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.name_);
+  }
+  _impl_.name_ = name;
+  if (name) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.ItemList.name)
+}
+inline ::IMC_DCCL::EntityName* ItemList::release_name() {
+  
+  ::IMC_DCCL::EntityName* temp = _impl_.name_;
+  _impl_.name_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::EntityName* ItemList::unsafe_arena_release_name() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.ItemList.name)
+  
+  ::IMC_DCCL::EntityName* temp = _impl_.name_;
+  _impl_.name_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::EntityName* ItemList::_internal_mutable_name() {
+  
+  if (_impl_.name_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::EntityName>(GetArenaForAllocation());
+    _impl_.name_ = p;
+  }
+  return _impl_.name_;
+}
+inline ::IMC_DCCL::EntityName* ItemList::mutable_name() {
+  ::IMC_DCCL::EntityName* _msg = _internal_mutable_name();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.ItemList.name)
+  return _msg;
+}
+inline void ItemList::set_allocated_name(::IMC_DCCL::EntityName* name) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.name_;
+  }
+  if (name) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(name);
+    if (message_arena != submessage_arena) {
+      name = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, name, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.name_ = name;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.ItemList.name)
+}
+
+// int32 number = 2 [(.dccl.field) = {
+inline void ItemList::clear_number() {
+  _impl_.number_ = 0;
+}
+inline int32_t ItemList::_internal_number() const {
+  return _impl_.number_;
+}
+inline int32_t ItemList::number() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.ItemList.number)
+  return _internal_number();
+}
+inline void ItemList::_internal_set_number(int32_t value) {
+  
+  _impl_.number_ = value;
+}
+inline void ItemList::set_number(int32_t value) {
+  _internal_set_number(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.ItemList.number)
+}
+
+// -------------------------------------------------------------------
+
+// ListCombined
+
+// repeated .IMC_DCCL.ItemList item = 1 [(.dccl.field) = {
+inline int ListCombined::_internal_item_size() const {
+  return _impl_.item_.size();
+}
+inline int ListCombined::item_size() const {
+  return _internal_item_size();
+}
+inline void ListCombined::clear_item() {
+  _impl_.item_.Clear();
+}
+inline ::IMC_DCCL::ItemList* ListCombined::mutable_item(int index) {
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.ListCombined.item)
+  return _impl_.item_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::ItemList >*
+ListCombined::mutable_item() {
+  // @@protoc_insertion_point(field_mutable_list:IMC_DCCL.ListCombined.item)
+  return &_impl_.item_;
+}
+inline const ::IMC_DCCL::ItemList& ListCombined::_internal_item(int index) const {
+  return _impl_.item_.Get(index);
+}
+inline const ::IMC_DCCL::ItemList& ListCombined::item(int index) const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.ListCombined.item)
+  return _internal_item(index);
+}
+inline ::IMC_DCCL::ItemList* ListCombined::_internal_add_item() {
+  return _impl_.item_.Add();
+}
+inline ::IMC_DCCL::ItemList* ListCombined::add_item() {
+  ::IMC_DCCL::ItemList* _add = _internal_add_item();
+  // @@protoc_insertion_point(field_add:IMC_DCCL.ListCombined.item)
+  return _add;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::ItemList >&
+ListCombined::item() const {
+  // @@protoc_insertion_point(field_list:IMC_DCCL.ListCombined.item)
+  return _impl_.item_;
+}
+
+// -------------------------------------------------------------------
+
 // EntityList
 
 // .IMC_DCCL.EntityList.operationEnum op = 1;
@@ -13509,53 +14004,93 @@ inline void EntityList::set_op(::IMC_DCCL::EntityList_operationEnum value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EntityList.op)
 }
 
-// string list = 2 [(.dccl.field) = {
-inline void EntityList::clear_list() {
-  _impl_.list_.ClearToEmpty();
+// .IMC_DCCL.ListCombined list = 2;
+inline bool EntityList::_internal_has_list() const {
+  return this != internal_default_instance() && _impl_.list_ != nullptr;
 }
-inline const std::string& EntityList::list() const {
+inline bool EntityList::has_list() const {
+  return _internal_has_list();
+}
+inline void EntityList::clear_list() {
+  if (GetArenaForAllocation() == nullptr && _impl_.list_ != nullptr) {
+    delete _impl_.list_;
+  }
+  _impl_.list_ = nullptr;
+}
+inline const ::IMC_DCCL::ListCombined& EntityList::_internal_list() const {
+  const ::IMC_DCCL::ListCombined* p = _impl_.list_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::ListCombined&>(
+      ::IMC_DCCL::_ListCombined_default_instance_);
+}
+inline const ::IMC_DCCL::ListCombined& EntityList::list() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.EntityList.list)
   return _internal_list();
 }
-template <typename ArgT0, typename... ArgT>
-inline PROTOBUF_ALWAYS_INLINE
-void EntityList::set_list(ArgT0&& arg0, ArgT... args) {
- 
- _impl_.list_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
-  // @@protoc_insertion_point(field_set:IMC_DCCL.EntityList.list)
-}
-inline std::string* EntityList::mutable_list() {
-  std::string* _s = _internal_mutable_list();
-  // @@protoc_insertion_point(field_mutable:IMC_DCCL.EntityList.list)
-  return _s;
-}
-inline const std::string& EntityList::_internal_list() const {
-  return _impl_.list_.Get();
-}
-inline void EntityList::_internal_set_list(const std::string& value) {
-  
-  _impl_.list_.Set(value, GetArenaForAllocation());
-}
-inline std::string* EntityList::_internal_mutable_list() {
-  
-  return _impl_.list_.Mutable(GetArenaForAllocation());
-}
-inline std::string* EntityList::release_list() {
-  // @@protoc_insertion_point(field_release:IMC_DCCL.EntityList.list)
-  return _impl_.list_.Release();
-}
-inline void EntityList::set_allocated_list(std::string* list) {
-  if (list != nullptr) {
+inline void EntityList::unsafe_arena_set_allocated_list(
+    ::IMC_DCCL::ListCombined* list) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.list_);
+  }
+  _impl_.list_ = list;
+  if (list) {
     
   } else {
     
   }
-  _impl_.list_.SetAllocated(list, GetArenaForAllocation());
-#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  if (_impl_.list_.IsDefault()) {
-    _impl_.list_.Set("", GetArenaForAllocation());
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.EntityList.list)
+}
+inline ::IMC_DCCL::ListCombined* EntityList::release_list() {
+  
+  ::IMC_DCCL::ListCombined* temp = _impl_.list_;
+  _impl_.list_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
   }
-#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::ListCombined* EntityList::unsafe_arena_release_list() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.EntityList.list)
+  
+  ::IMC_DCCL::ListCombined* temp = _impl_.list_;
+  _impl_.list_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::ListCombined* EntityList::_internal_mutable_list() {
+  
+  if (_impl_.list_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::ListCombined>(GetArenaForAllocation());
+    _impl_.list_ = p;
+  }
+  return _impl_.list_;
+}
+inline ::IMC_DCCL::ListCombined* EntityList::mutable_list() {
+  ::IMC_DCCL::ListCombined* _msg = _internal_mutable_list();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.EntityList.list)
+  return _msg;
+}
+inline void EntityList::set_allocated_list(::IMC_DCCL::ListCombined* list) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.list_;
+  }
+  if (list) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(list);
+    if (message_arena != submessage_arena) {
+      list = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, list, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.list_ = list;
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.EntityList.list)
 }
 
@@ -19295,6 +19830,10 @@ inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUni
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
