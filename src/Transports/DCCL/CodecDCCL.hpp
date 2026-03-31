@@ -235,7 +235,7 @@ namespace IMCDCCL
                 }
 
                 default:
-                    throw std::runtime_error("DCCL:CodecDCCL: Decoding not available for this Msg");
+                    throw std::runtime_error("DCCL:CodecDCCL: Decoding not available for this Msg"); //nullptr check
             }
         }
 
