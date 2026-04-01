@@ -29,6 +29,66 @@ void decodeEntityName(const IMC_DCCL::EntityName& dccl, std::string& imc)
 }
 
 
+// ================ ItemList Message ================
+void encodeItemList(const std::string& imc, IMC_DCCL::ItemList& dccl)
+{
+    
+    if (auto pos = imc.find('='); pos != std::string::npos)
+    {
+        std::string name_ = imc.substr(0, pos);
+        int number_ = std::stoi(imc.substr(pos + 1));
+    
+        IMC_DCCL::EntityName* name = new IMC_DCCL::EntityName();
+        encodeEntityName(name_, *name);
+        dccl.set_allocated_name(name);
+    
+        if(!Helper::is_default_value(number_)) dccl.set_number(number_);
+    
+    }
+                              
+}
+
+
+// ================ ItemList Message ================
+void decodeItemList(const IMC_DCCL::ItemList& dccl, std::string& imc)
+{
+    
+    std::string name_;
+    decodeEntityName(dccl.name(), name_);
+    
+    int number_ = dccl.number();
+    
+    imc = name_ + '=' + std::to_string(number_);
+}
+
+
+// ================ ListCombined Message ================
+void encodeListCombined(const std::string& imc, IMC_DCCL::ListCombined& dccl)
+{
+    
+    std::stringstream ss(imc);
+    for (std::string item; std::getline(ss, item, ';'); )
+    {
+        auto* elem_dccl = dccl.add_item();
+        encodeItemList(item, *elem_dccl);
+    }
+                                                     
+                              
+}
+
+
+// ================ ListCombined Message ================
+void decodeListCombined(const IMC_DCCL::ListCombined& dccl, std::string& imc)
+{
+    
+    for (unsigned int i=0; i < dccl.item_size(); i++) {
+        std::string temp;
+        decodeItemList(dccl.item(i), temp);	
+        imc += temp + ';';
+    }
+}
+
+
 // ================ Maneuver Message ================
 void encodeManeuver(const DUNE::IMC::Maneuver& imc, IMC_DCCL::Maneuver& dccl)
 {
@@ -163,8 +223,7 @@ void encodeParameterName(const std::string& imc, IMC_DCCL::ParameterName& dccl)
             dccl.set_param_enum(enum_val);
             return;
     }
-    std::cout<<"ENUM_VAL stringaa:"<<std::endl;
-    std::cout<<enum_val<<std::endl;
+    
     dccl.set_param_string(imc);
 }
 

@@ -85,7 +85,7 @@ namespace Transports
         
         bind<IMC::UamRxFrame>(this);
 
-        //bind<IMC::PlanSpecification>(this);
+        bind<IMC::PlanSpecification>(this);
         //bind<IMC::VerticalProfile>(this);
         //bind<IMC::Current>(this);
         //bind<IMC::FuelLevel>(this);
