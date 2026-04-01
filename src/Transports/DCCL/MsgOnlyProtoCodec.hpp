@@ -10,6 +10,14 @@ void encodeEntityName(const std::string& imc, IMC_DCCL::EntityName& dccl);
 
 void decodeEntityName(const IMC_DCCL::EntityName& dccl, std::string& imc);
 
+void encodeItemList(const std::string& imc, IMC_DCCL::ItemList& dccl);
+
+void decodeItemList(const IMC_DCCL::ItemList& dccl, std::string& imc);
+
+void encodeListCombined(const std::string& imc, IMC_DCCL::ListCombined& dccl);
+
+void decodeListCombined(const IMC_DCCL::ListCombined& dccl, std::string& imc);
+
 void encodeManeuver(const DUNE::IMC::Maneuver& imc, IMC_DCCL::Maneuver& dccl);
 
 DUNE::IMC::Maneuver* decodeManeuver(const IMC_DCCL::Maneuver& dccl)	;
