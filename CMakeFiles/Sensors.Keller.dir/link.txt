@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.Keller.a  CMakeFiles/Sensors.Keller.dir/src/Sensors/Keller/Task.cpp.o
+/usr/bin/ranlib libSensors.Keller.a

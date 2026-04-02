@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/distance_travelled.dir/programs/distance_travelled.cpp.o  -o distance_travelled libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

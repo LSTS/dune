@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSupervisors.UAV.LostComms.a  CMakeFiles/Supervisors.UAV.LostComms.dir/src/Supervisors/UAV/LostComms/Task.cpp.o
+/usr/bin/ranlib libSupervisors.UAV.LostComms.a
