@@ -77,9 +77,6 @@ namespace Sensors
         .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
                      "or \"uart://DEVICE:BAUD\"");
 
-        param(DTR_RT("Power On Delay"), m_args.pwr_on_delay)
-        .defaultValue("0.0");
-
         param("Input Timeout", m_args.input_timeout)
         .defaultValue("4.0")
         .minimumValue("1.0")
@@ -98,8 +95,6 @@ namespace Sensors
       bool
       onConnect() override
       {
-        Delay::wait(m_args.pwr_on_delay);
-
         try
         {        
           m_handle = openSocketTCP(m_args.io_dev);
