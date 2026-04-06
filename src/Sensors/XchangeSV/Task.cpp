@@ -101,8 +101,7 @@ namespace Sensors
 
           if (m_handle == nullptr)
           {
-            m_handle = openUART(m_args.io_dev);
-            static_cast<SerialPort*>(m_handle)->setCanonicalInput(true);
+            m_handle = openUART(m_args.io_dev, true);
             m_uart = true;
           }
 
