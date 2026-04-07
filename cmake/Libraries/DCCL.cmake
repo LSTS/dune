@@ -32,7 +32,8 @@ if(DCCL)
   find_library(DCCL_LIBRARY NAMES dccl)
   message(STATUS "DCCL Library found:  ${DCCL_LIBRARY}")
   if(${DCCL_LIBRARY} STRLESS "libdccl.so")
-    # dccl present
+    # DCCL runtime present. The DUNE-specific codec sources are vendored under
+    # vendor/libraries/dccl.
     set(DUNE_SYS_HAS_DCCL 1 CACHE INTERNAL "DCCL library")
     dune_add_lib(dccl)
   else()
