@@ -31,10 +31,7 @@
 #include <DUNE/DUNE.hpp>
 
 // Dccl headers.
-#include "dccl.h"
-//#include "dcclMsg.pb.h"
-#include "IMC_DCCL.pb.cc"
-#include "CodecDCCL.hpp"
+#include <dccl/CodecDCCL.hpp>
 
 namespace Transports
 {
