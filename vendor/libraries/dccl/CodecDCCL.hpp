@@ -6,10 +6,12 @@
 #include <stdexcept>
 #include <DUNE/DUNE.hpp>
 
+#ifdef DUNE_USING_DCCL
 #include "dccl.h"
 #include "EnumCodec.hpp"
 #include "MsgOnlyProtoCodec.hpp"
 #include "MsgCodec.hpp"
+#endif
 
 
 
@@ -27,16 +29,36 @@ namespace IMCDCCL
         
         ~CodecDCCL() = default;
 
+        bool
+        isAvailable()
+        {
+#ifdef DUNE_USING_DCCL
+            return true;
+#else
+            return false;
+#endif
+        }
+
         DUNE::IMC::Message* 
         decodeDCCL(std::string& encoded_string)
         {
-            return dispatchDecode(encoded_string); 
+#ifdef DUNE_USING_DCCL
+            return dispatchDecode(encoded_string);
+#else
+            (void)encoded_string;
+            return nullptr;
+#endif
         }
 
         std::string 
         encodeDCCL(const DUNE::IMC::Message* imc_msg)
         {
+#ifdef DUNE_USING_DCCL
             return dispatchEncode(imc_msg); 
+#else
+            (void)imc_msg;
+            return std::string();
+#endif
         }
 
         enum  MsgID {
@@ -57,8 +79,8 @@ namespace IMCDCCL
             ENTITY_LIST = 5,
         };
 
-        private: 
-
+#ifdef DUNE_USING_DCCL
+        private:
         dccl::Codec m_codec;
 
         MsgID
@@ -469,11 +491,8 @@ namespace IMCDCCL
                     throw std::runtime_error("DCCL:CodecDCCL: Encoding not available for this Msg");
             }
         }
-
-
+#endif
     };
-
-
 }
   
 
