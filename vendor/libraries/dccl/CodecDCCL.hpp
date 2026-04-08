@@ -133,9 +133,8 @@ namespace IMCDCCL
         DUNE::IMC::Message*
         dispatchDecode(std::string& encoded_string){
 
-            try {
-                MsgID id = getMsgID(encoded_string);
-                switch(id){
+            MsgID id = getMsgID(encoded_string);
+            switch(id){
                     case PLAN_SPECIFICATION:
                     {
                         m_codec.load<IMC_DCCL::PlanSpecification>();
@@ -288,15 +287,9 @@ namespace IMCDCCL
                     }
 
                     default:
-                        throw std::runtime_error("DCCL:CodecDCCL: Decoding not available for this Msg"); //nullptr check
+                        return nullptr;
                 }
-            }
-            catch (const std::runtime_error& e) {
-                return nullptr;
-            }
-            catch (...) {
-                return nullptr;
-            }
+                    
         }
 
 
@@ -514,7 +507,7 @@ namespace IMCDCCL
                 }
 
                 default:
-                    throw std::runtime_error("DCCL:CodecDCCL: Encoding not available for this Msg");
+                    return std::string();
             }
         }
 #endif
