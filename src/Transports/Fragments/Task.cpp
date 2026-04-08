@@ -31,6 +31,9 @@
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Network/FragmentedMessage.hpp>
 
+// Dccl headers.
+#include <dccl/CodecDCCL.hpp>
+
 namespace Transports
 {
   namespace Fragments
@@ -57,6 +60,8 @@ namespace Transports
       std::map<uint32_t, std::pair<FragmentedMessage, bool>> m_incoming;
       //! Garbage collector counter.
       Time::Counter<float> m_gc_counter;
+      // DCCL
+      IMCDCCL::CodecDCCL m_codec_dccl;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -92,16 +97,48 @@ namespace Transports
           m_incoming[hash].first = incMsg;
         }
 
-        IMC::Message* res = m_incoming[hash].first.setFragment(msg);
+        std::vector<char> data = m_incoming[hash].first.setFragment(msg);
         m_incoming[hash].second = true;
         debug("Incoming message fragment for message %u (system: 0x%x) (%d still missing)",
               msg->uid,
               source,
               m_incoming[hash].first.getFragmentsMissing());
 
-        if (res != NULL)
+        if (data.empty())
+          return;
+
+        // Check if it is an IMC message
+        IMC::Message* res = nullptr;
+        try
         {
-          debug("created message %s", res->getName());
+          res = IMC::Packet::deserialize((uint8_t*)&data[0], data.size());
+        
+          if (res != NULL)
+          {
+            debug("created message %s", res->getName());
+            res->setSource(msg->getSource());
+            res->setDestination(msg->getDestination());
+            dispatch(res);
+            m_incoming.erase(hash);
+            return;
+          }
+        }
+        catch(const std::exception& e)
+        {
+          debug("Failed to deserialize message with uid %u (system: 0x%x) as IMC message: %s",
+                msg->uid,
+                source,
+                e.what());
+        }
+
+        if (!m_codec_dccl.isAvailable())
+          return;
+
+        std::string encoded_bytes(data.begin(), data.end());
+        res = m_codec_dccl.decodeDCCL(encoded_bytes);
+        if (res != nullptr)
+        {
+          debug("created DCCL message %s", res->getName());
           res->setSource(msg->getSource());
           res->setDestination(msg->getDestination());
           dispatch(res);
