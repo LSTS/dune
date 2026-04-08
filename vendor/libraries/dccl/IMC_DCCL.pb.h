@@ -220,12 +220,13 @@ enum EntityList_operationEnum : int {
   EntityList_operationEnum_OP_REPORT = 0,
   EntityList_operationEnum_OP_QUERY = 1,
   EntityList_operationEnum_OP_RELOAD = 2,
+  EntityList_operationEnum_OP_UNKNOWN = 3,
   EntityList_operationEnum_EntityList_operationEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   EntityList_operationEnum_EntityList_operationEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool EntityList_operationEnum_IsValid(int value);
 constexpr EntityList_operationEnum EntityList_operationEnum_operationEnum_MIN = EntityList_operationEnum_OP_REPORT;
-constexpr EntityList_operationEnum EntityList_operationEnum_operationEnum_MAX = EntityList_operationEnum_OP_RELOAD;
+constexpr EntityList_operationEnum EntityList_operationEnum_operationEnum_MAX = EntityList_operationEnum_OP_UNKNOWN;
 constexpr int EntityList_operationEnum_operationEnum_ARRAYSIZE = EntityList_operationEnum_operationEnum_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* EntityList_operationEnum_descriptor();
@@ -792,10 +793,10 @@ enum ParamName : int {
   PN_ADC2_ENTITY_LABEL_1 = 60,
   PN_ADC2_MESSAGE = 61,
   PN_ADC3_CONVERSION = 62,
-  PN_ADC3_ENTITY_LABEL = 63,
+  PN_ADC3_ENTITY_LABEL_1 = 63,
   PN_ADC3_MESSAGE = 64,
   PN_ADC4_CONVERSION = 65,
-  PN_ADC4_ENTITY_LABEL_1 = 66,
+  PN_ADC4_ENTITY_LABEL = 66,
   PN_ADC4_MESSAGE = 67,
   PN_ADC5_CONVERSION = 68,
   PN_ADC5_ENTITY_LABEL = 69,
@@ -824,13 +825,13 @@ enum ParamName : int {
   PN_ADC_2_IS_ACTIVE = 92,
   PN_ADC_2_MAXIMUM_VAL = 93,
   PN_ADC_2_MINIMUM_VAL = 94,
-  PN_ADC_3_ENTITY_LABEL_1 = 95,
+  PN_ADC_3_ENTITY_LABEL = 95,
   PN_ADC_3_FIXED_GAIN = 96,
   PN_ADC_3_FIXED_GAIN_VAL = 97,
   PN_ADC_3_IS_ACTIVE = 98,
   PN_ADC_3_MAXIMUM_VAL = 99,
   PN_ADC_3_MINIMUM_VAL = 100,
-  PN_ADC_4_ENTITY_LABEL = 101,
+  PN_ADC_4_ENTITY_LABEL_1 = 101,
   PN_ADC_4_FIXED_GAIN = 102,
   PN_ADC_4_FIXED_GAIN_VAL = 103,
   PN_ADC_4_IS_ACTIVE = 104,
@@ -5840,6 +5841,8 @@ class EntityList final :
     EntityList_operationEnum_OP_QUERY;
   static constexpr operationEnum OP_RELOAD =
     EntityList_operationEnum_OP_RELOAD;
+  static constexpr operationEnum OP_UNKNOWN =
+    EntityList_operationEnum_OP_UNKNOWN;
   static inline bool operationEnum_IsValid(int value) {
     return EntityList_operationEnum_IsValid(value);
   }

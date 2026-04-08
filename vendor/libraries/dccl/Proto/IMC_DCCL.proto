@@ -111,10 +111,10 @@ enum ParamName {
     PN_ADC2_ENTITY_LABEL_1 = 60;
     PN_ADC2_MESSAGE = 61;
     PN_ADC3_CONVERSION = 62;
-    PN_ADC3_ENTITY_LABEL = 63;
+    PN_ADC3_ENTITY_LABEL_1 = 63;
     PN_ADC3_MESSAGE = 64;
     PN_ADC4_CONVERSION = 65;
-    PN_ADC4_ENTITY_LABEL_1 = 66;
+    PN_ADC4_ENTITY_LABEL = 66;
     PN_ADC4_MESSAGE = 67;
     PN_ADC5_CONVERSION = 68;
     PN_ADC5_ENTITY_LABEL = 69;
@@ -143,13 +143,13 @@ enum ParamName {
     PN_ADC_2_IS_ACTIVE = 92;
     PN_ADC_2_MAXIMUM_VAL = 93;
     PN_ADC_2_MINIMUM_VAL = 94;
-    PN_ADC_3_ENTITY_LABEL_1 = 95;
+    PN_ADC_3_ENTITY_LABEL = 95;
     PN_ADC_3_FIXED_GAIN = 96;
     PN_ADC_3_FIXED_GAIN_VAL = 97;
     PN_ADC_3_IS_ACTIVE = 98;
     PN_ADC_3_MAXIMUM_VAL = 99;
     PN_ADC_3_MINIMUM_VAL = 100;
-    PN_ADC_4_ENTITY_LABEL = 101;
+    PN_ADC_4_ENTITY_LABEL_1 = 101;
     PN_ADC_4_FIXED_GAIN = 102;
     PN_ADC_4_FIXED_GAIN_VAL = 103;
     PN_ADC_4_IS_ACTIVE = 104;
@@ -2174,9 +2174,9 @@ enum EntityNameEnum {
 
 // Profile Sample
 message ProfileSample {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 80};
-    optional int32 depth = 1 [(dccl.field) = { min: 0 max: 2000 precision: 1 }];
-    optional float avg = 2 [(dccl.field) = { min: -1000 max: 1000 precision: 2 }];
+    option (dccl.msg) = { codec_version: 4 max_bytes: 8};
+    optional int32 depth = 1 [(dccl.field) = { min: 0 max: 3000}];
+    optional float avg = 2 [(dccl.field) = { min: -10000 max: 10000 precision: 2 }];
 }
 
 
@@ -2310,6 +2310,7 @@ message EntityList {
         OP_REPORT = 0;
         OP_QUERY = 1;
         OP_RELOAD = 2;
+        OP_UNKNOWN = 3;
     }
     operationEnum op = 1;
     ListCombined list = 2;
@@ -2425,7 +2426,7 @@ message VerticalProfile {
     }
 
     ParameterEnum parameter = 1;
-    optional int32 numsamples = 2 [(dccl.field) = { min: 0 max: 255 precision: 1 }];
+    optional int32 numsamples = 2 [(dccl.field) = { min: 0 max: 255}];
     repeated ProfileSample samples = 3 [(dccl.field) = { max_repeat: 70 }];
     optional float lat = 4 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
     optional float lon = 5 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
@@ -2499,7 +2500,7 @@ message PlanDB {
     
     TypeEnum type = 1;
     OperationEnum op = 2;
-    optional int32 request_id = 3 [(dccl.field) = { min: 0 max: 10000 precision: 1 }];
+    optional int32 request_id = 3 [(dccl.field) = { min: 0 max: 10000}];
     optional string plan_id = 4 [(dccl.field).max_length = 20]; 
     PlanDBArgUnion arg = 5;
     optional string info = 6 [(dccl.field).max_length = 40]; 
@@ -2508,10 +2509,10 @@ message PlanDB {
 // PlanDBState 
 message PlanDBState {
     option (dccl.msg) = { codec_version: 4 id: 557 max_bytes: 800000};
-    optional int32 plan_count = 1 [(dccl.field) = { min: 0 max: 100000 precision: 1 }];
-    optional int32 plan_size = 2 [(dccl.field) = { min: 0 max: 1 precision: 1 }];
+    optional int32 plan_count = 1 [(dccl.field) = { min: 0 max: 100000}];
+    optional int32 plan_size = 2 [(dccl.field) = { min: 0 max: 1}];
     optional float change_time = 3 [(dccl.field) = { min: 0 max: 1835634114 precision: 2 }];
-    optional int32 change_sid = 4 [(dccl.field) = { min: 0 max: 50000 precision: 1 }];
+    optional int32 change_sid = 4 [(dccl.field) = { min: 0 max: 50000}];
     optional string change_sname = 5 [(dccl.field).max_length = 40]; 
     optional string md5 = 6 [(dccl.field).max_length = 40]; 
     repeated PlanDBInformation plans_info = 7 [(dccl.field) = { max_repeat: 100 }];
@@ -2522,9 +2523,9 @@ message PlanDBState {
 message PlanDBInformation {
     option (dccl.msg) = { codec_version: 4 id: 558 max_bytes: 800000};
     optional string plan_id = 1 [(dccl.field).max_length = 20]; 
-    optional int32 plan_size = 2 [(dccl.field) = { min: 0 max: 5000 precision: 1 }];
+    optional int32 plan_size = 2 [(dccl.field) = { min: 0 max: 5000}];
     optional float change_time = 3 [(dccl.field) = { min: 0 max: 1835634114 precision: 2 }];
-    optional int32 change_sid = 4 [(dccl.field) = { min: 0 max: 50000 precision: 1 }];
+    optional int32 change_sid = 4 [(dccl.field) = { min: 0 max: 50000}];
     optional string change_sname = 5 [(dccl.field).max_length = 40]; 
     optional string md5 = 6 [(dccl.field).max_length = 40]; 
 }
@@ -2552,9 +2553,9 @@ message PlanControl {
 
     TypeEnum type = 1;  
     OperationEnum op = 2; 
-    optional int32 request_id = 3 [(dccl.field) = { min: 0 max: 5000 precision: 1 }];
+    optional int32 request_id = 3 [(dccl.field) = { min: 0 max: 5000}];
     optional string plan_id = 4 [(dccl.field).max_length = 100];
-    optional int32 flags = 5 [(dccl.field) = { min: 0 max: 5000 precision: 1 }];
+    optional int32 flags = 5 [(dccl.field) = { min: 0 max: 5000}];
     PlanControlArgUnion arg = 6;
     optional string info = 7 [(dccl.field).max_length = 100];
 }
@@ -2571,7 +2572,7 @@ message PlanStatistics {
         TP_UNKNOWN = 3;
     }  
     TypeEnum type = 2;  
-    optional int32 properties = 3 [(dccl.field) = { min: 0 max: 5000 precision: 1 }];
+    optional int32 properties = 3 [(dccl.field) = { min: 0 max: 5000}];
     optional string durations = 4 [(dccl.field).max_length = 100];
     optional string distances = 5 [(dccl.field).max_length = 100];
     optional string actions = 6 [(dccl.field).max_length = 100];
@@ -2592,13 +2593,13 @@ message VehicleState {
         VS_UNKNOWN = 6;
     }  
     OperationModeEnum op_mode = 1;  
-    optional int32 error_count = 2 [(dccl.field) = { min: 0 max: 255 precision: 1 }];
+    optional int32 error_count = 2 [(dccl.field) = { min: 0 max: 255}];
     optional string error_ents = 3 [(dccl.field).max_length = 500];
-    optional int32 maneuver_type = 4 [(dccl.field) = { min: 0 max: 65535 precision: 1 }];
+    optional int32 maneuver_type = 4 [(dccl.field) = { min: 0 max: 65535}];
     optional float maneuver_stime = 5 [(dccl.field) = { min: -1 max: 1808764799 precision: 1 }];
-    optional int32 maneuver_eta = 6 [(dccl.field) = { min: 0 max: 86400 precision: 1 }];
-    optional int32 control_loops = 7 [(dccl.field) = { min: 0 max: 10000 precision: 1 }];
-    optional int32 flags = 8 [(dccl.field) = { min: 0 max: 10000 precision: 1 }];
+    optional int32 maneuver_eta = 6 [(dccl.field) = { min: 0 max: 86400}];
+    optional int32 control_loops = 7 [(dccl.field) = { min: 0 max: 10000}];
+    optional int32 flags = 8 [(dccl.field) = { min: 0 max: 10000}];
     optional string last_error = 9 [(dccl.field).max_length = 100];
     optional float last_error_time = 10 [(dccl.field) = { min: -1 max: 1835634114 precision: 2 }];
 }
@@ -2616,7 +2617,7 @@ message EntityState {
         ESTA_UNKNOWN = 5;
     }  
     StateEnum state = 1;  
-    optional int32 flags = 2 [(dccl.field) = { min: 0 max: 255 precision: 1 }];
+    optional int32 flags = 2 [(dccl.field) = { min: 0 max: 255}];
     optional string description = 3 [(dccl.field).max_length = 500];
 }
 
@@ -2633,11 +2634,11 @@ message PlanControlState {
     }  
     StateEnum state = 1;  
     optional string plan_id = 2 [(dccl.field).max_length = 500];
-    optional int32 plan_eta = 3 [(dccl.field) = { min: -1 max: 172800 precision: 1 }];
+    optional int32 plan_eta = 3 [(dccl.field) = { min: -1 max: 172800}];
     optional float plan_progress = 4 [(dccl.field) = { min: -100 max: 100 precision: 2 }];
     ManeuverID man_id = 5;
-    optional int32 man_type = 6 [(dccl.field) = { min: 0 max: 50000 precision: 1 }];
-    optional int32 man_eta = 7 [(dccl.field) = { min: -1 max: 172800 precision: 1 }];
+    optional int32 man_type = 6 [(dccl.field) = { min: 0 max: 50000}];
+    optional int32 man_eta = 7 [(dccl.field) = { min: -1 max: 172800}];
     enum LastPlanOutcomeEnum
     {
         LPO_NONE = 0;

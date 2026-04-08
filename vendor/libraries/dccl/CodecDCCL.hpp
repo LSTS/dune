@@ -43,7 +43,16 @@ namespace IMCDCCL
         decodeDCCL(std::string& encoded_string)
         {
 #ifdef DUNE_USING_DCCL
-            return dispatchDecode(encoded_string);
+            try{
+                return dispatchDecode(encoded_string);
+            }
+            catch(std::runtime_error& e){
+                return nullptr;
+            }
+            catch(...){
+                return nullptr;
+            }
+            
 #else
             (void)encoded_string;
             return nullptr;
@@ -54,7 +63,16 @@ namespace IMCDCCL
         encodeDCCL(const DUNE::IMC::Message* imc_msg)
         {
 #ifdef DUNE_USING_DCCL
-            return dispatchEncode(imc_msg); 
+            try{
+                return dispatchEncode(imc_msg); 
+            }
+            catch(std::runtime_error& e){
+                return std::string();
+            }
+            catch(...){
+                return std::string();
+            }
+            
 #else
             (void)imc_msg;
             return std::string();
@@ -115,161 +133,169 @@ namespace IMCDCCL
         DUNE::IMC::Message*
         dispatchDecode(std::string& encoded_string){
 
-            MsgID id = getMsgID(encoded_string);
-            switch(id){
-                case PLAN_SPECIFICATION:
-                {
-                    m_codec.load<IMC_DCCL::PlanSpecification>();
-                    IMC_DCCL::PlanSpecification src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::PlanSpecification* dst_imc = new DUNE::IMC::PlanSpecification();
-                    decodePlanSpecification(src_dccl, *dst_imc);
-                    return dst_imc;
+            try {
+                MsgID id = getMsgID(encoded_string);
+                switch(id){
+                    case PLAN_SPECIFICATION:
+                    {
+                        m_codec.load<IMC_DCCL::PlanSpecification>();
+                        IMC_DCCL::PlanSpecification src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::PlanSpecification* dst_imc = new DUNE::IMC::PlanSpecification();
+                        decodePlanSpecification(src_dccl, *dst_imc);
+                        return dst_imc;
 
-                }
+                    }
 
-                case ESTIMATED_STATE:
-                {
-                    m_codec.load<IMC_DCCL::EstimatedState>();
-                    IMC_DCCL::EstimatedState src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::EstimatedState* dst_imc = new DUNE::IMC::EstimatedState();
-                    decodeEstimatedState(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case ESTIMATED_STATE:
+                    {
+                        m_codec.load<IMC_DCCL::EstimatedState>();
+                        IMC_DCCL::EstimatedState src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::EstimatedState* dst_imc = new DUNE::IMC::EstimatedState();
+                        decodeEstimatedState(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case PLAN_DB:
-                {
-                    m_codec.load<IMC_DCCL::PlanDB>();
-                    IMC_DCCL::PlanDB src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::PlanDB* dst_imc = new DUNE::IMC::PlanDB();
-                    decodePlanDB(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case PLAN_DB:
+                    {
+                        m_codec.load<IMC_DCCL::PlanDB>();
+                        IMC_DCCL::PlanDB src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::PlanDB* dst_imc = new DUNE::IMC::PlanDB();
+                        decodePlanDB(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case PLAN_CONTROL:
-                {
-                    m_codec.load<IMC_DCCL::PlanControl>();
-                    IMC_DCCL::PlanControl src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::PlanControl* dst_imc = new DUNE::IMC::PlanControl();
-                    decodePlanControl(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case PLAN_CONTROL:
+                    {
+                        m_codec.load<IMC_DCCL::PlanControl>();
+                        IMC_DCCL::PlanControl src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::PlanControl* dst_imc = new DUNE::IMC::PlanControl();
+                        decodePlanControl(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case SET_ENTITY_PARAMETERS:
-                {
-                    m_codec.load<IMC_DCCL::SetEntityParameters>();
-                    IMC_DCCL::SetEntityParameters src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::SetEntityParameters* dst_imc = new DUNE::IMC::SetEntityParameters();
-                    decodeSetEntityParameters(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case SET_ENTITY_PARAMETERS:
+                    {
+                        m_codec.load<IMC_DCCL::SetEntityParameters>();
+                        IMC_DCCL::SetEntityParameters src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::SetEntityParameters* dst_imc = new DUNE::IMC::SetEntityParameters();
+                        decodeSetEntityParameters(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case VEHICLE_STATE:
-                {
-                    m_codec.load<IMC_DCCL::VehicleState>();
-                    IMC_DCCL::VehicleState src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::VehicleState* dst_imc = new DUNE::IMC::VehicleState();
-                    decodeVehicleState(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case VEHICLE_STATE:
+                    {
+                        m_codec.load<IMC_DCCL::VehicleState>();
+                        IMC_DCCL::VehicleState src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::VehicleState* dst_imc = new DUNE::IMC::VehicleState();
+                        decodeVehicleState(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case ENTITY_STATE:
-                {
-                    m_codec.load<IMC_DCCL::EntityState>();
-                    IMC_DCCL::EntityState src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::EntityState* dst_imc = new DUNE::IMC::EntityState();
-                    decodeEntityState(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case ENTITY_STATE:
+                    {
+                        m_codec.load<IMC_DCCL::EntityState>();
+                        IMC_DCCL::EntityState src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::EntityState* dst_imc = new DUNE::IMC::EntityState();
+                        decodeEntityState(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case PLAN_CONTROL_STATE:
-                {
-                    m_codec.load<IMC_DCCL::PlanControlState>();
-                    IMC_DCCL::PlanControlState src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::PlanControlState* dst_imc = new DUNE::IMC::PlanControlState();
-                    decodePlanControlState(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case PLAN_CONTROL_STATE:
+                    {
+                        m_codec.load<IMC_DCCL::PlanControlState>();
+                        IMC_DCCL::PlanControlState src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::PlanControlState* dst_imc = new DUNE::IMC::PlanControlState();
+                        decodePlanControlState(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case VERTICAL_PROFILE:
-                {
-                    m_codec.load<IMC_DCCL::VerticalProfile>();
-                    IMC_DCCL::VerticalProfile src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::VerticalProfile* dst_imc = new DUNE::IMC::VerticalProfile();
-                    decodeVerticalProfile(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case VERTICAL_PROFILE:
+                    {
+                        m_codec.load<IMC_DCCL::VerticalProfile>();
+                        IMC_DCCL::VerticalProfile src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::VerticalProfile* dst_imc = new DUNE::IMC::VerticalProfile();
+                        decodeVerticalProfile(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case VOLTAGE:
-                {
-                    m_codec.load<IMC_DCCL::Voltage>();
-                    IMC_DCCL::Voltage src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::Voltage* dst_imc = new DUNE::IMC::Voltage();
-                    decodeVoltage(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case VOLTAGE:
+                    {
+                        m_codec.load<IMC_DCCL::Voltage>();
+                        IMC_DCCL::Voltage src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::Voltage* dst_imc = new DUNE::IMC::Voltage();
+                        decodeVoltage(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case FUEL_LEVEL:
-                {
-                    m_codec.load<IMC_DCCL::FuelLevel>();
-                    IMC_DCCL::FuelLevel src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::FuelLevel* dst_imc = new DUNE::IMC::FuelLevel();
-                    decodeFuelLevel(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case FUEL_LEVEL:
+                    {
+                        m_codec.load<IMC_DCCL::FuelLevel>();
+                        IMC_DCCL::FuelLevel src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::FuelLevel* dst_imc = new DUNE::IMC::FuelLevel();
+                        decodeFuelLevel(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case CURRENT:
-                {
-                    m_codec.load<IMC_DCCL::Current>();
-                    IMC_DCCL::Current src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::Current* dst_imc = new DUNE::IMC::Current();
-                    decodeCurrent(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case CURRENT:
+                    {
+                        m_codec.load<IMC_DCCL::Current>();
+                        IMC_DCCL::Current src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::Current* dst_imc = new DUNE::IMC::Current();
+                        decodeCurrent(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case WIND_SPEED:
-                {
-                    m_codec.load<IMC_DCCL::WindSpeed>();
-                    IMC_DCCL::WindSpeed src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::WindSpeed* dst_imc = new DUNE::IMC::WindSpeed();
-                    decodeWindSpeed(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case WIND_SPEED:
+                    {
+                        m_codec.load<IMC_DCCL::WindSpeed>();
+                        IMC_DCCL::WindSpeed src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::WindSpeed* dst_imc = new DUNE::IMC::WindSpeed();
+                        decodeWindSpeed(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                case ENTITY_PARAMETERS:
-                {
-                    m_codec.load<IMC_DCCL::EntityParameters>();
-                    IMC_DCCL::EntityParameters src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::EntityParameters* dst_imc = new DUNE::IMC::EntityParameters();
-                    decodeEntityParameters(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
-        
-                case ENTITY_LIST:
-                {
-                    m_codec.load<IMC_DCCL::EntityList>();
-                    IMC_DCCL::EntityList src_dccl;
-                    m_codec.decode(encoded_string, &src_dccl);
-                    DUNE::IMC::EntityList* dst_imc = new DUNE::IMC::EntityList();
-                    decodeEntityList(src_dccl, *dst_imc);
-                    return dst_imc;
-                }
+                    case ENTITY_PARAMETERS:
+                    {
+                        m_codec.load<IMC_DCCL::EntityParameters>();
+                        IMC_DCCL::EntityParameters src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::EntityParameters* dst_imc = new DUNE::IMC::EntityParameters();
+                        decodeEntityParameters(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
+            
+                    case ENTITY_LIST:
+                    {
+                        m_codec.load<IMC_DCCL::EntityList>();
+                        IMC_DCCL::EntityList src_dccl;
+                        m_codec.decode(encoded_string, &src_dccl);
+                        DUNE::IMC::EntityList* dst_imc = new DUNE::IMC::EntityList();
+                        decodeEntityList(src_dccl, *dst_imc);
+                        return dst_imc;
+                    }
 
-                default:
-                    throw std::runtime_error("DCCL:CodecDCCL: Decoding not available for this Msg"); //nullptr check
+                    default:
+                        throw std::runtime_error("DCCL:CodecDCCL: Decoding not available for this Msg"); //nullptr check
+                }
+            }
+            catch (const std::runtime_error& e) {
+                return nullptr;
+            }
+            catch (...) {
+                return nullptr;
             }
         }
 
