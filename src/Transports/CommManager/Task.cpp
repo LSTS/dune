@@ -35,6 +35,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Dccl headers.
+#include <dccl/CodecDCCL.hpp>
+
 // Local headers.
 #include "Router.hpp"
 #include "TransmissionFragments.hpp"
@@ -63,6 +66,8 @@ namespace Transports
       uint32_t iridium_payload_size;
       //! Fragment storage time to live (seconds)
       uint32_t fragment_storage_time;
+      //! Enable encoding of IMC messages with DCCL protocol
+      bool dccl_enabled;
     };
 
     //! Config section from where to fetch emergency sms number
@@ -86,6 +91,8 @@ namespace Transports
       //! Map of fragment id to Transmission Request ID
       std::map<uint8_t, uint16_t> m_frag_id_to_req_id;
 
+      // DCCL
+      IMCDCCL::CodecDCCL m_codec_dccl;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -125,6 +132,10 @@ namespace Transports
             .units(Units::Second)
             .description("Represents the amount of time a message is valid for retransmission. "
                          "If set to 0, retransmission requests are not allowed.");
+
+        param("DCCL Encoding", m_args.dccl_enabled)
+            .defaultValue("false")
+            .description("Enable encoding of IMC messages with DCCL protocol");
 
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticStatus>(this);
@@ -722,11 +733,15 @@ namespace Transports
         if (msg->getDestination() != getSystemId())
           return;
 
+        IMC::TransmissionRequest req = *msg;
+        if (m_args.dccl_enabled && m_codec_dccl.isAvailable())
+          req = compressMessage(&req);
+
         switch (msg->comm_mean)
         {
           case (IMC::TransmissionRequest::CMEAN_SATELLITE):
             {
-              std::vector<IMC::TransmissionRequest> tx_list = fragmentMessage(msg, m_args.iridium_payload_size);
+              std::vector<IMC::TransmissionRequest> tx_list = fragmentMessage(&req, m_args.iridium_payload_size);
               for (auto tx_msg : tx_list)
                 m_router.sendViaSatellite(&tx_msg, m_args.iridium_plain_texts);
             }
@@ -842,6 +857,39 @@ namespace Transports
         //add to transmission_queue
         m_acoustic_requests[newId] = msg->clone();
         dispatch(tx);
+      }
+
+      IMC::TransmissionRequest
+      compressMessage(const IMC::TransmissionRequest* msg)
+      {
+        if (msg->comm_mean != IMC::TransmissionRequest::CMEAN_SATELLITE)
+          return *msg;
+        
+        if (msg->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
+          return *msg;
+        
+        if (msg->msg_data.isNull())
+          return *msg;
+
+        // Get message content
+        IMC::TransmissionRequest req = *msg;
+        IMC::Message* inlinemsg = req.msg_data.get();
+        
+        // Encode message using DCCL
+        std::string encoded_string = m_codec_dccl.encodeDCCL(inlinemsg);
+
+        if (encoded_string.empty())
+          return *msg;
+
+        req.raw_data.assign(encoded_string.begin(), encoded_string.end());
+
+        // Remove original message content
+        req.msg_data.clear();
+
+        // Set data mode to raw data
+        req.data_mode = IMC::TransmissionRequest::DMODE_RAW;
+
+        return req;
       }
 
       std::vector<IMC::TransmissionRequest>
