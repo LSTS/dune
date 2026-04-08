@@ -62,7 +62,7 @@ namespace DUNE
       void
       getFragmentsReceived(std::string& frag_ids);
 
-      IMC::Message*
+      std::vector<char>
       setFragment(const IMC::MessagePart* part);
 
       void
