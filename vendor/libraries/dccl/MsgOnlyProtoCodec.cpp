@@ -81,7 +81,7 @@ void encodeListCombined(const std::string& imc, IMC_DCCL::ListCombined& dccl)
 void decodeListCombined(const IMC_DCCL::ListCombined& dccl, std::string& imc)
 {
     
-    for (unsigned int i=0; i < dccl.item_size(); i++) {
+    for (int i=0; i < dccl.item_size(); i++) {
         std::string temp;
         decodeItemList(dccl.item(i), temp);	
         imc += temp + ';';
