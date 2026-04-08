@@ -156,8 +156,15 @@ namespace Transports
           setReadMode(saved_read_mode);
           expectOK();
         }
+        catch (std::exception& e)
+        {
+          getTask()->war("error reading MT buffer: %s", e.what());
+          setReadMode(saved_read_mode);
+          return 0;
+        }
         catch (...)
         {
+          getTask()->war("unknown error reading MT buffer");
           setReadMode(saved_read_mode);
           return 0;
         }
