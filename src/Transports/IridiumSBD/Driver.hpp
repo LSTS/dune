@@ -524,7 +524,7 @@ namespace Transports
       //! This function guarantees that unsolicited messages
       //! are properly handled and the length is read correctly.
       unsigned
-      getBufferSizeMT(Counter<double>& timer, bool unsolicited = false)
+      getBufferSizeMT(Counter<double>& timer)
       {
         uint8_t bfr[2] = {0};
 
@@ -534,36 +534,35 @@ namespace Transports
         getTask()->debug("bfr[0]: %02x", bfr[0]);
 
         // Handle start of unsolicited messages and ring alerts.
-        if (bfr[0] == '+' || bfr[0] == 'S')
+        if (bfr[0] > 0x01)
         {
           getTask()->debug("handling unsolicited message in raw mode");
-          std::string line((const char*)bfr, 1);
+          char unsolicited[512];
+          size_t idx = 0;
+          unsolicited[idx++] = static_cast<char>(bfr[0]);
           while (!timer.overflow())
           {
             readRaw(timer, bfr, 1);
+            unsolicited[idx++] = static_cast<char>(bfr[0]);
+            getTask()->debug("bfr[0]: %02x", bfr[0]);
+
             if (bfr[0] == '\n')
             {
-              handleUnsolicited(String::trim(line));
-              return getBufferSizeMT(timer, true);
+              handleDataLineMode(unsolicited, idx);
+              return getBufferSizeMT(timer);
             }
           }
 
           throw ReadTimeout();
         }
-        // Handle padding of an unsolicited message
-        else if (((bfr[0] == '\r') || (bfr[0] == '\n')) && unsolicited)
+        else if (bfr[0] == 0 && m_use_9523)
         {
           return getBufferSizeMT(timer);
         }
-        else if(bfr[0] == 0)
-        {
-          if(m_use_9523)
-            return getBufferSizeMT(timer);
-        }
 
-        if(m_use_9523)
+        if (m_use_9523)
         {
-          if(m_length_msg_9523 <= 255)
+          if (m_length_msg_9523 <= 255)
           {
             getTask()->debug("size <255: %d ! %d ! %02x", m_length_msg_9523, bfr[0], bfr[0]);
           }
