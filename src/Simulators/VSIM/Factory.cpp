@@ -150,7 +150,7 @@ namespace Simulators
 
       double force[3];
       double position[3];
-      double orientation[2];
+      double orientation[3];
 
       // Retrieve fins.
       unsigned fins;
