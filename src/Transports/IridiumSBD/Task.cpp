@@ -132,11 +132,11 @@ namespace Transports
       Counter<double> m_monitor_check_timer;
       //! State of task.
       uint8_t m_state;
-      //! rx queue size.
+      //! RX queue size.
       unsigned m_rx_queue_size;
-      //! tx queue size
+      //! TX queue size.
       unsigned m_tx_queue_size;
-      //! General Monitor
+      //! General Monitor.
       Counter<double> m_general_monitor;
       //! Nothing to read, nothing to write.
       bool m_idle;
@@ -643,12 +643,12 @@ namespace Transports
           const char* errorMsg = msg.c_str();
           if (errorMsg != nullptr && *errorMsg != '\0')
           {
-              msg = errorMsg;
-              sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_ERROR, msg);
+            msg = errorMsg;
+            sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_ERROR, msg);
           }
           else
           {
-              sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+            sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
           }
           delete *itr;
           itr = m_tx_requests.erase(itr);
@@ -794,7 +794,7 @@ namespace Transports
         //get rx and tx queue size
         unsigned rx_queue_size = m_driver->getQueuedMT();
         unsigned tx_queue_size = m_tx_requests.size();
-        if(m_rx_queue_size != rx_queue_size || m_tx_queue_size != tx_queue_size)
+        if (m_rx_queue_size != rx_queue_size || m_tx_queue_size != tx_queue_size)
         {
           m_rx_queue_size = rx_queue_size;
           m_tx_queue_size = tx_queue_size;
@@ -877,7 +877,7 @@ namespace Transports
       }
 
       void
-      checkError()
+      checkError(void)
       {
         if (m_error_timer.overflow())
         {
