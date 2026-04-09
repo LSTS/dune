@@ -191,6 +191,9 @@ namespace DUNE
       void
       setSkipLine(const std::string& line);
 
+      void
+      handleDataLineMode(const char* data, const size_t len);
+
       //! I/O handle.
       IO::Handle* m_handle;
       //! Last command sent to modem.
@@ -227,11 +230,11 @@ namespace DUNE
       std::string m_line_term_out;
       //! True to trim white-space.
       bool m_line_trim;
-
-
+      //! Line mode buffer.
+      std::string m_line_bfr;
 
       void
-      handleIncomingCharacters(std::string& str);
+      handleIncomingCharacters(void);
 
       void
       ingestIncomingDataRaw(const char* data, const size_t len);

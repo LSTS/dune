@@ -188,8 +188,7 @@ namespace DUNE
         if (!converBytesToLines())
           break;
         
-        std::string line;
-        handleIncomingCharacters(line);
+                handleIncomingCharacters();
         break;
       }
 
@@ -373,20 +372,20 @@ namespace DUNE
     }
 
     void
-    BasicModem::handleIncomingCharacters(std::string& str)
+    BasicModem::handleIncomingCharacters(void)
     {
       while (!incomingCharsQueueEmpty())
       {
-        if (!processInput(str))
+        if (!processInput(m_line_bfr))
           continue;
 
-        if (str.empty())
+        if (m_line_bfr.empty())
           continue;
 
-        if (!handleUnsolicited(str))
-          pushLine(str);
+        if (!handleUnsolicited(m_line_bfr))
+          pushLine(m_line_bfr);
 
-        str = "";
+        m_line_bfr = "";
       }
     }
 
@@ -463,11 +462,18 @@ namespace DUNE
     }
 
     void
+    BasicModem::handleDataLineMode(const char* data, const size_t len)
+    {
+      m_task->spew("%s", Streams::sanitize(data).c_str());
+      ingestIncomingDataLine(data, len);
+      handleIncomingCharacters();
+    }
+
+    void
     BasicModem::run(void)
     {
       char bfr[512];
-      std::string line;
-
+      
       while (!isStopping())
       {
         if (!IO::Poll::poll(*m_handle, 0.01))
@@ -508,10 +514,8 @@ namespace DUNE
         case READ_MODE_LINE:
         {
           bfr[rv] = 0;
-          m_task->spew("%s", Streams::sanitize(bfr).c_str());
-          ingestIncomingDataLine(bfr, rv);
-          handleIncomingCharacters(line);
-          break;
+          handleDataLineMode(bfr, rv);
+                    break;
         }
         
         default:
