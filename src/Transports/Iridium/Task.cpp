@@ -32,6 +32,9 @@
 #include <DUNE/IMC/IridiumMessageDefinitions.hpp>
 #include <DUNE/Math/Random.hpp>
 
+// Dccl headers.
+#include <dccl/CodecDCCL.hpp>
+
 namespace Transports
 {
   namespace Iridium
@@ -66,6 +69,9 @@ namespace Transports
       IMC::PlanControlState m_plan_state;
       IMC::VehicleState m_vehicle_state;
       Arguments m_args;
+
+      // DCCL
+      IMCDCCL::CodecDCCL m_codec_dccl;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -231,8 +237,24 @@ namespace Transports
       {
 
         DUNE::IMC::IridiumMessage * m = DUNE::IMC::IridiumMessage::deserialize(msg);
+        // If its not an IridiumMessage, try to decode as DCCL message.
         if (m == NULL)
         {
+          if (m_codec_dccl.isAvailable())
+          {
+            std::string encoded_string(msg->data.begin(), msg->data.end());
+            DUNE::IMC::Message* decoded_msg = m_codec_dccl.decodeDCCL(encoded_string);
+            if (decoded_msg != nullptr)
+            {
+              war("Received DCCL message of type %s via Iridium.", decoded_msg->getName());
+              // decoded_msg->setSource(msg->source);
+              // decoded_msg->setDestination(m_args.iridium_destination);
+              dispatch(decoded_msg, DF_KEEP_SRC_EID);
+              return;
+            }
+          }
+
+          // If it's not a DCCL message, send as text message.
           war(DTR("Parsing unrecognized iridium message as text"));
           std::string text(msg->data.begin(), msg->data.end());
           IMC::TextMessage tm;
