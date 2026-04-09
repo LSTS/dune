@@ -140,9 +140,7 @@ namespace DUNE
     BasicModem::isCooling(void)
     {
       Concurrency::ScopedMutex l(m_mutex);
-      if ((m_tx_rate_max >= 0.0) && (!m_tx_rate_timer.overflow()))
-        return true;
-      return false;
+      return (m_tx_rate_max >= 0.0) && (!m_tx_rate_timer.overflow());
     }
 
     //! Set maximum transmission rate.
@@ -187,15 +185,15 @@ namespace DUNE
       {
         if (!converBytesToLines())
           break;
-        
-                handleIncomingCharacters();
+
+        handleIncomingCharacters();
         break;
       }
 
       case READ_MODE_RAW:
         convertLinesToBytes();
         break;
-      
+
       default:
         break;
       }
@@ -473,7 +471,7 @@ namespace DUNE
     BasicModem::run(void)
     {
       char bfr[512];
-      
+
       while (!isStopping())
       {
         if (!IO::Poll::poll(*m_handle, 0.01))
@@ -515,7 +513,7 @@ namespace DUNE
         {
           bfr[rv] = 0;
           handleDataLineMode(bfr, rv);
-                    break;
+          break;
         }
         
         default:
