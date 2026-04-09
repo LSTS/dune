@@ -138,6 +138,8 @@ namespace Transports
       unsigned m_tx_queue_size;
       //! General Monitor
       Counter<double> m_general_monitor;
+      //! Nothing to read, nothing to write.
+      bool m_idle;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -151,7 +153,8 @@ namespace Transports
         m_error_count(0),
         m_state(Status::CODE_INIT),
         m_rx_queue_size(99),
-        m_tx_queue_size(99)
+        m_tx_queue_size(99),
+        m_idle(false)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -680,20 +683,22 @@ namespace Transports
           m_driver->checkMailBoxAlert();
         else if (m_driver->getQueuedMT() > 0 || m_mbox_check_timer.overflow())
           m_driver->checkMailBox();
-        else if(m_driver->getQueuedMT() == 0 && m_tx_request == NULL) //No messages to be received or sent
+        else if (m_driver->getQueuedMT() == 0 && m_tx_request == NULL && !m_idle)
         {
           unsigned src_adr = getSystemId();
           unsigned src_eid = getEntityId();
           const std::vector<char> data(1);
           TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF, 0, 0, data);
-          sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
-          // clear empty request
+          sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY, "No message to be received or sent.");
           delete empty_req;
-          debug(DTR("No message to be received or sent."));
-
+          spew("No message to be received or sent.");
+          m_idle = true;
           return false;
         }
+        else if (m_idle)
+          return false;
 
+        m_idle = false;
         return true;
       }
 
