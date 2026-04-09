@@ -179,7 +179,7 @@ namespace DUNE
         if (Utils::String::startsWith(str, rly))
           return str;
       }
-      while(!timer.overflow());
+      while (!timer.overflow());
 
       if (str.empty())
         throw ReadTimeout();
