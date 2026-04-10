@@ -80,6 +80,8 @@ namespace Transports
           param("Verbose", m_args.verbose)
           .defaultValue("false")
           .description("Enable verbose output from libcurl.");
+
+          bind<IMC::FTPTransmissionRequest>(this);
         }
 
         //! Update internal state with new parameter values.
@@ -112,6 +114,7 @@ namespace Transports
         void
         onResourceInitialization(void)
         {
+          setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
         //! Release resources.
@@ -122,6 +125,29 @@ namespace Transports
             curl_easy_cleanup(m_curl);
 
           curl_global_cleanup();
+        }
+
+        void
+        consume(const IMC::FTPTransmissionRequest* msg)
+        {
+          switch (msg->type)
+          {
+          case IMC::FTPTransmissionRequest::TYPE_FILE:
+            sendFile(msg->data, {msg->url, msg->username, msg->password});
+            break;
+
+          case IMC::FTPTransmissionRequest::TYPE_TEXT:
+            sendText(msg->data, {msg->url, msg->username, msg->password}, msg->op == IMC::FTPTransmissionRequest::OP_APPEND);
+            break;
+          
+          default:
+            return;
+          }
+
+          FTPTransmissionStatus response;
+          response.id = msg->id;
+          response.status = IMC::FTPTransmissionStatus::StatusEnum::STAT_SUCCESS;
+          dispatch(response);
         }
 
         void
