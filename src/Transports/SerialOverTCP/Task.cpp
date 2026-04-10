@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -103,15 +103,14 @@ namespace Transports
           m_uart = new SerialPort(m_args.uart_dev, m_args.uart_baud);
           if (m_args.uart_canonical_input)
           {
-              m_uart->setCanonicalInput(true);
-              m_uart->flush();
+            m_uart->setCanonicalInput(true);
+            m_uart->flush();
           }
         }
         catch (std::runtime_error& e)
         {
           throw RestartNeeded(e.what(), 30);
         }
-
       }
 
       void
@@ -149,6 +148,7 @@ namespace Transports
         m_sock->setNoDelay(true);
         m_poll.add(*m_sock);
         m_poll.add(*m_uart);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void

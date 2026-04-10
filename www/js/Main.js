@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -40,6 +40,7 @@ Main.prototype = new BasicSection;
 var system_mode = 6;
 var GPS_srcEntity_id = -1;
 var rpm_value = 0;
+var system_info = 'Unknown';
 
 function getHeader(label) {
   return function(data) {
@@ -602,11 +603,11 @@ function getSystemInfo(data) {
         var msg = data.dune_messages[i];
         var systemType = getSystemType(data, msg.sys_type);
         document.title = msg.sys_name + ' (' + getSystemTypeString(msg.sys_type) + ')';
-        return msg.sys_name + ' (' + systemType + ')';
+        system_info = msg.sys_name + ' (' + systemType + ')';
       }
     }
   }
-  return 'Unknown';
+  return system_info;
 }
 
 function getSystemTypeString(value) {

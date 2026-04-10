@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -102,12 +102,18 @@ namespace Monitors
       }
 
       void
+      onResourceInitialization(void) override
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, CODE_IDLE);
+      }
+
+      void
       consume(const IMC::EntityParameters* msg)
       {
         if (msg->name != m_args.light_entity)
           return;
 
-        for (const auto& p: msg->params)
+        for (const auto& p : msg->params)
         {
           if (p->name == m_args.light_parameter_label)
           {
@@ -216,12 +222,6 @@ namespace Monitors
 
         inf("No AIS targets in the area.");
         setNavigationLight(m_args.light_state_no_targets);
-      }
-
-      void
-      onResourceAcquisition(void) override
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, CODE_IDLE);
       }
     };
   }

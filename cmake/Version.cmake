@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -83,7 +83,6 @@ if(DUNE_VERSION_TPL AND DUNE_VERSION_OUT)
     execute_process(COMMAND git rev-parse --short HEAD
       WORKING_DIRECTORY "${PRIVATE_DIR}"
       OUTPUT_VARIABLE private_sha1
-      ERROR_QUIET
       OUTPUT_STRIP_TRAILING_WHITESPACE)
     if(private_sha1 STREQUAL "")
       set(private_sha1 "unknown")

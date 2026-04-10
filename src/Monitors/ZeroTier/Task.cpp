@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -174,7 +174,7 @@ namespace Monitors
           if (m_args.force_restart)
           {
             restartZeroTierService();
-            applyEntityParameter(m_args.force_restart, false);
+            applyEntityParameter(&m_args.force_restart, false);
           }
         }
 
@@ -184,7 +184,7 @@ namespace Monitors
           if (m_args.restart_modem_gsm)
           {
             restartGSMModem();
-            applyEntityParameter(m_args.restart_modem_gsm, false);
+            applyEntityParameter(&m_args.restart_modem_gsm, false);
           }
         }
 

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -102,6 +102,9 @@ namespace DUNE
       setBusy(bool value);
 
     protected:
+      //! Default command timeout.
+      static constexpr double c_timeout = 5.0;
+
       //! Read mode.
       enum ReadMode
       {
@@ -113,6 +116,8 @@ namespace DUNE
 
       //! Concurrency lock.
       Concurrency::Mutex m_mutex;
+      //! Lock for data ingestion.
+      Concurrency::Mutex m_ingestion_mtx;
 
       //! Handle unsolicited or asynchronous commands.
       //! @param[in] str command string.
@@ -186,6 +191,9 @@ namespace DUNE
       void
       setSkipLine(const std::string& line);
 
+      void
+      handleDataLineMode(const char* data, const size_t len);
+
       //! I/O handle.
       IO::Handle* m_handle;
       //! Last command sent to modem.
@@ -222,6 +230,29 @@ namespace DUNE
       std::string m_line_term_out;
       //! True to trim white-space.
       bool m_line_trim;
+      //! Line mode buffer.
+      std::string m_line_bfr;
+
+      void
+      handleIncomingCharacters(void);
+
+      void
+      ingestIncomingDataRaw(const char* data, const size_t len);
+
+      void
+      ingestIncomingDataLine(const char* data, const size_t len);
+
+      void
+      pushLine(const std::string& line);
+
+      bool
+      incomingCharsQueueEmpty(void);
+
+      bool
+      converBytesToLines(void);
+
+      bool
+      convertLinesToBytes(void);
 
       bool
       processInput(std::string& str);

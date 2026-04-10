@@ -1,0 +1,387 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;cxx;c;def</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h</Extensions>
+    </Filter>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>moc;h;cpp</Extensions>
+      <SourceControlFiles>False</SourceControlFiles>
+    </Filter>
+    <Filter Include="Generated Files\Debug">
+      <UniqueIdentifier>{0498a474-93ae-47ed-b6c2-c9298eeb7e77}</UniqueIdentifier>
+      <Extensions>cpp;moc</Extensions>
+      <SourceControlFiles>False</SourceControlFiles>
+    </Filter>
+    <Filter Include="Generated Files\Release">
+      <UniqueIdentifier>{e5a54512-acf5-4b3f-9b46-692730051ad8}</UniqueIdentifier>
+      <Extensions>cpp;moc</Extensions>
+      <SourceControlFiles>False</SourceControlFiles>
+    </Filter>
+    <Filter Include="RTHostIMUCommon">
+      <UniqueIdentifier>{af79c93d-1fc5-4cd7-8c1c-e60b40d40269}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RTArduLinkHost">
+      <UniqueIdentifier>{7bb41597-6c89-406e-8b01-0768453bb56c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RTIMULib">
+      <UniqueIdentifier>{83de7b79-2099-44d3-aed3-f09d3cfa140c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RTSerialPort">
+      <UniqueIdentifier>{dd0c7d74-9d10-4356-aecb-f66b9dc58ada}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RTIMULib\IMUDrivers">
+      <UniqueIdentifier>{525b3139-c312-4999-a056-5b23682ed5b4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RTHostImu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_RTHostImu.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_RTHostImu.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTHostIMUCommon\RTHostIMUClient.cpp">
+      <Filter>RTHostIMUCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_RTHostIMUClient.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_RTHostIMUClient.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTHostIMUCommon\RTHostIMUThread.cpp">
+      <Filter>RTHostIMUCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_RTHostIMUThread.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_RTHostIMUThread.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTHostIMUCommon\SelectFusionDlg.cpp">
+      <Filter>RTHostIMUCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_SelectFusionDlg.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_SelectFusionDlg.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTArduLinkHost\RTArduLinkHost.cpp">
+      <Filter>RTArduLinkHost</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_RTArduLinkHost.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_RTArduLinkHost.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTArduLinkHost\RTArduLinkUtils.cpp">
+      <Filter>RTArduLinkHost</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTHostIMUCommon\AccelCalDlg.cpp">
+      <Filter>RTHostIMUCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_AccelCalDlg.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_AccelCalDlg.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTHostIMUCommon\MagCalDlg.cpp">
+      <Filter>RTHostIMUCommon</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_MagCalDlg.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_MagCalDlg.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTSerialPort\src\qextserialenumerator.cpp">
+      <Filter>RTSerialPort</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_qextserialenumerator.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_qextserialenumerator.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTSerialPort\src\qextserialenumerator_win.cpp">
+      <Filter>RTSerialPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTSerialPort\src\qextserialport.cpp">
+      <Filter>RTSerialPort</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_qextserialport.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_qextserialport.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTSerialPort\src\qextserialport_win.cpp">
+      <Filter>RTSerialPort</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RTSerialPort\src\qextwineventnotifier_p.cpp">
+      <Filter>RTSerialPort</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_qextwineventnotifier_p.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_qextwineventnotifier_p.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\RTFusion.cpp">
+      <Filter>RTIMULib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\RTFusionKalman4.cpp">
+      <Filter>RTIMULib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\RTFusionRTQF.cpp">
+      <Filter>RTIMULib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\RTIMUAccelCal.cpp">
+      <Filter>RTIMULib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\RTIMUHal.cpp">
+      <Filter>RTIMULib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\RTIMUMagCal.cpp">
+      <Filter>RTIMULib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\RTIMUSettings.cpp">
+      <Filter>RTIMULib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\RTMath.cpp">
+      <Filter>RTIMULib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTIMU.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTIMUGD20HM303D.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTIMUGD20HM303DLHC.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTIMUGD20M303DLHC.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTIMULSM9DS0.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTIMUMPU9150.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTIMUMPU9250.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTIMUNull.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTIMUBMX055.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTPressure.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTPressureBMP180.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTPressureLPS25H.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTPressureMS5611.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTPressureMS5637.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTIMULSM9DS1.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\RTIMULib\IMUDrivers\RTIMUBNO055.cpp">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="RTHostImu.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\RTHostIMUCommon\RTHostIMUClient.h">
+      <Filter>RTHostIMUCommon</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\RTHostIMUCommon\RTHostIMUThread.h">
+      <Filter>RTHostIMUCommon</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\RTHostIMUCommon\SelectFusionDlg.h">
+      <Filter>RTHostIMUCommon</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\RTArduLinkHost\RTArduLinkHost.h">
+      <Filter>RTArduLinkHost</Filter>
+    </CustomBuild>
+    <CustomBuild Include="RTHostIMU.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\RTHostIMUCommon\AccelCalDlg.h">
+      <Filter>RTHostIMUCommon</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\RTHostIMUCommon\MagCalDlg.h">
+      <Filter>RTHostIMUCommon</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\RTSerialPort\src\qextserialenumerator.h">
+      <Filter>RTSerialPort</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\RTSerialPort\src\qextserialport.h">
+      <Filter>RTSerialPort</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\RTSerialPort\src\qextwineventnotifier_p.h">
+      <Filter>RTSerialPort</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\RTHostIMUCommon\RTArduLinkIMUDefs.h">
+      <Filter>RTHostIMUCommon</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RTArduLinkHost\RTArduLinkDefs.h">
+      <Filter>RTArduLinkHost</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RTArduLinkHost\RTArduLinkDemoDefs.h">
+      <Filter>RTArduLinkHost</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RTArduLinkHost\RTArduLinkUtils.h">
+      <Filter>RTArduLinkHost</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_RTHostIMU.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RTSerialPort\src\qextserialenumerator_p.h">
+      <Filter>RTSerialPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RTSerialPort\src\qextserialport_global.h">
+      <Filter>RTSerialPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RTSerialPort\src\qextserialport_p.h">
+      <Filter>RTSerialPort</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\RTFusion.h">
+      <Filter>RTIMULib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\RTFusionKalman4.h">
+      <Filter>RTIMULib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\RTFusionRTQF.h">
+      <Filter>RTIMULib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\RTIMUAccelCal.h">
+      <Filter>RTIMULib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\RTIMUCalDefs.h">
+      <Filter>RTIMULib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\RTIMUHal.h">
+      <Filter>RTIMULib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\RTIMULib.h">
+      <Filter>RTIMULib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\RTIMULibDefs.h">
+      <Filter>RTIMULib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\RTIMUMagCal.h">
+      <Filter>RTIMULib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\RTIMUSettings.h">
+      <Filter>RTIMULib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\RTMath.h">
+      <Filter>RTIMULib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMU.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMUDefs.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMUGD20HM303D.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMUGD20HM303DLHC.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMUGD20M303DLHC.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMULSM9DS0.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMUMPU9150.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMUMPU9250.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMUNull.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMUBMX055.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTPressure.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTPressureBMP180.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTPressureDefs.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTPressureLPS25H.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTPressureMS5611.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTPressureMS5637.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMULSM9DS1.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\RTIMULib\IMUDrivers\RTIMUBNO055.h">
+      <Filter>RTIMULib\IMUDrivers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\RTArduLinkHost\RTArduLinkHost.pri">
+      <Filter>RTArduLinkHost</Filter>
+    </None>
+    <None Include="..\..\RTIMULib\RTIMULIB LICENSE">
+      <Filter>RTIMULib</Filter>
+    </None>
+    <None Include="..\..\RTIMULib\RTIMULib.pri">
+      <Filter>RTIMULib</Filter>
+    </None>
+  </ItemGroup>
+</Project>

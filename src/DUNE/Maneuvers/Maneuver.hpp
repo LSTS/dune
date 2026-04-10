@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -123,7 +123,7 @@ namespace DUNE
 
       template <typename T>
       void
-      bindToManeuvers(T* task_obj, const std::vector<uint32_t>& list)
+      bindToManeuvers(T* task_obj, const std::vector<uint16_t>& list)
       {
         void (Maneuver::* startfunc)(const IMC::Maneuver*) = &Maneuver::startManeuver<T, IMC::Maneuver>;
 

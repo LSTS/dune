@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -135,7 +135,7 @@ namespace Transports
             uint16_t rv = m_sock.read(bfr, c_bfr_size, &addr);
             IMC::Message* msg = IMC::Packet::deserialize(bfr, rv);
             if (m_trace)
-              m_task.inf("incomming: %s", msg->getName());
+              DUNE_MSG(m_task.getName(), "incoming: " + std::string(msg->getName()));
 
             if (m_lcomms->isActive())
             {
