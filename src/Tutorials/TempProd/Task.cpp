@@ -76,7 +76,7 @@ namespace Tutorials
         {
           war("Reseting temperature to starting value: %f", m_initial_temp);
           m_temp.value = m_initial_temp;
-          applyEntityParameter(m_reset_temp, false);
+          //applyEntityParameter(m_reset_temp, false);
         }
       }
 

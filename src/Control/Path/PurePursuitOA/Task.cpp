@@ -94,9 +94,12 @@ namespace Control
         std::string m_obs_msg;
         std::vector<Obstacle> m_obstacles;
         Position finalPos;
+        Position endPoint;
         Position currPos;
         int oldAvoidState = 0;
         int currAvoidState = 0;
+        bool finalPosChanged = false;
+        bool hasStoredOriginal = false;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx)
@@ -337,7 +340,7 @@ namespace Control
             veicleObstacleDistance = sqrt(horizontalDistanceV*horizontalDistanceV+verticalDistanceV*verticalDistanceV);
 
             war("Obstacle %d @ %fm", counter++, veicleObstacleDistance);
-            war("I'm Here: %f %f", currPos.lon, currPos.lat);
+            inf("I'm Here: %f %f", currPos.lon, currPos.lat);
             
 
             if (obstacle.state == 'S') //para obstáculos estáticos
@@ -348,29 +351,29 @@ namespace Control
                 {
                   if (veicleObstacleDistance < obstacle.nogoZoneDistance)
                   {
-                    war("Trying to get out Static Circle Point");
+                    inf("Trying to get out Static Circle Point");
                     getOutStaticCircle(obstacle, horizontalDistanceV, verticalDistanceV);
                     avoidingcollision = 2;
                   }
                   else if (veicleObstacleDistance < obstacle.nogoZoneDistance + obstacle.safetyZoneDistance)
                   {
-                    war("Trying to avoid collision Static Circle Point");
+                    inf("Trying to avoid collision Static Circle Point");
                     goAroundStaticCircle(obstacle, horizontalDistanceV, verticalDistanceV);
                     avoidingcollision = 1;
                   }
                 }
                 else if (obstacle.type == 'Z') //caso de obstáculo ser zona
                 {
-                  //war("It's a static circle zone");
+                  //inf("It's a static circle zone");
                   if (veicleObstacleDistance < obstacle.radius + obstacle.nogoZoneDistance)
                   {
-                    war("Trying to get out Static Circle Zone");
+                    inf("Trying to get out Static Circle Zone");
                     getOutStaticCircle(obstacle, horizontalDistanceV, verticalDistanceV);
                     avoidingcollision = 2;
                   }
                   else if (veicleObstacleDistance < obstacle.radius + obstacle.nogoZoneDistance + obstacle.safetyZoneDistance)
                   {
-                    war("Trying to avoid collision Static Circle Zone");
+                    inf("Trying to avoid collision Static Circle Zone");
                     goAroundStaticCircle(obstacle, horizontalDistanceV, verticalDistanceV);
                     avoidingcollision = 1;
                   }
@@ -382,13 +385,13 @@ namespace Control
                 {
                   if (veicleObstacleDistance < obstacle.nogoZoneDistance)
                   {
-                    war("Trying to get out Static Rectangle Point");
+                    inf("Trying to get out Static Rectangle Point");
                     getOutStaticCircle(obstacle, horizontalDistanceV, verticalDistanceV);
                     avoidingcollision = 2;
                   }
                   else if (veicleObstacleDistance < obstacle.nogoZoneDistance + obstacle.safetyZoneDistance)
                   {
-                    war("Trying to avoid collision Static Rectangle Point");
+                    inf("Trying to avoid collision Static Rectangle Point");
                     goAroundStaticCircle(obstacle, horizontalDistanceV, verticalDistanceV);
                     avoidingcollision = 1;
                   }
@@ -400,7 +403,7 @@ namespace Control
                       (verticalDistanceO < obstacle.verticalDistance/2 + obstacle.nogoZoneDistance) & 
                       (verticalDistanceO > 0 - obstacle.verticalDistance/2 - obstacle.nogoZoneDistance)) //dentro da zona proibida
                   {
-                    war("Trying to get out Static Rectangle Zone");
+                    inf("Trying to get out Static Rectangle Zone");
                     getOutStaticRectangle(obstacle, horizontalDistanceO, verticalDistanceO);
                     avoidingcollision = 2;
                   }
@@ -409,7 +412,7 @@ namespace Control
                             (verticalDistanceO < obstacle.verticalDistance/2 + obstacle.nogoZoneDistance + obstacle.safetyZoneDistance) & 
                             (verticalDistanceO > 0 - obstacle.verticalDistance/2 - obstacle.nogoZoneDistance - obstacle.safetyZoneDistance)) //dentro da zona de segurança
                   {
-                    war("Trying to avoid collision Static Rectangle Poin");
+                    inf("Trying to avoid collision Static Rectangle Poin");
                     goAroundStaticRectangle(obstacle, horizontalDistanceO, verticalDistanceO);
                     avoidingcollision = 1;
                   }
@@ -489,16 +492,25 @@ namespace Control
                 }
               }
             }
-            war("Going to: %f %f", m_path.end_lon, m_path.end_lat);
-            war("Avoiding collision: %d", avoidingcollision);
+            inf("Going to: %f %f", m_path.end_lon, m_path.end_lat);
+            inf("Avoiding collision: %d", avoidingcollision);
           }
           
-          if (!avoidingcollision) //se não está a evitar colisão, continuar para o destino final
+          if (!avoidingcollision && m_ts.nearby) //se não está a evitar colisão, continuar para o destino final
           {
+            // Se estamos vindo de um desvio, atualizar para o destino original
+            if (hasStoredOriginal)
+            {
+              finalPos = endPoint;
+            }
+            
+            m_heading.value = Angles::normalizeRadian(atan2(latDist2verDist(finalPos.lat - currPos.lat), lonDist2horDist(finalPos.lon - currPos.lon, currPos.lat)));
+            
             m_path.end_lon = finalPos.lon;
             m_path.end_lat = finalPos.lat;
-
-            m_heading.value = Angles::normalizeRadian(atan2(latDist2verDist(finalPos.lat - currPos.lat), lonDist2horDist(finalPos.lon - currPos.lon, currPos.lat)));
+            m_ts.nearby = false;
+            finalPosChanged = false;
+            hasStoredOriginal = false;
           }
           return avoidingcollision;
         }
@@ -509,8 +521,8 @@ namespace Control
         void
         getOutStaticCircle(Obstacle obstacle, double veicObstHorDist, double veicObstVerDist)
         {
-          war("Getting out Static Circle");
-          double obstRadPosition; //posição angular do centro do obstáculo relativamente ao veículo -pi:pi
+          inf("Getting out Static Circle");
+          /* double obstRadPosition; //posição angular do centro do obstáculo relativamente ao veículo -pi:pi
           double nowHeading;
           double shift = 1.5*(obstacle.radius+obstacle.nogoZoneDistance);
           double horShift, verShift;  //meters
@@ -535,13 +547,13 @@ namespace Control
           m_path.end_lon = currPos.lon + lonShift;
           m_path.end_lat = currPos.lat + latShift;
 
-          m_heading.value = nowHeading;
+          m_heading.value = nowHeading; */
         }
         
         void
         getOutStaticRectangle(Obstacle obstacle, double veicObstHorDist, double veicObstVerDist)
         {
-          war("Getting out Static Rectangle");
+          inf("Getting out Static Rectangle");
 
           if ((veicObstHorDist < 0 - obstacle.horizontalDistance/2) &
               (veicObstVerDist > 0 - obstacle.verticalDistance/2))      //à esquerda do obstáculo
@@ -581,7 +593,7 @@ namespace Control
         void
         goAroundStaticCircle(Obstacle obstacle, double veicObstHorDist, double veicObstVerDist)
         {
-          war("Avoiding collision Static Circle");
+          inf("Avoiding collision Static Circle");
           
           double obstRadPosition; //posição angular do centro do obstáculo relativamente ao veículo -pi:pi
           double nowHeading;
@@ -589,10 +601,10 @@ namespace Control
           double horShift, verShift;  //meters
           double lonShift, latShift;  //degrees
           
-          obstRadPosition = atan2(veicObstVerDist, veicObstHorDist);
+          obstRadPosition = Angles::normalizeRadian(atan2(veicObstVerDist, veicObstHorDist));
 
-          // war("Obstacle Direction: %f", obstRadPosition/M_PI);
-          // war("Shift: %f", shift);
+          // inf("Obstacle Direction: %f", obstRadPosition/M_PI);
+          // inf("Shift: %f", shift);
 
           if (Angles::normalizeRadian(obstRadPosition - m_heading.value) > 0)
           {
@@ -603,27 +615,27 @@ namespace Control
             nowHeading = obstRadPosition - M_PI/2;
           }
 
-          // war("Heading Direction: %f", nowHeading/M_PI); 
+          inf("Heading Direction: %f", nowHeading*180/M_PI); 
           horShift = shift * cos(nowHeading);
           verShift = shift * sin(nowHeading);
 
-          // war("Horizontal Shift: %f", horShift);
-          // war("Vertical Shift: %f", verShift);
-          // war("Lon/Lat center obstacle: %f %f", obstacle.centerLongitude, obstacle.centerLatitude);
+          // inf("Horizontal Shift: %f", horShift);
+          // inf("Vertical Shift: %f", verShift);
+          // inf("Lon/Lat center obstacle: %f %f", obstacle.centerLongitude, obstacle.centerLatitude);
           lonShift = horDist2lonDist(horShift, obstacle.centerLatitude);
           latShift = verDist2latDist(verShift);
 
           m_path.end_lon = currPos.lon + lonShift;
           m_path.end_lat = currPos.lat + latShift;
           
-          m_heading.value = nowHeading;
+          //m_heading.value = nowHeading;
           
         }
 
         void
         goAroundStaticRectangle(Obstacle obstacle, double veicObstHorDist, double veicObstVerDist)
         {
-          war("Avoiding collision Static Rectangle");
+          inf("Avoiding collision Static Rectangle");
           if ((veicObstHorDist < 0 - obstacle.horizontalDistance/2 - obstacle.nogoZoneDistance) &
               (veicObstVerDist > 0 - obstacle.verticalDistance/2 - obstacle.nogoZoneDistance))      //à esquerda do obstáculo
           {
@@ -683,65 +695,82 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         { 
-          war("3333333333");
-          inf("Final Lon: %f", finalPos.lon);
-          inf("Final Lat: %f", finalPos.lat);
+          war("Step----------------------------------------");
           double curr_lat = state.lat;
           double curr_lon = state.lon;
           WGS84::displace(state.x, state.y, &curr_lat, &curr_lon);
-          war("2222222222");
-          inf("Final Lon: %f", finalPos.lon);
-          inf("Final Lat: %f", finalPos.lat);
 
-          finalPos = {Angles::degrees(ts.lon_en), Angles::degrees(ts.lat_en)}; //CORRIGIR ESTA PORCARIA QUE AUMENTA O VALOR A CADA ITERAÇÃO DA FUNÇÃO STEP() SOMEHOW
+          finalPos = {Angles::degrees(ts.lon_en), Angles::degrees(ts.lat_en)};
 
-          war("----------------------------------------");
-          war("1111111111");
-          inf("Final Lon: %f", finalPos.lon);
-          inf("Final Lat: %f", finalPos.lat);
+          inf("Next Lon: %f", finalPos.lon);
+          inf("Next Lat: %f", finalPos.lat);
+
+          war("Final Lon: %f", endPoint.lon);
+          war("Final Lat: %f", endPoint.lat);
           if (ts.nearby)
           {
-            war("Nearby");
+            inf("Nearby");
           }
           else
           {
-            war("Not Nearby");
+            inf("Not Nearby");
           }
-          
           currPos.lon = Angles::degrees(curr_lon);          //posição atual do veículo em coordenadas geográficas para fazer 
           currPos.lat = Angles::degrees(curr_lat);          //os cálculos com posição do obstáculo definidas em coordendas geográficas
           m_path.start_lat = curr_lat;                      //guardar posição atual como inicial
           m_path.start_lon = curr_lon;                      //guardar posição atual como inicial
-
-
+          
           m_path.end_lon = Angles::degrees(ts.lon_en);                       //guardar o destino original
           m_path.end_lat = Angles::degrees(ts.lat_en);                       //guardar o destino original
-
 
           m_path.speed = ts.speed;
           m_path.end_z = ts.end.z;
           m_path.end_z_units = ts.end.z_units;
-          /*******************************/
+
           currAvoidState = checkPosition(m_obstacles);
 
 
+          m_path.end_lon = Angles::normalizeRadian(Angles::radians(m_path.end_lon));
+          m_path.end_lat = Angles::normalizeRadian(Angles::radians(m_path.end_lat));
+
+          //UNDER CONSTRUCTION*********************************************
           if ( currAvoidState != oldAvoidState)
           {
-            
             inf("Mudou de estado");
-            
-            m_path.end_lon = Angles::normalizeRadian(Angles::radians(m_path.end_lon));
-            m_path.end_lat = Angles::normalizeRadian(Angles::radians(m_path.end_lat));
-            
-            m_ts.nearby = false;
+
+            war("CCCCCCCCCCCC");
+
             
             dispatch(m_path, DF_LOOP_BACK);
-            
-            oldAvoidState = currAvoidState;
+            setEndPoint(&m_path);
+          
+            finalPosChanged = true;
+
           }
 
-          setEndPoint(&m_path);
-          /*******************************/
+          if (!hasStoredOriginal)
+          {
+            war("AAAAAAAAAAAA");
+            endPoint = {Angles::degrees(ts.lon_en), Angles::degrees(ts.lat_en)};
+            hasStoredOriginal = true;
+          }
+
+          if (ts.nearby && !currAvoidState)
+          {
+            war("BBBBBBBBBBBB");
+
+              finalPos = endPoint;
+              m_path.end_lon = endPoint.lon;
+              m_path.end_lat = endPoint.lat;
+
+              m_heading.value = Angles::normalizeRadian(atan2(latDist2verDist(finalPos.lat - currPos.lat), lonDist2horDist(finalPos.lon - currPos.lon, currPos.lat)));
+              
+              m_ts.nearby = false;
+          }
+          //UNDER CONSTRUCTION END*********************************************
+
+
+          oldAvoidState = currAvoidState;
 
           //war("lat %f lon %f", curr_lat, curr_lon);
 
