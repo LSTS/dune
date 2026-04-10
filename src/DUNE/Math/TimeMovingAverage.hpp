@@ -67,6 +67,11 @@ namespace DUNE
       unsigned m_sample_size;
 
     public:
+      LinearAccumulator(void):
+        m_accum(T(0)),
+        m_sample_size(0)
+      { }
+
       void
       add(T value) override
       {
@@ -103,6 +108,12 @@ namespace DUNE
       unsigned m_sample_size;
 
     public:
+      CircularAccumulator(void):
+        m_sin_accum(T(0)),
+        m_cos_accum(T(0)),
+        m_sample_size(0)
+      { }
+
       void
       add(T value) override
       {
@@ -114,6 +125,9 @@ namespace DUNE
       void
       remove(T value) override
       {
+        if (m_sample_size == 0)
+          return;
+
         m_sin_accum -= std::sin(Angles::normalizeRadian(value));
         m_cos_accum -= std::cos(Angles::normalizeRadian(value));
         m_sample_size--;
@@ -138,19 +152,18 @@ namespace DUNE
       //! Queue to store timestamped values.
       std::queue<Entry> m_queue;
       //! Accumulator for the values in the current window.
-      Accumulator<T>* m_accum;
+      std::unique_ptr<Accumulator<T>> m_accum;
       //! Size of the moving window in seconds.
       double m_window_size;
 
     public:
       TimeMovingAverage(double window_size, bool circular = false):
-        m_accum(circular ? static_cast<Accumulator<T>*>(new CircularAccumulator<T>()) : static_cast<Accumulator<T>*>(new LinearAccumulator<T>())),
         m_window_size(window_size)
-      { }
-
-      ~TimeMovingAverage(void)
       {
-        delete m_accum;
+        if (circular)
+          m_accum = std::make_unique<CircularAccumulator<T>>();
+        else
+          m_accum = std::make_unique<LinearAccumulator<T>>();
       }
 
       void
