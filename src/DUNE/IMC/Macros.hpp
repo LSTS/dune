@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: 09f2a9261b1c07a6455248712034dad9                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -718,6 +718,10 @@
 #define DUNE_IMC_VERSIONINFO 2021
 //! TotalHeading identification number.
 #define DUNE_IMC_TOTALHEADING 2022
+//! FTPTransmissionRequest identification number.
+#define DUNE_IMC_FTPTRANSMISSIONREQUEST 2025
+//! FTPTransmissionStatus identification number.
+#define DUNE_IMC_FTPTRANSMISSIONSTATUS 2026
 //! TypedEntityParameterEditor identification number.
 #define DUNE_IMC_TYPEDENTITYPARAMETEREDITOR 2036
 

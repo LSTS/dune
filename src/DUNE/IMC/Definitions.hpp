@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: 09f2a9261b1c07a6455248712034dad9                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -27763,6 +27763,191 @@ namespace DUNE
 
       void
       setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! FTP Transmission Request.
+    class FTPTransmissionRequest: public Message
+    {
+    public:
+      //! Type.
+      enum TypeEnum
+      {
+        //! File.
+        TYPE_FILE = 0,
+        //! Text.
+        TYPE_TEXT = 1
+      };
+
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Append.
+        OP_APPEND = 0,
+        //! Overwrite.
+        OP_OVERWRITE = 1
+      };
+
+      //! Id.
+      uint32_t id;
+      //! Type.
+      uint8_t type;
+      //! Operation.
+      uint8_t op;
+      //! URL.
+      std::string url;
+      //! Username.
+      std::string username;
+      //! Password.
+      std::string password;
+      //! Data.
+      std::string data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2025;
+      }
+
+      FTPTransmissionRequest(void);
+
+      FTPTransmissionRequest*
+      clone(void) const
+      {
+        return new FTPTransmissionRequest(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FTPTransmissionRequest::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FTPTransmissionRequest";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 6;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(url) + IMC::getSerializationSize(username) + IMC::getSerializationSize(password) + IMC::getSerializationSize(data);
+      }
+
+      uint16_t
+      getSubId(void) const;
+
+      void
+      setSubId(uint16_t subid);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! FTP Transmission Status.
+    class FTPTransmissionStatus: public Message
+    {
+    public:
+      //! Status.
+      enum StatusEnum
+      {
+        //! Success.
+        STAT_SUCCESS = 0,
+        //! Temporary Error.
+        STAT_TEMPORARY_ERROR = 1,
+        //! Permanent Error.
+        STAT_PERMANENT_ERROR = 2,
+        //! Invalid Address.
+        STAT_INV_ADDR = 3
+      };
+
+      //! Id.
+      uint32_t id;
+      //! Status.
+      uint8_t status;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2026;
+      }
+
+      FTPTransmissionStatus(void);
+
+      FTPTransmissionStatus*
+      clone(void) const
+      {
+        return new FTPTransmissionStatus(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FTPTransmissionStatus::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FTPTransmissionStatus";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 5;
+      }
+
+      uint16_t
+      getSubId(void) const;
+
+      void
+      setSubId(uint16_t subid);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;

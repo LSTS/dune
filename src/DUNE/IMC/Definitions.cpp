@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: 09f2a9261b1c07a6455248712034dad9                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -29337,6 +29337,184 @@ namespace DUNE
     TotalHeading::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    FTPTransmissionRequest::FTPTransmissionRequest(void)
+    {
+      m_header.mgid = 2025;
+      clear();
+    }
+
+    void
+    FTPTransmissionRequest::clear(void)
+    {
+      id = 0;
+      type = 0;
+      op = 0;
+      url.clear();
+      username.clear();
+      password.clear();
+      data.clear();
+    }
+
+    bool
+    FTPTransmissionRequest::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FTPTransmissionRequest& other__ = static_cast<const FTPTransmissionRequest&>(msg__);
+      if (id != other__.id) return false;
+      if (type != other__.type) return false;
+      if (op != other__.op) return false;
+      if (url != other__.url) return false;
+      if (username != other__.username) return false;
+      if (password != other__.password) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    FTPTransmissionRequest::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    FTPTransmissionRequest::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(id, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(url, ptr__);
+      ptr__ += IMC::serialize(username, ptr__);
+      ptr__ += IMC::serialize(password, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FTPTransmissionRequest::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(url, bfr__, size__);
+      bfr__ += IMC::deserialize(username, bfr__, size__);
+      bfr__ += IMC::deserialize(password, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FTPTransmissionRequest::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(url, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(username, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(password, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FTPTransmissionRequest::getSubId(void) const
+    {
+      return id;
+    }
+
+    void
+    FTPTransmissionRequest::setSubId(uint16_t subid)
+    {
+      id = (uint32_t)subid;
+    }
+
+    void
+    FTPTransmissionRequest::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "id", id, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "url", url, nindent__);
+      IMC::toJSON(os__, "username", username, nindent__);
+      IMC::toJSON(os__, "password", password, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    FTPTransmissionStatus::FTPTransmissionStatus(void)
+    {
+      m_header.mgid = 2026;
+      clear();
+    }
+
+    void
+    FTPTransmissionStatus::clear(void)
+    {
+      id = 0;
+      status = 0;
+    }
+
+    bool
+    FTPTransmissionStatus::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FTPTransmissionStatus& other__ = static_cast<const FTPTransmissionStatus&>(msg__);
+      if (id != other__.id) return false;
+      if (status != other__.status) return false;
+      return true;
+    }
+
+    int
+    FTPTransmissionStatus::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    FTPTransmissionStatus::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(id, ptr__);
+      ptr__ += IMC::serialize(status, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FTPTransmissionStatus::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FTPTransmissionStatus::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(id, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FTPTransmissionStatus::getSubId(void) const
+    {
+      return id;
+    }
+
+    void
+    FTPTransmissionStatus::setSubId(uint16_t subid)
+    {
+      id = (uint32_t)subid;
+    }
+
+    void
+    FTPTransmissionStatus::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "id", id, nindent__);
+      IMC::toJSON(os__, "status", status, nindent__);
     }
 
     TypedEntityParameterEditor::TypedEntityParameterEditor(void)
