@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -31,6 +31,7 @@
 // ISO C++ 98 headers.
 #include <sstream>
 #include <cstddef>
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/IMC/Constants.hpp>
@@ -57,6 +58,19 @@ namespace DUNE
   {
     //! Maximum size of a log book entry message.
     const static size_t c_log_message_max_size = 1024;
+    //! String to data type map
+    static const std::map<std::string, IMC::TypedEntityParameter::TypeEnum> c_str_to_type = {
+      {"boolean",       IMC::TypedEntityParameter::TYPE_BOOL},
+      {"integer",       IMC::TypedEntityParameter::TYPE_INT},
+      {"real",          IMC::TypedEntityParameter::TYPE_FLOAT},
+      {"string",        IMC::TypedEntityParameter::TYPE_STRING},
+      {"ipv4-address",  IMC::TypedEntityParameter::TYPE_STRING},
+      {"list:boolean",  IMC::TypedEntityParameter::TYPE_LIST_BOOL},
+      {"list:integer",  IMC::TypedEntityParameter::TYPE_LIST_INT},
+      {"list:real",     IMC::TypedEntityParameter::TYPE_LIST_FLOAT},
+      {"list:string",   IMC::TypedEntityParameter::TYPE_LIST_STRING},
+      {"list:ipv4-address",  IMC::TypedEntityParameter::TYPE_LIST_STRING}
+    };
 
     Task::Task(const std::string& n, Context& ctx):
       m_ctx(ctx),
@@ -72,24 +86,35 @@ namespace DUNE
       m_args.active = false;
 
       param(DTR_RT("Entity Label"), m_args.elabel)
-      .defaultValue("")
+      .editable(false)
       .description(DTR("Main entity label"));
 
       param(DTR_RT("Execution Priority"), m_args.priority)
+      .editable(false)
       .defaultValue("10")
       .description(DTR("Execution priority"));
 
       param(DTR_RT("Activation Time"), m_args.act_time)
-      .defaultValue("0");
+      .editable(false)
+      .defaultValue("0")
+      .minimumValue("0")
+      .units(Units::Second)
+      .description(DTR("Expected activation time in seconds."));
 
       param(DTR_RT("Deactivation Time"), m_args.deact_time)
-      .defaultValue("0");
+      .editable(false)
+      .defaultValue("0")
+      .minimumValue("0")
+      .units(Units::Second)
+      .description(DTR("Expected deactivation time in seconds."));
 
       param(DTR_RT("Debug Level"), m_debug_level_string)
       .defaultValue("None")
-      .values("None, Debug, Trace, Spew");
+      .values("None, Debug, Trace, Spew")
+      .description(DTR("Debug level for human-readable messages"));
 
       param(DTR_RT("Loopback Internal Messages"), m_args.loopback)
+      .editable(false)
       .defaultValue("false")
       .description("Loopback internal messages, such as EntityState"
                    " and EntityParameters");
@@ -104,6 +129,7 @@ namespace DUNE
       bind<IMC::PopEntityParameters>(this);
       bind<IMC::QueryEntityState>(this);
       bind<IMC::RestartSystem>(this);
+      bind<IMC::QueryTypedEntityParameters>(this);
     }
 
     unsigned int
@@ -206,22 +232,6 @@ namespace DUNE
     {
       m_honours_active = true;
 
-      std::string scope_str = Parameter::scopeToString(def_scope);
-      param(DTR_RT("Active - Scope"), m_args.active_scope)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue(scope_str)
-      .values(Parameter::scopeValues())
-      .description(DTR("Scoped of the 'Active' parameter"));
-
-      std::string visibility_str = Parameter::visibilityToString(def_visibility);
-      param(DTR_RT("Active - Visibility"), m_args.active_visibility)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue(visibility_str)
-      .values(Parameter::visibilityValues())
-      .description(DTR("Visibility of the 'Active' parameter"));
-
       param(DTR_RT("Active"), m_args.active)
       .visibility(def_visibility)
       .scope(def_scope)
@@ -232,49 +242,27 @@ namespace DUNE
     void
     Task::updateParameters(bool act_deact)
     {
-      if (m_entity->getLabel().empty())
-        m_entity->setLabel(m_args.elabel);
-      if (m_args.elabel != m_entity->getLabel())
-        m_params.set(DTR_RT("Entity Label"), m_entity->getLabel());
-      m_entity->setActTimes(m_args.act_time, m_args.deact_time);
-      m_entity->setLoopback(m_args.loopback);
-      m_entity->reportInfo();
-
-      if (m_debug_level_string == "Debug")
-        m_debug_level = DEBUG_LEVEL_DEBUG;
-      else if (m_debug_level_string == "Trace")
-        m_debug_level = DEBUG_LEVEL_TRACE;
-      else if (m_debug_level_string == "Spew")
-        m_debug_level = DEBUG_LEVEL_SPEW;
-      else
-        m_debug_level = DEBUG_LEVEL_NONE;
+      if (paramChanged(m_debug_level_string))
+      {
+        const auto it = c_debug_level_str_to_enum.find(m_debug_level_string);
+        m_debug_level = (it != c_debug_level_str_to_enum.end()) ? it->second : DEBUG_LEVEL_NONE;
+      }
 
       onUpdateParameters();
 
-      if (m_honours_active)
+      if (m_honours_active && act_deact)
       {
-        std::map<std::string, Parameter*>::iterator itr = m_params.find("Active");
-
-        if (paramChanged(m_args.active_scope))
-          itr->second->scope(m_args.active_scope);
-
-        if (paramChanged(m_args.active_visibility))
-          itr->second->visibility(m_args.active_visibility);
-
-        if (act_deact)
+        if (paramChanged(m_args.active))
         {
-          if (paramChanged(m_args.active))
-          {
-            war("due to params active change, requesting %s", m_args.active ? "activation" : "deactivation");
-            if (m_args.active)
-              requestActivation();
-            else
-              requestDeactivation();
-          }
+          war("due to params active change, requesting %s", m_args.active ? "activation" : "deactivation");
+          if (m_args.active)
+            requestActivation();
           else
-          {
-            m_entity->reportActivationState();
-          }
+            requestDeactivation();
+        }
+        else
+        {
+          m_entity->reportActivationState();
         }
       }
 
@@ -302,7 +290,7 @@ namespace DUNE
       spew("activate");
 
       if (m_honours_active)
-        applyEntityParameter(m_args.active, true);
+        applyEntityParameter(&m_args.active, true);
 
       spew("calling on activation");
       onActivation();
@@ -321,7 +309,7 @@ namespace DUNE
       spew("activation failed: %s", reason.c_str());
       
       if (m_honours_active)
-        applyEntityParameter(m_args.active, false);
+        applyEntityParameter(&m_args.active, false);
 
       m_entity->failActivation(reason);
     }
@@ -347,7 +335,7 @@ namespace DUNE
       spew("deactivate");
 
       if (m_honours_active)
-        applyEntityParameter(m_args.active, false);
+        applyEntityParameter(&m_args.active, false);
 
       spew("calling on deactivation");
       onDeactivation();
@@ -402,7 +390,7 @@ namespace DUNE
 
           if (m_honours_active)
           {
-            Parameter::Scope active_scope = Parameter::scopeFromString(m_args.active_scope);
+            Parameter::Scope active_scope = getParameterScope(&m_args.active);
             if (m_args.active && ((active_scope == Parameter::SCOPE_GLOBAL) || (active_scope == Parameter::SCOPE_IDLE)))
               requestActivation();
           }
@@ -639,6 +627,87 @@ namespace DUNE
     }
 
     void
+    Task::onQueryTypedEntityParameters(const IMC::QueryTypedEntityParameters* msg)
+    {
+      if (msg->op != IMC::QueryTypedEntityParameters::OP_REQUEST)
+        return;
+
+      if (!msg->entity_name.empty() && msg->entity_name.compare(std::string(getEntityLabel())) != 0)
+        return;
+
+      IMC::QueryTypedEntityParameters reply;
+      reply.op = IMC::QueryTypedEntityParameters::OP_REPLY;
+      reply.request_id = msg->request_id;
+      reply.entity_name = std::string(getEntityLabel());
+
+      if (!m_param_editor.empty())
+      {
+        IMC::TypedEntityParameterEditor editor;
+        editor.value = m_param_editor;
+        reply.parameters.push_back(editor);
+      }
+
+      std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
+      for (; itr != m_params.end(); itr++)
+      {
+        IMC::TypedEntityParameter teparam;
+
+        Parameter* p = itr->second;
+        teparam.name = p->name();
+        try
+        {
+          teparam.type = c_str_to_type.at(p->getType());
+        }
+        catch (const std::out_of_range& e)
+        {
+          throw std::runtime_error("invalid parameter type: " + p->getType()); 
+        }
+        teparam.default_value = p->value().empty() ? p->defaultValue() : p->value();
+        teparam.units = Units::getAbbrev(p->units());
+        teparam.description = p->description();
+        teparam.values_list = p->values();
+
+        teparam.min_value = p->minimumValue().empty() ?
+                          -std::numeric_limits<float>::max() :
+                          std::stof(p->minimumValue());
+        teparam.max_value = p->maximumValue().empty() ?
+                          std::numeric_limits<float>::max() :
+                          std::stof(p->maximumValue());
+
+        teparam.list_min_size = p->minimumSize() == UINT_MAX ? 
+                              0 : p->minimumSize();
+        teparam.list_max_size = p->maximumSize();
+
+        // if parameter is not editable set visibility accordingly
+        teparam.visibility = p->getVisibility();
+        if (!p->editable())
+          teparam.visibility += 2;
+        
+        teparam.scope = p->getScope();
+
+        auto values_if = p->valuesIf();
+        for (auto v : values_if)
+        {
+          IMC::ValuesIf value;
+          value.param = v->name;
+          value.value = v->equals;
+          value.values_list = v->values;
+          teparam.values_if_list.push_back(value);
+        }
+
+        reply.parameters.push_back(teparam);
+      }
+
+      dispatch(reply);
+    }
+
+    void
+    Task::consume(const IMC::QueryTypedEntityParameters* msg)
+    {
+      onQueryTypedEntityParameters(msg);
+    }
+
+    void
     Task::writeParamsXML(std::ostream& os) const
     {
       if (onWriteParamsXML(os))
@@ -788,17 +857,51 @@ namespace DUNE
     }
 
     void
+    Task::setParameterAttributes(const std::string& name)
+    {
+      try
+      {
+        auto itr = m_params.find(name);
+        if (itr == m_params.end())
+          throw std::runtime_error("invalid parameter name: '" + name + "'");
+
+        std::string section = getName();
+        auto attributes = m_ctx.config.attributes(section, name);
+
+        std::string scope = attributes.get<std::string>(Parameter::c_scope_str, "");
+        if (!scope.empty())
+          itr->second->scope(Parameter::scopeFromString(scope));
+
+        std::string visibility = attributes.get<std::string>(Parameter::c_visibility_str, "");
+        if (!visibility.empty())
+          itr->second->visibility(Parameter::visibilityFromString(visibility));
+
+        std::string editable = attributes.get<std::string>(Parameter::c_editable_str, "");
+        if (!editable.empty())
+          itr->second->editable(editable);
+      }
+      catch(Parsers::Config::OptionAttributeEmpty& e)
+      { }
+      catch(const std::exception& e)
+      {
+        war("unbale to set parameter attributes: %s", e.what());
+      }
+    }
+
+    void
     Task::loadConfig(void)
     {
+      std::string name = getName();
       std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
       for (; itr != m_params.end(); ++itr)
       {
-        std::string value = m_ctx.config.get(getName(), itr->second->name());
+        setParameterAttributes(itr->second->name());
+        std::string value = m_ctx.config.get(name, itr->second->name());
         m_params.set(itr->second->name(), value);
       }
 
       // Check for invalid parameter names.
-      std::map<std::string, std::string> options = m_ctx.config.getSection(getName());
+      std::map<std::string, std::string> options = m_ctx.config.getSection(name);
       std::map<std::string, std::string>::const_iterator pitr = options.begin();
       for (; pitr != options.end(); ++pitr)
       {
@@ -806,7 +909,7 @@ namespace DUNE
           continue;
 
         // Ignore Supervisors.Delegator sections
-        std::string section = getName();
+        std::string section = name;
         std::string::size_type p = section.find('/');
         if(!std::strcmp(section.substr(0,p).c_str(),"Supervisors.Delegator"))
           continue;
@@ -817,6 +920,16 @@ namespace DUNE
 
       try
       {
+        if (m_entity->getLabel().empty())
+          m_entity->setLabel(m_args.elabel);
+        else
+          m_params.apply(&m_args.elabel, m_entity->getLabel());
+
+        m_entity->setActTimes(m_args.act_time, m_args.deact_time);
+        m_entity->reportInfo();
+
+        m_entity->setLoopback(m_args.loopback);
+
         updateParameters(false);
       }
       catch (RestartNeeded& e)

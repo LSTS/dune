@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -138,8 +138,8 @@ namespace Control
                 double leftThrust = m_speed + hdng;
                 double rightThrust = m_speed - hdng;
                 
-                m_thrust[0].value = Math::trimValue(leftThrust, -1.0, 1.0);
-                m_thrust[1].value = Math::trimValue(rightThrust, -1.0, 1.0);
+                m_thrust[0].value = Math::trimValue(leftThrust, -1.0, 1.0) * m_args.scale;
+                m_thrust[1].value = Math::trimValue(rightThrust, -1.0, 1.0) * m_args.scale;
 
                 if (tuples.get("Stop", 0))
                   m_speed = m_thrust[0].value = m_thrust[1].value = 0;

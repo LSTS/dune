@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -91,10 +91,10 @@ namespace DUNE
       IO::NativeHandle
       doGetNative(void) const
       {
-#if defined(DUNE_OS_LINUX)
+#if defined(DUNE_OS_LINUX) || defined(DUNE_OS_OPENBSD)
         return m_can_socket; // Makes Poll::poll work
 #else
-        return nullptr;
+        return NULL;
 #endif
       }
 

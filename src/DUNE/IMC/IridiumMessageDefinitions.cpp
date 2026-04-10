@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -138,7 +138,6 @@ namespace DUNE
       buffer += DUNE::IMC::deserialize(mgid, buffer, length);
       buffer += DUNE::IMC::deserialize(timestamp, buffer, length);
       msg = DUNE::IMC::Factory::produce(mgid);
-      msg->setTimeStamp(timestamp);
 
       if (msg == NULL)
       {
@@ -146,6 +145,7 @@ namespace DUNE
         return 0;
       }
 
+      msg->setTimeStamp(timestamp);
       buffer += msg->deserializeFields(buffer, length);
 
       return buffer - start;

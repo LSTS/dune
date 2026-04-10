@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -77,9 +77,6 @@ namespace Sensors
         .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
                      "or \"uart://DEVICE:BAUD\"");
 
-        param(DTR_RT("Power On Delay"), m_args.pwr_on_delay)
-        .defaultValue("0.0");
-
         param("Input Timeout", m_args.input_timeout)
         .defaultValue("4.0")
         .minimumValue("1.0")
@@ -98,16 +95,13 @@ namespace Sensors
       bool
       onConnect() override
       {
-        Delay::wait(m_args.pwr_on_delay);
-
         try
         {        
           m_handle = openSocketTCP(m_args.io_dev);
 
           if (m_handle == nullptr)
           {
-            m_handle = openUART(m_args.io_dev);
-            static_cast<SerialPort*>(m_handle)->setCanonicalInput(true);
+            m_handle = openUART(m_args.io_dev, true);
             m_uart = true;
           }
 

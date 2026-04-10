@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -98,6 +98,8 @@ namespace Transports
       size_t queue_max;
       //! Timeout in seconds for the general monitor
       double general_monitor_timeout;
+      //! Driver timeout.
+      double driver_timeout;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -130,12 +132,14 @@ namespace Transports
       Counter<double> m_monitor_check_timer;
       //! State of task.
       uint8_t m_state;
-      //! rx queue size.
+      //! RX queue size.
       unsigned m_rx_queue_size;
-      //! tx queue size
+      //! TX queue size.
       unsigned m_tx_queue_size;
-      //! General Monitor
+      //! General Monitor.
       Counter<double> m_general_monitor;
+      //! Nothing to read, nothing to write.
+      bool m_idle;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -149,7 +153,8 @@ namespace Transports
         m_error_count(0),
         m_state(Status::CODE_INIT),
         m_rx_queue_size(99),
-        m_tx_queue_size(99)
+        m_tx_queue_size(99),
+        m_idle(false)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
@@ -234,9 +239,17 @@ namespace Transports
         .minimumValue("60.0")
         .description("Timeout in seconds for the general monitor");
 
+        param("Driver Timeout", m_args.driver_timeout)
+        .minimumValue("0.0")
+        .defaultValue("5.0")
+        .units(Units::Second)
+        .description("Driver timeout for command responses. If value is 0, "
+                     "the driver won't wait for responses.");
+
         bind<IMC::IridiumMsgTx>(this);
         bind<IMC::IoEvent>(this);
         bind<IMC::EntityState>(this);
+        bind<IMC::VehicleMedium>(this);
         m_queued_mt = 0;
       }
 
@@ -287,6 +300,9 @@ namespace Transports
           trace("Setting general monitor timeout to %f seconds", m_args.general_monitor_timeout);
           m_general_monitor.setTop(m_args.general_monitor_timeout);
         }
+
+        if (paramChanged(m_args.driver_timeout) && m_driver)
+          m_driver->setDriverTimeout(m_args.driver_timeout);
       }
 
       //! Acquire resources.
@@ -627,12 +643,12 @@ namespace Transports
           const char* errorMsg = msg.c_str();
           if (errorMsg != nullptr && *errorMsg != '\0')
           {
-              msg = errorMsg;
-              sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_ERROR, msg);
+            msg = errorMsg;
+            sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_ERROR, msg);
           }
           else
           {
-              sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
+            sendTxRequestStatus(*itr, IMC::IridiumTxStatus::TXSTATUS_EXPIRED);
           }
           delete *itr;
           itr = m_tx_requests.erase(itr);
@@ -657,35 +673,37 @@ namespace Transports
         war("Queue cleared");
 
         // Reset clear queue flag
-        applyEntityParameter(m_args.clear_queue, false);
+        applyEntityParameter(&m_args.clear_queue, false);
       }
 
       bool
-      receptionSequence()
+      receptionSequence(void)
       {
         if (m_driver->hasRingAlert())
           m_driver->checkMailBoxAlert();
         else if (m_driver->getQueuedMT() > 0 || m_mbox_check_timer.overflow())
           m_driver->checkMailBox();
-        else if(m_driver->getQueuedMT() == 0 && m_tx_request == NULL) //No messages to be received or sent
+        else if (m_driver->getQueuedMT() == 0 && m_tx_request == NULL && !m_idle)
         {
           unsigned src_adr = getSystemId();
           unsigned src_eid = getEntityId();
           const std::vector<char> data(1);
           TxRequest* empty_req = new TxRequest(src_adr, src_eid, 0xFFFF, 0, 0, data);
-          sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY,"No message to be received or sent.");
-          // clear empty request
+          sendTxRequestStatus(empty_req, IMC::IridiumTxStatus::TXSTATUS_EMPTY, "No message to be received or sent.");
           delete empty_req;
-          debug(DTR("No message to be received or sent."));
-
+          spew("No message to be received or sent.");
+          m_idle = true;
           return false;
         }
+        else if (m_idle)
+          return false;
 
+        m_idle = false;
         return true;
       }
 
       bool
-      transmissionSequence()
+      transmissionSequence(void)
       {
         if (m_tx_request != NULL)
         {
@@ -776,7 +794,7 @@ namespace Transports
         //get rx and tx queue size
         unsigned rx_queue_size = m_driver->getQueuedMT();
         unsigned tx_queue_size = m_tx_requests.size();
-        if(m_rx_queue_size != rx_queue_size || m_tx_queue_size != tx_queue_size)
+        if (m_rx_queue_size != rx_queue_size || m_tx_queue_size != tx_queue_size)
         {
           m_rx_queue_size = rx_queue_size;
           m_tx_queue_size = tx_queue_size;
@@ -784,6 +802,16 @@ namespace Transports
           description += String::str("queue: rx:%u, tx:%u", rx_queue_size, tx_queue_size);
           setEntityState(IMC::EntityState::ESTA_NORMAL, description);
         }
+      }
+
+      void
+      consume(const IMC::VehicleMedium* msg)
+      {
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->medium == IMC::VehicleMedium::VM_UNDERWATER)
+          m_general_monitor.reset();
       }
 
       //! Main loop.
@@ -849,7 +877,7 @@ namespace Transports
       }
 
       void
-      checkError()
+      checkError(void)
       {
         if (m_error_timer.overflow())
         {

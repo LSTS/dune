@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -95,10 +95,6 @@ namespace Power
       SerialPort* m_uart;
       //! Control Interface.
       UCTK::Interface* m_ctl;
-      //! Current.
-      IMC::Current m_current[c_adcs_count/2-1];
-      //! Voltage.
-      IMC::Voltage m_voltage[c_adcs_count/2];
       //! Task arguments.
       Arguments m_args;
 

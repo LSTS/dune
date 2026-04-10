@@ -67,6 +67,8 @@ namespace DUNE
     static const char* c_invalid_sampling_desc = "<td>Invalid</td>";
     //! Not supported Sampling description.
     static const char* c_not_supported_sampling_desc = "<td>Not supported</td>";
+    //! Entity state dispatch period (s).
+    static constexpr uint8_t c_entity_state_dispatch_period = 5; 
 
     BasicDeviceDriver::BasicDeviceDriver( const std::string &name, Tasks::Context &ctx ):
       Tasks::Task(name, ctx),
@@ -84,12 +86,12 @@ namespace DUNE
       m_uri(),
       m_honours_conf_samp(false),
       m_is_sampling(false),
-      m_sample_timer(0.0f),
       m_periodicity_timer(0.0f),
       m_conf_samp_modes(CSM_NO_CONF_SAMP),
       m_conf_samp_mode(CSM_NO_CONF_SAMP),
       m_honours_vp(false),
-      m_vp_timer(0.0f)
+      m_vp_timer(0.0f),
+      m_state_timer(c_entity_state_dispatch_period)
     {
       paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                   Tasks::Parameter::VISIBILITY_DEVELOPER, 
@@ -190,18 +192,6 @@ namespace DUNE
           else
             m_periodicity_timer.setTop(0.0f);
         }
-
-        if (paramChanged(m_bdd_args.sample_time_duration_visibility))
-          setParameterVisbility(c_sample_time_duration, m_bdd_args.sample_time_duration_visibility);
-
-        if (paramChanged(m_bdd_args.sample_time_duration_scope))
-          setParameterScope(c_sample_time_duration, m_bdd_args.sample_time_duration_scope);
-
-        if (paramChanged(m_bdd_args.periodicity_data_sampling_visibility))
-          setParameterVisbility(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_visibility);
-
-        if (paramChanged(m_bdd_args.periodicity_data_sampling_scope))
-          setParameterScope(c_periodicity_data_sampling, m_bdd_args.periodicity_data_sampling_scope);
       }
 
       if (m_honours_vp)
@@ -278,20 +268,6 @@ namespace DUNE
       .units(Units::Second)
       .description(samp_dur_description.str());
 
-      param(std::string(c_sample_time_duration) + " - Visibility", m_bdd_args.sample_time_duration_visibility)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue("developer")
-      .values(Parameter::visibilityValues())
-      .description("Visibility of the '" + std::string(c_sample_time_duration) + "' parameter");
-
-      param(std::string(c_sample_time_duration) + " - Scope", m_bdd_args.sample_time_duration_scope)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue("global")
-      .values(Parameter::scopeValues())
-      .description("Scoped of the '" + std::string(c_sample_time_duration) + "' parameter");
-
       std::ostringstream perioditicity_description;
       perioditicity_description << c_periodicity_data_sampling << " (P) in seconds. "
                                 << "This value must not be lower than "
@@ -342,20 +318,6 @@ namespace DUNE
       .defaultValue(uncastLexical(def_periodicity))
       .units(Units::Second)
       .description(perioditicity_description.str());
-
-      param(std::string(c_periodicity_data_sampling) + " - Visibility", m_bdd_args.periodicity_data_sampling_visibility)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue("developer")
-      .values(Parameter::visibilityValues())
-      .description("Visibility of the '" + std::string(c_periodicity_data_sampling) + "' parameter");
-
-      param(std::string(c_periodicity_data_sampling) + " - Scope", m_bdd_args.periodicity_data_sampling_scope)
-      .visibility(Parameter::VISIBILITY_DEVELOPER)
-      .scope(Parameter::SCOPE_GLOBAL)
-      .defaultValue("global")
-      .values(Parameter::scopeValues())
-      .description("Scoped of the '" + std::string(c_periodicity_data_sampling) + "' parameter");
     }
 
     void
@@ -1067,31 +1029,20 @@ namespace DUNE
           }
           else if (m_periodicity_timer.overflow())
           {
+            m_periodicity_timer.setTop(m_bdd_args.periodicity_data_sampling);
             startSampling();
             readSample();
 
             if (m_conf_samp_mode == ConfigurableSamplingSupportedModes::CSM_PERIODIC_SINGLE_SAMPLING)
-            {
               stopSampling();
-            }
-            else
-            {
-              m_sample_timer.setTop(m_bdd_args.sample_time_duration);
-            }
-            
-            m_periodicity_timer.setTop(m_bdd_args.periodicity_data_sampling);
-          }
-          else if (!m_sample_timer.overflow())
-          {
-            readSample();
           }
           else if (m_is_sampling)
           {
-            stopSampling();
+            if (m_periodicity_timer.getElapsed() < m_bdd_args.sample_time_duration)
+              readSample();
+            else
+              stopSampling();
           }
-
-          if (m_honours_conf_samp)
-            setEntityStateSampling(m_is_sampling);
 
           break;
 
@@ -1223,6 +1174,12 @@ namespace DUNE
         consumeMessages();
       
       updateStateMachine();
+
+      if (m_honours_conf_samp && m_state_timer.overflow())
+      {
+        setEntityStateSampling(m_is_sampling);
+        m_state_timer.reset();
+      }
     }
 
     void

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -117,6 +117,8 @@ namespace Transports
       LimitedComms* m_lcomms;
       //! Message Filter
       MessageFilter m_filter;
+      //! Consumers for bound messages.
+      std::map<uint16_t, AbstractConsumer*> m_consumers;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -206,6 +208,36 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.messages))
+        {
+          std::unordered_set<uint16_t> msgs_set;
+          for (const auto& msg : m_args.messages)
+            msgs_set.insert(IMC::Factory::getIdFromAbbrev(msg));
+
+          std::vector<uint16_t> removed_msgs;
+          for (auto it = m_consumers.begin(); it != m_consumers.end(); ++it)
+          {
+            if (msgs_set.find(it->first) == msgs_set.end())
+              removed_msgs.push_back(it->first);
+            else
+              msgs_set.erase(it->first);
+          }
+
+          for (auto msg : removed_msgs)
+          {
+            unbind(msg, m_consumers[msg]);
+            m_consumers.erase(msg);
+          }
+
+          if (!msgs_set.empty())
+          {
+            std::vector<uint16_t> new_msgs(msgs_set.begin(), msgs_set.end());
+            auto new_consumers = bind<Task, IMC::Message>(this, new_msgs);
+            for (auto it = new_consumers.begin(); it != new_consumers.end(); ++it)
+              m_consumers[it->first] = it->second;
+          }
+        }
+
         if (paramChanged(m_args.contact_refresh_per))
           m_contacts_refresh_counter.setTop(m_args.contact_refresh_per);
 
@@ -214,12 +246,14 @@ namespace Transports
         for (unsigned int i = 0; i < m_args.destinations.size(); ++i)
           m_static_dsts.insert(NodeAddress(m_args.destinations[i]));
 
-        // Process rate limiters.
-        m_filter.setupRates(m_args.rate_lims);
-        // Process filtered entities.
-        m_filter.setupEntities(m_args.entities_flt, this);
+        if (paramChanged(m_args.rate_lims))
+          m_filter.setupRates(m_args.rate_lims);
+        
+        if (paramChanged(m_args.entities_flt))
+          m_filter.setupEntities(m_args.entities_flt, this);
 
-        m_underwater_comms = m_args.underwater_comms;
+        if (paramChanged(m_args.underwater_comms))
+          m_underwater_comms = m_args.underwater_comms;
 
         // Initialize communication limitations parameters.
         if (m_ctx.profiles.isSelected("Simulation") && m_args.comm_range > 0)
@@ -249,9 +283,6 @@ namespace Transports
       void
       onResourceAcquisition(void)
       {
-        // Register normal messages.
-        bind(this, m_args.messages);
-
         // Find a free port.
         unsigned port_limit = m_args.port + c_port_retries;
         while (m_args.port != port_limit)
@@ -277,34 +308,24 @@ namespace Transports
 
         if (m_args.announce_service)
         {
-          // Initialize and dispatch AnnounceService.
-          std::vector<Interface> itfs = Interface::get();
-          for (unsigned i = 0; i < itfs.size(); ++i)
+          std::stringstream os;
+          std::string service = "imc+udp";
+
+          // if custom service type is enabled
+          if (m_args.custom_service != "")
           {
-            std::stringstream os;
-            std::string service = "imc+udp";
-
-            // if custom service type is enabled
-            if (m_args.custom_service != "")
-            {
-              std::stringstream cs;
-              cs << service << "+" << m_args.custom_service;
-              service = cs.str();
-            }
-
-            os << service << "://" << itfs[i].address().str() << ":" << m_args.port
-               << "/";
-
-            IMC::AnnounceService announce;
-            announce.service = os.str();
-
-            if (itfs[i].address().isLoopback())
-              announce.service_type = IMC::AnnounceService::SRV_TYPE_LOCAL;
-            else
-              announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
-
-            dispatch(announce);
+            std::stringstream cs;
+            cs << service << "+" << m_args.custom_service;
+            service = cs.str();
           }
+
+          os << service << "://0.0.0.0:" << m_args.port
+              << "/";
+
+          IMC::AnnounceService announce;
+          announce.service = os.str();
+          announce.service_type = 0;
+          dispatch(announce);
         }
 
         // Initialize limited comms object
@@ -352,7 +373,7 @@ namespace Transports
           return;
 
         if (m_args.trace_out)
-          inf("outgoing: %s", msg->getName());
+          DUNE_MSG(getName(), "outgoing: " + std::string(msg->getName()));
 
         uint16_t rv;
         try

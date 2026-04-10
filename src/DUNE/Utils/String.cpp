@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -246,6 +246,17 @@ namespace DUNE
       ss << std::hex << nr;
 
       return ss.str();
+    }
+
+    std::string
+    String::bytesToHex(const std::vector<uint8_t>& bytes)
+    {
+      std::string result;
+
+      for (unsigned int i = 0; i < bytes.size(); i++)
+        result += toHex(bytes[i]);
+
+      return result;
     }
 
     std::vector<uint8_t>

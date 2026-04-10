@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -218,7 +218,7 @@ namespace Navigation
             }
           }
           else
-            war(DTR("trying to get if for label, but label is empty. "
+            war(DTR("trying to get id for label, but label is empty. "
                     "Is there a task failure or a configuration error?"));
 
           return id;

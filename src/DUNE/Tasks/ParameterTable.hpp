@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -32,6 +32,7 @@
 
 // ISO C++ 98 headers.
 #include <vector>
+#include <set>
 #include <string>
 #include <map>
 #include <sstream>
@@ -75,8 +76,8 @@ namespace DUNE
       void
       writeXML(std::ostream& os) const
       {
-        for (unsigned i = 0; i < m_params.size(); ++i)
-          m_params[i]->writeXML(os);
+        for (const auto& param: m_names)
+          param.second->writeXML(os);
       }
 
       bool
@@ -87,6 +88,16 @@ namespace DUNE
           throw std::runtime_error(DTR("variable does not exist"));
 
         return itr->second->changed();
+      }
+
+      void
+      setChanged(void* param, bool enabled)
+      {
+        const auto itr = m_pointers.find(param);
+        if (itr == m_pointers.end())
+          throw std::runtime_error(DTR("variable does not exist"));
+
+        itr->second->setChanged(enabled);
       }
 
       void
@@ -126,6 +137,86 @@ namespace DUNE
         return m_names.find(name);
       }
 
+      void
+      setScope(void* ptr, Parameter::Scope scope)
+      {
+        std::map<void*, Parameter*>::iterator itr = m_pointers.find(ptr);
+        if (itr == m_pointers.end())
+          throw std::runtime_error(DTR("parameter does not exist"));
+        
+        itr->second->scope(scope);
+      }
+
+      void
+      setScope(const std::string& name, Parameter::Scope scope)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_names.find(name);
+        if (itr == m_names.end())
+          throw std::runtime_error(DTR("parameter does not exist"));
+
+        itr->second->scope(scope);
+      }
+
+      Parameter::Scope
+      getScope(void* ptr)
+      {
+        std::map<void*, Parameter*>::iterator itr = m_pointers.find(ptr);
+        if (itr == m_pointers.end())
+          throw std::runtime_error(DTR("parameter does not exist"));
+
+        return itr->second->getScope();
+      }
+
+      Parameter::Scope
+      getScope(const std::string& name)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_names.find(name);
+        if (itr == m_names.end())
+          throw std::runtime_error(DTR("parameter does not exist"));
+        
+        return itr->second->getScope();
+      }
+
+      void
+      setVisibility(void* ptr, Parameter::Visibility visibility)
+      {
+        std::map<void*, Parameter*>::iterator itr = m_pointers.find(ptr);
+        if (itr == m_pointers.end())
+          throw std::runtime_error(DTR("parameter does not exist"));
+        
+        itr->second->visibility(visibility);
+      }
+
+      void
+      setVisibility(const std::string& name, Parameter::Visibility visibility)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_names.find(name);
+        if (itr == m_names.end())
+          throw std::runtime_error(DTR("parameter does not exist"));
+        
+        itr->second->visibility(visibility);
+      }
+
+      Parameter::Visibility
+      getVisibility(void* ptr)
+      {
+        std::map<void*, Parameter*>::iterator itr = m_pointers.find(ptr);
+        if (itr == m_pointers.end())
+          throw std::runtime_error(DTR("parameter does not exist"));
+
+        return itr->second->getVisibility();
+      }
+
+      Parameter::Visibility
+      getVisibility(const std::string& name)
+      {
+        std::map<std::string, Parameter*>::iterator itr = m_names.find(name);
+        if (itr == m_names.end())
+          throw std::runtime_error(DTR("parameter does not exist"));
+        
+        return itr->second->getVisibility();
+      }
+
       IMC::EntityParameter
       apply(void* ptr, const std::string& value)
       {
@@ -134,7 +225,8 @@ namespace DUNE
           throw std::runtime_error(DTR("variable does not exist"));
 
         itr->second->read(value);
-        itr->second->commit();
+        if (itr->second->commit())
+          itr->second->setChanged();
 
         IMC::EntityParameter p;
         p.name = itr->second->name();
