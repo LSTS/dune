@@ -1022,6 +1022,28 @@ void decodeFuelLevel(const IMC_DCCL::FuelLevel& dccl, DUNE::IMC::FuelLevel& imc)
 }
 
 
+// ================ Header Message ================
+void encodeHeader(const DUNE::IMC::Message& imc, IMC_DCCL::Header& dccl)
+{
+    dccl.set_timestamp(imc.getTimeStamp());
+    dccl.set_src(imc.getSource());
+    dccl.set_src_ent(imc.getSourceEntity());
+    dccl.set_dst(imc.getDestination());
+    dccl.set_dst_ent(imc.getDestinationEntity());
+}
+
+
+// ================ Header Message ================
+void decodeHeader(const IMC_DCCL::Header& dccl, DUNE::IMC::Message& imc)
+{
+    imc.setTimeStamp(dccl.timestamp());
+    imc.setSource(dccl.src());
+    imc.setSourceEntity(dccl.src_ent());
+    imc.setDestination(dccl.dst());
+    imc.setDestinationEntity(dccl.dst_ent());
+}
+
+
 // ================ PlanSpecification Message ================
 void encodePlanSpecification(const DUNE::IMC::PlanSpecification& imc, IMC_DCCL::PlanSpecification& dccl)
 {
