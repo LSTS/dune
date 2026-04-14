@@ -2709,3 +2709,40 @@ message PlanControlArgUnion {
         PlanStatistics stat_arg = 3;
     }
 }
+
+// Header
+message Header{
+   option (dccl.msg) = { codec_version: 4 max_bytes: 16}; 
+   optional float timestamp = 1 [(dccl.field) = { min: 1767225600 max: 2082758400 precision: 1 }]; 
+   optional int32 src = 2 [(dccl.field) = { min: 0 max: 65535}];
+   optional int32 src_ent = 3 [(dccl.field) = { min: 0 max: 255}];
+   optional int32 dst = 4 [(dccl.field) = { min: 0 max: 65535}];
+   optional int32 dst_ent = 5 [(dccl.field) = { min: 0 max: 255}];
+}
+
+message Payload {
+    option (dccl.msg) = { codec_version: 4 max_bytes: 900000};
+    oneof PayloadUnion{
+        PlanSpecification plan_specification_payload = 1;
+        EstimatedState estimated_state_payload = 2;
+        PlanDB plan_db_payload = 3;
+        PlanControl plan_control_payload = 4;
+        SetEntityParameters set_entity_parameters_payload = 5;
+        VehicleState vehicle_state_payload = 6;
+        EntityState entity_state_payload = 7;
+        PlanControlState plan_control_state_payload = 8;
+        VerticalProfile vertical_profile_payload = 9;
+        Voltage voltage_payload = 10;
+        FuelLevel fuel_level_payload = 11;
+        Current current_payload = 12;
+        WindSpeed wind_speed_payload = 13;
+        EntityParameters entity_parameters_payload = 14;
+        EntityList entity_list_payload = 15;
+    }
+}
+
+message ProtoMessage{
+    option (dccl.msg) = { codec_version: 4 id: 0 max_bytes: 800050};
+    Header msg_header = 1;
+    Payload msg_payload = 2;
+}

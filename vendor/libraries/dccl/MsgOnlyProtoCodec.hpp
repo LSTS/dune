@@ -62,4 +62,8 @@ void encodeTransitionCondition(const std::string& imc, IMC_DCCL::TransitionCondi
 
 void decodeTransitionCondition(const IMC_DCCL::TransitionCondition& dccl, std::string& imc);
 
+void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl);
+
+DUNE::IMC::Message* decodePayload(const IMC_DCCL::Payload& dccl);
+
 #endif // MSGONLYPROTOCODEC_HPP
