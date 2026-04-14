@@ -77,6 +77,9 @@ extern FuelLevelDefaultTypeInternal _FuelLevel_default_instance_;
 class Goto;
 struct GotoDefaultTypeInternal;
 extern GotoDefaultTypeInternal _Goto_default_instance_;
+class Header;
+struct HeaderDefaultTypeInternal;
+extern HeaderDefaultTypeInternal _Header_default_instance_;
 class ItemList;
 struct ItemListDefaultTypeInternal;
 extern ItemListDefaultTypeInternal _ItemList_default_instance_;
@@ -104,6 +107,9 @@ extern ParameterValueDefaultTypeInternal _ParameterValue_default_instance_;
 class PathPoint;
 struct PathPointDefaultTypeInternal;
 extern PathPointDefaultTypeInternal _PathPoint_default_instance_;
+class Payload;
+struct PayloadDefaultTypeInternal;
+extern PayloadDefaultTypeInternal _Payload_default_instance_;
 class PlanControl;
 struct PlanControlDefaultTypeInternal;
 extern PlanControlDefaultTypeInternal _PlanControl_default_instance_;
@@ -149,6 +155,9 @@ extern PlanTransitionDefaultTypeInternal _PlanTransition_default_instance_;
 class ProfileSample;
 struct ProfileSampleDefaultTypeInternal;
 extern ProfileSampleDefaultTypeInternal _ProfileSample_default_instance_;
+class ProtoMessage;
+struct ProtoMessageDefaultTypeInternal;
+extern ProtoMessageDefaultTypeInternal _ProtoMessage_default_instance_;
 class SetEntityParameters;
 struct SetEntityParametersDefaultTypeInternal;
 extern SetEntityParametersDefaultTypeInternal _SetEntityParameters_default_instance_;
@@ -182,6 +191,7 @@ template<> ::IMC_DCCL::EstimatedState* Arena::CreateMaybeMessage<::IMC_DCCL::Est
 template<> ::IMC_DCCL::FollowPath* Arena::CreateMaybeMessage<::IMC_DCCL::FollowPath>(Arena*);
 template<> ::IMC_DCCL::FuelLevel* Arena::CreateMaybeMessage<::IMC_DCCL::FuelLevel>(Arena*);
 template<> ::IMC_DCCL::Goto* Arena::CreateMaybeMessage<::IMC_DCCL::Goto>(Arena*);
+template<> ::IMC_DCCL::Header* Arena::CreateMaybeMessage<::IMC_DCCL::Header>(Arena*);
 template<> ::IMC_DCCL::ItemList* Arena::CreateMaybeMessage<::IMC_DCCL::ItemList>(Arena*);
 template<> ::IMC_DCCL::ListCombined* Arena::CreateMaybeMessage<::IMC_DCCL::ListCombined>(Arena*);
 template<> ::IMC_DCCL::Loiter* Arena::CreateMaybeMessage<::IMC_DCCL::Loiter>(Arena*);
@@ -191,6 +201,7 @@ template<> ::IMC_DCCL::ManeuverIDCombined* Arena::CreateMaybeMessage<::IMC_DCCL:
 template<> ::IMC_DCCL::ParameterName* Arena::CreateMaybeMessage<::IMC_DCCL::ParameterName>(Arena*);
 template<> ::IMC_DCCL::ParameterValue* Arena::CreateMaybeMessage<::IMC_DCCL::ParameterValue>(Arena*);
 template<> ::IMC_DCCL::PathPoint* Arena::CreateMaybeMessage<::IMC_DCCL::PathPoint>(Arena*);
+template<> ::IMC_DCCL::Payload* Arena::CreateMaybeMessage<::IMC_DCCL::Payload>(Arena*);
 template<> ::IMC_DCCL::PlanControl* Arena::CreateMaybeMessage<::IMC_DCCL::PlanControl>(Arena*);
 template<> ::IMC_DCCL::PlanControlArgUnion* Arena::CreateMaybeMessage<::IMC_DCCL::PlanControlArgUnion>(Arena*);
 template<> ::IMC_DCCL::PlanControlState* Arena::CreateMaybeMessage<::IMC_DCCL::PlanControlState>(Arena*);
@@ -206,6 +217,7 @@ template<> ::IMC_DCCL::PlanSpecificationStartActionsUnion* Arena::CreateMaybeMes
 template<> ::IMC_DCCL::PlanStatistics* Arena::CreateMaybeMessage<::IMC_DCCL::PlanStatistics>(Arena*);
 template<> ::IMC_DCCL::PlanTransition* Arena::CreateMaybeMessage<::IMC_DCCL::PlanTransition>(Arena*);
 template<> ::IMC_DCCL::ProfileSample* Arena::CreateMaybeMessage<::IMC_DCCL::ProfileSample>(Arena*);
+template<> ::IMC_DCCL::ProtoMessage* Arena::CreateMaybeMessage<::IMC_DCCL::ProtoMessage>(Arena*);
 template<> ::IMC_DCCL::SetEntityParameters* Arena::CreateMaybeMessage<::IMC_DCCL::SetEntityParameters>(Arena*);
 template<> ::IMC_DCCL::StationKeeping* Arena::CreateMaybeMessage<::IMC_DCCL::StationKeeping>(Arena*);
 template<> ::IMC_DCCL::TransitionCondition* Arena::CreateMaybeMessage<::IMC_DCCL::TransitionCondition>(Arena*);
@@ -12204,6 +12216,878 @@ class PlanControlArgUnion final :
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
 };
+// -------------------------------------------------------------------
+
+class Header final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.Header) */ {
+ public:
+  inline Header() : Header(nullptr) {}
+  ~Header() override;
+  explicit PROTOBUF_CONSTEXPR Header(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  Header(const Header& from);
+  Header(Header&& from) noexcept
+    : Header() {
+    *this = ::std::move(from);
+  }
+
+  inline Header& operator=(const Header& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Header& operator=(Header&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const Header& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const Header* internal_default_instance() {
+    return reinterpret_cast<const Header*>(
+               &_Header_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    41;
+
+  friend void swap(Header& a, Header& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Header* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Header* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  Header* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<Header>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const Header& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const Header& from) {
+    Header::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Header* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.Header";
+  }
+  protected:
+  explicit Header(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kTimestampFieldNumber = 1,
+    kSrcFieldNumber = 2,
+    kSrcEntFieldNumber = 3,
+    kDstFieldNumber = 4,
+    kDstEntFieldNumber = 5,
+  };
+  // optional float timestamp = 1 [(.dccl.field) = {
+  bool has_timestamp() const;
+  private:
+  bool _internal_has_timestamp() const;
+  public:
+  void clear_timestamp();
+  float timestamp() const;
+  void set_timestamp(float value);
+  private:
+  float _internal_timestamp() const;
+  void _internal_set_timestamp(float value);
+  public:
+
+  // optional int32 src = 2 [(.dccl.field) = {
+  bool has_src() const;
+  private:
+  bool _internal_has_src() const;
+  public:
+  void clear_src();
+  int32_t src() const;
+  void set_src(int32_t value);
+  private:
+  int32_t _internal_src() const;
+  void _internal_set_src(int32_t value);
+  public:
+
+  // optional int32 src_ent = 3 [(.dccl.field) = {
+  bool has_src_ent() const;
+  private:
+  bool _internal_has_src_ent() const;
+  public:
+  void clear_src_ent();
+  int32_t src_ent() const;
+  void set_src_ent(int32_t value);
+  private:
+  int32_t _internal_src_ent() const;
+  void _internal_set_src_ent(int32_t value);
+  public:
+
+  // optional int32 dst = 4 [(.dccl.field) = {
+  bool has_dst() const;
+  private:
+  bool _internal_has_dst() const;
+  public:
+  void clear_dst();
+  int32_t dst() const;
+  void set_dst(int32_t value);
+  private:
+  int32_t _internal_dst() const;
+  void _internal_set_dst(int32_t value);
+  public:
+
+  // optional int32 dst_ent = 5 [(.dccl.field) = {
+  bool has_dst_ent() const;
+  private:
+  bool _internal_has_dst_ent() const;
+  public:
+  void clear_dst_ent();
+  int32_t dst_ent() const;
+  void set_dst_ent(int32_t value);
+  private:
+  int32_t _internal_dst_ent() const;
+  void _internal_set_dst_ent(int32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.Header)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    float timestamp_;
+    int32_t src_;
+    int32_t src_ent_;
+    int32_t dst_;
+    int32_t dst_ent_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class Payload final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.Payload) */ {
+ public:
+  inline Payload() : Payload(nullptr) {}
+  ~Payload() override;
+  explicit PROTOBUF_CONSTEXPR Payload(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  Payload(const Payload& from);
+  Payload(Payload&& from) noexcept
+    : Payload() {
+    *this = ::std::move(from);
+  }
+
+  inline Payload& operator=(const Payload& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Payload& operator=(Payload&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const Payload& default_instance() {
+    return *internal_default_instance();
+  }
+  enum PayloadUnionCase {
+    kPlanSpecificationPayload = 1,
+    kEstimatedStatePayload = 2,
+    kPlanDbPayload = 3,
+    kPlanControlPayload = 4,
+    kSetEntityParametersPayload = 5,
+    kVehicleStatePayload = 6,
+    kEntityStatePayload = 7,
+    kPlanControlStatePayload = 8,
+    kVerticalProfilePayload = 9,
+    kVoltagePayload = 10,
+    kFuelLevelPayload = 11,
+    kCurrentPayload = 12,
+    kWindSpeedPayload = 13,
+    kEntityParametersPayload = 14,
+    kEntityListPayload = 15,
+    PAYLOADUNION_NOT_SET = 0,
+  };
+
+  static inline const Payload* internal_default_instance() {
+    return reinterpret_cast<const Payload*>(
+               &_Payload_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    42;
+
+  friend void swap(Payload& a, Payload& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Payload* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Payload* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  Payload* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<Payload>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const Payload& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const Payload& from) {
+    Payload::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Payload* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.Payload";
+  }
+  protected:
+  explicit Payload(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kPlanSpecificationPayloadFieldNumber = 1,
+    kEstimatedStatePayloadFieldNumber = 2,
+    kPlanDbPayloadFieldNumber = 3,
+    kPlanControlPayloadFieldNumber = 4,
+    kSetEntityParametersPayloadFieldNumber = 5,
+    kVehicleStatePayloadFieldNumber = 6,
+    kEntityStatePayloadFieldNumber = 7,
+    kPlanControlStatePayloadFieldNumber = 8,
+    kVerticalProfilePayloadFieldNumber = 9,
+    kVoltagePayloadFieldNumber = 10,
+    kFuelLevelPayloadFieldNumber = 11,
+    kCurrentPayloadFieldNumber = 12,
+    kWindSpeedPayloadFieldNumber = 13,
+    kEntityParametersPayloadFieldNumber = 14,
+    kEntityListPayloadFieldNumber = 15,
+  };
+  // .IMC_DCCL.PlanSpecification plan_specification_payload = 1;
+  bool has_plan_specification_payload() const;
+  private:
+  bool _internal_has_plan_specification_payload() const;
+  public:
+  void clear_plan_specification_payload();
+  const ::IMC_DCCL::PlanSpecification& plan_specification_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::PlanSpecification* release_plan_specification_payload();
+  ::IMC_DCCL::PlanSpecification* mutable_plan_specification_payload();
+  void set_allocated_plan_specification_payload(::IMC_DCCL::PlanSpecification* plan_specification_payload);
+  private:
+  const ::IMC_DCCL::PlanSpecification& _internal_plan_specification_payload() const;
+  ::IMC_DCCL::PlanSpecification* _internal_mutable_plan_specification_payload();
+  public:
+  void unsafe_arena_set_allocated_plan_specification_payload(
+      ::IMC_DCCL::PlanSpecification* plan_specification_payload);
+  ::IMC_DCCL::PlanSpecification* unsafe_arena_release_plan_specification_payload();
+
+  // .IMC_DCCL.EstimatedState estimated_state_payload = 2;
+  bool has_estimated_state_payload() const;
+  private:
+  bool _internal_has_estimated_state_payload() const;
+  public:
+  void clear_estimated_state_payload();
+  const ::IMC_DCCL::EstimatedState& estimated_state_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::EstimatedState* release_estimated_state_payload();
+  ::IMC_DCCL::EstimatedState* mutable_estimated_state_payload();
+  void set_allocated_estimated_state_payload(::IMC_DCCL::EstimatedState* estimated_state_payload);
+  private:
+  const ::IMC_DCCL::EstimatedState& _internal_estimated_state_payload() const;
+  ::IMC_DCCL::EstimatedState* _internal_mutable_estimated_state_payload();
+  public:
+  void unsafe_arena_set_allocated_estimated_state_payload(
+      ::IMC_DCCL::EstimatedState* estimated_state_payload);
+  ::IMC_DCCL::EstimatedState* unsafe_arena_release_estimated_state_payload();
+
+  // .IMC_DCCL.PlanDB plan_db_payload = 3;
+  bool has_plan_db_payload() const;
+  private:
+  bool _internal_has_plan_db_payload() const;
+  public:
+  void clear_plan_db_payload();
+  const ::IMC_DCCL::PlanDB& plan_db_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::PlanDB* release_plan_db_payload();
+  ::IMC_DCCL::PlanDB* mutable_plan_db_payload();
+  void set_allocated_plan_db_payload(::IMC_DCCL::PlanDB* plan_db_payload);
+  private:
+  const ::IMC_DCCL::PlanDB& _internal_plan_db_payload() const;
+  ::IMC_DCCL::PlanDB* _internal_mutable_plan_db_payload();
+  public:
+  void unsafe_arena_set_allocated_plan_db_payload(
+      ::IMC_DCCL::PlanDB* plan_db_payload);
+  ::IMC_DCCL::PlanDB* unsafe_arena_release_plan_db_payload();
+
+  // .IMC_DCCL.PlanControl plan_control_payload = 4;
+  bool has_plan_control_payload() const;
+  private:
+  bool _internal_has_plan_control_payload() const;
+  public:
+  void clear_plan_control_payload();
+  const ::IMC_DCCL::PlanControl& plan_control_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::PlanControl* release_plan_control_payload();
+  ::IMC_DCCL::PlanControl* mutable_plan_control_payload();
+  void set_allocated_plan_control_payload(::IMC_DCCL::PlanControl* plan_control_payload);
+  private:
+  const ::IMC_DCCL::PlanControl& _internal_plan_control_payload() const;
+  ::IMC_DCCL::PlanControl* _internal_mutable_plan_control_payload();
+  public:
+  void unsafe_arena_set_allocated_plan_control_payload(
+      ::IMC_DCCL::PlanControl* plan_control_payload);
+  ::IMC_DCCL::PlanControl* unsafe_arena_release_plan_control_payload();
+
+  // .IMC_DCCL.SetEntityParameters set_entity_parameters_payload = 5;
+  bool has_set_entity_parameters_payload() const;
+  private:
+  bool _internal_has_set_entity_parameters_payload() const;
+  public:
+  void clear_set_entity_parameters_payload();
+  const ::IMC_DCCL::SetEntityParameters& set_entity_parameters_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::SetEntityParameters* release_set_entity_parameters_payload();
+  ::IMC_DCCL::SetEntityParameters* mutable_set_entity_parameters_payload();
+  void set_allocated_set_entity_parameters_payload(::IMC_DCCL::SetEntityParameters* set_entity_parameters_payload);
+  private:
+  const ::IMC_DCCL::SetEntityParameters& _internal_set_entity_parameters_payload() const;
+  ::IMC_DCCL::SetEntityParameters* _internal_mutable_set_entity_parameters_payload();
+  public:
+  void unsafe_arena_set_allocated_set_entity_parameters_payload(
+      ::IMC_DCCL::SetEntityParameters* set_entity_parameters_payload);
+  ::IMC_DCCL::SetEntityParameters* unsafe_arena_release_set_entity_parameters_payload();
+
+  // .IMC_DCCL.VehicleState vehicle_state_payload = 6;
+  bool has_vehicle_state_payload() const;
+  private:
+  bool _internal_has_vehicle_state_payload() const;
+  public:
+  void clear_vehicle_state_payload();
+  const ::IMC_DCCL::VehicleState& vehicle_state_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::VehicleState* release_vehicle_state_payload();
+  ::IMC_DCCL::VehicleState* mutable_vehicle_state_payload();
+  void set_allocated_vehicle_state_payload(::IMC_DCCL::VehicleState* vehicle_state_payload);
+  private:
+  const ::IMC_DCCL::VehicleState& _internal_vehicle_state_payload() const;
+  ::IMC_DCCL::VehicleState* _internal_mutable_vehicle_state_payload();
+  public:
+  void unsafe_arena_set_allocated_vehicle_state_payload(
+      ::IMC_DCCL::VehicleState* vehicle_state_payload);
+  ::IMC_DCCL::VehicleState* unsafe_arena_release_vehicle_state_payload();
+
+  // .IMC_DCCL.EntityState entity_state_payload = 7;
+  bool has_entity_state_payload() const;
+  private:
+  bool _internal_has_entity_state_payload() const;
+  public:
+  void clear_entity_state_payload();
+  const ::IMC_DCCL::EntityState& entity_state_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::EntityState* release_entity_state_payload();
+  ::IMC_DCCL::EntityState* mutable_entity_state_payload();
+  void set_allocated_entity_state_payload(::IMC_DCCL::EntityState* entity_state_payload);
+  private:
+  const ::IMC_DCCL::EntityState& _internal_entity_state_payload() const;
+  ::IMC_DCCL::EntityState* _internal_mutable_entity_state_payload();
+  public:
+  void unsafe_arena_set_allocated_entity_state_payload(
+      ::IMC_DCCL::EntityState* entity_state_payload);
+  ::IMC_DCCL::EntityState* unsafe_arena_release_entity_state_payload();
+
+  // .IMC_DCCL.PlanControlState plan_control_state_payload = 8;
+  bool has_plan_control_state_payload() const;
+  private:
+  bool _internal_has_plan_control_state_payload() const;
+  public:
+  void clear_plan_control_state_payload();
+  const ::IMC_DCCL::PlanControlState& plan_control_state_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::PlanControlState* release_plan_control_state_payload();
+  ::IMC_DCCL::PlanControlState* mutable_plan_control_state_payload();
+  void set_allocated_plan_control_state_payload(::IMC_DCCL::PlanControlState* plan_control_state_payload);
+  private:
+  const ::IMC_DCCL::PlanControlState& _internal_plan_control_state_payload() const;
+  ::IMC_DCCL::PlanControlState* _internal_mutable_plan_control_state_payload();
+  public:
+  void unsafe_arena_set_allocated_plan_control_state_payload(
+      ::IMC_DCCL::PlanControlState* plan_control_state_payload);
+  ::IMC_DCCL::PlanControlState* unsafe_arena_release_plan_control_state_payload();
+
+  // .IMC_DCCL.VerticalProfile vertical_profile_payload = 9;
+  bool has_vertical_profile_payload() const;
+  private:
+  bool _internal_has_vertical_profile_payload() const;
+  public:
+  void clear_vertical_profile_payload();
+  const ::IMC_DCCL::VerticalProfile& vertical_profile_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::VerticalProfile* release_vertical_profile_payload();
+  ::IMC_DCCL::VerticalProfile* mutable_vertical_profile_payload();
+  void set_allocated_vertical_profile_payload(::IMC_DCCL::VerticalProfile* vertical_profile_payload);
+  private:
+  const ::IMC_DCCL::VerticalProfile& _internal_vertical_profile_payload() const;
+  ::IMC_DCCL::VerticalProfile* _internal_mutable_vertical_profile_payload();
+  public:
+  void unsafe_arena_set_allocated_vertical_profile_payload(
+      ::IMC_DCCL::VerticalProfile* vertical_profile_payload);
+  ::IMC_DCCL::VerticalProfile* unsafe_arena_release_vertical_profile_payload();
+
+  // .IMC_DCCL.Voltage voltage_payload = 10;
+  bool has_voltage_payload() const;
+  private:
+  bool _internal_has_voltage_payload() const;
+  public:
+  void clear_voltage_payload();
+  const ::IMC_DCCL::Voltage& voltage_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::Voltage* release_voltage_payload();
+  ::IMC_DCCL::Voltage* mutable_voltage_payload();
+  void set_allocated_voltage_payload(::IMC_DCCL::Voltage* voltage_payload);
+  private:
+  const ::IMC_DCCL::Voltage& _internal_voltage_payload() const;
+  ::IMC_DCCL::Voltage* _internal_mutable_voltage_payload();
+  public:
+  void unsafe_arena_set_allocated_voltage_payload(
+      ::IMC_DCCL::Voltage* voltage_payload);
+  ::IMC_DCCL::Voltage* unsafe_arena_release_voltage_payload();
+
+  // .IMC_DCCL.FuelLevel fuel_level_payload = 11;
+  bool has_fuel_level_payload() const;
+  private:
+  bool _internal_has_fuel_level_payload() const;
+  public:
+  void clear_fuel_level_payload();
+  const ::IMC_DCCL::FuelLevel& fuel_level_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::FuelLevel* release_fuel_level_payload();
+  ::IMC_DCCL::FuelLevel* mutable_fuel_level_payload();
+  void set_allocated_fuel_level_payload(::IMC_DCCL::FuelLevel* fuel_level_payload);
+  private:
+  const ::IMC_DCCL::FuelLevel& _internal_fuel_level_payload() const;
+  ::IMC_DCCL::FuelLevel* _internal_mutable_fuel_level_payload();
+  public:
+  void unsafe_arena_set_allocated_fuel_level_payload(
+      ::IMC_DCCL::FuelLevel* fuel_level_payload);
+  ::IMC_DCCL::FuelLevel* unsafe_arena_release_fuel_level_payload();
+
+  // .IMC_DCCL.Current current_payload = 12;
+  bool has_current_payload() const;
+  private:
+  bool _internal_has_current_payload() const;
+  public:
+  void clear_current_payload();
+  const ::IMC_DCCL::Current& current_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::Current* release_current_payload();
+  ::IMC_DCCL::Current* mutable_current_payload();
+  void set_allocated_current_payload(::IMC_DCCL::Current* current_payload);
+  private:
+  const ::IMC_DCCL::Current& _internal_current_payload() const;
+  ::IMC_DCCL::Current* _internal_mutable_current_payload();
+  public:
+  void unsafe_arena_set_allocated_current_payload(
+      ::IMC_DCCL::Current* current_payload);
+  ::IMC_DCCL::Current* unsafe_arena_release_current_payload();
+
+  // .IMC_DCCL.WindSpeed wind_speed_payload = 13;
+  bool has_wind_speed_payload() const;
+  private:
+  bool _internal_has_wind_speed_payload() const;
+  public:
+  void clear_wind_speed_payload();
+  const ::IMC_DCCL::WindSpeed& wind_speed_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::WindSpeed* release_wind_speed_payload();
+  ::IMC_DCCL::WindSpeed* mutable_wind_speed_payload();
+  void set_allocated_wind_speed_payload(::IMC_DCCL::WindSpeed* wind_speed_payload);
+  private:
+  const ::IMC_DCCL::WindSpeed& _internal_wind_speed_payload() const;
+  ::IMC_DCCL::WindSpeed* _internal_mutable_wind_speed_payload();
+  public:
+  void unsafe_arena_set_allocated_wind_speed_payload(
+      ::IMC_DCCL::WindSpeed* wind_speed_payload);
+  ::IMC_DCCL::WindSpeed* unsafe_arena_release_wind_speed_payload();
+
+  // .IMC_DCCL.EntityParameters entity_parameters_payload = 14;
+  bool has_entity_parameters_payload() const;
+  private:
+  bool _internal_has_entity_parameters_payload() const;
+  public:
+  void clear_entity_parameters_payload();
+  const ::IMC_DCCL::EntityParameters& entity_parameters_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::EntityParameters* release_entity_parameters_payload();
+  ::IMC_DCCL::EntityParameters* mutable_entity_parameters_payload();
+  void set_allocated_entity_parameters_payload(::IMC_DCCL::EntityParameters* entity_parameters_payload);
+  private:
+  const ::IMC_DCCL::EntityParameters& _internal_entity_parameters_payload() const;
+  ::IMC_DCCL::EntityParameters* _internal_mutable_entity_parameters_payload();
+  public:
+  void unsafe_arena_set_allocated_entity_parameters_payload(
+      ::IMC_DCCL::EntityParameters* entity_parameters_payload);
+  ::IMC_DCCL::EntityParameters* unsafe_arena_release_entity_parameters_payload();
+
+  // .IMC_DCCL.EntityList entity_list_payload = 15;
+  bool has_entity_list_payload() const;
+  private:
+  bool _internal_has_entity_list_payload() const;
+  public:
+  void clear_entity_list_payload();
+  const ::IMC_DCCL::EntityList& entity_list_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::EntityList* release_entity_list_payload();
+  ::IMC_DCCL::EntityList* mutable_entity_list_payload();
+  void set_allocated_entity_list_payload(::IMC_DCCL::EntityList* entity_list_payload);
+  private:
+  const ::IMC_DCCL::EntityList& _internal_entity_list_payload() const;
+  ::IMC_DCCL::EntityList* _internal_mutable_entity_list_payload();
+  public:
+  void unsafe_arena_set_allocated_entity_list_payload(
+      ::IMC_DCCL::EntityList* entity_list_payload);
+  ::IMC_DCCL::EntityList* unsafe_arena_release_entity_list_payload();
+
+  void clear_PayloadUnion();
+  PayloadUnionCase PayloadUnion_case() const;
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.Payload)
+ private:
+  class _Internal;
+  void set_has_plan_specification_payload();
+  void set_has_estimated_state_payload();
+  void set_has_plan_db_payload();
+  void set_has_plan_control_payload();
+  void set_has_set_entity_parameters_payload();
+  void set_has_vehicle_state_payload();
+  void set_has_entity_state_payload();
+  void set_has_plan_control_state_payload();
+  void set_has_vertical_profile_payload();
+  void set_has_voltage_payload();
+  void set_has_fuel_level_payload();
+  void set_has_current_payload();
+  void set_has_wind_speed_payload();
+  void set_has_entity_parameters_payload();
+  void set_has_entity_list_payload();
+
+  inline bool has_PayloadUnion() const;
+  inline void clear_has_PayloadUnion();
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    union PayloadUnionUnion {
+      constexpr PayloadUnionUnion() : _constinit_{} {}
+        ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
+      ::IMC_DCCL::PlanSpecification* plan_specification_payload_;
+      ::IMC_DCCL::EstimatedState* estimated_state_payload_;
+      ::IMC_DCCL::PlanDB* plan_db_payload_;
+      ::IMC_DCCL::PlanControl* plan_control_payload_;
+      ::IMC_DCCL::SetEntityParameters* set_entity_parameters_payload_;
+      ::IMC_DCCL::VehicleState* vehicle_state_payload_;
+      ::IMC_DCCL::EntityState* entity_state_payload_;
+      ::IMC_DCCL::PlanControlState* plan_control_state_payload_;
+      ::IMC_DCCL::VerticalProfile* vertical_profile_payload_;
+      ::IMC_DCCL::Voltage* voltage_payload_;
+      ::IMC_DCCL::FuelLevel* fuel_level_payload_;
+      ::IMC_DCCL::Current* current_payload_;
+      ::IMC_DCCL::WindSpeed* wind_speed_payload_;
+      ::IMC_DCCL::EntityParameters* entity_parameters_payload_;
+      ::IMC_DCCL::EntityList* entity_list_payload_;
+    } PayloadUnion_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    uint32_t _oneof_case_[1];
+
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class ProtoMessage final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.ProtoMessage) */ {
+ public:
+  inline ProtoMessage() : ProtoMessage(nullptr) {}
+  ~ProtoMessage() override;
+  explicit PROTOBUF_CONSTEXPR ProtoMessage(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  ProtoMessage(const ProtoMessage& from);
+  ProtoMessage(ProtoMessage&& from) noexcept
+    : ProtoMessage() {
+    *this = ::std::move(from);
+  }
+
+  inline ProtoMessage& operator=(const ProtoMessage& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline ProtoMessage& operator=(ProtoMessage&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const ProtoMessage& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const ProtoMessage* internal_default_instance() {
+    return reinterpret_cast<const ProtoMessage*>(
+               &_ProtoMessage_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    43;
+
+  friend void swap(ProtoMessage& a, ProtoMessage& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(ProtoMessage* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(ProtoMessage* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  ProtoMessage* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<ProtoMessage>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const ProtoMessage& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const ProtoMessage& from) {
+    ProtoMessage::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ProtoMessage* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.ProtoMessage";
+  }
+  protected:
+  explicit ProtoMessage(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kMsgHeaderFieldNumber = 1,
+    kMsgPayloadFieldNumber = 2,
+  };
+  // .IMC_DCCL.Header msg_header = 1;
+  bool has_msg_header() const;
+  private:
+  bool _internal_has_msg_header() const;
+  public:
+  void clear_msg_header();
+  const ::IMC_DCCL::Header& msg_header() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::Header* release_msg_header();
+  ::IMC_DCCL::Header* mutable_msg_header();
+  void set_allocated_msg_header(::IMC_DCCL::Header* msg_header);
+  private:
+  const ::IMC_DCCL::Header& _internal_msg_header() const;
+  ::IMC_DCCL::Header* _internal_mutable_msg_header();
+  public:
+  void unsafe_arena_set_allocated_msg_header(
+      ::IMC_DCCL::Header* msg_header);
+  ::IMC_DCCL::Header* unsafe_arena_release_msg_header();
+
+  // .IMC_DCCL.Payload msg_payload = 2;
+  bool has_msg_payload() const;
+  private:
+  bool _internal_has_msg_payload() const;
+  public:
+  void clear_msg_payload();
+  const ::IMC_DCCL::Payload& msg_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::Payload* release_msg_payload();
+  ::IMC_DCCL::Payload* mutable_msg_payload();
+  void set_allocated_msg_payload(::IMC_DCCL::Payload* msg_payload);
+  private:
+  const ::IMC_DCCL::Payload& _internal_msg_payload() const;
+  ::IMC_DCCL::Payload* _internal_mutable_msg_payload();
+  public:
+  void unsafe_arena_set_allocated_msg_payload(
+      ::IMC_DCCL::Payload* msg_payload);
+  ::IMC_DCCL::Payload* unsafe_arena_release_msg_payload();
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.ProtoMessage)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::IMC_DCCL::Header* msg_header_;
+    ::IMC_DCCL::Payload* msg_payload_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
 // ===================================================================
 
 
@@ -20251,9 +21135,1466 @@ inline void PlanControlArgUnion::clear_has_PlanDBArgUnion_() {
 inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUnion__case() const {
   return PlanControlArgUnion::PlanDBArgUnionCase(_impl_._oneof_case_[0]);
 }
+// -------------------------------------------------------------------
+
+// Header
+
+// optional float timestamp = 1 [(.dccl.field) = {
+inline bool Header::_internal_has_timestamp() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool Header::has_timestamp() const {
+  return _internal_has_timestamp();
+}
+inline void Header::clear_timestamp() {
+  _impl_.timestamp_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline float Header::_internal_timestamp() const {
+  return _impl_.timestamp_;
+}
+inline float Header::timestamp() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Header.timestamp)
+  return _internal_timestamp();
+}
+inline void Header::_internal_set_timestamp(float value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.timestamp_ = value;
+}
+inline void Header::set_timestamp(float value) {
+  _internal_set_timestamp(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Header.timestamp)
+}
+
+// optional int32 src = 2 [(.dccl.field) = {
+inline bool Header::_internal_has_src() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool Header::has_src() const {
+  return _internal_has_src();
+}
+inline void Header::clear_src() {
+  _impl_.src_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline int32_t Header::_internal_src() const {
+  return _impl_.src_;
+}
+inline int32_t Header::src() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Header.src)
+  return _internal_src();
+}
+inline void Header::_internal_set_src(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.src_ = value;
+}
+inline void Header::set_src(int32_t value) {
+  _internal_set_src(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Header.src)
+}
+
+// optional int32 src_ent = 3 [(.dccl.field) = {
+inline bool Header::_internal_has_src_ent() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  return value;
+}
+inline bool Header::has_src_ent() const {
+  return _internal_has_src_ent();
+}
+inline void Header::clear_src_ent() {
+  _impl_.src_ent_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000004u;
+}
+inline int32_t Header::_internal_src_ent() const {
+  return _impl_.src_ent_;
+}
+inline int32_t Header::src_ent() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Header.src_ent)
+  return _internal_src_ent();
+}
+inline void Header::_internal_set_src_ent(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_.src_ent_ = value;
+}
+inline void Header::set_src_ent(int32_t value) {
+  _internal_set_src_ent(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Header.src_ent)
+}
+
+// optional int32 dst = 4 [(.dccl.field) = {
+inline bool Header::_internal_has_dst() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  return value;
+}
+inline bool Header::has_dst() const {
+  return _internal_has_dst();
+}
+inline void Header::clear_dst() {
+  _impl_.dst_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000008u;
+}
+inline int32_t Header::_internal_dst() const {
+  return _impl_.dst_;
+}
+inline int32_t Header::dst() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Header.dst)
+  return _internal_dst();
+}
+inline void Header::_internal_set_dst(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_.dst_ = value;
+}
+inline void Header::set_dst(int32_t value) {
+  _internal_set_dst(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Header.dst)
+}
+
+// optional int32 dst_ent = 5 [(.dccl.field) = {
+inline bool Header::_internal_has_dst_ent() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  return value;
+}
+inline bool Header::has_dst_ent() const {
+  return _internal_has_dst_ent();
+}
+inline void Header::clear_dst_ent() {
+  _impl_.dst_ent_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000010u;
+}
+inline int32_t Header::_internal_dst_ent() const {
+  return _impl_.dst_ent_;
+}
+inline int32_t Header::dst_ent() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Header.dst_ent)
+  return _internal_dst_ent();
+}
+inline void Header::_internal_set_dst_ent(int32_t value) {
+  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_.dst_ent_ = value;
+}
+inline void Header::set_dst_ent(int32_t value) {
+  _internal_set_dst_ent(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Header.dst_ent)
+}
+
+// -------------------------------------------------------------------
+
+// Payload
+
+// .IMC_DCCL.PlanSpecification plan_specification_payload = 1;
+inline bool Payload::_internal_has_plan_specification_payload() const {
+  return PayloadUnion_case() == kPlanSpecificationPayload;
+}
+inline bool Payload::has_plan_specification_payload() const {
+  return _internal_has_plan_specification_payload();
+}
+inline void Payload::set_has_plan_specification_payload() {
+  _impl_._oneof_case_[0] = kPlanSpecificationPayload;
+}
+inline void Payload::clear_plan_specification_payload() {
+  if (_internal_has_plan_specification_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.plan_specification_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::PlanSpecification* Payload::release_plan_specification_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.plan_specification_payload)
+  if (_internal_has_plan_specification_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::PlanSpecification* temp = _impl_.PayloadUnion_.plan_specification_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.plan_specification_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::PlanSpecification& Payload::_internal_plan_specification_payload() const {
+  return _internal_has_plan_specification_payload()
+      ? *_impl_.PayloadUnion_.plan_specification_payload_
+      : reinterpret_cast< ::IMC_DCCL::PlanSpecification&>(::IMC_DCCL::_PlanSpecification_default_instance_);
+}
+inline const ::IMC_DCCL::PlanSpecification& Payload::plan_specification_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.plan_specification_payload)
+  return _internal_plan_specification_payload();
+}
+inline ::IMC_DCCL::PlanSpecification* Payload::unsafe_arena_release_plan_specification_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.plan_specification_payload)
+  if (_internal_has_plan_specification_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::PlanSpecification* temp = _impl_.PayloadUnion_.plan_specification_payload_;
+    _impl_.PayloadUnion_.plan_specification_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_plan_specification_payload(::IMC_DCCL::PlanSpecification* plan_specification_payload) {
+  clear_PayloadUnion();
+  if (plan_specification_payload) {
+    set_has_plan_specification_payload();
+    _impl_.PayloadUnion_.plan_specification_payload_ = plan_specification_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.plan_specification_payload)
+}
+inline ::IMC_DCCL::PlanSpecification* Payload::_internal_mutable_plan_specification_payload() {
+  if (!_internal_has_plan_specification_payload()) {
+    clear_PayloadUnion();
+    set_has_plan_specification_payload();
+    _impl_.PayloadUnion_.plan_specification_payload_ = CreateMaybeMessage< ::IMC_DCCL::PlanSpecification >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.plan_specification_payload_;
+}
+inline ::IMC_DCCL::PlanSpecification* Payload::mutable_plan_specification_payload() {
+  ::IMC_DCCL::PlanSpecification* _msg = _internal_mutable_plan_specification_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.plan_specification_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.EstimatedState estimated_state_payload = 2;
+inline bool Payload::_internal_has_estimated_state_payload() const {
+  return PayloadUnion_case() == kEstimatedStatePayload;
+}
+inline bool Payload::has_estimated_state_payload() const {
+  return _internal_has_estimated_state_payload();
+}
+inline void Payload::set_has_estimated_state_payload() {
+  _impl_._oneof_case_[0] = kEstimatedStatePayload;
+}
+inline void Payload::clear_estimated_state_payload() {
+  if (_internal_has_estimated_state_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.estimated_state_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::EstimatedState* Payload::release_estimated_state_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.estimated_state_payload)
+  if (_internal_has_estimated_state_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::EstimatedState* temp = _impl_.PayloadUnion_.estimated_state_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.estimated_state_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::EstimatedState& Payload::_internal_estimated_state_payload() const {
+  return _internal_has_estimated_state_payload()
+      ? *_impl_.PayloadUnion_.estimated_state_payload_
+      : reinterpret_cast< ::IMC_DCCL::EstimatedState&>(::IMC_DCCL::_EstimatedState_default_instance_);
+}
+inline const ::IMC_DCCL::EstimatedState& Payload::estimated_state_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.estimated_state_payload)
+  return _internal_estimated_state_payload();
+}
+inline ::IMC_DCCL::EstimatedState* Payload::unsafe_arena_release_estimated_state_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.estimated_state_payload)
+  if (_internal_has_estimated_state_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::EstimatedState* temp = _impl_.PayloadUnion_.estimated_state_payload_;
+    _impl_.PayloadUnion_.estimated_state_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_estimated_state_payload(::IMC_DCCL::EstimatedState* estimated_state_payload) {
+  clear_PayloadUnion();
+  if (estimated_state_payload) {
+    set_has_estimated_state_payload();
+    _impl_.PayloadUnion_.estimated_state_payload_ = estimated_state_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.estimated_state_payload)
+}
+inline ::IMC_DCCL::EstimatedState* Payload::_internal_mutable_estimated_state_payload() {
+  if (!_internal_has_estimated_state_payload()) {
+    clear_PayloadUnion();
+    set_has_estimated_state_payload();
+    _impl_.PayloadUnion_.estimated_state_payload_ = CreateMaybeMessage< ::IMC_DCCL::EstimatedState >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.estimated_state_payload_;
+}
+inline ::IMC_DCCL::EstimatedState* Payload::mutable_estimated_state_payload() {
+  ::IMC_DCCL::EstimatedState* _msg = _internal_mutable_estimated_state_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.estimated_state_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.PlanDB plan_db_payload = 3;
+inline bool Payload::_internal_has_plan_db_payload() const {
+  return PayloadUnion_case() == kPlanDbPayload;
+}
+inline bool Payload::has_plan_db_payload() const {
+  return _internal_has_plan_db_payload();
+}
+inline void Payload::set_has_plan_db_payload() {
+  _impl_._oneof_case_[0] = kPlanDbPayload;
+}
+inline void Payload::clear_plan_db_payload() {
+  if (_internal_has_plan_db_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.plan_db_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::PlanDB* Payload::release_plan_db_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.plan_db_payload)
+  if (_internal_has_plan_db_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::PlanDB* temp = _impl_.PayloadUnion_.plan_db_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.plan_db_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::PlanDB& Payload::_internal_plan_db_payload() const {
+  return _internal_has_plan_db_payload()
+      ? *_impl_.PayloadUnion_.plan_db_payload_
+      : reinterpret_cast< ::IMC_DCCL::PlanDB&>(::IMC_DCCL::_PlanDB_default_instance_);
+}
+inline const ::IMC_DCCL::PlanDB& Payload::plan_db_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.plan_db_payload)
+  return _internal_plan_db_payload();
+}
+inline ::IMC_DCCL::PlanDB* Payload::unsafe_arena_release_plan_db_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.plan_db_payload)
+  if (_internal_has_plan_db_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::PlanDB* temp = _impl_.PayloadUnion_.plan_db_payload_;
+    _impl_.PayloadUnion_.plan_db_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_plan_db_payload(::IMC_DCCL::PlanDB* plan_db_payload) {
+  clear_PayloadUnion();
+  if (plan_db_payload) {
+    set_has_plan_db_payload();
+    _impl_.PayloadUnion_.plan_db_payload_ = plan_db_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.plan_db_payload)
+}
+inline ::IMC_DCCL::PlanDB* Payload::_internal_mutable_plan_db_payload() {
+  if (!_internal_has_plan_db_payload()) {
+    clear_PayloadUnion();
+    set_has_plan_db_payload();
+    _impl_.PayloadUnion_.plan_db_payload_ = CreateMaybeMessage< ::IMC_DCCL::PlanDB >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.plan_db_payload_;
+}
+inline ::IMC_DCCL::PlanDB* Payload::mutable_plan_db_payload() {
+  ::IMC_DCCL::PlanDB* _msg = _internal_mutable_plan_db_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.plan_db_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.PlanControl plan_control_payload = 4;
+inline bool Payload::_internal_has_plan_control_payload() const {
+  return PayloadUnion_case() == kPlanControlPayload;
+}
+inline bool Payload::has_plan_control_payload() const {
+  return _internal_has_plan_control_payload();
+}
+inline void Payload::set_has_plan_control_payload() {
+  _impl_._oneof_case_[0] = kPlanControlPayload;
+}
+inline void Payload::clear_plan_control_payload() {
+  if (_internal_has_plan_control_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.plan_control_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::PlanControl* Payload::release_plan_control_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.plan_control_payload)
+  if (_internal_has_plan_control_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::PlanControl* temp = _impl_.PayloadUnion_.plan_control_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.plan_control_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::PlanControl& Payload::_internal_plan_control_payload() const {
+  return _internal_has_plan_control_payload()
+      ? *_impl_.PayloadUnion_.plan_control_payload_
+      : reinterpret_cast< ::IMC_DCCL::PlanControl&>(::IMC_DCCL::_PlanControl_default_instance_);
+}
+inline const ::IMC_DCCL::PlanControl& Payload::plan_control_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.plan_control_payload)
+  return _internal_plan_control_payload();
+}
+inline ::IMC_DCCL::PlanControl* Payload::unsafe_arena_release_plan_control_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.plan_control_payload)
+  if (_internal_has_plan_control_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::PlanControl* temp = _impl_.PayloadUnion_.plan_control_payload_;
+    _impl_.PayloadUnion_.plan_control_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_plan_control_payload(::IMC_DCCL::PlanControl* plan_control_payload) {
+  clear_PayloadUnion();
+  if (plan_control_payload) {
+    set_has_plan_control_payload();
+    _impl_.PayloadUnion_.plan_control_payload_ = plan_control_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.plan_control_payload)
+}
+inline ::IMC_DCCL::PlanControl* Payload::_internal_mutable_plan_control_payload() {
+  if (!_internal_has_plan_control_payload()) {
+    clear_PayloadUnion();
+    set_has_plan_control_payload();
+    _impl_.PayloadUnion_.plan_control_payload_ = CreateMaybeMessage< ::IMC_DCCL::PlanControl >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.plan_control_payload_;
+}
+inline ::IMC_DCCL::PlanControl* Payload::mutable_plan_control_payload() {
+  ::IMC_DCCL::PlanControl* _msg = _internal_mutable_plan_control_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.plan_control_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.SetEntityParameters set_entity_parameters_payload = 5;
+inline bool Payload::_internal_has_set_entity_parameters_payload() const {
+  return PayloadUnion_case() == kSetEntityParametersPayload;
+}
+inline bool Payload::has_set_entity_parameters_payload() const {
+  return _internal_has_set_entity_parameters_payload();
+}
+inline void Payload::set_has_set_entity_parameters_payload() {
+  _impl_._oneof_case_[0] = kSetEntityParametersPayload;
+}
+inline void Payload::clear_set_entity_parameters_payload() {
+  if (_internal_has_set_entity_parameters_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.set_entity_parameters_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::SetEntityParameters* Payload::release_set_entity_parameters_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.set_entity_parameters_payload)
+  if (_internal_has_set_entity_parameters_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::SetEntityParameters* temp = _impl_.PayloadUnion_.set_entity_parameters_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.set_entity_parameters_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::SetEntityParameters& Payload::_internal_set_entity_parameters_payload() const {
+  return _internal_has_set_entity_parameters_payload()
+      ? *_impl_.PayloadUnion_.set_entity_parameters_payload_
+      : reinterpret_cast< ::IMC_DCCL::SetEntityParameters&>(::IMC_DCCL::_SetEntityParameters_default_instance_);
+}
+inline const ::IMC_DCCL::SetEntityParameters& Payload::set_entity_parameters_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.set_entity_parameters_payload)
+  return _internal_set_entity_parameters_payload();
+}
+inline ::IMC_DCCL::SetEntityParameters* Payload::unsafe_arena_release_set_entity_parameters_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.set_entity_parameters_payload)
+  if (_internal_has_set_entity_parameters_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::SetEntityParameters* temp = _impl_.PayloadUnion_.set_entity_parameters_payload_;
+    _impl_.PayloadUnion_.set_entity_parameters_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_set_entity_parameters_payload(::IMC_DCCL::SetEntityParameters* set_entity_parameters_payload) {
+  clear_PayloadUnion();
+  if (set_entity_parameters_payload) {
+    set_has_set_entity_parameters_payload();
+    _impl_.PayloadUnion_.set_entity_parameters_payload_ = set_entity_parameters_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.set_entity_parameters_payload)
+}
+inline ::IMC_DCCL::SetEntityParameters* Payload::_internal_mutable_set_entity_parameters_payload() {
+  if (!_internal_has_set_entity_parameters_payload()) {
+    clear_PayloadUnion();
+    set_has_set_entity_parameters_payload();
+    _impl_.PayloadUnion_.set_entity_parameters_payload_ = CreateMaybeMessage< ::IMC_DCCL::SetEntityParameters >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.set_entity_parameters_payload_;
+}
+inline ::IMC_DCCL::SetEntityParameters* Payload::mutable_set_entity_parameters_payload() {
+  ::IMC_DCCL::SetEntityParameters* _msg = _internal_mutable_set_entity_parameters_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.set_entity_parameters_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.VehicleState vehicle_state_payload = 6;
+inline bool Payload::_internal_has_vehicle_state_payload() const {
+  return PayloadUnion_case() == kVehicleStatePayload;
+}
+inline bool Payload::has_vehicle_state_payload() const {
+  return _internal_has_vehicle_state_payload();
+}
+inline void Payload::set_has_vehicle_state_payload() {
+  _impl_._oneof_case_[0] = kVehicleStatePayload;
+}
+inline void Payload::clear_vehicle_state_payload() {
+  if (_internal_has_vehicle_state_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.vehicle_state_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::VehicleState* Payload::release_vehicle_state_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.vehicle_state_payload)
+  if (_internal_has_vehicle_state_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::VehicleState* temp = _impl_.PayloadUnion_.vehicle_state_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.vehicle_state_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::VehicleState& Payload::_internal_vehicle_state_payload() const {
+  return _internal_has_vehicle_state_payload()
+      ? *_impl_.PayloadUnion_.vehicle_state_payload_
+      : reinterpret_cast< ::IMC_DCCL::VehicleState&>(::IMC_DCCL::_VehicleState_default_instance_);
+}
+inline const ::IMC_DCCL::VehicleState& Payload::vehicle_state_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.vehicle_state_payload)
+  return _internal_vehicle_state_payload();
+}
+inline ::IMC_DCCL::VehicleState* Payload::unsafe_arena_release_vehicle_state_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.vehicle_state_payload)
+  if (_internal_has_vehicle_state_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::VehicleState* temp = _impl_.PayloadUnion_.vehicle_state_payload_;
+    _impl_.PayloadUnion_.vehicle_state_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_vehicle_state_payload(::IMC_DCCL::VehicleState* vehicle_state_payload) {
+  clear_PayloadUnion();
+  if (vehicle_state_payload) {
+    set_has_vehicle_state_payload();
+    _impl_.PayloadUnion_.vehicle_state_payload_ = vehicle_state_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.vehicle_state_payload)
+}
+inline ::IMC_DCCL::VehicleState* Payload::_internal_mutable_vehicle_state_payload() {
+  if (!_internal_has_vehicle_state_payload()) {
+    clear_PayloadUnion();
+    set_has_vehicle_state_payload();
+    _impl_.PayloadUnion_.vehicle_state_payload_ = CreateMaybeMessage< ::IMC_DCCL::VehicleState >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.vehicle_state_payload_;
+}
+inline ::IMC_DCCL::VehicleState* Payload::mutable_vehicle_state_payload() {
+  ::IMC_DCCL::VehicleState* _msg = _internal_mutable_vehicle_state_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.vehicle_state_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.EntityState entity_state_payload = 7;
+inline bool Payload::_internal_has_entity_state_payload() const {
+  return PayloadUnion_case() == kEntityStatePayload;
+}
+inline bool Payload::has_entity_state_payload() const {
+  return _internal_has_entity_state_payload();
+}
+inline void Payload::set_has_entity_state_payload() {
+  _impl_._oneof_case_[0] = kEntityStatePayload;
+}
+inline void Payload::clear_entity_state_payload() {
+  if (_internal_has_entity_state_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.entity_state_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::EntityState* Payload::release_entity_state_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.entity_state_payload)
+  if (_internal_has_entity_state_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::EntityState* temp = _impl_.PayloadUnion_.entity_state_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.entity_state_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::EntityState& Payload::_internal_entity_state_payload() const {
+  return _internal_has_entity_state_payload()
+      ? *_impl_.PayloadUnion_.entity_state_payload_
+      : reinterpret_cast< ::IMC_DCCL::EntityState&>(::IMC_DCCL::_EntityState_default_instance_);
+}
+inline const ::IMC_DCCL::EntityState& Payload::entity_state_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.entity_state_payload)
+  return _internal_entity_state_payload();
+}
+inline ::IMC_DCCL::EntityState* Payload::unsafe_arena_release_entity_state_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.entity_state_payload)
+  if (_internal_has_entity_state_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::EntityState* temp = _impl_.PayloadUnion_.entity_state_payload_;
+    _impl_.PayloadUnion_.entity_state_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_entity_state_payload(::IMC_DCCL::EntityState* entity_state_payload) {
+  clear_PayloadUnion();
+  if (entity_state_payload) {
+    set_has_entity_state_payload();
+    _impl_.PayloadUnion_.entity_state_payload_ = entity_state_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.entity_state_payload)
+}
+inline ::IMC_DCCL::EntityState* Payload::_internal_mutable_entity_state_payload() {
+  if (!_internal_has_entity_state_payload()) {
+    clear_PayloadUnion();
+    set_has_entity_state_payload();
+    _impl_.PayloadUnion_.entity_state_payload_ = CreateMaybeMessage< ::IMC_DCCL::EntityState >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.entity_state_payload_;
+}
+inline ::IMC_DCCL::EntityState* Payload::mutable_entity_state_payload() {
+  ::IMC_DCCL::EntityState* _msg = _internal_mutable_entity_state_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.entity_state_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.PlanControlState plan_control_state_payload = 8;
+inline bool Payload::_internal_has_plan_control_state_payload() const {
+  return PayloadUnion_case() == kPlanControlStatePayload;
+}
+inline bool Payload::has_plan_control_state_payload() const {
+  return _internal_has_plan_control_state_payload();
+}
+inline void Payload::set_has_plan_control_state_payload() {
+  _impl_._oneof_case_[0] = kPlanControlStatePayload;
+}
+inline void Payload::clear_plan_control_state_payload() {
+  if (_internal_has_plan_control_state_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.plan_control_state_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::PlanControlState* Payload::release_plan_control_state_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.plan_control_state_payload)
+  if (_internal_has_plan_control_state_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::PlanControlState* temp = _impl_.PayloadUnion_.plan_control_state_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.plan_control_state_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::PlanControlState& Payload::_internal_plan_control_state_payload() const {
+  return _internal_has_plan_control_state_payload()
+      ? *_impl_.PayloadUnion_.plan_control_state_payload_
+      : reinterpret_cast< ::IMC_DCCL::PlanControlState&>(::IMC_DCCL::_PlanControlState_default_instance_);
+}
+inline const ::IMC_DCCL::PlanControlState& Payload::plan_control_state_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.plan_control_state_payload)
+  return _internal_plan_control_state_payload();
+}
+inline ::IMC_DCCL::PlanControlState* Payload::unsafe_arena_release_plan_control_state_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.plan_control_state_payload)
+  if (_internal_has_plan_control_state_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::PlanControlState* temp = _impl_.PayloadUnion_.plan_control_state_payload_;
+    _impl_.PayloadUnion_.plan_control_state_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_plan_control_state_payload(::IMC_DCCL::PlanControlState* plan_control_state_payload) {
+  clear_PayloadUnion();
+  if (plan_control_state_payload) {
+    set_has_plan_control_state_payload();
+    _impl_.PayloadUnion_.plan_control_state_payload_ = plan_control_state_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.plan_control_state_payload)
+}
+inline ::IMC_DCCL::PlanControlState* Payload::_internal_mutable_plan_control_state_payload() {
+  if (!_internal_has_plan_control_state_payload()) {
+    clear_PayloadUnion();
+    set_has_plan_control_state_payload();
+    _impl_.PayloadUnion_.plan_control_state_payload_ = CreateMaybeMessage< ::IMC_DCCL::PlanControlState >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.plan_control_state_payload_;
+}
+inline ::IMC_DCCL::PlanControlState* Payload::mutable_plan_control_state_payload() {
+  ::IMC_DCCL::PlanControlState* _msg = _internal_mutable_plan_control_state_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.plan_control_state_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.VerticalProfile vertical_profile_payload = 9;
+inline bool Payload::_internal_has_vertical_profile_payload() const {
+  return PayloadUnion_case() == kVerticalProfilePayload;
+}
+inline bool Payload::has_vertical_profile_payload() const {
+  return _internal_has_vertical_profile_payload();
+}
+inline void Payload::set_has_vertical_profile_payload() {
+  _impl_._oneof_case_[0] = kVerticalProfilePayload;
+}
+inline void Payload::clear_vertical_profile_payload() {
+  if (_internal_has_vertical_profile_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.vertical_profile_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::VerticalProfile* Payload::release_vertical_profile_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.vertical_profile_payload)
+  if (_internal_has_vertical_profile_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::VerticalProfile* temp = _impl_.PayloadUnion_.vertical_profile_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.vertical_profile_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::VerticalProfile& Payload::_internal_vertical_profile_payload() const {
+  return _internal_has_vertical_profile_payload()
+      ? *_impl_.PayloadUnion_.vertical_profile_payload_
+      : reinterpret_cast< ::IMC_DCCL::VerticalProfile&>(::IMC_DCCL::_VerticalProfile_default_instance_);
+}
+inline const ::IMC_DCCL::VerticalProfile& Payload::vertical_profile_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.vertical_profile_payload)
+  return _internal_vertical_profile_payload();
+}
+inline ::IMC_DCCL::VerticalProfile* Payload::unsafe_arena_release_vertical_profile_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.vertical_profile_payload)
+  if (_internal_has_vertical_profile_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::VerticalProfile* temp = _impl_.PayloadUnion_.vertical_profile_payload_;
+    _impl_.PayloadUnion_.vertical_profile_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_vertical_profile_payload(::IMC_DCCL::VerticalProfile* vertical_profile_payload) {
+  clear_PayloadUnion();
+  if (vertical_profile_payload) {
+    set_has_vertical_profile_payload();
+    _impl_.PayloadUnion_.vertical_profile_payload_ = vertical_profile_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.vertical_profile_payload)
+}
+inline ::IMC_DCCL::VerticalProfile* Payload::_internal_mutable_vertical_profile_payload() {
+  if (!_internal_has_vertical_profile_payload()) {
+    clear_PayloadUnion();
+    set_has_vertical_profile_payload();
+    _impl_.PayloadUnion_.vertical_profile_payload_ = CreateMaybeMessage< ::IMC_DCCL::VerticalProfile >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.vertical_profile_payload_;
+}
+inline ::IMC_DCCL::VerticalProfile* Payload::mutable_vertical_profile_payload() {
+  ::IMC_DCCL::VerticalProfile* _msg = _internal_mutable_vertical_profile_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.vertical_profile_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.Voltage voltage_payload = 10;
+inline bool Payload::_internal_has_voltage_payload() const {
+  return PayloadUnion_case() == kVoltagePayload;
+}
+inline bool Payload::has_voltage_payload() const {
+  return _internal_has_voltage_payload();
+}
+inline void Payload::set_has_voltage_payload() {
+  _impl_._oneof_case_[0] = kVoltagePayload;
+}
+inline void Payload::clear_voltage_payload() {
+  if (_internal_has_voltage_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.voltage_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::Voltage* Payload::release_voltage_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.voltage_payload)
+  if (_internal_has_voltage_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::Voltage* temp = _impl_.PayloadUnion_.voltage_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.voltage_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::Voltage& Payload::_internal_voltage_payload() const {
+  return _internal_has_voltage_payload()
+      ? *_impl_.PayloadUnion_.voltage_payload_
+      : reinterpret_cast< ::IMC_DCCL::Voltage&>(::IMC_DCCL::_Voltage_default_instance_);
+}
+inline const ::IMC_DCCL::Voltage& Payload::voltage_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.voltage_payload)
+  return _internal_voltage_payload();
+}
+inline ::IMC_DCCL::Voltage* Payload::unsafe_arena_release_voltage_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.voltage_payload)
+  if (_internal_has_voltage_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::Voltage* temp = _impl_.PayloadUnion_.voltage_payload_;
+    _impl_.PayloadUnion_.voltage_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_voltage_payload(::IMC_DCCL::Voltage* voltage_payload) {
+  clear_PayloadUnion();
+  if (voltage_payload) {
+    set_has_voltage_payload();
+    _impl_.PayloadUnion_.voltage_payload_ = voltage_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.voltage_payload)
+}
+inline ::IMC_DCCL::Voltage* Payload::_internal_mutable_voltage_payload() {
+  if (!_internal_has_voltage_payload()) {
+    clear_PayloadUnion();
+    set_has_voltage_payload();
+    _impl_.PayloadUnion_.voltage_payload_ = CreateMaybeMessage< ::IMC_DCCL::Voltage >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.voltage_payload_;
+}
+inline ::IMC_DCCL::Voltage* Payload::mutable_voltage_payload() {
+  ::IMC_DCCL::Voltage* _msg = _internal_mutable_voltage_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.voltage_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.FuelLevel fuel_level_payload = 11;
+inline bool Payload::_internal_has_fuel_level_payload() const {
+  return PayloadUnion_case() == kFuelLevelPayload;
+}
+inline bool Payload::has_fuel_level_payload() const {
+  return _internal_has_fuel_level_payload();
+}
+inline void Payload::set_has_fuel_level_payload() {
+  _impl_._oneof_case_[0] = kFuelLevelPayload;
+}
+inline void Payload::clear_fuel_level_payload() {
+  if (_internal_has_fuel_level_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.fuel_level_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::FuelLevel* Payload::release_fuel_level_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.fuel_level_payload)
+  if (_internal_has_fuel_level_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::FuelLevel* temp = _impl_.PayloadUnion_.fuel_level_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.fuel_level_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::FuelLevel& Payload::_internal_fuel_level_payload() const {
+  return _internal_has_fuel_level_payload()
+      ? *_impl_.PayloadUnion_.fuel_level_payload_
+      : reinterpret_cast< ::IMC_DCCL::FuelLevel&>(::IMC_DCCL::_FuelLevel_default_instance_);
+}
+inline const ::IMC_DCCL::FuelLevel& Payload::fuel_level_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.fuel_level_payload)
+  return _internal_fuel_level_payload();
+}
+inline ::IMC_DCCL::FuelLevel* Payload::unsafe_arena_release_fuel_level_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.fuel_level_payload)
+  if (_internal_has_fuel_level_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::FuelLevel* temp = _impl_.PayloadUnion_.fuel_level_payload_;
+    _impl_.PayloadUnion_.fuel_level_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_fuel_level_payload(::IMC_DCCL::FuelLevel* fuel_level_payload) {
+  clear_PayloadUnion();
+  if (fuel_level_payload) {
+    set_has_fuel_level_payload();
+    _impl_.PayloadUnion_.fuel_level_payload_ = fuel_level_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.fuel_level_payload)
+}
+inline ::IMC_DCCL::FuelLevel* Payload::_internal_mutable_fuel_level_payload() {
+  if (!_internal_has_fuel_level_payload()) {
+    clear_PayloadUnion();
+    set_has_fuel_level_payload();
+    _impl_.PayloadUnion_.fuel_level_payload_ = CreateMaybeMessage< ::IMC_DCCL::FuelLevel >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.fuel_level_payload_;
+}
+inline ::IMC_DCCL::FuelLevel* Payload::mutable_fuel_level_payload() {
+  ::IMC_DCCL::FuelLevel* _msg = _internal_mutable_fuel_level_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.fuel_level_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.Current current_payload = 12;
+inline bool Payload::_internal_has_current_payload() const {
+  return PayloadUnion_case() == kCurrentPayload;
+}
+inline bool Payload::has_current_payload() const {
+  return _internal_has_current_payload();
+}
+inline void Payload::set_has_current_payload() {
+  _impl_._oneof_case_[0] = kCurrentPayload;
+}
+inline void Payload::clear_current_payload() {
+  if (_internal_has_current_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.current_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::Current* Payload::release_current_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.current_payload)
+  if (_internal_has_current_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::Current* temp = _impl_.PayloadUnion_.current_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.current_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::Current& Payload::_internal_current_payload() const {
+  return _internal_has_current_payload()
+      ? *_impl_.PayloadUnion_.current_payload_
+      : reinterpret_cast< ::IMC_DCCL::Current&>(::IMC_DCCL::_Current_default_instance_);
+}
+inline const ::IMC_DCCL::Current& Payload::current_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.current_payload)
+  return _internal_current_payload();
+}
+inline ::IMC_DCCL::Current* Payload::unsafe_arena_release_current_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.current_payload)
+  if (_internal_has_current_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::Current* temp = _impl_.PayloadUnion_.current_payload_;
+    _impl_.PayloadUnion_.current_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_current_payload(::IMC_DCCL::Current* current_payload) {
+  clear_PayloadUnion();
+  if (current_payload) {
+    set_has_current_payload();
+    _impl_.PayloadUnion_.current_payload_ = current_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.current_payload)
+}
+inline ::IMC_DCCL::Current* Payload::_internal_mutable_current_payload() {
+  if (!_internal_has_current_payload()) {
+    clear_PayloadUnion();
+    set_has_current_payload();
+    _impl_.PayloadUnion_.current_payload_ = CreateMaybeMessage< ::IMC_DCCL::Current >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.current_payload_;
+}
+inline ::IMC_DCCL::Current* Payload::mutable_current_payload() {
+  ::IMC_DCCL::Current* _msg = _internal_mutable_current_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.current_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.WindSpeed wind_speed_payload = 13;
+inline bool Payload::_internal_has_wind_speed_payload() const {
+  return PayloadUnion_case() == kWindSpeedPayload;
+}
+inline bool Payload::has_wind_speed_payload() const {
+  return _internal_has_wind_speed_payload();
+}
+inline void Payload::set_has_wind_speed_payload() {
+  _impl_._oneof_case_[0] = kWindSpeedPayload;
+}
+inline void Payload::clear_wind_speed_payload() {
+  if (_internal_has_wind_speed_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.wind_speed_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::WindSpeed* Payload::release_wind_speed_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.wind_speed_payload)
+  if (_internal_has_wind_speed_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::WindSpeed* temp = _impl_.PayloadUnion_.wind_speed_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.wind_speed_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::WindSpeed& Payload::_internal_wind_speed_payload() const {
+  return _internal_has_wind_speed_payload()
+      ? *_impl_.PayloadUnion_.wind_speed_payload_
+      : reinterpret_cast< ::IMC_DCCL::WindSpeed&>(::IMC_DCCL::_WindSpeed_default_instance_);
+}
+inline const ::IMC_DCCL::WindSpeed& Payload::wind_speed_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.wind_speed_payload)
+  return _internal_wind_speed_payload();
+}
+inline ::IMC_DCCL::WindSpeed* Payload::unsafe_arena_release_wind_speed_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.wind_speed_payload)
+  if (_internal_has_wind_speed_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::WindSpeed* temp = _impl_.PayloadUnion_.wind_speed_payload_;
+    _impl_.PayloadUnion_.wind_speed_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_wind_speed_payload(::IMC_DCCL::WindSpeed* wind_speed_payload) {
+  clear_PayloadUnion();
+  if (wind_speed_payload) {
+    set_has_wind_speed_payload();
+    _impl_.PayloadUnion_.wind_speed_payload_ = wind_speed_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.wind_speed_payload)
+}
+inline ::IMC_DCCL::WindSpeed* Payload::_internal_mutable_wind_speed_payload() {
+  if (!_internal_has_wind_speed_payload()) {
+    clear_PayloadUnion();
+    set_has_wind_speed_payload();
+    _impl_.PayloadUnion_.wind_speed_payload_ = CreateMaybeMessage< ::IMC_DCCL::WindSpeed >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.wind_speed_payload_;
+}
+inline ::IMC_DCCL::WindSpeed* Payload::mutable_wind_speed_payload() {
+  ::IMC_DCCL::WindSpeed* _msg = _internal_mutable_wind_speed_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.wind_speed_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.EntityParameters entity_parameters_payload = 14;
+inline bool Payload::_internal_has_entity_parameters_payload() const {
+  return PayloadUnion_case() == kEntityParametersPayload;
+}
+inline bool Payload::has_entity_parameters_payload() const {
+  return _internal_has_entity_parameters_payload();
+}
+inline void Payload::set_has_entity_parameters_payload() {
+  _impl_._oneof_case_[0] = kEntityParametersPayload;
+}
+inline void Payload::clear_entity_parameters_payload() {
+  if (_internal_has_entity_parameters_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.entity_parameters_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::EntityParameters* Payload::release_entity_parameters_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.entity_parameters_payload)
+  if (_internal_has_entity_parameters_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::EntityParameters* temp = _impl_.PayloadUnion_.entity_parameters_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.entity_parameters_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::EntityParameters& Payload::_internal_entity_parameters_payload() const {
+  return _internal_has_entity_parameters_payload()
+      ? *_impl_.PayloadUnion_.entity_parameters_payload_
+      : reinterpret_cast< ::IMC_DCCL::EntityParameters&>(::IMC_DCCL::_EntityParameters_default_instance_);
+}
+inline const ::IMC_DCCL::EntityParameters& Payload::entity_parameters_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.entity_parameters_payload)
+  return _internal_entity_parameters_payload();
+}
+inline ::IMC_DCCL::EntityParameters* Payload::unsafe_arena_release_entity_parameters_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.entity_parameters_payload)
+  if (_internal_has_entity_parameters_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::EntityParameters* temp = _impl_.PayloadUnion_.entity_parameters_payload_;
+    _impl_.PayloadUnion_.entity_parameters_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_entity_parameters_payload(::IMC_DCCL::EntityParameters* entity_parameters_payload) {
+  clear_PayloadUnion();
+  if (entity_parameters_payload) {
+    set_has_entity_parameters_payload();
+    _impl_.PayloadUnion_.entity_parameters_payload_ = entity_parameters_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.entity_parameters_payload)
+}
+inline ::IMC_DCCL::EntityParameters* Payload::_internal_mutable_entity_parameters_payload() {
+  if (!_internal_has_entity_parameters_payload()) {
+    clear_PayloadUnion();
+    set_has_entity_parameters_payload();
+    _impl_.PayloadUnion_.entity_parameters_payload_ = CreateMaybeMessage< ::IMC_DCCL::EntityParameters >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.entity_parameters_payload_;
+}
+inline ::IMC_DCCL::EntityParameters* Payload::mutable_entity_parameters_payload() {
+  ::IMC_DCCL::EntityParameters* _msg = _internal_mutable_entity_parameters_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.entity_parameters_payload)
+  return _msg;
+}
+
+// .IMC_DCCL.EntityList entity_list_payload = 15;
+inline bool Payload::_internal_has_entity_list_payload() const {
+  return PayloadUnion_case() == kEntityListPayload;
+}
+inline bool Payload::has_entity_list_payload() const {
+  return _internal_has_entity_list_payload();
+}
+inline void Payload::set_has_entity_list_payload() {
+  _impl_._oneof_case_[0] = kEntityListPayload;
+}
+inline void Payload::clear_entity_list_payload() {
+  if (_internal_has_entity_list_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.entity_list_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::EntityList* Payload::release_entity_list_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.entity_list_payload)
+  if (_internal_has_entity_list_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::EntityList* temp = _impl_.PayloadUnion_.entity_list_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.entity_list_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::EntityList& Payload::_internal_entity_list_payload() const {
+  return _internal_has_entity_list_payload()
+      ? *_impl_.PayloadUnion_.entity_list_payload_
+      : reinterpret_cast< ::IMC_DCCL::EntityList&>(::IMC_DCCL::_EntityList_default_instance_);
+}
+inline const ::IMC_DCCL::EntityList& Payload::entity_list_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.entity_list_payload)
+  return _internal_entity_list_payload();
+}
+inline ::IMC_DCCL::EntityList* Payload::unsafe_arena_release_entity_list_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.entity_list_payload)
+  if (_internal_has_entity_list_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::EntityList* temp = _impl_.PayloadUnion_.entity_list_payload_;
+    _impl_.PayloadUnion_.entity_list_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_entity_list_payload(::IMC_DCCL::EntityList* entity_list_payload) {
+  clear_PayloadUnion();
+  if (entity_list_payload) {
+    set_has_entity_list_payload();
+    _impl_.PayloadUnion_.entity_list_payload_ = entity_list_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.entity_list_payload)
+}
+inline ::IMC_DCCL::EntityList* Payload::_internal_mutable_entity_list_payload() {
+  if (!_internal_has_entity_list_payload()) {
+    clear_PayloadUnion();
+    set_has_entity_list_payload();
+    _impl_.PayloadUnion_.entity_list_payload_ = CreateMaybeMessage< ::IMC_DCCL::EntityList >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.entity_list_payload_;
+}
+inline ::IMC_DCCL::EntityList* Payload::mutable_entity_list_payload() {
+  ::IMC_DCCL::EntityList* _msg = _internal_mutable_entity_list_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.entity_list_payload)
+  return _msg;
+}
+
+inline bool Payload::has_PayloadUnion() const {
+  return PayloadUnion_case() != PAYLOADUNION_NOT_SET;
+}
+inline void Payload::clear_has_PayloadUnion() {
+  _impl_._oneof_case_[0] = PAYLOADUNION_NOT_SET;
+}
+inline Payload::PayloadUnionCase Payload::PayloadUnion_case() const {
+  return Payload::PayloadUnionCase(_impl_._oneof_case_[0]);
+}
+// -------------------------------------------------------------------
+
+// ProtoMessage
+
+// .IMC_DCCL.Header msg_header = 1;
+inline bool ProtoMessage::_internal_has_msg_header() const {
+  return this != internal_default_instance() && _impl_.msg_header_ != nullptr;
+}
+inline bool ProtoMessage::has_msg_header() const {
+  return _internal_has_msg_header();
+}
+inline void ProtoMessage::clear_msg_header() {
+  if (GetArenaForAllocation() == nullptr && _impl_.msg_header_ != nullptr) {
+    delete _impl_.msg_header_;
+  }
+  _impl_.msg_header_ = nullptr;
+}
+inline const ::IMC_DCCL::Header& ProtoMessage::_internal_msg_header() const {
+  const ::IMC_DCCL::Header* p = _impl_.msg_header_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::Header&>(
+      ::IMC_DCCL::_Header_default_instance_);
+}
+inline const ::IMC_DCCL::Header& ProtoMessage::msg_header() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.ProtoMessage.msg_header)
+  return _internal_msg_header();
+}
+inline void ProtoMessage::unsafe_arena_set_allocated_msg_header(
+    ::IMC_DCCL::Header* msg_header) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.msg_header_);
+  }
+  _impl_.msg_header_ = msg_header;
+  if (msg_header) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.ProtoMessage.msg_header)
+}
+inline ::IMC_DCCL::Header* ProtoMessage::release_msg_header() {
+  
+  ::IMC_DCCL::Header* temp = _impl_.msg_header_;
+  _impl_.msg_header_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::Header* ProtoMessage::unsafe_arena_release_msg_header() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.ProtoMessage.msg_header)
+  
+  ::IMC_DCCL::Header* temp = _impl_.msg_header_;
+  _impl_.msg_header_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::Header* ProtoMessage::_internal_mutable_msg_header() {
+  
+  if (_impl_.msg_header_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::Header>(GetArenaForAllocation());
+    _impl_.msg_header_ = p;
+  }
+  return _impl_.msg_header_;
+}
+inline ::IMC_DCCL::Header* ProtoMessage::mutable_msg_header() {
+  ::IMC_DCCL::Header* _msg = _internal_mutable_msg_header();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.ProtoMessage.msg_header)
+  return _msg;
+}
+inline void ProtoMessage::set_allocated_msg_header(::IMC_DCCL::Header* msg_header) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.msg_header_;
+  }
+  if (msg_header) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(msg_header);
+    if (message_arena != submessage_arena) {
+      msg_header = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, msg_header, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.msg_header_ = msg_header;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.ProtoMessage.msg_header)
+}
+
+// .IMC_DCCL.Payload msg_payload = 2;
+inline bool ProtoMessage::_internal_has_msg_payload() const {
+  return this != internal_default_instance() && _impl_.msg_payload_ != nullptr;
+}
+inline bool ProtoMessage::has_msg_payload() const {
+  return _internal_has_msg_payload();
+}
+inline void ProtoMessage::clear_msg_payload() {
+  if (GetArenaForAllocation() == nullptr && _impl_.msg_payload_ != nullptr) {
+    delete _impl_.msg_payload_;
+  }
+  _impl_.msg_payload_ = nullptr;
+}
+inline const ::IMC_DCCL::Payload& ProtoMessage::_internal_msg_payload() const {
+  const ::IMC_DCCL::Payload* p = _impl_.msg_payload_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::Payload&>(
+      ::IMC_DCCL::_Payload_default_instance_);
+}
+inline const ::IMC_DCCL::Payload& ProtoMessage::msg_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.ProtoMessage.msg_payload)
+  return _internal_msg_payload();
+}
+inline void ProtoMessage::unsafe_arena_set_allocated_msg_payload(
+    ::IMC_DCCL::Payload* msg_payload) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.msg_payload_);
+  }
+  _impl_.msg_payload_ = msg_payload;
+  if (msg_payload) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.ProtoMessage.msg_payload)
+}
+inline ::IMC_DCCL::Payload* ProtoMessage::release_msg_payload() {
+  
+  ::IMC_DCCL::Payload* temp = _impl_.msg_payload_;
+  _impl_.msg_payload_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::Payload* ProtoMessage::unsafe_arena_release_msg_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.ProtoMessage.msg_payload)
+  
+  ::IMC_DCCL::Payload* temp = _impl_.msg_payload_;
+  _impl_.msg_payload_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::Payload* ProtoMessage::_internal_mutable_msg_payload() {
+  
+  if (_impl_.msg_payload_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::Payload>(GetArenaForAllocation());
+    _impl_.msg_payload_ = p;
+  }
+  return _impl_.msg_payload_;
+}
+inline ::IMC_DCCL::Payload* ProtoMessage::mutable_msg_payload() {
+  ::IMC_DCCL::Payload* _msg = _internal_mutable_msg_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.ProtoMessage.msg_payload)
+  return _msg;
+}
+inline void ProtoMessage::set_allocated_msg_payload(::IMC_DCCL::Payload* msg_payload) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.msg_payload_;
+  }
+  if (msg_payload) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(msg_payload);
+    if (message_arena != submessage_arena) {
+      msg_payload = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, msg_payload, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.msg_payload_ = msg_payload;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.ProtoMessage.msg_payload)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

@@ -127,6 +127,229 @@ void encodeManeuver(const DUNE::IMC::Maneuver& imc, IMC_DCCL::Maneuver& dccl)
 }
 
 
+// ================ Payload Message ================
+void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl)
+{
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanSpecification*>(&imc))
+    {
+            IMC_DCCL::PlanSpecification* dccl_tmp = new IMC_DCCL::PlanSpecification();
+            encodePlanSpecification(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_plan_specification_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::EstimatedState*>(&imc))
+    {
+            IMC_DCCL::EstimatedState* dccl_tmp = new IMC_DCCL::EstimatedState();
+            encodeEstimatedState(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_estimated_state_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanDB*>(&imc))
+    {
+            IMC_DCCL::PlanDB* dccl_tmp = new IMC_DCCL::PlanDB();
+            encodePlanDB(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_plan_db_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanControl*>(&imc))
+    {
+            IMC_DCCL::PlanControl* dccl_tmp = new IMC_DCCL::PlanControl();
+            encodePlanControl(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_plan_control_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::SetEntityParameters*>(&imc))
+    {
+            IMC_DCCL::SetEntityParameters* dccl_tmp = new IMC_DCCL::SetEntityParameters();
+            encodeSetEntityParameters(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_set_entity_parameters_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::VehicleState*>(&imc))
+    {
+            IMC_DCCL::VehicleState* dccl_tmp = new IMC_DCCL::VehicleState();
+            encodeVehicleState(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_vehicle_state_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::EntityState*>(&imc))
+    {
+            IMC_DCCL::EntityState* dccl_tmp = new IMC_DCCL::EntityState();
+            encodeEntityState(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_entity_state_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanControlState*>(&imc))
+    {
+            IMC_DCCL::PlanControlState* dccl_tmp = new IMC_DCCL::PlanControlState();
+            encodePlanControlState(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_plan_control_state_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::VerticalProfile*>(&imc))
+    {
+            IMC_DCCL::VerticalProfile* dccl_tmp = new IMC_DCCL::VerticalProfile();
+            encodeVerticalProfile(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_vertical_profile_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::Voltage*>(&imc))
+    {
+            IMC_DCCL::Voltage* dccl_tmp = new IMC_DCCL::Voltage();
+            encodeVoltage(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_voltage_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::FuelLevel*>(&imc))
+    {
+            IMC_DCCL::FuelLevel* dccl_tmp = new IMC_DCCL::FuelLevel();
+            encodeFuelLevel(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_fuel_level_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::Current*>(&imc))
+    {
+            IMC_DCCL::Current* dccl_tmp = new IMC_DCCL::Current();
+            encodeCurrent(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_current_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::WindSpeed*>(&imc))
+    {
+            IMC_DCCL::WindSpeed* dccl_tmp = new IMC_DCCL::WindSpeed();
+            encodeWindSpeed(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_wind_speed_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::EntityParameters*>(&imc))
+    {
+            IMC_DCCL::EntityParameters* dccl_tmp = new IMC_DCCL::EntityParameters();
+            encodeEntityParameters(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_entity_parameters_payload(dccl_tmp);
+            return;
+    }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::EntityList*>(&imc))
+    {
+            IMC_DCCL::EntityList* dccl_tmp = new IMC_DCCL::EntityList();
+            encodeEntityList(*imc_tmp, *dccl_tmp);
+            dccl.set_allocated_entity_list_payload(dccl_tmp);
+            return;
+    }
+}
+
+
+// ================ Payload Message ================
+DUNE::IMC::Message* decodePayload(const IMC_DCCL::Payload& dccl)
+{
+    
+    if (dccl.has_plan_specification_payload()){
+            auto* tmp = new DUNE::IMC::PlanSpecification();
+            decodePlanSpecification(dccl.plan_specification_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_estimated_state_payload()){
+            auto* tmp = new DUNE::IMC::EstimatedState();
+            decodeEstimatedState(dccl.estimated_state_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_plan_db_payload()){
+            auto* tmp = new DUNE::IMC::PlanDB();
+            decodePlanDB(dccl.plan_db_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_plan_control_payload()){
+            auto* tmp = new DUNE::IMC::PlanControl();
+            decodePlanControl(dccl.plan_control_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_set_entity_parameters_payload()){
+            auto* tmp = new DUNE::IMC::SetEntityParameters();
+            decodeSetEntityParameters(dccl.set_entity_parameters_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_vehicle_state_payload()){
+            auto* tmp = new DUNE::IMC::VehicleState();
+            decodeVehicleState(dccl.vehicle_state_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_entity_state_payload()){
+            auto* tmp = new DUNE::IMC::EntityState();
+            decodeEntityState(dccl.entity_state_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_plan_control_state_payload()){
+            auto* tmp = new DUNE::IMC::PlanControlState();
+            decodePlanControlState(dccl.plan_control_state_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_vertical_profile_payload()){
+            auto* tmp = new DUNE::IMC::VerticalProfile();
+            decodeVerticalProfile(dccl.vertical_profile_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_voltage_payload()){
+            auto* tmp = new DUNE::IMC::Voltage();
+            decodeVoltage(dccl.voltage_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_fuel_level_payload()){
+            auto* tmp = new DUNE::IMC::FuelLevel();
+            decodeFuelLevel(dccl.fuel_level_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_current_payload()){
+            auto* tmp = new DUNE::IMC::Current();
+            decodeCurrent(dccl.current_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_wind_speed_payload()){
+            auto* tmp = new DUNE::IMC::WindSpeed();
+            decodeWindSpeed(dccl.wind_speed_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_entity_parameters_payload()){
+            auto* tmp = new DUNE::IMC::EntityParameters();
+            decodeEntityParameters(dccl.entity_parameters_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_entity_list_payload()){
+            auto* tmp = new DUNE::IMC::EntityList();
+            decodeEntityList(dccl.entity_list_payload(), *tmp);
+            return tmp;
+    }
+    return nullptr;
+}
+
+
 // ================ Maneuver Message ================
 DUNE::IMC::Maneuver* decodeManeuver(const IMC_DCCL::Maneuver& dccl)	
 {

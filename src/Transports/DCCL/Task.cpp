@@ -147,10 +147,10 @@ namespace Transports
         if(m_args.trigger_dccl){
 
           msg->toJSON(std::cout);
-          war("[ENCODING] PlanSpecification with size %u received.", msg->getPayloadSerializationSize());
 
           ////////////////////////////////////////////////////////////// DCCL LIB
           std::string encoded_string = m_codecdcll.encodeDCCL(msg);
+          war("[ENCODING] PlanSpecification with size %u received.", msg->getPayloadSerializationSize());
           war("[ENCODING] Compressed with size %zu received.", encoded_string.size());
           ////////////////////////////////////////////////////////////// DCCL LIB
 

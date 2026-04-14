@@ -114,4 +114,8 @@ void encodePlanSpecification(const DUNE::IMC::PlanSpecification& imc, IMC_DCCL::
 
 void decodePlanSpecification(const IMC_DCCL::PlanSpecification& dccl, DUNE::IMC::PlanSpecification& imc);
 
+void encodeHeader(const DUNE::IMC::Message& imc, IMC_DCCL::Header& dccl);
+
+void decodeHeader(const IMC_DCCL::Header& dccl, DUNE::IMC::Message& imc);
+
 #endif // MSGCODEC_HPP
