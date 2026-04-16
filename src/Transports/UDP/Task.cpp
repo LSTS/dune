@@ -36,6 +36,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Tasks/MessageFilter.hpp>
 
 // Local headers.
 #include "NodeAddress.hpp"
