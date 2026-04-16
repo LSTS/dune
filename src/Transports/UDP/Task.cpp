@@ -69,6 +69,8 @@ namespace Transports
       std::vector<std::string> rate_lims;
       // Filtered entities.
       std::vector<std::string> entities_flt;
+      // Custom filters to apply.
+      std::vector<std::string> custom_filters;
       // List of messages to publish.
       std::vector<std::string> messages;
       // Announce this transport to services or not
@@ -155,6 +157,9 @@ namespace Transports
 
         param("Filtered Entities", m_args.entities_flt)
         .description("List of <Message>:<Entity>+<Entity> that define the source entities allowed to pass message of a specific message type.");
+
+        param("Custom Filters", m_args.custom_filters)
+        .description("List of custom filters to apply");
 
         param("Announce Service", m_args.announce_service)
         .defaultValue("true")
@@ -279,6 +284,9 @@ namespace Transports
           if (paramChanged(m_args.ign_filter))
             m_listener->setIgnoreFilter(m_args.ign_filter);
         }
+
+        if (paramChanged(m_args.custom_filters))
+          m_filter.setupCustomFilters(m_args.custom_filters, this);
       }
 
       void
