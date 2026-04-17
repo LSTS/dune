@@ -168,7 +168,7 @@ namespace Payload
         Tasks::Task(name, ctx)
       {
         // Retrieve configuration values.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Power Channel Control - Descend Motor", m_args.descend_pump_motor_name)
@@ -216,28 +216,28 @@ namespace Payload
         .defaultValue("9")
         .minimumValue("1")
         .maximumValue("9")
-        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Number of filters to use in the system.");
 
         param("Maximum Time to wait for a filter to fill up", m_args.max_time_to_fill_up_filter)
         .defaultValue("60.0")
         .minimumValue("1.0")
-        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Maximum time to wait for a filter to fill up in seconds.");
 
         param("Maximum Time to wait for a purge valve to open/close", m_args.max_time_to_operate_purge_valve)
         .defaultValue("10.0")
         .minimumValue("1.0")
-        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Maximum time to wait for a purge valve to open/close in seconds.");
 
         param("Depth to put the water bomb in water at when descending", m_args.depth_to_put_bomb_in_water)
         .defaultValue("0.5")
         .minimumValue("0.1")
-        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Depth to put the water bomb in water at when descending in meters.");
 
