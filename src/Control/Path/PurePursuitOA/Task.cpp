@@ -89,17 +89,22 @@ namespace Control
 
       struct Task: public DUNE::Control::PathController
       {
-        IMC::DesiredHeading m_heading;
-        IMC::DesiredPath m_path;
-        std::string m_obs_msg;
-        std::vector<Obstacle> m_obstacles;
-        Position finalPos;
-        Position endPoint;
-        Position currPos;
+        IMC::DesiredHeading m_heading;            //direção para onde está a ir
+        IMC::DesiredPath m_path;                  //ponto para o qual está a ir
+        std::string m_obs_msg;                    //mensagem com os obstáculos 
+        std::vector<Obstacle> m_obstacles;        //vetor com os obstáculos
+        Position finalPos;                        //destino imediato
+        Position endPoint;                        //próximo GoTo do percurso
+        Position currPos;                         //posição atual
         int oldAvoidState = 0;
         int currAvoidState = 0;
+
+        bool canChangeEP = true;                 //pode-se alterar o endPoint
+        Position oldPath = {m_path.end_lon, m_path.end_lat};      //verifica seo m_path.end mudou ou não
+        Position newPath;                                         //verifica seo m_path.end mudou ou não
+
         bool finalPosChanged = false;
-        bool hasStoredOriginal = false;
+        bool hasStoredOriginal = false;           //se em endPoint está guardada o GoTo correto
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx)
@@ -495,23 +500,48 @@ namespace Control
             inf("Going to: %f %f", m_path.end_lon, m_path.end_lat);
             inf("Avoiding collision: %d", avoidingcollision);
           }
-          
-          if (!avoidingcollision && m_ts.nearby) //se não está a evitar colisão, continuar para o destino final
+
+
+          //*******************************************************************************
+
+          if (!avoidingcollision)
           {
-            // Se estamos vindo de um desvio, atualizar para o destino original
-            if (hasStoredOriginal)
-            {
-              finalPos = endPoint;
-            }
-            
             m_heading.value = Angles::normalizeRadian(atan2(latDist2verDist(finalPos.lat - currPos.lat), lonDist2horDist(finalPos.lon - currPos.lon, currPos.lat)));
             
             m_path.end_lon = finalPos.lon;
             m_path.end_lat = finalPos.lat;
-            m_ts.nearby = false;
-            finalPosChanged = false;
-            hasStoredOriginal = false;
           }
+
+
+
+
+
+
+
+
+
+
+
+          // if (!avoidingcollision && m_ts.nearby) //se não está a evitar colisão, continuar para o destino final
+          // {
+          //   // Se estamos vindo de um desvio, atualizar para o destino original
+          //   if (hasStoredOriginal)
+          //   {
+          //     finalPos = endPoint;
+          //   }
+            
+          //   m_heading.value = Angles::normalizeRadian(atan2(latDist2verDist(finalPos.lat - currPos.lat), lonDist2horDist(finalPos.lon - currPos.lon, currPos.lat)));
+            
+          //   m_path.end_lon = finalPos.lon;
+          //   m_path.end_lat = finalPos.lat;
+          //   m_ts.nearby = false;
+          //   finalPosChanged = false;
+          //   hasStoredOriginal = false;
+          // }
+          //*******************************************************************************
+
+
+
           return avoidingcollision;
         }
         
@@ -734,39 +764,63 @@ namespace Control
           m_path.end_lat = Angles::normalizeRadian(Angles::radians(m_path.end_lat));
 
           //UNDER CONSTRUCTION*********************************************
-          if ( currAvoidState != oldAvoidState)
+          newPath = {m_path.end_lon, m_path.end_lat};
+
+          if(newPath.lon != oldPath.lon || newPath.lat != oldPath.lat)    //verificar se o m_path.end mudou
+          {
+            finalPos = newPath;                                           //se tiver mudado, atualizar o destino imediato
+            finalPosChanged = true;
+          }
+          
+          // se não está a fazer avoidance, o m_path.end é igual ao destino imediato, e está próximo ao destino
+          if (!currAvoidState && (m_path.end_lon == finalPos.lon) && (m_path.end_lat == finalPos.lat) && m_ts.nearby)
+          {
+            m_path.end_lon = endPoint.lon;      //passar o próximo GoTo
+            m_path.end_lat = endPoint.lat;      //passar o próximo GoTo
+            canChangeEP = true;                 //o endPoint pode ser atualizado para o próximo GoTo
+            m_ts.nearby = false;                //já não está próximo do destino imediato
+          }
+          
+          if (canChangeEP && finalPosChanged)
+          {
+            endPoint = {m_path.end_lon, m_path.end_lat};
+            canChangeEP = false;
+          }
+          
+          oldPath = newPath;
+          
+          if ( currAvoidState != oldAvoidState)           // Se o estado de avoidance atual mudou
           {
             inf("Mudou de estado");
 
             war("CCCCCCCCCCCC");
 
             
-            dispatch(m_path, DF_LOOP_BACK);
-            setEndPoint(&m_path);
-          
-            finalPosChanged = true;
-
+            dispatch(m_path, DF_LOOP_BACK);               // Avisar que mudamos o DesiredPath
+            setEndPoint(&m_path);                         // Alterar de facto o DesiredPath
           }
 
-          if (!hasStoredOriginal)
-          {
-            war("AAAAAAAAAAAA");
-            endPoint = {Angles::degrees(ts.lon_en), Angles::degrees(ts.lat_en)};
-            hasStoredOriginal = true;
-          }
+          //OLD****************************************************************
 
-          if (ts.nearby && !currAvoidState)
-          {
-            war("BBBBBBBBBBBB");
+          // if (!hasStoredOriginal)
+          // {
+          //   war("AAAAAAAAAAAA");
+          //   endPoint = {Angles::degrees(ts.lon_en), Angles::degrees(ts.lat_en)};
+          //   hasStoredOriginal = true;
+          // }
 
-              finalPos = endPoint;
-              m_path.end_lon = endPoint.lon;
-              m_path.end_lat = endPoint.lat;
-
-              m_heading.value = Angles::normalizeRadian(atan2(latDist2verDist(finalPos.lat - currPos.lat), lonDist2horDist(finalPos.lon - currPos.lon, currPos.lat)));
-              
-              m_ts.nearby = false;
-          }
+          // if (ts.nearby && !currAvoidState)
+          // {
+          //   war("BBBBBBBBBBBB");
+            
+          //   finalPos = endPoint;
+          //   m_path.end_lon = endPoint.lon;
+          //   m_path.end_lat = endPoint.lat;
+            
+          //   m_heading.value = Angles::normalizeRadian(atan2(latDist2verDist(finalPos.lat - currPos.lat), lonDist2horDist(finalPos.lon - currPos.lon, currPos.lat)));
+          //   m_ts.nearby = false;
+            
+          // }
           //UNDER CONSTRUCTION END*********************************************
 
 
