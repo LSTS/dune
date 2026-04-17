@@ -99,11 +99,12 @@ namespace Control
         int oldAvoidState = 0;
         int currAvoidState = 0;
 
-        bool canChangeEP = true;                 //pode-se alterar o endPoint
+        bool epIsSet = false;                                     //se o endPoint já foi definido
+        bool canChangeEP = true;                                  //pode-se alterar o endPoint
         Position oldPath = {m_path.end_lon, m_path.end_lat};      //verifica seo m_path.end mudou ou não
         Position newPath;                                         //verifica seo m_path.end mudou ou não
 
-        bool finalPosChanged = false;
+        bool finalPosChanged = true;
         bool hasStoredOriginal = false;           //se em endPoint está guardada o GoTo correto
 
         Task(const std::string& name, Tasks::Context& ctx):
@@ -113,9 +114,18 @@ namespace Control
           .defaultValue("")
           .description("Obstacles definition.");
 
+          bind<IMC::PlanControlState>(this);
         }
 
-        
+        void
+        consume(const IMC::PlanControlState* pcs)
+        {
+          if (pcs->getSource() != getSystemId())
+            return;
+
+          //war("Received PlanControlState: %s | maneuver: %s", pcs->plan_id.c_str(), pcs->man_id.c_str());
+        }
+
         void
         onUpdateParameters(void)
         {
@@ -345,7 +355,7 @@ namespace Control
             veicleObstacleDistance = sqrt(horizontalDistanceV*horizontalDistanceV+verticalDistanceV*verticalDistanceV);
 
             war("Obstacle %d @ %fm", counter++, veicleObstacleDistance);
-            inf("I'm Here: %f %f", currPos.lon, currPos.lat);
+            //inf("I'm Here: %f %f", currPos.lon, currPos.lat);
             
 
             if (obstacle.state == 'S') //para obstáculos estáticos
@@ -497,7 +507,7 @@ namespace Control
                 }
               }
             }
-            inf("Going to: %f %f", m_path.end_lon, m_path.end_lat);
+            //inf("Going to: %f %f", m_path.end_lon, m_path.end_lat);
             inf("Avoiding collision: %d", avoidingcollision);
           }
 
@@ -721,22 +731,49 @@ namespace Control
 
         //********************operating Functions END
 
+        void
+        onDesiredPath(const IMC::DesiredPath* dp)
+        {
+          war("DesiredPath: %f %f", dp->end_lon, dp->end_lat);
+          war("m_path: %f %f", m_path.end_lon, m_path.end_lat);
+          
+          //if (dp->getSourceEntity() == getEntityId())
+          return;
+        }
 
+        int clic = 0;
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         { 
+          clic++;
           war("Step----------------------------------------");
           double curr_lat = state.lat;
           double curr_lon = state.lon;
           WGS84::displace(state.x, state.y, &curr_lat, &curr_lon);
 
-          finalPos = {Angles::degrees(ts.lon_en), Angles::degrees(ts.lat_en)};
+          //finalPos = {Angles::degrees(ts.lon_en), Angles::degrees(ts.lat_en)};
 
           inf("Next Lon: %f", finalPos.lon);
           inf("Next Lat: %f", finalPos.lat);
 
           war("Final Lon: %f", endPoint.lon);
           war("Final Lat: %f", endPoint.lat);
+
+          currPos.lon = Angles::degrees(curr_lon);          //posição atual do veículo em coordenadas geográficas para fazer 
+          currPos.lat = Angles::degrees(curr_lat);          //os cálculos com posição do obstáculo definidas em coordendas geográficas
+          m_path.start_lat = curr_lat;                      //guardar posição atual como inicial
+          m_path.start_lon = curr_lon;                      //guardar posição atual como inicial
+          
+          m_path.end_lon = Angles::degrees(ts.lon_en);                       //guardar o destino original
+          m_path.end_lat = Angles::degrees(ts.lat_en);                       //guardar o destino original
+          
+          m_path.speed = ts.speed;
+          m_path.end_z = ts.end.z;
+          m_path.end_z_units = ts.end.z_units;
+          
+          inf("m_path Lon: %f", m_path.end_lon);
+          inf("m_path Lat: %f", m_path.end_lat);
+          
           if (ts.nearby)
           {
             inf("Nearby");
@@ -745,94 +782,62 @@ namespace Control
           {
             inf("Not Nearby");
           }
-          currPos.lon = Angles::degrees(curr_lon);          //posição atual do veículo em coordenadas geográficas para fazer 
-          currPos.lat = Angles::degrees(curr_lat);          //os cálculos com posição do obstáculo definidas em coordendas geográficas
-          m_path.start_lat = curr_lat;                      //guardar posição atual como inicial
-          m_path.start_lon = curr_lon;                      //guardar posição atual como inicial
-          
-          m_path.end_lon = Angles::degrees(ts.lon_en);                       //guardar o destino original
-          m_path.end_lat = Angles::degrees(ts.lat_en);                       //guardar o destino original
-
-          m_path.speed = ts.speed;
-          m_path.end_z = ts.end.z;
-          m_path.end_z_units = ts.end.z_units;
-
-          currAvoidState = checkPosition(m_obstacles);
-
-
-          m_path.end_lon = Angles::normalizeRadian(Angles::radians(m_path.end_lon));
-          m_path.end_lat = Angles::normalizeRadian(Angles::radians(m_path.end_lat));
-
+          inf("I'm Here: %f %f", currPos.lon, currPos.lat);
           //UNDER CONSTRUCTION*********************************************
           newPath = {m_path.end_lon, m_path.end_lat};
-
+          
+          inf("%d", getEntityId());
+          inf("%d", m_path.getSourceEntity());
+          
+          if (m_path.getSourceEntity() == getEntityId() && !epIsSet)   //se o DesiredPath foi definido por este controlador e o endPoint ainda não foi definido
+          { 
+            war("AAAAAAAAAAAAAAAAAA");
+            endPoint = {oldPath.lon, oldPath.lat};
+            epIsSet = true;
+          }
           if(newPath.lon != oldPath.lon || newPath.lat != oldPath.lat)    //verificar se o m_path.end mudou
           {
-            finalPos = newPath;                                           //se tiver mudado, atualizar o destino imediato
+            war("BBBBBBBBBBBBBBBBBB");
+
+            finalPos = {newPath.lon, newPath.lat};                                           //se tiver mudado, atualizar o destino imediato
             finalPosChanged = true;
           }
-          
-          // se não está a fazer avoidance, o m_path.end é igual ao destino imediato, e está próximo ao destino
-          if (!currAvoidState && (m_path.end_lon == finalPos.lon) && (m_path.end_lat == finalPos.lat) && m_ts.nearby)
+          if (!currAvoidState && m_ts.nearby && (clic % 20 == 0))
           {
+            war("CCCCCCCCCCCC");
             m_path.end_lon = endPoint.lon;      //passar o próximo GoTo
             m_path.end_lat = endPoint.lat;      //passar o próximo GoTo
-            canChangeEP = true;                 //o endPoint pode ser atualizado para o próximo GoTo
+            epIsSet = false;                    //o endPoint pode ser atualizado para o próximo GoTo
             m_ts.nearby = false;                //já não está próximo do destino imediato
           }
           
-          if (canChangeEP && finalPosChanged)
-          {
-            endPoint = {m_path.end_lon, m_path.end_lat};
-            canChangeEP = false;
-          }
-          
           oldPath = newPath;
+                                                                                      //TODO: ver porque é que o m_path não está a receber o valor de endPoint
+
+          currAvoidState = checkPosition(m_obstacles);
+
+          m_path.end_lon = Angles::normalizeRadian(Angles::radians(m_path.end_lon));
+          m_path.end_lat = Angles::normalizeRadian(Angles::radians(m_path.end_lat));
+          
+          //UNDER CONSTRUCTION END*********************************************
+          
+          
+          if (ts.cc)
+            m_heading.value = Angles::normalizeRadian(m_heading.value + state.psi - ts.course);
           
           if ( currAvoidState != oldAvoidState)           // Se o estado de avoidance atual mudou
           {
             inf("Mudou de estado");
-
-            war("CCCCCCCCCCCC");
-
             
             dispatch(m_path, DF_LOOP_BACK);               // Avisar que mudamos o DesiredPath
             setEndPoint(&m_path);                         // Alterar de facto o DesiredPath
           }
-
-          //OLD****************************************************************
-
-          // if (!hasStoredOriginal)
-          // {
-          //   war("AAAAAAAAAAAA");
-          //   endPoint = {Angles::degrees(ts.lon_en), Angles::degrees(ts.lat_en)};
-          //   hasStoredOriginal = true;
-          // }
-
-          // if (ts.nearby && !currAvoidState)
-          // {
-          //   war("BBBBBBBBBBBB");
-            
-          //   finalPos = endPoint;
-          //   m_path.end_lon = endPoint.lon;
-          //   m_path.end_lat = endPoint.lat;
-            
-          //   m_heading.value = Angles::normalizeRadian(atan2(latDist2verDist(finalPos.lat - currPos.lat), lonDist2horDist(finalPos.lon - currPos.lon, currPos.lat)));
-          //   m_ts.nearby = false;
-            
-          // }
-          //UNDER CONSTRUCTION END*********************************************
-
-
+          
           oldAvoidState = currAvoidState;
-
+          
           //war("lat %f lon %f", curr_lat, curr_lon);
-
+          
           m_heading.value = ts.los_angle;
-
-          if (ts.cc)
-            m_heading.value = Angles::normalizeRadian(m_heading.value + state.psi - ts.course);
-
           dispatch(m_heading);
         }
       };

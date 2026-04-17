@@ -88,6 +88,11 @@ namespace DUNE
       void
       consume(const IMC::DesiredPath* dp);
 
+      //! Handler for DesiredPath message.
+      //! @param dp message to consume.
+      virtual void
+      onDesiredPath(const IMC::DesiredPath* dp);
+
       //! Consumer for NavigationUncertainty message.
       //! @param nu message to consume.
       void

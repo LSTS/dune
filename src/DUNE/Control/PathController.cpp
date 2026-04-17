@@ -323,6 +323,10 @@ namespace DUNE
     }
 
     void
+    PathController::onDesiredPath(const IMC::DesiredPath* dp)
+    { }
+      
+    void
     PathController::consume(const IMC::Brake* brake)
     {
       if (brake->op == IMC::Brake::OP_START)
@@ -344,6 +348,8 @@ namespace DUNE
         war(DTR("not active"));
         return;
       }
+
+      //onDesiredPath(dpath);
 
       const double now = Clock::get();
       const bool no_start = setStartPoint(now, dpath);
