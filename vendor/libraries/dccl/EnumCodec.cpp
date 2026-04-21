@@ -516,7 +516,7 @@ IMC_DCCL::EntityNameEnum encodeEntityNameEnum(const std::string& imc_src)
         if (imc_src == "LostComms Supervisor ASV") return IMC_DCCL::EntityNameEnum::EN_LOSTCOMMS_SUPERVISOR_ASV;
         if (imc_src == "Lost Comms") return IMC_DCCL::EntityNameEnum::EN_LOST_COMMS;
         if (imc_src == "Lost Comms Monitor") return IMC_DCCL::EntityNameEnum::EN_LOST_COMMS_MONITOR;
-        if (imc_src == "Mainboard") return IMC_DCCL::EntityNameEnum::EN_MAINBOARD_1;
+        if (imc_src == "Mainboard") return IMC_DCCL::EntityNameEnum::EN_MAINBOARD;
         if (imc_src == "Mainboard Aux") return IMC_DCCL::EntityNameEnum::EN_MAINBOARD_AUX;
         if (imc_src == "Mainboard (Auxiliary CPU)") return IMC_DCCL::EntityNameEnum::EN_MAINBOARD_AUXILIARY_CPU;
         if (imc_src == "Mainboard (Board)") return IMC_DCCL::EntityNameEnum::EN_MAINBOARD_BOARD;
@@ -524,7 +524,7 @@ IMC_DCCL::EntityNameEnum encodeEntityNameEnum(const std::string& imc_src)
         if (imc_src == "Mainboard (Camera CPU)") return IMC_DCCL::EntityNameEnum::EN_MAINBOARD_CAMERA_CPU_1;
         if (imc_src == "Mainboard (Core)") return IMC_DCCL::EntityNameEnum::EN_MAINBOARD_CORE;
         if (imc_src == "Mainboard (SuperIO)") return IMC_DCCL::EntityNameEnum::EN_MAINBOARD_SUPERIO;
-        if (imc_src == "Main Board") return IMC_DCCL::EntityNameEnum::EN_MAIN_BOARD;
+        if (imc_src == "Main Board") return IMC_DCCL::EntityNameEnum::EN_MAIN_BOARD_1;
         if (imc_src == "Manta Fuel Level") return IMC_DCCL::EntityNameEnum::EN_MANTA_FUEL_LEVEL;
         if (imc_src == "MCD4R") return IMC_DCCL::EntityNameEnum::EN_MCD4R;
         if (imc_src == "Medium") return IMC_DCCL::EntityNameEnum::EN_MEDIUM;
@@ -734,7 +734,7 @@ std::string decodeEntityNameEnum(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_LOSTCOMMS_SUPERVISOR_ASV) return "LostComms Supervisor ASV";
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_LOST_COMMS) return "Lost Comms";
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_LOST_COMMS_MONITOR) return "Lost Comms Monitor";
-        if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MAINBOARD_1) return "Mainboard";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MAINBOARD) return "Mainboard";
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MAINBOARD_AUX) return "Mainboard Aux";
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MAINBOARD_AUXILIARY_CPU) return "Mainboard (Auxiliary CPU)";
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MAINBOARD_BOARD) return "Mainboard (Board)";
@@ -742,7 +742,7 @@ std::string decodeEntityNameEnum(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MAINBOARD_CAMERA_CPU_1) return "Mainboard (Camera CPU)";
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MAINBOARD_CORE) return "Mainboard (Core)";
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MAINBOARD_SUPERIO) return "Mainboard (SuperIO)";
-        if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MAIN_BOARD) return "Main Board";
+        if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MAIN_BOARD_1) return "Main Board";
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MANTA_FUEL_LEVEL) return "Manta Fuel Level";
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MCD4R) return "MCD4R";
         if (dccl_src == IMC_DCCL::EntityNameEnum::EN_MEDIUM) return "Medium";
@@ -937,7 +937,7 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "ADC15 - Entity Label") return IMC_DCCL::ParamName::PN_ADC15_ENTITY_LABEL;
         if (imc_src == "ADC15 - Message") return IMC_DCCL::ParamName::PN_ADC15_MESSAGE;
         if (imc_src == "ADC1 - Conversion") return IMC_DCCL::ParamName::PN_ADC1_CONVERSION;
-        if (imc_src == "ADC1 - Entity Label") return IMC_DCCL::ParamName::PN_ADC1_ENTITY_LABEL_1;
+        if (imc_src == "ADC1 - Entity Label") return IMC_DCCL::ParamName::PN_ADC1_ENTITY_LABEL;
         if (imc_src == "ADC1 - Message") return IMC_DCCL::ParamName::PN_ADC1_MESSAGE;
         if (imc_src == "ADC2 - Conversion") return IMC_DCCL::ParamName::PN_ADC2_CONVERSION;
         if (imc_src == "ADC2 - Entity Label") return IMC_DCCL::ParamName::PN_ADC2_ENTITY_LABEL_1;
@@ -946,7 +946,7 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "ADC3 - Entity Label") return IMC_DCCL::ParamName::PN_ADC3_ENTITY_LABEL_1;
         if (imc_src == "ADC3 - Message") return IMC_DCCL::ParamName::PN_ADC3_MESSAGE;
         if (imc_src == "ADC4 - Conversion") return IMC_DCCL::ParamName::PN_ADC4_CONVERSION;
-        if (imc_src == "ADC4 - Entity Label") return IMC_DCCL::ParamName::PN_ADC4_ENTITY_LABEL;
+        if (imc_src == "ADC4 - Entity Label") return IMC_DCCL::ParamName::PN_ADC4_ENTITY_LABEL_1;
         if (imc_src == "ADC4 - Message") return IMC_DCCL::ParamName::PN_ADC4_MESSAGE;
         if (imc_src == "ADC5 - Conversion") return IMC_DCCL::ParamName::PN_ADC5_CONVERSION;
         if (imc_src == "ADC5 - Entity Label") return IMC_DCCL::ParamName::PN_ADC5_ENTITY_LABEL;
@@ -963,7 +963,7 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "ADC9 - Conversion") return IMC_DCCL::ParamName::PN_ADC9_CONVERSION;
         if (imc_src == "ADC9 - Entity Label") return IMC_DCCL::ParamName::PN_ADC9_ENTITY_LABEL;
         if (imc_src == "ADC9 - Message") return IMC_DCCL::ParamName::PN_ADC9_MESSAGE;
-        if (imc_src == "ADC 1 - Entity Label") return IMC_DCCL::ParamName::PN_ADC_1_ENTITY_LABEL;
+        if (imc_src == "ADC 1 - Entity Label") return IMC_DCCL::ParamName::PN_ADC_1_ENTITY_LABEL_1;
         if (imc_src == "ADC 1 - Fixed Gain") return IMC_DCCL::ParamName::PN_ADC_1_FIXED_GAIN;
         if (imc_src == "ADC 1 - Fixed Gain Value") return IMC_DCCL::ParamName::PN_ADC_1_FIXED_GAIN_VAL;
         if (imc_src == "ADC 1 - Is Active") return IMC_DCCL::ParamName::PN_ADC_1_IS_ACTIVE;
@@ -981,7 +981,7 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "ADC 3 - Is Active") return IMC_DCCL::ParamName::PN_ADC_3_IS_ACTIVE;
         if (imc_src == "ADC 3 - Maximum Value") return IMC_DCCL::ParamName::PN_ADC_3_MAXIMUM_VAL;
         if (imc_src == "ADC 3 - Minimum Value") return IMC_DCCL::ParamName::PN_ADC_3_MINIMUM_VAL;
-        if (imc_src == "ADC 4 - Entity Label") return IMC_DCCL::ParamName::PN_ADC_4_ENTITY_LABEL_1;
+        if (imc_src == "ADC 4 - Entity Label") return IMC_DCCL::ParamName::PN_ADC_4_ENTITY_LABEL;
         if (imc_src == "ADC 4 - Fixed Gain") return IMC_DCCL::ParamName::PN_ADC_4_FIXED_GAIN;
         if (imc_src == "ADC 4 - Fixed Gain Value") return IMC_DCCL::ParamName::PN_ADC_4_FIXED_GAIN_VAL;
         if (imc_src == "ADC 4 - Is Active") return IMC_DCCL::ParamName::PN_ADC_4_IS_ACTIVE;
@@ -1044,8 +1044,8 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "Altitude PID Gains") return IMC_DCCL::ParamName::PN_ALTITUDE_PID_GAINS;
         if (imc_src == "Altitude Reference Margin") return IMC_DCCL::ParamName::PN_ALTITUDE_REFERENCE_MARGIN;
         if (imc_src == "Altitude Threshold") return IMC_DCCL::ParamName::PN_ALTITUDE_THRESHOLD;
-        if (imc_src == "Altitude timeout") return IMC_DCCL::ParamName::PN_ALTITUDE_TIMEOUT;
-        if (imc_src == "Altitude Timeout") return IMC_DCCL::ParamName::PN_ALTITUDE_TIMEOUT_1;
+        if (imc_src == "Altitude Timeout") return IMC_DCCL::ParamName::PN_ALTITUDE_TIMEOUT;
+        if (imc_src == "Altitude timeout") return IMC_DCCL::ParamName::PN_ALTITUDE_TIMEOUT_1;
         if (imc_src == "Altitude Time Constant") return IMC_DCCL::ParamName::PN_ALTITUDE_TIME_CONSTANT;
         if (imc_src == "Always Transmitted Messages") return IMC_DCCL::ParamName::PN_ALWAYS_TRANSMITTED_MESSAGES;
         if (imc_src == "Amplitude LPF cutoff frequency") return IMC_DCCL::ParamName::PN_AMPLITUDE_LPF_CUTOFF_FREQUENCY;
@@ -1246,8 +1246,8 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "Corridor Loiter -- Width") return IMC_DCCL::ParamName::PN_CORRIDOR_LOITER_WIDTH;
         if (imc_src == "Corridor -- Out LOS") return IMC_DCCL::ParamName::PN_CORRIDOR_OUT_LOS;
         if (imc_src == "Corridor -- Out Vector Field") return IMC_DCCL::ParamName::PN_CORRIDOR_OUT_VECTOR_FIELD;
-        if (imc_src == "Corridor -- Width") return IMC_DCCL::ParamName::PN_CORRIDOR_WIDTH;
-        if (imc_src == "Corridor width") return IMC_DCCL::ParamName::PN_CORRIDOR_WIDTH_1;
+        if (imc_src == "Corridor width") return IMC_DCCL::ParamName::PN_CORRIDOR_WIDTH;
+        if (imc_src == "Corridor -- Width") return IMC_DCCL::ParamName::PN_CORRIDOR_WIDTH_1;
         if (imc_src == "Cost of changing COLREGS") return IMC_DCCL::ParamName::PN_COST_OF_CHANGING_COLREGS;
         if (imc_src == "Cost of Changing Speed Offset") return IMC_DCCL::ParamName::PN_COST_OF_CHANGING_SPEED_OFFSET;
         if (imc_src == "Cost of collisions") return IMC_DCCL::ParamName::PN_COST_OF_COLLISIONS;
@@ -1284,8 +1284,8 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "Data Gain") return IMC_DCCL::ParamName::PN_DATA_GAIN;
         if (imc_src == "Data Points") return IMC_DCCL::ParamName::PN_DATA_POINTS;
         if (imc_src == "Data Port") return IMC_DCCL::ParamName::PN_DATA_PORT;
-        if (imc_src == "Data rate") return IMC_DCCL::ParamName::PN_DATA_RATE;
-        if (imc_src == "Data Rate") return IMC_DCCL::ParamName::PN_DATA_RATE_1;
+        if (imc_src == "Data Rate") return IMC_DCCL::ParamName::PN_DATA_RATE;
+        if (imc_src == "Data rate") return IMC_DCCL::ParamName::PN_DATA_RATE_1;
         if (imc_src == "Data sampling frequency") return IMC_DCCL::ParamName::PN_DATA_SAMPLING_FREQUENCY;
         if (imc_src == "Data Timeout") return IMC_DCCL::ParamName::PN_DATA_TIMEOUT;
         if (imc_src == "Days Forward") return IMC_DCCL::ParamName::PN_DAYS_FORWARD;
@@ -1327,8 +1327,8 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "Device Address") return IMC_DCCL::ParamName::PN_DEVICE_ADDRESS;
         if (imc_src == "Device orientation") return IMC_DCCL::ParamName::PN_DEVICE_ORIENTATION;
         if (imc_src == "Device Orientation") return IMC_DCCL::ParamName::PN_DEVICE_ORIENTATION_1;
-        if (imc_src == "Device Position") return IMC_DCCL::ParamName::PN_DEVICE_POSITION;
-        if (imc_src == "Device position") return IMC_DCCL::ParamName::PN_DEVICE_POSITION_1;
+        if (imc_src == "Device position") return IMC_DCCL::ParamName::PN_DEVICE_POSITION;
+        if (imc_src == "Device Position") return IMC_DCCL::ParamName::PN_DEVICE_POSITION_1;
         if (imc_src == "Device Serial Number") return IMC_DCCL::ParamName::PN_DEVICE_SERIAL_NUMBER;
         if (imc_src == "Device updates - Periodicity") return IMC_DCCL::ParamName::PN_DEVICE_UPDATES_PERIODICITY;
         if (imc_src == "Differential Mode") return IMC_DCCL::ParamName::PN_DIFFERENTIAL_MODE;
@@ -1614,8 +1614,8 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "GPS Maximum HDOP") return IMC_DCCL::ParamName::PN_GPS_MAXIMUM_HDOP;
         if (imc_src == "GPS Moving Average Samples") return IMC_DCCL::ParamName::PN_GPS_MOVING_AVERAGE_SAMPLES;
         if (imc_src == "GPS Noise Covariance") return IMC_DCCL::ParamName::PN_GPS_NOISE_COVARIANCE;
-        if (imc_src == "GPS timeout") return IMC_DCCL::ParamName::PN_GPS_TIMEOUT;
-        if (imc_src == "GPS Timeout") return IMC_DCCL::ParamName::PN_GPS_TIMEOUT_1;
+        if (imc_src == "GPS Timeout") return IMC_DCCL::ParamName::PN_GPS_TIMEOUT;
+        if (imc_src == "GPS timeout") return IMC_DCCL::ParamName::PN_GPS_TIMEOUT_1;
         if (imc_src == "Ground Speed Threshold") return IMC_DCCL::ParamName::PN_GROUND_SPEED_THRESHOLD;
         if (imc_src == "GSM Address Section") return IMC_DCCL::ParamName::PN_GSM_ADDRESS_SECTION;
         if (imc_src == "GSM - APN") return IMC_DCCL::ParamName::PN_GSM_APN;
@@ -2433,8 +2433,8 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "Serial Port - Echo") return IMC_DCCL::ParamName::PN_SERIAL_PORT_ECHO;
         if (imc_src == "Serial Port - Local Echo") return IMC_DCCL::ParamName::PN_SERIAL_PORT_LOCAL_ECHO;
         if (imc_src == "Serial Port - TimeOut") return IMC_DCCL::ParamName::PN_SERIAL_PORT_TIMEOUT;
-        if (imc_src == "Server - Address") return IMC_DCCL::ParamName::PN_SERVER_ADDRESS;
-        if (imc_src == "Server Address") return IMC_DCCL::ParamName::PN_SERVER_ADDRESS_1;
+        if (imc_src == "Server Address") return IMC_DCCL::ParamName::PN_SERVER_ADDRESS;
+        if (imc_src == "Server - Address") return IMC_DCCL::ParamName::PN_SERVER_ADDRESS_1;
         if (imc_src == "Server Path") return IMC_DCCL::ParamName::PN_SERVER_PATH;
         if (imc_src == "Server - Port") return IMC_DCCL::ParamName::PN_SERVER_PORT;
         if (imc_src == "Server Port") return IMC_DCCL::ParamName::PN_SERVER_PORT_1;
@@ -2848,7 +2848,7 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC15_ENTITY_LABEL) return "ADC15 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC15_MESSAGE) return "ADC15 - Message";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC1_CONVERSION) return "ADC1 - Conversion";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ADC1_ENTITY_LABEL_1) return "ADC1 - Entity Label";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ADC1_ENTITY_LABEL) return "ADC1 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC1_MESSAGE) return "ADC1 - Message";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC2_CONVERSION) return "ADC2 - Conversion";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC2_ENTITY_LABEL_1) return "ADC2 - Entity Label";
@@ -2857,7 +2857,7 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC3_ENTITY_LABEL_1) return "ADC3 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC3_MESSAGE) return "ADC3 - Message";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC4_CONVERSION) return "ADC4 - Conversion";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ADC4_ENTITY_LABEL) return "ADC4 - Entity Label";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ADC4_ENTITY_LABEL_1) return "ADC4 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC4_MESSAGE) return "ADC4 - Message";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC5_CONVERSION) return "ADC5 - Conversion";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC5_ENTITY_LABEL) return "ADC5 - Entity Label";
@@ -2874,7 +2874,7 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC9_CONVERSION) return "ADC9 - Conversion";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC9_ENTITY_LABEL) return "ADC9 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC9_MESSAGE) return "ADC9 - Message";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_ENTITY_LABEL) return "ADC 1 - Entity Label";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_ENTITY_LABEL_1) return "ADC 1 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_FIXED_GAIN) return "ADC 1 - Fixed Gain";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_FIXED_GAIN_VAL) return "ADC 1 - Fixed Gain Value";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_IS_ACTIVE) return "ADC 1 - Is Active";
@@ -2892,7 +2892,7 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_3_IS_ACTIVE) return "ADC 3 - Is Active";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_3_MAXIMUM_VAL) return "ADC 3 - Maximum Value";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_3_MINIMUM_VAL) return "ADC 3 - Minimum Value";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ADC_4_ENTITY_LABEL_1) return "ADC 4 - Entity Label";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ADC_4_ENTITY_LABEL) return "ADC 4 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_4_FIXED_GAIN) return "ADC 4 - Fixed Gain";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_4_FIXED_GAIN_VAL) return "ADC 4 - Fixed Gain Value";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_4_IS_ACTIVE) return "ADC 4 - Is Active";
@@ -2955,8 +2955,8 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_ALTITUDE_PID_GAINS) return "Altitude PID Gains";
         if (dccl_src == IMC_DCCL::ParamName::PN_ALTITUDE_REFERENCE_MARGIN) return "Altitude Reference Margin";
         if (dccl_src == IMC_DCCL::ParamName::PN_ALTITUDE_THRESHOLD) return "Altitude Threshold";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ALTITUDE_TIMEOUT) return "Altitude timeout";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ALTITUDE_TIMEOUT_1) return "Altitude Timeout";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ALTITUDE_TIMEOUT) return "Altitude Timeout";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ALTITUDE_TIMEOUT_1) return "Altitude timeout";
         if (dccl_src == IMC_DCCL::ParamName::PN_ALTITUDE_TIME_CONSTANT) return "Altitude Time Constant";
         if (dccl_src == IMC_DCCL::ParamName::PN_ALWAYS_TRANSMITTED_MESSAGES) return "Always Transmitted Messages";
         if (dccl_src == IMC_DCCL::ParamName::PN_AMPLITUDE_LPF_CUTOFF_FREQUENCY) return "Amplitude LPF cutoff frequency";
@@ -3157,8 +3157,8 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_CORRIDOR_LOITER_WIDTH) return "Corridor Loiter -- Width";
         if (dccl_src == IMC_DCCL::ParamName::PN_CORRIDOR_OUT_LOS) return "Corridor -- Out LOS";
         if (dccl_src == IMC_DCCL::ParamName::PN_CORRIDOR_OUT_VECTOR_FIELD) return "Corridor -- Out Vector Field";
-        if (dccl_src == IMC_DCCL::ParamName::PN_CORRIDOR_WIDTH) return "Corridor -- Width";
-        if (dccl_src == IMC_DCCL::ParamName::PN_CORRIDOR_WIDTH_1) return "Corridor width";
+        if (dccl_src == IMC_DCCL::ParamName::PN_CORRIDOR_WIDTH) return "Corridor width";
+        if (dccl_src == IMC_DCCL::ParamName::PN_CORRIDOR_WIDTH_1) return "Corridor -- Width";
         if (dccl_src == IMC_DCCL::ParamName::PN_COST_OF_CHANGING_COLREGS) return "Cost of changing COLREGS";
         if (dccl_src == IMC_DCCL::ParamName::PN_COST_OF_CHANGING_SPEED_OFFSET) return "Cost of Changing Speed Offset";
         if (dccl_src == IMC_DCCL::ParamName::PN_COST_OF_COLLISIONS) return "Cost of collisions";
@@ -3195,8 +3195,8 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_DATA_GAIN) return "Data Gain";
         if (dccl_src == IMC_DCCL::ParamName::PN_DATA_POINTS) return "Data Points";
         if (dccl_src == IMC_DCCL::ParamName::PN_DATA_PORT) return "Data Port";
-        if (dccl_src == IMC_DCCL::ParamName::PN_DATA_RATE) return "Data rate";
-        if (dccl_src == IMC_DCCL::ParamName::PN_DATA_RATE_1) return "Data Rate";
+        if (dccl_src == IMC_DCCL::ParamName::PN_DATA_RATE) return "Data Rate";
+        if (dccl_src == IMC_DCCL::ParamName::PN_DATA_RATE_1) return "Data rate";
         if (dccl_src == IMC_DCCL::ParamName::PN_DATA_SAMPLING_FREQUENCY) return "Data sampling frequency";
         if (dccl_src == IMC_DCCL::ParamName::PN_DATA_TIMEOUT) return "Data Timeout";
         if (dccl_src == IMC_DCCL::ParamName::PN_DAYS_FORWARD) return "Days Forward";
@@ -3238,8 +3238,8 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_DEVICE_ADDRESS) return "Device Address";
         if (dccl_src == IMC_DCCL::ParamName::PN_DEVICE_ORIENTATION) return "Device orientation";
         if (dccl_src == IMC_DCCL::ParamName::PN_DEVICE_ORIENTATION_1) return "Device Orientation";
-        if (dccl_src == IMC_DCCL::ParamName::PN_DEVICE_POSITION) return "Device Position";
-        if (dccl_src == IMC_DCCL::ParamName::PN_DEVICE_POSITION_1) return "Device position";
+        if (dccl_src == IMC_DCCL::ParamName::PN_DEVICE_POSITION) return "Device position";
+        if (dccl_src == IMC_DCCL::ParamName::PN_DEVICE_POSITION_1) return "Device Position";
         if (dccl_src == IMC_DCCL::ParamName::PN_DEVICE_SERIAL_NUMBER) return "Device Serial Number";
         if (dccl_src == IMC_DCCL::ParamName::PN_DEVICE_UPDATES_PERIODICITY) return "Device updates - Periodicity";
         if (dccl_src == IMC_DCCL::ParamName::PN_DIFFERENTIAL_MODE) return "Differential Mode";
@@ -3525,8 +3525,8 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_GPS_MAXIMUM_HDOP) return "GPS Maximum HDOP";
         if (dccl_src == IMC_DCCL::ParamName::PN_GPS_MOVING_AVERAGE_SAMPLES) return "GPS Moving Average Samples";
         if (dccl_src == IMC_DCCL::ParamName::PN_GPS_NOISE_COVARIANCE) return "GPS Noise Covariance";
-        if (dccl_src == IMC_DCCL::ParamName::PN_GPS_TIMEOUT) return "GPS timeout";
-        if (dccl_src == IMC_DCCL::ParamName::PN_GPS_TIMEOUT_1) return "GPS Timeout";
+        if (dccl_src == IMC_DCCL::ParamName::PN_GPS_TIMEOUT) return "GPS Timeout";
+        if (dccl_src == IMC_DCCL::ParamName::PN_GPS_TIMEOUT_1) return "GPS timeout";
         if (dccl_src == IMC_DCCL::ParamName::PN_GROUND_SPEED_THRESHOLD) return "Ground Speed Threshold";
         if (dccl_src == IMC_DCCL::ParamName::PN_GSM_ADDRESS_SECTION) return "GSM Address Section";
         if (dccl_src == IMC_DCCL::ParamName::PN_GSM_APN) return "GSM - APN";
@@ -4344,8 +4344,8 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_SERIAL_PORT_ECHO) return "Serial Port - Echo";
         if (dccl_src == IMC_DCCL::ParamName::PN_SERIAL_PORT_LOCAL_ECHO) return "Serial Port - Local Echo";
         if (dccl_src == IMC_DCCL::ParamName::PN_SERIAL_PORT_TIMEOUT) return "Serial Port - TimeOut";
-        if (dccl_src == IMC_DCCL::ParamName::PN_SERVER_ADDRESS) return "Server - Address";
-        if (dccl_src == IMC_DCCL::ParamName::PN_SERVER_ADDRESS_1) return "Server Address";
+        if (dccl_src == IMC_DCCL::ParamName::PN_SERVER_ADDRESS) return "Server Address";
+        if (dccl_src == IMC_DCCL::ParamName::PN_SERVER_ADDRESS_1) return "Server - Address";
         if (dccl_src == IMC_DCCL::ParamName::PN_SERVER_PATH) return "Server Path";
         if (dccl_src == IMC_DCCL::ParamName::PN_SERVER_PORT) return "Server - Port";
         if (dccl_src == IMC_DCCL::ParamName::PN_SERVER_PORT_1) return "Server Port";
