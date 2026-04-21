@@ -96,7 +96,8 @@ namespace Transports
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_router(this)
+        m_router(this),
+        m_codec_dccl(this)
       {
         param("Iridium - Entity Label", m_args.iridium_label)
             .defaultValue("GSM")
