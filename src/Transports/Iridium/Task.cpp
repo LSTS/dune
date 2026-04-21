@@ -80,7 +80,8 @@ namespace Transports
         m_update_pool_empty(true),
         m_announce_pool_empty(true),
         m_dev_update_req_id(10),
-        m_announce_req_id(75)
+        m_announce_req_id(75),
+        m_codec_dccl(this)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER);
