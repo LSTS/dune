@@ -29,6 +29,32 @@ void decodeEntityName(const IMC_DCCL::EntityName& dccl, std::string& imc)
 }
 
 
+// ================ Header Message ================
+void encodeHeader(const DUNE::IMC::Message& imc, IMC_DCCL::Header& dccl)
+{
+    
+    dccl.set_timestamp(imc.getTimeStamp());
+    dccl.set_src(imc.getSource());
+    dccl.set_src_ent(imc.getSourceEntity());
+    dccl.set_dst(imc.getDestination());
+    dccl.set_dst_ent(imc.getDestinationEntity());
+                              
+}
+
+
+// ================ Header Message ================
+void decodeHeader(const IMC_DCCL::Header& dccl, DUNE::IMC::Message& imc)
+{
+    
+    imc.setTimeStamp(dccl.timestamp());
+    imc.setSource(dccl.src());
+    imc.setSourceEntity(dccl.src_ent());
+    imc.setDestination(dccl.dst());
+    imc.setDestinationEntity(dccl.dst_ent());
+                              
+}
+
+
 // ================ ItemList Message ================
 void encodeItemList(const std::string& imc, IMC_DCCL::ItemList& dccl)
 {
@@ -124,6 +150,152 @@ void encodeManeuver(const DUNE::IMC::Maneuver& imc, IMC_DCCL::Maneuver& dccl)
             dccl.set_allocated_stationkeeping_maneuver(dccl_tmp);
             return;
     }
+    throw std::runtime_error("Invalid Maneuver");
+}
+
+
+// ================ Maneuver Message ================
+DUNE::IMC::Maneuver* decodeManeuver(const IMC_DCCL::Maneuver& dccl)	
+{
+    
+    if (dccl.has_goto_maneuver()){
+            auto* tmp = new DUNE::IMC::Goto();
+            decodeGoto(dccl.goto_maneuver(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_followpath_maneuver()){
+            auto* tmp = new DUNE::IMC::FollowPath();
+            decodeFollowPath(dccl.followpath_maneuver(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_loiter_maneuver()){
+            auto* tmp = new DUNE::IMC::Loiter();
+            decodeLoiter(dccl.loiter_maneuver(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_stationkeeping_maneuver()){
+            auto* tmp = new DUNE::IMC::StationKeeping();
+            decodeStationKeeping(dccl.stationkeeping_maneuver(), *tmp);
+            return tmp;
+    }
+    throw std::runtime_error("Invalid Maneuver");
+}
+
+
+// ================ ManeuverID Message ================
+void encodeManeuverID(const std::string& imc, IMC_DCCL::ManeuverID& dccl)
+{
+    
+    IMC_DCCL::ManeuverIDCombined* id_combined = new IMC_DCCL::ManeuverIDCombined();
+    encodeManeuverIDCombined(imc, *id_combined);
+    if(id_combined->maneuver_type() != IMC_DCCL::ManeuverType::MT_UNKNOWN){
+        dccl.set_allocated_id_combined(id_combined);
+        return;}
+    
+    dccl.set_id_string(imc);
+}
+
+
+// ================ ManeuverID Message ================
+void decodeManeuverID(const IMC_DCCL::ManeuverID& dccl, std::string& imc)
+{
+    
+    if(dccl.has_id_combined()) decodeManeuverIDCombined(dccl.id_combined(), imc);
+    
+    
+    if(dccl.has_id_string()) imc = dccl.id_string();
+}
+
+
+// ================ ManeuverIDCombined Message ================
+void encodeManeuverIDCombined(const std::string& imc, IMC_DCCL::ManeuverIDCombined& dccl)
+{
+    
+    std::string letters;
+    std::string numbers;
+    for(char c : imc){
+        if (std::isalpha(c)){
+            letters += c;
+            } else if (std::isdigit(c)){
+                numbers += c;
+            }
+    }
+    dccl.set_maneuver_type(encodeManeuverType(letters));
+    
+    if (!numbers.empty()) dccl.set_maneuver_number(std::stoi(numbers));                         
+                              
+                              
+}
+
+
+// ================ ManeuverIDCombined Message ================
+void decodeManeuverIDCombined(const IMC_DCCL::ManeuverIDCombined& dccl, std::string& imc)
+{
+    
+    std::string str1 = decodeManeuverType(dccl.maneuver_type());
+    std::string str2 = std::to_string(dccl.maneuver_number());
+    imc = str1 + str2;
+}
+
+
+// ================ ParameterName Message ================
+void encodeParameterName(const std::string& imc, IMC_DCCL::ParameterName& dccl)
+{
+    
+    auto enum_val = encodeParamName(imc);
+    if(enum_val != IMC_DCCL::ParamName::PN_UNKNOWN){
+            dccl.set_param_enum(enum_val);
+            return;
+    }
+    
+    dccl.set_param_string(imc);
+}
+
+
+// ================ ParameterName Message ================
+void decodeParameterName(const IMC_DCCL::ParameterName& dccl, std::string& imc)
+{
+    
+    if(dccl.has_param_enum()) imc = decodeParamName(dccl.param_enum());
+    
+    
+    if(dccl.has_param_string()) imc = dccl.param_string();
+}
+
+
+// ================ ParameterValue Message ================
+void encodeParameterValue(const std::string& imc, IMC_DCCL::ParameterValue& dccl)
+{
+    
+    auto enum_val = encodeParamValue(imc);
+    if(enum_val != IMC_DCCL::ParamValue::PV_UNKNOWN){
+            dccl.set_param_enum(enum_val);
+            return;
+    }
+    
+    if(Helper::containsJustDigits(imc)){
+            dccl.set_param_number(std::stof(imc));
+            return;
+    }
+    
+    dccl.set_param_string(imc);
+}
+
+
+// ================ ParameterValue Message ================
+void decodeParameterValue(const IMC_DCCL::ParameterValue& dccl, std::string& imc)
+{
+    
+    if(dccl.has_param_enum()) imc = decodeParamValue(dccl.param_enum());
+    
+    
+    if(dccl.has_param_number()) imc = std::to_string(dccl.param_number());
+    
+    
+    if(dccl.has_param_string()) imc = dccl.param_string();
 }
 
 
@@ -250,6 +422,7 @@ void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl)
             dccl.set_allocated_entity_list_payload(dccl_tmp);
             return;
     }
+    throw std::runtime_error("Invalid Payload");
 }
 
 
@@ -346,152 +519,7 @@ DUNE::IMC::Message* decodePayload(const IMC_DCCL::Payload& dccl)
             decodeEntityList(dccl.entity_list_payload(), *tmp);
             return tmp;
     }
-    return nullptr;
-}
-
-
-// ================ Maneuver Message ================
-DUNE::IMC::Maneuver* decodeManeuver(const IMC_DCCL::Maneuver& dccl)	
-{
-    
-    if (dccl.has_goto_maneuver()){
-            auto* tmp = new DUNE::IMC::Goto();
-            decodeGoto(dccl.goto_maneuver(), *tmp);
-            return tmp;
-    }
-    
-    if (dccl.has_followpath_maneuver()){
-            auto* tmp = new DUNE::IMC::FollowPath();
-            decodeFollowPath(dccl.followpath_maneuver(), *tmp);
-            return tmp;
-    }
-    
-    if (dccl.has_loiter_maneuver()){
-            auto* tmp = new DUNE::IMC::Loiter();
-            decodeLoiter(dccl.loiter_maneuver(), *tmp);
-            return tmp;
-    }
-    
-    if (dccl.has_stationkeeping_maneuver()){
-            auto* tmp = new DUNE::IMC::StationKeeping();
-            decodeStationKeeping(dccl.stationkeeping_maneuver(), *tmp);
-            return tmp;
-    }
-    return nullptr;
-}
-
-
-// ================ ManeuverID Message ================
-void encodeManeuverID(const std::string& imc, IMC_DCCL::ManeuverID& dccl)
-{
-    
-    IMC_DCCL::ManeuverIDCombined* id_combined = new IMC_DCCL::ManeuverIDCombined();
-    encodeManeuverIDCombined(imc, *id_combined);
-    if(id_combined->maneuver_type() != IMC_DCCL::ManeuverType::MT_UNKNOWN){
-        dccl.set_allocated_id_combined(id_combined);
-        return;}
-    
-    dccl.set_id_string(imc);
-}
-
-
-// ================ ManeuverID Message ================
-void decodeManeuverID(const IMC_DCCL::ManeuverID& dccl, std::string& imc)
-{
-    
-    if(dccl.has_id_combined()) decodeManeuverIDCombined(dccl.id_combined(), imc);
-    
-    
-    if(dccl.has_id_string()) imc = dccl.id_string();
-}
-
-
-// ================ ManeuverIDCombined Message ================
-void encodeManeuverIDCombined(const std::string& imc, IMC_DCCL::ManeuverIDCombined& dccl)
-{
-    
-    std::string letters;
-    std::string numbers;
-    for(char c : imc){
-        if (std::isalpha(c)){
-            letters += c;
-            } else if (std::isdigit(c)){
-                numbers += c;
-            }
-    }
-    dccl.set_maneuver_type(encodeManeuverType(letters));
-    
-    if (!numbers.empty()) dccl.set_maneuver_number(std::stoi(numbers));                         
-                              
-                              
-}
-
-
-// ================ ManeuverIDCombined Message ================
-void decodeManeuverIDCombined(const IMC_DCCL::ManeuverIDCombined& dccl, std::string& imc)
-{
-    
-    std::string str1 = decodeManeuverType(dccl.maneuver_type());
-    std::string str2 = std::to_string(dccl.maneuver_number());
-    imc = str1 + str2;
-}
-
-
-// ================ ParameterName Message ================
-void encodeParameterName(const std::string& imc, IMC_DCCL::ParameterName& dccl)
-{
-    
-    auto enum_val = encodeParamName(imc);
-    if(enum_val != IMC_DCCL::ParamName::PN_UNKNOWN){
-            dccl.set_param_enum(enum_val);
-            return;
-    }
-    
-    dccl.set_param_string(imc);
-}
-
-
-// ================ ParameterName Message ================
-void decodeParameterName(const IMC_DCCL::ParameterName& dccl, std::string& imc)
-{
-    
-    if(dccl.has_param_enum()) imc = decodeParamName(dccl.param_enum());
-    
-    
-    if(dccl.has_param_string()) imc = dccl.param_string();
-}
-
-
-// ================ ParameterValue Message ================
-void encodeParameterValue(const std::string& imc, IMC_DCCL::ParameterValue& dccl)
-{
-    
-    auto enum_val = encodeParamValue(imc);
-    if(enum_val != IMC_DCCL::ParamValue::PV_UNKNOWN){
-            dccl.set_param_enum(enum_val);
-            return;
-    }
-    
-    if(Helper::containsJustDigits(imc)){
-            dccl.set_param_number(std::stof(imc));
-            return;
-    }
-    
-    dccl.set_param_string(imc);
-}
-
-
-// ================ ParameterValue Message ================
-void decodeParameterValue(const IMC_DCCL::ParameterValue& dccl, std::string& imc)
-{
-    
-    if(dccl.has_param_enum()) imc = decodeParamValue(dccl.param_enum());
-    
-    
-    if(dccl.has_param_number()) imc = std::to_string(dccl.param_number());
-    
-    
-    if(dccl.has_param_string()) imc = dccl.param_string();
+    throw std::runtime_error("Invalid Payload");
 }
 
 
@@ -522,6 +550,7 @@ void encodePlanControlArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanCont
             dccl.set_allocated_stat_arg(dccl_tmp);
             return;
     }
+    throw std::runtime_error("Invalid PlanControlArgUnion");
 }
 
 
@@ -544,7 +573,7 @@ DUNE::IMC::Message* decodePlanControlArgUnion(const IMC_DCCL::PlanControlArgUnio
             decodePlanStatistics(dccl.stat_arg(), *tmp);
             return tmp;
     }
-    return nullptr;
+    throw std::runtime_error("Invalid PlanControlArgUnion");
 }
 
 
@@ -575,6 +604,7 @@ void encodePlanDBArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanDBArgUnio
             dccl.set_allocated_pc_arg(dccl_tmp);
             return;
     }
+    throw std::runtime_error("Invalid PlanDBArgUnion");
 }
 
 
@@ -599,7 +629,7 @@ DUNE::IMC::Message* decodePlanDBArgUnion(const IMC_DCCL::PlanDBArgUnion& dccl)
             decodePlanDBState(dccl.pc_arg(), *tmp);
             return tmp;
     }
-    return nullptr;
+    throw std::runtime_error("Invalid PlanDBArgUnion");
 }
 
 
@@ -614,6 +644,7 @@ void encodePlanManeuverStartActionsUnion(const DUNE::IMC::Message& imc, IMC_DCCL
             dccl.set_allocated_ep(dccl_tmp);
             return;
     }
+    throw std::runtime_error("Invalid PlanManeuverStartActionsUnion");
 }
 
 
@@ -626,7 +657,7 @@ DUNE::IMC::Message* decodePlanManeuverStartActionsUnion(const IMC_DCCL::PlanMane
             decodeSetEntityParameters(dccl.ep(), *tmp);
             return tmp;
     }
-    return nullptr;
+    throw std::runtime_error("Invalid PlanManeuverStartActionsUnion");
 }
 
 
@@ -641,6 +672,7 @@ void encodePlanSpecificationEndActionsUnion(const DUNE::IMC::Message& imc, IMC_D
             dccl.set_allocated_ep(dccl_tmp);
             return;
     }
+    throw std::runtime_error("Invalid PlanSpecificationEndActionsUnion");
 }
 
 
@@ -653,7 +685,7 @@ DUNE::IMC::Message* decodePlanSpecificationEndActionsUnion(const IMC_DCCL::PlanS
             decodeSetEntityParameters(dccl.ep(), *tmp);
             return tmp;
     }
-    return nullptr;
+    throw std::runtime_error("Invalid PlanSpecificationEndActionsUnion");
 }
 
 
@@ -668,6 +700,7 @@ void encodePlanSpecificationStartActionsUnion(const DUNE::IMC::Message& imc, IMC
             dccl.set_allocated_ep(dccl_tmp);
             return;
     }
+    throw std::runtime_error("Invalid PlanSpecificationStartActionsUnion");
 }
 
 
@@ -680,7 +713,7 @@ DUNE::IMC::Message* decodePlanSpecificationStartActionsUnion(const IMC_DCCL::Pla
             decodeSetEntityParameters(dccl.ep(), *tmp);
             return tmp;
     }
-    return nullptr;
+    throw std::runtime_error("Invalid PlanSpecificationStartActionsUnion");
 }
 
 

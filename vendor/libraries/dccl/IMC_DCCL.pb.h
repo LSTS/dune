@@ -799,7 +799,7 @@ enum ParamName : int {
   PN_ADC15_ENTITY_LABEL = 54,
   PN_ADC15_MESSAGE = 55,
   PN_ADC1_CONVERSION = 56,
-  PN_ADC1_ENTITY_LABEL_1 = 57,
+  PN_ADC1_ENTITY_LABEL = 57,
   PN_ADC1_MESSAGE = 58,
   PN_ADC2_CONVERSION = 59,
   PN_ADC2_ENTITY_LABEL_1 = 60,
@@ -808,7 +808,7 @@ enum ParamName : int {
   PN_ADC3_ENTITY_LABEL_1 = 63,
   PN_ADC3_MESSAGE = 64,
   PN_ADC4_CONVERSION = 65,
-  PN_ADC4_ENTITY_LABEL = 66,
+  PN_ADC4_ENTITY_LABEL_1 = 66,
   PN_ADC4_MESSAGE = 67,
   PN_ADC5_CONVERSION = 68,
   PN_ADC5_ENTITY_LABEL = 69,
@@ -825,7 +825,7 @@ enum ParamName : int {
   PN_ADC9_CONVERSION = 80,
   PN_ADC9_ENTITY_LABEL = 81,
   PN_ADC9_MESSAGE = 82,
-  PN_ADC_1_ENTITY_LABEL = 83,
+  PN_ADC_1_ENTITY_LABEL_1 = 83,
   PN_ADC_1_FIXED_GAIN = 84,
   PN_ADC_1_FIXED_GAIN_VAL = 85,
   PN_ADC_1_IS_ACTIVE = 86,
@@ -843,7 +843,7 @@ enum ParamName : int {
   PN_ADC_3_IS_ACTIVE = 98,
   PN_ADC_3_MAXIMUM_VAL = 99,
   PN_ADC_3_MINIMUM_VAL = 100,
-  PN_ADC_4_ENTITY_LABEL_1 = 101,
+  PN_ADC_4_ENTITY_LABEL = 101,
   PN_ADC_4_FIXED_GAIN = 102,
   PN_ADC_4_FIXED_GAIN_VAL = 103,
   PN_ADC_4_IS_ACTIVE = 104,
@@ -2764,7 +2764,7 @@ enum EntityNameEnum : int {
   EN_LOSTCOMMS_SUPERVISOR_ASV = 91,
   EN_LOST_COMMS = 92,
   EN_LOST_COMMS_MONITOR = 93,
-  EN_MAINBOARD_1 = 94,
+  EN_MAINBOARD = 94,
   EN_MAINBOARD_AUX = 95,
   EN_MAINBOARD_AUXILIARY_CPU = 96,
   EN_MAINBOARD_BOARD = 97,
@@ -2772,7 +2772,7 @@ enum EntityNameEnum : int {
   EN_MAINBOARD_CAMERA_CPU_1 = 99,
   EN_MAINBOARD_CORE = 100,
   EN_MAINBOARD_SUPERIO = 101,
-  EN_MAIN_BOARD = 102,
+  EN_MAIN_BOARD_1 = 102,
   EN_MANTA_FUEL_LEVEL = 103,
   EN_MCD4R = 104,
   EN_MEDIUM = 105,
@@ -3030,17 +3030,17 @@ class ProfileSample final :
     kDepthFieldNumber = 1,
     kAvgFieldNumber = 2,
   };
-  // optional int32 depth = 1 [(.dccl.field) = {
+  // optional uint32 depth = 1 [(.dccl.field) = {
   bool has_depth() const;
   private:
   bool _internal_has_depth() const;
   public:
   void clear_depth();
-  int32_t depth() const;
-  void set_depth(int32_t value);
+  uint32_t depth() const;
+  void set_depth(uint32_t value);
   private:
-  int32_t _internal_depth() const;
-  void _internal_set_depth(int32_t value);
+  uint32_t _internal_depth() const;
+  void _internal_set_depth(uint32_t value);
   public:
 
   // optional float avg = 2 [(.dccl.field) = {
@@ -3066,7 +3066,7 @@ class ProfileSample final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-    int32_t depth_;
+    uint32_t depth_;
     float avg_;
   };
   union { Impl_ _impl_; };
@@ -3195,6 +3195,7 @@ class StationKeeping final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kCustomFieldNumber = 9,
     kLatFieldNumber = 1,
     kLonFieldNumber = 2,
     kZFieldNumber = 3,
@@ -3204,6 +3205,24 @@ class StationKeeping final :
     kSpeedFieldNumber = 7,
     kSpeedUnitsFieldNumber = 8,
   };
+  // optional string custom = 9 [(.dccl.field) = {
+  bool has_custom() const;
+  private:
+  bool _internal_has_custom() const;
+  public:
+  void clear_custom();
+  const std::string& custom() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_custom(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_custom();
+  PROTOBUF_NODISCARD std::string* release_custom();
+  void set_allocated_custom(std::string* custom);
+  private:
+  const std::string& _internal_custom() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_custom(const std::string& value);
+  std::string* _internal_mutable_custom();
+  public:
+
   // optional float lat = 1 [(.dccl.field) = {
   bool has_lat() const;
   private:
@@ -3265,17 +3284,17 @@ class StationKeeping final :
   void _internal_set_radius(float value);
   public:
 
-  // optional int32 duration = 6 [(.dccl.field) = {
+  // optional uint32 duration = 6 [(.dccl.field) = {
   bool has_duration() const;
   private:
   bool _internal_has_duration() const;
   public:
   void clear_duration();
-  int32_t duration() const;
-  void set_duration(int32_t value);
+  uint32_t duration() const;
+  void set_duration(uint32_t value);
   private:
-  int32_t _internal_duration() const;
-  void _internal_set_duration(int32_t value);
+  uint32_t _internal_duration() const;
+  void _internal_set_duration(uint32_t value);
   public:
 
   // optional float speed = 7 [(.dccl.field) = {
@@ -3310,12 +3329,13 @@ class StationKeeping final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr custom_;
     float lat_;
     float lon_;
     float z_;
     int z_units_;
     float radius_;
-    int32_t duration_;
+    uint32_t duration_;
     float speed_;
     int speed_units_;
   };
@@ -13099,7 +13119,7 @@ class ProtoMessage final :
 #endif  // __GNUC__
 // ProfileSample
 
-// optional int32 depth = 1 [(.dccl.field) = {
+// optional uint32 depth = 1 [(.dccl.field) = {
 inline bool ProfileSample::_internal_has_depth() const {
   bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
   return value;
@@ -13108,21 +13128,21 @@ inline bool ProfileSample::has_depth() const {
   return _internal_has_depth();
 }
 inline void ProfileSample::clear_depth() {
-  _impl_.depth_ = 0;
+  _impl_.depth_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000001u;
 }
-inline int32_t ProfileSample::_internal_depth() const {
+inline uint32_t ProfileSample::_internal_depth() const {
   return _impl_.depth_;
 }
-inline int32_t ProfileSample::depth() const {
+inline uint32_t ProfileSample::depth() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.ProfileSample.depth)
   return _internal_depth();
 }
-inline void ProfileSample::_internal_set_depth(int32_t value) {
+inline void ProfileSample::_internal_set_depth(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.depth_ = value;
 }
-inline void ProfileSample::set_depth(int32_t value) {
+inline void ProfileSample::set_depth(uint32_t value) {
   _internal_set_depth(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.ProfileSample.depth)
 }
@@ -13161,7 +13181,7 @@ inline void ProfileSample::set_avg(float value) {
 
 // optional float lat = 1 [(.dccl.field) = {
 inline bool StationKeeping::_internal_has_lat() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   return value;
 }
 inline bool StationKeeping::has_lat() const {
@@ -13169,7 +13189,7 @@ inline bool StationKeeping::has_lat() const {
 }
 inline void StationKeeping::clear_lat() {
   _impl_.lat_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000001u;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline float StationKeeping::_internal_lat() const {
   return _impl_.lat_;
@@ -13179,7 +13199,7 @@ inline float StationKeeping::lat() const {
   return _internal_lat();
 }
 inline void StationKeeping::_internal_set_lat(float value) {
-  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.lat_ = value;
 }
 inline void StationKeeping::set_lat(float value) {
@@ -13189,7 +13209,7 @@ inline void StationKeeping::set_lat(float value) {
 
 // optional float lon = 2 [(.dccl.field) = {
 inline bool StationKeeping::_internal_has_lon() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
 }
 inline bool StationKeeping::has_lon() const {
@@ -13197,7 +13217,7 @@ inline bool StationKeeping::has_lon() const {
 }
 inline void StationKeeping::clear_lon() {
   _impl_.lon_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000002u;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline float StationKeeping::_internal_lon() const {
   return _impl_.lon_;
@@ -13207,7 +13227,7 @@ inline float StationKeeping::lon() const {
   return _internal_lon();
 }
 inline void StationKeeping::_internal_set_lon(float value) {
-  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.lon_ = value;
 }
 inline void StationKeeping::set_lon(float value) {
@@ -13217,7 +13237,7 @@ inline void StationKeeping::set_lon(float value) {
 
 // optional float z = 3 [(.dccl.field) = {
 inline bool StationKeeping::_internal_has_z() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
 }
 inline bool StationKeeping::has_z() const {
@@ -13225,7 +13245,7 @@ inline bool StationKeeping::has_z() const {
 }
 inline void StationKeeping::clear_z() {
   _impl_.z_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline float StationKeeping::_internal_z() const {
   return _impl_.z_;
@@ -13235,7 +13255,7 @@ inline float StationKeeping::z() const {
   return _internal_z();
 }
 inline void StationKeeping::_internal_set_z(float value) {
-  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.z_ = value;
 }
 inline void StationKeeping::set_z(float value) {
@@ -13265,7 +13285,7 @@ inline void StationKeeping::set_z_units(::IMC_DCCL::ZUnits value) {
 
 // optional float radius = 5 [(.dccl.field) = {
 inline bool StationKeeping::_internal_has_radius() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   return value;
 }
 inline bool StationKeeping::has_radius() const {
@@ -13273,7 +13293,7 @@ inline bool StationKeeping::has_radius() const {
 }
 inline void StationKeeping::clear_radius() {
   _impl_.radius_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline float StationKeeping::_internal_radius() const {
   return _impl_.radius_;
@@ -13283,7 +13303,7 @@ inline float StationKeeping::radius() const {
   return _internal_radius();
 }
 inline void StationKeeping::_internal_set_radius(float value) {
-  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.radius_ = value;
 }
 inline void StationKeeping::set_radius(float value) {
@@ -13291,37 +13311,37 @@ inline void StationKeeping::set_radius(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.radius)
 }
 
-// optional int32 duration = 6 [(.dccl.field) = {
+// optional uint32 duration = 6 [(.dccl.field) = {
 inline bool StationKeeping::_internal_has_duration() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
   return value;
 }
 inline bool StationKeeping::has_duration() const {
   return _internal_has_duration();
 }
 inline void StationKeeping::clear_duration() {
-  _impl_.duration_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_.duration_ = 0u;
+  _impl_._has_bits_[0] &= ~0x00000020u;
 }
-inline int32_t StationKeeping::_internal_duration() const {
+inline uint32_t StationKeeping::_internal_duration() const {
   return _impl_.duration_;
 }
-inline int32_t StationKeeping::duration() const {
+inline uint32_t StationKeeping::duration() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.StationKeeping.duration)
   return _internal_duration();
 }
-inline void StationKeeping::_internal_set_duration(int32_t value) {
-  _impl_._has_bits_[0] |= 0x00000010u;
+inline void StationKeeping::_internal_set_duration(uint32_t value) {
+  _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.duration_ = value;
 }
-inline void StationKeeping::set_duration(int32_t value) {
+inline void StationKeeping::set_duration(uint32_t value) {
   _internal_set_duration(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.duration)
 }
 
 // optional float speed = 7 [(.dccl.field) = {
 inline bool StationKeeping::_internal_has_speed() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000040u) != 0;
   return value;
 }
 inline bool StationKeeping::has_speed() const {
@@ -13329,7 +13349,7 @@ inline bool StationKeeping::has_speed() const {
 }
 inline void StationKeeping::clear_speed() {
   _impl_.speed_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000020u;
+  _impl_._has_bits_[0] &= ~0x00000040u;
 }
 inline float StationKeeping::_internal_speed() const {
   return _impl_.speed_;
@@ -13339,7 +13359,7 @@ inline float StationKeeping::speed() const {
   return _internal_speed();
 }
 inline void StationKeeping::_internal_set_speed(float value) {
-  _impl_._has_bits_[0] |= 0x00000020u;
+  _impl_._has_bits_[0] |= 0x00000040u;
   _impl_.speed_ = value;
 }
 inline void StationKeeping::set_speed(float value) {
@@ -13365,6 +13385,74 @@ inline void StationKeeping::_internal_set_speed_units(::IMC_DCCL::SpeedUnits val
 inline void StationKeeping::set_speed_units(::IMC_DCCL::SpeedUnits value) {
   _internal_set_speed_units(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.speed_units)
+}
+
+// optional string custom = 9 [(.dccl.field) = {
+inline bool StationKeeping::_internal_has_custom() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool StationKeeping::has_custom() const {
+  return _internal_has_custom();
+}
+inline void StationKeeping::clear_custom() {
+  _impl_.custom_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& StationKeeping::custom() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.StationKeeping.custom)
+  return _internal_custom();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void StationKeeping::set_custom(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.custom_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.StationKeeping.custom)
+}
+inline std::string* StationKeeping::mutable_custom() {
+  std::string* _s = _internal_mutable_custom();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.StationKeeping.custom)
+  return _s;
+}
+inline const std::string& StationKeeping::_internal_custom() const {
+  return _impl_.custom_.Get();
+}
+inline void StationKeeping::_internal_set_custom(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.custom_.Set(value, GetArenaForAllocation());
+}
+inline std::string* StationKeeping::_internal_mutable_custom() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.custom_.Mutable(GetArenaForAllocation());
+}
+inline std::string* StationKeeping::release_custom() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.StationKeeping.custom)
+  if (!_internal_has_custom()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.custom_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.custom_.IsDefault()) {
+    _impl_.custom_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void StationKeeping::set_allocated_custom(std::string* custom) {
+  if (custom != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.custom_.SetAllocated(custom, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.custom_.IsDefault()) {
+    _impl_.custom_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.StationKeeping.custom)
 }
 
 // -------------------------------------------------------------------

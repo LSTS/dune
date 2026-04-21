@@ -10,6 +10,10 @@ void encodeEntityName(const std::string& imc, IMC_DCCL::EntityName& dccl);
 
 void decodeEntityName(const IMC_DCCL::EntityName& dccl, std::string& imc);
 
+void encodeHeader(const DUNE::IMC::Message& imc, IMC_DCCL::Header& dccl);
+
+void decodeHeader(const IMC_DCCL::Header& dccl, DUNE::IMC::Message& imc);
+
 void encodeItemList(const std::string& imc, IMC_DCCL::ItemList& dccl);
 
 void decodeItemList(const IMC_DCCL::ItemList& dccl, std::string& imc);
@@ -38,6 +42,10 @@ void encodeParameterValue(const std::string& imc, IMC_DCCL::ParameterValue& dccl
 
 void decodeParameterValue(const IMC_DCCL::ParameterValue& dccl, std::string& imc);
 
+void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl);
+
+DUNE::IMC::Message* decodePayload(const IMC_DCCL::Payload& dccl);
+
 void encodePlanControlArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanControlArgUnion& dccl);
 
 DUNE::IMC::Message* decodePlanControlArgUnion(const IMC_DCCL::PlanControlArgUnion& dccl);
@@ -61,9 +69,5 @@ DUNE::IMC::Message* decodePlanSpecificationStartActionsUnion(const IMC_DCCL::Pla
 void encodeTransitionCondition(const std::string& imc, IMC_DCCL::TransitionCondition& dccl);
 
 void decodeTransitionCondition(const IMC_DCCL::TransitionCondition& dccl, std::string& imc);
-
-void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl);
-
-DUNE::IMC::Message* decodePayload(const IMC_DCCL::Payload& dccl);
 
 #endif // MSGONLYPROTOCODEC_HPP
