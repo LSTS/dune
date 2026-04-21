@@ -105,7 +105,7 @@ enum ParamName {
     PN_ADC15_ENTITY_LABEL = 54;
     PN_ADC15_MESSAGE = 55;
     PN_ADC1_CONVERSION = 56;
-    PN_ADC1_ENTITY_LABEL_1 = 57;
+    PN_ADC1_ENTITY_LABEL = 57;
     PN_ADC1_MESSAGE = 58;
     PN_ADC2_CONVERSION = 59;
     PN_ADC2_ENTITY_LABEL_1 = 60;
@@ -114,7 +114,7 @@ enum ParamName {
     PN_ADC3_ENTITY_LABEL_1 = 63;
     PN_ADC3_MESSAGE = 64;
     PN_ADC4_CONVERSION = 65;
-    PN_ADC4_ENTITY_LABEL = 66;
+    PN_ADC4_ENTITY_LABEL_1 = 66;
     PN_ADC4_MESSAGE = 67;
     PN_ADC5_CONVERSION = 68;
     PN_ADC5_ENTITY_LABEL = 69;
@@ -131,7 +131,7 @@ enum ParamName {
     PN_ADC9_CONVERSION = 80;
     PN_ADC9_ENTITY_LABEL = 81;
     PN_ADC9_MESSAGE = 82;
-    PN_ADC_1_ENTITY_LABEL = 83;
+    PN_ADC_1_ENTITY_LABEL_1 = 83;
     PN_ADC_1_FIXED_GAIN = 84;
     PN_ADC_1_FIXED_GAIN_VAL = 85;
     PN_ADC_1_IS_ACTIVE = 86;
@@ -149,7 +149,7 @@ enum ParamName {
     PN_ADC_3_IS_ACTIVE = 98;
     PN_ADC_3_MAXIMUM_VAL = 99;
     PN_ADC_3_MINIMUM_VAL = 100;
-    PN_ADC_4_ENTITY_LABEL_1 = 101;
+    PN_ADC_4_ENTITY_LABEL = 101;
     PN_ADC_4_FIXED_GAIN = 102;
     PN_ADC_4_FIXED_GAIN_VAL = 103;
     PN_ADC_4_IS_ACTIVE = 104;
@@ -2052,7 +2052,7 @@ enum EntityNameEnum {
     EN_LOSTCOMMS_SUPERVISOR_ASV = 91;
     EN_LOST_COMMS = 92;
     EN_LOST_COMMS_MONITOR = 93;
-    EN_MAINBOARD_1 = 94;
+    EN_MAINBOARD = 94;
     EN_MAINBOARD_AUX = 95;
     EN_MAINBOARD_AUXILIARY_CPU = 96;
     EN_MAINBOARD_BOARD = 97;
@@ -2060,7 +2060,7 @@ enum EntityNameEnum {
     EN_MAINBOARD_CAMERA_CPU_1 = 99;
     EN_MAINBOARD_CORE = 100;
     EN_MAINBOARD_SUPERIO = 101;
-    EN_MAIN_BOARD = 102;
+    EN_MAIN_BOARD_1 = 102;
     EN_MANTA_FUEL_LEVEL = 103;
     EN_MCD4R = 104;
     EN_MEDIUM = 105;
@@ -2175,7 +2175,7 @@ enum EntityNameEnum {
 // Profile Sample
 message ProfileSample {
     option (dccl.msg) = { codec_version: 4 max_bytes: 8};
-    optional int32 depth = 1 [(dccl.field) = { min: 0 max: 3000}];
+    optional uint32 depth = 1 [(dccl.field) = { min: 0 max: 4000}];
     optional float avg = 2 [(dccl.field) = { min: -10000 max: 10000 precision: 2 }];
 }
 
@@ -2183,23 +2183,23 @@ message ProfileSample {
 // StationKeeping Maneuver
 message StationKeeping {
     option (dccl.msg) = { codec_version: 4 max_bytes: 80};
-    optional float lat = 1 [(dccl.field) = { min: -1.570 max: 1.570 precision: 10 }];
-    optional float lon = 2 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
-    optional float z = 3 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    optional float lat = 1 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
+    optional float lon = 2 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
+    optional float z = 3 [(dccl.field) = { min: 0 max: 400 precision: 1 }];
     ZUnits z_units = 4;  
-    optional float radius = 5 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
-    optional int32 duration = 6 [(dccl.field) = { min: 0 max: 65535}];
+    optional float radius = 5 [(dccl.field) = { min: 0 max: 100 precision: 1 }];
+    optional uint32 duration = 6 [(dccl.field) = { min: 0 max: 3600}];
     optional float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
     SpeedUnits speed_units = 8;
-    //TODO: costum field > enum with possible string
+    optional string custom = 9 [(dccl.field).max_length = 10]; 
 }
 
 // FollowPath Maneuver
 message FollowPath {
     option (dccl.msg) = { codec_version: 4 max_bytes: 1000};
     optional int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
-    optional float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
-    optional float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    optional float lat = 2 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
+    optional float lon = 3 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
     optional float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
     ZUnits z_units = 5;
     optional float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
@@ -2212,8 +2212,8 @@ message FollowPath {
 message Goto {
     option (dccl.msg) = { codec_version: 4 max_bytes: 80};
     optional int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
-    optional float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
-    optional float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    optional float lat = 2 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
+    optional float lon = 3 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
     optional float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
     ZUnits z_units = 5;
     optional float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1  }];
@@ -2344,8 +2344,8 @@ message TransitionCondition {
 message Loiter {
     option (dccl.msg) = { codec_version: 4 max_bytes: 1000};
     optional int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
-    optional float lat = 2 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
-    optional float lon = 3 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    optional float lat = 2 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
+    optional float lon = 3 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
     optional float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
     ZUnits z_units = 5;
     optional int32 duration = 6 [(dccl.field) = { min: 0 max: 10800}];
@@ -2428,15 +2428,15 @@ message VerticalProfile {
     ParameterEnum parameter = 1;
     optional int32 numsamples = 2 [(dccl.field) = { min: 0 max: 255}];
     repeated ProfileSample samples = 3 [(dccl.field) = { max_repeat: 70 }];
-    optional float lat = 4 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
-    optional float lon = 5 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    optional float lat = 4 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
+    optional float lon = 5 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
 }
 
 // Estimated State
 message EstimatedState {
     option (dccl.msg) = { codec_version: 4 id: 350 max_bytes: 80};
-    optional float lat = 1 [(dccl.field) = { min: -1.570796 max: 1.570796 precision: 6 }];
-    optional float lon = 2 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6 }];
+    optional float lat = 1 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
+    optional float lon = 2 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
     optional float height = 3 [(dccl.field) = { min: -1000 max: 7000  precision: 1 }];
     optional float x = 4 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
     optional float y = 5 [(dccl.field) = { min: -2000 max: 2000  precision: 1 }];

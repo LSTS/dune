@@ -23,9 +23,9 @@ namespace IMCDCCL
     class CodecDCCL
     {
         public:
-            CodecDCCL()
-        {
-        }
+        CodecDCCL(DUNE::Tasks::Task* task = nullptr)
+          : m_task(task)
+        {}
         
         ~CodecDCCL() = default;
 
@@ -47,6 +47,7 @@ namespace IMCDCCL
                 return decodeProtoMessage(encoded_string);
             }
             catch(std::runtime_error& e){
+                m_task->war("Unable to decode message with DCCL: %s", e.what());
                 return nullptr;
             }
             catch(...){
@@ -67,6 +68,7 @@ namespace IMCDCCL
                 return encodeProtoMessage(imc_msg); 
             }
             catch(std::runtime_error& e){
+                m_task->war("Unable to encode message with DCCL: %s", e.what());
                 return std::string();
             }
             catch(...){
@@ -80,8 +82,12 @@ namespace IMCDCCL
         }
 
 
-#ifdef DUNE_USING_DCCL
+
         private:
+
+        DUNE::Tasks::Task* m_task;
+
+#ifdef DUNE_USING_DCCL
         dccl::Codec m_codec;
 
         DUNE::IMC::Message*
@@ -93,7 +99,6 @@ namespace IMCDCCL
 
             //Payload
             DUNE::IMC::Message* imc_msg = decodePayload(src_dccl.msg_payload());
-            if (!imc_msg) return nullptr;
 
             //Header
             decodeHeader(src_dccl.msg_header(), *imc_msg);
@@ -104,10 +109,10 @@ namespace IMCDCCL
 
         std::string
         encodeProtoMessage(const DUNE::IMC::Message* imc_msg){
-
+            
             m_codec.load<IMC_DCCL::ProtoMessage>();
             IMC_DCCL::ProtoMessage dst_dccl;
-
+            
             //Header
             IMC_DCCL::Header* header = new IMC_DCCL::Header();
             encodeHeader(*imc_msg, *header);
@@ -116,13 +121,12 @@ namespace IMCDCCL
             //Payload
             IMC_DCCL::Payload* payload = new IMC_DCCL::Payload();
             encodePayload(*imc_msg, *payload);
-            dst_dccl.set_allocated_msg_payload(payload);
-            
-            std::string encoded_bytes;
-            m_codec.encode(&encoded_bytes, dst_dccl);
+            dst_dccl.set_allocated_msg_payload(payload);      
 
-            return encoded_bytes;            
-            
+            std::string encoded_bytes;
+            m_codec.encode(&encoded_bytes, dst_dccl); 
+
+            return encoded_bytes;                              
         }
 #endif
     };
