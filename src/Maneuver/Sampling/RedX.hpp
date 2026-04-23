@@ -28,8 +28,12 @@
 #ifndef MANEUVER_SAMPLING_REDX_HPP_INCLUDED_
 #define MANEUVER_SAMPLING_REDX_HPP_INCLUDED_
 
+// DUNE Headers
 #include <DUNE/Tasks.hpp>
 #include <DUNE/IMC.hpp>
+#include <DUNE/Utils/TupleList.hpp>
+
+// Local Headers
 #include "BasicSampler.hpp"
 
 namespace Maneuver
@@ -40,10 +44,14 @@ namespace Maneuver
     class RedX: public BasicSampler
     {
     public:
+      DUNE::Utils::TupleList m_args;
+
       //! Default constructor.
-      RedX(DUNE::Tasks::Task* task):
+      RedX(DUNE::Tasks::Task* task, std::string args):
         BasicSampler(task, "RedX")
-      { }
+      {
+        m_args = DUNE::Utils::TupleList(args);
+      }
 
       ~RedX() = default;
 
