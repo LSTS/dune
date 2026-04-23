@@ -45,7 +45,8 @@ namespace Maneuver
       std::unique_ptr<BasicSampler> m_sampler;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Maneuvers::Maneuver(name, ctx)
+        DUNE::Maneuvers::Maneuver(name, ctx),
+        m_sampler(nullptr)
       {
         bindToManeuver<Task, IMC::Sampling>();
         bind<IMC::EstimatedState>(this);
@@ -54,6 +55,9 @@ namespace Maneuver
       void
       onManeuverDeactivation(void)
       {
+        if (!m_sampler)
+          return;
+        
         m_sampler->onReset();
         m_sampler.reset();
       }
@@ -61,7 +65,16 @@ namespace Maneuver
       void
       consume(const IMC::Sampling* msg)
       {
-        m_sampler = Sampler::factory(this, msg);
+        try
+        {
+          m_sampler = Sampler::factory(this, msg);
+        }
+        catch(const std::runtime_error& e)
+        {
+          signalError(String::str("Failed to create sampler: %s", e.what()));
+          return;
+        }
+
         m_sampler->onInit(msg);
       }
 
