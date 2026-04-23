@@ -31,8 +31,8 @@
 #define MANEUVER_SAMPLING_SAMPLER_FACTORY_HPP_INCLUDED_
 
 #include <memory>
-#include <DUNE/Tasks.hpp>
 #include <DUNE/IMC.hpp>
+#include <DUNE/Maneuvers/Maneuver.hpp>
 #include "DUNE/I18N.hpp"
 
 #include "BasicSampler.hpp"
@@ -49,7 +49,7 @@ namespace Maneuver
       //! @param[in] maneuver sampling maneuver specification
       //! @return handle to the Sampler type.
       std::unique_ptr<BasicSampler>
-      factory(DUNE::Tasks::Task* task, const DUNE::IMC::Sampling* maneuver)
+      factory(DUNE::Maneuvers::Maneuver* task, const DUNE::IMC::Sampling* maneuver)
       {
         if (maneuver->sampling_type == "RedX")
           return std::make_unique<RedX>(task, maneuver->sampling_args);

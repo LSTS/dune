@@ -28,8 +28,8 @@
 #ifndef MANEUVER_SAMPLING_BASIC_SAMPLER_HPP_INCLUDED_
 #define MANEUVER_SAMPLING_BASIC_SAMPLER_HPP_INCLUDED_
 
-#include <DUNE/Tasks.hpp>
 #include <DUNE/IMC.hpp>
+#include <DUNE/Maneuvers/Maneuver.hpp>
 
 namespace Maneuver
 {
@@ -40,7 +40,7 @@ namespace Maneuver
     {
     public:
       //! Default constructor.
-      BasicSampler(DUNE::Tasks::Task* task, const std::string& sampler_type):
+      BasicSampler(DUNE::Maneuvers::Maneuver* task, const std::string& sampler_type):
           m_task(task),
           m_sampler_type(sampler_type)
       { }
@@ -72,7 +72,7 @@ namespace Maneuver
 
     protected:
       //! Parent task.
-      DUNE::Tasks::Task* m_task;
+      DUNE::Maneuvers::Maneuver* m_task;
 
       void
       debug(const std::string& msg) const
