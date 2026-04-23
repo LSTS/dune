@@ -134,7 +134,11 @@ namespace DUNE
                   if ((m_sm_csum | c_csum_msk) == m_sm_data[m_sm_data_idx - 1])
                     interpret = true;
                   else
+                  {
                     handler.onError(0xE5, 0, 0);
+                    reset();
+                    return;
+                  }
                 }
                 else
                   m_sm_csum ^= byte;

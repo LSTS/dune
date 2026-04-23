@@ -220,12 +220,12 @@ namespace DUNE
       Protocol::sendCommand(uint8_t cmd, const uint8_t* data, int data_size)
       {
         if (data_size > c_data_max)
-          throw std::runtime_error("maximum data size is 64 bytes");
+          throw std::runtime_error("maximum data size is exceeded");
 
         using Algorithms::XORChecksum;
 
         int size = 3 + data_size + 1;
-        uint8_t msg[32] = {c_sync, (uint8_t)(data_size + 1), cmd};
+        uint8_t msg[c_data_max + 4] = {c_sync, (uint8_t)(data_size + 1), cmd};
 
         std::memcpy(msg + 3, data, data_size);
         msg[size - 1] = XORChecksum::compute(data, data_size, c_sync ^ (data_size + 1) ^ cmd) | c_csum_msk;
@@ -338,6 +338,8 @@ namespace DUNE
                 else
                 {
                   cmd.type = CommandTypeInvalidChecksum;
+                  reset();
+                  return cmd.type;
                 }
               }
               else
@@ -406,6 +408,7 @@ namespace DUNE
             }
 
             reset();
+            return cmd.type;
           }
         }
 

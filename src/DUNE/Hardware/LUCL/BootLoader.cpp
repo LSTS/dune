@@ -82,7 +82,9 @@
 
 // Poll delay.
 static const double c_poll_delay = 0.01;
-static const double c_reset_delay = 0.2;
+// Reset delay: time to wait after requesting device reset before attempting
+// to communicate. Some devices (like PCTL) have a boot delay of 2-4 seconds.
+static const double c_reset_delay = 5.0;
 
 using namespace DUNE::Time;
 using namespace DUNE::Utils;
