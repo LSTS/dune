@@ -324,7 +324,7 @@ namespace Transports
           }
 
           inf("Opening serial port %s", m_args.io_dev.c_str());
-          m_handle = openUART(m_args.io_dev);
+          m_handle = openDeviceHandle(m_args.io_dev);
 
           IMC::VersionInfo vi;
           std::string version_model = "no libd-9523";
@@ -402,18 +402,63 @@ namespace Transports
       }
 
       IO::Handle*
-      openUART(const std::string& device)
+      openDeviceHandle(const std::string &device)
       {
-        if (device.empty())
-          throw std::runtime_error("no device name");
+        IO::Handle *handle = openSocketTCP(device);
+        if (handle == nullptr)
+          handle = openUART(device);
 
+        if (handle != nullptr)
+          handle->flush();
+
+        return handle;
+      }
+
+      IO::Handle*
+      openUART(const std::string &device)
+      {
         char uart[128] = {0};
         unsigned baud = 0;
-        trace("[UART] >> attempting URI: %s", device.c_str());
-        if (std::sscanf(device.c_str(), "uart://%[^:]:%u", uart, &baud) != 2)
-          throw std::runtime_error("invalid device name");
 
-        return new SerialPort(uart, baud);
+        trace("[UART] >> attempting URI: %s", device.c_str());
+
+        if (std::sscanf(device.c_str(), "uart://%[^:]:%u", uart, &baud) != 2)
+          return nullptr;
+
+        SerialPort* uri = new SerialPort(uart, baud);
+        uri->setCanonicalInput(true);
+        return uri;
+      }
+
+      IO::Handle *
+      openSocketTCP(const std::string &device)
+      {
+        char addr[128] = {0};
+        unsigned port = 0;
+
+        trace("[TCP] >> attempting URI: %s", device.c_str());
+
+        if (std::sscanf(device.c_str(), "tcp://%[^:]:%u", addr, &port) != 2)
+          return nullptr;
+
+        TCPSocket *sock = nullptr;
+
+        try
+        {
+          sock = new TCPSocket();
+          sock->setKeepAlive(true);
+          sock->setNoDelay(true);
+          sock->setSendTimeout(1.0);
+          sock->setReceiveTimeout(1.0);
+          sock->connect(addr, port);
+        }
+        catch (...)
+        {
+          Memory::clear(sock);
+          throw;
+        }
+
+        return sock;
       }
 
       unsigned
