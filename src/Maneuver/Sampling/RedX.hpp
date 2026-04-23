@@ -32,6 +32,7 @@
 #include <DUNE/Tasks.hpp>
 #include <DUNE/IMC.hpp>
 #include <DUNE/Utils/TupleList.hpp>
+#include <DUNE/Utils/String.hpp>
 
 // Local Headers
 #include "BasicSampler.hpp"
@@ -51,6 +52,11 @@ namespace Maneuver
         BasicSampler(task, "RedX")
       {
         m_args = DUNE::Utils::TupleList(args);
+
+        auto args_map = m_args.getMapReversed();
+        for (const auto& arg : m_required_args)
+          if (args_map.find(arg) == args_map.end())
+            throw std::runtime_error(DUNE::Utils::String::str("Missing required argument: %s", arg.c_str()));
       }
 
       ~RedX() = default;
@@ -82,6 +88,9 @@ namespace Maneuver
       {
         
       }
+    private:
+      const std::vector<std::string> m_required_args = {"Duration", 
+                                                        "Radius"};
     };
   }
 }
