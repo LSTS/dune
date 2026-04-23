@@ -48,30 +48,39 @@ namespace Maneuver
         DUNE::Maneuvers::Maneuver(name, ctx)
       {
         bindToManeuver<Task, IMC::Sampling>();
+        bind<IMC::EstimatedState>(this);
       }
       
       void
       onManeuverDeactivation(void)
       {
-        
+        m_sampler->onReset();
+        m_sampler.reset();
       }
 
       void
       consume(const IMC::Sampling* msg)
       {
-        
+        m_sampler = Sampler::factory(this, msg);
+        m_sampler->onInit(msg);
       }
 
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
-        (void)pcs;
+        m_sampler->onPathControlState(pcs);
+      }
+
+      void
+      consume(const IMC::EstimatedState* msg)
+      {
+        m_sampler->onEstimatedState(msg);
       }
 
       void
       onStateReport(void)
       {
-        
+        m_sampler->run();
       }
     };
   }
