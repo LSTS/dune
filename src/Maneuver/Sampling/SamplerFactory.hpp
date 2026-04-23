@@ -52,7 +52,7 @@ namespace Maneuver
       factory(DUNE::Tasks::Task* task, const DUNE::IMC::Sampling* maneuver)
       {
         if (maneuver->sampling_type == "RedX")
-          return std::make_unique<RedX>(task);
+          return std::make_unique<RedX>(task, maneuver->sampling_args);
         else
           throw std::runtime_error(DTR("Unknown sampler type."));
       }
