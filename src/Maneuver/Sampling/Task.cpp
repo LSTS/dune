@@ -81,18 +81,27 @@ namespace Maneuver
       void
       onPathControlState(const IMC::PathControlState* pcs)
       {
+        if (!m_sampler)
+          return;
+
         m_sampler->onPathControlState(pcs);
       }
 
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (!m_sampler)
+          return;
+
         m_sampler->onEstimatedState(msg);
       }
 
       void
       onStateReport(void)
       {
+        if (!m_sampler)
+          return;
+
         m_sampler->run();
       }
     };
