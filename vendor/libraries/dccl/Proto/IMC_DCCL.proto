@@ -114,7 +114,7 @@ enum ParamName {
     PN_ADC3_ENTITY_LABEL_1 = 63;
     PN_ADC3_MESSAGE = 64;
     PN_ADC4_CONVERSION = 65;
-    PN_ADC4_ENTITY_LABEL_1 = 66;
+    PN_ADC4_ENTITY_LABEL = 66;
     PN_ADC4_MESSAGE = 67;
     PN_ADC5_CONVERSION = 68;
     PN_ADC5_ENTITY_LABEL = 69;
@@ -149,7 +149,7 @@ enum ParamName {
     PN_ADC_3_IS_ACTIVE = 98;
     PN_ADC_3_MAXIMUM_VAL = 99;
     PN_ADC_3_MINIMUM_VAL = 100;
-    PN_ADC_4_ENTITY_LABEL = 101;
+    PN_ADC_4_ENTITY_LABEL_1 = 101;
     PN_ADC_4_FIXED_GAIN = 102;
     PN_ADC_4_FIXED_GAIN_VAL = 103;
     PN_ADC_4_IS_ACTIVE = 104;
@@ -2174,7 +2174,7 @@ enum EntityNameEnum {
 
 // Profile Sample
 message ProfileSample {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 8};
+    option (dccl.msg) = { codec_version: 4 };
     optional uint32 depth = 1 [(dccl.field) = { min: 0 max: 4000}];
     optional float avg = 2 [(dccl.field) = { min: -10000 max: 10000 precision: 2 }];
 }
@@ -2182,52 +2182,53 @@ message ProfileSample {
 
 // StationKeeping Maneuver
 message StationKeeping {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 80};
+    option (dccl.msg) = { codec_version: 4 };
     optional float lat = 1 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
     optional float lon = 2 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
     optional float z = 3 [(dccl.field) = { min: 0 max: 400 precision: 1 }];
     ZUnits z_units = 4;  
     optional float radius = 5 [(dccl.field) = { min: 0 max: 100 precision: 1 }];
-    optional uint32 duration = 6 [(dccl.field) = { min: 0 max: 3600}];
-    optional float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    optional uint32 duration = 6 [(dccl.field) = { min: 0 max: 21600}];
+    optional float speed = 7 [(dccl.field) = { min: -4000 max: 4000 precision: 1 }];
     SpeedUnits speed_units = 8;
     optional string custom = 9 [(dccl.field).max_length = 10]; 
 }
 
 // FollowPath Maneuver
 message FollowPath {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 1000};
-    optional int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
+    option (dccl.msg) = { codec_version: 4 };
+    optional uint32 timeout = 1 [(dccl.field) = { min: 0 max: 10000}];
     optional float lat = 2 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
     optional float lon = 3 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
-    optional float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    optional float z = 4 [(dccl.field) = { min: 0 max: 400 precision: 1 }];
     ZUnits z_units = 5;
-    optional float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    optional float speed = 6 [(dccl.field) = { min: -4000 max: 4000 precision: 1 }];
     SpeedUnits speed_units = 7;
-    repeated PathPoint points = 8 [(dccl.field) = { max_repeat: 30 }];
-    //TODO: costum field > enum with possible string
+    repeated PathPoint points = 8 [(dccl.field) = { max_repeat: 10 }];
+    optional string custom = 9 [(dccl.field).max_length = 10];
 }
 
 // Goto Maneuver
 message Goto {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 80};
-    optional int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
+    option (dccl.msg) = { codec_version: 4 };
+    optional uint32 timeout = 1 [(dccl.field) = { min: 0 max: 10000}];
     optional float lat = 2 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
     optional float lon = 3 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
-    optional float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    optional float z = 4 [(dccl.field) = { min: 0 max: 400 precision: 1 }];
     ZUnits z_units = 5;
-    optional float speed = 6 [(dccl.field) = { min: -2000 max: 2000 precision: 1  }];
+    optional float speed = 6 [(dccl.field) = { min: -4000 max: 4000 precision: 1 }];
     SpeedUnits speed_units = 7;
-    optional float roll = 8 [(dccl.field) = { min: -1 max: 6.283 precision: 3}];
-    optional float pitch = 9 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
-    optional float yaw = 10 [(dccl.field) = { min: -1 max: 6.283 precision: 3 }];
+    optional float roll = 8 [(dccl.field) = { min: -1 max: 6.283 precision: 2}];
+    optional float pitch = 9 [(dccl.field) = { min: -1 max: 6.283 precision: 2 }];
+    optional float yaw = 10 [(dccl.field) = { min: -1 max: 6.283 precision: 2 }];
+    optional string custom = 11 [(dccl.field).max_length = 10];
 }
 
 // ParameterValue
 message ParameterValue{   
-    option (dccl.msg) = { codec_version: 4 max_bytes: 300};
+    option (dccl.msg) = { codec_version: 4 };
     oneof ParameterValueUnion{
-        float param_number = 1 [(dccl.field) = { min: -400 max: 10000 precision: 1 }];
+        float param_number = 1 [(dccl.field) = { min: -100000 max: 100000 precision: 1 }];
         ParamValue param_enum = 2;
         string param_string = 3 [(dccl.field).max_length = 20];
     }
@@ -2235,7 +2236,7 @@ message ParameterValue{
 
 // ParameterName
 message ParameterName{   
-    option (dccl.msg) = { codec_version: 4 max_bytes: 300};
+    option (dccl.msg) = { codec_version: 4 };
     oneof ParameterNameUnion{
         ParamName param_enum = 1;
         string param_string = 2 [(dccl.field).max_length = 50];
@@ -2244,7 +2245,7 @@ message ParameterName{
 
 // EntityName
 message EntityName{   
-    option (dccl.msg) = { codec_version: 4 max_bytes: 300};
+    option (dccl.msg) = { codec_version: 4 };
     oneof EntityNameUnion{
         EntityNameEnum name_enum = 1;
         string name_string = 2 [(dccl.field).max_length = 50];
@@ -2253,15 +2254,15 @@ message EntityName{
 
 // PathPoint 
 message PathPoint {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 80};
-    optional float x = 1 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
-    optional float y = 2 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
-    optional float z = 3 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
+    option (dccl.msg) = { codec_version: 4 };
+    optional float x = 1 [(dccl.field) = { min: -20000  max: 20000  precision: 1  }];
+    optional float y = 2 [(dccl.field) = { min: -20000  max: 20000  precision: 1  }];
+    optional float z = 3 [(dccl.field) = { min: 0 max: 400  precision: 1 }];
 }
 
 // Maneuver - message group
 message Maneuver{   
-    option (dccl.msg) = { codec_version: 4 max_bytes: 300};
+    option (dccl.msg) = { codec_version: 4 };
     oneof ManeuverUnion{
         Goto goto_maneuver = 1 ;
         FollowPath followpath_maneuver = 2;
@@ -2271,41 +2272,41 @@ message Maneuver{
     }
 }
 
-// EntityParameter
+// EntityParameter 
 message EntityParameter {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 300};
+    option (dccl.msg) = { codec_version: 4};
     ParameterName name = 1;
     ParameterValue value = 2;
 }
 
 // EntityParameters
 message EntityParameters {
-    option (dccl.msg) = { codec_version: 4 id: 802 max_bytes: 1000};
+    option (dccl.msg) = { codec_version: 4 id: 802};
     EntityName name = 1;
-    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 10 }];
+    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 30 }];
 }
 
 //SetEntityParameters
 message SetEntityParameters {
-    option (dccl.msg) = { codec_version: 4 id: 804 max_bytes: 800};
+    option (dccl.msg) = { codec_version: 4 id: 804};
     EntityName name = 1; 
-    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 10 }];
+    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 30 }];
 }
 
 message ItemList {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 60};
+    option (dccl.msg) = { codec_version: 4};
     EntityName name = 1;
-    int32 number = 2 [(dccl.field) = { min: 0 max: 100}];
+    int32 number = 2 [(dccl.field) = { min: 0 max: 200}];
 }
 
 message ListCombined {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 6200};
-    repeated ItemList item = 1 [(dccl.field) = { max_repeat: 100}];
+    option (dccl.msg) = { codec_version: 4};
+    repeated ItemList item = 1 [(dccl.field) = { max_repeat: 200}];
 }
 
 // EntityList
 message EntityList {
-    option (dccl.msg) = { codec_version: 4 id: 5 max_bytes: 8000};
+    option (dccl.msg) = { codec_version: 4 id: 5};
     enum operationEnum {
         OP_REPORT = 0;
         OP_QUERY = 1;
@@ -2316,40 +2317,40 @@ message EntityList {
     ListCombined list = 2;
 }
 
-// ManeuverIDCombined (composed by maneuver_type and maneuver_number (max number in the maneuver name = 50))
+// ManeuverIDCombined (composed by maneuver_type and maneuver_number (max number in the maneuver name = 20))
 message ManeuverIDCombined {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 30};
+    option (dccl.msg) = { codec_version: 4};
     ManeuverType maneuver_type = 1;
-    int32 maneuver_number = 2 [(dccl.field) = { min: 0 max: 50}];
+    int32 maneuver_number = 2 [(dccl.field) = { min: 0 max: 20}];
 }
 
-// ManeuverID (composed by maneuver_type and maneuver_number (max number in the maneuver name = 50))
+// ManeuverID 
 message ManeuverID {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 30};
+    option (dccl.msg) = { codec_version: 4};
     oneof ManeuverIDUnion{
         ManeuverIDCombined id_combined = 1;
-        string id_string = 2 [(dccl.field).max_length = 20];
+        string id_string = 2 [(dccl.field).max_length = 10];
     }
 }
 
 message TransitionCondition {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 30};
+    option (dccl.msg) = { codec_version: 4};
     oneof TransitionConditionUnion{
         TransitionConditionEnum condition_enum = 1;
         string condition_string = 2 [(dccl.field).max_length = 20];
     }
 }
 
-// Loiter Maneuver
+// Loiter Maneuver 
 message Loiter {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 1000};
-    optional int32 timeout = 1 [(dccl.field) = { min: 0 max: 65535}];
+    option (dccl.msg) = { codec_version: 4 };
+    optional uint32 timeout = 1 [(dccl.field) = { min: 0 max: 10000}];
     optional float lat = 2 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
     optional float lon = 3 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
-    optional float z = 4 [(dccl.field) = { min: -400 max: 400 precision: 1 }];
+    optional float z = 4 [(dccl.field) = { min: 0 max: 400 precision: 1 }];
     ZUnits z_units = 5;
-    optional int32 duration = 6 [(dccl.field) = { min: 0 max: 10800}];
-    float speed = 7 [(dccl.field) = { min: -2000 max: 2000 precision: 1 }];
+    optional uint32 duration = 6 [(dccl.field) = { min: 0 max: 21600}];
+    optional float speed = 7 [(dccl.field) = { min: -4000 max: 4000 precision: 1 }];
     SpeedUnits speed_units = 8;
   
     enum LoiterTypeEnum {
@@ -2361,8 +2362,8 @@ message Loiter {
         LT_UNKNOWN = 5;
     }
     LoiterTypeEnum type = 9;
-    optional float radius = 10 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
-    optional float length = 11 [(dccl.field) = { min: 1 max: 100000 precision: 1 }];
+    optional float radius = 10 [(dccl.field) = { min: 1 max: 256 precision: 1 }];
+    optional float length = 11 [(dccl.field) = { min: 1 max: 256 precision: 1 }];
     optional float bearing = 12 [(dccl.field) = { min: 0 max: 6.283 precision: 3 }];
 
     enum DirectionEnum
@@ -2375,10 +2376,11 @@ message Loiter {
     }
 
     DirectionEnum direction = 13;
+    optional string custom = 14 [(dccl.field).max_length = 10];
 }
 
 message PlanManeuverStartActionsUnion {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
+    option (dccl.msg) = { codec_version: 4};
     oneof PlanManeuverStartActionsUnion_{
         SetEntityParameters ep = 1;
     }
@@ -2387,7 +2389,7 @@ message PlanManeuverStartActionsUnion {
 
 // PlanManeuver 
 message PlanManeuver {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 400};
+    option (dccl.msg) = { codec_version: 4};
     ManeuverID maneuver_id = 1;
     Maneuver data = 2;
     repeated PlanManeuverStartActionsUnion start_actions = 3 [(dccl.field) = { max_repeat: 15 }];
@@ -2396,7 +2398,7 @@ message PlanManeuver {
 
 // PlanTransition 
 message PlanTransition {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 400};
+    option (dccl.msg) = { codec_version: 4};
     ManeuverID source_man = 1;
     ManeuverID dest_man = 2;
     TransitionCondition conditions = 3;
@@ -2405,7 +2407,7 @@ message PlanTransition {
 
 // Vertical Profile
 message VerticalProfile {
-    option (dccl.msg) = { codec_version: 4 id: 111 max_bytes: 400};
+    option (dccl.msg) = { codec_version: 4 id: 111};
 
     enum ParameterEnum
     {
@@ -2426,7 +2428,7 @@ message VerticalProfile {
     }
 
     ParameterEnum parameter = 1;
-    optional int32 numsamples = 2 [(dccl.field) = { min: 0 max: 255}];
+    optional uint32 numsamples = 2 [(dccl.field) = { min: 0 max: 255}];
     repeated ProfileSample samples = 3 [(dccl.field) = { max_repeat: 70 }];
     optional float lat = 4 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
     optional float lon = 5 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
@@ -2434,47 +2436,69 @@ message VerticalProfile {
 
 // Estimated State
 message EstimatedState {
-    option (dccl.msg) = { codec_version: 4 id: 350 max_bytes: 80};
+    option (dccl.msg) = { codec_version: 4 id: 350};
     optional float lat = 1 [(dccl.field) = { min: -1.5707963 max: 1.5707963 precision: 7 }];
     optional float lon = 2 [(dccl.field) = { min: -3.1415926 max: 3.1415926 precision: 7 }];
-    optional float height = 3 [(dccl.field) = { min: -1000 max: 7000  precision: 1 }];
-    optional float x = 4 [(dccl.field) = { min: -2000  max: 2000  precision: 1  }];
-    optional float y = 5 [(dccl.field) = { min: -2000 max: 2000  precision: 1 }];
-    optional float z = 6 [(dccl.field) = { min: -400 max: 400  precision: 1 }];
-    optional float phi = 7 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
-    optional float theta = 8 [(dccl.field) = { min: -1.570 max: 1.570 precision: 3 }];
-    optional float psi = 9 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }];
+    optional float height = 3 [(dccl.field) = { min: -10 max: 10  precision: 1 }];
+    optional float x = 4 [(dccl.field) = { min: -20000  max: 20000  precision: 1  }];
+    optional float y = 5 [(dccl.field) = { min: -20000 max: 20000  precision: 1 }];
+    optional float z = 6 [(dccl.field) = { min: -10 max: 10  precision: 1 }];
+    optional float phi = 7 [(dccl.field) = { min: -3.141 max: 3.141 precision: 2 }];
+    optional float theta = 8 [(dccl.field) = { min: -1.570 max: 1.570 precision: 2 }];
+    optional float psi = 9 [(dccl.field) = { min: -3.141 max: 3.141 precision: 2 }];
     optional float u = 10 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
     optional float v = 11 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
     optional float w = 12 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
     optional float vx = 13 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
     optional float vy = 14 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
     optional float vz = 15 [(dccl.field) = { min: -10 max: 10 precision: 1 }];
-    optional float p = 16 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
-    optional float q = 17 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
-    optional float r = 18 [(dccl.field) = { min: -3.141 max: 3.141 precision: 3 }]; 
-    optional float depth = 19 [(dccl.field) = { min: -1 max: 400 precision: 2 }];
-    optional float alt = 20 [(dccl.field) = { min: -1 max: 5000 precision: 2 }];
+    optional float p = 16 [(dccl.field) = { min: -3.141 max: 3.141 precision: 2 }]; 
+    optional float q = 17 [(dccl.field) = { min: -3.141 max: 3.141 precision: 2 }]; 
+    optional float r = 18 [(dccl.field) = { min: -3.141 max: 3.141 precision: 2 }]; 
+    optional float depth = 19 [(dccl.field) = { min: -1 max: 400 precision: 1 }];
+    optional float alt = 20 [(dccl.field) = { min: -1 max: 5000 precision: 1 }];
 }
 
+// PlanVariable 
+message PlanVariable {
+    option (dccl.msg) = { codec_version: 4 id: 561};
+    optional string name = 1 [(dccl.field).max_length = 10]; 
+    optional string value = 2 [(dccl.field).max_length = 10]; 
+    enum TypeEnum {
+        PVT_BOOLEAN = 0;
+        PVT_NUMBER = 1;
+        PVT_TEXT = 2;
+        PVT_MESSAGE = 3;
+        PVT_UNKNOWN = 4;
+    }
+    TypeEnum type = 3;
+    enum AccessTypeEnum {
+        PVA_INPUT = 0;
+        PVA_OUTPUT = 1;
+        PVA_LOCAL = 2;
+        PVA_UNKNOWN = 3;
+    }
+    AccessTypeEnum access = 4;
+}
 
 // PlanSpecification 
 message PlanSpecification {
-    option (dccl.msg) = { codec_version: 4 id: 551 max_bytes: 800000};
-    optional string plan_id = 1 [(dccl.field).max_length = 20]; 
-    optional string description = 2 [(dccl.field).max_length = 2]; 
-    optional string vnamespace = 3 [(dccl.field).max_length = 2]; 
-    ManeuverID start_man_id = 4;
-    repeated PlanManeuver maneuvers = 5 [(dccl.field) = { max_repeat: 30 }];
-    repeated PlanTransition transitions = 6 [(dccl.field) = { max_repeat: 30 }];
-    repeated PlanSpecificationStartActionsUnion start_actions = 7 [(dccl.field) = { max_repeat: 7 }];
-    repeated PlanSpecificationEndActionsUnion end_actions = 8 [(dccl.field) = { max_repeat: 7 }];
+    option (dccl.msg) = { codec_version: 4 id: 551};
+    optional string plan_id = 1 [(dccl.field).max_length = 30]; 
+    optional string description = 2 [(dccl.field).max_length = 5]; 
+    optional string vnamespace = 3 [(dccl.field).max_length = 5]; 
+    repeated PlanVariable variables = 4 [(dccl.field) = { max_repeat: 5 }];
+    ManeuverID start_man_id = 5;
+    repeated PlanManeuver maneuvers = 6 [(dccl.field) = { max_repeat: 20 }];
+    repeated PlanTransition transitions = 7 [(dccl.field) = { max_repeat: 20 }];
+    repeated PlanSpecificationStartActionsUnion start_actions = 8 [(dccl.field) = { max_repeat: 5 }];
+    repeated PlanSpecificationEndActionsUnion end_actions = 9 [(dccl.field) = { max_repeat: 5 }];
 }
 
 
 // PlanDB 
 message PlanDB {
-    option (dccl.msg) = { codec_version: 4 id: 556 max_bytes: 800000};
+    option (dccl.msg) = { codec_version: 4 id: 556};
 
     enum TypeEnum
     {
@@ -2500,20 +2524,20 @@ message PlanDB {
     
     TypeEnum type = 1;
     OperationEnum op = 2;
-    optional int32 request_id = 3 [(dccl.field) = { min: 0 max: 10000}];
-    optional string plan_id = 4 [(dccl.field).max_length = 20]; 
+    optional uint32 request_id = 3 [(dccl.field) = { min: 0 max: 65535}];
+    optional string plan_id = 4 [(dccl.field).max_length = 30]; 
     PlanDBArgUnion arg = 5;
-    optional string info = 6 [(dccl.field).max_length = 40]; 
+    optional string info = 6 [(dccl.field).max_length = 30]; 
 }
 
 // PlanDBState 
 message PlanDBState {
-    option (dccl.msg) = { codec_version: 4 id: 557 max_bytes: 800000};
-    optional int32 plan_count = 1 [(dccl.field) = { min: 0 max: 100000}];
-    optional int32 plan_size = 2 [(dccl.field) = { min: 0 max: 1}];
-    optional float change_time = 3 [(dccl.field) = { min: 0 max: 1835634114 precision: 2 }];
-    optional int32 change_sid = 4 [(dccl.field) = { min: 0 max: 50000}];
-    optional string change_sname = 5 [(dccl.field).max_length = 40]; 
+    option (dccl.msg) = { codec_version: 4 id: 557};
+    optional uint32 plan_count = 1 [(dccl.field) = { min: 0 max: 65535}];
+    optional uint32 plan_size = 2 [(dccl.field) = { min: 0 max: 100000}];
+    optional float change_time = 3 [(dccl.field) = { min: 1775001600 max: 2080224000 precision: 1 }];
+    optional uint32 change_sid = 4 [(dccl.field) = { min: 0 max: 65535}];
+    optional string change_sname = 5 [(dccl.field).max_length = 30]; 
     optional string md5 = 6 [(dccl.field).max_length = 40]; 
     repeated PlanDBInformation plans_info = 7 [(dccl.field) = { max_repeat: 100 }];
 }
@@ -2521,18 +2545,18 @@ message PlanDBState {
 
 // PlanDBInformation 
 message PlanDBInformation {
-    option (dccl.msg) = { codec_version: 4 id: 558 max_bytes: 800000};
-    optional string plan_id = 1 [(dccl.field).max_length = 20]; 
-    optional int32 plan_size = 2 [(dccl.field) = { min: 0 max: 5000}];
-    optional float change_time = 3 [(dccl.field) = { min: 0 max: 1835634114 precision: 2 }];
-    optional int32 change_sid = 4 [(dccl.field) = { min: 0 max: 50000}];
-    optional string change_sname = 5 [(dccl.field).max_length = 40]; 
+    option (dccl.msg) = { codec_version: 4 id: 558};
+    optional string plan_id = 1 [(dccl.field).max_length = 30]; 
+    optional uint32 plan_size = 2 [(dccl.field) = { min: 0 max: 65535}];
+    optional float change_time = 3 [(dccl.field) = { min: 1775001600 max: 2080224000 precision: 1 }];
+    optional uint32 change_sid = 4 [(dccl.field) = { min: 0 max: 65535}];
+    optional string change_sname = 5 [(dccl.field).max_length = 30]; 
     optional string md5 = 6 [(dccl.field).max_length = 40]; 
 }
 
 //PlanControl
 message PlanControl {
-    option (dccl.msg) = { codec_version: 4 id: 559 max_bytes: 800000};
+    option (dccl.msg) = { codec_version: 4 id: 559};
     enum TypeEnum
     {
         PC_REQUEST = 0;
@@ -2553,17 +2577,17 @@ message PlanControl {
 
     TypeEnum type = 1;  
     OperationEnum op = 2; 
-    optional int32 request_id = 3 [(dccl.field) = { min: 0 max: 5000}];
-    optional string plan_id = 4 [(dccl.field).max_length = 100];
-    optional int32 flags = 5 [(dccl.field) = { min: 0 max: 5000}];
+    optional uint32 request_id = 3 [(dccl.field) = { min: 0 max: 65535}];
+    optional string plan_id = 4 [(dccl.field).max_length = 30];
+    optional uint32 flags = 5 [(dccl.field) = { min: 0 max: 2}];
     PlanControlArgUnion arg = 6;
     optional string info = 7 [(dccl.field).max_length = 100];
 }
 
 //PlanStatistics
 message PlanStatistics {
-    option (dccl.msg) = { codec_version: 4 id: 564 max_bytes: 800000};
-    optional string plan_id = 1 [(dccl.field).max_length = 20];
+    option (dccl.msg) = { codec_version: 4 id: 564 };
+    optional string plan_id = 1 [(dccl.field).max_length = 30];
     enum TypeEnum
     {
         TP_PREPLAN = 0;
@@ -2572,8 +2596,8 @@ message PlanStatistics {
         TP_UNKNOWN = 3;
     }  
     TypeEnum type = 2;  
-    optional int32 properties = 3 [(dccl.field) = { min: 0 max: 5000}];
-    optional string durations = 4 [(dccl.field).max_length = 100];
+    optional uint32 properties = 3 [(dccl.field) = { min: 0 max: 255}];
+    optional string durations = 4 [(dccl.field).max_length = 200];
     optional string distances = 5 [(dccl.field).max_length = 100];
     optional string actions = 6 [(dccl.field).max_length = 100];
     optional string fuel = 7 [(dccl.field).max_length = 100];
@@ -2581,7 +2605,7 @@ message PlanStatistics {
 
 //VehicleState
 message VehicleState {
-    option (dccl.msg) = { codec_version: 4 id: 500 max_bytes: 800000};
+    option (dccl.msg) = { codec_version: 4 id: 500};
     enum OperationModeEnum
     {
         VS_SERVICE = 0;
@@ -2593,20 +2617,20 @@ message VehicleState {
         VS_UNKNOWN = 6;
     }  
     OperationModeEnum op_mode = 1;  
-    optional int32 error_count = 2 [(dccl.field) = { min: 0 max: 255}];
-    optional string error_ents = 3 [(dccl.field).max_length = 500];
-    optional int32 maneuver_type = 4 [(dccl.field) = { min: 0 max: 65535}];
-    optional float maneuver_stime = 5 [(dccl.field) = { min: -1 max: 1808764799 precision: 1 }];
-    optional int32 maneuver_eta = 6 [(dccl.field) = { min: 0 max: 86400}];
-    optional int32 control_loops = 7 [(dccl.field) = { min: 0 max: 10000}];
-    optional int32 flags = 8 [(dccl.field) = { min: 0 max: 10000}];
-    optional string last_error = 9 [(dccl.field).max_length = 100];
-    optional float last_error_time = 10 [(dccl.field) = { min: -1 max: 1835634114 precision: 2 }];
+    optional uint32 error_count = 2 [(dccl.field) = { min: 0 max: 255}];
+    optional string error_ents = 3 [(dccl.field).max_length = 100];
+    optional uint32 maneuver_type = 4 [(dccl.field) = { min: 0 max: 65535}];
+    optional float maneuver_stime = 5 [(dccl.field) = { min: -1 max: 2080224000 precision: 1 }];
+    optional uint32 maneuver_eta = 6 [(dccl.field) = { min: 0 max: 65535}];
+    optional uint32 control_loops = 7 [(dccl.field) = { min: 0 max: 4294967295}];
+    optional uint32 flags = 8 [(dccl.field) = { min: 0 max: 2}];
+    optional string last_error = 9 [(dccl.field).max_length = 50];
+    optional float last_error_time = 10 [(dccl.field) = { min: -1 max: 2080224000 precision: 1 }];
 }
 
 //EntityState
 message EntityState {
-    option (dccl.msg) = { codec_version: 4 id: 1 max_bytes: 800000};
+    option (dccl.msg) = { codec_version: 4 id: 1};
     enum StateEnum
     {
         ESTA_BOOT = 0;
@@ -2617,13 +2641,13 @@ message EntityState {
         ESTA_UNKNOWN = 5;
     }  
     StateEnum state = 1;  
-    optional int32 flags = 2 [(dccl.field) = { min: 0 max: 255}];
-    optional string description = 3 [(dccl.field).max_length = 500];
+    optional uint32 flags = 2 [(dccl.field) = { min: 0 max: 2}];
+    optional string description = 3 [(dccl.field).max_length = 300];
 }
 
 //PlanControlState
 message PlanControlState {
-    option (dccl.msg) = { codec_version: 4 id: 560 max_bytes: 800000};
+    option (dccl.msg) = { codec_version: 4 id: 560};
     enum StateEnum
     {
         PCS_BLOCKED = 0;
@@ -2633,12 +2657,12 @@ message PlanControlState {
         PCS_UNKNOWN = 4;
     }  
     StateEnum state = 1;  
-    optional string plan_id = 2 [(dccl.field).max_length = 500];
-    optional int32 plan_eta = 3 [(dccl.field) = { min: -1 max: 172800}];
-    optional float plan_progress = 4 [(dccl.field) = { min: -100 max: 100 precision: 2 }];
+    optional string plan_id = 2 [(dccl.field).max_length = 30];
+    optional int32 plan_eta = 3 [(dccl.field) = { min: -1 max: 604800}];
+    optional float plan_progress = 4 [(dccl.field) = { min: -1 max: 100 precision: 2 }];
     ManeuverID man_id = 5;
-    optional int32 man_type = 6 [(dccl.field) = { min: 0 max: 50000}];
-    optional int32 man_eta = 7 [(dccl.field) = { min: -1 max: 172800}];
+    optional uint32 man_type = 6 [(dccl.field) = { min: 0 max: 65535}];
+    optional int32 man_eta = 7 [(dccl.field) = { min: -1 max: 604800}];
     enum LastPlanOutcomeEnum
     {
         LPO_NONE = 0;
@@ -2651,35 +2675,35 @@ message PlanControlState {
 
 //Voltage
 message Voltage {
-    option (dccl.msg) = { codec_version: 4 id: 251 max_bytes: 800000};
-    optional float value = 1 [(dccl.field) = { min: -100 max: 100 precision: 3 }];
+    option (dccl.msg) = { codec_version: 4 id: 251};
+    optional float value = 1 [(dccl.field) = { min: -100 max: 100 precision: 2 }];
 }
 
 //Current
 message Current {
-    option (dccl.msg) = { codec_version: 4 id: 252 max_bytes: 800000};
-    optional float value = 1 [(dccl.field) = { min: -100 max: 100 precision: 3 }];
+    option (dccl.msg) = { codec_version: 4 id: 252};
+    optional float value = 1 [(dccl.field) = { min: -100 max: 100 precision: 3}];
 }
 
 //FuelLevel
 message FuelLevel {
-    option (dccl.msg) = { codec_version: 4 id: 279 max_bytes: 80};
-    optional float value = 1 [(dccl.field) = { min: 0 max: 100 precision: 4 }];
+    option (dccl.msg) = { codec_version: 4 id: 279 };
+    optional float value = 1 [(dccl.field) = { min: 0 max: 100 precision: 1 }];
     optional float confidence = 2 [(dccl.field) = { min: 0 max: 100 precision: 1 }];
-    optional string opmodes = 3 [(dccl.field).max_length = 50];
+    optional string opmodes = 3 [(dccl.field).max_length = 100];
 }
 
 //WindSpeed
 message WindSpeed {
-    option (dccl.msg) = { codec_version: 4 id: 271 max_bytes: 80};
-    optional float direction = 1 [(dccl.field) = { min: -3.141592 max: 3.141592 precision: 6}];
-    optional float speed = 2 [(dccl.field) = { min: 0 max: 100 precision: 3 }];
-    optional float turbulence = 3 [(dccl.field) = { min: 0 max: 100 precision: 3 }];
+    option (dccl.msg) = { codec_version: 4 id: 271 };
+    optional float direction = 1 [(dccl.field) = { min: 0 max: 6.283 precision: 3}];
+    optional float speed = 2 [(dccl.field) = { min: 0 max: 200 precision: 2 }];
+    optional float turbulence = 3 [(dccl.field) = { min: 0 max: 1 precision: 1 }]; 
 }
 
 
 message PlanDBArgUnion {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
+    option (dccl.msg) = { codec_version: 4 };
     oneof PlanDBArgUnion_{
         PlanSpecification ps_arg = 1;
         PlanDBInformation pi_arg = 2;
@@ -2688,21 +2712,21 @@ message PlanDBArgUnion {
 }
 
 message PlanSpecificationStartActionsUnion {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
+    option (dccl.msg) = { codec_version: 4};
     oneof PlanSpecificationStartActionsUnion_{
         SetEntityParameters ep = 1;
     }
 }
 
 message PlanSpecificationEndActionsUnion {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
+    option (dccl.msg) = { codec_version: 4};
     oneof PlanSpecificationEndActionsUnion_{
         SetEntityParameters ep = 1;
     }
 }
 
 message PlanControlArgUnion {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 800000};
+    option (dccl.msg) = { codec_version: 4};
     oneof PlanDBArgUnion_{
         PlanSpecification ps_arg = 1;
         Maneuver man_arg = 2;
@@ -2712,16 +2736,16 @@ message PlanControlArgUnion {
 
 // Header
 message Header{
-   option (dccl.msg) = { codec_version: 4 max_bytes: 16}; 
-   optional float timestamp = 1 [(dccl.field) = { min: 1767225600 max: 2082758400 precision: 1 }]; 
-   optional int32 src = 2 [(dccl.field) = { min: 0 max: 65535}];
-   optional int32 src_ent = 3 [(dccl.field) = { min: 0 max: 255}];
-   optional int32 dst = 4 [(dccl.field) = { min: 0 max: 65535}];
-   optional int32 dst_ent = 5 [(dccl.field) = { min: 0 max: 255}];
+   option (dccl.msg) = { codec_version: 4}; 
+   optional uint32 timestamp = 1 [(dccl.field) = { min: 1767225600 max: 2082758400}]; 
+   optional uint32 src = 2 [(dccl.field) = { min: 0 max: 65535}];
+   optional uint32 src_ent = 3 [(dccl.field) = { min: 0 max: 255}];
+   optional uint32 dst = 4 [(dccl.field) = { min: 0 max: 65535}];
+   optional uint32 dst_ent = 5 [(dccl.field) = { min: 0 max: 255}];
 }
 
 message Payload {
-    option (dccl.msg) = { codec_version: 4 max_bytes: 900000};
+    option (dccl.msg) = { codec_version: 4};
     oneof PayloadUnion{
         PlanSpecification plan_specification_payload = 1;
         EstimatedState estimated_state_payload = 2;
@@ -2742,7 +2766,7 @@ message Payload {
 }
 
 message ProtoMessage{
-    option (dccl.msg) = { codec_version: 4 id: 0 max_bytes: 800050};
+    option (dccl.msg) = { codec_version: 4 id: 0 max_bytes: 100000000};
     Header msg_header = 1;
     Payload msg_payload = 2;
 }
