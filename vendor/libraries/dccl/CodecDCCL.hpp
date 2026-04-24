@@ -105,6 +105,7 @@ namespace IMCDCCL
 
             DUNE::IMC::Message* imc_msg = msg.release();
 
+            m_task->war("DCCL message successfully decoded");
             return imc_msg;
         }
 
@@ -127,6 +128,8 @@ namespace IMCDCCL
 
             std::string encoded_bytes;
             m_codec.encode(&encoded_bytes, dst_dccl); 
+
+            m_task->war("DCCL message successfully encoded");
 
             return encoded_bytes;                              
         }
