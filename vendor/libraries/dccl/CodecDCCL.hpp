@@ -117,14 +117,10 @@ namespace IMCDCCL
             IMC_DCCL::ProtoMessage dst_dccl;
             
             //Header
-            IMC_DCCL::Header* header = new IMC_DCCL::Header();
-            encodeHeader(*imc_msg, *header);
-            dst_dccl.set_allocated_msg_header(header);
+            encodeHeader(*imc_msg, *dst_dccl.mutable_msg_header());
 
             //Payload
-            IMC_DCCL::Payload* payload = new IMC_DCCL::Payload();
-            encodePayload(*imc_msg, *payload);
-            dst_dccl.set_allocated_msg_payload(payload);      
+            encodePayload(*imc_msg, *dst_dccl.mutable_msg_payload());    
 
             std::string encoded_bytes;
             m_codec.encode(&encoded_bytes, dst_dccl); 
