@@ -48,6 +48,14 @@ IMC_DCCL::PlanStatistics::TypeEnum encodePlanStatisticsTypeEnum(const uint16_t& 
 
 DUNE::IMC::PlanStatistics::TypeEnum decodePlanStatisticsTypeEnum(const uint16_t& dccl_src);
 
+IMC_DCCL::PlanVariable::AccessTypeEnum encodePlanVariableAccessTypeEnum(const uint16_t& imc_src);
+
+DUNE::IMC::PlanVariable::AccessTypeEnum decodePlanVariableAccessTypeEnum(const uint16_t& dccl_src);
+
+IMC_DCCL::PlanVariable::TypeEnum encodePlanVariableTypeEnum(const uint16_t& imc_src);
+
+DUNE::IMC::PlanVariable::TypeEnum decodePlanVariableTypeEnum(const uint16_t& dccl_src);
+
 IMC_DCCL::SpeedUnits encodeSpeedUnits(const uint16_t& imc_src);
 
 DUNE::IMC::SpeedUnits decodeSpeedUnits(const uint16_t& dccl_src);
