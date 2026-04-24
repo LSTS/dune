@@ -98,10 +98,12 @@ namespace IMCDCCL
             m_codec.decode(encoded_string, &src_dccl);
 
             //Payload
-            DUNE::IMC::Message* imc_msg = decodePayload(src_dccl.msg_payload());
+            auto msg = decodePayload(src_dccl.msg_payload());
 
             //Header
-            decodeHeader(src_dccl.msg_header(), *imc_msg);
+            decodeHeader(src_dccl.msg_header(), *msg);
+
+            DUNE::IMC::Message* imc_msg = msg.release();
 
             return imc_msg;
         }
