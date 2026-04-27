@@ -254,6 +254,9 @@ namespace Transports
       bool eor = false;
       while (!eor && (idx < (c_max_request_size - 1)))
       {
+        if (!Poll::poll(*sock, 1.0))
+          throw ConnectionClosed();
+
         int rv = sock->read(bfr + idx, 1);
 
         if (rv <= 0)
