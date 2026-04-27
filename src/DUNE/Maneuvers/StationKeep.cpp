@@ -206,5 +206,12 @@ namespace DUNE
     {
       return (m_sks == ST_OFF_STATION);
     }
+
+    void
+    StationKeep::setSpeed(float speed, uint8_t speed_units)
+    {
+      m_path.speed = speed;
+      m_path.speed_units = speed_units;
+    }
   }
 }
