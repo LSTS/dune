@@ -519,6 +519,7 @@ namespace Payload
             sendPowerChannelControl(m_pressurizationPumpExtTank.name, PowerChannelControl::PCC_OP_TURN_OFF);
             m_inTankPump.stop();
             sendPowerChannelControl(m_inTankPump.name, PowerChannelControl::PCC_OP_TURN_OFF);
+            sentThrustActuation(m_submersiblePumpMotor, -m_args.velocity_to_start_descending_and_ascending_in_percent / 100.0f); // Start ascending at specified velocity
             m_current_state = STATE_COMPLETED;
             m_state_info_buffer = "active | Purge to exterior of the tank finished, closed purge valve to exterior and stopped internal pump.";
             setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
