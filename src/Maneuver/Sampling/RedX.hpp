@@ -49,11 +49,26 @@ namespace Maneuver
       float m_radius;
       float m_speed;
 
+      //! State machine states.
+      enum RedxState
+      {
+        //! Moving to target point.
+        RS_MOVING,
+        //! Sampling setup.
+        RS_SETUP,
+        //! Sampling.
+        RS_SAMPLING
+      };
+
+      //! Current state.
+      RedxState m_state;
+
       //! Default constructor.
       RedX(DUNE::Maneuvers::Maneuver* task, std::string args):
         BasicSampler(task, "RedX"),
         m_skeep(nullptr),
-        m_radius(0.0f)
+        m_radius(0.0f),
+        m_state(RS_MOVING)
       {
         m_args = DUNE::Utils::TupleList(args);
 
@@ -120,6 +135,28 @@ namespace Maneuver
       {
         if (m_skeep == nullptr)
           return;
+
+        switch (m_state)
+        {
+          case RS_MOVING:
+            if (m_skeep->isInside())
+            {
+              m_skeep->setSpeed(m_speed, DUNE::IMC::SpeedUnits::SUNITS_METERS_PS);
+              m_state = RS_SETUP;
+            }
+            break;
+
+          case RS_SETUP:
+            war("Reached sampling point, starting sampling...");
+            m_state = RS_SAMPLING;
+            break;
+
+          case RS_SAMPLING:
+            war("Sampling...");
+        
+        default:
+          break;
+        }
 
         m_task->signalProgress();
       }
