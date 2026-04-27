@@ -244,13 +244,13 @@ namespace Transports
           if (m_codec_dccl.isAvailable())
           {
             std::string encoded_string(msg->data.begin(), msg->data.end());
-            DUNE::IMC::Message* decoded_msg = m_codec_dccl.decodeDCCL(encoded_string);
+            std::unique_ptr<DUNE::IMC::Message> decoded_msg = m_codec_dccl.decodeDCCL(encoded_string);
             if (decoded_msg != nullptr)
             {
               war("Received DCCL message of type %s via Iridium.", decoded_msg->getName());
               // decoded_msg->setSource(msg->source);
               // decoded_msg->setDestination(m_args.iridium_destination);
-              dispatch(decoded_msg, DF_KEEP_SRC_EID);
+              dispatch(decoded_msg.get(), DF_KEEP_SRC_EID);
               return;
             }
           }
