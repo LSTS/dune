@@ -177,17 +177,15 @@ std::unique_ptr<DUNE::IMC::Maneuver> decodeManeuver(const IMC_DCCL::Maneuver& dc
 
 // ================ ManeuverID Message ================
 void encodeManeuverID(const std::string& imc, IMC_DCCL::ManeuverID& dccl)
-{
-    
-    IMC_DCCL::ManeuverIDCombined* id_combined = new IMC_DCCL::ManeuverIDCombined();
-    encodeManeuverIDCombined(imc, *id_combined);
-    if(id_combined->maneuver_type() != IMC_DCCL::ManeuverType::MT_UNKNOWN){
-        dccl.set_allocated_id_combined(id_combined);
+{  
+    IMC_DCCL::ManeuverIDCombined id_combined;
+    encodeManeuverIDCombined(imc, id_combined);
+    if(id_combined.maneuver_type() != IMC_DCCL::ManeuverType::MT_UNKNOWN){
+        *dccl.mutable_id_combined() = id_combined;
         return;}
     
     dccl.set_id_string(imc);
 }
-
 
 // ================ ManeuverID Message ================
 void decodeManeuverID(const IMC_DCCL::ManeuverID& dccl, std::string& imc)
@@ -215,7 +213,9 @@ void encodeManeuverIDCombined(const std::string& imc, IMC_DCCL::ManeuverIDCombin
     }
     dccl.set_maneuver_type(encodeManeuverType(letters));
     
-    if (!numbers.empty()) dccl.set_maneuver_number(std::stoi(numbers));                         
+    if (!numbers.empty()) dccl.set_maneuver_number(std::stoi(numbers));    
+
+    std::cout<<"Trying SET MANEUVER ID COMBINED"<<std::endl;                     
                               
                               
 }
