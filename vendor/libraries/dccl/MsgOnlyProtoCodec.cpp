@@ -214,9 +214,6 @@ void encodeManeuverIDCombined(const std::string& imc, IMC_DCCL::ManeuverIDCombin
     dccl.set_maneuver_type(encodeManeuverType(letters));
     
     if (!numbers.empty()) dccl.set_maneuver_number(std::stoi(numbers));    
-
-    std::cout<<"Trying SET MANEUVER ID COMBINED"<<std::endl;                     
-                              
                               
 }
 
