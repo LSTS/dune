@@ -135,13 +135,13 @@ namespace Transports
           return;
 
         std::string encoded_bytes(data.begin(), data.end());
-        res = m_codec_dccl.decodeDCCL(encoded_bytes);
-        if (res != nullptr)
+        std::unique_ptr<DUNE::IMC::Message> decoded_msg = m_codec_dccl.decodeDCCL(encoded_bytes);
+        if (decoded_msg != nullptr)
         {
           debug("created DCCL message %s", res->getName());
-          res->setSource(msg->getSource());
-          res->setDestination(msg->getDestination());
-          dispatch(res);
+          decoded_msg->setSource(msg->getSource());
+          decoded_msg->setDestination(msg->getDestination());
+          dispatch(decoded_msg.get());
           m_incoming.erase(hash);
         }
       }
