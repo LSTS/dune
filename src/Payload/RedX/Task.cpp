@@ -604,6 +604,7 @@ namespace Payload
             inf("Received command to start sampling action, transitioning to INITIAL state.");
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             m_current_state = STATE_INITIAL;
+            sendSamplingActionMessage(IMC::SamplingAction::ActionEnum::SA_REPORT, IMC::SamplingAction::TypeEnum::SAT_STATE_STARTING);
           }
         }
         else if(msg->action == IMC::SamplingAction::TypeEnum::SAT_CMD_STOP)
@@ -628,16 +629,16 @@ namespace Payload
       void
       sendDeactivation()
       {
-        sendSamplingActionMessage(IMC::SamplingAction::TypeEnum::SAT_CMD_STOP);
+        sendSamplingActionMessage(IMC::SamplingAction::ActionEnum::SA_REPORT, IMC::SamplingAction::TypeEnum::SAT_STATE_STOPPING);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         m_current_state = STATE_COMPLETED;
       }
 
       void
-      sendSamplingActionMessage(IMC::SamplingAction::TypeEnum type)
+      sendSamplingActionMessage(IMC::SamplingAction::ActionEnum action, IMC::SamplingAction::TypeEnum type)
       {
         IMC::SamplingAction msg;
-        msg.action = IMC::SamplingAction::ActionEnum::SA_COMMAND;
+        msg.action = action;
         msg.type = type;
         msg.description = getName();
         dispatch(msg);
