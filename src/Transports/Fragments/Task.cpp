@@ -65,7 +65,8 @@ namespace Transports
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_gc_counter(c_gc_timeout)
+        m_gc_counter(c_gc_timeout),
+        m_codec_dccl(this)
       {
         param("Reception timeout", m_args.max_age_secs)
         .defaultValue("1800")
