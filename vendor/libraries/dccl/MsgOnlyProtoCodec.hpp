@@ -24,7 +24,7 @@ void decodeListCombined(const IMC_DCCL::ListCombined& dccl, std::string& imc);
 
 void encodeManeuver(const DUNE::IMC::Maneuver& imc, IMC_DCCL::Maneuver& dccl);
 
-DUNE::IMC::Maneuver* decodeManeuver(const IMC_DCCL::Maneuver& dccl)	;
+std::unique_ptr<DUNE::IMC::Maneuver> decodeManeuver(const IMC_DCCL::Maneuver& dccl)	;
 
 void encodeManeuverID(const std::string& imc, IMC_DCCL::ManeuverID& dccl);
 
@@ -44,27 +44,27 @@ void decodeParameterValue(const IMC_DCCL::ParameterValue& dccl, std::string& imc
 
 void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl);
 
-DUNE::IMC::Message* decodePayload(const IMC_DCCL::Payload& dccl);
+std::unique_ptr<DUNE::IMC::Message> decodePayload(const IMC_DCCL::Payload& dccl);
 
 void encodePlanControlArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanControlArgUnion& dccl);
 
-DUNE::IMC::Message* decodePlanControlArgUnion(const IMC_DCCL::PlanControlArgUnion& dccl);
+std::unique_ptr<DUNE::IMC::Message> decodePlanControlArgUnion(const IMC_DCCL::PlanControlArgUnion& dccl);
 
 void encodePlanDBArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanDBArgUnion& dccl);
 
-DUNE::IMC::Message* decodePlanDBArgUnion(const IMC_DCCL::PlanDBArgUnion& dccl);
+std::unique_ptr<DUNE::IMC::Message> decodePlanDBArgUnion(const IMC_DCCL::PlanDBArgUnion& dccl);
 
 void encodePlanManeuverStartActionsUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanManeuverStartActionsUnion& dccl);
 
-DUNE::IMC::Message* decodePlanManeuverStartActionsUnion(const IMC_DCCL::PlanManeuverStartActionsUnion& dccl);
+std::unique_ptr<DUNE::IMC::Message> decodePlanManeuverStartActionsUnion(const IMC_DCCL::PlanManeuverStartActionsUnion& dccl);
 
 void encodePlanSpecificationEndActionsUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanSpecificationEndActionsUnion& dccl);
 
-DUNE::IMC::Message* decodePlanSpecificationEndActionsUnion(const IMC_DCCL::PlanSpecificationEndActionsUnion& dccl);
+std::unique_ptr<DUNE::IMC::Message> decodePlanSpecificationEndActionsUnion(const IMC_DCCL::PlanSpecificationEndActionsUnion& dccl);
 
 void encodePlanSpecificationStartActionsUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanSpecificationStartActionsUnion& dccl);
 
-DUNE::IMC::Message* decodePlanSpecificationStartActionsUnion(const IMC_DCCL::PlanSpecificationStartActionsUnion& dccl);
+std::unique_ptr<DUNE::IMC::Message> decodePlanSpecificationStartActionsUnion(const IMC_DCCL::PlanSpecificationStartActionsUnion& dccl);
 
 void encodeTransitionCondition(const std::string& imc, IMC_DCCL::TransitionCondition& dccl);
 

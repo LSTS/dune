@@ -152,6 +152,9 @@ extern PlanStatisticsDefaultTypeInternal _PlanStatistics_default_instance_;
 class PlanTransition;
 struct PlanTransitionDefaultTypeInternal;
 extern PlanTransitionDefaultTypeInternal _PlanTransition_default_instance_;
+class PlanVariable;
+struct PlanVariableDefaultTypeInternal;
+extern PlanVariableDefaultTypeInternal _PlanVariable_default_instance_;
 class ProfileSample;
 struct ProfileSampleDefaultTypeInternal;
 extern ProfileSampleDefaultTypeInternal _ProfileSample_default_instance_;
@@ -216,6 +219,7 @@ template<> ::IMC_DCCL::PlanSpecificationEndActionsUnion* Arena::CreateMaybeMessa
 template<> ::IMC_DCCL::PlanSpecificationStartActionsUnion* Arena::CreateMaybeMessage<::IMC_DCCL::PlanSpecificationStartActionsUnion>(Arena*);
 template<> ::IMC_DCCL::PlanStatistics* Arena::CreateMaybeMessage<::IMC_DCCL::PlanStatistics>(Arena*);
 template<> ::IMC_DCCL::PlanTransition* Arena::CreateMaybeMessage<::IMC_DCCL::PlanTransition>(Arena*);
+template<> ::IMC_DCCL::PlanVariable* Arena::CreateMaybeMessage<::IMC_DCCL::PlanVariable>(Arena*);
 template<> ::IMC_DCCL::ProfileSample* Arena::CreateMaybeMessage<::IMC_DCCL::ProfileSample>(Arena*);
 template<> ::IMC_DCCL::ProtoMessage* Arena::CreateMaybeMessage<::IMC_DCCL::ProtoMessage>(Arena*);
 template<> ::IMC_DCCL::SetEntityParameters* Arena::CreateMaybeMessage<::IMC_DCCL::SetEntityParameters>(Arena*);
@@ -348,6 +352,61 @@ inline bool VerticalProfile_ParameterEnum_Parse(
     ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, VerticalProfile_ParameterEnum* value) {
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<VerticalProfile_ParameterEnum>(
     VerticalProfile_ParameterEnum_descriptor(), name, value);
+}
+enum PlanVariable_TypeEnum : int {
+  PlanVariable_TypeEnum_PVT_BOOLEAN = 0,
+  PlanVariable_TypeEnum_PVT_NUMBER = 1,
+  PlanVariable_TypeEnum_PVT_TEXT = 2,
+  PlanVariable_TypeEnum_PVT_MESSAGE = 3,
+  PlanVariable_TypeEnum_PVT_UNKNOWN = 4,
+  PlanVariable_TypeEnum_PlanVariable_TypeEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  PlanVariable_TypeEnum_PlanVariable_TypeEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool PlanVariable_TypeEnum_IsValid(int value);
+constexpr PlanVariable_TypeEnum PlanVariable_TypeEnum_TypeEnum_MIN = PlanVariable_TypeEnum_PVT_BOOLEAN;
+constexpr PlanVariable_TypeEnum PlanVariable_TypeEnum_TypeEnum_MAX = PlanVariable_TypeEnum_PVT_UNKNOWN;
+constexpr int PlanVariable_TypeEnum_TypeEnum_ARRAYSIZE = PlanVariable_TypeEnum_TypeEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanVariable_TypeEnum_descriptor();
+template<typename T>
+inline const std::string& PlanVariable_TypeEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, PlanVariable_TypeEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function PlanVariable_TypeEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    PlanVariable_TypeEnum_descriptor(), enum_t_value);
+}
+inline bool PlanVariable_TypeEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, PlanVariable_TypeEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<PlanVariable_TypeEnum>(
+    PlanVariable_TypeEnum_descriptor(), name, value);
+}
+enum PlanVariable_AccessTypeEnum : int {
+  PlanVariable_AccessTypeEnum_PVA_INPUT = 0,
+  PlanVariable_AccessTypeEnum_PVA_OUTPUT = 1,
+  PlanVariable_AccessTypeEnum_PVA_LOCAL = 2,
+  PlanVariable_AccessTypeEnum_PVA_UNKNOWN = 3,
+  PlanVariable_AccessTypeEnum_PlanVariable_AccessTypeEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  PlanVariable_AccessTypeEnum_PlanVariable_AccessTypeEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool PlanVariable_AccessTypeEnum_IsValid(int value);
+constexpr PlanVariable_AccessTypeEnum PlanVariable_AccessTypeEnum_AccessTypeEnum_MIN = PlanVariable_AccessTypeEnum_PVA_INPUT;
+constexpr PlanVariable_AccessTypeEnum PlanVariable_AccessTypeEnum_AccessTypeEnum_MAX = PlanVariable_AccessTypeEnum_PVA_UNKNOWN;
+constexpr int PlanVariable_AccessTypeEnum_AccessTypeEnum_ARRAYSIZE = PlanVariable_AccessTypeEnum_AccessTypeEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* PlanVariable_AccessTypeEnum_descriptor();
+template<typename T>
+inline const std::string& PlanVariable_AccessTypeEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, PlanVariable_AccessTypeEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function PlanVariable_AccessTypeEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    PlanVariable_AccessTypeEnum_descriptor(), enum_t_value);
+}
+inline bool PlanVariable_AccessTypeEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, PlanVariable_AccessTypeEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<PlanVariable_AccessTypeEnum>(
+    PlanVariable_AccessTypeEnum_descriptor(), name, value);
 }
 enum PlanDB_TypeEnum : int {
   PlanDB_TypeEnum_DBT_REQUEST = 0,
@@ -808,7 +867,7 @@ enum ParamName : int {
   PN_ADC3_ENTITY_LABEL_1 = 63,
   PN_ADC3_MESSAGE = 64,
   PN_ADC4_CONVERSION = 65,
-  PN_ADC4_ENTITY_LABEL_1 = 66,
+  PN_ADC4_ENTITY_LABEL = 66,
   PN_ADC4_MESSAGE = 67,
   PN_ADC5_CONVERSION = 68,
   PN_ADC5_ENTITY_LABEL = 69,
@@ -843,7 +902,7 @@ enum ParamName : int {
   PN_ADC_3_IS_ACTIVE = 98,
   PN_ADC_3_MAXIMUM_VAL = 99,
   PN_ADC_3_MINIMUM_VAL = 100,
-  PN_ADC_4_ENTITY_LABEL = 101,
+  PN_ADC_4_ENTITY_LABEL_1 = 101,
   PN_ADC_4_FIXED_GAIN = 102,
   PN_ADC_4_FIXED_GAIN_VAL = 103,
   PN_ADC_4_IS_ACTIVE = 104,
@@ -3466,6 +3525,7 @@ class FollowPath final :
 
   enum : int {
     kPointsFieldNumber = 8,
+    kCustomFieldNumber = 9,
     kTimeoutFieldNumber = 1,
     kLatFieldNumber = 2,
     kLonFieldNumber = 3,
@@ -3492,17 +3552,35 @@ class FollowPath final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PathPoint >&
       points() const;
 
-  // optional int32 timeout = 1 [(.dccl.field) = {
+  // optional string custom = 9 [(.dccl.field) = {
+  bool has_custom() const;
+  private:
+  bool _internal_has_custom() const;
+  public:
+  void clear_custom();
+  const std::string& custom() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_custom(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_custom();
+  PROTOBUF_NODISCARD std::string* release_custom();
+  void set_allocated_custom(std::string* custom);
+  private:
+  const std::string& _internal_custom() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_custom(const std::string& value);
+  std::string* _internal_mutable_custom();
+  public:
+
+  // optional uint32 timeout = 1 [(.dccl.field) = {
   bool has_timeout() const;
   private:
   bool _internal_has_timeout() const;
   public:
   void clear_timeout();
-  int32_t timeout() const;
-  void set_timeout(int32_t value);
+  uint32_t timeout() const;
+  void set_timeout(uint32_t value);
   private:
-  int32_t _internal_timeout() const;
-  void _internal_set_timeout(int32_t value);
+  uint32_t _internal_timeout() const;
+  void _internal_set_timeout(uint32_t value);
   public:
 
   // optional float lat = 2 [(.dccl.field) = {
@@ -3586,7 +3664,8 @@ class FollowPath final :
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PathPoint > points_;
-    int32_t timeout_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr custom_;
+    uint32_t timeout_;
     float lat_;
     float lon_;
     float z_;
@@ -3720,6 +3799,7 @@ class Goto final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kCustomFieldNumber = 11,
     kTimeoutFieldNumber = 1,
     kLatFieldNumber = 2,
     kLonFieldNumber = 3,
@@ -3731,17 +3811,35 @@ class Goto final :
     kPitchFieldNumber = 9,
     kYawFieldNumber = 10,
   };
-  // optional int32 timeout = 1 [(.dccl.field) = {
+  // optional string custom = 11 [(.dccl.field) = {
+  bool has_custom() const;
+  private:
+  bool _internal_has_custom() const;
+  public:
+  void clear_custom();
+  const std::string& custom() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_custom(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_custom();
+  PROTOBUF_NODISCARD std::string* release_custom();
+  void set_allocated_custom(std::string* custom);
+  private:
+  const std::string& _internal_custom() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_custom(const std::string& value);
+  std::string* _internal_mutable_custom();
+  public:
+
+  // optional uint32 timeout = 1 [(.dccl.field) = {
   bool has_timeout() const;
   private:
   bool _internal_has_timeout() const;
   public:
   void clear_timeout();
-  int32_t timeout() const;
-  void set_timeout(int32_t value);
+  uint32_t timeout() const;
+  void set_timeout(uint32_t value);
   private:
-  int32_t _internal_timeout() const;
-  void _internal_set_timeout(int32_t value);
+  uint32_t _internal_timeout() const;
+  void _internal_set_timeout(uint32_t value);
   public:
 
   // optional float lat = 2 [(.dccl.field) = {
@@ -3863,7 +3961,8 @@ class Goto final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-    int32_t timeout_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr custom_;
+    uint32_t timeout_;
     float lat_;
     float lon_;
     float z_;
@@ -6691,6 +6790,7 @@ class Loiter final :
   // accessors -------------------------------------------------------
 
   enum : int {
+    kCustomFieldNumber = 14,
     kTimeoutFieldNumber = 1,
     kLatFieldNumber = 2,
     kLonFieldNumber = 3,
@@ -6705,17 +6805,35 @@ class Loiter final :
     kBearingFieldNumber = 12,
     kDirectionFieldNumber = 13,
   };
-  // optional int32 timeout = 1 [(.dccl.field) = {
+  // optional string custom = 14 [(.dccl.field) = {
+  bool has_custom() const;
+  private:
+  bool _internal_has_custom() const;
+  public:
+  void clear_custom();
+  const std::string& custom() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_custom(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_custom();
+  PROTOBUF_NODISCARD std::string* release_custom();
+  void set_allocated_custom(std::string* custom);
+  private:
+  const std::string& _internal_custom() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_custom(const std::string& value);
+  std::string* _internal_mutable_custom();
+  public:
+
+  // optional uint32 timeout = 1 [(.dccl.field) = {
   bool has_timeout() const;
   private:
   bool _internal_has_timeout() const;
   public:
   void clear_timeout();
-  int32_t timeout() const;
-  void set_timeout(int32_t value);
+  uint32_t timeout() const;
+  void set_timeout(uint32_t value);
   private:
-  int32_t _internal_timeout() const;
-  void _internal_set_timeout(int32_t value);
+  uint32_t _internal_timeout() const;
+  void _internal_set_timeout(uint32_t value);
   public:
 
   // optional float lat = 2 [(.dccl.field) = {
@@ -6766,20 +6884,24 @@ class Loiter final :
   void _internal_set_z_units(::IMC_DCCL::ZUnits value);
   public:
 
-  // optional int32 duration = 6 [(.dccl.field) = {
+  // optional uint32 duration = 6 [(.dccl.field) = {
   bool has_duration() const;
   private:
   bool _internal_has_duration() const;
   public:
   void clear_duration();
-  int32_t duration() const;
-  void set_duration(int32_t value);
+  uint32_t duration() const;
+  void set_duration(uint32_t value);
   private:
-  int32_t _internal_duration() const;
-  void _internal_set_duration(int32_t value);
+  uint32_t _internal_duration() const;
+  void _internal_set_duration(uint32_t value);
   public:
 
-  // float speed = 7 [(.dccl.field) = {
+  // optional float speed = 7 [(.dccl.field) = {
+  bool has_speed() const;
+  private:
+  bool _internal_has_speed() const;
+  public:
   void clear_speed();
   float speed() const;
   void set_speed(float value);
@@ -6864,12 +6986,13 @@ class Loiter final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-    int32_t timeout_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr custom_;
+    uint32_t timeout_;
     float lat_;
     float lon_;
     float z_;
     int z_units_;
-    int32_t duration_;
+    uint32_t duration_;
     float speed_;
     int speed_units_;
     int type_;
@@ -7659,17 +7782,17 @@ class VerticalProfile final :
   void _internal_set_parameter(::IMC_DCCL::VerticalProfile_ParameterEnum value);
   public:
 
-  // optional int32 numsamples = 2 [(.dccl.field) = {
+  // optional uint32 numsamples = 2 [(.dccl.field) = {
   bool has_numsamples() const;
   private:
   bool _internal_has_numsamples() const;
   public:
   void clear_numsamples();
-  int32_t numsamples() const;
-  void set_numsamples(int32_t value);
+  uint32_t numsamples() const;
+  void set_numsamples(uint32_t value);
   private:
-  int32_t _internal_numsamples() const;
-  void _internal_set_numsamples(int32_t value);
+  uint32_t _internal_numsamples() const;
+  void _internal_set_numsamples(uint32_t value);
   public:
 
   // optional float lat = 4 [(.dccl.field) = {
@@ -7710,7 +7833,7 @@ class VerticalProfile final :
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::ProfileSample > samples_;
     int parameter_;
-    int32_t numsamples_;
+    uint32_t numsamples_;
     float lat_;
     float lon_;
   };
@@ -8157,6 +8280,276 @@ class EstimatedState final :
 };
 // -------------------------------------------------------------------
 
+class PlanVariable final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanVariable) */ {
+ public:
+  inline PlanVariable() : PlanVariable(nullptr) {}
+  ~PlanVariable() override;
+  explicit PROTOBUF_CONSTEXPR PlanVariable(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  PlanVariable(const PlanVariable& from);
+  PlanVariable(PlanVariable&& from) noexcept
+    : PlanVariable() {
+    *this = ::std::move(from);
+  }
+
+  inline PlanVariable& operator=(const PlanVariable& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline PlanVariable& operator=(PlanVariable&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const PlanVariable& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const PlanVariable* internal_default_instance() {
+    return reinterpret_cast<const PlanVariable*>(
+               &_PlanVariable_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    24;
+
+  friend void swap(PlanVariable& a, PlanVariable& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(PlanVariable* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(PlanVariable* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  PlanVariable* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<PlanVariable>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const PlanVariable& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const PlanVariable& from) {
+    PlanVariable::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(PlanVariable* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.PlanVariable";
+  }
+  protected:
+  explicit PlanVariable(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  typedef PlanVariable_TypeEnum TypeEnum;
+  static constexpr TypeEnum PVT_BOOLEAN =
+    PlanVariable_TypeEnum_PVT_BOOLEAN;
+  static constexpr TypeEnum PVT_NUMBER =
+    PlanVariable_TypeEnum_PVT_NUMBER;
+  static constexpr TypeEnum PVT_TEXT =
+    PlanVariable_TypeEnum_PVT_TEXT;
+  static constexpr TypeEnum PVT_MESSAGE =
+    PlanVariable_TypeEnum_PVT_MESSAGE;
+  static constexpr TypeEnum PVT_UNKNOWN =
+    PlanVariable_TypeEnum_PVT_UNKNOWN;
+  static inline bool TypeEnum_IsValid(int value) {
+    return PlanVariable_TypeEnum_IsValid(value);
+  }
+  static constexpr TypeEnum TypeEnum_MIN =
+    PlanVariable_TypeEnum_TypeEnum_MIN;
+  static constexpr TypeEnum TypeEnum_MAX =
+    PlanVariable_TypeEnum_TypeEnum_MAX;
+  static constexpr int TypeEnum_ARRAYSIZE =
+    PlanVariable_TypeEnum_TypeEnum_ARRAYSIZE;
+  static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
+  TypeEnum_descriptor() {
+    return PlanVariable_TypeEnum_descriptor();
+  }
+  template<typename T>
+  static inline const std::string& TypeEnum_Name(T enum_t_value) {
+    static_assert(::std::is_same<T, TypeEnum>::value ||
+      ::std::is_integral<T>::value,
+      "Incorrect type passed to function TypeEnum_Name.");
+    return PlanVariable_TypeEnum_Name(enum_t_value);
+  }
+  static inline bool TypeEnum_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
+      TypeEnum* value) {
+    return PlanVariable_TypeEnum_Parse(name, value);
+  }
+
+  typedef PlanVariable_AccessTypeEnum AccessTypeEnum;
+  static constexpr AccessTypeEnum PVA_INPUT =
+    PlanVariable_AccessTypeEnum_PVA_INPUT;
+  static constexpr AccessTypeEnum PVA_OUTPUT =
+    PlanVariable_AccessTypeEnum_PVA_OUTPUT;
+  static constexpr AccessTypeEnum PVA_LOCAL =
+    PlanVariable_AccessTypeEnum_PVA_LOCAL;
+  static constexpr AccessTypeEnum PVA_UNKNOWN =
+    PlanVariable_AccessTypeEnum_PVA_UNKNOWN;
+  static inline bool AccessTypeEnum_IsValid(int value) {
+    return PlanVariable_AccessTypeEnum_IsValid(value);
+  }
+  static constexpr AccessTypeEnum AccessTypeEnum_MIN =
+    PlanVariable_AccessTypeEnum_AccessTypeEnum_MIN;
+  static constexpr AccessTypeEnum AccessTypeEnum_MAX =
+    PlanVariable_AccessTypeEnum_AccessTypeEnum_MAX;
+  static constexpr int AccessTypeEnum_ARRAYSIZE =
+    PlanVariable_AccessTypeEnum_AccessTypeEnum_ARRAYSIZE;
+  static inline const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor*
+  AccessTypeEnum_descriptor() {
+    return PlanVariable_AccessTypeEnum_descriptor();
+  }
+  template<typename T>
+  static inline const std::string& AccessTypeEnum_Name(T enum_t_value) {
+    static_assert(::std::is_same<T, AccessTypeEnum>::value ||
+      ::std::is_integral<T>::value,
+      "Incorrect type passed to function AccessTypeEnum_Name.");
+    return PlanVariable_AccessTypeEnum_Name(enum_t_value);
+  }
+  static inline bool AccessTypeEnum_Parse(::PROTOBUF_NAMESPACE_ID::ConstStringParam name,
+      AccessTypeEnum* value) {
+    return PlanVariable_AccessTypeEnum_Parse(name, value);
+  }
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kNameFieldNumber = 1,
+    kValueFieldNumber = 2,
+    kTypeFieldNumber = 3,
+    kAccessFieldNumber = 4,
+  };
+  // optional string name = 1 [(.dccl.field) = {
+  bool has_name() const;
+  private:
+  bool _internal_has_name() const;
+  public:
+  void clear_name();
+  const std::string& name() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_name(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_name();
+  PROTOBUF_NODISCARD std::string* release_name();
+  void set_allocated_name(std::string* name);
+  private:
+  const std::string& _internal_name() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_name(const std::string& value);
+  std::string* _internal_mutable_name();
+  public:
+
+  // optional string value = 2 [(.dccl.field) = {
+  bool has_value() const;
+  private:
+  bool _internal_has_value() const;
+  public:
+  void clear_value();
+  const std::string& value() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_value(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_value();
+  PROTOBUF_NODISCARD std::string* release_value();
+  void set_allocated_value(std::string* value);
+  private:
+  const std::string& _internal_value() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_value(const std::string& value);
+  std::string* _internal_mutable_value();
+  public:
+
+  // .IMC_DCCL.PlanVariable.TypeEnum type = 3;
+  void clear_type();
+  ::IMC_DCCL::PlanVariable_TypeEnum type() const;
+  void set_type(::IMC_DCCL::PlanVariable_TypeEnum value);
+  private:
+  ::IMC_DCCL::PlanVariable_TypeEnum _internal_type() const;
+  void _internal_set_type(::IMC_DCCL::PlanVariable_TypeEnum value);
+  public:
+
+  // .IMC_DCCL.PlanVariable.AccessTypeEnum access = 4;
+  void clear_access();
+  ::IMC_DCCL::PlanVariable_AccessTypeEnum access() const;
+  void set_access(::IMC_DCCL::PlanVariable_AccessTypeEnum value);
+  private:
+  ::IMC_DCCL::PlanVariable_AccessTypeEnum _internal_access() const;
+  void _internal_set_access(::IMC_DCCL::PlanVariable_AccessTypeEnum value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanVariable)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr value_;
+    int type_;
+    int access_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class PlanSpecification final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanSpecification) */ {
  public:
@@ -8205,7 +8598,7 @@ class PlanSpecification final :
                &_PlanSpecification_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    25;
 
   friend void swap(PlanSpecification& a, PlanSpecification& b) {
     a.Swap(&b);
@@ -8278,16 +8671,35 @@ class PlanSpecification final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kManeuversFieldNumber = 5,
-    kTransitionsFieldNumber = 6,
-    kStartActionsFieldNumber = 7,
-    kEndActionsFieldNumber = 8,
+    kVariablesFieldNumber = 4,
+    kManeuversFieldNumber = 6,
+    kTransitionsFieldNumber = 7,
+    kStartActionsFieldNumber = 8,
+    kEndActionsFieldNumber = 9,
     kPlanIdFieldNumber = 1,
     kDescriptionFieldNumber = 2,
     kVnamespaceFieldNumber = 3,
-    kStartManIdFieldNumber = 4,
+    kStartManIdFieldNumber = 5,
   };
-  // repeated .IMC_DCCL.PlanManeuver maneuvers = 5 [(.dccl.field) = {
+  // repeated .IMC_DCCL.PlanVariable variables = 4 [(.dccl.field) = {
+  int variables_size() const;
+  private:
+  int _internal_variables_size() const;
+  public:
+  void clear_variables();
+  ::IMC_DCCL::PlanVariable* mutable_variables(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanVariable >*
+      mutable_variables();
+  private:
+  const ::IMC_DCCL::PlanVariable& _internal_variables(int index) const;
+  ::IMC_DCCL::PlanVariable* _internal_add_variables();
+  public:
+  const ::IMC_DCCL::PlanVariable& variables(int index) const;
+  ::IMC_DCCL::PlanVariable* add_variables();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanVariable >&
+      variables() const;
+
+  // repeated .IMC_DCCL.PlanManeuver maneuvers = 6 [(.dccl.field) = {
   int maneuvers_size() const;
   private:
   int _internal_maneuvers_size() const;
@@ -8305,7 +8717,7 @@ class PlanSpecification final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanManeuver >&
       maneuvers() const;
 
-  // repeated .IMC_DCCL.PlanTransition transitions = 6 [(.dccl.field) = {
+  // repeated .IMC_DCCL.PlanTransition transitions = 7 [(.dccl.field) = {
   int transitions_size() const;
   private:
   int _internal_transitions_size() const;
@@ -8323,7 +8735,7 @@ class PlanSpecification final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanTransition >&
       transitions() const;
 
-  // repeated .IMC_DCCL.PlanSpecificationStartActionsUnion start_actions = 7 [(.dccl.field) = {
+  // repeated .IMC_DCCL.PlanSpecificationStartActionsUnion start_actions = 8 [(.dccl.field) = {
   int start_actions_size() const;
   private:
   int _internal_start_actions_size() const;
@@ -8341,7 +8753,7 @@ class PlanSpecification final :
   const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanSpecificationStartActionsUnion >&
       start_actions() const;
 
-  // repeated .IMC_DCCL.PlanSpecificationEndActionsUnion end_actions = 8 [(.dccl.field) = {
+  // repeated .IMC_DCCL.PlanSpecificationEndActionsUnion end_actions = 9 [(.dccl.field) = {
   int end_actions_size() const;
   private:
   int _internal_end_actions_size() const;
@@ -8413,7 +8825,7 @@ class PlanSpecification final :
   std::string* _internal_mutable_vnamespace();
   public:
 
-  // .IMC_DCCL.ManeuverID start_man_id = 4;
+  // .IMC_DCCL.ManeuverID start_man_id = 5;
   bool has_start_man_id() const;
   private:
   bool _internal_has_start_man_id() const;
@@ -8441,6 +8853,7 @@ class PlanSpecification final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanVariable > variables_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanManeuver > maneuvers_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanTransition > transitions_;
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanSpecificationStartActionsUnion > start_actions_;
@@ -8503,7 +8916,7 @@ class PlanDB final :
                &_PlanDB_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    26;
 
   friend void swap(PlanDB& a, PlanDB& b) {
     a.Swap(&b);
@@ -8735,17 +9148,17 @@ class PlanDB final :
   void _internal_set_op(::IMC_DCCL::PlanDB_OperationEnum value);
   public:
 
-  // optional int32 request_id = 3 [(.dccl.field) = {
+  // optional uint32 request_id = 3 [(.dccl.field) = {
   bool has_request_id() const;
   private:
   bool _internal_has_request_id() const;
   public:
   void clear_request_id();
-  int32_t request_id() const;
-  void set_request_id(int32_t value);
+  uint32_t request_id() const;
+  void set_request_id(uint32_t value);
   private:
-  int32_t _internal_request_id() const;
-  void _internal_set_request_id(int32_t value);
+  uint32_t _internal_request_id() const;
+  void _internal_set_request_id(uint32_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanDB)
@@ -8763,7 +9176,7 @@ class PlanDB final :
     ::IMC_DCCL::PlanDBArgUnion* arg_;
     int type_;
     int op_;
-    int32_t request_id_;
+    uint32_t request_id_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -8818,7 +9231,7 @@ class PlanDBState final :
                &_PlanDBState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    27;
 
   friend void swap(PlanDBState& a, PlanDBState& b) {
     a.Swap(&b);
@@ -8953,30 +9366,30 @@ class PlanDBState final :
   std::string* _internal_mutable_md5();
   public:
 
-  // optional int32 plan_count = 1 [(.dccl.field) = {
+  // optional uint32 plan_count = 1 [(.dccl.field) = {
   bool has_plan_count() const;
   private:
   bool _internal_has_plan_count() const;
   public:
   void clear_plan_count();
-  int32_t plan_count() const;
-  void set_plan_count(int32_t value);
+  uint32_t plan_count() const;
+  void set_plan_count(uint32_t value);
   private:
-  int32_t _internal_plan_count() const;
-  void _internal_set_plan_count(int32_t value);
+  uint32_t _internal_plan_count() const;
+  void _internal_set_plan_count(uint32_t value);
   public:
 
-  // optional int32 plan_size = 2 [(.dccl.field) = {
+  // optional uint32 plan_size = 2 [(.dccl.field) = {
   bool has_plan_size() const;
   private:
   bool _internal_has_plan_size() const;
   public:
   void clear_plan_size();
-  int32_t plan_size() const;
-  void set_plan_size(int32_t value);
+  uint32_t plan_size() const;
+  void set_plan_size(uint32_t value);
   private:
-  int32_t _internal_plan_size() const;
-  void _internal_set_plan_size(int32_t value);
+  uint32_t _internal_plan_size() const;
+  void _internal_set_plan_size(uint32_t value);
   public:
 
   // optional float change_time = 3 [(.dccl.field) = {
@@ -8992,17 +9405,17 @@ class PlanDBState final :
   void _internal_set_change_time(float value);
   public:
 
-  // optional int32 change_sid = 4 [(.dccl.field) = {
+  // optional uint32 change_sid = 4 [(.dccl.field) = {
   bool has_change_sid() const;
   private:
   bool _internal_has_change_sid() const;
   public:
   void clear_change_sid();
-  int32_t change_sid() const;
-  void set_change_sid(int32_t value);
+  uint32_t change_sid() const;
+  void set_change_sid(uint32_t value);
   private:
-  int32_t _internal_change_sid() const;
-  void _internal_set_change_sid(int32_t value);
+  uint32_t _internal_change_sid() const;
+  void _internal_set_change_sid(uint32_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanDBState)
@@ -9018,10 +9431,10 @@ class PlanDBState final :
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanDBInformation > plans_info_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr change_sname_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr md5_;
-    int32_t plan_count_;
-    int32_t plan_size_;
+    uint32_t plan_count_;
+    uint32_t plan_size_;
     float change_time_;
-    int32_t change_sid_;
+    uint32_t change_sid_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -9076,7 +9489,7 @@ class PlanDBInformation final :
                &_PlanDBInformation_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   friend void swap(PlanDBInformation& a, PlanDBInformation& b) {
     a.Swap(&b);
@@ -9210,17 +9623,17 @@ class PlanDBInformation final :
   std::string* _internal_mutable_md5();
   public:
 
-  // optional int32 plan_size = 2 [(.dccl.field) = {
+  // optional uint32 plan_size = 2 [(.dccl.field) = {
   bool has_plan_size() const;
   private:
   bool _internal_has_plan_size() const;
   public:
   void clear_plan_size();
-  int32_t plan_size() const;
-  void set_plan_size(int32_t value);
+  uint32_t plan_size() const;
+  void set_plan_size(uint32_t value);
   private:
-  int32_t _internal_plan_size() const;
-  void _internal_set_plan_size(int32_t value);
+  uint32_t _internal_plan_size() const;
+  void _internal_set_plan_size(uint32_t value);
   public:
 
   // optional float change_time = 3 [(.dccl.field) = {
@@ -9236,17 +9649,17 @@ class PlanDBInformation final :
   void _internal_set_change_time(float value);
   public:
 
-  // optional int32 change_sid = 4 [(.dccl.field) = {
+  // optional uint32 change_sid = 4 [(.dccl.field) = {
   bool has_change_sid() const;
   private:
   bool _internal_has_change_sid() const;
   public:
   void clear_change_sid();
-  int32_t change_sid() const;
-  void set_change_sid(int32_t value);
+  uint32_t change_sid() const;
+  void set_change_sid(uint32_t value);
   private:
-  int32_t _internal_change_sid() const;
-  void _internal_set_change_sid(int32_t value);
+  uint32_t _internal_change_sid() const;
+  void _internal_set_change_sid(uint32_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanDBInformation)
@@ -9262,9 +9675,9 @@ class PlanDBInformation final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr plan_id_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr change_sname_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr md5_;
-    int32_t plan_size_;
+    uint32_t plan_size_;
     float change_time_;
-    int32_t change_sid_;
+    uint32_t change_sid_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -9319,7 +9732,7 @@ class PlanControl final :
                &_PlanControl_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    29;
 
   friend void swap(PlanControl& a, PlanControl& b) {
     a.Swap(&b);
@@ -9544,30 +9957,30 @@ class PlanControl final :
   void _internal_set_op(::IMC_DCCL::PlanControl_OperationEnum value);
   public:
 
-  // optional int32 request_id = 3 [(.dccl.field) = {
+  // optional uint32 request_id = 3 [(.dccl.field) = {
   bool has_request_id() const;
   private:
   bool _internal_has_request_id() const;
   public:
   void clear_request_id();
-  int32_t request_id() const;
-  void set_request_id(int32_t value);
+  uint32_t request_id() const;
+  void set_request_id(uint32_t value);
   private:
-  int32_t _internal_request_id() const;
-  void _internal_set_request_id(int32_t value);
+  uint32_t _internal_request_id() const;
+  void _internal_set_request_id(uint32_t value);
   public:
 
-  // optional int32 flags = 5 [(.dccl.field) = {
+  // optional uint32 flags = 5 [(.dccl.field) = {
   bool has_flags() const;
   private:
   bool _internal_has_flags() const;
   public:
   void clear_flags();
-  int32_t flags() const;
-  void set_flags(int32_t value);
+  uint32_t flags() const;
+  void set_flags(uint32_t value);
   private:
-  int32_t _internal_flags() const;
-  void _internal_set_flags(int32_t value);
+  uint32_t _internal_flags() const;
+  void _internal_set_flags(uint32_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanControl)
@@ -9585,8 +9998,8 @@ class PlanControl final :
     ::IMC_DCCL::PlanControlArgUnion* arg_;
     int type_;
     int op_;
-    int32_t request_id_;
-    int32_t flags_;
+    uint32_t request_id_;
+    uint32_t flags_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -9641,7 +10054,7 @@ class PlanStatistics final :
                &_PlanStatistics_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    30;
 
   friend void swap(PlanStatistics& a, PlanStatistics& b) {
     a.Swap(&b);
@@ -9855,17 +10268,17 @@ class PlanStatistics final :
   void _internal_set_type(::IMC_DCCL::PlanStatistics_TypeEnum value);
   public:
 
-  // optional int32 properties = 3 [(.dccl.field) = {
+  // optional uint32 properties = 3 [(.dccl.field) = {
   bool has_properties() const;
   private:
   bool _internal_has_properties() const;
   public:
   void clear_properties();
-  int32_t properties() const;
-  void set_properties(int32_t value);
+  uint32_t properties() const;
+  void set_properties(uint32_t value);
   private:
-  int32_t _internal_properties() const;
-  void _internal_set_properties(int32_t value);
+  uint32_t _internal_properties() const;
+  void _internal_set_properties(uint32_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:IMC_DCCL.PlanStatistics)
@@ -9884,7 +10297,7 @@ class PlanStatistics final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr actions_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr fuel_;
     int type_;
-    int32_t properties_;
+    uint32_t properties_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -9939,7 +10352,7 @@ class VehicleState final :
                &_VehicleState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    31;
 
   friend void swap(VehicleState& a, VehicleState& b) {
     a.Swap(&b);
@@ -10108,30 +10521,30 @@ class VehicleState final :
   void _internal_set_op_mode(::IMC_DCCL::VehicleState_OperationModeEnum value);
   public:
 
-  // optional int32 error_count = 2 [(.dccl.field) = {
+  // optional uint32 error_count = 2 [(.dccl.field) = {
   bool has_error_count() const;
   private:
   bool _internal_has_error_count() const;
   public:
   void clear_error_count();
-  int32_t error_count() const;
-  void set_error_count(int32_t value);
+  uint32_t error_count() const;
+  void set_error_count(uint32_t value);
   private:
-  int32_t _internal_error_count() const;
-  void _internal_set_error_count(int32_t value);
+  uint32_t _internal_error_count() const;
+  void _internal_set_error_count(uint32_t value);
   public:
 
-  // optional int32 maneuver_type = 4 [(.dccl.field) = {
+  // optional uint32 maneuver_type = 4 [(.dccl.field) = {
   bool has_maneuver_type() const;
   private:
   bool _internal_has_maneuver_type() const;
   public:
   void clear_maneuver_type();
-  int32_t maneuver_type() const;
-  void set_maneuver_type(int32_t value);
+  uint32_t maneuver_type() const;
+  void set_maneuver_type(uint32_t value);
   private:
-  int32_t _internal_maneuver_type() const;
-  void _internal_set_maneuver_type(int32_t value);
+  uint32_t _internal_maneuver_type() const;
+  void _internal_set_maneuver_type(uint32_t value);
   public:
 
   // optional float maneuver_stime = 5 [(.dccl.field) = {
@@ -10147,43 +10560,43 @@ class VehicleState final :
   void _internal_set_maneuver_stime(float value);
   public:
 
-  // optional int32 maneuver_eta = 6 [(.dccl.field) = {
+  // optional uint32 maneuver_eta = 6 [(.dccl.field) = {
   bool has_maneuver_eta() const;
   private:
   bool _internal_has_maneuver_eta() const;
   public:
   void clear_maneuver_eta();
-  int32_t maneuver_eta() const;
-  void set_maneuver_eta(int32_t value);
+  uint32_t maneuver_eta() const;
+  void set_maneuver_eta(uint32_t value);
   private:
-  int32_t _internal_maneuver_eta() const;
-  void _internal_set_maneuver_eta(int32_t value);
+  uint32_t _internal_maneuver_eta() const;
+  void _internal_set_maneuver_eta(uint32_t value);
   public:
 
-  // optional int32 control_loops = 7 [(.dccl.field) = {
+  // optional uint32 control_loops = 7 [(.dccl.field) = {
   bool has_control_loops() const;
   private:
   bool _internal_has_control_loops() const;
   public:
   void clear_control_loops();
-  int32_t control_loops() const;
-  void set_control_loops(int32_t value);
+  uint32_t control_loops() const;
+  void set_control_loops(uint32_t value);
   private:
-  int32_t _internal_control_loops() const;
-  void _internal_set_control_loops(int32_t value);
+  uint32_t _internal_control_loops() const;
+  void _internal_set_control_loops(uint32_t value);
   public:
 
-  // optional int32 flags = 8 [(.dccl.field) = {
+  // optional uint32 flags = 8 [(.dccl.field) = {
   bool has_flags() const;
   private:
   bool _internal_has_flags() const;
   public:
   void clear_flags();
-  int32_t flags() const;
-  void set_flags(int32_t value);
+  uint32_t flags() const;
+  void set_flags(uint32_t value);
   private:
-  int32_t _internal_flags() const;
-  void _internal_set_flags(int32_t value);
+  uint32_t _internal_flags() const;
+  void _internal_set_flags(uint32_t value);
   public:
 
   // optional float last_error_time = 10 [(.dccl.field) = {
@@ -10212,12 +10625,12 @@ class VehicleState final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr error_ents_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr last_error_;
     int op_mode_;
-    int32_t error_count_;
-    int32_t maneuver_type_;
+    uint32_t error_count_;
+    uint32_t maneuver_type_;
     float maneuver_stime_;
-    int32_t maneuver_eta_;
-    int32_t control_loops_;
-    int32_t flags_;
+    uint32_t maneuver_eta_;
+    uint32_t control_loops_;
+    uint32_t flags_;
     float last_error_time_;
   };
   union { Impl_ _impl_; };
@@ -10273,7 +10686,7 @@ class EntityState final :
                &_EntityState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    32;
 
   friend void swap(EntityState& a, EntityState& b) {
     a.Swap(&b);
@@ -10415,17 +10828,17 @@ class EntityState final :
   void _internal_set_state(::IMC_DCCL::EntityState_StateEnum value);
   public:
 
-  // optional int32 flags = 2 [(.dccl.field) = {
+  // optional uint32 flags = 2 [(.dccl.field) = {
   bool has_flags() const;
   private:
   bool _internal_has_flags() const;
   public:
   void clear_flags();
-  int32_t flags() const;
-  void set_flags(int32_t value);
+  uint32_t flags() const;
+  void set_flags(uint32_t value);
   private:
-  int32_t _internal_flags() const;
-  void _internal_set_flags(int32_t value);
+  uint32_t _internal_flags() const;
+  void _internal_set_flags(uint32_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:IMC_DCCL.EntityState)
@@ -10440,7 +10853,7 @@ class EntityState final :
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr description_;
     int state_;
-    int32_t flags_;
+    uint32_t flags_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -10495,7 +10908,7 @@ class PlanControlState final :
                &_PlanControlState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    33;
 
   friend void swap(PlanControlState& a, PlanControlState& b) {
     a.Swap(&b);
@@ -10718,17 +11131,17 @@ class PlanControlState final :
   void _internal_set_plan_progress(float value);
   public:
 
-  // optional int32 man_type = 6 [(.dccl.field) = {
+  // optional uint32 man_type = 6 [(.dccl.field) = {
   bool has_man_type() const;
   private:
   bool _internal_has_man_type() const;
   public:
   void clear_man_type();
-  int32_t man_type() const;
-  void set_man_type(int32_t value);
+  uint32_t man_type() const;
+  void set_man_type(uint32_t value);
   private:
-  int32_t _internal_man_type() const;
-  void _internal_set_man_type(int32_t value);
+  uint32_t _internal_man_type() const;
+  void _internal_set_man_type(uint32_t value);
   public:
 
   // optional int32 man_eta = 7 [(.dccl.field) = {
@@ -10768,7 +11181,7 @@ class PlanControlState final :
     int state_;
     int32_t plan_eta_;
     float plan_progress_;
-    int32_t man_type_;
+    uint32_t man_type_;
     int32_t man_eta_;
     int last_outcome_;
   };
@@ -10825,7 +11238,7 @@ class Voltage final :
                &_Voltage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    34;
 
   friend void swap(Voltage& a, Voltage& b) {
     a.Swap(&b);
@@ -10978,7 +11391,7 @@ class Current final :
                &_Current_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    34;
+    35;
 
   friend void swap(Current& a, Current& b) {
     a.Swap(&b);
@@ -11131,7 +11544,7 @@ class FuelLevel final :
                &_FuelLevel_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    35;
+    36;
 
   friend void swap(FuelLevel& a, FuelLevel& b) {
     a.Swap(&b);
@@ -11319,7 +11732,7 @@ class WindSpeed final :
                &_WindSpeed_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    36;
+    37;
 
   friend void swap(WindSpeed& a, WindSpeed& b) {
     a.Swap(&b);
@@ -11509,7 +11922,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    37;
+    38;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -11725,7 +12138,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    38;
+    39;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -11899,7 +12312,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    39;
+    40;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -12075,7 +12488,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    40;
+    41;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -12286,7 +12699,7 @@ class Header final :
                &_Header_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    41;
+    42;
 
   friend void swap(Header& a, Header& b) {
     a.Swap(&b);
@@ -12365,69 +12778,69 @@ class Header final :
     kDstFieldNumber = 4,
     kDstEntFieldNumber = 5,
   };
-  // optional float timestamp = 1 [(.dccl.field) = {
+  // optional uint32 timestamp = 1 [(.dccl.field) = {
   bool has_timestamp() const;
   private:
   bool _internal_has_timestamp() const;
   public:
   void clear_timestamp();
-  float timestamp() const;
-  void set_timestamp(float value);
+  uint32_t timestamp() const;
+  void set_timestamp(uint32_t value);
   private:
-  float _internal_timestamp() const;
-  void _internal_set_timestamp(float value);
+  uint32_t _internal_timestamp() const;
+  void _internal_set_timestamp(uint32_t value);
   public:
 
-  // optional int32 src = 2 [(.dccl.field) = {
+  // optional uint32 src = 2 [(.dccl.field) = {
   bool has_src() const;
   private:
   bool _internal_has_src() const;
   public:
   void clear_src();
-  int32_t src() const;
-  void set_src(int32_t value);
+  uint32_t src() const;
+  void set_src(uint32_t value);
   private:
-  int32_t _internal_src() const;
-  void _internal_set_src(int32_t value);
+  uint32_t _internal_src() const;
+  void _internal_set_src(uint32_t value);
   public:
 
-  // optional int32 src_ent = 3 [(.dccl.field) = {
+  // optional uint32 src_ent = 3 [(.dccl.field) = {
   bool has_src_ent() const;
   private:
   bool _internal_has_src_ent() const;
   public:
   void clear_src_ent();
-  int32_t src_ent() const;
-  void set_src_ent(int32_t value);
+  uint32_t src_ent() const;
+  void set_src_ent(uint32_t value);
   private:
-  int32_t _internal_src_ent() const;
-  void _internal_set_src_ent(int32_t value);
+  uint32_t _internal_src_ent() const;
+  void _internal_set_src_ent(uint32_t value);
   public:
 
-  // optional int32 dst = 4 [(.dccl.field) = {
+  // optional uint32 dst = 4 [(.dccl.field) = {
   bool has_dst() const;
   private:
   bool _internal_has_dst() const;
   public:
   void clear_dst();
-  int32_t dst() const;
-  void set_dst(int32_t value);
+  uint32_t dst() const;
+  void set_dst(uint32_t value);
   private:
-  int32_t _internal_dst() const;
-  void _internal_set_dst(int32_t value);
+  uint32_t _internal_dst() const;
+  void _internal_set_dst(uint32_t value);
   public:
 
-  // optional int32 dst_ent = 5 [(.dccl.field) = {
+  // optional uint32 dst_ent = 5 [(.dccl.field) = {
   bool has_dst_ent() const;
   private:
   bool _internal_has_dst_ent() const;
   public:
   void clear_dst_ent();
-  int32_t dst_ent() const;
-  void set_dst_ent(int32_t value);
+  uint32_t dst_ent() const;
+  void set_dst_ent(uint32_t value);
   private:
-  int32_t _internal_dst_ent() const;
-  void _internal_set_dst_ent(int32_t value);
+  uint32_t _internal_dst_ent() const;
+  void _internal_set_dst_ent(uint32_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:IMC_DCCL.Header)
@@ -12440,11 +12853,11 @@ class Header final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
-    float timestamp_;
-    int32_t src_;
-    int32_t src_ent_;
-    int32_t dst_;
-    int32_t dst_ent_;
+    uint32_t timestamp_;
+    uint32_t src_;
+    uint32_t src_ent_;
+    uint32_t dst_;
+    uint32_t dst_ent_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -12518,7 +12931,7 @@ class Payload final :
                &_Payload_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    42;
+    43;
 
   friend void swap(Payload& a, Payload& b) {
     a.Swap(&b);
@@ -12981,7 +13394,7 @@ class ProtoMessage final :
                &_ProtoMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    43;
+    44;
 
   friend void swap(ProtoMessage& a, ProtoMessage& b) {
     a.Swap(&b);
@@ -13459,37 +13872,37 @@ inline void StationKeeping::set_allocated_custom(std::string* custom) {
 
 // FollowPath
 
-// optional int32 timeout = 1 [(.dccl.field) = {
+// optional uint32 timeout = 1 [(.dccl.field) = {
 inline bool FollowPath::_internal_has_timeout() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   return value;
 }
 inline bool FollowPath::has_timeout() const {
   return _internal_has_timeout();
 }
 inline void FollowPath::clear_timeout() {
-  _impl_.timeout_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000001u;
+  _impl_.timeout_ = 0u;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
-inline int32_t FollowPath::_internal_timeout() const {
+inline uint32_t FollowPath::_internal_timeout() const {
   return _impl_.timeout_;
 }
-inline int32_t FollowPath::timeout() const {
+inline uint32_t FollowPath::timeout() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.FollowPath.timeout)
   return _internal_timeout();
 }
-inline void FollowPath::_internal_set_timeout(int32_t value) {
-  _impl_._has_bits_[0] |= 0x00000001u;
+inline void FollowPath::_internal_set_timeout(uint32_t value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.timeout_ = value;
 }
-inline void FollowPath::set_timeout(int32_t value) {
+inline void FollowPath::set_timeout(uint32_t value) {
   _internal_set_timeout(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.FollowPath.timeout)
 }
 
 // optional float lat = 2 [(.dccl.field) = {
 inline bool FollowPath::_internal_has_lat() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
 }
 inline bool FollowPath::has_lat() const {
@@ -13497,7 +13910,7 @@ inline bool FollowPath::has_lat() const {
 }
 inline void FollowPath::clear_lat() {
   _impl_.lat_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000002u;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline float FollowPath::_internal_lat() const {
   return _impl_.lat_;
@@ -13507,7 +13920,7 @@ inline float FollowPath::lat() const {
   return _internal_lat();
 }
 inline void FollowPath::_internal_set_lat(float value) {
-  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.lat_ = value;
 }
 inline void FollowPath::set_lat(float value) {
@@ -13517,7 +13930,7 @@ inline void FollowPath::set_lat(float value) {
 
 // optional float lon = 3 [(.dccl.field) = {
 inline bool FollowPath::_internal_has_lon() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
 }
 inline bool FollowPath::has_lon() const {
@@ -13525,7 +13938,7 @@ inline bool FollowPath::has_lon() const {
 }
 inline void FollowPath::clear_lon() {
   _impl_.lon_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline float FollowPath::_internal_lon() const {
   return _impl_.lon_;
@@ -13535,7 +13948,7 @@ inline float FollowPath::lon() const {
   return _internal_lon();
 }
 inline void FollowPath::_internal_set_lon(float value) {
-  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.lon_ = value;
 }
 inline void FollowPath::set_lon(float value) {
@@ -13545,7 +13958,7 @@ inline void FollowPath::set_lon(float value) {
 
 // optional float z = 4 [(.dccl.field) = {
 inline bool FollowPath::_internal_has_z() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   return value;
 }
 inline bool FollowPath::has_z() const {
@@ -13553,7 +13966,7 @@ inline bool FollowPath::has_z() const {
 }
 inline void FollowPath::clear_z() {
   _impl_.z_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline float FollowPath::_internal_z() const {
   return _impl_.z_;
@@ -13563,7 +13976,7 @@ inline float FollowPath::z() const {
   return _internal_z();
 }
 inline void FollowPath::_internal_set_z(float value) {
-  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.z_ = value;
 }
 inline void FollowPath::set_z(float value) {
@@ -13593,7 +14006,7 @@ inline void FollowPath::set_z_units(::IMC_DCCL::ZUnits value) {
 
 // optional float speed = 6 [(.dccl.field) = {
 inline bool FollowPath::_internal_has_speed() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
   return value;
 }
 inline bool FollowPath::has_speed() const {
@@ -13601,7 +14014,7 @@ inline bool FollowPath::has_speed() const {
 }
 inline void FollowPath::clear_speed() {
   _impl_.speed_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000020u;
 }
 inline float FollowPath::_internal_speed() const {
   return _impl_.speed_;
@@ -13611,7 +14024,7 @@ inline float FollowPath::speed() const {
   return _internal_speed();
 }
 inline void FollowPath::_internal_set_speed(float value) {
-  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.speed_ = value;
 }
 inline void FollowPath::set_speed(float value) {
@@ -13679,41 +14092,109 @@ FollowPath::points() const {
   return _impl_.points_;
 }
 
+// optional string custom = 9 [(.dccl.field) = {
+inline bool FollowPath::_internal_has_custom() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool FollowPath::has_custom() const {
+  return _internal_has_custom();
+}
+inline void FollowPath::clear_custom() {
+  _impl_.custom_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& FollowPath::custom() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.FollowPath.custom)
+  return _internal_custom();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void FollowPath::set_custom(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.custom_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.FollowPath.custom)
+}
+inline std::string* FollowPath::mutable_custom() {
+  std::string* _s = _internal_mutable_custom();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.FollowPath.custom)
+  return _s;
+}
+inline const std::string& FollowPath::_internal_custom() const {
+  return _impl_.custom_.Get();
+}
+inline void FollowPath::_internal_set_custom(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.custom_.Set(value, GetArenaForAllocation());
+}
+inline std::string* FollowPath::_internal_mutable_custom() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.custom_.Mutable(GetArenaForAllocation());
+}
+inline std::string* FollowPath::release_custom() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.FollowPath.custom)
+  if (!_internal_has_custom()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.custom_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.custom_.IsDefault()) {
+    _impl_.custom_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void FollowPath::set_allocated_custom(std::string* custom) {
+  if (custom != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.custom_.SetAllocated(custom, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.custom_.IsDefault()) {
+    _impl_.custom_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.FollowPath.custom)
+}
+
 // -------------------------------------------------------------------
 
 // Goto
 
-// optional int32 timeout = 1 [(.dccl.field) = {
+// optional uint32 timeout = 1 [(.dccl.field) = {
 inline bool Goto::_internal_has_timeout() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   return value;
 }
 inline bool Goto::has_timeout() const {
   return _internal_has_timeout();
 }
 inline void Goto::clear_timeout() {
-  _impl_.timeout_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000001u;
+  _impl_.timeout_ = 0u;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
-inline int32_t Goto::_internal_timeout() const {
+inline uint32_t Goto::_internal_timeout() const {
   return _impl_.timeout_;
 }
-inline int32_t Goto::timeout() const {
+inline uint32_t Goto::timeout() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Goto.timeout)
   return _internal_timeout();
 }
-inline void Goto::_internal_set_timeout(int32_t value) {
-  _impl_._has_bits_[0] |= 0x00000001u;
+inline void Goto::_internal_set_timeout(uint32_t value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.timeout_ = value;
 }
-inline void Goto::set_timeout(int32_t value) {
+inline void Goto::set_timeout(uint32_t value) {
   _internal_set_timeout(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.timeout)
 }
 
 // optional float lat = 2 [(.dccl.field) = {
 inline bool Goto::_internal_has_lat() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
 }
 inline bool Goto::has_lat() const {
@@ -13721,7 +14202,7 @@ inline bool Goto::has_lat() const {
 }
 inline void Goto::clear_lat() {
   _impl_.lat_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000002u;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline float Goto::_internal_lat() const {
   return _impl_.lat_;
@@ -13731,7 +14212,7 @@ inline float Goto::lat() const {
   return _internal_lat();
 }
 inline void Goto::_internal_set_lat(float value) {
-  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.lat_ = value;
 }
 inline void Goto::set_lat(float value) {
@@ -13741,7 +14222,7 @@ inline void Goto::set_lat(float value) {
 
 // optional float lon = 3 [(.dccl.field) = {
 inline bool Goto::_internal_has_lon() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
 }
 inline bool Goto::has_lon() const {
@@ -13749,7 +14230,7 @@ inline bool Goto::has_lon() const {
 }
 inline void Goto::clear_lon() {
   _impl_.lon_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline float Goto::_internal_lon() const {
   return _impl_.lon_;
@@ -13759,7 +14240,7 @@ inline float Goto::lon() const {
   return _internal_lon();
 }
 inline void Goto::_internal_set_lon(float value) {
-  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.lon_ = value;
 }
 inline void Goto::set_lon(float value) {
@@ -13769,7 +14250,7 @@ inline void Goto::set_lon(float value) {
 
 // optional float z = 4 [(.dccl.field) = {
 inline bool Goto::_internal_has_z() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   return value;
 }
 inline bool Goto::has_z() const {
@@ -13777,7 +14258,7 @@ inline bool Goto::has_z() const {
 }
 inline void Goto::clear_z() {
   _impl_.z_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline float Goto::_internal_z() const {
   return _impl_.z_;
@@ -13787,7 +14268,7 @@ inline float Goto::z() const {
   return _internal_z();
 }
 inline void Goto::_internal_set_z(float value) {
-  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.z_ = value;
 }
 inline void Goto::set_z(float value) {
@@ -13817,7 +14298,7 @@ inline void Goto::set_z_units(::IMC_DCCL::ZUnits value) {
 
 // optional float speed = 6 [(.dccl.field) = {
 inline bool Goto::_internal_has_speed() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
   return value;
 }
 inline bool Goto::has_speed() const {
@@ -13825,7 +14306,7 @@ inline bool Goto::has_speed() const {
 }
 inline void Goto::clear_speed() {
   _impl_.speed_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000020u;
 }
 inline float Goto::_internal_speed() const {
   return _impl_.speed_;
@@ -13835,7 +14316,7 @@ inline float Goto::speed() const {
   return _internal_speed();
 }
 inline void Goto::_internal_set_speed(float value) {
-  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.speed_ = value;
 }
 inline void Goto::set_speed(float value) {
@@ -13865,7 +14346,7 @@ inline void Goto::set_speed_units(::IMC_DCCL::SpeedUnits value) {
 
 // optional float roll = 8 [(.dccl.field) = {
 inline bool Goto::_internal_has_roll() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000040u) != 0;
   return value;
 }
 inline bool Goto::has_roll() const {
@@ -13873,7 +14354,7 @@ inline bool Goto::has_roll() const {
 }
 inline void Goto::clear_roll() {
   _impl_.roll_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000020u;
+  _impl_._has_bits_[0] &= ~0x00000040u;
 }
 inline float Goto::_internal_roll() const {
   return _impl_.roll_;
@@ -13883,7 +14364,7 @@ inline float Goto::roll() const {
   return _internal_roll();
 }
 inline void Goto::_internal_set_roll(float value) {
-  _impl_._has_bits_[0] |= 0x00000020u;
+  _impl_._has_bits_[0] |= 0x00000040u;
   _impl_.roll_ = value;
 }
 inline void Goto::set_roll(float value) {
@@ -13893,7 +14374,7 @@ inline void Goto::set_roll(float value) {
 
 // optional float pitch = 9 [(.dccl.field) = {
 inline bool Goto::_internal_has_pitch() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000040u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000080u) != 0;
   return value;
 }
 inline bool Goto::has_pitch() const {
@@ -13901,7 +14382,7 @@ inline bool Goto::has_pitch() const {
 }
 inline void Goto::clear_pitch() {
   _impl_.pitch_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000040u;
+  _impl_._has_bits_[0] &= ~0x00000080u;
 }
 inline float Goto::_internal_pitch() const {
   return _impl_.pitch_;
@@ -13911,7 +14392,7 @@ inline float Goto::pitch() const {
   return _internal_pitch();
 }
 inline void Goto::_internal_set_pitch(float value) {
-  _impl_._has_bits_[0] |= 0x00000040u;
+  _impl_._has_bits_[0] |= 0x00000080u;
   _impl_.pitch_ = value;
 }
 inline void Goto::set_pitch(float value) {
@@ -13921,7 +14402,7 @@ inline void Goto::set_pitch(float value) {
 
 // optional float yaw = 10 [(.dccl.field) = {
 inline bool Goto::_internal_has_yaw() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000080u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000100u) != 0;
   return value;
 }
 inline bool Goto::has_yaw() const {
@@ -13929,7 +14410,7 @@ inline bool Goto::has_yaw() const {
 }
 inline void Goto::clear_yaw() {
   _impl_.yaw_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000080u;
+  _impl_._has_bits_[0] &= ~0x00000100u;
 }
 inline float Goto::_internal_yaw() const {
   return _impl_.yaw_;
@@ -13939,12 +14420,80 @@ inline float Goto::yaw() const {
   return _internal_yaw();
 }
 inline void Goto::_internal_set_yaw(float value) {
-  _impl_._has_bits_[0] |= 0x00000080u;
+  _impl_._has_bits_[0] |= 0x00000100u;
   _impl_.yaw_ = value;
 }
 inline void Goto::set_yaw(float value) {
   _internal_set_yaw(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.yaw)
+}
+
+// optional string custom = 11 [(.dccl.field) = {
+inline bool Goto::_internal_has_custom() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool Goto::has_custom() const {
+  return _internal_has_custom();
+}
+inline void Goto::clear_custom() {
+  _impl_.custom_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& Goto::custom() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Goto.custom)
+  return _internal_custom();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void Goto::set_custom(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.custom_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.custom)
+}
+inline std::string* Goto::mutable_custom() {
+  std::string* _s = _internal_mutable_custom();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Goto.custom)
+  return _s;
+}
+inline const std::string& Goto::_internal_custom() const {
+  return _impl_.custom_.Get();
+}
+inline void Goto::_internal_set_custom(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.custom_.Set(value, GetArenaForAllocation());
+}
+inline std::string* Goto::_internal_mutable_custom() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.custom_.Mutable(GetArenaForAllocation());
+}
+inline std::string* Goto::release_custom() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Goto.custom)
+  if (!_internal_has_custom()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.custom_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.custom_.IsDefault()) {
+    _impl_.custom_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void Goto::set_allocated_custom(std::string* custom) {
+  if (custom != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.custom_.SetAllocated(custom, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.custom_.IsDefault()) {
+    _impl_.custom_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.Goto.custom)
 }
 
 // -------------------------------------------------------------------
@@ -15830,37 +16379,37 @@ inline TransitionCondition::TransitionConditionUnionCase TransitionCondition::Tr
 
 // Loiter
 
-// optional int32 timeout = 1 [(.dccl.field) = {
+// optional uint32 timeout = 1 [(.dccl.field) = {
 inline bool Loiter::_internal_has_timeout() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   return value;
 }
 inline bool Loiter::has_timeout() const {
   return _internal_has_timeout();
 }
 inline void Loiter::clear_timeout() {
-  _impl_.timeout_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000001u;
+  _impl_.timeout_ = 0u;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
-inline int32_t Loiter::_internal_timeout() const {
+inline uint32_t Loiter::_internal_timeout() const {
   return _impl_.timeout_;
 }
-inline int32_t Loiter::timeout() const {
+inline uint32_t Loiter::timeout() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Loiter.timeout)
   return _internal_timeout();
 }
-inline void Loiter::_internal_set_timeout(int32_t value) {
-  _impl_._has_bits_[0] |= 0x00000001u;
+inline void Loiter::_internal_set_timeout(uint32_t value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.timeout_ = value;
 }
-inline void Loiter::set_timeout(int32_t value) {
+inline void Loiter::set_timeout(uint32_t value) {
   _internal_set_timeout(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.timeout)
 }
 
 // optional float lat = 2 [(.dccl.field) = {
 inline bool Loiter::_internal_has_lat() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
 }
 inline bool Loiter::has_lat() const {
@@ -15868,7 +16417,7 @@ inline bool Loiter::has_lat() const {
 }
 inline void Loiter::clear_lat() {
   _impl_.lat_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000002u;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline float Loiter::_internal_lat() const {
   return _impl_.lat_;
@@ -15878,7 +16427,7 @@ inline float Loiter::lat() const {
   return _internal_lat();
 }
 inline void Loiter::_internal_set_lat(float value) {
-  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.lat_ = value;
 }
 inline void Loiter::set_lat(float value) {
@@ -15888,7 +16437,7 @@ inline void Loiter::set_lat(float value) {
 
 // optional float lon = 3 [(.dccl.field) = {
 inline bool Loiter::_internal_has_lon() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
 }
 inline bool Loiter::has_lon() const {
@@ -15896,7 +16445,7 @@ inline bool Loiter::has_lon() const {
 }
 inline void Loiter::clear_lon() {
   _impl_.lon_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline float Loiter::_internal_lon() const {
   return _impl_.lon_;
@@ -15906,7 +16455,7 @@ inline float Loiter::lon() const {
   return _internal_lon();
 }
 inline void Loiter::_internal_set_lon(float value) {
-  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.lon_ = value;
 }
 inline void Loiter::set_lon(float value) {
@@ -15916,7 +16465,7 @@ inline void Loiter::set_lon(float value) {
 
 // optional float z = 4 [(.dccl.field) = {
 inline bool Loiter::_internal_has_z() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   return value;
 }
 inline bool Loiter::has_z() const {
@@ -15924,7 +16473,7 @@ inline bool Loiter::has_z() const {
 }
 inline void Loiter::clear_z() {
   _impl_.z_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline float Loiter::_internal_z() const {
   return _impl_.z_;
@@ -15934,7 +16483,7 @@ inline float Loiter::z() const {
   return _internal_z();
 }
 inline void Loiter::_internal_set_z(float value) {
-  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.z_ = value;
 }
 inline void Loiter::set_z(float value) {
@@ -15962,37 +16511,45 @@ inline void Loiter::set_z_units(::IMC_DCCL::ZUnits value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.z_units)
 }
 
-// optional int32 duration = 6 [(.dccl.field) = {
+// optional uint32 duration = 6 [(.dccl.field) = {
 inline bool Loiter::_internal_has_duration() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
   return value;
 }
 inline bool Loiter::has_duration() const {
   return _internal_has_duration();
 }
 inline void Loiter::clear_duration() {
-  _impl_.duration_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_.duration_ = 0u;
+  _impl_._has_bits_[0] &= ~0x00000020u;
 }
-inline int32_t Loiter::_internal_duration() const {
+inline uint32_t Loiter::_internal_duration() const {
   return _impl_.duration_;
 }
-inline int32_t Loiter::duration() const {
+inline uint32_t Loiter::duration() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Loiter.duration)
   return _internal_duration();
 }
-inline void Loiter::_internal_set_duration(int32_t value) {
-  _impl_._has_bits_[0] |= 0x00000010u;
+inline void Loiter::_internal_set_duration(uint32_t value) {
+  _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.duration_ = value;
 }
-inline void Loiter::set_duration(int32_t value) {
+inline void Loiter::set_duration(uint32_t value) {
   _internal_set_duration(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.duration)
 }
 
-// float speed = 7 [(.dccl.field) = {
+// optional float speed = 7 [(.dccl.field) = {
+inline bool Loiter::_internal_has_speed() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000040u) != 0;
+  return value;
+}
+inline bool Loiter::has_speed() const {
+  return _internal_has_speed();
+}
 inline void Loiter::clear_speed() {
   _impl_.speed_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000040u;
 }
 inline float Loiter::_internal_speed() const {
   return _impl_.speed_;
@@ -16002,7 +16559,7 @@ inline float Loiter::speed() const {
   return _internal_speed();
 }
 inline void Loiter::_internal_set_speed(float value) {
-  
+  _impl_._has_bits_[0] |= 0x00000040u;
   _impl_.speed_ = value;
 }
 inline void Loiter::set_speed(float value) {
@@ -16052,7 +16609,7 @@ inline void Loiter::set_type(::IMC_DCCL::Loiter_LoiterTypeEnum value) {
 
 // optional float radius = 10 [(.dccl.field) = {
 inline bool Loiter::_internal_has_radius() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000080u) != 0;
   return value;
 }
 inline bool Loiter::has_radius() const {
@@ -16060,7 +16617,7 @@ inline bool Loiter::has_radius() const {
 }
 inline void Loiter::clear_radius() {
   _impl_.radius_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000020u;
+  _impl_._has_bits_[0] &= ~0x00000080u;
 }
 inline float Loiter::_internal_radius() const {
   return _impl_.radius_;
@@ -16070,7 +16627,7 @@ inline float Loiter::radius() const {
   return _internal_radius();
 }
 inline void Loiter::_internal_set_radius(float value) {
-  _impl_._has_bits_[0] |= 0x00000020u;
+  _impl_._has_bits_[0] |= 0x00000080u;
   _impl_.radius_ = value;
 }
 inline void Loiter::set_radius(float value) {
@@ -16080,7 +16637,7 @@ inline void Loiter::set_radius(float value) {
 
 // optional float length = 11 [(.dccl.field) = {
 inline bool Loiter::_internal_has_length() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000040u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000100u) != 0;
   return value;
 }
 inline bool Loiter::has_length() const {
@@ -16088,7 +16645,7 @@ inline bool Loiter::has_length() const {
 }
 inline void Loiter::clear_length() {
   _impl_.length_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000040u;
+  _impl_._has_bits_[0] &= ~0x00000100u;
 }
 inline float Loiter::_internal_length() const {
   return _impl_.length_;
@@ -16098,7 +16655,7 @@ inline float Loiter::length() const {
   return _internal_length();
 }
 inline void Loiter::_internal_set_length(float value) {
-  _impl_._has_bits_[0] |= 0x00000040u;
+  _impl_._has_bits_[0] |= 0x00000100u;
   _impl_.length_ = value;
 }
 inline void Loiter::set_length(float value) {
@@ -16108,7 +16665,7 @@ inline void Loiter::set_length(float value) {
 
 // optional float bearing = 12 [(.dccl.field) = {
 inline bool Loiter::_internal_has_bearing() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000080u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000200u) != 0;
   return value;
 }
 inline bool Loiter::has_bearing() const {
@@ -16116,7 +16673,7 @@ inline bool Loiter::has_bearing() const {
 }
 inline void Loiter::clear_bearing() {
   _impl_.bearing_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000080u;
+  _impl_._has_bits_[0] &= ~0x00000200u;
 }
 inline float Loiter::_internal_bearing() const {
   return _impl_.bearing_;
@@ -16126,7 +16683,7 @@ inline float Loiter::bearing() const {
   return _internal_bearing();
 }
 inline void Loiter::_internal_set_bearing(float value) {
-  _impl_._has_bits_[0] |= 0x00000080u;
+  _impl_._has_bits_[0] |= 0x00000200u;
   _impl_.bearing_ = value;
 }
 inline void Loiter::set_bearing(float value) {
@@ -16152,6 +16709,74 @@ inline void Loiter::_internal_set_direction(::IMC_DCCL::Loiter_DirectionEnum val
 inline void Loiter::set_direction(::IMC_DCCL::Loiter_DirectionEnum value) {
   _internal_set_direction(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.direction)
+}
+
+// optional string custom = 14 [(.dccl.field) = {
+inline bool Loiter::_internal_has_custom() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool Loiter::has_custom() const {
+  return _internal_has_custom();
+}
+inline void Loiter::clear_custom() {
+  _impl_.custom_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& Loiter::custom() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Loiter.custom)
+  return _internal_custom();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void Loiter::set_custom(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.custom_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Loiter.custom)
+}
+inline std::string* Loiter::mutable_custom() {
+  std::string* _s = _internal_mutable_custom();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Loiter.custom)
+  return _s;
+}
+inline const std::string& Loiter::_internal_custom() const {
+  return _impl_.custom_.Get();
+}
+inline void Loiter::_internal_set_custom(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.custom_.Set(value, GetArenaForAllocation());
+}
+inline std::string* Loiter::_internal_mutable_custom() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.custom_.Mutable(GetArenaForAllocation());
+}
+inline std::string* Loiter::release_custom() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Loiter.custom)
+  if (!_internal_has_custom()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.custom_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.custom_.IsDefault()) {
+    _impl_.custom_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void Loiter::set_allocated_custom(std::string* custom) {
+  if (custom != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.custom_.SetAllocated(custom, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.custom_.IsDefault()) {
+    _impl_.custom_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.Loiter.custom)
 }
 
 // -------------------------------------------------------------------
@@ -16763,7 +17388,7 @@ inline void VerticalProfile::set_parameter(::IMC_DCCL::VerticalProfile_Parameter
   // @@protoc_insertion_point(field_set:IMC_DCCL.VerticalProfile.parameter)
 }
 
-// optional int32 numsamples = 2 [(.dccl.field) = {
+// optional uint32 numsamples = 2 [(.dccl.field) = {
 inline bool VerticalProfile::_internal_has_numsamples() const {
   bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
   return value;
@@ -16772,21 +17397,21 @@ inline bool VerticalProfile::has_numsamples() const {
   return _internal_has_numsamples();
 }
 inline void VerticalProfile::clear_numsamples() {
-  _impl_.numsamples_ = 0;
+  _impl_.numsamples_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000001u;
 }
-inline int32_t VerticalProfile::_internal_numsamples() const {
+inline uint32_t VerticalProfile::_internal_numsamples() const {
   return _impl_.numsamples_;
 }
-inline int32_t VerticalProfile::numsamples() const {
+inline uint32_t VerticalProfile::numsamples() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.VerticalProfile.numsamples)
   return _internal_numsamples();
 }
-inline void VerticalProfile::_internal_set_numsamples(int32_t value) {
+inline void VerticalProfile::_internal_set_numsamples(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.numsamples_ = value;
 }
-inline void VerticalProfile::set_numsamples(int32_t value) {
+inline void VerticalProfile::set_numsamples(uint32_t value) {
   _internal_set_numsamples(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.VerticalProfile.numsamples)
 }
@@ -17453,6 +18078,186 @@ inline void EstimatedState::set_alt(float value) {
 
 // -------------------------------------------------------------------
 
+// PlanVariable
+
+// optional string name = 1 [(.dccl.field) = {
+inline bool PlanVariable::_internal_has_name() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool PlanVariable::has_name() const {
+  return _internal_has_name();
+}
+inline void PlanVariable::clear_name() {
+  _impl_.name_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const std::string& PlanVariable::name() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanVariable.name)
+  return _internal_name();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanVariable::set_name(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000001u;
+ _impl_.name_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanVariable.name)
+}
+inline std::string* PlanVariable::mutable_name() {
+  std::string* _s = _internal_mutable_name();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanVariable.name)
+  return _s;
+}
+inline const std::string& PlanVariable::_internal_name() const {
+  return _impl_.name_.Get();
+}
+inline void PlanVariable::_internal_set_name(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.name_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanVariable::_internal_mutable_name() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  return _impl_.name_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanVariable::release_name() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanVariable.name)
+  if (!_internal_has_name()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  auto* p = _impl_.name_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.name_.IsDefault()) {
+    _impl_.name_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanVariable::set_allocated_name(std::string* name) {
+  if (name != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.name_.SetAllocated(name, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.name_.IsDefault()) {
+    _impl_.name_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanVariable.name)
+}
+
+// optional string value = 2 [(.dccl.field) = {
+inline bool PlanVariable::_internal_has_value() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  return value;
+}
+inline bool PlanVariable::has_value() const {
+  return _internal_has_value();
+}
+inline void PlanVariable::clear_value() {
+  _impl_.value_.ClearToEmpty();
+  _impl_._has_bits_[0] &= ~0x00000002u;
+}
+inline const std::string& PlanVariable::value() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanVariable.value)
+  return _internal_value();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void PlanVariable::set_value(ArgT0&& arg0, ArgT... args) {
+ _impl_._has_bits_[0] |= 0x00000002u;
+ _impl_.value_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanVariable.value)
+}
+inline std::string* PlanVariable::mutable_value() {
+  std::string* _s = _internal_mutable_value();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanVariable.value)
+  return _s;
+}
+inline const std::string& PlanVariable::_internal_value() const {
+  return _impl_.value_.Get();
+}
+inline void PlanVariable::_internal_set_value(const std::string& value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.value_.Set(value, GetArenaForAllocation());
+}
+inline std::string* PlanVariable::_internal_mutable_value() {
+  _impl_._has_bits_[0] |= 0x00000002u;
+  return _impl_.value_.Mutable(GetArenaForAllocation());
+}
+inline std::string* PlanVariable::release_value() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanVariable.value)
+  if (!_internal_has_value()) {
+    return nullptr;
+  }
+  _impl_._has_bits_[0] &= ~0x00000002u;
+  auto* p = _impl_.value_.Release();
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.value_.IsDefault()) {
+    _impl_.value_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  return p;
+}
+inline void PlanVariable::set_allocated_value(std::string* value) {
+  if (value != nullptr) {
+    _impl_._has_bits_[0] |= 0x00000002u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000002u;
+  }
+  _impl_.value_.SetAllocated(value, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.value_.IsDefault()) {
+    _impl_.value_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanVariable.value)
+}
+
+// .IMC_DCCL.PlanVariable.TypeEnum type = 3;
+inline void PlanVariable::clear_type() {
+  _impl_.type_ = 0;
+}
+inline ::IMC_DCCL::PlanVariable_TypeEnum PlanVariable::_internal_type() const {
+  return static_cast< ::IMC_DCCL::PlanVariable_TypeEnum >(_impl_.type_);
+}
+inline ::IMC_DCCL::PlanVariable_TypeEnum PlanVariable::type() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanVariable.type)
+  return _internal_type();
+}
+inline void PlanVariable::_internal_set_type(::IMC_DCCL::PlanVariable_TypeEnum value) {
+  
+  _impl_.type_ = value;
+}
+inline void PlanVariable::set_type(::IMC_DCCL::PlanVariable_TypeEnum value) {
+  _internal_set_type(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanVariable.type)
+}
+
+// .IMC_DCCL.PlanVariable.AccessTypeEnum access = 4;
+inline void PlanVariable::clear_access() {
+  _impl_.access_ = 0;
+}
+inline ::IMC_DCCL::PlanVariable_AccessTypeEnum PlanVariable::_internal_access() const {
+  return static_cast< ::IMC_DCCL::PlanVariable_AccessTypeEnum >(_impl_.access_);
+}
+inline ::IMC_DCCL::PlanVariable_AccessTypeEnum PlanVariable::access() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanVariable.access)
+  return _internal_access();
+}
+inline void PlanVariable::_internal_set_access(::IMC_DCCL::PlanVariable_AccessTypeEnum value) {
+  
+  _impl_.access_ = value;
+}
+inline void PlanVariable::set_access(::IMC_DCCL::PlanVariable_AccessTypeEnum value) {
+  _internal_set_access(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanVariable.access)
+}
+
+// -------------------------------------------------------------------
+
 // PlanSpecification
 
 // optional string plan_id = 1 [(.dccl.field) = {
@@ -17659,7 +18464,47 @@ inline void PlanSpecification::set_allocated_vnamespace(std::string* vnamespace)
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanSpecification.vnamespace)
 }
 
-// .IMC_DCCL.ManeuverID start_man_id = 4;
+// repeated .IMC_DCCL.PlanVariable variables = 4 [(.dccl.field) = {
+inline int PlanSpecification::_internal_variables_size() const {
+  return _impl_.variables_.size();
+}
+inline int PlanSpecification::variables_size() const {
+  return _internal_variables_size();
+}
+inline void PlanSpecification::clear_variables() {
+  _impl_.variables_.Clear();
+}
+inline ::IMC_DCCL::PlanVariable* PlanSpecification::mutable_variables(int index) {
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanSpecification.variables)
+  return _impl_.variables_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanVariable >*
+PlanSpecification::mutable_variables() {
+  // @@protoc_insertion_point(field_mutable_list:IMC_DCCL.PlanSpecification.variables)
+  return &_impl_.variables_;
+}
+inline const ::IMC_DCCL::PlanVariable& PlanSpecification::_internal_variables(int index) const {
+  return _impl_.variables_.Get(index);
+}
+inline const ::IMC_DCCL::PlanVariable& PlanSpecification::variables(int index) const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.PlanSpecification.variables)
+  return _internal_variables(index);
+}
+inline ::IMC_DCCL::PlanVariable* PlanSpecification::_internal_add_variables() {
+  return _impl_.variables_.Add();
+}
+inline ::IMC_DCCL::PlanVariable* PlanSpecification::add_variables() {
+  ::IMC_DCCL::PlanVariable* _add = _internal_add_variables();
+  // @@protoc_insertion_point(field_add:IMC_DCCL.PlanSpecification.variables)
+  return _add;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::PlanVariable >&
+PlanSpecification::variables() const {
+  // @@protoc_insertion_point(field_list:IMC_DCCL.PlanSpecification.variables)
+  return _impl_.variables_;
+}
+
+// .IMC_DCCL.ManeuverID start_man_id = 5;
 inline bool PlanSpecification::_internal_has_start_man_id() const {
   return this != internal_default_instance() && _impl_.start_man_id_ != nullptr;
 }
@@ -17749,7 +18594,7 @@ inline void PlanSpecification::set_allocated_start_man_id(::IMC_DCCL::ManeuverID
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanSpecification.start_man_id)
 }
 
-// repeated .IMC_DCCL.PlanManeuver maneuvers = 5 [(.dccl.field) = {
+// repeated .IMC_DCCL.PlanManeuver maneuvers = 6 [(.dccl.field) = {
 inline int PlanSpecification::_internal_maneuvers_size() const {
   return _impl_.maneuvers_.size();
 }
@@ -17789,7 +18634,7 @@ PlanSpecification::maneuvers() const {
   return _impl_.maneuvers_;
 }
 
-// repeated .IMC_DCCL.PlanTransition transitions = 6 [(.dccl.field) = {
+// repeated .IMC_DCCL.PlanTransition transitions = 7 [(.dccl.field) = {
 inline int PlanSpecification::_internal_transitions_size() const {
   return _impl_.transitions_.size();
 }
@@ -17829,7 +18674,7 @@ PlanSpecification::transitions() const {
   return _impl_.transitions_;
 }
 
-// repeated .IMC_DCCL.PlanSpecificationStartActionsUnion start_actions = 7 [(.dccl.field) = {
+// repeated .IMC_DCCL.PlanSpecificationStartActionsUnion start_actions = 8 [(.dccl.field) = {
 inline int PlanSpecification::_internal_start_actions_size() const {
   return _impl_.start_actions_.size();
 }
@@ -17869,7 +18714,7 @@ PlanSpecification::start_actions() const {
   return _impl_.start_actions_;
 }
 
-// repeated .IMC_DCCL.PlanSpecificationEndActionsUnion end_actions = 8 [(.dccl.field) = {
+// repeated .IMC_DCCL.PlanSpecificationEndActionsUnion end_actions = 9 [(.dccl.field) = {
 inline int PlanSpecification::_internal_end_actions_size() const {
   return _impl_.end_actions_.size();
 }
@@ -17953,7 +18798,7 @@ inline void PlanDB::set_op(::IMC_DCCL::PlanDB_OperationEnum value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDB.op)
 }
 
-// optional int32 request_id = 3 [(.dccl.field) = {
+// optional uint32 request_id = 3 [(.dccl.field) = {
 inline bool PlanDB::_internal_has_request_id() const {
   bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
@@ -17962,21 +18807,21 @@ inline bool PlanDB::has_request_id() const {
   return _internal_has_request_id();
 }
 inline void PlanDB::clear_request_id() {
-  _impl_.request_id_ = 0;
+  _impl_.request_id_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000004u;
 }
-inline int32_t PlanDB::_internal_request_id() const {
+inline uint32_t PlanDB::_internal_request_id() const {
   return _impl_.request_id_;
 }
-inline int32_t PlanDB::request_id() const {
+inline uint32_t PlanDB::request_id() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDB.request_id)
   return _internal_request_id();
 }
-inline void PlanDB::_internal_set_request_id(int32_t value) {
+inline void PlanDB::_internal_set_request_id(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.request_id_ = value;
 }
-inline void PlanDB::set_request_id(int32_t value) {
+inline void PlanDB::set_request_id(uint32_t value) {
   _internal_set_request_id(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDB.request_id)
 }
@@ -18211,7 +19056,7 @@ inline void PlanDB::set_allocated_info(std::string* info) {
 
 // PlanDBState
 
-// optional int32 plan_count = 1 [(.dccl.field) = {
+// optional uint32 plan_count = 1 [(.dccl.field) = {
 inline bool PlanDBState::_internal_has_plan_count() const {
   bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
@@ -18220,26 +19065,26 @@ inline bool PlanDBState::has_plan_count() const {
   return _internal_has_plan_count();
 }
 inline void PlanDBState::clear_plan_count() {
-  _impl_.plan_count_ = 0;
+  _impl_.plan_count_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000004u;
 }
-inline int32_t PlanDBState::_internal_plan_count() const {
+inline uint32_t PlanDBState::_internal_plan_count() const {
   return _impl_.plan_count_;
 }
-inline int32_t PlanDBState::plan_count() const {
+inline uint32_t PlanDBState::plan_count() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBState.plan_count)
   return _internal_plan_count();
 }
-inline void PlanDBState::_internal_set_plan_count(int32_t value) {
+inline void PlanDBState::_internal_set_plan_count(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.plan_count_ = value;
 }
-inline void PlanDBState::set_plan_count(int32_t value) {
+inline void PlanDBState::set_plan_count(uint32_t value) {
   _internal_set_plan_count(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.plan_count)
 }
 
-// optional int32 plan_size = 2 [(.dccl.field) = {
+// optional uint32 plan_size = 2 [(.dccl.field) = {
 inline bool PlanDBState::_internal_has_plan_size() const {
   bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
@@ -18248,21 +19093,21 @@ inline bool PlanDBState::has_plan_size() const {
   return _internal_has_plan_size();
 }
 inline void PlanDBState::clear_plan_size() {
-  _impl_.plan_size_ = 0;
+  _impl_.plan_size_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000008u;
 }
-inline int32_t PlanDBState::_internal_plan_size() const {
+inline uint32_t PlanDBState::_internal_plan_size() const {
   return _impl_.plan_size_;
 }
-inline int32_t PlanDBState::plan_size() const {
+inline uint32_t PlanDBState::plan_size() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBState.plan_size)
   return _internal_plan_size();
 }
-inline void PlanDBState::_internal_set_plan_size(int32_t value) {
+inline void PlanDBState::_internal_set_plan_size(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.plan_size_ = value;
 }
-inline void PlanDBState::set_plan_size(int32_t value) {
+inline void PlanDBState::set_plan_size(uint32_t value) {
   _internal_set_plan_size(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.plan_size)
 }
@@ -18295,7 +19140,7 @@ inline void PlanDBState::set_change_time(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.change_time)
 }
 
-// optional int32 change_sid = 4 [(.dccl.field) = {
+// optional uint32 change_sid = 4 [(.dccl.field) = {
 inline bool PlanDBState::_internal_has_change_sid() const {
   bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
   return value;
@@ -18304,21 +19149,21 @@ inline bool PlanDBState::has_change_sid() const {
   return _internal_has_change_sid();
 }
 inline void PlanDBState::clear_change_sid() {
-  _impl_.change_sid_ = 0;
+  _impl_.change_sid_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000020u;
 }
-inline int32_t PlanDBState::_internal_change_sid() const {
+inline uint32_t PlanDBState::_internal_change_sid() const {
   return _impl_.change_sid_;
 }
-inline int32_t PlanDBState::change_sid() const {
+inline uint32_t PlanDBState::change_sid() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBState.change_sid)
   return _internal_change_sid();
 }
-inline void PlanDBState::_internal_set_change_sid(int32_t value) {
+inline void PlanDBState::_internal_set_change_sid(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.change_sid_ = value;
 }
-inline void PlanDBState::set_change_sid(int32_t value) {
+inline void PlanDBState::set_change_sid(uint32_t value) {
   _internal_set_change_sid(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.change_sid)
 }
@@ -18571,7 +19416,7 @@ inline void PlanDBInformation::set_allocated_plan_id(std::string* plan_id) {
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanDBInformation.plan_id)
 }
 
-// optional int32 plan_size = 2 [(.dccl.field) = {
+// optional uint32 plan_size = 2 [(.dccl.field) = {
 inline bool PlanDBInformation::_internal_has_plan_size() const {
   bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
@@ -18580,21 +19425,21 @@ inline bool PlanDBInformation::has_plan_size() const {
   return _internal_has_plan_size();
 }
 inline void PlanDBInformation::clear_plan_size() {
-  _impl_.plan_size_ = 0;
+  _impl_.plan_size_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000008u;
 }
-inline int32_t PlanDBInformation::_internal_plan_size() const {
+inline uint32_t PlanDBInformation::_internal_plan_size() const {
   return _impl_.plan_size_;
 }
-inline int32_t PlanDBInformation::plan_size() const {
+inline uint32_t PlanDBInformation::plan_size() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBInformation.plan_size)
   return _internal_plan_size();
 }
-inline void PlanDBInformation::_internal_set_plan_size(int32_t value) {
+inline void PlanDBInformation::_internal_set_plan_size(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.plan_size_ = value;
 }
-inline void PlanDBInformation::set_plan_size(int32_t value) {
+inline void PlanDBInformation::set_plan_size(uint32_t value) {
   _internal_set_plan_size(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBInformation.plan_size)
 }
@@ -18627,7 +19472,7 @@ inline void PlanDBInformation::set_change_time(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBInformation.change_time)
 }
 
-// optional int32 change_sid = 4 [(.dccl.field) = {
+// optional uint32 change_sid = 4 [(.dccl.field) = {
 inline bool PlanDBInformation::_internal_has_change_sid() const {
   bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
   return value;
@@ -18636,21 +19481,21 @@ inline bool PlanDBInformation::has_change_sid() const {
   return _internal_has_change_sid();
 }
 inline void PlanDBInformation::clear_change_sid() {
-  _impl_.change_sid_ = 0;
+  _impl_.change_sid_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000020u;
 }
-inline int32_t PlanDBInformation::_internal_change_sid() const {
+inline uint32_t PlanDBInformation::_internal_change_sid() const {
   return _impl_.change_sid_;
 }
-inline int32_t PlanDBInformation::change_sid() const {
+inline uint32_t PlanDBInformation::change_sid() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBInformation.change_sid)
   return _internal_change_sid();
 }
-inline void PlanDBInformation::_internal_set_change_sid(int32_t value) {
+inline void PlanDBInformation::_internal_set_change_sid(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.change_sid_ = value;
 }
-inline void PlanDBInformation::set_change_sid(int32_t value) {
+inline void PlanDBInformation::set_change_sid(uint32_t value) {
   _internal_set_change_sid(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBInformation.change_sid)
 }
@@ -18835,7 +19680,7 @@ inline void PlanControl::set_op(::IMC_DCCL::PlanControl_OperationEnum value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanControl.op)
 }
 
-// optional int32 request_id = 3 [(.dccl.field) = {
+// optional uint32 request_id = 3 [(.dccl.field) = {
 inline bool PlanControl::_internal_has_request_id() const {
   bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
@@ -18844,21 +19689,21 @@ inline bool PlanControl::has_request_id() const {
   return _internal_has_request_id();
 }
 inline void PlanControl::clear_request_id() {
-  _impl_.request_id_ = 0;
+  _impl_.request_id_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000004u;
 }
-inline int32_t PlanControl::_internal_request_id() const {
+inline uint32_t PlanControl::_internal_request_id() const {
   return _impl_.request_id_;
 }
-inline int32_t PlanControl::request_id() const {
+inline uint32_t PlanControl::request_id() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControl.request_id)
   return _internal_request_id();
 }
-inline void PlanControl::_internal_set_request_id(int32_t value) {
+inline void PlanControl::_internal_set_request_id(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.request_id_ = value;
 }
-inline void PlanControl::set_request_id(int32_t value) {
+inline void PlanControl::set_request_id(uint32_t value) {
   _internal_set_request_id(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanControl.request_id)
 }
@@ -18931,7 +19776,7 @@ inline void PlanControl::set_allocated_plan_id(std::string* plan_id) {
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanControl.plan_id)
 }
 
-// optional int32 flags = 5 [(.dccl.field) = {
+// optional uint32 flags = 5 [(.dccl.field) = {
 inline bool PlanControl::_internal_has_flags() const {
   bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
@@ -18940,21 +19785,21 @@ inline bool PlanControl::has_flags() const {
   return _internal_has_flags();
 }
 inline void PlanControl::clear_flags() {
-  _impl_.flags_ = 0;
+  _impl_.flags_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000008u;
 }
-inline int32_t PlanControl::_internal_flags() const {
+inline uint32_t PlanControl::_internal_flags() const {
   return _impl_.flags_;
 }
-inline int32_t PlanControl::flags() const {
+inline uint32_t PlanControl::flags() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControl.flags)
   return _internal_flags();
 }
-inline void PlanControl::_internal_set_flags(int32_t value) {
+inline void PlanControl::_internal_set_flags(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.flags_ = value;
 }
-inline void PlanControl::set_flags(int32_t value) {
+inline void PlanControl::set_flags(uint32_t value) {
   _internal_set_flags(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanControl.flags)
 }
@@ -19209,7 +20054,7 @@ inline void PlanStatistics::set_type(::IMC_DCCL::PlanStatistics_TypeEnum value) 
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.type)
 }
 
-// optional int32 properties = 3 [(.dccl.field) = {
+// optional uint32 properties = 3 [(.dccl.field) = {
 inline bool PlanStatistics::_internal_has_properties() const {
   bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
   return value;
@@ -19218,21 +20063,21 @@ inline bool PlanStatistics::has_properties() const {
   return _internal_has_properties();
 }
 inline void PlanStatistics::clear_properties() {
-  _impl_.properties_ = 0;
+  _impl_.properties_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000020u;
 }
-inline int32_t PlanStatistics::_internal_properties() const {
+inline uint32_t PlanStatistics::_internal_properties() const {
   return _impl_.properties_;
 }
-inline int32_t PlanStatistics::properties() const {
+inline uint32_t PlanStatistics::properties() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.properties)
   return _internal_properties();
 }
-inline void PlanStatistics::_internal_set_properties(int32_t value) {
+inline void PlanStatistics::_internal_set_properties(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.properties_ = value;
 }
-inline void PlanStatistics::set_properties(int32_t value) {
+inline void PlanStatistics::set_properties(uint32_t value) {
   _internal_set_properties(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.properties)
 }
@@ -19533,7 +20378,7 @@ inline void VehicleState::set_op_mode(::IMC_DCCL::VehicleState_OperationModeEnum
   // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.op_mode)
 }
 
-// optional int32 error_count = 2 [(.dccl.field) = {
+// optional uint32 error_count = 2 [(.dccl.field) = {
 inline bool VehicleState::_internal_has_error_count() const {
   bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
@@ -19542,21 +20387,21 @@ inline bool VehicleState::has_error_count() const {
   return _internal_has_error_count();
 }
 inline void VehicleState::clear_error_count() {
-  _impl_.error_count_ = 0;
+  _impl_.error_count_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000004u;
 }
-inline int32_t VehicleState::_internal_error_count() const {
+inline uint32_t VehicleState::_internal_error_count() const {
   return _impl_.error_count_;
 }
-inline int32_t VehicleState::error_count() const {
+inline uint32_t VehicleState::error_count() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.error_count)
   return _internal_error_count();
 }
-inline void VehicleState::_internal_set_error_count(int32_t value) {
+inline void VehicleState::_internal_set_error_count(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.error_count_ = value;
 }
-inline void VehicleState::set_error_count(int32_t value) {
+inline void VehicleState::set_error_count(uint32_t value) {
   _internal_set_error_count(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.error_count)
 }
@@ -19629,7 +20474,7 @@ inline void VehicleState::set_allocated_error_ents(std::string* error_ents) {
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.VehicleState.error_ents)
 }
 
-// optional int32 maneuver_type = 4 [(.dccl.field) = {
+// optional uint32 maneuver_type = 4 [(.dccl.field) = {
 inline bool VehicleState::_internal_has_maneuver_type() const {
   bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
@@ -19638,21 +20483,21 @@ inline bool VehicleState::has_maneuver_type() const {
   return _internal_has_maneuver_type();
 }
 inline void VehicleState::clear_maneuver_type() {
-  _impl_.maneuver_type_ = 0;
+  _impl_.maneuver_type_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000008u;
 }
-inline int32_t VehicleState::_internal_maneuver_type() const {
+inline uint32_t VehicleState::_internal_maneuver_type() const {
   return _impl_.maneuver_type_;
 }
-inline int32_t VehicleState::maneuver_type() const {
+inline uint32_t VehicleState::maneuver_type() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.maneuver_type)
   return _internal_maneuver_type();
 }
-inline void VehicleState::_internal_set_maneuver_type(int32_t value) {
+inline void VehicleState::_internal_set_maneuver_type(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.maneuver_type_ = value;
 }
-inline void VehicleState::set_maneuver_type(int32_t value) {
+inline void VehicleState::set_maneuver_type(uint32_t value) {
   _internal_set_maneuver_type(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.maneuver_type)
 }
@@ -19685,7 +20530,7 @@ inline void VehicleState::set_maneuver_stime(float value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.maneuver_stime)
 }
 
-// optional int32 maneuver_eta = 6 [(.dccl.field) = {
+// optional uint32 maneuver_eta = 6 [(.dccl.field) = {
 inline bool VehicleState::_internal_has_maneuver_eta() const {
   bool value = (_impl_._has_bits_[0] & 0x00000020u) != 0;
   return value;
@@ -19694,26 +20539,26 @@ inline bool VehicleState::has_maneuver_eta() const {
   return _internal_has_maneuver_eta();
 }
 inline void VehicleState::clear_maneuver_eta() {
-  _impl_.maneuver_eta_ = 0;
+  _impl_.maneuver_eta_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000020u;
 }
-inline int32_t VehicleState::_internal_maneuver_eta() const {
+inline uint32_t VehicleState::_internal_maneuver_eta() const {
   return _impl_.maneuver_eta_;
 }
-inline int32_t VehicleState::maneuver_eta() const {
+inline uint32_t VehicleState::maneuver_eta() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.maneuver_eta)
   return _internal_maneuver_eta();
 }
-inline void VehicleState::_internal_set_maneuver_eta(int32_t value) {
+inline void VehicleState::_internal_set_maneuver_eta(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000020u;
   _impl_.maneuver_eta_ = value;
 }
-inline void VehicleState::set_maneuver_eta(int32_t value) {
+inline void VehicleState::set_maneuver_eta(uint32_t value) {
   _internal_set_maneuver_eta(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.maneuver_eta)
 }
 
-// optional int32 control_loops = 7 [(.dccl.field) = {
+// optional uint32 control_loops = 7 [(.dccl.field) = {
 inline bool VehicleState::_internal_has_control_loops() const {
   bool value = (_impl_._has_bits_[0] & 0x00000040u) != 0;
   return value;
@@ -19722,26 +20567,26 @@ inline bool VehicleState::has_control_loops() const {
   return _internal_has_control_loops();
 }
 inline void VehicleState::clear_control_loops() {
-  _impl_.control_loops_ = 0;
+  _impl_.control_loops_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000040u;
 }
-inline int32_t VehicleState::_internal_control_loops() const {
+inline uint32_t VehicleState::_internal_control_loops() const {
   return _impl_.control_loops_;
 }
-inline int32_t VehicleState::control_loops() const {
+inline uint32_t VehicleState::control_loops() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.control_loops)
   return _internal_control_loops();
 }
-inline void VehicleState::_internal_set_control_loops(int32_t value) {
+inline void VehicleState::_internal_set_control_loops(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000040u;
   _impl_.control_loops_ = value;
 }
-inline void VehicleState::set_control_loops(int32_t value) {
+inline void VehicleState::set_control_loops(uint32_t value) {
   _internal_set_control_loops(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.control_loops)
 }
 
-// optional int32 flags = 8 [(.dccl.field) = {
+// optional uint32 flags = 8 [(.dccl.field) = {
 inline bool VehicleState::_internal_has_flags() const {
   bool value = (_impl_._has_bits_[0] & 0x00000080u) != 0;
   return value;
@@ -19750,21 +20595,21 @@ inline bool VehicleState::has_flags() const {
   return _internal_has_flags();
 }
 inline void VehicleState::clear_flags() {
-  _impl_.flags_ = 0;
+  _impl_.flags_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000080u;
 }
-inline int32_t VehicleState::_internal_flags() const {
+inline uint32_t VehicleState::_internal_flags() const {
   return _impl_.flags_;
 }
-inline int32_t VehicleState::flags() const {
+inline uint32_t VehicleState::flags() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.flags)
   return _internal_flags();
 }
-inline void VehicleState::_internal_set_flags(int32_t value) {
+inline void VehicleState::_internal_set_flags(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000080u;
   _impl_.flags_ = value;
 }
-inline void VehicleState::set_flags(int32_t value) {
+inline void VehicleState::set_flags(uint32_t value) {
   _internal_set_flags(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.flags)
 }
@@ -19889,7 +20734,7 @@ inline void EntityState::set_state(::IMC_DCCL::EntityState_StateEnum value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.EntityState.state)
 }
 
-// optional int32 flags = 2 [(.dccl.field) = {
+// optional uint32 flags = 2 [(.dccl.field) = {
 inline bool EntityState::_internal_has_flags() const {
   bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   return value;
@@ -19898,21 +20743,21 @@ inline bool EntityState::has_flags() const {
   return _internal_has_flags();
 }
 inline void EntityState::clear_flags() {
-  _impl_.flags_ = 0;
+  _impl_.flags_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000002u;
 }
-inline int32_t EntityState::_internal_flags() const {
+inline uint32_t EntityState::_internal_flags() const {
   return _impl_.flags_;
 }
-inline int32_t EntityState::flags() const {
+inline uint32_t EntityState::flags() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.EntityState.flags)
   return _internal_flags();
 }
-inline void EntityState::_internal_set_flags(int32_t value) {
+inline void EntityState::_internal_set_flags(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.flags_ = value;
 }
-inline void EntityState::set_flags(int32_t value) {
+inline void EntityState::set_flags(uint32_t value) {
   _internal_set_flags(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.EntityState.flags)
 }
@@ -20223,7 +21068,7 @@ inline void PlanControlState::set_allocated_man_id(::IMC_DCCL::ManeuverID* man_i
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanControlState.man_id)
 }
 
-// optional int32 man_type = 6 [(.dccl.field) = {
+// optional uint32 man_type = 6 [(.dccl.field) = {
 inline bool PlanControlState::_internal_has_man_type() const {
   bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
@@ -20232,21 +21077,21 @@ inline bool PlanControlState::has_man_type() const {
   return _internal_has_man_type();
 }
 inline void PlanControlState::clear_man_type() {
-  _impl_.man_type_ = 0;
+  _impl_.man_type_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000008u;
 }
-inline int32_t PlanControlState::_internal_man_type() const {
+inline uint32_t PlanControlState::_internal_man_type() const {
   return _impl_.man_type_;
 }
-inline int32_t PlanControlState::man_type() const {
+inline uint32_t PlanControlState::man_type() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanControlState.man_type)
   return _internal_man_type();
 }
-inline void PlanControlState::_internal_set_man_type(int32_t value) {
+inline void PlanControlState::_internal_set_man_type(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.man_type_ = value;
 }
-inline void PlanControlState::set_man_type(int32_t value) {
+inline void PlanControlState::set_man_type(uint32_t value) {
   _internal_set_man_type(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanControlState.man_type)
 }
@@ -21227,7 +22072,7 @@ inline PlanControlArgUnion::PlanDBArgUnionCase PlanControlArgUnion::PlanDBArgUni
 
 // Header
 
-// optional float timestamp = 1 [(.dccl.field) = {
+// optional uint32 timestamp = 1 [(.dccl.field) = {
 inline bool Header::_internal_has_timestamp() const {
   bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
   return value;
@@ -21236,26 +22081,26 @@ inline bool Header::has_timestamp() const {
   return _internal_has_timestamp();
 }
 inline void Header::clear_timestamp() {
-  _impl_.timestamp_ = 0;
+  _impl_.timestamp_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000001u;
 }
-inline float Header::_internal_timestamp() const {
+inline uint32_t Header::_internal_timestamp() const {
   return _impl_.timestamp_;
 }
-inline float Header::timestamp() const {
+inline uint32_t Header::timestamp() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Header.timestamp)
   return _internal_timestamp();
 }
-inline void Header::_internal_set_timestamp(float value) {
+inline void Header::_internal_set_timestamp(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000001u;
   _impl_.timestamp_ = value;
 }
-inline void Header::set_timestamp(float value) {
+inline void Header::set_timestamp(uint32_t value) {
   _internal_set_timestamp(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Header.timestamp)
 }
 
-// optional int32 src = 2 [(.dccl.field) = {
+// optional uint32 src = 2 [(.dccl.field) = {
 inline bool Header::_internal_has_src() const {
   bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   return value;
@@ -21264,26 +22109,26 @@ inline bool Header::has_src() const {
   return _internal_has_src();
 }
 inline void Header::clear_src() {
-  _impl_.src_ = 0;
+  _impl_.src_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000002u;
 }
-inline int32_t Header::_internal_src() const {
+inline uint32_t Header::_internal_src() const {
   return _impl_.src_;
 }
-inline int32_t Header::src() const {
+inline uint32_t Header::src() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Header.src)
   return _internal_src();
 }
-inline void Header::_internal_set_src(int32_t value) {
+inline void Header::_internal_set_src(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.src_ = value;
 }
-inline void Header::set_src(int32_t value) {
+inline void Header::set_src(uint32_t value) {
   _internal_set_src(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Header.src)
 }
 
-// optional int32 src_ent = 3 [(.dccl.field) = {
+// optional uint32 src_ent = 3 [(.dccl.field) = {
 inline bool Header::_internal_has_src_ent() const {
   bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
@@ -21292,26 +22137,26 @@ inline bool Header::has_src_ent() const {
   return _internal_has_src_ent();
 }
 inline void Header::clear_src_ent() {
-  _impl_.src_ent_ = 0;
+  _impl_.src_ent_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000004u;
 }
-inline int32_t Header::_internal_src_ent() const {
+inline uint32_t Header::_internal_src_ent() const {
   return _impl_.src_ent_;
 }
-inline int32_t Header::src_ent() const {
+inline uint32_t Header::src_ent() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Header.src_ent)
   return _internal_src_ent();
 }
-inline void Header::_internal_set_src_ent(int32_t value) {
+inline void Header::_internal_set_src_ent(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.src_ent_ = value;
 }
-inline void Header::set_src_ent(int32_t value) {
+inline void Header::set_src_ent(uint32_t value) {
   _internal_set_src_ent(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Header.src_ent)
 }
 
-// optional int32 dst = 4 [(.dccl.field) = {
+// optional uint32 dst = 4 [(.dccl.field) = {
 inline bool Header::_internal_has_dst() const {
   bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
@@ -21320,26 +22165,26 @@ inline bool Header::has_dst() const {
   return _internal_has_dst();
 }
 inline void Header::clear_dst() {
-  _impl_.dst_ = 0;
+  _impl_.dst_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000008u;
 }
-inline int32_t Header::_internal_dst() const {
+inline uint32_t Header::_internal_dst() const {
   return _impl_.dst_;
 }
-inline int32_t Header::dst() const {
+inline uint32_t Header::dst() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Header.dst)
   return _internal_dst();
 }
-inline void Header::_internal_set_dst(int32_t value) {
+inline void Header::_internal_set_dst(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.dst_ = value;
 }
-inline void Header::set_dst(int32_t value) {
+inline void Header::set_dst(uint32_t value) {
   _internal_set_dst(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Header.dst)
 }
 
-// optional int32 dst_ent = 5 [(.dccl.field) = {
+// optional uint32 dst_ent = 5 [(.dccl.field) = {
 inline bool Header::_internal_has_dst_ent() const {
   bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   return value;
@@ -21348,21 +22193,21 @@ inline bool Header::has_dst_ent() const {
   return _internal_has_dst_ent();
 }
 inline void Header::clear_dst_ent() {
-  _impl_.dst_ent_ = 0;
+  _impl_.dst_ent_ = 0u;
   _impl_._has_bits_[0] &= ~0x00000010u;
 }
-inline int32_t Header::_internal_dst_ent() const {
+inline uint32_t Header::_internal_dst_ent() const {
   return _impl_.dst_ent_;
 }
-inline int32_t Header::dst_ent() const {
+inline uint32_t Header::dst_ent() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Header.dst_ent)
   return _internal_dst_ent();
 }
-inline void Header::_internal_set_dst_ent(int32_t value) {
+inline void Header::_internal_set_dst_ent(uint32_t value) {
   _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.dst_ent_ = value;
 }
-inline void Header::set_dst_ent(int32_t value) {
+inline void Header::set_dst_ent(uint32_t value) {
   _internal_set_dst_ent(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Header.dst_ent)
 }
@@ -22763,6 +23608,8 @@ inline void ProtoMessage::set_allocated_msg_payload(::IMC_DCCL::Payload* msg_pay
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -22789,6 +23636,16 @@ template <> struct is_proto_enum< ::IMC_DCCL::VerticalProfile_ParameterEnum> : :
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::VerticalProfile_ParameterEnum>() {
   return ::IMC_DCCL::VerticalProfile_ParameterEnum_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::PlanVariable_TypeEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::PlanVariable_TypeEnum>() {
+  return ::IMC_DCCL::PlanVariable_TypeEnum_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::PlanVariable_AccessTypeEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::PlanVariable_AccessTypeEnum>() {
+  return ::IMC_DCCL::PlanVariable_AccessTypeEnum_descriptor();
 }
 template <> struct is_proto_enum< ::IMC_DCCL::PlanDB_TypeEnum> : ::std::true_type {};
 template <>

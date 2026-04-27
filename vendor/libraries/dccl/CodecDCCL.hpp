@@ -98,11 +98,14 @@ namespace IMCDCCL
             m_codec.decode(encoded_string, &src_dccl);
 
             //Payload
-            DUNE::IMC::Message* imc_msg = decodePayload(src_dccl.msg_payload());
+            auto msg = decodePayload(src_dccl.msg_payload());
 
             //Header
-            decodeHeader(src_dccl.msg_header(), *imc_msg);
+            decodeHeader(src_dccl.msg_header(), *msg);
 
+            DUNE::IMC::Message* imc_msg = msg.release();
+
+            m_task->war("DCCL message successfully decoded");
             return imc_msg;
         }
 
@@ -114,17 +117,15 @@ namespace IMCDCCL
             IMC_DCCL::ProtoMessage dst_dccl;
             
             //Header
-            IMC_DCCL::Header* header = new IMC_DCCL::Header();
-            encodeHeader(*imc_msg, *header);
-            dst_dccl.set_allocated_msg_header(header);
+            encodeHeader(*imc_msg, *dst_dccl.mutable_msg_header());
 
             //Payload
-            IMC_DCCL::Payload* payload = new IMC_DCCL::Payload();
-            encodePayload(*imc_msg, *payload);
-            dst_dccl.set_allocated_msg_payload(payload);      
+            encodePayload(*imc_msg, *dst_dccl.mutable_msg_payload());    
 
             std::string encoded_bytes;
             m_codec.encode(&encoded_bytes, dst_dccl); 
+
+            m_task->war("DCCL message successfully encoded");
 
             return encoded_bytes;                              
         }
