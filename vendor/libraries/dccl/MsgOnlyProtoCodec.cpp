@@ -63,10 +63,8 @@ void encodeItemList(const std::string& imc, IMC_DCCL::ItemList& dccl)
     {
         std::string name_ = imc.substr(0, pos);
         int number_ = std::stoi(imc.substr(pos + 1));
-    
-        IMC_DCCL::EntityName* name = new IMC_DCCL::EntityName();
-        encodeEntityName(name_, *name);
-        dccl.set_allocated_name(name);
+        
+        encodeEntityName(name_, *dccl.mutable_name());
     
         if(!Helper::is_default_value(number_)) dccl.set_number(number_);
     
@@ -121,33 +119,25 @@ void encodeManeuver(const DUNE::IMC::Maneuver& imc, IMC_DCCL::Maneuver& dccl)
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::Goto*>(&imc))
     {
-            IMC_DCCL::Goto* dccl_tmp = new IMC_DCCL::Goto();
-            encodeGoto(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_goto_maneuver(dccl_tmp);
+            encodeGoto(*imc_tmp, *dccl.mutable_goto_maneuver());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::FollowPath*>(&imc))
     {
-            IMC_DCCL::FollowPath* dccl_tmp = new IMC_DCCL::FollowPath();
-            encodeFollowPath(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_followpath_maneuver(dccl_tmp);
+            encodeFollowPath(*imc_tmp, *dccl.mutable_followpath_maneuver());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::Loiter*>(&imc))
     {
-            IMC_DCCL::Loiter* dccl_tmp = new IMC_DCCL::Loiter();
-            encodeLoiter(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_loiter_maneuver(dccl_tmp);
+            encodeLoiter(*imc_tmp, *dccl.mutable_loiter_maneuver());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::StationKeeping*>(&imc))
     {
-            IMC_DCCL::StationKeeping* dccl_tmp = new IMC_DCCL::StationKeeping();
-            encodeStationKeeping(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_stationkeeping_maneuver(dccl_tmp);
+            encodeStationKeeping(*imc_tmp, *dccl.mutable_stationkeeping_maneuver());
             return;
     }
     throw std::runtime_error("Invalid Maneuver");
@@ -155,29 +145,29 @@ void encodeManeuver(const DUNE::IMC::Maneuver& imc, IMC_DCCL::Maneuver& dccl)
 
 
 // ================ Maneuver Message ================
-DUNE::IMC::Maneuver* decodeManeuver(const IMC_DCCL::Maneuver& dccl)	
+std::unique_ptr<DUNE::IMC::Maneuver> decodeManeuver(const IMC_DCCL::Maneuver& dccl)	
 {
     
     if (dccl.has_goto_maneuver()){
-            auto* tmp = new DUNE::IMC::Goto();
+            auto tmp = std::make_unique<DUNE::IMC::Goto>();
             decodeGoto(dccl.goto_maneuver(), *tmp);
             return tmp;
     }
     
     if (dccl.has_followpath_maneuver()){
-            auto* tmp = new DUNE::IMC::FollowPath();
+            auto tmp = std::make_unique<DUNE::IMC::FollowPath>();
             decodeFollowPath(dccl.followpath_maneuver(), *tmp);
             return tmp;
     }
     
     if (dccl.has_loiter_maneuver()){
-            auto* tmp = new DUNE::IMC::Loiter();
+            auto tmp = std::make_unique<DUNE::IMC::Loiter>();
             decodeLoiter(dccl.loiter_maneuver(), *tmp);
             return tmp;
     }
     
     if (dccl.has_stationkeeping_maneuver()){
-            auto* tmp = new DUNE::IMC::StationKeeping();
+            auto tmp = std::make_unique<DUNE::IMC::StationKeeping>();
             decodeStationKeeping(dccl.stationkeeping_maneuver(), *tmp);
             return tmp;
     }
@@ -305,121 +295,91 @@ void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl)
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanSpecification*>(&imc))
     {
-            IMC_DCCL::PlanSpecification* dccl_tmp = new IMC_DCCL::PlanSpecification();
-            encodePlanSpecification(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_plan_specification_payload(dccl_tmp);
+            encodePlanSpecification(*imc_tmp, *dccl.mutable_plan_specification_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::EstimatedState*>(&imc))
     {
-            IMC_DCCL::EstimatedState* dccl_tmp = new IMC_DCCL::EstimatedState();
-            encodeEstimatedState(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_estimated_state_payload(dccl_tmp);
+            encodeEstimatedState(*imc_tmp, *dccl.mutable_estimated_state_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanDB*>(&imc))
     {
-            IMC_DCCL::PlanDB* dccl_tmp = new IMC_DCCL::PlanDB();
-            encodePlanDB(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_plan_db_payload(dccl_tmp);
+            encodePlanDB(*imc_tmp, *dccl.mutable_plan_db_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanControl*>(&imc))
     {
-            IMC_DCCL::PlanControl* dccl_tmp = new IMC_DCCL::PlanControl();
-            encodePlanControl(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_plan_control_payload(dccl_tmp);
+            encodePlanControl(*imc_tmp, *dccl.mutable_plan_control_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::SetEntityParameters*>(&imc))
     {
-            IMC_DCCL::SetEntityParameters* dccl_tmp = new IMC_DCCL::SetEntityParameters();
-            encodeSetEntityParameters(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_set_entity_parameters_payload(dccl_tmp);
+            encodeSetEntityParameters(*imc_tmp, *dccl.mutable_set_entity_parameters_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::VehicleState*>(&imc))
     {
-            IMC_DCCL::VehicleState* dccl_tmp = new IMC_DCCL::VehicleState();
-            encodeVehicleState(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_vehicle_state_payload(dccl_tmp);
+            encodeVehicleState(*imc_tmp, *dccl.mutable_vehicle_state_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::EntityState*>(&imc))
     {
-            IMC_DCCL::EntityState* dccl_tmp = new IMC_DCCL::EntityState();
-            encodeEntityState(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_entity_state_payload(dccl_tmp);
+            encodeEntityState(*imc_tmp, *dccl.mutable_entity_state_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanControlState*>(&imc))
     {
-            IMC_DCCL::PlanControlState* dccl_tmp = new IMC_DCCL::PlanControlState();
-            encodePlanControlState(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_plan_control_state_payload(dccl_tmp);
+            encodePlanControlState(*imc_tmp, *dccl.mutable_plan_control_state_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::VerticalProfile*>(&imc))
     {
-            IMC_DCCL::VerticalProfile* dccl_tmp = new IMC_DCCL::VerticalProfile();
-            encodeVerticalProfile(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_vertical_profile_payload(dccl_tmp);
+            encodeVerticalProfile(*imc_tmp, *dccl.mutable_vertical_profile_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::Voltage*>(&imc))
     {
-            IMC_DCCL::Voltage* dccl_tmp = new IMC_DCCL::Voltage();
-            encodeVoltage(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_voltage_payload(dccl_tmp);
+            encodeVoltage(*imc_tmp, *dccl.mutable_voltage_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::FuelLevel*>(&imc))
     {
-            IMC_DCCL::FuelLevel* dccl_tmp = new IMC_DCCL::FuelLevel();
-            encodeFuelLevel(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_fuel_level_payload(dccl_tmp);
+            encodeFuelLevel(*imc_tmp, *dccl.mutable_fuel_level_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::Current*>(&imc))
     {
-            IMC_DCCL::Current* dccl_tmp = new IMC_DCCL::Current();
-            encodeCurrent(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_current_payload(dccl_tmp);
+            encodeCurrent(*imc_tmp, *dccl.mutable_current_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::WindSpeed*>(&imc))
     {
-            IMC_DCCL::WindSpeed* dccl_tmp = new IMC_DCCL::WindSpeed();
-            encodeWindSpeed(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_wind_speed_payload(dccl_tmp);
+            encodeWindSpeed(*imc_tmp, *dccl.mutable_wind_speed_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::EntityParameters*>(&imc))
     {
-            IMC_DCCL::EntityParameters* dccl_tmp = new IMC_DCCL::EntityParameters();
-            encodeEntityParameters(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_entity_parameters_payload(dccl_tmp);
+            encodeEntityParameters(*imc_tmp, *dccl.mutable_entity_parameters_payload());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::EntityList*>(&imc))
     {
-            IMC_DCCL::EntityList* dccl_tmp = new IMC_DCCL::EntityList();
-            encodeEntityList(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_entity_list_payload(dccl_tmp);
+            encodeEntityList(*imc_tmp, *dccl.mutable_entity_list_payload());
             return;
     }
     throw std::runtime_error("Invalid Payload");
@@ -427,95 +387,95 @@ void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl)
 
 
 // ================ Payload Message ================
-DUNE::IMC::Message* decodePayload(const IMC_DCCL::Payload& dccl)
+std::unique_ptr<DUNE::IMC::Message> decodePayload(const IMC_DCCL::Payload& dccl)
 {
     
     if (dccl.has_plan_specification_payload()){
-            auto* tmp = new DUNE::IMC::PlanSpecification();
+            auto tmp = std::make_unique<DUNE::IMC::PlanSpecification>();
             decodePlanSpecification(dccl.plan_specification_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_estimated_state_payload()){
-            auto* tmp = new DUNE::IMC::EstimatedState();
+            auto tmp = std::make_unique<DUNE::IMC::EstimatedState>();
             decodeEstimatedState(dccl.estimated_state_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_plan_db_payload()){
-            auto* tmp = new DUNE::IMC::PlanDB();
+            auto tmp = std::make_unique<DUNE::IMC::PlanDB>();
             decodePlanDB(dccl.plan_db_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_plan_control_payload()){
-            auto* tmp = new DUNE::IMC::PlanControl();
+            auto tmp = std::make_unique<DUNE::IMC::PlanControl>();
             decodePlanControl(dccl.plan_control_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_set_entity_parameters_payload()){
-            auto* tmp = new DUNE::IMC::SetEntityParameters();
+            auto tmp = std::make_unique<DUNE::IMC::SetEntityParameters>();
             decodeSetEntityParameters(dccl.set_entity_parameters_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_vehicle_state_payload()){
-            auto* tmp = new DUNE::IMC::VehicleState();
+            auto tmp = std::make_unique<DUNE::IMC::VehicleState>();
             decodeVehicleState(dccl.vehicle_state_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_entity_state_payload()){
-            auto* tmp = new DUNE::IMC::EntityState();
+            auto tmp = std::make_unique<DUNE::IMC::EntityState>();
             decodeEntityState(dccl.entity_state_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_plan_control_state_payload()){
-            auto* tmp = new DUNE::IMC::PlanControlState();
+            auto tmp = std::make_unique<DUNE::IMC::PlanControlState>();
             decodePlanControlState(dccl.plan_control_state_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_vertical_profile_payload()){
-            auto* tmp = new DUNE::IMC::VerticalProfile();
+            auto tmp = std::make_unique<DUNE::IMC::VerticalProfile>();
             decodeVerticalProfile(dccl.vertical_profile_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_voltage_payload()){
-            auto* tmp = new DUNE::IMC::Voltage();
+            auto tmp = std::make_unique<DUNE::IMC::Voltage>();
             decodeVoltage(dccl.voltage_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_fuel_level_payload()){
-            auto* tmp = new DUNE::IMC::FuelLevel();
+            auto tmp = std::make_unique<DUNE::IMC::FuelLevel>();
             decodeFuelLevel(dccl.fuel_level_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_current_payload()){
-            auto* tmp = new DUNE::IMC::Current();
+            auto tmp = std::make_unique<DUNE::IMC::Current>();
             decodeCurrent(dccl.current_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_wind_speed_payload()){
-            auto* tmp = new DUNE::IMC::WindSpeed();
+            auto tmp = std::make_unique<DUNE::IMC::WindSpeed>();
             decodeWindSpeed(dccl.wind_speed_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_entity_parameters_payload()){
-            auto* tmp = new DUNE::IMC::EntityParameters();
+            auto tmp = std::make_unique<DUNE::IMC::EntityParameters>();
             decodeEntityParameters(dccl.entity_parameters_payload(), *tmp);
             return tmp;
     }
     
     if (dccl.has_entity_list_payload()){
-            auto* tmp = new DUNE::IMC::EntityList();
+            auto tmp = std::make_unique<DUNE::IMC::EntityList>();
             decodeEntityList(dccl.entity_list_payload(), *tmp);
             return tmp;
     }
@@ -529,25 +489,19 @@ void encodePlanControlArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanCont
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanSpecification*>(&imc))
     {
-            IMC_DCCL::PlanSpecification* dccl_tmp = new IMC_DCCL::PlanSpecification();
-            encodePlanSpecification(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_ps_arg(dccl_tmp);
+            encodePlanSpecification(*imc_tmp, *dccl.mutable_ps_arg());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::Maneuver*>(&imc))
     {
-            IMC_DCCL::Maneuver* dccl_tmp = new IMC_DCCL::Maneuver();
-            encodeManeuver(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_man_arg(dccl_tmp);
+            encodeManeuver(*imc_tmp, *dccl.mutable_man_arg());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanStatistics*>(&imc))
     {
-            IMC_DCCL::PlanStatistics* dccl_tmp = new IMC_DCCL::PlanStatistics();
-            encodePlanStatistics(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_stat_arg(dccl_tmp);
+            encodePlanStatistics(*imc_tmp, *dccl.mutable_stat_arg());
             return;
     }
     throw std::runtime_error("Invalid PlanControlArgUnion");
@@ -555,11 +509,11 @@ void encodePlanControlArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanCont
 
 
 // ================ PlanControlArgUnion Message ================
-DUNE::IMC::Message* decodePlanControlArgUnion(const IMC_DCCL::PlanControlArgUnion& dccl)
+std::unique_ptr<DUNE::IMC::Message> decodePlanControlArgUnion(const IMC_DCCL::PlanControlArgUnion& dccl)
 {
     
     if (dccl.has_ps_arg()){
-            auto* tmp = new DUNE::IMC::PlanSpecification();
+            auto tmp = std::make_unique<DUNE::IMC::PlanSpecification>();
             decodePlanSpecification(dccl.ps_arg(), *tmp);
             return tmp;
     }
@@ -569,7 +523,7 @@ DUNE::IMC::Message* decodePlanControlArgUnion(const IMC_DCCL::PlanControlArgUnio
     }
     
     if (dccl.has_stat_arg()){
-            auto* tmp = new DUNE::IMC::PlanStatistics();
+            auto tmp = std::make_unique<DUNE::IMC::PlanStatistics>();
             decodePlanStatistics(dccl.stat_arg(), *tmp);
             return tmp;
     }
@@ -583,25 +537,19 @@ void encodePlanDBArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanDBArgUnio
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanSpecification*>(&imc))
     {
-            IMC_DCCL::PlanSpecification* dccl_tmp = new IMC_DCCL::PlanSpecification();
-            encodePlanSpecification(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_ps_arg(dccl_tmp);
+            encodePlanSpecification(*imc_tmp, *dccl.mutable_ps_arg());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanDBInformation*>(&imc))
     {
-            IMC_DCCL::PlanDBInformation* dccl_tmp = new IMC_DCCL::PlanDBInformation();
-            encodePlanDBInformation(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_pi_arg(dccl_tmp);
+            encodePlanDBInformation(*imc_tmp, *dccl.mutable_pi_arg());
             return;
     }
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanDBState*>(&imc))
     {
-            IMC_DCCL::PlanDBState* dccl_tmp = new IMC_DCCL::PlanDBState();
-            encodePlanDBState(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_pc_arg(dccl_tmp);
+            encodePlanDBState(*imc_tmp, *dccl.mutable_pc_arg());
             return;
     }
     throw std::runtime_error("Invalid PlanDBArgUnion");
@@ -609,23 +557,23 @@ void encodePlanDBArgUnion(const DUNE::IMC::Message& imc, IMC_DCCL::PlanDBArgUnio
 
 
 // ================ PlanDBArgUnion Message ================
-DUNE::IMC::Message* decodePlanDBArgUnion(const IMC_DCCL::PlanDBArgUnion& dccl)
+std::unique_ptr<DUNE::IMC::Message> decodePlanDBArgUnion(const IMC_DCCL::PlanDBArgUnion& dccl)
 {
     
     if (dccl.has_ps_arg()){
-            auto* tmp = new DUNE::IMC::PlanSpecification();
+            auto tmp = std::make_unique<DUNE::IMC::PlanSpecification>();
             decodePlanSpecification(dccl.ps_arg(), *tmp);
             return tmp;
     }
     
     if (dccl.has_pi_arg()){
-            auto* tmp = new DUNE::IMC::PlanDBInformation();
+            auto tmp = std::make_unique<DUNE::IMC::PlanDBInformation>();
             decodePlanDBInformation(dccl.pi_arg(), *tmp);
             return tmp;
     }
     
     if (dccl.has_pc_arg()){
-            auto* tmp = new DUNE::IMC::PlanDBState();
+            auto tmp = std::make_unique<DUNE::IMC::PlanDBState>();
             decodePlanDBState(dccl.pc_arg(), *tmp);
             return tmp;
     }
@@ -639,9 +587,7 @@ void encodePlanManeuverStartActionsUnion(const DUNE::IMC::Message& imc, IMC_DCCL
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::SetEntityParameters*>(&imc))
     {
-            IMC_DCCL::SetEntityParameters* dccl_tmp = new IMC_DCCL::SetEntityParameters();
-            encodeSetEntityParameters(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_ep(dccl_tmp);
+            encodeSetEntityParameters(*imc_tmp, *dccl.mutable_ep());
             return;
     }
     throw std::runtime_error("Invalid PlanManeuverStartActionsUnion");
@@ -649,11 +595,11 @@ void encodePlanManeuverStartActionsUnion(const DUNE::IMC::Message& imc, IMC_DCCL
 
 
 // ================ PlanManeuverStartActionsUnion Message ================
-DUNE::IMC::Message* decodePlanManeuverStartActionsUnion(const IMC_DCCL::PlanManeuverStartActionsUnion& dccl)
+std::unique_ptr<DUNE::IMC::Message> decodePlanManeuverStartActionsUnion(const IMC_DCCL::PlanManeuverStartActionsUnion& dccl)
 {
     
     if (dccl.has_ep()){
-            auto* tmp = new DUNE::IMC::SetEntityParameters();
+            auto tmp = std::make_unique<DUNE::IMC::SetEntityParameters>();
             decodeSetEntityParameters(dccl.ep(), *tmp);
             return tmp;
     }
@@ -667,9 +613,7 @@ void encodePlanSpecificationEndActionsUnion(const DUNE::IMC::Message& imc, IMC_D
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::SetEntityParameters*>(&imc))
     {
-            IMC_DCCL::SetEntityParameters* dccl_tmp = new IMC_DCCL::SetEntityParameters();
-            encodeSetEntityParameters(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_ep(dccl_tmp);
+            encodeSetEntityParameters(*imc_tmp, *dccl.mutable_ep());
             return;
     }
     throw std::runtime_error("Invalid PlanSpecificationEndActionsUnion");
@@ -677,11 +621,11 @@ void encodePlanSpecificationEndActionsUnion(const DUNE::IMC::Message& imc, IMC_D
 
 
 // ================ PlanSpecificationEndActionsUnion Message ================
-DUNE::IMC::Message* decodePlanSpecificationEndActionsUnion(const IMC_DCCL::PlanSpecificationEndActionsUnion& dccl)
+std::unique_ptr<DUNE::IMC::Message> decodePlanSpecificationEndActionsUnion(const IMC_DCCL::PlanSpecificationEndActionsUnion& dccl)
 {
     
     if (dccl.has_ep()){
-            auto* tmp = new DUNE::IMC::SetEntityParameters();
+            auto tmp = std::make_unique<DUNE::IMC::SetEntityParameters>();
             decodeSetEntityParameters(dccl.ep(), *tmp);
             return tmp;
     }
@@ -695,9 +639,7 @@ void encodePlanSpecificationStartActionsUnion(const DUNE::IMC::Message& imc, IMC
     
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::SetEntityParameters*>(&imc))
     {
-            IMC_DCCL::SetEntityParameters* dccl_tmp = new IMC_DCCL::SetEntityParameters();
-            encodeSetEntityParameters(*imc_tmp, *dccl_tmp);
-            dccl.set_allocated_ep(dccl_tmp);
+            encodeSetEntityParameters(*imc_tmp, *dccl.mutable_ep());
             return;
     }
     throw std::runtime_error("Invalid PlanSpecificationStartActionsUnion");
@@ -705,11 +647,11 @@ void encodePlanSpecificationStartActionsUnion(const DUNE::IMC::Message& imc, IMC
 
 
 // ================ PlanSpecificationStartActionsUnion Message ================
-DUNE::IMC::Message* decodePlanSpecificationStartActionsUnion(const IMC_DCCL::PlanSpecificationStartActionsUnion& dccl)
+std::unique_ptr<DUNE::IMC::Message> decodePlanSpecificationStartActionsUnion(const IMC_DCCL::PlanSpecificationStartActionsUnion& dccl)
 {
     
     if (dccl.has_ep()){
-            auto* tmp = new DUNE::IMC::SetEntityParameters();
+            auto tmp = std::make_unique<DUNE::IMC::SetEntityParameters>();
             decodeSetEntityParameters(dccl.ep(), *tmp);
             return tmp;
     }
