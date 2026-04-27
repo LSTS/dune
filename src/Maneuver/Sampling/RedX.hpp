@@ -29,10 +29,7 @@
 #define MANEUVER_SAMPLING_REDX_HPP_INCLUDED_
 
 // DUNE Headers
-#include <DUNE/Tasks.hpp>
-#include <DUNE/IMC.hpp>
-#include <DUNE/Utils/TupleList.hpp>
-#include <DUNE/Utils/String.hpp>
+#include <DUNE/DUNE.hpp>
 
 // Local Headers
 #include "BasicSampler.hpp"
@@ -46,10 +43,17 @@ namespace Maneuver
     {
     public:
       DUNE::Utils::TupleList m_args;
+      DUNE::Maneuvers::StationKeep* m_skeep;
+
+      //! Arguments
+      float m_radius;
+      float m_speed;
 
       //! Default constructor.
-      RedX(DUNE::Tasks::Task* task, std::string args):
-        BasicSampler(task, "RedX")
+      RedX(DUNE::Maneuvers::Maneuver* task, std::string args):
+        BasicSampler(task, "RedX"),
+        m_skeep(nullptr),
+        m_radius(0.0f)
       {
         m_args = DUNE::Utils::TupleList(args);
 
@@ -57,40 +61,72 @@ namespace Maneuver
         for (const auto& arg : m_required_args)
           if (args_map.find(arg) == args_map.end())
             throw std::runtime_error(DUNE::Utils::String::str("Missing required argument: %s", arg.c_str()));
+
+        m_radius = m_args.get<float>("Radius", -1.0f);
+        m_speed = m_args.get<float>("Speed", -1.0f);
+
+        if (m_radius <= 0.0f)
+          throw std::runtime_error("Invalid sampling radius.");
+
+        if (m_speed <= 0.0f)
+          throw std::runtime_error("Invalid sampling speed.");
       }
 
-      ~RedX() = default;
+      ~RedX()
+      {
+        DUNE::Memory::clear(m_skeep);
+      }
 
       void
       onReset(void)
-      { }
+      {
+        DUNE::Memory::clear(m_skeep);
+      }
 
       void
       onInit(const DUNE::IMC::Sampling* msg)
-      { 
-        (void)msg;
+      {
+        DUNE::Memory::clear(m_skeep);
+        m_skeep = new DUNE::Maneuvers::StationKeep(m_task,
+                                                   msg->lat,
+                                                   msg->lon,
+                                                   m_radius,
+                                                   msg->z,
+                                                   msg->z_units,
+                                                   msg->speed,
+                                                   msg->speed_units);
       }
 
       void
       onPathControlState(const DUNE::IMC::PathControlState* msg)
-      { 
-        (void)msg;
+      {
+        if (m_skeep == nullptr)
+          return;
+
+        m_skeep->updatePathControl(msg);
       }
 
       void
       onEstimatedState(const DUNE::IMC::EstimatedState* msg)
-      { 
-        (void)msg;
+      {
+        if (m_skeep == nullptr)
+          return;
+
+        m_skeep->update(msg);
       }
 
       void
       run(void)
       {
-        
+        if (m_skeep == nullptr)
+          return;
+
+        m_task->signalProgress();
       }
+
     private:
-      const std::vector<std::string> m_required_args = {"Duration", 
-                                                        "Radius"};
+      const std::vector<std::string> m_required_args = {"Radius",
+                                                        "Speed"};
     };
   }
 }
