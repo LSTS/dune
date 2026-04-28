@@ -25,6 +25,26 @@ enum SpeedUnits {
     SUNITS_UNKNOWN = 3;
 }
 
+// FuelParcelName
+enum FuelParcelName {
+    FE_TOTAL = 0;
+    FE_HOTEL = 1;
+    FE_PAYLOAD = 2;   
+    FE_MOTION = 3;
+    FE_IMU = 4;
+    FE_PREDICTION_ERROR = 5;
+    FE_UNKNOWN = 6;
+}
+
+// DurationEnum
+enum DurationEnum {
+    DE_TOTAL = 0;
+    DE_EXECUTION = 1;
+    DE_CALIBRATION = 2;   
+    DE_MANEUVER = 3;
+    DE_UNKNOWN = 4;
+}
+
 // Enum Maneuver Type
 enum ManeuverType {
     GOTO = 0;
@@ -108,10 +128,10 @@ enum ParamName {
     PN_ADC1_ENTITY_LABEL = 57;
     PN_ADC1_MESSAGE = 58;
     PN_ADC2_CONVERSION = 59;
-    PN_ADC2_ENTITY_LABEL_1 = 60;
+    PN_ADC2_ENTITY_LABEL = 60;
     PN_ADC2_MESSAGE = 61;
     PN_ADC3_CONVERSION = 62;
-    PN_ADC3_ENTITY_LABEL_1 = 63;
+    PN_ADC3_ENTITY_LABEL = 63;
     PN_ADC3_MESSAGE = 64;
     PN_ADC4_CONVERSION = 65;
     PN_ADC4_ENTITY_LABEL = 66;
@@ -137,13 +157,13 @@ enum ParamName {
     PN_ADC_1_IS_ACTIVE = 86;
     PN_ADC_1_MAXIMUM_VAL = 87;
     PN_ADC_1_MINIMUM_VAL = 88;
-    PN_ADC_2_ENTITY_LABEL = 89;
+    PN_ADC_2_ENTITY_LABEL_1 = 89;
     PN_ADC_2_FIXED_GAIN = 90;
     PN_ADC_2_FIXED_GAIN_VAL = 91;
     PN_ADC_2_IS_ACTIVE = 92;
     PN_ADC_2_MAXIMUM_VAL = 93;
     PN_ADC_2_MINIMUM_VAL = 94;
-    PN_ADC_3_ENTITY_LABEL = 95;
+    PN_ADC_3_ENTITY_LABEL_1 = 95;
     PN_ADC_3_FIXED_GAIN = 96;
     PN_ADC_3_FIXED_GAIN_VAL = 97;
     PN_ADC_3_IS_ACTIVE = 98;
@@ -2304,6 +2324,19 @@ message ListCombined {
     repeated ItemList item = 1 [(dccl.field) = { max_repeat: 200}];
 }
 
+// FuelItemList
+message FuelItemList {
+    option (dccl.msg) = { codec_version: 4};
+    FuelParcelName name = 1;
+    float number = 2 [(dccl.field) = { min: 0 max: 100 precision:2}];
+}
+
+// FuelList
+message FuelList {
+    option (dccl.msg) = { codec_version: 4};
+    repeated FuelItemList item = 1 [(dccl.field) = { max_repeat: 7}];
+}
+
 // EntityList
 message EntityList {
     option (dccl.msg) = { codec_version: 4 id: 5};
@@ -2600,7 +2633,7 @@ message PlanStatistics {
     optional string durations = 4 [(dccl.field).max_length = 200];
     optional string distances = 5 [(dccl.field).max_length = 100];
     optional string actions = 6 [(dccl.field).max_length = 100];
-    optional string fuel = 7 [(dccl.field).max_length = 100];
+    optional FuelList fuel = 7;
 }
 
 //VehicleState
