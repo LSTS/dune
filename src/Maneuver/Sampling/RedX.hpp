@@ -67,7 +67,7 @@ namespace Maneuver
       RedX(DUNE::Maneuvers::Maneuver* task, std::string args):
         BasicSampler(task, "RedX"),
         m_skeep(nullptr),
-        m_radius(0.0f),
+        m_radius(-1.0f),
         m_state(RS_MOVING)
       {
         m_args = DUNE::Utils::TupleList(args);
@@ -110,6 +110,9 @@ namespace Maneuver
                                                    msg->z_units,
                                                    msg->speed,
                                                    msg->speed_units);
+        
+        
+        debug("Moving to sampling point...");
       }
 
       void
@@ -131,6 +134,28 @@ namespace Maneuver
       }
 
       void
+      onSamplingAction(const DUNE::IMC::SamplingAction* msg)
+      {
+        if (m_skeep == nullptr)
+          return;
+          
+        if (msg->action == DUNE::IMC::SamplingAction::SA_COMMAND)
+          return;
+        
+        if (m_state == RS_SETUP && msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STARTING)
+        {
+          debug("Starting sampling...");
+          m_state = RS_SAMPLING;
+        }
+
+        if (m_state == RS_SAMPLING && msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STOPPING)
+        {
+          debug("Stopping sampling...");
+          m_task->signalCompletion();
+        }
+      }
+
+      void
       run(void)
       {
         if (m_skeep == nullptr)
@@ -141,21 +166,21 @@ namespace Maneuver
           case RS_MOVING:
             if (m_skeep->isInside())
             {
+              debug("Reached sampling point, setting up...");
               m_skeep->setSpeed(m_speed, DUNE::IMC::SpeedUnits::SUNITS_METERS_PS);
               m_state = RS_SETUP;
+              sendSamplingActionCmd(DUNE::IMC::SamplingAction::SAT_CMD_START);
             }
             break;
 
           case RS_SETUP:
-            war("Reached sampling point, starting sampling...");
-            m_state = RS_SAMPLING;
             break;
 
           case RS_SAMPLING:
-            war("Sampling...");
+            break;
         
-        default:
-          break;
+          default:
+            break;
         }
 
         m_task->signalProgress();
