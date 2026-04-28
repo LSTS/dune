@@ -50,6 +50,7 @@ namespace Maneuver
       {
         bindToManeuver<Task, IMC::Sampling>();
         bind<IMC::EstimatedState>(this);
+        bind<IMC::SamplingAction>(this);
       }
       
       void
@@ -94,6 +95,15 @@ namespace Maneuver
           return;
 
         m_sampler->onEstimatedState(msg);
+      }
+
+      void
+      consume(const IMC::SamplingAction* msg)
+      {
+        if (!m_sampler)
+          return;
+
+        m_sampler->onSamplingAction(msg);
       }
 
       void
