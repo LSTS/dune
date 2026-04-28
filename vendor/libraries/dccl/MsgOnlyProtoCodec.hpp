@@ -10,6 +10,14 @@ void encodeEntityName(const std::string& imc, IMC_DCCL::EntityName& dccl);
 
 void decodeEntityName(const IMC_DCCL::EntityName& dccl, std::string& imc);
 
+void encodeFuelItemList(const std::string& imc, IMC_DCCL::FuelItemList& dccl);
+
+void decodeFuelItemList(const IMC_DCCL::FuelItemList& dccl, std::string& imc);
+
+void encodeFuelList(const std::string& imc, IMC_DCCL::FuelList& dccl);
+
+void decodeFuelList(const IMC_DCCL::FuelList& dccl, std::string& imc);
+
 void encodeHeader(const DUNE::IMC::Message& imc, IMC_DCCL::Header& dccl);
 
 void decodeHeader(const IMC_DCCL::Header& dccl, DUNE::IMC::Message& imc);

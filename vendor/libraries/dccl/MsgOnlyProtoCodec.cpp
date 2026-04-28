@@ -29,6 +29,62 @@ void decodeEntityName(const IMC_DCCL::EntityName& dccl, std::string& imc)
 }
 
 
+// ================ FuelItemList Message ================
+void encodeFuelItemList(const std::string& imc, IMC_DCCL::FuelItemList& dccl)
+{
+    
+    if (auto pos = imc.find('='); pos != std::string::npos)
+    {
+        std::string name_ = imc.substr(0, pos);
+        dccl.set_name(encodeFuelParcelName(name_));
+    
+        auto number_ = std::stof(imc.substr(pos + 1));
+        if(!Helper::is_default_value(number_)) dccl.set_number(number_);
+    
+    }
+                              
+}
+
+
+// ================ FuelItemList Message ================
+void decodeFuelItemList(const IMC_DCCL::FuelItemList& dccl, std::string& imc)
+{
+    
+    std::string name_;
+    name_ = decodeFuelParcelName(dccl.name());
+    
+    auto number_ = dccl.number();
+    
+    imc = name_ + '=' + std::to_string(number_);
+}
+
+
+// ================ FuelList Message ================
+void encodeFuelList(const std::string& imc, IMC_DCCL::FuelList& dccl)
+{
+    
+    auto items = Helper::getItems(imc);
+    
+    for (const auto& item : items){
+        auto* elem_dccl = dccl.add_item();
+        encodeFuelItemList(item, *elem_dccl);
+    }                                                 
+                              
+}
+
+
+// ================ FuelList Message ================
+void decodeFuelList(const IMC_DCCL::FuelList& dccl, std::string& imc)
+{
+    
+    for (int i=0; i < dccl.item_size(); i++) {
+        std::string temp;
+        decodeFuelItemList(dccl.item(i), temp);	
+        imc += temp + ',';
+    }
+}
+
+
 // ================ Header Message ================
 void encodeHeader(const DUNE::IMC::Message& imc, IMC_DCCL::Header& dccl)
 {
@@ -62,10 +118,9 @@ void encodeItemList(const std::string& imc, IMC_DCCL::ItemList& dccl)
     if (auto pos = imc.find('='); pos != std::string::npos)
     {
         std::string name_ = imc.substr(0, pos);
-        int number_ = std::stoi(imc.substr(pos + 1));
-        
         encodeEntityName(name_, *dccl.mutable_name());
     
+        auto number_ = std::stoi(imc.substr(pos + 1));
         if(!Helper::is_default_value(number_)) dccl.set_number(number_);
     
     }
@@ -80,7 +135,7 @@ void decodeItemList(const IMC_DCCL::ItemList& dccl, std::string& imc)
     std::string name_;
     decodeEntityName(dccl.name(), name_);
     
-    int number_ = dccl.number();
+    auto number_ = dccl.number();
     
     imc = name_ + '=' + std::to_string(number_);
 }
@@ -90,13 +145,12 @@ void decodeItemList(const IMC_DCCL::ItemList& dccl, std::string& imc)
 void encodeListCombined(const std::string& imc, IMC_DCCL::ListCombined& dccl)
 {
     
-    std::stringstream ss(imc);
-    for (std::string item; std::getline(ss, item, ';'); )
-    {
+    auto items = Helper::getItems(imc);
+    
+    for (const auto& item : items){
         auto* elem_dccl = dccl.add_item();
         encodeItemList(item, *elem_dccl);
-    }
-                                                     
+    }                                                 
                               
 }
 
