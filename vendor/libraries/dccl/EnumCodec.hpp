@@ -72,9 +72,17 @@ IMC_DCCL::ZUnits encodeZUnits(const uint16_t& imc_src);
 
 DUNE::IMC::ZUnits decodeZUnits(const uint16_t& dccl_src);
 
+IMC_DCCL::DurationEnum encodeDurationEnum(const std::string& imc_src);
+
+std::string decodeDurationEnum(const uint16_t& dccl_src);
+
 IMC_DCCL::EntityNameEnum encodeEntityNameEnum(const std::string& imc_src);
 
 std::string decodeEntityNameEnum(const uint16_t& dccl_src);
+
+IMC_DCCL::FuelParcelName encodeFuelParcelName(const std::string& imc_src);
+
+std::string decodeFuelParcelName(const uint16_t& dccl_src);
 
 IMC_DCCL::ManeuverType encodeManeuverType(const std::string& imc_src);
 
