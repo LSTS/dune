@@ -67,6 +67,12 @@ namespace Maneuver
       }
 
       virtual void
+      onSamplingAction(const DUNE::IMC::SamplingAction* msg)
+      { 
+        (void)msg;
+      }
+
+      virtual void
       run(void)
       { }
 
@@ -108,6 +114,16 @@ namespace Maneuver
       inf(const std::string& msg) const
       {
         m_task->inf("[%s] >> %s", m_sampler_type.c_str(), msg.c_str());
+      }
+
+      void
+      sendSamplingActionCmd(uint8_t action_type, const std::string& description = "")
+      {
+        DUNE::IMC::SamplingAction sa;
+        sa.action = DUNE::IMC::SamplingAction::SA_COMMAND;
+        sa.type = action_type;
+        sa.description = description;
+        m_task->dispatch(sa);
       }
 
     private:
