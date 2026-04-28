@@ -43,6 +43,29 @@ namespace Helper {
         return value.empty();
     }
 
+    // Split a string with ";" and "," in its items
+    inline std::vector<std::string> getItems(const std::string& imc)
+    {
+        std::string normalized = imc;
+
+        // convert ',' to ';'
+        std::replace(normalized.begin(), normalized.end(), ',', ';');
+
+        std::stringstream ss(normalized);
+        std::string item;
+        std::vector<std::string> items;
+
+        while (std::getline(ss, item, ';'))
+        {
+            //skip empty items
+            if (!item.empty())
+                items.push_back(item);
+        }
+
+        return items;
+    }
+
+
 } // namespace Helper
 
 #endif // HELPER_HPP
