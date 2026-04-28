@@ -165,6 +165,10 @@ namespace Payload
       std::string m_state_info_buffer;
       //! Flag to indicate if the system is waiting for manual reset after using all filters.
       bool m_waiting_for_manual_reset;
+      //! Flag to indicate if the system is idle (not active).
+      bool m_is_idle;
+      //! Counter to manage the timing of sending state of sampling action messages.
+      Counter<double> m_send_state_of_sampling_action;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -286,7 +290,7 @@ namespace Payload
           inf("Updated maximum time to wait for a filter to fill up: %d seconds", m_args.max_time_to_fill_up_filter);
         }
         if(paramChanged(m_args.max_time_to_operate_purge_valve))
-        {         
+        {
           inf("Updated maximum time to wait for a purge valve to open/close: %d seconds", m_args.max_time_to_operate_purge_valve);
         }
         if(paramChanged(m_args.number_of_filters))
@@ -310,6 +314,8 @@ namespace Payload
       {
         war("onResourceInitialization() called");
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+        m_send_state_of_sampling_action.setTop(1.0); // Set the counter to send state of sampling action messages every 1 seconds
+        m_is_idle = true;
         m_last_filter_used = 0;
         m_waiting_for_manual_reset = false;
         m_current_state = STATE_INITIAL;
@@ -399,7 +405,7 @@ namespace Payload
         while (!stopping())
         {
           waitForMessages(1.0);
-          if(isActive())
+          if(!m_is_idle)
           {
             if(m_last_filter_used >= 0)
             {
@@ -424,6 +430,19 @@ namespace Payload
             else
             {
               setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
+            }
+          }
+
+          if(m_send_state_of_sampling_action.overflow())
+          {
+            m_send_state_of_sampling_action.reset();
+            if(!m_is_idle)
+            {
+              sendSamplingActionMessage(IMC::SamplingAction::ActionEnum::SA_REPORT, IMC::SamplingAction::TypeEnum::SAT_STATE_SAMPLING);
+            }
+            else
+            {
+              sendSamplingActionMessage(IMC::SamplingAction::ActionEnum::SA_REPORT, IMC::SamplingAction::TypeEnum::SAT_STATE_IDLE);
             }
           }
         }
@@ -533,6 +552,7 @@ namespace Payload
         switch (m_current_state)
         {
           case STATE_INITIAL:
+            m_is_idle = false;
             m_current_state = STATE_DESCENDING_PUMP;
             m_submersiblePumpMotor.isActive = false;
             sendThrustActuation(m_submersiblePumpMotor.id, m_args.velocity_to_start_descending_and_ascending_in_percent / 100.0f); // Start descending at specified velocity
@@ -604,6 +624,7 @@ namespace Payload
             inf("Received command to start sampling action, transitioning to INITIAL state.");
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
             m_current_state = STATE_INITIAL;
+            m_is_idle = false;
             sendSamplingActionMessage(IMC::SamplingAction::ActionEnum::SA_REPORT, IMC::SamplingAction::TypeEnum::SAT_STATE_STARTING);
           }
         }
@@ -632,6 +653,7 @@ namespace Payload
         sendSamplingActionMessage(IMC::SamplingAction::ActionEnum::SA_REPORT, IMC::SamplingAction::TypeEnum::SAT_STATE_STOPPING);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         m_current_state = STATE_COMPLETED;
+        m_is_idle = true;
       }
 
       void
