@@ -55,7 +55,8 @@ void decodeDurationList(const IMC_DCCL::DurationList& dccl, std::string& imc)
     for (int i=0; i < dccl.item_size(); i++) {
         std::string temp;
         decodeDurationItemList(dccl.item(i), temp);	
-        imc += temp + ',';
+        imc += temp;
+        if (i != dccl.item_size() - 1) imc += ',';
     }
 }
 
@@ -170,7 +171,8 @@ void decodeFuelList(const IMC_DCCL::FuelList& dccl, std::string& imc)
     for (int i=0; i < dccl.item_size(); i++) {
         std::string temp;
         decodeFuelItemList(dccl.item(i), temp);	
-        imc += temp + ',';
+        imc += temp;
+        if (i != dccl.item_size() - 1) imc += ',';
     }
 }
 
@@ -252,7 +254,8 @@ void decodeListCombined(const IMC_DCCL::ListCombined& dccl, std::string& imc)
     for (int i=0; i < dccl.item_size(); i++) {
         std::string temp;
         decodeItemList(dccl.item(i), temp);	
-        imc += temp + ';';
+        imc += temp;
+        if (i != dccl.item_size() - 1) imc += ';';
     }
 }
 
