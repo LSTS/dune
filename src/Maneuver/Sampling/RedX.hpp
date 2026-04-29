@@ -42,12 +42,19 @@ namespace Maneuver
     class RedX: public BasicSampler
     {
     public:
+      //! Maneuver arguments as tuple list.
       DUNE::Utils::TupleList m_args;
+      //! Station keeping maneuver.
       DUNE::Maneuvers::StationKeep* m_skeep;
-
       //! Arguments
       float m_radius;
       float m_speed;
+      //! Timeout timer.
+      DUNE::Time::Counter<float> m_timeout_timer;
+      //! Setup timeout.
+      const float m_setup_timeout = 10.0f;
+      //! Sampling timeout.
+      const float m_sampling_timeout = 5.0f;
 
       //! State machine states.
       enum RedxState
@@ -59,7 +66,6 @@ namespace Maneuver
         //! Sampling.
         RS_SAMPLING
       };
-
       //! Current state.
       RedxState m_state;
 
@@ -141,17 +147,37 @@ namespace Maneuver
           
         if (msg->action == DUNE::IMC::SamplingAction::SA_COMMAND)
           return;
-        
-        if (m_state == RS_SETUP && msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STARTING)
-        {
-          debug("Starting sampling...");
-          m_state = RS_SAMPLING;
-        }
 
-        if (m_state == RS_SAMPLING && msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STOPPING)
+        switch (m_state)
         {
-          debug("Stopping sampling...");
-          m_task->signalCompletion();
+          case RS_MOVING:
+            if (msg->type != DUNE::IMC::SamplingAction::SAT_STATE_IDLE)
+              m_task->signalError("Received unexpected sampling state report while moving to sampling point.");
+            break;
+
+          case RS_SETUP:
+            if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STARTING)
+            {
+              debug("Starting sampling...");
+              m_timeout_timer.setTop(m_sampling_timeout);
+              m_state = RS_SAMPLING;
+            }
+            break;
+
+          case RS_SAMPLING:
+            if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STOPPING)
+            {
+              debug("Stopping sampling...");
+              m_task->signalCompletion();
+            }
+            else if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_SAMPLING)
+            {
+              m_timeout_timer.reset();
+            }
+            break;
+        
+          default:
+            break;
         }
       }
 
@@ -169,14 +195,25 @@ namespace Maneuver
               debug("Reached sampling point, setting up...");
               m_skeep->setSpeed(m_speed, DUNE::IMC::SpeedUnits::SUNITS_METERS_PS);
               m_state = RS_SETUP;
+              m_timeout_timer.setTop(m_setup_timeout);
               sendSamplingActionCmd(DUNE::IMC::SamplingAction::SAT_CMD_START);
             }
             break;
 
           case RS_SETUP:
+            if (m_timeout_timer.overflow())
+            {
+              debug("Sampling setup timeout, stopping...");
+              m_task->signalError("Sampling setup timed out.");
+            }
             break;
 
           case RS_SAMPLING:
+            if (m_timeout_timer.overflow())
+            {
+              debug("Sampling timeout, stopping...");
+              m_task->signalError("Sampling timed out.");
+            }
             break;
         
           default:
