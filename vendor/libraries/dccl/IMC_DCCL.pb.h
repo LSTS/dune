@@ -50,6 +50,15 @@ namespace IMC_DCCL {
 class Current;
 struct CurrentDefaultTypeInternal;
 extern CurrentDefaultTypeInternal _Current_default_instance_;
+class DurationItemList;
+struct DurationItemListDefaultTypeInternal;
+extern DurationItemListDefaultTypeInternal _DurationItemList_default_instance_;
+class DurationList;
+struct DurationListDefaultTypeInternal;
+extern DurationListDefaultTypeInternal _DurationList_default_instance_;
+class DurationName;
+struct DurationNameDefaultTypeInternal;
+extern DurationNameDefaultTypeInternal _DurationName_default_instance_;
 class EntityList;
 struct EntityListDefaultTypeInternal;
 extern EntityListDefaultTypeInternal _EntityList_default_instance_;
@@ -71,9 +80,15 @@ extern EstimatedStateDefaultTypeInternal _EstimatedState_default_instance_;
 class FollowPath;
 struct FollowPathDefaultTypeInternal;
 extern FollowPathDefaultTypeInternal _FollowPath_default_instance_;
+class FuelItemList;
+struct FuelItemListDefaultTypeInternal;
+extern FuelItemListDefaultTypeInternal _FuelItemList_default_instance_;
 class FuelLevel;
 struct FuelLevelDefaultTypeInternal;
 extern FuelLevelDefaultTypeInternal _FuelLevel_default_instance_;
+class FuelList;
+struct FuelListDefaultTypeInternal;
+extern FuelListDefaultTypeInternal _FuelList_default_instance_;
 class Goto;
 struct GotoDefaultTypeInternal;
 extern GotoDefaultTypeInternal _Goto_default_instance_;
@@ -185,6 +200,9 @@ extern WindSpeedDefaultTypeInternal _WindSpeed_default_instance_;
 }  // namespace IMC_DCCL
 PROTOBUF_NAMESPACE_OPEN
 template<> ::IMC_DCCL::Current* Arena::CreateMaybeMessage<::IMC_DCCL::Current>(Arena*);
+template<> ::IMC_DCCL::DurationItemList* Arena::CreateMaybeMessage<::IMC_DCCL::DurationItemList>(Arena*);
+template<> ::IMC_DCCL::DurationList* Arena::CreateMaybeMessage<::IMC_DCCL::DurationList>(Arena*);
+template<> ::IMC_DCCL::DurationName* Arena::CreateMaybeMessage<::IMC_DCCL::DurationName>(Arena*);
 template<> ::IMC_DCCL::EntityList* Arena::CreateMaybeMessage<::IMC_DCCL::EntityList>(Arena*);
 template<> ::IMC_DCCL::EntityName* Arena::CreateMaybeMessage<::IMC_DCCL::EntityName>(Arena*);
 template<> ::IMC_DCCL::EntityParameter* Arena::CreateMaybeMessage<::IMC_DCCL::EntityParameter>(Arena*);
@@ -192,7 +210,9 @@ template<> ::IMC_DCCL::EntityParameters* Arena::CreateMaybeMessage<::IMC_DCCL::E
 template<> ::IMC_DCCL::EntityState* Arena::CreateMaybeMessage<::IMC_DCCL::EntityState>(Arena*);
 template<> ::IMC_DCCL::EstimatedState* Arena::CreateMaybeMessage<::IMC_DCCL::EstimatedState>(Arena*);
 template<> ::IMC_DCCL::FollowPath* Arena::CreateMaybeMessage<::IMC_DCCL::FollowPath>(Arena*);
+template<> ::IMC_DCCL::FuelItemList* Arena::CreateMaybeMessage<::IMC_DCCL::FuelItemList>(Arena*);
 template<> ::IMC_DCCL::FuelLevel* Arena::CreateMaybeMessage<::IMC_DCCL::FuelLevel>(Arena*);
+template<> ::IMC_DCCL::FuelList* Arena::CreateMaybeMessage<::IMC_DCCL::FuelList>(Arena*);
 template<> ::IMC_DCCL::Goto* Arena::CreateMaybeMessage<::IMC_DCCL::Goto>(Arena*);
 template<> ::IMC_DCCL::Header* Arena::CreateMaybeMessage<::IMC_DCCL::Header>(Arena*);
 template<> ::IMC_DCCL::ItemList* Arena::CreateMaybeMessage<::IMC_DCCL::ItemList>(Arena*);
@@ -720,6 +740,64 @@ inline bool SpeedUnits_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<SpeedUnits>(
     SpeedUnits_descriptor(), name, value);
 }
+enum FuelParcelName : int {
+  FE_TOTAL = 0,
+  FE_HOTEL = 1,
+  FE_PAYLOAD = 2,
+  FE_MOTION = 3,
+  FE_IMU = 4,
+  FE_PREDICTION_ERROR = 5,
+  FE_UNKNOWN = 6,
+  FuelParcelName_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  FuelParcelName_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool FuelParcelName_IsValid(int value);
+constexpr FuelParcelName FuelParcelName_MIN = FE_TOTAL;
+constexpr FuelParcelName FuelParcelName_MAX = FE_UNKNOWN;
+constexpr int FuelParcelName_ARRAYSIZE = FuelParcelName_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* FuelParcelName_descriptor();
+template<typename T>
+inline const std::string& FuelParcelName_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, FuelParcelName>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function FuelParcelName_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    FuelParcelName_descriptor(), enum_t_value);
+}
+inline bool FuelParcelName_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, FuelParcelName* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<FuelParcelName>(
+    FuelParcelName_descriptor(), name, value);
+}
+enum DurationEnum : int {
+  DE_TOTAL = 0,
+  DE_EXECUTION = 1,
+  DE_CALIBRATION = 2,
+  DE_MANEUVER = 3,
+  DE_UNKNOWN = 4,
+  DurationEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  DurationEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool DurationEnum_IsValid(int value);
+constexpr DurationEnum DurationEnum_MIN = DE_TOTAL;
+constexpr DurationEnum DurationEnum_MAX = DE_UNKNOWN;
+constexpr int DurationEnum_ARRAYSIZE = DurationEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* DurationEnum_descriptor();
+template<typename T>
+inline const std::string& DurationEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, DurationEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function DurationEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    DurationEnum_descriptor(), enum_t_value);
+}
+inline bool DurationEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, DurationEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<DurationEnum>(
+    DurationEnum_descriptor(), name, value);
+}
 enum ManeuverType : int {
   GOTO = 0,
   LOITER = 1,
@@ -858,16 +936,16 @@ enum ParamName : int {
   PN_ADC15_ENTITY_LABEL = 54,
   PN_ADC15_MESSAGE = 55,
   PN_ADC1_CONVERSION = 56,
-  PN_ADC1_ENTITY_LABEL = 57,
+  PN_ADC1_ENTITY_LABEL_1 = 57,
   PN_ADC1_MESSAGE = 58,
   PN_ADC2_CONVERSION = 59,
   PN_ADC2_ENTITY_LABEL_1 = 60,
   PN_ADC2_MESSAGE = 61,
   PN_ADC3_CONVERSION = 62,
-  PN_ADC3_ENTITY_LABEL_1 = 63,
+  PN_ADC3_ENTITY_LABEL = 63,
   PN_ADC3_MESSAGE = 64,
   PN_ADC4_CONVERSION = 65,
-  PN_ADC4_ENTITY_LABEL = 66,
+  PN_ADC4_ENTITY_LABEL_1 = 66,
   PN_ADC4_MESSAGE = 67,
   PN_ADC5_CONVERSION = 68,
   PN_ADC5_ENTITY_LABEL = 69,
@@ -884,7 +962,7 @@ enum ParamName : int {
   PN_ADC9_CONVERSION = 80,
   PN_ADC9_ENTITY_LABEL = 81,
   PN_ADC9_MESSAGE = 82,
-  PN_ADC_1_ENTITY_LABEL_1 = 83,
+  PN_ADC_1_ENTITY_LABEL = 83,
   PN_ADC_1_FIXED_GAIN = 84,
   PN_ADC_1_FIXED_GAIN_VAL = 85,
   PN_ADC_1_IS_ACTIVE = 86,
@@ -896,13 +974,13 @@ enum ParamName : int {
   PN_ADC_2_IS_ACTIVE = 92,
   PN_ADC_2_MAXIMUM_VAL = 93,
   PN_ADC_2_MINIMUM_VAL = 94,
-  PN_ADC_3_ENTITY_LABEL = 95,
+  PN_ADC_3_ENTITY_LABEL_1 = 95,
   PN_ADC_3_FIXED_GAIN = 96,
   PN_ADC_3_FIXED_GAIN_VAL = 97,
   PN_ADC_3_IS_ACTIVE = 98,
   PN_ADC_3_MAXIMUM_VAL = 99,
   PN_ADC_3_MINIMUM_VAL = 100,
-  PN_ADC_4_ENTITY_LABEL_1 = 101,
+  PN_ADC_4_ENTITY_LABEL = 101,
   PN_ADC_4_FIXED_GAIN = 102,
   PN_ADC_4_FIXED_GAIN_VAL = 103,
   PN_ADC_4_IS_ACTIVE = 104,
@@ -5847,6 +5925,816 @@ class ListCombined final :
 };
 // -------------------------------------------------------------------
 
+class FuelItemList final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.FuelItemList) */ {
+ public:
+  inline FuelItemList() : FuelItemList(nullptr) {}
+  ~FuelItemList() override;
+  explicit PROTOBUF_CONSTEXPR FuelItemList(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  FuelItemList(const FuelItemList& from);
+  FuelItemList(FuelItemList&& from) noexcept
+    : FuelItemList() {
+    *this = ::std::move(from);
+  }
+
+  inline FuelItemList& operator=(const FuelItemList& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline FuelItemList& operator=(FuelItemList&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const FuelItemList& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const FuelItemList* internal_default_instance() {
+    return reinterpret_cast<const FuelItemList*>(
+               &_FuelItemList_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    14;
+
+  friend void swap(FuelItemList& a, FuelItemList& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(FuelItemList* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(FuelItemList* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  FuelItemList* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<FuelItemList>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const FuelItemList& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const FuelItemList& from) {
+    FuelItemList::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(FuelItemList* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.FuelItemList";
+  }
+  protected:
+  explicit FuelItemList(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kNameFieldNumber = 1,
+    kNumberFieldNumber = 2,
+  };
+  // .IMC_DCCL.FuelParcelName name = 1;
+  void clear_name();
+  ::IMC_DCCL::FuelParcelName name() const;
+  void set_name(::IMC_DCCL::FuelParcelName value);
+  private:
+  ::IMC_DCCL::FuelParcelName _internal_name() const;
+  void _internal_set_name(::IMC_DCCL::FuelParcelName value);
+  public:
+
+  // float number = 2 [(.dccl.field) = {
+  void clear_number();
+  float number() const;
+  void set_number(float value);
+  private:
+  float _internal_number() const;
+  void _internal_set_number(float value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.FuelItemList)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    int name_;
+    float number_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class FuelList final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.FuelList) */ {
+ public:
+  inline FuelList() : FuelList(nullptr) {}
+  ~FuelList() override;
+  explicit PROTOBUF_CONSTEXPR FuelList(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  FuelList(const FuelList& from);
+  FuelList(FuelList&& from) noexcept
+    : FuelList() {
+    *this = ::std::move(from);
+  }
+
+  inline FuelList& operator=(const FuelList& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline FuelList& operator=(FuelList&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const FuelList& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const FuelList* internal_default_instance() {
+    return reinterpret_cast<const FuelList*>(
+               &_FuelList_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    15;
+
+  friend void swap(FuelList& a, FuelList& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(FuelList* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(FuelList* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  FuelList* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<FuelList>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const FuelList& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const FuelList& from) {
+    FuelList::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(FuelList* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.FuelList";
+  }
+  protected:
+  explicit FuelList(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kItemFieldNumber = 1,
+  };
+  // repeated .IMC_DCCL.FuelItemList item = 1 [(.dccl.field) = {
+  int item_size() const;
+  private:
+  int _internal_item_size() const;
+  public:
+  void clear_item();
+  ::IMC_DCCL::FuelItemList* mutable_item(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::FuelItemList >*
+      mutable_item();
+  private:
+  const ::IMC_DCCL::FuelItemList& _internal_item(int index) const;
+  ::IMC_DCCL::FuelItemList* _internal_add_item();
+  public:
+  const ::IMC_DCCL::FuelItemList& item(int index) const;
+  ::IMC_DCCL::FuelItemList* add_item();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::FuelItemList >&
+      item() const;
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.FuelList)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::FuelItemList > item_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class DurationName final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.DurationName) */ {
+ public:
+  inline DurationName() : DurationName(nullptr) {}
+  ~DurationName() override;
+  explicit PROTOBUF_CONSTEXPR DurationName(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  DurationName(const DurationName& from);
+  DurationName(DurationName&& from) noexcept
+    : DurationName() {
+    *this = ::std::move(from);
+  }
+
+  inline DurationName& operator=(const DurationName& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline DurationName& operator=(DurationName&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const DurationName& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const DurationName* internal_default_instance() {
+    return reinterpret_cast<const DurationName*>(
+               &_DurationName_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    16;
+
+  friend void swap(DurationName& a, DurationName& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(DurationName* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(DurationName* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  DurationName* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<DurationName>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const DurationName& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const DurationName& from) {
+    DurationName::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(DurationName* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.DurationName";
+  }
+  protected:
+  explicit DurationName(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kManeuverIdFieldNumber = 2,
+    kNameFieldNumber = 1,
+  };
+  // optional .IMC_DCCL.ManeuverID maneuver_id = 2;
+  bool has_maneuver_id() const;
+  private:
+  bool _internal_has_maneuver_id() const;
+  public:
+  void clear_maneuver_id();
+  const ::IMC_DCCL::ManeuverID& maneuver_id() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::ManeuverID* release_maneuver_id();
+  ::IMC_DCCL::ManeuverID* mutable_maneuver_id();
+  void set_allocated_maneuver_id(::IMC_DCCL::ManeuverID* maneuver_id);
+  private:
+  const ::IMC_DCCL::ManeuverID& _internal_maneuver_id() const;
+  ::IMC_DCCL::ManeuverID* _internal_mutable_maneuver_id();
+  public:
+  void unsafe_arena_set_allocated_maneuver_id(
+      ::IMC_DCCL::ManeuverID* maneuver_id);
+  ::IMC_DCCL::ManeuverID* unsafe_arena_release_maneuver_id();
+
+  // .IMC_DCCL.DurationEnum name = 1;
+  void clear_name();
+  ::IMC_DCCL::DurationEnum name() const;
+  void set_name(::IMC_DCCL::DurationEnum value);
+  private:
+  ::IMC_DCCL::DurationEnum _internal_name() const;
+  void _internal_set_name(::IMC_DCCL::DurationEnum value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.DurationName)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    ::IMC_DCCL::ManeuverID* maneuver_id_;
+    int name_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class DurationItemList final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.DurationItemList) */ {
+ public:
+  inline DurationItemList() : DurationItemList(nullptr) {}
+  ~DurationItemList() override;
+  explicit PROTOBUF_CONSTEXPR DurationItemList(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  DurationItemList(const DurationItemList& from);
+  DurationItemList(DurationItemList&& from) noexcept
+    : DurationItemList() {
+    *this = ::std::move(from);
+  }
+
+  inline DurationItemList& operator=(const DurationItemList& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline DurationItemList& operator=(DurationItemList&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const DurationItemList& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const DurationItemList* internal_default_instance() {
+    return reinterpret_cast<const DurationItemList*>(
+               &_DurationItemList_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    17;
+
+  friend void swap(DurationItemList& a, DurationItemList& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(DurationItemList* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(DurationItemList* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  DurationItemList* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<DurationItemList>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const DurationItemList& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const DurationItemList& from) {
+    DurationItemList::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(DurationItemList* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.DurationItemList";
+  }
+  protected:
+  explicit DurationItemList(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kNameFieldNumber = 1,
+    kNumberFieldNumber = 2,
+  };
+  // .IMC_DCCL.DurationName name = 1;
+  bool has_name() const;
+  private:
+  bool _internal_has_name() const;
+  public:
+  void clear_name();
+  const ::IMC_DCCL::DurationName& name() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::DurationName* release_name();
+  ::IMC_DCCL::DurationName* mutable_name();
+  void set_allocated_name(::IMC_DCCL::DurationName* name);
+  private:
+  const ::IMC_DCCL::DurationName& _internal_name() const;
+  ::IMC_DCCL::DurationName* _internal_mutable_name();
+  public:
+  void unsafe_arena_set_allocated_name(
+      ::IMC_DCCL::DurationName* name);
+  ::IMC_DCCL::DurationName* unsafe_arena_release_name();
+
+  // float number = 2 [(.dccl.field) = {
+  void clear_number();
+  float number() const;
+  void set_number(float value);
+  private:
+  float _internal_number() const;
+  void _internal_set_number(float value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.DurationItemList)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::IMC_DCCL::DurationName* name_;
+    float number_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class DurationList final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.DurationList) */ {
+ public:
+  inline DurationList() : DurationList(nullptr) {}
+  ~DurationList() override;
+  explicit PROTOBUF_CONSTEXPR DurationList(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  DurationList(const DurationList& from);
+  DurationList(DurationList&& from) noexcept
+    : DurationList() {
+    *this = ::std::move(from);
+  }
+
+  inline DurationList& operator=(const DurationList& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline DurationList& operator=(DurationList&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const DurationList& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const DurationList* internal_default_instance() {
+    return reinterpret_cast<const DurationList*>(
+               &_DurationList_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    18;
+
+  friend void swap(DurationList& a, DurationList& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(DurationList* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(DurationList* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  DurationList* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<DurationList>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const DurationList& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const DurationList& from) {
+    DurationList::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(DurationList* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.DurationList";
+  }
+  protected:
+  explicit DurationList(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kItemFieldNumber = 1,
+  };
+  // repeated .IMC_DCCL.DurationItemList item = 1 [(.dccl.field) = {
+  int item_size() const;
+  private:
+  int _internal_item_size() const;
+  public:
+  void clear_item();
+  ::IMC_DCCL::DurationItemList* mutable_item(int index);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::DurationItemList >*
+      mutable_item();
+  private:
+  const ::IMC_DCCL::DurationItemList& _internal_item(int index) const;
+  ::IMC_DCCL::DurationItemList* _internal_add_item();
+  public:
+  const ::IMC_DCCL::DurationItemList& item(int index) const;
+  ::IMC_DCCL::DurationItemList* add_item();
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::DurationItemList >&
+      item() const;
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.DurationList)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::DurationItemList > item_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class EntityList final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.EntityList) */ {
  public:
@@ -5895,7 +6783,7 @@ class EntityList final :
                &_EntityList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    19;
 
   friend void swap(EntityList& a, EntityList& b) {
     a.Swap(&b);
@@ -6097,7 +6985,7 @@ class ManeuverIDCombined final :
                &_ManeuverIDCombined_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    20;
 
   friend void swap(ManeuverIDCombined& a, ManeuverIDCombined& b) {
     a.Swap(&b);
@@ -6262,7 +7150,7 @@ class ManeuverID final :
                &_ManeuverID_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    21;
 
   friend void swap(ManeuverID& a, ManeuverID& b) {
     a.Swap(&b);
@@ -6458,7 +7346,7 @@ class TransitionCondition final :
                &_TransitionCondition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    22;
 
   friend void swap(TransitionCondition& a, TransitionCondition& b) {
     a.Swap(&b);
@@ -6643,7 +7531,7 @@ class Loiter final :
                &_Loiter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    23;
 
   friend void swap(Loiter& a, Loiter& b) {
     a.Swap(&b);
@@ -7059,7 +7947,7 @@ class PlanManeuverStartActionsUnion final :
                &_PlanManeuverStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    24;
 
   friend void swap(PlanManeuverStartActionsUnion& a, PlanManeuverStartActionsUnion& b) {
     a.Swap(&b);
@@ -7228,7 +8116,7 @@ class PlanManeuver final :
                &_PlanManeuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    25;
 
   friend void swap(PlanManeuver& a, PlanManeuver& b) {
     a.Swap(&b);
@@ -7425,7 +8313,7 @@ class PlanTransition final :
                &_PlanTransition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    26;
 
   friend void swap(PlanTransition& a, PlanTransition& b) {
     a.Swap(&b);
@@ -7622,7 +8510,7 @@ class VerticalProfile final :
                &_VerticalProfile_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    27;
 
   friend void swap(VerticalProfile& a, VerticalProfile& b) {
     a.Swap(&b);
@@ -7890,7 +8778,7 @@ class EstimatedState final :
                &_EstimatedState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    28;
 
   friend void swap(EstimatedState& a, EstimatedState& b) {
     a.Swap(&b);
@@ -8328,7 +9216,7 @@ class PlanVariable final :
                &_PlanVariable_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    29;
 
   friend void swap(PlanVariable& a, PlanVariable& b) {
     a.Swap(&b);
@@ -8598,7 +9486,7 @@ class PlanSpecification final :
                &_PlanSpecification_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    30;
 
   friend void swap(PlanSpecification& a, PlanSpecification& b) {
     a.Swap(&b);
@@ -8916,7 +9804,7 @@ class PlanDB final :
                &_PlanDB_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    31;
 
   friend void swap(PlanDB& a, PlanDB& b) {
     a.Swap(&b);
@@ -9231,7 +10119,7 @@ class PlanDBState final :
                &_PlanDBState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    32;
 
   friend void swap(PlanDBState& a, PlanDBState& b) {
     a.Swap(&b);
@@ -9489,7 +10377,7 @@ class PlanDBInformation final :
                &_PlanDBInformation_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    33;
 
   friend void swap(PlanDBInformation& a, PlanDBInformation& b) {
     a.Swap(&b);
@@ -9732,7 +10620,7 @@ class PlanControl final :
                &_PlanControl_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    34;
 
   friend void swap(PlanControl& a, PlanControl& b) {
     a.Swap(&b);
@@ -10054,7 +10942,7 @@ class PlanStatistics final :
                &_PlanStatistics_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    35;
 
   friend void swap(PlanStatistics& a, PlanStatistics& b) {
     a.Swap(&b);
@@ -10162,9 +11050,9 @@ class PlanStatistics final :
 
   enum : int {
     kPlanIdFieldNumber = 1,
-    kDurationsFieldNumber = 4,
     kDistancesFieldNumber = 5,
     kActionsFieldNumber = 6,
+    kDurationsFieldNumber = 4,
     kFuelFieldNumber = 7,
     kTypeFieldNumber = 2,
     kPropertiesFieldNumber = 3,
@@ -10185,24 +11073,6 @@ class PlanStatistics final :
   const std::string& _internal_plan_id() const;
   inline PROTOBUF_ALWAYS_INLINE void _internal_set_plan_id(const std::string& value);
   std::string* _internal_mutable_plan_id();
-  public:
-
-  // optional string durations = 4 [(.dccl.field) = {
-  bool has_durations() const;
-  private:
-  bool _internal_has_durations() const;
-  public:
-  void clear_durations();
-  const std::string& durations() const;
-  template <typename ArgT0 = const std::string&, typename... ArgT>
-  void set_durations(ArgT0&& arg0, ArgT... args);
-  std::string* mutable_durations();
-  PROTOBUF_NODISCARD std::string* release_durations();
-  void set_allocated_durations(std::string* durations);
-  private:
-  const std::string& _internal_durations() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_durations(const std::string& value);
-  std::string* _internal_mutable_durations();
   public:
 
   // optional string distances = 5 [(.dccl.field) = {
@@ -10241,23 +11111,41 @@ class PlanStatistics final :
   std::string* _internal_mutable_actions();
   public:
 
-  // optional string fuel = 7 [(.dccl.field) = {
+  // optional .IMC_DCCL.DurationList durations = 4;
+  bool has_durations() const;
+  private:
+  bool _internal_has_durations() const;
+  public:
+  void clear_durations();
+  const ::IMC_DCCL::DurationList& durations() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::DurationList* release_durations();
+  ::IMC_DCCL::DurationList* mutable_durations();
+  void set_allocated_durations(::IMC_DCCL::DurationList* durations);
+  private:
+  const ::IMC_DCCL::DurationList& _internal_durations() const;
+  ::IMC_DCCL::DurationList* _internal_mutable_durations();
+  public:
+  void unsafe_arena_set_allocated_durations(
+      ::IMC_DCCL::DurationList* durations);
+  ::IMC_DCCL::DurationList* unsafe_arena_release_durations();
+
+  // optional .IMC_DCCL.FuelList fuel = 7;
   bool has_fuel() const;
   private:
   bool _internal_has_fuel() const;
   public:
   void clear_fuel();
-  const std::string& fuel() const;
-  template <typename ArgT0 = const std::string&, typename... ArgT>
-  void set_fuel(ArgT0&& arg0, ArgT... args);
-  std::string* mutable_fuel();
-  PROTOBUF_NODISCARD std::string* release_fuel();
-  void set_allocated_fuel(std::string* fuel);
+  const ::IMC_DCCL::FuelList& fuel() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::FuelList* release_fuel();
+  ::IMC_DCCL::FuelList* mutable_fuel();
+  void set_allocated_fuel(::IMC_DCCL::FuelList* fuel);
   private:
-  const std::string& _internal_fuel() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_fuel(const std::string& value);
-  std::string* _internal_mutable_fuel();
+  const ::IMC_DCCL::FuelList& _internal_fuel() const;
+  ::IMC_DCCL::FuelList* _internal_mutable_fuel();
   public:
+  void unsafe_arena_set_allocated_fuel(
+      ::IMC_DCCL::FuelList* fuel);
+  ::IMC_DCCL::FuelList* unsafe_arena_release_fuel();
 
   // .IMC_DCCL.PlanStatistics.TypeEnum type = 2;
   void clear_type();
@@ -10292,10 +11180,10 @@ class PlanStatistics final :
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr plan_id_;
-    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr durations_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr distances_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr actions_;
-    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr fuel_;
+    ::IMC_DCCL::DurationList* durations_;
+    ::IMC_DCCL::FuelList* fuel_;
     int type_;
     uint32_t properties_;
   };
@@ -10352,7 +11240,7 @@ class VehicleState final :
                &_VehicleState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    36;
 
   friend void swap(VehicleState& a, VehicleState& b) {
     a.Swap(&b);
@@ -10686,7 +11574,7 @@ class EntityState final :
                &_EntityState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    37;
 
   friend void swap(EntityState& a, EntityState& b) {
     a.Swap(&b);
@@ -10908,7 +11796,7 @@ class PlanControlState final :
                &_PlanControlState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    38;
 
   friend void swap(PlanControlState& a, PlanControlState& b) {
     a.Swap(&b);
@@ -11238,7 +12126,7 @@ class Voltage final :
                &_Voltage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    34;
+    39;
 
   friend void swap(Voltage& a, Voltage& b) {
     a.Swap(&b);
@@ -11391,7 +12279,7 @@ class Current final :
                &_Current_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    35;
+    40;
 
   friend void swap(Current& a, Current& b) {
     a.Swap(&b);
@@ -11544,7 +12432,7 @@ class FuelLevel final :
                &_FuelLevel_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    36;
+    41;
 
   friend void swap(FuelLevel& a, FuelLevel& b) {
     a.Swap(&b);
@@ -11732,7 +12620,7 @@ class WindSpeed final :
                &_WindSpeed_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    37;
+    42;
 
   friend void swap(WindSpeed& a, WindSpeed& b) {
     a.Swap(&b);
@@ -11922,7 +12810,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    38;
+    43;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -12138,7 +13026,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    39;
+    44;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -12312,7 +13200,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    40;
+    45;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -12488,7 +13376,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    41;
+    46;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -12699,7 +13587,7 @@ class Header final :
                &_Header_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    42;
+    47;
 
   friend void swap(Header& a, Header& b) {
     a.Swap(&b);
@@ -12931,7 +13819,7 @@ class Payload final :
                &_Payload_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    43;
+    48;
 
   friend void swap(Payload& a, Payload& b) {
     a.Swap(&b);
@@ -13394,7 +14282,7 @@ class ProtoMessage final :
                &_ProtoMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    44;
+    49;
 
   friend void swap(ProtoMessage& a, ProtoMessage& b) {
     a.Swap(&b);
@@ -15922,6 +16810,366 @@ inline ::IMC_DCCL::ItemList* ListCombined::add_item() {
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::ItemList >&
 ListCombined::item() const {
   // @@protoc_insertion_point(field_list:IMC_DCCL.ListCombined.item)
+  return _impl_.item_;
+}
+
+// -------------------------------------------------------------------
+
+// FuelItemList
+
+// .IMC_DCCL.FuelParcelName name = 1;
+inline void FuelItemList::clear_name() {
+  _impl_.name_ = 0;
+}
+inline ::IMC_DCCL::FuelParcelName FuelItemList::_internal_name() const {
+  return static_cast< ::IMC_DCCL::FuelParcelName >(_impl_.name_);
+}
+inline ::IMC_DCCL::FuelParcelName FuelItemList::name() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.FuelItemList.name)
+  return _internal_name();
+}
+inline void FuelItemList::_internal_set_name(::IMC_DCCL::FuelParcelName value) {
+  
+  _impl_.name_ = value;
+}
+inline void FuelItemList::set_name(::IMC_DCCL::FuelParcelName value) {
+  _internal_set_name(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.FuelItemList.name)
+}
+
+// float number = 2 [(.dccl.field) = {
+inline void FuelItemList::clear_number() {
+  _impl_.number_ = 0;
+}
+inline float FuelItemList::_internal_number() const {
+  return _impl_.number_;
+}
+inline float FuelItemList::number() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.FuelItemList.number)
+  return _internal_number();
+}
+inline void FuelItemList::_internal_set_number(float value) {
+  
+  _impl_.number_ = value;
+}
+inline void FuelItemList::set_number(float value) {
+  _internal_set_number(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.FuelItemList.number)
+}
+
+// -------------------------------------------------------------------
+
+// FuelList
+
+// repeated .IMC_DCCL.FuelItemList item = 1 [(.dccl.field) = {
+inline int FuelList::_internal_item_size() const {
+  return _impl_.item_.size();
+}
+inline int FuelList::item_size() const {
+  return _internal_item_size();
+}
+inline void FuelList::clear_item() {
+  _impl_.item_.Clear();
+}
+inline ::IMC_DCCL::FuelItemList* FuelList::mutable_item(int index) {
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.FuelList.item)
+  return _impl_.item_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::FuelItemList >*
+FuelList::mutable_item() {
+  // @@protoc_insertion_point(field_mutable_list:IMC_DCCL.FuelList.item)
+  return &_impl_.item_;
+}
+inline const ::IMC_DCCL::FuelItemList& FuelList::_internal_item(int index) const {
+  return _impl_.item_.Get(index);
+}
+inline const ::IMC_DCCL::FuelItemList& FuelList::item(int index) const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.FuelList.item)
+  return _internal_item(index);
+}
+inline ::IMC_DCCL::FuelItemList* FuelList::_internal_add_item() {
+  return _impl_.item_.Add();
+}
+inline ::IMC_DCCL::FuelItemList* FuelList::add_item() {
+  ::IMC_DCCL::FuelItemList* _add = _internal_add_item();
+  // @@protoc_insertion_point(field_add:IMC_DCCL.FuelList.item)
+  return _add;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::FuelItemList >&
+FuelList::item() const {
+  // @@protoc_insertion_point(field_list:IMC_DCCL.FuelList.item)
+  return _impl_.item_;
+}
+
+// -------------------------------------------------------------------
+
+// DurationName
+
+// .IMC_DCCL.DurationEnum name = 1;
+inline void DurationName::clear_name() {
+  _impl_.name_ = 0;
+}
+inline ::IMC_DCCL::DurationEnum DurationName::_internal_name() const {
+  return static_cast< ::IMC_DCCL::DurationEnum >(_impl_.name_);
+}
+inline ::IMC_DCCL::DurationEnum DurationName::name() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.DurationName.name)
+  return _internal_name();
+}
+inline void DurationName::_internal_set_name(::IMC_DCCL::DurationEnum value) {
+  
+  _impl_.name_ = value;
+}
+inline void DurationName::set_name(::IMC_DCCL::DurationEnum value) {
+  _internal_set_name(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.DurationName.name)
+}
+
+// optional .IMC_DCCL.ManeuverID maneuver_id = 2;
+inline bool DurationName::_internal_has_maneuver_id() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.maneuver_id_ != nullptr);
+  return value;
+}
+inline bool DurationName::has_maneuver_id() const {
+  return _internal_has_maneuver_id();
+}
+inline void DurationName::clear_maneuver_id() {
+  if (_impl_.maneuver_id_ != nullptr) _impl_.maneuver_id_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline const ::IMC_DCCL::ManeuverID& DurationName::_internal_maneuver_id() const {
+  const ::IMC_DCCL::ManeuverID* p = _impl_.maneuver_id_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::ManeuverID&>(
+      ::IMC_DCCL::_ManeuverID_default_instance_);
+}
+inline const ::IMC_DCCL::ManeuverID& DurationName::maneuver_id() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.DurationName.maneuver_id)
+  return _internal_maneuver_id();
+}
+inline void DurationName::unsafe_arena_set_allocated_maneuver_id(
+    ::IMC_DCCL::ManeuverID* maneuver_id) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.maneuver_id_);
+  }
+  _impl_.maneuver_id_ = maneuver_id;
+  if (maneuver_id) {
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.DurationName.maneuver_id)
+}
+inline ::IMC_DCCL::ManeuverID* DurationName::release_maneuver_id() {
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::IMC_DCCL::ManeuverID* temp = _impl_.maneuver_id_;
+  _impl_.maneuver_id_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::ManeuverID* DurationName::unsafe_arena_release_maneuver_id() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.DurationName.maneuver_id)
+  _impl_._has_bits_[0] &= ~0x00000001u;
+  ::IMC_DCCL::ManeuverID* temp = _impl_.maneuver_id_;
+  _impl_.maneuver_id_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::ManeuverID* DurationName::_internal_mutable_maneuver_id() {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  if (_impl_.maneuver_id_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::ManeuverID>(GetArenaForAllocation());
+    _impl_.maneuver_id_ = p;
+  }
+  return _impl_.maneuver_id_;
+}
+inline ::IMC_DCCL::ManeuverID* DurationName::mutable_maneuver_id() {
+  ::IMC_DCCL::ManeuverID* _msg = _internal_mutable_maneuver_id();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.DurationName.maneuver_id)
+  return _msg;
+}
+inline void DurationName::set_allocated_maneuver_id(::IMC_DCCL::ManeuverID* maneuver_id) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.maneuver_id_;
+  }
+  if (maneuver_id) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(maneuver_id);
+    if (message_arena != submessage_arena) {
+      maneuver_id = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, maneuver_id, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000001u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000001u;
+  }
+  _impl_.maneuver_id_ = maneuver_id;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.DurationName.maneuver_id)
+}
+
+// -------------------------------------------------------------------
+
+// DurationItemList
+
+// .IMC_DCCL.DurationName name = 1;
+inline bool DurationItemList::_internal_has_name() const {
+  return this != internal_default_instance() && _impl_.name_ != nullptr;
+}
+inline bool DurationItemList::has_name() const {
+  return _internal_has_name();
+}
+inline void DurationItemList::clear_name() {
+  if (GetArenaForAllocation() == nullptr && _impl_.name_ != nullptr) {
+    delete _impl_.name_;
+  }
+  _impl_.name_ = nullptr;
+}
+inline const ::IMC_DCCL::DurationName& DurationItemList::_internal_name() const {
+  const ::IMC_DCCL::DurationName* p = _impl_.name_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::DurationName&>(
+      ::IMC_DCCL::_DurationName_default_instance_);
+}
+inline const ::IMC_DCCL::DurationName& DurationItemList::name() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.DurationItemList.name)
+  return _internal_name();
+}
+inline void DurationItemList::unsafe_arena_set_allocated_name(
+    ::IMC_DCCL::DurationName* name) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.name_);
+  }
+  _impl_.name_ = name;
+  if (name) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.DurationItemList.name)
+}
+inline ::IMC_DCCL::DurationName* DurationItemList::release_name() {
+  
+  ::IMC_DCCL::DurationName* temp = _impl_.name_;
+  _impl_.name_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::DurationName* DurationItemList::unsafe_arena_release_name() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.DurationItemList.name)
+  
+  ::IMC_DCCL::DurationName* temp = _impl_.name_;
+  _impl_.name_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::DurationName* DurationItemList::_internal_mutable_name() {
+  
+  if (_impl_.name_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::DurationName>(GetArenaForAllocation());
+    _impl_.name_ = p;
+  }
+  return _impl_.name_;
+}
+inline ::IMC_DCCL::DurationName* DurationItemList::mutable_name() {
+  ::IMC_DCCL::DurationName* _msg = _internal_mutable_name();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.DurationItemList.name)
+  return _msg;
+}
+inline void DurationItemList::set_allocated_name(::IMC_DCCL::DurationName* name) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.name_;
+  }
+  if (name) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(name);
+    if (message_arena != submessage_arena) {
+      name = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, name, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.name_ = name;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.DurationItemList.name)
+}
+
+// float number = 2 [(.dccl.field) = {
+inline void DurationItemList::clear_number() {
+  _impl_.number_ = 0;
+}
+inline float DurationItemList::_internal_number() const {
+  return _impl_.number_;
+}
+inline float DurationItemList::number() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.DurationItemList.number)
+  return _internal_number();
+}
+inline void DurationItemList::_internal_set_number(float value) {
+  
+  _impl_.number_ = value;
+}
+inline void DurationItemList::set_number(float value) {
+  _internal_set_number(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.DurationItemList.number)
+}
+
+// -------------------------------------------------------------------
+
+// DurationList
+
+// repeated .IMC_DCCL.DurationItemList item = 1 [(.dccl.field) = {
+inline int DurationList::_internal_item_size() const {
+  return _impl_.item_.size();
+}
+inline int DurationList::item_size() const {
+  return _internal_item_size();
+}
+inline void DurationList::clear_item() {
+  _impl_.item_.Clear();
+}
+inline ::IMC_DCCL::DurationItemList* DurationList::mutable_item(int index) {
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.DurationList.item)
+  return _impl_.item_.Mutable(index);
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::DurationItemList >*
+DurationList::mutable_item() {
+  // @@protoc_insertion_point(field_mutable_list:IMC_DCCL.DurationList.item)
+  return &_impl_.item_;
+}
+inline const ::IMC_DCCL::DurationItemList& DurationList::_internal_item(int index) const {
+  return _impl_.item_.Get(index);
+}
+inline const ::IMC_DCCL::DurationItemList& DurationList::item(int index) const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.DurationList.item)
+  return _internal_item(index);
+}
+inline ::IMC_DCCL::DurationItemList* DurationList::_internal_add_item() {
+  return _impl_.item_.Add();
+}
+inline ::IMC_DCCL::DurationItemList* DurationList::add_item() {
+  ::IMC_DCCL::DurationItemList* _add = _internal_add_item();
+  // @@protoc_insertion_point(field_add:IMC_DCCL.DurationList.item)
+  return _add;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::IMC_DCCL::DurationItemList >&
+DurationList::item() const {
+  // @@protoc_insertion_point(field_list:IMC_DCCL.DurationList.item)
   return _impl_.item_;
 }
 
@@ -20082,77 +21330,99 @@ inline void PlanStatistics::set_properties(uint32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.properties)
 }
 
-// optional string durations = 4 [(.dccl.field) = {
+// optional .IMC_DCCL.DurationList durations = 4;
 inline bool PlanStatistics::_internal_has_durations() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.durations_ != nullptr);
   return value;
 }
 inline bool PlanStatistics::has_durations() const {
   return _internal_has_durations();
 }
 inline void PlanStatistics::clear_durations() {
-  _impl_.durations_.ClearToEmpty();
-  _impl_._has_bits_[0] &= ~0x00000002u;
+  if (_impl_.durations_ != nullptr) _impl_.durations_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
-inline const std::string& PlanStatistics::durations() const {
+inline const ::IMC_DCCL::DurationList& PlanStatistics::_internal_durations() const {
+  const ::IMC_DCCL::DurationList* p = _impl_.durations_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::DurationList&>(
+      ::IMC_DCCL::_DurationList_default_instance_);
+}
+inline const ::IMC_DCCL::DurationList& PlanStatistics::durations() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.durations)
   return _internal_durations();
 }
-template <typename ArgT0, typename... ArgT>
-inline PROTOBUF_ALWAYS_INLINE
-void PlanStatistics::set_durations(ArgT0&& arg0, ArgT... args) {
- _impl_._has_bits_[0] |= 0x00000002u;
- _impl_.durations_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
-  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.durations)
-}
-inline std::string* PlanStatistics::mutable_durations() {
-  std::string* _s = _internal_mutable_durations();
-  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanStatistics.durations)
-  return _s;
-}
-inline const std::string& PlanStatistics::_internal_durations() const {
-  return _impl_.durations_.Get();
-}
-inline void PlanStatistics::_internal_set_durations(const std::string& value) {
-  _impl_._has_bits_[0] |= 0x00000002u;
-  _impl_.durations_.Set(value, GetArenaForAllocation());
-}
-inline std::string* PlanStatistics::_internal_mutable_durations() {
-  _impl_._has_bits_[0] |= 0x00000002u;
-  return _impl_.durations_.Mutable(GetArenaForAllocation());
-}
-inline std::string* PlanStatistics::release_durations() {
-  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanStatistics.durations)
-  if (!_internal_has_durations()) {
-    return nullptr;
+inline void PlanStatistics::unsafe_arena_set_allocated_durations(
+    ::IMC_DCCL::DurationList* durations) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.durations_);
   }
-  _impl_._has_bits_[0] &= ~0x00000002u;
-  auto* p = _impl_.durations_.Release();
-#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  if (_impl_.durations_.IsDefault()) {
-    _impl_.durations_.Set("", GetArenaForAllocation());
-  }
-#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  return p;
-}
-inline void PlanStatistics::set_allocated_durations(std::string* durations) {
-  if (durations != nullptr) {
-    _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_.durations_ = durations;
+  if (durations) {
+    _impl_._has_bits_[0] |= 0x00000008u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000002u;
+    _impl_._has_bits_[0] &= ~0x00000008u;
   }
-  _impl_.durations_.SetAllocated(durations, GetArenaForAllocation());
-#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  if (_impl_.durations_.IsDefault()) {
-    _impl_.durations_.Set("", GetArenaForAllocation());
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.PlanStatistics.durations)
+}
+inline ::IMC_DCCL::DurationList* PlanStatistics::release_durations() {
+  _impl_._has_bits_[0] &= ~0x00000008u;
+  ::IMC_DCCL::DurationList* temp = _impl_.durations_;
+  _impl_.durations_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
   }
-#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::DurationList* PlanStatistics::unsafe_arena_release_durations() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanStatistics.durations)
+  _impl_._has_bits_[0] &= ~0x00000008u;
+  ::IMC_DCCL::DurationList* temp = _impl_.durations_;
+  _impl_.durations_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::DurationList* PlanStatistics::_internal_mutable_durations() {
+  _impl_._has_bits_[0] |= 0x00000008u;
+  if (_impl_.durations_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::DurationList>(GetArenaForAllocation());
+    _impl_.durations_ = p;
+  }
+  return _impl_.durations_;
+}
+inline ::IMC_DCCL::DurationList* PlanStatistics::mutable_durations() {
+  ::IMC_DCCL::DurationList* _msg = _internal_mutable_durations();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanStatistics.durations)
+  return _msg;
+}
+inline void PlanStatistics::set_allocated_durations(::IMC_DCCL::DurationList* durations) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.durations_;
+  }
+  if (durations) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(durations);
+    if (message_arena != submessage_arena) {
+      durations = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, durations, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000008u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000008u;
+  }
+  _impl_.durations_ = durations;
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanStatistics.durations)
 }
 
 // optional string distances = 5 [(.dccl.field) = {
 inline bool PlanStatistics::_internal_has_distances() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   return value;
 }
 inline bool PlanStatistics::has_distances() const {
@@ -20160,7 +21430,7 @@ inline bool PlanStatistics::has_distances() const {
 }
 inline void PlanStatistics::clear_distances() {
   _impl_.distances_.ClearToEmpty();
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline const std::string& PlanStatistics::distances() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.distances)
@@ -20169,7 +21439,7 @@ inline const std::string& PlanStatistics::distances() const {
 template <typename ArgT0, typename... ArgT>
 inline PROTOBUF_ALWAYS_INLINE
 void PlanStatistics::set_distances(ArgT0&& arg0, ArgT... args) {
- _impl_._has_bits_[0] |= 0x00000004u;
+ _impl_._has_bits_[0] |= 0x00000002u;
  _impl_.distances_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.distances)
 }
@@ -20182,11 +21452,11 @@ inline const std::string& PlanStatistics::_internal_distances() const {
   return _impl_.distances_.Get();
 }
 inline void PlanStatistics::_internal_set_distances(const std::string& value) {
-  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.distances_.Set(value, GetArenaForAllocation());
 }
 inline std::string* PlanStatistics::_internal_mutable_distances() {
-  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_._has_bits_[0] |= 0x00000002u;
   return _impl_.distances_.Mutable(GetArenaForAllocation());
 }
 inline std::string* PlanStatistics::release_distances() {
@@ -20194,7 +21464,7 @@ inline std::string* PlanStatistics::release_distances() {
   if (!_internal_has_distances()) {
     return nullptr;
   }
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000002u;
   auto* p = _impl_.distances_.Release();
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
   if (_impl_.distances_.IsDefault()) {
@@ -20205,9 +21475,9 @@ inline std::string* PlanStatistics::release_distances() {
 }
 inline void PlanStatistics::set_allocated_distances(std::string* distances) {
   if (distances != nullptr) {
-    _impl_._has_bits_[0] |= 0x00000004u;
+    _impl_._has_bits_[0] |= 0x00000002u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000004u;
+    _impl_._has_bits_[0] &= ~0x00000002u;
   }
   _impl_.distances_.SetAllocated(distances, GetArenaForAllocation());
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
@@ -20220,7 +21490,7 @@ inline void PlanStatistics::set_allocated_distances(std::string* distances) {
 
 // optional string actions = 6 [(.dccl.field) = {
 inline bool PlanStatistics::_internal_has_actions() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
 }
 inline bool PlanStatistics::has_actions() const {
@@ -20228,7 +21498,7 @@ inline bool PlanStatistics::has_actions() const {
 }
 inline void PlanStatistics::clear_actions() {
   _impl_.actions_.ClearToEmpty();
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline const std::string& PlanStatistics::actions() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.actions)
@@ -20237,7 +21507,7 @@ inline const std::string& PlanStatistics::actions() const {
 template <typename ArgT0, typename... ArgT>
 inline PROTOBUF_ALWAYS_INLINE
 void PlanStatistics::set_actions(ArgT0&& arg0, ArgT... args) {
- _impl_._has_bits_[0] |= 0x00000008u;
+ _impl_._has_bits_[0] |= 0x00000004u;
  _impl_.actions_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.actions)
 }
@@ -20250,11 +21520,11 @@ inline const std::string& PlanStatistics::_internal_actions() const {
   return _impl_.actions_.Get();
 }
 inline void PlanStatistics::_internal_set_actions(const std::string& value) {
-  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.actions_.Set(value, GetArenaForAllocation());
 }
 inline std::string* PlanStatistics::_internal_mutable_actions() {
-  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_._has_bits_[0] |= 0x00000004u;
   return _impl_.actions_.Mutable(GetArenaForAllocation());
 }
 inline std::string* PlanStatistics::release_actions() {
@@ -20262,7 +21532,7 @@ inline std::string* PlanStatistics::release_actions() {
   if (!_internal_has_actions()) {
     return nullptr;
   }
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000004u;
   auto* p = _impl_.actions_.Release();
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
   if (_impl_.actions_.IsDefault()) {
@@ -20273,9 +21543,9 @@ inline std::string* PlanStatistics::release_actions() {
 }
 inline void PlanStatistics::set_allocated_actions(std::string* actions) {
   if (actions != nullptr) {
-    _impl_._has_bits_[0] |= 0x00000008u;
+    _impl_._has_bits_[0] |= 0x00000004u;
   } else {
-    _impl_._has_bits_[0] &= ~0x00000008u;
+    _impl_._has_bits_[0] &= ~0x00000004u;
   }
   _impl_.actions_.SetAllocated(actions, GetArenaForAllocation());
 #ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
@@ -20286,71 +21556,93 @@ inline void PlanStatistics::set_allocated_actions(std::string* actions) {
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanStatistics.actions)
 }
 
-// optional string fuel = 7 [(.dccl.field) = {
+// optional .IMC_DCCL.FuelList fuel = 7;
 inline bool PlanStatistics::_internal_has_fuel() const {
   bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  PROTOBUF_ASSUME(!value || _impl_.fuel_ != nullptr);
   return value;
 }
 inline bool PlanStatistics::has_fuel() const {
   return _internal_has_fuel();
 }
 inline void PlanStatistics::clear_fuel() {
-  _impl_.fuel_.ClearToEmpty();
+  if (_impl_.fuel_ != nullptr) _impl_.fuel_->Clear();
   _impl_._has_bits_[0] &= ~0x00000010u;
 }
-inline const std::string& PlanStatistics::fuel() const {
+inline const ::IMC_DCCL::FuelList& PlanStatistics::_internal_fuel() const {
+  const ::IMC_DCCL::FuelList* p = _impl_.fuel_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::FuelList&>(
+      ::IMC_DCCL::_FuelList_default_instance_);
+}
+inline const ::IMC_DCCL::FuelList& PlanStatistics::fuel() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanStatistics.fuel)
   return _internal_fuel();
 }
-template <typename ArgT0, typename... ArgT>
-inline PROTOBUF_ALWAYS_INLINE
-void PlanStatistics::set_fuel(ArgT0&& arg0, ArgT... args) {
- _impl_._has_bits_[0] |= 0x00000010u;
- _impl_.fuel_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
-  // @@protoc_insertion_point(field_set:IMC_DCCL.PlanStatistics.fuel)
-}
-inline std::string* PlanStatistics::mutable_fuel() {
-  std::string* _s = _internal_mutable_fuel();
-  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanStatistics.fuel)
-  return _s;
-}
-inline const std::string& PlanStatistics::_internal_fuel() const {
-  return _impl_.fuel_.Get();
-}
-inline void PlanStatistics::_internal_set_fuel(const std::string& value) {
-  _impl_._has_bits_[0] |= 0x00000010u;
-  _impl_.fuel_.Set(value, GetArenaForAllocation());
-}
-inline std::string* PlanStatistics::_internal_mutable_fuel() {
-  _impl_._has_bits_[0] |= 0x00000010u;
-  return _impl_.fuel_.Mutable(GetArenaForAllocation());
-}
-inline std::string* PlanStatistics::release_fuel() {
-  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanStatistics.fuel)
-  if (!_internal_has_fuel()) {
-    return nullptr;
+inline void PlanStatistics::unsafe_arena_set_allocated_fuel(
+    ::IMC_DCCL::FuelList* fuel) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.fuel_);
   }
-  _impl_._has_bits_[0] &= ~0x00000010u;
-  auto* p = _impl_.fuel_.Release();
-#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  if (_impl_.fuel_.IsDefault()) {
-    _impl_.fuel_.Set("", GetArenaForAllocation());
-  }
-#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  return p;
-}
-inline void PlanStatistics::set_allocated_fuel(std::string* fuel) {
-  if (fuel != nullptr) {
+  _impl_.fuel_ = fuel;
+  if (fuel) {
     _impl_._has_bits_[0] |= 0x00000010u;
   } else {
     _impl_._has_bits_[0] &= ~0x00000010u;
   }
-  _impl_.fuel_.SetAllocated(fuel, GetArenaForAllocation());
-#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  if (_impl_.fuel_.IsDefault()) {
-    _impl_.fuel_.Set("", GetArenaForAllocation());
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.PlanStatistics.fuel)
+}
+inline ::IMC_DCCL::FuelList* PlanStatistics::release_fuel() {
+  _impl_._has_bits_[0] &= ~0x00000010u;
+  ::IMC_DCCL::FuelList* temp = _impl_.fuel_;
+  _impl_.fuel_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
   }
-#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::FuelList* PlanStatistics::unsafe_arena_release_fuel() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.PlanStatistics.fuel)
+  _impl_._has_bits_[0] &= ~0x00000010u;
+  ::IMC_DCCL::FuelList* temp = _impl_.fuel_;
+  _impl_.fuel_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::FuelList* PlanStatistics::_internal_mutable_fuel() {
+  _impl_._has_bits_[0] |= 0x00000010u;
+  if (_impl_.fuel_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::FuelList>(GetArenaForAllocation());
+    _impl_.fuel_ = p;
+  }
+  return _impl_.fuel_;
+}
+inline ::IMC_DCCL::FuelList* PlanStatistics::mutable_fuel() {
+  ::IMC_DCCL::FuelList* _msg = _internal_mutable_fuel();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.PlanStatistics.fuel)
+  return _msg;
+}
+inline void PlanStatistics::set_allocated_fuel(::IMC_DCCL::FuelList* fuel) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.fuel_;
+  }
+  if (fuel) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(fuel);
+    if (message_arena != submessage_arena) {
+      fuel = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, fuel, submessage_arena);
+    }
+    _impl_._has_bits_[0] |= 0x00000010u;
+  } else {
+    _impl_._has_bits_[0] &= ~0x00000010u;
+  }
+  _impl_.fuel_ = fuel;
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.PlanStatistics.fuel)
 }
 
@@ -23610,6 +24902,16 @@ inline void ProtoMessage::set_allocated_msg_payload(::IMC_DCCL::Payload* msg_pay
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -23701,6 +25003,16 @@ template <> struct is_proto_enum< ::IMC_DCCL::SpeedUnits> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::SpeedUnits>() {
   return ::IMC_DCCL::SpeedUnits_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::FuelParcelName> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::FuelParcelName>() {
+  return ::IMC_DCCL::FuelParcelName_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::DurationEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::DurationEnum>() {
+  return ::IMC_DCCL::DurationEnum_descriptor();
 }
 template <> struct is_proto_enum< ::IMC_DCCL::ManeuverType> : ::std::true_type {};
 template <>
