@@ -6,6 +6,18 @@
 #include "EnumCodec.hpp"
 #include "MsgCodec.hpp"
 
+void encodeDurationItemList(const std::string& imc, IMC_DCCL::DurationItemList& dccl);
+
+void decodeDurationItemList(const IMC_DCCL::DurationItemList& dccl, std::string& imc);
+
+void encodeDurationList(const std::string& imc, IMC_DCCL::DurationList& dccl);
+
+void decodeDurationList(const IMC_DCCL::DurationList& dccl, std::string& imc);
+
+void encodeDurationName(const std::string& imc, IMC_DCCL::DurationName& dccl);
+
+void decodeDurationName(const IMC_DCCL::DurationName& dccl, std::string& imc);
+
 void encodeEntityName(const std::string& imc, IMC_DCCL::EntityName& dccl);
 
 void decodeEntityName(const IMC_DCCL::EntityName& dccl, std::string& imc);

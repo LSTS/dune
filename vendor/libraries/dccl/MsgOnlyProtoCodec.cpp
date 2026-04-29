@@ -4,6 +4,96 @@
 #include <DUNE/DUNE.hpp>
 #include "Helper.hpp"
 
+// ================ DurationItemList Message ================
+void encodeDurationItemList(const std::string& imc, IMC_DCCL::DurationItemList& dccl)
+{
+    
+    if (auto pos = imc.find('='); pos != std::string::npos)
+    {
+        std::string name_ = imc.substr(0, pos);
+        encodeDurationName(name_, *dccl.mutable_name());
+    
+        auto number_ = std::stof(imc.substr(pos + 1));
+        if(!Helper::is_default_value(number_)) dccl.set_number(number_);
+    
+    }
+                              
+}
+
+
+// ================ DurationItemList Message ================
+void decodeDurationItemList(const IMC_DCCL::DurationItemList& dccl, std::string& imc)
+{
+    
+    std::string name_;
+    decodeDurationName(dccl.name(), name_);
+    
+    auto number_ = dccl.number();
+    
+    imc = name_ + '=' + std::to_string(number_);
+}
+
+
+// ================ DurationList Message ================
+void encodeDurationList(const std::string& imc, IMC_DCCL::DurationList& dccl)
+{
+    
+    auto items = Helper::getItems(imc);
+    
+    for (const auto& item : items){
+        auto* elem_dccl = dccl.add_item();
+        encodeDurationItemList(item, *elem_dccl);
+    }                                                 
+                              
+}
+
+
+// ================ DurationList Message ================
+void decodeDurationList(const IMC_DCCL::DurationList& dccl, std::string& imc)
+{
+    
+    for (int i=0; i < dccl.item_size(); i++) {
+        std::string temp;
+        decodeDurationItemList(dccl.item(i), temp);	
+        imc += temp + ',';
+    }
+}
+
+
+// ================ DurationName Message ================
+void encodeDurationName(const std::string& imc, IMC_DCCL::DurationName& dccl)
+{
+    
+    std::istringstream stream(imc);
+    std::string first, second;
+    stream >> first >> second;
+    
+    auto first_enum = encodeDurationEnum(first);
+    
+    if(first_enum != IMC_DCCL::DurationEnum::DE_UNKNOWN){
+            dccl.set_name(first_enum);
+            if(first_enum == IMC_DCCL::DurationEnum::DE_MANEUVER){
+                     encodeManeuverID(second, *dccl.mutable_maneuver_id());
+            }
+    }
+                              
+}
+
+
+// ================ DurationName Message ================
+void decodeDurationName(const IMC_DCCL::DurationName& dccl, std::string& imc)
+{
+    
+    std::string str1, str2;
+    str1 = decodeDurationEnum(dccl.name());
+    decodeManeuverID(dccl.maneuver_id(), str2);
+    
+    imc = str1;
+    if(!str2.empty()) imc += " " + str2;
+                              
+}
+
+
 // ================ EntityName Message ================
 void encodeEntityName(const std::string& imc, IMC_DCCL::EntityName& dccl)
 {
