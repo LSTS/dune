@@ -2347,7 +2347,7 @@ message DurationName {
 message DurationItemList {
     option (dccl.msg) = { codec_version: 4};
     DurationName name = 1;
-    float number = 2 [(dccl.field) = { min: 0 max: 100 precision:2}];
+    float number = 2 [(dccl.field) = { min: 0 max: 172800 precision:1}];
 }
 
 // DurationList
