@@ -125,16 +125,16 @@ enum ParamName {
     PN_ADC15_ENTITY_LABEL = 54;
     PN_ADC15_MESSAGE = 55;
     PN_ADC1_CONVERSION = 56;
-    PN_ADC1_ENTITY_LABEL = 57;
+    PN_ADC1_ENTITY_LABEL_1 = 57;
     PN_ADC1_MESSAGE = 58;
     PN_ADC2_CONVERSION = 59;
-    PN_ADC2_ENTITY_LABEL = 60;
+    PN_ADC2_ENTITY_LABEL_1 = 60;
     PN_ADC2_MESSAGE = 61;
     PN_ADC3_CONVERSION = 62;
     PN_ADC3_ENTITY_LABEL = 63;
     PN_ADC3_MESSAGE = 64;
     PN_ADC4_CONVERSION = 65;
-    PN_ADC4_ENTITY_LABEL = 66;
+    PN_ADC4_ENTITY_LABEL_1 = 66;
     PN_ADC4_MESSAGE = 67;
     PN_ADC5_CONVERSION = 68;
     PN_ADC5_ENTITY_LABEL = 69;
@@ -151,13 +151,13 @@ enum ParamName {
     PN_ADC9_CONVERSION = 80;
     PN_ADC9_ENTITY_LABEL = 81;
     PN_ADC9_MESSAGE = 82;
-    PN_ADC_1_ENTITY_LABEL_1 = 83;
+    PN_ADC_1_ENTITY_LABEL = 83;
     PN_ADC_1_FIXED_GAIN = 84;
     PN_ADC_1_FIXED_GAIN_VAL = 85;
     PN_ADC_1_IS_ACTIVE = 86;
     PN_ADC_1_MAXIMUM_VAL = 87;
     PN_ADC_1_MINIMUM_VAL = 88;
-    PN_ADC_2_ENTITY_LABEL_1 = 89;
+    PN_ADC_2_ENTITY_LABEL = 89;
     PN_ADC_2_FIXED_GAIN = 90;
     PN_ADC_2_FIXED_GAIN_VAL = 91;
     PN_ADC_2_IS_ACTIVE = 92;
@@ -169,7 +169,7 @@ enum ParamName {
     PN_ADC_3_IS_ACTIVE = 98;
     PN_ADC_3_MAXIMUM_VAL = 99;
     PN_ADC_3_MINIMUM_VAL = 100;
-    PN_ADC_4_ENTITY_LABEL_1 = 101;
+    PN_ADC_4_ENTITY_LABEL = 101;
     PN_ADC_4_FIXED_GAIN = 102;
     PN_ADC_4_FIXED_GAIN_VAL = 103;
     PN_ADC_4_IS_ACTIVE = 104;
@@ -2337,6 +2337,25 @@ message FuelList {
     repeated FuelItemList item = 1 [(dccl.field) = { max_repeat: 7}];
 }
 
+message DurationName {
+    option (dccl.msg) = { codec_version: 4};
+    DurationEnum name = 1;
+    optional ManeuverID maneuver_id = 2;
+}
+
+// DurationItemList
+message DurationItemList {
+    option (dccl.msg) = { codec_version: 4};
+    DurationName name = 1;
+    float number = 2 [(dccl.field) = { min: 0 max: 100 precision:2}];
+}
+
+// DurationList
+message DurationList {
+    option (dccl.msg) = { codec_version: 4};
+    repeated DurationItemList item = 1 [(dccl.field) = { max_repeat: 20}];
+}
+
 // EntityList
 message EntityList {
     option (dccl.msg) = { codec_version: 4 id: 5};
@@ -2630,7 +2649,7 @@ message PlanStatistics {
     }  
     TypeEnum type = 2;  
     optional uint32 properties = 3 [(dccl.field) = { min: 0 max: 255}];
-    optional string durations = 4 [(dccl.field).max_length = 200];
+    optional DurationList durations = 4;
     optional string distances = 5 [(dccl.field).max_length = 100];
     optional string actions = 6 [(dccl.field).max_length = 100];
     optional FuelList fuel = 7;
