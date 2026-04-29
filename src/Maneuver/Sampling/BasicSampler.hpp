@@ -73,6 +73,18 @@ namespace Maneuver
       }
 
       virtual void
+      onPause(void)
+      {
+        war("Pause command received, but pause functionality is not implemented for this sampler.");
+      }
+
+      virtual void
+      onResume(void)
+      {
+        war("Resume command received, but resume functionality is not implemented for this sampler.");
+      }
+
+      virtual void
       run(void)
       { }
 
