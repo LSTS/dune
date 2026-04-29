@@ -475,7 +475,7 @@ IMC_DCCL::DurationEnum encodeDurationEnum(const std::string& imc_src)
         if (imc_src == "Total") return IMC_DCCL::DurationEnum::DE_TOTAL;
         if (imc_src == "Execution") return IMC_DCCL::DurationEnum::DE_EXECUTION;
         if (imc_src == "Calibration") return IMC_DCCL::DurationEnum::DE_CALIBRATION;
-        if (imc_src == "Maneuver ") return IMC_DCCL::DurationEnum::DE_MANEUVER;
+        if (imc_src == "Maneuver") return IMC_DCCL::DurationEnum::DE_MANEUVER;
         return IMC_DCCL::DurationEnum::DE_UNKNOWN;
 }
 
@@ -486,7 +486,7 @@ std::string decodeDurationEnum(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::DurationEnum::DE_TOTAL) return "Total";
         if (dccl_src == IMC_DCCL::DurationEnum::DE_EXECUTION) return "Execution";
         if (dccl_src == IMC_DCCL::DurationEnum::DE_CALIBRATION) return "Calibration";
-        if (dccl_src == IMC_DCCL::DurationEnum::DE_MANEUVER) return "Maneuver ";
+        if (dccl_src == IMC_DCCL::DurationEnum::DE_MANEUVER) return "Maneuver";
         throw std::runtime_error("Unknown Type in Enum IMC_DCCL::DurationEnum");
 }
 
@@ -1035,16 +1035,16 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "ADC15 - Entity Label") return IMC_DCCL::ParamName::PN_ADC15_ENTITY_LABEL;
         if (imc_src == "ADC15 - Message") return IMC_DCCL::ParamName::PN_ADC15_MESSAGE;
         if (imc_src == "ADC1 - Conversion") return IMC_DCCL::ParamName::PN_ADC1_CONVERSION;
-        if (imc_src == "ADC1 - Entity Label") return IMC_DCCL::ParamName::PN_ADC1_ENTITY_LABEL;
+        if (imc_src == "ADC1 - Entity Label") return IMC_DCCL::ParamName::PN_ADC1_ENTITY_LABEL_1;
         if (imc_src == "ADC1 - Message") return IMC_DCCL::ParamName::PN_ADC1_MESSAGE;
         if (imc_src == "ADC2 - Conversion") return IMC_DCCL::ParamName::PN_ADC2_CONVERSION;
-        if (imc_src == "ADC2 - Entity Label") return IMC_DCCL::ParamName::PN_ADC2_ENTITY_LABEL;
+        if (imc_src == "ADC2 - Entity Label") return IMC_DCCL::ParamName::PN_ADC2_ENTITY_LABEL_1;
         if (imc_src == "ADC2 - Message") return IMC_DCCL::ParamName::PN_ADC2_MESSAGE;
         if (imc_src == "ADC3 - Conversion") return IMC_DCCL::ParamName::PN_ADC3_CONVERSION;
         if (imc_src == "ADC3 - Entity Label") return IMC_DCCL::ParamName::PN_ADC3_ENTITY_LABEL;
         if (imc_src == "ADC3 - Message") return IMC_DCCL::ParamName::PN_ADC3_MESSAGE;
         if (imc_src == "ADC4 - Conversion") return IMC_DCCL::ParamName::PN_ADC4_CONVERSION;
-        if (imc_src == "ADC4 - Entity Label") return IMC_DCCL::ParamName::PN_ADC4_ENTITY_LABEL;
+        if (imc_src == "ADC4 - Entity Label") return IMC_DCCL::ParamName::PN_ADC4_ENTITY_LABEL_1;
         if (imc_src == "ADC4 - Message") return IMC_DCCL::ParamName::PN_ADC4_MESSAGE;
         if (imc_src == "ADC5 - Conversion") return IMC_DCCL::ParamName::PN_ADC5_CONVERSION;
         if (imc_src == "ADC5 - Entity Label") return IMC_DCCL::ParamName::PN_ADC5_ENTITY_LABEL;
@@ -1061,13 +1061,13 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "ADC9 - Conversion") return IMC_DCCL::ParamName::PN_ADC9_CONVERSION;
         if (imc_src == "ADC9 - Entity Label") return IMC_DCCL::ParamName::PN_ADC9_ENTITY_LABEL;
         if (imc_src == "ADC9 - Message") return IMC_DCCL::ParamName::PN_ADC9_MESSAGE;
-        if (imc_src == "ADC 1 - Entity Label") return IMC_DCCL::ParamName::PN_ADC_1_ENTITY_LABEL_1;
+        if (imc_src == "ADC 1 - Entity Label") return IMC_DCCL::ParamName::PN_ADC_1_ENTITY_LABEL;
         if (imc_src == "ADC 1 - Fixed Gain") return IMC_DCCL::ParamName::PN_ADC_1_FIXED_GAIN;
         if (imc_src == "ADC 1 - Fixed Gain Value") return IMC_DCCL::ParamName::PN_ADC_1_FIXED_GAIN_VAL;
         if (imc_src == "ADC 1 - Is Active") return IMC_DCCL::ParamName::PN_ADC_1_IS_ACTIVE;
         if (imc_src == "ADC 1 - Maximum Value") return IMC_DCCL::ParamName::PN_ADC_1_MAXIMUM_VAL;
         if (imc_src == "ADC 1 - Minimum Value") return IMC_DCCL::ParamName::PN_ADC_1_MINIMUM_VAL;
-        if (imc_src == "ADC 2 - Entity Label") return IMC_DCCL::ParamName::PN_ADC_2_ENTITY_LABEL_1;
+        if (imc_src == "ADC 2 - Entity Label") return IMC_DCCL::ParamName::PN_ADC_2_ENTITY_LABEL;
         if (imc_src == "ADC 2 - Fixed Gain") return IMC_DCCL::ParamName::PN_ADC_2_FIXED_GAIN;
         if (imc_src == "ADC 2 - Fixed Gain Value") return IMC_DCCL::ParamName::PN_ADC_2_FIXED_GAIN_VAL;
         if (imc_src == "ADC 2 - Is Active") return IMC_DCCL::ParamName::PN_ADC_2_IS_ACTIVE;
@@ -1079,7 +1079,7 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "ADC 3 - Is Active") return IMC_DCCL::ParamName::PN_ADC_3_IS_ACTIVE;
         if (imc_src == "ADC 3 - Maximum Value") return IMC_DCCL::ParamName::PN_ADC_3_MAXIMUM_VAL;
         if (imc_src == "ADC 3 - Minimum Value") return IMC_DCCL::ParamName::PN_ADC_3_MINIMUM_VAL;
-        if (imc_src == "ADC 4 - Entity Label") return IMC_DCCL::ParamName::PN_ADC_4_ENTITY_LABEL_1;
+        if (imc_src == "ADC 4 - Entity Label") return IMC_DCCL::ParamName::PN_ADC_4_ENTITY_LABEL;
         if (imc_src == "ADC 4 - Fixed Gain") return IMC_DCCL::ParamName::PN_ADC_4_FIXED_GAIN;
         if (imc_src == "ADC 4 - Fixed Gain Value") return IMC_DCCL::ParamName::PN_ADC_4_FIXED_GAIN_VAL;
         if (imc_src == "ADC 4 - Is Active") return IMC_DCCL::ParamName::PN_ADC_4_IS_ACTIVE;
@@ -1382,8 +1382,8 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "Data Gain") return IMC_DCCL::ParamName::PN_DATA_GAIN;
         if (imc_src == "Data Points") return IMC_DCCL::ParamName::PN_DATA_POINTS;
         if (imc_src == "Data Port") return IMC_DCCL::ParamName::PN_DATA_PORT;
-        if (imc_src == "Data Rate") return IMC_DCCL::ParamName::PN_DATA_RATE;
-        if (imc_src == "Data rate") return IMC_DCCL::ParamName::PN_DATA_RATE_1;
+        if (imc_src == "Data rate") return IMC_DCCL::ParamName::PN_DATA_RATE;
+        if (imc_src == "Data Rate") return IMC_DCCL::ParamName::PN_DATA_RATE_1;
         if (imc_src == "Data sampling frequency") return IMC_DCCL::ParamName::PN_DATA_SAMPLING_FREQUENCY;
         if (imc_src == "Data Timeout") return IMC_DCCL::ParamName::PN_DATA_TIMEOUT;
         if (imc_src == "Days Forward") return IMC_DCCL::ParamName::PN_DAYS_FORWARD;
@@ -1832,8 +1832,8 @@ IMC_DCCL::ParamName encodeParamName(const std::string& imc_src)
         if (imc_src == "Invert Orientation Angle") return IMC_DCCL::ParamName::PN_INVERT_ORIENTATION_ANGLE;
         if (imc_src == "In Mission Timeout") return IMC_DCCL::ParamName::PN_IN_MISSION_TIMEOUT;
         if (imc_src == "IO Port - Device") return IMC_DCCL::ParamName::PN_IO_PORT_DEVICE;
-        if (imc_src == "IPV4 Address") return IMC_DCCL::ParamName::PN_IPV4_ADDRESS;
-        if (imc_src == "IPv4 - Address") return IMC_DCCL::ParamName::PN_IPV4_ADDRESS_1;
+        if (imc_src == "IPv4 - Address") return IMC_DCCL::ParamName::PN_IPV4_ADDRESS;
+        if (imc_src == "IPV4 Address") return IMC_DCCL::ParamName::PN_IPV4_ADDRESS_1;
         if (imc_src == "IPv4 Address") return IMC_DCCL::ParamName::PN_IPV4_ADDRESS_2;
         if (imc_src == "Iridium - Entity Label") return IMC_DCCL::ParamName::PN_IRIDIUM_ENTITY_LABEL;
         if (imc_src == "Iridium Modem 1 Power Channel ID") return IMC_DCCL::ParamName::PN_IRIDIUM_MODEM_1_POWER_CHANNEL_ID;
@@ -2946,16 +2946,16 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC15_ENTITY_LABEL) return "ADC15 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC15_MESSAGE) return "ADC15 - Message";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC1_CONVERSION) return "ADC1 - Conversion";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ADC1_ENTITY_LABEL) return "ADC1 - Entity Label";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ADC1_ENTITY_LABEL_1) return "ADC1 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC1_MESSAGE) return "ADC1 - Message";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC2_CONVERSION) return "ADC2 - Conversion";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ADC2_ENTITY_LABEL) return "ADC2 - Entity Label";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ADC2_ENTITY_LABEL_1) return "ADC2 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC2_MESSAGE) return "ADC2 - Message";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC3_CONVERSION) return "ADC3 - Conversion";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC3_ENTITY_LABEL) return "ADC3 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC3_MESSAGE) return "ADC3 - Message";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC4_CONVERSION) return "ADC4 - Conversion";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ADC4_ENTITY_LABEL) return "ADC4 - Entity Label";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ADC4_ENTITY_LABEL_1) return "ADC4 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC4_MESSAGE) return "ADC4 - Message";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC5_CONVERSION) return "ADC5 - Conversion";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC5_ENTITY_LABEL) return "ADC5 - Entity Label";
@@ -2972,13 +2972,13 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC9_CONVERSION) return "ADC9 - Conversion";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC9_ENTITY_LABEL) return "ADC9 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC9_MESSAGE) return "ADC9 - Message";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_ENTITY_LABEL_1) return "ADC 1 - Entity Label";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_ENTITY_LABEL) return "ADC 1 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_FIXED_GAIN) return "ADC 1 - Fixed Gain";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_FIXED_GAIN_VAL) return "ADC 1 - Fixed Gain Value";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_IS_ACTIVE) return "ADC 1 - Is Active";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_MAXIMUM_VAL) return "ADC 1 - Maximum Value";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_1_MINIMUM_VAL) return "ADC 1 - Minimum Value";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ADC_2_ENTITY_LABEL_1) return "ADC 2 - Entity Label";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ADC_2_ENTITY_LABEL) return "ADC 2 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_2_FIXED_GAIN) return "ADC 2 - Fixed Gain";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_2_FIXED_GAIN_VAL) return "ADC 2 - Fixed Gain Value";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_2_IS_ACTIVE) return "ADC 2 - Is Active";
@@ -2990,7 +2990,7 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_3_IS_ACTIVE) return "ADC 3 - Is Active";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_3_MAXIMUM_VAL) return "ADC 3 - Maximum Value";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_3_MINIMUM_VAL) return "ADC 3 - Minimum Value";
-        if (dccl_src == IMC_DCCL::ParamName::PN_ADC_4_ENTITY_LABEL_1) return "ADC 4 - Entity Label";
+        if (dccl_src == IMC_DCCL::ParamName::PN_ADC_4_ENTITY_LABEL) return "ADC 4 - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_4_FIXED_GAIN) return "ADC 4 - Fixed Gain";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_4_FIXED_GAIN_VAL) return "ADC 4 - Fixed Gain Value";
         if (dccl_src == IMC_DCCL::ParamName::PN_ADC_4_IS_ACTIVE) return "ADC 4 - Is Active";
@@ -3293,8 +3293,8 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_DATA_GAIN) return "Data Gain";
         if (dccl_src == IMC_DCCL::ParamName::PN_DATA_POINTS) return "Data Points";
         if (dccl_src == IMC_DCCL::ParamName::PN_DATA_PORT) return "Data Port";
-        if (dccl_src == IMC_DCCL::ParamName::PN_DATA_RATE) return "Data Rate";
-        if (dccl_src == IMC_DCCL::ParamName::PN_DATA_RATE_1) return "Data rate";
+        if (dccl_src == IMC_DCCL::ParamName::PN_DATA_RATE) return "Data rate";
+        if (dccl_src == IMC_DCCL::ParamName::PN_DATA_RATE_1) return "Data Rate";
         if (dccl_src == IMC_DCCL::ParamName::PN_DATA_SAMPLING_FREQUENCY) return "Data sampling frequency";
         if (dccl_src == IMC_DCCL::ParamName::PN_DATA_TIMEOUT) return "Data Timeout";
         if (dccl_src == IMC_DCCL::ParamName::PN_DAYS_FORWARD) return "Days Forward";
@@ -3743,8 +3743,8 @@ std::string decodeParamName(const uint16_t& dccl_src)
         if (dccl_src == IMC_DCCL::ParamName::PN_INVERT_ORIENTATION_ANGLE) return "Invert Orientation Angle";
         if (dccl_src == IMC_DCCL::ParamName::PN_IN_MISSION_TIMEOUT) return "In Mission Timeout";
         if (dccl_src == IMC_DCCL::ParamName::PN_IO_PORT_DEVICE) return "IO Port - Device";
-        if (dccl_src == IMC_DCCL::ParamName::PN_IPV4_ADDRESS) return "IPV4 Address";
-        if (dccl_src == IMC_DCCL::ParamName::PN_IPV4_ADDRESS_1) return "IPv4 - Address";
+        if (dccl_src == IMC_DCCL::ParamName::PN_IPV4_ADDRESS) return "IPv4 - Address";
+        if (dccl_src == IMC_DCCL::ParamName::PN_IPV4_ADDRESS_1) return "IPV4 Address";
         if (dccl_src == IMC_DCCL::ParamName::PN_IPV4_ADDRESS_2) return "IPv4 Address";
         if (dccl_src == IMC_DCCL::ParamName::PN_IRIDIUM_ENTITY_LABEL) return "Iridium - Entity Label";
         if (dccl_src == IMC_DCCL::ParamName::PN_IRIDIUM_MODEM_1_POWER_CHANNEL_ID) return "Iridium Modem 1 Power Channel ID";
