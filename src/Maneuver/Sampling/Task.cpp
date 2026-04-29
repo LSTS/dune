@@ -51,6 +51,19 @@ namespace Maneuver
         bindToManeuver<Task, IMC::Sampling>();
         bind<IMC::EstimatedState>(this);
         bind<IMC::SamplingAction>(this);
+        bind<IMC::RemoteActions>(this);
+      }
+
+      void
+      onResourceInitialization(void)
+      {
+        Maneuver::onResourceInitialization();
+
+        // Add button to pause and resume sampling.
+        IMC::RemoteActionsRequest action_register;
+        action_register.op = DUNE::IMC::RemoteActionsRequest::OP_REGISTER;
+        action_register.actions = "Pause Sampler=Button;Resume Sampler=Button";
+        dispatch(action_register);
       }
       
       void
@@ -104,6 +117,24 @@ namespace Maneuver
           return;
 
         m_sampler->onSamplingAction(msg);
+      }
+
+      void
+      consume(const IMC::RemoteActions* msg)
+      {
+        if (!m_sampler)
+          return;
+          
+        TupleList tuples(msg->actions);
+        if (tuples.get("Pause Sampler", 0))
+        {
+          m_sampler->onPause();
+        }
+
+        if (tuples.get("Resume Sampler", 0))
+        {
+          m_sampler->onResume();
+        }
       }
 
       void
