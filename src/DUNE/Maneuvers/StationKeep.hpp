@@ -86,6 +86,11 @@ namespace DUNE
       bool
       isMoving(void) const;
 
+      //! Set maneuver speed
+      //! @param[in] speed new speed to set
+      void
+      setSpeed(float speed, uint8_t speed_units);
+
     private:
       //! Compute the range to the point
       //! @param[in] state
