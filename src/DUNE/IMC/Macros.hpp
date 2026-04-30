@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: 47810ebdc3879861837e89177f26e6aa                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -572,6 +572,10 @@
 #define DUNE_IMC_COMPRESSEDIMAGE 702
 //! ImageTxSettings identification number.
 #define DUNE_IMC_IMAGETXSETTINGS 703
+//! Sampling identification number.
+#define DUNE_IMC_SAMPLING 722
+//! SamplingAction identification number.
+#define DUNE_IMC_SAMPLINGACTION 723
 //! RemoteState identification number.
 #define DUNE_IMC_REMOTESTATE 750
 //! Target identification number.
@@ -694,6 +698,8 @@
 #define DUNE_IMC_FREQUENCY 1017
 //! WaveSpectrumParameters identification number.
 #define DUNE_IMC_WAVESPECTRUMPARAMETERS 1018
+//! WaterFlow identification number.
+#define DUNE_IMC_WATERFLOW 1019
 //! GpioState identification number.
 #define DUNE_IMC_GPIOSTATE 2000
 //! GpioStateGet identification number.

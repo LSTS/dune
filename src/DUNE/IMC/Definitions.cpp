@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: 47810ebdc3879861837e89177f26e6aa                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -23382,6 +23382,180 @@ namespace DUNE
       IMC::toJSON(os__, "tsize", tsize, nindent__);
     }
 
+    Sampling::Sampling(void)
+    {
+      m_header.mgid = 722;
+      clear();
+    }
+
+    void
+    Sampling::clear(void)
+    {
+      lat = 0;
+      lon = 0;
+      z = 0;
+      z_units = 0;
+      speed = 0;
+      speed_units = 0;
+      sampling_type.clear();
+      sampling_args.clear();
+      custom.clear();
+    }
+
+    bool
+    Sampling::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Sampling& other__ = static_cast<const Sampling&>(msg__);
+      if (lat != other__.lat) return false;
+      if (lon != other__.lon) return false;
+      if (z != other__.z) return false;
+      if (z_units != other__.z_units) return false;
+      if (speed != other__.speed) return false;
+      if (speed_units != other__.speed_units) return false;
+      if (sampling_type != other__.sampling_type) return false;
+      if (sampling_args != other__.sampling_args) return false;
+      if (custom != other__.custom) return false;
+      return true;
+    }
+
+    int
+    Sampling::validate(void) const
+    {
+      if (lat > 1.5707963267948966) return false;
+      if (lon > 3.141592653589793) return false;
+      return true;
+    }
+
+    uint8_t*
+    Sampling::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(lat, ptr__);
+      ptr__ += IMC::serialize(lon, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      ptr__ += IMC::serialize(z_units, ptr__);
+      ptr__ += IMC::serialize(speed, ptr__);
+      ptr__ += IMC::serialize(speed_units, ptr__);
+      ptr__ += IMC::serialize(sampling_type, ptr__);
+      ptr__ += IMC::serialize(sampling_args, ptr__);
+      ptr__ += IMC::serialize(custom, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Sampling::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(lat, bfr__, size__);
+      bfr__ += IMC::deserialize(lon, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::deserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::deserialize(sampling_type, bfr__, size__);
+      bfr__ += IMC::deserialize(sampling_args, bfr__, size__);
+      bfr__ += IMC::deserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Sampling::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(lat, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(lon, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(z_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(speed_units, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(sampling_type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(sampling_args, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(custom, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    Sampling::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "lat", lat, nindent__);
+      IMC::toJSON(os__, "lon", lon, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
+      IMC::toJSON(os__, "z_units", z_units, nindent__);
+      IMC::toJSON(os__, "speed", speed, nindent__);
+      IMC::toJSON(os__, "speed_units", speed_units, nindent__);
+      IMC::toJSON(os__, "sampling_type", sampling_type, nindent__);
+      IMC::toJSON(os__, "sampling_args", sampling_args, nindent__);
+      IMC::toJSON(os__, "custom", custom, nindent__);
+    }
+
+    SamplingAction::SamplingAction(void)
+    {
+      m_header.mgid = 723;
+      clear();
+    }
+
+    void
+    SamplingAction::clear(void)
+    {
+      action = 0;
+      type = 0;
+      description.clear();
+    }
+
+    bool
+    SamplingAction::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::SamplingAction& other__ = static_cast<const SamplingAction&>(msg__);
+      if (action != other__.action) return false;
+      if (type != other__.type) return false;
+      if (description != other__.description) return false;
+      return true;
+    }
+
+    int
+    SamplingAction::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    SamplingAction::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(action, ptr__);
+      ptr__ += IMC::serialize(type, ptr__);
+      ptr__ += IMC::serialize(description, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    SamplingAction::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(action, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::deserialize(description, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    SamplingAction::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(action, bfr__, size__);
+      bfr__ += IMC::deserialize(type, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(description, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    SamplingAction::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "action", action, nindent__);
+      IMC::toJSON(os__, "type", type, nindent__);
+      IMC::toJSON(os__, "description", description, nindent__);
+    }
+
     RemoteState::RemoteState(void)
     {
       m_header.mgid = 750;
@@ -28399,6 +28573,74 @@ namespace DUNE
       IMC::toJSON(os__, "stdev_heading", stdev_heading, nindent__);
       IMC::toJSON(os__, "stdev_pitch", stdev_pitch, nindent__);
       IMC::toJSON(os__, "stdev_roll", stdev_roll, nindent__);
+    }
+
+    WaterFlow::WaterFlow(void)
+    {
+      m_header.mgid = 1019;
+      clear();
+    }
+
+    void
+    WaterFlow::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    WaterFlow::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::WaterFlow& other__ = static_cast<const WaterFlow&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    WaterFlow::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    WaterFlow::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    WaterFlow::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    WaterFlow::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    WaterFlow::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    WaterFlow::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp64_t>(val);
+    }
+
+    void
+    WaterFlow::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
     }
 
     GpioState::GpioState(void)

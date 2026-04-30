@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: 47810ebdc3879861837e89177f26e6aa                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -300,6 +300,8 @@ MESSAGE(658, TrexPlan)
 MESSAGE(660, Event)
 MESSAGE(702, CompressedImage)
 MESSAGE(703, ImageTxSettings)
+MESSAGE(722, Sampling)
+MESSAGE(723, SamplingAction)
 MESSAGE(750, RemoteState)
 MESSAGE(800, Target)
 MESSAGE(801, EntityParameter)
@@ -361,6 +363,7 @@ MESSAGE(1015, CurrentProfileCell)
 MESSAGE(1016, ADCPBeam)
 MESSAGE(1017, Frequency)
 MESSAGE(1018, WaveSpectrumParameters)
+MESSAGE(1019, WaterFlow)
 MESSAGE(2000, GpioState)
 MESSAGE(2001, GpioStateGet)
 MESSAGE(2002, GpioStateSet)

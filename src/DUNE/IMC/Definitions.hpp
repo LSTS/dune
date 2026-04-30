@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: 47810ebdc3879861837e89177f26e6aa                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -22082,6 +22082,198 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Sampling Maneuver.
+    class Sampling: public Maneuver
+    {
+    public:
+      //! Latitude WGS-84.
+      fp64_t lat;
+      //! Longitude WGS-84.
+      fp64_t lon;
+      //! Z Reference.
+      fp32_t z;
+      //! Z Units.
+      uint8_t z_units;
+      //! Speed.
+      fp32_t speed;
+      //! Speed Units.
+      uint8_t speed_units;
+      //! Sampling Type.
+      std::string sampling_type;
+      //! Sampling Arguments.
+      std::string sampling_args;
+      //! Custom settings for maneuver.
+      std::string custom;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 722;
+      }
+
+      Sampling(void);
+
+      Sampling*
+      clone(void) const
+      {
+        return new Sampling(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Sampling::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Sampling";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 26;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(sampling_type) + IMC::getSerializationSize(sampling_args) + IMC::getSerializationSize(custom);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Sampling Action.
+    class SamplingAction: public Message
+    {
+    public:
+      //! Action.
+      enum ActionEnum
+      {
+        //! Report.
+        SA_REPORT = 0,
+        //! Command.
+        SA_COMMAND = 1
+      };
+
+      //! Type.
+      enum TypeEnum
+      {
+        //! State Idle.
+        SAT_STATE_IDLE = 0,
+        //! State Starting.
+        SAT_STATE_STARTING = 1,
+        //! State Stopping.
+        SAT_STATE_STOPPING = 2,
+        //! State Paused.
+        SAT_STATE_PAUSED = 3,
+        //! State Resuming.
+        SAT_STATE_RESUMING = 4,
+        //! State Sampling.
+        SAT_STATE_SAMPLING = 5,
+        //! State Error.
+        SAT_STATE_ERROR = 6,
+        //! Command Query State.
+        SAT_CMD_QUERY_STATE = 7,
+        //! Command Start.
+        SAT_CMD_START = 8,
+        //! Command Stop.
+        SAT_CMD_STOP = 9,
+        //! Command Pause.
+        SAT_CMD_PAUSE = 10,
+        //! Command Resume.
+        SAT_CMD_RESUME = 11
+      };
+
+      //! Action.
+      uint8_t action;
+      //! Type.
+      uint8_t type;
+      //! Description.
+      std::string description;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 723;
+      }
+
+      SamplingAction(void);
+
+      SamplingAction*
+      clone(void) const
+      {
+        return new SamplingAction(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return SamplingAction::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "SamplingAction";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 2;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(description);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Remote State.
     class RemoteState: public Message
     {
@@ -26793,6 +26985,73 @@ namespace DUNE
       {
         return 108;
       }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Water Flow.
+    class WaterFlow: public Message
+    {
+    public:
+      //! Value.
+      fp64_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 1019;
+      }
+
+      WaterFlow(void);
+
+      WaterFlow*
+      clone(void) const
+      {
+        return new WaterFlow(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return WaterFlow::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "WaterFlow";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 8;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
