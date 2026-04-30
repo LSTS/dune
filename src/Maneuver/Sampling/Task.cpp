@@ -39,8 +39,6 @@ namespace Maneuver
 
     struct Task: public DUNE::Maneuvers::Maneuver
     {
-      //! Sampling maneuver specification.
-      IMC::Sampling m_maneuver;
       //! Sampler handle.
       std::unique_ptr<BasicSampler> m_sampler;
 
@@ -124,7 +122,7 @@ namespace Maneuver
       {
         if (!m_sampler)
           return;
-          
+
         TupleList tuples(msg->actions);
         if (tuples.get("Pause Sampler", 0))
         {
