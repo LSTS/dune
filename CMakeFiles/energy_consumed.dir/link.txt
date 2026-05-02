@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/energy_consumed.dir/programs/energy_consumed.cpp.o  -o energy_consumed libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 
