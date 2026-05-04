@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: 396fd28e5e56f112d9bfa1e137b908a2                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_BITFIELDS_HPP_INCLUDED_
@@ -71,6 +71,8 @@ namespace DUNE
       CL_VELOCITY = 0x00001000,
       //! Throttle Control.
       CL_THROTTLE = 0x00002000,
+      //! Hovering Control.
+      CL_HOVERING = 0x00004000,
       //! Unspecified External Control.
       CL_EXTERNAL = 0x40000000,
       //! Non-overridable control.
