@@ -2590,7 +2590,7 @@ message PlanDBState {
     optional float change_time = 3 [(dccl.field) = { min: 1775001600 max: 2080224000 precision: 1 }];
     optional uint32 change_sid = 4 [(dccl.field) = { min: 0 max: 65535}];
     optional string change_sname = 5 [(dccl.field).max_length = 30]; 
-    optional string md5 = 6 [(dccl.field).max_length = 40]; 
+    optional string md5 = 6 [(dccl.field).max_length = 32]; 
     repeated PlanDBInformation plans_info = 7 [(dccl.field) = { max_repeat: 100 }];
 }
 
@@ -2603,7 +2603,7 @@ message PlanDBInformation {
     optional float change_time = 3 [(dccl.field) = { min: 1775001600 max: 2080224000 precision: 1 }];
     optional uint32 change_sid = 4 [(dccl.field) = { min: 0 max: 65535}];
     optional string change_sname = 5 [(dccl.field).max_length = 30]; 
-    optional string md5 = 6 [(dccl.field).max_length = 40]; 
+    optional string md5 = 6 [(dccl.field).max_length = 32]; 
 }
 
 //PlanControl
