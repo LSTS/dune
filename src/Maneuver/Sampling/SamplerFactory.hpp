@@ -49,10 +49,10 @@ namespace Maneuver
       //! @param[in] maneuver sampling maneuver specification
       //! @return handle to the Sampler type.
       std::unique_ptr<BasicSampler>
-      factory(DUNE::Maneuvers::Maneuver* task, const DUNE::IMC::Sampling* maneuver)
+      factory(DUNE::Maneuvers::Maneuver* task, const DUNE::IMC::Sampling* maneuver, float timeout = 10.0f)
       {
         if (maneuver->sampling_type == "RedX")
-          return std::make_unique<RedX>(task, maneuver->sampling_args);
+          return std::make_unique<RedX>(task, maneuver->sampling_args, timeout);
         else
           throw std::runtime_error(DTR("Unknown sampler type."));
       }

@@ -52,7 +52,7 @@ namespace Maneuver
       //! Timeout timer.
       DUNE::Time::Counter<float> m_timeout_timer;
       //! Setup timeout.
-      const float m_setup_timeout = 10.0f;
+      float m_setup_timeout;
       //! Sampling timeout.
       const float m_sampling_timeout = 5.0f;
 
@@ -70,10 +70,11 @@ namespace Maneuver
       RedxState m_state;
 
       //! Default constructor.
-      RedX(DUNE::Maneuvers::Maneuver* task, std::string args):
+      RedX(DUNE::Maneuvers::Maneuver* task, std::string args, float setup_timeout = 10.0f):
         BasicSampler(task, "RedX"),
         m_skeep(nullptr),
         m_radius(-1.0f),
+        m_setup_timeout(setup_timeout),
         m_state(RS_MOVING)
       {
         m_args = DUNE::Utils::TupleList(args);
