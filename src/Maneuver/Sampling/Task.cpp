@@ -41,11 +41,18 @@ namespace Maneuver
     {
       //! Sampler handle.
       std::unique_ptr<BasicSampler> m_sampler;
+      float m_setup_timeout;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx),
-        m_sampler(nullptr)
+        m_sampler(nullptr),
+        m_setup_timeout(10.0f)
       {
+        param("Setup Timeout", m_setup_timeout)
+          .defaultValue("10.0")
+          .units(Units::Second)
+          .description("Time to wait for maneuver setup before aborting.");
+
         bindToManeuver<Task, IMC::Sampling>();
         bind<IMC::EstimatedState>(this);
         bind<IMC::SamplingAction>(this);
@@ -79,7 +86,7 @@ namespace Maneuver
       {
         try
         {
-          m_sampler = Sampler::factory(this, msg);
+          m_sampler = Sampler::factory(this, msg, m_setup_timeout);
         }
         catch(const std::runtime_error& e)
         {
