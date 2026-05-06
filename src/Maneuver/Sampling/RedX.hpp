@@ -152,7 +152,10 @@ namespace Maneuver
         {
           case RS_MOVING:
             if (msg->type != DUNE::IMC::SamplingAction::SAT_STATE_IDLE)
+            {
               m_task->signalError("Received unexpected sampling state report while moving to sampling point.");
+              return;
+            }
             break;
 
           case RS_SETUP:
@@ -169,6 +172,7 @@ namespace Maneuver
             {
               debug("Stopping sampling...");
               m_task->signalCompletion();
+              return;
             }
             else if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_SAMPLING)
             {
@@ -205,6 +209,7 @@ namespace Maneuver
             {
               debug("Sampling setup timeout, stopping...");
               m_task->signalError("Sampling setup timed out.");
+              return;
             }
             break;
 
@@ -213,6 +218,7 @@ namespace Maneuver
             {
               debug("Sampling timeout, stopping...");
               m_task->signalError("Sampling timed out.");
+              return;
             }
             break;
         
