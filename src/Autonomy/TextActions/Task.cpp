@@ -55,8 +55,6 @@ namespace Autonomy
       IMC::VehicleState* m_vstate;
       //! last received message
       IMC::TextMessage* m_last;
-      //! Transmission request id
-      int m_reqid;
       //! Plan database file.
       Path m_db_file;
       //! Emergency message generator.
@@ -81,7 +79,6 @@ namespace Autonomy
         m_pcs(NULL),
         m_vstate(NULL),
         m_last(nullptr),
-        m_reqid(0),
         m_emsg(nullptr)
       {
         param("Reply timeout", m_args.reply_timeout)
@@ -396,7 +393,6 @@ namespace Autonomy
         req.data_mode = TransmissionRequest::DMODE_TEXT;
         req.txt_data = text;
         req.deadline = Clock::getSinceEpoch() + m_args.reply_timeout;
-        req.req_id = ++m_reqid;
 
         // if request was sent over sms
         if (origin.find("+") == 0)

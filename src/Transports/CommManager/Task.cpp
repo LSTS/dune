@@ -35,8 +35,12 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Dccl headers.
+#include <dccl/CodecDCCL.hpp>
+
 // Local headers.
 #include "Router.hpp"
+#include "TransmissionFragments.hpp"
 
 namespace Transports
 {
@@ -46,8 +50,6 @@ namespace Transports
 
     struct Arguments
     {
-      //! Period, in seconds, between state report transmissions over iridium
-      int iridium_period;
       //! Enable CommManager to process and convert legacy message -> AcousticOperation
       bool enable_acoustic;
       //! Addresses Number - modem
@@ -60,47 +62,50 @@ namespace Transports
       std::string acoustic_addr_section;
       //! Send Iridium text messages as plain text
       bool iridium_plain_texts;
+      //! Payload size for iridium transmissions
+      uint32_t iridium_payload_size;
+      //! Fragment storage time to live (seconds)
+      uint32_t fragment_storage_time;
+      //! Enable encoding of IMC messages with DCCL protocol
+      bool dccl_enabled;
     };
 
     //! Config section from where to fetch emergency sms number
     const std::string c_sms_section = "Monitors.Emergency";
     //! Config field from where to fetch emergency sms number
     const std::string c_sms_field = "SMS Recipient Number";
-    //! Minimum period for iridium messages, in seconds
-    const int c_minimum_iridium_period = 300;
 
     struct Task: public DUNE::Tasks::Task
     {
       // Task arguments.
       Arguments m_args;
 
-      IMC::PlanControlState* m_pstate;
-      IMC::FuelLevel* m_fuel;
-      IMC::EstimatedState* m_estate;
-      IMC::VehicleState* m_vstate;
-      IMC::VehicleMedium* m_vmedium;
-      Time::Counter<float> m_iridium_timer;
-      Time::Counter<float> m_clean_timer;
       Time::Counter<float> m_retransmission_timer;
       std::list<IMC::TransmissionRequest*> m_retransmission_list;
-      int m_plan_chksum;
       Router m_router;
 
       std::map<uint16_t, IMC::AcousticOperation*> m_acoustic_requests;
 
+      //! Map of Transmission Request ID to its corresponding fragments and states
+      std::map<uint16_t, TransmissionFragments*> m_fragments_map;
+      //! Map of fragment id to Transmission Request ID
+      std::map<uint8_t, uint16_t> m_frag_id_to_req_id;
+
+      // DCCL
+      IMCDCCL::CodecDCCL m_codec_dccl;
+
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_pstate(NULL),
-        m_fuel(NULL),
-        m_estate(NULL),
-        m_vstate(NULL),
-        m_vmedium(NULL),
-        m_plan_chksum(0),
-        m_router(this)
+        m_router(this),
+        m_codec_dccl(this)
       {
         param("Iridium - Entity Label", m_args.iridium_label)
             .defaultValue("GSM")
             .description("Entity label of Iridium modem");
+
+        param("Iridium - Payload Size", m_args.iridium_payload_size)
+            .defaultValue("259")
+            .description("Maximum size of iridium payload messages in bytes.");
 
         param("GSM - Entity Label", m_args.gsm_label)
             .defaultValue("Iridium Modem")
@@ -114,10 +119,6 @@ namespace Transports
             .defaultValue("Evologics Addresses")
             .description("Name of the configuration section with acoustic modem addresses");
 
-        param("Iridium Reports Period", m_args.iridium_period)
-            .description("Period, in seconds, between transmission of states via Iridium. Value of 0 disables transmission.")
-            .defaultValue("300");
-
         param("Process AcousticOperation Messages", m_args.enable_acoustic)
             .description("Enable CommManager to process and convert legacy message -> AcousticOperation")
             .defaultValue("true");
@@ -126,35 +127,38 @@ namespace Transports
             .description("Send Iridium text messages as plain text (and not IMC)")
             .defaultValue("1");
 
+        param("Fragment Storage Time", m_args.fragment_storage_time)
+            .minimumValue("0")
+            .defaultValue("1800")
+            .units(Units::Second)
+            .description("Represents the amount of time a message is valid for retransmission. "
+                         "If set to 0, retransmission requests are not allowed.");
+
+        param("DCCL Encoding", m_args.dccl_enabled)
+            .defaultValue("false")
+            .description("Enable encoding of IMC messages with DCCL protocol");
+
         bind<IMC::AcousticOperation>(this);
         bind<IMC::AcousticStatus>(this);
         bind<IMC::Announce>(this);
-        bind<IMC::EstimatedState>(this);
-        bind<IMC::FuelLevel>(this);
         bind<IMC::IridiumTxStatus>(this);
-        bind<IMC::PlanControlState>(this);
-        bind<IMC::PlanSpecification>(this);
+        bind<IMC::MessagePartControl>(this);
         bind<IMC::RSSI>(this);
         bind<IMC::Sms>(this);
         bind<IMC::SmsStatus>(this);
         bind<IMC::TCPStatus>(this);
         bind<IMC::TransmissionRequest>(this);
-        bind<IMC::VehicleState>(this);
         bind<IMC::VehicleMedium>(this);
-        bind<IMC::StateReport>(this);
 
-        m_clean_timer.setTop(3);
         m_retransmission_timer.setTop(1);
       }
 
       void
       onResourceRelease(void)
       {
-        Memory::clear(m_fuel);
-        Memory::clear(m_pstate);
-        Memory::clear(m_vstate);
-        Memory::clear(m_estate);
-        Memory::clear(m_vmedium);
+        for (auto& it : m_fragments_map)
+          Memory::clear(it.second);
+        m_fragments_map.clear();
       }
 
       //! Initialize resources and configure modem
@@ -220,47 +224,6 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
-        if(paramChanged(m_args.iridium_period))
-          m_iridium_timer.setTop(0);
-      }
-
-      void
-      consume(const IMC::PlanControlState* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        Memory::replace(m_pstate, new IMC::PlanControlState(*msg));
-
-        std::string str = msg->plan_id + "|Man:" + msg->man_id;
-        m_plan_chksum = CRC16::compute((uint8_t*)str.data(), str.size());
-      }
-
-      void
-      consume(const IMC::FuelLevel* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        Memory::replace(m_fuel, new IMC::FuelLevel(*msg));
-      }
-
-      void
-      consume(const IMC::EstimatedState* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        Memory::replace(m_estate, new IMC::EstimatedState(*msg));
-      }
-
-      void
-      consume(const IMC::VehicleState* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        Memory::replace(m_vstate, new IMC::VehicleState(*msg));
       }
 
       void
@@ -268,20 +231,7 @@ namespace Transports
       {
         if (msg->getSource() != getSystemId())
           return;
-
-        Memory::replace(m_vmedium, new IMC::VehicleMedium(*msg));
         m_router.process(msg);
-      }
-
-      void
-      consume(const IMC::PlanSpecification* msg)
-      {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        std::string str = msg->plan_id + "|Man:" + msg->start_man_id;
-        m_plan_chksum = CRC16::compute((uint8_t*)str.data(), str.size());
-
       }
 
       void
@@ -316,38 +266,100 @@ namespace Transports
           if (req->comm_mean != IMC::TransmissionRequest::CMEAN_SATELLITE)
             return;
 
-          switch (msg->status)
+          // Check if its fragmented message
+          if (isKnownFragment(req))
           {
-            case (IMC::IridiumTxStatus::TXSTATUS_QUEUED):
-              m_router.answer(
-                  req, "Message has been queued for Satellite transmission.",
-                  IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
-              break;
-            case (IMC::IridiumTxStatus::TXSTATUS_TRANSMIT):
-              m_router.answer(req, "Message is being transmitted.",
-                              IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
-              break;
-            case (IMC::IridiumTxStatus::TXSTATUS_OK):
-              m_router.answer(req, "Message has been sent via Iridium.",
-                              IMC::TransmissionStatus::TSTAT_SENT);
-              Memory::clear(req);
-              tr_list.erase(msg->req_id);
-              break;
-            case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
-              m_router.answer(req, "Error while trying to transmit message.",
-                              IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              m_retransmission_list.push_back(req->clone());
-              Memory::clear(req);
-              tr_list.erase(msg->req_id);
-              break;
-            case (IMC::IridiumTxStatus::TXSTATUS_EXPIRED):
-              m_router.answer(req, "Timeout while trying to transmit message.",
-                              IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-              Memory::clear(req);
-              tr_list.erase(msg->req_id);
-              break;
-            default:
-              break;
+            // Collect fragment status
+            TransmissionFragments* fragments = m_fragments_map[req->req_id];
+            uint8_t frag_num = getFragmentNumber(req);
+
+            switch (msg->status)
+            {
+              case (IMC::IridiumTxStatus::TXSTATUS_QUEUED):
+                fragments->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+
+                if (fragments->isTransmissionInProgress())
+                {
+                  m_router.answer(fragments->getOriginalTransmissionRequest(), 
+                                  "All fragments have been queued for Satellite transmission.",
+                                  IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+                }
+                
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_TRANSMIT):
+                fragments->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+
+                if (fragments->isTransmissionInProgress())
+                {
+                  m_router.answer(fragments->getOriginalTransmissionRequest(),
+                                  "All fragments have been queued for Satellite transmission.",
+                                  IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+                }
+
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_OK):
+                fragments->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_SENT);
+
+                if (fragments->isTransmissionComplete())
+                {
+                  m_router.answer(fragments->getOriginalTransmissionRequest(),
+                                  "All fragments have been sent via Iridium.",
+                                  IMC::TransmissionStatus::TSTAT_SENT);
+                }
+
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
+                fragments->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+                m_retransmission_list.push_back(req->clone());
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_EXPIRED):
+                fragments->setFragmentStatus(frag_num, IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              default:
+                break;
+            }
+          }
+          else
+          {
+            switch (msg->status)
+            {
+              case (IMC::IridiumTxStatus::TXSTATUS_QUEUED):
+                m_router.answer(
+                    req, "Message has been queued for Satellite transmission.",
+                    IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_TRANSMIT):
+                m_router.answer(req, "Message is being transmitted.",
+                                IMC::TransmissionStatus::TSTAT_IN_PROGRESS);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_OK):
+                m_router.answer(req, "Message has been sent via Iridium.",
+                                IMC::TransmissionStatus::TSTAT_SENT);
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_ERROR):
+                m_router.answer(req, "Error while trying to transmit message.",
+                                IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+                m_retransmission_list.push_back(req->clone());
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              case (IMC::IridiumTxStatus::TXSTATUS_EXPIRED):
+                m_router.answer(req, "Timeout while trying to transmit message.",
+                                IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+                Memory::clear(req);
+                tr_list.erase(msg->req_id);
+                break;
+              default:
+                break;
+            }
           }
         }
       }
@@ -676,31 +688,66 @@ namespace Transports
       }
 
       void
+      consume(const IMC::MessagePartControl* msg)
+      {
+        // if (msg->getSource() == getSystemId())
+        // {
+        //   switch (msg->op)
+        //   {
+        //   case IMC::MessagePartControl::OP_REQUEST_RETRANSMIT:
+        //     sendIridiumMsg(msg);
+        //     break;
+          
+        //   default:
+        //     break;
+        //   }
+          
+        //   return;
+        // }
+
+        if (msg->op != IMC::MessagePartControl::OP_REQUEST_RETRANSMIT)
+          return;
+
+        if (m_args.fragment_storage_time == 0)
+          return;
+
+        if (msg->frag_ids.empty())
+          return;
+
+        std::map<uint8_t, uint16_t>::iterator frag_it = m_frag_id_to_req_id.find(msg->uid);
+        if (frag_it == m_frag_id_to_req_id.end())
+          return;
+        std::map<uint16_t, TransmissionFragments*>::iterator it = m_fragments_map.find(frag_it->second);
+        if (it == m_fragments_map.end())
+          return;
+        std::vector<IMC::TransmissionRequest> frags = it->second->getRetransmissionList(msg->frag_ids);
+
+        // Resent fragments keep original message ID
+        for (auto& frag: frags)
+          consume(&frag);
+        it->second->resetExpirationTimer();
+      }
+
+      void
       consume(const IMC::TransmissionRequest* msg)
       {
         if (msg->getDestination() != getSystemId())
           return;
 
+        IMC::TransmissionRequest req = *msg;
+        if (m_args.dccl_enabled && m_codec_dccl.isAvailable())
+          req = compressMessage(&req);
+
         switch (msg->comm_mean)
         {
           case (IMC::TransmissionRequest::CMEAN_SATELLITE):
-            m_router.sendViaSatellite(msg, m_args.iridium_plain_texts);
+            {
+              std::vector<IMC::TransmissionRequest> tx_list = fragmentMessage(&req, m_args.iridium_payload_size);
+              for (auto tx_msg : tx_list)
+                m_router.sendViaSatellite(&tx_msg, m_args.iridium_plain_texts);
+            }
             break;
           case (IMC::TransmissionRequest::CMEAN_GSM):
-            if (msg->destination.empty() || msg->destination == "broadcast") 
-            {
-              IMC::TransmissionRequest req = *msg->clone();
-              std::vector<std::string> recipients;
-              m_ctx.config.get(c_sms_section, c_sms_field, "", recipients);
-
-              for(auto recipient : recipients)
-              {
-                req.destination = recipient;
-                req.req_id = m_router.createInternalId();
-              }
-              m_router.sendViaGSM(&req);
-            }
-            else
               m_router.sendViaGSM(msg);
             break;
           case (IMC::TransmissionRequest::CMEAN_ACOUSTIC):
@@ -813,98 +860,184 @@ namespace Transports
         dispatch(tx);
       }
 
-      //Conversion from AcousticOperation to AcousticRequest Message
-      void
-      consume(const IMC::StateReport* msg)
+      IMC::TransmissionRequest
+      compressMessage(const IMC::TransmissionRequest* msg)
       {
-        if (msg->getSource() == getSystemId())
-          return;
+        if (msg->comm_mean != IMC::TransmissionRequest::CMEAN_SATELLITE)
+          return *msg;
+        
+        if (msg->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
+          return *msg;
+        
+        if (msg->msg_data.isNull())
+          return *msg;
 
-        IMC::AssetReport report;
-        report.name = resolveSystemId(msg->getSource());
+        // Get message content
+        IMC::TransmissionRequest req = *msg;
+        IMC::Message* inlinemsg = req.msg_data.get();
+        
+        // Encode message using DCCL
+        std::string encoded_string = m_codec_dccl.encodeDCCL(inlinemsg);
 
-        if (report.name == "unknown")
-          return;
+        if (encoded_string.empty())
+          return *msg;
 
-        report.report_time = msg->stime;
-        report.medium = IMC::AssetReport::RM_SATELLITE;
-        report.lat = msg->latitude;
-        report.lon = msg->longitude;
-        report.depth = msg->depth == 0xFFFF ? -1 : msg->depth / 10.0;
-        report.alt = msg->altitude == 0xFFFF ? -1 : msg->altitude / 10.0;
-        report.sog = msg->speed / 100.0;
-        report.cog = msg->heading / 65535.0 * Math::c_two_pi;
+        req.raw_data.assign(encoded_string.begin(), encoded_string.end());
 
-        dispatch(report);
+        // Remove original message content
+        req.msg_data.clear();
+
+        // Set data mode to raw data
+        req.data_mode = IMC::TransmissionRequest::DMODE_RAW;
+
+        return req;
       }
 
-      IMC::StateReport*
-      produceReport()
+      std::vector<IMC::TransmissionRequest>
+      fragmentMessage(const IMC::TransmissionRequest* msg, uint32_t payload_size)
       {
-        if (m_vstate == NULL || m_estate == NULL)
-          return NULL;
-
-        IMC::EstimatedState* estate = new IMC::EstimatedState(*m_estate);
-        IMC::VehicleState* vstate = new IMC::VehicleState(*m_vstate);
-
-        IMC::StateReport* report = new IMC::StateReport();
-        report->stime = (int)Clock::getSinceEpoch();
-
-        // get current position
-        double lat = estate->lat, lon = estate->lon;
-        WGS84::displace(estate->x, estate->y, &lat, &lon);
-        lat = Angles::degrees(lat);
-        lon = Angles::degrees(lon);
-
-        report->latitude = (fp32_t)lat;
-        report->longitude = (fp32_t)lon;
-
-        if (estate->depth != -1)
-          report->depth = Math::roundToInteger(estate->depth * 10.0f);
-        else
-          report->depth = 0xFFFF;
-
-        if (estate->alt != -1)
-          report->altitude = Math::roundToInteger(estate->alt * 10.0f);
-        else
-          report->altitude = 0xFFFF;
-
-        report->speed = Math::roundToInteger(estate->u * 100.0f);
-
-        double ang = Angles::normalizeRadian(estate->psi);
-        if (ang < 0)
-          ang += Math::c_two_pi;
-        report->heading = Math::roundToInteger((ang / c_two_pi) * 65535);
-
-        if (m_fuel != NULL)
-          report->fuel = Math::roundToInteger(m_fuel->value);
-
-        switch (vstate->op_mode)
+        if (!TransmissionFragments::needsFragmentation(msg, payload_size))
+          return std::vector<IMC::TransmissionRequest>{*msg};
+        
+        TransmissionFragments* tx_frag = new TransmissionFragments(msg, payload_size, m_args.fragment_storage_time);
+        std::vector<IMC::TransmissionRequest> transmission_list = tx_frag->getTransmissionList();
+        if (m_args.fragment_storage_time > 0)
         {
-          case VehicleState::VS_SERVICE:
-            report->exec_state = -1;
-            break;
-          case VehicleState::VS_BOOT:
-            report->exec_state = -2;
-            break;
-          case VehicleState::VS_CALIBRATION:
-            report->exec_state = -3;
-            report->plan_checksum = m_plan_chksum;
-            break;
-          default:
-            if (m_pstate != NULL)
-            {
-              report->exec_state = Math::roundToInteger(m_pstate->plan_progress);
-              report->plan_checksum = m_plan_chksum;
-            }
-            else
-              report->exec_state = -2;
-            break;
+          m_fragments_map[msg->req_id] = tx_frag;
+          m_frag_id_to_req_id[tx_frag->getFragmentsId()] = msg->req_id;
+          return transmission_list;
         }
 
-        Memory::clear(vstate);
-        Memory::clear(estate);
-        return report;
+        Memory::clear(tx_frag);
+        return transmission_list;
+      }
+
+      uint8_t
+      getFragmentNumber(const IMC::TransmissionRequest* msg)
+      {
+        if (m_fragments_map.empty())
+          throw std::runtime_error("No fragments stored.");
+        
+        if (msg->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
+          throw std::runtime_error("Message data mode is not inline message.");
+
+        const IMC::Message* inline_msg = msg->msg_data.get();
+        if (inline_msg == nullptr)
+          throw std::runtime_error("Message does not contain a MessagePart inline message.");
+        if (inline_msg->getId() != DUNE_IMC_MESSAGEPART)
+          throw std::runtime_error("Message does not contain a MessagePart inline message.");
+
+        const IMC::MessagePart* frags_msg = static_cast<const IMC::MessagePart*>(inline_msg);
+        return frags_msg->frag_number;
+      }
+
+      bool
+      isKnownFragment(const IMC::TransmissionRequest* msg)
+      {
+        if (m_fragments_map.empty())
+          return false;
+        
+        if (msg->data_mode != IMC::TransmissionRequest::DMODE_INLINEMSG)
+          return false;
+
+        std::map<uint16_t, TransmissionFragments*>::iterator it = m_fragments_map.find(msg->req_id);
+        return it != m_fragments_map.end();
+      }
+
+      void
+      clearFragmentsTimeouts()
+      {
+        auto it = m_fragments_map.begin();
+        while (it != m_fragments_map.end())
+        {
+          if (!it->second->isTransmissionTimedOut() && it->second->isDeadlineExpired())
+          {
+            it->second->setTransmissionAsTimedout();
+
+            if (it->second->isTransmissionFailed())
+            {
+              const IMC::TransmissionRequest* original_request = it->second->getOriginalTransmissionRequest();
+              const std::string failed_fragments_str = it->second->getFailedFragments();
+              std::string info = String::str("Fragments {%s} of Transmission Request %d are expired by %f seconds.", 
+                                              failed_fragments_str.c_str(), 
+                                              original_request->req_id, 
+                                              original_request->deadline - Clock::getSinceEpoch());
+              inf("%s", info.c_str());
+              m_router.answer(original_request, String::str("Fragments {%s} timedout", failed_fragments_str.c_str()), IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            }
+          }
+
+          if (it->second->areFragmentsExpired())
+          {
+            m_frag_id_to_req_id.erase(it->second->getFragmentsId());
+            Memory::clear(it->second);
+            it = m_fragments_map.erase(it);
+          }
+          else
+            ++it;
+        }
+      }
+
+      void
+      clearTransmissionTimeouts()
+      {
+        double time = Time::Clock::getSinceEpoch();
+        std::map<uint16_t, IMC::TransmissionRequest*>& tr_list = m_router.getList();
+        auto it = tr_list.begin();
+
+        while (it != tr_list.end())
+        {
+          if (it->second->deadline <= time)
+          {
+            // If it is a known fragment do not reply
+            // Fragment deadline is handled in clearFragmentsTimeout() method
+            if (!isKnownFragment(it->second))
+            {
+              inf("Transmission Request %d is expired by %f seconds", it->second->req_id, it->second->deadline - time);
+              m_router.answer(it->second, "Transmission timed out.",
+                              IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            }
+
+            Memory::clear(it->second);
+            it = tr_list.erase(it);
+          }
+          else
+            ++it;
+        }
+      }
+
+      void
+      sendRetransmissions()
+      {
+        if (m_retransmission_list.empty())
+          return;
+
+        if (!m_retransmission_timer.overflow())
+          return;
+        
+        double time = Time::Clock::getSinceEpoch();
+        for (auto& transm : m_retransmission_list)
+        {
+          // clear expired transmissions
+          if (transm->deadline <= time)
+          {
+            if (!isKnownFragment(transm))
+            {
+              inf("Transmission Request %d is expired by %f seconds", transm->req_id, transm->deadline - time);
+              m_router.answer(transm, "Retransmission timed out.",
+                              IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
+            }
+          }
+          else
+          {
+            // send retransmission
+            consume(transm);
+          }
+
+          delete transm;
+        }
+        m_retransmission_list.clear();
+        m_retransmission_timer.reset();
       }
 
       void
@@ -914,48 +1047,12 @@ namespace Transports
         {
           waitForMessages(1.0);
 
-          if (m_retransmission_timer.overflow())
-          {
-            while (!m_retransmission_list.empty())
-            {
-              consume(m_retransmission_list.front());
-              delete m_retransmission_list.front();
-              m_retransmission_list.pop_front();
-            }
-            m_retransmission_timer.reset();
-          }
+          // Clear timeouts for pending transmissions and fragments
+          clearTransmissionTimeouts();
+          clearFragmentsTimeouts();
 
-          if (m_clean_timer.overflow())
-          {
-            m_router.clearTimeouts();
-            m_clean_timer.reset();
-          }
-
-          if (m_args.iridium_period > 0 && m_iridium_timer.overflow())
-          {
-            if (m_vmedium != NULL && m_vmedium->medium == IMC::VehicleMedium::VM_WATER)
-            {
-              IMC::StateReport* msg = produceReport();
-              if (msg != NULL)
-              {
-                dispatch(msg);
-                inf("Requesting report transmission over Iridium.");
-                IMC::TransmissionRequest request;
-                request.setDestination (getSystemId());
-                request.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
-                request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
-                fp64_t ttl = std::max(c_minimum_iridium_period, m_args.iridium_period);
-                request.deadline = Time::Clock::getSinceEpoch() + ttl;
-                request.destination = "broadcast";
-                request.msg_data.set(msg);
-                request.req_id = m_router.createInternalId();
-                dispatch(request, DF_LOOP_BACK);
-
-                Memory::clear(msg);
-                m_iridium_timer.setTop(m_args.iridium_period);
-              }
-            }
-          }
+          // Send retransmissions
+          sendRetransmissions();
         }
       }
     };

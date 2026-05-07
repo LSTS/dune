@@ -48,7 +48,7 @@ namespace DUNE
       m_parent = parent;
     }
 
-    IMC::Message*
+    std::vector<char>
     FragmentedMessage::setFragment(const IMC::MessagePart* part)
     {
       // is this the first fragment?
@@ -69,7 +69,7 @@ namespace DUNE
         else
           m_parent->err(DTR("Invalid fragment received and it won't be processed."));
 
-        return NULL;
+        return std::vector<char>();
       }
 
       m_fragments[part->frag_number] = *part;
@@ -88,11 +88,11 @@ namespace DUNE
                       m_fragments[i].data.end());
         }
 
-        return IMC::Packet::deserialize((uint8_t*)&data[0], total_length);
+        return data;
       }
       else
       {
-        return 0;
+        return std::vector<char>();
       }
     }
 
