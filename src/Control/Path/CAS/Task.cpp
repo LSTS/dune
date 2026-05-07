@@ -159,8 +159,6 @@ namespace Control
         int m_avg;
         //! Dynamic obstacles state matrix.
         Math::Matrix m_dyn_obst_state; //Eigen::Matrix<double,-1,10> m_dyn_obst_state; //Math::Matrix m_dyn_obst_state;
-        //! Transmission request id.
-        uint16_t m_tx_req_id;
 
         //! Previous heading offset.
         double m_prev_psi_os;
@@ -212,7 +210,6 @@ namespace Control
           m_timestamp_obst(0.0),
           m_cost(0.0),
           m_avg(0),
-          m_tx_req_id(0),
           m_integral_controller(nullptr)
           // m_wind_dir(0.0),
           // m_wind_speed(0.0),
@@ -1419,7 +1416,6 @@ namespace Control
 
                 TransmissionRequest tr;
                 tr.setDestination(getSystemId());
-                tr.req_id = m_tx_req_id++;
                 tr.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
                 tr.data_mode = TransmissionRequest::DMODE_INLINEMSG;
                 tr.msg_data.set(*ais_vessel);

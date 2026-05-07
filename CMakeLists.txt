@@ -118,6 +118,7 @@ dune_option(NO_RTTI "Disable support for RTTI")
 dune_option(UEYE "Enable support for IDS uEye cameras")
 dune_option(H5CPP "Enable support for hdf5 format i/o using the h5cpp library")
 dune_option(DUNELEGACY "Disable compilation of C++17 features")
+dune_option(DCCL "Include DCCL library")
 
 # Internationalization.
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
@@ -466,7 +467,6 @@ if(TESTS)
     dune_test(${test})
   endforeach(test ${DUNE_TESTS_SOURCES})
 endif(TESTS)
-
 ##########################################################################
 #                                CDash                                   #
 ##########################################################################

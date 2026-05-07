@@ -50,11 +50,9 @@ namespace Transports
     class Router
     {
     public:
-      uint16_t m_reqid;
 
       Router(Task* parent)
       {
-        m_reqid=0,
         m_parent = parent;
       }
 
@@ -213,22 +211,10 @@ namespace Transports
         msg.comm_mean         = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
         msg.data_mode         = IMC::TransmissionRequest::DMODE_INLINEMSG;
         msg.destination       = destination;
-        msg.req_id            = createInternalId();
         msg.msg_data.set(hist);
 
         return msg;
 
-      }
-
-      uint16_t
-      createInternalId(){
-        if(m_reqid==0xFFFF){
-          m_reqid=0;
-        }
-        else{
-          m_reqid++;
-        }
-        return m_reqid;
       }
 
       void iridiumUpload(DataStore* store)
@@ -242,7 +228,6 @@ namespace Transports
         tr.data_mode            = IMC::TransmissionRequest::DMODE_INLINEMSG;
         tr.msg_data.set(data->clone());
         tr.deadline             = Time::Clock::getSinceEpoch() + 120;
-        tr.req_id               = createInternalId();
         m_parent->inf("Requesting upload of %u samples via Iridium.", (uint32_t) data->data.size());
         m_parent->dispatch(tr);
         Memory::clear(data);        

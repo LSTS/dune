@@ -109,8 +109,6 @@ namespace UserInterfaces
       Command* m_cmd;
       //! Time of last acoustic operation dispatch.
       double m_last_acop;
-      //! Sequence number.
-      uint16_t m_reqid;
       //! Progress bar.
       unsigned m_prog_bar;
       //! Supported umodem system names.
@@ -123,7 +121,6 @@ namespace UserInterfaces
         m_power_down_now(false),
         m_cmd(0),
         m_last_acop(-1.0),
-        m_reqid(0),
         m_prog_bar(0)
       {
         // Define configuration parameters.
@@ -310,23 +307,11 @@ namespace UserInterfaces
         tr.setDestination(getSystemId());
         tr.destination     = sys;
         tr.deadline =  Time::Clock::getSinceEpoch() + 10;
-        tr.req_id          = createInternalId();
         tr.comm_mean       = IMC::TransmissionRequest::CMEAN_ACOUSTIC;
         tr.data_mode       = code;
 
         dispatch(&tr, DF_LOOP_BACK);
 
-      }
-
-      uint16_t
-      createInternalId(){
-        if(m_reqid==0xFFFF){
-          m_reqid=0;
-        }
-        else{
-          m_reqid++;
-        }
-        return m_reqid;
       }
 
 

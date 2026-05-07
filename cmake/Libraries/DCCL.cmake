@@ -1,5 +1,5 @@
 ############################################################################
-# Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -24,36 +24,36 @@
 # https://github.com/LSTS/dune/blob/master/LICENCE.md and                  #
 # http://ec.europa.eu/idabc/eupl.html.                                     #
 ############################################################################
+# Author: Lucrezia Bernacchi                                               #                            
+############################################################################
 
-[Monitors.OperationalLimits]
-Enabled                                 = Never
-Entity Label                            = Operational Limits
+if(DCCL)
+  find_package(Protobuf REQUIRED)
+  find_library(DCCL_LIBRARY NAMES dccl)
+  message(STATUS "DCCL Library found:  ${DCCL_LIBRARY}")
+  if(${DCCL_LIBRARY} STRLESS "libdccl.so")
+    # DCCL runtime present. The DUNE-specific codec sources are vendored under
+    # vendor/libraries/dccl.
+    set(DUNE_SYS_HAS_DCCL 1 CACHE INTERNAL "DCCL library")
+    dune_add_lib(dccl)
+  else()
+    # dccl not found on the system.
+    message(SEND_ERROR "DCCL not found on the system.")
+    set(DUNE_SYS_HAS_DCCL 0 CACHE INTERNAL "DCCL library")
+  endif()
 
-[Monitors.Clock]
-Enabled                                 = Hardware
-Entity Label                            = Clock
-Minimum GPS Fixes                       = 30
-Maximum Clock Offset                    = 2
-Boot Synchronization Timeout            = 60
-Hardware Clock Synchronization Command  = hwclock -w
-
-[Monitors.Entities]
-Enabled                                 = Always
-Entity Label                            = Entity Monitor
-Default Monitoring                      = Autopilot,
-                                          Daemon
-
-[Monitors.Medium]
-Enabled                                 = Always
-Execution Frequency                     = 2
-Entity Label                            = Medium
-Vehicle Type                            = UAV
-Initialization Time                     = 15.0
-Air Speed Threshold                     = 12.5
-Altitude Threshold                      = 2.5
-Vehicle Sub-Type                        = FixedWing
-
-[Monitors.StateReport]
-Enabled                                 = Always
-Entity Label                            = State Reporter
-Iridium Reports Period                  = 600
+  find_library(PROTOBUF_LIBRARY NAMES protobuf)
+  message(STATUS "Protobuf Library found:  ${PROTOBUF_LIBRARY}")
+  if(${PROTOBUF_LIBRARY} STRLESS "libprotobuf.so")
+    # protobuf present
+    set(DUNE_SYS_HAS_PROTOBUF 1 CACHE INTERNAL "Protobuf library")
+    dune_add_lib(protobuf)
+  else()
+    # protobuf not found on the system.
+    message(SEND_ERROR "Protobuf not found on the system.")
+    set(DUNE_SYS_HAS_PROTOBUF 0 CACHE INTERNAL "Protobuf library")
+  endif() 
+else(DCCL)
+  set(DUNE_SYS_HAS_DCCL 0 CACHE INTERNAL "DCCL library")
+  set(DUNE_SYS_HAS_PROTOBUF 0 CACHE INTERNAL "Protobuf library")
+endif(DCCL)

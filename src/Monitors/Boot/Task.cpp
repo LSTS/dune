@@ -149,7 +149,6 @@ namespace Monitors
         request.deadline = Time::Clock::getSinceEpoch() + m_args.ttl;
         request.destination = "broadcast";
         request.msg_data.set(msg);
-        request.req_id = 0;
 
         dispatch(request);
         war("EntityState sent");
@@ -174,7 +173,6 @@ namespace Monitors
         request.deadline = Time::Clock::getSinceEpoch() + m_args.ttl;
         request.destination = "broadcast";
         request.txt_data = msg;
-        request.req_id = 0;
 
         dispatch(request);
       }
@@ -226,11 +224,9 @@ namespace Monitors
           return;
         }
 
-        request.req_id = 0;
         for (auto recipient : recipients)
         {
           request.destination = recipient;
-          request.req_id++;
           dispatch(request);
         }
       }
