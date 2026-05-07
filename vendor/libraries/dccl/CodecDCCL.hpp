@@ -47,7 +47,7 @@ namespace IMCDCCL
                 return decodeProtoMessage(encoded_string);
             }
             catch(std::runtime_error& e){
-                m_task->war("Unable to decode message with DCCL: %s", e.what());
+                m_task->trace("Unable to decode message with DCCL: %s", e.what());
                 return nullptr;
             }
             catch(...){
@@ -68,7 +68,7 @@ namespace IMCDCCL
                 return encodeProtoMessage(imc_msg); 
             }
             catch(std::runtime_error& e){
-                m_task->war("Unable to encode message with DCCL: %s", e.what());
+                m_task->trace("Unable to encode message with DCCL: %s", e.what());
                 return std::string();
             }
             catch(...){
@@ -103,7 +103,7 @@ namespace IMCDCCL
             //Header
             decodeHeader(src_dccl.msg_header(), *imc_msg);
 
-            m_task->war("DCCL message successfully decoded");
+            m_task->trace("DCCL message successfully decoded as type %s", imc_msg->getName());
             return imc_msg;
         }
 
@@ -123,8 +123,7 @@ namespace IMCDCCL
             std::string encoded_bytes;
             m_codec.encode(&encoded_bytes, dst_dccl); 
 
-            m_task->war("DCCL message successfully encoded");
-
+            m_task->trace("DCCL message successfully encoded as type %s", imc_msg->getName());
             return encoded_bytes;                              
         }
 #endif
