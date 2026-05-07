@@ -139,9 +139,7 @@ namespace Transports
         std::unique_ptr<DUNE::IMC::Message> decoded_msg = m_codec_dccl.decodeDCCL(encoded_bytes);
         if (decoded_msg != nullptr)
         {
-          debug("created DCCL message %s", decoded_msg->getName());
-          decoded_msg->setSource(msg->getSource());
-          decoded_msg->setDestination(msg->getDestination());
+          debug("Created DCCL message %s", decoded_msg->getName());
           dispatch(decoded_msg.get());
           m_incoming.erase(hash);
         }
