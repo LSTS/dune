@@ -248,8 +248,6 @@ namespace Transports
             if (decoded_msg != nullptr)
             {
               debug("Received DCCL message of type %s via Iridium.", decoded_msg->getName());
-              // decoded_msg->setSource(msg->source);
-              // decoded_msg->setDestination(m_args.iridium_destination);
               dispatch(decoded_msg.get(), DF_KEEP_SRC_EID);
               return;
             }
