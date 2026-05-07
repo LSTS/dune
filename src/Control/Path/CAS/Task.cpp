@@ -1489,7 +1489,6 @@ namespace Control
 
                 ilos_offset = m_integral_controller->update(new_track_pos.y, new_los_angle, m_new_track_bearing);
                 m_des_heading.value = new_los_angle + ilos_offset;
-                war("[Avoiding]");
               }
             }
             else
@@ -1500,7 +1499,7 @@ namespace Control
 
           //! Normalize angle
           m_des_heading.value = Angles::normalizeRadian(m_des_heading.value);
-          debug("CAS OFFSET: %.0f | ILOS OFFSET: %.3f | NEW COURSE NORMALIZED %.3f", Angles::degrees(m_psi_os), Angles::degrees(ilos_offset), Angles::degrees(m_des_heading.value));
+          debug("CAS OFFSET: %.0f | ILOS OFFSET: %.3f | NEW COURSE NORMALIZED: %.3f", Angles::degrees(m_psi_os), Angles::degrees(ilos_offset), Angles::degrees(m_des_heading.value));
           dispatch(m_des_heading);
         }
 
