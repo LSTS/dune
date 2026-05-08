@@ -817,7 +817,7 @@ namespace Transports
         std::string header;
         std::string body;
 
-        std::regex cmglRegex(R"delim(\+CMGL: (\d+),"[^"]*","([^"]*)",,"([^"]*)")delim");
+        std::regex cmglRegex(R"delim(\+CMGL:\s*(\d+),\s*"[^"]*",\s*"([^"]*)",\s*(?:"[^"]*"|),\s*"([^"]*)")delim");
         double time_sys = Clock::getSinceEpoch();
         double time_to_accept_sms = m_time_to_accept_sms * 3600.0; // Convert hours to seconds
         while (std::getline(stream, line))
