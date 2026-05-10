@@ -91,6 +91,8 @@ namespace Transports
       Arguments m_args;
       //! Message Filter
       MessageFilter m_filter;
+      //! Consumers for bound messages.
+      std::map<uint16_t, AbstractConsumer*> m_consumers;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -116,7 +118,8 @@ namespace Transports
         .defaultValue("");
 
         param("Transports", m_args.messages)
-        .defaultValue("");
+        .defaultValue("")
+        .description("List of messages to log. If empty, all messages will be logged.");
 
         param("Rate Limiters", m_args.rate_lims)
         .description("List of <Message>:<Frequency>");
@@ -141,16 +144,6 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        if (m_args.messages.empty())
-        {
-          std::vector<std::string> all_abbrevs;
-          IMC::Factory::getAbbrevs(all_abbrevs);
-          bind(this, all_abbrevs);
-          inf("Logging all messages");
-        }
-        else
-          bind(this, m_args.messages);
-
         //dispatch git version information.
         IMC::VersionInfo version_info;
         version_info.op = IMC::VersionInfo::OP_REPLY;
@@ -191,6 +184,44 @@ namespace Transports
         
         if (paramChanged(m_args.entities_flt))
           m_filter.setupEntities(m_args.entities_flt, this);
+
+        if (paramChanged(m_args.messages))
+        {
+          if (m_args.messages.empty())
+          {
+            std::vector<std::string> all_abbrevs;
+            IMC::Factory::getAbbrevs(all_abbrevs);
+            applyEntityParameter(&m_args.messages, all_abbrevs);
+            war("Logging all messages");
+          }
+
+          std::unordered_set<uint16_t> msgs_set;
+          for (const auto& msg : m_args.messages)
+            msgs_set.insert(IMC::Factory::getIdFromAbbrev(msg));
+
+          std::vector<uint16_t> removed_msgs;
+          for (auto it = m_consumers.begin(); it != m_consumers.end(); ++it)
+          {
+            if (msgs_set.find(it->first) == msgs_set.end())
+              removed_msgs.push_back(it->first);
+            else
+              msgs_set.erase(it->first);
+          }
+
+          for (auto msg : removed_msgs)
+          {
+            unbind(msg, m_consumers[msg]);
+            m_consumers.erase(msg);
+          }
+
+          if (!msgs_set.empty())
+          {
+            std::vector<uint16_t> new_msgs(msgs_set.begin(), msgs_set.end());
+            auto new_consumers = bind<Task, IMC::Message>(this, new_msgs);
+            for (auto it = new_consumers.begin(); it != new_consumers.end(); ++it)
+              m_consumers[it->first] = it->second;
+          }
+        }
       }
 
       void
