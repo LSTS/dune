@@ -29,6 +29,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Tasks/SimpleTransport.hpp>
 
 namespace Transports
 {

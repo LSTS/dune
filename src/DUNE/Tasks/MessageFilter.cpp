@@ -29,6 +29,8 @@
 // Author: José Braga                                                       *
 //***************************************************************************
 
+#include "MessageFilter.hpp"
+
 // DUNE headers.
 #include <DUNE/IMC/Factory.hpp>
 #include <DUNE/Time/Clock.hpp>
@@ -88,6 +90,11 @@ namespace DUNE
         stime = now;
       }
 
+      // Custom filter for message.
+      auto cfitr = m_custom_filters.find(mid);
+      if (cfitr != m_custom_filters.end())
+        return cfitr->second->filter(msg);
+      
       return false;
     }
 
@@ -156,6 +163,57 @@ namespace DUNE
             m_filtered[id][j] = UINT_MAX;
           }
         }
+      }
+    }
+
+    //! Setup custom filters.
+    //! @param[in] spec String specification.
+    void
+    MessageFilter::setupCustomFilters(const std::vector<std::string>& spec, Tasks::Task* task)
+    {
+      std::unordered_map<uint32_t, std::string> custom_filters;
+
+      for (const auto& filter : spec)
+      {
+        std::vector<std::string> parts;
+        DUNE::Utils::String::split(filter, ":", parts);
+
+        if (parts.empty() || parts.size() > 2)
+        {
+          DUNE_WRN("Message Filter", "invalid custom filter specification '" << filter << "'");
+          continue;
+        }
+
+        const std::string& filter_name = parts[0];
+        uint32_t filter_id = CustomMessageFilterFactory::getId(filter_name);
+
+        if (filter_id == 0)
+        {
+          DUNE_WRN("Message Filter", "unknown custom filter '" << filter_name << "'");
+          continue;
+        }
+
+        custom_filters.emplace(filter_id, parts.size() == 2 ? parts[1] : "");
+      }
+
+      for (auto it = m_custom_filters.begin(); it != m_custom_filters.end(); )
+      {
+        if (custom_filters.find(it->first) == custom_filters.end())
+          it = m_custom_filters.erase(it);
+        else
+          ++it;
+      }
+
+      for (const auto& filter : custom_filters)
+      {
+        const auto filter_id = filter.first;
+
+        if (m_custom_filters.find(filter_id) != m_custom_filters.end())
+          continue;
+
+        auto custom_filter = CustomMessageFilterFactory::produce(task, filter_id, filter.second);
+        if (custom_filter)
+          m_custom_filters.emplace(filter_id, std::move(custom_filter));
       }
     }
   }
