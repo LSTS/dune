@@ -2248,9 +2248,8 @@ message Goto {
 message ParameterValue{   
     option (dccl.msg) = { codec_version: 4 };
     oneof ParameterValueUnion{
-        float param_number = 1 [(dccl.field) = { min: -100000 max: 100000 precision: 1 }];
-        ParamValue param_enum = 2;
-        string param_string = 3 [(dccl.field).max_length = 20];
+        ParamValue param_enum = 1;
+        string param_string = 2 [(dccl.field).max_length = 20];
     }
 }
 
