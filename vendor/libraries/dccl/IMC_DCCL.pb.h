@@ -3878,10 +3878,10 @@ class Goto final :
 
   enum : int {
     kCustomFieldNumber = 11,
-    kTimeoutFieldNumber = 1,
     kLatFieldNumber = 2,
-    kLonFieldNumber = 3,
+    kTimeoutFieldNumber = 1,
     kZFieldNumber = 4,
+    kLonFieldNumber = 3,
     kZUnitsFieldNumber = 5,
     kSpeedFieldNumber = 6,
     kSpeedUnitsFieldNumber = 7,
@@ -3907,6 +3907,19 @@ class Goto final :
   std::string* _internal_mutable_custom();
   public:
 
+  // optional double lat = 2 [(.dccl.field) = {
+  bool has_lat() const;
+  private:
+  bool _internal_has_lat() const;
+  public:
+  void clear_lat();
+  double lat() const;
+  void set_lat(double value);
+  private:
+  double _internal_lat() const;
+  void _internal_set_lat(double value);
+  public:
+
   // optional uint32 timeout = 1 [(.dccl.field) = {
   bool has_timeout() const;
   private:
@@ -3920,32 +3933,6 @@ class Goto final :
   void _internal_set_timeout(uint32_t value);
   public:
 
-  // optional float lat = 2 [(.dccl.field) = {
-  bool has_lat() const;
-  private:
-  bool _internal_has_lat() const;
-  public:
-  void clear_lat();
-  float lat() const;
-  void set_lat(float value);
-  private:
-  float _internal_lat() const;
-  void _internal_set_lat(float value);
-  public:
-
-  // optional float lon = 3 [(.dccl.field) = {
-  bool has_lon() const;
-  private:
-  bool _internal_has_lon() const;
-  public:
-  void clear_lon();
-  float lon() const;
-  void set_lon(float value);
-  private:
-  float _internal_lon() const;
-  void _internal_set_lon(float value);
-  public:
-
   // optional float z = 4 [(.dccl.field) = {
   bool has_z() const;
   private:
@@ -3957,6 +3944,19 @@ class Goto final :
   private:
   float _internal_z() const;
   void _internal_set_z(float value);
+  public:
+
+  // optional double lon = 3 [(.dccl.field) = {
+  bool has_lon() const;
+  private:
+  bool _internal_has_lon() const;
+  public:
+  void clear_lon();
+  double lon() const;
+  void set_lon(double value);
+  private:
+  double _internal_lon() const;
+  void _internal_set_lon(double value);
   public:
 
   // .IMC_DCCL.ZUnits z_units = 5;
@@ -4040,10 +4040,10 @@ class Goto final :
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr custom_;
+    double lat_;
     uint32_t timeout_;
-    float lat_;
-    float lon_;
     float z_;
+    double lon_;
     int z_units_;
     float speed_;
     int speed_units_;
@@ -15054,7 +15054,7 @@ inline void FollowPath::set_allocated_custom(std::string* custom) {
 
 // optional uint32 timeout = 1 [(.dccl.field) = {
 inline bool Goto::_internal_has_timeout() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
 }
 inline bool Goto::has_timeout() const {
@@ -15062,7 +15062,7 @@ inline bool Goto::has_timeout() const {
 }
 inline void Goto::clear_timeout() {
   _impl_.timeout_ = 0u;
-  _impl_._has_bits_[0] &= ~0x00000002u;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
 inline uint32_t Goto::_internal_timeout() const {
   return _impl_.timeout_;
@@ -15072,7 +15072,7 @@ inline uint32_t Goto::timeout() const {
   return _internal_timeout();
 }
 inline void Goto::_internal_set_timeout(uint32_t value) {
-  _impl_._has_bits_[0] |= 0x00000002u;
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.timeout_ = value;
 }
 inline void Goto::set_timeout(uint32_t value) {
@@ -15080,9 +15080,9 @@ inline void Goto::set_timeout(uint32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.timeout)
 }
 
-// optional float lat = 2 [(.dccl.field) = {
+// optional double lat = 2 [(.dccl.field) = {
 inline bool Goto::_internal_has_lat() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   return value;
 }
 inline bool Goto::has_lat() const {
@@ -15090,27 +15090,27 @@ inline bool Goto::has_lat() const {
 }
 inline void Goto::clear_lat() {
   _impl_.lat_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
-inline float Goto::_internal_lat() const {
+inline double Goto::_internal_lat() const {
   return _impl_.lat_;
 }
-inline float Goto::lat() const {
+inline double Goto::lat() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Goto.lat)
   return _internal_lat();
 }
-inline void Goto::_internal_set_lat(float value) {
-  _impl_._has_bits_[0] |= 0x00000004u;
+inline void Goto::_internal_set_lat(double value) {
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.lat_ = value;
 }
-inline void Goto::set_lat(float value) {
+inline void Goto::set_lat(double value) {
   _internal_set_lat(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.lat)
 }
 
-// optional float lon = 3 [(.dccl.field) = {
+// optional double lon = 3 [(.dccl.field) = {
 inline bool Goto::_internal_has_lon() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   return value;
 }
 inline bool Goto::has_lon() const {
@@ -15118,27 +15118,27 @@ inline bool Goto::has_lon() const {
 }
 inline void Goto::clear_lon() {
   _impl_.lon_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
-inline float Goto::_internal_lon() const {
+inline double Goto::_internal_lon() const {
   return _impl_.lon_;
 }
-inline float Goto::lon() const {
+inline double Goto::lon() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Goto.lon)
   return _internal_lon();
 }
-inline void Goto::_internal_set_lon(float value) {
-  _impl_._has_bits_[0] |= 0x00000008u;
+inline void Goto::_internal_set_lon(double value) {
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.lon_ = value;
 }
-inline void Goto::set_lon(float value) {
+inline void Goto::set_lon(double value) {
   _internal_set_lon(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.lon)
 }
 
 // optional float z = 4 [(.dccl.field) = {
 inline bool Goto::_internal_has_z() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
 }
 inline bool Goto::has_z() const {
@@ -15146,7 +15146,7 @@ inline bool Goto::has_z() const {
 }
 inline void Goto::clear_z() {
   _impl_.z_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
 inline float Goto::_internal_z() const {
   return _impl_.z_;
@@ -15156,7 +15156,7 @@ inline float Goto::z() const {
   return _internal_z();
 }
 inline void Goto::_internal_set_z(float value) {
-  _impl_._has_bits_[0] |= 0x00000010u;
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.z_ = value;
 }
 inline void Goto::set_z(float value) {
