@@ -413,11 +413,6 @@ void encodeParameterValue(const std::string& imc, IMC_DCCL::ParameterValue& dccl
             return;
     }
     
-    if(Helper::containsJustDigits(imc)){
-            dccl.set_param_number(std::stof(imc));
-            return;
-    }
-    
     dccl.set_param_string(imc);
 }
 
@@ -427,9 +422,6 @@ void decodeParameterValue(const IMC_DCCL::ParameterValue& dccl, std::string& imc
 {
     
     if(dccl.has_param_enum()) imc = decodeParamValue(dccl.param_enum());
-    
-    
-    if(dccl.has_param_number()) imc = std::to_string(dccl.param_number());
     
     
     if(dccl.has_param_string()) imc = dccl.param_string();
