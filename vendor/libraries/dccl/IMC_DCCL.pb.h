@@ -939,10 +939,10 @@ enum ParamName : int {
   PN_ADC1_ENTITY_LABEL_1 = 57,
   PN_ADC1_MESSAGE = 58,
   PN_ADC2_CONVERSION = 59,
-  PN_ADC2_ENTITY_LABEL_1 = 60,
+  PN_ADC2_ENTITY_LABEL = 60,
   PN_ADC2_MESSAGE = 61,
   PN_ADC3_CONVERSION = 62,
-  PN_ADC3_ENTITY_LABEL = 63,
+  PN_ADC3_ENTITY_LABEL_1 = 63,
   PN_ADC3_MESSAGE = 64,
   PN_ADC4_CONVERSION = 65,
   PN_ADC4_ENTITY_LABEL_1 = 66,
@@ -968,13 +968,13 @@ enum ParamName : int {
   PN_ADC_1_IS_ACTIVE = 86,
   PN_ADC_1_MAXIMUM_VAL = 87,
   PN_ADC_1_MINIMUM_VAL = 88,
-  PN_ADC_2_ENTITY_LABEL = 89,
+  PN_ADC_2_ENTITY_LABEL_1 = 89,
   PN_ADC_2_FIXED_GAIN = 90,
   PN_ADC_2_FIXED_GAIN_VAL = 91,
   PN_ADC_2_IS_ACTIVE = 92,
   PN_ADC_2_MAXIMUM_VAL = 93,
   PN_ADC_2_MINIMUM_VAL = 94,
-  PN_ADC_3_ENTITY_LABEL_1 = 95,
+  PN_ADC_3_ENTITY_LABEL = 95,
   PN_ADC_3_FIXED_GAIN = 96,
   PN_ADC_3_FIXED_GAIN_VAL = 97,
   PN_ADC_3_IS_ACTIVE = 98,
@@ -2810,215 +2810,249 @@ enum EntityNameEnum : int {
   EN_ACOUSTIC_ACCESS_CONTROLLER = 0,
   EN_ACOUSTIC_MODEM = 1,
   EN_ACOUSTIC_MODEM_SIMULATOR = 2,
-  EN_AHRS = 3,
-  EN_AIS_RECEIVER = 4,
-  EN_ALLOCATOR = 5,
-  EN_ALTIMETER = 6,
-  EN_ANNOUNCE = 7,
-  EN_ANTENNA_TRACKER = 8,
-  EN_ARDUINO_SERIAL = 9,
-  EN_ATTITUDE = 10,
-  EN_AUTOPILOT = 11,
-  EN_A_D_BOARD = 12,
-  EN_BACK_SEAT_TCP_SERVER = 13,
-  EN_BATMAN = 14,
-  EN_BATTERIES = 15,
-  EN_CACHE = 16,
-  EN_CAMERA = 17,
-  EN_CAMERA_BACKEND = 18,
-  EN_CAMERA_MODULE = 19,
-  EN_CDC3_ACOMMS_SIMULATOR = 20,
-  EN_CHARGER = 21,
-  EN_CLOCK = 22,
-  EN_COLLISIONS = 23,
-  EN_COMMUNICATIONS_MANAGER = 24,
-  EN_COMMUNICATIONS_RELAY_MANEUVER = 25,
-  EN_COMPASS_CALIBRATION_MANEUVER = 26,
-  EN_COVER_AREA = 27,
-  EN_CTD = 28,
-  EN_CTD_SIMULATOR = 29,
-  EN_CYCLOPSC7 = 30,
-  EN_DAQ = 31,
-  EN_DATASTORE_SOURCE = 32,
-  EN_DATASTORE_TRANSPORT = 33,
-  EN_DCCL = 34,
-  EN_DEPTH_CONTROL = 35,
-  EN_DEPTH_SENSOR = 36,
-  EN_DESIRED_DISTANCE = 37,
-  EN_DISCOVERY = 38,
-  EN_DISLODGE_MANEUVER = 39,
-  EN_DIVING = 40,
-  EN_DMS = 41,
-  EN_DOCKING = 42,
-  EN_DVL = 43,
-  EN_DVL_FILTERED = 44,
-  EN_ECHO_SOUNDER = 45,
-  EN_ELEVATOR_MANEUVER = 46,
-  EN_EMERGENCY_MONITOR = 47,
-  EN_EMULATED_GPS = 48,
-  EN_ENTITY_MONITOR = 49,
-  EN_ENVIRONMENT = 50,
-  EN_EVOLOGICS_SERIALOVERTCP = 51,
-  EN_FILTERED_DISTANCE = 52,
-  EN_FOLLOW_PATH_MANEUVER = 53,
-  EN_FOLLOW_REFERENCE = 54,
-  EN_FOLLOW_REFERENCE_MANEUVER = 55,
-  EN_FOLLOW_SYSTEM_MANEUVER = 56,
-  EN_FOLLOW_TRAJECTORY_PID_MANEUVER = 57,
-  EN_FORMATION_CONTROL = 58,
-  EN_FORMATION_LINK = 59,
-  EN_FRAME_GRABBER = 60,
-  EN_FTP_SERVER = 61,
-  EN_FUEL = 62,
-  EN_FUELLEVEL = 63,
-  EN_GOTO_MANEUVER = 64,
-  EN_GPS = 65,
-  EN_GPS_TO_TCP = 66,
-  EN_GSM = 67,
-  EN_HEADING_SPEED_CONTROLLER = 68,
-  EN_HEAVE_MOTOR = 69,
-  EN_HEIGHT_CONTROL = 70,
-  EN_HORIZONTAL_PLANE_CONTROL = 71,
-  EN_HTTP_SERVER = 72,
-  EN_IDLE_MANEUVER = 73,
-  EN_IMU = 74,
-  EN_IMU_POWER_SUPPLY = 75,
-  EN_IRIDIUM_MODEM = 76,
-  EN_IRIDIUM_SIMULATOR = 77,
-  EN_IRIDIUM_TRANSPORT = 78,
-  EN_LAND_MANEUVER = 79,
-  EN_LAUNCH_MANEUVER = 80,
-  EN_LBL = 81,
-  EN_LBL_ESTIMATOR = 82,
-  EN_LCD = 83,
-  EN_LEAK_SIMULATOR = 84,
-  EN_LEDS = 85,
-  EN_LED_DRIVER = 86,
-  EN_LOGGER = 87,
-  EN_LOGGER_DIGEST = 88,
-  EN_LOG_BOOK = 89,
-  EN_LOITER_MANEUVER = 90,
-  EN_LOSTCOMMS_SUPERVISOR_ASV = 91,
-  EN_LOST_COMMS = 92,
-  EN_LOST_COMMS_MONITOR = 93,
-  EN_MAINBOARD = 94,
-  EN_MAINBOARD_AUX = 95,
-  EN_MAINBOARD_AUXILIARY_CPU = 96,
-  EN_MAINBOARD_BOARD = 97,
-  EN_MAINBOARD_CAMERA_CPU = 98,
-  EN_MAINBOARD_CAMERA_CPU_1 = 99,
-  EN_MAINBOARD_CORE = 100,
-  EN_MAINBOARD_SUPERIO = 101,
-  EN_MAIN_BOARD_1 = 102,
-  EN_MANTA_FUEL_LEVEL = 103,
-  EN_MCD4R = 104,
-  EN_MEDIUM = 105,
-  EN_MEDIUM_SENSOR = 106,
-  EN_MESSAGE_FRAGMENTS = 107,
-  EN_MOBILE_INTERNET = 108,
-  EN_MOTOR = 109,
-  EN_MOTOR_1 = 110,
-  EN_MOTOR_2 = 111,
-  EN_MOTOR_3 = 112,
-  EN_MOTOR_4 = 113,
-  EN_MOTOR_5 = 114,
-  EN_MOTOR_CONTROLLER = 115,
-  EN_MOTOR_CONTROLLER_CHANNEL_0 = 116,
-  EN_MOTOR_CONTROLLER_CHANNEL_1 = 117,
-  EN_MOTOR_PORT = 118,
-  EN_MOTOR_STARBOARD = 119,
-  EN_MQTT = 120,
-  EN_MULTIBEAM = 121,
-  EN_MULTIPLEXER_MANEUVER = 122,
-  EN_NAVIGATION = 123,
-  EN_N_A = 124,
-  EN_OEMX = 125,
-  EN_OPERATIONAL_LIMITS = 126,
-  EN_OXYGEN_SENSOR = 127,
-  EN_PANEL = 128,
-  EN_PANEL_BUTTONS = 129,
-  EN_PATH_CONTROL = 130,
-  EN_PATH_CONTROL_LEADER = 131,
-  EN_PENCIL_BEAM = 132,
-  EN_PHOTO_TRIGGER = 133,
-  EN_PICCOLO_GATEWAY = 134,
-  EN_PICCOLO_SERIAL = 135,
-  EN_PLAN_DATABASE = 136,
-  EN_PLAN_ENGINE = 137,
-  EN_PLAN_GENERATOR = 138,
-  EN_POP_UP_MANEUVER = 139,
-  EN_PORT_BOW_MOTOR = 140,
-  EN_PORT_STERN_MOTOR = 141,
-  EN_POWER_BOARD = 142,
-  EN_POWER_SOURCE = 143,
-  EN_POWER_SUPERVISOR = 144,
-  EN_POWER_SUPPLY = 145,
-  EN_PTUD48 = 146,
-  EN_PTUTRANSPORT = 147,
-  EN_PTU_COMMS = 148,
-  EN_PWM = 149,
-  EN_RADIO = 150,
-  EN_RANGER = 151,
-  EN_RECOVERY_SUPERVISOR = 152,
-  EN_REMOTE_CONTROL = 153,
-  EN_REMOTE_OPERATION = 154,
-  EN_REPLAY = 155,
-  EN_REPORT_SUPERVISOR = 156,
-  EN_ROWS_COVERAGE_MANEUVER = 157,
-  EN_ROWS_MANEUVER = 158,
-  EN_SADC = 159,
-  EN_SEATRAC_TCP = 160,
-  EN_SERVICE_ANNOUNCER = 161,
-  EN_SERVICE_DISCOVERY = 162,
-  EN_SERVOS = 163,
-  EN_SERVO_CONTROLLER = 164,
-  EN_SERVO_CONTROLLER_0 = 165,
-  EN_SERVO_CONTROLLER_1 = 166,
-  EN_SERVO_CONTROLLER_2 = 167,
-  EN_SERVO_CONTROLLER_3 = 168,
-  EN_SERVO_MONITOR = 169,
-  EN_SIDESCAN = 170,
-  EN_SIGNAL_LIGHT = 171,
-  EN_SIMULATION_ENGINE = 172,
-  EN_SLAVE_CPU = 173,
-  EN_SOUND_SPEED_SENSOR = 174,
-  EN_SOUND_SPEED_SIMULATOR = 175,
-  EN_SPEED_CONTROL = 176,
-  EN_STARBOARD_BOW_MOTOR = 177,
-  EN_STARBOARD_STERN_MOTOR = 178,
-  EN_STATION_KEEPING_MANEUVER = 179,
-  EN_STREAM_VELOCITY_SIMULATOR = 180,
-  EN_SUPERVISOR_ASSIST = 181,
-  EN_SVS_TO_TCP = 182,
-  EN_TAKEOFF_MANEUVER = 183,
-  EN_TASE = 184,
-  EN_TCP_ON_DEMAND = 185,
-  EN_TCP_SERVER = 186,
-  EN_TCP_TO_CAMERA_CPU = 187,
-  EN_TCP_TO_MASTER = 188,
-  EN_TCP_TO_SLAVE_CPU = 189,
-  EN_TCP_TRANSMISSION_MODULE = 190,
-  EN_TELEOPERATION_MANEUVER = 191,
-  EN_TEXT_MESSAGE_PARSER = 192,
-  EN_THERMAL_ZONE = 193,
-  EN_TORQEEDO = 194,
-  EN_TREX = 195,
-  EN_UART_SERIAL = 196,
-  EN_UAVCAMERA = 197,
-  EN_UAV_SIMULATOR = 198,
-  EN_UDP = 199,
-  EN_UDP_TO_TREX = 200,
-  EN_UEYE = 201,
-  EN_USBL = 202,
-  EN_V104_BAUD_SETUP = 203,
-  EN_VEHICLE_FORMATION_SMC_MANEUVER = 204,
-  EN_VEHICLE_SUPERVISOR = 205,
-  EN_WATCHDOG = 206,
-  EN_WATER_QUALITY_SENSOR = 207,
-  EN_WEATHER_STATION = 208,
-  EN_WI_FI_RSSI = 209,
-  EN_YOYO_MANEUVER = 210,
-  EN_UNKNOWN = 211,
+  EN_ADCP = 3,
+  EN_AHRS = 4,
+  EN_AIRMAR120WX = 5,
+  EN_AIS_RECEIVER = 6,
+  EN_ALLOCATOR = 7,
+  EN_ALTIMETER = 8,
+  EN_ANNOUNCE = 9,
+  EN_ANTENNA_TRACKER = 10,
+  EN_ARDUINO_SERIAL = 11,
+  EN_ATTITUDE = 12,
+  EN_AUTONAUT_SUPERVISOR = 13,
+  EN_AUTOPILOT = 14,
+  EN_A_D_BOARD = 15,
+  EN_BACK_SEAT_TCP_SERVER = 16,
+  EN_BATMAN = 17,
+  EN_BATTERIES = 18,
+  EN_BOOT_MONITOR = 19,
+  EN_CACHE = 20,
+  EN_CAMERA = 21,
+  EN_CAMERA_BACKEND = 22,
+  EN_CAMERA_MODULE = 23,
+  EN_CDC3_ACOMMS_SIMULATOR = 24,
+  EN_CHARGER = 25,
+  EN_CLOCK = 26,
+  EN_CLOCK_MONITOR = 27,
+  EN_CLOCK_PPS = 28,
+  EN_COLLISIONS = 29,
+  EN_COMMUNICATIONS_MANAGER = 30,
+  EN_COMMUNICATIONS_RELAY_MANEUVER = 31,
+  EN_COMPASS_CALIBRATION_MANEUVER = 32,
+  EN_COURSE_SPEED_CONTROLLER = 33,
+  EN_COVER_AREA = 34,
+  EN_CPC = 35,
+  EN_CPU_SCALING = 36,
+  EN_CTD = 37,
+  EN_CTD_SIMULATOR = 38,
+  EN_CYCLOPSC7 = 39,
+  EN_DAQ = 40,
+  EN_DATASTORE_SOURCE = 41,
+  EN_DATASTORE_TRANSPORT = 42,
+  EN_DCCL = 43,
+  EN_DEPTH_CONTROL = 44,
+  EN_DEPTH_SENSOR = 45,
+  EN_DESIRED_DISTANCE = 46,
+  EN_DISCOVERY = 47,
+  EN_DISLODGE_MANEUVER = 48,
+  EN_DISSOLVED_OXYGEN = 49,
+  EN_DIVING = 50,
+  EN_DMS = 51,
+  EN_DOCKING = 52,
+  EN_DVL = 53,
+  EN_DVL_FILTERED = 54,
+  EN_ECHO_SOUNDER = 55,
+  EN_ELEVATOR_MANEUVER = 56,
+  EN_EMERGENCY_MONITOR = 57,
+  EN_EMULATED_GPS = 58,
+  EN_ENC_PARSER = 59,
+  EN_ENTITY_MONITOR = 60,
+  EN_ENVIRONMENT = 61,
+  EN_EVOLOGICS_SERIALOVERTCP = 62,
+  EN_FILTERED_DISTANCE = 63,
+  EN_FLUOROMETERS = 64,
+  EN_FOLLOW_PATH_MANEUVER = 65,
+  EN_FOLLOW_REFERENCE = 66,
+  EN_FOLLOW_REFERENCE_MANEUVER = 67,
+  EN_FOLLOW_SYSTEM_MANEUVER = 68,
+  EN_FOLLOW_TRAJECTORY_PID_MANEUVER = 69,
+  EN_FORMATION_CONTROL = 70,
+  EN_FORMATION_LINK = 71,
+  EN_FRAME_GRABBER = 72,
+  EN_FTP_SERVER = 73,
+  EN_FUEL = 74,
+  EN_FUELLEVEL = 75,
+  EN_GOTO_MANEUVER = 76,
+  EN_GPS = 77,
+  EN_GPS_NAVIGATION = 78,
+  EN_GPS_TO_TCP = 79,
+  EN_HEADING_CONTROLLER = 80,
+  EN_HEADING_SPEED_CONTROLLER = 81,
+  EN_HEAVE_MOTOR = 82,
+  EN_HEIGHT_CONTROL = 83,
+  EN_HORIZONTAL_PLANE_CONTROL = 84,
+  EN_HOST_RESOURCES = 85,
+  EN_HTTP_SERVER = 86,
+  EN_IDLE_MANEUVER = 87,
+  EN_IMU = 88,
+  EN_IMU_POWER_SUPPLY = 89,
+  EN_IRIDIUM_MODEM = 90,
+  EN_IRIDIUM_OPERATION = 91,
+  EN_IRIDIUM_SIMULATOR = 92,
+  EN_IRIDIUM_TRANSPORT = 93,
+  EN_LAND_MANEUVER = 94,
+  EN_LAUNCH_MANEUVER = 95,
+  EN_LBL = 96,
+  EN_LBL_ESTIMATOR = 97,
+  EN_LCD = 98,
+  EN_LEAK_SIMULATOR = 99,
+  EN_LEDS = 100,
+  EN_LED_DRIVER = 101,
+  EN_LOGGER = 102,
+  EN_LOGGER_DIGEST = 103,
+  EN_LOG_BOOK = 104,
+  EN_LOG_MONITOR = 105,
+  EN_LOITER_MANEUVER = 106,
+  EN_LOSTCOMMS_SUPERVISOR_ASV = 107,
+  EN_LOST_COMMS = 108,
+  EN_LOST_COMMS_MONITOR = 109,
+  EN_MAINBOARD = 110,
+  EN_MAINBOARD_AUX = 111,
+  EN_MAINBOARD_AUXILIARY_CPU = 112,
+  EN_MAINBOARD_BOARD = 113,
+  EN_MAINBOARD_CAMERA_CPU = 114,
+  EN_MAINBOARD_CAMERA_CPU_1 = 115,
+  EN_MAINBOARD_CORE = 116,
+  EN_MAINBOARD_SUPERIO = 117,
+  EN_MAIN_BOARD_1 = 118,
+  EN_MANTA_FUEL_LEVEL = 119,
+  EN_MCD4R = 120,
+  EN_MEDIUM = 121,
+  EN_MEDIUM_SENSOR = 122,
+  EN_MESSAGE_FRAGMENTS = 123,
+  EN_MOBILE_INTERNET = 124,
+  EN_MONITOR_THRUSTER = 125,
+  EN_MOTOR = 126,
+  EN_MOTOR_1 = 127,
+  EN_MOTOR_2 = 128,
+  EN_MOTOR_3 = 129,
+  EN_MOTOR_4 = 130,
+  EN_MOTOR_5 = 131,
+  EN_MOTOR_CONTROLLER = 132,
+  EN_MOTOR_CONTROLLER_CHANNEL_0 = 133,
+  EN_MOTOR_CONTROLLER_CHANNEL_1 = 134,
+  EN_MOTOR_PORT = 135,
+  EN_MOTOR_STARBOARD = 136,
+  EN_MQTT = 137,
+  EN_MULTIBEAM = 138,
+  EN_MULTIPLEXER_MANEUVER = 139,
+  EN_NAVIGATION = 140,
+  EN_NAVIGATION_MANAGER = 141,
+  EN_N_A = 142,
+  EN_OEMX = 143,
+  EN_OPERATIONAL_LIMITS = 144,
+  EN_OXYGEN_SENSOR = 145,
+  EN_PANEL = 146,
+  EN_PANEL_BUTTONS = 147,
+  EN_PATH_CONTROL = 148,
+  EN_PATH_CONTROL_LEADER = 149,
+  EN_PAYLOAD_MONITOR = 150,
+  EN_PENCIL_BEAM = 151,
+  EN_PHOTO_TRIGGER = 152,
+  EN_PICCOLO_GATEWAY = 153,
+  EN_PICCOLO_SERIAL = 154,
+  EN_PLAN_DATABASE = 155,
+  EN_PLAN_ENGINE = 156,
+  EN_PLAN_GENERATOR = 157,
+  EN_POP_UP_MANEUVER = 158,
+  EN_PORT_BOW_MOTOR = 159,
+  EN_PORT_MOTOR = 160,
+  EN_PORT_STERN_MOTOR = 161,
+  EN_POWER_BOARD = 162,
+  EN_POWER_SOURCE = 163,
+  EN_POWER_SUPERVISOR = 164,
+  EN_POWER_SUPPLY = 165,
+  EN_PTUD48 = 166,
+  EN_PTUTRANSPORT = 167,
+  EN_PTU_COMMS = 168,
+  EN_PWM = 169,
+  EN_RADIO = 170,
+  EN_RANGER = 171,
+  EN_RECOVERY_SUPERVISOR = 172,
+  EN_REMOTE_CONTROL = 173,
+  EN_REMOTE_OPERATION = 174,
+  EN_REPLAY = 175,
+  EN_REPORT_SUPERVISOR = 176,
+  EN_ROWS_COVERAGE_MANEUVER = 177,
+  EN_ROWS_MANEUVER = 178,
+  EN_RUDDER_SERVO = 179,
+  EN_SADC = 180,
+  EN_SEATRAC_TCP = 181,
+  EN_SERVICE_ANNOUNCER = 182,
+  EN_SERVICE_DISCOVERY = 183,
+  EN_SERVO = 184,
+  EN_SERVOS = 185,
+  EN_SERVO_CONTROLLER = 186,
+  EN_SERVO_CONTROLLER_0 = 187,
+  EN_SERVO_CONTROLLER_1 = 188,
+  EN_SERVO_CONTROLLER_2 = 189,
+  EN_SERVO_CONTROLLER_3 = 190,
+  EN_SERVO_MONITOR = 191,
+  EN_SIDESCAN = 192,
+  EN_SIGNAL_LIGHT = 193,
+  EN_SIMULATED_GPS = 194,
+  EN_SIMULATED_HEAVE = 195,
+  EN_SIMULATED_IMU = 196,
+  EN_SIMULATED_NAVIGATION_MANAGER = 197,
+  EN_SIMULATION_ENGINE = 198,
+  EN_SLAVE_CPU = 199,
+  EN_SMS = 200,
+  EN_SOUND_SPEED_SENSOR = 201,
+  EN_SOUND_SPEED_SIMULATOR = 202,
+  EN_SPEED_CONTROL = 203,
+  EN_STARBOARD_BOW_MOTOR = 204,
+  EN_STARBOARD_MOTOR = 205,
+  EN_STARBOARD_STERN_MOTOR = 206,
+  EN_STATE_REPORTER = 207,
+  EN_STATION_KEEPING_MANEUVER = 208,
+  EN_STERN_LIGHT = 209,
+  EN_STREAM_VELOCITY_SIMULATOR = 210,
+  EN_SUPERVISOR_ASSIST = 211,
+  EN_SVS_TO_TCP = 212,
+  EN_TAKEOFF_MANEUVER = 213,
+  EN_TASE = 214,
+  EN_TCP_ON_DEMAND = 215,
+  EN_TCP_SERVER = 216,
+  EN_TCP_TO_CAMERA_CPU = 217,
+  EN_TCP_TO_MASTER = 218,
+  EN_TCP_TO_SLAVE_CPU = 219,
+  EN_TCP_TRANSMISSION_MODULE = 220,
+  EN_TELEOPERATION_MANEUVER = 221,
+  EN_TEXT_ACTIONS = 222,
+  EN_TEXT_MESSAGE_PARSER = 223,
+  EN_THERMAL_ZONE = 224,
+  EN_TORQEEDO = 225,
+  EN_TREX = 226,
+  EN_UART_SERIAL = 227,
+  EN_UAVCAMERA = 228,
+  EN_UAV_SIMULATOR = 229,
+  EN_UDP = 230,
+  EN_UDP_FILTERED = 231,
+  EN_UDP_TO_TREX = 232,
+  EN_UEYE = 233,
+  EN_USBL = 234,
+  EN_V104_BAUD_SETUP = 235,
+  EN_VEHICLE_FORMATION_SMC_MANEUVER = 236,
+  EN_VEHICLE_SUPERVISOR = 237,
+  EN_WATCHDOG = 238,
+  EN_WATER_QUALITY_SENSOR = 239,
+  EN_WAVE_FREQUENCY_ESTIMATOR = 240,
+  EN_WEATHER_STATION = 241,
+  EN_WI_FI_RSSI = 242,
+  EN_YOYO_MANEUVER = 243,
+  EN_ZEROTIER = 244,
+  EN_UNKNOWN = 245,
   EntityNameEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   EntityNameEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
@@ -3878,10 +3912,10 @@ class Goto final :
 
   enum : int {
     kCustomFieldNumber = 11,
-    kLatFieldNumber = 2,
     kTimeoutFieldNumber = 1,
-    kZFieldNumber = 4,
+    kLatFieldNumber = 2,
     kLonFieldNumber = 3,
+    kZFieldNumber = 4,
     kZUnitsFieldNumber = 5,
     kSpeedFieldNumber = 6,
     kSpeedUnitsFieldNumber = 7,
@@ -3907,19 +3941,6 @@ class Goto final :
   std::string* _internal_mutable_custom();
   public:
 
-  // optional double lat = 2 [(.dccl.field) = {
-  bool has_lat() const;
-  private:
-  bool _internal_has_lat() const;
-  public:
-  void clear_lat();
-  double lat() const;
-  void set_lat(double value);
-  private:
-  double _internal_lat() const;
-  void _internal_set_lat(double value);
-  public:
-
   // optional uint32 timeout = 1 [(.dccl.field) = {
   bool has_timeout() const;
   private:
@@ -3933,6 +3954,32 @@ class Goto final :
   void _internal_set_timeout(uint32_t value);
   public:
 
+  // optional float lat = 2 [(.dccl.field) = {
+  bool has_lat() const;
+  private:
+  bool _internal_has_lat() const;
+  public:
+  void clear_lat();
+  float lat() const;
+  void set_lat(float value);
+  private:
+  float _internal_lat() const;
+  void _internal_set_lat(float value);
+  public:
+
+  // optional float lon = 3 [(.dccl.field) = {
+  bool has_lon() const;
+  private:
+  bool _internal_has_lon() const;
+  public:
+  void clear_lon();
+  float lon() const;
+  void set_lon(float value);
+  private:
+  float _internal_lon() const;
+  void _internal_set_lon(float value);
+  public:
+
   // optional float z = 4 [(.dccl.field) = {
   bool has_z() const;
   private:
@@ -3944,19 +3991,6 @@ class Goto final :
   private:
   float _internal_z() const;
   void _internal_set_z(float value);
-  public:
-
-  // optional double lon = 3 [(.dccl.field) = {
-  bool has_lon() const;
-  private:
-  bool _internal_has_lon() const;
-  public:
-  void clear_lon();
-  double lon() const;
-  void set_lon(double value);
-  private:
-  double _internal_lon() const;
-  void _internal_set_lon(double value);
   public:
 
   // .IMC_DCCL.ZUnits z_units = 5;
@@ -4040,10 +4074,10 @@ class Goto final :
     ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr custom_;
-    double lat_;
     uint32_t timeout_;
+    float lat_;
+    float lon_;
     float z_;
-    double lon_;
     int z_units_;
     float speed_;
     int speed_units_;
@@ -4100,9 +4134,8 @@ class ParameterValue final :
     return *internal_default_instance();
   }
   enum ParameterValueUnionCase {
-    kParamNumber = 1,
-    kParamEnum = 2,
-    kParamString = 3,
+    kParamEnum = 1,
+    kParamString = 2,
     PARAMETERVALUEUNION_NOT_SET = 0,
   };
 
@@ -4184,24 +4217,10 @@ class ParameterValue final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kParamNumberFieldNumber = 1,
-    kParamEnumFieldNumber = 2,
-    kParamStringFieldNumber = 3,
+    kParamEnumFieldNumber = 1,
+    kParamStringFieldNumber = 2,
   };
-  // float param_number = 1 [(.dccl.field) = {
-  bool has_param_number() const;
-  private:
-  bool _internal_has_param_number() const;
-  public:
-  void clear_param_number();
-  float param_number() const;
-  void set_param_number(float value);
-  private:
-  float _internal_param_number() const;
-  void _internal_set_param_number(float value);
-  public:
-
-  // .IMC_DCCL.ParamValue param_enum = 2;
+  // .IMC_DCCL.ParamValue param_enum = 1;
   bool has_param_enum() const;
   private:
   bool _internal_has_param_enum() const;
@@ -4214,7 +4233,7 @@ class ParameterValue final :
   void _internal_set_param_enum(::IMC_DCCL::ParamValue value);
   public:
 
-  // string param_string = 3 [(.dccl.field) = {
+  // string param_string = 2 [(.dccl.field) = {
   bool has_param_string() const;
   private:
   bool _internal_has_param_string() const;
@@ -4237,7 +4256,6 @@ class ParameterValue final :
   // @@protoc_insertion_point(class_scope:IMC_DCCL.ParameterValue)
  private:
   class _Internal;
-  void set_has_param_number();
   void set_has_param_enum();
   void set_has_param_string();
 
@@ -4251,7 +4269,6 @@ class ParameterValue final :
     union ParameterValueUnionUnion {
       constexpr ParameterValueUnionUnion() : _constinit_{} {}
         ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
-      float param_number_;
       int param_enum_;
       ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr param_string_;
     } ParameterValueUnion_;
@@ -15054,7 +15071,7 @@ inline void FollowPath::set_allocated_custom(std::string* custom) {
 
 // optional uint32 timeout = 1 [(.dccl.field) = {
 inline bool Goto::_internal_has_timeout() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
   return value;
 }
 inline bool Goto::has_timeout() const {
@@ -15062,7 +15079,7 @@ inline bool Goto::has_timeout() const {
 }
 inline void Goto::clear_timeout() {
   _impl_.timeout_ = 0u;
-  _impl_._has_bits_[0] &= ~0x00000004u;
+  _impl_._has_bits_[0] &= ~0x00000002u;
 }
 inline uint32_t Goto::_internal_timeout() const {
   return _impl_.timeout_;
@@ -15072,7 +15089,7 @@ inline uint32_t Goto::timeout() const {
   return _internal_timeout();
 }
 inline void Goto::_internal_set_timeout(uint32_t value) {
-  _impl_._has_bits_[0] |= 0x00000004u;
+  _impl_._has_bits_[0] |= 0x00000002u;
   _impl_.timeout_ = value;
 }
 inline void Goto::set_timeout(uint32_t value) {
@@ -15080,9 +15097,9 @@ inline void Goto::set_timeout(uint32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.timeout)
 }
 
-// optional double lat = 2 [(.dccl.field) = {
+// optional float lat = 2 [(.dccl.field) = {
 inline bool Goto::_internal_has_lat() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000002u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000004u) != 0;
   return value;
 }
 inline bool Goto::has_lat() const {
@@ -15090,27 +15107,27 @@ inline bool Goto::has_lat() const {
 }
 inline void Goto::clear_lat() {
   _impl_.lat_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000002u;
+  _impl_._has_bits_[0] &= ~0x00000004u;
 }
-inline double Goto::_internal_lat() const {
+inline float Goto::_internal_lat() const {
   return _impl_.lat_;
 }
-inline double Goto::lat() const {
+inline float Goto::lat() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Goto.lat)
   return _internal_lat();
 }
-inline void Goto::_internal_set_lat(double value) {
-  _impl_._has_bits_[0] |= 0x00000002u;
+inline void Goto::_internal_set_lat(float value) {
+  _impl_._has_bits_[0] |= 0x00000004u;
   _impl_.lat_ = value;
 }
-inline void Goto::set_lat(double value) {
+inline void Goto::set_lat(float value) {
   _internal_set_lat(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.lat)
 }
 
-// optional double lon = 3 [(.dccl.field) = {
+// optional float lon = 3 [(.dccl.field) = {
 inline bool Goto::_internal_has_lon() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
 }
 inline bool Goto::has_lon() const {
@@ -15118,27 +15135,27 @@ inline bool Goto::has_lon() const {
 }
 inline void Goto::clear_lon() {
   _impl_.lon_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
-inline double Goto::_internal_lon() const {
+inline float Goto::_internal_lon() const {
   return _impl_.lon_;
 }
-inline double Goto::lon() const {
+inline float Goto::lon() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.Goto.lon)
   return _internal_lon();
 }
-inline void Goto::_internal_set_lon(double value) {
-  _impl_._has_bits_[0] |= 0x00000010u;
+inline void Goto::_internal_set_lon(float value) {
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.lon_ = value;
 }
-inline void Goto::set_lon(double value) {
+inline void Goto::set_lon(float value) {
   _internal_set_lon(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.Goto.lon)
 }
 
 // optional float z = 4 [(.dccl.field) = {
 inline bool Goto::_internal_has_z() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   return value;
 }
 inline bool Goto::has_z() const {
@@ -15146,7 +15163,7 @@ inline bool Goto::has_z() const {
 }
 inline void Goto::clear_z() {
   _impl_.z_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline float Goto::_internal_z() const {
   return _impl_.z_;
@@ -15156,7 +15173,7 @@ inline float Goto::z() const {
   return _internal_z();
 }
 inline void Goto::_internal_set_z(float value) {
-  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.z_ = value;
 }
 inline void Goto::set_z(float value) {
@@ -15388,45 +15405,7 @@ inline void Goto::set_allocated_custom(std::string* custom) {
 
 // ParameterValue
 
-// float param_number = 1 [(.dccl.field) = {
-inline bool ParameterValue::_internal_has_param_number() const {
-  return ParameterValueUnion_case() == kParamNumber;
-}
-inline bool ParameterValue::has_param_number() const {
-  return _internal_has_param_number();
-}
-inline void ParameterValue::set_has_param_number() {
-  _impl_._oneof_case_[0] = kParamNumber;
-}
-inline void ParameterValue::clear_param_number() {
-  if (_internal_has_param_number()) {
-    _impl_.ParameterValueUnion_.param_number_ = 0;
-    clear_has_ParameterValueUnion();
-  }
-}
-inline float ParameterValue::_internal_param_number() const {
-  if (_internal_has_param_number()) {
-    return _impl_.ParameterValueUnion_.param_number_;
-  }
-  return 0;
-}
-inline void ParameterValue::_internal_set_param_number(float value) {
-  if (!_internal_has_param_number()) {
-    clear_ParameterValueUnion();
-    set_has_param_number();
-  }
-  _impl_.ParameterValueUnion_.param_number_ = value;
-}
-inline float ParameterValue::param_number() const {
-  // @@protoc_insertion_point(field_get:IMC_DCCL.ParameterValue.param_number)
-  return _internal_param_number();
-}
-inline void ParameterValue::set_param_number(float value) {
-  _internal_set_param_number(value);
-  // @@protoc_insertion_point(field_set:IMC_DCCL.ParameterValue.param_number)
-}
-
-// .IMC_DCCL.ParamValue param_enum = 2;
+// .IMC_DCCL.ParamValue param_enum = 1;
 inline bool ParameterValue::_internal_has_param_enum() const {
   return ParameterValueUnion_case() == kParamEnum;
 }
@@ -15464,7 +15443,7 @@ inline void ParameterValue::set_param_enum(::IMC_DCCL::ParamValue value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.ParameterValue.param_enum)
 }
 
-// string param_string = 3 [(.dccl.field) = {
+// string param_string = 2 [(.dccl.field) = {
 inline bool ParameterValue::_internal_has_param_string() const {
   return ParameterValueUnion_case() == kParamString;
 }
