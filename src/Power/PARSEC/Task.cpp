@@ -48,53 +48,47 @@ namespace Power
     //! Max expected hearbeat timeout (seconds).
     static constexpr uint8_t c_hb_max_tmt = 5;
     //! Data command id.
-    static constexpr char c_cmd_data = 'D';
+    static constexpr const char* c_cmd_data = "DATA";
     //! Control power channel command id.
-    static constexpr char c_cmd_power_ctl = 'P';
-    //! Control deep pump command id.
-    static constexpr char c_cmd_dp_ctl = 'L';
+    static constexpr const char* c_cmd_power_ctl = "POWER";
+    //! Control water pump command id.
+    static constexpr const char* c_cmd_wp_ctl = "WATER";
     //! Control motor command id.
-    static constexpr char c_cmd_motor_ctl = 'M';
+    static constexpr const char* c_cmd_motor_ctl = "MOTOR";
     //! Acknowledge command id.
-    static constexpr char c_cmd_ack = 'A';
+    static constexpr const char* c_cmd_ack = "ACKN";
     //! Not acknowledge command id.
-    static constexpr char c_cmd_nack = 'N';
+    static constexpr const char* c_cmd_nack = "NACK";
     //! Synchronize command id.
-    static constexpr char c_cmd_sync = 'S';
+    static constexpr const char* c_cmd_sync = "SYNC";
     //! Shutdown command id.
-    static constexpr char c_cmd_shdn = 'X';
+    static constexpr const char* c_cmd_shdn = "XHUTD";
     //! Heartbeat command id.
-    static constexpr char c_cmd_hb = 'H';
+    static constexpr const char* c_cmd_hb = "HEART";
     //! Number of power channels.
     static constexpr uint8_t c_num_pwr_chs = 4;
-    //! Deep pump entity label.
-    static constexpr char c_deep_pump_elabel[] = "Deep Pump";
-    //! Motor entity label.
-    static constexpr char c_motor_elabel[] = "Motor";
     //! Total of endpoints.
     static constexpr uint8_t c_num_endpoints = 2;
-    //! Endpoint 1 entity label.
-    static constexpr char c_endpoint1_elabel[] = "Endpoint 1";
-    //! Endpoint 2 entity label.
-    static constexpr char c_endpoint2_elabel[] = "Endpoint 2";
     //! Maximum voltage for water level low.
     static constexpr float c_max_wl_low_voltage = 0.5;
     //! Minimum voltage for water level high.
     static constexpr float c_min_wl_high_voltage = 2.5;
     //! Total of water level sensors.
     static constexpr uint8_t c_num_wl_sensors = 3;
-    //! Water Level 1 entity label.
-    static constexpr char c_wl1_elabel[] = "Water Level 1";
-    //! Water Level 2 entity label.
-    static constexpr char c_wl2_elabel[] = "Water Level 2";
-    //! Water Level 3 entity label.
-    static constexpr char c_wl3_elabel[] = "Water Level 3";
     //! Total of water flow sensors.
     static constexpr uint8_t c_num_wf_sensors = 2;
-    //! Water Flow 1 entity label.
-    static constexpr char c_wf1_elabel[] = "Water Flow 1";
-    //! Water Flow 2 entity label.
-    static constexpr char c_wf2_elabel[] = "Water Flow 2";
+    //! Minimum depth endpoint id.
+    static constexpr uint8_t c_min_wp_depth_id = 1;
+    //! Maximum depth endpoint id.
+    static constexpr uint8_t c_max_wp_depth_id = 2;
+    //! Minimum depth for water pump.
+    static constexpr float c_min_wp_depth = 0.0;
+    //! Maximum depth for water pump.
+    static constexpr float c_max_wp_depth = 25.0;
+    //! Motor motion detection timeout (seconds).
+    static constexpr float c_motor_motion_timeout = 5.0;
+    //! Convert L/min to m*m*m/s.
+    static constexpr double c_lmin_to_m3s = 1.0f / 60000.0f;
 
     //! Task arguments.
     struct Arguments
@@ -107,16 +101,28 @@ namespace Power
       std::string pwr_ch_names[c_num_pwr_chs];
       //! Power channel states.
       bool pwr_ch_states[c_num_pwr_chs];
-      //! Deep pump entity label.
-      std::string dp_elabel;
+      //! Water pump actuation id.
+      int water_pump_id;
+      //! Water pump entity label.
+      std::string wp_elabel;
+      //! Water pump min depth.
+      float wp_min_depth;
+      //! Water pump max depth.
+      float wp_max_depth;
+      //! Motor actuation id.
+      int motor_id;
       //! Motor entity label.
       std::string motor_elabel;
-      //! Endpoint entity labels.
-      std::string endpoint_gpios_labels[c_num_endpoints];
       //! Water Level gpio labels.
       std::string wl_gpios_labels[c_num_wl_sensors];
       //! Water Flow entity labels.
       std::string wf_elabels[c_num_wf_sensors];
+      //! Use motor motion detection to determine water pump depth.
+      bool wp_depth_from_motor_motion;
+      //! Disable water level sensors malfunction warning.
+      bool disable_wl_malfunction_warning;
+      //! Water pump motion timeout.
+      float wp_motion_timeout;
     };
 
     struct PowerChannel
@@ -151,20 +157,30 @@ namespace Power
       bool m_shdn_req;
       //! Heartbeat timer.
       Time::Counter<double> m_hb_timer;
-      //! Deep Pump voltage.
-      IMC::Voltage m_dp_voltage;
-      //! Deep Pump current.
-      IMC::Current m_dp_current;
-      //! Deep pump entity.
-      Entities::BasicEntity* m_deep_pump_entity;
+      //! Water Pump voltage.
+      IMC::Voltage m_wp_voltage;
+      //! Water Pump current.
+      IMC::Current m_wp_current;
+      //! Water Pump depth.
+      IMC::Depth m_wp_depth;
+      //! Water Pump entity.
+      Entities::BasicEntity* m_wp_entity;
       //! Motor current.
       IMC::Current m_motor_current;
       //! Motor entity.
       Entities::BasicEntity* m_motor_entity;
       //! Water Flow entities.
       Entities::BasicEntity* m_wf_entities[c_num_wf_sensors];
+      //! Water Flow messages.
+      IMC::WaterFlow m_wf_messages[c_num_wf_sensors];
       //! GPIO States <label, state>.
       std::map<std::string, IMC::GpioState> m_gpio_states;
+      //! Motor current actuation.
+      float m_motor_actuation;
+      //! Motor motion timer.
+      Time::Counter<double> m_motor_motion_timer;
+      //! Water pump motion timer.
+      Time::Counter<double> m_wp_motion_timer;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -172,7 +188,8 @@ namespace Power
         m_no_rpl_cnt(0),
         m_synced(false),
         m_shdn_req(false),
-        m_hb_timer(c_hb_period)
+        m_hb_timer(c_hb_period),
+        m_motor_actuation(false)
       {
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
@@ -200,50 +217,82 @@ namespace Power
           .description(String::str("State of power channel %u", i));
         }
 
-        param("Deep Pump - Entity Label", m_args.dp_elabel)
+        param("Water Pump - Id", m_args.water_pump_id)
         .editable(false)
-        .defaultValue(c_deep_pump_elabel)
-        .description("Label of the deep pump entity");
+        .defaultValue("-1")
+        .minimumValue("0")
+        .description("Water pump activity id.");
+
+        param("Water Pump - Entity Label", m_args.wp_elabel)
+        .editable(false)
+        .defaultValue("")
+        .minimumSize(1)
+        .description("Water pump entity label.");
+
+        param("Water Pump - Min Depth", m_args.wp_min_depth)
+        .defaultValue(std::to_string(c_min_wp_depth))
+        .minimumValue(std::to_string(c_min_wp_depth))
+        .maximumValue(std::to_string(c_max_wp_depth))
+        .description("Water pump min depth. This value needs to be lower than max depth, "
+                     "otherwise it will be adjusted to be equal to default min depth " + std::to_string(c_min_wp_depth) + ".");
+
+        param("Water Pump - Max Depth", m_args.wp_max_depth)
+        .defaultValue(std::to_string(c_max_wp_depth))
+        .minimumValue(std::to_string(c_min_wp_depth))
+        .maximumValue(std::to_string(c_max_wp_depth))
+        .description("Water pump max depth. This value needs to be higher than min depth, "
+                     "otherwise it will be adjusted to be equal to default max depth " + std::to_string(c_max_wp_depth) + ".");
+
+        param("Motor - Id", m_args.motor_id)
+        .editable(false)
+        .defaultValue("-1")
+        .minimumValue("0")
+        .description("Motor actuation id.");
 
         param("Motor - Entity Label", m_args.motor_elabel)
         .editable(false)
-        .defaultValue(c_motor_elabel)
+        .defaultValue("")
+        .minimumSize(1)
         .description("Label of the motor entity");
-
-        param("Endpoint 1 - GPIO Label", m_args.endpoint_gpios_labels[0])
-        .editable(false)
-        .defaultValue(c_endpoint1_elabel)
-        .description("Label of the endpoint 1 gpio");
-
-        param("Endpoint 2 - GPIO Label", m_args.endpoint_gpios_labels[1])
-        .editable(false)
-        .defaultValue(c_endpoint2_elabel)
-        .description("Label of the endpoint 2 gpio");
 
         param("Water Level 1 - GPIO Label", m_args.wl_gpios_labels[0])
         .editable(false)
-        .defaultValue(c_wl1_elabel)
+        .defaultValue("")
         .description("Label of the water level 1 gpio");
 
         param("Water Level 2 - GPIO Label", m_args.wl_gpios_labels[1])
         .editable(false)
-        .defaultValue(c_wl2_elabel)
+        .defaultValue("")
         .description("Label of the water level 2 gpio");
 
         param("Water Level 3 - GPIO Label", m_args.wl_gpios_labels[2])
         .editable(false)
-        .defaultValue(c_wl3_elabel)
+        .defaultValue("")
         .description("Label of the water level 3 entity");
 
         param("Water Flow 1 - Entity Label", m_args.wf_elabels[0])
         .editable(false)
-        .defaultValue(c_wf1_elabel)
+        .defaultValue("")
         .description("Label of the water flow 1 entity");
 
         param("Water Flow 2 - Entity Label", m_args.wf_elabels[1])
         .editable(false)
-        .defaultValue(c_wf2_elabel)
+        .defaultValue("")
         .description("Label of the water flow 2 entity");
+
+        param("Use Motor Motion for Water Pump Depth", m_args.wp_depth_from_motor_motion)
+        .defaultValue("false")
+        .description("Use motor motion detection to determine water pump depth.");
+
+        param("Disable Water Level Sensors Warning", m_args.disable_wl_malfunction_warning)
+        .defaultValue("true")
+        .description("Indicates if water level sensors malfunction warning is disabled.");
+
+        param("Water Pump Motion Timeout", m_args.wp_motion_timeout)
+        .defaultValue("30.0")
+        .units(Units::Types::Second)
+        .description("Timeout for water pump motion. "
+                     "When timeout is reached, water pump is considered to be at desired depth.");
 
         m_vi.op = VersionInfo::OP_REPLY;
 
@@ -251,6 +300,7 @@ namespace Power
         bind<IMC::PowerChannelControl>(this);
         bind<IMC::QueryPowerChannelState>(this);
         bind<IMC::GpioStateGet>(this);
+        bind<IMC::SetThrusterActuation>(this);
       }
 
       void
@@ -267,6 +317,24 @@ namespace Power
           if (paramChanged(m_args.pwr_ch_states[i]))
             setPowerChannel(m_args.pwr_ch_names[i], m_args.pwr_ch_states[i]);
         }
+
+        if (paramChanged(m_args.wp_min_depth))
+        {
+          if (m_args.wp_min_depth >= m_args.wp_max_depth)
+          {
+            inf("water pump min depth needs to be lower than max depth, adjusting to default min depth %f", c_min_wp_depth);
+            applyEntityParameter(&m_args.wp_min_depth, c_min_wp_depth);
+          }
+        }
+
+        if (paramChanged(m_args.wp_max_depth))
+        {
+          if (m_args.wp_max_depth <= m_args.wp_min_depth)
+          {
+            inf("water pump max depth needs to be higher than min depth, adjusting to default max depth %f", c_max_wp_depth);
+            applyEntityParameter(&m_args.wp_max_depth, c_max_wp_depth);
+          }
+        }
       }
 
       void
@@ -281,10 +349,10 @@ namespace Power
       void
       onEntityReservation(void) override
       {
-        m_deep_pump_entity = reserveEntity<Entities::BasicEntity>(m_args.dp_elabel);
+        m_wp_entity = reserveEntity<Entities::BasicEntity>(m_args.wp_elabel);
         m_motor_entity = reserveEntity<Entities::BasicEntity>(m_args.motor_elabel);
-        m_wf_entities[0] = reserveEntity<Entities::BasicEntity>(m_args.wf_elabels[0]);
-        m_wf_entities[1] = reserveEntity<Entities::BasicEntity>(m_args.wf_elabels[1]);
+        m_wf_entities[0] = m_args.wf_elabels[0].empty() ? nullptr : reserveEntity<Entities::BasicEntity>(m_args.wf_elabels[0]);
+        m_wf_entities[1] = m_args.wf_elabels[1].empty() ? nullptr : reserveEntity<Entities::BasicEntity>(m_args.wf_elabels[1]);
       }
 
       void
@@ -315,11 +383,13 @@ namespace Power
         }
 
         m_gpio_states.clear();
-        for (uint8_t i = 0; i < c_num_endpoints; i++)
-          m_gpio_states[m_args.endpoint_gpios_labels[i]].name = m_args.endpoint_gpios_labels[i];
-
         for (uint8_t i = 0; i < c_num_wl_sensors; i++)
+        {
+          if (m_args.wl_gpios_labels[i].empty())
+            continue;
+
           m_gpio_states[m_args.wl_gpios_labels[i]].name = m_args.wl_gpios_labels[i];
+        }
 
         m_synced = false;
       }
@@ -439,46 +509,57 @@ namespace Power
         dispatchReply(*msg, gpio->second);
       }
 
+      void
+      consume(const IMC::SetThrusterActuation* msg)
+      {
+        if (!m_synced)
+          return;
+
+        // if (msg->getDestination() != getSystemId())
+        //   return;
+
+        if (msg->id != m_args.motor_id)
+          setMotorActuation(msg->value);
+        else if (msg->id == m_args.water_pump_id)
+          setWaterPumpActuation(msg->value);
+      }
+
+      void
+      dispatchWaterPumpDepth(float depth)
+      {
+        m_wp_depth.value = depth;
+        m_wp_entity->dispatch(m_wp_depth);
+      }
+
       char
       processInput(const std::string input)
       {
-        char res = '\0';
         try
         {
           NMEAReader reader(input);
-          res = interpretInput(reader);
+          return interpretInput(reader);
         }
         catch(const DUNE::Parsers::Error& e)
         {
           war("error parsing input : %s", e.what());
         }
         
-        return res;
+        return '\0';
       }
 
       char
       interpretInput(NMEAReader& reader)
       {
-        const auto code = reader.code();
-        if (strlen(code) != 1)
+        const char* code = reader.code();
+
+        if (code == nullptr)
           return '\0';
 
-        const char cmd_id = code[0];
-        switch (cmd_id)
-        {
-        case c_cmd_data:
+        if (strcmp(code, c_cmd_data) == 0)
           interpretData(reader);
-          break;
-
-        case c_cmd_ack:
-        case c_cmd_nack:
-          break;
-
-        case c_cmd_sync:
+        else if (strcmp(code, c_cmd_sync) == 0)
           interpretSynchronize(reader);
-          break;
-
-        case c_cmd_shdn:
+        else if (strcmp(code, c_cmd_shdn) == 0)
         {
           inf("shutdown has been requested");
           IMC::PowerOperation pop;
@@ -486,14 +567,15 @@ namespace Power
           pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
           dispatch(pop);
           m_shdn_req = true;
-          break;
         }
-
-        default:
+        else if (strcmp(code, c_cmd_ack) == 0)
+          debug("acknowledge received");
+        else if (strcmp(code, c_cmd_nack) == 0)
+          debug("negative acknowledge received");
+        else
           return '\0';
-        }
 
-        return cmd_id;
+        return code[0];
       }
 
       void
@@ -501,32 +583,34 @@ namespace Power
       {
         //! TODO: add timestamp to IMC::Messages.
 
-        float voltage;
         float current;
-        reader >> voltage >> current;
-        m_dp_voltage.value = voltage;
-        m_dp_current.value = current;
-        m_deep_pump_entity->dispatch(m_dp_voltage);
-        m_deep_pump_entity->dispatch(m_dp_current);
-        trace("deep pump v: %.3f V i: %.3f A", voltage, current);
+        float voltage;
+        reader >> current >> voltage;
+        m_wp_current.value = current;
+        m_wp_voltage.value = voltage;
+        m_wp_entity->dispatch(m_wp_current);
+        m_wp_entity->dispatch(m_wp_voltage);
+        trace("water pump v: %.3f V i: %.3f A", voltage, current);
 
-        unsigned endpoint;
-        for (size_t i = 0; i < c_num_endpoints; i++)
+        unsigned endpoints[c_num_endpoints];
+        for (size_t i = 1; i <= c_num_endpoints; i++)
         {
-          reader >> endpoint;
-          auto& gpio = m_gpio_states[m_args.endpoint_gpios_labels[i]];
-          gpio.value = endpoint;
-          dispatch(gpio);
-          trace("endpoint %zu: %u", i + 1, endpoint);
+          reader >> endpoints[i - 1];
+          trace("endpoint %zu: %u", i, endpoints[i - 1]);
         }
-        
+
         float waterlevel;
         for (size_t i = 0; i < c_num_wl_sensors; i++)
         {
           reader >> waterlevel;
+          if (m_args.wl_gpios_labels[i].empty())
+            continue;
+
           if (waterlevel > c_max_wl_low_voltage && waterlevel < c_min_wl_high_voltage)
           {
-            war("check connection of water level %zu sensor : voltage is %.3f V", i + 1, waterlevel);
+            if (!m_args.disable_wl_malfunction_warning)
+              war("check connection of water level %zu sensor : voltage is %.3f V", i + 1, waterlevel);
+
             continue;
           }
 
@@ -542,12 +626,39 @@ namespace Power
         m_motor_entity->dispatch(m_motor_current);
         trace("motor current: %.3f A", motor_current);
 
+        bool motor_fault, motor_moving;
+        reader >> motor_fault >> motor_moving;
+
+        if (motor_fault)
+          war("motor fault detected");
+
+        if (motor_moving)
+          m_motor_motion_timer.reset();
+
         float waterflow;
         for (size_t i = 0; i < c_num_wf_sensors; i++)
         {
           reader >> waterflow;
-          trace("water flow %zu: %f m*m*m/s", i + 1, waterflow);
+          if (m_wf_entities[i] != nullptr)
+          {
+            m_wf_messages[i].value = waterflow * c_lmin_to_m3s;
+            m_wf_entities[i]->dispatch(m_wf_messages[i]);
+            trace("water flow %zu: %f m*m*m/s", i + 1, waterflow);
+          }
         }
+
+        float depth = -1.0f;
+        if (endpoints[c_min_wp_depth_id - 1] > 0)
+          depth = m_args.wp_min_depth;
+        else if (endpoints[c_max_wp_depth_id - 1] > 0)
+          depth = m_args.wp_max_depth;
+        else if (m_args.wp_depth_from_motor_motion && m_motor_motion_timer.overflow() && m_motor_motion_timer.getTop() > 0.0f)
+          depth = (m_motor_actuation > 0.0f) ? m_args.wp_max_depth : m_args.wp_min_depth;
+        else if (m_wp_motion_timer.overflow() && m_wp_motion_timer.getTop() > 0.0f)
+          depth = (m_motor_actuation > 0.0f) ? m_args.wp_max_depth : m_args.wp_min_depth;
+
+        if (depth >= 0.0f)
+          dispatchWaterPumpDepth(depth);
 
         m_inp_tmt.reset();
       }
@@ -565,14 +676,14 @@ namespace Power
 
       template <typename T>
       void
-      sendCommand(const char cmd_id, const char cmd_reply = '\0', const bool persistent = false, const std::vector<T>& args = {})
+      sendCommand(const char* cmd_type, const char cmd_reply = '\0', const bool persistent = false, const std::vector<T>& args = {})
       {
         if (m_handle == NULL)
           throw RestartNeeded("device handle is null", 5);
 
         do
         {
-          NMEAWriter cmd(std::string(1, cmd_id));
+          NMEAWriter cmd(cmd_type);
           for (const auto& arg: args)
             cmd << uncastLexical(arg);
           m_handle->writeString(cmd.sentence().c_str());
@@ -598,7 +709,7 @@ namespace Power
       }
 
       bool
-      waitForCommand(const char cmd_id, const uint8_t timeout = c_cmd_timeout)
+      waitForCommand(char cmd_id, const uint8_t timeout = c_cmd_timeout)
       {
         if (m_handle == NULL)
           throw RestartNeeded("device handle is null", 5);
@@ -609,7 +720,7 @@ namespace Power
         {
           if (Poll::poll(*m_handle, timer.getRemaining()))
           {
-            const auto in = readInput();
+            const char in = readInput();
 
             if (in == cmd_id)
             {
@@ -643,7 +754,7 @@ namespace Power
         try
         {
           debug("trying to sync with device : setting max expected heartbeat timeout : %u seconds", c_hb_max_tmt);
-          sendCommand(c_cmd_sync, c_cmd_sync, true, std::vector<uint8_t>{c_hb_max_tmt});
+          sendCommand(c_cmd_sync, c_cmd_sync[0], true, std::vector<uint8_t>{c_hb_max_tmt});
           inf("synced with device : set max expected heartbeat timeout : %u seconds", c_hb_max_tmt);
           return true;
         }
@@ -667,7 +778,7 @@ namespace Power
         try
         {
           debug("trying to set data rate to %u Hz", rate);
-          sendCommand(c_cmd_data, c_cmd_ack, persistent, std::vector<uint8_t>{rate});
+          sendCommand(c_cmd_data, c_cmd_ack[0], persistent, std::vector<uint8_t>{rate});
           debug("data rate set to %u Hz", rate);
 
           if (rate > 0)
@@ -689,7 +800,7 @@ namespace Power
         {
           auto& pwr_ch = m_pwr_chs.at(label);
           debug("trying to turn %s power channel \"%s\"", state ? "on" : "off", label.c_str());
-          sendCommand(c_cmd_power_ctl, c_cmd_ack, persistent, std::vector<uint8_t>{pwr_ch.id, static_cast<uint8_t>(state)});
+          sendCommand(c_cmd_power_ctl, c_cmd_ack[0], persistent, std::vector<uint8_t>{pwr_ch.id, static_cast<uint8_t>(state)});
           pwr_ch.pcs.state = state;
           dispatch(m_pwr_chs[label].pcs);
           spew("power channel \"%s\" is %s", label.c_str(), state ? "on" : "off");
@@ -708,7 +819,10 @@ namespace Power
         try
         {
           debug("trying to set motor actuation to %.2f%%", actuation);
-          sendCommand(c_cmd_motor_ctl, c_cmd_ack, persistent, std::vector<float>{actuation});
+          m_motor_actuation = actuation;
+          m_motor_motion_timer.setTop((m_motor_actuation != 0.0f) ? c_motor_motion_timeout : 0.0);
+          m_wp_motion_timer.setTop((m_motor_actuation != 0.0f) ? m_args.wp_motion_timeout : 0.0);
+          sendCommand(c_cmd_motor_ctl, c_cmd_ack[0], persistent, std::vector<float>{actuation});
           return true;
         }
         catch(const std::exception& e)
@@ -719,17 +833,17 @@ namespace Power
       }
 
       bool
-      setDeepPumpActuation(const float actuation, const bool persistent = false)
+      setWaterPumpActuation(const float actuation, const bool persistent = false)
       {
         try
         {
-          debug("trying to set deep pump actuation to %.2f%%", actuation);
-          sendCommand(c_cmd_dp_ctl, c_cmd_ack, persistent, std::vector<float>{actuation});
+          debug("trying to set water pump actuation to %.2f%%", actuation);
+          sendCommand(c_cmd_wp_ctl, c_cmd_ack[0], persistent, std::vector<float>{actuation});
           return true;
         }
         catch(const std::exception& e)
         {
-          err("failed to set deep pump actuation : %s", e.what());
+          err("failed to set water pump actuation : %s", e.what());
           return false;
         }
       }
