@@ -40,231 +40,261 @@ namespace Payload
 {
   namespace RedX
   {
-    //! Task to control the Payload for RedX Project/Board. 
-    //!
-    //! @author Pedro Gonçalves
-
     using DUNE_NAMESPACES;
 
-    static const uint8_t c_max_filters = 9;
-
-    struct PumpAndMotor {
-      bool isActive;
-      float flowRate;  // Pump flow rate in L/min
-      float operationTime;  // Time the pump has been operating (in seconds)
-      int id; // ID of the pump or motor
-      std::string name; // Name of the pump
-      PumpAndMotor() : isActive(false), flowRate(0.0f), operationTime(0.0f) {}
-      void start() {
-        isActive = true;
-      }
-      void stop() {
-        isActive = false;
-        operationTime = 0.0f; // Reset operation time when stopped
-      }
-    };
-
-    struct Valve {
-      bool isOpen;
-      int filterNumber;
-      std::string name; // Name of the valve
-      Valve() : isOpen(false), filterNumber(0) {}
-      void open() {
-          isOpen = true;
-      }
-      void close() {
-          isOpen = false;
-      }
-    };
-
-    struct Sensor {
-      bool isActive;
-      float value;  // Sensor value (e.g., level, flow, etc.)
-      std::string name; // Name of the sensor
-      Sensor() : isActive(true), value(0.0f) {}
-      float read() {
-          return value;
-      }
-    };
+    //! Maximum number of filters supported by the system.
+    static constexpr uint8_t c_max_filters = 9;
+    //! Sampling state report timeout.
+    static constexpr float c_state_report_tout = 1;
 
     //! Task arguments.
     struct Arguments
     {
-      // ID of motor to control the descending pump.
-      int descend_pump_motor_id;
-      //! Velocity to Start Descending and Ascending in percent.
-      int velocity_to_start_descending_and_ascending_in_percent;
-      // ID of pmp in water
-      int pump_in_water_id;
-      //! velocity pf in water pump.
-      int velocity_pf_in_water_pump;
-      // Name of pump in tank
-      std::string pump_in_tank_name;
-      // Name of sensor to monitor water tank maximum level.
-      std::string sensor_water_tank_max_name;
-      // Name of sensor to monitor water tank minimum level.
-      std::string sensor_water_tank_min_name;
-      // Name of purge valve for external tank.
-      std::string purge_valve_ext_name;
-      // Name of valves for filters.
-      std::string filters[c_max_filters];
-      // Name of sensor to monitor filter fill up.
-      std::string sensor_fill_up_filter_name;
-      // Name of entity to receive depth information from.
-      std::string entity_label_depth_info;
-      // Number of filters to use in the system.
-      int number_of_filters;
-      // Last filter that was used in the system.
+      //! ID of motor to control pump descending/asceding.
+      int motor_id;
+      //! Motor actuation value.
+      int motor_actuation;
+      //! ID of water pump.
+      int wp_id;
+      //! Water pump actuation value.
+      int wp_actuation;
+      //! Water pump depth.
+      double wp_depth;
+      //! Water pump depth entity label.
+      std::string wp_elabel;
+      //! Name of pump in tank.
+      std::string tank_pump_name;
+      //! Maximum water level gpio name.
+      std::string max_wl_name;
+      //! Minimum water level gpio name.
+      std::string min_wl_name;
+      //! Purge valve name.
+      std::string purge_valve_name;
+      //! Maximum time for purge operation.
+      int purge_timeout;
+      //! Name of filters valves.
+      std::string filters_names[c_max_filters];
+      //! Filter water flow entity label.
+      std::string filters_water_flow_elabel;
+      //! Number of filters to use in the system.
+      unsigned int number_of_filters;
+      //! Last filter that was used in the system.
       int last_filter_used;
-      // Maximum time to wait for a filter to fill up.
-      int max_time_to_fill_up_filter;
-      // Maximum time to wait for a purge valve to open/close.
-      int max_time_to_operate_purge_valve;
-      // Depth to put the water pump in water at when descending, in meters.
-      double depth_to_put_pump_in_water;
+      //! Maximum time to wait for a filter to fill up.
+      int filter_fill_up_timeout;
+      //! Water flow threshold to consider a filter as filled up.
+      double filter_fill_up_wf_tld;
+      //! Restarting is allowed.
+      bool restart_allowed;
+      //! Pausing is allowed.
+      bool pausing_allowed;
     };
 
+    //! Task to control RedX payload. 
+    //!
+    //! @author Pedro Gonçalves
     struct Task: public Tasks::Task
     {
-      // State Machine Enum
-      enum State {
+      enum State
+      {
+        STATE_UNKNOWN,
+        STATE_IDLE,
         STATE_INITIAL,
         STATE_DESCENDING_PUMP,
         STATE_SAMPLING,
         STATE_PURGING,
         STATE_FILTERING,
         STATE_DRAINING,
-        STATE_WAITING,
+        STATE_NEXT_FILTER,
         STATE_COMPLETED,
-        STATE_PAUSED,
-        STATE_STOP
+        STATE_PAUSED
+      };
+
+      enum Request
+      {
+        REQ_NONE,
+        REQ_START_SAMPLING,
+        REQ_STOP_SAMPLING,
+        REQ_PAUSE_SAMPLING,
+        REQ_RESUME_SAMPLING
       };
 
       //! Task arguments.
       Arguments m_args;
-      //! PumpAndMotor
-      PumpAndMotor m_submersiblePumpMotor;
-      PumpAndMotor m_submersiblePump;
-      PumpAndMotor m_inTankPump;
-      //! Valves
-      Valve m_pressurizationPumpExtTank;
-      //! Valves
-      std::vector<Valve> m_filterValves;
-      //! Sensors
-      Sensor m_tankMaxLevelSensor;
-      Sensor m_tankMinLevelSensor;
-      Sensor m_flowSensor;
-      Sensor m_depthSensor;
+      //! Timer for reporting state
+      Counter<double> m_report_state_timer;
+      //! Water pump depth source entity id.
+      unsigned int m_wp_depth_source_eid;
+      //! Water pump depth.
+      double m_curr_wp_depth;
+      //! Maximum water level sensor state.
+      bool m_max_wl;
+      //! Minimum water level sensor state.
+      bool m_min_wl;
+      //! Filters water flow source entity id.
+      unsigned int m_filters_wf_source_eid;
+      //! Filter timeout timer.
+      Counter<double> m_filter_tout_timer;
+      //! Available filters state map typedef <id, available>.
+      typedef std::map<int, bool> AvailableFiltersStates;
+      //! Available filters state map.
+      AvailableFiltersStates m_available_filters;
+      //! Total number of filters available.
+      unsigned int m_total_available;
+      //! Current filter being used.
+      AvailableFiltersStates::iterator m_curr_filter;
+      //! Filters used counter.
+      unsigned int m_filters_used;
+      //! Water flow sensor value.
+      double m_filters_wf;
+      //! Purge timer.
+      Counter<double> m_purge_timer;
+      //! Sampling state report message.
+      IMC::SamplingAction m_sa_report;
+      //! Description of the entity state.
+      std::string m_es_desc;
       //! Current state of the system.
-      State m_current_state;
-      //! Delay timer.
-      Counter<double> m_delay_timer;
-      //! Last filter used in the system.
-      int m_last_filter_used;
-      //! Buffer to save state info for debugging purposes.
-      std::string m_state_info_buffer;
-      //! Flag to indicate if the system is waiting for manual reset after using all filters.
-      bool m_waiting_for_manual_reset;
-      //! Flag to indicate if the system is idle (not active).
-      bool m_is_idle;
-      //! Counter to manage the timing of sending state of sampling action messages.
-      Counter<double> m_send_state_of_sampling_action;
+      State m_curr_state;
+      //! Last received request.
+      Request m_recv_req;
+      //! Paused state.
+      State m_paused_state;
 
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx)
+        Tasks::Task(name, ctx),
+        m_report_state_timer(c_state_report_tout),
+        m_curr_wp_depth(0.0),
+        m_max_wl(true),
+        m_min_wl(false),
+        m_total_available(0),
+        m_filters_used(0),
+        m_filters_wf(0.0),
+        m_curr_state(STATE_IDLE),
+        m_recv_req(REQ_NONE),
+        m_paused_state(STATE_UNKNOWN)
       {
-        // Retrieve configuration values.
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
 
-        param("Velocity to Start Descending and Ascending in percent", m_args.velocity_to_start_descending_and_ascending_in_percent)
-          .defaultValue("100")
-          .minimumValue("0")
-          .maximumValue("100")
-          .scope(Tasks::Parameter::SCOPE_MANEUVER)
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .description("Velocity to start descending and ascending in percent of maximum velocity.");
+        param("Motor - Id", m_args.motor_id)
+        .defaultValue("-1")
+        .minimumValue("0")
+        .editable(false)
+        .description("Id of motor that controls the pump descending/asceding.");
 
-        param("Power Control - Descend Motor ID", m_args.descend_pump_motor_id)
-          .defaultValue("0")
-          .description("ID of motor to control the descending pump.");
-
-        param("Velocity of in water pump", m_args.velocity_pf_in_water_pump)
-          .defaultValue("100")
-          .minimumValue("0")
-          .maximumValue("100")
-          .scope(Tasks::Parameter::SCOPE_MANEUVER)
-          .visibility(Tasks::Parameter::VISIBILITY_USER)
-          .description("Velocity of in water pump in percent of maximum velocity.");
-
-        param("Power Control - Pump in Water ID", m_args.pump_in_water_id)
-          .defaultValue("1")
-          .description("ID of Pump in water sensor.");
-
-        param("Power Channel Control - Pump in Tank", m_args.pump_in_tank_name)
-          .defaultValue("")
-          .description("Name of Pump in tank sensor.");
-
-        param("Power Channel Control - Sensor Water Tank Maximum", m_args.sensor_water_tank_max_name)
-          .defaultValue("")
-          .description("Name of sensor to monitor water tank maximum level.");
-
-        param("Power Channel Control - Sensor Water Tank Minimum", m_args.sensor_water_tank_min_name)
-          .defaultValue("")
-          .description("Name of sensor to monitor water tank minimum level.");
-
-        param("Power Channel Control - Purge Valve Extern", m_args.purge_valve_ext_name)
-          .defaultValue("")
-          .description("Name of purge valve for external tank.");
-
-        param("Entity Label for Depth Information", m_args.entity_label_depth_info)
-          .defaultValue("")
-          .description("Name of entity to receive depth information from.");
-
-        // Extract power channel control labels
-        for (uint8_t i = 1; i <= c_max_filters; ++i)
-        {
-          std::string option = String::str("Power Channel Control - Valve Filter %u", i);
-          param(option, m_args.filters[i - 1])
-          .defaultValue("")
-          .description("Power Channel Control Label");
-        }
-
-        param("Task of Sensor Filter Fill Up", m_args.sensor_fill_up_filter_name)
-          .defaultValue("")
-          .description("Name of sensor to monitor filter fill up.");
-
-        param("Number of Filters to use", m_args.number_of_filters)
-        .defaultValue("9")
-        .minimumValue("1")
-        .maximumValue("9")
+        param("Motor - Actuation", m_args.motor_actuation)
+        .defaultValue("100")
+        .minimumValue("0")
+        .maximumValue("100")
+        .units(Units::Types::Percentage)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .description("Number of filters to use in the system.");
+        .description("Motor actuation value.");
 
-        param("Maximum Time to wait for a filter to fill up", m_args.max_time_to_fill_up_filter)
-        .defaultValue("60.0")
-        .minimumValue("1.0")
+        param("Water Pump - Id", m_args.wp_id)
+        .defaultValue("-1")
+        .minimumValue("0")
+        .editable(false)
+        .description("Id of water pump.");
+
+        param("Water Pump - Actuation", m_args.wp_actuation)
+        .defaultValue("100")
+        .minimumValue("0")
+        .maximumValue("100")
+        .units(Units::Types::Percentage)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Water pump actuation value.");
+
+        param("Water Pump - Depth", m_args.wp_depth)
+        .defaultValue("0.0")
+        .minimumValue("0.0")
+        .units(Units::Types::Meter)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Water pump depth in meters.");
+
+        param("Water Pump - Entity Label", m_args.wp_elabel)
+        .defaultValue("")
+        .editable(false)
+        .description("Water pump entity label.");
+
+        param("Tank Pump - Power Channel Name", m_args.tank_pump_name)
+        .defaultValue("")
+        .editable(false)
+        .description("Power channel name for tank pump.");
+
+        param("Maximum Water Level - GPIO Name", m_args.max_wl_name)
+        .defaultValue("")
+        .editable(false)
+        .description("Maximum water level gpio name.");
+
+        param("Minimum Water Level - GPIO Name", m_args.min_wl_name)
+        .defaultValue("")
+        .editable(false)
+        .description("Minimum water level gpio name.");
+
+        param("Purge Valve - Power Channel Name", m_args.purge_valve_name)
+        .defaultValue("")
+        .editable(false)
+        .description("Power channel name for purge valve.");
+
+        param("Purge Valve Operation Timeout", m_args.purge_timeout)
+        .defaultValue("10")
+        .minimumValue("1")
+        .units(Units::Types::Second)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Purge valve operation timeout.");
+
+        for (uint8_t i = 0; i < c_max_filters; ++i)
+        {
+          std::string option = String::str("Filter %u - Power Channel Name", i);
+          param(option, m_args.filters_names[i])
+          .defaultValue("")
+          .editable(false)
+          .description("Power channel name for filter valve");
+        }
+
+        param("Filters Water Flow - Entity Label", m_args.filters_water_flow_elabel)
+        .defaultValue("")
+        .editable(false)
+        .description("Entity label for filters water flow sensor.");
+
+        param("Number of Filters to Use", m_args.number_of_filters)
+        .defaultValue("1")
+        .minimumValue("1")
+        .maximumValue(std::to_string(c_max_filters))
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .description("Number of filters to use.");
+
+        param("Last Filter Used", m_args.last_filter_used)
+        .defaultValue("-1")
+        .minimumValue("-1")
+        .maximumValue(std::to_string(c_max_filters - 1))
+        .description("Last filter that was used in the system.");
+
+        param("Filter Fill Up Timeout", m_args.filter_fill_up_timeout)
+        .defaultValue("60")
+        .minimumValue("0")
+        .units(Units::Types::Second)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Maximum time to wait for a filter to fill up in seconds.");
 
-        param("Maximum Time to wait for a purge valve to open/close", m_args.max_time_to_operate_purge_valve)
-        .defaultValue("10.0")
-        .minimumValue("1.0")
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .description("Maximum time to wait for a purge valve to open/close in seconds.");
+        param("Restart Allowed", m_args.restart_allowed)
+        .defaultValue("false")
+        .description("Indicates if restarting is allowed.");
 
-        param("Depth to put the water pump in water at when descending", m_args.depth_to_put_pump_in_water)
-        .defaultValue("0.5")
-        .minimumValue("0.1")
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
-        .description("Depth to put the water pump in water at when descending in meters.");
+        param("Pause Allowed", m_args.pausing_allowed)
+        .defaultValue("false")
+        .description("Indicates if pausing is allowed.");
+
+        m_sa_report.action = IMC::SamplingAction::SA_REPORT;
 
         bind<IMC::Depth>(this);
         bind<IMC::GpioState>(this);
@@ -272,399 +302,628 @@ namespace Payload
         bind<IMC::SamplingAction>(this);
       }
 
-      ~Task(void)
+      void
+      onActivation(void) override
       {
-        onResourceRelease();
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
-      onUpdateParameters(void)
+      onDeactivation(void) override
       {
-        debug("onUpdateParameters() called");
-        if(paramChanged(m_args.depth_to_put_pump_in_water))
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
+      }
+
+      void
+      onUpdateParameters(void) override
+      {
+        if (paramChanged(m_args.wp_depth))
+          spew("payload settings : water pump depth set to : %.2f meters", m_args.wp_depth);
+
+        if (paramChanged(m_args.filter_fill_up_timeout))
+          spew("payload settings : filter fill up timeout set to : %d seconds", m_args.filter_fill_up_timeout);
+        
+        if(paramChanged(m_args.purge_timeout))
+          spew("payload settings : purge timeout set to : %d seconds", m_args.purge_timeout);
+
+        if (paramChanged(m_args.number_of_filters))
+          spew("payload settings : number of filters set to : %d", m_args.number_of_filters);
+
+        if (paramChanged(m_args.motor_actuation))
+          spew("payload settings : motor actuation set to : %d%%", m_args.motor_actuation);
+
+        if (paramChanged(m_args.wp_actuation))
+          spew("payload settings : water pump actuation set to : %d%%", m_args.wp_actuation);
+      }
+
+      void
+      onEntityResolution(void) override
+      {
+        getEid(m_wp_depth_source_eid, m_args.wp_elabel);
+        getEid(m_filters_wf_source_eid, m_args.filters_water_flow_elabel);
+      }
+
+      void
+      getEid(unsigned int& entity_id, const std::string& label)
+      {
+        try
         {
-          inf("Updated depth to put the water pump in water at when descending: %.2f meters", m_args.depth_to_put_pump_in_water);
+          entity_id = resolveEntity(label);
         }
-        if(paramChanged(m_args.max_time_to_fill_up_filter))
+        catch (const Entities::EntityDataBase::NonexistentLabel& e)
         {
-          inf("Updated maximum time to wait for a filter to fill up: %d seconds", m_args.max_time_to_fill_up_filter);
-        }
-        if(paramChanged(m_args.max_time_to_operate_purge_valve))
-        {
-          inf("Updated maximum time to wait for a purge valve to open/close: %d seconds", m_args.max_time_to_operate_purge_valve);
-        }
-        if(paramChanged(m_args.number_of_filters))
-        {
-          inf("Updated number of filters to use in the system: %d", m_args.number_of_filters);
-          m_state_info_buffer = "idle | Filters used " + std::to_string(m_last_filter_used) + ", remaining " + std::to_string(m_args.number_of_filters - m_last_filter_used);
-        }
-        if(paramChanged(m_args.velocity_to_start_descending_and_ascending_in_percent))
-        {
-          inf("Updated velocity to start descending and ascending: %d%%", m_args.velocity_to_start_descending_and_ascending_in_percent);
-        }
-        if(paramChanged(m_args.velocity_pf_in_water_pump))
-        {
-          inf("Updated velocity pf in water pump: %d%%", m_args.velocity_pf_in_water_pump);
+          war("%s", e.what());
+          entity_id = DUNE_IMC_CONST_UNK_EID;
         }
       }
 
       //! Initialize resources.
       void
-      onResourceInitialization(void)
+      onResourceInitialization(void) override
       {
-        war("onResourceInitialization() called");
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        m_send_state_of_sampling_action.setTop(1.0); // Set the counter to send state of sampling action messages every 1 seconds
-        m_is_idle = true;
-        m_last_filter_used = 0;
-        m_waiting_for_manual_reset = false;
-        m_current_state = STATE_INITIAL;
-        m_submersiblePumpMotor.id = m_args.descend_pump_motor_id;
-        m_submersiblePumpMotor.isActive = false;
-        sendThrustActuation(m_submersiblePumpMotor.id, 0.0f); // Ensure the pump motor is off at initialization
-        m_submersiblePump.id = m_args.pump_in_water_id;
-        m_submersiblePump.isActive = false;
-        sendThrustActuation(m_submersiblePump.id, 0.0f); // Ensure the pump is off at initialization
-        m_inTankPump.name = m_args.pump_in_tank_name;
-        m_inTankPump.isActive = false;
-        sendPowerChannelControl(m_inTankPump.name, PowerChannelControl::PCC_OP_TURN_OFF); // Ensure the in-tank pump is off at initialization
-        m_pressurizationPumpExtTank.name = m_args.purge_valve_ext_name;
-        m_pressurizationPumpExtTank.isOpen = false;
-        sendPowerChannelControl(m_pressurizationPumpExtTank.name, PowerChannelControl::PCC_OP_TURN_OFF); // Ensure the external tank pressurization pump is off at initialization
-        for (int i = 0; i < m_args.number_of_filters; ++i)
+        for (int i = 0; i < c_max_filters; ++i)
         {
-          Valve valve;
-          valve.name = m_args.filters[i];
-          valve.isOpen = false;
-          m_filterValves.push_back(valve);
-          sendPowerChannelControl(valve.name, PowerChannelControl::PCC_OP_TURN_OFF); // Ensure all filter valves are off at initialization
+          m_available_filters[i] = (m_args.last_filter_used < i) && !m_args.filters_names[i].empty();
+          if (m_available_filters[i])
+            m_total_available++;
         }
-        m_tankMaxLevelSensor.name = m_args.sensor_water_tank_max_name;
-        m_tankMaxLevelSensor.isActive = false;
-        m_tankMinLevelSensor.name = m_args.sensor_water_tank_min_name;
-        m_tankMinLevelSensor.isActive = false;
-        m_flowSensor.name = m_args.sensor_fill_up_filter_name;
-        m_flowSensor.isActive = false;
-        m_depthSensor.name = "Depth Sensor"; // Assuming a fixed name for depth sensor
-        m_depthSensor.isActive = true;
-        m_depthSensor.value = 0.0f; // Initialize depth sensor value
-        m_state_info_buffer = "idle | Filters used 0, remaining " + std::to_string(m_args.number_of_filters);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
       }
 
       void
       consume(const IMC::Depth* msg)
       {
-        parseDepthMessage(msg);
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getSourceEntity() != m_wp_depth_source_eid)
+          return;
+
+        m_curr_wp_depth = msg->value;
+        spew("received water pump depth update: %.2f.", msg->value);
       }
 
       void
       consume(const IMC::GpioState* msg)
       {
-        parseGPIOMessage(msg);
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->name == m_args.max_wl_name)
+        {
+          m_max_wl = msg->value > 0;
+          spew("received maximum water level update: %s.", m_max_wl ? "HIGH" : "LOW");
+        }
+        else if (msg->name == m_args.min_wl_name)
+        {
+          m_min_wl = msg->value > 0;
+          spew("received minimum water level update: %s.", m_min_wl ? "HIGH" : "LOW");
+        }
       }
 
       void
       consume(const IMC::WaterFlow* msg)
       {
-        parseWaterFlowMessage(msg);
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (msg->getSourceEntity() != m_filters_wf_source_eid)
+          return;
+
+        m_filters_wf = msg->value;
+        spew("received filters water flow update: %.2f.", msg->value);
       }
 
       void
       consume(const IMC::SamplingAction* msg)
       {
-        parseSamplingActionMessage(msg);
+        if (msg->action != IMC::SamplingAction::ActionEnum::SA_COMMAND)
+          return;
+
+        if (!isActive())
+        {
+          inf("received SamplingAction command message with action %d, but the entity is not active", msg->action);
+          return;
+        }
+        else
+          spew("received SamplingAction command message with action %d", msg->action);
+
+        switch (msg->type)
+        {
+        case IMC::SamplingAction::TypeEnum::SAT_CMD_START:
+          inf("received command to start sampling");
+          m_recv_req = REQ_START_SAMPLING;
+          break;
+
+        case IMC::SamplingAction::TypeEnum::SAT_CMD_STOP:
+          inf("received command to stop sampling");
+          m_recv_req = REQ_STOP_SAMPLING;
+          break;
+
+        case IMC::SamplingAction::TypeEnum::SAT_CMD_PAUSE:
+          if(m_args.pausing_allowed)
+          {
+            m_recv_req = REQ_PAUSE_SAMPLING;
+            inf("received command to pause sampling action");
+          }
+          else
+            inf("received command to pause sampling action, but pausing is not allowed");
+
+          break;
+
+        case IMC::SamplingAction::TypeEnum::SAT_CMD_RESUME:
+          if(m_args.pausing_allowed)
+          {
+            m_recv_req = REQ_RESUME_SAMPLING;
+            inf("received command to resume sampling action");
+          }
+          else
+            inf("received command to resume sampling action, but pausing is not allowed");
+
+          break;
+
+        case IMC::SamplingAction::TypeEnum::SAT_CMD_QUERY_STATE:
+          dispatch(m_sa_report);
+          break;
+        
+        default:
+          break;
+        }
       }
 
       void
-      sendPowerChannelControl(const std::string& channel_name, uint8_t operation)
+      setPowerChannel(const std::string& channel_name, bool operation, fp64_t sched_time = 0.0)
       {
         IMC::PowerChannelControl msg;
         msg.name = channel_name;
-        msg.op = operation;
-        msg.sched_time = 0.0; // Immediate operation
+        msg.op = operation ? PowerChannelControl::PCC_OP_TURN_ON : PowerChannelControl::PCC_OP_TURN_OFF;
+        msg.sched_time = sched_time;
         dispatch(msg);
-        inf("Sent PowerChannelControl message for channel '%s' with operation %s",
-          channel_name.c_str(), operation? "ON" : "OFF");
+        trace("set power channel '%s': %s", channel_name.c_str(), operation ? "on" : "off");
       }
 
       void
-      sendThrustActuation(uint8_t id, float thrust_value)
+      setActuation(uint8_t id, float value)
       {
         IMC::SetThrusterActuation msg;
         msg.id = id;
-        msg.value = thrust_value;
+        msg.value = value;
         dispatch(msg);
-        inf("Sent SetThrusterActuation message for id '%d' with thrust value %.2f", id, thrust_value);
+        trace("set actuation for id '%d': %.2f", id, value);
       }
 
-      //! Main loop.
+      void
+      startMotor(bool reverse = false)
+      {
+        setActuation(m_args.motor_id, reverse ? -m_args.motor_actuation / 100.0f : m_args.motor_actuation / 100.0f);
+      }
+
+      void
+      stopMotor(void)
+      {
+        setActuation(m_args.motor_id, 0.0f);
+      }
+
+      void
+      startWaterPump(void)
+      {
+        setActuation(m_args.wp_id, m_args.wp_actuation / 100.0f);
+      }
+
+      void
+      stopWaterPump(void)
+      {
+        setActuation(m_args.wp_id, 0.0f);
+      }
+
+      void
+      startTankPump(void)
+      {
+        setPowerChannel(m_args.tank_pump_name, true);
+      }
+
+      void
+      stopTankPump(void)
+      {
+        setPowerChannel(m_args.tank_pump_name, false);
+      }
+
+      void
+      startPurge(void)
+      {
+        m_purge_timer.setTop(m_args.purge_timeout);
+        setPowerChannel(m_args.purge_valve_name, true);
+      }
+
+      void
+      stopPurge(void)
+      {
+        setPowerChannel(m_args.purge_valve_name, false);
+      }
+
+      bool
+      startRequested(bool sampling = true)
+      {
+        if (m_recv_req != REQ_START_SAMPLING)
+          return false;
+
+        m_recv_req = REQ_NONE;
+        if (sampling && !m_args.restart_allowed)
+        {
+          inf("received request to restart sampling, but restarting is not allowed");
+          return false;
+        }
+
+        m_recv_req = REQ_NONE;
+        setState(STATE_INITIAL);
+        trace("received request to start sampling");
+        return true;
+      }
+
+      bool
+      stopRequested(bool sampling = true)
+      {
+        if (m_recv_req != REQ_STOP_SAMPLING)
+          return false;
+
+        m_recv_req = REQ_NONE;
+
+        if (!sampling)
+        {
+          inf("received request to stop sampling, but not sampling");
+          return false;
+        }
+
+        setState(STATE_IDLE);
+        trace("received request to stop sampling");
+        return true;
+      }
+
+      bool
+      pauseRequested(bool sampling = true)
+      {
+        if (!m_args.pausing_allowed || m_recv_req != REQ_PAUSE_SAMPLING)
+          return false;
+
+        m_recv_req = REQ_NONE;
+
+        if (!m_args.pausing_allowed)
+        {
+          inf("received request to pause sampling, but pausing is not allowed");
+          return false;
+        }
+
+        if (!sampling)
+        {
+          inf("received request to pause sampling, but not sampling");
+          return false;
+        }
+
+        setState(STATE_PAUSED);
+        trace("received request to pause sampling");
+        return true;
+      }
+
+      bool
+      resumeRequested(void)
+      {
+        if (m_recv_req != REQ_RESUME_SAMPLING)
+          return false;
+
+        m_recv_req = REQ_NONE;
+
+        if (!m_args.pausing_allowed)
+        {
+          inf("received request to resume sampling, but pausing is not allowed");
+          return false;
+        }
+
+        setState((m_paused_state != STATE_UNKNOWN) ? m_paused_state : STATE_IDLE);
+        trace("received request to resume sampling action");
+        return true;
+      }
+
+      void
+      setState(State state)
+      {
+        m_curr_state = state;
+
+        switch (m_curr_state)
+        {
+        case STATE_INITIAL:
+          updateSamplingState(IMC::SamplingAction::SAT_STATE_STARTING, "initializing sampling action");
+          m_filters_used = 0;
+          break;
+
+        case STATE_DESCENDING_PUMP:
+          updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "descending pump to target depth");
+          startMotor();
+          break;
+
+        case STATE_SAMPLING:
+          updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "sampling at target depth");
+          startWaterPump();
+          break;
+
+        case STATE_PURGING:
+          updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "purging filters");
+          startPurge();
+          break;
+
+        case STATE_FILTERING:
+          updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "filtering water");
+          m_filter_tout_timer.setTop(m_args.filter_fill_up_timeout);
+          // choose filter valve
+          startTankPump();
+          break;
+
+        case STATE_DRAINING:
+          updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "draining water");
+          startPurge();
+          break;
+
+        case STATE_COMPLETED:
+          updateSamplingState(IMC::SamplingAction::SAT_STATE_STOPPING, "sampling completed");
+          startMotor(true);
+          break;
+
+        case STATE_IDLE:
+          updateSamplingState(IMC::SamplingAction::SAT_STATE_IDLE, "ready for sampling");
+        default:
+          break;
+        }
+      }
+
+      bool
+      filtering(void)
+      {
+        return (!m_filter_tout_timer.overflow() &&
+                m_filters_wf <= m_args.filter_fill_up_wf_tld &&
+                !m_min_wl);
+      }
+
+      bool
+      draining(void)
+      {
+        return (!m_purge_timer.overflow() &&
+                m_filters_wf <= m_args.filter_fill_up_wf_tld &&
+                !m_min_wl);
+      }
+
+      bool
+      nextFilter(void)
+      {
+        if (m_filters_used >= m_args.number_of_filters)
+          return false;
+
+        if (m_filters_used == 0)
+          m_curr_filter = (m_args.last_filter_used >= 0) ? std::next(m_available_filters.find(m_args.last_filter_used)) : m_available_filters.begin();
+
+        while (m_curr_filter != m_available_filters.end() && !m_curr_filter->second)
+          ++m_curr_filter;
+
+        return m_curr_filter != m_available_filters.end();
+      }
+
+      void
+      updateMachineState(void)
+      {
+        switch (m_curr_state)
+        {
+        case STATE_IDLE:
+          startRequested(false);
+          break;
+
+        case STATE_INITIAL:
+          if (startRequested() || stopRequested() || pauseRequested())
+            break;
+
+          if (m_args.number_of_filters > m_total_available && m_total_available > 0)
+          {
+            inf("number of filters to use (%u) is higher than total available filters (%u), adjusting to use all available filters", m_args.number_of_filters, m_total_available);
+            applyEntityParameter(&m_args.number_of_filters, m_total_available);
+          }
+
+          if (nextFilter())
+          {
+            setState(STATE_DESCENDING_PUMP);
+            trace("transitioning to DESCENDING_PUMP state.");
+          }
+          else
+          {
+            setState(STATE_COMPLETED);
+            trace("no available filters: transitioning to COMPLETED state.");
+          }
+
+          break;
+
+        case STATE_DESCENDING_PUMP:
+          if (startRequested() || stopRequested() || pauseRequested())
+            break;
+
+          if (m_curr_wp_depth >= m_args.wp_depth)
+          {
+            stopMotor();
+            setState(STATE_SAMPLING);
+            trace("reached target depth of %.2f meters: transitioning to SAMPLING state and starting water pump", m_args.wp_depth);
+          }
+
+          break;
+
+        case STATE_SAMPLING:
+          if (startRequested() || stopRequested() || pauseRequested())
+            break;
+
+          if (m_max_wl)
+          {
+            stopWaterPump();
+            setState(STATE_PURGING);
+            trace("maximum water level reached: stopping water pump, transitioning to PURGING state and starting purge valve: timeout for purge operation: %d seconds", m_args.purge_timeout);
+          }
+
+          break;
+
+        case STATE_PURGING:
+          if (startRequested() || stopRequested() || pauseRequested())
+            break;
+
+          if (m_purge_timer.overflow())
+          {
+            stopPurge();
+            setState(STATE_FILTERING);
+            trace("stopping purge valve, transitioning to FILTERING state and starting filter valve");
+          }
+
+          break;
+
+        case STATE_FILTERING:
+          if (startRequested() || stopRequested() || pauseRequested())
+            break;
+
+          if (!filtering())
+          {
+            m_filters_used++;
+            m_curr_filter->second = false;
+            m_total_available--;
+            applyEntityParameter(&m_args.last_filter_used, m_curr_filter->first);
+            stopTankPump();
+            setState(STATE_DRAINING);
+            trace("stopping filter valve, transitioning to DRAINING state and starting purge valve: timeout for draining operation: %d seconds", m_args.purge_timeout);
+          }
+
+          break;
+
+        case STATE_DRAINING:
+          if (startRequested() || stopRequested() || pauseRequested())
+            break;
+
+          if (!draining())
+          {
+            stopPurge();
+            setState(STATE_NEXT_FILTER);
+            trace("stopping purge valve, transitioning to NEXT_FILTER state");
+          }
+
+          break;
+
+        case STATE_NEXT_FILTER:
+          if (startRequested() || stopRequested() || pauseRequested())
+            break;
+
+          if (nextFilter())
+          {
+            setState(STATE_SAMPLING);
+            trace("next filter: transitioning to SAMPLING state");
+          }
+          else
+          {
+            setState(STATE_COMPLETED);
+            trace("transitioning to COMPLETED state");
+          }
+
+          break;
+
+        case STATE_COMPLETED:
+          if (m_curr_wp_depth <= 0.0f)
+          {
+            stopMotor();
+            setState(STATE_IDLE);
+            trace("sampling completed: transitioning to IDLE state");
+          }
+          
+          break;
+
+        case STATE_PAUSED:
+          resumeRequested();
+          break;
+          
+        default:
+          setState(STATE_IDLE);
+          break;
+        }
+
+        if (m_report_state_timer.overflow())
+        {
+          updateEntityState();
+          dispatch(m_sa_report);
+          m_report_state_timer.reset();
+        }
+      }
+      
+      void
+      produceEntityStateDescription(std::string& description)
+      {
+        std::ostringstream ss;
+        ss << "active";
+
+        switch (m_curr_state)
+        {
+        case STATE_INITIAL:
+          ss << " | initializing sampling action";
+          break;
+
+        case STATE_DESCENDING_PUMP:
+          ss << " | descending water pump";
+          break;
+
+        case STATE_SAMPLING:
+          ss << " | sampling at depth " << m_args.wp_depth << " meters";
+          break;
+
+        case STATE_PURGING:
+          ss << " | purging filters";
+          break;
+
+        case STATE_FILTERING:
+          ss << " | filtering | using filter " << m_curr_filter->first;
+          break;
+
+        case STATE_DRAINING:
+          ss << " | draining";
+          break;
+
+        case STATE_NEXT_FILTER:
+          ss << " | next filter";
+          break;
+
+        case STATE_COMPLETED:
+          ss << " | completed | ascending water pump";
+          break;
+
+        case STATE_IDLE:
+        default:
+          description = "idle";
+          return;
+        }
+
+        description = ss.str();
+      }
+
+      void
+      updateEntityState(void)
+      {
+        produceEntityStateDescription(m_es_desc);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, m_es_desc.c_str());
+      }
+
+      void
+      updateSamplingState(IMC::SamplingAction::TypeEnum type, const std::string& description = "")
+      {
+        debug("updating sampling state report: type %d, description: %s", type, description.c_str());
+        m_sa_report.type = type;
+        m_sa_report.description = description;
+        dispatch(m_sa_report);
+      }
+
       void
       onMain(void)
       {
         while (!stopping())
         {
           waitForMessages(1.0);
-          if(!m_is_idle)
-          {
-            if(m_last_filter_used >= 0)
-            {
-              updateMachineState();
-            }
-            else
-            {
-              war("No more filters to use, waiting for manual set of filters.");
-              m_waiting_for_manual_reset = true;
-              sendDeactivation();
-              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_IDLE);
-            }
-          }
-          else
-          {
-            if(m_waiting_for_manual_reset)
-            {
-              m_state_info_buffer = "error | No more filters to use, waiting for manual set of filters (" + std::to_string(m_args.number_of_filters) + " filters used).";
-              sendDeactivation();
-              setEntityState(IMC::EntityState::ESTA_ERROR, m_state_info_buffer);
-            }
-            else
-            {
-              setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-            }
-          }
 
-          if(m_send_state_of_sampling_action.overflow())
-          {
-            m_send_state_of_sampling_action.reset();
-            if(!m_is_idle)
-            {
-              sendSamplingActionMessage(IMC::SamplingAction::ActionEnum::SA_REPORT, IMC::SamplingAction::TypeEnum::SAT_STATE_SAMPLING);
-            }
-            else
-            {
-              sendSamplingActionMessage(IMC::SamplingAction::ActionEnum::SA_REPORT, IMC::SamplingAction::TypeEnum::SAT_STATE_IDLE);
-            }
-          }
+          if (isActive())
+            updateMachineState();
         }
-      }
-
-      void
-      parseDepthMessage(const IMC::Depth* msg)
-      {
-        if(resolveEntity(msg->getSourceEntity()) == m_args.entity_label_depth_info)
-        {
-          debug("Received depth update: %.2f meters from source entity %s.", msg->value, resolveEntity(msg->getSourceEntity()).c_str());
-          if(m_current_state == STATE_DESCENDING_PUMP)
-          {
-            m_depthSensor.value = msg->value;
-            if(m_depthSensor.value >= m_args.depth_to_put_pump_in_water)
-            {
-              m_submersiblePumpMotor.stop();
-              sendThrustActuation(m_submersiblePumpMotor.id, 0.0f);
-              inf("Submersible pump motor turned OFF at depth %.2f meters.", m_depthSensor.value);
-              m_submersiblePump.start();
-              sendThrustActuation(m_submersiblePump.id, m_args.velocity_pf_in_water_pump / 100.0f); // Start the pump with the specified velocity percentage
-              m_state_info_buffer = "active | Descending pump deactivated and external pump activated, reached target depth " + std::to_string(m_depthSensor.value) + " meters.";
-              setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-              m_current_state = STATE_SAMPLING;
-            }
-          }
-        }
-      }
-
-      void
-      parseWaterFlowMessage(const IMC::WaterFlow* msg)
-      {
-        debug("Received water flow update: %.2f L/min from source entity %s.", msg->value, resolveEntity(msg->getSourceEntity()).c_str());
-        if(resolveEntity(msg->getSourceEntity()) == m_args.sensor_fill_up_filter_name)
-        {
-          m_flowSensor.value = msg->value;
-          if(m_current_state == STATE_FILTERING && m_flowSensor.value == 0.0f)
-          {
-            m_flowSensor.isActive = true;
-            inf("Flow sensor activated with flow rate %.2f L/min, filter is full.", m_flowSensor.value);
-            sendPowerChannelControl(m_args.filters[m_last_filter_used], PowerChannelControl::PCC_OP_TURN_OFF);
-            inf("Filter %d is full, closed pressurization for the filter and started purge to exterior of the tank.", m_last_filter_used + 1);
-            sendPowerChannelControl(m_pressurizationPumpExtTank.name, PowerChannelControl::PCC_OP_TURN_ON);
-            m_current_state = STATE_DRAINING;
-            m_state_info_buffer = "active | Flow sensor activated with flow rate " + std::to_string(m_flowSensor.value) + " L/min, filter " + std::to_string(m_last_filter_used + 1) + " is full, closed pressurization for the filter and started purge to exterior of the tank.";
-            setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-          }
-        }
-      }
-
-      void
-      parseGPIOMessage(const IMC::GpioState* msg)
-      {
-        debug("Received GPIO state message from source entity %s.", resolveEntity(msg->getSourceEntity()).c_str());
-        // Here you would implement the logic to handle incoming GPIO messages
-        // For example, you could check the GPIO pin states and update the state of pumps, valves, etc.
-        // Detect the tank is full by checking the max level sensor and if we are currently sampling, then start the purging process
-        if(msg->name.c_str() == m_tankMaxLevelSensor.name && m_current_state == STATE_SAMPLING && msg->value)
-        {
-          m_tankMaxLevelSensor.isActive = true;
-          inf("Tank maximum level reached, starting in-tank pump and opening purge valve to external tank to start purging.(Time to purge: %d seconds)", m_args.max_time_to_operate_purge_valve);
-          m_inTankPump.start();
-          sendPowerChannelControl(m_inTankPump.name, PowerChannelControl::PCC_OP_TURN_ON);
-          m_submersiblePump.stop();
-          sendThrustActuation(m_submersiblePump.id, 0.0f);
-          sendPowerChannelControl(m_pressurizationPumpExtTank.name, PowerChannelControl::PCC_OP_TURN_ON);
-          m_delay_timer.setTop(m_args.max_time_to_operate_purge_valve);
-          m_current_state = STATE_PURGING;
-          m_state_info_buffer = "active | Tank maximum level reached, started in-tank pump and opened purge valve to external tank to start purging. Timeout to purge: " + std::to_string(m_args.max_time_to_operate_purge_valve) + " seconds.";
-          setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-        }
-
-        if(msg->name.c_str() == m_tankMinLevelSensor.name && msg->value && m_current_state == STATE_FILTERING)
-        {
-          m_tankMinLevelSensor.isActive = true;
-          inf("Tank minimum level reached, stopping in-tank pump and closing valve of filter %d to stop filling up filter.", m_last_filter_used + 1);
-          m_inTankPump.stop();
-          sendPowerChannelControl(m_inTankPump.name, PowerChannelControl::PCC_OP_TURN_OFF);
-          sendPowerChannelControl(m_args.filters[m_last_filter_used], PowerChannelControl::PCC_OP_TURN_OFF);
-          m_inTankPump.stop();
-          sendPowerChannelControl(m_inTankPump.name, PowerChannelControl::PCC_OP_TURN_OFF);
-          m_current_state = STATE_COMPLETED;
-          m_state_info_buffer = "active | Tank minimum level reached, stopped in-tank pump and closed valve of filter " + std::to_string(m_last_filter_used + 1) + " to stop filling up filter.";
-          setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-        }
-
-        if(m_current_state == STATE_DRAINING || m_current_state == STATE_WAITING)
-        {
-          if(msg->name.c_str() == m_tankMinLevelSensor.name)
-          {
-            m_pressurizationPumpExtTank.isOpen = false;
-            inf("Purge to exterior of the tank finished, closing purge valve to exterior and stop internal pump.");
-            sendPowerChannelControl(m_pressurizationPumpExtTank.name, PowerChannelControl::PCC_OP_TURN_OFF);
-            m_inTankPump.stop();
-            sendPowerChannelControl(m_inTankPump.name, PowerChannelControl::PCC_OP_TURN_OFF);
-            sendThrustActuation(m_submersiblePumpMotor.id, -m_args.velocity_to_start_descending_and_ascending_in_percent / 100.0f); // Start ascending at specified velocity
-            m_current_state = STATE_COMPLETED;
-            m_state_info_buffer = "active | Purge to exterior of the tank finished, closed purge valve to exterior and stopped internal pump.";
-            setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-          }
-        }
-      }
-
-      void
-      updateMachineState(void)
-      {
-        switch (m_current_state)
-        {
-          case STATE_INITIAL:
-            m_is_idle = false;
-            m_current_state = STATE_DESCENDING_PUMP;
-            m_submersiblePumpMotor.isActive = false;
-            sendThrustActuation(m_submersiblePumpMotor.id, m_args.velocity_to_start_descending_and_ascending_in_percent / 100.0f); // Start descending at specified velocity
-            inf("Transitioning to DESCENDING_PUMP state.");
-            m_state_info_buffer = "active | Descending pump cable activated, waiting to reach target depth " + std::to_string(m_args.depth_to_put_pump_in_water) + " meters.";
-            setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-            break;
-
-          case STATE_PURGING:
-            if(m_delay_timer.overflow())
-            {
-              inf("Purge valve operation time finish, transitioning to FILTERING state and closing purge valve to external tank.");
-              sendPowerChannelControl(m_pressurizationPumpExtTank.name, PowerChannelControl::PCC_OP_TURN_OFF);
-              m_pressurizationPumpExtTank.isOpen = false;
-              m_delay_timer.setTop(m_args.max_time_to_fill_up_filter);
-              inf("Transitioning to FILTERING state and starting to fill up filter. Timeout to fill up filter: %d seconds.", m_args.max_time_to_fill_up_filter);
-              inf("Using filter %d.", m_last_filter_used + 1);
-              sendPowerChannelControl(m_args.filters[m_last_filter_used], PowerChannelControl::PCC_OP_TURN_ON);
-              m_state_info_buffer = "active | Filling up filter " + std::to_string(m_last_filter_used + 1) + ", timeout to fill up: " + std::to_string(m_args.max_time_to_fill_up_filter) + " seconds.";
-              setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-              m_current_state = STATE_FILTERING;
-            }
-            setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-            break;
-
-          case STATE_FILTERING:
-            if(m_delay_timer.overflow())
-            {
-              inf("Filter %d fill up time expired, transitioning to DRAINING state (purge to exterior of the tank).", m_last_filter_used + 1);
-              sendPowerChannelControl(m_args.filters[m_last_filter_used], PowerChannelControl::PCC_OP_TURN_OFF);
-              // open the valve to purge to exterior of the tank
-              sendPowerChannelControl(m_pressurizationPumpExtTank.name, PowerChannelControl::PCC_OP_TURN_ON);
-              m_current_state = STATE_DRAINING;
-              m_state_info_buffer = "active | Filter " + std::to_string(m_last_filter_used + 1) + " fill up time expired, purging to exterior of the tank.";
-              setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-            }
-            setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-            break;
-
-          case STATE_COMPLETED:
-            inf("Sampling process completed.");
-            m_last_filter_used++;
-            m_state_info_buffer = "idle | Filters used " + std::to_string(m_last_filter_used) + ", remaining " + std::to_string(m_args.number_of_filters - m_last_filter_used);
-            setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-            if(m_last_filter_used >= m_args.number_of_filters)
-            {
-               war("All filters have been used, no more filters to use.");
-               m_last_filter_used = -1; // Reset to the first filter if we have used
-            }
-            sendDeactivation();
-            break;
-
-          default:
-            setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-            break;
-        }
-      }
-
-      void
-      parseSamplingActionMessage(const IMC::SamplingAction* msg)
-      {
-        debug("Received SamplingAction message with action %d from source entity %s.", msg->action, resolveEntity(msg->getSourceEntity()).c_str());
-        // Here you would implement the logic to handle incoming SamplingAction messages
-        // For example, you could check the action type and update the state of the system accordingly
-        if(msg->action == IMC::SamplingAction::ActionEnum::SA_COMMAND)
-        {
-          if(msg->type == IMC::SamplingAction::TypeEnum::SAT_CMD_START)
-          {
-            inf("Received command to start sampling action, transitioning to INITIAL state.");
-            setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-            m_current_state = STATE_INITIAL;
-            m_is_idle = false;
-            sendSamplingActionMessage(IMC::SamplingAction::ActionEnum::SA_REPORT, IMC::SamplingAction::TypeEnum::SAT_STATE_STARTING);
-          }
-        }
-        else if(msg->action == IMC::SamplingAction::TypeEnum::SAT_CMD_STOP)
-        {
-          inf("Received command to stop sampling action, transitioning to COMPLETED state.");
-          m_current_state = STATE_COMPLETED;
-          m_state_info_buffer = "idle | Received command to stop sampling action, transitioning to COMPLETED state.";
-          setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-          sendDeactivation();
-          //TODO missing implementation to stop all pumps and close all valves immediately when receiving a stop command, regardless of the current state of the system
-        }
-        else if(msg->action == IMC::SamplingAction::TypeEnum::SAT_CMD_PAUSE)
-        {
-          inf("Received command to pause sampling action, transitioning to PAUSED state.");
-          //m_current_state = STATE_PAUSED;
-          m_state_info_buffer = "paused | Received command to pause sampling action, transitioning to PAUSED state.";
-          setEntityState(IMC::EntityState::ESTA_NORMAL, m_state_info_buffer.c_str());
-          //TODO missing implementation to stop all pumps and close all valves immediately when receiving a pause command, regardless of the current state of the system
-        }
-      }
-
-      void
-      sendDeactivation()
-      {
-        sendSamplingActionMessage(IMC::SamplingAction::ActionEnum::SA_REPORT, IMC::SamplingAction::TypeEnum::SAT_STATE_STOPPING);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-        m_current_state = STATE_COMPLETED;
-        m_is_idle = true;
-      }
-
-      void
-      sendSamplingActionMessage(IMC::SamplingAction::ActionEnum action, IMC::SamplingAction::TypeEnum type)
-      {
-        IMC::SamplingAction msg;
-        msg.action = action;
-        msg.type = type;
-        msg.description = getName();
-        dispatch(msg);
-        inf("Sent SamplingAction message with action type %d.", type);
       }
     };
   }
