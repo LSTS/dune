@@ -490,6 +490,9 @@ namespace Power
         if (msg->getDestinationEntity() != getEntityId())
           return;
 
+        if (msg->op != VersionInfo::OP_QUERY)
+          return;
+
         dispatchReply(*msg, m_vi);
       }
 
