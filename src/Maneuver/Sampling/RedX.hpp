@@ -168,13 +168,14 @@ namespace Maneuver
             break;
 
           case RS_SAMPLING:
-            if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STOPPING)
+            if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_IDLE)
             {
               debug("Stopping sampling...");
               m_task->signalCompletion();
               return;
             }
-            else if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_SAMPLING)
+            else if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_SAMPLING ||
+                     msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STOPPING)
             {
               m_timeout_timer.reset();
             }
