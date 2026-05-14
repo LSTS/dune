@@ -54,6 +54,8 @@ namespace Payload
       int motor_id;
       //! Motor actuation value.
       int motor_actuation;
+      //! Motor actuation timeout.
+      float motor_timeout;
       //! ID of water pump.
       int wp_id;
       //! Water pump actuation value.
@@ -63,7 +65,9 @@ namespace Payload
       //! Water pump depth entity label.
       std::string wp_elabel;
       //! Name of pump in tank.
-      std::string tank_pump_name;
+      std::string press_pump_name;
+      //! Full/empty tank timeout.
+      float tank_timeout;
       //! Maximum water level gpio name.
       std::string max_wl_name;
       //! Minimum water level gpio name.
@@ -71,7 +75,7 @@ namespace Payload
       //! Purge valve name.
       std::string purge_valve_name;
       //! Maximum time for purge operation.
-      int purge_timeout;
+      float purge_timeout;
       //! Name of filters valves.
       std::string filters_names[c_max_filters];
       //! Filter water flow entity label.
@@ -82,12 +86,16 @@ namespace Payload
       int last_filter_used;
       //! Maximum time to wait for a filter to fill up.
       int filter_fill_up_timeout;
-      //! Water flow threshold to consider a filter as filled up.
-      double filter_fill_up_wf_tld;
       //! Restarting is allowed.
       bool restart_allowed;
       //! Pausing is allowed.
       bool pausing_allowed;
+      //! Water flow threshold to consider a filter as clogged.
+      double filter_clogged_wf_tld;
+      //! Water flow timeout.
+      float water_flow_timeout;
+      //! Extra press pump label.
+      std::string extra_press_pump_name;
     };
 
     //! Task to control RedX payload. 
@@ -127,10 +135,14 @@ namespace Payload
       unsigned int m_wp_depth_source_eid;
       //! Water pump depth.
       double m_curr_wp_depth;
+      //! Motor timer.
+      Counter<double> m_motor_timer;
       //! Maximum water level sensor state.
       bool m_max_wl;
       //! Minimum water level sensor state.
       bool m_min_wl;
+      //! Tank timer.
+      Counter<double> m_tank_timer;
       //! Filters water flow source entity id.
       unsigned int m_filters_wf_source_eid;
       //! Filter timeout timer.
@@ -143,10 +155,10 @@ namespace Payload
       unsigned int m_total_available;
       //! Current filter being used.
       AvailableFiltersStates::iterator m_curr_filter;
+      //! Water flow timer.
+      Counter<double> m_water_flow_timer;
       //! Filters used counter.
       unsigned int m_filters_used;
-      //! Water flow sensor value.
-      double m_filters_wf;
       //! Purge timer.
       Counter<double> m_purge_timer;
       //! Sampling state report message.
@@ -159,6 +171,10 @@ namespace Payload
       Request m_recv_req;
       //! Paused state.
       State m_paused_state;
+      //! Set of remote actions
+      IMC::RemoteActionsRequest m_actions;
+      //! Remote actions map.
+      std::map<std::string, std::function<void(float value)>> m_remote_actions_map;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -167,11 +183,10 @@ namespace Payload
         Tasks::Task(name, ctx),
         m_report_state_timer(c_state_report_tout),
         m_curr_wp_depth(0.0),
-        m_max_wl(true),
+        m_max_wl(false),
         m_min_wl(false),
         m_total_available(0),
         m_filters_used(0),
-        m_filters_wf(0.0),
         m_curr_state(STATE_IDLE),
         m_recv_req(REQ_NONE),
         m_paused_state(STATE_UNKNOWN)
@@ -190,9 +205,13 @@ namespace Payload
         .minimumValue("0")
         .maximumValue("100")
         .units(Units::Types::Percentage)
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Motor actuation value.");
+
+        param("Motor - Timeout", m_args.motor_timeout)
+        .defaultValue("10")
+        .minimumValue("0")
+        .units(Units::Types::Second)
+        .description("Motor actuation timeout.");
 
         param("Water Pump - Id", m_args.wp_id)
         .defaultValue("-1")
@@ -205,16 +224,12 @@ namespace Payload
         .minimumValue("0")
         .maximumValue("100")
         .units(Units::Types::Percentage)
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Water pump actuation value.");
 
         param("Water Pump - Depth", m_args.wp_depth)
         .defaultValue("0.0")
         .minimumValue("0.0")
         .units(Units::Types::Meter)
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Water pump depth in meters.");
 
         param("Water Pump - Entity Label", m_args.wp_elabel)
@@ -222,10 +237,10 @@ namespace Payload
         .editable(false)
         .description("Water pump entity label.");
 
-        param("Tank Pump - Power Channel Name", m_args.tank_pump_name)
+        param("Press Pump - Power Channel Name", m_args.press_pump_name)
         .defaultValue("")
         .editable(false)
-        .description("Power channel name for tank pump.");
+        .description("Power channel name for press pump.");
 
         param("Maximum Water Level - GPIO Name", m_args.max_wl_name)
         .defaultValue("")
@@ -237,17 +252,21 @@ namespace Payload
         .editable(false)
         .description("Minimum water level gpio name.");
 
+        param("Tank - Timeout", m_args.tank_timeout)
+        .defaultValue("60")
+        .minimumValue("0")
+        .units(Units::Types::Second)
+        .description("Tank operation timeout.");
+
         param("Purge Valve - Power Channel Name", m_args.purge_valve_name)
         .defaultValue("")
         .editable(false)
         .description("Power channel name for purge valve.");
 
-        param("Purge Valve Operation Timeout", m_args.purge_timeout)
+        param("Purge Valve - Timeout", m_args.purge_timeout)
         .defaultValue("10")
         .minimumValue("1")
         .units(Units::Types::Second)
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Purge valve operation timeout.");
 
         for (uint8_t i = 0; i < c_max_filters; ++i)
@@ -255,21 +274,29 @@ namespace Payload
           std::string option = String::str("Filter %u - Power Channel Name", i);
           param(option, m_args.filters_names[i])
           .defaultValue("")
-          .editable(false)
           .description("Power channel name for filter valve");
         }
 
-        param("Filters Water Flow - Entity Label", m_args.filters_water_flow_elabel)
+        param("Water Flow - Entity Label", m_args.filters_water_flow_elabel)
         .defaultValue("")
         .editable(false)
         .description("Entity label for filters water flow sensor.");
+
+        param("Water Flow - Timeout", m_args.water_flow_timeout)
+        .defaultValue("60")
+        .minimumValue("0")
+        .units(Units::Types::Second)
+        .description("Timeout for water flow detection.");
+
+        param("Water Flow - Clogged Filter Threshold", m_args.filter_clogged_wf_tld)
+        .defaultValue("0.1")
+        .minimumValue("0")
+        .description("Water flow threshold to consider a filter as clogged.");
 
         param("Number of Filters to Use", m_args.number_of_filters)
         .defaultValue("1")
         .minimumValue("1")
         .maximumValue(std::to_string(c_max_filters))
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Number of filters to use.");
 
         param("Last Filter Used", m_args.last_filter_used)
@@ -282,17 +309,22 @@ namespace Payload
         .defaultValue("60")
         .minimumValue("0")
         .units(Units::Types::Second)
-        .scope(Tasks::Parameter::SCOPE_MANEUVER)
-        .visibility(Tasks::Parameter::VISIBILITY_USER)
         .description("Maximum time to wait for a filter to fill up in seconds.");
 
         param("Restart Allowed", m_args.restart_allowed)
         .defaultValue("false")
+        .editable(false)
         .description("Indicates if restarting is allowed.");
 
         param("Pause Allowed", m_args.pausing_allowed)
         .defaultValue("false")
+        .editable(false)
         .description("Indicates if pausing is allowed.");
+
+        param("Extra Press Pump - Power Channel Name", m_args.extra_press_pump_name)
+        .defaultValue("")
+        .editable(false)
+        .description("Power channel name for extra pressure pump.");
 
         m_sa_report.action = IMC::SamplingAction::SA_REPORT;
 
@@ -324,7 +356,7 @@ namespace Payload
           spew("payload settings : filter fill up timeout set to : %d seconds", m_args.filter_fill_up_timeout);
         
         if(paramChanged(m_args.purge_timeout))
-          spew("payload settings : purge timeout set to : %d seconds", m_args.purge_timeout);
+          spew("payload settings : purge timeout set to : %.1f seconds", m_args.purge_timeout);
 
         if (paramChanged(m_args.number_of_filters))
           spew("payload settings : number of filters set to : %d", m_args.number_of_filters);
@@ -409,8 +441,9 @@ namespace Payload
         if (msg->getSourceEntity() != m_filters_wf_source_eid)
           return;
 
-        m_filters_wf = msg->value;
         spew("received filters water flow update: %.2f.", msg->value);
+        if (msg->value > m_args.filter_clogged_wf_tld)
+          m_water_flow_timer.reset();
       }
 
       void
@@ -516,28 +549,43 @@ namespace Payload
       }
 
       void
-      startTankPump(void)
+      startPressPump(void)
       {
-        setPowerChannel(m_args.tank_pump_name, true);
+        setPowerChannel(m_args.press_pump_name, true);
+        if (!m_args.extra_press_pump_name.empty())
+          setPowerChannel(m_args.extra_press_pump_name, true);
       }
 
       void
-      stopTankPump(void)
+      stopPressPump(void)
       {
-        setPowerChannel(m_args.tank_pump_name, false);
+        setPowerChannel(m_args.press_pump_name, false);
+        if (!m_args.extra_press_pump_name.empty())
+          setPowerChannel(m_args.extra_press_pump_name, false);
       }
 
       void
-      startPurge(void)
+      openPurge(void)
       {
-        m_purge_timer.setTop(m_args.purge_timeout);
         setPowerChannel(m_args.purge_valve_name, true);
       }
 
       void
-      stopPurge(void)
+      closePurge(void)
       {
         setPowerChannel(m_args.purge_valve_name, false);
+      }
+
+      void
+      openValve(unsigned int filter_id)
+      {
+        setPowerChannel(m_args.filters_names[filter_id], true);
+      }
+
+      void
+      closeValve(unsigned int filter_id)
+      {
+        setPowerChannel(m_args.filters_names[filter_id], false);
       }
 
       bool
@@ -637,33 +685,40 @@ namespace Payload
         case STATE_DESCENDING_PUMP:
           updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "descending pump to target depth");
           startMotor();
+          m_motor_timer.setTop(m_args.motor_timeout);
           break;
 
         case STATE_SAMPLING:
           updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "sampling at target depth");
           startWaterPump();
+          m_tank_timer.setTop(m_args.tank_timeout);
           break;
 
         case STATE_PURGING:
           updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "purging filters");
-          startPurge();
+          startPressPump();
+          openPurge();
+          m_purge_timer.setTop(m_args.purge_timeout);
           break;
 
         case STATE_FILTERING:
           updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "filtering water");
+          openValve(m_curr_filter->first);
           m_filter_tout_timer.setTop(m_args.filter_fill_up_timeout);
-          // choose filter valve
-          startTankPump();
+          m_water_flow_timer.setTop(m_args.water_flow_timeout);
           break;
 
         case STATE_DRAINING:
           updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "draining water");
-          startPurge();
+          openPurge();
+          m_tank_timer.setTop(m_args.tank_timeout);
+          m_water_flow_timer.setTop(m_args.water_flow_timeout);
           break;
 
         case STATE_COMPLETED:
           updateSamplingState(IMC::SamplingAction::SAT_STATE_STOPPING, "sampling completed");
           startMotor(true);
+          m_motor_timer.setTop(m_args.motor_timeout);
           break;
 
         case STATE_IDLE:
@@ -677,16 +732,16 @@ namespace Payload
       filtering(void)
       {
         return (!m_filter_tout_timer.overflow() &&
-                m_filters_wf <= m_args.filter_fill_up_wf_tld &&
-                !m_min_wl);
+                m_min_wl &&
+                !m_water_flow_timer.overflow());
       }
 
       bool
       draining(void)
       {
-        return (!m_purge_timer.overflow() &&
-                m_filters_wf <= m_args.filter_fill_up_wf_tld &&
-                !m_min_wl);
+        return (m_min_wl &&
+                !m_tank_timer.overflow() &&
+                !m_water_flow_timer.overflow());
       }
 
       bool
@@ -746,6 +801,12 @@ namespace Payload
             setState(STATE_SAMPLING);
             trace("reached target depth of %.2f meters: transitioning to SAMPLING state and starting water pump", m_args.wp_depth);
           }
+          else if (m_motor_timer.overflow())
+          {
+            stopMotor();
+            setState(STATE_SAMPLING);
+            trace("motor actuation timeout reached: transitioning to SAMPLING state and starting water pump");
+          }
 
           break;
 
@@ -757,7 +818,13 @@ namespace Payload
           {
             stopWaterPump();
             setState(STATE_PURGING);
-            trace("maximum water level reached: stopping water pump, transitioning to PURGING state and starting purge valve: timeout for purge operation: %d seconds", m_args.purge_timeout);
+            trace("maximum water level reached: stopping water pump, transitioning to PURGING state and starting purge valve: timeout for purge operation: %.1f seconds", m_args.purge_timeout);
+          }
+          else if (m_tank_timer.overflow())
+          {
+            stopWaterPump();
+            setState(STATE_PURGING);
+            trace("tank operation timeout reached: stopping water pump, transitioning to PURGING state and starting purge valve: timeout for purge operation: %.1f seconds", m_args.purge_timeout);
           }
 
           break;
@@ -768,7 +835,7 @@ namespace Payload
 
           if (m_purge_timer.overflow())
           {
-            stopPurge();
+            closePurge();
             setState(STATE_FILTERING);
             trace("stopping purge valve, transitioning to FILTERING state and starting filter valve");
           }
@@ -781,13 +848,15 @@ namespace Payload
 
           if (!filtering())
           {
+            const auto id = m_curr_filter->first;
+            closeValve(id);
             m_filters_used++;
             m_curr_filter->second = false;
             m_total_available--;
-            applyEntityParameter(&m_args.last_filter_used, m_curr_filter->first);
-            stopTankPump();
+            applyEntityParameter(&m_args.filters_names[id], "");
+            applyEntityParameter(&m_args.last_filter_used, id);
             setState(STATE_DRAINING);
-            trace("stopping filter valve, transitioning to DRAINING state and starting purge valve: timeout for draining operation: %d seconds", m_args.purge_timeout);
+            trace("stopping filter valve, transitioning to DRAINING state and starting purge valve: timeout for draining operation: %.1f seconds", m_args.purge_timeout);
           }
 
           break;
@@ -798,7 +867,8 @@ namespace Payload
 
           if (!draining())
           {
-            stopPurge();
+            stopPressPump();
+            closePurge();
             setState(STATE_NEXT_FILTER);
             trace("stopping purge valve, transitioning to NEXT_FILTER state");
           }
