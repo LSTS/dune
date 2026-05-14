@@ -290,6 +290,7 @@ namespace Power
 
         param("Water Pump Motion Timeout", m_args.wp_motion_timeout)
         .defaultValue("30.0")
+        .minimumValue("0.0")
         .units(Units::Types::Second)
         .description("Timeout for water pump motion. "
                      "When timeout is reached, water pump is considered to be at desired depth.");
