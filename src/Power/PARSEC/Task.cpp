@@ -521,7 +521,7 @@ namespace Power
         // if (msg->getDestination() != getSystemId())
         //   return;
 
-        if (msg->id != m_args.motor_id)
+        if (msg->id == m_args.motor_id)
           setMotorActuation(msg->value);
         else if (msg->id == m_args.water_pump_id)
           setWaterPumpActuation(msg->value);
