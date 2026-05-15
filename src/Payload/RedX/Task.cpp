@@ -900,7 +900,13 @@ namespace Payload
           {
             stopMotor();
             setState(STATE_IDLE);
-            trace("sampling completed: transitioning to IDLE state");
+            trace("water pump recovery complete: transitioning to IDLE state");
+          }
+          else if (m_motor_timer.overflow())
+          {
+            stopMotor();
+            setState(STATE_IDLE);
+            trace("motor actuation timeout reached: transitioning to IDLE state");
           }
           
           break;
