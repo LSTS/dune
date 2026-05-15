@@ -645,7 +645,7 @@ namespace Control
 
           double obstRadPosition; //posição angular do centro do obstáculo relativamente ao veículo -pi:pi
           double nowHeading;
-          double shift = 0.8 * (obstacle.radius+obstacle.nogoZoneDistance);
+          double shift = 0.5 * (obstacle.radius+obstacle.nogoZoneDistance);
           double horShift, verShift;  //meters
           double lonShift, latShift;  //degrees
 
@@ -659,11 +659,11 @@ namespace Control
 
           if (Angles::normalizeRadian(obstRadPosition - m_heading.value) > 0)
           {
-            nowHeading = Angles::normalizeRadian(obstRadPosition + M_PI/2);
+            nowHeading = Angles::normalizeRadian(obstRadPosition + 3*M_PI/4);
           }
           else
           {
-            nowHeading = Angles::normalizeRadian(obstRadPosition - M_PI/2);
+            nowHeading = Angles::normalizeRadian(obstRadPosition - 3*M_PI/4);
           }
 
           //inf("Heading Direction: %f", nowHeading*180/M_PI);
