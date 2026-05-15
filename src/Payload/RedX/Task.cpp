@@ -724,6 +724,8 @@ namespace Payload
 
         case STATE_IDLE:
           updateSamplingState(IMC::SamplingAction::SAT_STATE_IDLE, "ready for sampling");
+          break;
+
         default:
           break;
         }
