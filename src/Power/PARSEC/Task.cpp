@@ -637,7 +637,12 @@ namespace Power
           war("motor fault detected");
 
         if (motor_moving)
+        {
+          spew("motor motion detected");
           m_motor_motion_timer.reset();
+        }
+        else
+          spew("motor motion not detected");
 
         float waterflow;
         for (size_t i = 0; i < c_num_wf_sensors; i++)
