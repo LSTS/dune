@@ -174,10 +174,6 @@ namespace Payload
       Request m_recv_req;
       //! Paused state.
       State m_paused_state;
-      //! Set of remote actions
-      IMC::RemoteActionsRequest m_actions;
-      //! Remote actions map.
-      std::map<std::string, std::function<void(float value)>> m_remote_actions_map;
 
       //! Constructor.
       //! @param[in] name task name.
