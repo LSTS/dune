@@ -425,7 +425,8 @@ namespace Payload
           m_max_wl = msg->value > 0;
           spew("received maximum water level update: %s.", m_max_wl ? "HIGH" : "LOW");
         }
-        else if (msg->name == m_args.min_wl_name)
+
+        if (msg->name == m_args.min_wl_name)
         {
           m_min_wl = msg->value > 0;
           spew("received minimum water level update: %s.", m_min_wl ? "HIGH" : "LOW");
