@@ -284,7 +284,7 @@ namespace Power
         .defaultValue("false")
         .description("Use motor motion detection to determine water pump depth.");
 
-        param("Disable Water Level Sensors Warning", m_args.disable_wl_malfunction_warning)
+        param("Disable Water Level Sensors Warnings", m_args.disable_wl_malfunction_warning)
         .defaultValue("true")
         .description("Indicates if water level sensors malfunction warning is disabled.");
 
