@@ -82,6 +82,8 @@ namespace Transports
       MessageMonitor m_msg_mon;
       //! Task arguments.
       Arguments m_args;
+      //! Consumers for bound messages.
+      std::map<uint16_t, AbstractConsumer*> m_consumers;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -113,10 +115,43 @@ namespace Transports
       }
 
       void
+      onUpdateParameters(void)
+      {
+        if (paramChanged(m_args.messages))
+        {
+          std::unordered_set<uint16_t> msgs_set;
+          for (const auto& msg : m_args.messages)
+            msgs_set.insert(IMC::Factory::getIdFromAbbrev(msg));
+
+          std::vector<uint16_t> removed_msgs;
+          for (auto it = m_consumers.begin(); it != m_consumers.end(); ++it)
+          {
+            if (msgs_set.find(it->first) == msgs_set.end())
+              removed_msgs.push_back(it->first);
+            else
+              msgs_set.erase(it->first);
+          }
+
+          for (auto msg : removed_msgs)
+          {
+            unbind(msg, m_consumers[msg]);
+            m_consumers.erase(msg);
+          }
+
+          if (!msgs_set.empty())
+          {
+            std::vector<uint16_t> new_msgs(msgs_set.begin(), msgs_set.end());
+            auto new_consumers = bind<Task, IMC::Message>(this, new_msgs);
+            for (auto it = new_consumers.begin(); it != new_consumers.end(); ++it)
+              m_consumers[it->first] = it->second;
+          }
+        }
+      }
+
+      void
       onResourceAcquisition(void)
       {
         m_msg_mon.setLogEntry(m_args.logbook_lines);
-        bind(this, m_args.messages);
 
         uint16_t last_port = m_args.port + c_max_port_tries;
 

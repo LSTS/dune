@@ -335,7 +335,12 @@ Main.prototype.update = function () {
     for (i in g_data.dune_messages) {
       var msg = g_data.dune_messages[i];
       if (msg.abbrev == 'EntityInfo') {
-        var name = g_data.dune_entities[msg.src_ent].label;
+        const ent = g_data.dune_entities[msg.src_ent];
+        if (!ent) {
+          continue;
+        }
+
+        var name = ent.label;
         if (name == 'GPS') {
           GPS_srcEntity_id = msg.src_ent;
         }

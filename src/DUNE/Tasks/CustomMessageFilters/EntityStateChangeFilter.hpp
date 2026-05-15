@@ -24,69 +24,82 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Eduardo Marques                                                  *
+// Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_MESSAGE_FILTER_HPP_INCLUDED_
-#define DUNE_TASKS_MESSAGE_FILTER_HPP_INCLUDED_
+#ifndef DUNE_TASKS_CUSTOM_MESSAGE_FILTERS_ENTITY_STATE_CHANGE_FILTER_HPP_INCLUDED_
+#define DUNE_TASKS_CUSTOM_MESSAGE_FILTERS_ENTITY_STATE_CHANGE_FILTER_HPP_INCLUDED_
 
-// ISO C++ 98 headers.
-#include <vector>
-#include <map>
+#include "CustomMessageFilter.hpp"
+
 #include <unordered_map>
-#include <functional>
-#include <memory>
+#include <unordered_set>
 
-// DUNE headers.
+#include <DUNE/IMC/Definitions.hpp>
+#include <DUNE/Utils/String.hpp>
 #include <DUNE/Tasks/Task.hpp>
-#include <DUNE/IMC/Message.hpp>
-#include <DUNE/Tasks/CustomMessageFilters/CustomMessageFilter.hpp>
-#include <DUNE/Tasks/CustomMessageFilters/Factory.hpp>
 
 namespace DUNE
 {
   namespace Tasks
   {
-    class CustomMessageFilter;
-
-    class MessageFilter
+    class EntityStateChangeFilter : public CustomMessageFilter
     {
     public:
-      MessageFilter(bool use_hz = true);
+      EntityStateChangeFilter(DUNE::Tasks::Task* task, const std::string& spec = ""):
+        CustomMessageFilter(DUNE::IMC::EntityState::getIdStatic())
+      {
+        if (spec.empty())
+          return;
 
-      ~MessageFilter(void);
-
-      void
-      setupRates(const std::vector<std::string>& spec);
-
-      void
-      setupEntities(const std::vector<std::string>& spec, Tasks::Task* task);
-
-      void
-      setupCustomFilters(const std::vector<std::string>& spec, Tasks::Task* task);
+        std::vector<std::string> parts;
+        DUNE::Utils::String::split(spec, "+", parts);
+        for (auto& part : parts)
+        {
+          try
+          {
+            auto id = task->resolveEntity(part);
+            m_monitored_entities.insert(id);
+          }
+          catch(const std::exception& e)
+          {
+            DUNE_WRN("EntityStateChangeFilter", "invalid entity label in filter specification: " << part);
+            continue;
+          }
+        }
+      }
 
       bool
-      filter(const IMC::Message* msg);
+      filter(const DUNE::IMC::Message* msg) override
+      {
+        const auto entity_state_msg = dynamic_cast<const DUNE::IMC::EntityState*>(msg);
+        if (entity_state_msg == nullptr)
+          return false;
+
+        auto id = entity_state_msg->getSourceEntity();
+        if (!m_monitored_entities.empty() && m_monitored_entities.find(id) == m_monitored_entities.end())
+          return false;
+
+        auto state = entity_state_msg->state;
+        auto it = m_entity_states.find(id);
+        if (it == m_entity_states.end())
+        {
+          m_entity_states[id] = state;
+          return false;
+        }
+
+        if (it->second == state)
+          return true;
+
+        it->second = state;
+        return false;
+      }
 
     private:
-      bool m_use_hz;
-
-      // Rate limiters.
-      typedef std::map<uint32_t, double> RateMap;
-      RateMap m_rates;
-
-      // Send times.
-      typedef std::pair<uint32_t, unsigned int> MsgKey;
-      typedef std::map<MsgKey, double> STimesMap;
-      STimesMap m_stimes;
-
-      // List of entities to be passed by given message
-      typedef std::vector<uint32_t> Entities;
-      std::map<uint32_t, Entities> m_filtered;
-
-      //! Custom filter for a given message.
-      typedef std::unordered_map<uint32_t, std::unique_ptr<CustomMessageFilter>> CustomMessageFilterMap;
-      CustomMessageFilterMap m_custom_filters;
+      //! Map of entity id to last known state.
+      std::unordered_map<uint16_t, uint8_t> m_entity_states;
+      //! Set of entity ids to monitor.
+      std::unordered_set<uint16_t> m_monitored_entities;
     };
   }
 }

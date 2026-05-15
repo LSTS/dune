@@ -24,31 +24,69 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_HPP_INCLUDED_
-#define DUNE_TASKS_HPP_INCLUDED_
+#ifndef DUNE_TASKS_CUSTOM_MESSAGE_FILTERS_LOGBOOK_ENTRY_FILTER_HPP_INCLUDED_
+#define DUNE_TASKS_CUSTOM_MESSAGE_FILTERS_LOGBOOK_ENTRY_FILTER_HPP_INCLUDED_
+
+#include "CustomMessageFilter.hpp"
+
+#include <unordered_map>
+#include <unordered_set>
+
+#include <DUNE/IMC/Definitions.hpp>
+#include <DUNE/Utils/String.hpp>
+#include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
 {
-  //! %Task related routines and classes.
   namespace Tasks
-  { }
-}
+  {
+    const std::map<std::string, uint8_t> c_logbook_entry_types = {
+      {"INFO", DUNE::IMC::LogBookEntry::LBET_INFO},
+      {"WARNING", DUNE::IMC::LogBookEntry::LBET_WARNING},
+      {"ERROR", DUNE::IMC::LogBookEntry::LBET_ERROR},
+      {"CRITICAL", DUNE::IMC::LogBookEntry::LBET_CRITICAL},
+      {"DEBUG", DUNE::IMC::LogBookEntry::LBET_DEBUG}
+    };
 
-#include <DUNE/Tasks/Factory.hpp>
-#include <DUNE/Tasks/Exceptions.hpp>
-#include <DUNE/Tasks/Consumer.hpp>
-#include <DUNE/Tasks/Periodic.hpp>
-#include <DUNE/Tasks/Profiles.hpp>
-#include <DUNE/Tasks/Task.hpp>
-#include <DUNE/Tasks/Context.hpp>
-#include <DUNE/Tasks/Manager.hpp>
-#include <DUNE/Tasks/AbstractConsumer.hpp>
-#include <DUNE/Tasks/Recipient.hpp>
-#include <DUNE/Tasks/AbstractCreator.hpp>
-#include <DUNE/Tasks/ParameterTable.hpp>
-#include <DUNE/Tasks/SourceFilter.hpp>
+    class LogBookEntryFilter : public CustomMessageFilter
+    {
+    public:
+      LogBookEntryFilter(DUNE::Tasks::Task* task, const std::string& spec = ""):
+        CustomMessageFilter(DUNE::IMC::LogBookEntry::getIdStatic())
+      {
+        (void)task;
+
+        if (spec.empty())
+          return;
+
+        std::vector<std::string> parts;
+        DUNE::Utils::String::split(spec, "+", parts);
+        for (auto& part : parts)
+        {
+          auto it = c_logbook_entry_types.find(part);
+          if (it != c_logbook_entry_types.end())
+            m_logbook_entry_types.insert(it->second);
+        }
+      }
+
+      bool
+      filter(const DUNE::IMC::Message* msg) override
+      {
+        const auto log_book_entry_msg = dynamic_cast<const DUNE::IMC::LogBookEntry*>(msg);
+        if (log_book_entry_msg == nullptr)
+          return false;
+
+        return (!m_logbook_entry_types.empty() && m_logbook_entry_types.find(log_book_entry_msg->type) == m_logbook_entry_types.end());
+      }
+
+    private:
+      //! Filtered logbook entry types.
+      std::unordered_set<uint8_t> m_logbook_entry_types;
+    };
+  }
+}
 
 #endif

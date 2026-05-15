@@ -24,31 +24,43 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_HPP_INCLUDED_
-#define DUNE_TASKS_HPP_INCLUDED_
+#ifndef DUNE_TASKS_CUSTOM_MESSAGE_FILTERS_CUSTOM_MESSAGE_FILTERS_HPP_INCLUDED_
+#define DUNE_TASKS_CUSTOM_MESSAGE_FILTERS_CUSTOM_MESSAGE_FILTERS_HPP_INCLUDED_
+
+#include <functional>
+
+#include <DUNE/IMC/Definitions.hpp>
 
 namespace DUNE
 {
-  //! %Task related routines and classes.
   namespace Tasks
-  { }
-}
+  {
+    class CustomMessageFilter
+    {
+    public:
+      CustomMessageFilter(uint32_t mid):
+        m_mid(mid)
+      { }
 
-#include <DUNE/Tasks/Factory.hpp>
-#include <DUNE/Tasks/Exceptions.hpp>
-#include <DUNE/Tasks/Consumer.hpp>
-#include <DUNE/Tasks/Periodic.hpp>
-#include <DUNE/Tasks/Profiles.hpp>
-#include <DUNE/Tasks/Task.hpp>
-#include <DUNE/Tasks/Context.hpp>
-#include <DUNE/Tasks/Manager.hpp>
-#include <DUNE/Tasks/AbstractConsumer.hpp>
-#include <DUNE/Tasks/Recipient.hpp>
-#include <DUNE/Tasks/AbstractCreator.hpp>
-#include <DUNE/Tasks/ParameterTable.hpp>
-#include <DUNE/Tasks/SourceFilter.hpp>
+      virtual ~CustomMessageFilter() = default;
+
+      virtual bool
+      filter(const IMC::Message* msg) = 0;
+
+      uint32_t
+      getMessageId(void) const
+      {
+        return m_mid;
+      }
+
+    private:
+      //! Message id.
+      uint32_t m_mid;
+    };
+  }
+}
 
 #endif

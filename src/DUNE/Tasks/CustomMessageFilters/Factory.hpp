@@ -24,31 +24,48 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_HPP_INCLUDED_
-#define DUNE_TASKS_HPP_INCLUDED_
+#ifndef DUNE_TASKS_CUSTOM_MESSAGE_FILTERS_FACTORY_HPP_INCLUDED_
+#define DUNE_TASKS_CUSTOM_MESSAGE_FILTERS_FACTORY_HPP_INCLUDED_
+
+#include <map>
+#include <vector>
+#include <string>
+#include <memory>
+#include <functional>
+
+#include "CustomMessageFilter.hpp"
+
+#include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
 {
-  //! %Task related routines and classes.
   namespace Tasks
-  { }
-}
+  {
+    class CustomMessageFilterFactory
+    {
+    public:
+      static std::string
+      getName(uint32_t id);
 
-#include <DUNE/Tasks/Factory.hpp>
-#include <DUNE/Tasks/Exceptions.hpp>
-#include <DUNE/Tasks/Consumer.hpp>
-#include <DUNE/Tasks/Periodic.hpp>
-#include <DUNE/Tasks/Profiles.hpp>
-#include <DUNE/Tasks/Task.hpp>
-#include <DUNE/Tasks/Context.hpp>
-#include <DUNE/Tasks/Manager.hpp>
-#include <DUNE/Tasks/AbstractConsumer.hpp>
-#include <DUNE/Tasks/Recipient.hpp>
-#include <DUNE/Tasks/AbstractCreator.hpp>
-#include <DUNE/Tasks/ParameterTable.hpp>
-#include <DUNE/Tasks/SourceFilter.hpp>
+      static void
+      getNames(std::vector<std::string>& names);
+
+      static void
+      getNames(std::string& names);
+
+      static uint32_t
+      getId(const std::string& name);
+
+      static std::unique_ptr<CustomMessageFilter>
+      produce(DUNE::Tasks::Task* task, const std::string& name, const std::string& spec = "");
+
+      static std::unique_ptr<CustomMessageFilter>
+      produce(DUNE::Tasks::Task* task, uint32_t id, const std::string& spec = "");
+    };
+  }
+}
 
 #endif
