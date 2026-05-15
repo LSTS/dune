@@ -96,6 +96,8 @@ namespace Payload
       float water_flow_timeout;
       //! Extra press pump label.
       std::string extra_press_pump_name;
+      //! Force state transition.
+      bool force_state_transition;
     };
 
     //! Task to control RedX payload. 
@@ -124,7 +126,8 @@ namespace Payload
         REQ_START_SAMPLING,
         REQ_STOP_SAMPLING,
         REQ_PAUSE_SAMPLING,
-        REQ_RESUME_SAMPLING
+        REQ_RESUME_SAMPLING,
+        REQ_FORCE_STATE_TRANSITION
       };
 
       //! Task arguments.
@@ -326,6 +329,10 @@ namespace Payload
         .editable(false)
         .description("Power channel name for extra pressure pump.");
 
+        param("Force State Transition", m_args.force_state_transition)
+        .defaultValue("false")
+        .description("Manually force state transition.");
+
         m_sa_report.action = IMC::SamplingAction::SA_REPORT;
 
         bind<IMC::Depth>(this);
@@ -366,6 +373,16 @@ namespace Payload
 
         if (paramChanged(m_args.wp_actuation))
           spew("payload settings : water pump actuation set to : %d%%", m_args.wp_actuation);
+
+        if (paramChanged(m_args.force_state_transition) && m_args.force_state_transition)
+        {
+          applyEntityParameter(&m_args.force_state_transition, false);
+          if (isActive())
+          {
+            m_recv_req = REQ_FORCE_STATE_TRANSITION;
+            inf("force state transition request received");
+          }
+        }
       }
 
       void
@@ -671,6 +688,17 @@ namespace Payload
         return true;
       }
 
+      bool
+      forceStateTransition(void)
+      {
+        if (m_recv_req != REQ_FORCE_STATE_TRANSITION)
+          return false;
+
+        m_recv_req = REQ_NONE;
+        trace("received request to force state transition");
+        return true;
+      }
+
       void
       setState(State state)
       {
@@ -798,7 +826,13 @@ namespace Payload
           if (startRequested() || stopRequested() || pauseRequested())
             break;
 
-          if (m_curr_wp_depth >= m_args.wp_depth)
+          if (forceStateTransition())
+          {
+            stopMotor();
+            setState(STATE_SAMPLING);
+            trace("force state transition: transitioning to SAMPLING state.");
+          }
+          else if (m_curr_wp_depth >= m_args.wp_depth)
           {
             stopMotor();
             setState(STATE_SAMPLING);
@@ -817,7 +851,13 @@ namespace Payload
           if (startRequested() || stopRequested() || pauseRequested())
             break;
 
-          if (m_max_wl)
+          if (forceStateTransition())
+          {
+            stopWaterPump();
+            setState(STATE_PURGING);
+            trace("force state transition: transitioning to PURGING state.");
+          }
+          else if (m_max_wl)
           {
             stopWaterPump();
             setState(STATE_PURGING);
@@ -836,7 +876,13 @@ namespace Payload
           if (startRequested() || stopRequested() || pauseRequested())
             break;
 
-          if (m_purge_timer.overflow())
+          if (forceStateTransition())
+          {
+            closePurge();
+            setState(STATE_FILTERING);
+            trace("force state transition: transitioning to FILTERING state.");
+          }
+          else if (m_purge_timer.overflow())
           {
             closePurge();
             setState(STATE_FILTERING);
@@ -849,7 +895,19 @@ namespace Payload
           if (startRequested() || stopRequested() || pauseRequested())
             break;
 
-          if (!filtering())
+          if (forceStateTransition())
+          {
+            const auto id = m_curr_filter->first;
+            closeValve(id);
+            m_filters_used++;
+            m_curr_filter->second = false;
+            m_total_available--;
+            applyEntityParameter(&m_args.filters_names[id], "");
+            applyEntityParameter(&m_args.last_filter_used, id);
+            setState(STATE_DRAINING);
+            trace("force state transition: transitioning to DRAINING state and starting purge valve: timeout for draining operation: %.1f seconds", m_args.purge_timeout);
+          }
+          else if (!filtering())
           {
             const auto id = m_curr_filter->first;
             closeValve(id);
@@ -868,7 +926,15 @@ namespace Payload
           if (startRequested() || stopRequested() || pauseRequested())
             break;
 
-          if (!draining())
+          if (forceStateTransition())
+          {
+            stopPressPump();
+            closePurge();
+            setState(STATE_FILTERING);
+            trace("force state transition: transitioning to FILTERING state and starting filter valve.");
+            break;
+          }
+          else if (!draining())
           {
             stopPressPump();
             closePurge();
@@ -896,7 +962,13 @@ namespace Payload
           break;
 
         case STATE_COMPLETED:
-          if (m_curr_wp_depth <= 0.0f)
+          if (forceStateTransition())
+          {
+            stopMotor();
+            setState(STATE_IDLE);
+            trace("force state transition: transitioning to IDLE state.");
+          }
+          else if (m_curr_wp_depth <= 0.0f)
           {
             stopMotor();
             setState(STATE_IDLE);
