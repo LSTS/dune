@@ -104,15 +104,19 @@ namespace Supervisors
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Surrogate System", m_args.system_name)
-        .description("Power channel");
-
-        param("Surrogate Entity", m_args.entity_name)
+.editable(false)
         .description("Name of the slave system");
 
+        param("Surrogate Entity", m_args.entity_name)
+.editable(false)
+        .description("Entity name of the slave system entity");
+
         param("Surrogate Task", m_args.task_name)
+.editable(false)
         .description("Name of the slave task");
 
         param("Surrogate Section", m_args.config_section)
+.editable(false)
         .description("Name of the surrogate configuration section");
 
         param("Surrogate Power Channel", m_args.power_channel)
