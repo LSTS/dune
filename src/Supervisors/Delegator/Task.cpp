@@ -104,26 +104,29 @@ namespace Supervisors
                     Tasks::Parameter::VISIBILITY_USER);
 
         param("Surrogate System", m_args.system_name)
-.editable(false)
+        .editable(false)
         .description("Name of the slave system");
 
         param("Surrogate Entity", m_args.entity_name)
-.editable(false)
+        .editable(false)
         .description("Entity name of the slave system entity");
 
         param("Surrogate Task", m_args.task_name)
-.editable(false)
+        .editable(false)
         .description("Name of the slave task");
 
         param("Surrogate Section", m_args.config_section)
-.editable(false)
+        .editable(false)
         .description("Name of the surrogate configuration section");
 
         param("Surrogate Power Channel", m_args.power_channel)
         .editable(false)
-                .description("Name of the power channel of the surrogate system. Only use if PCC is for the payload's CPU.");
+        .description("Name of the power channel of the surrogate system. Only use if PCC is for the payload's CPU.");
+
+        m_sid = resolveSystemName(m_args.system_name);
 
         // Register handler routines.
+        bind<IMC::Announce>(this);
         bind<IMC::EntityInfo>(this);
         bind<IMC::EntityActivationState>(this);
         bind<IMC::EntityState>(this);
@@ -161,12 +164,6 @@ namespace Supervisors
       }
 
       void
-      onUpdateParameters(void)
-      {
-        m_sid = resolveSystemName(m_args.system_name);
-      }
-
-      void
       onResourceInitialization(void)
       {
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -178,6 +175,15 @@ namespace Supervisors
 
         if(!m_args.power_channel.empty())
           queryEntityInfo();
+      }
+
+      void
+      consume(const IMC::Announce* msg)
+      {
+        if (msg->sys_name != m_args.system_name)
+          return;
+
+        m_sid = msg->getSource();
       }
 
       void
@@ -284,17 +290,17 @@ namespace Supervisors
       {
         if (m_args.power_channel.empty())
         {
-sendActiveParameter("false");
+          sendActiveParameter("false");
           return;
         }
 
-          IMC::PowerOperation pop;
-          pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
-          relayTo(&pop);
-          debug ("Sent PowerOperation shutdown in progress to surrogate.");
-          m_deact_countdown.reset();
-          m_deactivating = true;
-              }
+        IMC::PowerOperation pop;
+        pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+        relayTo(&pop);
+        debug ("Sent PowerOperation shutdown in progress to surrogate.");
+        m_deact_countdown.reset();
+        m_deactivating = true;
+      }
 
       bool
       isFromSurrogate(const IMC::Message* msg)
