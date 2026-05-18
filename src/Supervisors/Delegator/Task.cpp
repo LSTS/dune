@@ -116,8 +116,8 @@ namespace Supervisors
         .description("Name of the surrogate configuration section");
 
         param("Surrogate Power Channel", m_args.power_channel)
-        .defaultValue("None")
-        .description("Name of the power channel of the surrogate system. Only use if PCC is for the payload's CPU.");
+        .editable(false)
+                .description("Name of the power channel of the surrogate system. Only use if PCC is for the payload's CPU.");
 
         // Register handler routines.
         bind<IMC::EntityInfo>(this);
@@ -172,7 +172,7 @@ namespace Supervisors
         m_act_countdown.setTop(getActivationTime());
         m_deact_countdown.setTop(getDeactivationTime());
 
-        if(m_args.power_channel != "None")
+        if(!m_args.power_channel.empty())
           queryEntityInfo();
       }
 
@@ -207,7 +207,7 @@ namespace Supervisors
         relayTo(msg);
         trace(DTR("Setting entity parameters %s"), getEntityLabel());
 
-        if(m_args.power_channel == "None")
+        if (m_args.power_channel.empty())
           return;
 
         IMC::MessageList<IMC::EntityParameter>::const_iterator itr = msg->params.begin();
@@ -253,7 +253,7 @@ namespace Supervisors
       void
       onRequestActivation(void)
       {
-        if(m_args.power_channel != "None")
+        if (!m_args.power_channel.empty())
         {
           // Powerdown aborted
           if (m_deactivating && !m_deact_countdown.overflow())
@@ -278,18 +278,19 @@ namespace Supervisors
       void
       onRequestDeactivation(void)
       {
-        if(m_args.power_channel != "None")
+        if (m_args.power_channel.empty())
         {
+sendActiveParameter("false");
+          return;
+        }
+
           IMC::PowerOperation pop;
           pop.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
           relayTo(&pop);
           debug ("Sent PowerOperation shutdown in progress to surrogate.");
           m_deact_countdown.reset();
           m_deactivating = true;
-        }
-        else
-          sendActiveParameter("false");
-      }
+              }
 
       bool
       isFromSurrogate(const IMC::Message* msg)
@@ -346,10 +347,10 @@ namespace Supervisors
         else if (isDeactivating() && (msg->state == IMC::EntityActivationState::EAS_INACTIVE))
           deactivate();
 
-        if(m_args.power_channel != "None" && msg->state == IMC::EntityActivationState::EAS_DEACT_IP)
+        if (!m_args.power_channel.empty() && msg->state == IMC::EntityActivationState::EAS_DEACT_IP)
           onRequestDeactivation();
 
-        if(m_args.power_channel != "None" && msg->state == IMC::EntityActivationState::EAS_ACT_IP &&
+        if (!m_args.power_channel.empty() && msg->state == IMC::EntityActivationState::EAS_ACT_IP &&
            m_estate.state == IMC::EntityState::ESTA_FAILURE)
         {
           activationFailed(DTR("failed activation, device reporting failure state."));
