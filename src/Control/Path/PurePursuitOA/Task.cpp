@@ -646,7 +646,7 @@ namespace Control
           double obstRadPosition; //posição angular do centro do obstáculo relativamente ao veículo -pi:pi
           double destRadPosition; //posição angular do próximo GoTo relativamente ao veículo -pi:pi
           double nowHeading;
-          double shift = 0.25 * (obstacle.radius+obstacle.nogoZoneDistance);
+          double shift = 0.35 * (obstacle.radius+obstacle.nogoZoneDistance);
           double horShift, verShift;  //meters
           double lonShift, latShift;  //degrees
           double angular_distance;    //radians
@@ -819,6 +819,11 @@ namespace Control
             // war("AAAAAAAAAAAAAAAAAA");
             endPoint = {oldPath.lon, oldPath.lat};
             epIsSet = true;
+          }
+
+          if(m_path.getSourceEntity() == getEntityId())
+          {
+            war("AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA");
           }
           if(newPath.lon != oldPath.lon || newPath.lat != oldPath.lat)    //verificar se o m_path.end mudou
           {
