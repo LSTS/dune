@@ -480,6 +480,7 @@ namespace Plan
           else
           {
             IMC::PlanManeuver* pman = m_plan->loadNextManeuver();
+            war("YAHUUUUUU");
             startManeuver(pman);
           }
         }

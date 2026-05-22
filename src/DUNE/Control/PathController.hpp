@@ -275,7 +275,7 @@ namespace DUNE
 
       float
       getSpeed(void) const
-      {
+      { 
         return std::max((double)m_eta_min_speed, m_ts.speed);
       }
 
@@ -401,7 +401,7 @@ namespace DUNE
         Coordinates::getTrackPosition(m_ts.start, m_ts.track_bearing, coord, x, y);
       }
 
-      //! Get EstimatedState vertical position, based on ZUnits
+      //! Get EstimatedState vertical position, based on ZUnits 
       //! @param unit Coordenate unit
       //! @return EstimatedSate vertical position
       double

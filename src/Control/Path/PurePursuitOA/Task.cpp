@@ -115,6 +115,7 @@ namespace Control
           .description("Obstacles definition.");
 
           bind<IMC::PlanControlState>(this);
+          // bind<IMC::VehicleState>(this);
         }
 
         void
@@ -123,7 +124,7 @@ namespace Control
           if (pcs->getSource() != getSystemId())
             return;
 
-          //war("Received PlanControlState: %s | maneuver: %s", pcs->plan_id.c_str(), pcs->man_id.c_str());
+          war("Received PlanControlState: %s | maneuver: %s", pcs->plan_id.c_str(), pcs->man_id.c_str());
         }
 
         void
@@ -664,11 +665,11 @@ namespace Control
 
           if (angular_distance > 0)
           {
-            nowHeading = Angles::normalizeRadian(obstRadPosition + M_PI/2);
+            nowHeading = Angles::normalizeRadian(obstRadPosition + (M_PI/2));
           }
           else
           {
-            nowHeading = Angles::normalizeRadian(obstRadPosition - M_PI/2);
+            nowHeading = Angles::normalizeRadian(obstRadPosition - (M_PI/2));
           }
 
           //inf("Heading Direction: %f", nowHeading*180/M_PI);
@@ -793,7 +794,7 @@ namespace Control
           if (contador)
           {
             pathInit(curr_lat, curr_lon, ts);
-            processMessage(m_obs_msg);
+            // processMessage(m_obs_msg);
             contador--;
           }
 
@@ -804,10 +805,12 @@ namespace Control
 
           inf("I'm Here:        %f %f", currPos.lon, currPos.lat);
           //UNDER CONSTRUCTION*********************************************
-          newPath = {m_path.end_lon, m_path.end_lat};
+          // newPath = {m_path.end_lon, m_path.end_lat};
+          newPath = {Angles::degrees(m_ts.lon_en), Angles::degrees(m_ts.lat_en)};
 
           // inf("%d", getEntityId());
           // inf("%d", m_path.getSourceEntity());
+          inf("TrackingStat:    %f %f", newPath.lon, newPath.lat);
 
 
           currAvoidState = checkPosition(m_obstacles);
@@ -821,10 +824,11 @@ namespace Control
             epIsSet = true;
           }
 
-          if(m_path.getSourceEntity() == getEntityId())
-          {
-            war("AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA");
-          }
+          // if(ts.getSourceEntity() != getEntityId())
+          // {
+          //   war("AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA");
+          // }
+
           if(newPath.lon != oldPath.lon || newPath.lat != oldPath.lat)    //verificar se o m_path.end mudou
           {
             // war("BBBBBBBBBBBBBBBBBB");
@@ -860,7 +864,7 @@ namespace Control
 
           if ( currAvoidState != oldAvoidState || dsptch)           // Se o estado de avoidance atual mudou
           {
-            // inf("Mudou de estado");
+            inf("Mudou de estado");
 
             m_path.end_lon = Angles::normalizeRadian(Angles::radians(m_path.end_lon));
             m_path.end_lat = Angles::normalizeRadian(Angles::radians(m_path.end_lat));
