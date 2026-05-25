@@ -32,5 +32,6 @@
 
 #include <DUNE/Utils/Actuators/Models/RPM/Model.hpp>
 #include <DUNE/Utils/Actuators/Models/RPM/T200.hpp>
+#include <DUNE/Utils/Actuators/Models/RPM/T500.hpp>
 
 #endif
