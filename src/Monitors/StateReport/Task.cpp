@@ -294,8 +294,7 @@ namespace Monitors
               request.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
               fp64_t ttl = std::max(c_minimum_iridium_period, m_args.report_period);
               request.deadline = Time::Clock::getSinceEpoch() + ttl;
-              // request.destination = "broadcast";
-              request.destination = "lauv-noptilus-3";
+              request.destination = "broadcast";
               request.msg_data.set(msg);
               dispatch(request, DF_LOOP_BACK);
 
