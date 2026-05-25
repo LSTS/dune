@@ -82,6 +82,9 @@ namespace DUNE
     void
     String::rightTrimInPlace(char* str)
     {
+      if (str == nullptr)
+        return;
+
       size_t len = std::strlen(str);
       if (len == 0)
         return;
