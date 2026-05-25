@@ -178,6 +178,8 @@ namespace Actuators
       {
         if (model == "T200")
           return std::make_unique<Utils::Actuators::Models::RPM::T200>();
+        else if (model == "T500")
+          return std::make_unique<Utils::Actuators::Models::RPM::T500>();
         
         throw std::invalid_argument("Invalid thruster model name");
       }
