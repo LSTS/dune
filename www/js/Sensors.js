@@ -50,6 +50,7 @@ Sensors.prototype.m_msgs =
   'Conductivity': {},
   'Current': {},
   'Voltage': {},
+  'Power': {},
   'RSSI': {},
   'LinkLevel':
   {
