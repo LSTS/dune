@@ -86,12 +86,8 @@ namespace DUNE
         return;
 
       size_t len = std::strlen(str);
-      if (len == 0)
-        return;
-
-      char* r = str + len - 1; // Rightmost character
-      for (; r >= str && isspace(static_cast<unsigned char>(*r)); --r)
-        *r = 0;
+      while (len > 0 && isspace(static_cast<unsigned char>(str[len - 1])))
+        str[--len] = '\0';
     }
 
     void
