@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: 2293d9e5efdaaeeeab6cb84d3f81ae72                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -332,6 +332,8 @@
 #define DUNE_IMC_GROUPSTREAMVELOCITY 362
 //! Airflow identification number.
 #define DUNE_IMC_AIRFLOW 363
+//! Power identification number.
+#define DUNE_IMC_POWER 364
 //! DesiredHeading identification number.
 #define DUNE_IMC_DESIREDHEADING 400
 //! DesiredZ identification number.
@@ -718,7 +720,17 @@
 #define DUNE_IMC_VERSIONINFO 2021
 //! TotalHeading identification number.
 #define DUNE_IMC_TOTALHEADING 2022
+//! BDI identification number.
+#define DUNE_IMC_BDI 2035
 //! TypedEntityParameterEditor identification number.
 #define DUNE_IMC_TYPEDENTITYPARAMETEREDITOR 2036
+//! QueryBmsData identification number.
+#define DUNE_IMC_QUERYBMSDATA 2041
+//! BmsData identification number.
+#define DUNE_IMC_BMSDATA 2042
+//! BmsCellVoltage identification number.
+#define DUNE_IMC_BMSCELLVOLTAGE 2043
+//! BmsRegister identification number.
+#define DUNE_IMC_BMSREGISTER 2044
 
 #endif
