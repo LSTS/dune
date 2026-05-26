@@ -515,9 +515,6 @@ namespace Control
           // .defaultValue("10.0, 10.0, 10.0, 10.0, 10.0")
           // .description("Weights on environmental factors.");
 
-          setParameterScope("Bottom Track -- Minimum Depth", Parameter::SCOPE_GLOBAL);
-          setParameterVisibility("Bottom Track -- Minimum Depth", Parameter::VISIBILITY_DEVELOPER);
-
           // Register handler routines.
           bind<IMC::AisInfo>(this);
           // bind<IMC::CurrentProfile>(this);
@@ -708,17 +705,15 @@ namespace Control
         void
         onPathActivation(void)
         {
-          //! Activate Heading & Speed controller.
+          //! Activate Heading controller.
           enableControlLoops(IMC::CL_YAW);
-          enableControlLoops(IMC::CL_SPEED);
         }
 
         void
         onPathDeactivation(void)
         {
-          //! Deactivate Heading & Speed controller.
+          //! Deactivate Heading controller.
           disableControlLoops(IMC::CL_YAW);
-          disableControlLoops(IMC::CL_SPEED);
         }
 
         void
