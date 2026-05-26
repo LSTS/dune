@@ -86,6 +86,8 @@ namespace Navigation
         bool estimate_cog_sog;
         //! VX and VY estimator moving average window size.
         unsigned ma_window_size;
+        //! Use course over ground as heading when Euler Angles data is not available.
+        bool cog_as_heading;
       };
 
       struct Task: public DUNE::Tasks::Periodic
@@ -261,6 +263,10 @@ namespace Navigation
           .minimumValue("1")
           .defaultValue("5")
           .description("Window size for the moving average of COG and SOG estimates.");
+
+          param("Use COG as Heading", m_args.cog_as_heading)
+          .defaultValue("false")
+          .description("Use course over ground as heading when Euler Angles data is not available.");
 
           bind<IMC::EulerAngles>(this);
           bind<IMC::GpsFix>(this);
@@ -848,7 +854,7 @@ namespace Navigation
           {
             m_estate.phi = 0.0f;
             m_estate.theta = 0.0f;
-            m_estate.psi = 0.0f;
+            m_estate.psi = m_args.cog_as_heading ? cog : 0.0f;
           }
           else if (m_euler_input->get(m_estate.phi, m_estate.theta, m_estate.psi))
             has_euler = true;
