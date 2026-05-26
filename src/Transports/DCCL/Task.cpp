@@ -60,7 +60,10 @@ namespace Transports
       Arguments m_args;
       uint16_t m_reqid;
       IMCDCCL::CodecDCCL m_codecdccl; //DCCL LIB
-     
+
+      //test md5
+      IMC::PlanDBInformation m_plan_info;
+      
       //! Message Filter
       MessageFilter m_filter;
 
@@ -146,6 +149,25 @@ namespace Transports
       void
       consume(const IMC::PlanSpecification* msg)
       {
+
+        m_plan_info.plan_size = msg->getPayloadSerializationSize();
+        m_plan_info.plan_id = msg->plan_id;
+        m_plan_info.change_time = Clock::getSinceEpoch();
+        m_plan_info.change_sid = msg->getSource();
+        m_plan_info.change_sname = resolveSystemId(m_plan_info.change_sid);
+
+        Database::Blob plan_data(m_plan_info.plan_size);
+        msg->serializeFields((uint8_t*)&plan_data[0]);
+
+        m_plan_info.md5.resize(16);
+        MD5::compute((uint8_t*)&plan_data[0], m_plan_info.plan_size, (uint8_t*)&m_plan_info.md5[0]);
+
+        std::cout << "MD5: ";
+        for (size_t i = 0; i < m_plan_info.md5.size(); i++)
+        {
+          printf("%02x", (unsigned char)m_plan_info.md5[i]);
+        }
+        std::cout << std::endl;
 
         if(m_args.trigger_dccl){
 
@@ -521,6 +543,29 @@ namespace Transports
               if (decode_msg != nullptr) { 
                 war("[DECODING] Original msg with size %u decompressed.", decode_msg->getPayloadSerializationSize());
                 decode_msg->toJSON(std::cout); }
+
+                if (auto plan = dynamic_cast<IMC::PlanSpecification*>(decode_msg.get()))
+                {
+                  m_plan_info.plan_size = plan->getPayloadSerializationSize();
+                  m_plan_info.plan_id = plan->plan_id;
+                  m_plan_info.change_time = Clock::getSinceEpoch();
+                  m_plan_info.change_sid = plan->getSource();
+                  m_plan_info.change_sname = resolveSystemId(m_plan_info.change_sid);
+
+                  Database::Blob plan_data(m_plan_info.plan_size);
+                  plan->serializeFields((uint8_t*)&plan_data[0]);
+
+                  m_plan_info.md5.resize(16);
+                  MD5::compute((uint8_t*)&plan_data[0], m_plan_info.plan_size, (uint8_t*)&m_plan_info.md5[0]);
+
+                  std::cout << "MD5: ";
+                  for (size_t i = 0; i < m_plan_info.md5.size(); i++)
+                  {
+                    printf("%02x", (unsigned char)m_plan_info.md5[i]);
+                  }
+                  std::cout << std::endl;
+                }
+                
 
           }
 
