@@ -50,7 +50,7 @@ namespace Monitors
       { }
 
       void
-      checkUptime()
+      checkUptime(void)
       {
         std::ifstream f(c_file_name);
 
@@ -76,7 +76,7 @@ namespace Monitors
       }
 
       void
-      task()
+      task(void)
       {
         try
         {
