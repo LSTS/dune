@@ -212,14 +212,13 @@ namespace DUNE
       m_ctx.config.get("General", "Absolute Minimum Altitude", "1.2", m_btd.args.min_alt);
 
       m_ctx.config.get("General", "Time Of Arrival Factor", "5.0", m_time_factor);
-
-      param("Use Radius To Endpoint", m_use_radius_to_endpoint)
-      .defaultValue("false")
-      .description("Use radius to endpoint instead of ETA.");
       
       param("Radius To Endpoint", m_end_radius)
       .defaultValue("5")
-      .description("Radius around endpoint to consider maneuver as done.");
+      .minimumValue("-1")
+      .defaultValue("-1")
+      .description("Radius around endpoint to consider maneuver as done. "
+                   "If negative, only ETA is considered.");
 
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);
@@ -813,7 +812,7 @@ namespace DUNE
 
         const bool was_nearby = m_ts.nearby;
 
-        if (!m_use_radius_to_endpoint)
+        if (m_end_radius < 0.0f)
         {
           if (!m_ts.nearby && m_ts.eta <= 0)
           {
