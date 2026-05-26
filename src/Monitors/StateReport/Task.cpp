@@ -54,12 +54,19 @@ namespace Monitors
     {
       //! Task arguments.
       Arguments m_args;
+      //! Plan Control State message.
       IMC::PlanControlState* m_pstate;
+      //! Fuel Level message.
       IMC::FuelLevel* m_fuel;
+      //! Estimated State message.
       IMC::EstimatedState* m_estate;
+      //! Vehicle State message.
       IMC::VehicleState* m_vstate;
+      //! Vehicle Medium message.
       IMC::VehicleMedium* m_vmedium;
+      //! Plan checksum.
       int m_plan_chksum;
+      //! Iridium report timer.
       Time::Counter<float> m_report_timer;
 
       Task(const std::string& name, Tasks::Context& ctx):
@@ -113,7 +120,7 @@ namespace Monitors
       void
       onResourceInitialization(void)
       {
-        
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
       void
