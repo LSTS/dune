@@ -1492,6 +1492,9 @@ namespace Control
             }
           }
 
+          if (ts.cc)
+            m_des_heading.value += state.psi - ts.course;
+
           //! Normalize angle
           m_des_heading.value = Angles::normalizeRadian(m_des_heading.value);
           debug("CAS OFFSET: %.0f | ILOS OFFSET: %.3f | NEW COURSE NORMALIZED: %.3f", Angles::degrees(m_psi_os), Angles::degrees(ilos_offset), Angles::degrees(m_des_heading.value));
@@ -1512,6 +1515,9 @@ namespace Control
             ref = -ref;
 
           ref += DUNE::Math::c_pi + ts.los_angle;
+
+          if (ts.cc)
+            m_des_heading.value += state.psi - ts.course;
 
           // Dispatch heading reference
           m_des_heading.value = Angles::normalizeRadian(ref);
