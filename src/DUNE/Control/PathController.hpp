@@ -332,6 +332,13 @@ namespace DUNE
         dispatch(m_speed, Tasks::DF_LOOP_BACK);
       }
 
+      //! Reset speed reference.
+      void
+      resetSpeedReference(void)
+      {
+        setSpeedReference(m_dpath_speed, m_dpath_speed_units);
+      }
+
     private:
       //! Update entity state
       //! @param[in] msg message text for error description
@@ -492,6 +499,10 @@ namespace DUNE
       bool m_jump_monitors;
       //! Navigation jump timer to disable monitors
       Time::Counter<float> m_jump_timer;
+      //! Desired path speed reference.
+      fp32_t m_dpath_speed;
+      //! Desired path speed reference units.
+      uint8_t m_dpath_speed_units;
 
       // Arguments
       //! Control period

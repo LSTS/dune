@@ -67,6 +67,7 @@ namespace DUNE
       m_setup(true),
       m_braking(false),
       m_jump_monitors(false),
+      m_dpath_speed(0),
       m_aloops(0),
       m_btrack(NULL),
       m_scope_ref(0)
@@ -372,6 +373,11 @@ namespace DUNE
       setControlLoops(dpath);
       handleLoiter(dpath);
 
+      // Send speed reference
+      m_dpath_speed = dpath->speed;
+      m_dpath_speed_units = dpath->speed_units;
+      setSpeedReference(m_dpath_speed, m_dpath_speed_units);
+
       updateTrackingState();
       reportPathControlState(true);
       updateEntityState();
@@ -528,9 +534,6 @@ namespace DUNE
         m_ts.z_control = false;
         m_pcs.flags |= IMC::PathControlState::FL_NO_Z;
       }
-
-      // Send speed reference
-      setSpeedReference(dpath->speed, dpath->speed_units);
     }
 
     void
