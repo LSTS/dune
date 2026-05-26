@@ -319,6 +319,19 @@ namespace DUNE
       void
       onMain(void);
 
+    protected:
+      //! Set speed reference.
+      //! @param[in] speed desired speed reference
+      //! @param[in] speed_units desired speed units
+      void
+      setSpeedReference(float speed, uint8_t speed_units)
+      {
+        enableControlLoops(IMC::CL_SPEED);
+        m_speed.value = speed;
+        m_speed.speed_units = speed_units;
+        dispatch(m_speed, Tasks::DF_LOOP_BACK);
+      }
+
     private:
       //! Update entity state
       //! @param[in] msg message text for error description
