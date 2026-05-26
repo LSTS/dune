@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -109,11 +109,19 @@ namespace DUNE
       { }
     };
 
+    class EmptyField: public Error
+    {
+    public:
+      EmptyField(unsigned field):
+        Error(Utils::String::str("field %u is empty", field))
+      { }
+    };
+
     class ConversionError: public Error
     {
     public:
-      ConversionError(const char* type, unsigned field):
-        Error(Utils::String::str("conversion to %s failed on field %u", type, field))
+      ConversionError(unsigned field):
+        Error(Utils::String::str("conversion failed on field %u", field))
       { }
     };
 

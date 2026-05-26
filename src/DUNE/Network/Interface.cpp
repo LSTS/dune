@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -84,14 +84,16 @@ namespace DUNE
       std::vector<Interface> itfs;
 
 #if defined(DUNE_SYS_HAS_IFADDRS_H)
-      struct ifaddrs* ifa;
-      getifaddrs(&ifa);
-      struct ifaddrs* next = ifa;
+      struct ifaddrs* ifa = nullptr;
 
-      do
+      // Check if getifaddrs fails
+      if (getifaddrs(&ifa) != 0 || ifa == nullptr)
+        return itfs;
+
+      for (struct ifaddrs* next = ifa; next != nullptr; next = next->ifa_next)
       {
         // No address.
-        if (next->ifa_addr == 0)
+        if (next->ifa_addr == nullptr)
           continue;
 
         // Not IPv4.
@@ -105,26 +107,31 @@ namespace DUNE
         Interface itf;
         itf.m_name = next->ifa_name;
         itf.m_addr = next->ifa_addr;
-        itf.m_bcast = next->ifa_broadaddr;
+        if (next->ifa_flags & IFF_BROADCAST)
+        {
+          itf.m_bcast = next->ifa_broadaddr;
+          itf.m_features |= FeatureBroadcast;
+        }
         if (next->ifa_flags & IFF_MULTICAST)
           itf.m_features |= FeatureMulticast;
-        if (next->ifa_flags & IFF_BROADCAST)
-          itf.m_features |= FeatureBroadcast;
+
         itfs.push_back(itf);
       }
-      while ((next = next->ifa_next));
 
       freeifaddrs(ifa);
 
       // Microsoft Windows implementation.
 #elif defined(DUNE_SYS_HAS_IPHLPAPI_H)
       ULONG adps_len = 16 * 1024;
-      PIP_ADAPTER_ADDRESSES adps = (PIP_ADAPTER_ADDRESSES) std::malloc(adps_len);
+      PIP_ADAPTER_ADDRESSES adps = (PIP_ADAPTER_ADDRESSES)std::malloc(adps_len);
 
       int rv = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, 0, adps, &adps_len);
 
       if (rv != ERROR_SUCCESS)
+      {
+        std::free(adps);
         return itfs;
+      }
 
       PIP_ADAPTER_ADDRESSES padp = adps;
 
@@ -144,7 +151,7 @@ namespace DUNE
         padp = padp->Next;
       }
 
-      free(adps);
+      std::free(adps);
 #endif
 
       return itfs;

@@ -1,0 +1,580 @@
+//***************************************************************************
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
+// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+//***************************************************************************
+// This file is part of DUNE: Unified Navigation Environment.               *
+//                                                                          *
+// Commercial Licence Usage                                                 *
+// Licencees holding valid commercial DUNE licences may use this file in    *
+// accordance with the commercial licence agreement provided with the       *
+// Software or, alternatively, in accordance with the terms contained in a  *
+// written agreement between you and Faculdade de Engenharia da             *
+// Universidade do Porto. For licensing terms, conditions, and further      *
+// information contact lsts@fe.up.pt.                                       *
+//                                                                          *
+// Modified European Union Public Licence - EUPL v.1.1 Usage                *
+// Alternatively, this file may be used under the terms of the Modified     *
+// EUPL, Version 1.1 only (the "Licence"), appearing in the file LICENCE.md *
+// included in the packaging of this file. You may not use this work        *
+// except in compliance with the Licence. Unless required by applicable     *
+// law or agreed to in writing, software distributed under the Licence is   *
+// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
+// ANY KIND, either express or implied. See the Licence for the specific    *
+// language governing permissions and limitations at                        *
+// https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
+//***************************************************************************
+// Author: Alberto Dallolio                                                 *
+//***************************************************************************
+
+// ISO C++ 98 headers.
+#include <cmath>
+
+// DUNE headers.
+#include <DUNE/DUNE.hpp>
+
+// Local headers.
+#include "DeviceState.hpp"
+
+namespace Navigation
+{
+  namespace General
+  {
+    //! Navigation Manager.
+    //!
+    //! @author Alberto Dallolio
+    namespace NavManager
+    {
+      using DUNE_NAMESPACES;
+
+      //! Timeout for valid altitude.
+      static constexpr float c_alt_timeout = 10.0f;
+      //! Maximum horizontal accuracy (m)
+      static constexpr float c_max_hacc = 15.0f;
+      //! Maximum horizontal dilution of precision (HDOP)
+      static constexpr float c_max_hdop = 5.0f;
+
+      struct Arguments
+      {
+        //! Main Euler Angles source entity label.
+        std::string main_euler_label;
+        //! Secondary Euler Angles source entity label.
+        std::string secondary_euler_label;
+        //! Angular Velocity source entity label.
+        std::string ang_label;
+         //! Distance source entity label.
+        std::string dist_label;
+        //! Convert height to geoid height (MSL)
+        bool convert_msl;
+        //! Main unit.
+        std::string main_unit;
+        //! Secondary unit.
+        std::string secondary_unit;
+        //! Third unit.
+        std::string third_unit;
+        //! Number of seconds without data before reporting an error.
+        double inp_tout;
+        //! Reference change distance
+        double ref_distance;
+      };
+
+      struct Task: public DUNE::Tasks::Task
+      {
+        //! Height offset.
+        float m_offset;
+        //! Offset flag.
+        bool m_offset_flag;
+        //! Angular velocity entity eid.
+        unsigned int m_ang_eid;
+        //! Distance entity eid.
+        unsigned int m_dist_eid;
+        //! Timeout for invalid altitude.
+        Counter<float> m_alt_timer;
+        //! Transmission request id
+        int m_reqid;
+        //! Estimated state.
+        IMC::EstimatedState m_estate;
+        //! Origin reference.
+        IMC::GpsFix* m_origin;
+        //! GPS fix rejection.
+        IMC::GpsFixRejection m_rej;
+        //! Device State for main gps unit.
+        DeviceState m_main;
+        //! Device State for secondary gps unit.
+        DeviceState m_second;
+        //! Device State for third gps unit.
+        DeviceState m_third;
+        //! Device State for main euler unit.
+        DeviceState m_euler_main;
+        //! Device State for secondary euler unit.
+        DeviceState m_euler_second;
+        //! Last valid course over ground
+        double m_last_cog;
+        //! Task arguments.
+        Arguments m_args;
+
+        Task(const std::string& name, Tasks::Context& ctx):
+          DUNE::Tasks::Task(name, ctx),
+          m_ang_eid(AddressResolver::invalid()),
+          m_dist_eid(AddressResolver::invalid()),
+          m_alt_timer(c_alt_timeout),
+          m_reqid(0),
+          m_origin(nullptr),
+          m_last_cog(0.0f)
+        {
+          // Define configuration parameters.
+          param("Entity Label - Main Euler Angles", m_args.main_euler_label)
+            .description("Entity label of main 'EulerAngles' provider");
+
+          param("Entity Label - Secondary Euler Angles", m_args.secondary_euler_label)
+            .defaultValue("")
+            .description("Entity label of secondary 'EulerAngles' provider");
+
+          param("Entity Label - Angular Velocity", m_args.ang_label)
+            .description("Entity label of 'AngularVelocity' messages");
+
+          param("Entity Label - Distance", m_args.dist_label)
+            .defaultValue("")
+            .description("Entity label of 'Distance' messages");
+
+          param("Main unit", m_args.main_unit)
+            .description("Name of preferred GPS navigation unit.");
+
+          param("Secondary unit", m_args.secondary_unit)
+            .description("Name of secondary preferred GPS navigation unit.");
+
+          param("Third unit", m_args.third_unit)
+            .description("Name of third preferred GPS navigation unit.");
+
+          param("Convert Height to Geoid Height", m_args.convert_msl)
+            .defaultValue("false")
+            .description("Convert WGS84 height to geoid height (mean sea level) height");
+
+          param("Input timeout", m_args.inp_tout)
+            .units(Units::Second)
+            .defaultValue("30.0")
+            .minimumValue("0.0")
+            .description("Input timeout before error is thrown.");
+
+          param("Reference Change Distance", m_args.ref_distance)
+            .units(Units::Meter)
+            .defaultValue("20000.0")
+            .description("Distance needed for reference change.");
+
+          m_estate.clear();
+          m_offset = 0.0f;
+          m_offset_flag = false;
+          m_estate.alt = -1.0;
+
+          // Register callbacks
+          bind<IMC::AngularVelocity>(this);
+          bind<IMC::Distance>(this);
+          bind<IMC::EulerAngles>(this);
+          bind<IMC::GpsFix>(this);
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          if (!m_args.convert_msl)
+          {
+            m_offset = 0.0f;
+            m_offset_flag = false;
+          }
+        }
+
+        void
+        onEntityResolution(void)
+        {
+          m_ang_eid = getEid(m_args.ang_label);
+          m_dist_eid = getEid(m_args.dist_label);
+
+          // Gps entities
+          m_main.id = getEid(m_args.main_unit);
+          m_second.id = getEid(m_args.secondary_unit);
+          m_third.id = getEid(m_args.third_unit);
+
+          // Euler Angles entities
+          m_euler_main.id = getEid(m_args.main_euler_label);
+          m_euler_second.id = getEid(m_args.secondary_euler_label);
+        }
+
+        //! Get entity id of label.
+        //! Returns Invalid ID in case of missing label.
+        unsigned int
+        getEid(const std::string& label)
+        {
+          unsigned int id = AddressResolver::invalid();
+          if (!label.empty())
+          {
+            try
+            {
+              id = resolveEntity(label);
+            }
+            catch (const std::exception& e)
+            {
+              err(DTR("cann't resolve %s (%s), is there a task failure or a configuration error?"),
+                  label.c_str(), e.what());
+            }
+          }
+          else
+            war(DTR("trying to get id for label, but label is empty. "
+                    "Is there a task failure or a configuration error?"));
+
+          return id;
+        }
+
+        void
+        onResourceAcquisition(void)
+        {
+          // Navigation enters error mode without valid GPS or EulerAngle data.
+          m_main.setTop(m_args.inp_tout);
+          m_second.setTop(m_args.inp_tout);
+          m_third.setTop(m_args.inp_tout);
+          m_euler_main.setTop(m_args.inp_tout);
+          m_euler_second.setTop(m_args.inp_tout);
+
+          setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_WAIT_GPS_FIX);
+        }
+
+        void
+        consume(const IMC::AngularVelocity* msg)
+        {
+          if (msg->getSource() != getSystemId() || msg->getSourceEntity() != m_ang_eid)
+            return;
+
+          m_estate.p = msg->x;
+          m_estate.q = msg->y;
+          m_estate.r = msg->z;
+        }
+
+        void
+        consume(const IMC::Distance* msg)
+        {
+          if (!AddressResolver::isValid(m_dist_eid))
+            return;
+
+          if (msg->getSource() != getSystemId())
+            return;
+
+          if (msg->getSourceEntity() != m_dist_eid)
+            return;
+
+          m_alt_timer.reset();
+          m_estate.alt = msg->value;
+        }
+
+        void
+        consume(const IMC::EulerAngles* msg)
+        {
+          if (msg->getSource() != getSystemId())
+            return;
+
+          if (msg->getSourceEntity() == m_euler_main.id)
+          {
+            updateEulerState(m_euler_main, msg);
+            if (!m_main.isInvalid())
+              setAttitude(msg);
+          }
+          else if (msg->getSourceEntity() == m_euler_second.id)
+          {
+            updateEulerState(m_euler_second, msg);
+            if (m_euler_main.isInvalid() && !m_euler_second.isInvalid())
+              setAttitude(msg);
+          }
+        }
+
+        //! Update Euler State with EulerAngles message
+        //! @param euler EulerState object to update
+        //! @param msg EulerAngles message
+        void
+        updateEulerState(DeviceState& euler, const IMC::EulerAngles* msg)
+        {
+          euler.reset();
+          // If psi is exatly zero, we consider the angles invalid.
+          // This is a workaround for the case where the GPS is not
+          // providing a valid heading.
+          if (msg->psi == 0.0)
+          {
+            debug("Got INVALID Euler Angles: No Heading (psi)");
+            euler.setValid(false);
+            return;
+          }
+
+          trace("Got VALID Euler Angles");
+          euler.setValid(true);
+        }
+
+        void
+        setAttitude(const IMC::EulerAngles* msg)
+        {
+          m_estate.phi = msg->phi;
+          m_estate.theta = msg->theta;
+          m_estate.psi = msg->psi;
+        }
+
+        void
+        consume(const IMC::GpsFix* msg)
+        {
+          spew("GPS FIX FROM: %u", msg->getSourceEntity());
+          if (msg->getSourceEntity() == m_main.id)
+          {
+            updateGpsState(m_main, msg);
+            if (!m_main.isInvalid())
+              sendFix(msg);
+          }
+          else if (msg->getSourceEntity() == m_second.id)
+          {
+            updateGpsState(m_second, msg);
+            if (m_main.isInvalid() && !m_second.isInvalid())
+              sendFix(msg);
+          }
+          else if (msg->getSourceEntity() == m_third.id)
+          {
+            updateGpsState(m_third, msg);
+            if (m_main.isInvalid() && m_second.isInvalid() && !m_third.isInvalid())
+              sendFix(msg);
+          }
+        }
+
+        //! Update Gps State with GpsFix message
+        //! @param gps GpsState object to update
+        //! @param msg GpsFix message
+        void
+        updateGpsState(DeviceState& gps, const IMC::GpsFix* msg)
+        {
+          gps.reset();
+
+          m_rej.utc_time = msg->utc_time;
+          m_rej.setTimeStamp(msg->getTimeStamp());
+
+          if ((msg->validity & IMC::GpsFix::GFV_VALID_POS) == 0)
+          {
+            debug("Got INVALID fix: No Position");
+
+            gps.setValid(false);
+
+            // Dispatch Rejection to Invalid source Entity
+            m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
+            m_rej.setDestinationEntity(msg->getSourceEntity());
+            dispatch(m_rej, DF_KEEP_TIME);
+            return;
+          }
+
+          // if ((msg->validity & IMC::GpsFix::GFV_VALID_HACC) == 0)
+          // {
+          //   m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
+          //   m_rej.setDestinationEntity(msg->getSourceEntity());
+
+          //   debug("Got INVALID fix: No Horizontal Accuracy");
+
+          //   gps.setValid(false);
+          //   dispatch(m_rej, DF_KEEP_TIME);
+          //   return;
+          // }
+
+          // if (msg->hacc > c_max_hacc)
+          // {
+          //   m_rej.reason = IMC::GpsFixRejection::RR_ABOVE_MAX_HACC;
+          //   m_rej.setDestinationEntity(msg->getSourceEntity());
+
+          //   debug("Got INVALID fix: Above Maximum HACC");
+
+          //   gps.setValid(false);
+          //   dispatch(m_rej, DF_KEEP_TIME);
+          //   return;
+          // }
+
+
+          if ((msg->validity & IMC::GpsFix::GFV_VALID_HDOP) == 0)
+          {
+            m_rej.reason = IMC::GpsFixRejection::RR_INVALID;
+            m_rej.setDestinationEntity(msg->getSourceEntity());
+
+            debug("Got INVALID fix: No Horizontal Dilution of Precision");
+
+            gps.setValid(false);
+            dispatch(m_rej, DF_KEEP_TIME);
+            return;
+          }
+
+          if (msg->hdop > c_max_hdop)
+          {
+            m_rej.reason = IMC::GpsFixRejection::RR_ABOVE_MAX_HDOP;
+            m_rej.setDestinationEntity(msg->getSourceEntity());
+
+            debug("Got INVALID fix: Above Maximum HDOP");
+
+            gps.setValid(false);
+            dispatch(m_rej, DF_KEEP_TIME);
+            return;
+          }
+
+          trace("Got VALID fix");
+          gps.setValid(true);
+        }
+
+        void
+        sendFix(const IMC::GpsFix* msg)
+        {
+          if (!originIsSet())
+            setOrigin(msg);
+
+          if (originIsFar(msg))
+            setOrigin(msg);
+
+          // Received valid GPS data.
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+          // Fill out IMC::EstimatedState as well.
+          m_estate.lat = m_origin->lat;
+          m_estate.lon = m_origin->lon;
+          m_estate.height = m_origin->height;
+
+          if (m_args.convert_msl && !m_offset_flag)
+          {
+            m_offset_flag = true;
+            Coordinates::WMM wmm(m_ctx.dir_cfg);
+            m_offset = wmm.height(msg->lat, msg->lon);
+          }
+
+          WGS84::displacement(m_estate.lat, m_estate.lon, m_estate.height, msg->lat, msg->lon,
+                              msg->height - m_offset, &m_estate.x, &m_estate.y, &m_estate.z);
+
+          // Decompose velocity vector.
+          m_estate.vx = std::cos(msg->cog) * msg->sog;
+          m_estate.vy = std::sin(msg->cog) * msg->sog;
+          // m_estate.u = msg->sog;
+          m_estate.u = m_estate.vx * std::cos(m_estate.psi) + m_estate.vy * std::sin(m_estate.psi);
+          m_estate.v = -m_estate.vx * std::sin(m_estate.psi) + m_estate.vy * std::cos(m_estate.psi);
+          dispatch(m_estate);
+
+          // Save last valid course over ground.
+          // if (msg->validity & IMC::GpsFix::GFV_VALID_COG)
+          m_last_cog = msg->cog;
+        }
+
+        void
+        sendIridium(const std::string& msg)
+        {
+          IMC::TransmissionRequest req;
+          req.setDestination(m_ctx.resolver.id());
+          req.data_mode = TransmissionRequest::DMODE_TEXT;
+          req.txt_data = msg;
+          req.deadline = Clock::getSinceEpoch() + 60;
+          req.req_id = ++m_reqid;
+
+          req.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
+          req.destination = "";
+          inf("Sending via Iridium: '%s'", req.txt_data.c_str());
+          dispatch(req);
+        }
+
+        bool
+        originIsSet()
+        {
+          return m_origin != nullptr;
+        }
+
+        void
+        setOrigin(const IMC::GpsFix* msg)
+        {
+          Memory::replace(m_origin, new IMC::GpsFix(*msg));
+        }
+
+        bool
+        originIsFar(const IMC::GpsFix* msg)
+        {
+          double distance = WGS84::distance(m_origin->lat, m_origin->lon, m_origin->height,
+                                            msg->lat, msg->lon, msg->height);
+
+          return distance > m_args.ref_distance;
+        }
+
+        void
+        onMain(void)
+        {
+          while (!stopping())
+          {
+            waitForMessages(1.0);
+
+            // Gps State updates.
+            if (m_main.update())
+              debug("Main Gps disappeared");
+
+            if (m_second.update())
+              debug("Secondary Gps disappeared");
+
+            if (m_third.update())
+              debug("Third Gps disappeared");
+            
+            if (m_alt_timer.overflow())
+              m_estate.alt = -1.0f;
+
+            // Raise ERROR MODE if all GPSs are out of service.
+            if (m_main.isInvalid() && m_second.isInvalid() && m_third.isInvalid())
+              setEntityState(IMC::EntityState::ESTA_ERROR, "All Gps sources are out of service.");
+            else if (m_main.sendIridium())
+            {
+              debug("Main GPS not working!");
+
+              // Send iridium message.
+              sendIridium("Main GPS not working!");
+              m_main.send_ir = true;
+            }
+            else if (m_second.sendIridium())
+            {
+              debug("Secondary GPS not working!");
+
+              // Send iridium message.
+              sendIridium("Secondary GPS not working!");
+              m_second.send_ir = true;
+            }
+            else if (m_third.sendIridium())
+            {
+              debug("Third GPS not working!");
+
+              // Send iridium message.
+              sendIridium("Third GPS not working!");
+              m_third.send_ir = true;
+            }
+
+            // Euler State updates.
+            if (m_euler_main.update())
+              debug("Main Euler Angles provider disappeared");
+            if (m_euler_second.update())
+              debug("Secondary Euler Angles provider disappeared");
+
+            if (m_euler_main.isInvalid() && m_euler_second.isInvalid())
+            {
+              // Use last course over ground if available.
+              if (m_euler_main.sendIridium() && m_euler_second.sendIridium())
+              {
+                debug("No EulerAngles providers! Using COG.");
+                sendIridium("No EulerAngles providers! Using COG.");
+                m_euler_main.send_ir = true;
+                m_euler_second.send_ir = true;
+              }
+
+              m_estate.psi = m_last_cog;
+            }
+            else if (m_euler_main.sendIridium())
+            {
+              debug("Main Euler Angles provider not working!");
+              sendIridium("Main Euler Angles provider not working!");
+              m_euler_main.send_ir = true;
+            }
+            else if (m_euler_second.sendIridium())
+            {
+              debug("Secondary Euler Angles provider not working!");
+              sendIridium("Secondary Euler Angles provider not working!");
+              m_euler_second.send_ir = true;
+            }
+          }
+        }
+      };
+    }
+  }
+}
+
+DUNE_TASK

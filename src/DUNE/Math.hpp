@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -37,6 +37,7 @@ namespace DUNE
   { }
 }
 
+#include <DUNE/Math/CircularMean.hpp>
 #include <DUNE/Math/Constants.hpp>
 #include <DUNE/Math/Derivative.hpp>
 #include <DUNE/Math/EulerAnglesZyx.hpp>

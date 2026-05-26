@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -40,6 +40,7 @@ namespace DUNE
 #include <DUNE/Utils/ByteBuffer.hpp>
 #include <DUNE/Utils/ByteCopy.hpp>
 #include <DUNE/Utils/CircularBuffer.hpp>
+#include <DUNE/Utils/EmergencyMessage.hpp>
 #include <DUNE/Utils/Exceptions.hpp>
 #include <DUNE/Utils/OptionParser.hpp>
 #include <DUNE/Utils/RawFifo.hpp>
@@ -49,4 +50,5 @@ namespace DUNE
 #include <DUNE/Utils/Utils.hpp>
 #include <DUNE/Utils/XML.hpp>
 #include <DUNE/Utils/Codecs.hpp>
+#include <DUNE/Utils/Actuators.hpp>
 #endif

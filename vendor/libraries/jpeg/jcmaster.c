@@ -688,7 +688,11 @@ prepare_for_pass (j_compress_ptr cinfo)
      */
     master->pass_type = output_pass;
     master->pass_number++;
+#ifdef DUNE_LEGACY
     /*FALLTHROUGH*/
+#else
+    [[fallthrough]];
+#endif
 #endif
   case output_pass:
     /* Do a data-output pass. */

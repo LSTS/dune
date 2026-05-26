@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -42,6 +42,7 @@ namespace DUNE
 #include <DUNE/Algorithms/CRC16.hpp>
 #include <DUNE/Algorithms/FletcherChecksum.hpp>
 #include <DUNE/Algorithms/MD5.hpp>
+#include <DUNE/Algorithms/Sha256.hpp>
 #include <DUNE/Algorithms/XORChecksum.hpp>
 #include <DUNE/Algorithms/UNESCO1983.hpp>
 

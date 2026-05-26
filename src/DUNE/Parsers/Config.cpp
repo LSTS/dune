@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -55,6 +55,10 @@ namespace DUNE
 
     //! Maximum buffer size.
     static const size_t c_max_bfr_size = 1024;
+    //! Options attributes opener.
+    static constexpr char c_attr_open = '{';
+    //! Options attributes closer.
+    static constexpr char c_attr_close = '}';
 
     //! Retrieve option and respective value from a line.
     //! @param[in] line line.
@@ -62,15 +66,36 @@ namespace DUNE
     //! @param[out] value option value.
     //! @return true if line is an option assignment, false otherwise.
     static bool
-    getOptionAndValue(const char* line, char* option, char* value)
+    getOptionAndValueAndAttributes(const char* line, char* option, char* value, std::string& attributes)
     {
+      attributes.clear();
+      option[0] = '\0';
+      value[0] = '\0';
       char equal[2] = {0};
       int rv = std::sscanf(line, " %[^=] %1[=] %[^;|#] ", option, equal, value);
+
+      if (rv < 1)
+        return false;
+
+      char* open = std::strchr(option, c_attr_open);
+      if (open)
+      {
+        char* close = std::strchr(open + 1, c_attr_close);
+        if (close)
+          attributes.assign(open + 1, close - (open + 1));
+
+        *open = '\0';
+      }
+
+      String::rightTrimInPlace(option);
+
       if (rv < 2 || rv > 3)
         return false;
 
       if (rv == 2)
         value[0] = '\0';
+      else
+        String::rightTrimInPlace(value);
 
       return true;
     }
@@ -83,7 +108,7 @@ namespace DUNE
     void
     Config::parseFile(const char* fname)
     {
-      Concurrency::ScopedRWLock(m_data_lock, false);
+      Concurrency::ScopedRWLock(m_data_lock, true);
 
       char line[c_max_bfr_size] = {0};
       char section[c_max_bfr_size] = {0};
@@ -107,9 +132,12 @@ namespace DUNE
         if (line[0] == ';' || line[0] == '#')
           continue;
 
+        bool remove = false;
+        std::string attributes;
         // Section name.
         if (std::sscanf(line, "[%[^]]] ", section) == 1)
         {
+          remove = false;
           String::rightTrimInPlace(section);
 
           if (std::strncmp(section, "Include ", 8) == 0)
@@ -133,13 +161,20 @@ namespace DUNE
           ++section_count;
         }
         // Option and value.
-        else if (getOptionAndValue(line, option, arg))
+        else if (getOptionAndValueAndAttributes(line, option, arg, attributes))
         {
           if (section_count == 0)
             throw SyntaxError(fname, line_count);
 
-          String::rightTrimInPlace(option);
-          String::rightTrimInPlace(arg);
+          if (!attributes.empty())
+          {
+            auto& section_attributes = m_attributes[section];
+            auto option_itr = section_attributes.find(option);
+            if (option_itr != section_attributes.end())
+              option_itr->second << attributes;
+            else
+              section_attributes[option] = Utils::TupleList(attributes, ":", ",", true);
+          }
 
           bool append = false;
           if (String::endsWith(String::str(option), "+"))
@@ -147,13 +182,29 @@ namespace DUNE
             String::resize(option, -1);
             // append if a previous value already exists
             append = m_data[section].find(option) != m_data[section].end();
+            remove = false;
           }
+          else if (String::endsWith(String::str(option), "-"))
+          {
+            String::resize(option, -1);
+            // remove if a previous value already exists
+            remove = m_data[section].find(option) != m_data[section].end();
+          }
+          else
+            remove = false;
 
           std::strncpy(tmp, option, c_max_bfr_size);
           if (append)
           {
             m_data[section][option] += ", ";
             m_data[section][option] += arg;
+          }
+          else if (remove)
+          {
+            std::vector<std::string> list;
+            String::split(arg, ",", list);
+            for (const auto& val: list)
+              String::removeSequence(m_data[section][option], val);
           }
           else
             m_data[section][option] = arg;
@@ -174,18 +225,40 @@ namespace DUNE
 
           m_data[section][option] = m_data[isec][iopt];
         }
+        // Option with attributes but no value.
+        else if (!attributes.empty())
+        {
+          auto& section_attributes = m_attributes[section];
+          auto option_itr = section_attributes.find(option);
+          if (option_itr != section_attributes.end())
+            option_itr->second << attributes;
+          else
+            section_attributes[option] = Utils::TupleList(attributes, ":", ",", true);
+        }
         // Multiline argument.
         else if (std::sscanf(line, " %[^;|#] ", arg) == 1)
         {
           if (section_count == 0)
             throw SyntaxError(fname, line_count);
 
-          if (String::endsWith(String::str(option), "+"))
-            String::resize(option, -1);
+          if (remove)
+          {
+            std::vector<std::string> list;
+            String::split(arg, ",", list);
+            for (const auto& val: list)
+              String::removeSequence(m_data[section][tmp], val);
+          }
+          else
+          {
+            if (String::endsWith(String::str(option), "+"))
+            {
+              String::resize(option, -1);
+            }
 
-          String::rightTrimInPlace(arg);
-          m_data[section][tmp] += " ";
-          m_data[section][tmp] += arg;
+            String::rightTrimInPlace(arg);
+            m_data[section][tmp] += " ";
+            m_data[section][tmp] += arg;
+          }
         }
         // Syntax error.
         else
@@ -236,6 +309,22 @@ namespace DUNE
       return opts;
     }
 
+    Utils::TupleList
+    Config::attributes(const std::string& section, const std::string& option)
+    {
+      Concurrency::ScopedRWLock(m_data_lock, false);
+
+      auto sitr = m_attributes.find(section);
+      if (sitr == m_attributes.end())
+        throw OptionAttributeEmpty(String::str("no attributes found in section '%s'", section.c_str()));
+      
+      auto oitr = sitr->second.find(option);
+      if (oitr == sitr->second.end())
+        throw OptionAttributeEmpty(String::str("no attributes found for option '%s' in section '%s'", option.c_str(), section.c_str()));
+
+      return m_attributes[section].at(option);
+    } 
+
     std::ostream&
     operator<<(std::ostream& os, const Config& cfg)
     {
@@ -243,7 +332,8 @@ namespace DUNE
 
       Config::Sections::const_iterator sections;
       Config::Section::const_iterator labels;
-      std::string banner = String::str("Generated by DUNE v%s", getFullVersion());
+      std::string banner = String::str("Generated by DUNE v%s;\n;\t\tPrivate: %s", getFullVersion(),
+                                        getFullVersionPrivate());
 
       os << std::setfill(';')
          << std::setw(74) << ";" << std::endl

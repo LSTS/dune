@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -176,10 +176,6 @@ namespace Sensors
         Hardware::BasicDeviceDriver(name, ctx),
         m_uart(NULL)
       {
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
@@ -262,7 +258,6 @@ namespace Sensors
         m_need_setup = true;
         m_lat = 0.0;
 
-        bind<IMC::EstimatedState>(this);
         bind<IMC::Temperature>(this);
       }
 
@@ -270,6 +265,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
+        
         m_need_setup = true;
 
         // Produce and update messages.
@@ -382,12 +379,9 @@ namespace Sensors
       }
 
       void
-      consume(const IMC::EstimatedState* msg)
+      onEstimatedState(const IMC::EstimatedState& msg) override
       {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        m_lat = msg->lat;
+        m_lat = msg.lat;
       }
 
       void

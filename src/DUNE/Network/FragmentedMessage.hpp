@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -47,8 +47,20 @@ namespace DUNE
       double
       getAge(void);
 
+      void
+      resetAge(void);
+
       int
       getFragmentsMissing(void);
+
+      int
+      getFragmentsReceived(void);
+
+      void
+      getFragmentsMissing(std::string& frag_ids);
+
+      void
+      getFragmentsReceived(std::string& frag_ids);
 
       IMC::Message*
       setFragment(const IMC::MessagePart* part);

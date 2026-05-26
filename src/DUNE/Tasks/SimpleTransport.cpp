@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -86,7 +86,7 @@ namespace DUNE
       }
 
       if (m_gargs.trace_out)
-        inf(DTR("outgoing: %s"), msg->getName());
+        DUNE_MSG(getName(), "outgoing: " + std::string(msg->getName()));
 
       onDataTransmission(p, n);
     }
@@ -118,8 +118,8 @@ namespace DUNE
           dispatch(m, DF_KEEP_TIME | DF_KEEP_SRC_EID);
 
           if (m_gargs.trace_in)
-            inf(DTR("incoming: %s"), m->getName());
-
+            DUNE_MSG(getName(), "incoming: " + std::string(m->getName()));
+          
           delete m;
         }
       }

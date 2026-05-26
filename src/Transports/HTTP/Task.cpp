@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -61,6 +61,8 @@ namespace Transports
       unsigned threads;
       //! List of messages to transport.
       std::vector<std::string> messages;
+      //! Number of maximum lines to send from logbook.
+      unsigned logbook_lines;
     };
 
     //! Buffer length.
@@ -80,6 +82,8 @@ namespace Transports
       MessageMonitor m_msg_mon;
       //! Task arguments.
       Arguments m_args;
+      //! Consumers for bound messages.
+      std::map<uint16_t, AbstractConsumer*> m_consumers;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -100,6 +104,10 @@ namespace Transports
         .defaultValue("")
         .description("List of messages to transport");
 
+        param("Number Lines From LogBook to send", m_args.logbook_lines)
+        .defaultValue("100")
+        .description("List of messages to transport");
+
         m_cfg_dir = ctx.dir_cfg.str();
         m_agent = getSystemName();
 
@@ -107,9 +115,43 @@ namespace Transports
       }
 
       void
+      onUpdateParameters(void)
+      {
+        if (paramChanged(m_args.messages))
+        {
+          std::unordered_set<uint16_t> msgs_set;
+          for (const auto& msg : m_args.messages)
+            msgs_set.insert(IMC::Factory::getIdFromAbbrev(msg));
+
+          std::vector<uint16_t> removed_msgs;
+          for (auto it = m_consumers.begin(); it != m_consumers.end(); ++it)
+          {
+            if (msgs_set.find(it->first) == msgs_set.end())
+              removed_msgs.push_back(it->first);
+            else
+              msgs_set.erase(it->first);
+          }
+
+          for (auto msg : removed_msgs)
+          {
+            unbind(msg, m_consumers[msg]);
+            m_consumers.erase(msg);
+          }
+
+          if (!msgs_set.empty())
+          {
+            std::vector<uint16_t> new_msgs(msgs_set.begin(), msgs_set.end());
+            auto new_consumers = bind<Task, IMC::Message>(this, new_msgs);
+            for (auto it = new_consumers.begin(); it != new_consumers.end(); ++it)
+              m_consumers[it->first] = it->second;
+          }
+        }
+      }
+
+      void
       onResourceAcquisition(void)
       {
-        bind(this, m_args.messages);
+        m_msg_mon.setLogEntry(m_args.logbook_lines);
 
         uint16_t last_port = m_args.port + c_max_port_tries;
 
@@ -120,23 +162,12 @@ namespace Transports
             inf(DTR("listening on %s:%u"), Address(Address::Any).c_str(), port);
             m_server = new Server(port, m_args.threads, *this);
 
-            // Initialize and dispatch AnnounceService.
-            std::vector<Interface> itfs = Interface::get();
-            for (unsigned i = 0; i < itfs.size(); ++i)
-            {
-              std::stringstream os;
-              os << "http://" << itfs[i].address().str() << ":" << port << "/dune";
-
-              IMC::AnnounceService announce;
-              announce.service = os.str();
-
-              if (itfs[i].address().isLoopback())
-                announce.service_type = IMC::AnnounceService::SRV_TYPE_LOCAL;
-              else
-                announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
-
-              dispatch(announce);
-            }
+            std::stringstream os;
+            os << "http://0.0.0.0:" << port << "/dune";
+            IMC::AnnounceService announce;
+            announce.service = os.str();
+            announce.service_type = 0;
+            dispatch(announce);
             return;
           }
           catch (std::runtime_error& e)
@@ -163,8 +194,16 @@ namespace Transports
       void
       consume(const IMC::Message* msg)
       {
-        if (msg->getSource() == getSystemId())
+        //check if msg name is Announce
+        if (msg->getId() == DUNE_IMC_ANNOUNCE)
+        {
           m_msg_mon.updateMessage(msg);
+        }
+        else
+        {
+          if (msg->getSource() == getSystemId())
+            m_msg_mon.updateMessage(msg);
+        }
       }
 
       void
@@ -365,6 +404,8 @@ namespace Transports
         RequestHandler::HeaderFieldsMap hdr;
         hdr["Content-Type"] = "text/javascript";
         sendData(sock, os.str(), &hdr);
+        os << "var systemPrivateVersion = '" << getFullVersionPrivate() << "';";
+        sendData(sock, os.str(), &hdr);
       }
 
       void
@@ -442,6 +483,14 @@ namespace Transports
         {
           pcc.op = IMC::PowerChannelControl::PCC_OP_SCHED_OFF;
           pcc.sched_time = sched_time;
+        }
+        else if (parts[0] == "reset")
+        {
+          pcc.op = IMC::PowerChannelControl::PCC_OP_SCHED_RESET;
+        }
+        else if (parts[0] == "toggle")
+        {
+          pcc.op = IMC::PowerChannelControl::PCC_OP_TOGGLE;
         }
 
         sendResponse200(sock);

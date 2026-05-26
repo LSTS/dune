@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 ############################################################################
-# Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      #
+# Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      #
 # Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  #
 ############################################################################
 # This file is part of DUNE: Unified Navigation Environment.               #
@@ -130,11 +130,13 @@ class Message:
         if self.has_fields():
             for field in node.findall('field'):
                 fabbrev = get_name(field)
+                ftype = field.get('type')
                 fmin = field.get('min')
                 fmax = field.get('max')
-                if fmin is not None and fmax is not None:
+                fmin_val = int(fmin) if fmin is not None and ftype.startswith("uint") else None
+                if fmax is not None and fmin is not None and fmin_val is not None and fmin_val > 0:
                     f.add_body('if (%s < %s || %s > %s) return false;' % (fabbrev, fmin, fabbrev, fmax))
-                elif fmin is not None:
+                elif fmin is not None and fmin_val is not None and fmin_val > 0:
                     f.add_body('if (%s < %s) return false;' % (fabbrev, fmin))
                 elif fmax is not None:
                     f.add_body('if (%s > %s) return false;' % (fabbrev, fmax))

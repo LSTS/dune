@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -144,8 +144,6 @@ namespace Sensors
       bool xdcr;
       //! Output Data Format.
       std::string output_format;
-      // Power channel name.
-      std::string power_channel;
       //! Range Modifier.
       bool mod;
       //! Range Modifier Additive Constant.
@@ -229,10 +227,6 @@ namespace Sensors
         m_data(NULL),
         m_ec(NULL)
       {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
-
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"tcp://ADDRESS:PORT\".");
@@ -320,10 +314,6 @@ namespace Sensors
         .defaultValue("Data")
         .description("837/83P file name");
 
-        param("Power Channel", m_args.power_channel)
-        .defaultValue("")
-        .description("Power channel that controls the power of the device");
-
         param("Adaptive Range Modifier", m_args.mod)
         .defaultValue("true")
         .description("Adaptive Multibeam range modifier");
@@ -370,6 +360,8 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
+        BasicDeviceDriver::onUpdateParameters();
+
         if (isActive())
         {
           if (paramChanged(m_args.io_dev))
@@ -461,12 +453,6 @@ namespace Sensors
         else
         {
           setAutoMode(false);
-        }
-
-        if (paramChanged(m_args.power_channel))
-        {
-          clearPowerChannelNames();
-          addPowerChannelName(m_args.power_channel);
         }
 
         if (paramChanged(m_args.mod_timer))

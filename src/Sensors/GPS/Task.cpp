@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -81,10 +81,6 @@ namespace Sensors
       std::string init_cmds[c_max_init_cmds];
       //! Initialization replies.
       std::string init_rpls[c_max_init_cmds];
-      //! Power channels.
-      std::vector<std::string> pwr_channels;
-      //! Power on delay
-      double post_pwr_on_delay;
       //! Enable novatel sbas mode.
       bool novatelSbas;
     };
@@ -120,12 +116,7 @@ namespace Sensors
         m_has_agvel(false),
         m_has_euler(false),
         m_reader(NULL)
-      {
-        // Define configuration parameters.
-        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
-                    Tasks::Parameter::VISIBILITY_DEVELOPER, 
-                    true);
-                    
+      {             
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .description("IO device URI in the form \"uart://DEVICE:BAUD\"");
@@ -135,14 +126,6 @@ namespace Sensors
         .defaultValue("4.0")
         .minimumValue("0.0")
         .description("Input timeout");
-
-        param("Power Channel - Names", m_args.pwr_channels)
-        .defaultValue("")
-        .description("Device's power channels");
-
-        param("Post Power On Delay", m_args.post_pwr_on_delay)
-        .defaultValue("0.0")
-        .description("Delay on power on before attempts to connect");
 
         param("Sentence Order", m_args.stn_order)
         .defaultValue("")
@@ -176,17 +159,7 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.pwr_channels))
-        {
-          clearPowerChannelNames();
-          for (std::string pc : m_args.pwr_channels)
-            addPowerChannelName(pc);
-        }
-
-        if (paramChanged(m_args.post_pwr_on_delay))
-        {
-          setPostPowerOnDelay(m_args.post_pwr_on_delay);
-        }
+        BasicDeviceDriver::onUpdateParameters();
       }
 
       //! Try to connect to the device.
@@ -675,6 +648,10 @@ namespace Sensors
         }
         else
         {
+          m_fix.lat = 0;
+          m_fix.lon = 0;
+          m_fix.height = 0;
+          m_fix.satellites = 0;
           m_fix.validity &= ~IMC::GpsFix::GFV_VALID_POS;
         }
 

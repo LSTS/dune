@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -36,6 +36,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Tasks/MessageFilter.hpp>
 
 // Local headers.
 #include "NodeAddress.hpp"
@@ -68,6 +69,8 @@ namespace Transports
       std::vector<std::string> rate_lims;
       // Filtered entities.
       std::vector<std::string> entities_flt;
+      // Custom filters to apply.
+      std::vector<std::string> custom_filters;
       // List of messages to publish.
       std::vector<std::string> messages;
       // Announce this transport to services or not
@@ -84,6 +87,8 @@ namespace Transports
       bool only_local;
       // Optional custom service type
       std::string custom_service;
+      // Ignore the UDP source message filter
+      bool ign_filter;
     };
 
     // Internal buffer size.
@@ -115,6 +120,8 @@ namespace Transports
       LimitedComms* m_lcomms;
       //! Message Filter
       MessageFilter m_filter;
+      //! Consumers for bound messages.
+      std::map<uint16_t, AbstractConsumer*> m_consumers;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
@@ -151,6 +158,9 @@ namespace Transports
         param("Filtered Entities", m_args.entities_flt)
         .description("List of <Message>:<Entity>+<Entity> that define the source entities allowed to pass message of a specific message type.");
 
+        param("Custom Filters", m_args.custom_filters)
+        .description("List of custom filters to apply");
+
         param("Announce Service", m_args.announce_service)
         .defaultValue("true")
         .description("Announce this transport to services or not");
@@ -184,6 +194,10 @@ namespace Transports
         .defaultValue("")
         .description("Optional custom service type (imc+udp+<Custom Service Type>), empty entry gives default service (imc+udp)");
 
+        param("Ignore Filter", m_args.ign_filter)
+        .defaultValue("false")
+        .description("Ignore the UDP source message filter.");
+
         // Allocate space for internal buffer.
         m_bfr = new uint8_t[c_bfr_size];
 
@@ -200,6 +214,36 @@ namespace Transports
       void
       onUpdateParameters(void)
       {
+        if (paramChanged(m_args.messages))
+        {
+          std::unordered_set<uint16_t> msgs_set;
+          for (const auto& msg : m_args.messages)
+            msgs_set.insert(IMC::Factory::getIdFromAbbrev(msg));
+
+          std::vector<uint16_t> removed_msgs;
+          for (auto it = m_consumers.begin(); it != m_consumers.end(); ++it)
+          {
+            if (msgs_set.find(it->first) == msgs_set.end())
+              removed_msgs.push_back(it->first);
+            else
+              msgs_set.erase(it->first);
+          }
+
+          for (auto msg : removed_msgs)
+          {
+            unbind(msg, m_consumers[msg]);
+            m_consumers.erase(msg);
+          }
+
+          if (!msgs_set.empty())
+          {
+            std::vector<uint16_t> new_msgs(msgs_set.begin(), msgs_set.end());
+            auto new_consumers = bind<Task, IMC::Message>(this, new_msgs);
+            for (auto it = new_consumers.begin(); it != new_consumers.end(); ++it)
+              m_consumers[it->first] = it->second;
+          }
+        }
+
         if (paramChanged(m_args.contact_refresh_per))
           m_contacts_refresh_counter.setTop(m_args.contact_refresh_per);
 
@@ -208,12 +252,14 @@ namespace Transports
         for (unsigned int i = 0; i < m_args.destinations.size(); ++i)
           m_static_dsts.insert(NodeAddress(m_args.destinations[i]));
 
-        // Process rate limiters.
-        m_filter.setupRates(m_args.rate_lims);
-        // Process filtered entities.
-        m_filter.setupEntities(m_args.entities_flt, this);
+        if (paramChanged(m_args.rate_lims))
+          m_filter.setupRates(m_args.rate_lims);
+        
+        if (paramChanged(m_args.entities_flt))
+          m_filter.setupEntities(m_args.entities_flt, this);
 
-        m_underwater_comms = m_args.underwater_comms;
+        if (paramChanged(m_args.underwater_comms))
+          m_underwater_comms = m_args.underwater_comms;
 
         // Initialize communication limitations parameters.
         if (m_ctx.profiles.isSelected("Simulation") && m_args.comm_range > 0)
@@ -229,14 +275,23 @@ namespace Transports
           debug("limited communications simulation is not active");
           m_comm_limitations = false;
         }
+
+        if (m_listener != NULL)
+        {
+          if (paramChanged(m_args.trace_in))
+            m_listener->setTrace(m_args.trace_in);
+
+          if (paramChanged(m_args.ign_filter))
+            m_listener->setIgnoreFilter(m_args.ign_filter);
+        }
+
+        if (paramChanged(m_args.custom_filters))
+          m_filter.setupCustomFilters(m_args.custom_filters, this);
       }
 
       void
       onResourceAcquisition(void)
       {
-        // Register normal messages.
-        bind(this, m_args.messages);
-
         // Find a free port.
         unsigned port_limit = m_args.port + c_port_retries;
         while (m_args.port != port_limit)
@@ -262,34 +317,24 @@ namespace Transports
 
         if (m_args.announce_service)
         {
-          // Initialize and dispatch AnnounceService.
-          std::vector<Interface> itfs = Interface::get();
-          for (unsigned i = 0; i < itfs.size(); ++i)
+          std::stringstream os;
+          std::string service = "imc+udp";
+
+          // if custom service type is enabled
+          if (m_args.custom_service != "")
           {
-            std::stringstream os;
-            std::string service = "imc+udp";
-
-            // if custom service type is enabled
-            if (m_args.custom_service != "")
-            {
-              std::stringstream cs;
-              cs << service << "+" << m_args.custom_service;
-              service = cs.str();
-            }
-
-            os << service << "://" << itfs[i].address().str() << ":" << m_args.port
-               << "/";
-
-            IMC::AnnounceService announce;
-            announce.service = os.str();
-
-            if (itfs[i].address().isLoopback())
-              announce.service_type = IMC::AnnounceService::SRV_TYPE_LOCAL;
-            else
-              announce.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
-
-            dispatch(announce);
+            std::stringstream cs;
+            cs << service << "+" << m_args.custom_service;
+            service = cs.str();
           }
+
+          os << service << "://0.0.0.0:" << m_args.port
+              << "/";
+
+          IMC::AnnounceService announce;
+          announce.service = os.str();
+          announce.service_type = 0;
+          dispatch(announce);
         }
 
         // Initialize limited comms object
@@ -299,7 +344,7 @@ namespace Transports
 
         // Start listener thread.
         m_listener = new Listener(*this, m_sock, m_lcomms,
-                                  m_args.contact_timeout, m_args.trace_in);
+                                  m_args.contact_timeout, m_args.ign_filter, m_args.trace_in);
         m_listener->start();
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -337,7 +382,7 @@ namespace Transports
           return;
 
         if (m_args.trace_out)
-          msg->toText(std::cerr);
+          DUNE_MSG(getName(), "outgoing: " + std::string(msg->getName()));
 
         uint16_t rv;
         try
@@ -381,7 +426,12 @@ namespace Transports
             return;
         }
 
+        // Check if the message is from this system.
+        if (msg->getSource() == getSystemId())
+          return;
+
         m_node_table.addNode(msg->getSource(), msg->sys_name, msg->services);
+        m_listener->addContact(msg->getSource());
         m_lcomms->setAnnounce(msg);
       }
 

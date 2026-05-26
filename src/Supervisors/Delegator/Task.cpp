@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -195,6 +195,7 @@ namespace Supervisors
           return;
 
         relayTo(msg);
+        trace(DTR("Querying entity parameters %s"), getEntityLabel());
       }
 
       void
@@ -204,6 +205,7 @@ namespace Supervisors
           return;
 
         relayTo(msg);
+        trace(DTR("Setting entity parameters %s"), getEntityLabel());
 
         if(m_args.power_channel == "None")
           return;
@@ -221,6 +223,7 @@ namespace Supervisors
           return;
 
         relayTo(msg);
+        trace(DTR("Popping entity parameters %s"), getEntityLabel());
       }
 
       void
@@ -231,6 +234,7 @@ namespace Supervisors
 
         relayTo(msg);
         m_push = *msg;
+        trace(DTR("Pushing entity parameters %s"), getEntityLabel());
       }
 
       void

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -56,6 +56,7 @@
 #include <DUNE/Tasks/ParameterTable.hpp>
 #include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Entities/StatefulEntity.hpp>
+#include <DUNE/Time/Counter.hpp>
 
 #if defined(DUNE_SHARED)
 #  define DUNE_TASK_EXPORT(class, mangled)                              \
@@ -93,6 +94,12 @@ namespace DUNE
       //! Very verbose or frequent debug message.
       DEBUG_LEVEL_SPEW = 3
     };
+
+    //! Debug level string to enum map.
+    static const std::map<std::string, DebugLevel> c_debug_level_str_to_enum = {{"None", DEBUG_LEVEL_NONE},
+                                                                                {"Debug", DEBUG_LEVEL_DEBUG},
+                                                                                {"Trace", DEBUG_LEVEL_TRACE},
+                                                                                {"Spew", DEBUG_LEVEL_SPEW}};
 
     //! Flags to change dispatching behaviour.
     enum DispatchFlags
@@ -182,6 +189,15 @@ namespace DUNE
         return m_ctx.entities.resolve(id);
       }
 
+      //! Retrieve the number of entities registered in the
+      //! context's entity database.
+      //! @return number of entities.
+      u_int16_t
+      getEntityCount(void) const
+      {
+        return m_ctx.entities.size();
+      }
+
       //! Get current debug level.
       //! @return debug level.
       DebugLevel
@@ -192,7 +208,7 @@ namespace DUNE
 
       //! Retrieve the task's activation time.
       //! @return activation time of the task.
-      uint16_t
+      float
       getActivationTime(void) const
       {
         return m_args.act_time;
@@ -200,7 +216,7 @@ namespace DUNE
 
       //! Retrieve the task's deactivation time.
       //! @return deactivation time of the task.
-      uint16_t
+      float
       getDeactivationTime(void) const
       {
         return m_args.deact_time;
@@ -489,11 +505,21 @@ namespace DUNE
       //! Wait for the receiving queue to contain at least one message
       //! and then call the consumer functions for all the messages
       //! currently in it.
+      //! If persistent is true, the function will wait until the
+      //! timeout expires, otherwise it will return as soon as one
+      //! message is received.
       //! @param[in] timeout wait for timeout seconds.
+      //! @param[in] persistent if true, wait until the end of timeout.
       void
-      waitForMessages(double timeout)
+      waitForMessages(double timeout, const bool persistent = false)
       {
-        m_recipient->waitForMessages(timeout);
+        DUNE::Time::Counter<double> timer(timeout);
+
+        do
+        {
+          m_recipient->waitForMessages(timer.getRemaining());
+        }
+        while (!stopping() && !timer.overflow() && persistent);
       }
 
       //! Call the consumers of all messages currently in the
@@ -502,6 +528,54 @@ namespace DUNE
       consumeMessages(void)
       {
         m_recipient->runCallBacks();
+      }
+
+      void
+      setParameterScope(const std::string& name, const Parameter::Scope& scope)
+      {
+        m_params.setScope(name, scope);
+      }
+
+      void
+      setParameterScope(void* ptr, const Parameter::Scope& scope)
+      {
+        m_params.setScope(ptr, scope);
+      }
+
+      Parameter::Scope
+      getParameterScope(const std::string& name)
+      {
+        return m_params.getScope(name);
+      }
+
+      Parameter::Scope
+      getParameterScope(void* ptr)
+      {
+        return m_params.getScope(ptr);
+      }
+
+      void
+      setParameterVisibility(const std::string& name, const Parameter::Visibility& visibility)
+      {
+        m_params.setVisibility(name, visibility);
+      }
+
+      void
+      setParameterVisibility(void* ptr, const Parameter::Visibility& visibility)
+      {
+        m_params.setVisibility(ptr, visibility);
+      }
+
+      Parameter::Visibility
+      getParameterVisibility(const std::string& name)
+      {
+        return m_params.getVisibility(name);
+      }
+
+      Parameter::Visibility
+      getParameterVisibility(void* ptr)
+      {
+        return m_params.getVisibility(ptr);
       }
 
       //! Declare a configuration parameter that can be parsed using
@@ -514,7 +588,7 @@ namespace DUNE
       Parameter&
       param(const std::string& name, T& var)
       {
-        return param<BasicParameterParser<T> >(name, var);
+        return param<BasicParameterParser<T>>(name, var);
       }
 
       //! Declare a configuration parameter that can be parsed using
@@ -539,8 +613,7 @@ namespace DUNE
         return m_params.changed(&var);
       }
 
-      //! Declare parameter 'Active' and associated parameters 'Active
-      //! - Scope' and 'Active - Visibility'. These parameters allows
+      //! Declare parameter 'Active'. This parameter allows
       //! the task to be activated/deactivated using the message
       //! SetEntityParameters.
       //! @param[in] def_scope default scope of 'Active' parameter.
@@ -562,50 +635,57 @@ namespace DUNE
 
       //! Bind a message to a consumer method.
       //! @param task_obj consumer task.
-      //! @param consumer consumer method.
+      //! @param consumer consumer method, if not specified,
+      //! will use default consumer method.
       template <typename M, typename T>
-      void
+      AbstractConsumer*
       bind(T* task_obj, void (T::* consumer)(const M*) = &T::consume)
       {
-        bind(M::getIdStatic(), new Consumer<T, M>(*task_obj, consumer));
-      }
-
-      //! Bind multiple messages to a default consumer method.
-      //! @param task_obj consumer object.
-      //! @param list list of message identifiers.
-      template <typename T>
-      void
-      bind(T* task_obj, const std::vector<uint32_t>& list)
-      {
-        void (T::* func)(const IMC::Message*) = &T::consume;
-        for (unsigned int i = 0; i < list.size(); ++i)
-          bind(list[i], new Consumer<T, IMC::Message>(*task_obj, func));
+        AbstractConsumer* c = new Consumer<T, M>(*task_obj, consumer);
+        bind(M::getIdStatic(), c);
+        return c;
       }
 
       //! Bind multiple messages to a consumer method.
       //! @param task_obj consumer object.
       //! @param list list of message identifiers.
-      //! @param consumer consumer method.
+      //! @param consumer consumer method, if not specified,
+      //! will use default consumer method.
       template <typename T, typename M>
-      void
-      bind(T* task_obj, const std::vector<uint32_t>& list,
+      const std::map<uint16_t, AbstractConsumer*>
+      bind(T* task_obj, const std::vector<uint16_t>& list,
            void (T::* consumer)(const M*) = &T::consume)
       {
+        std::map<uint16_t, AbstractConsumer*> result;
         for (unsigned int i = 0; i < list.size(); ++i)
-          bind(list[i], new Consumer<T, M>(*task_obj, consumer));
+        {
+          uint16_t id = list[i];
+          AbstractConsumer* c = new Consumer<T, M>(*task_obj, consumer);
+          bind(id, c);
+          result[id] = c;
+        }
+        return result;
       }
 
-      //! Bind multiple messages to a default consumer method.
+      //! Bind multiple messages to a consumer method.
       //! @param task_obj consumer task.
       //! @param list list of message abbreviations.
+      //! @param consumer consumer method, if not specified,
+      //! will use default consumer method.
       template <typename T>
-      void
-      bind(T* task_obj, const std::vector<std::string>& list)
+      const std::map<uint16_t, AbstractConsumer*>
+      bind(T* task_obj, const std::vector<std::string>& list,
+           void (T::* consumer)(const IMC::Message*) = &T::consume)
       {
-        void (T::* func)(const IMC::Message*) = &T::consume;
+        std::map<uint16_t, AbstractConsumer*> result;
         for (unsigned int i = 0; i < list.size(); ++i)
-          bind(IMC::Factory::getIdFromAbbrev(list[i]),
-               new Consumer<T, IMC::Message>(*task_obj, func));
+        {
+          uint16_t id = IMC::Factory::getIdFromAbbrev(list[i]);
+          AbstractConsumer* c = new Consumer<T, IMC::Message>(*task_obj, consumer);
+          bind(id, c);
+          result[id] = c;
+        }
+        return result;
       }
 
       //! Register a consumer for a given message identifier.
@@ -617,6 +697,17 @@ namespace DUNE
         spew("registering consumer for '%s'",
              IMC::Factory::getAbbrevFromId(message_id).c_str());
         m_recipient->bind(message_id, consumer);
+      }
+
+      //! Unregister a consumer for a given message identifier.
+      //! @param[in] message_id message identifier.
+      //! @param[in] consumer consumer object.
+      void
+      unbind(unsigned int message_id, AbstractConsumer* consumer)
+      {
+        spew("unregistering consumer for '%s'",
+             IMC::Factory::getAbbrevFromId(message_id).c_str());
+        m_recipient->unbind(message_id, consumer);
       }
 
       //! Request task to start/resume normal execution.
@@ -649,6 +740,10 @@ namespace DUNE
       //! @param[in] reason reason for deactivation failure.
       void
       deactivationFailed(const std::string& reason);
+
+      //!
+      void
+      restart(const IMC::RestartSystem* msg, const unsigned delay = 0);
 
       virtual bool
       onWriteParamsXML(std::ostream& os) const
@@ -725,6 +820,13 @@ namespace DUNE
         activate();
       }
 
+      virtual void
+      onRequestRestart(const IMC::RestartSystem* msg)
+      {
+        spew("on request restart");
+        restart(msg);
+      }
+
       //! Called when an external deactivation request is
       //! received. Derived classes that need to perform extra steps
       //! to prepare normal execution should replace the default
@@ -753,6 +855,40 @@ namespace DUNE
         spew("on deactivation");
       }
 
+      template<typename T>
+      void
+      applyEntityParameter(void* p, const T& value, bool save = false)
+      {
+        try
+        {
+          auto ep = m_params.apply(p, uncastLexical(value));
+          IMC::EntityParameters eps;
+          eps.name = getEntityLabel();
+          eps.params.push_back(ep);
+          dispatch(eps);
+          m_params.setChanged(p, false);
+          m_ctx.config.set(getName(), ep.name, ep.value);
+
+          if (save)
+            saveEntityParameters();
+        }
+        catch(const std::exception& e)
+        {
+          war("Failed to apply entity parameter: %s", e.what());
+        }
+      }
+
+      void
+      setEntityParameter(const IMC::EntityParameter& param,
+                         const bool save = false);
+
+      void
+      setEntityParameters(const IMC::MessageList<IMC::EntityParameter>& params,
+                          const bool save = false);
+
+      void
+      saveEntityParameters(void);
+
       virtual void
       onQueryEntityParameters(const IMC::QueryEntityParameters* msg);
 
@@ -766,6 +902,9 @@ namespace DUNE
       onPopEntityParameters(const IMC::PopEntityParameters* msg);
 
       virtual void
+      onQueryTypedEntityParameters(const IMC::QueryTypedEntityParameters* msg);
+
+      virtual void
       onMain(void) = 0;
 
     private:
@@ -774,17 +913,15 @@ namespace DUNE
         //! Main entity label.
         std::string elabel;
         //! Activation time.
-        uint16_t act_time;
+        float act_time;
         //! Deactivation time.
-        uint16_t deact_time;
+        float deact_time;
         //! Scheduling priority.
         unsigned int priority;
         //! True if task is active.
         bool active;
-        //! Scope of 'Active' parameter.
-        std::string active_scope;
-        //! Visibility of 'Active' parameter.
-        std::string active_visibility;
+        //! Loopback internal messages
+        bool loopback;
       };
 
       //! Message recipient (queue).
@@ -836,6 +973,15 @@ namespace DUNE
 
       void
       consume(const IMC::PopEntityParameters* msg);
+
+      void
+      consume(const IMC::RestartSystem* msg);
+
+      void
+      consume(const IMC::QueryTypedEntityParameters* msg);
+
+      void
+      setParameterAttributes(const std::string& name);
     };
   }
 }

@@ -4,88 +4,78 @@
 
 #include "ais.h"
 
+using std::abs;
+
+namespace libais {
+
 Ais1_2_3::Ais1_2_3(const char *nmea_payload, const size_t pad)
-    : AisMsg(nmea_payload, pad) {
-  if (status != AIS_UNINITIALIZED)
+    : AisMsg(nmea_payload, pad), nav_status(0), rot_over_range(false),
+      rot_raw(0), rot(0.0), sog(0.0), position_accuracy(0),
+      cog(0.0), true_heading(0), timestamp(0), special_manoeuvre(0), spare(0),
+      raim(false), sync_state(0),
+      slot_timeout_valid(false), slot_timeout(0),
+      received_stations_valid(false), received_stations(0),
+      slot_number_valid(false), slot_number(0),
+      utc_valid(false), utc_hour(0), utc_min(0), utc_spare(0),
+      slot_offset_valid(false), slot_offset(0),
+      slot_increment_valid(false), slot_increment(0),
+      slots_to_allocate_valid(false), slots_to_allocate(0),
+      keep_flag_valid(false), keep_flag(false) {
+  if (!CheckStatus()) {
     return;
-
-  assert(message_id >= 1 && message_id <= 3);
-
-  if (pad != 0 || std::strlen(nmea_payload) != 28) {
+  }
+  if (pad != 0 || num_chars != 28) {
     status = AIS_ERR_BAD_BIT_COUNT;
     return;
   }
 
-  bitset<168> bs;
-  const AIS_STATUS r = aivdm_to_bits(bs, nmea_payload);
-  if (r != AIS_OK) {
-    status = r;
-    return;
-  }
+  assert(message_id >= 1 && message_id <= 3);
 
-  nav_status = ubits(bs, 38, 4);
+  bits.SeekTo(38);
+  nav_status = bits.ToUnsignedInt(38, 4);
 
-  rot_raw = sbits(bs, 42, 8);
-  rot_over_range = std::abs((float)rot_raw) > 126 ? true : false;
-  rot = std::pow((rot_raw/4.733), 2);
+  rot_raw = bits.ToInt(42, 8);
+  rot_over_range = abs(rot_raw) > 126 ? true : false;
+  rot = pow((rot_raw/4.733), 2);
   if (rot_raw < 0) rot = -rot;
 
-  sog = ubits(bs, 50, 10) / 10.;
-  position_accuracy = bs[60];
-  x = sbits(bs, 61, 28) / 600000.;
-  y = sbits(bs, 89, 27) / 600000.;
-  cog = ubits(bs, 116, 12) / 10.;
-  true_heading = ubits(bs, 128, 9);
-  timestamp = ubits(bs, 137, 6);
-  special_manoeuvre = ubits(bs, 143, 2);
-  spare = ubits(bs, 145, 3);
-  raim = bs[148];
+  sog = bits.ToUnsignedInt(50, 10) / 10.0;  // Knots.
+  position_accuracy = bits[60];
+  position = bits.ToAisPoint(61, 55);
+  cog = bits.ToUnsignedInt(116, 12) / 10.0;  // Degrees.
+  true_heading = bits.ToUnsignedInt(128, 9);
+  timestamp = bits.ToUnsignedInt(137, 6);
+  special_manoeuvre = bits.ToUnsignedInt(143, 2);
+  spare = bits.ToUnsignedInt(145, 3);
+  raim = bits[148];
 
-  sync_state = ubits(bs, 149, 2);
+  sync_state = bits.ToUnsignedInt(149, 2);
 
-  // Set all to invalid.  This way we don't have to track it in multiple places.
-  received_stations = -1;
-  received_stations_valid = false;
-  slot_number = -1;
-  slot_number_valid = false;
-  utc_hour = utc_min = -1;
-  utc_valid = false;
-  utc_spare = -1;
-  slot_offset = -1;
-  slot_offset_valid = false;
-
-  slot_increment = -1;
-  slot_increment_valid = false;
-  slots_to_allocate = -1;
-  slots_to_allocate_valid = false;
-  keep_flag = false;
-  keep_flag_valid = false;
-
-  if (1 == message_id || 2 == message_id) {
-    slot_timeout = ubits(bs, 151, 3);
+  if (message_id == 1 || message_id == 2) {
+    slot_timeout = bits.ToUnsignedInt(151, 3);
     slot_timeout_valid = true;
 
     switch (slot_timeout) {
     case 0:
-      slot_offset = ubits(bs, 154, 14);
+      slot_offset = bits.ToUnsignedInt(154, 14);
       slot_offset_valid = true;
       break;
     case 1:
-      utc_hour = ubits(bs, 154, 5);
-      utc_min = ubits(bs, 159, 7);
-      utc_spare = ubits(bs, 166, 2);
+      utc_hour = bits.ToUnsignedInt(154, 5);
+      utc_min = bits.ToUnsignedInt(159, 7);
+      utc_spare = bits.ToUnsignedInt(166, 2);
       utc_valid = true;
       break;
     case 2:  // FALLTHROUGH
     case 4:  // FALLTHROUGH
     case 6:
-      slot_number = ubits(bs, 154, 14);
+      slot_number = bits.ToUnsignedInt(154, 14);
       slot_number_valid = true;
       break;
     case 3:  // FALLTHROUGH
     case 5:  // FALLTHROUGH
     case 7:
-      received_stations = ubits(bs, 154, 14);
+      received_stations = bits.ToUnsignedInt(154, 14);
       received_stations_valid = true;
       break;
     default:
@@ -93,16 +83,17 @@ Ais1_2_3::Ais1_2_3(const char *nmea_payload, const size_t pad)
     }
   } else {
     // ITDMA
-    assert(3 == message_id);
-    slot_increment = ubits(bs, 151, 13);
+    slot_increment = bits.ToUnsignedInt(151, 13);
     slot_increment_valid = true;
 
-    slots_to_allocate = ubits(bs, 164, 3);
+    slots_to_allocate = bits.ToUnsignedInt(164, 3);
     slots_to_allocate_valid = true;
 
-    keep_flag = bs[167];
+    keep_flag = bits[167];
     keep_flag_valid = true;
   }
+
+  assert(bits.GetRemaining() == 0);
 
   status = AIS_OK;
 }
@@ -110,3 +101,5 @@ Ais1_2_3::Ais1_2_3(const char *nmea_payload, const size_t pad)
 ostream& operator<< (ostream &o, const Ais1_2_3 &msg) {
   return o << msg.message_id << ": " << msg.mmsi;
 }
+
+}  // namespace libais

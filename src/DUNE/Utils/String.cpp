@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -82,10 +82,12 @@ namespace DUNE
     void
     String::rightTrimInPlace(char* str)
     {
-      char* r = str + std::strlen(str) - 1; // Rightmost character
+      if (str == nullptr)
+        return;
 
-      for (; isspace(*r); --r)
-        *r = 0;
+      size_t len = std::strlen(str);
+      while (len > 0 && isspace(static_cast<unsigned char>(str[len - 1])))
+        str[--len] = '\0';
     }
 
     void
@@ -248,6 +250,17 @@ namespace DUNE
       return ss.str();
     }
 
+    std::string
+    String::bytesToHex(const std::vector<uint8_t>& bytes)
+    {
+      std::string result;
+
+      for (unsigned int i = 0; i < bytes.size(); i++)
+        result += toHex(bytes[i]);
+
+      return result;
+    }
+
     std::vector<uint8_t>
     String::hexToBytes(const std::string& hex)
     {
@@ -401,6 +414,23 @@ namespace DUNE
         return false;
 
       return str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+    }
+
+    void
+    String::removeSequence(std::string& str, const std::string& seq)
+    {
+      if (seq.empty() || str.empty() || seq.size() > str.size())
+        return;
+
+      size_t pos = 0;
+      while ((pos = str.find(seq, pos)) != std::string::npos)
+      {
+        size_t remove_len = seq.length();
+        if (pos + remove_len < str.size() && str[pos + remove_len] == ',')
+          ++remove_len;
+
+        str.erase(pos, remove_len);
+      }
     }
   }
 }

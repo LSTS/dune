@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -34,7 +34,7 @@ namespace DUNE
 {
   namespace Tasks
   {
-    void
+    bool
     ParameterTable::set(const std::string& name, const std::string& value)
     {
       std::map<std::string, Parameter*>::const_iterator itr = m_names.find(name);
@@ -49,7 +49,12 @@ namespace DUNE
         parameter->read(parameter->defaultValue());
 
       if (parameter->commit())
+      {
         parameter->setChanged();
+        return true;
+      }
+
+      return false;
     }
 
     ParameterTable::~ParameterTable(void)

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -216,13 +216,14 @@ main(int argc, char** argv)
   Tasks::Context context;
   I18N::setLanguage(context.dir_i18n);
   Scheduler::set(Scheduler::POLICY_RR);
+  std::string versions = String::str("%s - private: %s", getFullVersion(), getFullVersionPrivate());
 
   OptionParser options;
   options.executable("dune")
   .program(DUNE_SHORT_NAME)
   .copyright(DUNE_COPYRIGHT)
   .email(DUNE_CONTACT)
-  .version(getFullVersion())
+  .version(versions.c_str())
   .date(getCompileDate())
   .arch(DUNE_SYSTEM_NAME)
   .add("-d", "--config-dir",
@@ -300,9 +301,20 @@ main(int argc, char** argv)
     }
     catch (std::runtime_error& e2)
     {
-      std::cerr << String::str("ERROR: %s\n", e.what()) << std::endl;
-      std::cerr << String::str("ERROR: %s\n", e2.what()) << std::endl;
-      return 1;
+      try
+      {
+        cfg_file = context.dir_pri_cfg / options.value("--config-file") + ".ini";
+        context.config.parseFile(cfg_file.c_str());
+        context.original_cfg.parseFile(cfg_file.c_str());
+        context.dir_cfg = context.dir_pri_cfg;
+      }
+      catch (std::runtime_error& e3)
+      {
+        std::cerr << String::str("ERROR: %s\n", e.what()) << std::endl;
+        std::cerr << String::str("ERROR: %s\n", e2.what()) << std::endl;
+        std::cerr << String::str("ERROR: %s\n", e3.what()) << std::endl;
+        return 1;
+      }
     }
   }
 

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -31,6 +31,7 @@
 #include <cstring>
 #include <queue>
 #include <cmath>
+#include <vector>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -51,35 +52,27 @@ namespace Monitors
       //! Expiration time of lost communication SMS.
       unsigned sms_lost_coms_ttl;
       //! Default SMS recipient.
-      std::string recipient;
+      std::vector<std::string> recipients;
       //! Transmission interface.
       std::string interface;
+      //! External information text.
+      std::string external_info_text;
     };
 
     struct Task: public DUNE::Tasks::Periodic
     {
-      //! Emergency message.
-      std::string m_emsg;
-      //! Fuel level.
-      float m_fuel;
-      //! Confidence in fuel level.
-      float m_fuel_conf;
-      //! Batteries voltage
-      float m_bat_voltage;
       //! True if executing plan.
       bool m_in_mission;
-      //! Executing plan's progress.
-      float m_progress;
       //! Iridium request identifier.
       unsigned m_req;
-      //! Vehicle State
-      uint8_t m_vstate;
       //! Lost communications timer.
       Counter<double> m_lost_coms_timer;
       //! Medium handler.
       DUNE::Monitors::MediumHandler m_hand;
       //! Reporter API.
       Supervisors::Reporter::Client* m_reporter;
+      // Emergency message generator.
+      Utils::EmergencyMessage* m_emsg;
       //! Task arguments.
       Arguments m_args;
 
@@ -87,15 +80,17 @@ namespace Monitors
         Tasks::Periodic(name, ctx),
         m_in_mission(false),
         m_req(0),
-        m_reporter(NULL)
+        m_reporter(NULL),
+        m_emsg(nullptr)
       {
         paramActive(Tasks::Parameter::SCOPE_IDLE,
                     Tasks::Parameter::VISIBILITY_USER);
 
-        param(DTR_RT("SMS Recipient Number"), m_args.recipient)
+        param(DTR_RT("SMS Recipient Number"), m_args.recipients)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .minimumSize(1)
         .defaultValue("+351966575686")
-        .description(DTR("Phone number of the SMS recipient"));
+        .description(DTR("Phone numbers of the SMS recipients"));
 
         param("Lost Communications Timeout", m_args.heartbeat_tout)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
@@ -121,6 +116,11 @@ namespace Monitors
         .minimumValue("0.0")
         .description("Expiration time of lost communications SMS");
 
+        param("External Info Text", m_args.external_info_text)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .defaultValue("")
+        .description(DTR("External information to be sent in the boot message"));
+
         bind<IMC::Abort>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::GpsFix>(this);
@@ -128,7 +128,6 @@ namespace Monitors
         bind<IMC::PlanControlState>(this);
         bind<IMC::ReportControl>(this);
         bind<IMC::VehicleMedium>(this);
-        bind<IMC::TextMessage>(this);
         bind<IMC::VehicleState>(this);
         bind<IMC::Voltage>(this);
       }
@@ -144,6 +143,7 @@ namespace Monitors
       onResourceRelease(void)
       {
         Memory::clear(m_reporter);
+        Memory::clear(m_emsg);
       }
 
       void
@@ -151,6 +151,12 @@ namespace Monitors
       {
         m_reporter = new Supervisors::Reporter::Client(this, Supervisors::Reporter::IS_GSM,
                                                        2.0, false);
+
+        // Initialize emergency message generator.
+        std::string system_name = getSystemName();
+        if(!m_args.external_info_text.empty())
+          system_name += String::str(" - ") + m_args.external_info_text;
+        m_emsg = new Utils::EmergencyMessage(system_name);
       }
 
       void
@@ -163,11 +169,6 @@ namespace Monitors
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
         m_lost_coms_timer.setTop(m_args.heartbeat_tout);
-        m_fuel = -1.0;
-        m_fuel_conf = -1.0;
-        m_bat_voltage = -1.0;
-        m_progress = -1.0;
-        m_vstate = '?';
       }
 
       void
@@ -187,23 +188,7 @@ namespace Monitors
       {
         if (msg->validity & IMC::GpsFix::GFV_VALID_POS)
         {
-          int lat_deg;
-          double lat_min;
-          Angles::convertDecimalToDM(Angles::degrees(msg->lat), lat_deg, lat_min);
-
-          int lon_deg;
-          double lon_min;
-          Angles::convertDecimalToDM(Angles::degrees(msg->lon), lon_deg, lon_min);
-
-          Time::BrokenDown bdt;
-
-          m_emsg = String::str("(%s) %02u:%02u:%02u / %d %f, %d %f / f:%d v:%d c:%d / s: %c",
-                               getSystemName(),
-                               bdt.hour, bdt.minutes, bdt.seconds,
-                               lat_deg, lat_min, lon_deg, lon_min,
-                               (int)m_fuel, (int) m_bat_voltage, (int)m_fuel_conf, vehicleStateChar(m_vstate));
-
-          m_emsg += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
+          m_emsg->update(msg);
         }
       }
 
@@ -212,34 +197,6 @@ namespace Monitors
       {
         if (m_reporter != NULL)
           m_reporter->consume(msg);
-      }
-
-      void
-      consume(const IMC::TextMessage* msg)
-      {
-        spew("processing text message from %s: \"%s\"", msg->origin.c_str(), sanitize(msg->text).c_str());
-        std::istringstream iss(msg->text);
-        std::string cmd, args = "";
-        getline(iss, cmd, ' ');
-        if (iss.str().size() > cmd.size())
-          args = std::string(iss.str(), cmd.size() + 1, iss.str().size() - cmd.size() + 1);
-
-        spew("command is %s, args are %s", cmd.c_str(), args.c_str());
-
-        String::toLowerCase(cmd);
-        String::toLowerCase(args);
-
-        if (cmd == "gsm")
-        {
-          if (args == "true")
-            requestActivation();
-
-          if (args == "false")
-            requestDeactivation();
-        }
-
-        if (cmd == "pos")
-          sendSMS("T", m_args.sms_lost_coms_ttl, msg->origin);
       }
 
       void
@@ -265,8 +222,7 @@ namespace Monitors
       void
       consume(const IMC::FuelLevel* msg)
       {
-        m_fuel = msg->value;
-        m_fuel_conf = msg->confidence;
+        m_emsg->update(msg);
       }
 
       void
@@ -276,7 +232,7 @@ namespace Monitors
         {
           if(msg->getSourceEntity() != resolveEntity("Batteries"))
             return;
-          m_bat_voltage = msg->value * 10;
+          m_emsg->update(msg);
         }
         catch (std::runtime_error& e) {
           spew("Batteries entity is not present.");
@@ -287,7 +243,7 @@ namespace Monitors
       consume(const IMC::PlanControlState* msg)
       {
         m_in_mission = msg->state == IMC::PlanControlState::PCS_EXECUTING;
-        m_progress = msg->plan_progress;
+        m_emsg->update(msg);
       }
 
       void
@@ -302,29 +258,7 @@ namespace Monitors
       void
       consume(const IMC::VehicleState* msg)
       {
-        m_vstate = msg->op_mode;
-      }
-
-      char
-      vehicleStateChar(const uint8_t vstate)
-      {
-        switch((IMC::VehicleState::OperationModeEnum) vstate)
-        {
-          case IMC::VehicleState::VS_BOOT:
-            return 'B';
-          case IMC::VehicleState::VS_CALIBRATION:
-            return 'C';
-          case IMC::VehicleState::VS_ERROR:
-            return 'E';
-          case IMC::VehicleState::VS_EXTERNAL:
-            return 'X';
-          case IMC::VehicleState::VS_MANEUVER:
-            return 'M';
-          case IMC::VehicleState::VS_SERVICE:
-            return 'S';
-          default:
-            return '?';
-        }
+        m_emsg->update(msg);
       }
 
       //! Send SMS request.
@@ -336,32 +270,7 @@ namespace Monitors
       {
         IMC::TransmissionRequest msg;
         msg.data_mode= IMC::TransmissionRequest::DMODE_TEXT;
-
-        if (recipient.size() == 0)
-          msg.destination = m_args.recipient;
-        else
-          msg.destination = recipient;
-
-        msg.deadline = Time::Clock::getSinceEpoch() + timeout;
-
-        if (!m_emsg.empty())
-        {
-          msg.txt_data = String::str("(%s) %s", prefix, m_emsg.c_str());
-        }
-        else
-        {
-          std::string s;
-          Time::BrokenDown bdt;
-          s = String::str("(%s) %02u:%02u:%02u / Unknown Location / f:%d v:%d c:%d",
-                               getSystemName(),
-                               bdt.hour, bdt.minutes, bdt.seconds,
-                            (int)m_fuel, (int)m_bat_voltage, (int)m_fuel_conf);
-
-          s += m_in_mission ? String::str(" / p:%d", (int)m_progress) : "";
-          s += String::str("/ s: %c", vehicleStateChar(m_vstate));
-
-          msg.txt_data = String::str("(%s) %s", prefix, s.c_str());
-        }
+        msg.txt_data = m_emsg->get(prefix);
 
         msg.setDestination(getSystemId());
         msg.setDestinationEntity(getEntityId());
@@ -372,7 +281,7 @@ namespace Monitors
         if (ird)
         {
           msg.comm_mean=IMC::TransmissionRequest::CMEAN_SATELLITE;
-          msg.deadline+=30;
+          msg.deadline = Time::Clock::getSinceEpoch() + timeout + 30;
           msg.req_id=m_req++;
           dispatch(msg);
 
@@ -380,16 +289,37 @@ namespace Monitors
                     timeout, msg.destination.c_str(), msg.txt_data.c_str());
         }
 
-        if (gsm){
+        if (gsm)
+        {
           msg.comm_mean=IMC::TransmissionRequest::CMEAN_GSM;
-          msg.req_id=m_req++;
-          dispatch(msg);
-
-          inf(DTR("sending SMS (t:%u) to %s: %s"),
-                    timeout, msg.destination.c_str(), msg.txt_data.c_str());
+          msg.deadline = Time::Clock::getSinceEpoch() + timeout;
+          
+          if (recipient.size() == 0 || recipient == "broadcast")
+          {
+            for(auto rec : m_args.recipients)
+            {
+              msg.destination = rec;
+              msg.req_id=m_req++;
+              dispatch(msg);
+              inf(DTR("sending SMS (t:%u) to %s: %s"),
+                        timeout, msg.destination.c_str(), msg.txt_data.c_str());
+            }
+          }
+          else
+          {
+            msg.destination = recipient;
+            Utils::String::toLowerCase(msg.destination);
+            msg.req_id=m_req++;
+            dispatch(msg);
+            inf(DTR("sending SMS (t:%u) to %s: %s"),
+                      timeout, msg.destination.c_str(), msg.txt_data.c_str());
+          }
         }
-
-
+        else
+        {
+          inf(DTR("SMS not sent to destination \"%s\": %s"),
+                    msg.destination.c_str(), msg.txt_data.c_str());
+        }
       }
 
       //! Send all scheduled reports.
@@ -401,10 +331,6 @@ namespace Monitors
         {
           if (!m_hand.isUnderwater())
           {
-            // Use current emergency number.
-            if (number == "default")
-              number = m_args.recipient;
-
             sendSMS("R", m_args.sms_lost_coms_ttl, number);
             spew("sent report to %s", number.c_str());
           }

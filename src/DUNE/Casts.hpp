@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -309,6 +309,12 @@ namespace DUNE
   }
 
   inline std::string
+  uncastLexical(bool var)
+  {
+    return var ? "true" : "false";
+  }
+
+  inline std::string
   uncastLexical(int8_t var)
   {
     std::ostringstream os;
@@ -324,21 +330,11 @@ namespace DUNE
     return os.str();
   }
 
-  template <>
+  template <typename T>
   inline std::string
-  uncastLexical(std::vector<std::string>& var)
+  uncastLexical(const std::vector<T>& var)
   {
-    std::ostringstream os;
-
-    if (!var.empty())
-    {
-      os << var[0];
-
-      for (unsigned i = 0; i < var.size(); ++i)
-        os << ", " << var[i];
-    }
-
-    return os.str();
+    return Utils::String::join(var.begin(), var.end(), c_string_list_separator);
   }
 }
 

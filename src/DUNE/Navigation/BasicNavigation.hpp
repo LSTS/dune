@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -697,10 +697,20 @@ namespace DUNE
       Math::MovingAverage<double>* m_avg_heave;
       //! Moving Average for GpsFix.
       Math::MovingAverage<double>* m_avg_gps;
+      //! Moving average for GroundVelocity innovation rejection, in x.
+      Math::MovingAverage<float>* m_avg_gvx_rej;
+      //! Moving average for GroundVelocity innovation rejection, in y.
+      Math::MovingAverage<float>* m_avg_gvy_rej;
+      //! Moving average for WaterVelocity innovation rejection, in x.
+      Math::MovingAverage<float>* m_avg_wvelx_rej;
+      //! Moving average for WaterVelocity innovation rejection, in y.
+      Math::MovingAverage<float>* m_avg_wvely_rej;
       //! Number of samples to average heave.
       unsigned m_avg_heave_samples;
       //! Number of samples to average GPS.
       unsigned m_avg_gps_samples;
+      //! Number of samples to average DVL rejection.
+      unsigned m_avg_dvl_rej_samples;
       //! Entity Ids.
       unsigned m_depth_eid;
       unsigned m_ahrs_eid;
@@ -719,6 +729,8 @@ namespace DUNE
       float m_without_depth_timeout;
       float m_without_euler_timeout;
       float m_dvl_sanity_timeout;
+      //! DVL outlier rejection threshold percentage.
+      float m_dvl_outlier_rej_thresh;
       //! DVL ground velocity validation bits.
       uint8_t m_gvel_val_bits;
       //! DVL water velocity validation bits.

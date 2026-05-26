@@ -4265,15 +4265,15 @@ class byte_container_with_subtype : public BinaryType
         : container_type(std::move(b))
     {}
 
-    byte_container_with_subtype(const container_type& b, std::uint8_t subtype) noexcept(noexcept(container_type(b)))
+    byte_container_with_subtype(const container_type& b, std::uint8_t __subtype) noexcept(noexcept(container_type(b)))
         : container_type(b)
-        , m_subtype(subtype)
+        , m_subtype(__subtype)
         , m_has_subtype(true)
     {}
 
-    byte_container_with_subtype(container_type&& b, std::uint8_t subtype) noexcept(noexcept(container_type(std::move(b))))
+    byte_container_with_subtype(container_type&& b, std::uint8_t __subtype) noexcept(noexcept(container_type(std::move(b))))
         : container_type(std::move(b))
-        , m_subtype(subtype)
+        , m_subtype(__subtype)
         , m_has_subtype(true)
     {}
 
@@ -4306,9 +4306,9 @@ class byte_container_with_subtype : public BinaryType
 
     @since version 3.8.0
     */
-    void set_subtype(std::uint8_t subtype) noexcept
+    void set_subtype(std::uint8_t __subtype) noexcept
     {
-        m_subtype = subtype;
+        m_subtype = __subtype;
         m_has_subtype = true;
     }
 
@@ -5967,9 +5967,9 @@ class binary_reader
         }
 
         // All BSON binary values have a subtype
-        std::uint8_t subtype;
-        get_number<std::uint8_t>(input_format_t::bson, subtype);
-        result.set_subtype(subtype);
+        std::uint8_t __subtype;
+        get_number<std::uint8_t>(input_format_t::bson, __subtype);
+        result.set_subtype(__subtype);
 
         return get_binary(input_format_t::bson, len, result);
     }
@@ -17490,11 +17490,11 @@ class basic_json
     @since version 3.8.0
     */
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary(const typename binary_t::container_type& init, std::uint8_t subtype)
+    static basic_json binary(const typename binary_t::container_type& init, std::uint8_t __subtype)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
-        res.m_value = binary_t(init, subtype);
+        res.m_value = binary_t(init, __subtype);
         return res;
     }
 
@@ -17510,11 +17510,11 @@ class basic_json
 
     /// @copydoc binary(const typename binary_t::container_type&, std::uint8_t)
     JSON_HEDLEY_WARN_UNUSED_RESULT
-    static basic_json binary(typename binary_t::container_type&& init, std::uint8_t subtype)
+    static basic_json binary(typename binary_t::container_type&& init, std::uint8_t __subtype)
     {
         auto res = basic_json();
         res.m_type = value_t::binary;
-        res.m_value = binary_t(std::move(init), subtype);
+        res.m_value = binary_t(std::move(init), __subtype);
         return res;
     }
 

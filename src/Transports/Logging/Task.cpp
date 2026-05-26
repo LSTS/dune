@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -36,6 +36,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Tasks/MessageFilter.hpp>
 
 namespace Transports
 {
@@ -58,6 +59,10 @@ namespace Transports
       unsigned lsf_volume_size;
       // Compression method.
       std::string lsf_compression;
+      // Rate limits.
+      std::vector<std::string> rate_lims;
+      // Filtered entities.
+      std::vector<std::string> entities_flt;
     };
 
     struct Task: public Tasks::Task
@@ -84,6 +89,10 @@ namespace Transports
       bool m_active;
       // Task arguments.
       Arguments m_args;
+      //! Message Filter
+      MessageFilter m_filter;
+      //! Consumers for bound messages.
+      std::map<uint16_t, AbstractConsumer*> m_consumers;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
@@ -109,7 +118,14 @@ namespace Transports
         .defaultValue("");
 
         param("Transports", m_args.messages)
-        .defaultValue("");
+        .defaultValue("")
+        .description("List of messages to log. If empty, all messages will be logged.");
+
+        param("Rate Limiters", m_args.rate_lims)
+        .description("List of <Message>:<Frequency>");
+
+        param("Filtered Entities", m_args.entities_flt)
+        .description("List of <Message>:<Entity>+<Entity> that define the source entities allowed to pass message of a specific message type.");
 
         m_log_ctl.setSource(getSystemId());
 
@@ -117,6 +133,7 @@ namespace Transports
         bind<IMC::LoggingControl>(this);
         bind<IMC::PowerOperation>(this);
         bind<IMC::EntityInfo>(this);
+        bind<IMC::RemoteActions>(this);
       }
 
       ~Task(void)
@@ -127,15 +144,23 @@ namespace Transports
       void
       onResourceInitialization(void)
       {
-        if (m_args.messages.empty())
-        {
-          std::vector<std::string> all_abbrevs;
-          IMC::Factory::getAbbrevs(all_abbrevs);
-          bind(this, all_abbrevs);
-          inf("Logging all messages");
-        }
-        else
-          bind(this, m_args.messages);
+        //dispatch git version information.
+        IMC::VersionInfo version_info;
+        version_info.op = IMC::VersionInfo::OP_REPLY;
+        version_info.version = DUNE::getFullVersion();
+        inf(DTR("DUNE Version: %s"), version_info.version.c_str());
+        version_info.description = "DUNE Version Information";
+        dispatch(version_info);
+        version_info.version = DUNE::getFullVersionPrivate();
+        inf(DTR("DUNE Private Version: %s"), version_info.version.c_str());
+        version_info.description = "DUNE Private Version Information";
+        dispatch(version_info);
+
+        // Add button for log restart.
+        IMC::RemoteActionsRequest action_register;
+        action_register.op = IMC::RemoteActionsRequest::OP_REGISTER;
+        action_register.actions = "Restart Log=Button";
+        dispatch(action_register);
 
         // Initialize entity state.
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -153,6 +178,50 @@ namespace Transports
         m_compression = Compression::Factory::method(m_args.lsf_compression);
         if (m_args.lsf_volumes.empty())
           m_args.lsf_volumes.push_back("");
+
+        if (paramChanged(m_args.rate_lims))
+          m_filter.setupRates(m_args.rate_lims);
+        
+        if (paramChanged(m_args.entities_flt))
+          m_filter.setupEntities(m_args.entities_flt, this);
+
+        if (paramChanged(m_args.messages))
+        {
+          if (m_args.messages.empty())
+          {
+            std::vector<std::string> all_abbrevs;
+            IMC::Factory::getAbbrevs(all_abbrevs);
+            applyEntityParameter(&m_args.messages, all_abbrevs);
+            war("Logging all messages");
+          }
+
+          std::unordered_set<uint16_t> msgs_set;
+          for (const auto& msg : m_args.messages)
+            msgs_set.insert(IMC::Factory::getIdFromAbbrev(msg));
+
+          std::vector<uint16_t> removed_msgs;
+          for (auto it = m_consumers.begin(); it != m_consumers.end(); ++it)
+          {
+            if (msgs_set.find(it->first) == msgs_set.end())
+              removed_msgs.push_back(it->first);
+            else
+              msgs_set.erase(it->first);
+          }
+
+          for (auto msg : removed_msgs)
+          {
+            unbind(msg, m_consumers[msg]);
+            m_consumers.erase(msg);
+          }
+
+          if (!msgs_set.empty())
+          {
+            std::vector<uint16_t> new_msgs(msgs_set.begin(), msgs_set.end());
+            auto new_consumers = bind<Task, IMC::Message>(this, new_msgs);
+            for (auto it = new_consumers.begin(); it != new_consumers.end(); ++it)
+              m_consumers[it->first] = it->second;
+          }
+        }
       }
 
       void
@@ -224,10 +293,37 @@ namespace Transports
       }
 
       void
+      consume(const IMC::RemoteActions* msg)
+      {
+        TupleList tuples(msg->actions);
+        if (tuples.get("Restart Log", 0))
+        {
+          inf(DTR("Manually requested log restart"));
+
+          IMC::LoggingControl lc;
+          lc.name = m_label;
+          lc.op = LoggingControl::COP_REQUEST_START;
+          dispatch(lc, DF_LOOP_BACK);
+        }
+      }
+
+      void
       consume(const IMC::Message* msg)
       {
+        if (m_filter.filter(msg))
+          return;
+
         if (m_active)
           logMessage(msg);
+      }
+
+      void
+      queryEntityList(void)
+      {
+        IMC::EntityList query;
+        query.setDestination(getSystemId());
+        query.op = EntityList::OP_QUERY;
+        dispatch(query);
       }
 
       bool
@@ -369,6 +465,11 @@ namespace Transports
         m_log_ctl.setTimeStamp(ref_time);
         logMessage(&m_log_ctl);
         dispatch(m_log_ctl, DF_KEEP_TIME);
+
+        //! Query Entity List to have at least one Entity List per log file.
+        //! The EntityList message will only be logged
+        //! if EntityList is on m_args.messages or if m_args.messages is empty.
+        queryEntityList();
 
         inf(DTR("log started '%s'"), m_log_ctl.name.c_str());
 

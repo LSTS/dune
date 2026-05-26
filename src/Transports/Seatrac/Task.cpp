@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -464,7 +464,7 @@ namespace Transports
             sendCommand(commandCreateSeatrac(CID_SETTINGS_GET, m_data_beacon));
             processInput();
           }
-          while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0 && !m_args.dummy_connection);
+          while (m_data_beacon.newDataAvailable(CID_SETTINGS_GET) == 0 && !m_args.dummy_connection && !stopping());
 
           sendCommandAndWait(commandCreateSeatrac(CID_SYS_INFO, m_data_beacon), 1);
 
@@ -611,15 +611,7 @@ namespace Transports
         IMC::EntityParameter hip;
         hip.name = c_hard_iron_param;
         hip.value = String::str("%f, %f, 0.0", hi_x, hi_y);
-
-        IMC::SetEntityParameters np;
-        np.name = getEntityLabel();
-        np.params.push_back(hip);
-        dispatch(np, DF_LOOP_BACK);
-
-        IMC::SaveEntityParameters sp;
-        sp.name = getEntityLabel();
-        dispatch(sp);
+        setEntityParameter(hip, true);
       }
 
       //! Check if sensor has the same hard iron calibration parameters.
@@ -1245,7 +1237,7 @@ namespace Transports
               setAndSendState(STA_IDLE);
           }
         }
-        while (Clock::get() <= deadline);
+        while (Clock::get() <= deadline && !stopping());
       }
 
       void

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -59,16 +59,18 @@ namespace DUNE
         if (begin == end)
           return "";
 
+        std::ostringstream result;
         Iterator itr = begin;
-        std::string result = *itr;
+        result << *itr;
         ++itr;
 
-        for (; itr != end; ++itr)
+        while (itr != end)
         {
-          result.append(separator).append(*itr);
+          result << separator << *itr;
+          ++itr;
         }
 
-        return result;
+        return result.str();
       }
 
       //! Filter duplicates of a given character in a string.
@@ -186,6 +188,9 @@ namespace DUNE
       hexToBytes(const std::string& hex);
 
       static std::string
+      bytesToHex(const std::vector<uint8_t>& bytes);
+
+      static std::string
       fromHex(const std::string& str);
 
       static void
@@ -277,6 +282,12 @@ namespace DUNE
       //! @return true if 'str' ends with 'suffix', false otherwise.
       static bool
       endsWith(const std::string& str, const std::string& suffix);
+
+      //! Remove a sequence 'seq' from a string 'str' with comma-seperated values.
+      //! @param[in] str string.
+      //! @param[in] seq sequence.
+      static void
+      removeSequence(std::string& str, const std::string& seq);
     };
   }
 }

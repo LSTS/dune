@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -86,7 +86,7 @@ namespace Transports
         param("Device updates - Periodicity", m_args.delay_between_device_updates)
         .units(Units::Second)
         .defaultValue("600")
-        .description("Delay between announce update messages. 0 for no updates being sent.");
+        .description("Delay between device update messages. 0 for no updates being sent.");
 
         param("Announce Periodicity", m_args.delay_between_announces)
         .units(Units::Second)
@@ -217,6 +217,18 @@ namespace Transports
             sensorInfo.id = name;
 
           dispatch(sensorInfo);
+
+          // Asset report
+          if (name == "unknown")
+            return;
+
+          IMC::AssetReport report;
+          report.name = name;
+          report.report_time = p.time;
+          report.medium = IMC::AssetReport::RM_SATELLITE;
+          report.lat = p.lat;
+          report.lon = p.lon;
+          dispatch(report);
         }
       }
 
@@ -231,7 +243,7 @@ namespace Transports
           std::string text(msg->data.begin(), msg->data.end());
           IMC::TextMessage tm;
           tm.text = text;
-          tm.origin = "iridium";
+          tm.origin = m_args.text_origin;
           std::stringstream ss;
           tm.toText(ss);
           spew("sending this message to bus: %s", ss.str().c_str());
@@ -257,6 +269,9 @@ namespace Transports
           case (ID_EXTDEVUPDATE):
             handleUpdates(static_cast<ExtendedDeviceUpdate *>(m)->positions);
             break;
+          case (ID_UPDATE_OP):
+            inf("received update operation via Iridium (ignoring).");
+            break;
           default:
             DUNE::IMC::ImcIridiumMessage * irMsg =
             static_cast<DUNE::IMC::ImcIridiumMessage *>(m);
@@ -267,6 +282,7 @@ namespace Transports
               inf("received IMC message of type %s via Iridium from %d.", irMsg->msg->getName(), irMsg->source);
               IMC::Message* m2 = irMsg->msg;
               m2->setSource(irMsg->source);
+              m2->setDestination(irMsg->destination);
               dispatch(m2);
             }
             else

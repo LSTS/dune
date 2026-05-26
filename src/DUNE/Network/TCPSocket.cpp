@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -137,6 +137,16 @@ namespace DUNE
     }
 
     TCPSocket::~TCPSocket(void)
+    {
+#if defined(DUNE_OS_POSIX)
+      shutdown(m_handle, SHUT_RDWR);
+      close(m_handle);
+#elif defined(DUNE_OS_WINDOWS)
+      closesocket(m_handle);
+#endif
+    }
+
+    void TCPSocket::closeSocket()
     {
 #if defined(DUNE_OS_POSIX)
       shutdown(m_handle, SHUT_RDWR);

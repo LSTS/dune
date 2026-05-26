@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2023 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // Copyright 2016-2023 OceanScan - Marine Systems & Technology, Lda.        *
@@ -60,8 +60,6 @@ namespace Sensors
     {
       //! IO device.
       std::string io_dev;
-      //! Power channel.
-      std::string pwr_channel;
       //! Type of acoustics activation/deactivation.
       std::string type_activation;
       //! DVL position.
@@ -113,8 +111,6 @@ namespace Sensors
             .description("IO device URI in the form \"tcp://ADDRESS:PORT\" "
                          "or \"uart://DEVICE:BAUD\".");
 
-        param("Power Channel", m_args.pwr_channel).defaultValue("").description("Device's power channel");
-
         param("Acoustics Activation", m_args.type_activation)
             .values("Water, Always")
             .defaultValue("Water")
@@ -154,12 +150,7 @@ namespace Sensors
       void
       onUpdateParameters(void)
       {
-        if (paramChanged(m_args.pwr_channel))
-        {
-          clearPowerChannelNames();
-          if (!m_args.pwr_channel.empty())
-            addPowerChannelName(m_args.pwr_channel);
-        }
+        BasicDeviceDriver::onUpdateParameters();
 
         if (!(paramChanged(m_args.beam_width) || paramChanged(m_args.orientation) || paramChanged(m_args.position)))
           return;

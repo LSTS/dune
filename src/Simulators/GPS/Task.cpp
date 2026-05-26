@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -76,7 +76,7 @@ namespace Simulators
       double hdop;
       //! Horizontal Accuracy.
       double hacc;
-      //! Number of sattelites.
+      //! Number of satellites.
       uint16_t n_sat;
       //! Initial position (degrees)
       std::vector<double> position;

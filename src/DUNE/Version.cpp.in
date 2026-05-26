@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -36,6 +36,12 @@ namespace DUNE
   getFullVersion(void)
   {
     return DUNE_VERSION_STR " (@DUNE_GIT_INFO@)";
+  }
+
+  const char*
+  getFullVersionPrivate(void)
+  {
+    return "@DUNE_GIT_PRIVATE_INFO@";
   }
 
   const char*

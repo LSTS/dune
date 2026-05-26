@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -68,12 +68,19 @@ namespace DUNE
       BasicEntity(Tasks::AbstractTask* owner, Tasks::Context& context):
         m_owner(owner),
         m_ctx(context),
-        m_id(DUNE_IMC_CONST_UNK_EID)
+        m_id(DUNE_IMC_CONST_UNK_EID),
+        m_loopback(false)
       { }
 
       //! Destructor.
       virtual ~BasicEntity()
       { }
+
+      void
+      setLoopback(bool loopback)
+      {
+        m_loopback = loopback;
+      }
 
       //! Set the IMC bindings using the provided recipient object.
       //! @param[in] recipient pointer to the recipient object to use for binding to IMC messages.
@@ -93,7 +100,7 @@ namespace DUNE
 
       //! Set the entity label.
       //! @param[in] label entity label.
-      void
+      virtual void
       setLabel(const std::string& label);
 
       //! Retrieve the entity identifier.
@@ -192,6 +199,8 @@ namespace DUNE
       unsigned int m_id;
       //! Entity Label.
       std::string m_label;
+      //! Set loopback flag for EntityState report
+      bool m_loopback;
     };
   }
 }

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -65,11 +65,11 @@ namespace DUNE
 
       param("Altitude Timeout", m_alt_timeout)
       .defaultValue("60.0f")
-      .units(Units::Meter)
+      .units(Units::Second)
       .description("Timeout for ignoring invalid altitude");
 
       param("Altitude Reference Margin", m_alt_margin)
-      .defaultValue("0.2f")
+      .defaultValue("0.2")
       .units(Units::Meter)
       .description("Altitude reference marging to add above minimum altitude.");
 

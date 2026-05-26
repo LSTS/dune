@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -74,8 +74,9 @@ namespace DUNE
         if (!Factory::exists(getTaskName(vec[i])))
         {
           // We use '.' here to ignore configuration sections (such as General
-          // or Addresses)
-          if (getTaskName(vec[i]).find('.') != std::string::npos)
+          // or Addresses) and ':' to ignore parameterized entities configuration sections.
+          if (getTaskName(vec[i]).find('.') != std::string::npos &&
+              getTaskName(vec[i]).find(':') == std::string::npos)
           {
             std::string invalid = "Invalid task name: " + getTaskName(vec[i]);
             DUNE_WRN("Manager", DTR(invalid.c_str()));
@@ -214,8 +215,23 @@ namespace DUNE
     Manager::writeParamsXML(std::ostream& os) const
     {
       std::map<std::string, Task*>::const_iterator itr = m_tasks.begin();
+      std::map<std::string, std::string> label2section;
+      std::set<std::string> labels;
+      // Create an ordered set of tasks
       for ( ; itr != m_tasks.end(); ++itr)
-        itr->second->writeParamsXML(os);
+      {
+        std::string label = itr->second->getEntityLabel();
+        label2section[label] = itr->first;
+        labels.insert(label);
+      }
+
+      // Write task parameters in order of labels
+      std::set<std::string>::const_iterator litr = labels.begin();
+      for ( ; litr != labels.end(); ++litr)
+      {
+        std::string section = label2section.at(*litr);
+        m_tasks.at(section)->writeParamsXML(os);
+      }
     }
 
     void
@@ -253,6 +269,12 @@ namespace DUNE
         m_cpu_usage_hogs.pop();
         lowerHogPriority(entry.task, entry.usage);
       }
+    }
+
+    uint32_t
+    Manager::getNumTasks(void)
+    {
+      return static_cast<uint32_t>(m_tasks.size());
     }
 
     void

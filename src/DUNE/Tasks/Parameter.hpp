@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -83,17 +83,27 @@ namespace DUNE
         std::string values;
       };
 
+      static constexpr const char* c_visibility_str = "visibility";
+      static constexpr const char* c_scope_str = "scope";
+      static constexpr const char* c_editable_str = "editable";
+
       static Visibility
       visibilityFromString(const std::string& v);
 
       static const char*
       visibilityToString(Visibility v);
 
+      static std::string
+      visibilityValues(void);
+
       static Scope
       scopeFromString(const std::string& s);
 
       static const char*
       scopeToString(Scope s);
+
+      static std::string
+      scopeValues(void);
 
       //! Constructor.
       Parameter(const std::string& param_name, const std::string& type_name);
@@ -138,6 +148,12 @@ namespace DUNE
         return *this;
       }
 
+      const std::vector<ValuesIf*>&
+      valuesIf()
+      {
+        return m_values_if;
+      }
+
       Parameter&
       valuesIf(const std::string& if_param, const std::string& if_value, const std::string& a_values)
       {
@@ -175,12 +191,24 @@ namespace DUNE
         return *this;
       }
 
+      std::string
+      minimumValue(void)
+      {
+        return m_min_value;
+      }
+
       Parameter&
       minimumValue(const std::string& min_value)
       {
         m_min_value = min_value;
         m_reader->minimumValue(min_value);
         return *this;
+      }
+
+      std::string
+      maximumValue(void)
+      {
+        return m_max_value;
       }
 
       Parameter&
@@ -199,6 +227,12 @@ namespace DUNE
         return *this;
       }
 
+      unsigned
+      minimumSize(void)
+      {
+        return m_min_size;
+      }
+
       Parameter&
       minimumSize(unsigned min_size)
       {
@@ -207,12 +241,24 @@ namespace DUNE
         return *this;
       }
 
+      unsigned
+      maximumSize(void)
+      {
+        return m_max_size;
+      }
+
       Parameter&
       maximumSize(unsigned max_size)
       {
         m_max_size = max_size;
         m_reader->maximumSize(max_size);
         return *this;
+      }
+
+      std::string
+      values(void)
+      {
+        return m_values;
       }
 
       Parameter&
@@ -250,10 +296,23 @@ namespace DUNE
       scope(const std::string a_scope);
 
       Parameter&
-      editable(std::string a_editable)
+      editable(const std::string& a_editable)
       {
         castLexical(a_editable, m_editable);
         return *this;
+      }
+
+      Parameter&
+      editable(bool a_editable)
+      {
+        m_editable = a_editable;
+        return *this;
+      }
+
+      bool
+      editable(void) const
+      {
+        return m_editable;
       }
 
       void
@@ -283,6 +342,12 @@ namespace DUNE
       getScope(void) const
       {
         return m_scope;
+      }
+
+      std::string
+      getType(void)
+      {
+        return m_type_name;
       }
 
     protected:

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -56,7 +56,7 @@ namespace DUNE
     std::vector<std::string> addrs = m_ctx.config.options("IMC Addresses");
     for (unsigned i = 0; i < addrs.size(); ++i)
     {
-      unsigned id = IMC::AddressResolver::invalid();
+      unsigned id;
       m_ctx.config.get("IMC Addresses", addrs[i], "", id);
       m_ctx.resolver.insert(addrs[i], id);
     }
@@ -79,10 +79,8 @@ namespace DUNE
 
     // Register system name.
     std::string sys_name;
-    m_ctx.config.get("General", "Vehicle", "unknown", sys_name);
+    m_ctx.config.get("General", "Vehicle", IMC::AddressResolver::c_unknown, sys_name);
     m_ctx.resolver.name(sys_name);
-    unsigned id = resolveSystemName(sys_name);
-    m_ctx.resolver.id(id);
     setEntityLabel("Daemon");
     reserveEntities();
 
@@ -118,7 +116,7 @@ namespace DUNE
       err("%s", e.what());
     }
 
-    inf(DTR("system name: '%s' (%u)"), sys_name.c_str(), id);
+    inf(DTR("system name: '%s' (0x%04x)"), sys_name.c_str(), getSystemId());
     inf(DTR("registered tasks: %d"), Tasks::Factory::getRegisteredCount());
     inf(DTR("base folder: '%s'"), ctx.dir_app.c_str());
     inf(DTR("configuration folder: '%s'"), ctx.dir_cfg.c_str());
@@ -130,7 +128,6 @@ namespace DUNE
       m_ctx.profiles.select(profiles);
       inf(DTR("execution profiles: %s"), profiles.c_str());
     }
-
     // CPU usage.
     m_ctx.config.get("General", "CPU Usage - Maximum", "65", m_cpu_max_usage);
     m_ctx.config.get("General", "CPU Usage - Moving Average Samples", "10", m_cpu_avg_samples);
@@ -221,8 +218,8 @@ namespace DUNE
     {
       call_reboot = true;
       inf(DTR("Got message to reboot system"));
+      stop();
     }
-    stop();
   }
 
   void
@@ -244,6 +241,7 @@ namespace DUNE
       stream << ";" << devs[i]->label << "=" << devs[i]->id;
 
     IMC::EntityList list;
+    list.setDestination(msg->getSource());
     list.op = IMC::EntityList::OP_REPORT;
     list.list = stream.str();
     dispatch(list);
@@ -256,9 +254,11 @@ namespace DUNE
        << "<config"
        << " format=\"1\""
        << " version=\"" << getFullVersion() << "\""
+       << " modules=\"" << getFullVersionPrivate() << "\""
        << " system=\"" << getSystemName() << "\""
        << " i18n=\"" << I18N::getLanguage() << "\">\n";
 
+    Task::writeParamsXML(os);
     m_tman->writeParamsXML(os);
 
     os << "</config>\n";
@@ -287,7 +287,11 @@ namespace DUNE
       }
       else
       {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        uint32_t num_tasks = m_tman->getNumTasks();
+        uint16_t num_entities = getEntityCount();
+        std::string text = Utils::String::str("active | Number of tasks: %d | Number of Entities: %d",
+                      num_tasks, num_entities);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, text);
       }
     }
   }

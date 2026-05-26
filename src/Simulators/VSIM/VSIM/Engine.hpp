@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -105,7 +105,7 @@ namespace Simulators
       //! Engine's actuation.
       double m_act;
       //! Engine's orientation.
-      double m_act_orientation[3];
+      double m_act_orientation[2];
       //! Engine Maximum Force.
       float m_engine_max_force;
     };

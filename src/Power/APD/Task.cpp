@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -95,10 +95,6 @@ namespace Power
       SerialPort* m_uart;
       //! Control Interface.
       UCTK::Interface* m_ctl;
-      //! Current.
-      IMC::Current m_current[c_adcs_count/2-1];
-      //! Voltage.
-      IMC::Voltage m_voltage[c_adcs_count/2];
       //! Task arguments.
       Arguments m_args;
 
@@ -230,12 +226,19 @@ namespace Power
           m_uart = new SerialPort(m_args.uart_dev, c_baud_rate);
           m_ctl = new UCTK::Interface(m_uart);
           UCTK::FirmwareInfo info = m_ctl->getFirmwareInfo();
-
           if (info.isDevelopment())
+          {
             war(DTR("Device is using unstable firmware!"));
+          }
           else
-            inf(DTR("Firmware version %u.%u.%u"), info.major,
-                info.minor, info.patch);
+          {
+            std::string fw_version = String::str("%u.%u.%u", info.major, info.minor, info.patch);
+            IMC::VersionInfo vi;
+            vi.version = fw_version;
+            vi.op = IMC::VersionInfo::OP_REPLY;
+            dispatch(vi);
+            inf(DTR("Firmware version %s"), fw_version.c_str());
+          }
         }
         catch (std::runtime_error& e)
         {

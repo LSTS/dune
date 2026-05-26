@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -49,8 +49,6 @@ namespace DUNE
 #include <DUNE/Tasks/Recipient.hpp>
 #include <DUNE/Tasks/AbstractCreator.hpp>
 #include <DUNE/Tasks/ParameterTable.hpp>
-#include <DUNE/Tasks/SimpleTransport.hpp>
-#include <DUNE/Tasks/MessageFilter.hpp>
 #include <DUNE/Tasks/SourceFilter.hpp>
 
 #endif

@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -45,8 +45,6 @@ namespace DUNE
 {
   namespace Hardware
   {
-    //! Default command timeout.
-    static const double c_timeout = 5.0;
     //! Default input line termination.
     static std::string c_line_term_in = "\r\n";
     //! Default output line termination.
@@ -64,6 +62,9 @@ namespace DUNE
       m_line_term_out(c_line_term_out),
       m_line_trim(false)
     {
+      if (m_handle == nullptr)
+        throw std::runtime_error("Invalid I/O handle");
+        
       m_handle->flushInput();
     }
 
@@ -139,9 +140,7 @@ namespace DUNE
     BasicModem::isCooling(void)
     {
       Concurrency::ScopedMutex l(m_mutex);
-      if ((m_tx_rate_max >= 0.0) && (!m_tx_rate_timer.overflow()))
-        return true;
-      return false;
+      return (m_tx_rate_max >= 0.0) && (!m_tx_rate_timer.overflow());
     }
 
     //! Set maximum transmission rate.
@@ -171,38 +170,32 @@ namespace DUNE
     void
     BasicModem::setReadMode(BasicModem::ReadMode mode)
     {
-      Concurrency::ScopedMutex l(m_mutex);
-      m_read_mode = mode;
-      if (mode == READ_MODE_LINE) {
-        if (m_bytes.size() > 0) { // if have bytes in queue, transfer to lines
-          getTask()->spew(
-                          "There are %d bytes in the queue bytes. Convert to queue of lines.",
-                          m_bytes.size());
-          while (m_bytes.size() > 0) {
-            uint8_t byte = 0;
-            m_bytes.pop(byte);
-            m_chars.push(byte);
-          }
-          std::string line = "";
-          while (!m_chars.empty()) {
-            if (!processInput(line))
-              continue;
+      {
+        Concurrency::ScopedMutex l(m_mutex);
 
-            if (line.empty())
-              continue;
+        if (m_read_mode == mode)
+          return;
 
-            if (!handleUnsolicited(line)) {
-              m_lines.push(line);
-              line = "";
-            }
-          }
-        }
-      } else {
-        if (m_lines.size()) {
-          getTask()->err(
-                         "There are %d lines in the queue. Convert to queue of bytes.",
-                         m_lines.size());
-        }
+        m_read_mode = mode;
+      }
+
+      switch (mode)
+      {
+      case READ_MODE_LINE:
+      {
+        if (!converBytesToLines())
+          break;
+
+        handleIncomingCharacters();
+        break;
+      }
+
+      case READ_MODE_RAW:
+        convertLinesToBytes();
+        break;
+
+      default:
+        break;
       }
     }
 
@@ -250,6 +243,7 @@ namespace DUNE
     BasicModem::readLine(void)
     {
       Time::Counter<double> timer(getTimeout());
+      //IO::Poll::poll(*m_handle, 0.1);
       return readLine(timer);
     }
 
@@ -268,13 +262,15 @@ namespace DUNE
         if (bytes_read == data_size)
           return;
       }
-
+      getTask()->war("[BasicModem]:timeout while reading %u bytes", data_size);
       throw ReadTimeout();
     }
 
     bool
     BasicModem::processInput(std::string& str)
     {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+
       bool got_line = false;
 
       while (!m_chars.empty())
@@ -285,6 +281,7 @@ namespace DUNE
         m_line.push_back(c);
 
         //!@fixme: concurrency hazard.
+        //Concurrency::ScopedMutex l(m_mutex); // Protect shared resource
         if (c == m_line_term_in[m_line_term_idx])
         {
           ++m_line_term_idx;
@@ -329,7 +326,7 @@ namespace DUNE
       txt.setDestination(getTask()->getSystemId());
       getTask()->dispatch(txt);
 
-      m_task->trace("recv: %s", Streams::sanitize(str).c_str());
+      m_task->trace("[BasicModem]:recv: %s", Streams::sanitize(str).c_str());
       m_line.clear();
 
       if (!m_skip_line.empty())
@@ -347,7 +344,14 @@ namespace DUNE
     std::string
     BasicModem::readLine(Time::Counter<double>& timer)
     {
-      if (m_lines.waitForItems(timer.getRemaining()))
+      const auto remaining = timer.getRemaining();
+      if (remaining <= 0)
+      {
+        getTask()->war("[BasicModem]:timeout while reading line");
+        throw ReadTimeout();
+      }
+
+      if (m_lines.waitForItems(remaining))
       {
         std::string line = m_lines.pop();
         if (line != m_last_cmd)
@@ -355,7 +359,7 @@ namespace DUNE
         else
           return readLine(timer);
       }
-
+      getTask()->war("[BasicModem]:timeout while reading line");
       throw ReadTimeout();
     }
 
@@ -366,22 +370,121 @@ namespace DUNE
     }
 
     void
+    BasicModem::handleIncomingCharacters(void)
+    {
+      while (!incomingCharsQueueEmpty())
+      {
+        if (!processInput(m_line_bfr))
+          continue;
+
+        if (m_line_bfr.empty())
+          continue;
+
+        if (!handleUnsolicited(m_line_bfr))
+          pushLine(m_line_bfr);
+
+        m_line_bfr = "";
+      }
+    }
+
+    void
+    BasicModem::ingestIncomingDataRaw(const char* data, const size_t len)
+    {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+      for (size_t i = 0; i < len; ++i)
+        m_bytes.push(data[i]);
+    }
+
+    void
+    BasicModem::ingestIncomingDataLine(const char* data, const size_t len)
+    {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+      for (size_t i = 0; i < len; ++i)
+        m_chars.push(data[i]);
+    }
+
+    void
+    BasicModem::pushLine(const std::string& line)
+    {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+      m_lines.push(line);
+    }
+
+    bool
+    BasicModem::incomingCharsQueueEmpty(void)
+    {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+      return m_chars.empty();
+    }
+
+    bool
+    BasicModem::converBytesToLines(void)
+    {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+
+      if (m_bytes.size() <= 0)
+        return false;
+
+      // if have bytes in queue, transfer to lines
+      getTask()->spew("There are %u bytes in the queue bytes. Convert to queue of lines.",
+                      m_bytes.size());
+      while (m_bytes.size() > 0)
+      {
+        uint8_t byte = 0;
+        m_bytes.pop(byte);
+        m_chars.push(byte);
+      }
+
+      return true;
+    }
+
+    bool
+    BasicModem::convertLinesToBytes(void)
+    {
+      Concurrency::ScopedMutex l(m_ingestion_mtx);
+
+      if (m_lines.size() <= 0)
+        return false;
+
+      getTask()->war("[BasicModem]:There are %u lines in the queue. Convert to queue of bytes.",
+                      m_lines.size());
+      while (m_lines.size() > 0)
+      {
+        std::string line = m_lines.pop();
+        getTask()->war("[BasicModem]:line: %s", line.c_str());
+        for (const auto& c: line)
+          m_bytes.push(c);
+      }
+
+      return true;
+    }
+
+    void
+    BasicModem::handleDataLineMode(const char* data, const size_t len)
+    {
+      m_task->spew("%s", Streams::sanitize(data).c_str());
+      ingestIncomingDataLine(data, len);
+      handleIncomingCharacters();
+    }
+
+    void
     BasicModem::run(void)
     {
       char bfr[512];
-      std::string line;
 
       while (!isStopping())
       {
-        if (!IO::Poll::poll(*m_handle, 1.0))
+        if (!IO::Poll::poll(*m_handle, 0.01))
           continue;
 
         size_t rv = 0;
         try
         {
           rv = m_handle->read(bfr, sizeof(bfr));
-        } catch (std::runtime_error &e) {
-          m_task->war("%s: %s", Status::getString(Status::CODE_IO_ERROR), e.what());
+        }
+        catch (std::runtime_error& e)
+        {
+          m_task->war("[BasicModem]:%s: %s", Status::getString(Status::CODE_IO_ERROR), e.what());
           break;
         }
 
@@ -396,32 +499,25 @@ namespace DUNE
           break;
         }
 
-        if (getReadMode() == READ_MODE_RAW)
+        const auto mode = getReadMode();
+
+        switch (mode)
         {
-          for (size_t i = 0; i < rv; ++i)
-            m_bytes.push(bfr[i]);
+        case READ_MODE_RAW:
+        {
+          ingestIncomingDataRaw(bfr, rv);
+          break;
         }
-        else
+
+        case READ_MODE_LINE:
         {
           bfr[rv] = 0;
-          m_task->spew("%s", Streams::sanitize(bfr).c_str());
-
-          for (size_t i = 0; i < rv; ++i)
-          {
-            m_chars.push(bfr[i]);
-          }
-
-          while (!m_chars.empty())
-          {
-            if (!processInput(line))
-              continue;
-
-            if (line.empty())
-              continue;
-
-            if (!handleUnsolicited(line))
-              m_lines.push(line);
-          }
+          handleDataLineMode(bfr, rv);
+          break;
+        }
+        
+        default:
+          break;
         }
       }
     }

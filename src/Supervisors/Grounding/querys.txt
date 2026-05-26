@@ -1,0 +1,9 @@
+
+// For finding the nearest value in Lat
+select min(Lat), Lon, Depth from 'depthmap' where Lat >= 359.524 union select max(Lat), Lon, Depth from 'depthmap' where Lat <= 359.524;
+
+//For finding closest point in all directions of a coordinate:
+select min(Lat), min(Lon), Depth from 'depthmap' where Lat >= 359.524 and Lon >= -10.1056 union
+select min(Lat), max(Lon), Depth from 'depthmap' where Lat >= 359.524 and Lon <= -10.1056 union
+select max(Lat), min(Lon), Depth from 'depthmap' where Lat <= 359.524 and Lon >= -10.1056 union
+select max(Lat), max(Lon), Depth from 'depthmap' where Lat <= 359.524 and Lon <= -10.1056;

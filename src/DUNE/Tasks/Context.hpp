@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -74,6 +74,8 @@ namespace DUNE
       FileSystem::Path dir_cfg;
       //! Path to user configuration directory.
       FileSystem::Path dir_usr_cfg;
+      //! Path to private configuration directory.
+      FileSystem::Path dir_pri_cfg;
       //! Path to HTTP server directory.
       FileSystem::Path dir_www;
       //! Path to log directory.

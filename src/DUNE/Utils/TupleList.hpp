@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -50,6 +50,8 @@ namespace DUNE
     class TupleList
     {
     public:
+      TupleList(void) = default;
+
       TupleList(std::string str, std::string sep = "=", std::string tuple_sep = ";", bool ignore_case = false):
         m_sep(sep),
         m_tuple_sep(tuple_sep),
