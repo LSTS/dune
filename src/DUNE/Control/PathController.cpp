@@ -531,12 +531,7 @@ namespace DUNE
       }
 
       // Send speed reference
-      m_speed.value = dpath->speed;
-      m_speed.speed_units = dpath->speed_units;
-
-      enableControlLoops(IMC::CL_SPEED);
-
-      dispatch(m_speed, Tasks::DF_LOOP_BACK);
+      setSpeedReference(dpath->speed, dpath->speed_units);
     }
 
     void
