@@ -82,6 +82,10 @@ namespace DUNE
       void
       setIntegralLimits(float value);
 
+      //! Disable debug using control parcels logged using bus dispatch.
+      void
+      disableParcels(void);
+
       //! Enable debug using control parcels logged using bus dispatch.
       //! @param[in] t pointer to a task object.
       //! @param[in] p pointer to control parcel message.
