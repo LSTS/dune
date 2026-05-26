@@ -229,23 +229,23 @@ namespace Navigation
           .defaultValue("false")
           .description("Require course over ground (COG) and speed over ground (SOG) for a GpsFix to be valid.");
 
-          param("Maximum HDOP", m_args.max_hdop)
+          param("GNSS Maximum HDOP", m_args.max_hdop)
           .minimumValue("0.0")
           .defaultValue("0.0")
           .description("Maximum acceptable Horizontal Dilution of Precision (HDOP) for a GpsFix. Set to 0 to disable.");
 
-          // param("Maximum VDOP", m_args.max_vdop)
+          // param("GNSS Maximum VDOP", m_args.max_vdop)
           // .minimumValue("0.0")
           // .defaultValue("0.0")
           // .description("Maximum acceptable Vertical Dilution of Precision (VDOP) for a GpsFix. Set to 0 to disable.");
 
-          param("Maximum HACC", m_args.max_hacc)
+          param("GNSS Maximum HACC", m_args.max_hacc)
           .units(Units::Meter)
           .minimumValue("0.0")
           .defaultValue("0.0")
           .description("Maximum acceptable Horizontal Accuracy (HACC) for a GpsFix. Set to 0 to disable.");
 
-          // param("Maximum VACC", m_args.max_vacc)
+          // param("GNSS Maximum VACC", m_args.max_vacc)
           // .units(Units::Meter)
           // .minimumValue("0.0")
           // .defaultValue("0.0")
