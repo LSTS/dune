@@ -80,6 +80,10 @@ namespace Control
         double ilos_max_cross_track_heading;
         //! ILOS - Enabled
         bool ilos_enabled;
+        //! Thrust assistance during turns.
+        double turn_thrust_assist;
+        //! Heading offset threshold to consider.
+        double heading_offset_threshold;
 
         //! Enable anti-grounding.
         // bool en_antiground;
@@ -194,8 +198,10 @@ namespace Control
         // int m_es_eid;
         //! Average factor.
         // int m_avg_zero, m_avg_one;
-
+        //! Integral controller.
         ILOS* m_integral_controller;
+        //! Overriding desired path speed reference flag.
+        bool m_dpath_speed_override;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx),
@@ -210,7 +216,8 @@ namespace Control
           m_timestamp_obst(0.0),
           m_cost(0.0),
           m_avg(0),
-          m_integral_controller(nullptr)
+          m_integral_controller(nullptr),
+          m_dpath_speed_override(false)
           // m_wind_dir(0.0),
           // m_wind_speed(0.0),
           // m_heave(0.0),
@@ -441,7 +448,6 @@ namespace Control
           .units(Units::Degree)
           .description("Attack angle when lateral track error equals corridor width");
 
-
           param("ILOS -- Enabled", m_args.ilos_enabled)
           .defaultValue("true")
           .description("Enable ILOS.");
@@ -462,6 +468,20 @@ namespace Control
           .defaultValue("75.0")
           .units(Units::Degree)
           .description("Maximum desired heading possible, relative to track bearing.");
+
+          param("Thrust Assistance During Turns", m_args.turn_thrust_assist)
+          .units(Units::Percentage)
+          .minimumValue("0.0")
+          .maximumValue("100.0")
+          .defaultValue("0.0")
+          .description("Thrust assistance to be used during speed reference override, if the system is turning.");
+
+          param("Heading Offset Threshold", m_args.heading_offset_threshold)
+          .units(Units::Degree)
+          .minimumValue("0.0")
+          .maximumValue("180.0")
+          .defaultValue("10.0")
+          .description("Heading offset threshold to consider for thrust assistance during turns.");
 
           // param("Entity Label - Wind", m_args.elabel_ws)
           // .description("Entity label of 'AbsoluteWind' message");
@@ -707,6 +727,8 @@ namespace Control
         {
           //! Activate Heading controller.
           enableControlLoops(IMC::CL_YAW);
+
+          m_dpath_speed_override = false;
         }
 
         void
@@ -714,6 +736,8 @@ namespace Control
         {
           //! Deactivate Heading controller.
           disableControlLoops(IMC::CL_YAW);
+
+          m_dpath_speed_override = false;
         }
 
         void
@@ -1261,6 +1285,30 @@ namespace Control
         }
 
         void
+        overrideSpeedReference(bool turning)
+        {
+          if (m_args.turn_thrust_assist > 0.0f && turning)
+          {
+            m_dpath_speed_override = true;
+            setSpeedReference(m_args.turn_thrust_assist, IMC::SpeedUnits::SUNITS_PERCENTAGE);
+            return;
+          }
+
+          if (m_dpath_speed_override)
+          {
+            resetSpeedReference();
+            m_dpath_speed_override = false;
+          }
+        }
+
+        bool
+        isTurning(double heading_ref, double heading)
+        {
+          double heading_error = Angles::normalizeRadian(heading_ref - heading);
+          return std::fabs(heading_error) > Angles::radians(m_args.heading_offset_threshold);
+        }
+
+        void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
           updateEstimatedState(state);
@@ -1495,6 +1543,8 @@ namespace Control
           m_des_heading.value = Angles::normalizeRadian(m_des_heading.value);
           debug("CAS OFFSET: %.0f | ILOS OFFSET: %.3f | NEW COURSE NORMALIZED: %.3f", Angles::degrees(m_psi_os), Angles::degrees(ilos_offset), Angles::degrees(m_des_heading.value));
           dispatch(m_des_heading);
+
+          overrideSpeedReference(isTurning(m_des_heading.value, state.psi));
         }
 
         //! Execute a loiter control step
@@ -1518,6 +1568,8 @@ namespace Control
           // Dispatch heading reference
           m_des_heading.value = Angles::normalizeRadian(ref);
           dispatch(m_des_heading);
+
+          overrideSpeedReference(isTurning(m_des_heading.value, state.psi));
         }
       };
     }
