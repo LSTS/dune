@@ -67,6 +67,7 @@ namespace DUNE
       m_setup(true),
       m_braking(false),
       m_jump_monitors(false),
+      m_dpath_speed(0),
       m_aloops(0),
       m_btrack(NULL),
       m_scope_ref(0)
@@ -212,14 +213,13 @@ namespace DUNE
       m_ctx.config.get("General", "Absolute Minimum Altitude", "1.2", m_btd.args.min_alt);
 
       m_ctx.config.get("General", "Time Of Arrival Factor", "5.0", m_time_factor);
-
-      param("Use Radius To Endpoint", m_use_radius_to_endpoint)
-      .defaultValue("false")
-      .description("Use radius to endpoint instead of ETA.");
       
       param("Radius To Endpoint", m_end_radius)
       .defaultValue("5")
-      .description("Radius around endpoint to consider maneuver as done.");
+      .minimumValue("-1")
+      .defaultValue("-1")
+      .description("Radius around endpoint to consider maneuver as done. "
+                   "If negative, only ETA is considered.");
 
       bind<IMC::Brake>(this);
       bind<IMC::ControlLoops>(this);
@@ -372,6 +372,11 @@ namespace DUNE
 
       setControlLoops(dpath);
       handleLoiter(dpath);
+
+      // Send speed reference
+      m_dpath_speed = dpath->speed;
+      m_dpath_speed_units = dpath->speed_units;
+      setSpeedReference(m_dpath_speed, m_dpath_speed_units);
 
       updateTrackingState();
       reportPathControlState(true);
@@ -529,14 +534,6 @@ namespace DUNE
         m_ts.z_control = false;
         m_pcs.flags |= IMC::PathControlState::FL_NO_Z;
       }
-
-      // Send speed reference
-      m_speed.value = dpath->speed;
-      m_speed.speed_units = dpath->speed_units;
-
-      enableControlLoops(IMC::CL_SPEED);
-
-      dispatch(m_speed, Tasks::DF_LOOP_BACK);
     }
 
     void
@@ -818,7 +815,7 @@ namespace DUNE
 
         const bool was_nearby = m_ts.nearby;
 
-        if (!m_use_radius_to_endpoint)
+        if (m_end_radius < 0.0f)
         {
           if (!m_ts.nearby && m_ts.eta <= 0)
           {
