@@ -860,12 +860,16 @@ namespace Transports
         // Get message content
         IMC::TransmissionRequest req = *msg;
         IMC::Message* inlinemsg = req.msg_data.get();
-        
+
         // Encode message using DCCL
         std::string encoded_string = m_codec_dccl.encodeDCCL(inlinemsg);
 
         if (encoded_string.empty())
           return *msg;
+
+        //Compressed msg debug
+        war("[DCCL ENCODING] Encoded msg %s with size %d bytes, compressed msg with size %zu", inlinemsg->getName(), inlinemsg->getPayloadSerializationSize()+12, encoded_string.size());
+        inlinemsg->toJSON(std::cout); 
 
         req.raw_data.assign(encoded_string.begin(), encoded_string.end());
 
