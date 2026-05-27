@@ -715,7 +715,7 @@ namespace Navigation
             for (const auto& gnss : m_gnss_sources)
             {
               auto& input = m_gnss_inputs.at(gnss);
-              if (m_gnss_valid && !input->valid())
+              if (m_gnss_valid && !input->valid() && input == m_gnss_input)
               {
                 m_gnss_valid = false;
                 m_gnss_input = nullptr;
@@ -740,7 +740,7 @@ namespace Navigation
             for (const auto& euler : m_euler_sources)
             {
               auto& input = m_euler_inputs.at(euler);
-              if (m_euler_valid && !input->valid())
+              if (m_euler_valid && !input->valid() && input == m_euler_input)
               {
                 m_euler_valid = false;
                 m_euler_input = nullptr;
