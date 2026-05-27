@@ -244,10 +244,18 @@ namespace Transports
           if (m_codec_dccl.isAvailable())
           {
             std::string encoded_string(msg->data.begin(), msg->data.end());
+
+            //Debug DCCL Msg received
+            war("[DCCL DECODING] Trying to decode a dccl msg with size %zu ", encoded_string.size());
+
             std::unique_ptr<DUNE::IMC::Message> decoded_msg = m_codec_dccl.decodeDCCL(encoded_string);
             if (decoded_msg != nullptr)
             {
-              debug("Received DCCL message of type %s via Iridium.", decoded_msg->getName());
+              //debug("Received DCCL message of type %s via Iridium.", decoded_msg->getName());
+              //Debug IMC Msg decompressed
+              war("[DCCL DECODING] Decoded msg %s", decoded_msg->getName());
+              decoded_msg->toJSON(std::cout);
+
               dispatch(decoded_msg.get(), DF_KEEP_SRC_EID);
               return;
             }
