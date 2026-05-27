@@ -39,6 +39,7 @@
 #include <DUNE/Utils/String.hpp>
 #include <DUNE/Time/BrokenDown.hpp>
 #include <DUNE/Math/Angles.hpp>
+#include <DUNE/Coordinates/WGS84.hpp>
 
 namespace DUNE
 {
@@ -72,34 +73,33 @@ namespace DUNE
       };
 
       EmergencyMessage(const std::string& system_name):
-      m_system_name(system_name),
-      m_gps(nullptr),
-      m_fuel(-1.0),
-      m_fuel_conf(-1.0),
-      m_bat_voltage(-1.0),
-      m_in_mission(false),
-      m_progress(-1.0),
-      m_vstate('?')
-      {}
+        m_system_name(system_name),
+        m_lat(0.0),
+        m_lon(0.0),
+        m_fuel(-1.0),
+        m_fuel_conf(-1.0),
+        m_bat_voltage(-1.0),
+        m_in_mission(false),
+        m_progress(-1.0),
+        m_vstate('?')
+      { }
 
       ~EmergencyMessage()
-      {
-        Memory::clear(m_gps);
-      }
+      { }
 
       std::string
       get(const char* prefix = nullptr)
       {
         std::string pos;
-        if(m_gps != nullptr)
+        if (m_lat != 0.0 || m_lon != 0.0)
         {
           int lat_deg;
           double lat_min;
-          Math::Angles::convertDecimalToDM(Math::Angles::degrees(m_gps->lat), lat_deg, lat_min);
+          Math::Angles::convertDecimalToDM(m_lat, lat_deg, lat_min);
 
           int lon_deg;
           double lon_min;
-          Math::Angles::convertDecimalToDM(Math::Angles::degrees(m_gps->lon), lon_deg, lon_min);
+          Math::Angles::convertDecimalToDM(m_lon, lon_deg, lon_min);
 
           pos = String::str("%d %f, %d %f", lat_deg, lat_min, lon_deg, lon_min);
         }
@@ -144,9 +144,13 @@ namespace DUNE
       }
 
       void
-      update(const IMC::GpsFix* msg)
+      update(const IMC::EstimatedState* msg)
       {
-        Memory::replace(m_gps, msg->clone());
+        m_lat = msg->lat;
+        m_lon = msg->lon;
+        Coordinates::WGS84::displace(msg->x, msg->y, &m_lat, &m_lon);
+        m_lat = Math::Angles::degrees(m_lat);
+        m_lon = Math::Angles::degrees(m_lon);
       }
 
       void
@@ -200,7 +204,8 @@ namespace DUNE
     private:
       std::string m_system_name;
       unsigned int m_battery_id;
-      IMC::GpsFix* m_gps;
+      double m_lat;
+      double m_lon;
       float m_fuel;
       float m_fuel_conf;
       float m_bat_voltage;
