@@ -39,6 +39,8 @@ if(COMMAND CMAKE_POLICY)
   endif()
 endif(COMMAND CMAKE_POLICY)
 
+set(CMAKE_C_STANDARD 99)
+
 #############################################################################
 # DUNE Legacy build
 #############################################################################
@@ -50,6 +52,7 @@ if(DUNELEGACY)
   message(STATUS "USING CMAKE_CXX_STANDARD 14")
   set(CMAKE_CXX_STANDARD 14)
   add_definitions(-DDUNE_LEGACY)
+  add_compile_definitions(USE_BOOST_OPTIONAL)
 else(DUNELEGACY)
   message(STATUS "USING CMAKE_CXX_STANDARD 17")
   # Required C++ Standard.

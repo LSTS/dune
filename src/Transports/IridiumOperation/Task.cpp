@@ -32,6 +32,8 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Tasks/MessageFilter.hpp>
+#include <DUNE/Network/Fragments.hpp>
 
 #include "PersistentMessage.hpp"
 

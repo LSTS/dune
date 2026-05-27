@@ -36,6 +36,8 @@
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
+#include <DUNE/Optional.hpp>
+#include <DUNE/Parsers/Exceptions.hpp>
 
 namespace DUNE
 {
@@ -57,9 +59,6 @@ namespace DUNE
       //! @param sentence string with NMEA sentence.
       NMEAReader(const std::string& sentence);
 
-      //! Destructor.
-      ~NMEAReader(void);
-
       //! Retrieve sentence code.
       //! @return sentence code.
       const char*
@@ -69,46 +68,77 @@ namespace DUNE
       }
 
       //! Skip the next field in the input stream.
-      //! @return current object.
-      NMEAReader&
+      void
       skip(void);
 
-      //! Convert the next field in the input stream to boolean.
+      //! Read the next field in the input stream verbatim into a <T>.
       //! @param value output variable.
       //! @return current object.
+      //! @throw EmptyField, if the current field is empty.
+      //! @throw ConversionError, if failed to convert current field into a <T>.
+      template <typename T>
       NMEAReader&
-      operator>>(bool& value);
+      operator>>(T& value)
+      {
+        fieldStart();
 
-      //! Convert the next field in the input stream to integer.
-      //! @param value output variable.
+        if (eos())
+          throw ReaderError("trying to extract fields past the end of the sentence");
+
+        if (m_stream.peek() == ',' || m_stream.eof())
+          throw EmptyField(m_field);
+
+        m_stream >> value;
+        if (m_stream.fail())
+          throw ConversionError(m_field);
+
+        ++m_field;
+        return *this;
+      }
+
+      //! Read the next field in the input stream verbatim into a <T>, but field may be empty.
+      //! @param value optional output variable.
       //! @return current object.
+      //! @throw ConversionError, if failed to convert current field into a <T>.
+      template <typename T>
       NMEAReader&
-      operator>>(int& value);
+      operator>>(Optional::optional<T>& value)
+      {
+        fieldStart();
 
-      //! Convert the next field in the input stream to unsigned
-      //! integer.
+        if (eos())
+          throw ReaderError("trying to extract fields past the end of the sentence");
+
+        if (m_stream.peek() != ',' && !m_stream.eof())
+        {
+          T tmp{};
+          m_stream >> tmp;
+          if (m_stream.fail())
+            throw ConversionError(m_field);
+
+          value = tmp;
+        }
+        else
+          value.reset();
+
+        ++m_field;
+        return *this;
+      }
+
+      //! Read the next field in the input stream verbatim into a string.
       //! @param value output variable.
       //! @return current object.
-      NMEAReader&
-      operator>>(unsigned& value);
-
-      //! Convert the next field in the input stream to float.
-      //! @param value output variable.
-      //! @return current object.
-      NMEAReader&
-      operator>>(float& value);
-
-      //! Convert the next field in the input stream to double.
-      //! @param value output variable.
-      //! @return current object.
-      NMEAReader&
-      operator>>(double& value);
-
-      //! Read the next field in the input stream verbatim.
-      //! @param value output variable.
-      //! @return current object.
+      //! @throw EmptyField, if the current field is empty.
+      //! @throw ConversionError, if failed to convert current field into a string.
       NMEAReader&
       operator>>(std::string& value);
+
+      //! Read the next field in the input stream verbatim into a string, but field may be empty.
+      //! @param value optional output variable.
+      //! @return current object.
+      //! @throw ConversionError, if failed to convert current field into a string.
+      NMEAReader&
+      operator>>(Optional::optional<std::string>& value);
 
       //! Check if we reached the end of sentence and there are no
       //! more fields to extract.
@@ -117,6 +147,9 @@ namespace DUNE
       bool
       eos(void);
 
+      const char*
+      print(void);
+
     private:
       //! Input stream.
       std::istringstream m_stream;
@@ -124,14 +157,14 @@ namespace DUNE
       std::string m_code;
       //! Sentence length in bytes.
       unsigned m_length;
+      //! Total field number.
+      unsigned m_total;
       //! Current field number.
       unsigned m_field;
-      //! Internal buffer.
-      char* m_bfr;
 
-      //! Check if we can convert the next field.
+      //! Move to the start of the next field.
       void
-      checkFieldStart(void);
+      fieldStart(void);
 
       //! Parse NMEA checksum.
       //! @param checksum in ASCII format.
