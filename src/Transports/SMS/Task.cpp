@@ -110,7 +110,7 @@ namespace Transports
         param("IO Port - Device", m_args.io_dev)
         .defaultValue("")
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
-        .description("IO device URI in the form \"uart:///dev/tty[a-zA-Z][0-9]:BAUD\" or \"uart:///dev/uart/[0-9]:BAUD\"");
+        .description("IO device URI in the form \"uart:///dev/[a-zA-Z][0-9]:BAUD\" or \"uart:///dev/uart/[0-9]:BAUD\"");
 
         param("Time to Check Mailbox in Seconds", m_args.time_to_check_mailbox)
         .defaultValue("150")
