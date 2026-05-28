@@ -528,11 +528,13 @@ namespace Navigation
             m_euler_source = priority;
             m_euler_valid = true;
             m_euler_input = input->second;
+            sendDistress(String::str("Currently using EulerAngles input '%s'.", resolveEntity(m_euler_input->getEntityId()).c_str()));
           }
           else if (priority < m_euler_source)
           {
             m_euler_source = priority;
             m_euler_input = input->second;
+            sendDistress(String::str("Currently using EulerAngles input '%s'.", resolveEntity(m_euler_input->getEntityId()).c_str()));
           }
         }
 
@@ -699,6 +701,7 @@ namespace Navigation
           {
             m_gnss_source = priority;
             m_gnss_input = input->second;
+            sendDistress(String::str("Currently using GNSS input '%s'.", resolveEntity(m_gnss_input->getEntityId()).c_str()));
             m_gnss_valid = true;
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
@@ -706,6 +709,7 @@ namespace Navigation
           {
             m_gnss_source = priority;
             m_gnss_input = input->second;
+            sendDistress(String::str("Currently using GNSS input '%s'.", resolveEntity(m_gnss_input->getEntityId()).c_str()));
           }
 
           if (m_gnss_source == priority)
@@ -731,6 +735,7 @@ namespace Navigation
               auto& input = m_gnss_inputs.at(gnss);
               if (m_gnss_valid && !input->valid() && input == m_gnss_input)
               {
+                sendDistress(String::str("GNSS input '%s' timeout expired.", resolveEntity(input->getEntityId()).c_str()));
                 m_gnss_valid = false;
                 m_gnss_input = nullptr;
               }
@@ -744,6 +749,7 @@ namespace Navigation
 
             if (!m_gnss_valid)
             {
+              sendDistress("No valid GNSS source.");
               err("no valid GNSS source");
               setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_WAIT_GPS_FIX);
             }
@@ -756,6 +762,7 @@ namespace Navigation
               auto& input = m_euler_inputs.at(euler);
               if (m_euler_valid && !input->valid() && input == m_euler_input)
               {
+                sendDistress(String::str("EulerAngles input '%s' timeout expired.", resolveEntity(input->getEntityId()).c_str()));
                 m_euler_valid = false;
                 m_euler_input = nullptr;
               }
@@ -768,7 +775,10 @@ namespace Navigation
             }
 
             if (!m_euler_valid)
+            {
+              sendDistress("No valid EulerAngles source.");
               err("no valid EulerAngles source");
+            }
           }
 
           if (m_ang_vel_input != nullptr && m_ang_vel_valid && !m_ang_vel_input->valid())
