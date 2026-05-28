@@ -70,6 +70,8 @@ namespace Navigation
         std::string gv_elabel;
         //! Depth source entity label.
         std::string depth_elabel;
+        //! Default depth value.
+        float default_depth;
         //! Altitude source entity label.
         std::string alt_elabel;
         //! Require course over ground (COG) and speed over ground (SOG) for a GpsFix to be valid.
@@ -223,6 +225,11 @@ namespace Navigation
           .editable(false)
           .description("Entity label of the source of Depth data. "
                        "If an empty label is provided, Depth data will not be used.");
+
+          param("Default Depth", m_args.default_depth)
+          .units(Units::Meter)
+          .defaultValue("-1")
+          .description("Default value for depth.");
 
           param("Altitude Source Entity Label", m_args.alt_elabel)
           .editable(false)
@@ -424,7 +431,7 @@ namespace Navigation
 
           m_estate.clear();
           m_estate.alt = -1.0;
-          m_estate.depth = -1.0;
+          m_estate.depth = m_args.default_depth;
 
           if (m_gnss_sources.empty())
           {
@@ -925,7 +932,7 @@ namespace Navigation
           }
 
           if (m_depth_input == nullptr)
-            m_estate.depth = -1.0f;
+            m_estate.depth = m_args.default_depth;
           else
             m_depth_input->get(m_estate.depth);
 
