@@ -88,6 +88,8 @@ namespace Navigation
         unsigned ma_window_size;
         //! Use course over ground as heading when Euler Angles data is not available.
         bool cog_as_heading;
+        //! Distress message ttl.
+        float distress_ttl;
       };
 
       struct Task: public DUNE::Tasks::Periodic
@@ -150,6 +152,8 @@ namespace Navigation
         MovingAverage<double>* m_vx_ma;
         //! VY estimator moving average.
         MovingAverage<double>* m_vy_ma;
+        //! Distress message.
+        IMC::TransmissionRequest m_distress;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Periodic(name, ctx),
@@ -267,6 +271,12 @@ namespace Navigation
           param("Use COG as Heading", m_args.cog_as_heading)
           .defaultValue("false")
           .description("Use course over ground as heading when Euler Angles data is not available.");
+
+          param("Distress Message TTL", m_args.distress_ttl)
+          .units(Units::Second)
+          .minimumValue("0.0")
+          .defaultValue("60.0")
+          .description("Time to live for distress messages. If set to 0, distress messages will not be sent.");
 
           bind<IMC::EulerAngles>(this);
           bind<IMC::GpsFix>(this);
@@ -408,6 +418,10 @@ namespace Navigation
         void
         onResourceInitialization(void) override
         {
+          m_distress.setDestination(getSystemId());
+          m_distress.data_mode = TransmissionRequest::DMODE_TEXT;
+          m_distress.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
+
           m_estate.clear();
           m_estate.alt = -1.0;
           m_estate.depth = -1.0;
@@ -911,6 +925,17 @@ namespace Navigation
             m_alt_input->get(m_estate.alt);
 
           dispatch(m_estate);
+        }
+
+        void
+        sendDistress(const std::string& msg)
+        {
+          if (m_args.distress_ttl <= 0)
+            return;
+
+          m_distress.txt_data = msg;
+          m_distress.deadline = Clock::getSinceEpoch() + m_args.distress_ttl;
+          dispatch(m_distress);
         }
 
         void
