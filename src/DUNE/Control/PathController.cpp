@@ -349,7 +349,7 @@ namespace DUNE
         return;
       }
 
-      //onDesiredPath(dpath);
+      onDesiredPath(dpath);
 
       const double now = Clock::get();
       const bool no_start = setStartPoint(now, dpath);
@@ -743,6 +743,8 @@ namespace DUNE
 
       updateTrackingState();
 
+      war("prev:  %d", prev_nearby);
+      war("near:  %d", m_ts.nearby);
       reportPathControlState(!prev_nearby && m_ts.nearby);
 
       if (!m_ts.loitering)

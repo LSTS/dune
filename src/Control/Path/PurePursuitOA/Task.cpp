@@ -124,7 +124,7 @@ namespace Control
           if (pcs->getSource() != getSystemId())
             return;
 
-          war("Received PlanControlState: %s | maneuver: %s", pcs->plan_id.c_str(), pcs->man_id.c_str());
+          //war("Received PlanControlState: %s | maneuver: %s", pcs->plan_id.c_str(), pcs->man_id.c_str());
         }
 
         void
@@ -599,38 +599,38 @@ namespace Control
         {
           inf("Getting out Static Rectangle");
 
-          if ((veicObstHorDist < 0 - obstacle.horizontalDistance/2) &
-              (veicObstVerDist > 0 - obstacle.verticalDistance/2))      //à esquerda do obstáculo
-          {
-            m_path.end_lon = currPos.lon;
-            m_path.end_lat = currPos.lat + verDist2latDist(obstacle.verticalDistance + 2*obstacle.nogoZoneDistance);
+          // if ((veicObstHorDist < 0 - obstacle.horizontalDistance/2) &
+          //     (veicObstVerDist > 0 - obstacle.verticalDistance/2))      //à esquerda do obstáculo
+          // {
+          //   m_path.end_lon = currPos.lon;
+          //   m_path.end_lat = currPos.lat + verDist2latDist(obstacle.verticalDistance + 2*obstacle.nogoZoneDistance);
 
-            m_heading.value = M_PI/2;
-          }
-          else if ( (veicObstHorDist > obstacle.horizontalDistance/2) &
-          (veicObstVerDist < obstacle.verticalDistance/2))      //à esquerda do obstáculo
-          {
-            m_path.end_lon = currPos.lon;
-            m_path.end_lat = currPos.lat - verDist2latDist(obstacle.verticalDistance + 2*obstacle.nogoZoneDistance);
+          //   m_heading.value = M_PI/2;
+          // }
+          // else if ( (veicObstHorDist > obstacle.horizontalDistance/2) &
+          // (veicObstVerDist < obstacle.verticalDistance/2))      //à esquerda do obstáculo
+          // {
+          //   m_path.end_lon = currPos.lon;
+          //   m_path.end_lat = currPos.lat - verDist2latDist(obstacle.verticalDistance + 2*obstacle.nogoZoneDistance);
 
-            m_heading.value = -M_PI/2;
-          }
-          else if ( (veicObstVerDist < 0 - obstacle.verticalDistance/2) &
-                    (veicObstHorDist < obstacle.horizontalDistance/2))
-          {
-            m_path.end_lat = currPos.lat;
-            m_path.end_lon = currPos.lon - horDist2lonDist(obstacle.horizontalDistance + 2*obstacle.nogoZoneDistance, obstacle.centerLatitude);
+          //   m_heading.value = -M_PI/2;
+          // }
+          // else if ( (veicObstVerDist < 0 - obstacle.verticalDistance/2) &
+          //           (veicObstHorDist < obstacle.horizontalDistance/2))
+          // {
+          //   m_path.end_lat = currPos.lat;
+          //   m_path.end_lon = currPos.lon - horDist2lonDist(obstacle.horizontalDistance + 2*obstacle.nogoZoneDistance, obstacle.centerLatitude);
 
-            m_heading.value = M_PI;
-          }
-          else if ( (veicObstVerDist > obstacle.verticalDistance/2) &
-                    (veicObstHorDist > 0 - obstacle.horizontalDistance/2))
-          {
-            m_path.end_lat = currPos.lat;
-            m_path.end_lon = currPos.lon + horDist2lonDist(obstacle.horizontalDistance + 2*obstacle.nogoZoneDistance, obstacle.centerLatitude);
+          //   m_heading.value = M_PI;
+          // }
+          // else if ( (veicObstVerDist > obstacle.verticalDistance/2) &
+          //           (veicObstHorDist > 0 - obstacle.horizontalDistance/2))
+          // {
+          //   m_path.end_lat = currPos.lat;
+          //   m_path.end_lon = currPos.lon + horDist2lonDist(obstacle.horizontalDistance + 2*obstacle.nogoZoneDistance, obstacle.centerLatitude);
 
-            m_heading.value = 0;
-          }
+          //   m_heading.value = 0;
+          // }
 
         }
 
@@ -708,6 +708,8 @@ namespace Control
             m_path.end_lon = currPos.lon;
             m_path.end_lat = currPos.lat + verDist2latDist(obstacle.verticalDistance + 2*obstacle.nogoZoneDistance + obstacle.safetyZoneDistance);
 
+            war("AAAAAAAA");
+
             m_heading.value = M_PI/2;
           }
           else if ( (veicObstHorDist > obstacle.horizontalDistance/2 + obstacle.nogoZoneDistance) &
@@ -716,6 +718,7 @@ namespace Control
             m_path.end_lon = currPos.lon;
             m_path.end_lat = currPos.lat - verDist2latDist(obstacle.verticalDistance + 2*obstacle.nogoZoneDistance + obstacle.safetyZoneDistance);
 
+            war("BBBBBBBBB");
             m_heading.value = -M_PI/2;
           }
           else if ( (veicObstVerDist < 0 - obstacle.verticalDistance/2 - obstacle.nogoZoneDistance) &
@@ -723,6 +726,8 @@ namespace Control
           {
             m_path.end_lat = currPos.lat;
             m_path.end_lon = currPos.lon - horDist2lonDist(obstacle.horizontalDistance + 2*obstacle.nogoZoneDistance + obstacle.safetyZoneDistance, obstacle.centerLatitude);
+
+            war("CCCCCCCC");
 
             m_heading.value = M_PI;
           }
@@ -732,6 +737,7 @@ namespace Control
             m_path.end_lat = currPos.lat;
             m_path.end_lon = currPos.lon + horDist2lonDist(obstacle.horizontalDistance + 2*obstacle.nogoZoneDistance + obstacle.safetyZoneDistance, obstacle.centerLatitude);
 
+            war("DDDDDDDDD");
             m_heading.value = 0;
           }
 
@@ -763,6 +769,7 @@ namespace Control
           PathController::onDesiredPath(dp);
           war("DesiredPath: %f %f %d", dp->end_lon, dp->end_lat, dp->getSourceEntity());
           war("m_path:      %f %f %d", m_path.end_lon, m_path.end_lat, m_path.getSourceEntity());
+          war("self:  %u", getEntityId());
 
           // if (dp->getSourceEntity() == getEntityId())
           // {
@@ -824,6 +831,16 @@ namespace Control
             epIsSet = true;
           }
 
+          // Se DEIXOU de evitar colisão, restaurar o destino original
+          if (!currAvoidState && oldAvoidState && epIsSet)
+          {
+            war("Saiu de evasão, restaurando destino original");
+            m_path.end_lon = endPoint.lon;      //restaurar o GoTo original
+            m_path.end_lat = endPoint.lat;      //restaurar o GoTo original
+            epIsSet = false;                    //o endPoint pode ser atualizado para o próximo GoTo
+            dsptch = true;
+          }
+
           // if(ts.getSourceEntity() != getEntityId())
           // {
           //   war("AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA\n                                                            AAAAAAAAAAAAAAAAAAAAAAA");
@@ -844,11 +861,15 @@ namespace Control
           if (!currAvoidState && m_ts.nearby && (clic % 20 == 0))
           {
             // war("CCCCCCCCCCCC");
-            m_path.end_lon = endPoint.lon;      //passar o próximo GoTo
-            m_path.end_lat = endPoint.lat;      //passar o próximo GoTo
-            epIsSet = false;                    //o endPoint pode ser atualizado para o próximo GoTo
-            m_ts.nearby = false;                //já não está próximo do destino imediato
-            dsptch = true;
+            // Nota: Se já restaurou na lógica acima, isto não vai executar novamente
+            if (epIsSet)
+            {
+              m_path.end_lon = endPoint.lon;      //passar o próximo GoTo
+              m_path.end_lat = endPoint.lat;      //passar o próximo GoTo
+              epIsSet = false;                    //o endPoint pode ser atualizado para o próximo GoTo
+              m_ts.nearby = false;                //já não está próximo do destino imediato
+              dsptch = true;
+            }
           }
 
           //inf("m_path 2:        %f %f", m_path.end_lon, m_path.end_lat);
