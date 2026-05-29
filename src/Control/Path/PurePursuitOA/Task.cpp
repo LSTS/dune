@@ -706,36 +706,36 @@ namespace Control
               (veicObstVerDist > 0 - obstacle.verticalDistance/2 - obstacle.nogoZoneDistance))      //à esquerda do obstáculo
           {
             m_path.end_lon = currPos.lon;
-            m_path.end_lat = currPos.lat + verDist2latDist(obstacle.verticalDistance + 2*obstacle.nogoZoneDistance + obstacle.safetyZoneDistance);
+            m_path.end_lat = currPos.lat +  verDist2latDist(obstacle.verticalDistance/2 + veicObstVerDist + obstacle.safetyZoneDistance);
 
             war("AAAAAAAA");
 
             m_heading.value = M_PI/2;
           }
           else if ( (veicObstHorDist > obstacle.horizontalDistance/2 + obstacle.nogoZoneDistance) &
-                    (veicObstVerDist < obstacle.verticalDistance/2 + obstacle.nogoZoneDistance))      //à esquerda do obstáculo
+                    (veicObstVerDist < obstacle.verticalDistance/2 + obstacle.nogoZoneDistance))      //à direita do obstáculo
           {
             m_path.end_lon = currPos.lon;
-            m_path.end_lat = currPos.lat - verDist2latDist(obstacle.verticalDistance + 2*obstacle.nogoZoneDistance + obstacle.safetyZoneDistance);
+            m_path.end_lat = currPos.lat - verDist2latDist(obstacle.verticalDistance/2 + veicObstVerDist + obstacle.safetyZoneDistance);
 
             war("BBBBBBBBB");
             m_heading.value = -M_PI/2;
           }
           else if ( (veicObstVerDist < 0 - obstacle.verticalDistance/2 - obstacle.nogoZoneDistance) &
-                    (veicObstHorDist < obstacle.horizontalDistance/2 + obstacle.nogoZoneDistance))
+                    (veicObstHorDist < obstacle.horizontalDistance/2 + obstacle.nogoZoneDistance))    //acima do obstáculo
           {
             m_path.end_lat = currPos.lat;
-            m_path.end_lon = currPos.lon - horDist2lonDist(obstacle.horizontalDistance + 2*obstacle.nogoZoneDistance + obstacle.safetyZoneDistance, obstacle.centerLatitude);
+            m_path.end_lon = currPos.lon + horDist2lonDist(obstacle.horizontalDistance/2 + veicObstHorDist + obstacle.safetyZoneDistance, obstacle.centerLatitude);
 
             war("CCCCCCCC");
 
             m_heading.value = M_PI;
           }
           else if ( (veicObstVerDist > obstacle.verticalDistance/2 + obstacle.nogoZoneDistance) &
-                    (veicObstHorDist > 0 - obstacle.horizontalDistance/2 - obstacle.nogoZoneDistance))
+                    (veicObstHorDist > 0 - obstacle.horizontalDistance/2 - obstacle.nogoZoneDistance))    //abaixo do obstáculo
           {
             m_path.end_lat = currPos.lat;
-            m_path.end_lon = currPos.lon + horDist2lonDist(obstacle.horizontalDistance + 2*obstacle.nogoZoneDistance + obstacle.safetyZoneDistance, obstacle.centerLatitude);
+            m_path.end_lon = currPos.lon - horDist2lonDist(obstacle.horizontalDistance/2 + veicObstHorDist + obstacle.safetyZoneDistance, obstacle.centerLatitude);
 
             war("DDDDDDDDD");
             m_heading.value = 0;
