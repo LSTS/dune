@@ -145,8 +145,10 @@ namespace Transports
         {
           //debug("Created DCCL message %s", decoded_msg->getName());
           //Debug IMC Msg decompressed
+          std::ostringstream ss;
+          decoded_msg->toJSON(ss);
           war("[DCCL DECODING] Decoded msg %s", decoded_msg->getName());
-          decoded_msg->toJSON(std::cout);
+          war("[DCCL ENCODING] JSON: %s", ss.str().c_str());
 
           dispatch(decoded_msg.get());
           m_incoming.erase(hash);
