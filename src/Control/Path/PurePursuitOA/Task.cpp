@@ -61,7 +61,7 @@ namespace Control
       //!           |           |
       //!    p0 ->  *-----------*
 
-      //! ex: 41.18278733/-8.70796365/56;41.18330915/-8.7055238666667/175/160
+      //! ex: 41.18278733/-8.70796365/56;41.18186428/-8.70552352/175/160
 
       struct Obstacle
       {
@@ -210,14 +210,14 @@ namespace Control
 
         //! ex: 41.18278733/-8.70796365/56;41.18330915/-8.7055238666667/175/160
         // Type,State,Shape safetyZoneDistance(,nogoZoneDistance) centerLon,centerLat,R/bottomLeftLon,bottomLeftLat,horizontalDist,verticalDist (id)
-        // ZSC 10,10 -8.70796365,41.18278733,56;ZSR 10,10 -8.7055238666667,41.18330915,175,160
+        // ZSC 10,10 -8.70796365,41.18278733,56;ZSR 10,10 8.70552352,41.18186428,175,160
         void
         processMessage(std::string msg)
         {
           m_obstacles.clear();
 
           std::vector<std::string> obstacles_str;         //vetor com obstáculos
-          String::split(msg, ";", obstacles_str);
+          String::split(msg, "|", obstacles_str);
 
           for (const auto& obs_str: obstacles_str)            //separate the message in its obstacles
           {
@@ -817,7 +817,8 @@ namespace Control
 
           // inf("%d", getEntityId());
           // inf("%d", m_path.getSourceEntity());
-          inf("TrackingStat:    %f %f", newPath.lon, newPath.lat);
+          // inf("TrackingStat:    %f %f", newPath.lon, newPath.lat);
+          // inf("Center:          %f %f", m_obstacles[1].centerLongitude, m_obstacles[1].centerLatitude);
 
 
           currAvoidState = checkPosition(m_obstacles);
