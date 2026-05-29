@@ -45,6 +45,19 @@ namespace DUNE
     void
     ParameterizedEntity::onQueryEntityParameters(const IMC::QueryEntityParameters* msg)
     {
+      Tasks::Parameter::Scope scope;
+      Tasks::Parameter::Visibility visibility;
+      try
+      {
+        scope = Tasks::Parameter::scopeFromString(msg->scope);
+        visibility = Tasks::Parameter::visibilityFromString(msg->visibility);
+      }
+      catch (std::runtime_error& e)
+      {
+        m_owner->war("invalid query entity parameters message: %s", e.what());
+        return;
+      }
+
       if (msg->name != getLabel())
         return;
 
@@ -54,13 +67,20 @@ namespace DUNE
       std::map<std::string, Tasks::Parameter*>::const_iterator itr = m_params.begin();
       for (; itr != m_params.end(); ++itr)
       {
+        if (scope != itr->second->getScope() && scope != Tasks::Parameter::SCOPE_GLOBAL)
+          continue;
+
+        if (visibility != itr->second->getVisibility() && visibility != Tasks::Parameter::VISIBILITY_DEVELOPER)
+          continue;
+
         IMC::EntityParameter p;
         p.name = itr->second->name();
         p.value = itr->second->value();
         params.params.push_back(p);
       }
 
-      dispatchReply(*msg, params);
+      if (!params.params.empty())
+        dispatchReply(*msg, params);
     }
 
     void
