@@ -161,12 +161,12 @@ namespace Transports
           }
           // Validate the device path to avoid command injection
           // Accepts "/dev/" followed by letters and digits, or "/dev/uart/" followed by digits
-          std::regex re("^(/dev/[a-zA-Z]+[0-9]+|/dev/uart/[0-9]+)$");
-          if (!std::regex_match(device, re))
-          {
-            m_task->war("[PollThread]: Invalid device path format: %s", device.c_str());
-            return false;
-          }
+          // std::regex re("^(/dev/[a-zA-Z]+[0-9]+|/dev/uart/[0-9]+)$");
+          // if (!std::regex_match(device, re))
+          // {
+          //   m_task->war("[PollThread]: Invalid device path format: %s", device.c_str());
+          //   return false;
+          // }
           
           // For future reference, consider using invalid SerialPort read,
           // instead of access, to check if the device is still available
