@@ -868,8 +868,10 @@ namespace Transports
           return *msg;
 
         //Compressed msg debug
+        std::ostringstream ss;
+        inlinemsg->toJSON(ss);
         war("[DCCL ENCODING] Encoded msg %s with size %d bytes, compressed msg with size %zu", inlinemsg->getName(), inlinemsg->getPayloadSerializationSize()+12, encoded_string.size());
-        inlinemsg->toJSON(std::cout); 
+        war("[DCCL ENCODING] JSON: %s", ss.str().c_str());
 
         req.raw_data.assign(encoded_string.begin(), encoded_string.end());
 
