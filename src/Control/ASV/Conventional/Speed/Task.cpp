@@ -209,8 +209,6 @@ namespace Control
           {
             if (paramChanged(m_args.rpm_gains) ||
                 paramChanged(m_args.mps_gains) ||
-                paramChanged(m_args.rpm_ffgain) ||
-                paramChanged(m_args.mps_ffgain) ||
                 paramChanged(m_args.max_int_mps) ||
                 paramChanged(m_args.max_thrust) ||
                 paramChanged(m_args.min_thrust))
