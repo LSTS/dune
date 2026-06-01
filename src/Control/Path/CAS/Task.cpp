@@ -84,6 +84,8 @@ namespace Control
         double turn_thrust_assist;
         //! Heading offset threshold to consider.
         double heading_offset_threshold;
+        //! Force speed reference.
+        double force_speed_ref;
 
         //! Enable anti-grounding.
         // bool en_antiground;
@@ -482,6 +484,15 @@ namespace Control
           .maximumValue("180.0")
           .defaultValue("10.0")
           .description("Heading offset threshold to consider for thrust assistance during turns.");
+
+          param("Force Speed Reference", m_args.force_speed_ref)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .units(Units::MeterPerSecond)
+          .minimumValue("0.0")
+          .defaultValue("0.0")
+          .description("Reference speed to be used when overriding the speed reference. "
+                       "If set to 0, the speed reference will not be overridden by this value. "
+                       "Takes precedence over Thrust Assistance During Turns.");
 
           // param("Entity Label - Wind", m_args.elabel_ws)
           // .description("Entity label of 'AbsoluteWind' message");
@@ -1287,7 +1298,13 @@ namespace Control
         void
         overrideSpeedReference(bool turning)
         {
-          if (m_args.turn_thrust_assist > 0.0f && turning)
+          if (m_args.force_speed_ref > 0.0f)
+          {
+            m_dpath_speed_override = true;
+            setSpeedReference(m_args.force_speed_ref, IMC::SpeedUnits::SUNITS_METERS_PS);
+            return;
+          }
+          else if (m_args.turn_thrust_assist > 0.0f && turning)
           {
             m_dpath_speed_override = true;
             setSpeedReference(m_args.turn_thrust_assist, IMC::SpeedUnits::SUNITS_PERCENTAGE);
