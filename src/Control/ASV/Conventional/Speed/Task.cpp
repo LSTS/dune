@@ -215,7 +215,6 @@ namespace Control
                 paramChanged(m_args.max_thrust) ||
                 paramChanged(m_args.min_thrust))
             {
-              reset();
               initializePIDs();
             }
 
