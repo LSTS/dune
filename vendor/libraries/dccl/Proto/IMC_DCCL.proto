@@ -2790,6 +2790,11 @@ message WindSpeed {
     optional float turbulence = 3 [(dccl.field) = { min: 0 max: 1 precision: 1 }]; 
 }
 
+//Power
+message Power {
+    option (dccl.msg) = { codec_version: 4 id: 364 };
+    optional float value = 1 [(dccl.field) = { min: -200 max: 200 precision: 1}];
+}
 
 message PlanDBArgUnion {
     option (dccl.msg) = { codec_version: 4 };
