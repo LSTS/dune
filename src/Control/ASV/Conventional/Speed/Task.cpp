@@ -144,12 +144,16 @@ namespace Control
             .defaultValue("-1.0")
             .description("Limit for the integral term");
 
-            param("Positive Thrust Limit", m_args.max_thrust)
+            param("Maximum Thrust Limit", m_args.max_thrust)
             .defaultValue("1.0")
+            .minimumValue("-1.0")
+            .maximumValue("1.0")
             .description("Maximum thrust limit");
 
-            param("Negative Thrust Limit", m_args.min_thrust)
+            param("Minimum Thrust Limit", m_args.min_thrust)
             .defaultValue("-1.0")
+            .minimumValue("-1.0")
+            .maximumValue("1.0")
             .description("Minimum thrust limit");
 
             param("Minimum RPM Limit", m_args.min_rpm)
