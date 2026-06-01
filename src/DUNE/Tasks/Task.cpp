@@ -526,12 +526,12 @@ namespace DUNE
       params.name = getEntityLabel();
 
       IMC::MessageList<IMC::EntityParameter>::const_iterator itr = msg->params.begin();
+      IMC::EntityParameter p;
       for (; itr != msg->params.end(); ++itr)
       {
         try
         {
           m_params.set((*itr)->name, (*itr)->value);
-          IMC::EntityParameter p;
           p.name = (*itr)->name;
           p.value = (*itr)->value;
           params.params.push_back(p);
