@@ -472,6 +472,7 @@ namespace Control
           .description("Maximum desired heading possible, relative to track bearing.");
 
           param("Thrust Assistance During Turns", m_args.turn_thrust_assist)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
           .units(Units::Percentage)
           .minimumValue("0.0")
           .maximumValue("100.0")
