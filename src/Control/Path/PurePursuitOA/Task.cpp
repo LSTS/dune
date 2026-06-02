@@ -68,8 +68,7 @@ namespace Control
         char type = 'E';                    //P=point, Z=zone, E=not defined -> error
         char state = 'E';                   //S=static, M=moving, E=not defined -> error
         char shape = 'E';                   //C=circle, R=rectangle, E=not defined -> error
-        double safetyZoneDistance = 0;     //meters; distance between nogo zone margin and safety zone margin
-        double nogoZoneDistance = 0;       //meters; distance between center/obstacle margin and nogo zone margin
+        double safetyZoneDistance = 0;     //meters; distance between perimether and safety zone margin
         double centerLongitude = 0;        //degrees
         double centerLatitude = 0;         //degrees
         double radius = 0;                 //meters
@@ -211,16 +210,16 @@ namespace Control
         }
 
         //! ex: 41.18279098/-8.70796953/56;41.18186403/-8.70552352/175/160
-        // Type,State,Shape safetyZoneDistance(,nogoZoneDistance) centerLon,centerLat,R/bottomLeftLon,bottomLeftLat,horizontalDist,verticalDist (id)
-        // ZSC 10,10 -8.70796953,41.18279098,56|ZSR 10,10 -8.70552352,41.18186403,175,160
+        // Type,State,Shape safetyZoneDistance centerLon,centerLat,R/bottomLeftLon,bottomLeftLat,horizontalDist,verticalDist (id)
+        // ZSC 10 -8.70796953,41.18279098,56|ZSR 10 -8.70552352,41.18186403,175,160
         void
         processMessage(std::string msg)
         {
-          war("EEEEEEEEEEEEEEEEEEEEEEe");
+          // war("EEEEEEEEEEEEEEEEEEEEEE");
           m_obstacles.clear();
 
           std::vector<std::string> obstacles_str;         //vetor com obstáculos
-          String::split(msg, "|", obstacles_str);
+          String::split(msg, "&", obstacles_str);
 
           for (const auto& obs_str: obstacles_str)            //separate the message in its obstacles
           {
@@ -229,10 +228,10 @@ namespace Control
             Obstacle obstacle;
 
 
-            if (fields.size() <3 || fields.size()>4) //*****CORRIGIR
+            if (fields.size() <3 || fields.size()>4)
             {
               war("Incorrectly defined obstacle");
-              return;
+              continue;;
             }
 
             std::string obstacleParams = fields[0];
@@ -241,31 +240,23 @@ namespace Control
             if (obstacleParams.size() != 3)
             {
               war("Parameter incorrectly defined: Params wrong size -> %li", obstacleParams.size());
-              //return;
+              continue;
             }
             if ((obstacleParams[0] != 'P' && obstacleParams[0] != 'Z') || (obstacleParams[1] != 'S' && obstacleParams[1] != 'M') || (obstacleParams[2] != 'C' && obstacleParams[2] != 'R'))
             {
               war("Parameter incorrectly defined: Value without meaning");
-              return;
+              continue;
             }
             obstacle.type = obstacleParams[0];
             obstacle.state = obstacleParams[1];
             obstacle.shape = obstacleParams[2];
 
-            war("%c%c%c", obstacleParams[0], obstacleParams[1], obstacleParams[2]);
+            // war("%c%c%c", obstacleParams[0], obstacleParams[1], obstacleParams[2]);
 
             if (obstacle.type == 'P')                           //if the obstacle is a point
             {
               obstacle.shape = 'C';
-              std::vector<std::string> zonesDistances_str;
-              String::split(fields[1], ",", zonesDistances_str);
-              if (zonesDistances_str.size() != 1)         //if there is a number of distances defined inconsistent with the type of obstacle -> error
-              {
-                war(">> Parameter incorrectly defined: incorrect number of distances inserted");
-                return;
-              }
-              obstacle.safetyZoneDistance = std::stod(zonesDistances_str[0]);
-              war("Safety Distance: %f", obstacle.safetyZoneDistance);
+              obstacle.safetyZoneDistance = std::stod(fields[1]);
 
               //obstacle treated as a circle
               std::vector<std::string> circleParams_str;
@@ -273,23 +264,21 @@ namespace Control
               if (circleParams_str.size() != 3)
               {
                 war(">> Parameter incorrectly defined: incorrect number of location parameters (1): %li", circleParams_str.size());
-                return;
+                continue;
               }
               obstacle.centerLongitude = std::stod(circleParams_str[0]);
-              war("CenterLon: %f", obstacle.centerLongitude);
               obstacle.centerLatitude = std::stod(circleParams_str[1]);
-              war("CenterLat: %f", obstacle.centerLatitude);
-              obstacle.radius = std::stod(circleParams_str[2]);
-              war("Radius: %f", obstacle.radius);
-              obstacle.nogoZoneDistance = std::stod(circleParams_str[2]);
-              war("nogoDistance: %f", obstacle.nogoZoneDistance);
+              obstacle.radius = 0 /* std::stod(circleParams_str[2]) */;
+              // war("CenterLon: %f", obstacle.centerLongitude);
+              // war("CenterLat: %f", obstacle.centerLatitude);
+              // war("Radius: %f", obstacle.radius);
 
               if (obstacle.state == 'M')
               {
                 if (fields[3].size() != 1)
                 {
                   war(">> Parameter incorrectly defined: incorrect id");
-                  return;
+                  continue;
                 }
                 obstacle.id = std::stoi(fields[3]);
               }
@@ -297,15 +286,7 @@ namespace Control
             }
             else                      //if the obstacle is a zone
             {
-              std::vector<std::string> zonesDistances_str;
-              String::split(fields[1], ",", zonesDistances_str);
-              if (zonesDistances_str.size() != 2)         //if there is a number of distances defined inconsistent with the type of obstacle -> error
-              {
-                war(">> Parameter incorrectly defined: incorrect number of distances inserted");
-                return;
-              }
-              obstacle.safetyZoneDistance = std::stod(zonesDistances_str[0]);
-              obstacle.nogoZoneDistance = std::stod(zonesDistances_str[1]);
+              obstacle.safetyZoneDistance = std::stod(fields[1]);
 
               if (obstacle.shape == 'C')          //if the obstacle is a circle
               {
@@ -314,7 +295,7 @@ namespace Control
                 if (circleParams_str.size() != 3)
                 {
                   war(">> Parameter incorrectly defined: incorrect number of location parameters (2): %li", circleParams_str.size());
-                  return;
+                  continue;
                 }
                 obstacle.centerLongitude = std::stod(circleParams_str[0]);
                 obstacle.centerLatitude = std::stod(circleParams_str[1]);
@@ -327,7 +308,7 @@ namespace Control
                 if (rectangleParams_str.size() != 4)
                 {
                   war(">> Parameter incorrectly defined: incorrect number of location parameters (3): %li", rectangleParams_str.size());
-                  return;
+                  continue;
                 }
                 obstacle.bottomLeftLongitude = std::stod(rectangleParams_str[0]);
                 obstacle.bottomLeftLatitude = std::stod(rectangleParams_str[1]);
@@ -340,14 +321,14 @@ namespace Control
                 if (fields[3].size() != 1)
                 {
                   war(">> Parameter incorrectly defined: incorrect id");
-                  return;
+                  continue;
                 }
                 obstacle.id = std::stoi(fields[3]);
               }
 
             }
             m_obstacles.push_back(obstacle);
-            war(">> Obstacle added successfully");
+            // war(">> Obstacle added successfully");
           }
         }
 
@@ -356,7 +337,7 @@ namespace Control
         checkPosition(const std::vector<Obstacle> obstacles)
         {
           int avoidingcollision = 0;
-          int counter = 0;
+          // int counter = 0;
           for (const auto &obstacle : obstacles)
           {
             double horizontalDistanceV, horizontalDistanceO; //referência é o veículo, referência é o obstáculo
@@ -372,7 +353,7 @@ namespace Control
             veicleObstacleDistance = sqrt(horizontalDistanceV*horizontalDistanceV+verticalDistanceV*verticalDistanceV);
 
             // war("Obstacle %d @ %fm", counter++, veicleObstacleDistance);
-            //inf("I'm Here: %f %f", currPos.lon, currPos.lat);
+            // inf("I'm Here: %f %f", currPos.lon, currPos.lat);
 
 
             if (obstacle.state == 'S') //para obstáculos estáticos
@@ -596,7 +577,7 @@ namespace Control
           lonShift = horDist2lonDist(horShift, obstacle.centerLatitude);
           latShift = verDist2latDist(verShift);
 
-          war("PERIGOOOOOOO");
+          // war("PERIGOOOOOOO");
           // inf("obstRadPosition: %f", obstRadPosition);
           // inf("shift: %f", shift);
           // inf("horShift: %f", horShift);
@@ -605,8 +586,8 @@ namespace Control
           // inf("latShift: %f", latShift);
           m_path.end_lon = currPos.lon + lonShift;
           m_path.end_lat = currPos.lat + latShift;
-          //m_heading.value = nowHeading;
-          inf("m_path circle:   %f %f", m_path.end_lon, m_path.end_lat);
+          // m_heading.value = nowHeading;
+          // inf("m_path circle:   %f %f", m_path.end_lon, m_path.end_lat);
 
         }
 
@@ -666,16 +647,16 @@ namespace Control
                         /*
 
                               -------------------------------------
-                              |    .   SAFETYZONE ------->        |
-                              | A  ---------------------------....|
-                              | |  |   . NOGOZONE  ------->  |    |
-                              | |  | A -------------------...|  | |
-                              | |  | | |    OBSTACLE     | | |  | |
-                              | |  | | |                 | | |  | |
-                              | |  |...------------------- V |  | |
-                              |    |     <------------   .   |  | |
-                              |....---------------------------  V |
-                              |       <---------------       .    |
+                              |        .  SAFETYZONE ------->     |
+                              | A      .                          |
+                              | |      .                          |
+                              | |      -------------------........|
+                              | |      |    OBSTACLE     |      | |
+                              | |      |                 |      | |
+                              |........-------------------      | |
+                              |                          .      | |
+                              |                          .      V |
+                              |                          .        |
                               -------------------------------------
 
 
@@ -685,20 +666,20 @@ namespace Control
 
         //********************operating Functions END
 
-        void
+        /* void
         onDesiredPath(const IMC::DesiredPath* dp)
         {
           PathController::onDesiredPath(dp);
-          war("DesiredPath: %f %f %d", dp->end_lon, dp->end_lat, dp->getSourceEntity());
-          war("m_path:      %f %f %d", m_path.end_lon, m_path.end_lat, m_path.getSourceEntity());
-          war("self:  %u", getEntityId());
+          // war("DesiredPath: %f %f %d", dp->end_lon, dp->end_lat, dp->getSourceEntity());
+          // war("m_path:      %f %f %d", m_path.end_lon, m_path.end_lat, m_path.getSourceEntity());
+          // war("self:  %u", getEntityId());
 
           // if (dp->getSourceEntity() == getEntityId())
           // {
 
           // }
           return;
-        }
+        } */
 
         int clic = 0;
         int contador = 1;
@@ -727,10 +708,10 @@ namespace Control
             contador--;
           }
 
-          inf("m_path:          %f %f", m_path.end_lon, m_path.end_lat);
+          // inf("m_path:          %f %f", m_path.end_lon, m_path.end_lat);
           // inf("speed:           %f", ts.speed);
 
-          inf("%s", ((ts.nearby) ? "Nearby" : "Not Nearby"));
+          // inf("%s", ((ts.nearby) ? "Nearby" : "Not Nearby"));
 
           inf("I'm Here:        %f %f", currPos.lon, currPos.lat);
           //UNDER CONSTRUCTION*********************************************
@@ -748,7 +729,7 @@ namespace Control
 
           if (!epIsSet && currAvoidState && !oldAvoidState)   //se o DesiredPath foi definido por este controlador e o endPoint ainda não foi definido
           {
-            war("AAAAAAAAAAAAAAAAAA");
+            // war("AAAAAAAAAAAAAAAAAA");
             endPoint = {oldPath.lon, oldPath.lat};
             epIsSet = true;
           }
@@ -770,7 +751,7 @@ namespace Control
 
           if(newPath.lon != oldPath.lon || newPath.lat != oldPath.lat)    //verificar se o m_path.end mudou
           {
-            war("BBBBBBBBBBBBBBBBBB");
+            // war("BBBBBBBBBBBBBBBBBB");
 
             finalPos = {newPath.lon, newPath.lat};                                           //se tiver mudado, atualizar o destino imediato
             finalPosChanged = true;
@@ -782,7 +763,7 @@ namespace Control
 
           if (!currAvoidState && m_ts.nearby && (clic % 20 == 0))
           {
-            war("CCCCCCCCCCCC");
+            // war("CCCCCCCCCCCC");
             // Nota: Se já restaurou na lógica acima, isto não vai executar novamente
             if (epIsSet)
             {
@@ -808,7 +789,7 @@ namespace Control
           {
             inf("Mudou de estado");
 
-            inf("m_path 2:        %f %f", m_path.end_lon, m_path.end_lat);
+            // inf("m_path 2:        %f %f", m_path.end_lon, m_path.end_lat);
             m_path.end_lon = Angles::normalizeRadian(Angles::radians(m_path.end_lon));
             m_path.end_lat = Angles::normalizeRadian(Angles::radians(m_path.end_lat));
 

@@ -743,8 +743,8 @@ namespace DUNE
 
       updateTrackingState();
 
-      war("prev:  %d", prev_nearby);
-      war("near:  %d", m_ts.nearby);
+      // war("prev:  %d", prev_nearby);
+      // war("near:  %d", m_ts.nearby);
       reportPathControlState(!prev_nearby && m_ts.nearby);
 
       if (!m_ts.loitering)
