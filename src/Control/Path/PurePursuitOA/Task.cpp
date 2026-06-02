@@ -92,6 +92,7 @@ namespace Control
         IMC::DesiredPath m_path;                  //ponto para o qual está a ir
         std::string m_obs_msg;                    //mensagem com os obstáculos
         std::string m_add_obst;                   //mensagem com obstáculo extra para adicionar
+        std::string m_rmv_obst;                   //mensagem com pbstáculo para remover
         std::vector<Obstacle> m_obstacles;        //vetor com os obstáculos
         Position finalPos;                        //destino imediato
         Position endPoint;                        //próximo GoTo do percurso
@@ -118,6 +119,10 @@ namespace Control
           param("Add Obstacle", m_add_obst)
           .defaultValue("")
           .description("Add an obstacle to the list.");
+
+          param("Rmv Obstacle", m_rmv_obst)
+          .defaultValue("")
+          .description("Remove an obstacle from the list.");
 
           bind<IMC::PlanControlState>(this);
           // bind<IMC::VehicleState>(this);
