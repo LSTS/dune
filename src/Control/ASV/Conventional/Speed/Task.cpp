@@ -217,6 +217,18 @@ namespace Control
                 paramChanged(m_args.max_thrust) ||
                 paramChanged(m_args.min_thrust))
             {
+              if (m_args.min_thrust > m_args.max_thrust)
+              {
+                inf("Adjusting minimum thrust limit according to maximum thrust limit.");
+                applyEntityParameter(&m_args.min_thrust, m_args.max_thrust);
+              }
+
+              if (m_args.max_thrust < m_args.min_thrust)
+              {
+                inf("Adjusting maximum thrust limit according to minimum thrust limit.");
+                applyEntityParameter(&m_args.max_thrust, m_args.min_thrust);
+              }
+
               initializePIDs();
             }
 
