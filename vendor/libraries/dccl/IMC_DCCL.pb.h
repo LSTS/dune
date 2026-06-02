@@ -170,6 +170,9 @@ extern PlanTransitionDefaultTypeInternal _PlanTransition_default_instance_;
 class PlanVariable;
 struct PlanVariableDefaultTypeInternal;
 extern PlanVariableDefaultTypeInternal _PlanVariable_default_instance_;
+class Power;
+struct PowerDefaultTypeInternal;
+extern PowerDefaultTypeInternal _Power_default_instance_;
 class ProfileSample;
 struct ProfileSampleDefaultTypeInternal;
 extern ProfileSampleDefaultTypeInternal _ProfileSample_default_instance_;
@@ -240,6 +243,7 @@ template<> ::IMC_DCCL::PlanSpecificationStartActionsUnion* Arena::CreateMaybeMes
 template<> ::IMC_DCCL::PlanStatistics* Arena::CreateMaybeMessage<::IMC_DCCL::PlanStatistics>(Arena*);
 template<> ::IMC_DCCL::PlanTransition* Arena::CreateMaybeMessage<::IMC_DCCL::PlanTransition>(Arena*);
 template<> ::IMC_DCCL::PlanVariable* Arena::CreateMaybeMessage<::IMC_DCCL::PlanVariable>(Arena*);
+template<> ::IMC_DCCL::Power* Arena::CreateMaybeMessage<::IMC_DCCL::Power>(Arena*);
 template<> ::IMC_DCCL::ProfileSample* Arena::CreateMaybeMessage<::IMC_DCCL::ProfileSample>(Arena*);
 template<> ::IMC_DCCL::ProtoMessage* Arena::CreateMaybeMessage<::IMC_DCCL::ProtoMessage>(Arena*);
 template<> ::IMC_DCCL::SetEntityParameters* Arena::CreateMaybeMessage<::IMC_DCCL::SetEntityParameters>(Arena*);
@@ -936,7 +940,7 @@ enum ParamName : int {
   PN_ADC15_ENTITY_LABEL = 54,
   PN_ADC15_MESSAGE = 55,
   PN_ADC1_CONVERSION = 56,
-  PN_ADC1_ENTITY_LABEL_1 = 57,
+  PN_ADC1_ENTITY_LABEL = 57,
   PN_ADC1_MESSAGE = 58,
   PN_ADC2_CONVERSION = 59,
   PN_ADC2_ENTITY_LABEL_1 = 60,
@@ -962,7 +966,7 @@ enum ParamName : int {
   PN_ADC9_CONVERSION = 80,
   PN_ADC9_ENTITY_LABEL = 81,
   PN_ADC9_MESSAGE = 82,
-  PN_ADC_1_ENTITY_LABEL = 83,
+  PN_ADC_1_ENTITY_LABEL_1 = 83,
   PN_ADC_1_FIXED_GAIN = 84,
   PN_ADC_1_FIXED_GAIN_VAL = 85,
   PN_ADC_1_IS_ACTIVE = 86,
@@ -2919,7 +2923,7 @@ enum EntityNameEnum : int {
   EN_LOSTCOMMS_SUPERVISOR_ASV = 109,
   EN_LOST_COMMS = 110,
   EN_LOST_COMMS_MONITOR = 111,
-  EN_MAINBOARD = 112,
+  EN_MAINBOARD_1 = 112,
   EN_MAINBOARD_AUX = 113,
   EN_MAINBOARD_AUXILIARY_CPU = 114,
   EN_MAINBOARD_BOARD = 115,
@@ -2927,7 +2931,7 @@ enum EntityNameEnum : int {
   EN_MAINBOARD_CAMERA_CPU_1 = 117,
   EN_MAINBOARD_CORE = 118,
   EN_MAINBOARD_SUPERIO = 119,
-  EN_MAIN_BOARD_1 = 120,
+  EN_MAIN_BOARD = 120,
   EN_MANTA_FUEL_LEVEL = 121,
   EN_MCD4R = 122,
   EN_MEDIUM = 123,
@@ -10301,17 +10305,17 @@ class PlanDBState final :
   void _internal_set_plan_size(uint32_t value);
   public:
 
-  // optional float change_time = 3 [(.dccl.field) = {
+  // optional double change_time = 3 [(.dccl.field) = {
   bool has_change_time() const;
   private:
   bool _internal_has_change_time() const;
   public:
   void clear_change_time();
-  float change_time() const;
-  void set_change_time(float value);
+  double change_time() const;
+  void set_change_time(double value);
   private:
-  float _internal_change_time() const;
-  void _internal_set_change_time(float value);
+  double _internal_change_time() const;
+  void _internal_set_change_time(double value);
   public:
 
   // optional uint32 change_sid = 4 [(.dccl.field) = {
@@ -10342,7 +10346,7 @@ class PlanDBState final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr md5_;
     uint32_t plan_count_;
     uint32_t plan_size_;
-    float change_time_;
+    double change_time_;
     uint32_t change_sid_;
   };
   union { Impl_ _impl_; };
@@ -10474,8 +10478,8 @@ class PlanDBInformation final :
     kPlanIdFieldNumber = 1,
     kChangeSnameFieldNumber = 5,
     kMd5FieldNumber = 6,
-    kPlanSizeFieldNumber = 2,
     kChangeTimeFieldNumber = 3,
+    kPlanSizeFieldNumber = 2,
     kChangeSidFieldNumber = 4,
   };
   // optional string plan_id = 1 [(.dccl.field) = {
@@ -10532,6 +10536,19 @@ class PlanDBInformation final :
   std::string* _internal_mutable_md5();
   public:
 
+  // optional double change_time = 3 [(.dccl.field) = {
+  bool has_change_time() const;
+  private:
+  bool _internal_has_change_time() const;
+  public:
+  void clear_change_time();
+  double change_time() const;
+  void set_change_time(double value);
+  private:
+  double _internal_change_time() const;
+  void _internal_set_change_time(double value);
+  public:
+
   // optional uint32 plan_size = 2 [(.dccl.field) = {
   bool has_plan_size() const;
   private:
@@ -10543,19 +10560,6 @@ class PlanDBInformation final :
   private:
   uint32_t _internal_plan_size() const;
   void _internal_set_plan_size(uint32_t value);
-  public:
-
-  // optional float change_time = 3 [(.dccl.field) = {
-  bool has_change_time() const;
-  private:
-  bool _internal_has_change_time() const;
-  public:
-  void clear_change_time();
-  float change_time() const;
-  void set_change_time(float value);
-  private:
-  float _internal_change_time() const;
-  void _internal_set_change_time(float value);
   public:
 
   // optional uint32 change_sid = 4 [(.dccl.field) = {
@@ -10584,8 +10588,8 @@ class PlanDBInformation final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr plan_id_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr change_sname_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr md5_;
+    double change_time_;
     uint32_t plan_size_;
-    float change_time_;
     uint32_t change_sid_;
   };
   union { Impl_ _impl_; };
@@ -11378,8 +11382,8 @@ class VehicleState final :
     kLastErrorFieldNumber = 9,
     kOpModeFieldNumber = 1,
     kErrorCountFieldNumber = 2,
-    kManeuverTypeFieldNumber = 4,
     kManeuverStimeFieldNumber = 5,
+    kManeuverTypeFieldNumber = 4,
     kManeuverEtaFieldNumber = 6,
     kControlLoopsFieldNumber = 7,
     kFlagsFieldNumber = 8,
@@ -11443,6 +11447,19 @@ class VehicleState final :
   void _internal_set_error_count(uint32_t value);
   public:
 
+  // optional double maneuver_stime = 5 [(.dccl.field) = {
+  bool has_maneuver_stime() const;
+  private:
+  bool _internal_has_maneuver_stime() const;
+  public:
+  void clear_maneuver_stime();
+  double maneuver_stime() const;
+  void set_maneuver_stime(double value);
+  private:
+  double _internal_maneuver_stime() const;
+  void _internal_set_maneuver_stime(double value);
+  public:
+
   // optional uint32 maneuver_type = 4 [(.dccl.field) = {
   bool has_maneuver_type() const;
   private:
@@ -11454,19 +11471,6 @@ class VehicleState final :
   private:
   uint32_t _internal_maneuver_type() const;
   void _internal_set_maneuver_type(uint32_t value);
-  public:
-
-  // optional float maneuver_stime = 5 [(.dccl.field) = {
-  bool has_maneuver_stime() const;
-  private:
-  bool _internal_has_maneuver_stime() const;
-  public:
-  void clear_maneuver_stime();
-  float maneuver_stime() const;
-  void set_maneuver_stime(float value);
-  private:
-  float _internal_maneuver_stime() const;
-  void _internal_set_maneuver_stime(float value);
   public:
 
   // optional uint32 maneuver_eta = 6 [(.dccl.field) = {
@@ -11508,17 +11512,17 @@ class VehicleState final :
   void _internal_set_flags(uint32_t value);
   public:
 
-  // optional float last_error_time = 10 [(.dccl.field) = {
+  // optional double last_error_time = 10 [(.dccl.field) = {
   bool has_last_error_time() const;
   private:
   bool _internal_has_last_error_time() const;
   public:
   void clear_last_error_time();
-  float last_error_time() const;
-  void set_last_error_time(float value);
+  double last_error_time() const;
+  void set_last_error_time(double value);
   private:
-  float _internal_last_error_time() const;
-  void _internal_set_last_error_time(float value);
+  double _internal_last_error_time() const;
+  void _internal_set_last_error_time(double value);
   public:
 
   // @@protoc_insertion_point(class_scope:IMC_DCCL.VehicleState)
@@ -11535,12 +11539,12 @@ class VehicleState final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr last_error_;
     int op_mode_;
     uint32_t error_count_;
+    double maneuver_stime_;
     uint32_t maneuver_type_;
-    float maneuver_stime_;
     uint32_t maneuver_eta_;
     uint32_t control_loops_;
     uint32_t flags_;
-    float last_error_time_;
+    double last_error_time_;
   };
   union { Impl_ _impl_; };
   friend struct ::TableStruct_IMC_5fDCCL_2eproto;
@@ -12776,6 +12780,159 @@ class WindSpeed final :
 };
 // -------------------------------------------------------------------
 
+class Power final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.Power) */ {
+ public:
+  inline Power() : Power(nullptr) {}
+  ~Power() override;
+  explicit PROTOBUF_CONSTEXPR Power(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  Power(const Power& from);
+  Power(Power&& from) noexcept
+    : Power() {
+    *this = ::std::move(from);
+  }
+
+  inline Power& operator=(const Power& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Power& operator=(Power&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const Power& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const Power* internal_default_instance() {
+    return reinterpret_cast<const Power*>(
+               &_Power_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    43;
+
+  friend void swap(Power& a, Power& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Power* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Power* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  Power* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<Power>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const Power& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const Power& from) {
+    Power::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Power* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.Power";
+  }
+  protected:
+  explicit Power(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kValueFieldNumber = 1,
+  };
+  // optional float value = 1 [(.dccl.field) = {
+  bool has_value() const;
+  private:
+  bool _internal_has_value() const;
+  public:
+  void clear_value();
+  float value() const;
+  void set_value(float value);
+  private:
+  float _internal_value() const;
+  void _internal_set_value(float value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.Power)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::internal::HasBits<1> _has_bits_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    float value_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class PlanDBArgUnion final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PlanDBArgUnion) */ {
  public:
@@ -12831,7 +12988,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    43;
+    44;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -13047,7 +13204,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    44;
+    45;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -13221,7 +13378,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    45;
+    46;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -13397,7 +13554,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    46;
+    47;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -13608,7 +13765,7 @@ class Header final :
                &_Header_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    47;
+    48;
 
   friend void swap(Header& a, Header& b) {
     a.Swap(&b);
@@ -13840,7 +13997,7 @@ class Payload final :
                &_Payload_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    48;
+    49;
 
   friend void swap(Payload& a, Payload& b) {
     a.Swap(&b);
@@ -14303,7 +14460,7 @@ class ProtoMessage final :
                &_ProtoMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    49;
+    50;
 
   friend void swap(ProtoMessage& a, ProtoMessage& b) {
     a.Swap(&b);
@@ -20343,7 +20500,7 @@ inline void PlanDBState::set_plan_size(uint32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.plan_size)
 }
 
-// optional float change_time = 3 [(.dccl.field) = {
+// optional double change_time = 3 [(.dccl.field) = {
 inline bool PlanDBState::_internal_has_change_time() const {
   bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   return value;
@@ -20355,18 +20512,18 @@ inline void PlanDBState::clear_change_time() {
   _impl_.change_time_ = 0;
   _impl_._has_bits_[0] &= ~0x00000010u;
 }
-inline float PlanDBState::_internal_change_time() const {
+inline double PlanDBState::_internal_change_time() const {
   return _impl_.change_time_;
 }
-inline float PlanDBState::change_time() const {
+inline double PlanDBState::change_time() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBState.change_time)
   return _internal_change_time();
 }
-inline void PlanDBState::_internal_set_change_time(float value) {
+inline void PlanDBState::_internal_set_change_time(double value) {
   _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.change_time_ = value;
 }
-inline void PlanDBState::set_change_time(float value) {
+inline void PlanDBState::set_change_time(double value) {
   _internal_set_change_time(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBState.change_time)
 }
@@ -20649,7 +20806,7 @@ inline void PlanDBInformation::set_allocated_plan_id(std::string* plan_id) {
 
 // optional uint32 plan_size = 2 [(.dccl.field) = {
 inline bool PlanDBInformation::_internal_has_plan_size() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   return value;
 }
 inline bool PlanDBInformation::has_plan_size() const {
@@ -20657,7 +20814,7 @@ inline bool PlanDBInformation::has_plan_size() const {
 }
 inline void PlanDBInformation::clear_plan_size() {
   _impl_.plan_size_ = 0u;
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline uint32_t PlanDBInformation::_internal_plan_size() const {
   return _impl_.plan_size_;
@@ -20667,7 +20824,7 @@ inline uint32_t PlanDBInformation::plan_size() const {
   return _internal_plan_size();
 }
 inline void PlanDBInformation::_internal_set_plan_size(uint32_t value) {
-  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.plan_size_ = value;
 }
 inline void PlanDBInformation::set_plan_size(uint32_t value) {
@@ -20675,9 +20832,9 @@ inline void PlanDBInformation::set_plan_size(uint32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBInformation.plan_size)
 }
 
-// optional float change_time = 3 [(.dccl.field) = {
+// optional double change_time = 3 [(.dccl.field) = {
 inline bool PlanDBInformation::_internal_has_change_time() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
 }
 inline bool PlanDBInformation::has_change_time() const {
@@ -20685,20 +20842,20 @@ inline bool PlanDBInformation::has_change_time() const {
 }
 inline void PlanDBInformation::clear_change_time() {
   _impl_.change_time_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
-inline float PlanDBInformation::_internal_change_time() const {
+inline double PlanDBInformation::_internal_change_time() const {
   return _impl_.change_time_;
 }
-inline float PlanDBInformation::change_time() const {
+inline double PlanDBInformation::change_time() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.PlanDBInformation.change_time)
   return _internal_change_time();
 }
-inline void PlanDBInformation::_internal_set_change_time(float value) {
-  _impl_._has_bits_[0] |= 0x00000010u;
+inline void PlanDBInformation::_internal_set_change_time(double value) {
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.change_time_ = value;
 }
-inline void PlanDBInformation::set_change_time(float value) {
+inline void PlanDBInformation::set_change_time(double value) {
   _internal_set_change_time(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.PlanDBInformation.change_time)
 }
@@ -21751,7 +21908,7 @@ inline void VehicleState::set_allocated_error_ents(std::string* error_ents) {
 
 // optional uint32 maneuver_type = 4 [(.dccl.field) = {
 inline bool VehicleState::_internal_has_maneuver_type() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
   return value;
 }
 inline bool VehicleState::has_maneuver_type() const {
@@ -21759,7 +21916,7 @@ inline bool VehicleState::has_maneuver_type() const {
 }
 inline void VehicleState::clear_maneuver_type() {
   _impl_.maneuver_type_ = 0u;
-  _impl_._has_bits_[0] &= ~0x00000008u;
+  _impl_._has_bits_[0] &= ~0x00000010u;
 }
 inline uint32_t VehicleState::_internal_maneuver_type() const {
   return _impl_.maneuver_type_;
@@ -21769,7 +21926,7 @@ inline uint32_t VehicleState::maneuver_type() const {
   return _internal_maneuver_type();
 }
 inline void VehicleState::_internal_set_maneuver_type(uint32_t value) {
-  _impl_._has_bits_[0] |= 0x00000008u;
+  _impl_._has_bits_[0] |= 0x00000010u;
   _impl_.maneuver_type_ = value;
 }
 inline void VehicleState::set_maneuver_type(uint32_t value) {
@@ -21777,9 +21934,9 @@ inline void VehicleState::set_maneuver_type(uint32_t value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.maneuver_type)
 }
 
-// optional float maneuver_stime = 5 [(.dccl.field) = {
+// optional double maneuver_stime = 5 [(.dccl.field) = {
 inline bool VehicleState::_internal_has_maneuver_stime() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000010u) != 0;
+  bool value = (_impl_._has_bits_[0] & 0x00000008u) != 0;
   return value;
 }
 inline bool VehicleState::has_maneuver_stime() const {
@@ -21787,20 +21944,20 @@ inline bool VehicleState::has_maneuver_stime() const {
 }
 inline void VehicleState::clear_maneuver_stime() {
   _impl_.maneuver_stime_ = 0;
-  _impl_._has_bits_[0] &= ~0x00000010u;
+  _impl_._has_bits_[0] &= ~0x00000008u;
 }
-inline float VehicleState::_internal_maneuver_stime() const {
+inline double VehicleState::_internal_maneuver_stime() const {
   return _impl_.maneuver_stime_;
 }
-inline float VehicleState::maneuver_stime() const {
+inline double VehicleState::maneuver_stime() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.maneuver_stime)
   return _internal_maneuver_stime();
 }
-inline void VehicleState::_internal_set_maneuver_stime(float value) {
-  _impl_._has_bits_[0] |= 0x00000010u;
+inline void VehicleState::_internal_set_maneuver_stime(double value) {
+  _impl_._has_bits_[0] |= 0x00000008u;
   _impl_.maneuver_stime_ = value;
 }
-inline void VehicleState::set_maneuver_stime(float value) {
+inline void VehicleState::set_maneuver_stime(double value) {
   _internal_set_maneuver_stime(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.maneuver_stime)
 }
@@ -21957,7 +22114,7 @@ inline void VehicleState::set_allocated_last_error(std::string* last_error) {
   // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.VehicleState.last_error)
 }
 
-// optional float last_error_time = 10 [(.dccl.field) = {
+// optional double last_error_time = 10 [(.dccl.field) = {
 inline bool VehicleState::_internal_has_last_error_time() const {
   bool value = (_impl_._has_bits_[0] & 0x00000100u) != 0;
   return value;
@@ -21969,18 +22126,18 @@ inline void VehicleState::clear_last_error_time() {
   _impl_.last_error_time_ = 0;
   _impl_._has_bits_[0] &= ~0x00000100u;
 }
-inline float VehicleState::_internal_last_error_time() const {
+inline double VehicleState::_internal_last_error_time() const {
   return _impl_.last_error_time_;
 }
-inline float VehicleState::last_error_time() const {
+inline double VehicleState::last_error_time() const {
   // @@protoc_insertion_point(field_get:IMC_DCCL.VehicleState.last_error_time)
   return _internal_last_error_time();
 }
-inline void VehicleState::_internal_set_last_error_time(float value) {
+inline void VehicleState::_internal_set_last_error_time(double value) {
   _impl_._has_bits_[0] |= 0x00000100u;
   _impl_.last_error_time_ = value;
 }
-inline void VehicleState::set_last_error_time(float value) {
+inline void VehicleState::set_last_error_time(double value) {
   _internal_set_last_error_time(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.VehicleState.last_error_time)
 }
@@ -22697,6 +22854,38 @@ inline void WindSpeed::_internal_set_turbulence(float value) {
 inline void WindSpeed::set_turbulence(float value) {
   _internal_set_turbulence(value);
   // @@protoc_insertion_point(field_set:IMC_DCCL.WindSpeed.turbulence)
+}
+
+// -------------------------------------------------------------------
+
+// Power
+
+// optional float value = 1 [(.dccl.field) = {
+inline bool Power::_internal_has_value() const {
+  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
+  return value;
+}
+inline bool Power::has_value() const {
+  return _internal_has_value();
+}
+inline void Power::clear_value() {
+  _impl_.value_ = 0;
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+inline float Power::_internal_value() const {
+  return _impl_.value_;
+}
+inline float Power::value() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Power.value)
+  return _internal_value();
+}
+inline void Power::_internal_set_value(float value) {
+  _impl_._has_bits_[0] |= 0x00000001u;
+  _impl_.value_ = value;
+}
+inline void Power::set_value(float value) {
+  _internal_set_value(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Power.value)
 }
 
 // -------------------------------------------------------------------
@@ -24797,6 +24986,8 @@ inline void ProtoMessage::set_allocated_msg_payload(::IMC_DCCL::Payload* msg_pay
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
