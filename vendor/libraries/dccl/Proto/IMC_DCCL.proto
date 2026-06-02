@@ -2624,7 +2624,7 @@ message PlanDBState {
     option (dccl.msg) = { codec_version: 4 id: 557};
     optional uint32 plan_count = 1 [(dccl.field) = { min: 0 max: 65535}];
     optional uint32 plan_size = 2 [(dccl.field) = { min: 0 max: 100000}];
-    optional float change_time = 3 [(dccl.field) = { min: 1775001600 max: 2080224000 precision: 1 }];
+    optional double change_time = 3 [(dccl.field) = { min: 1775001600 max: 2080224000 precision: 1 }];
     optional uint32 change_sid = 4 [(dccl.field) = { min: 0 max: 65535}];
     optional string change_sname = 5 [(dccl.field).max_length = 30]; 
     optional string md5 = 6 [(dccl.field).max_length = 32]; 
@@ -2637,7 +2637,7 @@ message PlanDBInformation {
     option (dccl.msg) = { codec_version: 4 id: 558};
     optional string plan_id = 1 [(dccl.field).max_length = 30]; 
     optional uint32 plan_size = 2 [(dccl.field) = { min: 0 max: 65535}];
-    optional float change_time = 3 [(dccl.field) = { min: 1775001600 max: 2080224000 precision: 1 }];
+    optional double change_time = 3 [(dccl.field) = { min: 1775001600 max: 2080224000 precision: 1 }];
     optional uint32 change_sid = 4 [(dccl.field) = { min: 0 max: 65535}];
     optional string change_sname = 5 [(dccl.field).max_length = 30]; 
     optional string md5 = 6 [(dccl.field).max_length = 32]; 
@@ -2709,12 +2709,12 @@ message VehicleState {
     optional uint32 error_count = 2 [(dccl.field) = { min: 0 max: 255}];
     optional string error_ents = 3 [(dccl.field).max_length = 100];
     optional uint32 maneuver_type = 4 [(dccl.field) = { min: 0 max: 65535}];
-    optional float maneuver_stime = 5 [(dccl.field) = { min: -1 max: 2080224000 precision: 1 }];
+    optional double maneuver_stime = 5 [(dccl.field) = { min: -1 max: 2080224000 precision: 1 }];
     optional uint32 maneuver_eta = 6 [(dccl.field) = { min: 0 max: 65535}];
     optional uint32 control_loops = 7 [(dccl.field) = { min: 0 max: 4294967295}];
     optional uint32 flags = 8 [(dccl.field) = { min: 0 max: 2}];
     optional string last_error = 9 [(dccl.field).max_length = 50];
-    optional float last_error_time = 10 [(dccl.field) = { min: -1 max: 2080224000 precision: 1 }];
+    optional double last_error_time = 10 [(dccl.field) = { min: -1 max: 2080224000 precision: 1 }];
 }
 
 //EntityState
