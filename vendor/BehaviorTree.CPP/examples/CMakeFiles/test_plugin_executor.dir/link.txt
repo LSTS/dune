@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/test_plugin_executor.dir/plugin_example/plugin_executor.cpp.o -o test_plugin_executor  -Wl,-rpath,/home/amilcar/workspace/dune/source/vendor/BehaviorTree.CPP ../libbehaviortree_cpp.so /usr/lib/x86_64-linux-gnu/libzmq.so 

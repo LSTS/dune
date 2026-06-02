@@ -250,6 +250,26 @@ namespace Plan
       return loadManeuverFromId(m_last_id);
     }
 
+    IMC::PlanManeuver*
+    Plan::loadResumeManeuver(const std::string& man_id)
+    {
+      IMC::PlanManeuver* pman = loadManeuverFromId(man_id);
+
+      if (pman != NULL)
+      {
+        m_last_id = man_id;
+
+        PlanMap::iterator it = m_graph.find(man_id);
+        if (it != m_graph.end())
+        {
+          m_curr_node = &it->second;
+          return pman;
+        }
+      }
+
+      return NULL;
+    }
+
     float
     Plan::updateProgress(const IMC::ManeuverControlState* mcs)
     {

@@ -134,6 +134,11 @@ namespace Plan
       IMC::PlanManeuver*
       loadStartManeuver(void);
 
+      IMC::PlanManeuver*
+      loadResumeManeuver(const std::string& man_id);
+
+
+
       //! Get next maneuver message
       //! @return NULL if maneuver id is invalid
       IMC::PlanManeuver*
