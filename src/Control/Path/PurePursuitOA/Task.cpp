@@ -68,15 +68,15 @@ namespace Control
         char type = 'E';                    //P=point, Z=zone, E=not defined -> error
         char state = 'E';                   //S=static, M=moving, E=not defined -> error
         char shape = 'E';                   //C=circle, R=rectangle, E=not defined -> error
-        double safetyZoneDistance = 0;     //meters; distance between perimether and safety zone margin
-        double centerLongitude = 0;        //degrees
-        double centerLatitude = 0;         //degrees
-        double radius = 0;                 //meters
-        double bottomLeftLongitude = 0;    //degrees
-        double bottomLeftLatitude = 0;     //degrees
-        double width = 0;     //meters
-        double hight = 0;       //meters
-        int id = 0;                         //id
+        double safetyZoneDistance = 0;      //meters; distance between perimether and safety zone margin
+        double centerLongitude = 0;         //degrees
+        double centerLatitude = 0;          //degrees
+        double radius = 0;                  //meters
+        double bottomLeftLongitude = 0;     //degrees
+        double bottomLeftLatitude = 0;      //degrees
+        double width = 0;                   //meters
+        double hight = 0;                   //meters
+        int id = -1;                        //id
       };
 
       struct Position
@@ -91,12 +91,14 @@ namespace Control
         IMC::DesiredHeading m_heading;            //direção para onde está a ir
         IMC::DesiredPath m_path;                  //ponto para o qual está a ir
         std::string m_obs_msg;                    //mensagem com os obstáculos
+        std::string m_add_obst;                   //mensagem com obstáculo extra para adicionar
         std::vector<Obstacle> m_obstacles;        //vetor com os obstáculos
         Position finalPos;                        //destino imediato
         Position endPoint;                        //próximo GoTo do percurso
         Position currPos;                         //posição atual
         int oldAvoidState = 0;
         int currAvoidState = 0;
+        bool clear_obst_list = false;
 
         bool epIsSet = false;                                     //se o endPoint já foi definido
         bool canChangeEP = true;                                  //pode-se alterar o endPoint
@@ -112,6 +114,10 @@ namespace Control
           param("Obstacle Message", m_obs_msg)
           .defaultValue("")
           .description("Obstacles definition.");
+
+          param("Add Obstacle", m_add_obst)
+          .defaultValue("")
+          .description("Add an obstacle to the list.");
 
           bind<IMC::PlanControlState>(this);
           // bind<IMC::VehicleState>(this);
@@ -131,7 +137,14 @@ namespace Control
         {
           PathController::onUpdateParameters();
           if (paramChanged(m_obs_msg))
+          {
+            clear_obst_list = true;
             processMessage(m_obs_msg);
+          }
+          if (paramChanged(m_add_obst))
+          {
+            processMessage(m_add_obst);
+          }
         }
 
         void
@@ -216,7 +229,10 @@ namespace Control
         processMessage(std::string msg)
         {
           // war("EEEEEEEEEEEEEEEEEEEEEE");
-          m_obstacles.clear();
+          if (clear_obst_list)
+          {
+            m_obstacles.clear();
+          }
 
           std::vector<std::string> obstacles_str;         //vetor com obstáculos
           String::split(msg, "&", obstacles_str);
