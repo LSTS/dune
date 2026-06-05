@@ -698,10 +698,7 @@ namespace Navigation
           fp32_t cog = msg->cog;
           fp32_t sog = msg->sog;
 
-          if (m_args.estimate_cog_sog)
-            input->second->set(lat, lon, height, cog, sog);
-          else
-            input->second->set(lat, lon, height);
+          input->second->set(lat, lon, height, cog, sog);
           
           auto priority = input->second->getPriority();
           if (!m_gnss_valid)
