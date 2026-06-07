@@ -1,0 +1,48 @@
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+  
+    <BehaviorTree ID="MainTree">
+        <Tree_selector Consume_ID="{Consume_ID}">
+            <SubTree ID="VehicleCommandBranch" _autoremap="true"/>
+            <SubTree ID="ControlStateBranch" _autoremap="true"/>
+            <SubTree ID="QueueProcessingBranch" _autoremap="true"/>
+        </Tree_selector>
+    </BehaviorTree>
+
+    <BehaviorTree ID="QueueProcessingBranch">
+        <ProcessRequests />
+    </BehaviorTree>
+
+    <BehaviorTree ID="VehicleCommandBranch">
+        <VehicleCommand_Switch cmd="{cmd}">
+            <Sequence>
+                <Fallback>
+                    <Inverter>
+                        <CheckResume />
+                    </Inverter>
+                    <AlwaysSuccess>
+                        </AlwaysSuccess>
+                </Fallback>
+                <VC_EXEC cmd="{cmd}"/>
+            </Sequence>
+
+            <VC_STOP cmd="{cmd}"/>
+
+            <VC_START_CAL cmd="{cmd}"/>
+
+            <VC_STOP_CAL cmd="{cmd}"/>
+        </VehicleCommand_Switch>
+    </BehaviorTree>
+
+    <BehaviorTree ID="ControlStateBranch">
+        <ReactiveSequence>
+            <Source_mode msg="{msg}"/>
+            <TrackResumeState />
+            <ManueverControlState_Switch msg="{msg}">
+                <eta_update msg="{msg}"/>
+                <set_done />
+                <ERROR      msg="{msg}"/>
+                <STOPPED />
+            </ManueverControlState_Switch>
+        </ReactiveSequence>
+    </BehaviorTree>
+</root>
