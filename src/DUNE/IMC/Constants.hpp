@@ -28,22 +28,22 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: ad14f56ab70a8164942f60e224b54dc4                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_CONSTANTS_HPP_INCLUDED_
 #define DUNE_IMC_CONSTANTS_HPP_INCLUDED_
 
 //! IMC version string.
-#define DUNE_IMC_CONST_VERSION "5.4.30"
+#define DUNE_IMC_CONST_VERSION "5.5.0"
 //! Git repository information.
-#define DUNE_IMC_CONST_GIT_INFO "2026-01-06 f218468  (HEAD -> master, origin/master, origin/HEAD)"
+#define DUNE_IMC_CONST_GIT_INFO "2026-04-22 d706c99  (HEAD -> feature/unify, origin/feature/unify)"
 //! MD5 sum of XML specification file.
-#define DUNE_IMC_CONST_MD5 "00461bdf5ee51803f5b42f972c159299"
+#define DUNE_IMC_CONST_MD5 "ad14f56ab70a8164942f60e224b54dc4"
 //! Synchronization number.
-#define DUNE_IMC_CONST_SYNC 0xFE54
+#define DUNE_IMC_CONST_SYNC 0xFE55
 //! Reversed synchronization number.
-#define DUNE_IMC_CONST_SYNC_REV 0x54FE
+#define DUNE_IMC_CONST_SYNC_REV 0x55FE
 //! Size of the header in bytes.
 #define DUNE_IMC_CONST_HEADER_SIZE 20
 //! Size of the footer in bytes.
