@@ -36,8 +36,11 @@
 
 // DUNE headers.
 #include <DUNE/Config.hpp>
-#include <DUNE/Optional.hpp>
 #include <DUNE/Parsers/Exceptions.hpp>
+
+#ifdef DUNE_HAS_OPTIONAL
+#include <DUNE/Optional.hpp>
+#endif
 
 namespace DUNE
 {
@@ -96,6 +99,7 @@ namespace DUNE
         return *this;
       }
 
+#ifdef DUNE_HAS_OPTIONAL
       //! Read the next field in the input stream verbatim into a <T>, but field may be empty.
       //! @param value optional output variable.
       //! @return current object.
@@ -124,6 +128,7 @@ namespace DUNE
         ++m_field;
         return *this;
       }
+#endif
 
       //! Read the next field in the input stream verbatim into a string.
       //! @param value output variable.
@@ -133,12 +138,14 @@ namespace DUNE
       NMEAReader&
       operator>>(std::string& value);
 
+#ifdef DUNE_HAS_OPTIONAL
       //! Read the next field in the input stream verbatim into a string, but field may be empty.
       //! @param value optional output variable.
       //! @return current object.
       //! @throw ConversionError, if failed to convert current field into a string.
       NMEAReader&
       operator>>(Optional::optional<std::string>& value);
+#endif
 
       //! Check if we reached the end of sentence and there are no
       //! more fields to extract.
