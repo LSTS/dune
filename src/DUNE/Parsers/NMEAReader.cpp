@@ -108,8 +108,13 @@ namespace DUNE
     void
     NMEAReader::skip(void)
     {
+#ifdef DUNE_HAS_OPTIONAL
       Optional::optional<int> dummy;
       (*this) >> dummy;
+#else
+      std::string dummy;
+      (*this) >> dummy;
+#endif
     }
 
     NMEAReader&
@@ -143,6 +148,7 @@ namespace DUNE
       return *this;
     }
 
+#ifdef DUNE_HAS_OPTIONAL
     NMEAReader&
     NMEAReader::operator>>(Optional::optional<std::string>& value)
     {
@@ -170,6 +176,7 @@ namespace DUNE
       ++m_field;
       return *this;
     }
+#endif
 
     bool
     NMEAReader::eos(void)

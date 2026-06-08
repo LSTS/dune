@@ -1,9 +1,11 @@
 if(NOT DUNELEGACY)
+  add_compile_definitions(DUNE_HAS_OPTIONAL)
   return()
 endif()
 
-find_package(Boost 1.80 REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
+find_package(Boost 1.80)
 
-dune_test_header(boost/optional.hpp)
-dune_add_lib(boost_optional)
+if(Boost_FOUND)
+  include_directories(${Boost_INCLUDE_DIRS})
+  add_compile_definitions(DUNE_HAS_OPTIONAL)
+endif()
