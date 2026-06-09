@@ -120,11 +120,110 @@ namespace IMCDCCL
             //Payload
             encodePayload(*imc_msg, *dst_dccl.mutable_msg_payload());    
 
+            //validate Msg range 
+            validateProtoMessageRange(dst_dccl);
+
+            //Encode
             std::string encoded_bytes;
             m_codec.encode(&encoded_bytes, dst_dccl); 
 
             m_task->trace("DCCL message successfully encoded as type %s", imc_msg->getName());
             return encoded_bytes;                              
+        }
+
+
+        void validateProtoMessageRange(
+            const google::protobuf::Message& msg)
+        {
+            const auto* desc = msg.GetDescriptor();
+            const auto* refl = msg.GetReflection();
+
+            for(int i = 0; i < desc->field_count(); ++i)
+            {
+                const auto* field = desc->field(i);
+
+                //No field
+                if(field->is_optional() && !refl->HasField(msg, field)) continue;
+
+                //Nested msg
+                if(field->cpp_type() == google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE)
+                {
+                    if(field->is_repeated())
+                    {
+                        int n = refl->FieldSize(msg, field);
+
+                        for(int j=0; j<n; ++j)
+                        {
+                            validateProtoMessageRange(refl->GetRepeatedMessage(msg, field, j));
+                        }
+                    }
+                    else
+                    {
+                        validateProtoMessageRange(refl->GetMessage(msg, field));
+                    }
+
+                    continue;
+                }
+
+                if(!field->options().HasExtension(dccl::field))
+                    continue;
+
+                const auto& opts = field->options().GetExtension(dccl::field);
+
+                double min = opts.min();
+                double max = opts.max();
+                int max_length = opts.max_length();
+                double value = 0.0;
+                double length = 0.0;
+                
+                switch(field->cpp_type())
+                {
+                    case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
+                        value = refl->GetInt32(msg, field);
+                        break;
+
+                    case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
+                        value = refl->GetInt64(msg, field);
+                        break;
+
+                    case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
+                        value = refl->GetUInt32(msg, field);
+                        break;
+
+                    case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
+                        value = refl->GetUInt64(msg, field);
+                        break;
+
+                    case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
+                        value = refl->GetFloat(msg, field);
+                        break;
+
+                    case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
+                        value = refl->GetDouble(msg, field);
+                        break;
+
+                    case google::protobuf::FieldDescriptor::CPPTYPE_STRING:
+                    {
+                        const std::string& str = refl->GetString(msg, field);
+                        length = static_cast<double>(str.size());
+                        //String check
+                        if(length > max_length)
+                        {
+                            throw std::runtime_error(desc->name() + "." + field->name() + " = " + std::to_string(length) + " outside DCCL range [" + std::to_string(max_length) + "]");
+                        }
+                        continue;
+                    }
+
+                    default:
+                        continue;
+                }
+
+                //Numeric check
+                if(value < min || value > max)  
+                {
+                    throw std::runtime_error(desc->name() + "." + field->name() + " = " + std::to_string(value) + " outside DCCL range [" + std::to_string(min) + "," + std::to_string(max) + "]");
+                }
+            }
         }
 #endif
     };
