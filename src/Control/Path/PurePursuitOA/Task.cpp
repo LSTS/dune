@@ -76,7 +76,7 @@ namespace Control
         double bottomLeftLatitude = 0;      //degrees
         double width = 0;                   //meters
         double hight = 0;                   //meters
-        int id = -1;                        //id
+        std::string id = "";                //id
       };
 
       struct Position
@@ -88,15 +88,16 @@ namespace Control
 
       struct Task: public DUNE::Control::PathController
       {
-        IMC::DesiredHeading m_heading;            //direção para onde está a ir
-        IMC::DesiredPath m_path;                  //ponto para o qual está a ir
-        std::string m_obs_msg;                    //mensagem com os obstáculos
-        std::string m_add_obst;                   //mensagem com obstáculo extra para adicionar
-        std::string m_rmv_obst;                   //mensagem com pbstáculo para remover
-        std::vector<Obstacle> m_obstacles;        //vetor com os obstáculos
-        Position finalPos;                        //destino imediato
-        Position endPoint;                        //próximo GoTo do percurso
-        Position currPos;                         //posição atual
+        IMC::DesiredHeading m_heading;                  //direção para onde está a ir
+        IMC::DesiredPath m_path;                        //ponto para o qual está a ir
+        std::string m_obs_msg;                          //mensagem com os obstáculos
+        std::string m_add_obst;                         //mensagem com obstáculo extra para adicionar
+        std::string m_rmv_obst;                         //mensagem com obstáculo para remover
+        std::vector<Obstacle> m_obstacles;              //vetor com os obstáculos
+        std::unordered_map<std::string, int> m_obst_index;      //índices de cada obstáculo no vetor de obstáculos
+        Position finalPos;                              //destino imediato
+        Position endPoint;                              //próximo GoTo do percurso
+        Position currPos;                               //posição atual
         int oldAvoidState = 0;
         int currAvoidState = 0;
         bool clear_obst_list = false;
@@ -116,11 +117,11 @@ namespace Control
           .defaultValue("")
           .description("Obstacles definition.");
 
-          param("Add Obstacle", m_add_obst)
+          param("Obstacle Add", m_add_obst)
           .defaultValue("")
           .description("Add an obstacle to the list.");
 
-          param("Rmv Obstacle", m_rmv_obst)
+          param("Obstacle Rmv", m_rmv_obst)
           .defaultValue("")
           .description("Remove an obstacle from the list.");
 
@@ -149,6 +150,10 @@ namespace Control
           if (paramChanged(m_add_obst))
           {
             processMessage(m_add_obst);
+          }
+          if (paramChanged(m_rmv_obst))
+          {
+            removeObstacle(m_rmv_obst);
           }
         }
 
@@ -229,127 +234,162 @@ namespace Control
 
         //! ex: 41.18279098/-8.70796953/56;41.18186403/-8.70552352/175/160
         // Type,State,Shape safetyZoneDistance centerLon,centerLat,R/bottomLeftLon,bottomLeftLat,horizontalDist,verticalDist (id)
-        // ZSC 10 -8.70796953,41.18279098,56|ZSR 10 -8.70552352,41.18186403,175,160
+        // ZSC 10 -8.70796953,41.18279098,56 11&ZSR 10 -8.70552352,41.18186403,175,160 13
+
         void
         processMessage(std::string msg)
         {
-          // war("EEEEEEEEEEEEEEEEEEEEEE");
+          war("EEEEEEEEEEEEEEEEEEEEEE");
+
           if (clear_obst_list)
           {
             m_obstacles.clear();
+            m_obst_index.clear();
+            clear_obst_list = false;
           }
 
-          std::vector<std::string> obstacles_str;         //vetor com obstáculos
+
+          std::vector<std::string> obstacles_str;
           String::split(msg, "&", obstacles_str);
 
-          for (const auto& obs_str: obstacles_str)            //separate the message in its obstacles
+          for (const auto& obs_str : obstacles_str)
           {
             std::vector<std::string> fields;
             String::split(obs_str, " ", fields);
+
             Obstacle obstacle;
 
-
-            if (fields.size() <3 || fields.size()>4)
+            if (fields.size() != 4)
             {
-              war("Incorrectly defined obstacle");
-              continue;;
+              war("Incorrectly defined obstacle: %ld fields instead of 4", fields.size());
+              continue;
             }
 
             std::string obstacleParams = fields[0];
-
 
             if (obstacleParams.size() != 3)
             {
               war("Parameter incorrectly defined: Params wrong size -> %li", obstacleParams.size());
               continue;
             }
-            if ((obstacleParams[0] != 'P' && obstacleParams[0] != 'Z') || (obstacleParams[1] != 'S' && obstacleParams[1] != 'M') || (obstacleParams[2] != 'C' && obstacleParams[2] != 'R'))
+
+            if ((obstacleParams[0] != 'P' && obstacleParams[0] != 'Z') ||
+                (obstacleParams[1] != 'S' && obstacleParams[1] != 'M') ||
+                (obstacleParams[2] != 'C' && obstacleParams[2] != 'R'))
             {
               war("Parameter incorrectly defined: Value without meaning");
               continue;
             }
-            obstacle.type = obstacleParams[0];
+
+            obstacle.type  = obstacleParams[0];
             obstacle.state = obstacleParams[1];
             obstacle.shape = obstacleParams[2];
 
-            // war("%c%c%c", obstacleParams[0], obstacleParams[1], obstacleParams[2]);
+            obstacle.safetyZoneDistance = std::stod(fields[1]);
 
-            if (obstacle.type == 'P')                           //if the obstacle is a point
+            if (obstacle.type == 'P')
             {
               obstacle.shape = 'C';
-              obstacle.safetyZoneDistance = std::stod(fields[1]);
 
-              //obstacle treated as a circle
               std::vector<std::string> circleParams_str;
               String::split(fields[2], ",", circleParams_str);
+
               if (circleParams_str.size() != 3)
               {
                 war(">> Parameter incorrectly defined: incorrect number of location parameters (1): %li", circleParams_str.size());
                 continue;
               }
+
               obstacle.centerLongitude = std::stod(circleParams_str[0]);
-              obstacle.centerLatitude = std::stod(circleParams_str[1]);
-              obstacle.radius = 0 /* std::stod(circleParams_str[2]) */;
-              // war("CenterLon: %f", obstacle.centerLongitude);
-              // war("CenterLat: %f", obstacle.centerLatitude);
-              // war("Radius: %f", obstacle.radius);
+              obstacle.centerLatitude  = std::stod(circleParams_str[1]);
+              obstacle.radius = 0;
 
-              if (obstacle.state == 'M')
+              if (fields[3] == "")
               {
-                if (fields[3].size() != 1)
-                {
-                  war(">> Parameter incorrectly defined: incorrect id");
-                  continue;
-                }
-                obstacle.id = std::stoi(fields[3]);
+                war(">> Parameter incorrectly defined: incorrect id = %s", fields[3].c_str());
+                continue;
               }
-
+              obstacle.id = fields[3];
             }
-            else                      //if the obstacle is a zone
+            else
             {
-              obstacle.safetyZoneDistance = std::stod(fields[1]);
-
-              if (obstacle.shape == 'C')          //if the obstacle is a circle
+              if (obstacle.shape == 'C')
               {
                 std::vector<std::string> circleParams_str;
                 String::split(fields[2], ",", circleParams_str);
+
                 if (circleParams_str.size() != 3)
                 {
                   war(">> Parameter incorrectly defined: incorrect number of location parameters (2): %li", circleParams_str.size());
                   continue;
                 }
+
                 obstacle.centerLongitude = std::stod(circleParams_str[0]);
-                obstacle.centerLatitude = std::stod(circleParams_str[1]);
-                obstacle.radius = std::stod(circleParams_str[2]);
+                obstacle.centerLatitude  = std::stod(circleParams_str[1]);
+                obstacle.radius          = std::stod(circleParams_str[2]);
               }
-              else                                //if the obstacle is a rectangle
+              else
               {
                 std::vector<std::string> rectangleParams_str;
                 String::split(fields[2], ",", rectangleParams_str);
+
                 if (rectangleParams_str.size() != 4)
                 {
                   war(">> Parameter incorrectly defined: incorrect number of location parameters (3): %li", rectangleParams_str.size());
                   continue;
                 }
+
                 obstacle.bottomLeftLongitude = std::stod(rectangleParams_str[0]);
-                obstacle.bottomLeftLatitude = std::stod(rectangleParams_str[1]);
-                obstacle.width = std::stod(rectangleParams_str[2]);
-                obstacle.hight = std::stod(rectangleParams_str[3]);
+                obstacle.bottomLeftLatitude  = std::stod(rectangleParams_str[1]);
+                obstacle.width               = std::stod(rectangleParams_str[2]);
+                obstacle.hight              = std::stod(rectangleParams_str[3]);
+
                 centerLonLat(obstacle);
               }
-              if (obstacle.state == 'M')
-              {
-                if (fields[3].size() != 1)
-                {
-                  war(">> Parameter incorrectly defined: incorrect id");
-                  continue;
-                }
-                obstacle.id = std::stoi(fields[3]);
-              }
 
+              if (fields[3] == "")
+              {
+                war(">> Parameter incorrectly defined: incorrect id = %s", fields[3].c_str());
+                continue;
+              }
+              obstacle.id = fields[3];
             }
+            if (m_obst_index.find(obstacle.id) != m_obst_index.end())
+            {
+                war(">> Obstacle already exists: %s", obstacle.id.c_str());
+                continue;
+            }
+            m_obst_index[obstacle.id] = m_obstacles.size();
             m_obstacles.push_back(obstacle);
-            // war(">> Obstacle added successfully");
+            war(">> Obstacle added successfully: %s", obstacle.id.c_str());
+          }
+        }
+
+
+        void
+        removeObstacle(std::string id)
+        {
+          auto it = m_obst_index.find(id);
+
+          if (it == m_obst_index.end())
+          {
+            war("Obstacle doesn't exist");
+          }
+          else
+          {
+            int pos = it->second;
+            int lastPos = m_obstacles.size() - 1;
+
+            if(pos != lastPos)
+            {
+              m_obstacles[pos] = m_obstacles[lastPos];
+              m_obst_index[m_obstacles[pos].id] = pos;
+            }
+
+            m_obstacles.pop_back();
+            m_obst_index.erase(it);
+
+            war("Obstacle successefully removed: %s", id.c_str());
           }
         }
 
@@ -735,6 +775,11 @@ namespace Control
           // inf("%s", ((ts.nearby) ? "Nearby" : "Not Nearby"));
 
           inf("I'm Here:        %f %f", currPos.lon, currPos.lat);
+
+          for (auto obst : m_obstacles)
+          {
+            inf ("%s", obst.id.c_str());
+          }
           //UNDER CONSTRUCTION*********************************************
           newPath = {Angles::degrees(m_ts.lon_en), Angles::degrees(m_ts.lat_en)};
 
