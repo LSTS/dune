@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -O3 -DNDEBUG -shared -Wl,-soname,libcrossdoor_nodes_dyn.so -o bin/libcrossdoor_nodes_dyn.so CMakeFiles/crossdoor_nodes_dyn.dir/crossdoor_nodes.cpp.o  -Wl,-rpath,/home/amilcar/workspace/dune/source/vendor/BehaviorTree.CPP: ../libbehaviortree_cpp.so /usr/lib/x86_64-linux-gnu/libzmq.so 

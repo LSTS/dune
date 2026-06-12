@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/ex02_runtime_ports.dir/ex02_runtime_ports.cpp.o -o ex02_runtime_ports  -Wl,-rpath,/home/amilcar/workspace/dune/source/vendor/BehaviorTree.CPP ../sample_nodes/lib/libbt_sample_nodes.a ../libbehaviortree_cpp.so /usr/lib/x86_64-linux-gnu/libzmq.so 

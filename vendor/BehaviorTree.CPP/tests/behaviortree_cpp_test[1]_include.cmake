@@ -1,5 +1,0 @@
-if(EXISTS "/home/amilcar/workspace/dune/source/vendor/BehaviorTree.CPP/tests/behaviortree_cpp_test[1]_tests.cmake")
-  include("/home/amilcar/workspace/dune/source/vendor/BehaviorTree.CPP/tests/behaviortree_cpp_test[1]_tests.cmake")
-else()
-  add_test(behaviortree_cpp_test_NOT_BUILT behaviortree_cpp_test_NOT_BUILT)
-endif()

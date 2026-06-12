@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC -O3 -DNDEBUG -shared -Wl,-soname,libmovebase_node_dyn.so -o bin/libmovebase_node_dyn.so CMakeFiles/movebase_node_dyn.dir/movebase_node.cpp.o  -Wl,-rpath,/home/amilcar/workspace/dune/source/vendor/BehaviorTree.CPP: ../libbehaviortree_cpp.so /usr/lib/x86_64-linux-gnu/libzmq.so 

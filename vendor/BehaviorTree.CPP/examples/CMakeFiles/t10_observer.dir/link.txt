@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/t10_observer.dir/t10_observer.cpp.o -o t10_observer  -Wl,-rpath,/home/amilcar/workspace/dune/source/vendor/BehaviorTree.CPP ../sample_nodes/lib/libbt_sample_nodes.a ../libbehaviortree_cpp.so /usr/lib/x86_64-linux-gnu/libzmq.so 

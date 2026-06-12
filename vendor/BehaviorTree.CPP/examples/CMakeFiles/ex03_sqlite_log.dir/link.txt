@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/ex03_sqlite_log.dir/ex03_sqlite_log.cpp.o -o ex03_sqlite_log  -Wl,-rpath,/home/amilcar/workspace/dune/source/vendor/BehaviorTree.CPP ../sample_nodes/lib/libbt_sample_nodes.a ../libbehaviortree_cpp.so /usr/lib/x86_64-linux-gnu/libzmq.so 

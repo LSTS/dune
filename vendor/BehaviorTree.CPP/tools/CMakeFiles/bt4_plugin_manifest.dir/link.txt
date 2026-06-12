@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/bt4_plugin_manifest.dir/bt_plugin_manifest.cpp.o -o bt4_plugin_manifest  -Wl,-rpath,/home/amilcar/workspace/dune/source/vendor/BehaviorTree.CPP: ../libbehaviortree_cpp.so /usr/lib/x86_64-linux-gnu/libzmq.so 
