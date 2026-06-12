@@ -1,0 +1,9 @@
+CompileFlags:
+  Add:
+    - -xc++
+    - -std=c++17
+    - -I/home/LSTS/dune/source/vendor/libraries/behaviortree/include
+    - -I/home/LSTS/dune/source/vendor/libraries/behaviortree/3rdparty
+    - -I/home/LSTS/dune/source/vendor/libraries/behaviortree/3rdparty/minitrace
+    - -I/home/LSTS/dune/source/vendor/libraries/behaviortree/3rdparty/tinyxml2
+    - -I/home/LSTS/dune/source/vendor/libraries/behaviortree/3rdparty/minicoro

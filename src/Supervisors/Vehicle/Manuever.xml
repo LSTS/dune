@@ -36,7 +36,7 @@
     <BehaviorTree ID="ControlStateBranch">
         <ReactiveSequence>
             <Source_mode msg="{msg}"/>
-            <TrackResumeState skip="{skip}"/>
+            <TrackResumeState />
             <ManueverControlState_Switch msg="{msg}">
                 <eta_update msg="{msg}"/>
                 <set_done />
