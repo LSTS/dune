@@ -179,6 +179,12 @@ extern ProfileSampleDefaultTypeInternal _ProfileSample_default_instance_;
 class ProtoMessage;
 struct ProtoMessageDefaultTypeInternal;
 extern ProtoMessageDefaultTypeInternal _ProtoMessage_default_instance_;
+class QueryEntityParameters;
+struct QueryEntityParametersDefaultTypeInternal;
+extern QueryEntityParametersDefaultTypeInternal _QueryEntityParameters_default_instance_;
+class Scope;
+struct ScopeDefaultTypeInternal;
+extern ScopeDefaultTypeInternal _Scope_default_instance_;
 class SetEntityParameters;
 struct SetEntityParametersDefaultTypeInternal;
 extern SetEntityParametersDefaultTypeInternal _SetEntityParameters_default_instance_;
@@ -194,6 +200,9 @@ extern VehicleStateDefaultTypeInternal _VehicleState_default_instance_;
 class VerticalProfile;
 struct VerticalProfileDefaultTypeInternal;
 extern VerticalProfileDefaultTypeInternal _VerticalProfile_default_instance_;
+class Visibility;
+struct VisibilityDefaultTypeInternal;
+extern VisibilityDefaultTypeInternal _Visibility_default_instance_;
 class Voltage;
 struct VoltageDefaultTypeInternal;
 extern VoltageDefaultTypeInternal _Voltage_default_instance_;
@@ -246,11 +255,14 @@ template<> ::IMC_DCCL::PlanVariable* Arena::CreateMaybeMessage<::IMC_DCCL::PlanV
 template<> ::IMC_DCCL::Power* Arena::CreateMaybeMessage<::IMC_DCCL::Power>(Arena*);
 template<> ::IMC_DCCL::ProfileSample* Arena::CreateMaybeMessage<::IMC_DCCL::ProfileSample>(Arena*);
 template<> ::IMC_DCCL::ProtoMessage* Arena::CreateMaybeMessage<::IMC_DCCL::ProtoMessage>(Arena*);
+template<> ::IMC_DCCL::QueryEntityParameters* Arena::CreateMaybeMessage<::IMC_DCCL::QueryEntityParameters>(Arena*);
+template<> ::IMC_DCCL::Scope* Arena::CreateMaybeMessage<::IMC_DCCL::Scope>(Arena*);
 template<> ::IMC_DCCL::SetEntityParameters* Arena::CreateMaybeMessage<::IMC_DCCL::SetEntityParameters>(Arena*);
 template<> ::IMC_DCCL::StationKeeping* Arena::CreateMaybeMessage<::IMC_DCCL::StationKeeping>(Arena*);
 template<> ::IMC_DCCL::TransitionCondition* Arena::CreateMaybeMessage<::IMC_DCCL::TransitionCondition>(Arena*);
 template<> ::IMC_DCCL::VehicleState* Arena::CreateMaybeMessage<::IMC_DCCL::VehicleState>(Arena*);
 template<> ::IMC_DCCL::VerticalProfile* Arena::CreateMaybeMessage<::IMC_DCCL::VerticalProfile>(Arena*);
+template<> ::IMC_DCCL::Visibility* Arena::CreateMaybeMessage<::IMC_DCCL::Visibility>(Arena*);
 template<> ::IMC_DCCL::Voltage* Arena::CreateMaybeMessage<::IMC_DCCL::Voltage>(Arena*);
 template<> ::IMC_DCCL::WindSpeed* Arena::CreateMaybeMessage<::IMC_DCCL::WindSpeed>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
@@ -802,6 +814,59 @@ inline bool DurationEnum_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<DurationEnum>(
     DurationEnum_descriptor(), name, value);
 }
+enum ScopeEnum : int {
+  SE_GLOBAL = 0,
+  SE_MANEUVER = 1,
+  SE_IDLE = 2,
+  SE_UNKNOWN = 3,
+  ScopeEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  ScopeEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool ScopeEnum_IsValid(int value);
+constexpr ScopeEnum ScopeEnum_MIN = SE_GLOBAL;
+constexpr ScopeEnum ScopeEnum_MAX = SE_UNKNOWN;
+constexpr int ScopeEnum_ARRAYSIZE = ScopeEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ScopeEnum_descriptor();
+template<typename T>
+inline const std::string& ScopeEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, ScopeEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function ScopeEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    ScopeEnum_descriptor(), enum_t_value);
+}
+inline bool ScopeEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, ScopeEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<ScopeEnum>(
+    ScopeEnum_descriptor(), name, value);
+}
+enum VisibilityEnum : int {
+  VE_USER = 0,
+  VE_DEVELOPER = 1,
+  VE_UNKNOWN = 2,
+  VisibilityEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  VisibilityEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool VisibilityEnum_IsValid(int value);
+constexpr VisibilityEnum VisibilityEnum_MIN = VE_USER;
+constexpr VisibilityEnum VisibilityEnum_MAX = VE_UNKNOWN;
+constexpr int VisibilityEnum_ARRAYSIZE = VisibilityEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* VisibilityEnum_descriptor();
+template<typename T>
+inline const std::string& VisibilityEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, VisibilityEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function VisibilityEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    VisibilityEnum_descriptor(), enum_t_value);
+}
+inline bool VisibilityEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, VisibilityEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<VisibilityEnum>(
+    VisibilityEnum_descriptor(), name, value);
+}
 enum ManeuverType : int {
   GOTO = 0,
   LOITER = 1,
@@ -940,16 +1005,16 @@ enum ParamName : int {
   PN_ADC15_ENTITY_LABEL = 54,
   PN_ADC15_MESSAGE = 55,
   PN_ADC1_CONVERSION = 56,
-  PN_ADC1_ENTITY_LABEL = 57,
+  PN_ADC1_ENTITY_LABEL_1 = 57,
   PN_ADC1_MESSAGE = 58,
   PN_ADC2_CONVERSION = 59,
   PN_ADC2_ENTITY_LABEL_1 = 60,
   PN_ADC2_MESSAGE = 61,
   PN_ADC3_CONVERSION = 62,
-  PN_ADC3_ENTITY_LABEL = 63,
+  PN_ADC3_ENTITY_LABEL_1 = 63,
   PN_ADC3_MESSAGE = 64,
   PN_ADC4_CONVERSION = 65,
-  PN_ADC4_ENTITY_LABEL_1 = 66,
+  PN_ADC4_ENTITY_LABEL = 66,
   PN_ADC4_MESSAGE = 67,
   PN_ADC5_CONVERSION = 68,
   PN_ADC5_ENTITY_LABEL = 69,
@@ -966,7 +1031,7 @@ enum ParamName : int {
   PN_ADC9_CONVERSION = 80,
   PN_ADC9_ENTITY_LABEL = 81,
   PN_ADC9_MESSAGE = 82,
-  PN_ADC_1_ENTITY_LABEL_1 = 83,
+  PN_ADC_1_ENTITY_LABEL = 83,
   PN_ADC_1_FIXED_GAIN = 84,
   PN_ADC_1_FIXED_GAIN_VAL = 85,
   PN_ADC_1_IS_ACTIVE = 86,
@@ -978,13 +1043,13 @@ enum ParamName : int {
   PN_ADC_2_IS_ACTIVE = 92,
   PN_ADC_2_MAXIMUM_VAL = 93,
   PN_ADC_2_MINIMUM_VAL = 94,
-  PN_ADC_3_ENTITY_LABEL_1 = 95,
+  PN_ADC_3_ENTITY_LABEL = 95,
   PN_ADC_3_FIXED_GAIN = 96,
   PN_ADC_3_FIXED_GAIN_VAL = 97,
   PN_ADC_3_IS_ACTIVE = 98,
   PN_ADC_3_MAXIMUM_VAL = 99,
   PN_ADC_3_MINIMUM_VAL = 100,
-  PN_ADC_4_ENTITY_LABEL = 101,
+  PN_ADC_4_ENTITY_LABEL_1 = 101,
   PN_ADC_4_FIXED_GAIN = 102,
   PN_ADC_4_FIXED_GAIN_VAL = 103,
   PN_ADC_4_IS_ACTIVE = 104,
@@ -2855,212 +2920,213 @@ enum EntityNameEnum : int {
   EN_DAQ = 41,
   EN_DATASTORE_SOURCE = 42,
   EN_DATASTORE_TRANSPORT = 43,
-  EN_DEPTH_CONTROL = 44,
-  EN_DEPTH_SENSOR = 45,
-  EN_DESIRED_DISTANCE = 46,
-  EN_DICE = 47,
-  EN_DISCOVERY = 48,
-  EN_DISLODGE_MANEUVER = 49,
-  EN_DISSOLVED_OXYGEN = 50,
-  EN_DIVING = 51,
-  EN_DMS = 52,
-  EN_DOCKING = 53,
-  EN_DVL = 54,
-  EN_DVL_FILTERED = 55,
-  EN_ECHO_SOUNDER = 56,
-  EN_ELEVATOR_MANEUVER = 57,
-  EN_EMERGENCY_MONITOR = 58,
-  EN_EMULATED_GPS = 59,
-  EN_ENC_PARSER = 60,
-  EN_ENTITY_MONITOR = 61,
-  EN_ENVIRONMENT = 62,
-  EN_ESC = 63,
-  EN_EVOLOGICS_SERIALOVERTCP = 64,
-  EN_FILTERED_DISTANCE = 65,
-  EN_FLUOROMETERS = 66,
-  EN_FOLLOW_PATH_MANEUVER = 67,
-  EN_FOLLOW_REFERENCE = 68,
-  EN_FOLLOW_REFERENCE_MANEUVER = 69,
-  EN_FOLLOW_SYSTEM_MANEUVER = 70,
-  EN_FOLLOW_TRAJECTORY_PID_MANEUVER = 71,
-  EN_FORMATION_CONTROL = 72,
-  EN_FORMATION_LINK = 73,
-  EN_FRAME_GRABBER = 74,
-  EN_FTP_SERVER = 75,
-  EN_FUEL = 76,
-  EN_FUELLEVEL = 77,
-  EN_GOTO_MANEUVER = 78,
-  EN_GPS = 79,
-  EN_GPS_NAVIGATION = 80,
-  EN_GPS_TO_TCP = 81,
-  EN_HEADING_CONTROL = 82,
-  EN_HEADING_SPEED_CONTROLLER = 83,
-  EN_HEAVE_MOTOR = 84,
-  EN_HEIGHT_CONTROL = 85,
-  EN_HORIZONTAL_PLANE_CONTROL = 86,
-  EN_HOST_RESOURCES = 87,
-  EN_HTTP_SERVER = 88,
-  EN_IDLE_MANEUVER = 89,
-  EN_IMU = 90,
-  EN_IMU_POWER_SUPPLY = 91,
-  EN_IRIDIUM_MODEM = 92,
-  EN_IRIDIUM_OPERATION = 93,
-  EN_IRIDIUM_SIMULATOR = 94,
-  EN_IRIDIUM_TRANSPORT = 95,
-  EN_LAND_MANEUVER = 96,
-  EN_LAUNCH_MANEUVER = 97,
-  EN_LBL = 98,
-  EN_LBL_ESTIMATOR = 99,
-  EN_LCD = 100,
-  EN_LEAK_SIMULATOR = 101,
-  EN_LEDS = 102,
-  EN_LED_DRIVER = 103,
-  EN_LOGGER = 104,
-  EN_LOGGER_DIGEST = 105,
-  EN_LOG_BOOK = 106,
-  EN_LOG_MONITOR = 107,
-  EN_LOITER_MANEUVER = 108,
-  EN_LOSTCOMMS_SUPERVISOR_ASV = 109,
-  EN_LOST_COMMS = 110,
-  EN_LOST_COMMS_MONITOR = 111,
-  EN_MAINBOARD_1 = 112,
-  EN_MAINBOARD_AUX = 113,
-  EN_MAINBOARD_AUXILIARY_CPU = 114,
-  EN_MAINBOARD_BOARD = 115,
-  EN_MAINBOARD_CAMERA_CPU = 116,
-  EN_MAINBOARD_CAMERA_CPU_1 = 117,
-  EN_MAINBOARD_CORE = 118,
-  EN_MAINBOARD_SUPERIO = 119,
-  EN_MAIN_BOARD = 120,
-  EN_MANTA_FUEL_LEVEL = 121,
-  EN_MCD4R = 122,
-  EN_MEDIUM = 123,
-  EN_MEDIUM_SENSOR = 124,
-  EN_MESSAGE_FRAGMENTS = 125,
-  EN_MOBILE_INTERNET = 126,
-  EN_MONITOR_THRUSTER = 127,
-  EN_MOTOR = 128,
-  EN_MOTOR_1 = 129,
-  EN_MOTOR_2 = 130,
-  EN_MOTOR_3 = 131,
-  EN_MOTOR_4 = 132,
-  EN_MOTOR_5 = 133,
-  EN_MOTOR_CONTROLLER = 134,
-  EN_MOTOR_CONTROLLER_CHANNEL_0 = 135,
-  EN_MOTOR_CONTROLLER_CHANNEL_1 = 136,
-  EN_MOTOR_PORT = 137,
-  EN_MOTOR_STARBOARD = 138,
-  EN_MULTIBEAM = 139,
-  EN_MULTIPLEXER_MANEUVER = 140,
-  EN_NAVIGATION = 141,
-  EN_NAVIGATION_MANAGER = 142,
-  EN_N_A = 143,
-  EN_OEMX = 144,
-  EN_OPERATIONAL_LIMITS = 145,
-  EN_OXYGEN_SENSOR = 146,
-  EN_PANEL = 147,
-  EN_PANEL_BUTTONS = 148,
-  EN_PATH_CONTROL = 149,
-  EN_PATH_CONTROL_LEADER = 150,
-  EN_PAYLOAD_MONITOR = 151,
-  EN_PENCIL_BEAM = 152,
-  EN_PHOTO_TRIGGER = 153,
-  EN_PICCOLO_GATEWAY = 154,
-  EN_PICCOLO_SERIAL = 155,
-  EN_PLAN_DATABASE = 156,
-  EN_PLAN_ENGINE = 157,
-  EN_PLAN_GENERATOR = 158,
-  EN_POP_UP_MANEUVER = 159,
-  EN_PORT_BOW_MOTOR = 160,
-  EN_PORT_MOTOR = 161,
-  EN_PORT_STERN_MOTOR = 162,
-  EN_PORT_THRUSTER = 163,
-  EN_POWER_BOARD = 164,
-  EN_POWER_SOURCE = 165,
-  EN_POWER_SUPERVISOR = 166,
-  EN_POWER_SUPPLY = 167,
-  EN_PTUD48 = 168,
-  EN_PTUTRANSPORT = 169,
-  EN_PTU_COMMS = 170,
-  EN_PWM = 171,
-  EN_RADIO = 172,
-  EN_RANGER = 173,
-  EN_RECOVERY_SUPERVISOR = 174,
-  EN_REMOTE_CONTROL = 175,
-  EN_REMOTE_OPERATION = 176,
-  EN_REPLAY = 177,
-  EN_REPORT_SUPERVISOR = 178,
-  EN_ROWS_COVERAGE_MANEUVER = 179,
-  EN_ROWS_MANEUVER = 180,
-  EN_RPISENSEHAT = 181,
-  EN_RUDDER_SERVO = 182,
-  EN_SADC = 183,
-  EN_SEATRAC_TCP = 184,
-  EN_SERVICE_ANNOUNCER = 185,
-  EN_SERVICE_DISCOVERY = 186,
-  EN_SERVO = 187,
-  EN_SERVOS = 188,
-  EN_SERVO_CONTROLLER = 189,
-  EN_SERVO_CONTROLLER_0 = 190,
-  EN_SERVO_CONTROLLER_1 = 191,
-  EN_SERVO_CONTROLLER_2 = 192,
-  EN_SERVO_CONTROLLER_3 = 193,
-  EN_SERVO_MONITOR = 194,
-  EN_SIDESCAN = 195,
-  EN_SIGNAL_LIGHT = 196,
-  EN_SIMULATED_GPS = 197,
-  EN_SIMULATED_HEAVE = 198,
-  EN_SIMULATED_IMU = 199,
-  EN_SIMULATION_ENGINE = 200,
-  EN_SLAVE_CPU = 201,
-  EN_SMS = 202,
-  EN_SOUND_SPEED_SENSOR = 203,
-  EN_SOUND_SPEED_SIMULATOR = 204,
-  EN_SPEED_CONTROL = 205,
-  EN_STARBOARD_BOW_MOTOR = 206,
-  EN_STARBOARD_MOTOR = 207,
-  EN_STARBOARD_STERN_MOTOR = 208,
-  EN_STARBOARD_THRUSTER = 209,
-  EN_STATE_REPORTER = 210,
-  EN_STATION_KEEPING_MANEUVER = 211,
-  EN_STERN_LIGHT = 212,
-  EN_STREAM_VELOCITY_SIMULATOR = 213,
-  EN_SUPERVISOR_ASSIST = 214,
-  EN_SVS_TO_TCP = 215,
-  EN_SWARM_PARTICIPANT = 216,
-  EN_TAKEOFF_MANEUVER = 217,
-  EN_TASE = 218,
-  EN_TCP_ON_DEMAND = 219,
-  EN_TCP_SERVER = 220,
-  EN_TCP_TO_CAMERA_CPU = 221,
-  EN_TCP_TO_MASTER = 222,
-  EN_TCP_TO_SLAVE_CPU = 223,
-  EN_TCP_TRANSMISSION_MODULE = 224,
-  EN_TELEOPERATION_MANEUVER = 225,
-  EN_TEXT_ACTIONS = 226,
-  EN_TEXT_MESSAGE_PARSER = 227,
-  EN_THERMAL_ZONE = 228,
-  EN_TORQEEDO = 229,
-  EN_TREX = 230,
-  EN_UART_SERIAL = 231,
-  EN_UAVCAMERA = 232,
-  EN_UAV_SIMULATOR = 233,
-  EN_UDP = 234,
-  EN_UDP_FILTERED = 235,
-  EN_UDP_TO_TREX = 236,
-  EN_UEYE = 237,
-  EN_USBL = 238,
-  EN_V104_BAUD_SETUP = 239,
-  EN_VEHICLE_FORMATION_SMC_MANEUVER = 240,
-  EN_VEHICLE_SUPERVISOR = 241,
-  EN_VICTRONCERBO = 242,
-  EN_WATCHDOG = 243,
-  EN_WATER_QUALITY_SENSOR = 244,
-  EN_WEATHER_STATION = 245,
-  EN_WI_FI_RSSI = 246,
-  EN_YOYO_MANEUVER = 247,
-  EN_ZEROTIER = 248,
-  EN_UNKNOWN = 249,
+  EN_DCCL = 44,
+  EN_DEPTH_CONTROL = 45,
+  EN_DEPTH_SENSOR = 46,
+  EN_DESIRED_DISTANCE = 47,
+  EN_DICE = 48,
+  EN_DISCOVERY = 49,
+  EN_DISLODGE_MANEUVER = 50,
+  EN_DISSOLVED_OXYGEN = 51,
+  EN_DIVING = 52,
+  EN_DMS = 53,
+  EN_DOCKING = 54,
+  EN_DVL = 55,
+  EN_DVL_FILTERED = 56,
+  EN_ECHO_SOUNDER = 57,
+  EN_ELEVATOR_MANEUVER = 58,
+  EN_EMERGENCY_MONITOR = 59,
+  EN_EMULATED_GPS = 60,
+  EN_ENC_PARSER = 61,
+  EN_ENTITY_MONITOR = 62,
+  EN_ENVIRONMENT = 63,
+  EN_ESC = 64,
+  EN_EVOLOGICS_SERIALOVERTCP = 65,
+  EN_FILTERED_DISTANCE = 66,
+  EN_FLUOROMETERS = 67,
+  EN_FOLLOW_PATH_MANEUVER = 68,
+  EN_FOLLOW_REFERENCE = 69,
+  EN_FOLLOW_REFERENCE_MANEUVER = 70,
+  EN_FOLLOW_SYSTEM_MANEUVER = 71,
+  EN_FOLLOW_TRAJECTORY_PID_MANEUVER = 72,
+  EN_FORMATION_CONTROL = 73,
+  EN_FORMATION_LINK = 74,
+  EN_FRAME_GRABBER = 75,
+  EN_FTP_SERVER = 76,
+  EN_FUEL = 77,
+  EN_FUELLEVEL = 78,
+  EN_GOTO_MANEUVER = 79,
+  EN_GPS = 80,
+  EN_GPS_NAVIGATION = 81,
+  EN_GPS_TO_TCP = 82,
+  EN_HEADING_CONTROL = 83,
+  EN_HEADING_SPEED_CONTROLLER = 84,
+  EN_HEAVE_MOTOR = 85,
+  EN_HEIGHT_CONTROL = 86,
+  EN_HORIZONTAL_PLANE_CONTROL = 87,
+  EN_HOST_RESOURCES = 88,
+  EN_HTTP_SERVER = 89,
+  EN_IDLE_MANEUVER = 90,
+  EN_IMU = 91,
+  EN_IMU_POWER_SUPPLY = 92,
+  EN_IRIDIUM_MODEM = 93,
+  EN_IRIDIUM_OPERATION = 94,
+  EN_IRIDIUM_SIMULATOR = 95,
+  EN_IRIDIUM_TRANSPORT = 96,
+  EN_LAND_MANEUVER = 97,
+  EN_LAUNCH_MANEUVER = 98,
+  EN_LBL = 99,
+  EN_LBL_ESTIMATOR = 100,
+  EN_LCD = 101,
+  EN_LEAK_SIMULATOR = 102,
+  EN_LEDS = 103,
+  EN_LED_DRIVER = 104,
+  EN_LOGGER = 105,
+  EN_LOGGER_DIGEST = 106,
+  EN_LOG_BOOK = 107,
+  EN_LOG_MONITOR = 108,
+  EN_LOITER_MANEUVER = 109,
+  EN_LOSTCOMMS_SUPERVISOR_ASV = 110,
+  EN_LOST_COMMS = 111,
+  EN_LOST_COMMS_MONITOR = 112,
+  EN_MAINBOARD_1 = 113,
+  EN_MAINBOARD_AUX = 114,
+  EN_MAINBOARD_AUXILIARY_CPU = 115,
+  EN_MAINBOARD_BOARD = 116,
+  EN_MAINBOARD_CAMERA_CPU = 117,
+  EN_MAINBOARD_CAMERA_CPU_1 = 118,
+  EN_MAINBOARD_CORE = 119,
+  EN_MAINBOARD_SUPERIO = 120,
+  EN_MAIN_BOARD = 121,
+  EN_MANTA_FUEL_LEVEL = 122,
+  EN_MCD4R = 123,
+  EN_MEDIUM = 124,
+  EN_MEDIUM_SENSOR = 125,
+  EN_MESSAGE_FRAGMENTS = 126,
+  EN_MOBILE_INTERNET = 127,
+  EN_MONITOR_THRUSTER = 128,
+  EN_MOTOR = 129,
+  EN_MOTOR_1 = 130,
+  EN_MOTOR_2 = 131,
+  EN_MOTOR_3 = 132,
+  EN_MOTOR_4 = 133,
+  EN_MOTOR_5 = 134,
+  EN_MOTOR_CONTROLLER = 135,
+  EN_MOTOR_CONTROLLER_CHANNEL_0 = 136,
+  EN_MOTOR_CONTROLLER_CHANNEL_1 = 137,
+  EN_MOTOR_PORT = 138,
+  EN_MOTOR_STARBOARD = 139,
+  EN_MULTIBEAM = 140,
+  EN_MULTIPLEXER_MANEUVER = 141,
+  EN_NAVIGATION = 142,
+  EN_NAVIGATION_MANAGER = 143,
+  EN_N_A = 144,
+  EN_OEMX = 145,
+  EN_OPERATIONAL_LIMITS = 146,
+  EN_OXYGEN_SENSOR = 147,
+  EN_PANEL = 148,
+  EN_PANEL_BUTTONS = 149,
+  EN_PATH_CONTROL = 150,
+  EN_PATH_CONTROL_LEADER = 151,
+  EN_PAYLOAD_MONITOR = 152,
+  EN_PENCIL_BEAM = 153,
+  EN_PHOTO_TRIGGER = 154,
+  EN_PICCOLO_GATEWAY = 155,
+  EN_PICCOLO_SERIAL = 156,
+  EN_PLAN_DATABASE = 157,
+  EN_PLAN_ENGINE = 158,
+  EN_PLAN_GENERATOR = 159,
+  EN_POP_UP_MANEUVER = 160,
+  EN_PORT_BOW_MOTOR = 161,
+  EN_PORT_MOTOR = 162,
+  EN_PORT_STERN_MOTOR = 163,
+  EN_PORT_THRUSTER = 164,
+  EN_POWER_BOARD = 165,
+  EN_POWER_SOURCE = 166,
+  EN_POWER_SUPERVISOR = 167,
+  EN_POWER_SUPPLY = 168,
+  EN_PTUD48 = 169,
+  EN_PTUTRANSPORT = 170,
+  EN_PTU_COMMS = 171,
+  EN_PWM = 172,
+  EN_RADIO = 173,
+  EN_RANGER = 174,
+  EN_RECOVERY_SUPERVISOR = 175,
+  EN_REMOTE_CONTROL = 176,
+  EN_REMOTE_OPERATION = 177,
+  EN_REPLAY = 178,
+  EN_REPORT_SUPERVISOR = 179,
+  EN_ROWS_COVERAGE_MANEUVER = 180,
+  EN_ROWS_MANEUVER = 181,
+  EN_RPISENSEHAT = 182,
+  EN_RUDDER_SERVO = 183,
+  EN_SADC = 184,
+  EN_SEATRAC_TCP = 185,
+  EN_SERVICE_ANNOUNCER = 186,
+  EN_SERVICE_DISCOVERY = 187,
+  EN_SERVO = 188,
+  EN_SERVOS = 189,
+  EN_SERVO_CONTROLLER = 190,
+  EN_SERVO_CONTROLLER_0 = 191,
+  EN_SERVO_CONTROLLER_1 = 192,
+  EN_SERVO_CONTROLLER_2 = 193,
+  EN_SERVO_CONTROLLER_3 = 194,
+  EN_SERVO_MONITOR = 195,
+  EN_SIDESCAN = 196,
+  EN_SIGNAL_LIGHT = 197,
+  EN_SIMULATED_GPS = 198,
+  EN_SIMULATED_HEAVE = 199,
+  EN_SIMULATED_IMU = 200,
+  EN_SIMULATION_ENGINE = 201,
+  EN_SLAVE_CPU = 202,
+  EN_SMS = 203,
+  EN_SOUND_SPEED_SENSOR = 204,
+  EN_SOUND_SPEED_SIMULATOR = 205,
+  EN_SPEED_CONTROL = 206,
+  EN_STARBOARD_BOW_MOTOR = 207,
+  EN_STARBOARD_MOTOR = 208,
+  EN_STARBOARD_STERN_MOTOR = 209,
+  EN_STARBOARD_THRUSTER = 210,
+  EN_STATE_REPORTER = 211,
+  EN_STATION_KEEPING_MANEUVER = 212,
+  EN_STERN_LIGHT = 213,
+  EN_STREAM_VELOCITY_SIMULATOR = 214,
+  EN_SUPERVISOR_ASSIST = 215,
+  EN_SVS_TO_TCP = 216,
+  EN_SWARM_PARTICIPANT = 217,
+  EN_TAKEOFF_MANEUVER = 218,
+  EN_TASE = 219,
+  EN_TCP_ON_DEMAND = 220,
+  EN_TCP_SERVER = 221,
+  EN_TCP_TO_CAMERA_CPU = 222,
+  EN_TCP_TO_MASTER = 223,
+  EN_TCP_TO_SLAVE_CPU = 224,
+  EN_TCP_TRANSMISSION_MODULE = 225,
+  EN_TELEOPERATION_MANEUVER = 226,
+  EN_TEXT_ACTIONS = 227,
+  EN_TEXT_MESSAGE_PARSER = 228,
+  EN_THERMAL_ZONE = 229,
+  EN_TORQEEDO = 230,
+  EN_TREX = 231,
+  EN_UART_SERIAL = 232,
+  EN_UAVCAMERA = 233,
+  EN_UAV_SIMULATOR = 234,
+  EN_UDP = 235,
+  EN_UDP_FILTERED = 236,
+  EN_UDP_TO_TREX = 237,
+  EN_UEYE = 238,
+  EN_USBL = 239,
+  EN_V104_BAUD_SETUP = 240,
+  EN_VEHICLE_FORMATION_SMC_MANEUVER = 241,
+  EN_VEHICLE_SUPERVISOR = 242,
+  EN_VICTRONCERBO = 243,
+  EN_WATCHDOG = 244,
+  EN_WATER_QUALITY_SENSOR = 245,
+  EN_WEATHER_STATION = 246,
+  EN_WI_FI_RSSI = 247,
+  EN_YOYO_MANEUVER = 248,
+  EN_ZEROTIER = 249,
+  EN_UNKNOWN = 250,
   EntityNameEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   EntityNameEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
@@ -4671,6 +4737,388 @@ class EntityName final :
 };
 // -------------------------------------------------------------------
 
+class Visibility final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.Visibility) */ {
+ public:
+  inline Visibility() : Visibility(nullptr) {}
+  ~Visibility() override;
+  explicit PROTOBUF_CONSTEXPR Visibility(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  Visibility(const Visibility& from);
+  Visibility(Visibility&& from) noexcept
+    : Visibility() {
+    *this = ::std::move(from);
+  }
+
+  inline Visibility& operator=(const Visibility& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Visibility& operator=(Visibility&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const Visibility& default_instance() {
+    return *internal_default_instance();
+  }
+  enum VisibilityUnionCase {
+    kVisibilityEnum = 1,
+    kVisibilityString = 2,
+    VISIBILITYUNION_NOT_SET = 0,
+  };
+
+  static inline const Visibility* internal_default_instance() {
+    return reinterpret_cast<const Visibility*>(
+               &_Visibility_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    7;
+
+  friend void swap(Visibility& a, Visibility& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Visibility* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Visibility* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  Visibility* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<Visibility>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const Visibility& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const Visibility& from) {
+    Visibility::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Visibility* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.Visibility";
+  }
+  protected:
+  explicit Visibility(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kVisibilityEnumFieldNumber = 1,
+    kVisibilityStringFieldNumber = 2,
+  };
+  // .IMC_DCCL.VisibilityEnum visibility_enum = 1;
+  bool has_visibility_enum() const;
+  private:
+  bool _internal_has_visibility_enum() const;
+  public:
+  void clear_visibility_enum();
+  ::IMC_DCCL::VisibilityEnum visibility_enum() const;
+  void set_visibility_enum(::IMC_DCCL::VisibilityEnum value);
+  private:
+  ::IMC_DCCL::VisibilityEnum _internal_visibility_enum() const;
+  void _internal_set_visibility_enum(::IMC_DCCL::VisibilityEnum value);
+  public:
+
+  // string visibility_string = 2 [(.dccl.field) = {
+  bool has_visibility_string() const;
+  private:
+  bool _internal_has_visibility_string() const;
+  public:
+  void clear_visibility_string();
+  const std::string& visibility_string() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_visibility_string(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_visibility_string();
+  PROTOBUF_NODISCARD std::string* release_visibility_string();
+  void set_allocated_visibility_string(std::string* visibility_string);
+  private:
+  const std::string& _internal_visibility_string() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_visibility_string(const std::string& value);
+  std::string* _internal_mutable_visibility_string();
+  public:
+
+  void clear_VisibilityUnion();
+  VisibilityUnionCase VisibilityUnion_case() const;
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.Visibility)
+ private:
+  class _Internal;
+  void set_has_visibility_enum();
+  void set_has_visibility_string();
+
+  inline bool has_VisibilityUnion() const;
+  inline void clear_has_VisibilityUnion();
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    union VisibilityUnionUnion {
+      constexpr VisibilityUnionUnion() : _constinit_{} {}
+        ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
+      int visibility_enum_;
+      ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr visibility_string_;
+    } VisibilityUnion_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    uint32_t _oneof_case_[1];
+
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
+class Scope final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.Scope) */ {
+ public:
+  inline Scope() : Scope(nullptr) {}
+  ~Scope() override;
+  explicit PROTOBUF_CONSTEXPR Scope(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  Scope(const Scope& from);
+  Scope(Scope&& from) noexcept
+    : Scope() {
+    *this = ::std::move(from);
+  }
+
+  inline Scope& operator=(const Scope& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline Scope& operator=(Scope&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const Scope& default_instance() {
+    return *internal_default_instance();
+  }
+  enum ScopeUnionCase {
+    kScopeEnum = 1,
+    kScopeString = 2,
+    SCOPEUNION_NOT_SET = 0,
+  };
+
+  static inline const Scope* internal_default_instance() {
+    return reinterpret_cast<const Scope*>(
+               &_Scope_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    8;
+
+  friend void swap(Scope& a, Scope& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(Scope* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(Scope* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  Scope* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<Scope>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const Scope& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const Scope& from) {
+    Scope::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(Scope* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.Scope";
+  }
+  protected:
+  explicit Scope(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kScopeEnumFieldNumber = 1,
+    kScopeStringFieldNumber = 2,
+  };
+  // .IMC_DCCL.ScopeEnum scope_enum = 1;
+  bool has_scope_enum() const;
+  private:
+  bool _internal_has_scope_enum() const;
+  public:
+  void clear_scope_enum();
+  ::IMC_DCCL::ScopeEnum scope_enum() const;
+  void set_scope_enum(::IMC_DCCL::ScopeEnum value);
+  private:
+  ::IMC_DCCL::ScopeEnum _internal_scope_enum() const;
+  void _internal_set_scope_enum(::IMC_DCCL::ScopeEnum value);
+  public:
+
+  // string scope_string = 2 [(.dccl.field) = {
+  bool has_scope_string() const;
+  private:
+  bool _internal_has_scope_string() const;
+  public:
+  void clear_scope_string();
+  const std::string& scope_string() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_scope_string(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_scope_string();
+  PROTOBUF_NODISCARD std::string* release_scope_string();
+  void set_allocated_scope_string(std::string* scope_string);
+  private:
+  const std::string& _internal_scope_string() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_scope_string(const std::string& value);
+  std::string* _internal_mutable_scope_string();
+  public:
+
+  void clear_ScopeUnion();
+  ScopeUnionCase ScopeUnion_case() const;
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.Scope)
+ private:
+  class _Internal;
+  void set_has_scope_enum();
+  void set_has_scope_string();
+
+  inline bool has_ScopeUnion() const;
+  inline void clear_has_ScopeUnion();
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    union ScopeUnionUnion {
+      constexpr ScopeUnionUnion() : _constinit_{} {}
+        ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
+      int scope_enum_;
+      ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr scope_string_;
+    } ScopeUnion_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+    uint32_t _oneof_case_[1];
+
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class PathPoint final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.PathPoint) */ {
  public:
@@ -4719,7 +5167,7 @@ class PathPoint final :
                &_PathPoint_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    9;
 
   friend void swap(PathPoint& a, PathPoint& b) {
     a.Swap(&b);
@@ -4910,7 +5358,7 @@ class Maneuver final :
                &_Maneuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    10;
 
   friend void swap(Maneuver& a, Maneuver& b) {
     a.Swap(&b);
@@ -5142,7 +5590,7 @@ class EntityParameter final :
                &_EntityParameter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    11;
 
   friend void swap(EntityParameter& a, EntityParameter& b) {
     a.Swap(&b);
@@ -5319,7 +5767,7 @@ class EntityParameters final :
                &_EntityParameters_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    12;
 
   friend void swap(EntityParameters& a, EntityParameters& b) {
     a.Swap(&b);
@@ -5496,7 +5944,7 @@ class SetEntityParameters final :
                &_SetEntityParameters_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    13;
 
   friend void swap(SetEntityParameters& a, SetEntityParameters& b) {
     a.Swap(&b);
@@ -5673,7 +6121,7 @@ class ItemList final :
                &_ItemList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    14;
 
   friend void swap(ItemList& a, ItemList& b) {
     a.Swap(&b);
@@ -5841,7 +6289,7 @@ class ListCombined final :
                &_ListCombined_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    15;
 
   friend void swap(ListCombined& a, ListCombined& b) {
     a.Swap(&b);
@@ -5998,7 +6446,7 @@ class FuelItemList final :
                &_FuelItemList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    16;
 
   friend void swap(FuelItemList& a, FuelItemList& b) {
     a.Swap(&b);
@@ -6157,7 +6605,7 @@ class FuelList final :
                &_FuelList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    17;
 
   friend void swap(FuelList& a, FuelList& b) {
     a.Swap(&b);
@@ -6314,7 +6762,7 @@ class DurationName final :
                &_DurationName_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    18;
 
   friend void swap(DurationName& a, DurationName& b) {
     a.Swap(&b);
@@ -6483,7 +6931,7 @@ class DurationItemList final :
                &_DurationItemList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    19;
 
   friend void swap(DurationItemList& a, DurationItemList& b) {
     a.Swap(&b);
@@ -6651,7 +7099,7 @@ class DurationList final :
                &_DurationList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    20;
 
   friend void swap(DurationList& a, DurationList& b) {
     a.Swap(&b);
@@ -6808,7 +7256,7 @@ class EntityList final :
                &_EntityList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    21;
 
   friend void swap(EntityList& a, EntityList& b) {
     a.Swap(&b);
@@ -7010,7 +7458,7 @@ class ManeuverIDCombined final :
                &_ManeuverIDCombined_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    22;
 
   friend void swap(ManeuverIDCombined& a, ManeuverIDCombined& b) {
     a.Swap(&b);
@@ -7175,7 +7623,7 @@ class ManeuverID final :
                &_ManeuverID_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    23;
 
   friend void swap(ManeuverID& a, ManeuverID& b) {
     a.Swap(&b);
@@ -7371,7 +7819,7 @@ class TransitionCondition final :
                &_TransitionCondition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    24;
 
   friend void swap(TransitionCondition& a, TransitionCondition& b) {
     a.Swap(&b);
@@ -7556,7 +8004,7 @@ class Loiter final :
                &_Loiter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    25;
 
   friend void swap(Loiter& a, Loiter& b) {
     a.Swap(&b);
@@ -7972,7 +8420,7 @@ class PlanManeuverStartActionsUnion final :
                &_PlanManeuverStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    26;
 
   friend void swap(PlanManeuverStartActionsUnion& a, PlanManeuverStartActionsUnion& b) {
     a.Swap(&b);
@@ -8141,7 +8589,7 @@ class PlanManeuver final :
                &_PlanManeuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    27;
 
   friend void swap(PlanManeuver& a, PlanManeuver& b) {
     a.Swap(&b);
@@ -8338,7 +8786,7 @@ class PlanTransition final :
                &_PlanTransition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    28;
 
   friend void swap(PlanTransition& a, PlanTransition& b) {
     a.Swap(&b);
@@ -8535,7 +8983,7 @@ class VerticalProfile final :
                &_VerticalProfile_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    29;
 
   friend void swap(VerticalProfile& a, VerticalProfile& b) {
     a.Swap(&b);
@@ -8803,7 +9251,7 @@ class EstimatedState final :
                &_EstimatedState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    30;
 
   friend void swap(EstimatedState& a, EstimatedState& b) {
     a.Swap(&b);
@@ -9241,7 +9689,7 @@ class PlanVariable final :
                &_PlanVariable_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    31;
 
   friend void swap(PlanVariable& a, PlanVariable& b) {
     a.Swap(&b);
@@ -9511,7 +9959,7 @@ class PlanSpecification final :
                &_PlanSpecification_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    32;
 
   friend void swap(PlanSpecification& a, PlanSpecification& b) {
     a.Swap(&b);
@@ -9829,7 +10277,7 @@ class PlanDB final :
                &_PlanDB_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    33;
 
   friend void swap(PlanDB& a, PlanDB& b) {
     a.Swap(&b);
@@ -10144,7 +10592,7 @@ class PlanDBState final :
                &_PlanDBState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    34;
 
   friend void swap(PlanDBState& a, PlanDBState& b) {
     a.Swap(&b);
@@ -10402,7 +10850,7 @@ class PlanDBInformation final :
                &_PlanDBInformation_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    35;
 
   friend void swap(PlanDBInformation& a, PlanDBInformation& b) {
     a.Swap(&b);
@@ -10645,7 +11093,7 @@ class PlanControl final :
                &_PlanControl_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    34;
+    36;
 
   friend void swap(PlanControl& a, PlanControl& b) {
     a.Swap(&b);
@@ -10967,7 +11415,7 @@ class PlanStatistics final :
                &_PlanStatistics_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    35;
+    37;
 
   friend void swap(PlanStatistics& a, PlanStatistics& b) {
     a.Swap(&b);
@@ -11265,7 +11713,7 @@ class VehicleState final :
                &_VehicleState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    36;
+    38;
 
   friend void swap(VehicleState& a, VehicleState& b) {
     a.Swap(&b);
@@ -11599,7 +12047,7 @@ class EntityState final :
                &_EntityState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    37;
+    39;
 
   friend void swap(EntityState& a, EntityState& b) {
     a.Swap(&b);
@@ -11821,7 +12269,7 @@ class PlanControlState final :
                &_PlanControlState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    38;
+    40;
 
   friend void swap(PlanControlState& a, PlanControlState& b) {
     a.Swap(&b);
@@ -12103,6 +12551,203 @@ class PlanControlState final :
 };
 // -------------------------------------------------------------------
 
+class QueryEntityParameters final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.QueryEntityParameters) */ {
+ public:
+  inline QueryEntityParameters() : QueryEntityParameters(nullptr) {}
+  ~QueryEntityParameters() override;
+  explicit PROTOBUF_CONSTEXPR QueryEntityParameters(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  QueryEntityParameters(const QueryEntityParameters& from);
+  QueryEntityParameters(QueryEntityParameters&& from) noexcept
+    : QueryEntityParameters() {
+    *this = ::std::move(from);
+  }
+
+  inline QueryEntityParameters& operator=(const QueryEntityParameters& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline QueryEntityParameters& operator=(QueryEntityParameters&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const QueryEntityParameters& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const QueryEntityParameters* internal_default_instance() {
+    return reinterpret_cast<const QueryEntityParameters*>(
+               &_QueryEntityParameters_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    41;
+
+  friend void swap(QueryEntityParameters& a, QueryEntityParameters& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(QueryEntityParameters* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(QueryEntityParameters* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  QueryEntityParameters* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<QueryEntityParameters>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const QueryEntityParameters& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const QueryEntityParameters& from) {
+    QueryEntityParameters::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(QueryEntityParameters* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.QueryEntityParameters";
+  }
+  protected:
+  explicit QueryEntityParameters(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kNameFieldNumber = 1,
+    kVisibilityFieldNumber = 2,
+    kScopeFieldNumber = 3,
+  };
+  // .IMC_DCCL.EntityName name = 1;
+  bool has_name() const;
+  private:
+  bool _internal_has_name() const;
+  public:
+  void clear_name();
+  const ::IMC_DCCL::EntityName& name() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::EntityName* release_name();
+  ::IMC_DCCL::EntityName* mutable_name();
+  void set_allocated_name(::IMC_DCCL::EntityName* name);
+  private:
+  const ::IMC_DCCL::EntityName& _internal_name() const;
+  ::IMC_DCCL::EntityName* _internal_mutable_name();
+  public:
+  void unsafe_arena_set_allocated_name(
+      ::IMC_DCCL::EntityName* name);
+  ::IMC_DCCL::EntityName* unsafe_arena_release_name();
+
+  // .IMC_DCCL.Visibility visibility = 2;
+  bool has_visibility() const;
+  private:
+  bool _internal_has_visibility() const;
+  public:
+  void clear_visibility();
+  const ::IMC_DCCL::Visibility& visibility() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::Visibility* release_visibility();
+  ::IMC_DCCL::Visibility* mutable_visibility();
+  void set_allocated_visibility(::IMC_DCCL::Visibility* visibility);
+  private:
+  const ::IMC_DCCL::Visibility& _internal_visibility() const;
+  ::IMC_DCCL::Visibility* _internal_mutable_visibility();
+  public:
+  void unsafe_arena_set_allocated_visibility(
+      ::IMC_DCCL::Visibility* visibility);
+  ::IMC_DCCL::Visibility* unsafe_arena_release_visibility();
+
+  // .IMC_DCCL.Scope scope = 3;
+  bool has_scope() const;
+  private:
+  bool _internal_has_scope() const;
+  public:
+  void clear_scope();
+  const ::IMC_DCCL::Scope& scope() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::Scope* release_scope();
+  ::IMC_DCCL::Scope* mutable_scope();
+  void set_allocated_scope(::IMC_DCCL::Scope* scope);
+  private:
+  const ::IMC_DCCL::Scope& _internal_scope() const;
+  ::IMC_DCCL::Scope* _internal_mutable_scope();
+  public:
+  void unsafe_arena_set_allocated_scope(
+      ::IMC_DCCL::Scope* scope);
+  ::IMC_DCCL::Scope* unsafe_arena_release_scope();
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.QueryEntityParameters)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::IMC_DCCL::EntityName* name_;
+    ::IMC_DCCL::Visibility* visibility_;
+    ::IMC_DCCL::Scope* scope_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class Voltage final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.Voltage) */ {
  public:
@@ -12151,7 +12796,7 @@ class Voltage final :
                &_Voltage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    39;
+    42;
 
   friend void swap(Voltage& a, Voltage& b) {
     a.Swap(&b);
@@ -12304,7 +12949,7 @@ class Current final :
                &_Current_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    40;
+    43;
 
   friend void swap(Current& a, Current& b) {
     a.Swap(&b);
@@ -12457,7 +13102,7 @@ class FuelLevel final :
                &_FuelLevel_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    41;
+    44;
 
   friend void swap(FuelLevel& a, FuelLevel& b) {
     a.Swap(&b);
@@ -12645,7 +13290,7 @@ class WindSpeed final :
                &_WindSpeed_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    42;
+    45;
 
   friend void swap(WindSpeed& a, WindSpeed& b) {
     a.Swap(&b);
@@ -12828,7 +13473,7 @@ class Power final :
                &_Power_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    43;
+    46;
 
   friend void swap(Power& a, Power& b) {
     a.Swap(&b);
@@ -12988,7 +13633,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    44;
+    47;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -13204,7 +13849,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    45;
+    48;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -13378,7 +14023,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    46;
+    49;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -13554,7 +14199,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    47;
+    50;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -13765,7 +14410,7 @@ class Header final :
                &_Header_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    48;
+    51;
 
   friend void swap(Header& a, Header& b) {
     a.Swap(&b);
@@ -13989,6 +14634,7 @@ class Payload final :
     kWindSpeedPayload = 13,
     kEntityParametersPayload = 14,
     kEntityListPayload = 15,
+    kQueryEntityParametersPayload = 16,
     PAYLOADUNION_NOT_SET = 0,
   };
 
@@ -13997,7 +14643,7 @@ class Payload final :
                &_Payload_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    49;
+    52;
 
   friend void swap(Payload& a, Payload& b) {
     a.Swap(&b);
@@ -14085,6 +14731,7 @@ class Payload final :
     kWindSpeedPayloadFieldNumber = 13,
     kEntityParametersPayloadFieldNumber = 14,
     kEntityListPayloadFieldNumber = 15,
+    kQueryEntityParametersPayloadFieldNumber = 16,
   };
   // .IMC_DCCL.PlanSpecification plan_specification_payload = 1;
   bool has_plan_specification_payload() const;
@@ -14356,6 +15003,24 @@ class Payload final :
       ::IMC_DCCL::EntityList* entity_list_payload);
   ::IMC_DCCL::EntityList* unsafe_arena_release_entity_list_payload();
 
+  // .IMC_DCCL.QueryEntityParameters query_entity_parameters_payload = 16;
+  bool has_query_entity_parameters_payload() const;
+  private:
+  bool _internal_has_query_entity_parameters_payload() const;
+  public:
+  void clear_query_entity_parameters_payload();
+  const ::IMC_DCCL::QueryEntityParameters& query_entity_parameters_payload() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::QueryEntityParameters* release_query_entity_parameters_payload();
+  ::IMC_DCCL::QueryEntityParameters* mutable_query_entity_parameters_payload();
+  void set_allocated_query_entity_parameters_payload(::IMC_DCCL::QueryEntityParameters* query_entity_parameters_payload);
+  private:
+  const ::IMC_DCCL::QueryEntityParameters& _internal_query_entity_parameters_payload() const;
+  ::IMC_DCCL::QueryEntityParameters* _internal_mutable_query_entity_parameters_payload();
+  public:
+  void unsafe_arena_set_allocated_query_entity_parameters_payload(
+      ::IMC_DCCL::QueryEntityParameters* query_entity_parameters_payload);
+  ::IMC_DCCL::QueryEntityParameters* unsafe_arena_release_query_entity_parameters_payload();
+
   void clear_PayloadUnion();
   PayloadUnionCase PayloadUnion_case() const;
   // @@protoc_insertion_point(class_scope:IMC_DCCL.Payload)
@@ -14376,6 +15041,7 @@ class Payload final :
   void set_has_wind_speed_payload();
   void set_has_entity_parameters_payload();
   void set_has_entity_list_payload();
+  void set_has_query_entity_parameters_payload();
 
   inline bool has_PayloadUnion() const;
   inline void clear_has_PayloadUnion();
@@ -14402,6 +15068,7 @@ class Payload final :
       ::IMC_DCCL::WindSpeed* wind_speed_payload_;
       ::IMC_DCCL::EntityParameters* entity_parameters_payload_;
       ::IMC_DCCL::EntityList* entity_list_payload_;
+      ::IMC_DCCL::QueryEntityParameters* query_entity_parameters_payload_;
     } PayloadUnion_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
     uint32_t _oneof_case_[1];
@@ -14460,7 +15127,7 @@ class ProtoMessage final :
                &_ProtoMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    50;
+    53;
 
   friend void swap(ProtoMessage& a, ProtoMessage& b) {
     a.Swap(&b);
@@ -15945,6 +16612,262 @@ inline void EntityName::clear_has_EntityNameUnion() {
 }
 inline EntityName::EntityNameUnionCase EntityName::EntityNameUnion_case() const {
   return EntityName::EntityNameUnionCase(_impl_._oneof_case_[0]);
+}
+// -------------------------------------------------------------------
+
+// Visibility
+
+// .IMC_DCCL.VisibilityEnum visibility_enum = 1;
+inline bool Visibility::_internal_has_visibility_enum() const {
+  return VisibilityUnion_case() == kVisibilityEnum;
+}
+inline bool Visibility::has_visibility_enum() const {
+  return _internal_has_visibility_enum();
+}
+inline void Visibility::set_has_visibility_enum() {
+  _impl_._oneof_case_[0] = kVisibilityEnum;
+}
+inline void Visibility::clear_visibility_enum() {
+  if (_internal_has_visibility_enum()) {
+    _impl_.VisibilityUnion_.visibility_enum_ = 0;
+    clear_has_VisibilityUnion();
+  }
+}
+inline ::IMC_DCCL::VisibilityEnum Visibility::_internal_visibility_enum() const {
+  if (_internal_has_visibility_enum()) {
+    return static_cast< ::IMC_DCCL::VisibilityEnum >(_impl_.VisibilityUnion_.visibility_enum_);
+  }
+  return static_cast< ::IMC_DCCL::VisibilityEnum >(0);
+}
+inline ::IMC_DCCL::VisibilityEnum Visibility::visibility_enum() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Visibility.visibility_enum)
+  return _internal_visibility_enum();
+}
+inline void Visibility::_internal_set_visibility_enum(::IMC_DCCL::VisibilityEnum value) {
+  if (!_internal_has_visibility_enum()) {
+    clear_VisibilityUnion();
+    set_has_visibility_enum();
+  }
+  _impl_.VisibilityUnion_.visibility_enum_ = value;
+}
+inline void Visibility::set_visibility_enum(::IMC_DCCL::VisibilityEnum value) {
+  _internal_set_visibility_enum(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Visibility.visibility_enum)
+}
+
+// string visibility_string = 2 [(.dccl.field) = {
+inline bool Visibility::_internal_has_visibility_string() const {
+  return VisibilityUnion_case() == kVisibilityString;
+}
+inline bool Visibility::has_visibility_string() const {
+  return _internal_has_visibility_string();
+}
+inline void Visibility::set_has_visibility_string() {
+  _impl_._oneof_case_[0] = kVisibilityString;
+}
+inline void Visibility::clear_visibility_string() {
+  if (_internal_has_visibility_string()) {
+    _impl_.VisibilityUnion_.visibility_string_.Destroy();
+    clear_has_VisibilityUnion();
+  }
+}
+inline const std::string& Visibility::visibility_string() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Visibility.visibility_string)
+  return _internal_visibility_string();
+}
+template <typename ArgT0, typename... ArgT>
+inline void Visibility::set_visibility_string(ArgT0&& arg0, ArgT... args) {
+  if (!_internal_has_visibility_string()) {
+    clear_VisibilityUnion();
+    set_has_visibility_string();
+    _impl_.VisibilityUnion_.visibility_string_.InitDefault();
+  }
+  _impl_.VisibilityUnion_.visibility_string_.Set( static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Visibility.visibility_string)
+}
+inline std::string* Visibility::mutable_visibility_string() {
+  std::string* _s = _internal_mutable_visibility_string();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Visibility.visibility_string)
+  return _s;
+}
+inline const std::string& Visibility::_internal_visibility_string() const {
+  if (_internal_has_visibility_string()) {
+    return _impl_.VisibilityUnion_.visibility_string_.Get();
+  }
+  return ::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited();
+}
+inline void Visibility::_internal_set_visibility_string(const std::string& value) {
+  if (!_internal_has_visibility_string()) {
+    clear_VisibilityUnion();
+    set_has_visibility_string();
+    _impl_.VisibilityUnion_.visibility_string_.InitDefault();
+  }
+  _impl_.VisibilityUnion_.visibility_string_.Set(value, GetArenaForAllocation());
+}
+inline std::string* Visibility::_internal_mutable_visibility_string() {
+  if (!_internal_has_visibility_string()) {
+    clear_VisibilityUnion();
+    set_has_visibility_string();
+    _impl_.VisibilityUnion_.visibility_string_.InitDefault();
+  }
+  return _impl_.VisibilityUnion_.visibility_string_.Mutable(      GetArenaForAllocation());
+}
+inline std::string* Visibility::release_visibility_string() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Visibility.visibility_string)
+  if (_internal_has_visibility_string()) {
+    clear_has_VisibilityUnion();
+    return _impl_.VisibilityUnion_.visibility_string_.Release();
+  } else {
+    return nullptr;
+  }
+}
+inline void Visibility::set_allocated_visibility_string(std::string* visibility_string) {
+  if (has_VisibilityUnion()) {
+    clear_VisibilityUnion();
+  }
+  if (visibility_string != nullptr) {
+    set_has_visibility_string();
+    _impl_.VisibilityUnion_.visibility_string_.InitAllocated(visibility_string, GetArenaForAllocation());
+  }
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.Visibility.visibility_string)
+}
+
+inline bool Visibility::has_VisibilityUnion() const {
+  return VisibilityUnion_case() != VISIBILITYUNION_NOT_SET;
+}
+inline void Visibility::clear_has_VisibilityUnion() {
+  _impl_._oneof_case_[0] = VISIBILITYUNION_NOT_SET;
+}
+inline Visibility::VisibilityUnionCase Visibility::VisibilityUnion_case() const {
+  return Visibility::VisibilityUnionCase(_impl_._oneof_case_[0]);
+}
+// -------------------------------------------------------------------
+
+// Scope
+
+// .IMC_DCCL.ScopeEnum scope_enum = 1;
+inline bool Scope::_internal_has_scope_enum() const {
+  return ScopeUnion_case() == kScopeEnum;
+}
+inline bool Scope::has_scope_enum() const {
+  return _internal_has_scope_enum();
+}
+inline void Scope::set_has_scope_enum() {
+  _impl_._oneof_case_[0] = kScopeEnum;
+}
+inline void Scope::clear_scope_enum() {
+  if (_internal_has_scope_enum()) {
+    _impl_.ScopeUnion_.scope_enum_ = 0;
+    clear_has_ScopeUnion();
+  }
+}
+inline ::IMC_DCCL::ScopeEnum Scope::_internal_scope_enum() const {
+  if (_internal_has_scope_enum()) {
+    return static_cast< ::IMC_DCCL::ScopeEnum >(_impl_.ScopeUnion_.scope_enum_);
+  }
+  return static_cast< ::IMC_DCCL::ScopeEnum >(0);
+}
+inline ::IMC_DCCL::ScopeEnum Scope::scope_enum() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Scope.scope_enum)
+  return _internal_scope_enum();
+}
+inline void Scope::_internal_set_scope_enum(::IMC_DCCL::ScopeEnum value) {
+  if (!_internal_has_scope_enum()) {
+    clear_ScopeUnion();
+    set_has_scope_enum();
+  }
+  _impl_.ScopeUnion_.scope_enum_ = value;
+}
+inline void Scope::set_scope_enum(::IMC_DCCL::ScopeEnum value) {
+  _internal_set_scope_enum(value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Scope.scope_enum)
+}
+
+// string scope_string = 2 [(.dccl.field) = {
+inline bool Scope::_internal_has_scope_string() const {
+  return ScopeUnion_case() == kScopeString;
+}
+inline bool Scope::has_scope_string() const {
+  return _internal_has_scope_string();
+}
+inline void Scope::set_has_scope_string() {
+  _impl_._oneof_case_[0] = kScopeString;
+}
+inline void Scope::clear_scope_string() {
+  if (_internal_has_scope_string()) {
+    _impl_.ScopeUnion_.scope_string_.Destroy();
+    clear_has_ScopeUnion();
+  }
+}
+inline const std::string& Scope::scope_string() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Scope.scope_string)
+  return _internal_scope_string();
+}
+template <typename ArgT0, typename... ArgT>
+inline void Scope::set_scope_string(ArgT0&& arg0, ArgT... args) {
+  if (!_internal_has_scope_string()) {
+    clear_ScopeUnion();
+    set_has_scope_string();
+    _impl_.ScopeUnion_.scope_string_.InitDefault();
+  }
+  _impl_.ScopeUnion_.scope_string_.Set( static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:IMC_DCCL.Scope.scope_string)
+}
+inline std::string* Scope::mutable_scope_string() {
+  std::string* _s = _internal_mutable_scope_string();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Scope.scope_string)
+  return _s;
+}
+inline const std::string& Scope::_internal_scope_string() const {
+  if (_internal_has_scope_string()) {
+    return _impl_.ScopeUnion_.scope_string_.Get();
+  }
+  return ::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited();
+}
+inline void Scope::_internal_set_scope_string(const std::string& value) {
+  if (!_internal_has_scope_string()) {
+    clear_ScopeUnion();
+    set_has_scope_string();
+    _impl_.ScopeUnion_.scope_string_.InitDefault();
+  }
+  _impl_.ScopeUnion_.scope_string_.Set(value, GetArenaForAllocation());
+}
+inline std::string* Scope::_internal_mutable_scope_string() {
+  if (!_internal_has_scope_string()) {
+    clear_ScopeUnion();
+    set_has_scope_string();
+    _impl_.ScopeUnion_.scope_string_.InitDefault();
+  }
+  return _impl_.ScopeUnion_.scope_string_.Mutable(      GetArenaForAllocation());
+}
+inline std::string* Scope::release_scope_string() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Scope.scope_string)
+  if (_internal_has_scope_string()) {
+    clear_has_ScopeUnion();
+    return _impl_.ScopeUnion_.scope_string_.Release();
+  } else {
+    return nullptr;
+  }
+}
+inline void Scope::set_allocated_scope_string(std::string* scope_string) {
+  if (has_ScopeUnion()) {
+    clear_ScopeUnion();
+  }
+  if (scope_string != nullptr) {
+    set_has_scope_string();
+    _impl_.ScopeUnion_.scope_string_.InitAllocated(scope_string, GetArenaForAllocation());
+  }
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.Scope.scope_string)
+}
+
+inline bool Scope::has_ScopeUnion() const {
+  return ScopeUnion_case() != SCOPEUNION_NOT_SET;
+}
+inline void Scope::clear_has_ScopeUnion() {
+  _impl_._oneof_case_[0] = SCOPEUNION_NOT_SET;
+}
+inline Scope::ScopeUnionCase Scope::ScopeUnion_case() const {
+  return Scope::ScopeUnionCase(_impl_._oneof_case_[0]);
 }
 // -------------------------------------------------------------------
 
@@ -22578,6 +23501,280 @@ inline void PlanControlState::set_last_outcome(::IMC_DCCL::PlanControlState_Last
 
 // -------------------------------------------------------------------
 
+// QueryEntityParameters
+
+// .IMC_DCCL.EntityName name = 1;
+inline bool QueryEntityParameters::_internal_has_name() const {
+  return this != internal_default_instance() && _impl_.name_ != nullptr;
+}
+inline bool QueryEntityParameters::has_name() const {
+  return _internal_has_name();
+}
+inline void QueryEntityParameters::clear_name() {
+  if (GetArenaForAllocation() == nullptr && _impl_.name_ != nullptr) {
+    delete _impl_.name_;
+  }
+  _impl_.name_ = nullptr;
+}
+inline const ::IMC_DCCL::EntityName& QueryEntityParameters::_internal_name() const {
+  const ::IMC_DCCL::EntityName* p = _impl_.name_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::EntityName&>(
+      ::IMC_DCCL::_EntityName_default_instance_);
+}
+inline const ::IMC_DCCL::EntityName& QueryEntityParameters::name() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.QueryEntityParameters.name)
+  return _internal_name();
+}
+inline void QueryEntityParameters::unsafe_arena_set_allocated_name(
+    ::IMC_DCCL::EntityName* name) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.name_);
+  }
+  _impl_.name_ = name;
+  if (name) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.QueryEntityParameters.name)
+}
+inline ::IMC_DCCL::EntityName* QueryEntityParameters::release_name() {
+  
+  ::IMC_DCCL::EntityName* temp = _impl_.name_;
+  _impl_.name_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::EntityName* QueryEntityParameters::unsafe_arena_release_name() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.QueryEntityParameters.name)
+  
+  ::IMC_DCCL::EntityName* temp = _impl_.name_;
+  _impl_.name_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::EntityName* QueryEntityParameters::_internal_mutable_name() {
+  
+  if (_impl_.name_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::EntityName>(GetArenaForAllocation());
+    _impl_.name_ = p;
+  }
+  return _impl_.name_;
+}
+inline ::IMC_DCCL::EntityName* QueryEntityParameters::mutable_name() {
+  ::IMC_DCCL::EntityName* _msg = _internal_mutable_name();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.QueryEntityParameters.name)
+  return _msg;
+}
+inline void QueryEntityParameters::set_allocated_name(::IMC_DCCL::EntityName* name) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.name_;
+  }
+  if (name) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(name);
+    if (message_arena != submessage_arena) {
+      name = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, name, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.name_ = name;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.QueryEntityParameters.name)
+}
+
+// .IMC_DCCL.Visibility visibility = 2;
+inline bool QueryEntityParameters::_internal_has_visibility() const {
+  return this != internal_default_instance() && _impl_.visibility_ != nullptr;
+}
+inline bool QueryEntityParameters::has_visibility() const {
+  return _internal_has_visibility();
+}
+inline void QueryEntityParameters::clear_visibility() {
+  if (GetArenaForAllocation() == nullptr && _impl_.visibility_ != nullptr) {
+    delete _impl_.visibility_;
+  }
+  _impl_.visibility_ = nullptr;
+}
+inline const ::IMC_DCCL::Visibility& QueryEntityParameters::_internal_visibility() const {
+  const ::IMC_DCCL::Visibility* p = _impl_.visibility_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::Visibility&>(
+      ::IMC_DCCL::_Visibility_default_instance_);
+}
+inline const ::IMC_DCCL::Visibility& QueryEntityParameters::visibility() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.QueryEntityParameters.visibility)
+  return _internal_visibility();
+}
+inline void QueryEntityParameters::unsafe_arena_set_allocated_visibility(
+    ::IMC_DCCL::Visibility* visibility) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.visibility_);
+  }
+  _impl_.visibility_ = visibility;
+  if (visibility) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.QueryEntityParameters.visibility)
+}
+inline ::IMC_DCCL::Visibility* QueryEntityParameters::release_visibility() {
+  
+  ::IMC_DCCL::Visibility* temp = _impl_.visibility_;
+  _impl_.visibility_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::Visibility* QueryEntityParameters::unsafe_arena_release_visibility() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.QueryEntityParameters.visibility)
+  
+  ::IMC_DCCL::Visibility* temp = _impl_.visibility_;
+  _impl_.visibility_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::Visibility* QueryEntityParameters::_internal_mutable_visibility() {
+  
+  if (_impl_.visibility_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::Visibility>(GetArenaForAllocation());
+    _impl_.visibility_ = p;
+  }
+  return _impl_.visibility_;
+}
+inline ::IMC_DCCL::Visibility* QueryEntityParameters::mutable_visibility() {
+  ::IMC_DCCL::Visibility* _msg = _internal_mutable_visibility();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.QueryEntityParameters.visibility)
+  return _msg;
+}
+inline void QueryEntityParameters::set_allocated_visibility(::IMC_DCCL::Visibility* visibility) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.visibility_;
+  }
+  if (visibility) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(visibility);
+    if (message_arena != submessage_arena) {
+      visibility = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, visibility, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.visibility_ = visibility;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.QueryEntityParameters.visibility)
+}
+
+// .IMC_DCCL.Scope scope = 3;
+inline bool QueryEntityParameters::_internal_has_scope() const {
+  return this != internal_default_instance() && _impl_.scope_ != nullptr;
+}
+inline bool QueryEntityParameters::has_scope() const {
+  return _internal_has_scope();
+}
+inline void QueryEntityParameters::clear_scope() {
+  if (GetArenaForAllocation() == nullptr && _impl_.scope_ != nullptr) {
+    delete _impl_.scope_;
+  }
+  _impl_.scope_ = nullptr;
+}
+inline const ::IMC_DCCL::Scope& QueryEntityParameters::_internal_scope() const {
+  const ::IMC_DCCL::Scope* p = _impl_.scope_;
+  return p != nullptr ? *p : reinterpret_cast<const ::IMC_DCCL::Scope&>(
+      ::IMC_DCCL::_Scope_default_instance_);
+}
+inline const ::IMC_DCCL::Scope& QueryEntityParameters::scope() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.QueryEntityParameters.scope)
+  return _internal_scope();
+}
+inline void QueryEntityParameters::unsafe_arena_set_allocated_scope(
+    ::IMC_DCCL::Scope* scope) {
+  if (GetArenaForAllocation() == nullptr) {
+    delete reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(_impl_.scope_);
+  }
+  _impl_.scope_ = scope;
+  if (scope) {
+    
+  } else {
+    
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.QueryEntityParameters.scope)
+}
+inline ::IMC_DCCL::Scope* QueryEntityParameters::release_scope() {
+  
+  ::IMC_DCCL::Scope* temp = _impl_.scope_;
+  _impl_.scope_ = nullptr;
+#ifdef PROTOBUF_FORCE_COPY_IN_RELEASE
+  auto* old =  reinterpret_cast<::PROTOBUF_NAMESPACE_ID::MessageLite*>(temp);
+  temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  if (GetArenaForAllocation() == nullptr) { delete old; }
+#else  // PROTOBUF_FORCE_COPY_IN_RELEASE
+  if (GetArenaForAllocation() != nullptr) {
+    temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+  }
+#endif  // !PROTOBUF_FORCE_COPY_IN_RELEASE
+  return temp;
+}
+inline ::IMC_DCCL::Scope* QueryEntityParameters::unsafe_arena_release_scope() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.QueryEntityParameters.scope)
+  
+  ::IMC_DCCL::Scope* temp = _impl_.scope_;
+  _impl_.scope_ = nullptr;
+  return temp;
+}
+inline ::IMC_DCCL::Scope* QueryEntityParameters::_internal_mutable_scope() {
+  
+  if (_impl_.scope_ == nullptr) {
+    auto* p = CreateMaybeMessage<::IMC_DCCL::Scope>(GetArenaForAllocation());
+    _impl_.scope_ = p;
+  }
+  return _impl_.scope_;
+}
+inline ::IMC_DCCL::Scope* QueryEntityParameters::mutable_scope() {
+  ::IMC_DCCL::Scope* _msg = _internal_mutable_scope();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.QueryEntityParameters.scope)
+  return _msg;
+}
+inline void QueryEntityParameters::set_allocated_scope(::IMC_DCCL::Scope* scope) {
+  ::PROTOBUF_NAMESPACE_ID::Arena* message_arena = GetArenaForAllocation();
+  if (message_arena == nullptr) {
+    delete _impl_.scope_;
+  }
+  if (scope) {
+    ::PROTOBUF_NAMESPACE_ID::Arena* submessage_arena =
+        ::PROTOBUF_NAMESPACE_ID::Arena::InternalGetOwningArena(scope);
+    if (message_arena != submessage_arena) {
+      scope = ::PROTOBUF_NAMESPACE_ID::internal::GetOwnedMessage(
+          message_arena, scope, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  _impl_.scope_ = scope;
+  // @@protoc_insertion_point(field_set_allocated:IMC_DCCL.QueryEntityParameters.scope)
+}
+
+// -------------------------------------------------------------------
+
 // Voltage
 
 // optional float value = 1 [(.dccl.field) = {
@@ -24790,6 +25987,80 @@ inline ::IMC_DCCL::EntityList* Payload::mutable_entity_list_payload() {
   return _msg;
 }
 
+// .IMC_DCCL.QueryEntityParameters query_entity_parameters_payload = 16;
+inline bool Payload::_internal_has_query_entity_parameters_payload() const {
+  return PayloadUnion_case() == kQueryEntityParametersPayload;
+}
+inline bool Payload::has_query_entity_parameters_payload() const {
+  return _internal_has_query_entity_parameters_payload();
+}
+inline void Payload::set_has_query_entity_parameters_payload() {
+  _impl_._oneof_case_[0] = kQueryEntityParametersPayload;
+}
+inline void Payload::clear_query_entity_parameters_payload() {
+  if (_internal_has_query_entity_parameters_payload()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.PayloadUnion_.query_entity_parameters_payload_;
+    }
+    clear_has_PayloadUnion();
+  }
+}
+inline ::IMC_DCCL::QueryEntityParameters* Payload::release_query_entity_parameters_payload() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.Payload.query_entity_parameters_payload)
+  if (_internal_has_query_entity_parameters_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::QueryEntityParameters* temp = _impl_.PayloadUnion_.query_entity_parameters_payload_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.PayloadUnion_.query_entity_parameters_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::QueryEntityParameters& Payload::_internal_query_entity_parameters_payload() const {
+  return _internal_has_query_entity_parameters_payload()
+      ? *_impl_.PayloadUnion_.query_entity_parameters_payload_
+      : reinterpret_cast< ::IMC_DCCL::QueryEntityParameters&>(::IMC_DCCL::_QueryEntityParameters_default_instance_);
+}
+inline const ::IMC_DCCL::QueryEntityParameters& Payload::query_entity_parameters_payload() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.Payload.query_entity_parameters_payload)
+  return _internal_query_entity_parameters_payload();
+}
+inline ::IMC_DCCL::QueryEntityParameters* Payload::unsafe_arena_release_query_entity_parameters_payload() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.Payload.query_entity_parameters_payload)
+  if (_internal_has_query_entity_parameters_payload()) {
+    clear_has_PayloadUnion();
+    ::IMC_DCCL::QueryEntityParameters* temp = _impl_.PayloadUnion_.query_entity_parameters_payload_;
+    _impl_.PayloadUnion_.query_entity_parameters_payload_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void Payload::unsafe_arena_set_allocated_query_entity_parameters_payload(::IMC_DCCL::QueryEntityParameters* query_entity_parameters_payload) {
+  clear_PayloadUnion();
+  if (query_entity_parameters_payload) {
+    set_has_query_entity_parameters_payload();
+    _impl_.PayloadUnion_.query_entity_parameters_payload_ = query_entity_parameters_payload;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.Payload.query_entity_parameters_payload)
+}
+inline ::IMC_DCCL::QueryEntityParameters* Payload::_internal_mutable_query_entity_parameters_payload() {
+  if (!_internal_has_query_entity_parameters_payload()) {
+    clear_PayloadUnion();
+    set_has_query_entity_parameters_payload();
+    _impl_.PayloadUnion_.query_entity_parameters_payload_ = CreateMaybeMessage< ::IMC_DCCL::QueryEntityParameters >(GetArenaForAllocation());
+  }
+  return _impl_.PayloadUnion_.query_entity_parameters_payload_;
+}
+inline ::IMC_DCCL::QueryEntityParameters* Payload::mutable_query_entity_parameters_payload() {
+  ::IMC_DCCL::QueryEntityParameters* _msg = _internal_mutable_query_entity_parameters_payload();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.Payload.query_entity_parameters_payload)
+  return _msg;
+}
+
 inline bool Payload::has_PayloadUnion() const {
   return PayloadUnion_case() != PAYLOADUNION_NOT_SET;
 }
@@ -25086,6 +26357,12 @@ inline void ProtoMessage::set_allocated_msg_payload(::IMC_DCCL::Payload* msg_pay
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -25187,6 +26464,16 @@ template <> struct is_proto_enum< ::IMC_DCCL::DurationEnum> : ::std::true_type {
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::DurationEnum>() {
   return ::IMC_DCCL::DurationEnum_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::ScopeEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::ScopeEnum>() {
+  return ::IMC_DCCL::ScopeEnum_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::VisibilityEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::VisibilityEnum>() {
+  return ::IMC_DCCL::VisibilityEnum_descriptor();
 }
 template <> struct is_proto_enum< ::IMC_DCCL::ManeuverType> : ::std::true_type {};
 template <>
