@@ -96,8 +96,16 @@ IMC_DCCL::ParamValue encodeParamValue(const std::string& imc_src);
 
 std::string decodeParamValue(const uint16_t& dccl_src);
 
+IMC_DCCL::ScopeEnum encodeScopeEnum(const std::string& imc_src);
+
+std::string decodeScopeEnum(const uint16_t& dccl_src);
+
 IMC_DCCL::TransitionConditionEnum encodeTransitionConditionEnum(const std::string& imc_src);
 
 std::string decodeTransitionConditionEnum(const uint16_t& dccl_src);
+
+IMC_DCCL::VisibilityEnum encodeVisibilityEnum(const std::string& imc_src);
+
+std::string decodeVisibilityEnum(const uint16_t& dccl_src);
 
 #endif // ENUMCODEC_HPP
