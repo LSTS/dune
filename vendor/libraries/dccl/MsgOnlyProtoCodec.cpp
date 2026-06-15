@@ -521,6 +521,12 @@ void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl)
             encodeEntityList(*imc_tmp, *dccl.mutable_entity_list_payload());
             return;
     }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::QueryEntityParameters*>(&imc))
+    {
+            encodeQueryEntityParameters(*imc_tmp, *dccl.mutable_query_entity_parameters_payload());
+            return;
+    }
     throw std::runtime_error("Invalid Payload");
 }
 
@@ -616,6 +622,12 @@ std::unique_ptr<DUNE::IMC::Message> decodePayload(const IMC_DCCL::Payload& dccl)
     if (dccl.has_entity_list_payload()){
             auto tmp = std::make_unique<DUNE::IMC::EntityList>();
             decodeEntityList(dccl.entity_list_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_query_entity_parameters_payload()){
+            auto tmp = std::make_unique<DUNE::IMC::QueryEntityParameters>();
+            decodeQueryEntityParameters(dccl.query_entity_parameters_payload(), *tmp);
             return tmp;
     }
     throw std::runtime_error("Invalid Payload");
@@ -798,6 +810,31 @@ std::unique_ptr<DUNE::IMC::Message> decodePlanSpecificationStartActionsUnion(con
 }
 
 
+// ================ Scope Message ================
+void encodeScope(const std::string& imc, IMC_DCCL::Scope& dccl)
+{
+    
+    auto enum_val = encodeScopeEnum(imc);
+    if(enum_val != IMC_DCCL::ScopeEnum::SE_UNKNOWN){
+            dccl.set_scope_enum(enum_val);
+            return;
+    }
+    
+    dccl.set_scope_string(imc);
+}
+
+
+// ================ Scope Message ================
+void decodeScope(const IMC_DCCL::Scope& dccl, std::string& imc)
+{
+    
+    if(dccl.has_scope_enum()) imc = decodeScopeEnum(dccl.scope_enum());
+    
+    
+    if(dccl.has_scope_string()) imc = dccl.scope_string();
+}
+
+
 // ================ TransitionCondition Message ================
 void encodeTransitionCondition(const std::string& imc, IMC_DCCL::TransitionCondition& dccl)
 {
@@ -820,6 +857,31 @@ void decodeTransitionCondition(const IMC_DCCL::TransitionCondition& dccl, std::s
     
     
     if(dccl.has_condition_string()) imc = dccl.condition_string();
+}
+
+
+// ================ Visibility Message ================
+void encodeVisibility(const std::string& imc, IMC_DCCL::Visibility& dccl)
+{
+    
+    auto enum_val = encodeVisibilityEnum(imc);
+    if(enum_val != IMC_DCCL::VisibilityEnum::VE_UNKNOWN){
+            dccl.set_visibility_enum(enum_val);
+            return;
+    }
+    
+    dccl.set_visibility_string(imc);
+}
+
+
+// ================ Visibility Message ================
+void decodeVisibility(const IMC_DCCL::Visibility& dccl, std::string& imc)
+{
+    
+    if(dccl.has_visibility_enum()) imc = decodeVisibilityEnum(dccl.visibility_enum());
+    
+    
+    if(dccl.has_visibility_string()) imc = dccl.visibility_string();
 }
 
 
