@@ -86,8 +86,16 @@ void encodePlanSpecificationStartActionsUnion(const DUNE::IMC::Message& imc, IMC
 
 std::unique_ptr<DUNE::IMC::Message> decodePlanSpecificationStartActionsUnion(const IMC_DCCL::PlanSpecificationStartActionsUnion& dccl);
 
+void encodeScope(const std::string& imc, IMC_DCCL::Scope& dccl);
+
+void decodeScope(const IMC_DCCL::Scope& dccl, std::string& imc);
+
 void encodeTransitionCondition(const std::string& imc, IMC_DCCL::TransitionCondition& dccl);
 
 void decodeTransitionCondition(const IMC_DCCL::TransitionCondition& dccl, std::string& imc);
+
+void encodeVisibility(const std::string& imc, IMC_DCCL::Visibility& dccl);
+
+void decodeVisibility(const IMC_DCCL::Visibility& dccl, std::string& imc);
 
 #endif // MSGONLYPROTOCODEC_HPP
