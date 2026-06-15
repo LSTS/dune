@@ -2650,7 +2650,7 @@ message PlanDB {
     optional uint32 request_id = 3 [(dccl.field) = { min: 0 max: 65535}];
     optional string plan_id = 4 [(dccl.field).max_length = 30]; 
     PlanDBArgUnion arg = 5;
-    optional string info = 6 [(dccl.field).max_length = 30]; 
+    optional string info = 6 [(dccl.field).max_length = 60]; 
 }
 
 // PlanDBState 
