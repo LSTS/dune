@@ -187,7 +187,6 @@ namespace Monitors
         .description("Sub-Type of vehicle, if applicable");
 
         param("Entity Label - Medium Sensor", m_args.label_medium)
-        .defaultValue("Medium Sensor")
         .description("Entity label of 'EntityState' Medium Sensor messages");
 
         param("Vehicle Medium", m_args.vmedium)
