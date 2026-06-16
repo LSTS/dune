@@ -46,8 +46,14 @@ namespace Control
         //! Task arguments.
         struct Arguments
         {
-          //! Thrust scaling.
-          double scale;
+          //! Thruster id.
+          uint8_t thruster_id;
+          //! Thruster scaling.
+          double thruster_scale;
+          //! Rudder id.
+          uint8_t rudder_id;
+          //! Rudder scaling.
+          double rudder_scale;
         };
 
         struct Task: public DUNE::Control::BasicRemoteOperation
@@ -62,29 +68,46 @@ namespace Control
           uint8_t m_log_state;
           //! True if using the analog thrust
           bool m_analog_thrust;
+          //! Rudder angle scaling factor
+          double m_rudder_scale;
 
           Task(const std::string& name, Tasks::Context& ctx):
             DUNE::Control::BasicRemoteOperation(name, ctx)
           {
-            param("Thrust Scale", m_args.scale)
-              .defaultValue("1.0");
+            param("Thruster Id", m_args.thruster_id)
+            .minimumValue("0")
+            .maximumValue("255")
+            .defaultValue("0")
+            .description("Identifier of the thruster to be controlled.");
+
+            param("Thruster Scale", m_args.thruster_scale)
+            .minimumValue("-1.0")
+            .maximumValue("1.0")
+            .defaultValue("1.0")
+            .description("Scaling factor for the thruster actuation.");
+
+            param("Rudder Id", m_args.rudder_id)
+            .minimumValue("0")
+            .maximumValue("255")
+            .defaultValue("0")
+            .description("Identifier of the rudder to be controlled.");
+
+            param("Rudder Scale", m_args.rudder_scale)
+            .units(Units::Degree)
+            .minimumValue("-180.0")
+            .maximumValue("180.0")
+            .defaultValue("180.0")
+            .description("Maximum rudder deflection angle.");
 
             // Add remote actions.
             addActionButton("Accelerate");
             addActionButton("Decelerate");
             addActionButton("Stop");
             addActionButton("PowerOff");
-            // addActionButton("Restart Log"); // Moved to Logging task
-            // addActionButton("Toggle SPOT");
-            // addActionButton("Arm"); // Moved to Autonaut task
-            // addActionButton("Disarm"); // Moved to Autonaut task
-            // addActionButton("Enable CAS"); // Moved to CAS task
-            // addActionButton("Disable CAS"); // Moved to CAS task
             addActionAxis("Heading");
             addActionAxis("Thrust");
 
             // Initialize SetThrusterActuation messages.
-            m_thruster.id = 0;
             m_thruster.value = m_servo.value = 0;
             m_analog_thrust = true;
 
@@ -93,9 +116,24 @@ namespace Control
           }
 
           void
+          onUpdateParameters(void)
+          {
+            if (paramChanged(m_args.thruster_id))
+              m_thruster.id = m_args.thruster_id;
+
+            if (paramChanged(m_args.thruster_scale))
+              m_thruster.value *= m_args.thruster_scale / m_args.thruster_scale;
+
+            if (paramChanged(m_args.rudder_id))
+              m_servo.id = m_args.rudder_id;
+
+            if (paramChanged(m_args.rudder_scale))
+              m_rudder_scale = Angles::radians(m_args.rudder_scale);
+          }
+
+          void
           onActivation(void)
           {
-            m_thruster.id = 0;
             m_thruster.value = m_servo.value = 0;
             actuate();
           }
@@ -103,7 +141,6 @@ namespace Control
           void
           onDeactivation(void)
           {
-            m_thruster.id = 0;
             m_thruster.value = m_servo.value = 0;
             actuate();
           }
@@ -111,7 +148,6 @@ namespace Control
           void
           onConnectionTimeout(void)
           {
-            m_thruster.id = 0;
             m_thruster.value = m_servo.value = 0;
             actuate();
           }
@@ -123,10 +159,10 @@ namespace Control
             spew("received %s", msg->actions.c_str());
 
             if (tuples.get("PowerOff", 0))
+            {
+              spew("received power off request");
               sendPowerOff();
-
-            else if (tuples.get("Toggle SPOT", 0))
-              toggleSpot();
+            }
           }
 
           void
@@ -139,6 +175,7 @@ namespace Control
           onRemoteActions(const IMC::RemoteActions* msg)
           {
             TupleList tuples(msg->actions);
+            spew("received %s", msg->actions.c_str());
 
             if (tuples.get("Stop", 0))
               m_thruster.value = 0;
@@ -170,51 +207,24 @@ namespace Control
                 m_thruster.value = 0;
             }
 
-            int hdng = tuples.get("Heading", 0) * -1;
-            float val = hdng / 127.0;
-            m_servo.value = val * Math::c_pi / 4;
-            m_servo.value = Math::trimValue(m_servo.value, -Math::c_pi / 4, Math::c_pi / 4);
-            
-            m_thruster.value *= m_args.scale;
+            m_thruster.value *= m_args.thruster_scale;
+
+            int hdng = tuples.get("Heading", 0);
+            double val = hdng / 127.0;
+            double max_angle = std::abs(m_args.rudder_scale);
+            m_servo.value = Math::trimValue(val * m_rudder_scale, -max_angle, max_angle);
+
             actuate();
           }
 
           void
           sendPowerOff(void)
           {
-            IMC::LoggingControl lc;
-            lc.op = LoggingControl::COP_REQUEST_STOP;
-            dispatch(lc);
-
-            Counter<double> timer(3);
-            while (!stopping())
-            {
-              if (timer.overflow())
-                break;
-
-              if (m_log_state == LoggingControl::COP_STOPPED)
-                break;
-
-              waitForMessages(0.1);
-            }
-
-            war("PowerOff CPU");
-            int result = std::system("systemctl poweroff");
-            while (result == -1)
-            {
-              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
-              err(DTR("failed to execute poweroff command"));
-              result = std::system("systemctl poweroff");
-            }
-          }
-
-          void
-          toggleSpot(void)
-          {
-            IMC::PowerChannelControl pcc;
-            pcc.name = "SPOT_C";
-            pcc.op = IMC::PowerChannelControl::PCC_OP_TOGGLE;
-            dispatch(pcc);
+            IMC::PowerOperation po;
+            po.setDestination(getSystemId());
+            po.op = IMC::PowerOperation::POP_PWR_DOWN_IP;
+            dispatch(po);
+            requestDeactivation();
           }
 
           void
