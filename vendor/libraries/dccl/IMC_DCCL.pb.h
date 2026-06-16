@@ -113,6 +113,9 @@ extern ManeuverIDDefaultTypeInternal _ManeuverID_default_instance_;
 class ManeuverIDCombined;
 struct ManeuverIDCombinedDefaultTypeInternal;
 extern ManeuverIDCombinedDefaultTypeInternal _ManeuverIDCombined_default_instance_;
+class MsgNameList;
+struct MsgNameListDefaultTypeInternal;
+extern MsgNameListDefaultTypeInternal _MsgNameList_default_instance_;
 class ParameterName;
 struct ParameterNameDefaultTypeInternal;
 extern ParameterNameDefaultTypeInternal _ParameterName_default_instance_;
@@ -233,6 +236,7 @@ template<> ::IMC_DCCL::Loiter* Arena::CreateMaybeMessage<::IMC_DCCL::Loiter>(Are
 template<> ::IMC_DCCL::Maneuver* Arena::CreateMaybeMessage<::IMC_DCCL::Maneuver>(Arena*);
 template<> ::IMC_DCCL::ManeuverID* Arena::CreateMaybeMessage<::IMC_DCCL::ManeuverID>(Arena*);
 template<> ::IMC_DCCL::ManeuverIDCombined* Arena::CreateMaybeMessage<::IMC_DCCL::ManeuverIDCombined>(Arena*);
+template<> ::IMC_DCCL::MsgNameList* Arena::CreateMaybeMessage<::IMC_DCCL::MsgNameList>(Arena*);
 template<> ::IMC_DCCL::ParameterName* Arena::CreateMaybeMessage<::IMC_DCCL::ParameterName>(Arena*);
 template<> ::IMC_DCCL::ParameterValue* Arena::CreateMaybeMessage<::IMC_DCCL::ParameterValue>(Arena*);
 template<> ::IMC_DCCL::PathPoint* Arena::CreateMaybeMessage<::IMC_DCCL::PathPoint>(Arena*);
@@ -947,6 +951,379 @@ inline bool TransitionConditionEnum_Parse(
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<TransitionConditionEnum>(
     TransitionConditionEnum_descriptor(), name, value);
 }
+enum MessageNameEnum : int {
+  MN_ABORT = 0,
+  MN_ABORTED = 1,
+  MN_ABSOLUTEWIND = 2,
+  MN_ACCELERATION = 3,
+  MN_ACOUSTICLINK = 4,
+  MN_ACOUSTICMESSAGE = 5,
+  MN_ACOUSTICOPERATION = 6,
+  MN_ACOUSTICRELEASE = 7,
+  MN_ACOUSTICREQUEST = 8,
+  MN_ACOUSTICSTATUS = 9,
+  MN_ACOUSTICSYSTEMS = 10,
+  MN_ACOUSTICSYSTEMSQUERY = 11,
+  MN_ADCPBEAM = 12,
+  MN_AIRFLOW = 13,
+  MN_AIRSATURATION = 14,
+  MN_AISINFO = 15,
+  MN_ALIGNMENT = 16,
+  MN_ALIGNMENTSTATE = 17,
+  MN_ALLOCATEDCONTROLTORQUES = 18,
+  MN_ANGULARVELOCITY = 19,
+  MN_ANNOUNCE = 20,
+  MN_ANNOUNCESERVICE = 21,
+  MN_APMSTATUS = 22,
+  MN_ARMINGSTATE = 23,
+  MN_ASSETREPORT = 24,
+  MN_AUTONOMOUSSECTION = 25,
+  MN_AUTOPILOTMODE = 26,
+  MN_BDI = 27,
+  MN_BEAMCONFIG = 28,
+  MN_BMSCELLVOLTAGE = 29,
+  MN_BMSDATA = 30,
+  MN_BMSREGISTER = 31,
+  MN_BRAKE = 32,
+  MN_BUTTONEVENT = 33,
+  MN_CACHECONTROL = 34,
+  MN_CALIBRATION = 35,
+  MN_CAMERAZOOM = 36,
+  MN_CCUEVENT = 37,
+  MN_CHLOROPHYLL = 38,
+  MN_CLOCKCONTROL = 39,
+  MN_CLOSESESSION = 40,
+  MN_COLLISION = 41,
+  MN_COLOREDDISSOLVEDORGANICMATTER = 42,
+  MN_COMMRESTRICTION = 43,
+  MN_COMMSRELAY = 44,
+  MN_COMMSYSTEMSQUERY = 45,
+  MN_COMPASSCALIBRATION = 46,
+  MN_COMPRESSEDHISTORY = 47,
+  MN_COMPRESSEDIMAGE = 48,
+  MN_CONDUCTIVITY = 49,
+  MN_CONTROLLOOPS = 50,
+  MN_CONTROLPARCEL = 51,
+  MN_COVERAREA = 52,
+  MN_CPUUSAGE = 53,
+  MN_CREATESESSION = 54,
+  MN_CRUDEOIL = 55,
+  MN_CURRENT = 56,
+  MN_CURRENTPROFILE = 57,
+  MN_CURRENTPROFILECELL = 58,
+  MN_CUSTOMMANEUVER = 59,
+  MN_DATASANITY = 60,
+  MN_DEPTH = 61,
+  MN_DEPTHOFFSET = 62,
+  MN_DESIREDCONTROL = 63,
+  MN_DESIREDHEADING = 64,
+  MN_DESIREDHEADINGRATE = 65,
+  MN_DESIREDLINEARSTATE = 66,
+  MN_DESIREDPATH = 67,
+  MN_DESIREDPITCH = 68,
+  MN_DESIREDROLL = 69,
+  MN_DESIREDSPEED = 70,
+  MN_DESIREDTHROTTLE = 71,
+  MN_DESIREDVELOCITY = 72,
+  MN_DESIREDVERTICALRATE = 73,
+  MN_DESIREDZ = 74,
+  MN_DEVCALIBRATIONCONTROL = 75,
+  MN_DEVCALIBRATIONSTATE = 76,
+  MN_DEVDATABINARY = 77,
+  MN_DEVDATATEXT = 78,
+  MN_DEVICESTATE = 79,
+  MN_DISLODGE = 80,
+  MN_DISPLACEMENT = 81,
+  MN_DISSOLVEDORGANICMATTER = 82,
+  MN_DISSOLVEDOXYGEN = 83,
+  MN_DISTANCE = 84,
+  MN_DMSDETECTION = 85,
+  MN_DROP = 86,
+  MN_DVLREJECTION = 87,
+  MN_DYNAMICSSIMPARAM = 88,
+  MN_ELEVATOR = 89,
+  MN_EMERGENCYCONTROL = 90,
+  MN_EMERGENCYCONTROLSTATE = 91,
+  MN_ENCAWARENESS = 92,
+  MN_ENTITYACTIVATIONSTATE = 93,
+  MN_ENTITYINFO = 94,
+  MN_ENTITYLIST = 95,
+  MN_ENTITYMONITORINGSTATE = 96,
+  MN_ENTITYPARAMETER = 97,
+  MN_ENTITYPARAMETERS = 98,
+  MN_ENTITYSTATE = 99,
+  MN_ESTIMATEDSTATE = 100,
+  MN_ESTIMATEDSTREAMVELOCITY = 101,
+  MN_EULERANGLES = 102,
+  MN_EULERANGLESDELTA = 103,
+  MN_EVENT = 104,
+  MN_EXTENDEDRSSI = 105,
+  MN_EXTERNALNAVDATA = 106,
+  MN_FINEOIL = 107,
+  MN_FLUORESCEIN = 108,
+  MN_FLUORESCENTDISSOLVEDORGANICMATTER = 109,
+  MN_FOLLOWPATH = 110,
+  MN_FOLLOWPOINT = 111,
+  MN_FOLLOWREFERENCE = 112,
+  MN_FOLLOWREFSTATE = 113,
+  MN_FOLLOWSYSTEM = 114,
+  MN_FOLLOWTRAJECTORY = 115,
+  MN_FORCE = 116,
+  MN_FORMATION = 117,
+  MN_FORMATIONCONTROLPARAMS = 118,
+  MN_FORMATIONEVAL = 119,
+  MN_FORMATIONEVALUATION = 120,
+  MN_FORMATIONMONITOR = 121,
+  MN_FORMATIONPARAMETERS = 122,
+  MN_FORMATIONPLANEXECUTION = 123,
+  MN_FORMATIONSTATE = 124,
+  MN_FORMCTRLPARAM = 125,
+  MN_FORMSTATE = 126,
+  MN_FREQUENCY = 127,
+  MN_FUELLEVEL = 128,
+  MN_GETIMAGECOORDS = 129,
+  MN_GETOPERATIONALLIMITS = 130,
+  MN_GETPARAMETERSXML = 131,
+  MN_GETWORLDCOORDINATES = 132,
+  MN_GOTO = 133,
+  MN_GPIOSTATE = 134,
+  MN_GPIOSTATEGET = 135,
+  MN_GPIOSTATESET = 136,
+  MN_GPSFIX = 137,
+  MN_GPSFIXREJECTION = 138,
+  MN_GPSFIXRTK = 139,
+  MN_GPSNAVDATA = 140,
+  MN_GROUNDVELOCITY = 141,
+  MN_GROUPMEMBERSHIPSTATE = 142,
+  MN_GROUPSTREAMVELOCITY = 143,
+  MN_HEARTBEAT = 144,
+  MN_HISTORICCTD = 145,
+  MN_HISTORICDATA = 146,
+  MN_HISTORICDATAQUERY = 147,
+  MN_HISTORICEVENT = 148,
+  MN_HISTORICSAMPLE = 149,
+  MN_HISTORICSONARDATA = 150,
+  MN_HISTORICTELEMETRY = 151,
+  MN_HOMEPOSITION = 152,
+  MN_IDLEMANEUVER = 153,
+  MN_IMAGETRACKING = 154,
+  MN_IMAGETXSETTINGS = 155,
+  MN_INDICATEDSPEED = 156,
+  MN_IOEVENT = 157,
+  MN_IRIDIUMMSGRX = 158,
+  MN_IRIDIUMMSGTX = 159,
+  MN_IRIDIUMTXSTATUS = 160,
+  MN_LAND = 161,
+  MN_LAUNCH = 162,
+  MN_LBLBEACON = 163,
+  MN_LBLCONFIG = 164,
+  MN_LBLESTIMATE = 165,
+  MN_LBLRANGE = 166,
+  MN_LBLRANGEACCEPTANCE = 167,
+  MN_LCDCONTROL = 168,
+  MN_LEADERSTATE = 169,
+  MN_LEAKSIMULATION = 170,
+  MN_LEDBRIGHTNESS = 171,
+  MN_LINKLATENCY = 172,
+  MN_LINKLEVEL = 173,
+  MN_LOGBOOKCONTROL = 174,
+  MN_LOGBOOKENTRY = 175,
+  MN_LOGGINGCONTROL = 176,
+  MN_LOITER = 177,
+  MN_LOWLEVELCONTROL = 178,
+  MN_MAGNETICFIELD = 179,
+  MN_MAGNETOMETER = 180,
+  MN_MANEUVERCONTROLSTATE = 181,
+  MN_MANEUVERDONE = 182,
+  MN_MAP = 183,
+  MN_MAPFEATURE = 184,
+  MN_MAPPOINT = 185,
+  MN_MESSAGEPART = 186,
+  MN_MESSAGEPARTCONTROL = 187,
+  MN_MONITORENTITYSTATE = 188,
+  MN_MSGLIST = 189,
+  MN_NAVIGATIONDATA = 190,
+  MN_NAVIGATIONUNCERTAINTY = 191,
+  MN_NEPTUSBLOB = 192,
+  MN_OPERATIONALLIMITS = 193,
+  MN_OPTICALBACKSCATTER = 194,
+  MN_PARAMETERSXML = 195,
+  MN_PATHCONTROLSTATE = 196,
+  MN_PATHPOINT = 197,
+  MN_PH = 198,
+  MN_PHYCOCYANIN = 199,
+  MN_PHYCOERYTHRIN = 200,
+  MN_PLANCONTROL = 201,
+  MN_PLANCONTROLSTATE = 202,
+  MN_PLANDB = 203,
+  MN_PLANDBINFORMATION = 204,
+  MN_PLANDBSTATE = 205,
+  MN_PLANGENERATION = 206,
+  MN_PLANMANEUVER = 207,
+  MN_PLANSPECIFICATION = 208,
+  MN_PLANSTATISTICS = 209,
+  MN_PLANTRANSITION = 210,
+  MN_PLANVARIABLE = 211,
+  MN_POLYGONVERTEX = 212,
+  MN_POPENTITYPARAMETERS = 213,
+  MN_POPUP = 214,
+  MN_POWER = 215,
+  MN_POWERCHANNELCONTROL = 216,
+  MN_POWERCHANNELSTATE = 217,
+  MN_POWEROPERATION = 218,
+  MN_PRESSURE = 219,
+  MN_PROFILESAMPLE = 220,
+  MN_PULSE = 221,
+  MN_PULSEDETECTIONCONTROL = 222,
+  MN_PUSHENTITYPARAMETERS = 223,
+  MN_PWM = 224,
+  MN_QUERYBMSDATA = 225,
+  MN_QUERYENTITYACTIVATIONSTATE = 226,
+  MN_QUERYENTITYINFO = 227,
+  MN_QUERYENTITYPARAMETERS = 228,
+  MN_QUERYENTITYSTATE = 229,
+  MN_QUERYLEDBRIGHTNESS = 230,
+  MN_QUERYPOWERCHANNELSTATE = 231,
+  MN_QUERYTYPEDENTITYPARAMETERS = 232,
+  MN_RAMUSAGE = 233,
+  MN_REDOX = 234,
+  MN_REFERENCE = 235,
+  MN_REGISTERMANEUVER = 236,
+  MN_RELATIVEHUMIDITY = 237,
+  MN_RELATIVESTATE = 238,
+  MN_REMOTEACTIONS = 239,
+  MN_REMOTEACTIONSREQUEST = 240,
+  MN_REMOTECOMMAND = 241,
+  MN_REMOTESENSORINFO = 242,
+  MN_REMOTESTATE = 243,
+  MN_REPLAYCONTROL = 244,
+  MN_REPORTCONTROL = 245,
+  MN_REPORTEDSTATE = 246,
+  MN_RESTARTSYSTEM = 247,
+  MN_RHODAMINEDYE = 248,
+  MN_ROWS = 249,
+  MN_ROWSCOVERAGE = 250,
+  MN_RPM = 251,
+  MN_RSSI = 252,
+  MN_SADCREADINGS = 253,
+  MN_SALINITY = 254,
+  MN_SAMPLE = 255,
+  MN_SAVEENTITYPARAMETERS = 256,
+  MN_SCHEDULEDGOTO = 257,
+  MN_SERVOPOSITION = 258,
+  MN_SESSIONKEEPALIVE = 259,
+  MN_SESSIONSTATUS = 260,
+  MN_SESSIONSUBSCRIPTION = 261,
+  MN_SETCONTROLSURFACEDEFLECTION = 262,
+  MN_SETENTITYPARAMETERS = 263,
+  MN_SETIMAGECOORDS = 264,
+  MN_SETLEDBRIGHTNESS = 265,
+  MN_SETPWM = 266,
+  MN_SETSERVOPOSITION = 267,
+  MN_SETTHRUSTERACTUATION = 268,
+  MN_SIMACOUSTICMESSAGE = 269,
+  MN_SIMULATEDSTATE = 270,
+  MN_SMS = 271,
+  MN_SMSREQUEST = 272,
+  MN_SMSRX = 273,
+  MN_SMSSTATE = 274,
+  MN_SMSSTATUS = 275,
+  MN_SMSTX = 276,
+  MN_SOICOMMAND = 277,
+  MN_SOIPLAN = 278,
+  MN_SOISTATE = 279,
+  MN_SOIWAYPOINT = 280,
+  MN_SONARDATA = 281,
+  MN_SOUNDSPEED = 282,
+  MN_STATEREPORT = 283,
+  MN_STATIONKEEPING = 284,
+  MN_STATIONKEEPINGEXTENDED = 285,
+  MN_STOPMANEUVER = 286,
+  MN_STORAGEUSAGE = 287,
+  MN_SYSTEMGROUP = 288,
+  MN_TACHOGRAPH = 289,
+  MN_TAKEOFF = 290,
+  MN_TARGET = 291,
+  MN_TCPREQUEST = 292,
+  MN_TCPSTATUS = 293,
+  MN_TELEMETRYMSG = 294,
+  MN_TELEOPERATION = 295,
+  MN_TELEOPERATIONDONE = 296,
+  MN_TEMPERATURE = 297,
+  MN_TEXTMESSAGE = 298,
+  MN_THROTTLE = 299,
+  MN_TOTALHEADING = 300,
+  MN_TOTALMAGINTENSITY = 301,
+  MN_TRAJECTORYPOINT = 302,
+  MN_TRANSMISSIONREQUEST = 303,
+  MN_TRANSMISSIONSTATUS = 304,
+  MN_TRANSPORTBINDINGS = 305,
+  MN_TREXATTRIBUTE = 306,
+  MN_TREXCOMMAND = 307,
+  MN_TREXOBSERVATION = 308,
+  MN_TREXOPERATION = 309,
+  MN_TREXPLAN = 310,
+  MN_TREXTOKEN = 311,
+  MN_TRUESPEED = 312,
+  MN_TURBIDITY = 313,
+  MN_TYPEDENTITYPARAMETER = 314,
+  MN_TYPEDENTITYPARAMETEREDITOR = 315,
+  MN_UAMRXFRAME = 316,
+  MN_UAMRXRANGE = 317,
+  MN_UAMTXFRAME = 318,
+  MN_UAMTXRANGE = 319,
+  MN_UAMTXSTATUS = 320,
+  MN_UASIMULATION = 321,
+  MN_USBLANGLES = 322,
+  MN_USBLANGLESEXTENDED = 323,
+  MN_USBLCONFIG = 324,
+  MN_USBLFIX = 325,
+  MN_USBLFIXEXTENDED = 326,
+  MN_USBLMODEM = 327,
+  MN_USBLPOSITION = 328,
+  MN_USBLPOSITIONEXTENDED = 329,
+  MN_VALUESIF = 330,
+  MN_VEHICLECOMMAND = 331,
+  MN_VEHICLEFORMATION = 332,
+  MN_VEHICLEFORMATIONPARTICIPANT = 333,
+  MN_VEHICLELINKS = 334,
+  MN_VEHICLEMEDIUM = 335,
+  MN_VEHICLEOPERATIONALLIMITS = 336,
+  MN_VEHICLESTATE = 337,
+  MN_VELOCITYDELTA = 338,
+  MN_VERSIONINFO = 339,
+  MN_VERTICALPROFILE = 340,
+  MN_VOLTAGE = 341,
+  MN_VSWR = 342,
+  MN_VTOLSTATE = 343,
+  MN_WATERDENSITY = 344,
+  MN_WATERVELOCITY = 345,
+  MN_WAVESPECTRUMPARAMETERS = 346,
+  MN_WINDSPEED = 347,
+  MN_YOYO = 348,
+  MN_UNKNOWN = 349,
+  MessageNameEnum_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  MessageNameEnum_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool MessageNameEnum_IsValid(int value);
+constexpr MessageNameEnum MessageNameEnum_MIN = MN_ABORT;
+constexpr MessageNameEnum MessageNameEnum_MAX = MN_UNKNOWN;
+constexpr int MessageNameEnum_ARRAYSIZE = MessageNameEnum_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* MessageNameEnum_descriptor();
+template<typename T>
+inline const std::string& MessageNameEnum_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, MessageNameEnum>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function MessageNameEnum_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    MessageNameEnum_descriptor(), enum_t_value);
+}
+inline bool MessageNameEnum_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, MessageNameEnum* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<MessageNameEnum>(
+    MessageNameEnum_descriptor(), name, value);
+}
 enum ParamName : int {
   PN_12V_CHANNEL_DATA_ENTITY_LABEL = 0,
   PN_5V_CHANNEL_DATA_ENTITY_LABEL = 1,
@@ -1005,16 +1382,16 @@ enum ParamName : int {
   PN_ADC15_ENTITY_LABEL = 54,
   PN_ADC15_MESSAGE = 55,
   PN_ADC1_CONVERSION = 56,
-  PN_ADC1_ENTITY_LABEL_1 = 57,
+  PN_ADC1_ENTITY_LABEL = 57,
   PN_ADC1_MESSAGE = 58,
   PN_ADC2_CONVERSION = 59,
   PN_ADC2_ENTITY_LABEL_1 = 60,
   PN_ADC2_MESSAGE = 61,
   PN_ADC3_CONVERSION = 62,
-  PN_ADC3_ENTITY_LABEL_1 = 63,
+  PN_ADC3_ENTITY_LABEL = 63,
   PN_ADC3_MESSAGE = 64,
   PN_ADC4_CONVERSION = 65,
-  PN_ADC4_ENTITY_LABEL = 66,
+  PN_ADC4_ENTITY_LABEL_1 = 66,
   PN_ADC4_MESSAGE = 67,
   PN_ADC5_CONVERSION = 68,
   PN_ADC5_ENTITY_LABEL = 69,
@@ -1031,7 +1408,7 @@ enum ParamName : int {
   PN_ADC9_CONVERSION = 80,
   PN_ADC9_ENTITY_LABEL = 81,
   PN_ADC9_MESSAGE = 82,
-  PN_ADC_1_ENTITY_LABEL = 83,
+  PN_ADC_1_ENTITY_LABEL_1 = 83,
   PN_ADC_1_FIXED_GAIN = 84,
   PN_ADC_1_FIXED_GAIN_VAL = 85,
   PN_ADC_1_IS_ACTIVE = 86,
@@ -1043,13 +1420,13 @@ enum ParamName : int {
   PN_ADC_2_IS_ACTIVE = 92,
   PN_ADC_2_MAXIMUM_VAL = 93,
   PN_ADC_2_MINIMUM_VAL = 94,
-  PN_ADC_3_ENTITY_LABEL = 95,
+  PN_ADC_3_ENTITY_LABEL_1 = 95,
   PN_ADC_3_FIXED_GAIN = 96,
   PN_ADC_3_FIXED_GAIN_VAL = 97,
   PN_ADC_3_IS_ACTIVE = 98,
   PN_ADC_3_MAXIMUM_VAL = 99,
   PN_ADC_3_MINIMUM_VAL = 100,
-  PN_ADC_4_ENTITY_LABEL_1 = 101,
+  PN_ADC_4_ENTITY_LABEL = 101,
   PN_ADC_4_FIXED_GAIN = 102,
   PN_ADC_4_FIXED_GAIN_VAL = 103,
   PN_ADC_4_IS_ACTIVE = 104,
@@ -2989,7 +3366,7 @@ enum EntityNameEnum : int {
   EN_LOSTCOMMS_SUPERVISOR_ASV = 110,
   EN_LOST_COMMS = 111,
   EN_LOST_COMMS_MONITOR = 112,
-  EN_MAINBOARD_1 = 113,
+  EN_MAINBOARD = 113,
   EN_MAINBOARD_AUX = 114,
   EN_MAINBOARD_AUXILIARY_CPU = 115,
   EN_MAINBOARD_BOARD = 116,
@@ -2997,7 +3374,7 @@ enum EntityNameEnum : int {
   EN_MAINBOARD_CAMERA_CPU_1 = 118,
   EN_MAINBOARD_CORE = 119,
   EN_MAINBOARD_SUPERIO = 120,
-  EN_MAIN_BOARD = 121,
+  EN_MAIN_BOARD_1 = 121,
   EN_MANTA_FUEL_LEVEL = 122,
   EN_MCD4R = 123,
   EN_MEDIUM = 124,
@@ -4164,6 +4541,163 @@ class Goto final :
 };
 // -------------------------------------------------------------------
 
+class MsgNameList final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.MsgNameList) */ {
+ public:
+  inline MsgNameList() : MsgNameList(nullptr) {}
+  ~MsgNameList() override;
+  explicit PROTOBUF_CONSTEXPR MsgNameList(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  MsgNameList(const MsgNameList& from);
+  MsgNameList(MsgNameList&& from) noexcept
+    : MsgNameList() {
+    *this = ::std::move(from);
+  }
+
+  inline MsgNameList& operator=(const MsgNameList& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline MsgNameList& operator=(MsgNameList&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const MsgNameList& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const MsgNameList* internal_default_instance() {
+    return reinterpret_cast<const MsgNameList*>(
+               &_MsgNameList_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    4;
+
+  friend void swap(MsgNameList& a, MsgNameList& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(MsgNameList* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(MsgNameList* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  MsgNameList* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<MsgNameList>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const MsgNameList& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const MsgNameList& from) {
+    MsgNameList::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(MsgNameList* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "IMC_DCCL.MsgNameList";
+  }
+  protected:
+  explicit MsgNameList(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kMsgNameFieldNumber = 1,
+  };
+  // repeated .IMC_DCCL.MessageNameEnum msg_name = 1 [(.dccl.field) = {
+  int msg_name_size() const;
+  private:
+  int _internal_msg_name_size() const;
+  public:
+  void clear_msg_name();
+  private:
+  ::IMC_DCCL::MessageNameEnum _internal_msg_name(int index) const;
+  void _internal_add_msg_name(::IMC_DCCL::MessageNameEnum value);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>* _internal_mutable_msg_name();
+  public:
+  ::IMC_DCCL::MessageNameEnum msg_name(int index) const;
+  void set_msg_name(int index, ::IMC_DCCL::MessageNameEnum value);
+  void add_msg_name(::IMC_DCCL::MessageNameEnum value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>& msg_name() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>* mutable_msg_name();
+
+  // @@protoc_insertion_point(class_scope:IMC_DCCL.MsgNameList)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::RepeatedField<int> msg_name_;
+    mutable std::atomic<int> _msg_name_cached_byte_size_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_IMC_5fDCCL_2eproto;
+};
+// -------------------------------------------------------------------
+
 class ParameterValue final :
     public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:IMC_DCCL.ParameterValue) */ {
  public:
@@ -4209,7 +4743,8 @@ class ParameterValue final :
   }
   enum ParameterValueUnionCase {
     kParamEnum = 1,
-    kParamString = 2,
+    kParamMsgList = 2,
+    kParamString = 3,
     PARAMETERVALUEUNION_NOT_SET = 0,
   };
 
@@ -4218,7 +4753,7 @@ class ParameterValue final :
                &_ParameterValue_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    5;
 
   friend void swap(ParameterValue& a, ParameterValue& b) {
     a.Swap(&b);
@@ -4292,7 +4827,8 @@ class ParameterValue final :
 
   enum : int {
     kParamEnumFieldNumber = 1,
-    kParamStringFieldNumber = 2,
+    kParamMsgListFieldNumber = 2,
+    kParamStringFieldNumber = 3,
   };
   // .IMC_DCCL.ParamValue param_enum = 1;
   bool has_param_enum() const;
@@ -4307,7 +4843,25 @@ class ParameterValue final :
   void _internal_set_param_enum(::IMC_DCCL::ParamValue value);
   public:
 
-  // string param_string = 2 [(.dccl.field) = {
+  // .IMC_DCCL.MsgNameList param_msg_list = 2;
+  bool has_param_msg_list() const;
+  private:
+  bool _internal_has_param_msg_list() const;
+  public:
+  void clear_param_msg_list();
+  const ::IMC_DCCL::MsgNameList& param_msg_list() const;
+  PROTOBUF_NODISCARD ::IMC_DCCL::MsgNameList* release_param_msg_list();
+  ::IMC_DCCL::MsgNameList* mutable_param_msg_list();
+  void set_allocated_param_msg_list(::IMC_DCCL::MsgNameList* param_msg_list);
+  private:
+  const ::IMC_DCCL::MsgNameList& _internal_param_msg_list() const;
+  ::IMC_DCCL::MsgNameList* _internal_mutable_param_msg_list();
+  public:
+  void unsafe_arena_set_allocated_param_msg_list(
+      ::IMC_DCCL::MsgNameList* param_msg_list);
+  ::IMC_DCCL::MsgNameList* unsafe_arena_release_param_msg_list();
+
+  // string param_string = 3 [(.dccl.field) = {
   bool has_param_string() const;
   private:
   bool _internal_has_param_string() const;
@@ -4331,6 +4885,7 @@ class ParameterValue final :
  private:
   class _Internal;
   void set_has_param_enum();
+  void set_has_param_msg_list();
   void set_has_param_string();
 
   inline bool has_ParameterValueUnion() const;
@@ -4344,6 +4899,7 @@ class ParameterValue final :
       constexpr ParameterValueUnionUnion() : _constinit_{} {}
         ::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized _constinit_;
       int param_enum_;
+      ::IMC_DCCL::MsgNameList* param_msg_list_;
       ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr param_string_;
     } ParameterValueUnion_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
@@ -4409,7 +4965,7 @@ class ParameterName final :
                &_ParameterName_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    6;
 
   friend void swap(ParameterName& a, ParameterName& b) {
     a.Swap(&b);
@@ -4600,7 +5156,7 @@ class EntityName final :
                &_EntityName_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   friend void swap(EntityName& a, EntityName& b) {
     a.Swap(&b);
@@ -4791,7 +5347,7 @@ class Visibility final :
                &_Visibility_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    8;
 
   friend void swap(Visibility& a, Visibility& b) {
     a.Swap(&b);
@@ -4982,7 +5538,7 @@ class Scope final :
                &_Scope_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   friend void swap(Scope& a, Scope& b) {
     a.Swap(&b);
@@ -5167,7 +5723,7 @@ class PathPoint final :
                &_PathPoint_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   friend void swap(PathPoint& a, PathPoint& b) {
     a.Swap(&b);
@@ -5358,7 +5914,7 @@ class Maneuver final :
                &_Maneuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   friend void swap(Maneuver& a, Maneuver& b) {
     a.Swap(&b);
@@ -5590,7 +6146,7 @@ class EntityParameter final :
                &_EntityParameter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   friend void swap(EntityParameter& a, EntityParameter& b) {
     a.Swap(&b);
@@ -5767,7 +6323,7 @@ class EntityParameters final :
                &_EntityParameters_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   friend void swap(EntityParameters& a, EntityParameters& b) {
     a.Swap(&b);
@@ -5944,7 +6500,7 @@ class SetEntityParameters final :
                &_SetEntityParameters_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   friend void swap(SetEntityParameters& a, SetEntityParameters& b) {
     a.Swap(&b);
@@ -6121,7 +6677,7 @@ class ItemList final :
                &_ItemList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    15;
 
   friend void swap(ItemList& a, ItemList& b) {
     a.Swap(&b);
@@ -6289,7 +6845,7 @@ class ListCombined final :
                &_ListCombined_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    16;
 
   friend void swap(ListCombined& a, ListCombined& b) {
     a.Swap(&b);
@@ -6446,7 +7002,7 @@ class FuelItemList final :
                &_FuelItemList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    17;
 
   friend void swap(FuelItemList& a, FuelItemList& b) {
     a.Swap(&b);
@@ -6605,7 +7161,7 @@ class FuelList final :
                &_FuelList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    18;
 
   friend void swap(FuelList& a, FuelList& b) {
     a.Swap(&b);
@@ -6762,7 +7318,7 @@ class DurationName final :
                &_DurationName_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    19;
 
   friend void swap(DurationName& a, DurationName& b) {
     a.Swap(&b);
@@ -6931,7 +7487,7 @@ class DurationItemList final :
                &_DurationItemList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    20;
 
   friend void swap(DurationItemList& a, DurationItemList& b) {
     a.Swap(&b);
@@ -7099,7 +7655,7 @@ class DurationList final :
                &_DurationList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    21;
 
   friend void swap(DurationList& a, DurationList& b) {
     a.Swap(&b);
@@ -7256,7 +7812,7 @@ class EntityList final :
                &_EntityList_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    22;
 
   friend void swap(EntityList& a, EntityList& b) {
     a.Swap(&b);
@@ -7458,7 +8014,7 @@ class ManeuverIDCombined final :
                &_ManeuverIDCombined_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    23;
 
   friend void swap(ManeuverIDCombined& a, ManeuverIDCombined& b) {
     a.Swap(&b);
@@ -7623,7 +8179,7 @@ class ManeuverID final :
                &_ManeuverID_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    24;
 
   friend void swap(ManeuverID& a, ManeuverID& b) {
     a.Swap(&b);
@@ -7819,7 +8375,7 @@ class TransitionCondition final :
                &_TransitionCondition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    25;
 
   friend void swap(TransitionCondition& a, TransitionCondition& b) {
     a.Swap(&b);
@@ -8004,7 +8560,7 @@ class Loiter final :
                &_Loiter_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    26;
 
   friend void swap(Loiter& a, Loiter& b) {
     a.Swap(&b);
@@ -8420,7 +8976,7 @@ class PlanManeuverStartActionsUnion final :
                &_PlanManeuverStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    27;
 
   friend void swap(PlanManeuverStartActionsUnion& a, PlanManeuverStartActionsUnion& b) {
     a.Swap(&b);
@@ -8589,7 +9145,7 @@ class PlanManeuver final :
                &_PlanManeuver_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   friend void swap(PlanManeuver& a, PlanManeuver& b) {
     a.Swap(&b);
@@ -8786,7 +9342,7 @@ class PlanTransition final :
                &_PlanTransition_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    29;
 
   friend void swap(PlanTransition& a, PlanTransition& b) {
     a.Swap(&b);
@@ -8983,7 +9539,7 @@ class VerticalProfile final :
                &_VerticalProfile_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    30;
 
   friend void swap(VerticalProfile& a, VerticalProfile& b) {
     a.Swap(&b);
@@ -9251,7 +9807,7 @@ class EstimatedState final :
                &_EstimatedState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    31;
 
   friend void swap(EstimatedState& a, EstimatedState& b) {
     a.Swap(&b);
@@ -9689,7 +10245,7 @@ class PlanVariable final :
                &_PlanVariable_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    32;
 
   friend void swap(PlanVariable& a, PlanVariable& b) {
     a.Swap(&b);
@@ -9959,7 +10515,7 @@ class PlanSpecification final :
                &_PlanSpecification_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    33;
 
   friend void swap(PlanSpecification& a, PlanSpecification& b) {
     a.Swap(&b);
@@ -10277,7 +10833,7 @@ class PlanDB final :
                &_PlanDB_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    34;
 
   friend void swap(PlanDB& a, PlanDB& b) {
     a.Swap(&b);
@@ -10592,7 +11148,7 @@ class PlanDBState final :
                &_PlanDBState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    34;
+    35;
 
   friend void swap(PlanDBState& a, PlanDBState& b) {
     a.Swap(&b);
@@ -10850,7 +11406,7 @@ class PlanDBInformation final :
                &_PlanDBInformation_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    35;
+    36;
 
   friend void swap(PlanDBInformation& a, PlanDBInformation& b) {
     a.Swap(&b);
@@ -11093,7 +11649,7 @@ class PlanControl final :
                &_PlanControl_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    36;
+    37;
 
   friend void swap(PlanControl& a, PlanControl& b) {
     a.Swap(&b);
@@ -11415,7 +11971,7 @@ class PlanStatistics final :
                &_PlanStatistics_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    37;
+    38;
 
   friend void swap(PlanStatistics& a, PlanStatistics& b) {
     a.Swap(&b);
@@ -11713,7 +12269,7 @@ class VehicleState final :
                &_VehicleState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    38;
+    39;
 
   friend void swap(VehicleState& a, VehicleState& b) {
     a.Swap(&b);
@@ -12047,7 +12603,7 @@ class EntityState final :
                &_EntityState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    39;
+    40;
 
   friend void swap(EntityState& a, EntityState& b) {
     a.Swap(&b);
@@ -12269,7 +12825,7 @@ class PlanControlState final :
                &_PlanControlState_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    40;
+    41;
 
   friend void swap(PlanControlState& a, PlanControlState& b) {
     a.Swap(&b);
@@ -12599,7 +13155,7 @@ class QueryEntityParameters final :
                &_QueryEntityParameters_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    41;
+    42;
 
   friend void swap(QueryEntityParameters& a, QueryEntityParameters& b) {
     a.Swap(&b);
@@ -12796,7 +13352,7 @@ class Voltage final :
                &_Voltage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    42;
+    43;
 
   friend void swap(Voltage& a, Voltage& b) {
     a.Swap(&b);
@@ -12949,7 +13505,7 @@ class Current final :
                &_Current_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    43;
+    44;
 
   friend void swap(Current& a, Current& b) {
     a.Swap(&b);
@@ -13102,7 +13658,7 @@ class FuelLevel final :
                &_FuelLevel_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    44;
+    45;
 
   friend void swap(FuelLevel& a, FuelLevel& b) {
     a.Swap(&b);
@@ -13290,7 +13846,7 @@ class WindSpeed final :
                &_WindSpeed_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    45;
+    46;
 
   friend void swap(WindSpeed& a, WindSpeed& b) {
     a.Swap(&b);
@@ -13473,7 +14029,7 @@ class Power final :
                &_Power_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    46;
+    47;
 
   friend void swap(Power& a, Power& b) {
     a.Swap(&b);
@@ -13633,7 +14189,7 @@ class PlanDBArgUnion final :
                &_PlanDBArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    47;
+    48;
 
   friend void swap(PlanDBArgUnion& a, PlanDBArgUnion& b) {
     a.Swap(&b);
@@ -13849,7 +14405,7 @@ class PlanSpecificationStartActionsUnion final :
                &_PlanSpecificationStartActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    48;
+    49;
 
   friend void swap(PlanSpecificationStartActionsUnion& a, PlanSpecificationStartActionsUnion& b) {
     a.Swap(&b);
@@ -14023,7 +14579,7 @@ class PlanSpecificationEndActionsUnion final :
                &_PlanSpecificationEndActionsUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    49;
+    50;
 
   friend void swap(PlanSpecificationEndActionsUnion& a, PlanSpecificationEndActionsUnion& b) {
     a.Swap(&b);
@@ -14199,7 +14755,7 @@ class PlanControlArgUnion final :
                &_PlanControlArgUnion_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    50;
+    51;
 
   friend void swap(PlanControlArgUnion& a, PlanControlArgUnion& b) {
     a.Swap(&b);
@@ -14410,7 +14966,7 @@ class Header final :
                &_Header_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    51;
+    52;
 
   friend void swap(Header& a, Header& b) {
     a.Swap(&b);
@@ -14643,7 +15199,7 @@ class Payload final :
                &_Payload_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    52;
+    53;
 
   friend void swap(Payload& a, Payload& b) {
     a.Swap(&b);
@@ -15127,7 +15683,7 @@ class ProtoMessage final :
                &_ProtoMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    53;
+    54;
 
   friend void swap(ProtoMessage& a, ProtoMessage& b) {
     a.Swap(&b);
@@ -16231,6 +16787,53 @@ inline void Goto::set_allocated_custom(std::string* custom) {
 
 // -------------------------------------------------------------------
 
+// MsgNameList
+
+// repeated .IMC_DCCL.MessageNameEnum msg_name = 1 [(.dccl.field) = {
+inline int MsgNameList::_internal_msg_name_size() const {
+  return _impl_.msg_name_.size();
+}
+inline int MsgNameList::msg_name_size() const {
+  return _internal_msg_name_size();
+}
+inline void MsgNameList::clear_msg_name() {
+  _impl_.msg_name_.Clear();
+}
+inline ::IMC_DCCL::MessageNameEnum MsgNameList::_internal_msg_name(int index) const {
+  return static_cast< ::IMC_DCCL::MessageNameEnum >(_impl_.msg_name_.Get(index));
+}
+inline ::IMC_DCCL::MessageNameEnum MsgNameList::msg_name(int index) const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.MsgNameList.msg_name)
+  return _internal_msg_name(index);
+}
+inline void MsgNameList::set_msg_name(int index, ::IMC_DCCL::MessageNameEnum value) {
+  _impl_.msg_name_.Set(index, value);
+  // @@protoc_insertion_point(field_set:IMC_DCCL.MsgNameList.msg_name)
+}
+inline void MsgNameList::_internal_add_msg_name(::IMC_DCCL::MessageNameEnum value) {
+  _impl_.msg_name_.Add(value);
+}
+inline void MsgNameList::add_msg_name(::IMC_DCCL::MessageNameEnum value) {
+  _internal_add_msg_name(value);
+  // @@protoc_insertion_point(field_add:IMC_DCCL.MsgNameList.msg_name)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>&
+MsgNameList::msg_name() const {
+  // @@protoc_insertion_point(field_list:IMC_DCCL.MsgNameList.msg_name)
+  return _impl_.msg_name_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>*
+MsgNameList::_internal_mutable_msg_name() {
+  return &_impl_.msg_name_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField<int>*
+MsgNameList::mutable_msg_name() {
+  // @@protoc_insertion_point(field_mutable_list:IMC_DCCL.MsgNameList.msg_name)
+  return _internal_mutable_msg_name();
+}
+
+// -------------------------------------------------------------------
+
 // ParameterValue
 
 // .IMC_DCCL.ParamValue param_enum = 1;
@@ -16271,7 +16874,81 @@ inline void ParameterValue::set_param_enum(::IMC_DCCL::ParamValue value) {
   // @@protoc_insertion_point(field_set:IMC_DCCL.ParameterValue.param_enum)
 }
 
-// string param_string = 2 [(.dccl.field) = {
+// .IMC_DCCL.MsgNameList param_msg_list = 2;
+inline bool ParameterValue::_internal_has_param_msg_list() const {
+  return ParameterValueUnion_case() == kParamMsgList;
+}
+inline bool ParameterValue::has_param_msg_list() const {
+  return _internal_has_param_msg_list();
+}
+inline void ParameterValue::set_has_param_msg_list() {
+  _impl_._oneof_case_[0] = kParamMsgList;
+}
+inline void ParameterValue::clear_param_msg_list() {
+  if (_internal_has_param_msg_list()) {
+    if (GetArenaForAllocation() == nullptr) {
+      delete _impl_.ParameterValueUnion_.param_msg_list_;
+    }
+    clear_has_ParameterValueUnion();
+  }
+}
+inline ::IMC_DCCL::MsgNameList* ParameterValue::release_param_msg_list() {
+  // @@protoc_insertion_point(field_release:IMC_DCCL.ParameterValue.param_msg_list)
+  if (_internal_has_param_msg_list()) {
+    clear_has_ParameterValueUnion();
+    ::IMC_DCCL::MsgNameList* temp = _impl_.ParameterValueUnion_.param_msg_list_;
+    if (GetArenaForAllocation() != nullptr) {
+      temp = ::PROTOBUF_NAMESPACE_ID::internal::DuplicateIfNonNull(temp);
+    }
+    _impl_.ParameterValueUnion_.param_msg_list_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline const ::IMC_DCCL::MsgNameList& ParameterValue::_internal_param_msg_list() const {
+  return _internal_has_param_msg_list()
+      ? *_impl_.ParameterValueUnion_.param_msg_list_
+      : reinterpret_cast< ::IMC_DCCL::MsgNameList&>(::IMC_DCCL::_MsgNameList_default_instance_);
+}
+inline const ::IMC_DCCL::MsgNameList& ParameterValue::param_msg_list() const {
+  // @@protoc_insertion_point(field_get:IMC_DCCL.ParameterValue.param_msg_list)
+  return _internal_param_msg_list();
+}
+inline ::IMC_DCCL::MsgNameList* ParameterValue::unsafe_arena_release_param_msg_list() {
+  // @@protoc_insertion_point(field_unsafe_arena_release:IMC_DCCL.ParameterValue.param_msg_list)
+  if (_internal_has_param_msg_list()) {
+    clear_has_ParameterValueUnion();
+    ::IMC_DCCL::MsgNameList* temp = _impl_.ParameterValueUnion_.param_msg_list_;
+    _impl_.ParameterValueUnion_.param_msg_list_ = nullptr;
+    return temp;
+  } else {
+    return nullptr;
+  }
+}
+inline void ParameterValue::unsafe_arena_set_allocated_param_msg_list(::IMC_DCCL::MsgNameList* param_msg_list) {
+  clear_ParameterValueUnion();
+  if (param_msg_list) {
+    set_has_param_msg_list();
+    _impl_.ParameterValueUnion_.param_msg_list_ = param_msg_list;
+  }
+  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:IMC_DCCL.ParameterValue.param_msg_list)
+}
+inline ::IMC_DCCL::MsgNameList* ParameterValue::_internal_mutable_param_msg_list() {
+  if (!_internal_has_param_msg_list()) {
+    clear_ParameterValueUnion();
+    set_has_param_msg_list();
+    _impl_.ParameterValueUnion_.param_msg_list_ = CreateMaybeMessage< ::IMC_DCCL::MsgNameList >(GetArenaForAllocation());
+  }
+  return _impl_.ParameterValueUnion_.param_msg_list_;
+}
+inline ::IMC_DCCL::MsgNameList* ParameterValue::mutable_param_msg_list() {
+  ::IMC_DCCL::MsgNameList* _msg = _internal_mutable_param_msg_list();
+  // @@protoc_insertion_point(field_mutable:IMC_DCCL.ParameterValue.param_msg_list)
+  return _msg;
+}
+
+// string param_string = 3 [(.dccl.field) = {
 inline bool ParameterValue::_internal_has_param_string() const {
   return ParameterValueUnion_case() == kParamString;
 }
@@ -26363,6 +27040,8 @@ inline void ProtoMessage::set_allocated_msg_payload(::IMC_DCCL::Payload* msg_pay
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
@@ -26489,6 +27168,11 @@ template <> struct is_proto_enum< ::IMC_DCCL::TransitionConditionEnum> : ::std::
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::TransitionConditionEnum>() {
   return ::IMC_DCCL::TransitionConditionEnum_descriptor();
+}
+template <> struct is_proto_enum< ::IMC_DCCL::MessageNameEnum> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::IMC_DCCL::MessageNameEnum>() {
+  return ::IMC_DCCL::MessageNameEnum_descriptor();
 }
 template <> struct is_proto_enum< ::IMC_DCCL::ParamName> : ::std::true_type {};
 template <>
