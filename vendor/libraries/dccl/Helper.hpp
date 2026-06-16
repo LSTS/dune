@@ -65,6 +65,34 @@ namespace Helper {
         return items;
     }
 
+    // Split a string with ";" and "," in its items, removes the spaces if any.
+    inline std::vector<std::string> getCleanItems(const std::string& imc)
+    {
+        std::string normalized = imc;
+
+        std::replace(normalized.begin(), normalized.end(), ',', ';');
+
+        std::stringstream ss(normalized);
+        std::string item;
+        std::vector<std::string> items;
+
+        while (std::getline(ss, item, ';'))
+        {
+            // trim
+            size_t start = 0;
+            while (start < item.size() && std::isspace(static_cast<unsigned char>(item[start])))
+                start++;
+
+            size_t end = item.size();
+            while (end > start && std::isspace(static_cast<unsigned char>(item[end - 1])))
+                end--;
+
+            if (end > start)
+                items.push_back(item.substr(start, end - start));
+        }
+
+        return items;
+    }
 
 } // namespace Helper
 
