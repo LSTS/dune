@@ -378,6 +378,35 @@ void decodeManeuverIDCombined(const IMC_DCCL::ManeuverIDCombined& dccl, std::str
 }
 
 
+// ================ MsgNameList Message ================
+bool encodeMsgNameList(const std::string& imc, IMC_DCCL::MsgNameList& dccl)
+{
+    
+    auto items = Helper::getCleanItems(imc);
+    
+    for (const auto& item : items){
+        auto enum_val = encodeMessageNameEnum(item);
+        if (enum_val == IMC_DCCL::MessageNameEnum::MN_UNKNOWN) return false; 
+        dccl.add_msg_name(enum_val);
+    } 
+    return true;                                                
+                              
+}
+
+
+// ================ MsgNameList Message ================
+void decodeMsgNameList(const IMC_DCCL::MsgNameList& dccl, std::string& imc)
+{
+    
+    for (int i=0; i < dccl.msg_name_size(); i++) {
+        std::string temp;
+        temp = decodeMessageNameEnum(dccl.msg_name(i));	
+        imc += temp;
+        if (i != dccl.msg_name_size() - 1) imc += ', ';
+    }
+}
+
+
 // ================ ParameterName Message ================
 void encodeParameterName(const std::string& imc, IMC_DCCL::ParameterName& dccl)
 {
@@ -413,6 +442,12 @@ void encodeParameterValue(const std::string& imc, IMC_DCCL::ParameterValue& dccl
             return;
     }
     
+    IMC_DCCL::MsgNameList msg_list;
+    if(encodeMsgNameList(imc, msg_list)){        
+        *dccl.mutable_param_msg_list() = msg_list;
+        return;
+    }
+    
     dccl.set_param_string(imc);
 }
 
@@ -422,6 +457,9 @@ void decodeParameterValue(const IMC_DCCL::ParameterValue& dccl, std::string& imc
 {
     
     if(dccl.has_param_enum()) imc = decodeParamValue(dccl.param_enum());
+    
+    
+    if(dccl.has_param_msg_list()) decodeMsgNameList(dccl.param_msg_list(), imc);
     
     
     if(dccl.has_param_string()) imc = dccl.param_string();
