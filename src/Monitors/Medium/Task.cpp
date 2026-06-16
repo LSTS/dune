@@ -82,6 +82,8 @@ namespace Monitors
       std::string label_medium;
       //! Vehicle Medium (force).
       std::string vmedium;
+      //! Condutivity threshold.
+      float cond_lm;
     };
 
     //! %Medium task.
@@ -170,7 +172,8 @@ namespace Monitors
 
         param("Altitude Threshold", m_args.altitude_lm)
         .units(Units::Meter)
-        .defaultValue("1")
+        .defaultValue("1.0")
+        .minimumValue("0.0")
         .description("Minimum altitude necessary to consider a vehicle (Copter) in air");
 
         param("Vehicle Type", m_args.vtype)
@@ -192,13 +195,16 @@ namespace Monitors
         .values("Auto, Air, Ground, Water, Underwater")
         .description("Set vehicle medium.");
 
+        param("Condutivity Threshold", m_args.cond_lm)
+        .defaultValue("0.2")
+        .minimumValue("0.0")
+        .description("Condutivity threshold value");
+
         // GPS validity.
         m_gps_val_bits = (IMC::GpsFix::GFV_VALID_DATE | IMC::GpsFix::GFV_VALID_TIME |
                           IMC::GpsFix::GFV_VALID_HACC | IMC::GpsFix::GFV_VALID_VACC |
                           IMC::GpsFix::GFV_VALID_HDOP | IMC::GpsFix::GFV_VALID_VDOP |
                           IMC::GpsFix::GFV_VALID_POS);
-
-        m_wet_devs.setTop(c_water_presence);
 
         // Register consumers.
         bind<IMC::EntityState>(this);
@@ -207,18 +213,34 @@ namespace Monitors
         bind<IMC::Salinity>(this);
         bind<IMC::SoundSpeed>(this);
         bind<IMC::IndicatedSpeed>(this);
+        bind<IMC::Conductivity>(this);
+      }
+
+      void
+      onActivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      void
+      onDeactivation(void)
+      {
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
       onEntityResolution(void)
       {
+        if (m_args.label_medium.empty())
+          return;
+
         try
         {
           m_medium_eid = resolveEntity(m_args.label_medium);
         }
-        catch (...)
+        catch (Entities::EntityDataBase::NonexistentLabel& e)
         {
-          m_medium_eid = UINT_MAX;
+          war("%s", e.what());
         }
       }
 
@@ -226,6 +248,7 @@ namespace Monitors
       onResourceInitialization(void)
       {
         m_init.setTop(m_args.init_time);
+        m_wet_devs.setTop(c_water_presence);
         m_in_water.setTop(m_args.water_timeout);
         m_gps_status.setTop(m_args.gps_timeout);
       }
@@ -233,6 +256,9 @@ namespace Monitors
       void
       consume(const IMC::EntityState* msg)
       {
+        if (m_medium_eid == UINT_MAX)
+          return;
+
         if (msg->getSource() != getSystemId())
           return;
 
@@ -241,7 +267,8 @@ namespace Monitors
 
         m_wet_devs.reset();
 
-        if (msg->description == DTR("water")) {
+        if (msg->description == DTR("water"))
+        {
           m_in_water.reset();
           debug(DTR("Water detected using medium sensor."));
         }
@@ -250,12 +277,18 @@ namespace Monitors
       void
       consume(const IMC::EstimatedState* msg)
       {
+        if (isASV())
+          return;
+
         if (msg->getSource() != getSystemId())
           return;
 
-        m_depth = msg->depth;
+        if (isUUV())
+          m_depth = msg->depth;
+
         // For UAVs: Height is positive upwards, z is positive downwards.
-        m_altitude = msg->alt;
+        if (isUAV())
+          m_altitude = msg->alt;
       }
 
       void
@@ -270,6 +303,9 @@ namespace Monitors
       void
       consume(const IMC::GpsFix* msg)
       {
+        if (!isUUV())
+          return;
+        
         if ((msg->validity & m_gps_val_bits) == m_gps_val_bits)
           m_gps_status.reset();
 
@@ -279,6 +315,9 @@ namespace Monitors
       void
       consume(const IMC::Salinity* msg)
       {
+        if (m_args.salinity_lm == 0.0f)
+          return;
+
         if (isUAV())
           return;
 
@@ -293,6 +332,9 @@ namespace Monitors
       void
       consume(const IMC::SoundSpeed* msg)
       {
+        if (m_args.sspeed_lm == 0.0f)
+          return;
+
         if (isUAV())
           return;
 
@@ -301,6 +343,27 @@ namespace Monitors
         if (msg->value >= m_args.sspeed_lm) {
           m_in_water.reset();
           debug(DTR("Water detected using sound speed sensor."));
+        }
+      }
+
+      void
+      consume(const IMC::Conductivity* msg)
+      {
+        if (m_args.cond_lm == 0.0f)
+          return;
+
+        if (msg->getSource() != getSystemId())
+          return;
+
+        if (isUAV())
+          return;
+        
+        m_wet_devs.reset();
+
+        if (msg->value >= m_args.cond_lm)
+        {
+          m_in_water.reset();
+          debug(DTR("Water detected using condutivity threshold."));
         }
       }
 
@@ -340,26 +403,41 @@ namespace Monitors
           m_vm.medium = IMC::VehicleMedium::VM_GROUND;
       }
 
-      //! Check data input. Only for water going vehicles.
+      //! Check data input.
       void
-      checkUUV(void)
+      check(void)
       {
         if (isUAV())
+        {
+          checkUAV();
           return;
+        }
 
         if (!waterMediumCheck())
           return;
 
         checkWater();
 
-        if ((m_depth > m_args.depth_lm) && !isGpsAvailable())
-          m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
+        if (isUUV())
+        {
+          if ((m_depth > m_args.depth_lm) && !isGpsAvailable())
+            m_vm.medium = IMC::VehicleMedium::VM_UNDERWATER;
+        }
       }
 
       //! Check data input. Only for aerial vehicles.
       void
       checkUAV(void)
       {
+        if (m_args.altitude_lm == 0.0f)
+          return;
+
+        if (m_args.airspeed_lm == 0.0f)
+          return;
+
+        if (m_args.altitude_lm == 0.0f)
+          return;
+
         if (!isUAV())
           return;
 
@@ -396,10 +474,23 @@ namespace Monitors
       bool
       isUAV(void)
       {
-        if (m_args.vtype == "UAV")
-          return true;
+        return m_args.vtype == "UAV";
+      }
 
-        return false;
+      //! Check if vehicle is a UUV.
+      //! @return true if vehicle is a UAV.
+      bool
+      isUUV(void)
+      {
+        return m_args.vtype == "UUV";
+      }
+
+      //! Check if vehicle is a ASV.
+      //! @return true if vehicle is a ASV.
+      bool
+      isASV(void)
+      {
+        return m_args.vtype == "ASV";
       }
 
       //! Check water medium presence.
@@ -430,43 +521,27 @@ namespace Monitors
       void
       updateStateMachine(void)
       {
+        if (m_args.vmedium != "Auto")
+        {
+          m_vm.medium = c_str_to_medium.at(m_args.vmedium);
+          return;
+        }
+
         // Task state machine.
         switch (m_vm.medium)
         {
           case (IMC::VehicleMedium::VM_AIR):
-            checkUAV();
-            break;
-
           case (IMC::VehicleMedium::VM_GROUND):
-            checkUUV();
-            checkUAV();
-            break;
-
           case (IMC::VehicleMedium::VM_WATER):
-            checkUUV();
+          case (IMC::VehicleMedium::VM_UNKNOWN):
+          default:
+            check();
             break;
 
           case (IMC::VehicleMedium::VM_UNDERWATER):
             if ((m_depth < m_args.depth_lm - c_depth_hyst) && isGpsAvailable())
               m_vm.medium = IMC::VehicleMedium::VM_WATER;
             break;
-
-          case (IMC::VehicleMedium::VM_UNKNOWN):
-            checkUUV();
-            break;
-        }
-
-        if (isActive())
-        {
-          if (m_args.vmedium != "Auto")
-            m_vm.medium = c_str_to_medium.at(m_args.vmedium);
-          
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
-          dispatch(m_vm);
-        }
-        else
-        {
-          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
         }
       }
 
@@ -478,6 +553,9 @@ namespace Monitors
           return;
 
         updateStateMachine();
+
+        if (isActive())
+          dispatch(m_vm);
       }
     };
   }
