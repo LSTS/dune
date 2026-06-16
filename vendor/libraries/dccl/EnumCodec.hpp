@@ -88,6 +88,10 @@ IMC_DCCL::ManeuverType encodeManeuverType(const std::string& imc_src);
 
 std::string decodeManeuverType(const uint16_t& dccl_src);
 
+IMC_DCCL::MessageNameEnum encodeMessageNameEnum(const std::string& imc_src);
+
+std::string decodeMessageNameEnum(const uint16_t& dccl_src);
+
 IMC_DCCL::ParamName encodeParamName(const std::string& imc_src);
 
 std::string decodeParamName(const uint16_t& dccl_src);
