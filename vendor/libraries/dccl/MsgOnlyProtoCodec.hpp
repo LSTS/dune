@@ -54,6 +54,10 @@ void encodeManeuverIDCombined(const std::string& imc, IMC_DCCL::ManeuverIDCombin
 
 void decodeManeuverIDCombined(const IMC_DCCL::ManeuverIDCombined& dccl, std::string& imc);
 
+bool encodeMsgNameList(const std::string& imc, IMC_DCCL::MsgNameList& dccl);
+
+void decodeMsgNameList(const IMC_DCCL::MsgNameList& dccl, std::string& imc);
+
 void encodeParameterName(const std::string& imc, IMC_DCCL::ParameterName& dccl);
 
 void decodeParameterName(const IMC_DCCL::ParameterName& dccl, std::string& imc);
