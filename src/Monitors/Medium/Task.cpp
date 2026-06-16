@@ -195,10 +195,10 @@ namespace Monitors
         .values("Auto, Air, Ground, Water, Underwater")
         .description("Set vehicle medium.");
 
-        param("Condutivity Threshold", m_args.cond_lm)
+        param("Conductivity Threshold", m_args.cond_lm)
         .defaultValue("0.2")
         .minimumValue("0.0")
-        .description("Condutivity threshold value");
+        .description("Conductivity threshold value");
 
         // GPS validity.
         m_gps_val_bits = (IMC::GpsFix::GFV_VALID_DATE | IMC::GpsFix::GFV_VALID_TIME |
