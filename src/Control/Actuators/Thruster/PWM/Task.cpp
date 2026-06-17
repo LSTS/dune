@@ -351,6 +351,9 @@ namespace Control
           void
           consume(const IMC::PWM* msg)
           {
+            if (!m_ref_set)
+              return;
+
             if (!m_args.close_loop)
               return;
 
@@ -374,13 +377,9 @@ namespace Control
             uint32_t curr_dc = msg->duty_cycle;
             trace("received PWM signal: p=%u us dc=%u us)", msg->period, curr_dc);
 
-            uint32_t dc = m_pwm_dc_neutral;
             uint32_t desired_dc = (m_desired_dc_curr > 0) ? m_desired_dc_curr : m_desired_dc;
             int32_t error = static_cast<int32_t>(desired_dc) - static_cast<int32_t>(curr_dc);
-            if (delta > m_args.max_cl_update_delta)
-              dc = desired_dc;
-            else
-              dc = desired_dc + m_cl_pid.step(delta, error);
+            uint32_t dc = desired_dc + m_cl_pid.step(delta, error);
             
             dispatchPWM(dc);
           }
@@ -388,6 +387,9 @@ namespace Control
           void
           consume(const IMC::Current* msg)
           {
+            if (!m_ref_set)
+              return;
+
             if (m_args.thruster_curr_lim <= 0)
               return;
 
@@ -407,7 +409,7 @@ namespace Control
 
             uint32_t dc = m_pwm_dc_neutral;
             fp32_t error = current - m_args.thruster_curr_lim;
-            if (error <= 0.0f || delta > m_args.max_curr_update_delta)
+            if (error <= 0.0f)
               dc = m_desired_dc;
             else if (m_desired_dc > m_pwm_dc_neutral)
               dc = trimValue(m_desired_dc - m_curr_pid.step(delta, error), m_pwm_dc_neutral, m_pwm_max_dc_fwd);
@@ -436,9 +438,10 @@ namespace Control
             ref = trimValue(ref, -1.0f, 1.0f);
             m_desired_dc = computeDutyCycle(ref);
             m_ref_set = true;
-            trace("set actuation reference: %.2f | dc=%u us", ref, m_desired_dc);
+            trace("received actuation reference: %.2f | dc=%u us", ref, m_desired_dc);
 
-            if (m_args.close_loop || m_args.thruster_curr_lim > 0)
+            if ((m_args.close_loop && m_pwm_delta.check() < m_args.max_cl_update_delta) ||
+                (m_args.thruster_curr_lim > 0 && m_curr_delta.check() < m_args.max_curr_update_delta && !m_args.close_loop))
               return;
 
             dispatchPWM(m_desired_dc);
@@ -447,9 +450,6 @@ namespace Control
           void
           dispatchPWM(uint32_t dc)
           {
-            if (!m_ref_set)
-              return;
-
             m_set_pwm.duty_cycle = trimValue(dc, m_pwm_min_dc_rev, m_pwm_max_dc_fwd);
             dispatch(m_set_pwm);
             debug("dispatching PWM signal: p=%u us dc=%u us", m_set_pwm.period, m_set_pwm.duty_cycle);
