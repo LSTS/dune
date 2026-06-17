@@ -1,0 +1,3 @@
+if(NOT DUNE_SYS_HAS_EPOS)
+  set(TASK_ENABLED FALSE)
+endif()
