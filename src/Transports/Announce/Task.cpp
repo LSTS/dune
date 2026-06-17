@@ -206,10 +206,20 @@ namespace Transports
 
         // Add additional services defined statically.
         for (unsigned i = 0; i < m_args.adi_services_loc.size(); ++i)
-          m_uris_loc.insert(m_args.adi_services_loc[i]);
+        {
+          IMC::AnnounceService srv;
+          srv.service = m_args.adi_services_loc[i];
+          srv.service_type = IMC::AnnounceService::SRV_TYPE_LOCAL;
+          m_registered_services.push_back(srv);
+        }
 
         for (unsigned i = 0; i < m_args.adi_services_ext.size(); ++i)
-          m_uris_ext.insert(m_args.adi_services_ext[i]);
+        {
+          IMC::AnnounceService srv;
+          srv.service = m_args.adi_services_ext[i];
+          srv.service_type = IMC::AnnounceService::SRV_TYPE_EXTERNAL;
+          m_registered_services.push_back(srv);
+        }
 
         generateServiceStrings();
       }
