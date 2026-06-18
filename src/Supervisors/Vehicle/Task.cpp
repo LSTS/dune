@@ -38,6 +38,9 @@
 // Local headers.
 #include "ManeuverSupervisor.hpp"
 
+// Behavior Tree headers.
+#include "behaviortree_cpp/bt_factory.h"
+
 namespace Supervisors
 {
   namespace Vehicle
@@ -67,6 +70,8 @@ namespace Supervisors
       bool ext_control;
       //! Timeout for starting or stopping a maneuver
       double handle_timeout;
+
+      bool skip;
     };
 
     struct Task: public DUNE::Tasks::Periodic
@@ -101,6 +106,20 @@ namespace Supervisors
       float m_calib_timeout;
       //! Task arguments.
       Arguments m_args;
+      //! Tree XML path
+      DUNE::FileSystem::Path path = Path(DUNE_PATH_SRC) / "src" / "Supervisors" / "Vehicle" / "Manuever.xml";
+      //! BT factory and runtime objects
+      BT::BehaviorTreeFactory m_bt_factory;
+      BT::Blackboard::Ptr m_bt_blackboard;
+      BT::Tree m_bt_tree;
+      bool m_bt_ready;
+      //! Resume logic variables
+      std::string m_resume_man_id;
+      std::string m_resume_plan_id;
+      std::string m_stage_man_id;
+      std::string m_stage_plan_id;
+      bool m_can_resume;
+      //bool m_can_resume_teleop;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Periodic(name, ctx),
@@ -122,12 +141,35 @@ namespace Supervisors
         .defaultValue("1.0")
         .description("Timeout for starting or stopping a maneuver");
 
+        param("Skip maneuver Control", m_args.skip)
+        .defaultValue("false")
+        .description("Skip maneuver control");
+
         bind<IMC::Abort>(this);
         bind<IMC::ControlLoops>(this);
         bind<IMC::EntityMonitoringState>(this);
         bind<IMC::ManeuverControlState>(this);
         bind<IMC::VehicleCommand>(this);
         bind<IMC::PlanControl>(this);
+        bind<IMC::PlanControlState>(this);
+      }
+
+      void
+      onUpdateParameters(void) override
+      {
+        if (paramChanged(m_args.skip))
+        {
+          if (m_args.skip)
+          {
+            inf("skip called");
+          
+            m_bt_blackboard->set("Consume_ID", 1);
+            m_bt_blackboard->set("skip", true);
+            m_bt_tree.tickOnce();
+
+            applyEntityParameter(&m_args.skip, false);
+          }
+        }
       }
 
       void
@@ -149,6 +191,51 @@ namespace Supervisors
         m_err_timer.setTop(c_error_period);
         m_loops_timer.setTop(c_loops_check_time);
         m_idle.duration = 0;
+        if (m_bt_factory.builders().count("ManueverControlState_Switch") == 0)
+        {
+          // Register Action/Condition Nodes
+          m_bt_factory.registerBuilder<eta_update>("eta_update", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<eta_update>(name, config, this);});
+          m_bt_factory.registerBuilder<set_done>("set_done", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<set_done>(name, config, this);});
+          m_bt_factory.registerBuilder<ERROR>("ERROR", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<ERROR>(name, config, this);});
+          m_bt_factory.registerBuilder<Source_mode>("Source_mode", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<Source_mode>(name, config, this);});
+          m_bt_factory.registerBuilder<VC_EXEC>("VC_EXEC", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<VC_EXEC>(name, config, this);});
+          m_bt_factory.registerBuilder<VC_STOP>("VC_STOP", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<VC_STOP>(name, config, this);});
+          m_bt_factory.registerBuilder<VC_START_CAL>("VC_START_CAL", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<VC_START_CAL>(name, config, this);});
+          m_bt_factory.registerBuilder<VC_STOP_CAL>("VC_STOP_CAL", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<VC_STOP_CAL>(name, config, this);});
+          m_bt_factory.registerBuilder<VehicleCommand_Switch>("VehicleCommand_Switch", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<VehicleCommand_Switch>(name, config, this);});
+          m_bt_factory.registerBuilder<ProcessRequests>("ProcessRequests", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<ProcessRequests>(name, config, this);}); 
+          
+          // Resume node
+          m_bt_factory.registerBuilder<CheckResume>("CheckResume", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<CheckResume>(name, config, this);});
+          m_bt_factory.registerBuilder<TrackResumeState>("TrackResumeState", [this](const std::string& name, const BT::NodeConfig& config) {return std::make_unique<TrackResumeState>(name, config, this);});
+
+          // Register Control Nodes
+          m_bt_factory.registerNodeType<ManueverControlState_Switch>("ManueverControlState_Switch");
+          m_bt_factory.registerNodeType<Tree_selector>("Tree_selector");
+          m_bt_factory.registerNodeType<STOPPED>("STOPPED");
+
+          m_bt_blackboard = BT::Blackboard::create();
+
+          try {
+            // Check if file exists first using DUNE FileSystem
+            if (!path.isFile()) {
+                throw std::runtime_error("File not found at " + path.str());
+            }
+
+            m_bt_factory.registerBehaviorTreeFromFile(path.str());
+            m_bt_tree = m_bt_factory.createTree("MainTree", m_bt_blackboard);
+            
+            inf("BT loaded successfully from: %s", path.c_str());
+            m_bt_blackboard->set("skip", false);
+            m_bt_ready = true;
+          } 
+          catch (const std::exception& e) {
+            err("BT loading failed: %s", e.what());
+            m_bt_ready = false;
+            // Set an entity error so the user knows why the supervisor is inactive
+            setEntityState(IMC::EntityState::ESTA_FAILURE, "BT XML Error");
+          }
+        }
       }
 
       void
@@ -416,43 +503,10 @@ namespace Supervisors
       void
       consume(const IMC::ManeuverControlState* msg)
       {
-        if (msg->getSource() != getSystemId())
-          return;
-
-        m_man_sup->update(msg);
-
-        if (!maneuverMode())
-          return;
-
-        switch ((IMC::ManeuverControlState::StateEnum)msg->state)
-        {
-          case IMC::ManeuverControlState::MCS_EXECUTING:
-            if (msg->eta != m_vs.maneuver_eta)
-            {
-              m_vs.maneuver_eta = msg->eta;
-              dispatch(m_vs);
-            }
-            break;
-          case IMC::ManeuverControlState::MCS_DONE:
-            debug("%s maneuver done",
-                  IMC::Factory::getAbbrevFromId(m_vs.maneuver_type).c_str());
-            m_vs.maneuver_eta = 0;
-            m_vs.flags |= IMC::VehicleState::VFLG_MANEUVER_DONE;
-            dispatch(m_vs);
-            // start timer
-            m_switch_time = Clock::get();
-            break;
-          case IMC::ManeuverControlState::MCS_ERROR:
-            m_vs.last_error = IMC::Factory::getAbbrevFromId(m_vs.maneuver_type)
-            + DTR(" maneuver error: ") + msg->info;
-            m_vs.last_error_time = msg->getTimeStamp();
-            debug("%s", m_vs.last_error.c_str());
-            changeMode(IMC::VehicleState::VS_SERVICE);
-            reset();
-            break;
-          case IMC::ManeuverControlState::MCS_STOPPED:
-            break;
-        }
+        if (!m_bt_ready) return;
+        m_bt_blackboard->set("Consume_ID", 1);
+        m_bt_blackboard->set("msg", msg);
+        m_bt_tree.tickOnce();
       }
 
       void
@@ -461,12 +515,26 @@ namespace Supervisors
         if ((msg->type == IMC::PlanControl::PC_REQUEST) &&
             (msg->op == IMC::PlanControl::PC_START))
         {
-          // check if plan is supposed to ignore some errors
+          if(!msg->plan_id.empty())
+          {
+            m_stage_plan_id = msg->plan_id;
+            war(DTR("starting plan '%s'"), msg->plan_id.c_str());
+          }
+
           if (msg->flags & IMC::PlanControl::FLG_IGNORE_ERRORS)
             m_ignore_errors = true;
           else
             m_ignore_errors = false;
         }
+      }
+
+      void
+      consume(const IMC::PlanControlState* msg)
+      {
+        if (msg->man_id.empty())
+            return;
+
+        m_stage_man_id = msg->man_id;
       }
 
       void
@@ -581,6 +649,9 @@ namespace Supervisors
           return;
         }
 
+        m_can_resume = false;
+        m_vs.flags &= ~IMC::VehicleState::VFLG_MANEUVER_DONE;
+
         m_man_sup->addStop();
         IMC::Message* clone = m->clone();
         changeMode(IMC::VehicleState::VS_MANEUVER, clone);
@@ -592,6 +663,13 @@ namespace Supervisors
       void
       stopManeuver(bool abort = false)
       {
+
+        if (maneuverMode())
+        {
+          // Save the ID of the maneuver that was active
+          m_can_resume = true;
+        }
+
         if (!errorMode() && !bootMode())
         {
           reset();
@@ -604,28 +682,10 @@ namespace Supervisors
       void
       consume(const IMC::VehicleCommand* cmd)
       {
-        if (cmd->type != IMC::VehicleCommand::VC_REQUEST)
-          return;
-
-        trace("%s request (%u/%u/%u)", c_cmd_desc[cmd->command],
-              cmd->getSource(), cmd->getSourceEntity(), cmd->request_id);
-
-        switch ((IMC::VehicleCommand::CommandEnum)cmd->command)
-        {
-          case IMC::VehicleCommand::VC_EXEC_MANEUVER:
-            startManeuver(cmd);
-            break;
-          case IMC::VehicleCommand::VC_STOP_MANEUVER:
-            stopManeuver();
-            requestOK(cmd, DTR("OK"));
-            break;
-          case IMC::VehicleCommand::VC_START_CALIBRATION:
-            startCalibration(cmd);
-            break;
-          case IMC::VehicleCommand::VC_STOP_CALIBRATION:
-            stopCalibration(cmd);
-            break;
-        }
+        if (!m_bt_ready) return;
+        m_bt_blackboard->set("Consume_ID", 0);
+        m_bt_blackboard->set("cmd", cmd);
+        m_bt_tree.tickOnce();
       }
 
       void
@@ -641,6 +701,12 @@ namespace Supervisors
       void
       task(void)
       {
+
+        if (m_can_resume && !maneuverMode())
+          m_vs.flags |= IMC::VehicleState::VFLG_MANEUVER_DONE;
+        else
+          m_vs.flags &= ~IMC::VehicleState::VFLG_MANEUVER_DONE;
+
         dispatch(m_vs);
 
         if (serviceMode() && m_vs.control_loops && m_loops_timer.overflow())
@@ -653,6 +719,8 @@ namespace Supervisors
         }
 
         m_man_sup->update();
+        m_bt_blackboard->set("Consume_ID", 2);          
+        m_bt_tree.tickOnce();
 
         if (m_switch_time < 0.0)
           return;
@@ -773,6 +841,415 @@ namespace Supervisors
       {
         return (m_vs.control_loops & (IMC::CL_TELEOPERATION | IMC::CL_NO_OVERRIDE)) != 0;
       }
+
+      //---------------------------------BT_Nodes---------------------------------
+
+      class Tree_selector: public BT::ControlNode
+      {
+        public:
+
+          Tree_selector(const std::string& name, const BT::NodeConfiguration& config): BT::ControlNode(name, config) {};
+        
+        static BT::PortsList 
+        providedPorts()
+        {
+          return {BT::InputPort<int>("Consume_ID")};
+          
+        }
+
+        BT::NodeStatus 
+        tick() override
+        {
+          auto Consume_ID = getInput<int>("Consume_ID");
+          if(Consume_ID.value() == 0) return children_nodes_[0]->executeTick();
+          if(Consume_ID.value() == 1) return children_nodes_[1]->executeTick();
+          if(Consume_ID.value() == 2) return children_nodes_[2]->executeTick();
+
+          return BT::NodeStatus::FAILURE; 
+        }
+      };
+
+      class eta_update : public BT::SyncActionNode
+      {
+        public:
+          Task* mt;
+          eta_update(const std::string &name, const BT::NodeConfig& config, Task* task): BT::SyncActionNode(name, config), mt(task) {};
+        
+        static BT::PortsList 
+        providedPorts()
+        {
+          return {BT::InputPort<const DUNE::IMC::ManeuverControlState*>("msg")};
+        }
+
+        BT::NodeStatus 
+        tick() override
+        {
+          auto msg = getInput<const DUNE::IMC::ManeuverControlState*>("msg");
+          if(msg.value()->eta!=mt->m_vs.maneuver_eta){
+            mt->m_vs.maneuver_eta = msg.value()->eta;
+            mt->dispatch(mt->m_vs);
+          }
+          return BT::NodeStatus::SUCCESS; 
+        }
+
+      };
+
+      class set_done : public BT::SyncActionNode
+      {
+        public:
+          Task* mt;    
+          set_done(const std::string &name, const BT::NodeConfig& config, Task* task): BT::SyncActionNode(name, config), mt(task) {};
+
+        static BT::PortsList 
+        providedPorts()
+        {
+          return {};
+        }
+
+        BT::NodeStatus 
+        tick() override
+        {
+          mt->debug("%s maneuver done", IMC::Factory::getAbbrevFromId(mt->m_vs.maneuver_type).c_str());
+          mt->m_vs.maneuver_eta = 0;
+          mt->m_vs.flags |= IMC::VehicleState::VFLG_MANEUVER_DONE;
+          mt->dispatch(mt->m_vs);
+          // start timer
+          mt->m_switch_time = Clock::get();
+
+          return BT::NodeStatus::SUCCESS; 
+        }
+
+      };
+
+      class ERROR : public BT::SyncActionNode
+      {
+        public: 
+          Task* mt;    
+          ERROR(const std::string &name, const BT::NodeConfig& config, Task* task): BT::SyncActionNode(name, config), mt(task) {};        
+        static BT::PortsList 
+        providedPorts()
+        {
+          return {BT::InputPort<const DUNE::IMC::ManeuverControlState*>("msg")};
+        }
+
+        BT::NodeStatus 
+        tick() override
+        {
+          auto msg = getInput<const DUNE::IMC::ManeuverControlState*>("msg");
+          mt->m_vs.last_error = IMC::Factory::getAbbrevFromId(mt->m_vs.maneuver_type)+ DTR(" maneuver error: ") + msg.value()->info;
+          mt->m_vs.last_error_time = msg.value()->getTimeStamp();
+          mt->debug("%s", mt->m_vs.last_error.c_str());
+          mt->changeMode(IMC::VehicleState::VS_SERVICE);
+          mt->reset();
+
+          return BT::NodeStatus::SUCCESS; 
+        }
+
+      };
+
+      class STOPPED : public BT::SyncActionNode
+      {
+        public:
+          STOPPED(const std::string &name, const BT::NodeConfig& config): BT::SyncActionNode(name, config){};
+
+          static BT::PortsList providedPorts(){
+          return {};
+        }
+
+        BT::NodeStatus 
+        tick() override
+        {
+          return BT::NodeStatus::SUCCESS; 
+        }
+
+      };
+
+      class ManueverControlState_Switch : public BT::ControlNode
+      {
+        public:
+
+          ManueverControlState_Switch(const std::string& name, const BT::NodeConfiguration& config): BT::ControlNode(name, config) {};
+        
+        static BT::PortsList 
+        providedPorts()
+        {
+          return {BT::InputPort<const DUNE::IMC::ManeuverControlState*>("msg")};
+        }
+
+        BT::NodeStatus 
+        tick() override
+        {
+          auto msg = getInput<const DUNE::IMC::ManeuverControlState*>("msg");
+          if(msg.value()->state == IMC::ManeuverControlState::MCS_EXECUTING) return children_nodes_[0]->executeTick();
+          if(msg.value()->state == IMC::ManeuverControlState::MCS_DONE) return children_nodes_[1]->executeTick();
+          if(msg.value()->state == IMC::ManeuverControlState::MCS_ERROR) return children_nodes_[2]->executeTick();
+          if(msg.value()->state == IMC::ManeuverControlState::MCS_STOPPED) return children_nodes_[3]->executeTick();
+
+          return BT::NodeStatus::FAILURE; 
+        }
+      };
+
+      class Source_mode : public BT::ConditionNode
+      {
+        private:
+
+        public:
+          Task* mt;
+          Source_mode(const std::string& name, const BT::NodeConfiguration& config, Task* task): BT::ConditionNode(name, config), mt(task) {};
+        static BT::PortsList providedPorts()
+        {
+          return {BT::InputPort<const DUNE::IMC::ManeuverControlState*>("msg")};
+        }
+
+        BT::NodeStatus 
+        tick() override
+        {
+          auto msg = getInput<const DUNE::IMC::ManeuverControlState*>("msg");
+          if(msg.value()->getSource() == mt->getSystemId())
+          {
+            mt->m_man_sup->update(msg.value());
+            if(!(mt->maneuverMode())) return BT::NodeStatus::FAILURE;
+            return BT::NodeStatus::SUCCESS;
+          }
+          else return BT::NodeStatus::FAILURE; 
+        }
+      };
+
+      class VehicleCommand_Switch : public BT::ControlNode
+      {
+        public:
+          Task* mt;
+          VehicleCommand_Switch(const std::string& name, const BT::NodeConfiguration& config, Task* task): BT::ControlNode(name, config), mt(task) {};
+        
+        static BT::PortsList 
+        providedPorts()
+        {
+          return {BT::InputPort<const DUNE::IMC::VehicleCommand*>("cmd")};
+        }
+          std::string m_stage_man_id;
+          std::string m_stage_plan_id;
+        BT::NodeStatus 
+        tick() override
+        {
+          auto cmd = getInput<const DUNE::IMC::VehicleCommand*>("cmd");
+
+          if (cmd.value()->type != IMC::VehicleCommand::VC_REQUEST) return BT::NodeStatus::FAILURE;
+          mt->trace("%s request (%u/%u/%u)", c_cmd_desc[cmd.value()->command], cmd.value()->getSource(), cmd.value()->getSourceEntity(), cmd.value()->request_id);
+
+          if(cmd.value()->command == IMC::VehicleCommand::VC_EXEC_MANEUVER) return children_nodes_[0]->executeTick();
+          if(cmd.value()->command == IMC::VehicleCommand::VC_STOP_MANEUVER) return children_nodes_[1]->executeTick();
+          if(cmd.value()->command == IMC::VehicleCommand::VC_START_CALIBRATION) return children_nodes_[2]->executeTick();
+          if(cmd.value()->command == IMC::VehicleCommand::VC_STOP_CALIBRATION) return children_nodes_[3]->executeTick();
+
+          return BT::NodeStatus::FAILURE; 
+        }
+      };
+
+      class VC_EXEC : public BT::SyncActionNode
+      {
+        public:
+          Task* mt;    
+          VC_EXEC(const std::string &name, const BT::NodeConfig& config, Task* task): BT::SyncActionNode(name, config), mt(task) {};
+
+        static BT::PortsList 
+        providedPorts()
+        {
+          return {BT::InputPort<const DUNE::IMC::VehicleCommand*>("cmd")};
+        }
+
+        BT::NodeStatus 
+        tick() override
+        {
+          auto cmd = getInput<const DUNE::IMC::VehicleCommand*>("cmd");
+          mt->startManeuver(cmd.value());
+          return BT::NodeStatus::SUCCESS; 
+        }
+
+      };
+
+      class VC_STOP : public BT::SyncActionNode
+      {
+        public:
+          Task* mt;    
+          VC_STOP(const std::string &name, const BT::NodeConfig& config, Task* task): BT::SyncActionNode(name, config), mt(task) {};
+
+        static BT::PortsList 
+        providedPorts()
+        {
+          return {BT::InputPort<const DUNE::IMC::VehicleCommand*>("cmd")};
+        }
+
+        BT::NodeStatus 
+        tick() override
+        {
+          auto cmd = getInput<const DUNE::IMC::VehicleCommand*>("cmd");
+          mt->stopManeuver();
+          mt->requestOK(cmd.value(), DTR("OK"));
+          return BT::NodeStatus::SUCCESS; 
+        }
+
+      };
+
+      class VC_START_CAL : public BT::SyncActionNode
+      {
+        public:
+          Task* mt;    
+          VC_START_CAL(const std::string &name, const BT::NodeConfig& config, Task* task): BT::SyncActionNode(name, config), mt(task) {};
+
+        static BT::PortsList 
+        providedPorts()
+        {
+          return {BT::InputPort<const DUNE::IMC::VehicleCommand*>("cmd")};
+        }
+
+        BT::NodeStatus 
+        tick() override
+        {
+          auto cmd = getInput<const DUNE::IMC::VehicleCommand*>("cmd");
+          mt->startCalibration(cmd.value());
+          return BT::NodeStatus::SUCCESS; 
+        }
+
+      };
+
+      class VC_STOP_CAL : public BT::SyncActionNode
+      {
+        public:
+          Task* mt;    
+          VC_STOP_CAL(const std::string &name, const BT::NodeConfig& config, Task* task): BT::SyncActionNode(name, config), mt(task) {};
+
+        static BT::PortsList 
+        providedPorts()
+        {
+          return {BT::InputPort<const DUNE::IMC::VehicleCommand*>("cmd")};
+        }
+
+        BT::NodeStatus 
+        tick() override
+        {
+          auto cmd = getInput<const DUNE::IMC::VehicleCommand*>("cmd");
+          mt->stopCalibration(cmd.value());
+          return BT::NodeStatus::SUCCESS; 
+        }
+      };
+
+      class ProcessRequests : public BT::SyncActionNode {
+        public:
+          Task* mt;
+          ProcessRequests(const std::string &name, const BT::NodeConfig& config, Task* task): BT::SyncActionNode(name, config), mt(task) {};
+
+          static BT::PortsList providedPorts() { return {}; }
+          
+          BT::NodeStatus tick() override {
+            ManeuverSupervisor* ms = mt->m_man_sup;
+            if (ms->m_curr_req != NULL || ms->m_reqs.empty()) return BT::NodeStatus::FAILURE;
+            ms->m_curr_req = ms->m_reqs.front();
+            ms->m_reqs.pop();
+
+            if (ms->m_valid_state) {
+              if (ms->m_curr_req->isStop()) {
+
+                if (ms->m_state != IMC::ManeuverControlState::MCS_EXECUTING){ 
+                  ms->clearCurrent();
+                  return BT::NodeStatus::SUCCESS;
+                }
+
+                if (!ms->m_reqs.empty() && ms->m_reqs.front()->isStop()){ 
+                  ms->clearCurrent();
+                  return BT::NodeStatus::SUCCESS;
+                }
+              }
+              else if (ms->m_curr_req->isStart()){
+                if (ms->m_state == IMC::ManeuverControlState::MCS_EXECUTING){
+                  ms->clearCurrent();
+                  return BT::NodeStatus::SUCCESS;
+                }
+                if (!ms->m_reqs.empty()){
+                  if (ms->m_reqs.front()->isStart()){
+                    ms->clearCurrent();
+                    return BT::NodeStatus::SUCCESS;
+                  }
+                  else if (ms->m_reqs.front()->isStop()){
+                    ms->clearCurrent(); Memory::clear(ms->m_reqs.front());
+                    ms->m_reqs.pop();
+                    return BT::NodeStatus::SUCCESS;
+                  }
+                }
+              }
+            }
+            else if (ms->m_curr_req->isStop()){ 
+              ms->clearCurrent();
+              return BT::NodeStatus::SUCCESS;
+            }
+            ms->m_curr_req->issue();
+            mt->dispatch(ms->m_curr_req->getMessage());
+            return BT::NodeStatus::SUCCESS;
+          }
+      };
+
+      class CheckResume: public BT::ConditionNode
+      {
+        public:
+          Task* mt;
+          CheckResume(const std::string& name, const BT::NodeConfig& config, Task* t): BT::ConditionNode(name, config), mt(t) {};
+          BT::NodeStatus tick() override {
+            if (mt->m_can_resume) {
+              mt->war("Resume point available: %s (plan ID: %s)", mt->m_resume_man_id.c_str(), mt->m_resume_plan_id.c_str());
+              return BT::NodeStatus::SUCCESS;
+            }
+            return BT::NodeStatus::FAILURE; 
+          }
+      };
+
+      class TrackResumeState : public BT::SyncActionNode
+      {
+        public:
+          Task* mt;
+          TrackResumeState(const std::string &name, const BT::NodeConfig& config, Task* task): BT::SyncActionNode(name, config), mt(task) {};
+
+          static BT::PortsList providedPorts() { return {BT::InputPort<bool>("skip")}; }
+
+          BT::NodeStatus tick() override
+          {
+            
+            auto skip = getInput<bool>("skip");
+
+            // change plan
+            if (!mt->m_stage_plan_id.empty() && mt->m_resume_plan_id != mt->m_stage_plan_id)
+            {
+              mt->m_can_resume = false;
+              mt->m_resume_man_id.clear();
+              mt->m_resume_plan_id = mt->m_stage_plan_id;
+            }
+
+            // Non plan end
+            if (mt->maneuverMode() && !mt->m_stage_man_id.empty())
+            {
+              mt->m_resume_man_id = mt->m_stage_man_id;
+              mt->m_resume_plan_id = mt->m_stage_plan_id;
+              mt->m_can_resume = true;
+              
+              mt->trace("BT synchronized tracking profile: %s (Plan: %s)", 
+                        mt->m_resume_man_id.c_str(), mt->m_resume_plan_id.c_str());
+            }
+
+            // Skip Manuever
+            if (skip.value_or(false))
+            {
+              mt->debug("%s maneuver skipped", IMC::Factory::getAbbrevFromId(mt->m_vs.maneuver_type).c_str());
+              mt->m_vs.maneuver_eta = 0;
+              mt->m_vs.flags |= IMC::VehicleState::VFLG_MANEUVER_DONE;
+              mt->dispatch(mt->m_vs);
+              // start timer
+              mt->m_switch_time = Clock::get();
+
+              config().blackboard->set("skip", false);
+            }
+            
+            return BT::NodeStatus::SUCCESS;
+          }
+
+      };
     };
   }
 }

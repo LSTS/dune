@@ -88,6 +88,11 @@ namespace DUNE
       void
       consume(const IMC::DesiredPath* dp);
 
+      //! Handler for DesiredPath message.
+      //! @param dp message to consume.
+      virtual void
+      onDesiredPath(const IMC::DesiredPath* dp);
+
       //! Consumer for NavigationUncertainty message.
       //! @param nu message to consume.
       void
@@ -319,6 +324,12 @@ namespace DUNE
       void
       onMain(void);
 
+    protected:
+      //! Current tracking state
+      TrackingState m_ts;
+      void
+      setEndPoint(const IMC::DesiredPath* dpath);
+
     private:
       //! Update entity state
       //! @param[in] msg message text for error description
@@ -337,8 +348,6 @@ namespace DUNE
       // Helper functions for consume(const IMC::DesiredPath*)
       bool
       setStartPoint(double now, const IMC::DesiredPath* dpath);
-      void
-      setEndPoint(const IMC::DesiredPath* dpath);
       void
       setControlLoops(const IMC::DesiredPath* dpath);
       void
@@ -499,8 +508,6 @@ namespace DUNE
       double m_new_ref_timeout;
       //! Time of arrival factor
       float m_time_factor;
-      //! Current tracking state
-      TrackingState m_ts;
       //! Path control state message
       IMC::PathControlState m_pcs;
       //! Control loops message

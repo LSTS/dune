@@ -82,10 +82,12 @@ namespace DUNE
     void
     String::rightTrimInPlace(char* str)
     {
-      char* r = str + std::strlen(str) - 1; // Rightmost character
+      if (str == nullptr)
+        return;
 
-      for (; isspace(*r); --r)
-        *r = 0;
+      size_t len = std::strlen(str);
+      while (len > 0 && isspace(static_cast<unsigned char>(str[len - 1])))
+        str[--len] = '\0';
     }
 
     void

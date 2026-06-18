@@ -1,0 +1,9 @@
+CompileFlags:
+  Add:
+    - -xc++
+    - -std=c++17
+    - -I/home/LSTS/dune/source/include
+    - -I/home/LSTS/dune/source/3rdparty
+    - -I/home/LSTS/dune/source/3rdparty/minitrace
+    - -I/home/LSTS/dune/source/3rdparty/tinyxml2
+    - -I/home/LSTS/dune/source/3rdparty/minicoro

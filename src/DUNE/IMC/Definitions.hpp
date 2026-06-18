@@ -17232,6 +17232,12 @@ namespace DUNE
       }
 
       void
+      setFlagsDone(void)
+      {
+        flags |= IMC::VehicleState::VFLG_MANEUVER_DONE;
+      }
+
+      void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
