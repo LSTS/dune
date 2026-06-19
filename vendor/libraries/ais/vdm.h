@@ -67,6 +67,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 // #include "base/logging.h"
 #include "ais.h"
