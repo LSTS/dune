@@ -38,20 +38,23 @@ namespace Actuators
   {
     using DUNE_NAMESPACES;
 
+    //! Maximum stack size for the task thread.
+    constexpr const size_t c_stack_size = 2 * 1024 * 1024;
+
     struct Arguments
     {
       //! Node ID of the device.
-      uint8_t node_id = 1;
+      uint8_t node_id;
       //! Device name.
-      std::string device = "EPOS4";
+      std::string device;
       //! Protocol stack name.
-      std::string protocol = "MAXON SERIAL V2";
+      std::string protocol;
       //! Interface name.
-      std::string interface = "USB";
+      std::string interface;
       //! Port name.
-      std::string port = "USB0";
+      std::string port;
       //! Baudrate.
-      int baudrate = 1000000;
+      int baudrate;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -67,45 +70,32 @@ namespace Actuators
       //! @param[in] name task name.
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
+        DUNE::Tasks::Task(name, ctx, c_stack_size),
         m_handle(nullptr)
       {
-        // param("Node Id", m_args.node_id)
-        // .editable(false)
-        // .defaultValue("1");
+        param("Node Id", m_args.node_id)
+        .editable(false)
+        .defaultValue("1");
 
-        // param("Device", m_args.device)
-        // .editable(false)
-        // .defaultValue("EPOS4");
+        param("Device", m_args.device)
+        .editable(false)
+        .defaultValue("EPOS4");
 
-        // param("Protocol", m_args.protocol)
-        // .editable(false)
-        // .defaultValue("MAXON SERIAL V2");
+        param("Protocol", m_args.protocol)
+        .editable(false)
+        .defaultValue("MAXON SERIAL V2");
 
-        // param("Interface", m_args.interface)
-        // .editable(false)
-        // .defaultValue("USB");
+        param("Interface", m_args.interface)
+        .editable(false)
+        .defaultValue("USB");
 
-        // param("Port", m_args.port)
-        // .editable(false)
-        // .defaultValue("USB0");
+        param("Port", m_args.port)
+        .editable(false)
+        .defaultValue("USB0");
 
-        // param("Baudrate", m_args.baudrate)
-        // .editable(false)
-        // .defaultValue("1000000");
-
-        if (openDevice())
-          debug("Device opened successfully");
-        else
-          war("Failed to open device");
-      }
-
-      ~Task(void)
-      {
-        if (closeDevice())
-          debug("Device closed successfully");
-        else
-          war("Failed to close device");
+        param("Baudrate", m_args.baudrate)
+        .editable(false)
+        .defaultValue("1000000");
       }
 
       void
@@ -115,11 +105,21 @@ namespace Actuators
           debug("Device disabled successfully");
         else
           war("Failed to disable device");
+
+        if (closeDevice())
+          debug("Device closed successfully");
+        else
+          war("Failed to close device");
       }
 
       void
       onResourceAcquisition(void)
       {
+        if (openDevice())
+          debug("Device opened successfully");
+        else
+          war("Failed to open device");
+
         if (enableDevice())
           debug("Device enabled successfully");
         else
