@@ -239,7 +239,11 @@ main(int argc, char** argv)
   .add("-V", "--vehicle",
        "Vehicle name override", "VEHICLE")
   .add("-X", "--dump-params-xml",
-       "Dump parameters XML to folder DIR", "DIR");
+       "Dump parameters XML to folder DIR", "DIR")
+  .add("-y", "--dump-task-params",
+       "Dump TASK parameters", "TASK")
+  .add("-Y", "--dump-all-task-params",
+       "Dump all tasks parameters");
 
   // Parse command line arguments.
   if (!options.parse(argc, argv))
@@ -274,6 +278,49 @@ main(int argc, char** argv)
 
   DUNE::Tasks::Factory::registerDynamicTasks(context.dir_lib.c_str());
   registerStaticTasks();
+
+  if (!options.value("--dump-all-task-params").empty())
+  {
+    DUNE_MSG("Daemon", "Dumping parameters of all tasks");
+    Path path("all_tasks_params.xml");
+    std::ofstream ofs(path.c_str());
+    ofs << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+       << "<config"
+       << " format=\"1\""
+       << " version=\"" << getFullVersion() << "\""
+       << " modules=\"" << getFullVersionPrivate() << "\">\n";
+    std::vector<Tasks::Task*> tasks = Tasks::Factory::produce(context);
+    for (Tasks::Task* task : tasks)
+    {
+      task->writeParamsXML(ofs);
+      delete task;
+    }
+    ofs << "</config>\n";
+    return 0;
+  }
+  else if (options.value("--dump-task-params") != "")
+  {
+    std::string task_name = String::trim(options.value("--dump-task-params"));
+    Tasks::Task* task = Tasks::Factory::produce(task_name, task_name, context);
+    if (task == 0)
+    {
+      DUNE_ERR("Daemon", "Task '" + task_name + "' not found, cannot dump parameters");
+      return 1;
+    }
+
+    DUNE_MSG("Daemon", "Dumping '" + task_name + "' parameters");
+    Path path("task_" + task_name + "_params.xml");
+    std::ofstream ofs(path.c_str());
+    ofs << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+      << "<config"
+      << " format=\"1\""
+      << " version=\"" << getFullVersion() << "\""
+      << " modules=\"" << getFullVersionPrivate() << "\">\n";
+    task->writeParamsXML(ofs);
+    ofs << "</config>\n";
+    delete task;
+    return 0;
+  }
 
   // Retrieve configuration file and try parsing it.
   if (options.value("--config-file") == "")
