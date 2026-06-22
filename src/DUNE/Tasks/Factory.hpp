@@ -56,6 +56,9 @@ namespace DUNE
       static DUNE::Tasks::Task*
       produce(const std::string& name, const std::string& label, Context& ctx);
 
+      static std::vector<DUNE::Tasks::Task*>
+      produce(Context& ctx);
+
       static bool
       exists(const std::string& name);
 
