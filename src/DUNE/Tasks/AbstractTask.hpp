@@ -48,7 +48,8 @@ namespace DUNE
     class AbstractTask: public Concurrency::Thread
     {
     public:
-      AbstractTask(void)
+      AbstractTask(size_t stack_size = Concurrency::c_thread_stack_size):
+        Concurrency::Thread(stack_size)
       { }
 
       //! Destructor.
