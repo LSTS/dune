@@ -402,7 +402,7 @@ void decodeMsgNameList(const IMC_DCCL::MsgNameList& dccl, std::string& imc)
         std::string temp;
         temp = decodeMessageNameEnum(dccl.msg_name(i));	
         imc += temp;
-        if (i != dccl.msg_name_size() - 1) imc += ', ';
+        if (i != dccl.msg_name_size() - 1) imc += ", ";
     }
 }
 
