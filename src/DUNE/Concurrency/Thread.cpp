@@ -38,7 +38,6 @@
 #include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Concurrency/Exceptions.hpp>
 #include <DUNE/Concurrency/Thread.hpp>
-#include <DUNE/Concurrency/Constants.hpp>
 #include <DUNE/Concurrency/ScopedMutex.hpp>
 
 // System headers.
@@ -102,7 +101,7 @@ namespace DUNE
 {
   namespace Concurrency
   {
-    Thread::Thread(void):
+    Thread::Thread(size_t stack_size):
       m_start_barrier(2)
     {
 #if defined(DUNE_OS_LINUX)
@@ -125,7 +124,7 @@ namespace DUNE
       if (rv != 0)
         throw ThreadError("unable to set attribute detachable", rv);
 
-      pthread_attr_setstacksize(&m_attr, c_thread_stack_size);
+      pthread_attr_setstacksize(&m_attr, stack_size);
 
       setStateImpl(StateUnknown);
     }
