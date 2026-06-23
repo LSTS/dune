@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.Motor.a  CMakeFiles/Simulators.Motor.dir/src/Simulators/Motor/Task.cpp.o
+/usr/bin/ranlib libSimulators.Motor.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.AUV.Attitude.a  CMakeFiles/Control.AUV.Attitude.dir/src/Control/AUV/Attitude/Task.cpp.o
+/usr/bin/ranlib libControl.AUV.Attitude.a

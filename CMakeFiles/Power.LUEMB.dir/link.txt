@@ -1,0 +1,2 @@
+/usr/bin/ar qc libPower.LUEMB.a  CMakeFiles/Power.LUEMB.dir/src/Power/LUEMB/Task.cpp.o
+/usr/bin/ranlib libPower.LUEMB.a

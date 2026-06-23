@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-uctk.dir/programs/utils/dune-uctk.cpp.o  -o dune-uctk libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

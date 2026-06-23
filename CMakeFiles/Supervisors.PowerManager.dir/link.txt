@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSupervisors.PowerManager.a  CMakeFiles/Supervisors.PowerManager.dir/src/Supervisors/PowerManager/Task.cpp.o
+/usr/bin/ranlib libSupervisors.PowerManager.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.Genesys.a  CMakeFiles/Sensors.Genesys.dir/src/Sensors/Genesys/Task.cpp.o
+/usr/bin/ranlib libSensors.Genesys.a

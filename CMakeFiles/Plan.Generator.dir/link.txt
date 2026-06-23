@@ -1,0 +1,2 @@
+/usr/bin/ar qc libPlan.Generator.a  CMakeFiles/Plan.Generator.dir/src/Plan/Generator/Task.cpp.o
+/usr/bin/ranlib libPlan.Generator.a

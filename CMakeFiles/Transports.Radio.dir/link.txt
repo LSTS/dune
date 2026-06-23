@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.Radio.a  CMakeFiles/Transports.Radio.dir/src/Transports/Radio/Task.cpp.o
+/usr/bin/ranlib libTransports.Radio.a

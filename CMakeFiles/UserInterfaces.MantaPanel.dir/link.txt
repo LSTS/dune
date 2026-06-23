@@ -1,0 +1,2 @@
+/usr/bin/ar qc libUserInterfaces.MantaPanel.a  CMakeFiles/UserInterfaces.MantaPanel.dir/src/UserInterfaces/MantaPanel/Task.cpp.o
+/usr/bin/ranlib libUserInterfaces.MantaPanel.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.DataStore.a  CMakeFiles/Sensors.DataStore.dir/src/Sensors/DataStore/Task.cpp.o
+/usr/bin/ranlib libSensors.DataStore.a

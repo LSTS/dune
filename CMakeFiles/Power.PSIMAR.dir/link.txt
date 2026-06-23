@@ -1,0 +1,2 @@
+/usr/bin/ar qc libPower.PSIMAR.a  CMakeFiles/Power.PSIMAR.dir/src/Power/PSIMAR/Task.cpp.o
+/usr/bin/ranlib libPower.PSIMAR.a

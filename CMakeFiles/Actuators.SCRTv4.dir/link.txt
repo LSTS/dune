@@ -1,0 +1,2 @@
+/usr/bin/ar qc libActuators.SCRTv4.a  CMakeFiles/Actuators.SCRTv4.dir/src/Actuators/SCRTv4/Task.cpp.o
+/usr/bin/ranlib libActuators.SCRTv4.a

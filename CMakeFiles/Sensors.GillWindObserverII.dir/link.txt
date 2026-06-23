@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.GillWindObserverII.a  CMakeFiles/Sensors.GillWindObserverII.dir/src/Sensors/GillWindObserverII/Task.cpp.o
+/usr/bin/ranlib libSensors.GillWindObserverII.a

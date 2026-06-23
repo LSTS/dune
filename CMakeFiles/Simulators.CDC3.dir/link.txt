@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.CDC3.a  CMakeFiles/Simulators.CDC3.dir/src/Simulators/CDC3/Task.cpp.o
+/usr/bin/ranlib libSimulators.CDC3.a

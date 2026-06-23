@@ -1,0 +1,2 @@
+/usr/bin/ar qc libMonitors.Emergency.a  CMakeFiles/Monitors.Emergency.dir/src/Monitors/Emergency/Task.cpp.o
+/usr/bin/ranlib libMonitors.Emergency.a

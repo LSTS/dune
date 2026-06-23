@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.GPS.a  CMakeFiles/Simulators.GPS.dir/src/Simulators/GPS/Task.cpp.o
+/usr/bin/ranlib libSimulators.GPS.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libActuators.PWM.a  CMakeFiles/Actuators.PWM.dir/src/Actuators/PWM/Task.cpp.o
+/usr/bin/ranlib libActuators.PWM.a

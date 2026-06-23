@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-gsmux.dir/programs/gsmux/gsmux.cpp.o  -o dune-gsmux libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

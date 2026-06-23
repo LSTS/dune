@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSupervisors.Entities.a  CMakeFiles/Supervisors.Entities.dir/src/Supervisors/Entities/Task.cpp.o
+/usr/bin/ranlib libSupervisors.Entities.a

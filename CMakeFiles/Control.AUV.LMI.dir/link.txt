@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.AUV.LMI.a  CMakeFiles/Control.AUV.LMI.dir/src/Control/AUV/LMI/Task.cpp.o
+/usr/bin/ranlib libControl.AUV.LMI.a

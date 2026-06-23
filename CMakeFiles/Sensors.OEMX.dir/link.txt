@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.OEMX.a  CMakeFiles/Sensors.OEMX.dir/src/Sensors/OEMX/Task.cpp.o
+/usr/bin/ranlib libSensors.OEMX.a

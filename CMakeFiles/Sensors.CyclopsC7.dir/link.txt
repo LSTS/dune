@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.CyclopsC7.a  CMakeFiles/Sensors.CyclopsC7.dir/src/Sensors/CyclopsC7/Task.cpp.o
+/usr/bin/ranlib libSensors.CyclopsC7.a

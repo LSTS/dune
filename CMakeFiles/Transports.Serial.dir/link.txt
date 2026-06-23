@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.Serial.a  CMakeFiles/Transports.Serial.dir/src/Transports/Serial/Task.cpp.o
+/usr/bin/ranlib libTransports.Serial.a

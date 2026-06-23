@@ -1,0 +1,2 @@
+/usr/bin/ar qc libPower.CPMBv2.a  CMakeFiles/Power.CPMBv2.dir/src/Power/CPMBv2/Task.cpp.o
+/usr/bin/ranlib libPower.CPMBv2.a

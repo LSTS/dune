@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.MTi.a  CMakeFiles/Sensors.MTi.dir/src/Sensors/MTi/Task.cpp.o
+/usr/bin/ranlib libSensors.MTi.a

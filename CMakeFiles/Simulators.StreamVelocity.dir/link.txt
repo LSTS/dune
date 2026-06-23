@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.StreamVelocity.a  CMakeFiles/Simulators.StreamVelocity.dir/src/Simulators/StreamVelocity/ModelDataStreamGenerator.cpp.o CMakeFiles/Simulators.StreamVelocity.dir/src/Simulators/StreamVelocity/StreamGenerator.cpp.o CMakeFiles/Simulators.StreamVelocity.dir/src/Simulators/StreamVelocity/Task.cpp.o
+/usr/bin/ranlib libSimulators.StreamVelocity.a

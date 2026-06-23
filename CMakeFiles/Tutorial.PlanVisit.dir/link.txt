@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTutorial.PlanVisit.a  CMakeFiles/Tutorial.PlanVisit.dir/src/Tutorial/PlanVisit/Task.cpp.o
+/usr/bin/ranlib libTutorial.PlanVisit.a

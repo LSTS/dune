@@ -1,0 +1,2 @@
+/usr/bin/ar qc libMonitors.FuelLevel.a  CMakeFiles/Monitors.FuelLevel.dir/src/Monitors/FuelLevel/Task.cpp.o
+/usr/bin/ranlib libMonitors.FuelLevel.a

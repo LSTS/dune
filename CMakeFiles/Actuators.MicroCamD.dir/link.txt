@@ -1,0 +1,2 @@
+/usr/bin/ar qc libActuators.MicroCamD.a  CMakeFiles/Actuators.MicroCamD.dir/src/Actuators/MicroCamD/Task.cpp.o
+/usr/bin/ranlib libActuators.MicroCamD.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.Edgetech2205.a  CMakeFiles/Sensors.Edgetech2205.dir/src/Sensors/Edgetech2205/Task.cpp.o
+/usr/bin/ranlib libSensors.Edgetech2205.a

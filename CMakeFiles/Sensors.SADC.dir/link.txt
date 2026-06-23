@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.SADC.a  CMakeFiles/Sensors.SADC.dir/src/Sensors/SADC/Task.cpp.o
+/usr/bin/ranlib libSensors.SADC.a

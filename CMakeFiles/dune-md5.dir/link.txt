@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-md5.dir/programs/utils/dune-md5.cpp.o  -o dune-md5 libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

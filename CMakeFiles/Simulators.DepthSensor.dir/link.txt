@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.DepthSensor.a  CMakeFiles/Simulators.DepthSensor.dir/src/Simulators/DepthSensor/Task.cpp.o
+/usr/bin/ranlib libSimulators.DepthSensor.a

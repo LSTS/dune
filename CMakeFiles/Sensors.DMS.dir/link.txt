@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.DMS.a  CMakeFiles/Sensors.DMS.dir/src/Sensors/DMS/Task.cpp.o
+/usr/bin/ranlib libSensors.DMS.a

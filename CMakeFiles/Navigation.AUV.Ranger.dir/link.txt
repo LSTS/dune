@@ -1,0 +1,2 @@
+/usr/bin/ar qc libNavigation.AUV.Ranger.a  CMakeFiles/Navigation.AUV.Ranger.dir/src/Navigation/AUV/Ranger/Task.cpp.o
+/usr/bin/ranlib libNavigation.AUV.Ranger.a

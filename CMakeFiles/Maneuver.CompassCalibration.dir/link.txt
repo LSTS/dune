@@ -1,0 +1,2 @@
+/usr/bin/ar qc libManeuver.CompassCalibration.a  CMakeFiles/Maneuver.CompassCalibration.dir/src/Maneuver/CompassCalibration/Task.cpp.o
+/usr/bin/ranlib libManeuver.CompassCalibration.a

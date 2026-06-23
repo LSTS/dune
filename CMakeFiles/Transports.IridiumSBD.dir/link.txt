@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.IridiumSBD.a  CMakeFiles/Transports.IridiumSBD.dir/src/Transports/IridiumSBD/SessionResultCode.cpp.o CMakeFiles/Transports.IridiumSBD.dir/src/Transports/IridiumSBD/Task.cpp.o
+/usr/bin/ranlib libTransports.IridiumSBD.a

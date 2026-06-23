@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/filter_log.dir/programs/filter_log.cpp.o  -o filter_log libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

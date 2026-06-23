@@ -1,0 +1,1 @@
+/usr/bin/c++  -O3 -DNDEBUG  -rdynamic CMakeFiles/dune-sendmsg.dir/programs/utils/dune-sendmsg.cpp.o  -o dune-sendmsg libdune-core.a -lrt -lpthread -lm -lnsl -ldl -ljpeg 

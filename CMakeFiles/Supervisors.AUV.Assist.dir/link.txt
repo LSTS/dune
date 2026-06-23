@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSupervisors.AUV.Assist.a  CMakeFiles/Supervisors.AUV.Assist.dir/src/Supervisors/AUV/Assist/Task.cpp.o
+/usr/bin/ranlib libSupervisors.AUV.Assist.a

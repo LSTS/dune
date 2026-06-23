@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.USBL.a  CMakeFiles/Simulators.USBL.dir/src/Simulators/USBL/Task.cpp.o
+/usr/bin/ranlib libSimulators.USBL.a

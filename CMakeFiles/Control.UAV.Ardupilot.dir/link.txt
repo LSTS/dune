@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.UAV.Ardupilot.a  CMakeFiles/Control.UAV.Ardupilot.dir/src/Control/UAV/Ardupilot/Task.cpp.o
+/usr/bin/ranlib libControl.UAV.Ardupilot.a

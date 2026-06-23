@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSimulators.AcousticModem.a  CMakeFiles/Simulators.AcousticModem.dir/src/Simulators/AcousticModem/Task.cpp.o
+/usr/bin/ranlib libSimulators.AcousticModem.a

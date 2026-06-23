@@ -1,0 +1,2 @@
+/usr/bin/ar qc libManeuver.FollowTrajectory.a  CMakeFiles/Maneuver.FollowTrajectory.dir/src/Maneuver/FollowTrajectory/Task.cpp.o
+/usr/bin/ranlib libManeuver.FollowTrajectory.a

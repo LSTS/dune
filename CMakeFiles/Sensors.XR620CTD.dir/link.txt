@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.XR620CTD.a  CMakeFiles/Sensors.XR620CTD.dir/src/Sensors/XR620CTD/Task.cpp.o
+/usr/bin/ranlib libSensors.XR620CTD.a

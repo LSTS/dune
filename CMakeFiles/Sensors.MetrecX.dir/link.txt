@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.MetrecX.a  CMakeFiles/Sensors.MetrecX.dir/src/Sensors/MetrecX/Probes.cpp.o CMakeFiles/Sensors.MetrecX.dir/src/Sensors/MetrecX/Task.cpp.o
+/usr/bin/ranlib libSensors.MetrecX.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.Iridium.a  CMakeFiles/Transports.Iridium.dir/src/Transports/Iridium/Task.cpp.o
+/usr/bin/ranlib libTransports.Iridium.a

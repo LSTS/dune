@@ -1,0 +1,2 @@
+/usr/bin/ar qc libManeuver.RowsCoverage.a  CMakeFiles/Maneuver.RowsCoverage.dir/src/Maneuver/RowsCoverage/Task.cpp.o
+/usr/bin/ranlib libManeuver.RowsCoverage.a

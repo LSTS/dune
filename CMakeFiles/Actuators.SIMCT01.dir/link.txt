@@ -1,0 +1,2 @@
+/usr/bin/ar qc libActuators.SIMCT01.a  CMakeFiles/Actuators.SIMCT01.dir/src/Actuators/SIMCT01/Task.cpp.o
+/usr/bin/ranlib libActuators.SIMCT01.a

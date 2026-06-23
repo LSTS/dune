@@ -1,0 +1,2 @@
+/usr/bin/ar qc libActuators.FLIRPTU.a  CMakeFiles/Actuators.FLIRPTU.dir/src/Actuators/FLIRPTU/Task.cpp.o
+/usr/bin/ranlib libActuators.FLIRPTU.a

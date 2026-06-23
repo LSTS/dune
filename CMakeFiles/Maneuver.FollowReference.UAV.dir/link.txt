@@ -1,0 +1,2 @@
+/usr/bin/ar qc libManeuver.FollowReference.UAV.a  CMakeFiles/Maneuver.FollowReference.UAV.dir/src/Maneuver/FollowReference/UAV/Task.cpp.o
+/usr/bin/ranlib libManeuver.FollowReference.UAV.a

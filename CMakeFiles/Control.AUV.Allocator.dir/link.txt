@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.AUV.Allocator.a  CMakeFiles/Control.AUV.Allocator.dir/src/Control/AUV/Allocator/Task.cpp.o
+/usr/bin/ranlib libControl.AUV.Allocator.a

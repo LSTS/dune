@@ -1,0 +1,2 @@
+/usr/bin/ar qc libTransports.UAN.a  CMakeFiles/Transports.UAN.dir/src/Transports/UAN/Task.cpp.o
+/usr/bin/ranlib libTransports.UAN.a

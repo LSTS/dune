@@ -1,0 +1,2 @@
+/usr/bin/ar qc libVision.PhotoTrigger.a  CMakeFiles/Vision.PhotoTrigger.dir/src/Vision/PhotoTrigger/Task.cpp.o
+/usr/bin/ranlib libVision.PhotoTrigger.a

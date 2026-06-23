@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.ROV.HorizontalPlane.a  CMakeFiles/Control.ROV.HorizontalPlane.dir/src/Control/ROV/HorizontalPlane/Task.cpp.o
+/usr/bin/ranlib libControl.ROV.HorizontalPlane.a

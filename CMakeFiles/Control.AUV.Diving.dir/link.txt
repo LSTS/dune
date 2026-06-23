@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.AUV.Diving.a  CMakeFiles/Control.AUV.Diving.dir/src/Control/AUV/Diving/Task.cpp.o
+/usr/bin/ranlib libControl.AUV.Diving.a

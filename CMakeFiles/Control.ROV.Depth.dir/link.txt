@@ -1,0 +1,2 @@
+/usr/bin/ar qc libControl.ROV.Depth.a  CMakeFiles/Control.ROV.Depth.dir/src/Control/ROV/Depth/Task.cpp.o
+/usr/bin/ranlib libControl.ROV.Depth.a

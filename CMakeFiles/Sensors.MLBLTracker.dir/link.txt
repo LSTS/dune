@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSensors.MLBLTracker.a  CMakeFiles/Sensors.MLBLTracker.dir/src/Sensors/MLBLTracker/Task.cpp.o
+/usr/bin/ranlib libSensors.MLBLTracker.a
