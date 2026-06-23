@@ -25,7 +25,11 @@ namespace IMCDCCL
         public:
         CodecDCCL(DUNE::Tasks::Task* task = nullptr)
           : m_task(task)
-        {}
+        {
+            #ifdef DUNE_USING_DCCL
+                m_codec.load<IMC_DCCL::ProtoMessage>();
+            #endif
+        }
         
         ~CodecDCCL() = default;
 
@@ -92,9 +96,9 @@ namespace IMCDCCL
 
         std::unique_ptr<DUNE::IMC::Message>
         decodeProtoMessage(const std::string& encoded_string)
-        {
-            m_codec.load<IMC_DCCL::ProtoMessage>();
+        {   
             IMC_DCCL::ProtoMessage src_dccl;
+            
             m_codec.decode(encoded_string, &src_dccl);
 
             //Payload
@@ -111,7 +115,6 @@ namespace IMCDCCL
         std::string
         encodeProtoMessage(const DUNE::IMC::Message* imc_msg){
             
-            m_codec.load<IMC_DCCL::ProtoMessage>();
             IMC_DCCL::ProtoMessage dst_dccl;
             
             //Header
