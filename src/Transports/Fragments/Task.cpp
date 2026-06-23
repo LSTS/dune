@@ -148,7 +148,7 @@ namespace Transports
           std::ostringstream ss;
           decoded_msg->toJSON(ss);
           war("[DCCL DECODING] Decoded msg %s", decoded_msg->getName());
-          war("[DCCL ENCODING] JSON: %s", ss.str().c_str());
+          war("[DCCL DECODING] JSON: %s", ss.str().c_str());
 
           dispatch(decoded_msg.get());
           m_incoming.erase(hash);
