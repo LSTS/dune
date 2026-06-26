@@ -24,7 +24,7 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Bernardo Gabriel (based on Control.AUV.Speed)                 *
+// Author: Bernardo Gabriel (based on Control.AUV.Speed)                    *
 //***************************************************************************
 
 // DUNE headers.
