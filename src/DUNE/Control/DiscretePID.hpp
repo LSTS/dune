@@ -82,6 +82,13 @@ namespace DUNE
       void
       setIntegralLimits(float value);
 
+      //! Set integral bounds (limits).
+      //! @param[in] lower lower limit.
+      //! @param[in] upper upper limit.
+      //! negative.
+      void
+      setIntegralLimits(float lower, float upper);
+
       //! Disable debug using control parcels logged using bus dispatch.
       void
       disableParcels(void);
@@ -127,8 +134,10 @@ namespace DUNE
       bool m_limit_int;
       //! Boolean for limiting output of pid.
       bool m_limit_out;
-      //! Integral limits for anti windup.
+      //! Integral max limit for anti windup.
       float m_max_int;
+      //! Integral min limit for anti windup.
+      float m_min_int;
       //! Previous error sample.
       float m_prev_err;
       //! Windup lower limit.
