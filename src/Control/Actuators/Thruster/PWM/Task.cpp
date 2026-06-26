@@ -39,6 +39,9 @@ namespace Control
       {
         using DUNE_NAMESPACES;
 
+        //! Minimum integral accumulator error for current control.
+        constexpr float c_min_int_accum_error = 0.0f;
+
         //! %Task arguments.
         struct Arguments
         {
@@ -66,6 +69,8 @@ namespace Control
           std::string thruster_curr_src_elabel;
           //! Thruster current controller max update delta.
           double max_curr_update_delta;
+          //! Max integral accumulator error for current control.
+          float max_curr_int_acc;
         };
 
         struct Task: public DUNE::Tasks::Task
@@ -191,6 +196,12 @@ namespace Control
             .description("Maximum allowed update delta for the current controller. "
                          "If 0, the controller will work on open loop.");
 
+            param("Current Control - Max Integral Accumulator Error", m_args.max_curr_int_acc)
+            .defaultValue("0.0")
+            .minimumValue("0.0")
+            .description("Maximum allowed integral accumulator error for the current controller. "
+                         "If 0, the integral accumulator will be disabled.");
+
             bind<IMC::SetThrusterActuation>(this);
           }
 
@@ -239,6 +250,12 @@ namespace Control
                 m_curr_pid.enableParcels(this, &m_curr_log);
               else
                 m_curr_pid.disableParcels();
+            }
+
+            if (paramChanged(m_args.max_curr_int_acc))
+            {
+              m_curr_pid.setIntegralLimits(c_min_int_accum_error, m_args.max_curr_int_acc);
+              m_curr_pid.reset();
             }
           }
 
@@ -409,12 +426,10 @@ namespace Control
 
             uint32_t dc = m_pwm_dc_neutral;
             fp32_t error = current - m_args.thruster_curr_lim;
-            if (error <= 0.0f)
-              dc = m_desired_dc;
-            else if (m_desired_dc > m_pwm_dc_neutral)
-              dc = trimValue(m_desired_dc - m_curr_pid.step(delta, error), m_pwm_dc_neutral, m_pwm_max_dc_fwd);
+            if (m_desired_dc > m_pwm_dc_neutral)
+              dc = trimValue(m_desired_dc - m_curr_pid.step(delta, error), m_pwm_dc_neutral, m_desired_dc);
             else if (m_desired_dc < m_pwm_dc_neutral)
-              dc = trimValue(m_desired_dc + m_curr_pid.step(delta, error), m_pwm_min_dc_rev, m_pwm_dc_neutral);
+              dc = trimValue(m_desired_dc + m_curr_pid.step(delta, error), m_desired_dc, m_pwm_dc_neutral);
 
             if (!m_args.close_loop)
             {
