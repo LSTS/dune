@@ -1176,7 +1176,7 @@ namespace DUNE
       
       updateStateMachine();
 
-      if (m_honours_conf_samp && m_state_timer.overflow())
+      if (isActive() && m_honours_conf_samp && m_state_timer.overflow())
       {
         setEntityStateSampling(m_is_sampling);
         m_state_timer.reset();
