@@ -3244,22 +3244,22 @@ message Header{
 message Payload {
     option (dccl.msg) = { codec_version: 4};
     oneof PayloadUnion{
-        PlanSpecification plan_specification_payload = 1;
-        EstimatedState estimated_state_payload = 2;
-        PlanDB plan_db_payload = 3;
-        PlanControl plan_control_payload = 4;
-        SetEntityParameters set_entity_parameters_payload = 5;
-        VehicleState vehicle_state_payload = 6;
-        EntityState entity_state_payload = 7;
-        PlanControlState plan_control_state_payload = 8;
-        VerticalProfile vertical_profile_payload = 9;
-        Voltage voltage_payload = 10;
-        FuelLevel fuel_level_payload = 11;
-        Current current_payload = 12;
-        WindSpeed wind_speed_payload = 13;
-        EntityParameters entity_parameters_payload = 14;
-        EntityList entity_list_payload = 15;
-        QueryEntityParameters query_entity_parameters_payload = 16;
+        EstimatedState estimated_state_payload = 1;
+        PlanDB plan_db_payload = 2;
+        PlanControl plan_control_payload = 3;
+        SetEntityParameters set_entity_parameters_payload = 4;
+        VehicleState vehicle_state_payload = 5;
+        EntityState entity_state_payload = 6;
+        PlanControlState plan_control_state_payload = 7;
+        VerticalProfile vertical_profile_payload = 8;
+        Voltage voltage_payload = 9;
+        FuelLevel fuel_level_payload = 10;
+        Current current_payload = 11;
+        WindSpeed wind_speed_payload = 12;
+        EntityParameters entity_parameters_payload = 13;
+        EntityList entity_list_payload = 14;
+        QueryEntityParameters query_entity_parameters_payload = 15;
+        Power power= 16;
     }
 }
 
