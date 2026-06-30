@@ -470,12 +470,6 @@ void decodeParameterValue(const IMC_DCCL::ParameterValue& dccl, std::string& imc
 void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl)
 {
     
-    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::PlanSpecification*>(&imc))
-    {
-            encodePlanSpecification(*imc_tmp, *dccl.mutable_plan_specification_payload());
-            return;
-    }
-    
     if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::EstimatedState*>(&imc))
     {
             encodeEstimatedState(*imc_tmp, *dccl.mutable_estimated_state_payload());
@@ -565,6 +559,12 @@ void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl)
             encodeQueryEntityParameters(*imc_tmp, *dccl.mutable_query_entity_parameters_payload());
             return;
     }
+    
+    if (auto* imc_tmp = dynamic_cast<const DUNE::IMC::Power*>(&imc))
+    {
+            encodePower(*imc_tmp, *dccl.mutable_power());
+            return;
+    }
     throw std::runtime_error("Invalid Payload");
 }
 
@@ -572,12 +572,6 @@ void encodePayload(const DUNE::IMC::Message& imc, IMC_DCCL::Payload& dccl)
 // ================ Payload Message ================
 std::unique_ptr<DUNE::IMC::Message> decodePayload(const IMC_DCCL::Payload& dccl)
 {
-    
-    if (dccl.has_plan_specification_payload()){
-            auto tmp = std::make_unique<DUNE::IMC::PlanSpecification>();
-            decodePlanSpecification(dccl.plan_specification_payload(), *tmp);
-            return tmp;
-    }
     
     if (dccl.has_estimated_state_payload()){
             auto tmp = std::make_unique<DUNE::IMC::EstimatedState>();
@@ -666,6 +660,12 @@ std::unique_ptr<DUNE::IMC::Message> decodePayload(const IMC_DCCL::Payload& dccl)
     if (dccl.has_query_entity_parameters_payload()){
             auto tmp = std::make_unique<DUNE::IMC::QueryEntityParameters>();
             decodeQueryEntityParameters(dccl.query_entity_parameters_payload(), *tmp);
+            return tmp;
+    }
+    
+    if (dccl.has_power()){
+            auto tmp = std::make_unique<DUNE::IMC::Power>();
+            decodePower(dccl.power(), *tmp);
             return tmp;
     }
     throw std::runtime_error("Invalid Payload");
