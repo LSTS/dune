@@ -585,6 +585,16 @@ namespace Control
           // if (paramChanged(m_args.directions))
           //   m_offsets = m_args.directions;
 
+          // ILOS parameters
+          if (paramChanged(m_args.ilos_enabled) && m_integral_controller != nullptr)
+            m_integral_controller->reset();
+          if (paramChanged(m_args.ilos_ki) && m_integral_controller != nullptr)
+            m_integral_controller->setGain(m_args.ilos_ki);
+          if (paramChanged(m_args.ilos_lookahead_distance) && m_integral_controller != nullptr)
+            m_integral_controller->setLookAheadDistance(m_args.ilos_lookahead_distance);
+          if (paramChanged(m_args.ilos_max_cross_track_heading) && m_integral_controller != nullptr)
+            m_integral_controller->setMaxCrossTrackHeading(Angles::radians(m_args.ilos_max_cross_track_heading));
+
           if (m_sb_mpc == nullptr)
             return;
 
@@ -649,14 +659,6 @@ namespace Control
             m_sb_mpc->setAngRange(m_args.COURSE_RANGE);
           if (paramChanged(m_args.GRANULARITY))
             m_sb_mpc->setGran(m_args.GRANULARITY);
-
-
-          if (paramChanged(m_args.ilos_ki) && m_integral_controller != nullptr)
-            m_integral_controller->setGain(m_args.ilos_ki);
-          if (paramChanged(m_args.ilos_lookahead_distance) && m_integral_controller != nullptr)
-            m_integral_controller->setLookAheadDistance(m_args.ilos_lookahead_distance);
-          if (paramChanged(m_args.ilos_max_cross_track_heading) && m_integral_controller != nullptr)
-            m_integral_controller->setMaxCrossTrackHeading(Angles::radians(m_args.ilos_max_cross_track_heading));
         }
 
         void
