@@ -104,7 +104,7 @@ namespace Autonomy
         bind<IMC::PlanGeneration>(this);
         bind<IMC::PlanControlState>(this);
         bind<IMC::PlanControl>(this);
-        bind<IMC::GpsFix>(this);
+        bind<IMC::EstimatedState>(this);
         bind<IMC::FuelLevel>(this);
         bind<IMC::Voltage>(this);
       }
@@ -126,12 +126,9 @@ namespace Autonomy
       }
 
       void
-      consume(const IMC::GpsFix* msg)
+      consume(const IMC::EstimatedState* msg)
       {
-        if (msg->validity & IMC::GpsFix::GFV_VALID_POS)
-        {
-          m_emsg->update(msg);
-        }
+        m_emsg->update(msg);
       }
 
       void
