@@ -487,7 +487,14 @@ namespace DUNE
     void
     Task::consume(const IMC::QueryEntityParameters* msg)
     {
-      onQueryEntityParameters(msg);
+      try
+      {
+        onQueryEntityParameters(msg);
+      }
+      catch(const std::exception& e)
+      {
+        war("failed to process QueryEntityParameters message: %s", e.what());
+      }
     }
 
     void
@@ -527,7 +534,14 @@ namespace DUNE
     void
     Task::consume(const IMC::SetEntityParameters* msg)
     {
-      onSetEntityParameters(msg);
+      try
+      {
+        onSetEntityParameters(msg);
+      }
+      catch(const std::exception& e)
+      {
+        war("failed to process SetEntityParameters message: %s", e.what());
+      }
     }
 
     void
@@ -550,7 +564,14 @@ namespace DUNE
     void
     Task::consume(const IMC::PushEntityParameters* msg)
     {
-      onPushEntityParameters(msg);
+      try
+      {
+        onPushEntityParameters(msg);
+      }
+      catch(const std::exception& e)
+      {
+        war("failed to process PushEntityParameters message: %s", e.what());
+      }
     }
 
     void
@@ -574,7 +595,14 @@ namespace DUNE
     void
     Task::consume(const IMC::PopEntityParameters* msg)
     {
-      onPopEntityParameters(msg);
+      try
+      {
+        onPopEntityParameters(msg);
+      }
+      catch(const std::exception& e)
+      {
+        war("failed to process PopEntityParameters message: %s", e.what());
+      }
     }
 
     void
@@ -706,7 +734,14 @@ namespace DUNE
     void
     Task::consume(const IMC::QueryTypedEntityParameters* msg)
     {
-      onQueryTypedEntityParameters(msg);
+      try
+      {
+        onQueryTypedEntityParameters(msg);
+      }
+      catch(const std::exception& e)
+      {
+        war("failed to process QueryTypedEntityParameters message: %s", e.what());
+      }
     }
 
     void
