@@ -412,27 +412,31 @@ namespace DUNE
               err(DTR("restarting in %u seconds due to error: %s"), delay, e.getError());
           }
 
-          Time::Counter<double> counter(static_cast<double>(delay));
-          while (!stopping() && !counter.overflow())
-          {
-            double remaining = counter.getRemaining();
-            Time::Delay::wait((remaining < 1.0) ? remaining : 1.0);
-            reportEntityState();
-          }
-
           try
           {
-            updateParameters();
+            if (delay > 0)
+              waitForMessages(delay, true);
+            else
+              consumeMessages();
           }
-          catch (std::runtime_error& pe)
+          catch (std::exception& ep)
           {
-            err(DTR("failed to update parameters: %s"), pe.what());
+            err("%s", ep.what());
           }
         }
         catch (std::exception& e)
         {
           setEntityState(IMC::EntityState::ESTA_FAILURE, e.what());
           err(DTR("task died with uncaught exception: %s: restarting"), e.what());
+
+          try
+          {
+            consumeMessages();
+          }
+          catch(const std::exception& ep)
+          {
+            err("%s", ep.what());
+          }
         }
       }
     }
