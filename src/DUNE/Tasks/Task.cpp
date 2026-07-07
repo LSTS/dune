@@ -431,9 +431,7 @@ namespace DUNE
         }
         catch (std::exception& e)
         {
-          IMC::EntityState estate;
           setEntityState(IMC::EntityState::ESTA_FAILURE, e.what());
-          dispatch(estate);
           err(DTR("task died with uncaught exception: %s: restarting"), e.what());
         }
       }
