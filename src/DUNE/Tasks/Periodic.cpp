@@ -72,6 +72,8 @@ namespace DUNE
 
         if (next_inv > now)
           waitForMessages(next_inv - now, true);
+        else
+          consumeMessages();
 
         next_inv += delay;
         now = Time::Clock::get();
