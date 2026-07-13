@@ -351,6 +351,22 @@ set_source_files_properties(src/Main/Launcher.cpp
 target_link_libraries(dune-launcher dune-core ${DUNE_SYS_LIBS}
   ${DUNE_VENDOR_LIBS})
 
+# Modular launcher.
+add_executable(dune-modular-launcher
+  src/Main/Assets.rc
+  src/Main/Launcher.cpp)
+if(NOT DUNE_OS_WINDOWS)
+  set_target_properties(dune-modular-launcher PROPERTIES
+    INSTALL_RPATH "$ORIGIN/../lib")
+endif(NOT DUNE_OS_WINDOWS)
+set_source_files_properties(src/Main/Launcher.cpp
+  PROPERTIES
+  COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
+target_compile_definitions(dune-modular-launcher PRIVATE
+  DUNE_LAUNCHER_DAEMON="dune-modular")
+target_link_libraries(dune-modular-launcher dune-core ${DUNE_SYS_LIBS}
+  ${DUNE_VENDOR_LIBS})
+
 ##########################################################################
 #                          Simple programs                               #
 ##########################################################################
@@ -402,7 +418,7 @@ endif(DUNE_PROGRAM_DOXYGEN AND DUNE_PROGRAM_ZIP)
 ##########################################################################
 #                        Packaging/Installation                          #
 ##########################################################################
-install(TARGETS dune dune-modular dune-launcher dune-core ${DUNE_EXTRA_EXE}
+install(TARGETS dune dune-modular dune-launcher dune-modular-launcher dune-core ${DUNE_EXTRA_EXE}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
