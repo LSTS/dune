@@ -265,6 +265,11 @@ set(DUNE_CORE_FILES ${DUNE_CORE_SOURCES} ${DUNE_VENDOR_FILES})
 set(USER_CORE_FILES ${USER_CORE_SOURCES} ${USER_VENDOR_FILES})
 set(PRIVATE_CORE_FILES ${PRIVATE_CORE_SOURCES} ${PRIVATE_VENDOR_FILES})
 
+message(STATUS "")
+message(STATUS "******************************************")
+message(STATUS "***            Shared Flag             ***")
+message(STATUS "******************************************")
+
 if(DUNE_SHARED)
   message(STATUS "Building shared library")
   add_library(dune-core SHARED ${DUNE_CORE_FILES} ${USER_CORE_FILES} ${PRIVATE_CORE_FILES} )
@@ -272,6 +277,7 @@ if(DUNE_SHARED)
   target_link_libraries(dune-core ${DUNE_SYS_LIBS})
 else(DUNE_SHARED)
   message(STATUS "Building static library")
+  message(STATUS "To Build in Shared mode, use -DSHARED=ON")
   add_library(dune-core STATIC ${DUNE_CORE_FILES} ${USER_CORE_FILES} ${PRIVATE_CORE_FILES} )
   if(DUNE_CXX_MICROSOFT AND DUNE_CPU_X86)
     if(DUNE_CPU_32B)
@@ -318,6 +324,11 @@ target_link_libraries(dune dune-core ${DUNE_SYS_LIBS} ${DUNE_STATIC_TASKS}
 add_executable(dune-modular
     src/Main/Assets.rc
     src/Main/DaemonModular.cpp)
+
+if(NOT DUNE_OS_WINDOWS)
+  set_target_properties(dune-modular PROPERTIES
+    INSTALL_RPATH "$ORIGIN/../lib")
+endif(NOT DUNE_OS_WINDOWS)
 
 set_source_files_properties(
     src/Main/DaemonModular.cpp
