@@ -311,6 +311,25 @@ set_source_files_properties(src/Main/Daemon.cpp
 target_link_libraries(dune dune-core ${DUNE_SYS_LIBS} ${DUNE_STATIC_TASKS}
   ${DUNE_VENDOR_LIBS})
 
+#############################################################################
+# Modular Daemon
+#############################################################################
+
+add_executable(dune-modular
+    src/Main/Assets.rc
+    src/Main/DaemonModular.cpp)
+
+set_source_files_properties(
+    src/Main/DaemonModular.cpp
+    PROPERTIES
+    COMPILE_FLAGS "${DUNE_CXX_FLAGS}")
+
+target_link_libraries(
+    dune-modular
+    dune-core
+    ${DUNE_SYS_LIBS}
+    ${DUNE_VENDOR_LIBS})
+
 # Launcher.
 add_executable(dune-launcher
   src/Main/Assets.rc
@@ -372,7 +391,7 @@ endif(DUNE_PROGRAM_DOXYGEN AND DUNE_PROGRAM_ZIP)
 ##########################################################################
 #                        Packaging/Installation                          #
 ##########################################################################
-install(TARGETS dune dune-launcher dune-core ${DUNE_EXTRA_EXE}
+install(TARGETS dune dune-modular dune-launcher dune-core ${DUNE_EXTRA_EXE}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
