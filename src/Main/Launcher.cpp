@@ -55,6 +55,10 @@
 
 using DUNE_NAMESPACES;
 
+#if !defined(DUNE_LAUNCHER_DAEMON)
+#  define DUNE_LAUNCHER_DAEMON "dune"
+#endif
+
 static bool s_stop = false;
 static const double c_restart_period = 30.0;
 
@@ -144,7 +148,7 @@ int
 main(int argc, char** argv)
 {
   DUNE::Tasks::Context ctx;
-  Path bin = ctx.dir_app / "dune";
+  Path bin = ctx.dir_app / DUNE_LAUNCHER_DAEMON;
 
 #if defined(DUNE_OS_POSIX)
   setLauncherSignalHandlers();
