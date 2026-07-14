@@ -115,6 +115,8 @@ namespace Actuators
       unsigned pwr_states[c_pwrs_count];
       //! Write to motor every motor_write_divider times task is run
       unsigned int motor_write_divider;
+      //! RPM value below which motor direction is considered settled.
+      int16_t rpm_direction_deadband;
       //! Motor labels
       std::string motor_labels[c_motors];
       //! Rails labels
@@ -145,6 +147,8 @@ namespace Actuators
       unsigned m_power_rail_eid[c_pwr_rails_count];
       //! Most recent throttle values.
       int16_t motor0_throttle, motor1_throttle;
+      //! Last trusted motor RPM direction.
+      int8_t m_motor_rpm_sign[c_motors];
       //! CAN connection variable
       Hardware::SocketCAN* m_can;
       //! CAN buffer used for storing and sending messages
@@ -169,6 +173,11 @@ namespace Actuators
         param("Motor write divider", m_args.motor_write_divider)
         .defaultValue("20")
         .description("Write to motor every motor_write_divider times task is run");
+
+        param("RPM Direction Deadband", m_args.rpm_direction_deadband)
+        .defaultValue("75")
+        .units(Units::RPM)
+        .description("RPM magnitude below which a requested direction change is accepted.");
 
         char power_channel_pcb_labels[c_pwrs_count][8] = {"H_MOT0\0","H_MOT1\0","H_AUX0\0","H_AUX1\0","H_12V1\0","H_12V2\0","H_12V3\0","H_VR0\0","H_VR1\0","H_5V\0"};
         for (unsigned i= 0; i < c_pwrs_count; i++)
@@ -305,6 +314,9 @@ namespace Actuators
         if(m_can != NULL) {
           sendPowerChannelMessages();
         }
+
+        for (unsigned i = 0; i < c_motors; ++i)
+          m_motor_rpm_sign[i] = 0;
       }
 
       //! Release resources.
@@ -384,6 +396,43 @@ namespace Actuators
         return (int16_t)(most_significant << 8) | least_significant;
       }
 
+      int8_t
+      getThrottleSign(uint8_t mot_idx) const
+      {
+        int16_t throttle = mot_idx == 0 ? motor0_throttle : motor1_throttle;
+
+        if (throttle > 0)
+          return 1;
+
+        if (throttle < 0)
+          return -1;
+
+        return 0;
+      }
+
+      int16_t
+      getSignedRPM(uint8_t mot_idx, int16_t rpm_abs)
+      {
+        int8_t command_sign = getThrottleSign(mot_idx);
+
+        if (rpm_abs <= m_args.rpm_direction_deadband)
+        {
+          m_motor_rpm_sign[mot_idx] = command_sign;
+          return 0;
+        }
+
+        if (command_sign == 0)
+          return 0;
+
+        if (m_motor_rpm_sign[mot_idx] == 0)
+          m_motor_rpm_sign[mot_idx] = command_sign;
+
+        if (command_sign != m_motor_rpm_sign[mot_idx])
+          return 0;
+
+        return rpm_abs * m_motor_rpm_sign[mot_idx];
+      }
+
       //! Parses a received MSG_TQ_BAT_STATUS from CAN bus buffer and sends relevant data to IMC
       void 
       parseMSG_TQ_BAT_STATUS() 
@@ -461,6 +510,13 @@ namespace Actuators
       parseMSG_TQ_MOTOR_DRIVE()
       {
         uint8_t mot_idx = m_can_bfr[0];
+
+        if (mot_idx >= c_motors)
+        {
+          war(DTR("invalid motor index in MSG_TQ_MOTOR_DRIVE: %u"), mot_idx);
+          return;
+        }
+
         /// Power in whole watts
         uint16_t power = combine2charToUint16(m_can_bfr[2], m_can_bfr[1]);
         /// PCB temperature in tenths of degrees celsius
@@ -469,7 +525,7 @@ namespace Actuators
         uint16_t rpm_raw = combine2charToUint16(m_can_bfr[6], m_can_bfr[5]);
         
         fp32_t temp = fp32_t(temp_raw) * 0.1;
-        int16_t rpm = (int16_t)rpm_raw / 7; // Rounds down to nearest whole number
+        int16_t rpm = getSignedRPM(mot_idx, (int16_t)(rpm_raw / 7)); // Rounds down to nearest whole number
 
         debug("MSG_TQ_MOTOR_DRIVE: Motor#%d - Power: %dW; Temp %0.1fC; RPM: %d",
               mot_idx, power, temp, rpm);
