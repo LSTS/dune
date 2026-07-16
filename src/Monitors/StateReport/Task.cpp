@@ -212,34 +212,31 @@ namespace Monitors
         if (m_vstate == nullptr || m_estate == nullptr)
           return nullptr;
 
-        IMC::EstimatedState* estate = new IMC::EstimatedState(*m_estate);
-        IMC::VehicleState* vstate = new IMC::VehicleState(*m_vstate);
-
         IMC::StateReport* report = new IMC::StateReport();
         report->stime = (int)Clock::getSinceEpoch();
 
         // get current position
-        double lat = estate->lat, lon = estate->lon;
-        WGS84::displace(estate->x, estate->y, &lat, &lon);
+        double lat = m_estate->lat, lon = m_estate->lon;
+        WGS84::displace(m_estate->x, m_estate->y, &lat, &lon);
         lat = Angles::degrees(lat);
         lon = Angles::degrees(lon);
 
         report->latitude = (fp32_t)lat;
         report->longitude = (fp32_t)lon;
 
-        if (estate->depth != -1)
-          report->depth = Math::roundToInteger(estate->depth * 10.0f);
+        if (m_estate->depth != -1)
+          report->depth = Math::roundToInteger(m_estate->depth * 10.0f);
         else
           report->depth = 0xFFFF;
 
-        if (estate->alt != -1)
-          report->altitude = Math::roundToInteger(estate->alt * 10.0f);
+        if (m_estate->alt != -1)
+          report->altitude = Math::roundToInteger(m_estate->alt * 10.0f);
         else
           report->altitude = 0xFFFF;
 
-        report->speed = Math::roundToInteger(estate->u * 100.0f);
+        report->speed = Math::roundToInteger(m_estate->u * 100.0f);
 
-        double ang = Angles::normalizeRadian(estate->psi);
+        double ang = Angles::normalizeRadian(m_estate->psi);
         if (ang < 0)
           ang += Math::c_two_pi;
         report->heading = Math::roundToInteger((ang / c_two_pi) * 65535);
@@ -247,7 +244,7 @@ namespace Monitors
         if (m_fuel != NULL)
           report->fuel = Math::roundToInteger(m_fuel->value);
 
-        switch (vstate->op_mode)
+        switch (m_vstate->op_mode)
         {
           case VehicleState::VS_SERVICE:
             report->exec_state = -1;
@@ -270,8 +267,10 @@ namespace Monitors
             break;
         }
 
-        Memory::clear(vstate);
-        Memory::clear(estate);
+        Memory::clear(m_fuel);
+        Memory::clear(m_pstate);
+        Memory::clear(m_vstate);
+        Memory::clear(m_estate);
         return report;
       }
 
