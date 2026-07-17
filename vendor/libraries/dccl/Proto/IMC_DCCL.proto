@@ -2809,14 +2809,14 @@ message EntityParameter {
 message EntityParameters {
     option (dccl.msg) = { codec_version: 4 id: 802};
     EntityName name = 1;
-    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 130 }];
+    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 200 }];
 }
 
 //SetEntityParameters
 message SetEntityParameters {
     option (dccl.msg) = { codec_version: 4 id: 804};
     EntityName name = 1; 
-    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 100 }];
+    repeated EntityParameter params = 2 [(dccl.field) = { max_repeat: 200 }];
 }
 
 message ItemList {
