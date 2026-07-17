@@ -2997,7 +2997,7 @@ message EstimatedState {
     option (dccl.msg) = { codec_version: 4 id: 350};
     optional float lat = 1 [(dccl.field) = { min: -1.57079632 max: 1.57079632 precision: 8 }];
     optional float lon = 2 [(dccl.field) = { min: -3.14159265 max: 3.14159265 precision: 8 }];
-    optional float height = 3 [(dccl.field) = { min: -10 max: 10  precision: 1 }];
+    optional float height = 3 [(dccl.field) = { min: -100 max: 90  precision: 1 }];
     optional float x = 4 [(dccl.field) = { min: -20000  max: 20000  precision: 1  }];
     optional float y = 5 [(dccl.field) = { min: -20000 max: 20000  precision: 1 }];
     optional float z = 6 [(dccl.field) = { min: -10 max: 10  precision: 1 }];
