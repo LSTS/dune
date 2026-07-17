@@ -2988,8 +2988,8 @@ message VerticalProfile {
     ParameterEnum parameter = 1;
     optional uint32 numsamples = 2 [(dccl.field) = { min: 0 max: 255}];
     repeated ProfileSample samples = 3 [(dccl.field) = { max_repeat: 70 }];
-    optional float lat = 4 [(dccl.field) = { min: -1.57079632 max: 1.57079632 precision: 8 }];
-    optional float lon = 5 [(dccl.field) = { min: -3.14159265 max: 3.14159265 precision: 8 }];
+    optional float lat = 4 [(dccl.field) = { min: -90 max: 90 precision: 6 }];
+    optional float lon = 5 [(dccl.field) = { min: -180 max: 180 precision: 6 }];
 }
 
 // Estimated State
