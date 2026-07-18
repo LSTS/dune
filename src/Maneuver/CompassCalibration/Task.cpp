@@ -27,6 +27,11 @@
 // Author: Pedro Calado                                                     *
 //***************************************************************************
 
+// ISO C++ 98 headers.
+#include <map>
+#include <string>
+#include <vector>
+
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -47,14 +52,25 @@ namespace Maneuver
     {
       //! Saturation level for variation in pitch references.
       double variation;
-      //! AHRS entity label.
-      std::string label_ahrs;
+      //! AHRS entity labels.
+      std::vector<std::string> label_ahrs;
       //! Tolerance in cross-track error to consider loiter has started
       float cross_tol;
       //! Number of 360 degree turns until calibration
       float turns;
       //! Perform compass calibration if true
       bool compass_calib;
+    };
+
+    //! Calibration channel of a single AHRS entity.
+    struct CalibrationChannel
+    {
+      //! Compass calibration algorithm.
+      DUNE::Navigation::CompassCalibration ccal;
+      //! Magnetic Field for Compass Calibration.
+      IMC::MagneticField mfield;
+      //! AHRS entity label.
+      std::string label;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -65,10 +81,8 @@ namespace Maneuver
       IMC::DesiredPitch m_pitch;
       //! EstimatedState.
       IMC::EstimatedState m_estate;
-      //! Magnetic Field for Compass Calibration.
-      IMC::MagneticField m_mfield;
-      //! Compass calibration algorithm.
-      DUNE::Navigation::CompassCalibration m_ccal;
+      //! Calibration channels indexed by AHRS entity id.
+      std::map<unsigned, CalibrationChannel> m_channels;
       //! Yoyo motion controller.
       DUNE::Control::YoYoMotion* m_yoyo;
       //! Z units for the maneuver.
@@ -83,8 +97,6 @@ namespace Maneuver
       bool m_calibrated;
       //! True if a pitch message has been dispatched already
       bool m_dispatched;
-      //! AHRS entity id.
-      unsigned m_ahrs_eid;
       //! Started yoyo movements (not necessarily calibrating)
       bool m_yoyo_ing;
       //! Last value of psi
@@ -110,7 +122,7 @@ namespace Maneuver
 
         param("Entity Label - Compass", m_args.label_ahrs)
         .defaultValue("AHRS")
-        .description("Entity label of 'AHRS' messages");
+        .description("Comma-separated list of entity labels of 'AHRS' messages");
 
         param("Cross Track Tolerance", m_args.cross_tol)
         .defaultValue("1.0")
@@ -140,7 +152,7 @@ namespace Maneuver
         if (paramChanged(m_args.compass_calib))
         {
           if (!isActive())
-            m_ccal.clear();
+            clearCalibration();
         }
       }
 
@@ -153,16 +165,26 @@ namespace Maneuver
       void
       onEntityResolution(void)
       {
-        try
-        {
-          m_ahrs_eid = resolveEntity(m_args.label_ahrs);
-        }
-        catch (...)
-        {
-          m_ahrs_eid = 0;
-        }
+        m_channels.clear();
 
-        m_mfield.setDestinationEntity(m_ahrs_eid);
+        for (const std::string& label : m_args.label_ahrs)
+        {
+          unsigned eid;
+
+          try
+          {
+            eid = resolveEntity(label);
+          }
+          catch (...)
+          {
+            war(DTR("failed to resolve entity '%s'"), label.c_str());
+            continue;
+          }
+
+          CalibrationChannel& channel = m_channels[eid];
+          channel.label = label;
+          channel.mfield.setDestinationEntity(eid);
+        }
       }
 
       void
@@ -187,8 +209,12 @@ namespace Maneuver
         else
         {
           calibrate(false);
-          err(DTR("%s entity not calibrated. Calibration values with %d turns: %f, %f, 0.0"),
-              m_args.label_ahrs.c_str(), turns, m_mfield.x, m_mfield.y);
+          for (const auto& itr : m_channels)
+          {
+            const CalibrationChannel& channel = itr.second;
+            err(DTR("%s entity not calibrated. Calibration values with %d turns: %f, %f, 0.0"),
+                channel.label.c_str(), turns, channel.mfield.x, channel.mfield.y);
+          }
         }
       }
 
@@ -238,7 +264,10 @@ namespace Maneuver
         m_dispatched = false;
 
         // Clear compass_calibration data
-        m_ccal.clear();
+        clearCalibration();
+
+        if (m_args.compass_calib && m_channels.empty())
+          war(DTR("no AHRS entities resolved, compass will not be calibrated"));
 
         if (m_zunits != IMC::Z_DEPTH && m_zunits != IMC::Z_ALTITUDE)
         {
@@ -274,8 +303,9 @@ namespace Maneuver
         // Update Direct Cosine Matrix.
         if (m_args.compass_calib && m_calibrating)
         {
-          if (msg->getSourceEntity() == m_ahrs_eid)
-            m_ccal.updateDCM(*msg);
+          auto itr = m_channels.find(msg->getSourceEntity());
+          if (itr != m_channels.end())
+            itr->second.ccal.updateDCM(*msg);
         }
       }
 
@@ -285,8 +315,9 @@ namespace Maneuver
         // Update stabilized magnetic field.
         if (m_args.compass_calib && m_calibrating)
         {
-          if (msg->getSourceEntity() == m_ahrs_eid)
-            m_ccal.updateField(*msg);
+          auto itr = m_channels.find(msg->getSourceEntity());
+          if (itr != m_channels.end())
+            itr->second.ccal.updateField(*msg);
         }
       }
 
@@ -378,19 +409,31 @@ namespace Maneuver
         if (!m_args.compass_calib)
           return;
 
-        Math::Matrix params = m_ccal.getCalibrationParams();
-
-        // Fill message and send to bus.
-        m_mfield.x = params(0);
-        m_mfield.y = params(1);
-        m_mfield.z = params(2);
-
-        // Dispatch magnetic data.
-        if (send_magnetic)
+        for (auto& itr : m_channels)
         {
-          m_calibrated = true;
-          dispatch(m_mfield);
+          CalibrationChannel& channel = itr.second;
+          Math::Matrix params = channel.ccal.getCalibrationParams();
+
+          // Fill message and send to bus.
+          channel.mfield.x = params(0);
+          channel.mfield.y = params(1);
+          channel.mfield.z = params(2);
+
+          // Dispatch magnetic data.
+          if (send_magnetic)
+            dispatch(channel.mfield);
         }
+
+        if (send_magnetic)
+          m_calibrated = true;
+      }
+
+      //! Clear calibration data of all AHRS channels.
+      void
+      clearCalibration(void)
+      {
+        for (auto& itr : m_channels)
+          itr.second.ccal.clear();
       }
 
       //! Yoyo motion update
@@ -400,7 +443,7 @@ namespace Maneuver
       {
         if (m_estate.alt < 0 && m_zunits == IMC::Z_ALTITUDE)
         {
-          m_ccal.clear();
+          clearCalibration();
           signalNoAltitude();
           return;
         }
