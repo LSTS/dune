@@ -30,6 +30,7 @@
 // ISO C++ 98 headers.
 #include <cmath>
 #include <cstring>
+#include <limits>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -90,6 +91,8 @@ namespace Navigation
         double accel_gate;
         //! Nominal update period (s), used until timestamps provide a delta.
         double dt_nominal;
+        //! Label of the entity producing the inertial/magnetic measurements.
+        std::string elabel_imu;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -110,6 +113,8 @@ namespace Navigation
         double m_dt_meas;
         //! Time stamp of the previous filter step.
         double m_last_time;
+        //! Entity id of the measurement source, UINT_MAX if unresolved.
+        unsigned m_imu_eid;
         //! Filter initialized flag.
         bool m_setup;
         //! Received-input flags for the current time step.
@@ -124,6 +129,7 @@ namespace Navigation
           DUNE::Tasks::Task(name, ctx),
           m_dt_meas(0.0),
           m_last_time(-1.0),
+          m_imu_eid(std::numeric_limits<unsigned>::max()),
           m_setup(false),
           m_have_accel(false),
           m_have_omega(false),
@@ -157,6 +163,11 @@ namespace Navigation
             .description("Fallback filter period, used until timestamps provide a "
                          "valid delta");
 
+          param("Entity Label - IMU", m_args.elabel_imu)
+            .defaultValue("")
+            .description("Label of the entity producing the acceleration, angular "
+                         "velocity, delta angle and magnetic field measurements");
+
           std::memset(m_spf, 0, sizeof(m_spf));
           std::memset(m_omega, 0, sizeof(m_omega));
           std::memset(m_dtheta, 0, sizeof(m_dtheta));
@@ -177,14 +188,38 @@ namespace Navigation
         }
 
         void
+        onEntityResolution(void)
+        {
+          try
+          {
+            m_imu_eid = resolveEntity(m_args.elabel_imu);
+          }
+          catch (...)
+          {
+            m_imu_eid = std::numeric_limits<unsigned>::max();
+            err(DTR("failed to resolve entity '%s'"), m_args.elabel_imu.c_str());
+          }
+        }
+
+        void
         onResourceInitialization(void)
         {
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
 
+        //! Reject anything not produced by the configured measurement source.
+        bool
+        rejected(const IMC::Message* msg) const
+        {
+          return msg->getSourceEntity() != m_imu_eid;
+        }
+
         void
         consume(const IMC::Acceleration* msg)
         {
+          if (rejected(msg))
+            return;
+
           m_spf[0] = msg->x;
           m_spf[1] = msg->y;
           m_spf[2] = msg->z;
@@ -195,6 +230,9 @@ namespace Navigation
         void
         consume(const IMC::AngularVelocity* msg)
         {
+          if (rejected(msg))
+            return;
+
           m_omega[0] = msg->x;
           m_omega[1] = msg->y;
           m_omega[2] = msg->z;
@@ -205,6 +243,9 @@ namespace Navigation
         void
         consume(const IMC::EulerAnglesDelta* msg)
         {
+          if (rejected(msg))
+            return;
+
           m_dtheta[0] = msg->x;
           m_dtheta[1] = msg->y;
           m_dtheta[2] = msg->z;
@@ -216,6 +257,9 @@ namespace Navigation
         void
         consume(const IMC::MagneticField* msg)
         {
+          if (rejected(msg))
+            return;
+
           m_mag[0] = msg->x;
           m_mag[1] = msg->y;
           m_mag[2] = msg->z;
