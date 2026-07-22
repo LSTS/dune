@@ -115,6 +115,8 @@ namespace Navigation
         double m_last_time;
         //! Entity id of the measurement source, UINT_MAX if unresolved.
         unsigned m_imu_eid;
+        //! Filter measurements by source entity.
+        bool m_filter;
         //! Filter initialized flag.
         bool m_setup;
         //! Received-input flags for the current time step.
@@ -130,6 +132,7 @@ namespace Navigation
           m_dt_meas(0.0),
           m_last_time(-1.0),
           m_imu_eid(std::numeric_limits<unsigned>::max()),
+          m_filter(false),
           m_setup(false),
           m_have_accel(false),
           m_have_omega(false),
@@ -166,7 +169,8 @@ namespace Navigation
           param("Entity Label - IMU", m_args.elabel_imu)
             .defaultValue("")
             .description("Label of the entity producing the acceleration, angular "
-                         "velocity, delta angle and magnetic field measurements");
+                         "velocity, delta angle and magnetic field measurements. "
+                         "Leave empty to accept measurements from any source");
 
           std::memset(m_spf, 0, sizeof(m_spf));
           std::memset(m_omega, 0, sizeof(m_omega));
@@ -190,13 +194,26 @@ namespace Navigation
         void
         onEntityResolution(void)
         {
+          m_imu_eid = std::numeric_limits<unsigned>::max();
+          m_filter = false;
+
+          // Without a configured label there is assumed to be a single producer
+          // of each measurement, so anything that arrives is used as is.
+          if (m_args.elabel_imu.empty())
+          {
+            inf(DTR("no measurement source configured, accepting any entity"));
+            return;
+          }
+
+          // A configured label that cannot be resolved keeps filtering on, so no
+          // measurement is silently taken from an unintended source.
+          m_filter = true;
           try
           {
             m_imu_eid = resolveEntity(m_args.elabel_imu);
           }
           catch (...)
           {
-            m_imu_eid = std::numeric_limits<unsigned>::max();
             err(DTR("failed to resolve entity '%s'"), m_args.elabel_imu.c_str());
           }
         }
@@ -211,7 +228,7 @@ namespace Navigation
         bool
         rejected(const IMC::Message* msg) const
         {
-          return msg->getSourceEntity() != m_imu_eid;
+          return m_filter && msg->getSourceEntity() != m_imu_eid;
         }
 
         void
