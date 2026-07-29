@@ -714,6 +714,12 @@ namespace DUNE
                               m_pcs.end_lat, m_pcs.end_lon, 0,
                               &m_ts.end.x, &m_ts.end.y);
         }
+
+        // Track geometry is expressed in the navigation reference's NED
+        // frame, so it must be updated after reprojecting the endpoints.
+        Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
+                                        &m_ts.track_bearing,
+                                        &m_ts.track_length);
       }
 
       const double now = Clock::get();
