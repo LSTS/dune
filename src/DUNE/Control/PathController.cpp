@@ -66,6 +66,7 @@ namespace DUNE
       m_error(false),
       m_setup(true),
       m_braking(false),
+      m_spherical_path(false),
       m_jump_monitors(false),
       m_dpath_speed(0),
       m_aloops(0),
@@ -202,6 +203,11 @@ namespace DUNE
       .defaultValue("25000")
       .units(Units::Meter)
       .description("Maximum admissible track length");
+
+      param("Spherical Tracking", m_spherical_tracking)
+      .defaultValue("false")
+      .description(
+          "Use spherical great-circle calculations for straight paths");
 
       param("Bottom Track -- FLS Entity Label", m_btd.args.fls_elabel)
       .defaultValue("Echo Sounder")
@@ -349,8 +355,22 @@ namespace DUNE
       const bool no_start = setStartPoint(now, dpath);
       setEndPoint(dpath);
 
-      Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
-                                      &m_ts.track_bearing, &m_ts.track_length);
+      // Loiter approach points are constructed in the local NED frame.
+      m_spherical_path = m_spherical_tracking && dpath->lradius <= 0;
+
+      if (m_spherical_path)
+      {
+        WGS84::getGreatCircleBearingAndRange(
+            m_pcs.start_lat, m_pcs.start_lon,
+            m_pcs.end_lat, m_pcs.end_lon,
+            &m_ts.track_bearing, &m_ts.track_length);
+      }
+      else
+      {
+        Coordinates::getBearingAndRange(
+            m_ts.start, m_ts.end,
+            &m_ts.track_bearing, &m_ts.track_length);
+      }
 
       if (m_max_track_length > 0 && m_ts.track_length > m_max_track_length)
       {
@@ -715,11 +735,14 @@ namespace DUNE
                               &m_ts.end.x, &m_ts.end.y);
         }
 
-        // Track geometry is expressed in the navigation reference's NED
-        // frame, so it must be updated after reprojecting the endpoints.
-        Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
-                                        &m_ts.track_bearing,
-                                        &m_ts.track_length);
+        if (!m_spherical_path)
+        {
+          // Track geometry is expressed in the navigation reference's NED
+          // frame, so it must be updated after reprojecting the endpoints.
+          Coordinates::getBearingAndRange(m_ts.start, m_ts.end,
+                                          &m_ts.track_bearing,
+                                          &m_ts.track_length);
+        }
       }
 
       const double now = Clock::get();
@@ -802,8 +825,22 @@ namespace DUNE
     void
     PathController::updateTrackingState(void)
     {
-      // Range and LOS angle to destination
-      getBearingAndRange(m_estate, m_ts.end, &m_ts.los_angle, &m_ts.range);
+      double latitude = 0.0;
+      double longitude = 0.0;
+
+      if (m_spherical_path)
+      {
+        Coordinates::toWGS84(m_estate, latitude, longitude);
+        WGS84::getGreatCircleBearingAndRange(
+            latitude, longitude, m_ts.lat_en, m_ts.lon_en,
+            &m_ts.los_angle, &m_ts.range);
+      }
+      else
+      {
+        // Range and LOS angle to destination in the local NED frame.
+        getBearingAndRange(m_estate, m_ts.end,
+                           &m_ts.los_angle, &m_ts.range);
+      }
 
       // Ground course and speed
       m_ts.course = m_ts.cc ? std::atan2(m_estate.vy, m_estate.vx) : m_estate.psi;
@@ -812,7 +849,20 @@ namespace DUNE
 
       if (!m_ts.loitering)
       {
-        getTrackPosition(m_estate, &m_ts.track_pos.x, &m_ts.track_pos.y);
+        if (m_spherical_path)
+        {
+          WGS84::getGreatCircleTrackPosition(
+              latitude, longitude,
+              m_ts.lat_st, m_ts.lon_st,
+              m_ts.lat_en, m_ts.lon_en,
+              &m_ts.track_bearing,
+              &m_ts.track_pos.x, &m_ts.track_pos.y);
+        }
+        else
+        {
+          getTrackPosition(m_estate,
+                           &m_ts.track_pos.x, &m_ts.track_pos.y);
+        }
         // vertical-track
         m_ts.track_pos.z = m_ts.end.z - getZ(static_cast<IMC::ZUnits>(m_ts.end.z_units));
         m_ts.course_error = Angles::normalizeRadian(m_ts.course - m_ts.track_bearing);
