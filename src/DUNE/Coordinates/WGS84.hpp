@@ -286,6 +286,157 @@ namespace DUNE
         *range = (Tb)std::sqrt(n * n + e * e);
       }
 
+      //! Get initial bearing and great-circle range between two
+      //! latitude/longitude coordinates using a spherical Earth model.
+      //!
+      //! @param[in] lat1 latitude of first coordinate (rad).
+      //! @param[in] lon1 longitude of first coordinate (rad).
+      //! @param[in] lat2 latitude of second coordinate (rad).
+      //! @param[in] lon2 longitude of second coordinate (rad).
+      //! @param[out] bearing initial bearing at the first coordinate (rad).
+      //! @param[out] range great-circle range (m).
+      template <typename Ta, typename Tb>
+      static inline void
+      getGreatCircleBearingAndRange(Ta lat1, Ta lon1,
+                                    Ta lat2, Ta lon2,
+                                    Tb* bearing, Tb* range)
+      {
+        const double dlat = lat2 - lat1;
+        const double dlon = lon2 - lon1;
+        const double sdlat = std::sin(dlat * 0.5);
+        const double sdlon = std::sin(dlon * 0.5);
+        double haversine = sdlat * sdlat +
+                           std::cos(lat1) * std::cos(lat2) *
+                           sdlon * sdlon;
+
+        if (haversine < 0.0)
+          haversine = 0.0;
+        else if (haversine > 1.0)
+          haversine = 1.0;
+
+        if (range != NULL)
+        {
+          const double angle =
+              2.0 * std::atan2(std::sqrt(haversine),
+                               std::sqrt(1.0 - haversine));
+          *range = (Tb)(angle * c_radius);
+        }
+
+        if (bearing != NULL)
+        {
+          const double y = std::sin(dlon) * std::cos(lat2);
+          const double x =
+              std::cos(lat1) * std::sin(lat2) -
+              std::sin(lat1) * std::cos(lat2) * std::cos(dlon);
+          *bearing = (Tb)std::atan2(y, x);
+        }
+      }
+
+      //! Calculate a point reached by following a great circle on a
+      //! spherical Earth.
+      //!
+      //! @param[in] lat latitude of the starting coordinate (rad).
+      //! @param[in] lon longitude of the starting coordinate (rad).
+      //! @param[in] bearing initial bearing at the starting coordinate (rad).
+      //! @param[in] range distance along the great circle (m).
+      //! @param[out] end_lat latitude of the resulting coordinate (rad).
+      //! @param[out] end_lon longitude of the resulting coordinate (rad).
+      template <typename Ta, typename Tb>
+      static inline void
+      displaceGreatCircle(Ta lat, Ta lon, Ta bearing, Tb range,
+                          Ta* end_lat, Ta* end_lon)
+      {
+        const double angle = range / c_radius;
+        const double slat = std::sin(lat);
+        const double clat = std::cos(lat);
+        const double sangle = std::sin(angle);
+        const double cangle = std::cos(angle);
+
+        double latitude =
+            std::asin(slat * cangle +
+                      clat * sangle * std::cos(bearing));
+        double longitude =
+            lon + std::atan2(std::sin(bearing) * sangle * clat,
+                             cangle - slat * std::sin(latitude));
+
+        // Keep longitude in the conventional [-pi, pi] interval.
+        longitude = std::atan2(std::sin(longitude), std::cos(longitude));
+
+        *end_lat = (Ta)latitude;
+        *end_lon = (Ta)longitude;
+      }
+
+      //! Get along-track distance, signed cross-track distance and local
+      //! tangent bearing for a great-circle path on a spherical Earth.
+      //!
+      //! Positive cross-track distance is to the right of the path.
+      //!
+      //! @param[in] lat latitude of the external coordinate (rad).
+      //! @param[in] lon longitude of the external coordinate (rad).
+      //! @param[in] start_lat latitude of the path start (rad).
+      //! @param[in] start_lon longitude of the path start (rad).
+      //! @param[in] end_lat latitude of the path end (rad).
+      //! @param[in] end_lon longitude of the path end (rad).
+      //! @param[out] bearing local tangent bearing along the path (rad).
+      //! @param[out] along along-track distance from the path start (m).
+      //! @param[out] cross signed cross-track distance (m).
+      template <typename Ta, typename Tb>
+      static inline void
+      getGreatCircleTrackPosition(Ta lat, Ta lon,
+                                  Ta start_lat, Ta start_lon,
+                                  Ta end_lat, Ta end_lon,
+                                  Tb* bearing, Tb* along, Tb* cross)
+      {
+        double bearing13;
+        double range13;
+        double bearing12;
+
+        getGreatCircleBearingAndRange(start_lat, start_lon, lat, lon,
+                                      &bearing13, &range13);
+        getGreatCircleBearingAndRange(start_lat, start_lon, end_lat, end_lon,
+                                      &bearing12, (double*)NULL);
+
+        const double angle13 = range13 / c_radius;
+        const double difference = bearing13 - bearing12;
+        double sine_cross =
+            std::sin(angle13) * std::sin(difference);
+
+        if (sine_cross < -1.0)
+          sine_cross = -1.0;
+        else if (sine_cross > 1.0)
+          sine_cross = 1.0;
+
+        const double cross_distance = std::asin(sine_cross) * c_radius;
+        const double along_distance =
+            std::atan2(std::sin(angle13) * std::cos(difference),
+                       std::cos(angle13)) * c_radius;
+
+        if (along != NULL)
+          *along = (Tb)along_distance;
+        if (cross != NULL)
+          *cross = (Tb)cross_distance;
+
+        if (bearing != NULL)
+        {
+          Ta projected_lat;
+          Ta projected_lon;
+          Ta forward_lat;
+          Ta forward_lon;
+          double local_bearing;
+
+          displaceGreatCircle(start_lat, start_lon, (Ta)bearing12,
+                              along_distance,
+                              &projected_lat, &projected_lon);
+          displaceGreatCircle(start_lat, start_lon, (Ta)bearing12,
+                              along_distance + 1.0,
+                              &forward_lat, &forward_lon);
+          getGreatCircleBearingAndRange(projected_lat, projected_lon,
+                                        forward_lat, forward_lon,
+                                        &local_bearing, (double*)NULL);
+          *bearing = (Tb)local_bearing;
+        }
+      }
+
       //! Get angles of Azimuth and Elevation between two
       //! latitude/longitude/height coordinates.
       //!
