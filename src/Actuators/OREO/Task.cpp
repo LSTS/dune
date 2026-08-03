@@ -30,7 +30,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-namespace Power
+namespace Actuators
 {
   //! @author Bernardo Gabriel
   namespace OREO
