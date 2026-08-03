@@ -39,6 +39,8 @@ if(COMMAND CMAKE_POLICY)
   endif()
 endif(COMMAND CMAKE_POLICY)
 
+set(CMAKE_C_STANDARD 99)
+
 #############################################################################
 # DUNE Legacy build
 #############################################################################

@@ -391,7 +391,7 @@ namespace Actuators
         }
         catch (std::runtime_error& e)
         {
-          throw RestartNeeded(e.what(), 5, false);
+          throw RestartNeeded(e.what(), 5);
         }
       }
 

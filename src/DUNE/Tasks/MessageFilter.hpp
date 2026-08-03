@@ -33,15 +33,22 @@
 // ISO C++ 98 headers.
 #include <vector>
 #include <map>
+#include <unordered_map>
+#include <functional>
+#include <memory>
 
 // DUNE headers.
 #include <DUNE/Tasks/Task.hpp>
 #include <DUNE/IMC/Message.hpp>
+#include <DUNE/Tasks/CustomMessageFilters/CustomMessageFilter.hpp>
+#include <DUNE/Tasks/CustomMessageFilters/Factory.hpp>
 
 namespace DUNE
 {
   namespace Tasks
   {
+    class CustomMessageFilter;
+
     class MessageFilter
     {
     public:
@@ -54,6 +61,9 @@ namespace DUNE
 
       void
       setupEntities(const std::vector<std::string>& spec, Tasks::Task* task);
+
+      void
+      setupCustomFilters(const std::vector<std::string>& spec, Tasks::Task* task);
 
       bool
       filter(const IMC::Message* msg);
@@ -73,6 +83,10 @@ namespace DUNE
       // List of entities to be passed by given message
       typedef std::vector<uint32_t> Entities;
       std::map<uint32_t, Entities> m_filtered;
+
+      //! Custom filter for a given message.
+      typedef std::unordered_map<uint32_t, std::unique_ptr<CustomMessageFilter>> CustomMessageFilterMap;
+      CustomMessageFilterMap m_custom_filters;
     };
   }
 }

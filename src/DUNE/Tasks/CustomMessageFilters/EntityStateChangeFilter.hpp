@@ -24,61 +24,84 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <iomanip>
-#include <cmath>
+#ifndef DUNE_TASKS_CUSTOM_MESSAGE_FILTERS_ENTITY_STATE_CHANGE_FILTER_HPP_INCLUDED_
+#define DUNE_TASKS_CUSTOM_MESSAGE_FILTERS_ENTITY_STATE_CHANGE_FILTER_HPP_INCLUDED_
 
-// DUNE headers.
-#include <DUNE/IMC/Bus.hpp>
-#include <DUNE/Tasks/Context.hpp>
-#include <DUNE/Tasks/Periodic.hpp>
-#include <DUNE/Time/Clock.hpp>
-#include <DUNE/Time/Delay.hpp>
+#include "CustomMessageFilter.hpp"
+
+#include <unordered_map>
+#include <unordered_set>
+
+#include <DUNE/IMC/Definitions.hpp>
+#include <DUNE/Utils/String.hpp>
+#include <DUNE/Tasks/Task.hpp>
 
 namespace DUNE
 {
   namespace Tasks
   {
-    Periodic::Periodic(const std::string& name, Context& ctx):
-      Task(name, ctx),
-      m_run_count(0),
-      m_run_time(0)
+    class EntityStateChangeFilter : public CustomMessageFilter
     {
-      param(DTR_RT("Execution Frequency"), m_frequency)
-      .units(Units::Hertz)
-      .defaultValue("1.0")
-      .description(DTR("Frequency at which task is executed"));
-    }
-
-    void
-    Periodic::onMain(void)
-    {
-      double now = Time::Clock::get();
-      double delay = (1 / m_frequency);
-      double next_inv = now + delay;
-      m_run_time = now;
-
-      while (!stopping())
+    public:
+      EntityStateChangeFilter(DUNE::Tasks::Task* task, const std::string& spec = ""):
+        CustomMessageFilter(DUNE::IMC::EntityState::getIdStatic())
       {
-        task();
-        ++m_run_count;
+        if (spec.empty())
+          return;
 
-        now = Time::Clock::get();
-
-        delay = (1.0 / m_frequency);
-
-        if (next_inv > now)
-          waitForMessages(next_inv - now, true);
-        else
-          consumeMessages();
-
-        next_inv += delay;
-        now = Time::Clock::get();
-        m_run_time = now;
+        std::vector<std::string> parts;
+        DUNE::Utils::String::split(spec, "+", parts);
+        for (auto& part : parts)
+        {
+          try
+          {
+            auto id = task->resolveEntity(part);
+            m_monitored_entities.insert(id);
+          }
+          catch(const std::exception& e)
+          {
+            DUNE_WRN("EntityStateChangeFilter", "invalid entity label in filter specification: " << part);
+            continue;
+          }
+        }
       }
-    }
+
+      bool
+      filter(const DUNE::IMC::Message* msg) override
+      {
+        const auto entity_state_msg = dynamic_cast<const DUNE::IMC::EntityState*>(msg);
+        if (entity_state_msg == nullptr)
+          return false;
+
+        auto id = entity_state_msg->getSourceEntity();
+        if (!m_monitored_entities.empty() && m_monitored_entities.find(id) == m_monitored_entities.end())
+          return false;
+
+        auto state = entity_state_msg->state;
+        auto it = m_entity_states.find(id);
+        if (it == m_entity_states.end())
+        {
+          m_entity_states[id] = state;
+          return false;
+        }
+
+        if (it->second == state)
+          return true;
+
+        it->second = state;
+        return false;
+      }
+
+    private:
+      //! Map of entity id to last known state.
+      std::unordered_map<uint16_t, uint8_t> m_entity_states;
+      //! Set of entity ids to monitor.
+      std::unordered_set<uint16_t> m_monitored_entities;
+    };
   }
 }
+
+#endif
