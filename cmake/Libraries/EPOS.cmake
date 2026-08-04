@@ -27,15 +27,19 @@
 # Author: Bernardo Gabriel                                                 #
 ############################################################################
 
-if(EPOS)
-  find_library(EPOS_LIBRARY NAMES EposCmd PATHS /usr/lib)
+if (NOT DUNE_OS_LINUX)
+  message(STATUS "EPOS support is disabled.")
+  set(DUNE_SYS_HAS_EPOS FALSE)
+  return()
+endif()
 
-  if(EPOS_LIBRARY)
-    message(STATUS "Found Epos library: ${EPOS_LIBRARY}")
-    set(DUNE_SYS_HAS_EPOS TRUE)
-    dune_add_lib(${EPOS_LIBRARY})
-  else()
-    message(WARNING "Epos library not found. EPOS support will be disabled.")
-    set(DUNE_SYS_HAS_EPOS FALSE)
-  endif()
+find_library(EPOS_LIBRARY NAMES EposCmd PATHS /usr/lib)
+
+if(EPOS_LIBRARY)
+  message(STATUS "Found Epos library: ${EPOS_LIBRARY}")
+  set(DUNE_SYS_HAS_EPOS TRUE)
+  dune_add_lib(${EPOS_LIBRARY})
+else()
+  message(WARNING "Epos library not found. EPOS support will be disabled.")
+  set(DUNE_SYS_HAS_EPOS FALSE)
 endif()
