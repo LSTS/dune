@@ -204,7 +204,7 @@ namespace Actuators
         for (uint8_t i = 0; i < c_num_pwr_chs; i++)
         {
           if (paramChanged(m_args.pwr_ch_states[i]))
-            setPowerChannel(m_args.pwr_ch_names[i], m_args.pwr_ch_states[i]);
+            setPowerChannel(m_args.pwr_ch_names[i], m_args.pwr_ch_states[i], false);
         }
       }
 
@@ -287,7 +287,7 @@ namespace Actuators
 
         for (auto& pwr_ch: m_pwr_chs)
         {
-          if (!setPowerChannel(pwr_ch.first, m_args.pwr_ch_states[pwr_ch.second.id], true))
+          if (!setPowerChannel(pwr_ch.first, m_args.pwr_ch_states[pwr_ch.second.id], false))
             throw RestartNeeded("unable to set power channel initial state", 5);
           
           pwr_ch.second.init_state = m_args.pwr_ch_states[pwr_ch.second.id];
@@ -593,16 +593,18 @@ namespace Actuators
       }
 
       bool
-      setPowerChannel(const std::string& label, const bool state, const bool persistent = false)
+      setPowerChannel(const std::string& label, const bool state, const bool update_param = true)
       {
         try
         {
           auto& pwr_ch = m_pwr_chs.at(label);
           debug("trying to turn %s power channel \"%s\"", state ? "on" : "off", label.c_str());
-          sendCommand(c_cmd_power_ctl, c_cmd_ack[0], persistent, std::vector<uint8_t>{pwr_ch.id, static_cast<uint8_t>(state)});
+          sendCommand(c_cmd_power_ctl, c_cmd_ack[0], true, std::vector<uint8_t>{pwr_ch.id, static_cast<uint8_t>(state)});
           pwr_ch.pcs.state = state;
           dispatch(m_pwr_chs[label].pcs);
           spew("power channel \"%s\" is %s", label.c_str(), state ? "on" : "off");
+          if (update_param)
+            applyEntityParameter(&m_args.pwr_ch_states[pwr_ch.id], state);
           return true;
         }
         catch(const std::exception& e)
