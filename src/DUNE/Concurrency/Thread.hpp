@@ -40,6 +40,7 @@
 #include <DUNE/Concurrency/Mutex.hpp>
 #include <DUNE/Concurrency/Scheduler.hpp>
 #include <DUNE/Concurrency/Barrier.hpp>
+#include <DUNE/Concurrency/Constants.hpp>
 
 extern "C" void*
 dune_concurrency_thread_entry_point(void*);
@@ -60,7 +61,7 @@ namespace DUNE
 
     public:
       // Constructor.
-      Thread(void);
+      Thread(size_t stack_size = c_thread_stack_size);
 
       //! Destructor.
       virtual

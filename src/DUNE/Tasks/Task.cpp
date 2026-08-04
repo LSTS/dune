@@ -72,7 +72,8 @@ namespace DUNE
       {"list:ipv4-address",  IMC::TypedEntityParameter::TYPE_LIST_STRING}
     };
 
-    Task::Task(const std::string& n, Context& ctx):
+    Task::Task(const std::string& n, Context& ctx, size_t stack_size):
+      AbstractTask(stack_size),
       m_ctx(ctx),
       m_recipient(0),
       m_name(n),

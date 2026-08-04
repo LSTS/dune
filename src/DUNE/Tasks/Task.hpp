@@ -120,7 +120,7 @@ namespace DUNE
       //! Construct a task object.
       //! @param[in] name name of the task.
       //! @param[in] context task context.
-      Task(const std::string& name, Context& context);
+      Task(const std::string& name, Context& context, size_t stack_size = Concurrency::c_thread_stack_size);
 
       //! Destructor.
       virtual
