@@ -535,7 +535,10 @@ namespace Actuators
           {
             m_no_rpl_cnt++;
             if (m_no_rpl_cnt >= c_max_no_rpl_cnt)
+            {
+              m_synced = false;
               throw std::runtime_error("reached maximum no reply count");
+            }
             else
               war("no reply from device (%u/%u)", m_no_rpl_cnt, c_max_no_rpl_cnt);
 
