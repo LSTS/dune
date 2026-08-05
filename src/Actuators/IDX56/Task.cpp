@@ -61,9 +61,13 @@ namespace Actuators
     //! Mode dictionary: string to OperationMode.
     const std::map<std::string, OperationMode> c_mode_dict_rev = {{"Position", MODE_POSITION},
                                                                   {"Velocity", MODE_VELOCITY}};
+    //! Timeout for power operation.
+    constexpr const double c_power_timeout = 5.0;
 
     struct Arguments
     {
+      //! Power channel label.
+      std::string pwr_ch_label;
       //! Node ID of the device.
       uint8_t node_id;
       //! Device name.
@@ -86,6 +90,8 @@ namespace Actuators
       Arguments m_args;
       //! Device handle.
       void* m_handle;
+      //! Device power state.
+      bool m_powered;
       //! Device enabled flag.
       bool m_enabled;
       //! Error code.
@@ -101,11 +107,16 @@ namespace Actuators
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx, c_stack_size),
         m_handle(nullptr),
+        m_powered(false),
         m_enabled(false),
         m_error(0),
         m_mode(MODE_INVALID),
         m_consumer(nullptr)
       {
+        param("Power Channel Name", m_args.pwr_ch_label)
+        .editable(false)
+        .description("Name of the power channel.");
+
         param("Node Id", m_args.node_id)
         .editable(false)
         .defaultValue("1")
@@ -140,6 +151,8 @@ namespace Actuators
         .values(c_modes)
         .defaultValue(c_mode_default)
         .description("Mode of operation (Position or Velocity).");
+
+        bind<IMC::PowerChannelState>(this);
       }
 
       void
@@ -163,6 +176,9 @@ namespace Actuators
       void
       onResourceRelease(void) override
       {
+        if (m_powered)
+          powerDevice(false);
+
         if (m_enabled)
         {
           if (m_mode != MODE_INVALID)
@@ -185,6 +201,16 @@ namespace Actuators
       void
       onResourceAcquisition(void) override
       {
+        if (!powerDevice(true))
+        {
+          war("failed to power device");
+          requestDeactivation();
+          setEntityState(EntityState::ESTA_ERROR, "failed to power device");
+          return;
+        }
+        else
+          debug("device powered on successfully");
+
         if (!openDevice())
         {
           war("failed to open device");
@@ -211,6 +237,31 @@ namespace Actuators
 
         requestActivation();
         setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+      }
+
+      bool
+      powerDevice(bool state)
+      {
+        if (m_args.pwr_ch_label.empty() || (m_powered == state))
+          return true;
+
+        trace("trying to power %s device", state ? "on" : "off");
+
+        IMC::PowerChannelControl pcc;
+        pcc.name = m_args.pwr_ch_label;
+        pcc.op = state ? IMC::PowerChannelControl::PCC_OP_TURN_ON : IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        dispatch(pcc);
+
+        Time::Counter<double> timer(c_power_timeout);
+        while (!timer.overflow() && !stopping())
+        {
+          waitForMessages(timer.getRemaining());
+
+          if (m_powered == state)
+            return true;
+        }
+
+        return false;
       }
 
       bool
@@ -451,6 +502,19 @@ namespace Actuators
 
         trace("received SetServoPosition message with value: %f", msg->value);
         setPosition(msg->value);
+      }
+
+      void
+      consume(const IMC::PowerChannelState* msg)
+      {
+        if (msg->getDestination() != getSystemId())
+          return;
+
+        if (msg->name != m_args.pwr_ch_label)
+          return;
+
+        m_powered = (msg->state == IMC::PowerChannelState::PCS_ON);
+        debug("received PowerChannelState message with state: %s", m_powered ? "ON" : "OFF");
       }
 
       void
