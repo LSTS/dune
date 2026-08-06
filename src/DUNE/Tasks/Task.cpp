@@ -47,6 +47,7 @@
 #include <DUNE/Utils/String.hpp>
 #include <DUNE/Entities/BasicEntity.hpp>
 #include <DUNE/Entities/EntityUtils.hpp>
+#include <DUNE/Tasks/TransmissionIdGenerator.hpp>
 
 #if defined(DUNE_OS_LINUX)
 #  include <sys/prctl.h>
@@ -442,6 +443,13 @@ namespace DUNE
     }
 
     void
+    Task::dispatch(IMC::TransmissionRequest* msg, unsigned int flags)
+    {
+      msg->req_id = TransmissionIdGenerator::createId();
+      dispatch(static_cast<IMC::Message*>(msg), flags);
+    }
+
+    void
     Task::dispatch(IMC::Message* msg, unsigned int flags)
     {
       if (!IMC::AddressResolver::isValid(msg->getSource()))
@@ -466,6 +474,19 @@ namespace DUNE
     void
     Task::onQueryEntityParameters(const IMC::QueryEntityParameters* msg)
     {
+      Parameter::Scope scope;
+      Parameter::Visibility visibility;
+      try
+      {
+        scope = Parameter::scopeFromString(msg->scope);
+        visibility = Parameter::visibilityFromString(msg->visibility);
+      }
+      catch (std::runtime_error& e)
+      {
+        war("invalid query entity parameters message: %s", e.what());
+        return;
+      }
+
       if (msg->name != getEntityLabel())
         return;
 
@@ -475,13 +496,20 @@ namespace DUNE
       std::map<std::string, Parameter*>::const_iterator itr = m_params.begin();
       for (; itr != m_params.end(); ++itr)
       {
+        if (scope != itr->second->getScope() && scope != Parameter::SCOPE_GLOBAL)
+          continue;
+
+        if (visibility != itr->second->getVisibility() && visibility != Parameter::VISIBILITY_DEVELOPER)
+          continue;
+
         IMC::EntityParameter p;
         p.name = itr->second->name();
         p.value = itr->second->value();
         params.params.push_back(p);
       }
 
-      dispatchReply(*msg, params);
+      if (!params.params.empty())
+        dispatchReply(*msg, params);
     }
 
     void
@@ -507,12 +535,12 @@ namespace DUNE
       params.name = getEntityLabel();
 
       IMC::MessageList<IMC::EntityParameter>::const_iterator itr = msg->params.begin();
+      IMC::EntityParameter p;
       for (; itr != msg->params.end(); ++itr)
       {
         try
         {
           m_params.set((*itr)->name, (*itr)->value);
-          IMC::EntityParameter p;
           p.name = (*itr)->name;
           p.value = (*itr)->value;
           params.params.push_back(p);

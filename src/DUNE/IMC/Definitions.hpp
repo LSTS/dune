@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: 2293d9e5efdaaeeeab6cb84d3f81ae72                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -11601,6 +11601,73 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Power.
+    class Power: public Message
+    {
+    public:
+      //! Measured Power Value.
+      fp32_t value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 364;
+      }
+
+      Power(void);
+
+      Power*
+      clone(void) const
+      {
+        return new Power(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Power::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Power";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4;
+      }
+
+      fp64_t
+      getValueFP(void) const;
+
+      void
+      setValueFP(fp64_t val);
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Desired Heading.
     class DesiredHeading: public ControlCommand
     {
@@ -19157,7 +19224,9 @@ namespace DUNE
         //! Acoustic.
         RM_ACOUSTIC = 3,
         //! SMS.
-        RM_SMS = 4
+        RM_SMS = 4,
+        //! MQTT.
+        RM_MQTT = 5
       };
 
       //! Asset Name.
@@ -27768,6 +27837,67 @@ namespace DUNE
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
     };
 
+    //! Battery Detailed Info.
+    class BDI: public Message
+    {
+    public:
+      //! State of Health.
+      int16_t soh;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2035;
+      }
+
+      BDI(void);
+
+      BDI*
+      clone(void) const
+      {
+        return new BDI(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return BDI::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "BDI";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 2;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
     //! Typed Entity Parameter Editor.
     class TypedEntityParameterEditor: public TypedEntityParametersOptions
     {
@@ -27833,6 +27963,607 @@ namespace DUNE
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Query BMS Data.
+    class QueryBmsData: public Message
+    {
+    public:
+      //! Operation.
+      enum OperationEnum
+      {
+        //! Read Telemetry.
+        BOP_READ_TELEMETRY = 0,
+        //! Read Cell Voltages.
+        BOP_READ_CELL_VOLTAGES = 1,
+        //! Read Status.
+        BOP_READ_STATUS = 2,
+        //! Read All.
+        BOP_READ_ALL = 3,
+        //! Raw Register Read.
+        BOP_READ_RAW = 4,
+        //! Raw Register Write.
+        BOP_WRITE_RAW = 5,
+        //! Set FET.
+        BOP_SET_FET = 6
+      };
+
+      //! Operation.
+      uint8_t op;
+      //! Pack Index.
+      uint8_t pack_idx;
+      //! SBS Register.
+      uint8_t sbs_register;
+      //! Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2041;
+      }
+
+      QueryBmsData(void);
+
+      QueryBmsData*
+      clone(void) const
+      {
+        return new QueryBmsData(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return QueryBmsData::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "QueryBmsData";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 3;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! BMS Cell Voltage.
+    class BmsCellVoltage: public Message
+    {
+    public:
+      //! Cell Number.
+      uint8_t cell_number;
+      //! Voltage.
+      fp32_t voltage;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2043;
+      }
+
+      BmsCellVoltage(void);
+
+      BmsCellVoltage*
+      clone(void) const
+      {
+        return new BmsCellVoltage(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return BmsCellVoltage::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "BmsCellVoltage";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 5;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! BMS Register.
+    class BmsRegister: public Message
+    {
+    public:
+      //! Register.
+      uint8_t reg;
+      //! Value.
+      std::vector<char> value;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2044;
+      }
+
+      BmsRegister(void);
+
+      BmsRegister*
+      clone(void) const
+      {
+        return new BmsRegister(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return BmsRegister::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "BmsRegister";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return IMC::getSerializationSize(value);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! BMS Data.
+    class BmsData: public Message
+    {
+    public:
+      //! Request Status.
+      enum RequestStatusEnum
+      {
+        //! Success.
+        BST_SUCCESS = 0,
+        //! Failure.
+        BST_FAILURE = 1,
+        //! Not Supported.
+        BST_NOT_SUPPORTED = 2,
+        //! Invalid Pack.
+        BST_INVALID_PACK = 3
+      };
+
+      //! Battery Status.
+      enum BatteryStatusBits
+      {
+        //! Overcharged Alarm.
+        BST_OCA = 0x8000,
+        //! Terminate Charge Alarm.
+        BST_TCA = 0x4000,
+        //! Overtemperature Alarm.
+        BST_OTA = 0x1000,
+        //! Terminate Discharge Alarm.
+        BST_TDA = 0x0800,
+        //! Remaining Capacity Alarm.
+        BST_RCA = 0x0200,
+        //! Remaining Time Alarm.
+        BST_RTA = 0x0100,
+        //! Initialization.
+        BST_INIT = 0x0080,
+        //! Discharging or Rest.
+        BST_DSG = 0x0040,
+        //! Fully Charged.
+        BST_FC = 0x0020,
+        //! Fully Discharged.
+        BST_FD = 0x0010,
+        //! Error Code.
+        BST_EC = 0x0007
+      };
+
+      //! FET Status.
+      enum FETStatusBits
+      {
+        //! Charge FET.
+        FET_CHG = 0x01,
+        //! Discharge FET.
+        FET_DSG = 0x02,
+        //! Pre-Charge FET.
+        FET_PCHG = 0x04
+      };
+
+      //! Safety Status.
+      enum SafetyStatusBits
+      {
+        //! Overcharge.
+        SS_OC = 0x00100000,
+        //! Charge Timeout.
+        SS_CTO = 0x00040000,
+        //! Precharge Timeout.
+        SS_PTO = 0x00010000,
+        //! Overcurrent During Discharge Latch.
+        SS_OCDL = 0x00004000,
+        //! Overtemperature Fault.
+        SS_OTF = 0x00002000,
+        //! AFE Alert.
+        SS_AFE_OVRD = 0x00001000,
+        //! Undertemperature During Discharge.
+        SS_UTD = 0x00000800,
+        //! Undertemperature During Charge.
+        SS_UTC = 0x00000400,
+        //! Overtemperature During Discharge.
+        SS_OTD = 0x00000200,
+        //! Overtemperature During Charge.
+        SS_OTC = 0x00000100,
+        //! Short Circuit During Discharge Latch.
+        SS_ASCDL = 0x00000080,
+        //! Short Circuit During Discharge.
+        SS_ASCD = 0x00000040,
+        //! Overload During Discharge Latch.
+        SS_AOLDL = 0x00000020,
+        //! Overload During Discharge.
+        SS_AOLD = 0x00000010,
+        //! Overcurrent During Discharge.
+        SS_OCD = 0x00000008,
+        //! Overcurrent During Charge.
+        SS_OCC = 0x00000004,
+        //! Cell Overvoltage.
+        SS_COV = 0x00000002,
+        //! Cell Undervoltage.
+        SS_CUV = 0x00000001
+      };
+
+      //! PF Status.
+      enum PFStatusBits
+      {
+        //! Data Flash Wearout Failure.
+        PF_DFW = 0x00020000,
+        //! Instruction Flash Checksum Failure.
+        PF_IFC = 0x00010000,
+        //! Safety Overtemperature FET Failure.
+        PF_SOTF = 0x00008000,
+        //! Open Thermistor TS3 Failure.
+        PF_TS3 = 0x00004000,
+        //! Open Thermistor TS2 Failure.
+        PF_TS2 = 0x00002000,
+        //! Open Thermistor TS1 Failure.
+        PF_TS1 = 0x00001000,
+        //! AFE XREADY Failure.
+        PF_AFE_XRDY = 0x00000800,
+        //! AFE Override Failure.
+        PF_AFE_OVRD = 0x00000400,
+        //! AFE Communication Failure.
+        PF_AFEC = 0x00000200,
+        //! AFE Register Failure.
+        PF_AFER = 0x00000100,
+        //! Discharge FET Failure.
+        PF_DFETF = 0x00000080,
+        //! Charge FET Failure.
+        PF_CFETF = 0x00000040,
+        //! Voltage Imbalance At Rest Failure.
+        PF_VIMR = 0x00000020,
+        //! Safety Overtemperature Cell Failure.
+        PF_SOT = 0x00000010,
+        //! Safety Overcurrent in Discharge.
+        PF_SOCD = 0x00000008,
+        //! Safety Overcurrent in Charge.
+        PF_SOCC = 0x00000004,
+        //! Safety Cell Overvoltage Failure.
+        PF_SOV = 0x00000002,
+        //! Safety Cell Undervoltage Failure.
+        PF_SUV = 0x00000001
+      };
+
+      //! Operation Status.
+      enum OperationStatusBits
+      {
+        //! KEYIN.
+        OS_KEYIN = 0x80000000,
+        //! Cell Balancing.
+        OS_CB = 0x10000000,
+        //! CC Measurement in SLEEP.
+        OS_SLPCC = 0x08000000,
+        //! ADC Measurement in SLEEP.
+        OS_SLPAD = 0x04000000,
+        //! Initialization After Full Reset.
+        OS_INIT = 0x01000000,
+        //! SLEEP Mode.
+        OS_SLEEPM = 0x00800000,
+        //! 400-kHz SMBus Mode.
+        OS_XL = 0x00400000,
+        //! Calibration Output CC.
+        OS_CAL_OFFSET = 0x00200000,
+        //! Calibration Output ADC and CC.
+        OS_CAL = 0x00100000,
+        //! Authentication In Progress.
+        OS_AUTH = 0x00040000,
+        //! LED Display.
+        OS_LED = 0x00020000,
+        //! SHUTDOWN Via Command.
+        OS_SDM = 0x00010000,
+        //! SLEEP Conditions Met.
+        OS_SLEEP = 0x00008000,
+        //! Charging Disabled.
+        OS_XCHG = 0x00004000,
+        //! Discharging Disabled.
+        OS_XDSG = 0x00002000,
+        //! Permanent Failure Mode.
+        OS_PF = 0x00001000,
+        //! Safety Mode.
+        OS_SAFE_MODE = 0x00000800,
+        //! Shutdown Via Low Voltage.
+        OS_SDV = 0x00000400,
+        //! Security Mode SEC1.
+        OS_SEC1 = 0x00000200,
+        //! Security Mode SEC0.
+        OS_SEC0 = 0x00000100,
+        //! SAFE Pin.
+        OS_SAFE = 0x00000020,
+        //! Host FET Control.
+        OS_HCFET = 0x00000010,
+        //! Precharge FET.
+        OS_PCHG = 0x00000008,
+        //! DSG FET.
+        OS_DSG = 0x00000004,
+        //! CHG FET.
+        OS_CHG = 0x00000002,
+        //! System Present Low.
+        OS_PRES = 0x00000001
+      };
+
+      //! Charging Status.
+      enum ChargingStatusBits
+      {
+        //! Charge Termination.
+        CS_VCT = 0x8000,
+        //! Charge Suspend.
+        CS_SU = 0x2000,
+        //! Charge Inhibit.
+        CS_IN = 0x1000,
+        //! Fast Charge Mode.
+        CS_FCHG = 0x0200,
+        //! Pre-Charge Mode.
+        CS_PCHG = 0x0100,
+        //! Overtemperature Region.
+        CS_OT = 0x0010,
+        //! High Temperature Region.
+        CS_HT = 0x0008,
+        //! Standard Temperature Region.
+        CS_ST = 0x0004,
+        //! Low Temperature Region.
+        CS_LT = 0x0002,
+        //! Undertemperature Region.
+        CS_UT = 0x0001
+      };
+
+      //! Gauging Status.
+      enum GaugingStatusBits
+      {
+        //! Discharge Qualified for Learning.
+        GS_VDQ = 0x8000,
+        //! End-of-Discharge Voltage Level 2.
+        GS_EDV2 = 0x4000,
+        //! End-of-Discharge Voltage Level 1.
+        GS_EDV1 = 0x2000,
+        //! Full Charge Capacity Updated.
+        GS_FCCX = 0x0400,
+        //! Rest.
+        GS_REST = 0x0100,
+        //! Condition Flag.
+        GS_CF = 0x0080,
+        //! Discharge or Relax.
+        GS_DSG = 0x0040,
+        //! End-of-Discharge Voltage Level 0.
+        GS_EDV0 = 0x0020,
+        //! Cell Balancing Possible.
+        GS_BAL_OK = 0x0010,
+        //! Terminate Charge.
+        GS_TC = 0x0008,
+        //! Terminate Discharge.
+        GS_TD = 0x0004,
+        //! Fully Charged.
+        GS_FC = 0x0002,
+        //! Fully Discharged.
+        GS_FD = 0x0001
+      };
+
+      //! Original Message.
+      InlineMessage<Message> original;
+      //! Request Status.
+      uint8_t req_status;
+      //! Pack Index.
+      uint8_t pack_idx;
+      //! Temperature.
+      fp32_t temperature;
+      //! Voltage.
+      fp32_t voltage;
+      //! Current.
+      fp32_t current;
+      //! Relative State of Charge.
+      uint8_t rsoc;
+      //! Absolute State of Charge.
+      uint8_t asoc;
+      //! State of Health.
+      uint8_t soh;
+      //! Remaining Capacity.
+      uint16_t remaining_capacity;
+      //! Full Charge Capacity.
+      uint16_t full_charge_capacity;
+      //! Cycle Count.
+      uint16_t cycle_count;
+      //! Time to Empty.
+      uint16_t time_to_empty;
+      //! Time to Full.
+      uint16_t time_to_full;
+      //! Battery Status.
+      uint16_t battery_status;
+      //! Serial Number.
+      uint16_t serial_number;
+      //! FET Status.
+      uint16_t fet_status;
+      //! Safety Status.
+      uint32_t safety_status;
+      //! PF Status.
+      uint32_t pf_status;
+      //! Operation Status.
+      uint32_t operation_status;
+      //! Charging Status.
+      uint16_t charging_status;
+      //! Gauging Status.
+      uint16_t gauging_status;
+      //! Cell Voltages.
+      MessageList<BmsCellVoltage> cell_voltages;
+      //! Registers.
+      MessageList<BmsRegister> registers;
+      //! Data.
+      std::vector<char> data;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2042;
+      }
+
+      BmsData(void);
+
+      BmsData*
+      clone(void) const
+      {
+        return new BmsData(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return BmsData::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "BmsData";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 49;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return original.getSerializationSize() + cell_voltages.getSerializationSize() + registers.getSerializationSize() + IMC::getSerializationSize(data);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
     };
   }
 }

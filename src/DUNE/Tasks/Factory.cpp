@@ -58,6 +58,20 @@ namespace DUNE
       return creator(label, ctx);
     }
 
+    std::vector<DUNE::Tasks::Task*>
+    Factory::produce(Context& ctx)
+    {
+      std::vector<DUNE::Tasks::Task*> tasks;
+      task_creator_t creator;
+      for (auto& entry : c_table)
+      {
+        creator = entry.second.getCreatorPointer();
+        tasks.push_back(creator(entry.first, ctx));
+      }
+
+      return tasks;
+    }
+
     bool
     Factory::exists(const std::string& name)
     {

@@ -56,7 +56,7 @@ namespace Transports
         m_medium(4),
         m_gsm_entity_id(-1),
         m_iridium_entity_id(-1),
-        m_reqid(0),
+        m_reqid(0xFFFF),
         c_wifi_timeout(15)
       { }
 
@@ -238,27 +238,6 @@ namespace Transports
           m_reqid++;
         }
         return m_reqid;
-      }
-
-      void
-      clearTimeouts()
-      {
-        double time = Time::Clock::getSinceEpoch();
-        auto it = m_transmission_requests.begin();
-
-        while (it != m_transmission_requests.end())
-        {
-          if (it->second->deadline <= time)
-          {
-            m_parent->inf("Transmission Request %d is expired by %f seconds", it->second->req_id, it->second->deadline - time);
-            answer(it->second, "Transmission timed out.",
-                   IMC::TransmissionStatus::TSTAT_TEMPORARY_FAILURE);
-            Memory::clear(it->second);
-            m_transmission_requests.erase(it++);
-          }
-          else
-            ++it;
-        }
       }
 
       void

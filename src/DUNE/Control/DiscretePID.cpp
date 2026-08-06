@@ -43,6 +43,7 @@ namespace DUNE
       m_limit_int(false),
       m_limit_out(false),
       m_max_int(0),
+      m_min_int(0),
       m_lower_limit(0),
       m_upper_limit(0),
       m_debug(false),
@@ -106,7 +107,30 @@ namespace DUNE
       }
 
       m_limit_int = true;
+      m_min_int = -value;
       m_max_int = value;
+    }
+
+    void
+    DiscretePID::setIntegralLimits(float lower, float upper)
+    {
+      if ((lower == 0.0) && (upper == 0.0))
+      {
+        m_limit_int = false;
+        return;
+      }
+
+      m_limit_int = true;
+      m_min_int = std::min(lower, upper);
+      m_max_int = std::max(lower, upper);
+    }
+
+    void
+    DiscretePID::disableParcels(void)
+    {
+      m_task = NULL;
+      m_parcel = NULL;
+      m_debug = false;
     }
 
     void
@@ -114,9 +138,7 @@ namespace DUNE
     {
       m_task = t;
       m_parcel = p;
-
-      if ((t != NULL) && (p != NULL))
-        m_debug = true;
+      m_debug = (t != NULL) && (p != NULL);
     }
 
     float
@@ -147,7 +169,7 @@ namespace DUNE
       m_int_err += m_ki * error * timestep;
 
       if (m_limit_int)
-        m_int_err = Math::trimValue(m_int_err, -m_max_int, m_max_int);
+        m_int_err = Math::trimValue(m_int_err, m_min_int, m_max_int);
 
       m_prev_err = error;
       return cmd;

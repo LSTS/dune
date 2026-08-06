@@ -36,7 +36,6 @@
 #include <fstream>
 
 // DUNE headers.
-// DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include <DUNE/IO/Poll.hpp>
 #include <DUNE/Hardware/STM/FirmwareUpdate.hpp>
@@ -168,7 +167,7 @@ namespace DUNE
             std::printf(" > Finish Update: %ld - %d\n\n", (unsigned long)m_firmware_len, m_size_send);
             return true;
             break;
-          
+
           default:
             break;
         }
@@ -196,7 +195,7 @@ namespace DUNE
         uint32_t cnt_frame = 0;
         cmd_frame[cnt_frame++] = '$';
         cmd_frame[cnt_frame++] = 'F';
-        
+
         for(uint16_t i = 0; i < size_frame; i++)
           cmd_frame[cnt_frame++]= frame[i];
 

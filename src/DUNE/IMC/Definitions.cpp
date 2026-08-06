@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 00461bdf5ee51803f5b42f972c159299                            *
+// IMC XML MD5: 2293d9e5efdaaeeeab6cb84d3f81ae72                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -11686,6 +11686,74 @@ namespace DUNE
       IMC::toJSON(os__, "va", va, nindent__);
       IMC::toJSON(os__, "aoa", aoa, nindent__);
       IMC::toJSON(os__, "ssa", ssa, nindent__);
+    }
+
+    Power::Power(void)
+    {
+      m_header.mgid = 364;
+      clear();
+    }
+
+    void
+    Power::clear(void)
+    {
+      value = 0;
+    }
+
+    bool
+    Power::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Power& other__ = static_cast<const Power&>(msg__);
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    Power::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    Power::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Power::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Power::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    fp64_t
+    Power::getValueFP(void) const
+    {
+      return static_cast<fp64_t>(value);
+    }
+
+    void
+    Power::setValueFP(fp64_t val)
+    {
+      value = static_cast<fp32_t>(val);
+    }
+
+    void
+    Power::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "value", value, nindent__);
     }
 
     DesiredHeading::DesiredHeading(void)
@@ -29339,6 +29407,62 @@ namespace DUNE
       IMC::toJSON(os__, "value", value, nindent__);
     }
 
+    BDI::BDI(void)
+    {
+      m_header.mgid = 2035;
+      clear();
+    }
+
+    void
+    BDI::clear(void)
+    {
+      soh = 0;
+    }
+
+    bool
+    BDI::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::BDI& other__ = static_cast<const BDI&>(msg__);
+      if (soh != other__.soh) return false;
+      return true;
+    }
+
+    int
+    BDI::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    BDI::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(soh, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    BDI::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(soh, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    BDI::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(soh, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    BDI::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "soh", soh, nindent__);
+    }
+
     TypedEntityParameterEditor::TypedEntityParameterEditor(void)
     {
       m_header.mgid = 2036;
@@ -29393,6 +29517,472 @@ namespace DUNE
     TypedEntityParameterEditor::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    QueryBmsData::QueryBmsData(void)
+    {
+      m_header.mgid = 2041;
+      clear();
+    }
+
+    void
+    QueryBmsData::clear(void)
+    {
+      op = 0;
+      pack_idx = 0;
+      sbs_register = 0;
+      data.clear();
+    }
+
+    bool
+    QueryBmsData::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::QueryBmsData& other__ = static_cast<const QueryBmsData&>(msg__);
+      if (op != other__.op) return false;
+      if (pack_idx != other__.pack_idx) return false;
+      if (sbs_register != other__.sbs_register) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    QueryBmsData::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    QueryBmsData::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(op, ptr__);
+      ptr__ += IMC::serialize(pack_idx, ptr__);
+      ptr__ += IMC::serialize(sbs_register, ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    QueryBmsData::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(pack_idx, bfr__, size__);
+      bfr__ += IMC::deserialize(sbs_register, bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    QueryBmsData::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(op, bfr__, size__);
+      bfr__ += IMC::deserialize(pack_idx, bfr__, size__);
+      bfr__ += IMC::deserialize(sbs_register, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    QueryBmsData::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "op", op, nindent__);
+      IMC::toJSON(os__, "pack_idx", pack_idx, nindent__);
+      IMC::toJSON(os__, "sbs_register", sbs_register, nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    BmsCellVoltage::BmsCellVoltage(void)
+    {
+      m_header.mgid = 2043;
+      clear();
+    }
+
+    void
+    BmsCellVoltage::clear(void)
+    {
+      cell_number = 0;
+      voltage = 0;
+    }
+
+    bool
+    BmsCellVoltage::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::BmsCellVoltage& other__ = static_cast<const BmsCellVoltage&>(msg__);
+      if (cell_number != other__.cell_number) return false;
+      if (voltage != other__.voltage) return false;
+      return true;
+    }
+
+    int
+    BmsCellVoltage::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    BmsCellVoltage::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(cell_number, ptr__);
+      ptr__ += IMC::serialize(voltage, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    BmsCellVoltage::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(cell_number, bfr__, size__);
+      bfr__ += IMC::deserialize(voltage, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    BmsCellVoltage::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(cell_number, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(voltage, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    BmsCellVoltage::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "cell_number", cell_number, nindent__);
+      IMC::toJSON(os__, "voltage", voltage, nindent__);
+    }
+
+    BmsRegister::BmsRegister(void)
+    {
+      m_header.mgid = 2044;
+      clear();
+    }
+
+    void
+    BmsRegister::clear(void)
+    {
+      reg = 0;
+      value.clear();
+    }
+
+    bool
+    BmsRegister::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::BmsRegister& other__ = static_cast<const BmsRegister&>(msg__);
+      if (reg != other__.reg) return false;
+      if (value != other__.value) return false;
+      return true;
+    }
+
+    int
+    BmsRegister::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    BmsRegister::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(reg, ptr__);
+      ptr__ += IMC::serialize(value, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    BmsRegister::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(reg, bfr__, size__);
+      bfr__ += IMC::deserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    BmsRegister::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(reg, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(value, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    BmsRegister::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "reg", reg, nindent__);
+      IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    BmsData::BmsData(void)
+    {
+      m_header.mgid = 2042;
+      clear();
+      original.setParent(this);
+      cell_voltages.setParent(this);
+      registers.setParent(this);
+    }
+
+    void
+    BmsData::clear(void)
+    {
+      original.clear();
+      req_status = 0;
+      pack_idx = 0;
+      temperature = 0;
+      voltage = 0;
+      current = 0;
+      rsoc = 0;
+      asoc = 0;
+      soh = 0;
+      remaining_capacity = 0;
+      full_charge_capacity = 0;
+      cycle_count = 0;
+      time_to_empty = 0;
+      time_to_full = 0;
+      battery_status = 0;
+      serial_number = 0;
+      fet_status = 0;
+      safety_status = 0;
+      pf_status = 0;
+      operation_status = 0;
+      charging_status = 0;
+      gauging_status = 0;
+      cell_voltages.clear();
+      registers.clear();
+      data.clear();
+    }
+
+    bool
+    BmsData::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::BmsData& other__ = static_cast<const BmsData&>(msg__);
+      if (original != other__.original) return false;
+      if (req_status != other__.req_status) return false;
+      if (pack_idx != other__.pack_idx) return false;
+      if (temperature != other__.temperature) return false;
+      if (voltage != other__.voltage) return false;
+      if (current != other__.current) return false;
+      if (rsoc != other__.rsoc) return false;
+      if (asoc != other__.asoc) return false;
+      if (soh != other__.soh) return false;
+      if (remaining_capacity != other__.remaining_capacity) return false;
+      if (full_charge_capacity != other__.full_charge_capacity) return false;
+      if (cycle_count != other__.cycle_count) return false;
+      if (time_to_empty != other__.time_to_empty) return false;
+      if (time_to_full != other__.time_to_full) return false;
+      if (battery_status != other__.battery_status) return false;
+      if (serial_number != other__.serial_number) return false;
+      if (fet_status != other__.fet_status) return false;
+      if (safety_status != other__.safety_status) return false;
+      if (pf_status != other__.pf_status) return false;
+      if (operation_status != other__.operation_status) return false;
+      if (charging_status != other__.charging_status) return false;
+      if (gauging_status != other__.gauging_status) return false;
+      if (cell_voltages != other__.cell_voltages) return false;
+      if (registers != other__.registers) return false;
+      if (data != other__.data) return false;
+      return true;
+    }
+
+    int
+    BmsData::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    BmsData::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += original.serialize(ptr__);
+      ptr__ += IMC::serialize(req_status, ptr__);
+      ptr__ += IMC::serialize(pack_idx, ptr__);
+      ptr__ += IMC::serialize(temperature, ptr__);
+      ptr__ += IMC::serialize(voltage, ptr__);
+      ptr__ += IMC::serialize(current, ptr__);
+      ptr__ += IMC::serialize(rsoc, ptr__);
+      ptr__ += IMC::serialize(asoc, ptr__);
+      ptr__ += IMC::serialize(soh, ptr__);
+      ptr__ += IMC::serialize(remaining_capacity, ptr__);
+      ptr__ += IMC::serialize(full_charge_capacity, ptr__);
+      ptr__ += IMC::serialize(cycle_count, ptr__);
+      ptr__ += IMC::serialize(time_to_empty, ptr__);
+      ptr__ += IMC::serialize(time_to_full, ptr__);
+      ptr__ += IMC::serialize(battery_status, ptr__);
+      ptr__ += IMC::serialize(serial_number, ptr__);
+      ptr__ += IMC::serialize(fet_status, ptr__);
+      ptr__ += IMC::serialize(safety_status, ptr__);
+      ptr__ += IMC::serialize(pf_status, ptr__);
+      ptr__ += IMC::serialize(operation_status, ptr__);
+      ptr__ += IMC::serialize(charging_status, ptr__);
+      ptr__ += IMC::serialize(gauging_status, ptr__);
+      ptr__ += cell_voltages.serialize(ptr__);
+      ptr__ += registers.serialize(ptr__);
+      ptr__ += IMC::serialize(data, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    BmsData::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += original.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(req_status, bfr__, size__);
+      bfr__ += IMC::deserialize(pack_idx, bfr__, size__);
+      bfr__ += IMC::deserialize(temperature, bfr__, size__);
+      bfr__ += IMC::deserialize(voltage, bfr__, size__);
+      bfr__ += IMC::deserialize(current, bfr__, size__);
+      bfr__ += IMC::deserialize(rsoc, bfr__, size__);
+      bfr__ += IMC::deserialize(asoc, bfr__, size__);
+      bfr__ += IMC::deserialize(soh, bfr__, size__);
+      bfr__ += IMC::deserialize(remaining_capacity, bfr__, size__);
+      bfr__ += IMC::deserialize(full_charge_capacity, bfr__, size__);
+      bfr__ += IMC::deserialize(cycle_count, bfr__, size__);
+      bfr__ += IMC::deserialize(time_to_empty, bfr__, size__);
+      bfr__ += IMC::deserialize(time_to_full, bfr__, size__);
+      bfr__ += IMC::deserialize(battery_status, bfr__, size__);
+      bfr__ += IMC::deserialize(serial_number, bfr__, size__);
+      bfr__ += IMC::deserialize(fet_status, bfr__, size__);
+      bfr__ += IMC::deserialize(safety_status, bfr__, size__);
+      bfr__ += IMC::deserialize(pf_status, bfr__, size__);
+      bfr__ += IMC::deserialize(operation_status, bfr__, size__);
+      bfr__ += IMC::deserialize(charging_status, bfr__, size__);
+      bfr__ += IMC::deserialize(gauging_status, bfr__, size__);
+      bfr__ += cell_voltages.deserialize(bfr__, size__);
+      bfr__ += registers.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    BmsData::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += original.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(req_status, bfr__, size__);
+      bfr__ += IMC::deserialize(pack_idx, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(temperature, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(voltage, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(current, bfr__, size__);
+      bfr__ += IMC::deserialize(rsoc, bfr__, size__);
+      bfr__ += IMC::deserialize(asoc, bfr__, size__);
+      bfr__ += IMC::deserialize(soh, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(remaining_capacity, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(full_charge_capacity, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(cycle_count, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_to_empty, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(time_to_full, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(battery_status, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(serial_number, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(fet_status, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(safety_status, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(pf_status, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(operation_status, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(charging_status, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(gauging_status, bfr__, size__);
+      bfr__ += cell_voltages.reverseDeserialize(bfr__, size__);
+      bfr__ += registers.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(data, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    BmsData::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      original.toJSON(os__, "original", nindent__);
+      IMC::toJSON(os__, "req_status", req_status, nindent__);
+      IMC::toJSON(os__, "pack_idx", pack_idx, nindent__);
+      IMC::toJSON(os__, "temperature", temperature, nindent__);
+      IMC::toJSON(os__, "voltage", voltage, nindent__);
+      IMC::toJSON(os__, "current", current, nindent__);
+      IMC::toJSON(os__, "rsoc", rsoc, nindent__);
+      IMC::toJSON(os__, "asoc", asoc, nindent__);
+      IMC::toJSON(os__, "soh", soh, nindent__);
+      IMC::toJSON(os__, "remaining_capacity", remaining_capacity, nindent__);
+      IMC::toJSON(os__, "full_charge_capacity", full_charge_capacity, nindent__);
+      IMC::toJSON(os__, "cycle_count", cycle_count, nindent__);
+      IMC::toJSON(os__, "time_to_empty", time_to_empty, nindent__);
+      IMC::toJSON(os__, "time_to_full", time_to_full, nindent__);
+      IMC::toJSON(os__, "battery_status", battery_status, nindent__);
+      IMC::toJSON(os__, "serial_number", serial_number, nindent__);
+      IMC::toJSON(os__, "fet_status", fet_status, nindent__);
+      IMC::toJSON(os__, "safety_status", safety_status, nindent__);
+      IMC::toJSON(os__, "pf_status", pf_status, nindent__);
+      IMC::toJSON(os__, "operation_status", operation_status, nindent__);
+      IMC::toJSON(os__, "charging_status", charging_status, nindent__);
+      IMC::toJSON(os__, "gauging_status", gauging_status, nindent__);
+      cell_voltages.toJSON(os__, "cell_voltages", nindent__);
+      registers.toJSON(os__, "registers", nindent__);
+      IMC::toJSON(os__, "data", data, nindent__);
+    }
+
+    void
+    BmsData::setTimeStampNested(double value__)
+    {
+      if (!original.isNull())
+      {
+        original.get()->setTimeStamp(value__);
+      }
+
+      cell_voltages.setTimeStamp(value__);
+
+      registers.setTimeStamp(value__);
+    }
+
+    void
+    BmsData::setSourceNested(uint16_t value__)
+    {
+      if (!original.isNull())
+      {
+        original.get()->setSource(value__);
+      }
+
+      cell_voltages.setSource(value__);
+
+      registers.setSource(value__);
+    }
+
+    void
+    BmsData::setSourceEntityNested(uint8_t value__)
+    {
+      if (!original.isNull())
+      {
+        original.get()->setSourceEntity(value__);
+      }
+
+      cell_voltages.setSourceEntity(value__);
+
+      registers.setSourceEntity(value__);
+    }
+
+    void
+    BmsData::setDestinationNested(uint16_t value__)
+    {
+      if (!original.isNull())
+      {
+        original.get()->setDestination(value__);
+      }
+
+      cell_voltages.setDestination(value__);
+
+      registers.setDestination(value__);
+    }
+
+    void
+    BmsData::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!original.isNull())
+      {
+        original.get()->setDestinationEntity(value__);
+      }
+
+      cell_voltages.setDestinationEntity(value__);
+
+      registers.setDestinationEntity(value__);
     }
   }
 }
