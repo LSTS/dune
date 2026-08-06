@@ -100,7 +100,7 @@ namespace Transports
         m_codec_dccl(this)
       {
         param("Iridium - Entity Label", m_args.iridium_label)
-            .defaultValue("GSM")
+            .defaultValue("Iridium Modem")
             .description("Entity label of Iridium modem");
 
         param("Iridium - Payload Size", m_args.iridium_payload_size)
@@ -108,7 +108,7 @@ namespace Transports
             .description("Maximum size of iridium payload messages in bytes.");
 
         param("GSM - Entity Label", m_args.gsm_label)
-            .defaultValue("Iridium Modem")
+            .defaultValue("SMS")
             .description("Entity label of GSM modem");
 
         param("GSM Address Section", m_args.gsm_addr_section)
