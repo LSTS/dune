@@ -707,9 +707,8 @@ namespace Transports
           return;
         std::vector<IMC::TransmissionRequest> frags = it->second->getRetransmissionList(msg->frag_ids);
 
-        // Resent fragments keep original message ID
         for (auto& frag: frags)
-          consume(&frag);
+          dispatch(frag, DF_LOOP_BACK);
         it->second->resetExpirationTimer();
       }
 
