@@ -134,7 +134,11 @@ namespace DUNE
                   if ((m_sm_csum | c_csum_msk) == m_sm_data[m_sm_data_idx - 1])
                     interpret = true;
                   else
+                  {
                     handler.onError(0xE5, 0, 0);
+                    reset();
+                    return;
+                  }
                 }
                 else
                   m_sm_csum ^= byte;
@@ -215,9 +219,9 @@ namespace DUNE
         //! XOR checksum OR mask.
         static const uint8_t c_csum_msk = 0x80;
         //! Maximum command argument length.
-        static const uint8_t c_data_max = 64;
+        static const uint8_t c_data_max = 128;
         //! Read buffer size.
-        static const int c_bfr_len = 64;
+        static const int c_bfr_len = 128;
         //! Information command.
         static const uint8_t c_cmd_info = 0x00;
         //! Jump to bootloader on next reset.

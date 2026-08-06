@@ -52,5 +52,6 @@ namespace DUNE
 #include <DUNE/Math/MultiMovingAverage.hpp>
 #include <DUNE/Math/Grid.hpp>
 #include <DUNE/Math/FIRFilter.hpp>
+#include <DUNE/Math/RobustFilter.hpp>
 
 #endif

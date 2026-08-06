@@ -4955,6 +4955,211 @@ main(void)
   }
 
   {
+    IMC::LblBeaconExtended msg;
+    msg.setTimeStamp(0.7185643056950832);
+    msg.setSource(58419U);
+    msg.setSourceEntity(239U);
+    msg.setDestination(36051U);
+    msg.setDestinationEntity(170U);
+    msg.beacon.assign("RPKZAWRBNENGXWPIOXAKJCBTPFOJJSSHDPCFGMFQRXTTEHGSPNHSDXGWQWBHFLNYSNEGZTEPWLGOAQUCLFJNMFIVXRHSPHKMRBKRIZBGXFBPTEALUVZZVLOOQRJNEIYGFQWEUPYXGSVWCJXBDKYAKNMOAAZNLDWFOEKMUMVOXCULBIQVYSEKLJTACDZKDYARIIEIWUGRTQOUDHTMIQZCMIYDFVYDRC");
+    msg.lat = 0.9229359184065505;
+    msg.lon = 0.9484313227441935;
+    msg.depth = 0.8350190471153883;
+    msg.query_channel = 144U;
+    msg.reply_channel = 67U;
+    msg.transponder_delay = 182U;
+    msg.ctime = 0.10915629789073467;
+    msg.ttl = 9011U;
+    msg.vx = 0.5656040673636162;
+    msg.vy = 0.4613561034193666;
+    msg.vz = 0.11281762987043131;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("LblBeaconExtended #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::LblBeaconExtended msg;
+    msg.setTimeStamp(0.6456450667884187);
+    msg.setSource(29975U);
+    msg.setSourceEntity(253U);
+    msg.setDestination(9623U);
+    msg.setDestinationEntity(30U);
+    msg.beacon.assign("XIJXEPAEOQCOVSZFAJMAZUPBFTVHTYCNINKDWXTRJEYA");
+    msg.lat = 0.9323013938714267;
+    msg.lon = 0.3793895510863563;
+    msg.depth = 0.393855796441551;
+    msg.query_channel = 12U;
+    msg.reply_channel = 141U;
+    msg.transponder_delay = 82U;
+    msg.ctime = 0.012027866190562952;
+    msg.ttl = 19192U;
+    msg.vx = 0.3007656927441067;
+    msg.vy = 0.26066073343044804;
+    msg.vz = 0.8074170088666768;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("LblBeaconExtended #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::LblBeaconExtended msg;
+    msg.setTimeStamp(0.016879807481162912);
+    msg.setSource(23751U);
+    msg.setSourceEntity(181U);
+    msg.setDestination(31816U);
+    msg.setDestinationEntity(82U);
+    msg.beacon.assign("VWRYNWUIJIGJYBFEZYJRRPCETKZQQHSNEOMETBXHSBGYUPALCQVLTQYBQ");
+    msg.lat = 0.5756117371190054;
+    msg.lon = 0.5507505240515478;
+    msg.depth = 0.7958363573316699;
+    msg.query_channel = 160U;
+    msg.reply_channel = 155U;
+    msg.transponder_delay = 2U;
+    msg.ctime = 0.6883404150281627;
+    msg.ttl = 12337U;
+    msg.vx = 0.2222736542485393;
+    msg.vy = 0.4107038495552161;
+    msg.vz = 0.857847232533913;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("LblBeaconExtended #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::LblConfigExtended msg;
+    msg.setTimeStamp(0.6088037977506652);
+    msg.setSource(56021U);
+    msg.setSourceEntity(226U);
+    msg.setDestination(64603U);
+    msg.setDestinationEntity(76U);
+    msg.op = 226U;
+    IMC::LblBeaconExtended tmp_msg_0;
+    tmp_msg_0.beacon.assign("DYRUGWKDDJIBWX");
+    tmp_msg_0.lat = 0.4387102975359092;
+    tmp_msg_0.lon = 0.8583664294901665;
+    tmp_msg_0.depth = 0.1390303301925203;
+    tmp_msg_0.query_channel = 43U;
+    tmp_msg_0.reply_channel = 214U;
+    tmp_msg_0.transponder_delay = 10U;
+    tmp_msg_0.ctime = 0.23527329753068515;
+    tmp_msg_0.ttl = 35303U;
+    tmp_msg_0.vx = 0.509412523868271;
+    tmp_msg_0.vy = 0.2396692956774915;
+    tmp_msg_0.vz = 0.9062620087458313;
+    msg.beacons.push_back(tmp_msg_0);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("LblConfigExtended #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::LblConfigExtended msg;
+    msg.setTimeStamp(0.5042832233547496);
+    msg.setSource(31318U);
+    msg.setSourceEntity(114U);
+    msg.setDestination(17548U);
+    msg.setDestinationEntity(152U);
+    msg.op = 76U;
+    IMC::LblBeaconExtended tmp_msg_0;
+    tmp_msg_0.beacon.assign("QZDNTEKRSGBEJNKZDOUGVPTSOMFKABJSUXHJKWLLWUNNPSANXRWLGTMAMEHCBITECZGNRUBCIIIQFVDXLPZCVJGPDLSEPHGYMMYQFOIVWYTQPUXIBRDCWEEFGCRFOQVOOYWPZZYIJVNXTEBIHAXHAKNBGNSZLJLZQXUSWHUJYULTEYLWRKUXYICHDMTODMXFGHSCEKSQDAKZWZQJBVFOQOFCHAIJKCFSATRKRNDVMFLUXRTQGYAJVMOHM");
+    tmp_msg_0.lat = 0.18242385940131234;
+    tmp_msg_0.lon = 0.3203888990582885;
+    tmp_msg_0.depth = 0.016292564169568258;
+    tmp_msg_0.query_channel = 128U;
+    tmp_msg_0.reply_channel = 175U;
+    tmp_msg_0.transponder_delay = 37U;
+    tmp_msg_0.ctime = 0.24785019992238733;
+    tmp_msg_0.ttl = 31742U;
+    tmp_msg_0.vx = 0.46123467767562965;
+    tmp_msg_0.vy = 0.6506845310848983;
+    tmp_msg_0.vz = 0.7352340362443992;
+    msg.beacons.push_back(tmp_msg_0);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("LblConfigExtended #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::LblConfigExtended msg;
+    msg.setTimeStamp(0.12546333670530163);
+    msg.setSource(5884U);
+    msg.setSourceEntity(0U);
+    msg.setDestination(3801U);
+    msg.setDestinationEntity(143U);
+    msg.op = 96U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("LblConfigExtended #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
     IMC::AcousticMessage msg;
     msg.setTimeStamp(0.3987170138268157);
     msg.setSource(11396U);
@@ -17871,7 +18076,7 @@ main(void)
       Utils::ByteBuffer bfr;
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
-      test.boolean("StationKeepingExtended #0", msg == *msg_d);
+      test.boolean("FollowCommand #0", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)
@@ -17906,7 +18111,7 @@ main(void)
       Utils::ByteBuffer bfr;
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
-      test.boolean("StationKeepingExtended #1", msg == *msg_d);
+      test.boolean("FollowCommand #1", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)
@@ -17941,7 +18146,7 @@ main(void)
       Utils::ByteBuffer bfr;
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
-      test.boolean("StationKeepingExtended #2", msg == *msg_d);
+      test.boolean("FollowCommand #2", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)
@@ -17964,7 +18169,7 @@ main(void)
       Utils::ByteBuffer bfr;
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
-      test.boolean("ManeuverDone #0", msg == *msg_d);
+      test.boolean("Command #0", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)
@@ -17987,7 +18192,7 @@ main(void)
       Utils::ByteBuffer bfr;
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
-      test.boolean("ManeuverDone #1", msg == *msg_d);
+      test.boolean("Command #1", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)
@@ -18010,7 +18215,103 @@ main(void)
       Utils::ByteBuffer bfr;
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
-      test.boolean("ManeuverDone #2", msg == *msg_d);
+      test.boolean("Command #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::FollowCommandState msg;
+    msg.setTimeStamp(0.5074396141365347);
+    msg.setSource(13471U);
+    msg.setSourceEntity(118U);
+    msg.setDestination(50283U);
+    msg.setDestinationEntity(51U);
+    msg.control_src = 26895U;
+    msg.control_ent = 106U;
+    IMC::Command tmp_msg_0;
+    tmp_msg_0.flags = 110U;
+    tmp_msg_0.speed = 0.2090415500859626;
+    tmp_msg_0.z = 0.3189325629623352;
+    tmp_msg_0.heading = 0.8797898102260778;
+    msg.command.set(tmp_msg_0);
+    msg.state = 54U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("FollowCommandState #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::FollowCommandState msg;
+    msg.setTimeStamp(0.013030356219036032);
+    msg.setSource(48156U);
+    msg.setSourceEntity(221U);
+    msg.setDestination(57435U);
+    msg.setDestinationEntity(50U);
+    msg.control_src = 54396U;
+    msg.control_ent = 249U;
+    IMC::Command tmp_msg_0;
+    tmp_msg_0.flags = 141U;
+    tmp_msg_0.speed = 0.1855003181976641;
+    tmp_msg_0.z = 0.037283996952274356;
+    tmp_msg_0.heading = 0.12182046271299984;
+    msg.command.set(tmp_msg_0);
+    msg.state = 29U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("FollowCommandState #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::FollowCommandState msg;
+    msg.setTimeStamp(0.2719166379282889);
+    msg.setSource(35306U);
+    msg.setSourceEntity(194U);
+    msg.setDestination(36828U);
+    msg.setDestinationEntity(133U);
+    msg.control_src = 14115U;
+    msg.control_ent = 142U;
+    IMC::Command tmp_msg_0;
+    tmp_msg_0.flags = 52U;
+    tmp_msg_0.speed = 0.9859479668223279;
+    tmp_msg_0.z = 0.23519531698271356;
+    tmp_msg_0.heading = 0.5593604854383112;
+    msg.command.set(tmp_msg_0);
+    msg.state = 122U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("FollowCommandState #2", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)
@@ -21164,6 +21465,15 @@ main(void)
     msg.change_sname.assign("UTCVOMERQAPGWPZFHAYMUUWLJOGOXHHRXKWGQYWECDPBTGQVCXMLTAUBYFGCRWDMRRFJGYEKRQH");
     const signed char tmp_msg_0[] = {94, 14, -31, 31, 119, 67, -126, 36, -12, -34, -79, -13, -81, 62, 54, -47, 15, 71, -106, 9, 46, -113, 94, 83, -64, -17, -118, 110, -78, -101, -104, -34, 14, -41, 105, -126, -92, -7, 70, -123, -102, 6, -47, -34, -121, 108, 56, 90, -31, 102, 44, 23, 107, -80, -98, 91, -11, 94, 85, -68, -40, -21, 34, 63, -106, 88, -85, 17, 107, 66, -30, -69, -62, -55, 58, 108, -29, -102, 63, -121, -69, 125, -10, -118, 11, 11, -61};
     msg.md5.assign(tmp_msg_0, tmp_msg_0 + sizeof(tmp_msg_0));
+    IMC::PlanDBInformation tmp_msg_1;
+    tmp_msg_1.plan_id.assign("TYCHSFEBFYJYSBQXXKWZARNDMIDGOPIEWAMQVGUMVPIRIOOLTNHOUFSVUPDXTCWLAOJCZDKSHEJJZJYGCTVEJBYPAHIGLGAXAAVUVXMFTCRHNCSSHLYWQRQOGDHCAZZEYECFUWELOQYLAUMBBEPBRHHNSWSEUMGMIOTRFNDZKRIQPZTMOAPQKCZEQYNNUSSYGRLFNQTGLGWXPRMJHRLCIXIVKVXKKJN");
+    tmp_msg_1.plan_size = 42372U;
+    tmp_msg_1.change_time = 0.9992851720989869;
+    tmp_msg_1.change_sid = 16951U;
+    tmp_msg_1.change_sname.assign("FTBQGIGQGOFJMCKAFXPPRMHWYICEIZZAAMDAUFFXEHUNENACPSHVQVJKFOXLRVWJNVAQBXJHLMERWVEMASVJMZS");
+    const signed char tmp_tmp_msg_1_0[] = {-77, 104, -117, 56, 53, 19, -11, 46, 42, -70, -21, 101, -65, 29, -70, -29, -24, -27, 102, -26, 0, 8, 74, 114, 48, -65, 118, 103, -61, 73, -64, 36, -119, -115, 55, -25, -126, -4, -99, 28, 73, 41, -41, -120, 44, -116, -34, 12, -50, -21, 21, -122, 44, -42, 50, -98, 65, 112, 98, -40, 124, -30, 7, -61, -71, 24, 54, -119, 54, 34, -68, -66, -89, -84, 67, -63, -115, 88, -108, -103, -71, 47, 113, -59, -82, 56, -11, 92, -100, -18, -111, -57, -72, 41, -15, 84, -16, -79, 32, 49, 59, 49, 36, 89, -15, 89, -21, -40, -63, 93};
+    tmp_msg_1.md5.assign(tmp_tmp_msg_1_0, tmp_tmp_msg_1_0 + sizeof(tmp_tmp_msg_1_0));
+    msg.plans_info.push_back(tmp_msg_1);
 
     try
     {
@@ -23295,6 +23605,267 @@ main(void)
   }
 
   {
+    IMC::ImageSnippet msg;
+    msg.setTimeStamp(0.949138843044228);
+    msg.setSource(17404U);
+    msg.setSourceEntity(223U);
+    msg.setDestination(731U);
+    msg.setDestinationEntity(196U);
+    msg.snippet_id = 27708U;
+    msg.total_frames = 115U;
+    msg.frame_id = 220U;
+    msg.codec = 100U;
+    const signed char tmp_msg_0[] = {33, -58, 66, -30, -127, 32, -71, 51, 124, -111, -101, -79, 84, -30, 96, -39, -52, 107, 14, -105, 41, -94, 70, 55, 15, -96, -16, 63, -111, 96, 74, 94, -36, 83, 79, -92, -81, -86, -68, -16, 100, 45, -112, 109, 10, 19, -71, 96, 38, 47, 44, -28, -24, 93, 101, -20, 14, -30, 6, -111, -115, 57, 6, 64, 59, -25, 51, -40, 81, 26, 104, -42, 22, -74, 104, 102};
+    msg.data.assign(tmp_msg_0, tmp_msg_0 + sizeof(tmp_msg_0));
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ImageSnippet #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ImageSnippet msg;
+    msg.setTimeStamp(0.33314349500426466);
+    msg.setSource(23028U);
+    msg.setSourceEntity(184U);
+    msg.setDestination(34536U);
+    msg.setDestinationEntity(116U);
+    msg.snippet_id = 54586U;
+    msg.total_frames = 36U;
+    msg.frame_id = 119U;
+    msg.codec = 25U;
+    const signed char tmp_msg_0[] = {-90, -76, 68, 82, -42, -35, -20, -60, -3, 83, -33, -90, 115, -73, -95, 45, 4, -125, 44, 22, -88, -22, 33, -56, -87, -122, -15, -31, -70, 111, 92, -63, 2, -25, 47, 114, -127, -109, -128, -83, -113, -21, -6, -116, 34, -35, 60, 6, 52, -38, 9, -83, -80, 41, -97, 68, -78, -70, -124, 11, -33, 117, 28, -67, 124, 14, -41, 5, 115, -54, 31, 100, 33, -47, -33, 53, 120, 107, -91, 91, 90, 8, 111, -127, -39, 70, -122, 8, 117, 97, -23, -22, 79, 78, 86, -128, -87, -2, -7, -24, -97, 46, 119, -91, 21, 8, 52, -14, 122, -90, 55, 62, -50, -10, -91, 116, 96, 8, 26, -73, 26, 32, -23, 27, 102, -45, -11, 99, 94, 60, -117, 37, 25, 26, 107, 95, 86, -91, -30, 33, -67, -31, -82, 19, -47, 62, 126, 6, -10, 47, 50, 67, -13, -16, -23, 4, -105, 114, 115, -7, -44, 78, -44, -47, -28, -88, 21, -3, 48, 77, -108, 66, 52, -96, 109, -78, -16, -22, -7, 67, 14, -53, -18, 115, 105, -38, 22, -79, 34, -55, 12, 36, -72, -23, -10, 28, -94, -29, 31, -72, -78, -120, 24, 8, 98, -6, 41, -67, 34, 49, -51, 74, 3, -16, -41, -122, 56, -26, 75, 61, 38, -92, -107, -36, -3, 57, -125, 61, -86, 105, 2, 40, -76, -38, -94, 62, -69};
+    msg.data.assign(tmp_msg_0, tmp_msg_0 + sizeof(tmp_msg_0));
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ImageSnippet #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ImageSnippet msg;
+    msg.setTimeStamp(0.42122233899124983);
+    msg.setSource(37781U);
+    msg.setSourceEntity(245U);
+    msg.setDestination(33449U);
+    msg.setDestinationEntity(150U);
+    msg.snippet_id = 24780U;
+    msg.total_frames = 149U;
+    msg.frame_id = 19U;
+    msg.codec = 82U;
+    const signed char tmp_msg_0[] = {-87, 67, 99, -94, 44, -93, -3, -59, -35, 115, -108, 9, -81, 88, -61, 105, -7, -75, -68, -38, 3, -63, 63, 97, -90, 113, -114, -28, -59, -60, -124, -38, -113, 58, -3, -17, 24, -90, -89, 83, 108, -15, -22, -2, -31, 81, 27, -67, -22, 73, -8, 96, 101, -12, -27, 4, -80, -89, 70, -38, -34, -65, -22, 69, -21, -33, -114, -33, -127, 66, 105, -121, 107, -107, 36, -38, 98, 58, -15, 120, -125, -11, -49, 76, 67, -89, -112, 95, -15, 22, 29, 58, 73, -35, -82, 103, 35, -83, 18, 68, 94, 109, -34, -109, -89, 27, 28, -55, 87, 80, 95, 81, -51, -103, -34, -59, 64, 88, -88, -46, -47, -14, -86, -69, 119, -101, 54, -118, -1, 93, 2, 81, 45, 120, 113, -108, 21, -67, 66, 73, 25, 90, -105, -84, 24, 71, 7, 57, -114, -97, -35, 120, -55, 98, -100, -128, -77, -89, 25, -21, 48, 19, 86, 52, -96, 76, 0, 82, 59, 19, -16, 34, -116, -30, -46, -41, -69, -32, -4, 20, -100, -84, -37, -2, 112, 73, -19, 63, 103, -21, -41, 22, 42, 41, 50, -27, -119, 23, 1, 36, 43, 41, 124, 64, -1, 8, -78, 81, -126, -10, 74, 48, 114, 93, -120, 25, -82, 32, 76, -116, -128, 22, 37, -32, -73, -79, -93, -115, 103, -72, -71, 0, 100, -88, -79, -17, -2, 36, -17, 112, -86, 33, -91, -64, -32, 74, -120, -109, 32, -128, 93, 48, -117};
+    msg.data.assign(tmp_msg_0, tmp_msg_0 + sizeof(tmp_msg_0));
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ImageSnippet #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ManeuverDone msg;
+    msg.setTimeStamp(0.23223363805845143);
+    msg.setSource(9176U);
+    msg.setSourceEntity(65U);
+    msg.setDestination(38647U);
+    msg.setDestinationEntity(245U);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ManeuverDone #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ManeuverDone msg;
+    msg.setTimeStamp(0.0255301419841214);
+    msg.setSource(64436U);
+    msg.setSourceEntity(101U);
+    msg.setDestination(51369U);
+    msg.setDestinationEntity(86U);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ManeuverDone #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ManeuverDone msg;
+    msg.setTimeStamp(0.6148425971362873);
+    msg.setSource(10306U);
+    msg.setSourceEntity(198U);
+    msg.setDestination(40454U);
+    msg.setDestinationEntity(69U);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ManeuverDone #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::StationKeepingExtended msg;
+    msg.setTimeStamp(0.4222410315308506);
+    msg.setSource(25256U);
+    msg.setSourceEntity(11U);
+    msg.setDestination(63449U);
+    msg.setDestinationEntity(11U);
+    msg.lat = 0.606117607982538;
+    msg.lon = 0.9396490837999579;
+    msg.z = 0.09088487452488803;
+    msg.z_units = 233U;
+    msg.radius = 0.8525799882931414;
+    msg.duration = 2260U;
+    msg.speed = 0.3420175499791106;
+    msg.speed_units = 122U;
+    msg.popup_period = 34415U;
+    msg.popup_duration = 30949U;
+    msg.flags = 124U;
+    msg.custom.assign("VRRBMGODLJEZLGIJHVJULLFVAFXTRQJZAQOCYQBWVDRACMYZXZWVHIANSIFHCMSYPPEIIEQBKVSRJGZIFEPNXFNRFZUUGBTPSYQSDWGJKPBKFCMCGDHXMDXEUPYIKKXBSQZZRMLTUGQBHQANHOQTWUTPWKLDUAWHKXEHXPBINVAMJZMCEFDNUDSSHGNWDSGJFTAROIAYKTTBYLJJUTYGONOCVSYCIKWCRONDVHPEKTPA");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("StationKeepingExtended #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::StationKeepingExtended msg;
+    msg.setTimeStamp(0.04483782859057339);
+    msg.setSource(31847U);
+    msg.setSourceEntity(183U);
+    msg.setDestination(30122U);
+    msg.setDestinationEntity(85U);
+    msg.lat = 0.23768303517733902;
+    msg.lon = 0.027415587758359172;
+    msg.z = 0.4938823695020822;
+    msg.z_units = 96U;
+    msg.radius = 0.8286134356322478;
+    msg.duration = 25971U;
+    msg.speed = 0.4344438146273565;
+    msg.speed_units = 167U;
+    msg.popup_period = 49071U;
+    msg.popup_duration = 50789U;
+    msg.flags = 208U;
+    msg.custom.assign("LZPQAAWRPEXGHHLSXYZMPYCWWPUPMYUVTZHAMECAZMPXXIGNVKWQRMGNJKBYHLLCFUQRHDEIOYSGEWOLNJTGSDOBSVCTSEBWOFQPHBORPQGBYFBAVSFGEEKKJRTYPNDIDAIKIMSRQJSVAOXBWFLIEKRZOKUFHQZUMJCDWQUEQCTZILIJBQNTCVCGVFDZDAKWCAXXDSYNJNNGMMEZFBVVTHKOUYJ");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("StationKeepingExtended #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::StationKeepingExtended msg;
+    msg.setTimeStamp(0.978662517782382);
+    msg.setSource(30602U);
+    msg.setSourceEntity(0U);
+    msg.setDestination(58626U);
+    msg.setDestinationEntity(62U);
+    msg.lat = 0.2673790458554294;
+    msg.lon = 0.39112529896018644;
+    msg.z = 0.533770823139652;
+    msg.z_units = 141U;
+    msg.radius = 0.862425623226735;
+    msg.duration = 25177U;
+    msg.speed = 0.1752448085781253;
+    msg.speed_units = 214U;
+    msg.popup_period = 64237U;
+    msg.popup_duration = 39981U;
+    msg.flags = 13U;
+    msg.custom.assign("ZYVTSNTODWKWRMLQBBRCEGHFLFXUBHJERTSQLWHTNOZYIGMQJMAODXTGKRIWHQTEIRIFEMPOARFZBLGSRQMHHNZZCVBKODGRPWHEOPBQTPSDAXOAGLSJULBXDCAVPNSIYALVGIDUDQJMIYKOSGOPEBEZCBVAFUDVTAANUVIPCXKNSYJYNKQWFCRWYZEUECYFWUFXJMMNKSDHKCXJSUTGNQYCXFJLLNPZFYHMVIRIMEJDG");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("StationKeepingExtended #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
     IMC::RemoteState msg;
     msg.setTimeStamp(0.44640278648488874);
     msg.setSource(26233U);
@@ -24831,6 +25402,111 @@ main(void)
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
       test.boolean("UamTxRange #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::UamJanusPacket msg;
+    msg.setTimeStamp(0.29755761510686385);
+    msg.setSource(11952U);
+    msg.setSourceEntity(129U);
+    msg.setDestination(56275U);
+    msg.setDestinationEntity(233U);
+    msg.seq = 63391U;
+    msg.op = 246U;
+    msg.baseline_flags = 68U;
+    msg.time = 0.20802387228930463;
+    msg.class_user_id = 181U;
+    msg.application_type = 170U;
+    const signed char tmp_msg_0[] = {-46, -99, -111, -118, 48, 43, 49, 124, -61, -86, 102, 124, -68, 90, -63, 44, -116, 119, 55, -39, -36, -124, -101, -107, 46, 101, -94, -4, 103, -4, -74, -91, 104, 47, 110, -45, -70, -89, -67, -91, 111, -35, 19, -96, 99, -8, 95, -18, 33, 43, -24};
+    msg.adb.assign(tmp_msg_0, tmp_msg_0 + sizeof(tmp_msg_0));
+    msg.error.assign("UWSBWOORRALLBVWSXVESNZWOJVBWSTHSEVIMDNDSXUTS");
+    msg.length = 9U;
+    const signed char tmp_msg_1[] = {-124, -7, -8, 104, -97, -56, -22, 16, -65, -82, 109, 125, 28, -103, -96, 101, -37, -63, 22, -44, 80, -75, -25, -60, 94, -26, 13, 51, 19, -76, 123, -72, 82, -34, -54, 123, 25, 1, -58, 5, 3, -71, 67, 31, 82, -1, 10, 90, 11, -106, -36, -36, 88, 108, -75, 59, 55, -85, 88, -111, -118, 120, 39, 21, -8, 5, -42, -121, -7, -58, 109, -124, -117, 34, 11, -51, 62, -27, 1, -51, 88, -53, 110, 92, 38, 62, 99, 58, 107, 20, -33, -70, 76, 36, -65, -46, -21, 3, 109, 1, 7, 72, -84, -113, -32};
+    msg.cargo.assign(tmp_msg_1, tmp_msg_1 + sizeof(tmp_msg_1));
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("UamJanusPacket #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::UamJanusPacket msg;
+    msg.setTimeStamp(0.23242351724810728);
+    msg.setSource(21403U);
+    msg.setSourceEntity(178U);
+    msg.setDestination(27442U);
+    msg.setDestinationEntity(206U);
+    msg.seq = 49700U;
+    msg.op = 59U;
+    msg.baseline_flags = 83U;
+    msg.time = 0.9575262508487427;
+    msg.class_user_id = 176U;
+    msg.application_type = 132U;
+    const signed char tmp_msg_0[] = {-67, -120, -105, 52, 115, 97, 56, 37, 37, 111, -45, 21, 62, 84, 72, 78, 52, -90, 27, -21, 126, 28, 36, -18, -70, 43, -6, 51, -19, -74, 35, 44, 66, 51, -97, 73, -86, -37, 87, -58, -28, -107, -84, -18, -3, 30, 81, -29, -4, -9, 67, 59, 85, 106, 22, -48, -83, -91, -87, -23, 60, -51, -86, 33, -105, -31, -13, -31, 46, 45, -67, -114, 77, 21, -17, -75, -52, -58, 13, 23, -38, -8, 121, -67, 90, -77, -125, 33, -51, 25, -91, -79, 19, -81, 7, -126, 83, -125, -31, -98, 15, 42, -27, 1, -29, -46, -76, 67, -32, -41, -128, -25, 121, 96, -28, -14, -48, 6, 49, 65, 33, 97, -54, 99, 14, 45, -126, 63, 12, -81, -39, -108, -50, 56, -38, 7, -74, -102, -8, -97, -116, 65, -66, -62, 116, -4, 10, 16, -14};
+    msg.adb.assign(tmp_msg_0, tmp_msg_0 + sizeof(tmp_msg_0));
+    msg.error.assign("MWMEUZKVHCQTLYNLXPWJKFKHTGVGNVQTMGCLDEOAIXPXJOFJQQURNCQQASNIVKUSVKIQASMXPHODGCHPQCVZZLYMCGRTOTFFURVG");
+    msg.length = 187U;
+    const signed char tmp_msg_1[] = {-81, -75, -92, 119, -9, 31, 97, 58, 105, -50, -127, 40, -35, -103, -117, -84, 18, 16, 9, 55, 99, -45, -84, -96, 27, -81, -91, 99, -104, -19, 80, 2, -73, -19, 47, 123, 35, -116, 76, 110, -53, -97, 63, -15, -107, -106, 30, 112, 62, -75, -6, -38, -27, -105, -43, -2, -127, 27, 15, -58, 52, 14, 8, 93, 119, 43, 9, 40, -88, -116, -97, -45, 96, 69, 80, 25, -98, 96, -120, -84, -53, -45, 116, 31, 10, -7, -13, 100, 17, 60, -7, 91, -51, -109, -10, 51, -37, -78, -19, 124, -104, -126, 4, -27, 75, 54, -31, 38, 62, -95, -4, -60, -90, 112, -40, 49, -69, -24, -71, 31, 78, 80, 3, 17, -72, 54, -61, -83, 94, 68, -20, -14, -87, -49, 54, 106, -38, -104, 46, -1, -101, -25, -7, 60, 17, -22, 78, -23, 51, -65, -81, -27, 123, -103, 0, 112, -114, -84, 23, -59, 124, -124, -77, -114, 122, 1, -39, 38, 18, 70, -69, -41, 119, 72, -8, 59, 41, 25, 29, -101, 97, 76, 5, -54, 81, 63, -22, -20, 51, -67, 90, -121, -2, -125, 106, -81, -13, -10, 125, -76, -20, 6, 63, 115, 5, 114, 118, -121, 40, 23, 2, -48, 74, 92, -25, -117, 114, -118, 24, 43, 26, 99, -91, 70, 16, -83, 58, -93, 11, -72, -32, -55, 61, 59, -62, 13, -8, -89, -116};
+    msg.cargo.assign(tmp_msg_1, tmp_msg_1 + sizeof(tmp_msg_1));
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("UamJanusPacket #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::UamJanusPacket msg;
+    msg.setTimeStamp(0.18832424585540508);
+    msg.setSource(25400U);
+    msg.setSourceEntity(183U);
+    msg.setDestination(14477U);
+    msg.setDestinationEntity(177U);
+    msg.seq = 43669U;
+    msg.op = 238U;
+    msg.baseline_flags = 253U;
+    msg.time = 0.2915041957639639;
+    msg.class_user_id = 146U;
+    msg.application_type = 198U;
+    const signed char tmp_msg_0[] = {86, 83, 12, -15, -79, 104, -17, -113, 81, -15, -3, -85, 84, 18, -47, 125, 73, 19, 79, 126, 83, 2, 62, 62, 8, -46, -82, -24, 19, 124, -51, 113, -31, -103, 24, -51, -84, -2, 75, -47, -97, -106, -38, -111, -58, 51, 23, 32, 110, 53, -21};
+    msg.adb.assign(tmp_msg_0, tmp_msg_0 + sizeof(tmp_msg_0));
+    msg.error.assign("ZNJZTAEDXNWIEQSLOBIJCHOCQHFDGNPVRBTPAEFZCKMCVQYSXZCKCDGTMAISGLSDMJAHMYTGBHTWUPKYVXOISKPVAXWRJZSCYFSROOYVLLHTXCXPBFM");
+    msg.length = 230U;
+    const signed char tmp_msg_1[] = {-104, -39, -112, 3, -63, -101, -71, -67, 118, -36, -117, 60, 47, 97, 54, 1, -117, 102, -77, 95, -16, 121, 121, 15, 55, -33, -81, 78, -32, 71, -69, 84, 122, -95, 67, -56, 51, -49, -24, -33, 4, 113, -88, -95, -72, 95, 68, -75, 94, 45, 42, 66, -103, 105, -114, 6, 53, -84, -23, 1, -122, 78, -39, 96, 66, 46, -2, -126, 113, -94, 117, -102, -72, -16, 16, -54, 43, -45, 14, -49, 47, 34, 125, 10, 14, 93, 21, 43, -67, -86, -39, -67, -43, -78, -73, -44, -31, 73, -63, 9, -104, -88, 62, 106, 92, 13, -19, -32, -85, -40, -8, -106, -50, 116, -26, -43, 66, 103, -10, -15, -15, 95, 28, -98, 88, 95, 82, -78, -67, 47, 43, 117, -74, 34, 106, -67, 103, 96, -49, 35, -31, -123, -15, -82, -18, 123, 54, 93, 104, -128, 45, -124, -90, -128, 37, 57, -84, 99, -82, 72, 122, -48, 12, -6, 62, -96, 123, 29, -47, 17, 50, -87, -65, -126, 38, 80, -100, 50, -36, -14, 69, -30, -34, 7, -19, 95, -73, -127, -114, -44, 78, 110, 33, -32, 98, 116, 36, -55, 44, 70, -46, -44, 37, 25, -33, 74, -35};
+    msg.cargo.assign(tmp_msg_1, tmp_msg_1 + sizeof(tmp_msg_1));
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("UamJanusPacket #2", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)
@@ -27596,6 +28272,78 @@ main(void)
   }
 
   {
+    IMC::ChargingState msg;
+    msg.setTimeStamp(0.9424594276094691);
+    msg.setSource(27304U);
+    msg.setSourceEntity(204U);
+    msg.setDestination(7231U);
+    msg.setDestinationEntity(118U);
+    msg.is_charging = 181U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ChargingState #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ChargingState msg;
+    msg.setTimeStamp(0.41240151355463706);
+    msg.setSource(53770U);
+    msg.setSourceEntity(248U);
+    msg.setDestination(41341U);
+    msg.setDestinationEntity(130U);
+    msg.is_charging = 196U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ChargingState #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ChargingState msg;
+    msg.setTimeStamp(0.997083795350638);
+    msg.setSource(51344U);
+    msg.setSourceEntity(219U);
+    msg.setDestination(20964U);
+    msg.setDestinationEntity(128U);
+    msg.is_charging = 195U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ChargingState #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
     IMC::AbsoluteWind msg;
     msg.setTimeStamp(0.5554085766210838);
     msg.setSource(53617U);
@@ -28426,6 +29174,237 @@ main(void)
   }
 
   {
+    IMC::FileSampleEvent msg;
+    msg.setTimeStamp(0.21382505377631844);
+    msg.setSource(20445U);
+    msg.setSourceEntity(123U);
+    msg.setDestination(61286U);
+    msg.setDestinationEntity(201U);
+    msg.fstype = 6U;
+    msg.filename.assign("LKMEXTWRWDGHHDVDNXTSOZQKERCLXKGPSCFGZSREUEPHXBAUZABUZSGISQFDNLQFKBWKNLWIOMNRCBTMWRUKAKUIOVDAHIGDBMUIARXBYGVXVNWAJDCEIGNNNOOZCEXIQLG");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("FileSampleEvent #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::FileSampleEvent msg;
+    msg.setTimeStamp(0.5710204842277862);
+    msg.setSource(46577U);
+    msg.setSourceEntity(117U);
+    msg.setDestination(41716U);
+    msg.setDestinationEntity(169U);
+    msg.fstype = 206U;
+    msg.filename.assign("PWAORQQTWSVPHZGCDNBYKIQLFAMKTKLYCMFKOLBOTFYCKSEXCEINQMGBSNZEZRIFOQEXDVQOZDRWQNSVNORHYVNMCYGHJKNNEGTFPRKCZXUJKCZPPLMFTHMIRTJBPEOJXWQVCYZEOVQVGWVV");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("FileSampleEvent #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::FileSampleEvent msg;
+    msg.setTimeStamp(0.027657161193681445);
+    msg.setSource(9621U);
+    msg.setSourceEntity(59U);
+    msg.setDestination(33159U);
+    msg.setDestinationEntity(12U);
+    msg.fstype = 28U;
+    msg.filename.assign("DZBTOFAWZJUMEYKSVBWLPSYCQYNPAITYEKDKZBSROTRGAOGRYTGQQWFMPMGVRXMBKITLUKSRNGFINEDWZIFIWAMRUZDOHYBXRYPEMUX");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("FileSampleEvent #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::QueryGsmCredit msg;
+    msg.setTimeStamp(0.8704371371298208);
+    msg.setSource(44631U);
+    msg.setSourceEntity(232U);
+    msg.setDestination(62272U);
+    msg.setDestinationEntity(113U);
+    msg.req_id = 9225U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("QueryGsmCredit #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::QueryGsmCredit msg;
+    msg.setTimeStamp(0.8818446392177813);
+    msg.setSource(37729U);
+    msg.setSourceEntity(3U);
+    msg.setDestination(43389U);
+    msg.setDestinationEntity(188U);
+    msg.req_id = 1823U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("QueryGsmCredit #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::QueryGsmCredit msg;
+    msg.setTimeStamp(0.7845463050828203);
+    msg.setSource(52905U);
+    msg.setSourceEntity(120U);
+    msg.setDestination(37282U);
+    msg.setDestinationEntity(216U);
+    msg.req_id = 37695U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("QueryGsmCredit #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::FileClassification msg;
+    msg.setTimeStamp(0.868782928360972);
+    msg.setSource(48257U);
+    msg.setSourceEntity(163U);
+    msg.setDestination(37504U);
+    msg.setDestinationEntity(129U);
+    msg.original_filepath.assign("HXQFHFDILJAXESGGVSJYZUGJUIAFFTIGZXBYHIPXEYZUXRGLHKZMOVGPMKEITCE");
+    msg.resized_filepath.assign("LYFLMFNLYVVIWUBGTREVHFCWPBFGOISLGCIKDPUXCIHETBYJPHBYBHQARAGTNYSNTTLDITMZDEMWJMFRJXQZQIQBJKVOUODBEWCQTNZZUWSRKINZMVWRCDPKHPWUXCYKRNSJEPDAGWEHUVJUDPBENZQKPOHKDMYGNOHPKURLDEWPVFTOTXQF");
+    msg.class_prediction.assign("KGICMWZCLHWHPZTRHOQQCTVRVCUSNIMRTFGUOGLRFGRXAIUZNEBXDMJWKHZDALACSVHLWUODGKPXTYTFDHTMUOYTLHYADZIPKEAVNHQBGCFYQJSTEVKKYHXGKVYFZYYFJSYCILANGPXODOARFZSMJQX");
+    msg.confidence = 155U;
+    msg.fstype = 230U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("FileClassification #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::FileClassification msg;
+    msg.setTimeStamp(0.8038223030393057);
+    msg.setSource(62237U);
+    msg.setSourceEntity(93U);
+    msg.setDestination(33076U);
+    msg.setDestinationEntity(160U);
+    msg.original_filepath.assign("PORDQCWPAANFUAFEQSKCDJLDEVDHURLJANAZHDTXSLAVFYTHHKGNOIGZJZJRLNMSLSRBBGWMMNUTSPTEVBGUJQNZYZHOOHTQYR");
+    msg.resized_filepath.assign("HFVNUWXWZYLVAQBSMWJCVWUJLHPKQPMTSZLHYRPYLVETOFUZTKJUXDOHOTEXICNPOWAAFXKOKCDFJLQSAMSDJSVZBGVIKPCWJIRBGQTQRWPRNCERQXNAQLOEYMOWKUKDZHGARTSRIUMPPBULNIAUPRCHUGRGFJALIGCBTEFKEZRXQBIEYUSTSKMDDSMIBSYEM");
+    msg.class_prediction.assign("UZVEDAAGSUHTVNTPYHQNTEFKGFPGJRMXXCRSLUOTSZVZCVPWUKPGOERPXLXUCJYOMEMQIXXDLJAXWOAQEDDSMKQEWNMBDTWCSLFVRJHLIZODJNDJSQMKAWQWPCYNSCQDAXNEZRWUYKLRJ");
+    msg.confidence = 31U;
+    msg.fstype = 88U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("FileClassification #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::FileClassification msg;
+    msg.setTimeStamp(0.29430182002792615);
+    msg.setSource(63090U);
+    msg.setSourceEntity(73U);
+    msg.setDestination(61391U);
+    msg.setDestinationEntity(241U);
+    msg.original_filepath.assign("ZFYCCGMDOZLGJYKKDVRUDWQALMFSLUZQCMNWIXEBJSJYKHUQRRVKBKDDQAWLJOUOBKPGVRSANMSINYXVPGF");
+    msg.resized_filepath.assign("DPTYPSUOOMDRADNHXDUDUEVRGRKGRPICCLEQACVQLLMXYFERGZTYCITQNOFSFNJTGHGOYZMCPIMKYYTBQNJSQCGSNWBEKWGYVHZPWSKFVLSLKYFVCLEOKJXHXWNZESCJJYIQIUIHXXMQEGOMNNIZMBIMHCUORMBIENRUDTQCDRAAUVWPVDBBKIEDRXAEUVOUQWKQSJPJSPXYFXLHBTZKAS");
+    msg.class_prediction.assign("VMJFIIPIYEPIXQFGXREKFGOWMIZKYABLTRUSOZYBPMDIQLTHVLPHHWWMJGSGKHHXSRYKZWEOWOYSAFGIROB");
+    msg.confidence = 230U;
+    msg.fstype = 29U;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("FileClassification #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
     IMC::GpioState msg;
     msg.setTimeStamp(0.7137619086337423);
     msg.setSource(4922U);
@@ -28792,6 +29771,93 @@ main(void)
   }
 
   {
+    IMC::IridiumMsgTxExtended msg;
+    msg.setTimeStamp(0.5637473949716256);
+    msg.setSource(9996U);
+    msg.setSourceEntity(218U);
+    msg.setDestination(55843U);
+    msg.setDestinationEntity(217U);
+    msg.req_id = 60119U;
+    msg.ttl = 4375U;
+    msg.expiration = 43254981U;
+    msg.destination.assign("JQBZLVSLQQNXXGELPYSMEUBKTELACHAWBMZMGRYZFAOFFMNXUYHVNUCSZWFICKOJHXNXARFRVKHBRLMODJIJZVTDJKOKBBPWAGAYWQLYOJSWMRKZAFEGESXYICTWUOYLLVEWFXDDTQPCUYQGCZQLPKWQNNVCOTHTMJJSIGKAZWRPDRRBIPEIRZSGHNVTCUJCOPVBTHDTKUPFIXGDFGSIVGVBNYUFAQAHRWJSSUNID");
+    const signed char tmp_msg_0[] = {92, -109, 82, 76, 37, 115, 125, -37, -20, -68, -7, -106, 112, -60, -25, -96, 64, -118, 97, 88, 64, -19, -46, 45, 58, 92, 25, -90, 125, -23, 64, -4, -73, 50, -79, 15, 101, 102, 102, 89, -115, -83, -86, 110, 105, -108, 4, 4, -68, -84, 30, -128, -57, 96, 82, 3, -127, 33, -95, -90, 13, -38, -111, -88, -58, 97, 44, -10, 57, 111, -100, 110, -106, 117, -38, -54, -61, 121, -12, 96, 65, -19, -54, 86, 12, -86, 58, 44, 16, -60, 119, -108, -104};
+    msg.data.assign(tmp_msg_0, tmp_msg_0 + sizeof(tmp_msg_0));
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("IridiumMsgTxExtended #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::IridiumMsgTxExtended msg;
+    msg.setTimeStamp(0.7984612993794689);
+    msg.setSource(39145U);
+    msg.setSourceEntity(183U);
+    msg.setDestination(20518U);
+    msg.setDestinationEntity(17U);
+    msg.req_id = 53866U;
+    msg.ttl = 36615U;
+    msg.expiration = 2858703666U;
+    msg.destination.assign("QKEHNMKAFXHVSESJRIWKCNQRVDXICWZMLSVGFALEMBBFBPABCUUPOCUMVSJQBNHQWWZPVLYAJDIZFHWBAJOQETEAPLYDGQFIDCRZIKINBZLSGPHYJXEAOBCGPIYOPNXWWEJXHYUGGLEXMTPK");
+    const signed char tmp_msg_0[] = {-15, 124, -94, 35, -97, -31, 82, 6, 47, -30, -24, 88, -65, 25, -71, 77, -77, -59, 94, -77, -104, 70, -107, -92, 44, 93, 16, -26, -7, -96, 84, 60, 79, 32, 10, -89, -53, -122, -103, 70, 48, 109, 38, 46, -12, -67, 100, -100, 72, -117, -65, 108, 55};
+    msg.data.assign(tmp_msg_0, tmp_msg_0 + sizeof(tmp_msg_0));
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("IridiumMsgTxExtended #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::IridiumMsgTxExtended msg;
+    msg.setTimeStamp(0.05148413912149519);
+    msg.setSource(45413U);
+    msg.setSourceEntity(230U);
+    msg.setDestination(52235U);
+    msg.setDestinationEntity(8U);
+    msg.req_id = 63873U;
+    msg.ttl = 27700U;
+    msg.expiration = 2145022424U;
+    msg.destination.assign("QXGAYZFSHFFTYFSSDYPCIAMTVUVVWINZIXKONJPYULHWEHBMAWXOLJNSIZPYNVKKPTMTUAMQTCFNLPPBODRUDO");
+    const signed char tmp_msg_0[] = {-49, -43, -116, 69, -114, 80, -36, -1, -46, -124, -60, 97, 100, -56, 44, 29, -127, 47, -109, 18, -109, -93, -3, 124, 3, -23, 5, -10, -60, 51, -55, 95, 38, -67, -78, 101, -47, 93, 63, -106, 36, 53, 68, -19, 70, 56, -73, 89, 72, -10, -24, -8, 7, 92, -74, -105, 112, 102, 110, 12, -3, -96, 82, -100, 125, -57, 4, 93, 122, 70, 59, 44, -3, 18, -69, 12, -26, 37, 103, 24, -16, 17, -29, -124, -110, 30, 106, 121, -29, 93, 97, 27, -4, -74, 60, -92, -83, 18, 119, 48, 28, 87, 104, 53, 73, 55, -59, 80, -92, -3, 3, -119, -33, 89, -24, 68, 26, -21, -13, -18, -8, -12, 18, 19, 82, 106, -33, 97, -47, -29, 106, -89, -44, -23, 22, -77, -52, -116, -51, -47, 54, -47, 2, -98, 7, 6, -19, -93, 62, 8, -84, -68, 33, 16, -24, 121, -94, -93, 55, 17, 3, 26, -81, 124, 116, -39, 98, 21, 92, 72, 110, 17, 3, 0, -67, -89, 73, 74, 112, 115, -126, -79, -87, -88, -65, -43, 23, -77, -69, -48, 46, -18, -78, -95, 12, 36, -3, 74, -120, -4, -91, 26, 68, -105, 114, -69, 10, -17, -6, -6, 46, 14, -70, -120, 20, -86, -118, 3, -21, 77, 115, 68, -60, 109, -16, -63, 107, 29, 6, -19, -36, -83, -49, -3, -78, 61, -48, -98, -76, 2, -100, 90, -109, 65, 72, -47, 56, -106, -128, 30, 44, 42, 70};
+    msg.data.assign(tmp_msg_0, tmp_msg_0 + sizeof(tmp_msg_0));
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("IridiumMsgTxExtended #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
     IMC::TotalMagIntensity msg;
     msg.setTimeStamp(0.14579683598601556);
     msg.setSource(6999U);
@@ -28854,6 +29920,112 @@ main(void)
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
       test.boolean("TotalMagIntensity #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ValidatePlan msg;
+    msg.setTimeStamp(0.371425257117577);
+    msg.setSource(7141U);
+    msg.setSourceEntity(14U);
+    msg.setDestination(64597U);
+    msg.setDestinationEntity(140U);
+    msg.type = 30U;
+    IMC::PlanDB tmp_msg_0;
+    tmp_msg_0.type = 174U;
+    tmp_msg_0.op = 41U;
+    tmp_msg_0.request_id = 54678U;
+    tmp_msg_0.plan_id.assign("SHSBKERCZNCPDEUHBKGRJHHNDQNWDAOPRTLFZVIKRJZGZJURIOGORSYCDTAEQOPXGSXVQCSNHPWZFJCPIYKYTYWBSSBRLUMNCCTHEOFQWWDSWXPIQCJAGKAEMFJDFANGLILVMRHEYULPFYUGBPZIRIMOXZYBSGNWQJUUXBLOHNBZVTJLVCO");
+    IMC::Aborted tmp_tmp_msg_0_0;
+    tmp_msg_0.arg.set(tmp_tmp_msg_0_0);
+    tmp_msg_0.info.assign("EMQDSBFFTVYIZXNLFXLNVYWWEPKAUVDRKWHCITAHGGRQFUOTCROBEEADNNDBYLGJZWFBTYBOSTFODOMGPOEYRQSPCFXNPHZUZIHSALDMSGZJSSNNRP");
+    msg.plan.set(tmp_msg_0);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ValidatePlan #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ValidatePlan msg;
+    msg.setTimeStamp(0.24640189085720554);
+    msg.setSource(36634U);
+    msg.setSourceEntity(113U);
+    msg.setDestination(13361U);
+    msg.setDestinationEntity(228U);
+    msg.type = 66U;
+    IMC::PlanDB tmp_msg_0;
+    tmp_msg_0.type = 74U;
+    tmp_msg_0.op = 249U;
+    tmp_msg_0.request_id = 47068U;
+    tmp_msg_0.plan_id.assign("AGTHHLVJZGSVMATAKREPRKQPRGILQPMEUVFCJCFPKNIHXOZIXYLGATBQZKJBY");
+    IMC::MagneticField tmp_tmp_msg_0_0;
+    tmp_tmp_msg_0_0.time = 0.7023638259543596;
+    tmp_tmp_msg_0_0.x = 0.2388435809181001;
+    tmp_tmp_msg_0_0.y = 0.6631128945517903;
+    tmp_tmp_msg_0_0.z = 0.3904931644590618;
+    tmp_msg_0.arg.set(tmp_tmp_msg_0_0);
+    tmp_msg_0.info.assign("DTNLHYOGSTCFAHLDVZLBUMPEDWUYXJHJSAKCEOHRYMOOQYXISNYUKFOJZXEBCAEQIQSGNBRXWGVGVOZCMTUDUXMZQSFZTBMUDPJWPMCISVBKJI");
+    msg.plan.set(tmp_msg_0);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ValidatePlan #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ValidatePlan msg;
+    msg.setTimeStamp(0.25675754406697693);
+    msg.setSource(23626U);
+    msg.setSourceEntity(21U);
+    msg.setDestination(62897U);
+    msg.setDestinationEntity(179U);
+    msg.type = 250U;
+    IMC::PlanDB tmp_msg_0;
+    tmp_msg_0.type = 96U;
+    tmp_msg_0.op = 246U;
+    tmp_msg_0.request_id = 34309U;
+    tmp_msg_0.plan_id.assign("XLEGFQQGFVLUVYYIYLKZYZHYPTSBLRYPEXUBZNMGWPBQXARVIMHKIJOKSDCDLMKSPUOUSDWW");
+    IMC::HistoricData tmp_tmp_msg_0_0;
+    tmp_tmp_msg_0_0.base_lat = 0.822103253033627;
+    tmp_tmp_msg_0_0.base_lon = 0.2720465825418952;
+    tmp_tmp_msg_0_0.base_time = 0.601804440232069;
+    tmp_msg_0.arg.set(tmp_tmp_msg_0_0);
+    tmp_msg_0.info.assign("OUWFZDPKWRYJWXDCAVQCSLVEUDYVZYTEIHGAJFMCJFJAKRQMJTXZKITNCZDPLUPRSPWRQZPCKDDFVSFPDBTNIWIKEGCIRQWMXGSOFNK");
+    msg.plan.set(tmp_msg_0);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ValidatePlan #2", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)
@@ -28929,6 +30101,372 @@ main(void)
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
       test.boolean("CommRestriction #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::WifiStats msg;
+    msg.setTimeStamp(0.9781979197893468);
+    msg.setSource(49907U);
+    msg.setSourceEntity(60U);
+    msg.setDestination(14778U);
+    msg.setDestinationEntity(91U);
+    msg.mac.assign("MWTOARLQWIBFLLMKLSYXCAGLPYPYNPYAOTKCVBSUXVMQWQLAUPRJBKBRQTKSTIONZLXFNSJGVGKSUQDXNUWZMRVKZBCLQGZFQIEIEEGHEDIRMMAWDZPDJOHPBJCSDBPVAETFEKHDUOEZWNJXRTJEBRSSJWBYAYUTVECHCCCHIWQYOOKDFKDKWOXVMJFHGPVAI");
+    msg.ip.assign("FDXFORJCUAAWZWSNK");
+    msg.ccq = 23U;
+    msg.noise_floor = 32336;
+    msg.signal = 27123;
+    msg.rssi = 39276U;
+    msg.rx_rate = 516;
+    msg.tx_rate = -29165;
+    msg.tx_latency = -5850;
+    msg.tx_power = -13880;
+    msg.rx_count = 3470307548U;
+    msg.tx_count = 1471657883U;
+    msg.distance = -2334;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("WifiStats #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::WifiStats msg;
+    msg.setTimeStamp(0.6460184502596474);
+    msg.setSource(49874U);
+    msg.setSourceEntity(179U);
+    msg.setDestination(15918U);
+    msg.setDestinationEntity(141U);
+    msg.mac.assign("FDMMKSXHDURJQOIXMWZDHVLLOTBWJUZVCGDWXCOYZGWQETCNMZMSWDOFNIVUGNGAMASNZXADJOTBZTPEIQIJVNZXJJKFIYRHHABTTYYGTUOAYAVFUXDUXLSLCGPSRUXZRWPKWOYCSQPAFEKUNCEPKSQGDTCLSUUWJCAOKLROBQVZJRGAIEEPBQESBILSRJBFYMIYRKNEHOLHZBYKEHVJVLQHNC");
+    msg.ip.assign("ESSLXSYVBDMHFBBGJHGKZGZKFKWBABQGQWEEHQDFPBTINVACENXWRIDTQFMXOUPGJHDJXVVHCRWGGOHWTNALPARZKPDRMMNCTWKMFHLCIIJQYZJDJOEUFWOLFSVZCTODUUEOPLLJZOVPDUARYQSKHBEYRIVALIQKXEMOBASCUXOJPGWSKKHXMNTOKRRRVZ");
+    msg.ccq = 203U;
+    msg.noise_floor = 6078;
+    msg.signal = -16834;
+    msg.rssi = 18284U;
+    msg.rx_rate = 7629;
+    msg.tx_rate = -17690;
+    msg.tx_latency = 18201;
+    msg.tx_power = 31940;
+    msg.rx_count = 3634037272U;
+    msg.tx_count = 1220160247U;
+    msg.distance = 9687;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("WifiStats #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::WifiStats msg;
+    msg.setTimeStamp(0.8843046070498737);
+    msg.setSource(25192U);
+    msg.setSourceEntity(19U);
+    msg.setDestination(16097U);
+    msg.setDestinationEntity(172U);
+    msg.mac.assign("FXPNYFSGULCLPHRURJTZORDTMHNRZNTOWVCVXEYUQVWJZNTFHPNXHZWSMLMBDXJDWOSEJJSIFSJHHVUPTQAXXCOBIBKNBMBRPUAHNVYKYXJMQACDIZFXPPIBUMSAFJXOEYOWFEFVLFIVPZCDBGPQCEJKDGAELOUUDORYSGZWCGRKGZINWGSCIDBOAJZTUVLWIQQTWKLGLQ");
+    msg.ip.assign("MXKMKGWQTVONNGLJZDHZVWEHFDPZYDKRWRCOBQSCANGMOAHUBAKSPRGFXJEQNJPCJOHWELFATHSVMCUTTZXLBOCHNWBBSFIXNRLFJBLFFCQLASPUJRYUKVVIZCDRYCPQGOEKIJGLDAYFCNHBAHAEKEBTQVUTNXCSRUMQZOMYELEWIQDOBILSIQMSKMPMFWZHVDXTVENIWYUYKSXDAYGASDZTPUGG");
+    msg.ccq = 20U;
+    msg.noise_floor = 25880;
+    msg.signal = 18856;
+    msg.rssi = 48307U;
+    msg.rx_rate = 21235;
+    msg.tx_rate = 6893;
+    msg.tx_latency = -15540;
+    msg.tx_power = -31160;
+    msg.rx_count = 1453754364U;
+    msg.tx_count = 2397284439U;
+    msg.distance = -6600;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("WifiStats #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::WifiNetwork msg;
+    msg.setTimeStamp(0.35961165323653255);
+    msg.setSource(435U);
+    msg.setSourceEntity(141U);
+    msg.setDestination(21126U);
+    msg.setDestinationEntity(5U);
+    msg.essid.assign("BTBXJMBCUPIJZVAYUJAZOKJJREJMAKHFOTKGJXUNWVGLRROBZTSUODLHFAEMARWNIJMTSJHZCRWNOGXVAIOPBCSDEUZTLTQMXYKUSYHFRYQHDINQLIEKPYWGQOWPVNLXSYZPSVSGMDQFBWBFKCIUHWCLNIMYJUTUPUTHNRCNPXQWGVEZELTHIGGMLAODYKSKCTQSLHOABKDEBZZYIZFVRRH");
+    msg.mac.assign("WWKAGDQQXYNYOOZOZUPCCUVLSGNVXJZHMRRUCISMMYJBGTAACGGDARTBPPTWWHCZSEBOHUXFMFU");
+    msg.signal = 18903;
+    msg.noise = -3631;
+    msg.ccq = 66;
+    msg.channel = 91U;
+    msg.freq = 0.40786609044174693;
+    msg.security.assign("IULUTBTKMTDRUEBNBGWXCWDFQXACMVRDJNNFVPLWWZOBIACTHAHKZJWTBBSCFQANXLIZTWRPGKPIADPVEHQWFGCNYYPYRCRQTFXKGRZSZSHMZZLGXQHGUANYJOSGEQHTDCPIL");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("WifiNetwork #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::WifiNetwork msg;
+    msg.setTimeStamp(0.3396032198445982);
+    msg.setSource(37011U);
+    msg.setSourceEntity(229U);
+    msg.setDestination(63131U);
+    msg.setDestinationEntity(224U);
+    msg.essid.assign("ENUZMXECHPILAKWZUXUMGHXCDAHJNPPIXVF");
+    msg.mac.assign("ZOGDPYRPJLWGQRETZOJLXYKFTHCVVEJCQYYPUEYSMOOYVHSMKAZWCWMKRAZQBDFULUCDJPDHRYASOWUOPXIKYNOYBZSDRMAJGCIPBUQDSYBNAEWZT");
+    msg.signal = 21245;
+    msg.noise = -32571;
+    msg.ccq = 71;
+    msg.channel = 242U;
+    msg.freq = 0.5077467703437878;
+    msg.security.assign("LBKNKOXORYWOQQFEVADCZEUUZBAODWWELXIPDGMJMQJPMXXFARJGRURGIWVEQBDBAK");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("WifiNetwork #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::WifiNetwork msg;
+    msg.setTimeStamp(0.403447391849151);
+    msg.setSource(10156U);
+    msg.setSourceEntity(149U);
+    msg.setDestination(44218U);
+    msg.setDestinationEntity(242U);
+    msg.essid.assign("DAVXBKHDHWYBLHIKQGDWYXGCTNSHUUUWMQBOERHPOAISULNWOLMQCAXEUPTSNMSCBPLKVXJNPFELHTPCPYUIEUNMZDWWNXWMSRFEGUFCZDJRASBWXIKGVTVTZWRCZPMRFTOOKLVBOKEFAUVFJNOGRQWAAISKCTGYJGZQIFZDIVXHNYAFZBVNTIRIHYNBHGTBSDRPQJQRXLQEDMOGXLCKAPDYOTDLFZCMREHEVZIMKSKJYAJXZJLBM");
+    msg.mac.assign("NCJNPOWGFDLKJDKWWRLYUJVOUBXYVKLMWOMZCMMHOPOFE");
+    msg.signal = -29519;
+    msg.noise = -6718;
+    msg.ccq = -55;
+    msg.channel = 49U;
+    msg.freq = 0.7817645740461073;
+    msg.security.assign("AEMEYUGWTYPIBSNSRSJZPVABQNRDZTCWNLQXIAEMENLNRAOZPEJKBNNABSCGUZJDTURYCNPBMUFRQFIOUPYIFSYSQCRKOMJTDOZHZEAMVIOXYBKLXEQAEPGUATUMRIQQGNPTKTSVCCAZLKHZDRJGPYHIJJICSLLFHEWCXRVWKOXWMMTQWIEWSIXHOKHDVVDXHTCBURVYJQLHXBVFNLBPGUFDWYUJAK");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("WifiNetwork #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::SonarPulse msg;
+    msg.setTimeStamp(0.7017638826914433);
+    msg.setSource(64801U);
+    msg.setSourceEntity(184U);
+    msg.setDestination(32309U);
+    msg.setDestinationEntity(77U);
+    msg.frequency = -313942558;
+    msg.pulse_length = 1616212369;
+    msg.time_delay = -1941870987;
+    msg.simulated_speed = -341617217;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("SonarPulse #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::SonarPulse msg;
+    msg.setTimeStamp(0.9387380908200984);
+    msg.setSource(55829U);
+    msg.setSourceEntity(144U);
+    msg.setDestination(54612U);
+    msg.setDestinationEntity(239U);
+    msg.frequency = 1873575445;
+    msg.pulse_length = 517694773;
+    msg.time_delay = 66780693;
+    msg.simulated_speed = -1148661023;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("SonarPulse #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::SonarPulse msg;
+    msg.setTimeStamp(0.8150293972919466);
+    msg.setSource(49051U);
+    msg.setSourceEntity(64U);
+    msg.setDestination(3275U);
+    msg.setDestinationEntity(132U);
+    msg.frequency = -1689746462;
+    msg.pulse_length = -785751102;
+    msg.time_delay = 78904126;
+    msg.simulated_speed = -102623263;
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("SonarPulse #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::HealthCheck msg;
+    msg.setTimeStamp(0.6299472800871826);
+    msg.setSource(1730U);
+    msg.setSourceEntity(230U);
+    msg.setDestination(19980U);
+    msg.setDestinationEntity(192U);
+    msg.op = 148U;
+    msg.request_id = 331503065U;
+    msg.entity_name.assign("XCXIXOBQZVWNFLHEDANZPOAQYRFYTZJDPYHFJYUCKGZJAPTNAHRSLRMTDEBRMFOA");
+    msg.status = 21997U;
+    msg.text.assign("ZVGHGQZDNLIBWGDPWSXSFRPSVXRDGKEBHIGKQEYQMCXHKQUXEARZWDSYPKFXBJTLAOWQWZEMYZRELFQNVWJEILIUBNTWCMZARKHQYZTBDLIDJUNLBATYHSLCUWCZSJBADPCWGXCLFENTMSAPHYEFYNUHWMJNRIIRXQJTSCQQDVDKA");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("HealthCheck #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::HealthCheck msg;
+    msg.setTimeStamp(0.27988367541204506);
+    msg.setSource(22325U);
+    msg.setSourceEntity(203U);
+    msg.setDestination(27879U);
+    msg.setDestinationEntity(144U);
+    msg.op = 38U;
+    msg.request_id = 1977586593U;
+    msg.entity_name.assign("RFOCWBLTXOBRKHNPMSPWTADCLZTOZZSYNHGQTKPZCXXABFECNOYVYDAKUNGLQEECUJTOJGYHZKBTSHRNRGJENWVMQIBHFCFADTFTBXFVIDUUSKZGNFUMLZYSXESWPGVOICBQXNLYDLRACHQIRXLOYSDRSNJHVKMELPSDINJI");
+    msg.status = 33429U;
+    msg.text.assign("QDRKVAYQMVZCXUNVFBTQAJZHQOSFZNMVVRLHOWLBYDQDOHDADFRHGSUJFGBVPHFOXI");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("HealthCheck #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::HealthCheck msg;
+    msg.setTimeStamp(0.09231384985444002);
+    msg.setSource(51435U);
+    msg.setSourceEntity(133U);
+    msg.setDestination(9351U);
+    msg.setDestinationEntity(82U);
+    msg.op = 82U;
+    msg.request_id = 1808645286U;
+    msg.entity_name.assign("OJSBZZWAZXMTANDBFJMYEML");
+    msg.status = 39758U;
+    msg.text.assign("DBTRPJEEEWSOWNIIBUMZZGFAAXLMCMFRFLBXTLPHAKRMBXZSNTDAJVVURYWIMJYWLNZHPKMNDGXUIONVCRRJTYKQYQHOVQQIYLTCFFXRXLCNMVEHIOBMGGYZDWQJPVDEQXNAYIKSVSACHUHWUYJKRJOJFAMZWADOGVPQISJCCFDOJYEKHY");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("HealthCheck #2", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)
@@ -29208,6 +30746,229 @@ main(void)
       IMC::Packet::serialize(&msg, bfr);
       IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
       test.boolean("ValuesIf #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::DirSonarData msg;
+    msg.setTimeStamp(0.8650155542983429);
+    msg.setSource(57466U);
+    msg.setSourceEntity(105U);
+    msg.setDestination(6120U);
+    msg.setDestinationEntity(242U);
+    IMC::DeviceState tmp_msg_0;
+    tmp_msg_0.x = 0.9878004156039345;
+    tmp_msg_0.y = 0.13905951635982206;
+    tmp_msg_0.z = 0.7078388721234683;
+    tmp_msg_0.phi = 0.6816902553355991;
+    tmp_msg_0.theta = 0.3834371888243385;
+    tmp_msg_0.psi = 0.40089717344366094;
+    msg.pose.set(tmp_msg_0);
+    IMC::SonarData tmp_msg_1;
+    tmp_msg_1.type = 213U;
+    tmp_msg_1.frequency = 1235546651U;
+    tmp_msg_1.min_range = 35430U;
+    tmp_msg_1.max_range = 22882U;
+    tmp_msg_1.bits_per_point = 192U;
+    tmp_msg_1.scale_factor = 0.08588067243114872;
+    IMC::BeamConfig tmp_tmp_msg_1_0;
+    tmp_tmp_msg_1_0.beam_width = 0.6825134753166694;
+    tmp_tmp_msg_1_0.beam_height = 0.6160931257021011;
+    tmp_msg_1.beam_config.push_back(tmp_tmp_msg_1_0);
+    const signed char tmp_tmp_msg_1_1[] = {74, -35, -80, 62, -126, -45, 115, 18, -58, -82, 60, 53, 44, 31, -6, -112, -79, 97, 95, 105, -122, -4, 8, 1, 98, 58, -97, -1, -124, -111, 28, -119, 85, 100, 20, 43, 97, -91, 39, -14, -31, 35, 80};
+    tmp_msg_1.data.assign(tmp_tmp_msg_1_1, tmp_tmp_msg_1_1 + sizeof(tmp_tmp_msg_1_1));
+    msg.measurement.set(tmp_msg_1);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("DirSonarData #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::DirSonarData msg;
+    msg.setTimeStamp(0.19129448177678565);
+    msg.setSource(41313U);
+    msg.setSourceEntity(191U);
+    msg.setDestination(17413U);
+    msg.setDestinationEntity(215U);
+    IMC::DeviceState tmp_msg_0;
+    tmp_msg_0.x = 0.8819030335623268;
+    tmp_msg_0.y = 0.4534892999998871;
+    tmp_msg_0.z = 0.8345912800114059;
+    tmp_msg_0.phi = 0.7057644123453091;
+    tmp_msg_0.theta = 0.5672863484784613;
+    tmp_msg_0.psi = 0.3733064524253432;
+    msg.pose.set(tmp_msg_0);
+    IMC::SonarData tmp_msg_1;
+    tmp_msg_1.type = 11U;
+    tmp_msg_1.frequency = 3948616617U;
+    tmp_msg_1.min_range = 34889U;
+    tmp_msg_1.max_range = 9230U;
+    tmp_msg_1.bits_per_point = 27U;
+    tmp_msg_1.scale_factor = 0.9187656239740536;
+    IMC::BeamConfig tmp_tmp_msg_1_0;
+    tmp_tmp_msg_1_0.beam_width = 0.539000914598025;
+    tmp_tmp_msg_1_0.beam_height = 0.9264957282019008;
+    tmp_msg_1.beam_config.push_back(tmp_tmp_msg_1_0);
+    const signed char tmp_tmp_msg_1_1[] = {105, 114, -7, 81, -38, -26, 123, 68, -95, 111, -69, 28, 94, -113, 34, 35, -52, -66, 100, 95, 7, 26, 62, 121, -120, -88, -115, -75, 36, 50, 51, 0, 29, 96, 14, -31, -110, 24, 55, -90, 35, 7, -32, 96, 53, -116, 55, -124, -123, 66, -51, 56, 24, 16, -81, 34, 90, -92, -106, -60, -80, 110, -61, -27, -31, -100, 66, -59, 45, 1, -83, -118, -4, 73, -2, -57, 101, -15, -91, -128, -41, -105, 109, 18, -96, -112, 34, 21, 100, 92, -22, -82, 99, 88, 66, -65, -114, -91, -77, -77, -12, 69, 77, -36, -90, -65, -47, -8, 118, 114, 107, -101, -13, 108, -107, -109, 19, -17, 57, 72, 27, 72, -33, 116, -62, -104, 16, -10, 7, -10, -24, -44, 102, -35, -84, 75, 93, -94, 112, 42, -71, -41, -11, -73, -72, -123, 76, 114, -86, 47, 55, 71, 65, 71, 22, -72, -81, -53, -31, -79, -114, 18, -20, -128, 109, 88, 7, -105, -85, 46, -6, -128, 35, 36, -84, 117, 13, 14, -51, 28, -35, 66, 58, 120, 19, -14, -37, -25, 19, -48, 114, 114, -4, -116, -46, 103, 90, 57, 54, -82, -121, 48, -35, 57, 38, 27, 62, 25, 38, 81, 57, -92, 105, 115, 113, 11, -75, -88};
+    tmp_msg_1.data.assign(tmp_tmp_msg_1_1, tmp_tmp_msg_1_1 + sizeof(tmp_tmp_msg_1_1));
+    msg.measurement.set(tmp_msg_1);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("DirSonarData #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::DirSonarData msg;
+    msg.setTimeStamp(0.5540852282984149);
+    msg.setSource(41929U);
+    msg.setSourceEntity(8U);
+    msg.setDestination(56856U);
+    msg.setDestinationEntity(157U);
+    IMC::DeviceState tmp_msg_0;
+    tmp_msg_0.x = 0.9839140973254399;
+    tmp_msg_0.y = 0.8675047189472701;
+    tmp_msg_0.z = 0.5573535669263078;
+    tmp_msg_0.phi = 0.08139857281503571;
+    tmp_msg_0.theta = 0.6593378203249348;
+    tmp_msg_0.psi = 0.4560806606569433;
+    msg.pose.set(tmp_msg_0);
+    IMC::SonarData tmp_msg_1;
+    tmp_msg_1.type = 204U;
+    tmp_msg_1.frequency = 1528934431U;
+    tmp_msg_1.min_range = 53213U;
+    tmp_msg_1.max_range = 14046U;
+    tmp_msg_1.bits_per_point = 101U;
+    tmp_msg_1.scale_factor = 0.5342752046441834;
+    IMC::BeamConfig tmp_tmp_msg_1_0;
+    tmp_tmp_msg_1_0.beam_width = 0.46190407296908054;
+    tmp_tmp_msg_1_0.beam_height = 0.7393010063377252;
+    tmp_msg_1.beam_config.push_back(tmp_tmp_msg_1_0);
+    const signed char tmp_tmp_msg_1_1[] = {-127, 68, 15, -34, 69, 123, -54, -55, -70, -98, -126, -118, 22, 116, 66, -16, 113, -82, 77, -51, -111, 85, -110, -106, -63, -34, -53, -47, 83, 56, -117, 90, -86, -49, -19, 103, 35, -30, -69, -8, -79, 39, 4, -54, 35, -24, -13, 68, 50, -49, 79, -45, -28, -34, 79, 103, -35, -80, 121, 95, -50, 84, 56, -58, 31, 88, 122, 73, -127, -60, -44, -100, 75, 114, -77, -107, 43, -27, 93, -104, -87, -66, -81, -42, -37, 88, -122, 36, 57, -98, 53, -109, 120, -84, 14, 59, -58, 35, -62, -46, 62, 96, -19, -76, 2, 114, 119, -40, 31, 9, 22, -43, 112, -107, 17, -108, -125, -44, 39, 50, -54, -91, -125, -69, -57, -99, 111, 15, 103, -89, 61, -52, -67, -117, 28, -88, -38, 98, -48, -56, 67, 26, 34, -35, 41, -37, 41, -113, 30, -113, -63, 33, -27, -114, 54, -124, 2, 110, -104, 65, 68, 106, -54, -40, -63, 8, 117, -61, -59, -101, 13, 116, -105, -117, -96, 59, -121, -128, 66, -53, -65, -79, -47, 50, 79, 0, 53, -101, 72, 73, -84, -70, -49, 43, -27, 7, -102, 112, 76, -66, -113, 114, 51, 54, -50, 121, 107, 68, 50, 86, 53, -127, 45, -85, 114, -31, 34, -51, -47, 6, 65, 32, 73, 4, -40, 56, 29, -85, -79, 21, 107, 97, 2, 55};
+    tmp_msg_1.data.assign(tmp_tmp_msg_1_1, tmp_tmp_msg_1_1 + sizeof(tmp_tmp_msg_1_1));
+    msg.measurement.set(tmp_msg_1);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("DirSonarData #2", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #2", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ManeuverResumed msg;
+    msg.setTimeStamp(0.9913761247605666);
+    msg.setSource(43033U);
+    msg.setSourceEntity(133U);
+    msg.setDestination(26596U);
+    msg.setDestinationEntity(73U);
+    msg.man_id.assign("KFLHBADIKPERHKYFBUVANUNTFNVZFLUTCOONRPFSELPZYQXEGTDRTMPRRSHCDFWEKDLXZNIEBFJRWCKQJLSNMYJOBHUBHOZMPYDHFXPRJIUSCLJDHBCIMZYTVNGWQSCYEHZQGLOVNIFYBKGROGNJXAWOSWAJXOGQXLVCXVSWZMBWVKDQKTEOMQXDLHVJJBDFAXHASWRWUQZTJMZIVIUPVGTPLMBCMGSCKCPGNYEAEAYUW");
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ManeuverResumed #0", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #0", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ManeuverResumed msg;
+    msg.setTimeStamp(0.4501297630005199);
+    msg.setSource(37115U);
+    msg.setSourceEntity(67U);
+    msg.setDestination(16857U);
+    msg.setDestinationEntity(194U);
+    msg.man_id.assign("MNXOLTXOWWDHXQGUKIMCHCPOGECOIWFGHTGRDFHGKUAQLVJCNGAPOWASPZYUSNEEIKZJUAJSQYGWZFDKUCXERQZMLIJOYDNVJSAXTYTHNMOY");
+    IMC::CoverArea tmp_msg_0;
+    tmp_msg_0.lat = 0.0982472960182329;
+    tmp_msg_0.lon = 0.11479634900660607;
+    tmp_msg_0.z = 0.9438688807925406;
+    tmp_msg_0.z_units = 127U;
+    tmp_msg_0.speed = 0.16344537348002264;
+    tmp_msg_0.speed_units = 4U;
+    tmp_msg_0.custom.assign("MHFBUQKVLS");
+    msg.man_list.push_back(tmp_msg_0);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ManeuverResumed #1", msg == *msg_d);
+      delete msg_d;
+    }
+    catch (IMC::InvalidMessageSize& e)
+    {
+      (void)e;
+      test.boolean("msg #1", msg.getSerializationSize() > DUNE_IMC_CONST_MAX_SIZE);
+    }
+  }
+
+  {
+    IMC::ManeuverResumed msg;
+    msg.setTimeStamp(0.6122054569495422);
+    msg.setSource(4063U);
+    msg.setSourceEntity(222U);
+    msg.setDestination(27735U);
+    msg.setDestinationEntity(23U);
+    msg.man_id.assign("HFDOEWDKUPNCHOFLTYBAMIRZLIWQJTMFKDJMPGKNGV");
+    IMC::LowLevelControl tmp_msg_0;
+    IMC::DesiredPitch tmp_tmp_msg_0_0;
+    tmp_tmp_msg_0_0.value = 0.9369297254967212;
+    tmp_msg_0.control.set(tmp_tmp_msg_0_0);
+    tmp_msg_0.duration = 22757U;
+    tmp_msg_0.custom.assign("OYZDIBXXCLUTUTEVJWUWJWIOLXMFTHKJOXTZAOZGOHSHBIREHSKYBDQRVVPJOGNKIUYQQJWRKSRSYEXSJFMXSWAGAOPCBUEBLBRDFBHZSXLZLJFUCCRBCNPKPZPEQDATZNVWIHBJVFKGGPENVNSNACHAVTYYZP");
+    msg.man_list.push_back(tmp_msg_0);
+
+    try
+    {
+      Utils::ByteBuffer bfr;
+      IMC::Packet::serialize(&msg, bfr);
+      IMC::Message* msg_d = IMC::Packet::deserialize(bfr.getBuffer(), bfr.getSize());
+      test.boolean("ManeuverResumed #2", msg == *msg_d);
       delete msg_d;
     }
     catch (IMC::InvalidMessageSize& e)

@@ -38,6 +38,17 @@ namespace Sensors
 
     static const unsigned int c_max_n_probes = 4;
 
+    //! Allowed Sensor Gains
+    enum SensorGain
+    {
+      //! GAIN 1x
+      SG_GAIN_1   = 1,
+      //! GAIN 10x
+      SG_GAIN_10  = 10,
+      //! GAIN 100x
+      SG_GAIN_100 = 100
+    };
+
     struct Arguments
     {
       // channel state
@@ -52,6 +63,12 @@ namespace Sensors
       std::string power_channel[c_max_n_probes];
       //! Active power channel control;
       bool power_control[c_max_n_probes];
+      //! Blank Voltage X 1
+      double blank_x1;
+      //! Blank Voltage X 10
+      double blank_x10;
+      //! Blank Voltage X 100
+      double blank_x100;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -66,6 +83,8 @@ namespace Sensors
       IMC::PowerChannelState m_power_channel_state[c_max_n_probes];
       //! Power channel control.
       IMC::PowerChannelControl m_power_channel_control[c_max_n_probes];
+      //! Current reading gain.
+      unsigned m_gain[c_max_n_probes];
       //! Task Arguments.
       Arguments m_args;
 
@@ -113,10 +132,26 @@ namespace Sensors
           param(option, m_args.power_channel[i-1])
           .defaultValue("")
           .description("Power channel that controls the power of the device");
+
+          param("Blank Voltage X 1", m_args.blank_x1)
+          .defaultValue("0")
+          .units(Units::Volt)
+          .description("Clean solution reading value using gain x 1");
+        
+          param("Blank Voltage X 10", m_args.blank_x10)
+          .defaultValue("0")
+          .units(Units::Volt)
+          .description("Clean solution reading value using gain x 10");
+
+          param("Blank Voltage X 100", m_args.blank_x100)
+          .defaultValue("0")
+          .units(Units::Volt)
+          .description("Clean solution reading value using gain x 100");
         }
 
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
 
+        bind<IMC::SadcReadings>(this);
         bind<IMC::PowerChannelState>(this);
         bind<IMC::VehicleMedium>(this);
         bind<IMC::Voltage>(this);
@@ -253,7 +288,8 @@ namespace Sensors
         while( i<c_max_n_probes)
         {
           if ( m_args.power_channel[i].size() == 0 ||msg->name == m_args.power_channel[i])
-          break;
+            break;
+          i++;
         }
 
         if (i == c_max_n_probes)
@@ -275,6 +311,30 @@ namespace Sensors
       }
 
       void
+      consume(const IMC::SadcReadings* msg)
+      {
+        if (!isActive())
+          return;
+
+        unsigned  index = 0;
+        bool exist = false;
+
+        unsigned temp_entity=msg->getSourceEntity();
+        for (unsigned i=0; i < c_max_n_probes ;i++)
+        {
+          if (m_entity_id[i]==temp_entity && m_entity_id[i] != UINT_MAX)
+          {
+            exist = true;
+            index = i;
+            m_gain[i] = msg->gain;
+            debug("exist %d",i);
+          }
+        }
+        if (!exist)
+          return;
+      }
+
+      void
       consume(const IMC::Voltage* msg)
       {
         if (!isActive())
@@ -289,7 +349,7 @@ namespace Sensors
         bool exist = false;
 
         unsigned temp_entity=msg->getSourceEntity();
-         for (unsigned i=0; i < c_max_n_probes ;i++)
+        for (unsigned i=0; i < c_max_n_probes ;i++)
         {
           if (m_entity_id[i]==temp_entity && m_entity_id[i] != UINT_MAX)
           {
@@ -300,6 +360,21 @@ namespace Sensors
         }
         if (!exist)
           return;
+
+        switch (m_gain[index])
+        {
+          case SG_GAIN_1:
+            v -= m_args.blank_x1;              // normalize reading (blank correction)
+            break;
+          case SG_GAIN_10:
+            v = (v - m_args.blank_x10) / 10;   // normalize reading (blank correction)
+            break;
+          case SG_GAIN_100:
+            v = (v - m_args.blank_x100) / 100; // normalize reading (blank correction)
+            break;
+          default:
+            break;
+        }
 
         m_msg[index]->setValueFP(v * m_args.factor[index][0] + m_args.factor[index][1]);
         dispatch(m_msg[index]);

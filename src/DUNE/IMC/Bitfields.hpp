@@ -71,6 +71,8 @@ namespace DUNE
       CL_VELOCITY = 0x00001000,
       //! Throttle Control.
       CL_THROTTLE = 0x00002000,
+      //! Hovering Control.
+      CL_HOVERING = 0x00004000,
       //! Unspecified External Control.
       CL_EXTERNAL = 0x40000000,
       //! Non-overridable control.

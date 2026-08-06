@@ -72,7 +72,7 @@ namespace DUNE
           using Algorithms::XORChecksum;
 
           int size = 3 + data_size + 1;
-          uint8_t msg[32] = {c_sync, (uint8_t)(data_size + 1), cmd};
+          uint8_t msg[c_data_max + 4] = {c_sync, (uint8_t)(data_size + 1), cmd};
 
           std::memcpy(msg + 3, data, data_size);
           msg[size - 1] = XORChecksum::compute(data, data_size, c_sync ^ (data_size + 1) ^ cmd) | c_csum_msk;
@@ -143,6 +143,8 @@ namespace DUNE
                 else
                 {
                   cmd.type = CommandTypeInvalidChecksum;
+                  reset();
+                  return cmd.type;
                 }
               }
               else
@@ -238,7 +240,7 @@ namespace DUNE
         //! XOR checksum OR mask.
         static const uint8_t c_csum_msk = 0x80;
         //! Maximum command argument length.
-        static const uint8_t c_data_max = 64;
+        static const uint8_t c_data_max = 128;
         //! Read buffer size.
         static const int c_bfr_len = 128;
         //! Information command.

@@ -145,33 +145,33 @@ namespace Sensors
       }
 
       std::string
-      translate_feadback(void)
+      translate_feedback(void)
       {
-        //! Feadback message
-        char feadback_msg[16];
+        //! Feedback message
+        char feedback_msg[16];
         if (m_bfr[1] != ',')
         {
-          std::sscanf(m_bfr, "%s ,*", feadback_msg);
+          std::sscanf(m_bfr, "%s ,*", feedback_msg);
           std::memset(&m_bfr, '\0', sizeof(m_bfr));
 
-          if(std::strcmp(feadback_msg, "ERRO,1") == 0)
+          if(std::strcmp(feedback_msg, "ERRO,1") == 0)
             return ERRO1;
-          else if(std::strcmp(feadback_msg, "ERRO,2") == 0)
+          else if(std::strcmp(feedback_msg, "ERRO,2") == 0)
             return ERRO2;
-          else if(std::strcmp(feadback_msg, "ERRO,3") == 0)
+          else if(std::strcmp(feedback_msg, "ERRO,3") == 0)
             return ERRO3;
-          else if(std::strcmp(feadback_msg, "ERRO,4") == 0)
+          else if(std::strcmp(feedback_msg, "ERRO,4") == 0)
             return ERRO4;
-          else if(std::strcmp(feadback_msg, "ERRO,5") == 0)
+          else if(std::strcmp(feedback_msg, "ERRO,5") == 0)
             return ERRO5;
-          else if(std::strcmp(feadback_msg, "ERRO,6") == 0)
+          else if(std::strcmp(feedback_msg, "ERRO,6") == 0)
             return ERRO6;
-          else if(std::strcmp(feadback_msg, "ERRO,7") == 0)
+          else if(std::strcmp(feedback_msg, "ERRO,7") == 0)
             return ERRO7;
-          else if(std::strcmp(feadback_msg, "ERRO,8") == 0)
+          else if(std::strcmp(feedback_msg, "ERRO,8") == 0)
             return ERRO8;
-          else if(std::strcmp(feadback_msg, "OK") == 0)
-            return feadback_msg;
+          else if(std::strcmp(feedback_msg, "OK") == 0)
+            return feedback_msg;
         }
 
         return "";
