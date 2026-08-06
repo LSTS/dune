@@ -45,8 +45,10 @@ namespace Transports
 
     struct Arguments
     {
-      // Reception timeout.
+      //! Reception timeout.
       float max_age_secs;
+      //! Transmission request time to live.
+      float ttl;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -71,6 +73,10 @@ namespace Transports
         param("Reception timeout", m_args.max_age_secs)
         .defaultValue("1800")
         .description("Maximum amount of seconds to wait for missing fragments in incoming messages");
+
+        param("Transmission Request TTL", m_args.ttl)
+        .defaultValue("120")
+        .description("Time to live for transmission requests");
 
         bind<IMC::MessagePart>(this);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -187,7 +193,8 @@ namespace Transports
               it->second.second = false;
               inf(DTR("Incoming message with uid %u (system: 0x%x) is still incomplete (%d fragments missing). "
                       "Requesting retransmission."), mpc.uid, destination, it->second.first.getFragmentsMissing());
-              dispatch(mpc);
+              //! FIXME: This should be sent via the same mean as the original message, but we don't have that information here.
+              dispatchRequest(mpc);
               continue;
             }
 
@@ -212,6 +219,18 @@ namespace Transports
           m_incoming.erase(remove[i]);
 
         return true;
+      }
+
+      void
+      dispatchRequest(const IMC::Message& msg)
+      {
+        IMC::TransmissionRequest tr;
+        tr.setDestination(getSystemId());
+        tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
+        tr.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+        tr.deadline = Clock::getSinceEpoch() + m_args.ttl;
+        tr.msg_data.set(msg.clone());
+        dispatch(tr);
       }
 
       void
