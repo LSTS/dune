@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 2293d9e5efdaaeeeab6cb84d3f81ae72                            *
+// IMC XML MD5: 431862f600b4d042b3eff3664dedc132                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -724,6 +724,8 @@
 #define DUNE_IMC_BDI 2035
 //! TypedEntityParameterEditor identification number.
 #define DUNE_IMC_TYPEDENTITYPARAMETEREDITOR 2036
+//! AckMsg identification number.
+#define DUNE_IMC_ACKMSG 2040
 //! QueryBmsData identification number.
 #define DUNE_IMC_QUERYBMSDATA 2041
 //! BmsData identification number.

@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 2293d9e5efdaaeeeab6cb84d3f81ae72                            *
+// IMC XML MD5: 431862f600b4d042b3eff3664dedc132                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -18519,7 +18519,9 @@ namespace DUNE
         //! Any.
         CMEAN_ANY = 4,
         //! All.
-        CMEAN_ALL = 5
+        CMEAN_ALL = 5,
+        //! UHF.
+        CMEAN_UHF = 6
       };
 
       //! Data Mode.
@@ -27963,6 +27965,110 @@ namespace DUNE
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Acknowledged Message.
+    class AckMsg: public Message
+    {
+    public:
+      //! StatusEnum.
+      enum StatusEnumEnum
+      {
+        //! Success.
+        ST_SUCCESS = 0,
+        //! Failure.
+        ST_FAILURE = 1,
+        //! In Progress.
+        ST_IN_PROGRESS = 2,
+        //! Timeout.
+        ST_TIMEOUT = 3,
+        //! Invalid Request.
+        ST_INVALID = 4,
+        //! Not Supported.
+        ST_NOT_SUPPORTED = 5
+      };
+
+      //! Original Message.
+      InlineMessage<Message> original;
+      //! text.
+      std::string text;
+      //! StatusEnum.
+      uint8_t status;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 2040;
+      }
+
+      AckMsg(void);
+
+      AckMsg*
+      clone(void) const
+      {
+        return new AckMsg(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return AckMsg::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "AckMsg";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 1;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return original.getSerializationSize() + IMC::getSerializationSize(text);
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
     };
 
     //! Query BMS Data.

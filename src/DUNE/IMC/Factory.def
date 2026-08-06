@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 2293d9e5efdaaeeeab6cb84d3f81ae72                            *
+// IMC XML MD5: 431862f600b4d042b3eff3664dedc132                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -376,6 +376,7 @@ MESSAGE(2021, VersionInfo)
 MESSAGE(2022, TotalHeading)
 MESSAGE(2035, BDI)
 MESSAGE(2036, TypedEntityParameterEditor)
+MESSAGE(2040, AckMsg)
 MESSAGE(2041, QueryBmsData)
 MESSAGE(2042, BmsData)
 MESSAGE(2043, BmsCellVoltage)

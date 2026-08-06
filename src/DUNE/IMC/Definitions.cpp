@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 2293d9e5efdaaeeeab6cb84d3f81ae72                            *
+// IMC XML MD5: 431862f600b4d042b3eff3664dedc132                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -29517,6 +29517,120 @@ namespace DUNE
     TypedEntityParameterEditor::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
     {
       IMC::toJSON(os__, "value", value, nindent__);
+    }
+
+    AckMsg::AckMsg(void)
+    {
+      m_header.mgid = 2040;
+      clear();
+      original.setParent(this);
+    }
+
+    void
+    AckMsg::clear(void)
+    {
+      original.clear();
+      text.clear();
+      status = 0;
+    }
+
+    bool
+    AckMsg::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::AckMsg& other__ = static_cast<const AckMsg&>(msg__);
+      if (original != other__.original) return false;
+      if (text != other__.text) return false;
+      if (status != other__.status) return false;
+      return true;
+    }
+
+    int
+    AckMsg::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    AckMsg::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += original.serialize(ptr__);
+      ptr__ += IMC::serialize(text, ptr__);
+      ptr__ += IMC::serialize(status, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    AckMsg::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += original.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(text, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    AckMsg::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += original.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(text, bfr__, size__);
+      bfr__ += IMC::deserialize(status, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    AckMsg::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      original.toJSON(os__, "original", nindent__);
+      IMC::toJSON(os__, "text", text, nindent__);
+      IMC::toJSON(os__, "status", status, nindent__);
+    }
+
+    void
+    AckMsg::setTimeStampNested(double value__)
+    {
+      if (!original.isNull())
+      {
+        original.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    AckMsg::setSourceNested(uint16_t value__)
+    {
+      if (!original.isNull())
+      {
+        original.get()->setSource(value__);
+      }
+    }
+
+    void
+    AckMsg::setSourceEntityNested(uint8_t value__)
+    {
+      if (!original.isNull())
+      {
+        original.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    AckMsg::setDestinationNested(uint16_t value__)
+    {
+      if (!original.isNull())
+      {
+        original.get()->setDestination(value__);
+      }
+    }
+
+    void
+    AckMsg::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!original.isNull())
+      {
+        original.get()->setDestinationEntity(value__);
+      }
     }
 
     QueryBmsData::QueryBmsData(void)
