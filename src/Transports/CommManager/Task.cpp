@@ -936,7 +936,7 @@ namespace Transports
       }
 
       void
-      clearFragmentsTimeouts()
+      clearFragmentsTimeouts(void)
       {
         auto it = m_fragments_map.begin();
         while (it != m_fragments_map.end())
@@ -970,7 +970,7 @@ namespace Transports
       }
 
       void
-      clearTransmissionTimeouts()
+      clearTransmissionTimeouts(void)
       {
         double time = Time::Clock::getSinceEpoch();
         std::map<uint16_t, IMC::TransmissionRequest*>& tr_list = m_router.getList();
@@ -998,7 +998,7 @@ namespace Transports
       }
 
       void
-      sendRetransmissions()
+      sendRetransmissions(void)
       {
         if (m_retransmission_list.empty())
           return;
