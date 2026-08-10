@@ -31,6 +31,8 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+#include <DUNE/Tasks/MessageFilter.hpp>
+
 // Dccl headers.
 #include <dccl/CodecDCCL.hpp>
 
