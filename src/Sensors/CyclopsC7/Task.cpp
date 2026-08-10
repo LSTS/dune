@@ -316,22 +316,15 @@ namespace Sensors
         if (!isActive())
           return;
 
-        unsigned  index = 0;
-        bool exist = false;
-
-        unsigned temp_entity=msg->getSourceEntity();
-        for (unsigned i=0; i < c_max_n_probes ;i++)
+        unsigned temp_entity = msg->getSourceEntity();
+        for (unsigned i = 0; i < c_max_n_probes ;i++)
         {
-          if (m_entity_id[i]==temp_entity && m_entity_id[i] != UINT_MAX)
-          {
-            exist = true;
-            index = i;
-            m_gain[i] = msg->gain;
-            debug("exist %d",i);
-          }
+          unsigned eid = m_entity_id[i];
+          if (eid == UINT_MAX || eid != temp_entity)
+            continue;
+
+          m_gain[i] = msg->gain;
         }
-        if (!exist)
-          return;
       }
 
       void
