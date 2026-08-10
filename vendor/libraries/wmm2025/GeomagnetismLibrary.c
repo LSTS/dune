@@ -2948,7 +2948,10 @@ int MAG_PcupHigh(double *Pcup, double *dPcup, double x, int nMax)
         pm1 = plm;
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     pmm = PreSqr[2] * scalef;
+#pragma GCC diagnostic pop
     rescalem = 1.0 / scalef;
     kstart = 0;
 
