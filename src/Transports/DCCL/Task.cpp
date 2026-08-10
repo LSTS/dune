@@ -508,10 +508,9 @@ namespace Transports
      {
        //Check source
        if(!m_args.trigger_dccl){
-          uint16_t imc_addr_src = 0;
           try
           {
-            imc_addr_src = resolveSystemName(msg->sys_src);
+            resolveSystemName(msg->sys_src);
           }
           catch (...)
           {
@@ -520,10 +519,9 @@ namespace Transports
           }
 
           //Check dest
-          uint16_t imc_addr_dst = 0;
           try
           {
-            imc_addr_dst = resolveSystemName(msg->sys_dst);
+            resolveSystemName(msg->sys_dst);
           }
           catch (...)
           {
@@ -580,7 +578,7 @@ namespace Transports
       //! Create and send transmission request msg (broadcast, acoustic, raw)
       void
       sendTransmissionRequestViaAcoustic(const std::string& sys, std::string& encoded_msg){
-
+        (void)sys;
         IMC::TransmissionRequest msg;
         msg.setDestination(getSystemId());
         msg.destination     = "broadcast";
