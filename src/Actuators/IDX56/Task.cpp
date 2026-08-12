@@ -84,6 +84,8 @@ namespace Actuators
       std::string mode;
       //! Maximum RPM.
       int max_rpm;
+      //! Actuator Id.
+      int id;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -157,6 +159,10 @@ namespace Actuators
         param("Maximum RPM", m_args.max_rpm)
         .defaultValue("6000")
         .description("Maximum RPM of the motor.");
+
+        param("Actuator Id", m_args.id)
+        .defaultValue("0")
+        .description("Actuator Id.");
 
         bind<IMC::PowerChannelState>(this);
       }
