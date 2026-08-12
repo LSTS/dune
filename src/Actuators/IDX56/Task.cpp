@@ -387,7 +387,7 @@ namespace Actuators
           debug("enabling velocity mode");
           if (enableVelocityMode())
           {
-            m_consumer = bind<IMC::DesiredSpeed>(this);
+            m_consumer = bind<IMC::SetThrusterActuation>(this);
             debug("velocity mode enabled successfully");
             return true;
           }
@@ -417,7 +417,7 @@ namespace Actuators
 
         case MODE_VELOCITY:
           debug("disabling velocity mode");
-          unbind(IMC::DesiredSpeed::getIdStatic(), m_consumer);
+          unbind(IMC::SetThrusterActuation::getIdStatic(), m_consumer);
           return disableVelocityMode();
 
         default:
@@ -486,20 +486,21 @@ namespace Actuators
       }
 
       void
-      consume(const IMC::DesiredSpeed* msg)
+      consume(const IMC::SetThrusterActuation* msg)
       {
         if (!isActive() || m_mode != MODE_VELOCITY)
-          return;
-
-        if (msg->speed_units != IMC::SpeedUnits::SUNITS_RPM)
           return;
 
         if (msg->getDestination() != getSystemId() ||
             msg->getDestinationEntity() != getEntityId())
           return;
 
-        trace("received DesiredSpeed message with value: %f", msg->value);
-        setVelocity(msg->value);
+        if (msg->id != m_args.id)
+          return;
+
+        trace("received SetThrusterActuation message with value: %f", msg->value);
+        auto value = std::clamp(msg->value, -1.0f, 1.0f);
+        setVelocity(value * m_args.max_rpm);
       }
 
       void
