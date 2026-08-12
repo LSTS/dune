@@ -98,7 +98,7 @@ namespace Actuators
       unsigned int m_error;
       //! Mode.
       OperationMode m_mode;
-      //! Comand consumer.
+      //! Command consumer.
       AbstractConsumer* m_consumer;
 
       //! Constructor.
