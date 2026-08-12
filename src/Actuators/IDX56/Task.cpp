@@ -82,6 +82,8 @@ namespace Actuators
       int baudrate;
       //! Mode.
       std::string mode;
+      //! Maximum RPM.
+      int max_rpm;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -151,6 +153,10 @@ namespace Actuators
         .values(c_modes)
         .defaultValue(c_mode_default)
         .description("Mode of operation (Position or Velocity).");
+
+        param("Maximum RPM", m_args.max_rpm)
+        .defaultValue("6000")
+        .description("Maximum RPM of the motor.");
 
         bind<IMC::PowerChannelState>(this);
       }
