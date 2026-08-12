@@ -513,6 +513,9 @@ namespace Actuators
             msg->getDestinationEntity() != getEntityId())
           return;
 
+        if (msg->id != m_args.id)
+          return;
+
         trace("received SetServoPosition message with value: %f", msg->value);
         setPosition(msg->value);
       }
