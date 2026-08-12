@@ -45,6 +45,8 @@ namespace Payload
       std::string min_water_level_gpio;
       //! Maximum Water Level GPIO label.
       std::string max_water_level_gpio;
+      //! Motor entity label.
+      std::string motor_elabel;
       //! Motor id.
       uint8_t motor_id;
       //! Water flow 1 source entity label.
@@ -86,10 +88,12 @@ namespace Payload
       IMC::QueryPowerChannelState m_qry_pwr_ch_state;
       //! Get GPIOState message.
       IMC::GpioStateGet m_get_gpio_state;
-      //! SetThrusterActuation message for step motor.
-      IMC::SetThrusterActuation m_sta_step;
+      //! SetThrusterActuation message.
+      IMC::SetThrusterActuation m_sta;
       //! PowerChannelControl message.
       IMC::PowerChannelControl m_pcc;
+      //! Motor entity id.
+      unsigned m_motor_eid;
       //! WaterFlow 1 source entity id.
       unsigned m_water_flow_1_eid;
       //! WaterFlow 2 source entity id.
@@ -106,6 +110,7 @@ namespace Payload
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
+        m_motor_eid(UINT_MAX),
         m_water_flow_1_eid(UINT_MAX),
         m_water_flow_2_eid(UINT_MAX)
       {
@@ -127,6 +132,10 @@ namespace Payload
         param("Water Flow 2 - Entity Label", m_args.water_flow_2_elabel)
         .editable(false)
         .description("Entity label of the source of the second water flow.");
+
+        param("Motor Entity Label", m_args.motor_elabel)
+        .editable(false)
+        .description("Entity label of the motor to control.");
 
         param("Motor Id", m_args.motor_id)
         .editable(false)
@@ -176,6 +185,8 @@ namespace Payload
         .editable(false)
         .description("Name of the GPIO that indicates the second endpoint.");
 
+        m_sta.setDestination(getSystemId());
+
         bind<IMC::GpioState>(this);
         bind<IMC::WaterFlow>(this);
         bind<IMC::PowerChannelState>(this);
@@ -210,6 +221,7 @@ namespace Payload
       void
       onEntityResolution(void)
       {
+        tryResolveEntity(m_motor_eid, m_args.motor_elabel);
         resolveWaterFlowEntity(m_water_flow_1_eid, m_args.water_flow_1_elabel);
         resolveWaterFlowEntity(m_water_flow_2_eid, m_args.water_flow_2_elabel);
       }
@@ -305,24 +317,25 @@ namespace Payload
       }
 
       void
-      setThrusterActuation(uint8_t id, int step)
+      setThrusterActuation(uint8_t id, float step, uint8_t destination = UINT8_MAX)
       {
-        trace("setting thruster %u to %d", id, step);
-        m_sta_step.id = id;
-        m_sta_step.value = static_cast<float>(trimValue(step, -1, 1));
-        dispatch(m_sta_step);
+        trace("setting thruster %u to %f", id, step);
+        m_sta.setDestinationEntity(destination);
+        m_sta.id = id;
+        m_sta.value = static_cast<float>(trimValue(step, -1, 1));
+        dispatch(m_sta);
       }
 
       void
-      setStep(int step)
+      setStep(float step)
       {
         setThrusterActuation(m_args.step_id, step);
       }
 
       void
-      setMotor(int step)
+      setMotor(float step)
       {
-        setThrusterActuation(m_args.motor_id, step);
+        setThrusterActuation(m_args.motor_id, step, static_cast<uint8_t>(m_motor_eid));
       }
 
       void
