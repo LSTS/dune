@@ -38,9 +38,26 @@ namespace Payload
   {
     using DUNE_NAMESPACES;
 
+    enum ModeEnum
+    {
+      MODE_INVALID = 0,
+      MODE_AUTOMATIC = 1,
+      MODE_MANUAL = 2
+    };
+
+    const std::unordered_map<std::string, ModeEnum> c_mode_map = {{ "Invalid", MODE_INVALID },
+                                                                  { "Automatic", MODE_AUTOMATIC },
+                                                                  { "Manual", MODE_MANUAL }};
+
+    const std::unordered_map<ModeEnum, std::string> c_mode_str_map = {{ MODE_INVALID, "Invalid" },
+                                                                      { MODE_AUTOMATIC, "Automatic" },
+                                                                      { MODE_MANUAL, "Manual" }};
+
     //! Task arguments.
     struct Arguments
     {
+      //! Operation mode.
+      std::string mode;
       //! Minimum Water Level GPIO label.
       std::string min_water_level_gpio;
       //! Maximum Water Level GPIO label.
@@ -75,6 +92,26 @@ namespace Payload
       std::string valve2_pwr_ch_label;
       //! Valve 3 power channel label.
       std::string valve3_pwr_ch_label;
+      //! Manual motor control.
+      float manual_motor;
+      //! Manual step control.
+      int manual_step;
+      //! Manual pump 1 control.
+      bool manual_pump1;
+      //! Manual pump 2 control.
+      bool manual_pump2;
+      //! Manual pump 3 control.
+      bool manual_pump3;
+      //! Manual pump 4 control.
+      bool manual_pump4;
+      //! Manual pump 5 control.
+      bool manual_pump5;
+      //! Manual valve 1 control.
+      bool manual_valve1;
+      //! Manual valve 2 control.
+      bool manual_valve2;
+      //! Manual valve 3 control.
+      bool manual_valve3;
     };
 
     //! Task to control WhiteX payload. 
@@ -84,6 +121,8 @@ namespace Payload
     {
       //! Task arguments.
       Arguments m_args;
+      //! Operation mode.
+      ModeEnum m_mode;
       //! QueryPowerChannelState message.
       IMC::QueryPowerChannelState m_qry_pwr_ch_state;
       //! Get GPIOState message.
@@ -110,12 +149,18 @@ namespace Payload
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
+        m_mode(MODE_INVALID),
         m_motor_eid(UINT_MAX),
         m_water_flow_1_eid(UINT_MAX),
         m_water_flow_2_eid(UINT_MAX)
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER, true);
+
+        param("Mode", m_args.mode)
+        .defaultValue("Automatic")
+        .values("Automatic, Manual")
+        .description("Operation mode.");
 
         param("Minimum Water Level - GPIO Label", m_args.min_water_level_gpio)
         .editable(false)
@@ -185,6 +230,49 @@ namespace Payload
         .editable(false)
         .description("Name of the GPIO that indicates the second endpoint.");
 
+        param("Manual - Motor", m_args.manual_motor)
+        .defaultValue("0.0")
+        .minimumValue("-1.0")
+        .maximumValue("1.0")
+        .description("Manual control for the motor.");
+
+        param("Manual - Step", m_args.manual_step)
+        .defaultValue("0")
+        .values("-1, 0, 1")
+        .description("Manual control for the step motor.");
+
+        param("Manual - Pump 1", m_args.manual_pump1)
+        .defaultValue("false")
+        .description("Manual control for pump 1.");
+
+        param("Manual - Pump 2", m_args.manual_pump2)
+        .defaultValue("false")
+        .description("Manual control for pump 2.");
+
+        param("Manual - Pump 3", m_args.manual_pump3)
+        .defaultValue("false")
+        .description("Manual control for pump 3.");
+
+        param("Manual - Pump 4", m_args.manual_pump4)
+        .defaultValue("false")
+        .description("Manual control for pump 4.");
+
+        param("Manual - Pump 5", m_args.manual_pump5)
+        .defaultValue("false")
+        .description("Manual control for pump 5.");
+
+        param("Manual - Valve 1", m_args.manual_valve1)
+        .defaultValue("false")
+        .description("Manual control for valve 1.");
+
+        param("Manual - Valve 2", m_args.manual_valve2)
+        .defaultValue("false")
+        .description("Manual control for valve 2.");
+
+        param("Manual - Valve 3", m_args.manual_valve3)
+        .defaultValue("false")
+        .description("Manual control for valve 3.");
+
         m_sta.setDestination(getSystemId());
 
         bind<IMC::GpioState>(this);
@@ -195,7 +283,55 @@ namespace Payload
 
       void
       onUpdateParameters(void) override
-      { }
+      {
+        if (paramChanged(m_args.mode))
+        {
+          auto it = c_mode_map.find(m_args.mode);
+          if (it != c_mode_map.end())
+          {
+            m_mode = it->second;
+            inf("Operation mode set to: %s", c_mode_str_map.at(m_mode).c_str());
+          }
+          else
+          {
+            err("Invalid operation mode: %s", m_args.mode.c_str());
+            m_mode = MODE_INVALID;
+          }
+        }
+
+        if (m_mode == MODE_MANUAL)
+        {
+          if (paramChanged(m_args.manual_motor))
+            setMotor(m_args.manual_motor);
+
+          if (paramChanged(m_args.manual_step))
+            setStep(m_args.manual_step);
+
+          if (paramChanged(m_args.manual_pump1))
+            setPump(m_args.pump1_pwr_ch_label, m_args.manual_pump1);
+
+          if (paramChanged(m_args.manual_pump2))
+            setPump(m_args.pump2_pwr_ch_label, m_args.manual_pump2);
+
+          if (paramChanged(m_args.manual_pump3))
+            setPump(m_args.pump3_pwr_ch_label, m_args.manual_pump3);
+
+          if (paramChanged(m_args.manual_pump4))
+            setPump(m_args.pump4_pwr_ch_label, m_args.manual_pump4);
+
+          if (paramChanged(m_args.manual_pump5))
+            setPump(m_args.pump5_pwr_ch_label, m_args.manual_pump5);
+
+          if (paramChanged(m_args.manual_valve1))
+            setValve(m_args.valve1_pwr_ch_label, m_args.manual_valve1);
+
+          if (paramChanged(m_args.manual_valve2))
+            setValve(m_args.valve2_pwr_ch_label, m_args.manual_valve2);
+
+          if (paramChanged(m_args.manual_valve3))
+            setValve(m_args.valve3_pwr_ch_label, m_args.manual_valve3);
+        }
+      }
 
       void
       tryResolveEntity(unsigned& eid, const std::string& elabel)
@@ -315,6 +451,9 @@ namespace Payload
       void
       consume(const IMC::RemoteActions* msg)
       {
+        if (m_mode != MODE_MANUAL)
+          return;
+
         TupleList tuples(msg->actions);
 
         auto motor_value = tuples.get("Motor", 0);
@@ -384,8 +523,55 @@ namespace Payload
       }
 
       void
+      changeMode(ModeEnum mode)
+      {
+        if (mode == m_mode)
+          return;
+
+        auto it = c_mode_str_map.find(mode);
+        if (it != c_mode_str_map.end())
+        {
+          m_mode = mode;
+          inf("operation mode changed to: %s", it->second.c_str());
+        }
+        else
+        {
+          err("invalid operation mode: %d", static_cast<int>(mode));
+        }
+      }
+
+      void
       updateMachineState(void)
-      { }
+      {
+        if (!isActive())
+          return;
+
+        if (m_mode != MODE_AUTOMATIC)
+          return;
+      }
+
+      void
+      updateEntityState(void)
+      {
+        std::ostringstream ss;
+        ss << (isActive() ? "active" : "idle");
+        ss << " | m: " << c_mode_str_map.at(m_mode).front();
+
+        ss << " | wl: " << static_cast<int>(m_gpio_states[m_args.min_water_level_gpio])
+                        << static_cast<int>(m_gpio_states[m_args.max_water_level_gpio]);
+
+        ss << " | wf1: " << m_water_flows[m_water_flow_1_eid];
+        ss << " | wf2: " << m_water_flows[m_water_flow_2_eid];
+
+        ss << " | p: ";
+        for (const auto& pwr_ch : m_pwr_ch_states)
+          ss << static_cast<int>(pwr_ch.second);
+
+        ss << " | e: " << static_cast<int>(m_gpio_states[m_args.endpoint1_gpio])
+                       << static_cast<int>(m_gpio_states[m_args.endpoint2_gpio]);
+
+        setEntityState(EntityState::ESTA_NORMAL, ss.str());
+      }
 
       void
       onMain(void)
@@ -393,9 +579,8 @@ namespace Payload
         while (!stopping())
         {
           waitForMessages(1.0);
-
-          if (isActive())
-            updateMachineState();
+          updateMachineState();
+          updateEntityState();
         }
       }
     };
