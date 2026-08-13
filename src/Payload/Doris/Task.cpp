@@ -322,14 +322,14 @@ namespace Payload
         trace("setting thruster %u to %f", id, step);
         m_sta.setDestinationEntity(destination);
         m_sta.id = id;
-        m_sta.value = static_cast<float>(trimValue(step, -1, 1));
+        m_sta.value = std::clamp(step, -1.0f, 1.0f);
         dispatch(m_sta);
       }
 
       void
-      setStep(float step)
+      setStep(int step)
       {
-        setThrusterActuation(m_args.step_id, step);
+        setThrusterActuation(m_args.step_id, static_cast<float>(step));
       }
 
       void
