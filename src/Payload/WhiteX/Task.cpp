@@ -81,7 +81,7 @@ namespace Payload
       //! Map of GPIO states.
       std::unordered_map<std::string, bool> m_gpio_states;
       //! Map of Power Channel states.
-      std::unordered_map<std::string, bool> m_pwr_ch_states;
+      std::map<std::string, bool> m_pwr_ch_states;
       //! PowerChannelControl message.
       IMC::PowerChannelControl m_pcc;
       //! QueryPowerChannelState message.
