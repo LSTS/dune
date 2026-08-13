@@ -69,6 +69,8 @@ namespace Actuators
     static constexpr const char* c_cmd_valve_ctl = "VALVE";
     //! Step command id.
     static constexpr const char* c_cmd_step_ctl = "STEP";
+    //! Step config command id.
+    static constexpr const char* c_cmd_step_cfg = "CNFG";
     //! Number of power channels.
     static constexpr uint8_t c_num_pwr_chs = 8;
     //! Maximum voltage for water level low.
@@ -124,6 +126,10 @@ namespace Actuators
       std::string endpoint_labels[c_num_endpoints];
       //! Step id.
       uint8_t step_id;
+      //! Step frequency.
+      int step_freq;
+      //! Step mode.
+      int step_mode;
     };
 
     struct PowerChannel

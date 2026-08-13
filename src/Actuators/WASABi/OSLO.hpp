@@ -81,7 +81,19 @@ namespace Actuators
 
         param("Step Id", m_args.step_id)
         .defaultValue("0")
-        .description("Step ID of the OSLO.");
+        .description("Step ID of the OSLO step motor.");
+
+        param("Step Frequency", m_args.step_freq)
+        .defaultValue("100")
+        .minimumValue("1")
+        .maximumValue("1000")
+        .description("Frequency of the OSLO step motor.");
+
+        param("Step Mode", m_args.step_mode)
+        .defaultValue("0")
+        .minimumValue("0")
+        .maximumValue("7")
+        .description("Mode of the OSLO step motor.");
 
         m_pwr_chs.clear();
         m_gpio_states.clear();
@@ -115,6 +127,12 @@ namespace Actuators
             continue;
 
           m_gpio_states[m_args.endpoint_labels[i]].name = m_args.endpoint_labels[i];
+        }
+
+        if ((paramChanged(m_args.step_freq) || paramChanged(m_args.step_mode)) && m_state)
+        {
+          m_owner->debug("trying to set step config to id=%u, freq=%d, mode=%d", m_args.step_id, m_args.step_freq, m_args.step_mode);
+          setStepConfig(m_args.step_freq, m_args.step_mode);
         }
       }
     
@@ -303,6 +321,24 @@ namespace Actuators
       }
 
       void
+      setStepConfig(int freq, int mode)
+      {
+        if (!m_state)
+          return;
+
+        try
+        {
+          m_owner->debug("trying to set step config to freq=%d, mode=%d", freq, mode);
+          sendCommand(c_cmd_step_cfg, c_cmd_ack[0], true, std::vector<float>{static_cast<float>(freq), static_cast<float>(mode)});
+          m_owner->spew("step config set to freq=%d, mode=%d", freq, mode);
+        }
+        catch(const std::exception& e)
+        {
+          m_owner->err("failed to set step config : %s", e.what());
+        }
+      }
+
+      void
       sendCommand(const char* cmd_type, const char cmd_reply = '\0', const bool persistent = false, const std::vector<float>& args = {})
       {
         if (m_sendCommand == nullptr || !m_state)
@@ -328,6 +364,7 @@ namespace Actuators
         }
 
         setStep(0);
+        setStepConfig(m_args.step_freq, m_args.step_mode);
       }
     };
   }
