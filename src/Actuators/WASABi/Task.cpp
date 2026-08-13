@@ -142,6 +142,15 @@ namespace Actuators
         bind<IMC::GpioStateGet>(this);
       }
 
+      bool
+      onWriteParamsXML(std::ostream& os) const override
+      {
+        if (m_oslo != nullptr)
+          m_oslo->writeParamsXML(os);
+
+        return false;
+      }
+
       void
       onUpdateParameters(void) override
       {
