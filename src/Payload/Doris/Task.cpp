@@ -103,7 +103,7 @@ namespace Payload
       //! Map of Water Flows.
       std::unordered_map<unsigned, fp32_t> m_water_flows;
       //! Map of Power Channel states.
-      std::unordered_map<std::string, bool> m_pwr_ch_states;
+      std::map<std::string, bool> m_pwr_ch_states;
 
       //! Constructor.
       //! @param[in] name task name.
