@@ -190,6 +190,7 @@ namespace Payload
         bind<IMC::GpioState>(this);
         bind<IMC::WaterFlow>(this);
         bind<IMC::PowerChannelState>(this);
+        bind<IMC::RemoteActions>(this);
       }
 
       void
@@ -227,6 +228,15 @@ namespace Payload
       }
 
       void
+      setupRemoteActions(void)
+      {
+        IMC::RemoteActionsRequest ar;
+        ar.op = IMC::RemoteActionsRequest::OP_REGISTER;
+        ar.actions = "Motor=Slider;Step=Slider";
+        dispatch(ar);
+      }
+
+      void
       onResourceInitialization(void) override
       {
         m_gpio_states.clear();
@@ -244,6 +254,8 @@ namespace Payload
         m_pwr_ch_states[m_args.valve1_pwr_ch_label] = false;
         m_pwr_ch_states[m_args.valve2_pwr_ch_label] = false;
         m_pwr_ch_states[m_args.valve3_pwr_ch_label] = false;
+
+        setupRemoteActions();
       }
 
       void
@@ -298,6 +310,18 @@ namespace Payload
 
         flow->second = msg->value;
         spew("Water Flow from entity %u: %.2f m*m*m/s", flow->first, msg->value);
+      }
+
+      void
+      consume(const IMC::RemoteActions* msg)
+      {
+        TupleList tuples(msg->actions);
+
+        auto motor_value = tuples.get("Motor", 0);
+        setMotor(motor_value / 127.0f);
+
+        auto step_value = tuples.get("Step", 0);
+        setStep(step_value / 127);
       }
 
       void
