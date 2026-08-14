@@ -104,6 +104,8 @@ namespace Actuators
       OperationMode m_mode;
       //! Command consumer.
       AbstractConsumer* m_consumer;
+      //! Actuation.
+      fp32_t m_actuation;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -115,7 +117,8 @@ namespace Actuators
         m_enabled(false),
         m_error(0),
         m_mode(MODE_INVALID),
-        m_consumer(nullptr)
+        m_consumer(nullptr),
+        m_actuation(0.0f)
       {
         param("Power Channel Name", m_args.pwr_ch_label)
         .editable(false)
@@ -157,6 +160,8 @@ namespace Actuators
         .description("Mode of operation (Position or Velocity).");
 
         param("Maximum RPM", m_args.max_rpm)
+        .minimumValue("0")
+        .maximumValue("6000")
         .defaultValue("6000")
         .description("Maximum RPM of the motor.");
 
@@ -183,6 +188,9 @@ namespace Actuators
             enabledMode(m_mode);
           }
         }
+
+        if (paramChanged(m_args.max_rpm) && m_actuation != 0.0f)
+          setVelocity(m_actuation * m_args.max_rpm);
       }
 
       void
@@ -501,8 +509,8 @@ namespace Actuators
           return;
 
         trace("received SetThrusterActuation message with value: %f", msg->value);
-        auto value = std::clamp(msg->value, -1.0f, 1.0f);
-        setVelocity(value * m_args.max_rpm);
+        m_actuation = std::clamp(msg->value, -1.0f, 1.0f);
+        setVelocity(m_actuation * m_args.max_rpm);
       }
 
       void
@@ -519,7 +527,8 @@ namespace Actuators
           return;
 
         trace("received SetServoPosition message with value: %f", msg->value);
-        setPosition(msg->value);
+        m_actuation = msg->value;
+        setPosition(m_actuation);
       }
 
       void
