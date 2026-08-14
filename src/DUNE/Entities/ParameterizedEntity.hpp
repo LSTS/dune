@@ -53,6 +53,8 @@ namespace DUNE
     class ParameterizedEntity: public BasicEntity
     {
     public:
+      static constexpr const char* c_param_entity_section_separator = "::";
+
       //! Constructor.
       //! @param[in] owner pointer to the task containing the entity.
       //! @param[in] context entity context.
@@ -74,7 +76,10 @@ namespace DUNE
       setLabel(const std::string& label) override
       {
         BasicEntity::setLabel(label);
-        m_section = std::string(m_owner->getName()) + ":" + label;
+        m_section.clear();
+        m_section += m_owner->getName();
+        m_section += c_param_entity_section_separator;
+        m_section += label;
       }
 
       //! Consume QueryEntityParameters messages and reply accordingly.
