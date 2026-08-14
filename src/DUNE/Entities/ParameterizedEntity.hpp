@@ -252,6 +252,9 @@ namespace DUNE
         onUpdateParameters();
         m_params.setChanged(false);
       }
+
+      void
+      setParameterAttributes(const std::string& name);
     };
   }
 }

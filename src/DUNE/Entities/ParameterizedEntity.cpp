@@ -196,6 +196,7 @@ namespace DUNE
       std::map<std::string, Tasks::Parameter*>::const_iterator itr = m_params.begin();
       for (; itr != m_params.end(); ++itr)
       {
+        setParameterAttributes(itr->second->name());
         std::string value = m_ctx.config.get(m_section, itr->second->name());
         m_params.set(itr->second->name(), value);
       }
@@ -210,6 +211,37 @@ namespace DUNE
       }
 
       updateParameters();
+    }
+
+    void
+    ParameterizedEntity::setParameterAttributes(const std::string& name)
+    {
+      try
+      {
+        auto itr = m_params.find(name);
+        if (itr == m_params.end())
+          throw std::runtime_error("invalid parameter name: '" + name + "'");
+
+        auto attributes = m_ctx.config.attributes(m_section, name);
+
+        std::string scope = attributes.get<std::string>(Tasks::Parameter::c_scope_str, "");
+        if (!scope.empty())
+          itr->second->scope(Tasks::Parameter::scopeFromString(scope));
+
+        std::string visibility = attributes.get<std::string>(Tasks::Parameter::c_visibility_str, "");
+        if (!visibility.empty())
+          itr->second->visibility(Tasks::Parameter::visibilityFromString(visibility));
+
+        std::string editable = attributes.get<std::string>(Tasks::Parameter::c_editable_str, "");
+        if (!editable.empty())
+          itr->second->editable(editable);
+      }
+      catch(Parsers::Config::OptionAttributeEmpty& e)
+      { }
+      catch(const std::exception& e)
+      {
+        m_owner->war("unbale to set parameter attributes: %s", e.what());
+      }
     }
   }
 }
