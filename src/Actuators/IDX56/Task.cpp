@@ -452,6 +452,7 @@ namespace Actuators
           return false;
 
         m_error = 0;
+        debug("setting position to %ld", pos);
         return VCS_MoveToPosition(m_handle, m_args.node_id, pos, 0, 1, &m_error) != 0 && m_error == 0;
       }
 
@@ -482,6 +483,7 @@ namespace Actuators
           return false;
 
         m_error = 0;
+        debug("setting velocity to %ld", vel);
         return VCS_MoveWithVelocity(m_handle, m_args.node_id, vel, &m_error) != 0 && m_error == 0;
       }
 
