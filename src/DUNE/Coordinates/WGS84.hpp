@@ -27,6 +27,7 @@
 // Author: Eduardo Marques                                                  *
 // Author: Ricardo Martins                                                  *
 // Author: Alberto Dallolio                                                 *
+// Author: Luís Venâncio
 //***************************************************************************
 // These are the standard conversion routines as described in: J. Zhu,      *
 // "Conversion of Earth-centered Earth-fixed coordinates to geodetic        *
@@ -35,6 +36,16 @@
 //                                                                          *
 // A summary of the implementation can be found in:                         *
 // - http://en.wikipedia.org/wiki/Geodetic_system                           *
+//                                                                          *
+// Spherical Earth geometry implementation based on:                        *
+//                                                                          *
+// Spherical direct and inverse great-circle equations:                     *
+// Hagen et al., NASA/TM-2017-219669, Appendix B.                           *
+// https://ntrs.nasa.gov/citations/20170009610                              *
+//                                                                          *
+// Cross-track and along-track equations:                                   *
+// E. Williams, Aviation Formulary, "Cross track error and                  *
+// along track distance", https://edwilliams.org/avform147.htm              *
 //***************************************************************************
 
 #ifndef DUNE_COORDINATES_WGS84_HPP_INCLUDED_
