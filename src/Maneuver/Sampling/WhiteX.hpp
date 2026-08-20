@@ -42,13 +42,17 @@ namespace Maneuver
     class WhiteX: public BasicSampler
     {
     public:
-      //! Maneuver arguments as tuple list.
-      DUNE::Utils::TupleList m_args;
+      //! Maneuver arguments.
+      struct Arguments
+      {
+        float radius = -1.0f;
+        float speed = -1.0f;
+      };
+
+      //! Maneuver arguments.
+      Arguments m_args;
       //! Station keeping maneuver.
       DUNE::Maneuvers::StationKeep* m_skeep;
-      //! Arguments
-      float m_radius;
-      float m_speed;
       //! Timeout timer.
       DUNE::Time::Counter<float> m_timeout_timer;
       //! Setup timeout.
@@ -70,28 +74,12 @@ namespace Maneuver
       WhitexState m_state;
 
       //! Default constructor.
-      WhiteX(DUNE::Maneuvers::Maneuver* task, std::string args):
+      WhiteX(DUNE::Maneuvers::Maneuver* task, const std::string& args):
         BasicSampler(task, "WhiteX"),
+        m_args(parseArguments(args)),
         m_skeep(nullptr),
-        m_radius(-1.0f),
         m_state(WS_MOVING)
-      {
-        m_args = DUNE::Utils::TupleList(args);
-
-        auto args_map = m_args.getMapReversed();
-        for (const auto& arg : m_required_args)
-          if (args_map.find(arg) == args_map.end())
-            throw std::runtime_error(DUNE::Utils::String::str("Missing required argument: %s", arg.c_str()));
-
-        m_radius = m_args.get<float>("Radius", -1.0f);
-        m_speed = m_args.get<float>("Speed", -1.0f);
-
-        if (m_radius <= 0.0f)
-          throw std::runtime_error("Invalid sampling radius.");
-
-        if (m_speed <= 0.0f)
-          throw std::runtime_error("Invalid sampling speed.");
-      }
+      { }
 
       ~WhiteX()
       {
@@ -111,7 +99,7 @@ namespace Maneuver
         m_skeep = new DUNE::Maneuvers::StationKeep(m_task,
                                                    msg->lat,
                                                    msg->lon,
-                                                   m_radius,
+                                                   m_args.radius,
                                                    msg->z,
                                                    msg->z_units,
                                                    msg->speed,
@@ -198,7 +186,7 @@ namespace Maneuver
             if (m_skeep->isInside())
             {
               debug("Reached sampling point, setting up...");
-              m_skeep->setSpeed(m_speed, DUNE::IMC::SpeedUnits::SUNITS_METERS_PS);
+              m_skeep->setSpeed(m_args.speed, DUNE::IMC::SpeedUnits::SUNITS_METERS_PS);
               m_state = WS_SETUP;
               m_timeout_timer.setTop(m_setup_timeout);
               sendSamplingActionCmd(DUNE::IMC::SamplingAction::SAT_CMD_START);
@@ -231,8 +219,24 @@ namespace Maneuver
       }
 
     private:
-      const std::vector<std::string> m_required_args = {"Radius",
-                                                        "Speed"};
+      static Arguments
+      parseArguments(const std::string& args)
+      {
+        DUNE::Utils::TupleList args_list(args);
+        auto args_map = args_list.getMapReversed();
+
+        Arguments parsed_args;
+        
+        parsed_args.radius = getRequiredArgument<float>(args_map, "Radius");
+        if (parsed_args.radius <= 0.0f)
+          throw std::runtime_error("Invalid sampling radius.");
+
+        parsed_args.speed = getRequiredArgument<float>(args_map, "Speed");
+        if (parsed_args.speed <= 0.0f)
+          throw std::runtime_error("Invalid sampling speed.");
+
+        return parsed_args;
+      }
     };
   }
 }
