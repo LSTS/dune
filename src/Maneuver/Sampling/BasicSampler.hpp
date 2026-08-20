@@ -28,8 +28,15 @@
 #ifndef MANEUVER_SAMPLING_BASIC_SAMPLER_HPP_INCLUDED_
 #define MANEUVER_SAMPLING_BASIC_SAMPLER_HPP_INCLUDED_
 
+// ISO C++ 98 headers.
+#include <map>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+
 #include <DUNE/IMC.hpp>
 #include <DUNE/Maneuvers/Maneuver.hpp>
+#include <DUNE/Utils/String.hpp>
 
 namespace Maneuver
 {
@@ -91,6 +98,34 @@ namespace Maneuver
     protected:
       //! Parent task.
       DUNE::Maneuvers::Maneuver* m_task;
+
+      template<typename Type>
+      static Type
+      getRequiredArgument(const std::map<std::string, std::string>& values,
+                          const std::string& name)
+      {
+        auto itr = values.find(name);
+
+        if (itr == values.end())
+          throw std::runtime_error(
+            DUNE::Utils::String::str("Missing required argument: %s", name.c_str()));
+
+        std::istringstream input(itr->second);
+        Type value;
+
+        if (!(input >> value))
+          throw std::runtime_error(
+            DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
+            
+        // Check for any remaining characters in the stream. 
+        // Ex: "123abc" would be invalid for an integer.
+        input >> std::ws;
+        if (!input.eof())
+          throw std::runtime_error(
+            DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
+
+        return value;
+      }
 
       void
       debug(const std::string& msg) const
