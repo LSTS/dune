@@ -1,0 +1,263 @@
+//***************************************************************************
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
+// Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
+//***************************************************************************
+// This file is part of DUNE: Unified Navigation Environment.               *
+//                                                                          *
+// Commercial Licence Usage                                                 *
+// Licencees holding valid commercial DUNE licences may use this file in    *
+// accordance with the commercial licence agreement provided with the       *
+// Software or, alternatively, in accordance with the terms contained in a  *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
+//                                                                          *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// included in the packaging of this file. You may not use this work        *
+// except in compliance with the Licence. Unless required by applicable     *
+// law or agreed to in writing, software distributed under the Licence is   *
+// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
+// ANY KIND, either express or implied. See the Licence for the specific    *
+// language governing permissions and limitations at                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
+//***************************************************************************
+// Author: Luís Venâncio                                                    *
+//***************************************************************************
+
+#ifndef MANEUVER_SAMPLING_DORIS_HPP_INCLUDED_
+#define MANEUVER_SAMPLING_DORIS_HPP_INCLUDED_
+
+// DUNE Headers
+#include <DUNE/DUNE.hpp>
+
+// Local Headers
+#include "BasicSampler.hpp"
+
+namespace Maneuver
+{
+  namespace Sampling
+  {
+    //! Basic sampler
+    class Doris: public BasicSampler
+    {
+    public:
+      //! Movement type
+      enum MovementType
+      {
+        //! StationKeeping behaviour
+        MT_DRIFT,
+        //! GoTo behaviour
+        MT_MOVE
+      };
+
+      //! Maneuver arguments.
+      struct Arguments
+      {
+        MovementType movement_type = MT_DRIFT;
+        float radius = -1.0f;
+        float speed = -1.0f;
+      };
+
+      //! Maneuver arguments.
+      Arguments m_args;
+      //! Station keeping maneuver.
+      DUNE::Maneuvers::StationKeep* m_skeep;
+      //! Timeout timer.
+      DUNE::Time::Counter<float> m_timeout_timer;
+      //! Setup timeout.
+      const float m_setup_timeout = 10.0f;
+      //! Sampling timeout.
+      const float m_sampling_timeout = 5.0f;
+
+      //! State machine states.
+      enum DorisState
+      {
+        //! Moving to target point.
+        DS_MOVING,
+        //! Sampling setup.
+        DS_SETUP,
+        //! Sampling.
+        DS_SAMPLING
+      };
+      //! Current state.
+      DorisState m_state;
+
+      //! Default constructor.
+      Doris(DUNE::Maneuvers::Maneuver* task, const std::string& args):
+        BasicSampler(task, "Doris"),
+        m_args(parseArguments(args)),
+        m_skeep(nullptr),
+        m_state(DS_MOVING)
+      { }
+
+      ~Doris()
+      {
+        DUNE::Memory::clear(m_skeep);
+      }
+
+      void
+      onReset(void)
+      {
+        DUNE::Memory::clear(m_skeep);
+      }
+
+      void
+      onInit(const DUNE::IMC::Sampling* msg)
+      {
+        DUNE::Memory::clear(m_skeep);
+        m_skeep = new DUNE::Maneuvers::StationKeep(m_task,
+                                                   msg->lat,
+                                                   msg->lon,
+                                                   m_args.radius,
+                                                   msg->z,
+                                                   msg->z_units,
+                                                   msg->speed,
+                                                   msg->speed_units);
+        
+        
+        debug("Moving to sampling point...");
+      }
+
+      void
+      onPathControlState(const DUNE::IMC::PathControlState* msg)
+      {
+        if (m_skeep == nullptr)
+          return;
+
+        m_skeep->updatePathControl(msg);
+      }
+
+      void
+      onEstimatedState(const DUNE::IMC::EstimatedState* msg)
+      {
+        if (m_skeep == nullptr)
+          return;
+
+        m_skeep->update(msg);
+      }
+
+      void
+      onSamplingAction(const DUNE::IMC::SamplingAction* msg)
+      {
+        if (m_skeep == nullptr)
+          return;
+          
+        if (msg->action == DUNE::IMC::SamplingAction::SA_COMMAND)
+          return;
+
+        switch (m_state)
+        {
+          case DS_MOVING:
+            if (msg->type != DUNE::IMC::SamplingAction::SAT_STATE_IDLE)
+            {
+              m_task->signalError("Received unexpected sampling state report while moving to sampling point.");
+              return;
+            }
+            break;
+
+          case DS_SETUP:
+            if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STARTING)
+            {
+              debug("Starting sampling...");
+              m_timeout_timer.setTop(m_sampling_timeout);
+              m_state = DS_SAMPLING;
+            }
+            break;
+
+          case DS_SAMPLING:
+            if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_IDLE)
+            {
+              debug("Stopping sampling...");
+              m_task->signalCompletion();
+              return;
+            }
+            else if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_SAMPLING ||
+                     msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STOPPING)
+            {
+              m_timeout_timer.reset();
+            }
+            break;
+        
+          default:
+            break;
+        }
+      }
+
+      void
+      run(void)
+      {
+        if (m_skeep == nullptr)
+          return;
+
+        switch (m_state)
+        {
+          case DS_MOVING:
+            if (m_skeep->isInside())
+            {
+              debug("Reached sampling point, setting up...");
+              m_skeep->setSpeed(m_args.speed, DUNE::IMC::SpeedUnits::SUNITS_METERS_PS);
+              m_state = DS_SETUP;
+              m_timeout_timer.setTop(m_setup_timeout);
+              sendSamplingActionCmd(DUNE::IMC::SamplingAction::SAT_CMD_START);
+            }
+            break;
+
+          case DS_SETUP:
+            if (m_timeout_timer.overflow())
+            {
+              debug("Sampling setup timeout, stopping...");
+              m_task->signalError("Sampling setup timed out.");
+              return;
+            }
+            break;
+
+          case DS_SAMPLING:
+            if (m_timeout_timer.overflow())
+            {
+              debug("Sampling timeout, stopping...");
+              m_task->signalError("Sampling timed out.");
+              return;
+            }
+            break;
+        
+          default:
+            break;
+        }
+
+        m_task->signalProgress();
+      }
+
+    private:
+      static Arguments
+      parseArguments(const std::string& args)
+      {
+        DUNE::Utils::TupleList args_list(args);
+        auto args_map = args_list.getMapReversed();
+
+        Arguments parsed_args;
+
+        std::string movement_type_str = getRequiredArgument<std::string>(args_map, "Type");
+        if (movement_type_str == "Drift")
+          parsed_args.movement_type = MT_DRIFT;
+        else if (movement_type_str == "Move")
+          parsed_args.movement_type = MT_MOVE;
+        else
+          throw std::runtime_error("Invalid movement type.");
+        
+        parsed_args.radius = getRequiredArgument<float>(args_map, "Radius");
+        if (parsed_args.radius <= 0.0f)
+          throw std::runtime_error("Invalid sampling radius.");
+
+        parsed_args.speed = getRequiredArgument<float>(args_map, "Speed");
+        if (parsed_args.speed <= 0.0f)
+          throw std::runtime_error("Invalid sampling speed.");
+
+        return parsed_args;
+      }
+    };
+  }
+}
+
+#endif
+
