@@ -36,6 +36,7 @@
 #include "DUNE/I18N.hpp"
 
 #include "BasicSampler.hpp"
+#include "Doris.hpp"
 #include "RedX.hpp"
 #include "WhiteX.hpp"
 
@@ -52,7 +53,9 @@ namespace Maneuver
       std::unique_ptr<BasicSampler>
       factory(DUNE::Maneuvers::Maneuver* task, const DUNE::IMC::Sampling* maneuver)
       {
-        if (maneuver->sampling_type == "RedX")
+        if (maneuver->sampling_type == "Doris")
+          return std::make_unique<Doris>(task, maneuver->sampling_args);
+        else if (maneuver->sampling_type == "RedX")
           return std::make_unique<RedX>(task, maneuver->sampling_args);
         else if (maneuver->sampling_type == "WhiteX")
           return std::make_unique<WhiteX>(task, maneuver->sampling_args);
