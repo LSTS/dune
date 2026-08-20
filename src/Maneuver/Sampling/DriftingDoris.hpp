@@ -25,8 +25,8 @@
 // Author: Luís Venâncio                                                    *
 //***************************************************************************
 
-#ifndef MANEUVER_SAMPLING_DORIS_HPP_INCLUDED_
-#define MANEUVER_SAMPLING_DORIS_HPP_INCLUDED_
+#ifndef MANEUVER_SAMPLING_DRIFTING_DORIS_HPP_INCLUDED_
+#define MANEUVER_SAMPLING_DRIFTING_DORIS_HPP_INCLUDED_
 
 // DUNE Headers
 #include <DUNE/DUNE.hpp>
@@ -39,22 +39,12 @@ namespace Maneuver
   namespace Sampling
   {
     //! Basic sampler
-    class Doris: public BasicSampler
+    class DriftingDoris: public BasicSampler
     {
     public:
-      //! Movement type
-      enum MovementType
-      {
-        //! StationKeeping behaviour
-        MT_DRIFT,
-        //! GoTo behaviour
-        MT_MOVE
-      };
-
       //! Maneuver arguments.
       struct Arguments
       {
-        MovementType movement_type = MT_DRIFT;
         float radius = -1.0f;
         float speed = -1.0f;
       };
@@ -71,27 +61,27 @@ namespace Maneuver
       const float m_sampling_timeout = 5.0f;
 
       //! State machine states.
-      enum DorisState
+      enum DriftingDorisState
       {
         //! Moving to target point.
-        DS_MOVING,
+        DDS_MOVING,
         //! Sampling setup.
-        DS_SETUP,
+        DDS_SETUP,
         //! Sampling.
-        DS_SAMPLING
+        DDS_SAMPLING
       };
       //! Current state.
-      DorisState m_state;
+      DriftingDorisState m_state;
 
       //! Default constructor.
-      Doris(DUNE::Maneuvers::Maneuver* task, const std::string& args):
-        BasicSampler(task, "Doris"),
+      DriftingDoris(DUNE::Maneuvers::Maneuver* task, const std::string& args):
+        BasicSampler(task, "DriftingDoris"),
         m_args(parseArguments(args)),
         m_skeep(nullptr),
-        m_state(DS_MOVING)
+        m_state(DDS_MOVING)
       { }
 
-      ~Doris()
+      ~DriftingDoris()
       {
         DUNE::Memory::clear(m_skeep);
       }
@@ -148,7 +138,7 @@ namespace Maneuver
 
         switch (m_state)
         {
-          case DS_MOVING:
+          case DDS_MOVING:
             if (msg->type != DUNE::IMC::SamplingAction::SAT_STATE_IDLE)
             {
               m_task->signalError("Received unexpected sampling state report while moving to sampling point.");
@@ -156,16 +146,16 @@ namespace Maneuver
             }
             break;
 
-          case DS_SETUP:
+          case DDS_SETUP:
             if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STARTING)
             {
               debug("Starting sampling...");
               m_timeout_timer.setTop(m_sampling_timeout);
-              m_state = DS_SAMPLING;
+              m_state = DDS_SAMPLING;
             }
             break;
 
-          case DS_SAMPLING:
+          case DDS_SAMPLING:
             if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_IDLE)
             {
               debug("Stopping sampling...");
@@ -192,18 +182,18 @@ namespace Maneuver
 
         switch (m_state)
         {
-          case DS_MOVING:
+          case DDS_MOVING:
             if (m_skeep->isInside())
             {
               debug("Reached sampling point, setting up...");
               m_skeep->setSpeed(m_args.speed, DUNE::IMC::SpeedUnits::SUNITS_METERS_PS);
-              m_state = DS_SETUP;
+              m_state = DDS_SETUP;
               m_timeout_timer.setTop(m_setup_timeout);
               sendSamplingActionCmd(DUNE::IMC::SamplingAction::SAT_CMD_START);
             }
             break;
 
-          case DS_SETUP:
+          case DDS_SETUP:
             if (m_timeout_timer.overflow())
             {
               debug("Sampling setup timeout, stopping...");
@@ -212,7 +202,7 @@ namespace Maneuver
             }
             break;
 
-          case DS_SAMPLING:
+          case DDS_SAMPLING:
             if (m_timeout_timer.overflow())
             {
               debug("Sampling timeout, stopping...");
@@ -237,14 +227,6 @@ namespace Maneuver
 
         Arguments parsed_args;
 
-        std::string movement_type_str = getRequiredArgument<std::string>(args_map, "Type");
-        if (movement_type_str == "Drift")
-          parsed_args.movement_type = MT_DRIFT;
-        else if (movement_type_str == "Move")
-          parsed_args.movement_type = MT_MOVE;
-        else
-          throw std::runtime_error("Invalid movement type.");
-        
         parsed_args.radius = getRequiredArgument<float>(args_map, "Radius");
         if (parsed_args.radius <= 0.0f)
           throw std::runtime_error("Invalid sampling radius.");
@@ -260,4 +242,5 @@ namespace Maneuver
 }
 
 #endif
+
 
