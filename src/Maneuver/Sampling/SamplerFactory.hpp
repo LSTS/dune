@@ -37,6 +37,7 @@
 
 #include "BasicSampler.hpp"
 #include "RedX.hpp"
+#include "WhiteX.hpp"
 
 namespace Maneuver
 {
@@ -53,6 +54,8 @@ namespace Maneuver
       {
         if (maneuver->sampling_type == "RedX")
           return std::make_unique<RedX>(task, maneuver->sampling_args);
+        else if (maneuver->sampling_type == "WhiteX")
+          return std::make_unique<WhiteX>(task, maneuver->sampling_args);
         else
           throw std::runtime_error(DTR("Unknown sampler type."));
       }
