@@ -38,6 +38,8 @@ namespace Maneuver
 {
   namespace Sampling
   {
+    using DUNE_NAMESPACES;
+
     //! Basic sampler
     class MovingDoris: public BasicSampler
     {
@@ -47,12 +49,23 @@ namespace Maneuver
       {
         float radius = -1.0f;
         float speed = -1.0f;
+        float bearing = 0.0f;
+      };
+
+      enum MovingDorisState
+      {
+        MD_MOVE_TO_TARGET,
+        MD_SAMPLING,
       };
 
       //! Maneuver arguments.
       Arguments m_args;
-      //! Station keeping maneuver.
-      DUNE::Maneuvers::StationKeep* m_skeep;
+      //! Current state of the MovingDoris maneuver.
+      MovingDorisState m_state;
+      //! Desired path for points p1 and p2.
+      IMC::DesiredPath m_path_p[2];
+      //! Next point index
+      uint8_t m_next_point = 0;
       //! Timeout timer.
       DUNE::Time::Counter<float> m_timeout_timer;
       //! Setup timeout.
@@ -60,159 +73,133 @@ namespace Maneuver
       //! Sampling timeout.
       const float m_sampling_timeout = 5.0f;
 
-      //! State machine states.
-      enum MovingDorisState
-      {
-        //! Moving to target point.
-        MDS_MOVING,
-        //! Sampling setup.
-        MDS_SETUP,
-        //! Sampling.
-        MDS_SAMPLING
-      };
-      //! Current state.
-      MovingDorisState m_state;
-
       //! Default constructor.
       MovingDoris(DUNE::Maneuvers::Maneuver* task, const std::string& args):
         BasicSampler(task, "MovingDoris"),
         m_args(parseArguments(args)),
-        m_skeep(nullptr),
-        m_state(MDS_MOVING)
+        m_state(MD_MOVE_TO_TARGET)
       { }
 
       ~MovingDoris()
-      {
-        DUNE::Memory::clear(m_skeep);
-      }
+      { }
 
       void
       onReset(void)
-      {
-        DUNE::Memory::clear(m_skeep);
-      }
+      { }
 
       void
       onInit(const DUNE::IMC::Sampling* msg)
       {
-        DUNE::Memory::clear(m_skeep);
-        m_skeep = new DUNE::Maneuvers::StationKeep(m_task,
-                                                   msg->lat,
-                                                   msg->lon,
-                                                   m_args.radius,
-                                                   msg->z,
-                                                   msg->z_units,
-                                                   msg->speed,
-                                                   msg->speed_units);
-        
-        
+        // Set control loops
+        m_task->setControl(IMC::CL_PATH);
+
+        // Send to target
+        IMC::DesiredPath path;
+        path.end_lat = msg->lat;
+        path.end_lon = msg->lon;
+        path.end_z = 0.0;
+        path.end_z_units = ZUnits::Z_DEPTH;
+        path.speed = msg->speed;
+        path.speed_units = msg->speed_units;
+        path.flags |= IMC::DesiredPath::FL_DIRECT;
+        m_task->dispatch(path);
+        m_state = MD_MOVE_TO_TARGET;
+
+ 
+        // Get bearing
+        // double bearing, range;
+        // double lat, lon;
+        // toWGS84(m_estate, lat, lon);
+        // WGS84::getNEBearingAndRange(lat, lon, target_lat, target_lon, &bearing, &range);
+
+        // Compute P1 and P2 offsets
+        double p1_x = m_args.radius * std::cos(m_args.bearing);
+        double p1_y = m_args.radius * std::sin(m_args.bearing);
+        double p2_x = m_args.radius * std::cos(m_args.bearing + c_pi);
+        double p2_y = m_args.radius * std::sin(m_args.bearing + c_pi);
+
+        // Compute P1 and P2 coordinates
+        double p1_lat = msg->lat;
+        double p1_lon = msg->lon;
+        double p2_lat = msg->lat;
+        double p2_lon = msg->lon;
+
+        WGS84::displace(p1_x, p1_y, &p1_lat, &p1_lon);
+        WGS84::displace(p2_x, p2_y, &p2_lat, &p2_lon);
+
+        // Build desired paths for points p1 and p2 
+        m_path_p[0].end_lat = p1_lat;
+        m_path_p[0].end_lon = p1_lon;
+        m_path_p[0].end_z = 0.0;
+        m_path_p[0].end_z_units = ZUnits::Z_DEPTH;
+        m_path_p[0].speed = m_args.speed;
+        m_path_p[0].speed_units = SpeedUnits::SUNITS_METERS_PS;
+
+        m_path_p[1] = m_path_p[0];
+        m_path_p[1].end_lat = p2_lat;
+        m_path_p[1].end_lon = p2_lon;
+
         debug("Moving to sampling point...");
       }
 
       void
       onPathControlState(const DUNE::IMC::PathControlState* msg)
       {
-        if (m_skeep == nullptr)
-          return;
+        switch (m_state)
+        {
+        case MD_MOVE_TO_TARGET:
+          if (msg->flags & IMC::PathControlState::FL_NEAR)
+          {
+            debug("Reached sampling point, starting sampling...");
+            sendToNextPoint();
+            m_state = MD_SAMPLING;
+            m_timeout_timer.setTop(300.0);
+          }
+          break;
+        
+        case MD_SAMPLING:
+          if (msg->flags & IMC::PathControlState::FL_NEAR)
+          {
+            sendToNextPoint();
+          }
+          break;
 
-        m_skeep->updatePathControl(msg);
+        default:
+          break;
+        }
       }
 
       void
       onEstimatedState(const DUNE::IMC::EstimatedState* msg)
       {
-        if (m_skeep == nullptr)
-          return;
-
-        m_skeep->update(msg);
+        
       }
 
       void
       onSamplingAction(const DUNE::IMC::SamplingAction* msg)
       {
-        if (m_skeep == nullptr)
-          return;
-          
-        if (msg->action == DUNE::IMC::SamplingAction::SA_COMMAND)
-          return;
-
-        switch (m_state)
-        {
-          case MDS_MOVING:
-            if (msg->type != DUNE::IMC::SamplingAction::SAT_STATE_IDLE)
-            {
-              m_task->signalError("Received unexpected sampling state report while moving to sampling point.");
-              return;
-            }
-            break;
-
-          case MDS_SETUP:
-            if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STARTING)
-            {
-              debug("Starting sampling...");
-              m_timeout_timer.setTop(m_sampling_timeout);
-              m_state = MDS_SAMPLING;
-            }
-            break;
-
-          case MDS_SAMPLING:
-            if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_IDLE)
-            {
-              debug("Stopping sampling...");
-              m_task->signalCompletion();
-              return;
-            }
-            else if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_SAMPLING ||
-                     msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STOPPING)
-            {
-              m_timeout_timer.reset();
-            }
-            break;
         
-          default:
-            break;
-        }
       }
 
       void
       run(void)
       {
-        if (m_skeep == nullptr)
-          return;
-
         switch (m_state)
         {
-          case MDS_MOVING:
-            if (m_skeep->isInside())
-            {
-              debug("Reached sampling point, setting up...");
-              m_skeep->setSpeed(m_args.speed, DUNE::IMC::SpeedUnits::SUNITS_METERS_PS);
-              m_state = MDS_SETUP;
-              m_timeout_timer.setTop(m_setup_timeout);
-              sendSamplingActionCmd(DUNE::IMC::SamplingAction::SAT_CMD_START);
-            }
-            break;
+        case MD_MOVE_TO_TARGET:
+          /* code */
+          break;
 
-          case MDS_SETUP:
-            if (m_timeout_timer.overflow())
-            {
-              debug("Sampling setup timeout, stopping...");
-              m_task->signalError("Sampling setup timed out.");
-              return;
-            }
-            break;
-
-          case MDS_SAMPLING:
-            if (m_timeout_timer.overflow())
-            {
-              debug("Sampling timeout, stopping...");
-              m_task->signalError("Sampling timed out.");
-              return;
-            }
-            break;
+        case MD_SAMPLING:
+          if (m_timeout_timer.overflow())
+          {
+            debug("Sampling timeout reached, stopping maneuver...");
+            m_task->signalCompletion();
+          }
+          break;
         
-          default:
-            break;
+        default:
+          break;
         }
 
         m_task->signalProgress();
@@ -222,7 +209,7 @@ namespace Maneuver
       static Arguments
       parseArguments(const std::string& args)
       {
-        DUNE::Utils::TupleList args_list(args);
+        TupleList args_list(args);
         auto args_map = args_list.getMapReversed();
 
         Arguments parsed_args;
@@ -235,7 +222,18 @@ namespace Maneuver
         if (parsed_args.speed <= 0.0f)
           throw std::runtime_error("Invalid sampling speed.");
 
+        parsed_args.bearing = getRequiredArgument<float>(args_map, "Bearing");
+        parsed_args.bearing = Angles::normalizeRadian(Angles::radians(parsed_args.bearing));
+
         return parsed_args;
+      }
+
+      void
+      sendToNextPoint()
+      {
+        debug("Switching point...");
+        m_task->dispatch(m_path_p[m_next_point]);
+        m_next_point = (m_next_point + 1) % 2;
       }
     };
   }
