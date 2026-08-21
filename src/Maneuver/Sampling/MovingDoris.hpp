@@ -40,7 +40,13 @@ namespace Maneuver
   {
     using DUNE_NAMESPACES;
 
-    //! Basic sampler
+    //! Doris moving sampler
+    //! 
+    //! This sampling maneuver will move the vehicle to a target point, 
+    //! and then perform sampling by moving between two points (p1 and p2) that 
+    //! are offset from the target point by a specified radius and bearing. 
+    //! The maneuver will continue to alternate between these two points until 
+    //! sampling is complete or a timeout occurs.
     class MovingDoris: public BasicSampler
     {
     public:
