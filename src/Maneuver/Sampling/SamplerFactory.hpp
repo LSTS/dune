@@ -24,7 +24,7 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Miguel Aguiar                                                    *
+// Author: Luis Venâncio                                                    *
 //***************************************************************************
 
 #ifndef MANEUVER_SAMPLING_SAMPLER_FACTORY_HPP_INCLUDED_
@@ -50,7 +50,9 @@ namespace Maneuver
       //! Fixed configurations for all sampler types.
       struct Configurations
       {
+        DriftingDoris::Configuration drifting_doris;
         RedX::Configuration redx;
+        WhiteX::Configuration whitex;
       };
 
       //! Factory method for sampling type.
@@ -64,13 +66,15 @@ namespace Maneuver
               const Configurations& config)
       {
         if (maneuver->sampling_type == "DriftingDoris")
-          return std::make_unique<DriftingDoris>(task, maneuver->sampling_args);
+          return std::make_unique<DriftingDoris>(task,
+                                                 maneuver->sampling_args,
+                                                 config.drifting_doris);
         else if (maneuver->sampling_type == "MovingDoris")
           return std::make_unique<MovingDoris>(task, maneuver->sampling_args);
         else if (maneuver->sampling_type == "RedX")
           return std::make_unique<RedX>(task, maneuver->sampling_args, config.redx);
         else if (maneuver->sampling_type == "WhiteX")
-          return std::make_unique<WhiteX>(task, maneuver->sampling_args);
+          return std::make_unique<WhiteX>(task, maneuver->sampling_args, config.whitex);
         else
           throw std::runtime_error(DTR("Unknown sampler type."));
       }
