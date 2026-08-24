@@ -27,55 +27,19 @@
 // Author: Luis Venâncio                                                    *
 //***************************************************************************
 
-#ifndef MANEUVER_SAMPLING_SAMPLER_FACTORY_HPP_INCLUDED_
-#define MANEUVER_SAMPLING_SAMPLER_FACTORY_HPP_INCLUDED_
-
-#include <memory>
-#include <DUNE/IMC.hpp>
-#include <DUNE/Maneuvers/Maneuver.hpp>
-#include "DUNE/I18N.hpp"
-
-#include <Samplers/Samplers.hpp>
+#ifndef MANEUVER_SAMPLING_SAMPLERS_SAMPLERS_HPP_INCLUDED_
+#define MANEUVER_SAMPLING_SAMPLERS_SAMPLERS_HPP_INCLUDED_
 
 namespace Maneuver
 {
   namespace Sampling
-  {
-    namespace Sampler
-    {
-      //! Fixed configurations for all sampler types.
-      struct Configurations
-      {
-        DriftingDoris::Configuration drifting_doris;
-        RedX::Configuration redx;
-        WhiteX::Configuration whitex;
-      };
-
-      //! Factory method for sampling type.
-      //! @param[in] task pointer to Maneuver task
-      //! @param[in] maneuver sampling maneuver specification
-      //! @param[in] config fixed sampler configurations
-      //! @return handle to the Sampler type.
-      std::unique_ptr<BasicSampler>
-      factory(DUNE::Maneuvers::Maneuver* task,
-              const DUNE::IMC::Sampling* maneuver,
-              const Configurations& config)
-      {
-        if (maneuver->sampling_type == "DriftingDoris")
-          return std::make_unique<DriftingDoris>(task,
-                                                 maneuver->sampling_args,
-                                                 config.drifting_doris);
-        else if (maneuver->sampling_type == "MovingDoris")
-          return std::make_unique<MovingDoris>(task, maneuver->sampling_args);
-        else if (maneuver->sampling_type == "RedX")
-          return std::make_unique<RedX>(task, maneuver->sampling_args, config.redx);
-        else if (maneuver->sampling_type == "WhiteX")
-          return std::make_unique<WhiteX>(task, maneuver->sampling_args, config.whitex);
-        else
-          throw std::runtime_error(DTR("Unknown sampler type."));
-      }
-    }
-  }
+  { }
 }
+
+#include <Samplers/BasicSampler.hpp>
+#include <Samplers/DriftingDoris.hpp>
+#include <Samplers/MovingDoris.hpp>
+#include <Samplers/RedX.hpp>
+#include <Samplers/WhiteX.hpp>
 
 #endif
