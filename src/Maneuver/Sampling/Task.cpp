@@ -48,6 +48,18 @@ namespace Maneuver
         DUNE::Maneuvers::Maneuver(name, ctx),
         m_sampler(nullptr)
       {
+        param("DriftingDoris -- Setup Timeout", m_sampler_config.drifting_doris.setup_timeout)
+        .defaultValue("10.0")
+        .minimumValue("0.1")
+        .units(Units::Second)
+        .description("Maximum time allowed for sampling setup");
+
+        param("DriftingDoris -- Sampling Timeout", m_sampler_config.drifting_doris.sampling_timeout)
+        .defaultValue("5.0")
+        .minimumValue("0.1")
+        .units(Units::Second)
+        .description("Maximum time without a sampling state update");
+
         param("RedX -- Setup Timeout", m_sampler_config.redx.setup_timeout)
         .defaultValue("10.0")
         .minimumValue("0.1")
@@ -55,6 +67,18 @@ namespace Maneuver
         .description("Maximum time allowed for sampling setup");
 
         param("RedX -- Sampling Timeout", m_sampler_config.redx.sampling_timeout)
+        .defaultValue("5.0")
+        .minimumValue("0.1")
+        .units(Units::Second)
+        .description("Maximum time without a sampling state update");
+
+        param("WhiteX -- Setup Timeout", m_sampler_config.whitex.setup_timeout)
+        .defaultValue("10.0")
+        .minimumValue("0.1")
+        .units(Units::Second)
+        .description("Maximum time allowed for sampling setup");
+
+        param("WhiteX -- Sampling Timeout", m_sampler_config.whitex.sampling_timeout)
         .defaultValue("5.0")
         .minimumValue("0.1")
         .units(Units::Second)
