@@ -49,16 +49,21 @@ namespace Maneuver
         float speed = -1.0f;
       };
 
+      //! Fixed sampler configuration.
+      struct Configuration
+      {
+        float setup_timeout = -1.0f;
+        float sampling_timeout = -1.0f;
+      };
+
       //! Maneuver arguments.
       Arguments m_args;
+      //! Fixed sampler configuration.
+      const Configuration m_config;
       //! Station keeping maneuver.
       DUNE::Maneuvers::StationKeep* m_skeep;
       //! Timeout timer.
       DUNE::Time::Counter<float> m_timeout_timer;
-      //! Setup timeout.
-      const float m_setup_timeout = 10.0f;
-      //! Sampling timeout.
-      const float m_sampling_timeout = 5.0f;
 
       //! State machine states.
       enum DriftingDorisState
@@ -74,12 +79,21 @@ namespace Maneuver
       DriftingDorisState m_state;
 
       //! Default constructor.
-      DriftingDoris(DUNE::Maneuvers::Maneuver* task, const std::string& args):
+      DriftingDoris(DUNE::Maneuvers::Maneuver* task,
+                    const std::string& args,
+                    const Configuration& config):
         BasicSampler(task, "DriftingDoris"),
         m_args(parseArguments(args)),
+        m_config(config),
         m_skeep(nullptr),
         m_state(DDS_MOVING)
-      { }
+      {
+        if (m_config.setup_timeout <= 0.0f)
+          throw std::runtime_error("Invalid setup timeout.");
+
+        if (m_config.sampling_timeout <= 0.0f)
+          throw std::runtime_error("Invalid sampling timeout.");
+      }
 
       ~DriftingDoris()
       {
@@ -150,7 +164,7 @@ namespace Maneuver
             if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STARTING)
             {
               debug("Starting sampling...");
-              m_timeout_timer.setTop(m_sampling_timeout);
+              m_timeout_timer.setTop(m_config.sampling_timeout);
               m_state = DDS_SAMPLING;
             }
             break;
@@ -188,7 +202,7 @@ namespace Maneuver
               debug("Reached sampling point, setting up...");
               m_skeep->setSpeed(m_args.speed, DUNE::IMC::SpeedUnits::SUNITS_METERS_PS);
               m_state = DDS_SETUP;
-              m_timeout_timer.setTop(m_setup_timeout);
+              m_timeout_timer.setTop(m_config.setup_timeout);
               sendSamplingActionCmd(DUNE::IMC::SamplingAction::SAT_CMD_START);
             }
             break;
@@ -242,5 +256,4 @@ namespace Maneuver
 }
 
 #endif
-
 
