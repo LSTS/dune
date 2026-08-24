@@ -41,11 +41,25 @@ namespace Maneuver
     {
       //! Sampler handle.
       std::unique_ptr<BasicSampler> m_sampler;
+      //! Fixed sampler configurations.
+      Sampler::Configurations m_sampler_config;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx),
         m_sampler(nullptr)
       {
+        param("RedX -- Setup Timeout", m_sampler_config.redx.setup_timeout)
+        .defaultValue("10.0")
+        .minimumValue("0.1")
+        .units(Units::Second)
+        .description("Maximum time allowed for sampling setup");
+
+        param("RedX -- Sampling Timeout", m_sampler_config.redx.sampling_timeout)
+        .defaultValue("5.0")
+        .minimumValue("0.1")
+        .units(Units::Second)
+        .description("Maximum time without a sampling state update");
+
         bindToManeuver<Task, IMC::Sampling>();
         bind<IMC::EstimatedState>(this);
         bind<IMC::SamplingAction>(this);
@@ -79,7 +93,7 @@ namespace Maneuver
       {
         try
         {
-          m_sampler = Sampler::factory(this, msg);
+          m_sampler = Sampler::factory(this, msg, m_sampler_config);
         }
         catch(const std::runtime_error& e)
         {
