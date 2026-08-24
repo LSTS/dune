@@ -47,19 +47,28 @@ namespace Maneuver
   {
     namespace Sampler
     {
+      //! Fixed configurations for all sampler types.
+      struct Configurations
+      {
+        RedX::Configuration redx;
+      };
+
       //! Factory method for sampling type.
       //! @param[in] task pointer to Maneuver task
       //! @param[in] maneuver sampling maneuver specification
+      //! @param[in] config fixed sampler configurations
       //! @return handle to the Sampler type.
       std::unique_ptr<BasicSampler>
-      factory(DUNE::Maneuvers::Maneuver* task, const DUNE::IMC::Sampling* maneuver)
+      factory(DUNE::Maneuvers::Maneuver* task,
+              const DUNE::IMC::Sampling* maneuver,
+              const Configurations& config)
       {
         if (maneuver->sampling_type == "DriftingDoris")
           return std::make_unique<DriftingDoris>(task, maneuver->sampling_args);
         else if (maneuver->sampling_type == "MovingDoris")
           return std::make_unique<MovingDoris>(task, maneuver->sampling_args);
         else if (maneuver->sampling_type == "RedX")
-          return std::make_unique<RedX>(task, maneuver->sampling_args);
+          return std::make_unique<RedX>(task, maneuver->sampling_args, config.redx);
         else if (maneuver->sampling_type == "WhiteX")
           return std::make_unique<WhiteX>(task, maneuver->sampling_args);
         else
