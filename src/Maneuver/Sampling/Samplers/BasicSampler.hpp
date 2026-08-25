@@ -30,10 +30,10 @@
 
 // ISO C++ 98 headers.
 #include <map>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 
+#include <DUNE/Casts.hpp>
 #include <DUNE/IMC.hpp>
 #include <DUNE/Maneuvers/Maneuver.hpp>
 #include <DUNE/Utils/String.hpp>
@@ -192,7 +192,7 @@ namespace Maneuver
       std::string m_sampler_type;
 
       //! Parse argument from string to given type.
-      //! @param value string value to parse.
+      //! @param value_str string value to parse.
       //! @param name argument name.
       //! @throws std::runtime_error if the value cannot be parsed.
       //! @return parsed value.
@@ -200,16 +200,9 @@ namespace Maneuver
       static Type
       parseArgument(const std::string& value_str, const std::string& name)
       {
-        std::istringstream input(value_str);
         Type value;
 
-        if (!(input >> value))
-          throw std::runtime_error(
-            DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
-
-        // Reject trailing characters, such as "123abc" for an integer.
-        input >> std::ws;
-        if (!input.eof())
+        if (!DUNE::castLexical(value_str, value))
           throw std::runtime_error(
             DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
 
