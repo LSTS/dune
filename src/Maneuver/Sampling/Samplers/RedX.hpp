@@ -152,6 +152,12 @@ namespace Maneuver
         if (msg->action == IMC::SamplingAction::SA_COMMAND)
           return;
 
+        if (msg->type == IMC::SamplingAction::SAT_STATE_ERROR)
+        {
+          m_task->signalError("Received sampling error report.");
+          return;
+        }
+
         switch (m_state)
         {
           case RS_MOVING:
