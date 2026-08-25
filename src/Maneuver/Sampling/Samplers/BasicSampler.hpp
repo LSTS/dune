@@ -127,6 +127,34 @@ namespace Maneuver
         return value;
       }
 
+      template<typename Type>
+      static Type
+      getOptionalArgument(const std::map<std::string, std::string>& values,
+                          const std::string& name,
+                          const Type& default_value)
+      {
+        auto itr = values.find(name);
+
+        if (itr == values.end())
+          return default_value;
+
+        std::istringstream input(itr->second);
+        Type value;
+
+        if (!(input >> value))
+          throw std::runtime_error(
+            DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
+
+        // Check for any remaining characters in the stream.
+        // Ex: "123abc" would be invalid for an integer.
+        input >> std::ws;
+        if (!input.eof())
+          throw std::runtime_error(
+            DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
+
+        return value;
+      }
+
       void
       debug(const std::string& msg) const
       {
