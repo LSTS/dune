@@ -47,6 +47,7 @@ namespace Maneuver
       struct Configurations
       {
         DriftingDoris::Configuration drifting_doris;
+        MovingDoris::Configuration moving_doris;
         RedX::Configuration redx;
         WhiteX::Configuration whitex;
       };
@@ -66,7 +67,9 @@ namespace Maneuver
                                                  maneuver->sampling_args,
                                                  config.drifting_doris);
         else if (maneuver->sampling_type == "MovingDoris")
-          return std::make_unique<MovingDoris>(task, maneuver->sampling_args);
+          return std::make_unique<MovingDoris>(task,
+                                               maneuver->sampling_args,
+                                               config.moving_doris);
         else if (maneuver->sampling_type == "RedX")
           return std::make_unique<RedX>(task, maneuver->sampling_args, config.redx);
         else if (maneuver->sampling_type == "WhiteX")
