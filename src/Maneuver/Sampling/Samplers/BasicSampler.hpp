@@ -138,39 +138,51 @@ namespace Maneuver
         return parseArgument<Type>(itr->second, name);
       }
 
+      template<typename... Args>
       void
-      debug(const std::string& msg) const
+      debug(const char* format, Args... args) const
       {
+        const std::string msg = DUNE::Utils::String::str(format, args...);
         m_task->debug("[%s] >> %s", m_sampler_type.c_str(), msg.c_str());
       }
 
+      template<typename... Args>
       void
-      trace(const std::string& msg) const
+      trace(const char* format, Args... args) const
       {
+        const std::string msg = DUNE::Utils::String::str(format, args...);
         m_task->trace("[%s] >> %s", m_sampler_type.c_str(), msg.c_str());
       }
 
+      template<typename... Args>
       void
-      spew(const std::string& msg) const
+      spew(const char* format, Args... args) const
       {
+        const std::string msg = DUNE::Utils::String::str(format, args...);
         m_task->spew("[%s] >> %s", m_sampler_type.c_str(), msg.c_str());
       }
 
+      template<typename... Args>
       void
-      war(const std::string& msg) const
+      war(const char* format, Args... args) const
       {
+        const std::string msg = DUNE::Utils::String::str(format, args...);
         m_task->war("[%s] >> %s", m_sampler_type.c_str(), msg.c_str());
       }
 
+      template<typename... Args>
       void
-      err(const std::string& msg) const
+      err(const char* format, Args... args) const
       {
+        const std::string msg = DUNE::Utils::String::str(format, args...);
         m_task->err("[%s] >> %s", m_sampler_type.c_str(), msg.c_str());
       }
 
+      template<typename... Args>
       void
-      inf(const std::string& msg) const
+      inf(const char* format, Args... args) const
       {
+        const std::string msg = DUNE::Utils::String::str(format, args...);
         m_task->inf("[%s] >> %s", m_sampler_type.c_str(), msg.c_str());
       }
 
