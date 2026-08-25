@@ -99,6 +99,11 @@ namespace Maneuver
       //! Parent task.
       DUNE::Maneuvers::Maneuver* m_task;
 
+      //! Get a required argument from the values map.
+      //! @param values map of argument names and values.
+      //! @param name argument name.
+      //! @throws std::runtime_error if the argument is not found or cannot be parsed.
+      //! @return parsed value.
       template<typename Type>
       static Type
       getRequiredArgument(const std::map<std::string, std::string>& values,
@@ -110,23 +115,15 @@ namespace Maneuver
           throw std::runtime_error(
             DUNE::Utils::String::str("Missing required argument: %s", name.c_str()));
 
-        std::istringstream input(itr->second);
-        Type value;
-
-        if (!(input >> value))
-          throw std::runtime_error(
-            DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
-            
-        // Check for any remaining characters in the stream. 
-        // Ex: "123abc" would be invalid for an integer.
-        input >> std::ws;
-        if (!input.eof())
-          throw std::runtime_error(
-            DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
-
-        return value;
+        return parseArgument<Type>(itr->second, name);
       }
 
+      //! Get an optional argument from the values map, returning a default value if not found.
+      //! @param values map of argument names and values.
+      //! @param name argument name.
+      //! @param default_value value to return if the argument is not found.
+      //! @throws std::runtime_error if the argument cannot be parsed.
+      //! @return parsed value or default value.
       template<typename Type>
       static Type
       getOptionalArgument(const std::map<std::string, std::string>& values,
@@ -138,21 +135,7 @@ namespace Maneuver
         if (itr == values.end())
           return default_value;
 
-        std::istringstream input(itr->second);
-        Type value;
-
-        if (!(input >> value))
-          throw std::runtime_error(
-            DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
-
-        // Check for any remaining characters in the stream.
-        // Ex: "123abc" would be invalid for an integer.
-        input >> std::ws;
-        if (!input.eof())
-          throw std::runtime_error(
-            DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
-
-        return value;
+        return parseArgument<Type>(itr->second, name);
       }
 
       void
@@ -191,6 +174,9 @@ namespace Maneuver
         m_task->inf("[%s] >> %s", m_sampler_type.c_str(), msg.c_str());
       }
 
+      //! Send a SamplingAction command message.
+      //! @param action_type type of the action command.
+      //! @param description optional description for the command.
       void
       sendSamplingActionCmd(uint8_t action_type, const std::string& description = "")
       {
@@ -204,6 +190,31 @@ namespace Maneuver
     private:
       //! Sampler type name.
       std::string m_sampler_type;
+
+      //! Parse argument from string to given type.
+      //! @param value string value to parse.
+      //! @param name argument name.
+      //! @throws std::runtime_error if the value cannot be parsed.
+      //! @return parsed value.
+      template<typename Type>
+      static Type
+      parseArgument(const std::string& value, const std::string& name)
+      {
+        std::istringstream input(value);
+        Type value;
+
+        if (!(input >> value))
+          throw std::runtime_error(
+            DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
+
+        // Reject trailing characters, such as "123abc" for an integer.
+        input >> std::ws;
+        if (!input.eof())
+          throw std::runtime_error(
+            DUNE::Utils::String::str("Invalid value for argument: %s", name.c_str()));
+
+        return value;
+      }
     };
   }
 }
