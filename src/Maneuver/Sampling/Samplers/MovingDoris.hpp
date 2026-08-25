@@ -58,6 +58,13 @@ namespace Maneuver
         float bearing = 0.0f;
       };
 
+      //! Fixed sampler configuration.
+      struct Configuration
+      {
+        float setup_timeout = -1.0f;
+        float sampling_timeout = -1.0f;
+      };
+
       enum MovingDorisState
       {
         MD_MOVE_TO_TARGET,
@@ -66,6 +73,8 @@ namespace Maneuver
 
       //! Maneuver arguments.
       Arguments m_args;
+      //! Fixed sampler configuration.
+      const Configuration m_config;
       //! Current state of the MovingDoris maneuver.
       MovingDorisState m_state;
       //! Desired path for points p1 and p2.
@@ -80,11 +89,20 @@ namespace Maneuver
       const float m_sampling_timeout = 5.0f;
 
       //! Default constructor.
-      MovingDoris(DUNE::Maneuvers::Maneuver* task, const std::string& args):
+      MovingDoris(DUNE::Maneuvers::Maneuver* task,
+                  const std::string& args,
+                  const Configuration& config):
         BasicSampler(task, "MovingDoris"),
         m_args(parseArguments(args)),
+        m_config(config),
         m_state(MD_MOVE_TO_TARGET)
-      { }
+      {
+        if (m_config.setup_timeout <= 0.0f)
+          throw std::runtime_error("Invalid setup timeout.");
+
+        if (m_config.sampling_timeout <= 0.0f)
+          throw std::runtime_error("Invalid sampling timeout.");
+      }
 
       ~MovingDoris()
       { }
