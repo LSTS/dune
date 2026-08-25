@@ -198,9 +198,9 @@ namespace Maneuver
       //! @return parsed value.
       template<typename Type>
       static Type
-      parseArgument(const std::string& value, const std::string& name)
+      parseArgument(const std::string& value_str, const std::string& name)
       {
-        std::istringstream input(value);
+        std::istringstream input(value_str);
         Type value;
 
         if (!(input >> value))
