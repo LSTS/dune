@@ -60,6 +60,18 @@ namespace Maneuver
         .units(Units::Second)
         .description("Maximum time without a sampling state update");
 
+        param("MovingDoris -- Setup Timeout", m_sampler_config.moving_doris.setup_timeout)
+        .defaultValue("10.0")
+        .minimumValue("0.1")
+        .units(Units::Second)
+        .description("Maximum time allowed for sampling setup");
+
+        param("MovingDoris -- Sampling Timeout", m_sampler_config.moving_doris.sampling_timeout)
+        .defaultValue("5.0")
+        .minimumValue("0.1")
+        .units(Units::Second)
+        .description("Maximum time without a sampling state update");
+
         param("RedX -- Setup Timeout", m_sampler_config.redx.setup_timeout)
         .defaultValue("10.0")
         .minimumValue("0.1")
