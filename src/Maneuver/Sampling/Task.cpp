@@ -39,6 +39,8 @@ namespace Maneuver
 
     struct Task: public DUNE::Maneuvers::Maneuver
     {
+      //! Supported sampler types.
+      std::vector<std::string> m_supported_samplers;
       //! Sampler handle.
       std::unique_ptr<BasicSampler> m_sampler;
       //! Fixed sampler configurations.
@@ -48,6 +50,10 @@ namespace Maneuver
         DUNE::Maneuvers::Maneuver(name, ctx),
         m_sampler(nullptr)
       {
+        param("Supported Sampler Types", m_supported_samplers)
+        .defaultValue("")
+        .description("List of supported sampler types");
+
         param("DriftingDoris -- Setup Timeout", m_sampler_config.drifting_doris.setup_timeout)
         .defaultValue("10.0")
         .minimumValue("0.1")
@@ -127,6 +133,13 @@ namespace Maneuver
       void
       consume(const IMC::Sampling* msg)
       {
+        // Check if the requested sampler type is supported by the vehicle.
+        if (std::find(m_supported_samplers.begin(), m_supported_samplers.end(), msg->sampling_type) == m_supported_samplers.end())
+        {
+          signalError(String::str("Unsupported sampler type: %s", msg->sampling_type.c_str()));
+          return;
+        }
+
         try
         {
           m_sampler = Sampler::factory(this, msg, m_sampler_config);
