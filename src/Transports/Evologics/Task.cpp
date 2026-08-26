@@ -486,6 +486,9 @@ namespace Transports
         if (!m_args.src_level_control)
           return;
 
+        if (m_driver == NULL)
+          return;
+
         if (msg->medium != m_medium.medium)
         {
           spew("medium changed to %u", msg->medium);
