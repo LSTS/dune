@@ -38,6 +38,8 @@ namespace Maneuver
 {
   namespace Sampling
   {
+    using DUNE_NAMESPACES;
+
     //! Basic sampler
     class WhiteX: public BasicSampler
     {
@@ -61,9 +63,9 @@ namespace Maneuver
       //! Fixed sampler configuration.
       const Configuration m_config;
       //! Station keeping maneuver.
-      DUNE::Maneuvers::StationKeep* m_skeep;
+      Maneuvers::StationKeep* m_skeep;
       //! Timeout timer.
-      DUNE::Time::Counter<float> m_timeout_timer;
+      Time::Counter<float> m_timeout_timer;
 
       //! State machine states.
       enum WhitexState
@@ -79,7 +81,7 @@ namespace Maneuver
       WhitexState m_state;
 
       //! Default constructor.
-      WhiteX(DUNE::Maneuvers::Maneuver* task,
+      WhiteX(Maneuvers::Maneuver* task,
              const std::string& args,
              const Configuration& config):
         BasicSampler(task, "WhiteX"),
@@ -107,24 +109,24 @@ namespace Maneuver
       }
 
       void
-      onInit(const DUNE::IMC::Sampling* msg)
+      onInit(const IMC::Sampling* msg)
       {
-        DUNE::Memory::clear(m_skeep);
-        m_skeep = new DUNE::Maneuvers::StationKeep(m_task,
-                                                   msg->lat,
-                                                   msg->lon,
-                                                   m_args.radius,
-                                                   msg->z,
-                                                   msg->z_units,
-                                                   msg->speed,
-                                                   msg->speed_units);
+        Memory::clear(m_skeep);
+        m_skeep = new Maneuvers::StationKeep(m_task,
+                                             msg->lat,
+                                             msg->lon,
+                                             m_args.radius,
+                                             msg->z,
+                                             msg->z_units,
+                                             msg->speed,
+                                             msg->speed_units);
         
         
         debug("Moving to sampling point...");
       }
 
       void
-      onPathControlState(const DUNE::IMC::PathControlState* msg)
+      onPathControlState(const IMC::PathControlState* msg)
       {
         if (m_skeep == nullptr)
           return;
@@ -133,7 +135,7 @@ namespace Maneuver
       }
 
       void
-      onEstimatedState(const DUNE::IMC::EstimatedState* msg)
+      onEstimatedState(const IMC::EstimatedState* msg)
       {
         if (m_skeep == nullptr)
           return;
@@ -142,18 +144,24 @@ namespace Maneuver
       }
 
       void
-      onSamplingAction(const DUNE::IMC::SamplingAction* msg)
+      onSamplingAction(const IMC::SamplingAction* msg)
       {
         if (m_skeep == nullptr)
           return;
           
-        if (msg->action == DUNE::IMC::SamplingAction::SA_COMMAND)
+        if (msg->action == IMC::SamplingAction::SA_COMMAND)
           return;
+
+        if (msg->type == IMC::SamplingAction::SAT_STATE_ERROR)
+        {
+          m_task->signalError("Received sampling error report.");
+          return;
+        }
 
         switch (m_state)
         {
           case WS_MOVING:
-            if (msg->type != DUNE::IMC::SamplingAction::SAT_STATE_IDLE)
+            if (msg->type != IMC::SamplingAction::SAT_STATE_IDLE)
             {
               m_task->signalError("Received unexpected sampling state report while moving to sampling point.");
               return;
@@ -161,7 +169,7 @@ namespace Maneuver
             break;
 
           case WS_SETUP:
-            if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STARTING)
+            if (msg->type == IMC::SamplingAction::SAT_STATE_SAMPLING)
             {
               debug("Starting sampling...");
               m_timeout_timer.setTop(m_config.sampling_timeout);
@@ -170,14 +178,14 @@ namespace Maneuver
             break;
 
           case WS_SAMPLING:
-            if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_IDLE)
+            if (msg->type == IMC::SamplingAction::SAT_STATE_IDLE)
             {
               debug("Stopping sampling...");
               m_task->signalCompletion();
               return;
             }
-            else if (msg->type == DUNE::IMC::SamplingAction::SAT_STATE_SAMPLING ||
-                     msg->type == DUNE::IMC::SamplingAction::SAT_STATE_STOPPING)
+            else if (msg->type == IMC::SamplingAction::SAT_STATE_SAMPLING ||
+                     msg->type == IMC::SamplingAction::SAT_STATE_STOPPING)
             {
               m_timeout_timer.reset();
             }
@@ -200,10 +208,10 @@ namespace Maneuver
             if (m_skeep->isInside())
             {
               debug("Reached sampling point, setting up...");
-              m_skeep->setSpeed(m_args.speed, DUNE::IMC::SpeedUnits::SUNITS_METERS_PS);
+              m_skeep->setSpeed(m_args.speed, IMC::SpeedUnits::SUNITS_METERS_PS);
               m_state = WS_SETUP;
               m_timeout_timer.setTop(m_config.setup_timeout);
-              sendSamplingActionCmd(DUNE::IMC::SamplingAction::SAT_CMD_START);
+              sendSamplingActionCmd(IMC::SamplingAction::SAT_CMD_START);
             }
             break;
 
@@ -236,7 +244,7 @@ namespace Maneuver
       static Arguments
       parseArguments(const std::string& args)
       {
-        DUNE::Utils::TupleList args_list(args);
+        Utils::TupleList args_list(args);
         auto args_map = args_list.getMapReversed();
 
         Arguments parsed_args;
