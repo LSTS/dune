@@ -25,6 +25,7 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Author: Luís Venâncio                                                    *
 //***************************************************************************
 
 #ifndef DUNE_HARDWARE_GPIO_HPP_INCLUDED_
@@ -43,6 +44,11 @@ namespace DUNE
     // Export symbol.
     class DUNE_DLL_SYM GPIO;
 
+    namespace GPIOInternals
+    {
+      class GPIOInterface;
+    }
+
     class GPIO
     {
     public:
@@ -55,8 +61,14 @@ namespace DUNE
       };
 
       //! Initialize GPIO.
-      //! @param[in] number GPIO number.
+      //! @param[in] number GPIO line offset. On systems using the legacy
+      //! sysfs interface this is the global GPIO number.
       GPIO(unsigned int number);
+
+      //! Initialize GPIO from a character device.
+      //! @param[in] device GPIO chip character device.
+      //! @param[in] offset GPIO line offset within the chip.
+      GPIO(const std::string& device, unsigned int offset);
 
       //! Default destructor.
       ~GPIO(void);
@@ -93,18 +105,18 @@ namespace DUNE
       //! GPIO direction.
       Direction m_direction;
 
-#if defined(DUNE_OS_LINUX)
-      //! Path to GPIO direction file.
-      std::string m_file_dir;
-      //! Path to GPIO value file.
-      std::string m_file_val;
+      //! GPIO interface.
+      GPIOInternals::GPIOInterface* m_interface;
+      //! GPIO chip character device.
+      std::string m_device;
+      //! True if falling back to the legacy sysfs interface is safe.
+      bool m_allow_sysfs;
 
-      static void
-      writeToFile(const std::string& file, int value);
+      void
+      initializeBackend(void);
 
-      static void
-      writeToFile(const std::string& file, const std::string& value);
-#endif
+      void
+      fallbackToSysfs(Direction direction);
     };
   }
 }
