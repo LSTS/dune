@@ -198,6 +198,66 @@ select:focus-visible {
   min-height: 430px;
   padding: clamp(14px,2vw,22px)
 }
+#x-container.section-Sensors,
+#x-container.section-Power,
+#x-container.section-Logbook,
+#x-container.section-Announces {
+  display: flex;
+  height: calc(100vh - 155px);
+  height: calc(100dvh - 155px);
+  min-height: 0;
+  flex-direction: column
+}
+#x-container.section-Sensors #Sensors {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  flex: 1 1 auto;
+  overflow-y: auto
+}
+#x-container.section-Power #Power {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column
+}
+#x-container.section-Power #Power>div {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  flex: 1 1 auto;
+  overflow-y: auto
+}
+#x-container.section-Power #Power>button {
+  flex: 0 0 auto
+}
+#x-container.section-Logbook .logbook-filter {
+  flex: 0 0 auto
+}
+#x-container.section-Logbook #Logbook {
+  width: 100%;
+  height: auto!important;
+  min-height: 0;
+  max-height: none;
+  flex: 1 1 auto;
+  overflow-y: auto
+}
+#x-container.section-Announces #Announces {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column
+}
+#x-container.section-Announces .announces-container {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  flex: 1 1 auto
+}
 #x-copyright {
   clear: both;
   display: flex;
@@ -582,10 +642,18 @@ div#Sensors,
 }
 div#Sensors {
   display: grid;
+  max-height: calc(100vh - 155px);
   grid-template-columns: repeat(2,minmax(0,1fr));
   align-items: start;
   gap: 14px;
   padding: 2px
+}
+.sensor-column {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px
 }
 #Sensors table,
 #Power table {
@@ -934,6 +1002,9 @@ p.DEBUG {
     gap: 10px
   }
   .announce-column {
+    gap: 10px
+  }
+  .sensor-column {
     gap: 10px
   }
 }

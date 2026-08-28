@@ -30,6 +30,7 @@
 
 function Sensors(root_id) {
   this.create('Sensors', root_id);
+  this.m_tables = {};
 };
 
 Sensors.prototype = new BasicSection;
@@ -70,23 +71,41 @@ Sensors.prototype.m_msgs =
 };
 
 Sensors.prototype.updateSubSection = function (msg) {
-  for (var i = 0; i < this.m_base.childNodes.length; i++) {
-    var tbl = this.m_base.childNodes[i];
-    var hdr = tbl.firstChild.firstChild.firstChild.data;
-
-    if (hdr == this.translateAbbrev(msg.abbrev)) {
-      this.updateValue(tbl, msg);
-      return;
-    }
-    else if (this.translateAbbrev(msg.abbrev) < hdr) {
-      var ss = this.createSubSection(msg);
-      this.m_base.insertBefore(ss, tbl);
-      return;
-    }
+  var name = this.translateAbbrev(msg.abbrev);
+  if (this.m_tables[name]) {
+    this.updateValue(this.m_tables[name], msg);
+    return;
   }
 
-  var ss = this.createSubSection(msg);
-  this.m_base.appendChild(ss);
+  this.m_tables[name] = this.createSubSection(msg);
+};
+
+Sensors.prototype.renderColumns = function () {
+  var names = Object.keys(this.m_tables).sort();
+  var columnCount = window.innerWidth <= 900 ? 1 : 2;
+  var columns = [];
+  var columnWeights = [];
+
+  this.m_base.innerHTML = '';
+  for (var i = 0; i < columnCount; i++) {
+    var column = document.createElement('div');
+    column.className = 'sensor-column';
+    columns.push(column);
+    columnWeights.push(0);
+    this.m_base.appendChild(column);
+  }
+
+  for (var i = 0; i < names.length; i++) {
+    var targetColumn = 0;
+    for (var j = 1; j < columnCount; j++) {
+      if (columnWeights[j] < columnWeights[targetColumn])
+        targetColumn = j;
+    }
+
+    var table = this.m_tables[names[i]];
+    columns[targetColumn].appendChild(table);
+    columnWeights[targetColumn] += table.childNodes.length;
+  }
 };
 
 Sensors.prototype.translateAbbrev = function (abbrev) {
@@ -203,5 +222,6 @@ Sensors.prototype.update = function () {
         this.updateSubSection(msg);
       }
     }
+    this.renderColumns();
   }
 };

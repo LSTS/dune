@@ -84,6 +84,7 @@ Sections.prototype.hideSection = function (section) {
 
 Sections.prototype.showSection = function (section) {
   var btn = document.getElementById(section);
+  document.getElementById('x-container').className = 'section-' + section;
   if (section == 'Main')
     btn.className = 'FirstSelected';
   else
@@ -99,6 +100,7 @@ Sections.prototype.showSection = function (section) {
 
   if (section === 'Main' && typeof resizeTasksTable === 'function')
     window.requestAnimationFrame(resizeTasksTable);
+
 };
 
 Sections.prototype.toggleLogbookFilters = function (visible) {

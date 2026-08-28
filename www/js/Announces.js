@@ -70,30 +70,39 @@ Announces.prototype.update = function () {
   // Fixed priority order for sys_type
   const sysTypePriority = [2, 3, 4, 5, 0, 1, 6, 7, 8]; // Desired display order
 
+  // Keep only the newest Announce per source in each data cycle. A system may
+  // publish local and external variants with the same source identifier.
+  const announces = {};
   for (var i in g_data.dune_messages) {
     const msg = g_data.dune_messages[i];
     if (msg.abbrev === 'Announce') {
-      const sysTypeName = sysTypeMap[msg.sys_type] || 'UNKNOWN';
-      const sectionName = `(${sysTypeName}) ${msg.sys_name}`;
-      const sysType = parseInt(msg.sys_type);
-      // Source ID is unique even when several users share the same system name.
       const source = msg.src !== undefined ? msg.src : msg.source;
       const systemKey = source !== undefined ? `src:${source}` : `name:${msg.sys_type}:${msg.sys_name}`;
-
-      let section;
-      if (this.systems[systemKey]) {
-        section = this.systems[systemKey];
-        this.updateSection(section, msg, currentTime);
-      } else {
-        section = this.createSection(msg, currentTime);
-        section.dataset.systemKey = systemKey;
-        this.systems[systemKey] = section;
-      }
-
-      section.dataset.sysType = sysType;
-      section.dataset.sysName = sectionName.toLowerCase();
+      const previous = announces[systemKey];
+      if (!previous || Number(msg.timestamp) >= Number(previous.timestamp))
+        announces[systemKey] = msg;
     }
   }
+
+  Object.keys(announces).forEach(systemKey => {
+    const msg = announces[systemKey];
+    const sysTypeName = sysTypeMap[msg.sys_type] || 'UNKNOWN';
+    const sectionName = `(${sysTypeName}) ${msg.sys_name}`;
+    const sysType = parseInt(msg.sys_type);
+
+    let section;
+    if (this.systems[systemKey]) {
+      section = this.systems[systemKey];
+      this.updateSection(section, msg, currentTime);
+    } else {
+      section = this.createSection(msg, currentTime);
+      section.dataset.systemKey = systemKey;
+      this.systems[systemKey] = section;
+    }
+
+    section.dataset.sysType = sysType;
+    section.dataset.sysName = sectionName.toLowerCase();
+  });
 
   const sections = Object.values(this.systems);
   sections.forEach(section => this.updateFreshness(section, currentTime));
@@ -181,7 +190,8 @@ Announces.prototype.createSection = function (msg, currentTime) {
   // Add initial IPs
   this.addIPsToSection(list, msg);
 
-  section.dataset.lastSeen = this.getMessageTime(msg, currentTime);
+  section.dataset.remoteTimestamp = String(msg.timestamp);
+  section.dataset.lastSeen = currentTime;
 
   // Add mousemove event to dynamically position the tooltip
   title.addEventListener('mousemove', (e) => {
@@ -217,7 +227,11 @@ Announces.prototype.createSection = function (msg, currentTime) {
 Announces.prototype.updateSection = function (section, msg, currentTime) {
   const list = section.querySelector('.announce-list');
   this.addIPsToSection(list, msg);
-  section.dataset.lastSeen = this.getMessageTime(msg, currentTime);
+  const remoteTimestamp = String(msg.timestamp);
+  if (section.dataset.remoteTimestamp !== remoteTimestamp) {
+    section.dataset.remoteTimestamp = remoteTimestamp;
+    section.dataset.lastSeen = currentTime;
+  }
   this.updateFreshness(section, currentTime);
 };
 
@@ -231,11 +245,6 @@ Announces.prototype.updateFreshness = function (section, currentTime) {
   section.classList.toggle('is-offline', offline);
   const status = section.querySelector('.announce-status');
   status.textContent = offline ? 'Offline' : 'Online';
-};
-
-Announces.prototype.getMessageTime = function (msg, fallback) {
-  const timestamp = parseFloat(msg.timestamp) * 1000;
-  return Number.isFinite(timestamp) && timestamp > 0 ? timestamp : fallback;
 };
 
 // Method to add all services with their type, IP, and ports to a list
