@@ -96,6 +96,9 @@ Sections.prototype.showSection = function (section) {
     this.toggleLogbookFilters(true);
   else
     this.toggleLogbookFilters(false);
+
+  if (section === 'Main' && typeof resizeTasksTable === 'function')
+    window.requestAnimationFrame(resizeTasksTable);
 };
 
 Sections.prototype.toggleLogbookFilters = function (visible) {

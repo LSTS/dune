@@ -38,12 +38,45 @@ var g_dune_logbook = null;
 var g_logbook_timer = null;
 
 window.onload = function () {
+  initializeTheme();
   setConnected(false);
   g_sections.create();
+  resizeTasksTable();
+  window.addEventListener('resize', resizeTasksTable);
   requestData();
   requestLogs();
   requestLogBookEntries();
 };
+
+function resizeTasksTable() {
+  var tasks = document.getElementById('MainTaskTableDiv');
+  if (!tasks || tasks.offsetParent === null) {
+    return;
+  }
+
+  // Reserve room for the container padding and copyright below the table.
+  var footerSpace = 80;
+  var availableHeight = window.innerHeight - tasks.getBoundingClientRect().top - footerSpace;
+  tasks.style.maxHeight = Math.max(120, availableHeight) + 'px';
+}
+
+function initializeTheme() {
+  var savedTheme = localStorage.getItem('duneTheme');
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setTheme(savedTheme === 'dark' || (!savedTheme && prefersDark) ? 'dark' : 'light');
+}
+
+function setTheme(theme) {
+  var isDark = theme === 'dark';
+  document.body.className = isDark ? 'theme-dark' : 'theme-light';
+  document.getElementById('ThemeIcon').textContent = isDark ? '\u2600' : '\u263e';
+  document.getElementById('ThemeButton').title = isDark ? 'Use light theme' : 'Use dark theme';
+  localStorage.setItem('duneTheme', theme);
+}
+
+function toggleTheme() {
+  setTheme(document.body.classList.contains('theme-dark') ? 'light' : 'dark');
+}
 
 function requestLogBookEntries() {
   var options = Array();
@@ -77,16 +110,15 @@ function handleLogs(text) {
 
 function setConnected(value) {
   var icon = document.getElementById('ConnectionIcon');
-  icon.style.marginTop = '-7px';
-  icon.style.marginLeft = '0px';
-  icon.style.marginRight = '0px';
   if (value) {
     icon.src = g_icons.path('system-on');
     icon.title = 'Connected';
+    icon.alt = 'Connected';
   }
   else {
     icon.src = g_icons.path('system-off');
     icon.title = 'Disconnected';
+    icon.alt = 'Disconnected';
   }
 }
 
@@ -139,6 +171,7 @@ function handleData(text) {
 
   g_data = data;
   g_sections.update();
+  window.requestAnimationFrame(resizeTasksTable);
 };
 
 function show(section) {
