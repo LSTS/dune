@@ -91,6 +91,12 @@ namespace Maneuver
         war("Resume command received, but resume functionality is not implemented for this sampler.");
       }
 
+      virtual std::string
+      getEntityStateDescription(void) const
+      {
+        return "";
+      }
+
       virtual void
       run(void)
       { }
