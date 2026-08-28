@@ -211,6 +211,15 @@ namespace Maneuver
           return;
 
         m_sampler->run();
+
+        // The sampler may have requested deactivation after completing or
+        // encountering an error. Do not overwrite its terminal state.
+        if (isDeactivating())
+          return;
+
+        const std::string description = m_sampler->getEntityStateDescription();
+        if (!description.empty())
+          setEntityState(IMC::EntityState::ESTA_NORMAL, description);
       }
     };
   }
