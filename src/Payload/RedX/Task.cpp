@@ -357,7 +357,7 @@ namespace Payload
 
         if (paramChanged(m_args.filter_fill_up_timeout))
           spew("payload settings : filter fill up timeout set to : %d seconds", m_args.filter_fill_up_timeout);
-        
+
         if(paramChanged(m_args.purge_timeout))
           spew("payload settings : purge timeout set to : %.1f seconds", m_args.purge_timeout);
 
@@ -476,44 +476,44 @@ namespace Payload
 
         switch (msg->type)
         {
-        case IMC::SamplingAction::TypeEnum::SAT_CMD_START:
-          inf("received command to start sampling");
-          m_recv_req = REQ_START_SAMPLING;
-          break;
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_START:
+            inf("received command to start sampling");
+            m_recv_req = REQ_START_SAMPLING;
+            break;
 
-        case IMC::SamplingAction::TypeEnum::SAT_CMD_STOP:
-          inf("received command to stop sampling");
-          m_recv_req = REQ_STOP_SAMPLING;
-          break;
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_STOP:
+            inf("received command to stop sampling");
+            m_recv_req = REQ_STOP_SAMPLING;
+            break;
 
-        case IMC::SamplingAction::TypeEnum::SAT_CMD_PAUSE:
-          if(m_args.pausing_allowed)
-          {
-            m_recv_req = REQ_PAUSE_SAMPLING;
-            inf("received command to pause sampling action");
-          }
-          else
-            inf("received command to pause sampling action, but pausing is not allowed");
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_PAUSE:
+            if(m_args.pausing_allowed)
+            {
+              m_recv_req = REQ_PAUSE_SAMPLING;
+              inf("received command to pause sampling action");
+            }
+            else
+              inf("received command to pause sampling action, but pausing is not allowed");
 
-          break;
+            break;
 
-        case IMC::SamplingAction::TypeEnum::SAT_CMD_RESUME:
-          if(m_args.pausing_allowed)
-          {
-            m_recv_req = REQ_RESUME_SAMPLING;
-            inf("received command to resume sampling action");
-          }
-          else
-            inf("received command to resume sampling action, but pausing is not allowed");
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_RESUME:
+            if(m_args.pausing_allowed)
+            {
+              m_recv_req = REQ_RESUME_SAMPLING;
+              inf("received command to resume sampling action");
+            }
+            else
+              inf("received command to resume sampling action, but pausing is not allowed");
 
-          break;
+            break;
 
-        case IMC::SamplingAction::TypeEnum::SAT_CMD_QUERY_STATE:
-          dispatch(m_sa_report);
-          break;
-        
-        default:
-          break;
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_QUERY_STATE:
+            dispatch(m_sa_report);
+            break;
+
+          default:
+            break;
         }
       }
 
@@ -702,56 +702,56 @@ namespace Payload
 
         switch (m_curr_state)
         {
-        case STATE_INITIAL:
-          updateSamplingState(IMC::SamplingAction::SAT_STATE_STARTING, "initializing sampling action");
-          m_filters_used = 0;
-          break;
+          case STATE_INITIAL:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_STARTING, "initializing sampling action");
+            m_filters_used = 0;
+            break;
 
-        case STATE_DESCENDING_PUMP:
-          updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "descending pump to target depth");
-          startMotor();
-          m_motor_timer.setTop(m_args.motor_timeout);
-          break;
+          case STATE_DESCENDING_PUMP:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "descending pump to target depth");
+            startMotor();
+            m_motor_timer.setTop(m_args.motor_timeout);
+            break;
 
-        case STATE_SAMPLING:
-          updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "sampling at target depth");
-          startWaterPump();
-          m_tank_timer.setTop(m_args.tank_timeout);
-          break;
+          case STATE_SAMPLING:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "sampling at target depth");
+            startWaterPump();
+            m_tank_timer.setTop(m_args.tank_timeout);
+            break;
 
-        case STATE_PURGING:
-          updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "purging filters");
-          startPressPump();
-          openPurge();
-          m_purge_timer.setTop(m_args.purge_timeout);
-          break;
+          case STATE_PURGING:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "purging filters");
+            startPressPump();
+            openPurge();
+            m_purge_timer.setTop(m_args.purge_timeout);
+            break;
 
-        case STATE_FILTERING:
-          updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "filtering water");
-          openValve(m_curr_filter->first);
-          m_filter_tout_timer.setTop(m_args.filter_fill_up_timeout);
-          m_water_flow_timer.setTop(m_args.water_flow_timeout);
-          break;
+          case STATE_FILTERING:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "filtering water");
+            openValve(m_curr_filter->first);
+            m_filter_tout_timer.setTop(m_args.filter_fill_up_timeout);
+            m_water_flow_timer.setTop(m_args.water_flow_timeout);
+            break;
 
-        case STATE_DRAINING:
-          updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "draining water");
-          openPurge();
-          m_tank_timer.setTop(m_args.tank_timeout);
-          m_water_flow_timer.setTop(m_args.water_flow_timeout);
-          break;
+          case STATE_DRAINING:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "draining water");
+            openPurge();
+            m_tank_timer.setTop(m_args.tank_timeout);
+            m_water_flow_timer.setTop(m_args.water_flow_timeout);
+            break;
 
-        case STATE_COMPLETED:
-          updateSamplingState(IMC::SamplingAction::SAT_STATE_STOPPING, "sampling completed");
-          startMotor(true);
-          m_motor_timer.setTop(m_args.motor_timeout);
-          break;
+          case STATE_COMPLETED:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_STOPPING, "sampling completed");
+            startMotor(true);
+            m_motor_timer.setTop(m_args.motor_timeout);
+            break;
 
-        case STATE_IDLE:
-          updateSamplingState(IMC::SamplingAction::SAT_STATE_IDLE, "ready for sampling");
-          break;
+          case STATE_IDLE:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_IDLE, "ready for sampling");
+            break;
 
-        default:
-          break;
+          default:
+            break;
         }
       }
 
@@ -791,201 +791,201 @@ namespace Payload
       {
         switch (m_curr_state)
         {
-        case STATE_IDLE:
-          startRequested(false);
-          break;
-
-        case STATE_INITIAL:
-          if (startRequested() || stopRequested() || pauseRequested())
+          case STATE_IDLE:
+            startRequested(false);
             break;
 
-          if (m_args.number_of_filters > m_total_available && m_total_available > 0)
-          {
-            inf("number of filters to use (%u) is higher than total available filters (%u), adjusting to use all available filters", m_args.number_of_filters, m_total_available);
-            applyEntityParameter(&m_args.number_of_filters, m_total_available);
-          }
+          case STATE_INITIAL:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
 
-          if (nextFilter())
-          {
-            setState(STATE_DESCENDING_PUMP);
-            trace("transitioning to DESCENDING_PUMP state.");
-          }
-          else
-          {
-            setState(STATE_COMPLETED);
-            trace("no available filters: transitioning to COMPLETED state.");
-          }
+            if (m_args.number_of_filters > m_total_available && m_total_available > 0)
+            {
+              inf("number of filters to use (%u) is higher than total available filters (%u), adjusting to use all available filters", m_args.number_of_filters, m_total_available);
+              applyEntityParameter(&m_args.number_of_filters, m_total_available);
+            }
 
-          break;
+            if (nextFilter())
+            {
+              setState(STATE_DESCENDING_PUMP);
+              trace("transitioning to DESCENDING_PUMP state.");
+            }
+            else
+            {
+              setState(STATE_COMPLETED);
+              trace("no available filters: transitioning to COMPLETED state.");
+            }
 
-        case STATE_DESCENDING_PUMP:
-          if (startRequested() || stopRequested() || pauseRequested())
             break;
 
-          if (forceStateTransition())
-          {
-            stopMotor();
-            setState(STATE_SAMPLING);
-            trace("force state transition: transitioning to SAMPLING state.");
-          }
-          else if (m_curr_wp_depth >= m_args.wp_depth)
-          {
-            stopMotor();
-            setState(STATE_SAMPLING);
-            trace("reached target depth of %.2f meters: transitioning to SAMPLING state and starting water pump", m_args.wp_depth);
-          }
-          else if (m_motor_timer.overflow())
-          {
-            stopMotor();
-            setState(STATE_SAMPLING);
-            trace("motor actuation timeout reached: transitioning to SAMPLING state and starting water pump");
-          }
+          case STATE_DESCENDING_PUMP:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
 
-          break;
+            if (forceStateTransition())
+            {
+              stopMotor();
+              setState(STATE_SAMPLING);
+              trace("force state transition: transitioning to SAMPLING state.");
+            }
+            else if (m_curr_wp_depth >= m_args.wp_depth)
+            {
+              stopMotor();
+              setState(STATE_SAMPLING);
+              trace("reached target depth of %.2f meters: transitioning to SAMPLING state and starting water pump", m_args.wp_depth);
+            }
+            else if (m_motor_timer.overflow())
+            {
+              stopMotor();
+              setState(STATE_SAMPLING);
+              trace("motor actuation timeout reached: transitioning to SAMPLING state and starting water pump");
+            }
 
-        case STATE_SAMPLING:
-          if (startRequested() || stopRequested() || pauseRequested())
             break;
 
-          if (forceStateTransition())
-          {
-            stopWaterPump();
-            setState(STATE_PURGING);
-            trace("force state transition: transitioning to PURGING state.");
-          }
-          else if (m_max_wl)
-          {
-            stopWaterPump();
-            setState(STATE_PURGING);
-            trace("maximum water level reached: stopping water pump, transitioning to PURGING state and starting purge valve: timeout for purge operation: %.1f seconds", m_args.purge_timeout);
-          }
-          else if (m_tank_timer.overflow())
-          {
-            stopWaterPump();
-            setState(STATE_PURGING);
-            trace("tank operation timeout reached: stopping water pump, transitioning to PURGING state and starting purge valve: timeout for purge operation: %.1f seconds", m_args.purge_timeout);
-          }
+          case STATE_SAMPLING:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
 
-          break;
+            if (forceStateTransition())
+            {
+              stopWaterPump();
+              setState(STATE_PURGING);
+              trace("force state transition: transitioning to PURGING state.");
+            }
+            else if (m_max_wl)
+            {
+              stopWaterPump();
+              setState(STATE_PURGING);
+              trace("maximum water level reached: stopping water pump, transitioning to PURGING state and starting purge valve: timeout for purge operation: %.1f seconds", m_args.purge_timeout);
+            }
+            else if (m_tank_timer.overflow())
+            {
+              stopWaterPump();
+              setState(STATE_PURGING);
+              trace("tank operation timeout reached: stopping water pump, transitioning to PURGING state and starting purge valve: timeout for purge operation: %.1f seconds", m_args.purge_timeout);
+            }
 
-        case STATE_PURGING:
-          if (startRequested() || stopRequested() || pauseRequested())
             break;
 
-          if (forceStateTransition())
-          {
-            closePurge();
-            setState(STATE_FILTERING);
-            trace("force state transition: transitioning to FILTERING state.");
-          }
-          else if (m_purge_timer.overflow())
-          {
-            closePurge();
-            setState(STATE_FILTERING);
-            trace("stopping purge valve, transitioning to FILTERING state and starting filter valve");
-          }
+          case STATE_PURGING:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
 
-          break;
+            if (forceStateTransition())
+            {
+              closePurge();
+              setState(STATE_FILTERING);
+              trace("force state transition: transitioning to FILTERING state.");
+            }
+            else if (m_purge_timer.overflow())
+            {
+              closePurge();
+              setState(STATE_FILTERING);
+              trace("stopping purge valve, transitioning to FILTERING state and starting filter valve");
+            }
 
-        case STATE_FILTERING:
-          if (startRequested() || stopRequested() || pauseRequested())
             break;
 
-          if (forceStateTransition())
-          {
-            const auto id = m_curr_filter->first;
-            closeValve(id);
-            m_filters_used++;
-            m_curr_filter->second = false;
-            m_total_available--;
-            applyEntityParameter(&m_args.filters_names[id], "");
-            applyEntityParameter(&m_args.last_filter_used, id);
-            setState(STATE_DRAINING);
-            trace("force state transition: transitioning to DRAINING state and starting purge valve: timeout for draining operation: %.1f seconds", m_args.purge_timeout);
-          }
-          else if (!filtering())
-          {
-            const auto id = m_curr_filter->first;
-            closeValve(id);
-            m_filters_used++;
-            m_curr_filter->second = false;
-            m_total_available--;
-            applyEntityParameter(&m_args.filters_names[id], "");
-            applyEntityParameter(&m_args.last_filter_used, id);
-            setState(STATE_DRAINING);
-            trace("stopping filter valve, transitioning to DRAINING state and starting purge valve: timeout for draining operation: %.1f seconds", m_args.purge_timeout);
-          }
+          case STATE_FILTERING:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
 
-          break;
+            if (forceStateTransition())
+            {
+              const auto id = m_curr_filter->first;
+              closeValve(id);
+              m_filters_used++;
+              m_curr_filter->second = false;
+              m_total_available--;
+              applyEntityParameter(&m_args.filters_names[id], "");
+              applyEntityParameter(&m_args.last_filter_used, id);
+              setState(STATE_DRAINING);
+              trace("force state transition: transitioning to DRAINING state and starting purge valve: timeout for draining operation: %.1f seconds", m_args.purge_timeout);
+            }
+            else if (!filtering())
+            {
+              const auto id = m_curr_filter->first;
+              closeValve(id);
+              m_filters_used++;
+              m_curr_filter->second = false;
+              m_total_available--;
+              applyEntityParameter(&m_args.filters_names[id], "");
+              applyEntityParameter(&m_args.last_filter_used, id);
+              setState(STATE_DRAINING);
+              trace("stopping filter valve, transitioning to DRAINING state and starting purge valve: timeout for draining operation: %.1f seconds", m_args.purge_timeout);
+            }
 
-        case STATE_DRAINING:
-          if (startRequested() || stopRequested() || pauseRequested())
             break;
 
-          if (forceStateTransition())
-          {
-            stopPressPump();
-            closePurge();
-            setState(STATE_FILTERING);
-            trace("force state transition: transitioning to FILTERING state and starting filter valve.");
+          case STATE_DRAINING:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
+
+            if (forceStateTransition())
+            {
+              stopPressPump();
+              closePurge();
+              setState(STATE_FILTERING);
+              trace("force state transition: transitioning to FILTERING state and starting filter valve.");
+              break;
+            }
+            else if (!draining())
+            {
+              stopPressPump();
+              closePurge();
+              setState(STATE_NEXT_FILTER);
+              trace("stopping purge valve, transitioning to NEXT_FILTER state");
+            }
+
             break;
-          }
-          else if (!draining())
-          {
-            stopPressPump();
-            closePurge();
-            setState(STATE_NEXT_FILTER);
-            trace("stopping purge valve, transitioning to NEXT_FILTER state");
-          }
 
-          break;
+          case STATE_NEXT_FILTER:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
 
-        case STATE_NEXT_FILTER:
-          if (startRequested() || stopRequested() || pauseRequested())
+            if (nextFilter())
+            {
+              setState(STATE_SAMPLING);
+              trace("next filter: transitioning to SAMPLING state");
+            }
+            else
+            {
+              setState(STATE_COMPLETED);
+              trace("transitioning to COMPLETED state");
+            }
+
             break;
 
-          if (nextFilter())
-          {
-            setState(STATE_SAMPLING);
-            trace("next filter: transitioning to SAMPLING state");
-          }
-          else
-          {
-            setState(STATE_COMPLETED);
-            trace("transitioning to COMPLETED state");
-          }
+          case STATE_COMPLETED:
+            if (forceStateTransition())
+            {
+              stopMotor();
+              setState(STATE_IDLE);
+              trace("force state transition: transitioning to IDLE state.");
+            }
+            else if (m_curr_wp_depth <= 0.0f)
+            {
+              stopMotor();
+              setState(STATE_IDLE);
+              trace("water pump recovery complete: transitioning to IDLE state");
+            }
+            else if (m_motor_timer.overflow())
+            {
+              stopMotor();
+              setState(STATE_IDLE);
+              trace("motor actuation timeout reached: transitioning to IDLE state");
+            }
 
-          break;
+            break;
 
-        case STATE_COMPLETED:
-          if (forceStateTransition())
-          {
-            stopMotor();
+          case STATE_PAUSED:
+            resumeRequested();
+            break;
+
+          default:
             setState(STATE_IDLE);
-            trace("force state transition: transitioning to IDLE state.");
-          }
-          else if (m_curr_wp_depth <= 0.0f)
-          {
-            stopMotor();
-            setState(STATE_IDLE);
-            trace("water pump recovery complete: transitioning to IDLE state");
-          }
-          else if (m_motor_timer.overflow())
-          {
-            stopMotor();
-            setState(STATE_IDLE);
-            trace("motor actuation timeout reached: transitioning to IDLE state");
-          }
-          
-          break;
-
-        case STATE_PAUSED:
-          resumeRequested();
-          break;
-          
-        default:
-          setState(STATE_IDLE);
-          break;
+            break;
         }
 
         if (m_report_state_timer.overflow())
@@ -995,7 +995,7 @@ namespace Payload
           m_report_state_timer.reset();
         }
       }
-      
+
       void
       produceEntityStateDescription(std::string& description)
       {
@@ -1004,42 +1004,42 @@ namespace Payload
 
         switch (m_curr_state)
         {
-        case STATE_INITIAL:
-          ss << " | initializing sampling action";
-          break;
+          case STATE_INITIAL:
+            ss << " | initializing sampling action";
+            break;
 
-        case STATE_DESCENDING_PUMP:
-          ss << " | descending water pump";
-          break;
+          case STATE_DESCENDING_PUMP:
+            ss << " | descending water pump";
+            break;
 
-        case STATE_SAMPLING:
-          ss << " | sampling at depth " << m_args.wp_depth << " meters";
-          break;
+          case STATE_SAMPLING:
+            ss << " | sampling at depth " << m_args.wp_depth << " meters";
+            break;
 
-        case STATE_PURGING:
-          ss << " | purging filters";
-          break;
+          case STATE_PURGING:
+            ss << " | purging filters";
+            break;
 
-        case STATE_FILTERING:
-          ss << " | filtering | using filter " << m_curr_filter->first;
-          break;
+          case STATE_FILTERING:
+            ss << " | filtering | using filter " << m_curr_filter->first;
+            break;
 
-        case STATE_DRAINING:
-          ss << " | draining";
-          break;
+          case STATE_DRAINING:
+            ss << " | draining";
+            break;
 
-        case STATE_NEXT_FILTER:
-          ss << " | next filter";
-          break;
+          case STATE_NEXT_FILTER:
+            ss << " | next filter";
+            break;
 
-        case STATE_COMPLETED:
-          ss << " | completed | ascending water pump";
-          break;
+          case STATE_COMPLETED:
+            ss << " | completed | ascending water pump";
+            break;
 
-        case STATE_IDLE:
-        default:
-          description = "idle";
-          return;
+          case STATE_IDLE:
+          default:
+            description = "idle";
+            return;
         }
 
         description = ss.str();
