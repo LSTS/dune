@@ -116,7 +116,11 @@ namespace Maneuver
 
       void
       onReset(void)
-      { }
+      {
+        m_state = MD_MOVE_TO_TARGET;
+        m_next_point = 0;
+        m_aligned = false;
+      }
 
       void
       onInit(const DUNE::IMC::Sampling* msg)
@@ -294,6 +298,14 @@ namespace Maneuver
         m_task->signalProgress();
       }
 
+      std::string
+      getEntityStateDescription(void) const override
+      {
+        return String::str("%s - %s",
+                           Status::getString(Status::CODE_ACTIVE),
+                           stateToString(m_state).c_str());
+      }
+
     private:
       const std::map<MovingDorisState, std::string> m_state_names = {
         {MD_MOVE_TO_TARGET, "Moving to target"},
@@ -342,7 +354,7 @@ namespace Maneuver
       }
 
       std::string
-      stateToString(MovingDorisState state)
+      stateToString(MovingDorisState state) const
       {
         auto it = m_state_names.find(state);
         if (it != m_state_names.end())
@@ -381,6 +393,7 @@ namespace Maneuver
         m_task->setControl(IMC::CL_NONE);
         sendSamplingActionCmd(IMC::SamplingAction::SAT_CMD_PAUSE);
       }
+
     };
   }
 }
