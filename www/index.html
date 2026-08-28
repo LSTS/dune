@@ -45,6 +45,18 @@
             <li id="Logbook"><a href="javascript:show('Logbook')">Logbook</a></li>
             <li id="Announces"><a href="javascript:show('Announces')">Discovery Tool</a></li>
             <!-- <li id="Help"><a href="#">Help</a></li> -->
+            <li class="Static traffic-item">
+              <span id="NetworkTraffic" title="Traffic since this page was opened. Transmitted bytes are estimated.">
+                <span class="traffic-rx" title="Data received since this page was opened">
+                  <span class="traffic-arrow" aria-hidden="true">&#8595;</span>
+                  <strong id="TrafficReceived">0 B</strong>
+                </span>
+                <span class="traffic-tx" title="Estimated data sent since this page was opened">
+                  <span class="traffic-arrow" aria-hidden="true">&#8593;</span>
+                  <strong id="TrafficSent">0 B</strong>
+                </span>
+              </span>
+            </li>
             <li class="Static status-item"><span class="icon-control"><img id="ConnectionIcon" src="images/icons/system-off.png"
                 title="Disconnected" alt="Disconnected" /></span></li>
             <li class="Static theme-item"><button id="ThemeButton" class="icon-control" type="button" onclick="toggleTheme()"

@@ -36,17 +36,127 @@ var g_data = null;
 var g_dune_logs = null;
 var g_dune_logbook = null;
 var g_logbook_timer = null;
+var g_data_request_pending = false;
+var g_logbook_request_pending = false;
+
+var c_poll_interval = 4000;
+var c_background_poll_interval = 15000;
+var g_network_received = 0;
+var g_network_sent = 0;
+var g_network_tracking_ready = false;
 
 window.onload = function () {
   initializeTheme();
+  initializeNetworkTraffic();
   setConnected(false);
   g_sections.create();
   resizeTasksTable();
   window.addEventListener('resize', resizeTasksTable);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
   requestData();
   requestLogs();
-  requestLogBookEntries();
 };
+
+function formatTrafficBytes(bytes) {
+  var units = ['B', 'KB', 'MB', 'GB'];
+  var unit = 0;
+  bytes = Math.max(0, Number(bytes) || 0);
+
+  while (bytes >= 1024 && unit < units.length - 1) {
+    bytes /= 1024;
+    unit++;
+  }
+
+  var precision = unit === 0 ? 0 : (bytes < 10 ? 1 : 0);
+  return bytes.toFixed(precision) + ' ' + units[unit];
+}
+
+function updateNetworkTraffic() {
+  document.getElementById('TrafficReceived').textContent = formatTrafficBytes(g_network_received);
+  document.getElementById('TrafficSent').textContent = formatTrafficBytes(g_network_sent);
+}
+
+function estimateRequestBytes(url) {
+  // Browsers do not expose request-header sizes. This covers a typical GET
+  // request and keeps the transmitted counter useful without server changes.
+  return 420 + String(url || '').length;
+}
+
+function initializeNetworkTraffic() {
+  if (window.performance && performance.getEntriesByType) {
+    var entries = performance.getEntriesByType('navigation').concat(performance.getEntriesByType('resource'));
+    for (var i = 0; i < entries.length; i++) {
+      g_network_received += entries[i].transferSize || entries[i].encodedBodySize || 0;
+      g_network_sent += estimateRequestBytes(entries[i].name);
+    }
+  }
+
+  g_network_tracking_ready = true;
+  updateNetworkTraffic();
+}
+
+function recordNetworkRequest(url) {
+  if (!g_network_tracking_ready)
+    return;
+  g_network_sent += estimateRequestBytes(url);
+  updateNetworkTraffic();
+}
+
+function recordNetworkResponse(bytes) {
+  if (!g_network_tracking_ready)
+    return;
+  g_network_received += Math.max(0, Number(bytes) || 0);
+  updateNetworkTraffic();
+}
+
+function dataPollInterval() {
+  return document.hidden ? c_background_poll_interval : c_poll_interval;
+}
+
+function scheduleDataRequest(delay) {
+  if (g_timer != null)
+    clearTimeout(g_timer);
+  g_timer = setTimeout(requestData, delay);
+}
+
+function finishDataRequest() {
+  if (!g_data_request_pending)
+    return;
+
+  g_data_request_pending = false;
+  scheduleDataRequest(dataPollInterval());
+}
+
+function isLogbookVisible() {
+  return !document.hidden && g_sections.current() === 'Logbook';
+}
+
+function scheduleLogBookRequest(delay) {
+  if (g_logbook_timer != null)
+    clearTimeout(g_logbook_timer);
+
+  g_logbook_timer = null;
+  if (isLogbookVisible())
+    g_logbook_timer = setTimeout(requestLogBookEntries, delay);
+}
+
+function finishLogBookRequest() {
+  if (!g_logbook_request_pending)
+    return;
+
+  g_logbook_request_pending = false;
+  scheduleLogBookRequest(c_poll_interval);
+}
+
+function handleVisibilityChange() {
+  if (!g_data_request_pending)
+    scheduleDataRequest(document.hidden ? c_background_poll_interval : 0);
+
+  if (isLogbookVisible() && !g_logbook_request_pending)
+    scheduleLogBookRequest(0);
+  else if (!isLogbookVisible())
+    scheduleLogBookRequest(c_poll_interval);
+}
 
 function resizeTasksTable() {
   var tasks = document.getElementById('MainTaskTableDiv');
@@ -79,20 +189,29 @@ function toggleTheme() {
 }
 
 function requestLogBookEntries() {
+  g_logbook_timer = null;
+  if (!isLogbookVisible() || g_logbook_request_pending)
+    return;
+
+  g_logbook_request_pending = true;
   var options = Array();
   options.timeout = 10000;
-  options.timeoutHandler = timeoutHandler;
-  options.errorHandler = errorHandler;
+  options.timeoutHandler = function () {
+    timeoutHandler();
+    finishLogBookRequest();
+  };
+  options.errorHandler = function (status, status_text) {
+    errorHandler(status, status_text);
+    finishLogBookRequest();
+  };
   HTTP.get('dune/state/logbook.js', handleLogBookEntries, options);
 }
 
 function handleLogBookEntries(text) {
-  if (g_logbook_timer == null)
-    g_logbook_timer = setInterval(requestLogBookEntries, 4000);
-
   eval(text);
   g_dune_logbook = logbook;
-  g_sections.update();
+  g_logbook.update();
+  finishLogBookRequest();
 };
 
 function requestLogs() {
@@ -131,18 +250,26 @@ function errorHandler(status, status_text) {
 }
 
 function requestData() {
+  g_timer = null;
+  if (g_data_request_pending)
+    return;
+
+  g_data_request_pending = true;
   var options = Array();
   options.timeout = 10000;
-  options.timeoutHandler = timeoutHandler;
-  options.errorHandler = errorHandler;
+  options.timeoutHandler = function () {
+    timeoutHandler();
+    finishDataRequest();
+  };
+  options.errorHandler = function (status, status_text) {
+    errorHandler(status, status_text);
+    finishDataRequest();
+  };
   HTTP.get('dune/state/messages.js', handleData, options);
 };
 
 function handleData(text) {
   setConnected(true);
-
-  if (g_timer == null)
-    g_timer = setInterval(requestData, 4000);
 
   eval(text);
 
@@ -172,8 +299,13 @@ function handleData(text) {
   g_data = data;
   g_sections.update();
   window.requestAnimationFrame(resizeTasksTable);
+  finishDataRequest();
 };
 
 function show(section) {
   g_sections.show(section);
+  if (section === 'Logbook' && !g_logbook_request_pending)
+    scheduleLogBookRequest(0);
+  else if (section !== 'Logbook')
+    scheduleLogBookRequest(c_poll_interval);
 };
