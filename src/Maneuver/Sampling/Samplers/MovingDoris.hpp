@@ -63,12 +63,15 @@ namespace Maneuver
       {
         float setup_timeout = -1.0f;
         float sampling_timeout = -1.0f;
+        float alignment_threshold = 15.0f; // Degrees
       };
 
       enum MovingDorisState
       {
         MD_MOVE_TO_TARGET,
+        MD_SETUP,
         MD_SAMPLING,
+        MD_REPOSITIONING
       };
 
       //! Maneuver arguments.
@@ -80,13 +83,13 @@ namespace Maneuver
       //! Desired path for points p1 and p2.
       IMC::DesiredPath m_path_p[2];
       //! Next point index
-      uint8_t m_next_point = 0;
+      uint8_t m_next_point;
       //! Timeout timer.
       DUNE::Time::Counter<float> m_timeout_timer;
-      //! Setup timeout.
-      const float m_setup_timeout = 10.0f;
-      //! Sampling timeout.
-      const float m_sampling_timeout = 5.0f;
+      //! Alignment threshold for repositioning (radians).
+      float m_alignment_threshold;
+      //! Alignment flag for repositioning
+      bool m_aligned;
 
       //! Default constructor.
       MovingDoris(DUNE::Maneuvers::Maneuver* task,
@@ -95,13 +98,17 @@ namespace Maneuver
         BasicSampler(task, "MovingDoris"),
         m_args(parseArguments(args)),
         m_config(config),
-        m_state(MD_MOVE_TO_TARGET)
+        m_state(MD_MOVE_TO_TARGET),
+        m_next_point(0),
+        m_aligned(false)
       {
         if (m_config.setup_timeout <= 0.0f)
           throw std::runtime_error("Invalid setup timeout.");
 
         if (m_config.sampling_timeout <= 0.0f)
           throw std::runtime_error("Invalid sampling timeout.");
+
+        m_alignment_threshold = std::fabs(Angles::radians(m_config.alignment_threshold));
       }
 
       ~MovingDoris()
@@ -127,7 +134,7 @@ namespace Maneuver
         path.speed_units = msg->speed_units;
         path.flags |= IMC::DesiredPath::FL_DIRECT;
         m_task->dispatch(path);
-        m_state = MD_MOVE_TO_TARGET;
+        setState(MD_MOVE_TO_TARGET);
 
  
         // Get bearing
@@ -171,24 +178,28 @@ namespace Maneuver
       {
         switch (m_state)
         {
-        case MD_MOVE_TO_TARGET:
-          if (msg->flags & IMC::PathControlState::FL_NEAR)
-          {
-            debug("Reached sampling point, starting sampling...");
-            sendToNextPoint();
-            m_state = MD_SAMPLING;
-            m_timeout_timer.setTop(300.0);
-          }
-          break;
-        
-        case MD_SAMPLING:
-          if (msg->flags & IMC::PathControlState::FL_NEAR)
-          {
-            sendToNextPoint();
-          }
-          break;
+          case MD_MOVE_TO_TARGET:
+            if (msg->flags & IMC::PathControlState::FL_NEAR)
+              startSetup();
+            break;
 
-        default:
+          case MD_SETUP:
+            break;
+
+          case MD_SAMPLING:
+            if (msg->flags & IMC::PathControlState::FL_NEAR) // Suspended sampling for repositioning
+              suspendSampling();
+            break;
+
+          case MD_REPOSITIONING:
+            if (std::fabs(msg->course_error) < m_alignment_threshold && !m_aligned)
+            { 
+              sendSamplingActionCmd(IMC::SamplingAction::SAT_CMD_RESUME);
+              m_aligned = true;
+            }
+            break;
+
+          default:
           break;
         }
       }
@@ -200,36 +211,97 @@ namespace Maneuver
       }
 
       void
-      onSamplingAction(const DUNE::IMC::SamplingAction* msg)
+      onSamplingAction(const IMC::SamplingAction* msg)
       {
+        if (msg->action == IMC::SamplingAction::SA_COMMAND)
+          return;
+
+        if (msg->type == IMC::SamplingAction::SAT_STATE_ERROR)
+        {
+          m_task->signalError("Received sampling error report.");
+          return;
+        }
+
+        switch (m_state)
+        {
+          case MD_MOVE_TO_TARGET:
+            if (msg->type != IMC::SamplingAction::SAT_STATE_IDLE)
+            {
+              m_task->signalError("Received unexpected sampling state report while moving to sampling point.");
+              return;
+            }
+            break;
+
+          case MD_SETUP:
+            if (msg->type == IMC::SamplingAction::SAT_STATE_SAMPLING)
+              startSampling();
+            break;
+
+          case MD_SAMPLING:
+            if (msg->type == IMC::SamplingAction::SAT_STATE_IDLE)
+            {
+              m_task->signalCompletion();
+              return;
+            }
+            else if (msg->type == IMC::SamplingAction::SAT_STATE_PAUSED) // Sampling is suspended for repositioning
+            {
+              reposition();
+            }
+            else if (msg->type == IMC::SamplingAction::SAT_STATE_SAMPLING ||
+                     msg->type == IMC::SamplingAction::SAT_STATE_STOPPING)
+            {
+              m_timeout_timer.reset();
+            }
+            break;
+
+          case MD_REPOSITIONING:
+            if (msg->type == IMC::SamplingAction::SAT_STATE_SAMPLING)
+            {
+              m_timeout_timer.setTop(m_config.sampling_timeout);
+              setState(MD_SAMPLING);
+            }
+            break;
+
+          default:
+            break;
+        }
         
       }
 
       void
       run(void)
       {
-        switch (m_state)
+        if (m_timeout_timer.overflow())
         {
-        case MD_MOVE_TO_TARGET:
-          /* code */
-          break;
-
-        case MD_SAMPLING:
-          if (m_timeout_timer.overflow())
+          switch (m_state)
           {
-            debug("Sampling timeout reached, stopping maneuver...");
-            m_task->signalCompletion();
+            case MD_SETUP:
+                m_task->signalError("Setup timeout reached, stopping maneuver...");
+                return;
+              break;
+
+            case MD_SAMPLING:
+                m_task->signalError(DUNE::Utils::String::str("No sampling state report for more than %f seconds,"
+                                                            "stopping maneuver...", m_config.sampling_timeout));
+                return;
+              break;
+
+            default:
+              break;
           }
-          break;
-        
-        default:
-          break;
         }
 
         m_task->signalProgress();
       }
 
     private:
+      const std::map<MovingDorisState, std::string> m_state_names = {
+        {MD_MOVE_TO_TARGET, "Moving to target"},
+        {MD_SETUP, "Setting up"},
+        {MD_SAMPLING, "Sampling"},
+        {MD_REPOSITIONING, "Repositioning"},
+      };
+
       static Arguments
       parseArguments(const std::string& args)
       {
@@ -256,13 +328,61 @@ namespace Maneuver
       sendToNextPoint()
       {
         debug("Switching point...");
+        m_task->setControl(IMC::CL_PATH);
         m_task->dispatch(m_path_p[m_next_point]);
         m_next_point = (m_next_point + 1) % 2;
+      }
+
+      void
+      setState(MovingDorisState state)
+      {
+        debug("State changed: %s -> %s", stateToString(m_state).c_str(), 
+                                         stateToString(state).c_str());
+        m_state = state;
+      }
+
+      std::string
+      stateToString(MovingDorisState state)
+      {
+        auto it = m_state_names.find(state);
+        if (it != m_state_names.end())
+          return it->second;
+        return "Unknown";
+      }
+
+      void
+      startSetup()
+      {
+        m_task->setControl(IMC::CL_NONE);
+        sendSamplingActionCmd(IMC::SamplingAction::SAT_CMD_START);
+        m_timeout_timer.setTop(m_config.setup_timeout);
+        setState(MD_SETUP);
+      }
+
+      void
+      startSampling()
+      {
+        sendToNextPoint();
+        m_timeout_timer.setTop(m_config.sampling_timeout);
+        setState(MD_SAMPLING);
+      }
+
+      void
+      reposition()
+      {
+        sendToNextPoint();
+        m_aligned = false;
+        setState(MD_REPOSITIONING);
+      }
+
+      void
+      suspendSampling()
+      {
+        m_task->setControl(IMC::CL_NONE);
+        sendSamplingActionCmd(IMC::SamplingAction::SAT_CMD_PAUSE);
       }
     };
   }
 }
 
 #endif
-
-
