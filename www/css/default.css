@@ -790,7 +790,9 @@ div#Sensors {
   width: 36px
 }
 #Power table {
+  display: block;
   align-self: start;
+  width: 100%;
   margin: 0;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -798,9 +800,18 @@ div#Sensors {
   box-shadow: 0 6px 18px rgba(20,45,58,.08);
   overflow: hidden
 }
+#Power table>tbody,
+#Power table>tr,
+#Power table>tbody>tr,
+#Power table tr>th,
+#Power table tr>td {
+  display: block;
+  width: 100%
+}
 #Power>div {
   display: grid;
   grid-template-columns: repeat(2,minmax(0,1fr));
+  grid-auto-rows: max-content;
   align-items: start;
   gap: 14px;
   padding: 2px
