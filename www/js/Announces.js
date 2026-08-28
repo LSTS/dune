@@ -109,7 +109,24 @@ Announces.prototype.update = function () {
     return a.dataset.sysName.localeCompare(b.dataset.sysName);
   });
 
-  sections.forEach(section => this.m_tbl.appendChild(section));
+  this.renderColumns(sections);
+};
+
+Announces.prototype.renderColumns = function (sections) {
+  const columnCount = window.innerWidth <= 900 ? 1 : 2;
+  const columns = [];
+
+  this.m_tbl.innerHTML = '';
+  for (let i = 0; i < columnCount; i++) {
+    const column = document.createElement('div');
+    column.classList.add('announce-column');
+    columns.push(column);
+    this.m_tbl.appendChild(column);
+  }
+
+  sections.forEach((section, index) => {
+    columns[index % columnCount].appendChild(section);
+  });
 };
 
 // Method to create a new section

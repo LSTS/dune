@@ -376,18 +376,24 @@ select:focus {
   background: transparent
 }
 #MainTaskTableDiv {
-  width: 100%;
+  width: 90%;
   min-height: 100px;
   max-height: 50vh;
   margin: 0 auto;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(135deg,var(--surface),var(--soft));
+  box-shadow: 0 8px 24px rgba(20,45,58,.08);
   overflow: auto
 }
 #MainTaskTable {
+  width: 100%;
   border-collapse: separate;
-  border-spacing: 0 6px
+  border-spacing: 0 7px
 }
 #MainTaskTable tr {
-  background: var(--soft);
+  background: transparent;
   transition: transform .12s,box-shadow .12s
 }
 #MainTaskTable tr:hover {
@@ -396,15 +402,43 @@ select:focus {
 }
 #MainTaskTable th,
 #MainTaskTable td {
-  padding: 8px 12px;
+  padding: 9px 11px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: transparent;
   text-align: left
 }
 #MainTaskTable th {
   width: 170px;
-  border-radius: 8px 0 0 8px
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 750
 }
 #MainTaskTable td:last-child {
+  border-right: 1px solid var(--border);
   border-radius: 0 8px 8px 0
+}
+#MainTaskTable td:first-child {
+  width: 34px!important;
+  padding-right: 5px;
+  border-left: 4px solid var(--info);
+  border-radius: 9px 0 0 9px
+}
+#MainTaskTable td:nth-child(3)>div {
+  display: inline-flex!important;
+  min-width: 76px;
+  justify-content: center;
+  padding: 4px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--soft);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700
+}
+#MainTaskTable td:nth-child(4) {
+  color: var(--muted);
+  font-size: 11px
 }
 .cpu-icon {
   display: inline-block;
@@ -416,15 +450,23 @@ select:focus {
   background-repeat: no-repeat
 }
 #MainTaskTable th.rounded-corner {
-  border-left: 3px solid var(--info);
-  border-radius: 6px
+  border-left: 0;
+  border-radius: 0
 }
 #MainTaskTable tr[data-state="0"] th.rounded-corner {
+  border-left-color: var(--warning)
+}
+#MainTaskTable tr[data-state="0"] td:first-child {
   border-left-color: var(--warning)
 }
 #MainTaskTable tr[data-state="2"] th.rounded-corner,
 #MainTaskTable tr[data-state="3"] th.rounded-corner,
 #MainTaskTable tr[data-state="4"] th.rounded-corner {
+  border-left-color: var(--error)
+}
+#MainTaskTable tr[data-state="2"] td:first-child,
+#MainTaskTable tr[data-state="3"] td:first-child,
+#MainTaskTable tr[data-state="4"] td:first-child {
   border-left-color: var(--error)
 }
 .gauge-container {
@@ -552,20 +594,43 @@ div#Sensors {
   width: 36px
 }
 #Power table {
+  align-self: start;
+  margin: 0;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
+  background: linear-gradient(145deg,var(--surface),var(--soft));
+  box-shadow: 0 6px 18px rgba(20,45,58,.08);
   overflow: hidden
 }
+#Power>div {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  align-items: start;
+  gap: 14px;
+  padding: 2px
+}
+#Power th {
+  padding: 11px 14px;
+  border-radius: 10px 10px 4px 4px;
+  background: linear-gradient(100deg,var(--accent),var(--info));
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: .09em;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0,0,0,.2)
+}
 #Power table tr td {
-  padding: 8px;
-  text-align: left
+  padding: 10px;
+  background: transparent;
+  text-align: center
 }
 #Power table form {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  text-align: left
+  text-align: center
 }
 #Power table form * {
   margin: 2px
@@ -573,6 +638,12 @@ div#Sensors {
 #Power table tr td img {
   padding: 4px 8px 4px 4px;
   vertical-align: middle
+}
+#Power>button {
+  margin-top: 12px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff
 }
 #logbook-filters {
   display: none
@@ -638,11 +709,13 @@ input[type=checkbox]:checked+.custom-checkbox:after {
 #Logbook p {
   width: 100%;
   max-width: 100%;
-  margin: 0 0 6px;
-  padding: 9px 12px;
+  margin: 0 0 8px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
   border-left: 3px solid currentColor;
-  border-radius: 0 9px 9px 0;
+  border-radius: 9px;
   background: var(--soft);
+  box-shadow: 0 4px 12px rgba(20,45,58,.05);
   font-family: ui-monospace,Consolas,monospace;
   font-size: 12px;
   line-height: 1.55;
@@ -668,19 +741,29 @@ p.DEBUG {
   color: var(--muted)
 }
 .announces-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  align-items: start;
   max-height: 60vh;
-  flex-direction: column;
-  gap: 10px;
-  padding: 0;
+  gap: 14px;
+  padding: 2px;
   overflow: auto
 }
+.announce-column {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px
+}
 .announce-section {
+  width: 100%;
+  align-self: stretch;
   padding: 5px 14px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface);
-  box-shadow: 0 4px 14px rgba(20,45,58,.05)
+  background: linear-gradient(145deg,var(--surface),var(--soft));
+  box-shadow: 0 6px 18px rgba(20,45,58,.08)
 }
 .announce-title-container {
   display: flex;
@@ -691,6 +774,7 @@ p.DEBUG {
 }
 .announce-title {
   margin: 0;
+  color: var(--accent);
   font-size: 14px;
   font-weight: 700
 }
@@ -746,7 +830,12 @@ p.DEBUG {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
-  text-align: left
+  text-align: left;
+  transition: border-color .12s,transform .12s
+}
+.announce-item:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px)
 }
 .announce-item span {
   display: block;
@@ -773,8 +862,13 @@ p.DEBUG {
   display: block
 }
 @media(max-width:900px) {
-  div#Sensors {
+  div#Sensors,
+  #Power>div,
+  .announces-container {
     grid-template-columns: 1fr;
+    gap: 10px
+  }
+  .announce-column {
     gap: 10px
   }
 }
@@ -842,6 +936,10 @@ p.DEBUG {
   #MainTaskTable th {
     width: auto;
     max-width: 105px
+  }
+  #MainTaskTableDiv {
+    width: 100%;
+    padding: 5px
   }
   #MainTaskTable th,
   #MainTaskTable td {
