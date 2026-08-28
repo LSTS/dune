@@ -473,6 +473,13 @@ div#Sensors,
   overflow: auto;
   scrollbar-color: var(--border) transparent
 }
+div#Sensors {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  align-items: start;
+  gap: 14px;
+  padding: 2px
+}
 #Sensors table,
 #Power table {
   width: 100%;
@@ -494,18 +501,55 @@ div#Sensors,
   text-transform: uppercase
 }
 #Sensors th {
-  text-align: center
+  padding: 11px 14px;
+  border-radius: 10px 10px 4px 4px;
+  background: linear-gradient(100deg,var(--accent),var(--info));
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: .09em;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0,0,0,.2)
+}
+#Sensors table {
+  align-self: start;
+  margin: 0;
+  border-spacing: 0 4px;
+  border-radius: 12px;
+  background: linear-gradient(145deg,var(--surface),var(--soft));
+  box-shadow: 0 6px 18px rgba(20,45,58,.08);
+  overflow: hidden
 }
 #Sensors td {
-  padding: 7px 8px;
+  padding: 8px;
   border-bottom: 1px solid var(--border);
-  text-align: center
+  background: transparent;
+  text-align: center;
+  transition: background-color .12s
+}
+#Sensors tr:hover td {
+  background: rgba(8,124,150,.07)
 }
 #Sensors td:first-child {
-  width: 160px;
-  border-radius: 7px;
-  background: var(--soft);
-  font-weight: 650
+  width: 30%;
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .025em
+}
+#Sensors td:nth-child(2) {
+  width: 18%;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750
+}
+#Sensors td:nth-child(3) {
+  color: var(--muted);
+  font-size: 10px
+}
+#Sensors td:last-child {
+  width: 36px
 }
 #Power table {
   border: 1px solid var(--border);
@@ -727,6 +771,12 @@ p.DEBUG {
 }
 .announce-title:hover+.announce-tooltip {
   display: block
+}
+@media(max-width:900px) {
+  div#Sensors {
+    grid-template-columns: 1fr;
+    gap: 10px
+  }
 }
 @media(max-width:700px) {
   html,
