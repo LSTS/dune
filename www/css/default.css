@@ -338,6 +338,9 @@ select:focus {
   text-align: center;
   border-spacing: 0 2px
 }
+#MainOverviewRight {
+  table-layout: fixed
+}
 #MainOverviewLeft td,
 #MainOverviewRight td {
   padding: 5px 7px
@@ -367,8 +370,16 @@ select:focus {
   font-size: 12px;
   font-weight: 700
 }
-#MainOverviewLeft td.entryRight>div:not(.gauge-container),
-#MainOverviewRight td.entryRight>div:not(.gauge-container) {
+#MainOverviewRight td.entryLeft {
+  width: 18%!important;
+  padding-right: 8px!important;
+}
+#MainOverviewRight td.entryRight {
+  width: 82%;
+  min-width: 0
+}
+#MainOverviewLeft td.entryRight>div:not(.gauge-container):not(.cpu-chart),
+#MainOverviewRight td.entryRight>div:not(.gauge-container):not(.cpu-chart) {
   display: inline-block;
   max-width: 100%;
   padding: 0;
@@ -480,6 +491,7 @@ select:focus {
 }
 .gauge-container {
   position: relative;
+  width: 100%;
   height: 20px;
   min-width: 110px;
   overflow: hidden;
@@ -504,6 +516,50 @@ select:focus {
   font-weight: 750;
   line-height: 1;
   text-shadow: 0 1px 2px rgba(0,0,0,.35)
+}
+.cpu-chart {
+  display: block!important;
+  width: 100%;
+  max-height: 245px;
+  margin: 3px 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px!important;
+  background: transparent!important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+  overflow-y: auto;
+  scrollbar-color: var(--border) transparent
+}
+.cpu-history-chart {
+  display: block;
+  width: 100%;
+  height: 112px;
+  margin-bottom: 8px
+}
+.cpu-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(72px,1fr));
+  gap: 4px 9px
+}
+.cpu-legend-item {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 9px 1fr auto;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  white-space: nowrap
+}
+.cpu-legend-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px
+}
+.cpu-legend-value {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700
 }
 .section-header {
   margin: 5px 0 3px;
@@ -921,7 +977,10 @@ p.DEBUG {
     min-height: 0;
     padding: 12px
   }
-  #MainTable,#MainTable>tbody,#MainTable>tbody>tr {
+  #MainTable,
+  #MainTable>tbody,
+  #MainTable>tbody>tr,
+  #MainTable>tr {
     display: block;
     width: 100%!important
   }
@@ -929,11 +988,17 @@ p.DEBUG {
     padding: 5px;
     border-spacing: 0
   }
-  #MainTable>tbody>tr>td {
+  #MainTable>tbody>tr>td,
+  #MainTable>tr>td {
     display: block;
     width: 100%!important
   }
-  #MainTable>tbody>tr>td:first-child {
+  #MainTable>tbody>tr>td:nth-child(2),
+  #MainTable>tr>td:nth-child(2) {
+    display: none
+  }
+  #MainTable>tbody>tr>td:first-child,
+  #MainTable>tr>td:first-child {
     border-right: 0;
     border-bottom: 0
   }

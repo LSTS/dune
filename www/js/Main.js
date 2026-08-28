@@ -273,8 +273,12 @@ Main.prototype.createTableHeader = function (idx, tbl) {
 Main.prototype.createTableEntry = function (idx, tbl) {
   var field = this.m_fields[idx];
   var tr = document.createElement('tr');
+  if (field.widget instanceof ChartWidget)
+    tr.classList.add('cpu-overview-row');
   //check if field.single_line is true, if so, set the height to 25px
   if (!field.single_line) {
+    tr.classList.add('overview-data-row');
+    tr.classList.add('overview-data-row-' + field.side);
     tr.style.height = '25px';
     var td_label = document.createElement('td');
     td_label.className = 'entryLeft';
