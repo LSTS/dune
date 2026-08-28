@@ -143,7 +143,7 @@ Sensors.prototype.createValue = function (msg) {
   td_value.appendChild(document.createTextNode(''));
 
   var td_desc = document.createElement('td');
-  td_desc.style.textAlign = 'left';
+  td_desc.style.textAlign = 'center';
   td_desc.appendChild(document.createTextNode(''));
 
   var img_status = document.createElement('img');

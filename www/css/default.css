@@ -95,7 +95,9 @@ body {
   --c-color-link: var(--accent);
   min-height: 100vh;
   margin: 0;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 12% 0,rgba(8,124,150,.09),transparent 32rem),
+    var(--bg);
   color: var(--text);
   line-height: 1.45;
   transition: background-color .2s,color .2s
@@ -117,7 +119,11 @@ select:focus-visible {
   border-spacing: 0
 }
 #MenuBar {
-  padding: 0 6px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 6px 20px rgba(20,45,58,.07);
   vertical-align: middle
 }
 #Menu {
@@ -143,7 +149,7 @@ select:focus-visible {
   place-items: center;
   padding: 0 15px;
   border: 0;
-  border-radius: 10px 10px 0 0;
+  border-radius: 9px;
   background: transparent;
   color: var(--muted);
   font: inherit;
@@ -155,8 +161,8 @@ select:focus-visible {
 #Menu li:not(.Static):hover a,
 #Menu li.Selected a,
 #Menu li.FirstSelected a {
-  background: var(--surface);
-  color: var(--accent)
+  background: var(--accent);
+  color: #fff
 }
 #Menu li.status-item {
   margin-left: auto
@@ -183,14 +189,14 @@ select:focus-visible {
 .infoTable {
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 16px!important;
+  border-radius: 18px!important;
   background: var(--surface);
   box-shadow: var(--shadow);
   overflow: hidden
 }
 #x-container {
   min-height: 430px;
-  padding: clamp(16px,3vw,32px)
+  padding: clamp(14px,2vw,22px)
 }
 #x-copyright {
   clear: both;
@@ -210,11 +216,11 @@ div.Hidden {
   display: none!important
 }
 h1 {
-  margin: 6px 0 4px;
+  margin: 8px 0 5px;
   color: var(--text);
   font-size: 12px;
   font-weight: 750;
-  letter-spacing: .11em;
+  letter-spacing: .13em;
   text-align: left;
   text-transform: uppercase
 }
@@ -242,7 +248,7 @@ button {
   padding: 7px 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: var(--soft);
+  background: var(--surface);
   color: var(--text);
   font: inherit;
   font-size: 11px;
@@ -251,7 +257,9 @@ button {
   transition: .15s
 }
 button:hover {
-  border-color: var(--accent)
+  border-color: var(--accent);
+  background: var(--soft);
+  color: var(--accent)
 }
 button:active {
   transform: translateY(1px)
@@ -292,8 +300,8 @@ select:focus {
 }
 #systemName {
   display: inline-block;
-  margin: 0 0 20px;
-  padding: 10px 18px;
+  margin: 0 0 12px;
+  padding: 8px 14px;
   border: 1px solid rgba(255,255,255,.22);
   border-radius: 12px;
   background: var(--soft);
@@ -305,9 +313,12 @@ select:focus {
 }
 #MainTable {
   border-collapse: separate;
-  border-spacing: 18px 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border)
+  border-spacing: 10px 0;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(135deg,var(--surface),var(--soft));
+  box-shadow: 0 8px 24px rgba(20,45,58,.08)
 }
 #MainTable>tbody>tr>td:first-child,
 #MainTable>tbody>tr>td:last-child {
@@ -320,19 +331,16 @@ select:focus {
 #MainOverviewRight {
   width: 100%;
   margin: 0;
-  padding: 10px 4px 12px;
+  padding: 4px 2px 6px;
   border: 0;
   background: transparent;
   box-shadow: none;
   text-align: center;
-  border-spacing: 0 5px
-}
-#MainTable>tbody>tr>td:first-child {
-  border-right: 1px solid var(--border)
+  border-spacing: 0 2px
 }
 #MainOverviewLeft td,
 #MainOverviewRight td {
-  padding: 8px 10px
+  padding: 5px 7px
 }
 #MainOverviewLeft tr:not(:first-child) td,
 #MainOverviewRight tr:not(:first-child) td {
@@ -355,9 +363,17 @@ select:focus {
 }
 #MainOverviewLeft td.entryRight,
 #MainOverviewRight td.entryRight {
-  color: var(--text);
+  color: var(--accent);
   font-size: 12px;
-  font-weight: 650
+  font-weight: 700
+}
+#MainOverviewLeft td.entryRight>div:not(.gauge-container),
+#MainOverviewRight td.entryRight>div:not(.gauge-container) {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0;
+  border-radius: 0;
+  background: transparent
 }
 #MainTaskTableDiv {
   width: 100%;
@@ -371,7 +387,12 @@ select:focus {
   border-spacing: 0 6px
 }
 #MainTaskTable tr {
-  background: var(--soft)
+  background: var(--soft);
+  transition: transform .12s,box-shadow .12s
+}
+#MainTaskTable tr:hover {
+  box-shadow: 0 4px 12px rgba(20,45,58,.08);
+  transform: translateY(-1px)
 }
 #MainTaskTable th,
 #MainTaskTable td {
@@ -434,11 +455,11 @@ select:focus {
   text-shadow: 0 1px 2px rgba(0,0,0,.35)
 }
 .section-header {
-  margin: 8px 0 5px;
-  padding: 7px 10px;
+  margin: 5px 0 3px;
+  padding: 5px 8px;
   border-left: 3px solid var(--accent);
   border-radius: 6px;
-  background: var(--surface);
+  background: transparent;
   color: var(--text);
   font-size: 11px;
   font-weight: 750;
@@ -456,14 +477,24 @@ div#Sensors,
 #Power table {
   width: 100%;
   margin: 0 auto 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
   border-spacing: 0 5px
 }
 #Sensors th,
 #Power th {
   padding: 9px 12px;
-  border-radius: 8px;
-  background: var(--soft);
-  color: var(--text)
+  border-radius: 10px;
+  background: linear-gradient(90deg,var(--soft),var(--surface));
+  color: var(--text);
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-align: left;
+  text-transform: uppercase
+}
+#Sensors th {
+  text-align: center
 }
 #Sensors td {
   padding: 7px 8px;
@@ -510,8 +541,9 @@ div#Sensors,
   margin: 0 0 16px;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--soft)
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(20,45,58,.06)
 }
 label {
   position: relative;
@@ -560,14 +592,20 @@ input[type=checkbox]:checked+.custom-checkbox:after {
   transform: rotate(45deg)
 }
 #Logbook p {
+  width: 100%;
+  max-width: 100%;
   margin: 0 0 6px;
   padding: 9px 12px;
   border-left: 3px solid currentColor;
-  border-radius: 0 7px 7px 0;
+  border-radius: 0 9px 9px 0;
   background: var(--soft);
   font-family: ui-monospace,Consolas,monospace;
   font-size: 12px;
-  text-align: left
+  line-height: 1.55;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word
 }
 p.INFO {
   color: var(--info)
@@ -594,10 +632,11 @@ p.DEBUG {
   overflow: auto
 }
 .announce-section {
-  padding: 4px 14px;
+  padding: 5px 14px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--soft)
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 4px 14px rgba(20,45,58,.05)
 }
 .announce-title-container {
   display: flex;
@@ -733,18 +772,22 @@ p.DEBUG {
     display: block;
     width: 100%!important
   }
+  #MainTable {
+    padding: 5px;
+    border-spacing: 0
+  }
   #MainTable>tbody>tr>td {
     display: block;
     width: 100%!important
   }
   #MainTable>tbody>tr>td:first-child {
     border-right: 0;
-    border-bottom: 1px solid var(--border)
+    border-bottom: 0
   }
   #MainOverviewLeft,#MainOverviewRight {
     width: 100%!important;
-    margin-bottom: 12px;
-    padding: 8px
+    margin-bottom: 6px;
+    padding: 3px
   }
   #MainTaskTable th {
     width: auto;
