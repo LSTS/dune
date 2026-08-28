@@ -842,6 +842,57 @@ div#Sensors {
 #Power table form * {
   margin: 2px
 }
+.power-long-press {
+  position: relative;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none
+}
+.power-long-press:after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: rgba(255,255,255,.9);
+  transform: scaleX(0);
+  transform-origin: left
+}
+.power-long-press.holding:after {
+  animation: power-hold-progress 1s linear forwards
+}
+.power-long-press.hold-complete {
+  box-shadow: 0 0 0 3px rgba(105,211,158,.35)
+}
+@keyframes power-hold-progress {
+  to {
+    transform: scaleX(1)
+  }
+}
+#PowerHoldNotice {
+  position: fixed;
+  z-index: 1000;
+  top: 82px;
+  left: 50%;
+  max-width: calc(100% - 32px);
+  padding: 10px 14px;
+  border: 1px solid var(--warning);
+  border-radius: 10px;
+  background: linear-gradient(135deg,var(--warning-bg),#f2a93b);
+  color: var(--state-text);
+  box-shadow: 0 10px 26px rgba(154,104,0,.28);
+  font-size: 12px;
+  font-weight: 650;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%,-12px);
+  transition: opacity .18s,transform .18s
+}
+#PowerHoldNotice.visible {
+  opacity: 1;
+  transform: translate(-50%,0)
+}
 #Power table tr td img {
   padding: 4px 8px 4px 4px;
   vertical-align: middle
