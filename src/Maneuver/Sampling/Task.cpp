@@ -78,6 +78,12 @@ namespace Maneuver
         .units(Units::Second)
         .description("Maximum time without a sampling state update");
 
+        param("MovingDoris -- Alignment Threshold", m_sampler_config.moving_doris.alignment_threshold)
+        .defaultValue("15.0")
+        .minimumValue("0.1")
+        .units(Units::Degree)
+        .description("Threshold for alignment during sampling repositioning");
+
         param("RedX -- Setup Timeout", m_sampler_config.redx.setup_timeout)
         .defaultValue("10.0")
         .minimumValue("0.1")
