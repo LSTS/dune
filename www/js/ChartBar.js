@@ -29,158 +29,150 @@
 
 function ChartWidget() {
   this.chart = null;
+  this.canvas = null;
+  this.legend = null;
+  this.history = [];
 }
 
-const width_final = 240;
-
 ChartWidget.prototype.create = function (container) {
+  const chartContainer = document.createElement('div');
+  chartContainer.className = 'cpu-chart';
+
   const canvas = document.createElement('canvas');
-  const dpr = window.devicePixelRatio || 1;
-  //console.log(`Container width: ${container.clientWidth}`);
-  const displayWidth = width_final;
-  const displayHeight = width_final/2;
-  //console.log(`Creating chart with display size: ${displayWidth}x${displayHeight}`);
-  canvas.style.width = displayWidth + 'px';
-  canvas.style.height = displayHeight + 'px';
-  canvas.style.padding = '0px';
-  canvas.style.overflow = 'hidden';
-  canvas.style.display = 'block';
-  canvas.style.margin = 'auto auto';
+  canvas.className = 'cpu-history-chart';
+  chartContainer.appendChild(canvas);
 
-  canvas.width = displayWidth * dpr;
-  canvas.height = displayHeight * dpr;
-  container.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
+  const legend = document.createElement('div');
+  legend.className = 'cpu-legend';
+  chartContainer.appendChild(legend);
 
-  this.chart = {
-    canvas: canvas,
-    ctx: ctx,
-    values: [],
-    displayWidth: displayWidth,
-    displayHeight: displayHeight
-  };
+  container.appendChild(chartContainer);
+  this.chart = chartContainer;
+  this.canvas = canvas;
+  this.legend = legend;
 };
 
 ChartWidget.prototype.update = function (values) {
-  //console.log(`Canvas width: ${this.chart.canvas.width}`);
-  if (values && values.length > 0) {
-    this.chart.values = values;
-    const dpr = window.devicePixelRatio || 1;
-    const displayWidth = width_final;
-    this.chart.canvas.style.width = displayWidth + 'px';
-    this.chart.canvas.width = displayWidth * dpr;
-    this.chart.ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
-    this.chart.ctx.scale(dpr, dpr);
-    this.draw();
-  }
+  if (!values || values.length === 0)
+    return;
+
+  const now = Date.now();
+  const sample = values.map(value => Math.max(0, Math.min(100, Number(value) || 0)));
+  const latest = this.history[this.history.length - 1];
+  if (latest && now - latest.time < 2000)
+    latest.values = sample;
+  else
+    this.history.push({ time: now, values: sample });
+
+  this.history = this.history.filter(point => now - point.time <= 60000);
+  this.updateLegend(sample);
+  window.requestAnimationFrame(() => this.draw(now, sample.length));
 };
 
-
-ChartWidget.prototype.getBarColor = function (value) {
-  // Modern palette inspired by Material Design based on load percentage
-  // if (value <= 20) {
-  //   return '#66bb6a';  // Light green
-  // } else if (value <= 40) {
-  //   return '#43a047';  // Medium green
-  // } else if (value <= 60) {
-  //   return '#ffa726';  // Amber
-  // } else if (value <= 80) {
-  //   return '#fb8c00';  // Orange
-  // } else {
-  //   return '#e53935';  // Red
-  // }
-  if (value <= 50) {
-    red = Math.round(value * 5.1);
-    green = 255;
-  } else {
-    red = 255;
-    green = Math.round((100 - value) * 5.1);
-  }
-  return `rgb(${red}, ${green}, 0)`;
-
-};
-
-// Helper function to draw a rounded rectangle
-ChartWidget.prototype.drawRoundedRect = function (ctx, x, y, width, height, radius) {
-  // Ensure the radius doesn't exceed half of the width/height
-  radius = Math.min(radius, width / 2, height / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.lineTo(x + width - radius, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-  ctx.lineTo(x + width, y + height - radius);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  ctx.lineTo(x + radius, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-  ctx.lineTo(x, y + radius);
-  ctx.quadraticCurveTo(x, y, x + radius, y);
-  ctx.closePath();
-};
-
-ChartWidget.prototype.draw = function () {
-  const ctx = this.chart.ctx;
-  const canvas = this.chart.canvas;
-  const values = this.chart.values;
-  const minimumValueToShow = 9;
-
-  //const width = canvas.clientWidth - 1; // -1 to avoid scrollbar
-  const width = width_final;
-  const height = canvas.clientHeight;
-  ctx.clearRect(0, 0, width, height);
-  //console.log(`Drawing chart with ${values.length} values/cores`);
-  //console.log(`Canvas size: ${width}x${height}`);
-  const finalWidth = width_final;
-  const barWidth = Math.floor(finalWidth / values.length);
-  //console.log(`Bar width: ${barWidth}`);
-  const barHeightRatio = height / 100;
-
+ChartWidget.prototype.updateLegend = function (values) {
+  this.legend.innerHTML = '';
   for (let i = 0; i < values.length; i++) {
-    const value = values[i] || 0;
+    const item = document.createElement('div');
+    item.className = 'cpu-legend-item';
+    item.title = `CPU ${i + 1}: ${Math.round(values[i])}%`;
 
-    const barColor = this.getBarColor(value);
-    const x = i * barWidth;
-    const barHeight = value * barHeightRatio;
-    const y = height - barHeight;
+    const swatch = document.createElement('span');
+    swatch.className = 'cpu-legend-swatch';
+    swatch.style.backgroundColor = this.getCoreColor(i);
 
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
+    const label = document.createElement('span');
+    label.textContent = `CPU${i + 1}`;
 
-    ctx.fillStyle = barColor;
-    this.drawRoundedRect(ctx, x + 2, y, Math.max(0, barWidth - 4), barHeight, 4);
-    ctx.fill();
+    const value = document.createElement('span');
+    value.className = 'cpu-legend-value';
+    value.textContent = `${Math.round(values[i])}%`;
 
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-    ctx.lineWidth = 1;
+    item.appendChild(swatch);
+    item.appendChild(label);
+    item.appendChild(value);
+    this.legend.appendChild(item);
+  }
+};
+
+ChartWidget.prototype.draw = function (now, cpuCount) {
+  const canvas = this.canvas;
+  const width = Math.max(240, canvas.clientWidth);
+  const height = 112;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const styles = getComputedStyle(document.body);
+  const border = styles.getPropertyValue('--border').trim();
+  const muted = styles.getPropertyValue('--muted').trim();
+  const left = 5;
+  const right = width - 28;
+  const top = 7;
+  const bottom = height - 19;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.strokeStyle = border;
+  ctx.fillStyle = muted;
+  ctx.lineWidth = 1;
+  ctx.font = '8px system-ui, sans-serif';
+  ctx.textAlign = 'left';
+
+  [0, 50, 100].forEach(value => {
+    const y = bottom - (value / 100) * (bottom - top);
+    ctx.beginPath();
+    ctx.moveTo(left, y);
+    ctx.lineTo(right, y);
     ctx.stroke();
+    ctx.fillText(value + '%', right + 4, y + 3);
+  });
 
-    if (value >= minimumValueToShow) {
-      ctx.fillStyle = '#000';
-      ctx.font = '10px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const textX = x + barWidth / 2;
-      const textY = y + barHeight / 2;
-      ctx.fillText(value.toString(), textX, textY);
+  [60, 30, 0].forEach(seconds => {
+    const x = left + (60 - seconds) / 60 * (right - left);
+    ctx.beginPath();
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, bottom);
+    ctx.stroke();
+    ctx.fillText(seconds === 0 ? 'now' : '-' + seconds + 's', Math.min(x + 2, right - 18), bottom + 12);
+  });
+
+  for (let cpu = 0; cpu < cpuCount; cpu++) {
+    ctx.beginPath();
+    ctx.strokeStyle = this.getCoreColor(cpu);
+    ctx.lineWidth = 1.4;
+    let started = false;
+    let pointCount = 0;
+    let lastX = 0;
+    let lastY = 0;
+    for (let i = 0; i < this.history.length; i++) {
+      if (this.history[i].values[cpu] === undefined)
+        continue;
+      const age = Math.min(60000, now - this.history[i].time);
+      const x = right - age / 60000 * (right - left);
+      const y = bottom - this.history[i].values[cpu] / 100 * (bottom - top);
+      lastX = x;
+      lastY = y;
+      pointCount++;
+      if (!started) {
+        ctx.moveTo(x, y);
+        started = true;
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    if (started)
+      ctx.stroke();
+    if (pointCount === 1) {
+      ctx.beginPath();
+      ctx.fillStyle = this.getCoreColor(cpu);
+      ctx.arc(lastX, lastY, 2, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 };
 
-// Helper function to lighten a hexadecimal color
-// "amount" ranges from 0 (no change) to 1 (completely white)
-ChartWidget.prototype._lightenColor = function (hex, amount) {
-  // Remove the '#' and convert to a number
-  var num = parseInt(hex.slice(1), 16);
-  var r = (num >> 16) + Math.round(255 * amount);
-  var g = ((num >> 8) & 0x00FF) + Math.round(255 * amount);
-  var b = (num & 0x0000FF) + Math.round(255 * amount);
-  r = (r > 255) ? 255 : r;
-  g = (g > 255) ? 255 : g;
-  b = (b > 255) ? 255 : b;
-  // Convert back to hexadecimal
-  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b)
-    .toString(16)
-    .slice(1);
+ChartWidget.prototype.getCoreColor = function (index) {
+  const hue = Math.round((index * 137.508) % 360);
+  return `hsl(${hue}, 68%, 48%)`;
 };

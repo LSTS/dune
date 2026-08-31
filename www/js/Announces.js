@@ -47,80 +47,95 @@ function Announces(root_id) {
 
   this.m_base.appendChild(this.m_tbl);
 
-  // Store timestamps for last received messages
-  this.lastMessageTimestamps = {};  // e.g., { "system1": timestamp1, "system2": timestamp2 }
+  // Keep discovered systems even when they are not present in the latest data cycle.
+  this.systems = {};
+  this.lastUpdate = 0;
+  this.offlineTimeout = 30000;
 }
 
 Announces.prototype = new BasicSection();
 
 Announces.prototype.update = function () {
-  //only update if passed 1 seconds since last update
+  if (!g_data || !g_data.dune_messages) {
+    return;
+  }
+
+  // Only update if one second has passed since the last update.
   if (Date.now() - this.lastUpdate < 1000) {
     return;
   }
-  this.lastUpdate = Date.now();
+  const currentTime = Date.now();
+  this.lastUpdate = currentTime;
+
   // Fixed priority order for sys_type
   const sysTypePriority = [2, 3, 4, 5, 0, 1, 6, 7, 8]; // Desired display order
 
-  // Create a map to track existing sections
-  const existingSections = {};
-  const sections = this.m_tbl.querySelectorAll('.announce-section');
-  sections.forEach(section => {
-    const title = section.querySelector('.announce-title').textContent;
-    existingSections[title] = section; // Map by unique title
-  });
-
-  // Temporary list to store new sections
-  const newSections = [];
-
+  // Keep only the newest Announce per source in each data cycle. A system may
+  // publish local and external variants with the same source identifier.
+  const announces = {};
   for (var i in g_data.dune_messages) {
     const msg = g_data.dune_messages[i];
     if (msg.abbrev === 'Announce') {
-      // Get the system type name based on the sys_type value
-      const sysTypeName = sysTypeMap[msg.sys_type] || 'UNKNOWN';
-      //const sectionName = msg.sys_name;
-      const sectionName = `(${sysTypeName}) ${msg.sys_name}`;
-      const sysType = parseInt(msg.sys_type); // Parse sys_type as an integer
-      const currentTime = Date.now(); // Get current time in milliseconds
-
-      let section;
-      if (existingSections[sectionName]) {
-        // Update existing section
-        section = existingSections[sectionName];
-        this.updateSection(section, msg, currentTime);
-      } else {
-        // Create a new section
-        section = this.createSection(msg, currentTime);
-        existingSections[sectionName] = section; // Add to the map
-      }
-
-      // Add sys_type and sys_name for sorting
-      section.dataset.sysType = sysType;
-      section.dataset.sysName = sectionName.toLowerCase(); // Lowercase name for secondary sorting
-
-      // Add section to the temporary list
-      newSections.push(section);
+      const source = msg.src !== undefined ? msg.src : msg.source;
+      const systemKey = source !== undefined ? `src:${source}` : `name:${msg.sys_type}:${msg.sys_name}`;
+      const previous = announces[systemKey];
+      if (!previous || Number(msg.timestamp) >= Number(previous.timestamp))
+        announces[systemKey] = msg;
     }
   }
 
-  // Sort sections by type priority and then by name
-  newSections.sort((a, b) => {
+  Object.keys(announces).forEach(systemKey => {
+    const msg = announces[systemKey];
+    const sysTypeName = sysTypeMap[msg.sys_type] || 'UNKNOWN';
+    const sectionName = `(${sysTypeName}) ${msg.sys_name}`;
+    const sysType = parseInt(msg.sys_type);
+
+    let section;
+    if (this.systems[systemKey]) {
+      section = this.systems[systemKey];
+      this.updateSection(section, msg, currentTime);
+    } else {
+      section = this.createSection(msg, currentTime);
+      section.dataset.systemKey = systemKey;
+      this.systems[systemKey] = section;
+    }
+
+    section.dataset.sysType = sysType;
+    section.dataset.sysName = sectionName.toLowerCase();
+  });
+
+  const sections = Object.values(this.systems);
+  sections.forEach(section => this.updateFreshness(section, currentTime));
+
+  sections.sort((a, b) => {
     const typeA = parseInt(a.dataset.sysType);
     const typeB = parseInt(b.dataset.sysType);
-
-    // Sort by priority defined in sysTypePriority
-    const priorityDiff = sysTypePriority.indexOf(typeA) - sysTypePriority.indexOf(typeB);
+    const priorityA = sysTypePriority.indexOf(typeA);
+    const priorityB = sysTypePriority.indexOf(typeB);
+    const priorityDiff = (priorityA < 0 ? sysTypePriority.length : priorityA) -
+      (priorityB < 0 ? sysTypePriority.length : priorityB);
     if (priorityDiff !== 0) return priorityDiff;
-
-    // Secondary sorting by name (alphabetical)
     return a.dataset.sysName.localeCompare(b.dataset.sysName);
   });
 
-  // Clear all existing sections from the container
-  this.m_tbl.innerHTML = '';
+  this.renderColumns(sections);
+};
 
-  // Reattach sorted sections to the container
-  newSections.forEach(section => this.m_tbl.appendChild(section));
+Announces.prototype.renderColumns = function (sections) {
+  const columnCount = window.innerWidth <= 900 ? 1 : 2;
+  const columns = [];
+
+  this.m_tbl.innerHTML = '';
+  for (let i = 0; i < columnCount; i++) {
+    const column = document.createElement('div');
+    column.classList.add('announce-column');
+    columns.push(column);
+    this.m_tbl.appendChild(column);
+  }
+
+  sections.forEach((section, index) => {
+    columns[index % columnCount].appendChild(section);
+  });
 };
 
 // Method to create a new section
@@ -141,16 +156,11 @@ Announces.prototype.createSection = function (msg, currentTime) {
   title.textContent = `(${sysTypeName}) ${msg.sys_name}`;
   //title.textContent = `${msg.sys_name}`;
 
-  // Create the tooltip (popup)
   const tooltip = document.createElement('div');
-  tooltip.classList.add('announce-tooltip'); // Tooltip class
-  // Add the time and warning icon to the tooltip
-  const timeSinceLastUpdate = currentTime - this.lastMessageTimestamps[msg.sys_name] || 0;
-  tooltip.textContent = `${this.formatTime(timeSinceLastUpdate)}`;
-  // Add warning icon if the time since last update is more than 20 seconds
-  if (timeSinceLastUpdate > 20000) { // 20 seconds = 20000 milliseconds
-    tooltip.textContent += ' ⚠';
-  }
+  tooltip.classList.add('announce-tooltip');
+
+  const status = document.createElement('span');
+  status.classList.add('announce-status');
 
   // Add an expand/collapse arrow
   const arrow = document.createElement('span');
@@ -165,6 +175,7 @@ Announces.prototype.createSection = function (msg, currentTime) {
 
   // Append title and arrow to the container
   titleContainer.appendChild(title);
+  titleContainer.appendChild(status);
   titleContainer.appendChild(arrow);
 
   // Add the container to the section
@@ -179,8 +190,8 @@ Announces.prototype.createSection = function (msg, currentTime) {
   // Add initial IPs
   this.addIPsToSection(list, msg);
 
-  // Store the section title and time for reference
-  this.lastMessageTimestamps[msg.sys_name] = msg.timestamp;
+  section.dataset.remoteTimestamp = String(msg.timestamp);
+  section.dataset.lastSeen = currentTime;
 
   // Add mousemove event to dynamically position the tooltip
   title.addEventListener('mousemove', (e) => {
@@ -207,6 +218,7 @@ Announces.prototype.createSection = function (msg, currentTime) {
 
   // Initially hide the tooltip
   tooltip.style.display = 'none';
+  this.updateFreshness(section, currentTime);
 
   return section;
 };
@@ -215,26 +227,24 @@ Announces.prototype.createSection = function (msg, currentTime) {
 Announces.prototype.updateSection = function (section, msg, currentTime) {
   const list = section.querySelector('.announce-list');
   this.addIPsToSection(list, msg);
+  const remoteTimestamp = String(msg.timestamp);
+  if (section.dataset.remoteTimestamp !== remoteTimestamp) {
+    section.dataset.remoteTimestamp = remoteTimestamp;
+    section.dataset.lastSeen = currentTime;
+  }
+  this.updateFreshness(section, currentTime);
+};
 
-  // Get the timestamp of the last update for the section from the stored timestamp
-  const lastUpdateTimestamp = parseFloat(msg.timestamp) * 1000;
-  const timeSinceLastUpdate = currentTime - lastUpdateTimestamp || 0;
-
-  // Update the time in the tooltip
+Announces.prototype.updateFreshness = function (section, currentTime) {
+  const lastSeen = parseFloat(section.dataset.lastSeen);
+  const timeSinceLastUpdate = Math.max(0, currentTime - lastSeen);
+  const offline = timeSinceLastUpdate > this.offlineTimeout;
   const timeElement = section.querySelector('.announce-tooltip');
   timeElement.textContent = this.formatTime(timeSinceLastUpdate);
-
-  // Show warning icon if last update was more than 20 seconds ago
-  if (timeSinceLastUpdate > 20000) { // 20 seconds = 20000 milliseconds
-    timeElement.textContent += ' ⚠';
-    section.querySelector('.announce-title').style.color = "var(--c-color-disabled)";
-  }
-  else {
-    section.querySelector('.announce-title').style.color = "var(--c-color-text)";
-  }
-
-  // Update the timestamp for this section
-  this.lastMessageTimestamps[msg.sys_name] = msg.timestamp;
+  timeElement.textContent += offline ? ' — Offline' : ' — Online';
+  section.classList.toggle('is-offline', offline);
+  const status = section.querySelector('.announce-status');
+  status.textContent = offline ? 'Offline' : 'Online';
 };
 
 // Method to add all services with their type, IP, and ports to a list

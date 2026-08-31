@@ -104,6 +104,14 @@ HTTP.get = function(url, callback, options)
     {
         if (request.readyState == 4)
         {
+            if (typeof recordNetworkResponse == "function")
+            {
+                var response_size = parseInt(request.getResponseHeader("Content-Length"), 10);
+                if (isNaN(response_size))
+                    response_size = request.responseText ? request.responseText.length : 0;
+                recordNetworkResponse(response_size);
+            }
+
             if (timer)
                 clearTimeout(timer);
 
@@ -137,6 +145,9 @@ HTTP.get = function(url, callback, options)
     var target = url;
     if (options.parameters)
         target += "?" + HTTP.encodeFormData(options.parameters);
+
+    if (typeof recordNetworkRequest == "function")
+        recordNetworkRequest(target);
 
     request.open("GET", target);
     request.send(null);

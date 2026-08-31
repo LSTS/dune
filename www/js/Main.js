@@ -273,8 +273,12 @@ Main.prototype.createTableHeader = function (idx, tbl) {
 Main.prototype.createTableEntry = function (idx, tbl) {
   var field = this.m_fields[idx];
   var tr = document.createElement('tr');
+  if (field.widget instanceof ChartWidget)
+    tr.classList.add('cpu-overview-row');
   //check if field.single_line is true, if so, set the height to 25px
   if (!field.single_line) {
+    tr.classList.add('overview-data-row');
+    tr.classList.add('overview-data-row-' + field.side);
     tr.style.height = '25px';
     var td_label = document.createElement('td');
     td_label.className = 'entryLeft';
@@ -403,11 +407,12 @@ Main.prototype.insertTaskNode = function (id, name, desc, status, cpuUsage) {
       item.childNodes[0].firstChild.marginTop = '2px';
       item.childNodes[3].firstChild.data = desc;
       var cpuCell = item.childNodes[2];
-      if (cpuCell && cpuCell.firstChild && cpuCell.firstChild.childNodes.length >= 3) {
+      var cpuValue = cpuCell ? cpuCell.querySelector('.task-cpu-value') : null;
+      if (cpuValue) {
         if (cpuUsage > 0)
-          cpuCell.firstChild.childNodes[2].textContent = ' ' + cpuUsage + '%';
+          cpuValue.textContent = cpuUsage + '%';
         else
-          cpuCell.firstChild.childNodes[2].textContent = '< 1%';
+          cpuValue.textContent = '< 1%';
       }
       item.setAttribute("data-state", status);
       this.updateHeaderBackground(status);
@@ -483,20 +488,18 @@ Main.prototype.createTask = function (id, name, desc, status, cpuUsage) {
   var td_cpu = document.createElement('td');
   td_cpu.style.width = '40px';
   var cpuContainer = document.createElement('div');
+  cpuContainer.className = 'task-cpu-usage';
   cpuContainer.style.display = 'flex';
   cpuContainer.style.alignItems = 'center';
-
-  var bracketOpen = document.createElement('span');
-  bracketOpen.textContent = '[';
-  cpuContainer.appendChild(bracketOpen);
+  cpuContainer.title = 'CPU usage';
 
   var cpuIcon = document.createElement('span');
   cpuIcon.classList.add('cpu-icon');
   cpuContainer.appendChild(cpuIcon);
 
   var cpuText = document.createElement('span');
+  cpuText.className = 'task-cpu-value';
   cpuText.style.display = 'inline-block';
-  cpuText.style.width = '30px';
   cpuText.style.textAlign = 'right';
   if (cpuUsage > 0) {
     cpuText.textContent = cpuUsage + '%';
@@ -504,10 +507,6 @@ Main.prototype.createTask = function (id, name, desc, status, cpuUsage) {
     cpuText.textContent = '< 1%';
   }
   cpuContainer.appendChild(cpuText);
-
-  var bracketClose = document.createElement('span');
-  bracketClose.textContent = ']';
-  cpuContainer.appendChild(bracketClose);
 
   td_cpu.appendChild(cpuContainer);
   tr.appendChild(td_cpu);
