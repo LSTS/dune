@@ -66,6 +66,12 @@ namespace Maneuver
       Maneuvers::StationKeep* m_skeep;
       //! Timeout timer.
       Time::Counter<float> m_timeout_timer;
+      //! Sampling area latitude.
+      double m_target_lat;
+      //! Sampling area longitude.
+      double m_target_lon;
+      //! State captured when the vehicle leaves the sampling area.
+      IMC::EstimatedState m_outside_estate;
 
       //! State machine states.
       enum DriftingDorisState
@@ -75,7 +81,13 @@ namespace Maneuver
         //! Sampling setup.
         DDS_SETUP,
         //! Sampling.
-        DDS_SAMPLING
+        DDS_SAMPLING,
+        //! Waiting for the sampler to pause.
+        DDS_PAUSING,
+        //! Returning to the center while sampling is paused.
+        DDS_RETURNING,
+        //! Waiting for the sampler to resume.
+        DDS_RESUMING
       };
       //! Current state.
       DriftingDorisState m_state;
@@ -88,6 +100,8 @@ namespace Maneuver
         m_args(parseArguments(args)),
         m_config(config),
         m_skeep(nullptr),
+        m_target_lat(0.0),
+        m_target_lon(0.0),
         m_state(DDS_MOVING)
       {
         if (m_config.setup_timeout <= 0.0f)
@@ -105,13 +119,17 @@ namespace Maneuver
       void
       onReset(void)
       {
-        DUNE::Memory::clear(m_skeep);
+        Memory::clear(m_skeep);
+        m_state = DDS_MOVING;
       }
 
       void
       onInit(const IMC::Sampling* msg)
       {
         Memory::clear(m_skeep);
+        m_target_lat = msg->lat;
+        m_target_lon = msg->lon;
+        m_state = DDS_MOVING;
         m_skeep = new Maneuvers::StationKeep(m_task,
                                              msg->lat,
                                              msg->lon,
@@ -132,12 +150,27 @@ namespace Maneuver
           return;
 
         m_skeep->updatePathControl(msg);
+
+        if (m_state == DDS_RETURNING && m_skeep->isInside())
+          requestResume();
       }
 
       void
       onEstimatedState(const IMC::EstimatedState* msg)
       {
         if (m_skeep == nullptr)
+          return;
+
+        // Detect the boundary before StationKeep sees the outside state.
+        // Otherwise StationKeep would start returning before sampling pauses.
+        if (m_state == DDS_SAMPLING && getDistanceToCenter(msg) > m_args.radius)
+        {
+          requestPause(msg);
+          return;
+        }
+
+        // Keep StationKeep on station until the payload acknowledges PAUSE.
+        if (m_state == DDS_PAUSING)
           return;
 
         m_skeep->update(msg);
@@ -190,6 +223,45 @@ namespace Maneuver
               m_timeout_timer.reset();
             }
             break;
+
+          case DDS_PAUSING:
+            if (msg->type == IMC::SamplingAction::SAT_STATE_PAUSED)
+            {
+              debug("Sampling paused, returning to center...");
+              m_state = DDS_RETURNING;
+
+              // This is the first outside state seen by StationKeep, so it
+              // now starts the path back to the sampling center.
+              m_skeep->update(&m_outside_estate);
+            }
+            else if (msg->type == IMC::SamplingAction::SAT_STATE_IDLE)
+            {
+              m_task->signalCompletion();
+              return;
+            }
+            break;
+
+          case DDS_RETURNING:
+            if (msg->type == IMC::SamplingAction::SAT_STATE_IDLE)
+            {
+              m_task->signalCompletion();
+              return;
+            }
+            break;
+
+          case DDS_RESUMING:
+            if (msg->type == IMC::SamplingAction::SAT_STATE_SAMPLING)
+            {
+              debug("Sampling resumed...");
+              m_timeout_timer.setTop(m_config.sampling_timeout);
+              m_state = DDS_SAMPLING;
+            }
+            else if (msg->type == IMC::SamplingAction::SAT_STATE_IDLE)
+            {
+              m_task->signalCompletion();
+              return;
+            }
+            break;
         
           default:
             break;
@@ -232,6 +304,27 @@ namespace Maneuver
               return;
             }
             break;
+
+          case DDS_PAUSING:
+            if (m_timeout_timer.overflow())
+            {
+              debug("Sampling pause timeout, stopping...");
+              m_task->signalError("Sampling pause timed out.");
+              return;
+            }
+            break;
+
+          case DDS_RETURNING:
+            break;
+
+          case DDS_RESUMING:
+            if (m_timeout_timer.overflow())
+            {
+              debug("Sampling resume timeout, stopping...");
+              m_task->signalError("Sampling resume timed out.");
+              return;
+            }
+            break;
         
           default:
             break;
@@ -241,6 +334,42 @@ namespace Maneuver
       }
 
     private:
+      double
+      getDistanceToCenter(const IMC::EstimatedState* state) const
+      {
+        double lat = state->lat;
+        double lon = state->lon;
+        Coordinates::toWGS84(*state, lat, lon);
+
+        double north;
+        double east;
+        Coordinates::WGS84::displacement(lat, lon, 0.0,
+                                         m_target_lat, m_target_lon, 0.0,
+                                         &north, &east);
+
+        return Math::norm(north, east);
+      }
+
+      void
+      requestPause(const IMC::EstimatedState* state)
+      {
+        debug("Outside sampling area, requesting pause...");
+        m_outside_estate = *state;
+        m_task->setControl(IMC::CL_NONE);
+        m_timeout_timer.setTop(m_config.setup_timeout);
+        m_state = DDS_PAUSING;
+        sendSamplingActionCmd(IMC::SamplingAction::SAT_CMD_PAUSE);
+      }
+
+      void
+      requestResume(void)
+      {
+        debug("Reached sampling center, requesting resume...");
+        m_timeout_timer.setTop(m_config.setup_timeout);
+        m_state = DDS_RESUMING;
+        sendSamplingActionCmd(IMC::SamplingAction::SAT_CMD_RESUME);
+      }
+
       static Arguments
       parseArguments(const std::string& args)
       {
