@@ -98,6 +98,8 @@ namespace Payload
       std::string extra_press_pump_name;
       //! Force state transition.
       bool force_state_transition;
+      //! Ignore water flow readings.
+      bool ignore_water_flow;
     };
 
     //! Task to control RedX payload. 
@@ -302,7 +304,15 @@ namespace Payload
         .defaultValue("-1")
         .minimumValue("-1")
         .maximumValue(std::to_string(c_max_filters - 1))
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .description("Last filter that was used in the system.");
+
+        param("Ignore Water Flow Readings", m_args.ignore_water_flow)
+        .defaultValue("false")
+        .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .description("Ignore water flow readings.");
 
         param("Filter Fill Up Timeout", m_args.filter_fill_up_timeout)
         .defaultValue("60")
@@ -369,6 +379,12 @@ namespace Payload
 
         if (paramChanged(m_args.wp_actuation))
           spew("payload settings : water pump actuation set to : %d%%", m_args.wp_actuation);
+
+        if (paramChanged(m_args.last_filter_used))
+          spew("payload settings : last filter used set to : %d", m_args.last_filter_used);
+
+        if (paramChanged(m_args.ignore_water_flow))
+          spew("payload settings : ignore water flow readings set to : %s", m_args.ignore_water_flow ? "true" : "false");
 
         if (paramChanged(m_args.force_state_transition) && m_args.force_state_transition)
         {
@@ -853,7 +869,7 @@ namespace Payload
               setState(STATE_PURGING);
               trace("force state transition: transitioning to PURGING state.");
             }
-            else if (m_max_wl)
+            else if (m_max_wl && !m_args.ignore_water_flow)
             {
               stopWaterPump();
               setState(STATE_PURGING);
