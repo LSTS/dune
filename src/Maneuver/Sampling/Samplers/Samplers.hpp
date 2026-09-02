@@ -38,7 +38,6 @@ namespace Maneuver
 
 #include <Samplers/BasicSampler.hpp>
 #include <Samplers/Doris.hpp>
-#include <Samplers/RedX.hpp>
-#include <Samplers/WhiteX.hpp>
+#include <Samplers/StationKeeper.hpp>
 
 #endif
