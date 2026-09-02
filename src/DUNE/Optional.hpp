@@ -29,7 +29,7 @@
 
 #pragma once
 
-#ifdef DUNELEGACY
+#ifdef DUNE_LEGACY
 #include <boost/optional.hpp>
 
 namespace DUNE
