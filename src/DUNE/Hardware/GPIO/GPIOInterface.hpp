@@ -24,100 +24,55 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
-// Author: Luís Venâncio                                                    *
+// Author: Luis Venâncio                                                    *
 //***************************************************************************
 
-#ifndef DUNE_HARDWARE_GPIO_HPP_INCLUDED_
-#define DUNE_HARDWARE_GPIO_HPP_INCLUDED_
-
-// ISO C++ 98 headers.
-#include <string>
+#ifndef DUNE_HARDWARE_GPIO_GPIO_INTERFACE_HPP_INCLUDED_
+#define DUNE_HARDWARE_GPIO_GPIO_INTERFACE_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/Config.hpp>
+#include <DUNE/Hardware/GPIO.hpp>
 
 namespace DUNE
 {
   namespace Hardware
   {
-    // Export symbol.
-    class DUNE_DLL_SYM GPIO;
-
     namespace GPIOInternals
     {
-      class GPIOInterface;
-    }
-
-    class GPIO
-    {
-    public:
-      enum Direction
+      class GPIOInterfaceUnavailable
       {
-        //! GPIO is used as input.
-        GPIO_DIR_INPUT,
-        //! GPIO is used as output.
-        GPIO_DIR_OUTPUT
+      public:
+        GPIOInterfaceUnavailable(int code):
+          m_code(code)
+        { }
+
+        int
+        getCode(void) const
+        {
+          return m_code;
+        }
+
+      private:
+        int m_code;
       };
 
-      //! Initialize GPIO.
-      //! @param[in] number GPIO line offset. On systems using the legacy
-      //! sysfs interface this is the global GPIO number.
-      GPIO(unsigned int number);
+      class GPIOInterface
+      {
+      public:
+        virtual
+        ~GPIOInterface(void)
+        { }
 
-      //! Initialize GPIO from a character device.
-      //! @param[in] device GPIO chip character device.
-      //! @param[in] offset GPIO line offset within the chip.
-      GPIO(const std::string& device, unsigned int offset);
+        virtual void
+        setDirection(GPIO::Direction direction) = 0;
 
-      //! Default destructor.
-      ~GPIO(void);
+        virtual void
+        setValue(bool value) = 0;
 
-      //! Set GPIO direction.
-      //! @param[in] direction GPIO direction.
-      void
-      setDirection(Direction direction);
-
-      //! Set GPIO direction.
-      //! @param[in] direction "input" or "output".
-      void
-      setDirection(const std::string& direction);
-
-      //! Set GPIO value.
-      //! @param[in] value pin value (false = off, true = on).
-      void
-      setValue(bool value);
-
-      //! Get GPIO value.
-      //! @return pin value (false = off, true = on).
-      bool
-      getValue(void);
-
-    private:
-      //! Disallow copy constructor.
-      GPIO(const GPIO&);
-
-      //! Disallow copy assignment.
-      GPIO& operator=(const GPIO&);
-
-      //! GPIO number.
-      unsigned int m_number;
-      //! GPIO direction.
-      Direction m_direction;
-
-      //! GPIO interface.
-      GPIOInternals::GPIOInterface* m_interface;
-      //! GPIO chip character device.
-      std::string m_device;
-      //! True if falling back to the legacy sysfs interface is safe.
-      bool m_allow_sysfs;
-
-      void
-      initializeBackend(void);
-
-      void
-      fallbackToSysfs(Direction direction);
-    };
+        virtual bool
+        getValue(void) = 0;
+      };
+    }
   }
 }
 
