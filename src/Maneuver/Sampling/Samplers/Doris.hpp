@@ -63,6 +63,7 @@ namespace Maneuver
       //! Fixed sampler configuration.
       struct Configuration
       {
+        float initial_wait_time = 0.0f;
         float setup_timeout = -1.0f;
         float sampling_timeout = -1.0f;
         float alignment_threshold = 15.0f;
@@ -72,6 +73,7 @@ namespace Maneuver
       enum State
       {
         STATE_MOVING,
+        STATE_WAITING,
         STATE_SETUP,
         STATE_SAMPLING,
         STATE_PAUSING,
@@ -94,6 +96,9 @@ namespace Maneuver
         m_alignment_threshold(0.0f),
         m_aligned(false)
       {
+        if (m_config.initial_wait_time < 0.0f)
+          throw std::runtime_error("Invalid initial wait time.");
+
         if (m_config.setup_timeout <= 0.0f)
           throw std::runtime_error("Invalid setup timeout.");
 
@@ -150,7 +155,7 @@ namespace Maneuver
         {
           case STATE_MOVING:
             if (msg->flags & IMC::PathControlState::FL_NEAR)
-              startSetup();
+              startWaiting();
             break;
 
           case STATE_SAMPLING:
@@ -207,6 +212,11 @@ namespace Maneuver
           case STATE_MOVING:
             if (msg->type != IMC::SamplingAction::SAT_STATE_IDLE)
               m_task->signalError("Received unexpected sampling state report while moving to sampling point.");
+            break;
+
+          case STATE_WAITING:
+            if (msg->type != IMC::SamplingAction::SAT_STATE_IDLE)
+              m_task->signalError("Received unexpected sampling state report while waiting to set up.");
             break;
 
           case STATE_SETUP:
@@ -268,8 +278,11 @@ namespace Maneuver
             m_skeep->isInside())
         {
           m_skeep->setSpeed(m_args.speed, IMC::SpeedUnits::SUNITS_METERS_PS);
-          startSetup();
+          startWaiting();
         }
+
+        if (m_state == STATE_WAITING && m_timeout_timer.overflow())
+          startSetup();
 
         if ((m_state == STATE_SETUP ||
              m_state == STATE_PAUSING ||
@@ -423,9 +436,26 @@ namespace Maneuver
       }
 
       void
+      startWaiting(void)
+      {
+        m_task->setControl(IMC::CL_NONE);
+
+        if (m_config.initial_wait_time == 0.0f)
+        {
+          startSetup();
+          return;
+        }
+
+        debug("Reached sampling point, waiting %.1f seconds before setup...",
+              m_config.initial_wait_time);
+        m_timeout_timer.setTop(m_config.initial_wait_time);
+        setState(STATE_WAITING);
+      }
+
+      void
       startSetup(void)
       {
-        debug("Reached sampling point, setting up...");
+        debug("Setting up...");
         m_task->setControl(IMC::CL_NONE);
         m_timeout_timer.setTop(m_config.setup_timeout);
         setState(STATE_SETUP);
@@ -511,6 +541,8 @@ namespace Maneuver
         {
           case STATE_MOVING:
             return "Moving to target";
+          case STATE_WAITING:
+            return "Waiting to set up";
           case STATE_SETUP:
             return "Setting up";
           case STATE_SAMPLING:
