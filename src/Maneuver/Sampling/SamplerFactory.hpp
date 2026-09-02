@@ -47,8 +47,8 @@ namespace Maneuver
       struct Configurations
       {
         Doris::Configuration doris;
-        RedX::Configuration redx;
-        WhiteX::Configuration whitex;
+        StationKeeper::Configuration redx;
+        StationKeeper::Configuration whitex;
       };
 
       //! Factory method for sampling type.
@@ -64,9 +64,9 @@ namespace Maneuver
         if (maneuver->sampling_type == "Doris")
           return std::make_unique<Doris>(task, maneuver->sampling_args, config.doris);
         else if (maneuver->sampling_type == "RedX")
-          return std::make_unique<RedX>(task, maneuver->sampling_args, config.redx);
+          return std::make_unique<StationKeeper>(task, maneuver->sampling_args, config.redx, "RedX");
         else if (maneuver->sampling_type == "WhiteX")
-          return std::make_unique<WhiteX>(task, maneuver->sampling_args, config.whitex);
+          return std::make_unique<StationKeeper>(task, maneuver->sampling_args, config.whitex, "WhiteX");
         else
           throw std::runtime_error(DTR("Unknown sampler type."));
       }
