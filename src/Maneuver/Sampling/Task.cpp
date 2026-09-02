@@ -54,6 +54,12 @@ namespace Maneuver
         .defaultValue("")
         .description("List of supported sampler types");
 
+        param("Doris -- Initial Wait Time", m_sampler_config.doris.initial_wait_time)
+        .defaultValue("0.0")
+        .minimumValue("0.0")
+        .units(Units::Second)
+        .description("Time to wait at the initial sampling point before setup");
+
         param("Doris -- Setup Timeout", m_sampler_config.doris.setup_timeout)
         .defaultValue("10.0")
         .minimumValue("0.1")
