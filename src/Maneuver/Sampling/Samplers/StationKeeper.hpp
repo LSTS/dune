@@ -25,8 +25,8 @@
 // Author: Luís Venâncio                                                    *
 //***************************************************************************
 
-#ifndef MANEUVER_SAMPLING_REDX_HPP_INCLUDED_
-#define MANEUVER_SAMPLING_REDX_HPP_INCLUDED_
+#ifndef MANEUVER_SAMPLING_STATIONKEEPER_HPP_INCLUDED_
+#define MANEUVER_SAMPLING_STATIONKEEPER_HPP_INCLUDED_
 
 // DUNE Headers
 #include <DUNE/DUNE.hpp>
@@ -41,7 +41,7 @@ namespace Maneuver
     using DUNE_NAMESPACES;
 
     //! Basic sampler
-    class RedX: public BasicSampler
+    class StationKeeper: public BasicSampler
     {
     public:
       //! Maneuver arguments.
@@ -68,27 +68,28 @@ namespace Maneuver
       Time::Counter<float> m_timeout_timer;
 
       //! State machine states.
-      enum RedxState
+      enum StationKeeperState
       {
         //! Moving to target point.
-        RS_MOVING,
+        SK_MOVING,
         //! Sampling setup.
-        RS_SETUP,
+        SK_SETUP,
         //! Sampling.
-        RS_SAMPLING
+        SK_SAMPLING
       };
       //! Current state.
-      RedxState m_state;
+      StationKeeperState m_state;
 
       //! Default constructor.
-      RedX(Maneuvers::Maneuver* task,
-           const std::string& args,
-           const Configuration& config):
-        BasicSampler(task, "RedX"),
+      StationKeeper(Maneuvers::Maneuver* task,
+                    const std::string& args,
+                    const Configuration& config,
+                    const std::string& name):
+        BasicSampler(task, name),
         m_args(parseArguments(args)),
         m_config(config),
         m_skeep(nullptr),
-        m_state(RS_MOVING)
+        m_state(SK_MOVING)
       {
         if (m_config.setup_timeout <= 0.0f)
           throw std::runtime_error("Invalid setup timeout.");
@@ -97,7 +98,7 @@ namespace Maneuver
           throw std::runtime_error("Invalid sampling timeout.");
       }
 
-      ~RedX()
+      ~StationKeeper()
       {
         DUNE::Memory::clear(m_skeep);
       }
@@ -160,7 +161,7 @@ namespace Maneuver
 
         switch (m_state)
         {
-          case RS_MOVING:
+          case SK_MOVING:
             if (msg->type != IMC::SamplingAction::SAT_STATE_IDLE)
             {
               m_task->signalError("Received unexpected sampling state report while moving to sampling point.");
@@ -168,16 +169,16 @@ namespace Maneuver
             }
             break;
 
-          case RS_SETUP:
+          case SK_SETUP:
             if (msg->type == IMC::SamplingAction::SAT_STATE_SAMPLING)
             {
               debug("Starting sampling...");
               m_timeout_timer.setTop(m_config.sampling_timeout);
-              m_state = RS_SAMPLING;
+              m_state = SK_SAMPLING;
             }
             break;
 
-          case RS_SAMPLING:
+          case SK_SAMPLING:
             if (msg->type == IMC::SamplingAction::SAT_STATE_IDLE)
             {
               debug("Stopping sampling...");
@@ -204,18 +205,18 @@ namespace Maneuver
 
         switch (m_state)
         {
-          case RS_MOVING:
+          case SK_MOVING:
             if (m_skeep->isInside())
             {
               debug("Reached sampling point, setting up...");
               m_skeep->setSpeed(m_args.speed, IMC::SpeedUnits::SUNITS_METERS_PS);
-              m_state = RS_SETUP;
+              m_state = SK_SETUP;
               m_timeout_timer.setTop(m_config.setup_timeout);
               sendSamplingActionCmd(IMC::SamplingAction::SAT_CMD_START);
             }
             break;
 
-          case RS_SETUP:
+          case SK_SETUP:
             if (m_timeout_timer.overflow())
             {
               debug("Sampling setup timeout, stopping...");
@@ -224,7 +225,7 @@ namespace Maneuver
             }
             break;
 
-          case RS_SAMPLING:
+          case SK_SAMPLING:
             if (m_timeout_timer.overflow())
             {
               debug("Sampling timeout, stopping...");
