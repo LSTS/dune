@@ -54,31 +54,19 @@ namespace Maneuver
         .defaultValue("")
         .description("List of supported sampler types");
 
-        param("DriftingDoris -- Setup Timeout", m_sampler_config.drifting_doris.setup_timeout)
+        param("Doris -- Setup Timeout", m_sampler_config.doris.setup_timeout)
         .defaultValue("10.0")
         .minimumValue("0.1")
         .units(Units::Second)
         .description("Maximum time allowed for sampling setup");
 
-        param("DriftingDoris -- Sampling Timeout", m_sampler_config.drifting_doris.sampling_timeout)
+        param("Doris -- Sampling Timeout", m_sampler_config.doris.sampling_timeout)
         .defaultValue("5.0")
         .minimumValue("0.1")
         .units(Units::Second)
         .description("Maximum time without a sampling state update");
 
-        param("MovingDoris -- Setup Timeout", m_sampler_config.moving_doris.setup_timeout)
-        .defaultValue("10.0")
-        .minimumValue("0.1")
-        .units(Units::Second)
-        .description("Maximum time allowed for sampling setup");
-
-        param("MovingDoris -- Sampling Timeout", m_sampler_config.moving_doris.sampling_timeout)
-        .defaultValue("5.0")
-        .minimumValue("0.1")
-        .units(Units::Second)
-        .description("Maximum time without a sampling state update");
-
-        param("MovingDoris -- Alignment Threshold", m_sampler_config.moving_doris.alignment_threshold)
+        param("Doris -- Alignment Threshold", m_sampler_config.doris.alignment_threshold)
         .defaultValue("15.0")
         .minimumValue("0.1")
         .units(Units::Degree)
