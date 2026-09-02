@@ -37,8 +37,7 @@ namespace Maneuver
 }
 
 #include <Samplers/BasicSampler.hpp>
-#include <Samplers/DriftingDoris.hpp>
-#include <Samplers/MovingDoris.hpp>
+#include <Samplers/Doris.hpp>
 #include <Samplers/RedX.hpp>
 #include <Samplers/WhiteX.hpp>
 
