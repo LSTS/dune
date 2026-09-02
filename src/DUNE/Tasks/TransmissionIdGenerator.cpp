@@ -32,7 +32,7 @@ namespace DUNE
 {
   namespace Tasks
   {
-    Concurrency::Mutex TransmissionIdGenerator::s_transmission_id_generator_mutex = Concurrency::Mutex();
+    Concurrency::Mutex TransmissionIdGenerator::s_transmission_id_generator_mutex;
     uint16_t TransmissionIdGenerator::s_transmission_id_generator_uid = 0;
 
     uint16_t
