@@ -40,6 +40,11 @@ const sysTypeMap = {
   8: 'WSN',
 };
 
+function isMicroDUNEAnnounce(msg) {
+  return msg && typeof msg.services === 'string' &&
+    msg.services.indexOf('microdune+role://') !== -1;
+}
+
 function Announces(root_id) {
   this.create('Announces', root_id);
   this.m_tbl = document.createElement('div'); // Use div for flexibility with Material Design
@@ -148,12 +153,15 @@ Announces.prototype.createSection = function (msg, currentTime) {
   titleContainer.classList.add('announce-title-container'); // Class for styling title container
 
   // Get the system type name based on the sys_type value
+  const microdune = isMicroDUNEAnnounce(msg);
   const sysTypeName = sysTypeMap[msg.sys_type] || 'UNKNOWN';
 
   // Add the section title with the system type in parentheses
   const title = document.createElement('h3');
   title.classList.add('announce-title'); // Class for styling the title
-  title.textContent = `(${sysTypeName}) ${msg.sys_name}`;
+  title.textContent = microdune ? `◆ ${msg.sys_name}` : `(${sysTypeName}) ${msg.sys_name}`;
+  if (microdune)
+    title.classList.add('microdune-node-title');
   //title.textContent = `${msg.sys_name}`;
 
   const tooltip = document.createElement('div');
@@ -225,6 +233,11 @@ Announces.prototype.createSection = function (msg, currentTime) {
 
 // Method to update an existing section
 Announces.prototype.updateSection = function (section, msg, currentTime) {
+  const title = section.querySelector('.announce-title');
+  if (isMicroDUNEAnnounce(msg)) {
+    title.textContent = `◆ ${msg.sys_name}`;
+    title.classList.add('microdune-node-title');
+  }
   const list = section.querySelector('.announce-list');
   this.addIPsToSection(list, msg);
   const remoteTimestamp = String(msg.timestamp);

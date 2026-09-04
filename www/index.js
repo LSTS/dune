@@ -291,9 +291,13 @@ function handleData(text) {
     if (msg.abbrev != 'EntityState' && msg.abbrev != 'CpuUsage')
       continue;
 
-    data.dune_entities[msg.src_ent].state = msg.state;
-    data.dune_entities[msg.src_ent].description = msg.description;
-    data.dune_entities[msg.src_ent].value = msg.value;
+    var entity = data.dune_entities[msg.src_ent];
+    if (entity == null)
+      continue;
+
+    entity.state = msg.state;
+    entity.description = msg.description;
+    entity.value = msg.value;
   }
 
   g_data = data;

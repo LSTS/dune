@@ -43,6 +43,7 @@ Sections.prototype.create = function () {
   this.add(new Main('x-container'));
   this.add(new Sensors('x-container'));
   this.add(new Power('x-container'));
+  this.add(new MicroDUNENodes('x-container'));
   var logbook = new Logbook('x-container');
   g_logbook = logbook;
   this.add(logbook);

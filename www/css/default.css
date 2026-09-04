@@ -897,6 +897,48 @@ div#Sensors {
   padding: 4px 8px 4px 4px;
   vertical-align: middle
 }
+
+/* Compact material-like presentation for optional MicroDUNE nodes. */
+#MicroDUNENodes table.NodesTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid #d7dde3;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+#MicroDUNENodes table.NodesTable th {
+  background: #f1f4f6;
+  color: #455a64;
+  font-weight: 600;
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 1px solid #d7dde3;
+}
+#MicroDUNENodes table.NodesTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #edf0f2;
+  vertical-align: top;
+}
+#MicroDUNENodes table.NodesTable tr:last-child td { border-bottom: 0; }
+#MicroDUNENodes .NodeEntities { line-height: 1.8; }
+#MicroDUNENodes .NodeEntityBadge {
+  display: inline-block;
+  margin: 1px 5px 1px 0;
+  padding: 0 7px;
+  border-radius: 10px;
+  background: #e8f0f7;
+  color: #34566f;
+  font-size: 0.9em;
+}
+#MicroDUNENodes .NodeEntityBadge.Normal { background: #e4f3e5; color: #246b28; }
+#MicroDUNENodes .NodeEntityBadge.Warning { background: #fff3cd; color: #856404; }
+#MicroDUNENodes .NodeEntityBadge.Error { background: #fde8e7; color: #a3211b; }
+#MicroDUNENodes .NodeEntityBadge.Unknown { background: #eceff1; color: #546e7a; }
+.announce-title.microdune-node-title { color: #00695c; }
+#MicroDUNENodes .Normal td:last-child { color: #2e7d32; font-weight: 600; }
+#MicroDUNENodes .Error td:last-child { color: #c62828; font-weight: 600; }
 #Power>button {
   margin-top: 12px;
   border-color: var(--accent);

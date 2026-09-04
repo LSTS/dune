@@ -58,7 +58,7 @@ Power.prototype.updateEntry = function (msg) {
 
   for (var i = 0; i < this.m_sbase.childNodes.length; i++) {
     var child = this.m_sbase.childNodes[i];
-    var name = child.firstChild.firstChild.firstChild.data;
+    var name = child.dataset.channelName || child.firstChild.firstChild.firstChild.data;
 
     if (name == msg.name) {
       this.updateValue(child, msg);
@@ -100,7 +100,11 @@ Power.prototype.createEntry = function (msg) {
   // Header.
   var th = document.createElement('th');
   th.colSpan = 2;
-  th.appendChild(document.createTextNode(msg.name));
+  var source = 'Local';
+  if (g_data && g_data.dune_entities && msg.src_ent !== undefined &&
+      g_data.dune_entities[msg.src_ent])
+    source = g_data.dune_entities[msg.src_ent].label;
+  th.appendChild(document.createTextNode(msg.name + '  ·  ' + source));
   var tr = document.createElement('tr');
   tr.appendChild(th);
 
@@ -131,6 +135,7 @@ Power.prototype.createEntry = function (msg) {
 
   // Table.
   var tbl = document.createElement('table');
+  tbl.dataset.channelName = msg.name;
   tbl.appendChild(tr);
   tbl.appendChild(ctr);
 
