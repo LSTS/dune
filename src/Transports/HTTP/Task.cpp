@@ -371,6 +371,12 @@ namespace Transports
         (void)headers;
         (void)uri;
 
+        // Tasks such as private gateways may reserve proxy entities after the
+        // HTTP task has completed its initial entity-resolution phase.
+        // Refresh this lightweight, thread-safe map before serializing the
+        // current state so the web interface can resolve those new IDs.
+        m_msg_mon.setEntities(m_ctx.entities.entries());
+
         RequestHandler::HeaderFieldsMap hdr;
         hdr["Content-Type"] = "text/javascript";
         hdr["Content-Encoding"] = "gzip";
