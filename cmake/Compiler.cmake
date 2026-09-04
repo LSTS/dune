@@ -36,6 +36,10 @@ macro(dune_probe_cxx)
   message(STATUS "***           Probing Compiler         ***")
   message(STATUS "******************************************")
 
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
+endif(CMAKE_BUILD_TYPE MATCHES "Debug")
   # Intel C Compiler
   if(NOT DUNE_CXX_NAME)
     check_symbol_exists(__INTEL_COMPILER stdio.h DUNE_CXX_INTEL)
