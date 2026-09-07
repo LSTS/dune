@@ -192,7 +192,7 @@ namespace DUNE
       //! Retrieve the number of entities registered in the
       //! context's entity database.
       //! @return number of entities.
-      u_int16_t
+      uint16_t
       getEntityCount(void) const
       {
         return m_ctx.entities.size();
