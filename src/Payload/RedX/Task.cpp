@@ -660,6 +660,7 @@ namespace Payload
           return false;
         }
 
+        m_paused_state = m_curr_state;
         setState(STATE_PAUSED);
         trace("received request to pause sampling");
         return true;
