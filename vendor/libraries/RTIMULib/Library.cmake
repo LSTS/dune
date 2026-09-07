@@ -1,4 +1,10 @@
 
+if(NOT DUNE_OS_LINUX)
+  return()
+endif()
+
+set(DUNE_USING_RTIMULIB 1 CACHE INTERNAL "RTIMULib library")
+
 include_directories(${PROJECT_SOURCE_DIR}/vendor/libraries/RTIMULib/RTIMULib)
 include_directories(${PROJECT_SOURCE_DIR}/vendor/libraries/RTIMULib/RTIMULib/IMUDrivers)
 
