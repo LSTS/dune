@@ -53,65 +53,54 @@ namespace Payload
                                                                       { MODE_AUTOMATIC, "Automatic" },
                                                                       { MODE_MANUAL, "Manual" }};
 
+    //! Sampling state report timeout.
+    static constexpr float c_state_report_tout = 1;
+    //! Collector's motor moving actuation.
+    static constexpr float c_collector_motor_actuation = 1.0f;
+    //! Storage's max rows.
+    static constexpr size_t c_storage_max_rows = 2;
+
     //! Task arguments.
     struct Arguments
     {
       //! Operation mode.
       std::string mode;
-      //! Minimum Water Level GPIO label.
-      std::string min_water_level_gpio;
-      //! Maximum Water Level GPIO label.
-      std::string max_water_level_gpio;
-      //! Motor entity label.
-      std::string motor_elabel;
-      //! Motor id.
-      uint8_t motor_id;
-      //! Water flow 1 source entity label.
-      std::string water_flow_1_elabel;
-      //! Water flow 2 source entity label.
-      std::string water_flow_2_elabel;
-      //! Pump 1 power channel label.
-      std::string pump1_pwr_ch_label;
-      //! Pump 2 power channel label.
-      std::string pump2_pwr_ch_label;
-      //! Pump 3 power channel label.
-      std::string pump3_pwr_ch_label;
-      //! Pump 4 power channel label.
-      std::string pump4_pwr_ch_label;
-      //! Pump 5 power channel label.
-      std::string pump5_pwr_ch_label;
-      //! Step motor id.
-      uint8_t step_id;
-      //! Endpoint 1 GPIO label.
-      std::string endpoint1_gpio;
-      //! Endpoint 2 GPIO label.
-      std::string endpoint2_gpio;
-      //! Valve 1 power channel label.
-      std::string valve1_pwr_ch_label;
-      //! Valve 2 power channel label.
-      std::string valve2_pwr_ch_label;
-      //! Valve 3 power channel label.
-      std::string valve3_pwr_ch_label;
+      //! Collector's minimum water level GPIO label.
+      std::string col_min_water_level_gpio;
+      //! Collector's maximum water level GPIO label.
+      std::string col_max_water_level_gpio;
+      //! Collector's disks motor entity label.
+      std::string col_motor_elabel;
+      //! Collector's disks motor id.
+      uint8_t col_motor_id;
+      //! Collector's water flow source entity label.
+      std::string col_water_flow_elabel;
+      //! Collector's pumps power channel labels.
+      std::vector<std::string> col_pumps_pwr_ch_labels;
+      //! Storage's pumps power channel labels.
+      std::vector<std::string> sto_pumps_pwr_ch_labels;
+      //! Storage's water flow source entity label.
+      std::string sto_water_flow_elabel;
+      //! Storage's step motor id.
+      uint8_t sto_step_id;
+      //! Storage's bottle selector row start endpoint GPIO label.
+      std::string sto_start_ep_gpio;
+      //! Storage's bottle selector row end endpoint GPIO label.
+      std::string sto_end_ep_gpio;
+      //! Storage's purge valve power channel label.
+      std::string sto_purge_pwr_ch_label;
+      //! Storage's rows valve power channel labels.
+      std::vector<std::string> sto_rows_pwr_ch_labels;
       //! Manual motor control.
       float manual_motor;
       //! Manual step control.
       int manual_step;
-      //! Manual pump 1 control.
-      bool manual_pump1;
-      //! Manual pump 2 control.
-      bool manual_pump2;
-      //! Manual pump 3 control.
-      bool manual_pump3;
-      //! Manual pump 4 control.
-      bool manual_pump4;
-      //! Manual pump 5 control.
-      bool manual_pump5;
-      //! Manual valve 1 control.
-      bool manual_valve1;
-      //! Manual valve 2 control.
-      bool manual_valve2;
-      //! Manual valve 3 control.
-      bool manual_valve3;
+      //! Restarting is allowed.
+      bool restart_allowed;
+      //! Pausing is allowed.
+      bool pausing_allowed;
+      //! Force state transition.
+      bool force_state_transition;
     };
 
     //! Task to control WhiteX payload. 
@@ -119,6 +108,28 @@ namespace Payload
     //! @author Bernardo Gabriel
     struct Task: public Tasks::Task
     {
+      enum State
+      {
+        STATE_UNKNOWN,
+        STATE_IDLE,
+        STATE_INITIAL,
+        STATE_COLLECT,
+        STATE_SELECT,
+        STATE_STORE,
+        STATE_COMPLETED,
+        STATE_PAUSED
+      };
+
+      enum Request
+      {
+        REQ_NONE,
+        REQ_START_SAMPLING,
+        REQ_STOP_SAMPLING,
+        REQ_PAUSE_SAMPLING,
+        REQ_RESUME_SAMPLING,
+        REQ_FORCE_STATE_TRANSITION
+      };
+
       //! Task arguments.
       Arguments m_args;
       //! Operation mode.
@@ -131,18 +142,30 @@ namespace Payload
       IMC::SetThrusterActuation m_sta;
       //! PowerChannelControl message.
       IMC::PowerChannelControl m_pcc;
-      //! Motor entity id.
-      unsigned m_motor_eid;
-      //! WaterFlow 1 source entity id.
-      unsigned m_water_flow_1_eid;
-      //! WaterFlow 2 source entity id.
-      unsigned m_water_flow_2_eid;
+      //! Collector's motor entity id.
+      unsigned m_col_motor_eid;
+      //! Collector's water flow source entity id.
+      unsigned m_col_water_flow_eid;
+      //! Storage's water flow source entity id.
+      unsigned m_sto_water_flow_eid;
       //! Map of GPIO states.
       std::unordered_map<std::string, bool> m_gpio_states;
       //! Map of Water Flows.
       std::unordered_map<unsigned, fp32_t> m_water_flows;
       //! Map of Power Channel states.
       std::map<std::string, bool> m_pwr_ch_states;
+      //! Sampling state report message.
+      IMC::SamplingAction m_sa_report;
+      //! Current state of the system.
+      State m_curr_state;
+      //! Last received request.
+      Request m_recv_req;
+      //! Paused state.
+      State m_paused_state;
+      //! Timer for reporting state
+      Counter<double> m_report_state_timer;
+      //! Current selected bottle.
+      int m_curr_bottle;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -150,135 +173,100 @@ namespace Payload
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_mode(MODE_INVALID),
-        m_motor_eid(UINT_MAX),
-        m_water_flow_1_eid(UINT_MAX),
-        m_water_flow_2_eid(UINT_MAX)
+        m_col_motor_eid(UINT_MAX),
+        m_col_water_flow_eid(UINT_MAX),
+        m_sto_water_flow_eid(UINT_MAX),
+        m_curr_state(STATE_IDLE),
+        m_recv_req(REQ_NONE),
+        m_paused_state(STATE_UNKNOWN),
+        m_report_state_timer(c_state_report_tout),
+        m_curr_bottle(-1)
       {
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER, true);
+        paramActive(Tasks::Parameter::SCOPE_GLOBAL,
+                    Tasks::Parameter::VISIBILITY_USER,
+                    true);
 
         param("Mode", m_args.mode)
         .defaultValue("Automatic")
         .values("Automatic, Manual")
         .description("Operation mode.");
 
-        param("Minimum Water Level - GPIO Label", m_args.min_water_level_gpio)
+        param("Collector -- Minimum Water Level - GPIO Label", m_args.col_min_water_level_gpio)
         .editable(false)
-        .description("Name of the GPIO that indicates the minimum water level.");
+        .description("Name of the GPIO that indicates the collector's minimum water level.");
 
-        param("Maximum Water Level - GPIO Label", m_args.max_water_level_gpio)
+        param("Collector -- Maximum Water Level - GPIO Label", m_args.col_max_water_level_gpio)
         .editable(false)
-        .description("Name of the GPIO that indicates the maximum water level.");
+        .description("Name of the GPIO that indicates the collector's maximum water level.");
 
-        param("Water Flow 1 - Entity Label", m_args.water_flow_1_elabel)
+        param("Collector -- Water Flow - Entity Label", m_args.col_water_flow_elabel)
         .editable(false)
-        .description("Entity label of the source of the first water flow.");
+        .description("Entity label of the source of the collector's water flow.");
 
-        param("Water Flow 2 - Entity Label", m_args.water_flow_2_elabel)
+        param("Collector -- Motor - Entity Label", m_args.col_motor_elabel)
         .editable(false)
-        .description("Entity label of the source of the second water flow.");
+        .description("Entity label of the motor to control the collector's disks.");
 
-        param("Motor Entity Label", m_args.motor_elabel)
+        param("Collector -- Motor - Id", m_args.col_motor_id)
         .editable(false)
-        .description("Entity label of the motor to control.");
+        .description("Id of the motor to control the collector's disks.");
 
-        param("Motor Id", m_args.motor_id)
+        param("Collector -- Pumps - Power Channel Names", m_args.col_pumps_pwr_ch_labels)
         .editable(false)
-        .description("Id of the motor to control.");
+        .description("Names of the power channel that control the collector's pumps.");
 
-        param("Pump 1 - Power Channel Name", m_args.pump1_pwr_ch_label)
+        param("Storage -- Pumps - Power Channel Names", m_args.sto_pumps_pwr_ch_labels)
         .editable(false)
-        .description("Name of the power channel that controls pump 1.");
+        .description("Names of the power channel that control the storage's pumps.");
 
-        param("Pump 2 - Power Channel Name", m_args.pump2_pwr_ch_label)
+        param("Storage -- Purge Valve - Power Channel Name", m_args.sto_purge_pwr_ch_label)
         .editable(false)
-        .description("Name of the power channel that controls pump 2.");
+        .description("Name of the power channel that controls storage purge valve.");
 
-        param("Pump 3 - Power Channel Name", m_args.pump3_pwr_ch_label)
+        param("Storage -- Water Flow - Entity Label", m_args.sto_water_flow_elabel)
         .editable(false)
-        .description("Name of the power channel that controls pump 3.");
+        .description("Entity label of the source of the storage's water flow.");
 
-        param("Pump 4 - Power Channel Name", m_args.pump4_pwr_ch_label)
+        param("Storage -- Rows Valves - Power Channel Names", m_args.sto_rows_pwr_ch_labels)
+        .size(2)
         .editable(false)
-        .description("Name of the power channel that controls pump 4.");
+        .description("Names of the power channel that controls storage's rows valves.");
 
-        param("Pump 5 - Power Channel Name", m_args.pump5_pwr_ch_label)
+        param("Storage -- Step Motor - Id", m_args.sto_step_id)
         .editable(false)
-        .description("Name of the power channel that controls pump 5.");
+        .description("ID of the step motor to control the storage's bottle selector.");
 
-        param("Valve 1 - Power Channel Name", m_args.valve1_pwr_ch_label)
+        param("Storage -- Row Start - GPIO Label", m_args.sto_start_ep_gpio)
         .editable(false)
-        .description("Name of the power channel that controls valve 1.");
+        .description("Name of the GPIO that corresponds to the row start.");
 
-        param("Valve 2 - Power Channel Name", m_args.valve2_pwr_ch_label)
+        param("Storage -- Row End - GPIO Label", m_args.sto_end_ep_gpio)
         .editable(false)
-        .description("Name of the power channel that controls valve 2.");
+        .description("Name of the GPIO that corresponds to the row end.");
 
-        param("Valve 3 - Power Channel Name", m_args.valve3_pwr_ch_label)
-        .editable(false)
-        .description("Name of the power channel that controls valve 3.");
-
-        param("Step Motor Id", m_args.step_id)
-        .editable(false)
-        .description("ID of the step motor to control.");
-
-        param("Endpoint 1 - GPIO Label", m_args.endpoint1_gpio)
-        .editable(false)
-        .description("Name of the GPIO that indicates the first endpoint.");
-
-        param("Endpoint 2 - GPIO Label", m_args.endpoint2_gpio)
-        .editable(false)
-        .description("Name of the GPIO that indicates the second endpoint.");
+        param("Force State Transition", m_args.force_state_transition)
+        .defaultValue("false")
+        .description("Manually force state transition.");
 
         param("Manual - Motor", m_args.manual_motor)
         .defaultValue("0.0")
         .minimumValue("-1.0")
         .maximumValue("1.0")
-        .description("Manual control for the motor.");
+        .description("Manual control for the collector's disks motor.");
 
         param("Manual - Step", m_args.manual_step)
         .defaultValue("0")
         .values("-1, 0, 1")
-        .description("Manual control for the step motor.");
-
-        param("Manual - Pump 1", m_args.manual_pump1)
-        .defaultValue("false")
-        .description("Manual control for pump 1.");
-
-        param("Manual - Pump 2", m_args.manual_pump2)
-        .defaultValue("false")
-        .description("Manual control for pump 2.");
-
-        param("Manual - Pump 3", m_args.manual_pump3)
-        .defaultValue("false")
-        .description("Manual control for pump 3.");
-
-        param("Manual - Pump 4", m_args.manual_pump4)
-        .defaultValue("false")
-        .description("Manual control for pump 4.");
-
-        param("Manual - Pump 5", m_args.manual_pump5)
-        .defaultValue("false")
-        .description("Manual control for pump 5.");
-
-        param("Manual - Valve 1", m_args.manual_valve1)
-        .defaultValue("false")
-        .description("Manual control for valve 1.");
-
-        param("Manual - Valve 2", m_args.manual_valve2)
-        .defaultValue("false")
-        .description("Manual control for valve 2.");
-
-        param("Manual - Valve 3", m_args.manual_valve3)
-        .defaultValue("false")
-        .description("Manual control for valve 3.");
+        .description("Manual control for the storage's step motor.");
 
         m_sta.setDestination(getSystemId());
+        m_sa_report.action = IMC::SamplingAction::SA_REPORT;
 
         bind<IMC::GpioState>(this);
         bind<IMC::WaterFlow>(this);
         bind<IMC::PowerChannelState>(this);
         bind<IMC::RemoteActions>(this);
+        bind<IMC::SamplingAction>(this);
       }
 
       void
@@ -299,6 +287,16 @@ namespace Payload
           }
         }
 
+        if (paramChanged(m_args.force_state_transition) && m_args.force_state_transition)
+        {
+          applyEntityParameter(&m_args.force_state_transition, false);
+          if (isActive() && m_mode == MODE_AUTOMATIC)
+          {
+            m_recv_req = REQ_FORCE_STATE_TRANSITION;
+            inf("force state transition request received");
+          }
+        }
+
         if (m_mode == MODE_MANUAL)
         {
           if (paramChanged(m_args.manual_motor))
@@ -306,30 +304,6 @@ namespace Payload
 
           if (paramChanged(m_args.manual_step))
             setStep(m_args.manual_step);
-
-          if (paramChanged(m_args.manual_pump1))
-            setPump(m_args.pump1_pwr_ch_label, m_args.manual_pump1);
-
-          if (paramChanged(m_args.manual_pump2))
-            setPump(m_args.pump2_pwr_ch_label, m_args.manual_pump2);
-
-          if (paramChanged(m_args.manual_pump3))
-            setPump(m_args.pump3_pwr_ch_label, m_args.manual_pump3);
-
-          if (paramChanged(m_args.manual_pump4))
-            setPump(m_args.pump4_pwr_ch_label, m_args.manual_pump4);
-
-          if (paramChanged(m_args.manual_pump5))
-            setPump(m_args.pump5_pwr_ch_label, m_args.manual_pump5);
-
-          if (paramChanged(m_args.manual_valve1))
-            setValve(m_args.valve1_pwr_ch_label, m_args.manual_valve1);
-
-          if (paramChanged(m_args.manual_valve2))
-            setValve(m_args.valve2_pwr_ch_label, m_args.manual_valve2);
-
-          if (paramChanged(m_args.manual_valve3))
-            setValve(m_args.valve3_pwr_ch_label, m_args.manual_valve3);
         }
       }
 
@@ -358,9 +332,9 @@ namespace Payload
       void
       onEntityResolution(void)
       {
-        tryResolveEntity(m_motor_eid, m_args.motor_elabel);
-        resolveWaterFlowEntity(m_water_flow_1_eid, m_args.water_flow_1_elabel);
-        resolveWaterFlowEntity(m_water_flow_2_eid, m_args.water_flow_2_elabel);
+        tryResolveEntity(m_col_motor_eid, m_args.col_motor_elabel);
+        resolveWaterFlowEntity(m_col_water_flow_eid, m_args.col_water_flow_elabel);
+        resolveWaterFlowEntity(m_sto_water_flow_eid, m_args.sto_water_flow_elabel);
       }
 
       void
@@ -376,20 +350,17 @@ namespace Payload
       onResourceInitialization(void) override
       {
         m_gpio_states.clear();
-        m_gpio_states[m_args.min_water_level_gpio] = false;
-        m_gpio_states[m_args.max_water_level_gpio] = false;
-        m_gpio_states[m_args.endpoint1_gpio] = false;
-        m_gpio_states[m_args.endpoint2_gpio] = false;
+        m_gpio_states[m_args.col_min_water_level_gpio] = false;
+        m_gpio_states[m_args.col_max_water_level_gpio] = false;
+        m_gpio_states[m_args.sto_start_ep_gpio] = false;
+        m_gpio_states[m_args.sto_end_ep_gpio] = false;
 
         m_pwr_ch_states.clear();
-        m_pwr_ch_states[m_args.pump1_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.pump2_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.pump3_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.pump4_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.pump5_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve1_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve2_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve3_pwr_ch_label] = false;
+        for (const auto& label : m_args.col_pumps_pwr_ch_labels)
+          m_pwr_ch_states[label] = false;
+        m_pwr_ch_states[m_args.sto_purge_pwr_ch_label] = false;
+        m_pwr_ch_states[m_args.sto_rows_pwr_ch_labels[0]] = false;
+        m_pwr_ch_states[m_args.sto_rows_pwr_ch_labels[1]] = false;
 
         setupRemoteActions();
       }
@@ -464,6 +435,66 @@ namespace Payload
       }
 
       void
+      consume(const IMC::SamplingAction* msg)
+      {
+        if (m_mode != MODE_AUTOMATIC)
+          return;
+
+        if (msg->action != IMC::SamplingAction::ActionEnum::SA_COMMAND)
+          return;
+
+        if (!isActive())
+        {
+          inf("received SamplingAction command message with action %d, but the entity is not active", msg->action);
+          return;
+        }
+        else
+          spew("received SamplingAction command message with action %d", msg->action);
+
+        switch (msg->type)
+        {
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_START:
+            inf("received command to start sampling");
+            m_recv_req = REQ_START_SAMPLING;
+            break;
+
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_STOP:
+            inf("received command to stop sampling");
+            m_recv_req = REQ_STOP_SAMPLING;
+            break;
+
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_PAUSE:
+            if(m_args.pausing_allowed)
+            {
+              m_recv_req = REQ_PAUSE_SAMPLING;
+              inf("received command to pause sampling action");
+            }
+            else
+              inf("received command to pause sampling action, but pausing is not allowed");
+
+            break;
+
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_RESUME:
+            if(m_args.pausing_allowed)
+            {
+              m_recv_req = REQ_RESUME_SAMPLING;
+              inf("received command to resume sampling action");
+            }
+            else
+              inf("received command to resume sampling action, but pausing is not allowed");
+
+            break;
+
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_QUERY_STATE:
+            dispatch(m_sa_report);
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      void
       queryPowerChannels(void)
       {
         dispatch(m_qry_pwr_ch_state);
@@ -492,13 +523,13 @@ namespace Payload
       void
       setStep(int step)
       {
-        setThrusterActuation(m_args.step_id, static_cast<float>(step));
+        setThrusterActuation(m_args.sto_step_id, static_cast<float>(step));
       }
 
       void
       setMotor(float step)
       {
-        setThrusterActuation(m_args.motor_id, step, static_cast<uint8_t>(m_motor_eid));
+        setThrusterActuation(m_args.col_motor_id, step, static_cast<uint8_t>(m_col_motor_eid));
       }
 
       void
@@ -540,14 +571,438 @@ namespace Payload
         }
       }
 
+      bool
+      startRequested(bool sampling = true)
+      {
+        if (m_recv_req != REQ_START_SAMPLING)
+          return false;
+
+        m_recv_req = REQ_NONE;
+        if (sampling && !m_args.restart_allowed)
+        {
+          inf("received request to restart sampling, but restarting is not allowed");
+          return false;
+        }
+
+        m_recv_req = REQ_NONE;
+        setState(STATE_INITIAL);
+        trace("start sampling");
+        return true;
+      }
+
+      bool
+      stopRequested(bool sampling = true)
+      {
+        if (m_recv_req != REQ_STOP_SAMPLING)
+          return false;
+
+        m_recv_req = REQ_NONE;
+
+        if (!sampling)
+        {
+          inf("received request to stop sampling, but not sampling");
+          return false;
+        }
+
+        setState(STATE_IDLE);
+        trace("stop sampling");
+        return true;
+      }
+
+      bool
+      pauseRequested(bool sampling = true)
+      {
+        if (!m_args.pausing_allowed || m_recv_req != REQ_PAUSE_SAMPLING)
+          return false;
+
+        m_recv_req = REQ_NONE;
+
+        if (!m_args.pausing_allowed)
+        {
+          inf("received request to pause sampling, but pausing is not allowed");
+          return false;
+        }
+
+        if (!sampling)
+        {
+          inf("received request to pause sampling, but not sampling");
+          return false;
+        }
+
+        m_paused_state = m_curr_state;
+        setState(STATE_PAUSED);
+        trace("pause sampling");
+        return true;
+      }
+
+      bool
+      resumeRequested(void)
+      {
+        if (m_recv_req != REQ_RESUME_SAMPLING)
+          return false;
+
+        m_recv_req = REQ_NONE;
+
+        if (!m_args.pausing_allowed)
+        {
+          inf("received request to resume sampling, but pausing is not allowed");
+          return false;
+        }
+
+        m_paused_state = STATE_UNKNOWN;
+        setState((m_paused_state != STATE_UNKNOWN) ? m_paused_state : STATE_IDLE);
+        trace("resume sampling");
+        return true;
+      }
+
+      bool
+      forceStateTransition(void)
+      {
+        if (m_recv_req != REQ_FORCE_STATE_TRANSITION)
+          return false;
+
+        m_recv_req = REQ_NONE;
+        trace("force state transition");
+        return true;
+      }
+
+      void
+      startCollectorMotor(void)
+      {
+        setMotor(c_collector_motor_actuation);
+      }
+
+      void
+      stopCollectorMotor(void)
+      {
+        setMotor(0.0f);
+      }
+
+      void
+      startCollectorPumps(void)
+      {
+        for (const auto& label : m_args.col_pumps_pwr_ch_labels)
+          setPump(label, true);
+      }
+
+      void
+      stopCollectorPumps(void)
+      {
+        for (const auto& label : m_args.col_pumps_pwr_ch_labels)
+          setPump(label, false);
+      }
+
+      void
+      startCollection(void)
+      {
+        startCollectorMotor();
+        startCollectorPumps();
+      }
+
+      void
+      stopCollection(void)
+      {
+        stopCollectorMotor();
+        stopCollectorPumps();
+      }
+
+      void
+      startStorageStep(bool forward = true)
+      {
+        setStep(forward ? 1 : -1);
+      }
+      
+      void
+      stopStorageStep(void)
+      {
+        setStep(0);
+      }
+
+      void
+      startStoragePumps(void)
+      {
+        for (const auto& label : m_args.sto_pumps_pwr_ch_labels)
+          setPump(label, true);
+      }
+
+      void
+      stopStoragePumps(void)
+      {
+        for (const auto& label : m_args.sto_pumps_pwr_ch_labels)
+          setPump(label, false);
+      }
+
+      void
+      openStoragePurgeValve(void)
+      {
+        setValve(m_args.sto_purge_pwr_ch_label, true);
+      }
+
+      void
+      closeStoragePurgeValve(void)
+      {
+        setValve(m_args.sto_purge_pwr_ch_label, false);
+      }
+
+      void
+      openStorageRowValve(size_t row)
+      {
+        if (row > c_storage_max_rows)
+        {
+          err("invalid row number: %ld", row);
+          return;
+        }
+
+        setValve(m_args.sto_rows_pwr_ch_labels[row], true);
+      }
+
+      void
+      closeStorageRowValve(size_t row)
+      {
+        if (row > c_storage_max_rows)
+        {
+          err("invalid row number: %ld", row);
+          return;
+        }
+
+        setValve(m_args.sto_rows_pwr_ch_labels[row], false);
+      }
+
+      void
+      selectBottle(void)
+      {
+        if (m_curr_bottle < 0)
+          m_curr_bottle = 0;
+        else
+          m_curr_bottle = (m_curr_bottle + 1) % c_storage_max_rows;
+      }
+
+      int
+      bottleRow(int bottle)
+      {
+        return bottle % 2;
+      }
+
+      void
+      startStoreSample(int bottle)
+      {
+        int row = bottleRow(bottle);
+        startStoragePumps();
+        openStorageRowValve(row);
+      }
+
+      void
+      stopStoreSample(int bottle)
+      {
+        int row = bottleRow(bottle);
+        closeStorageRowValve(row);
+        stopStoragePumps();
+      }
+
+      void
+      startPurge(void)
+      {
+        openStoragePurgeValve();
+        startStoragePumps();
+      }
+
+      void
+      stopPurge(void)
+      {
+        closeStoragePurgeValve();
+        stopStoragePumps();
+      }
+
+      void
+      reset(void)
+      {
+        //!TODO: Implement actuators reset logic here.
+      }
+
+      bool
+      isResetOver(void)
+      {
+        if (1)
+        {
+          debug("reset over");
+          return true;
+        }
+
+        return false;
+      }
+
+      void
+      collect(void)
+      {
+        startCollection();
+      }
+
+      bool
+      isCollectOver(void)
+      {
+        if (1)
+        {
+          stopCollection();
+          debug("collect over");
+          return true;
+        }
+
+        return false;
+      }
+
+      void
+      select(void)
+      {
+        selectBottle();
+        startStorageStep(true);
+      }
+
+      bool
+      isSelectOver(void)
+      {
+        if (1)
+        {
+          debug("select over");
+          return true;
+        }
+
+        return false;
+      }
+
+      void
+      store(void)
+      {
+        startStoreSample(m_curr_bottle);
+      }
+
+      bool
+      isStoreOver(void)
+      {
+        if (1)
+        {
+          debug("store over");
+          stopStoreSample(m_curr_bottle);
+          return true;
+        }
+
+        return false;
+      }
+
+      void
+      setState(State state)
+      {
+        m_curr_state = state;
+
+        switch (m_curr_state)
+        {
+          case STATE_IDLE:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_IDLE, "ready for sampling");
+            break;
+
+          case STATE_INITIAL:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_STARTING, "initializing sampling action");
+            reset();
+            break;
+
+          case STATE_COLLECT:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "collecting sample");
+            collect();
+            break;
+
+          case STATE_SELECT:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "selecting bottle");
+            select();
+            break;
+
+          case STATE_STORE:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "storing sample");
+            store();
+            break;
+
+          case STATE_COMPLETED:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_STOPPING, "sampling action completed");
+            reset();
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      void
+      updateSamplingState(IMC::SamplingAction::TypeEnum type, const std::string& description = "")
+      {
+        debug("updating sampling state report: type %d, description: %s", type, description.c_str());
+        m_sa_report.type = type;
+        m_sa_report.description = description;
+        dispatch(m_sa_report);
+      }
+
       void
       updateMachineState(void)
       {
-        if (!isActive())
+        if (!isActive() || m_mode != MODE_AUTOMATIC)
           return;
 
-        if (m_mode != MODE_AUTOMATIC)
-          return;
+        switch (m_curr_state)
+        {
+          case STATE_IDLE:
+            startRequested(false);
+            break;
+
+          case STATE_INITIAL:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
+
+            if (forceStateTransition() || isResetOver())
+              setState(STATE_COLLECT);
+
+            break;
+
+          case STATE_COLLECT:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
+            
+            if (forceStateTransition() || isCollectOver())
+              setState(STATE_SELECT);
+
+            break;
+
+          case STATE_SELECT:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
+
+            if (forceStateTransition() || isSelectOver())
+              setState(STATE_STORE);
+
+            break;
+
+          case STATE_STORE:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
+
+            if (forceStateTransition() || isStoreOver())
+              setState(STATE_COMPLETED);
+
+            break;
+
+          case STATE_COMPLETED:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
+
+            if (forceStateTransition() || isResetOver())
+              setState(STATE_IDLE);
+
+            break;
+
+          case STATE_PAUSED:
+            resumeRequested();
+            break;
+
+          default:
+            setState(STATE_IDLE);
+            break;
+        }        
       }
 
       void
@@ -557,18 +1012,27 @@ namespace Payload
         ss << (isActive() ? "active" : "idle");
         ss << " | m: " << c_mode_str_map.at(m_mode).front();
 
-        ss << " | wl: " << static_cast<int>(m_gpio_states[m_args.min_water_level_gpio])
-                        << static_cast<int>(m_gpio_states[m_args.max_water_level_gpio]);
+        ss << " | collector: ";
 
-        ss << " | wf1: " << m_water_flows[m_water_flow_1_eid];
-        ss << " | wf2: " << m_water_flows[m_water_flow_2_eid];
+        ss << " wl=" << static_cast<int>(m_gpio_states[m_args.col_min_water_level_gpio])
+                     << static_cast<int>(m_gpio_states[m_args.col_max_water_level_gpio]);
 
-        ss << " | p: ";
-        for (const auto& pwr_ch : m_pwr_ch_states)
-          ss << static_cast<int>(pwr_ch.second);
+        ss << " wf=" << m_water_flows[m_col_water_flow_eid];
 
-        ss << " | e: " << static_cast<int>(m_gpio_states[m_args.endpoint1_gpio])
-                       << static_cast<int>(m_gpio_states[m_args.endpoint2_gpio]);
+        ss << " p=";
+        for (const auto& pwr_ch : m_args.col_pumps_pwr_ch_labels)
+          ss << static_cast<int>(m_pwr_ch_states[pwr_ch]);
+        
+        ss << " | storage: ";
+        
+        ss << " wf=" << m_water_flows[m_sto_water_flow_eid];
+
+        ss << " p=";
+        for (const auto& pwr_ch : m_args.col_pumps_pwr_ch_labels)
+          ss << static_cast<int>(m_pwr_ch_states[pwr_ch]);
+
+        ss << " e=" << static_cast<int>(m_gpio_states[m_args.sto_start_ep_gpio])
+                    << static_cast<int>(m_gpio_states[m_args.sto_end_ep_gpio]);
 
         setEntityState(EntityState::ESTA_NORMAL, ss.str());
       }
@@ -580,7 +1044,14 @@ namespace Payload
         {
           waitForMessages(1.0);
           updateMachineState();
-          updateEntityState();
+
+          if (m_report_state_timer.overflow())
+          {
+            updateEntityState();
+            if (isActive() && m_mode == MODE_AUTOMATIC)
+              dispatch(m_sa_report);
+            m_report_state_timer.reset();
+          }
         }
       }
     };
