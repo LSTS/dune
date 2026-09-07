@@ -1310,8 +1310,8 @@ namespace Control
 
 			private:
 
-				const double DEG2RAD = M_PI / 180.0f;
-				const double RAD2DEG = 180.0f / M_PI;
+				const double DEG2RAD = DUNE::Math::c_pi / 180.0f;
+				const double RAD2DEG = 180.0f / DUNE::Math::c_pi;
 
 				// bool AH_0, bool OBS_PASSED unused?
 				double costFunction(double P_ca, double Chi_ca, int k, bool SB_0, bool CRG_0, bool OTG_0, bool OT_0, bool HOT_0, double DIST_0, double u_d, int l, int &ik_return_to_path, Math::Matrix obst_state, Math::Matrix static_obst_state, int chi_ca_index)
@@ -1623,27 +1623,27 @@ namespace Control
 
 				inline double normalize_angle(double angle)
 				{
-					while (angle <= -M_PI)
-						angle += 2 * M_PI;
-					while (angle > M_PI)
-						angle -= 2 * M_PI;
+					while (angle <= -DUNE::Math::c_pi)
+						angle += 2 * DUNE::Math::c_pi;
+					while (angle > DUNE::Math::c_pi)
+						angle -= 2 * DUNE::Math::c_pi;
 					return angle;
 				}
 
 				inline double normalize_angle_360(double angle)
 				{
-					angle = fmod(angle, 2 * M_PI);
+					angle = fmod(angle, 2 * DUNE::Math::c_pi);
 					if (angle < 0)
-						angle += 2 * M_PI;
+						angle += 2 * DUNE::Math::c_pi;
 					return angle;
 				}
 
 				inline double angle_diff(double a, double b)
 				{
-					double dif = fmod(b - a + M_PI, 2 * M_PI);
+					double dif = fmod(b - a + DUNE::Math::c_pi, 2 * DUNE::Math::c_pi);
 					if (dif < 0)
-						dif += 2 * M_PI;
-					return dif - M_PI;
+						dif += 2 * DUNE::Math::c_pi;
+					return dif - DUNE::Math::c_pi;
 				}
 
 				void rot2d(double yaw, Eigen::Vector2d &res)

@@ -211,7 +211,7 @@ namespace Control
 						std::cout << "x_hat: \n"
 											<< x_hat.transpose() << std::endl;
 						std::cout << "psi_hat: \n"
-											<< psi_ * 180.0 / M_PI << std::endl;
+											<< psi_ * 180.0 / DUNE::Math::c_pi << std::endl;
 						std::cout << "\n"
 											<< std::endl;
 					}
@@ -425,9 +425,9 @@ namespace Control
 						u_(0) = x_hat(3);
 						v_(0) = x_hat(4);
 
-						// std::cout << "psi_hat_prev: \n" << psi_hat_prev*180.0/M_PI << std::endl;
+						// std::cout << "psi_hat_prev: \n" << psi_hat_prev * 180.0 / DUNE::Math::c_pi << std::endl;
 						std::cout << "psi_hat: \n"
-											<< psi_ * 180.0 / M_PI << std::endl;
+											<< psi_ * 180.0 / DUNE::Math::c_pi << std::endl;
 						std::cout << "\n"
 											<< std::endl;
 					}
@@ -549,23 +549,23 @@ namespace Control
 
 				inline double normalize(double angle)
 				{
-					while(angle <= -M_PI) angle += 2*M_PI; 
-					while (angle > M_PI) angle -= 2*M_PI;
+					while(angle <= -DUNE::Math::c_pi) angle += 2 * DUNE::Math::c_pi;
+					while (angle > DUNE::Math::c_pi) angle -= 2 * DUNE::Math::c_pi;
 					return angle;
 				}
 
 				inline double normalize_angle_360(double angle){
-					angle = fmod(angle,2*M_PI);
+					angle = fmod(angle, 2 * DUNE::Math::c_pi);
 					if (angle < 0)
-					angle += 2*M_PI;
+					angle += 2 * DUNE::Math::c_pi;
 					return angle;
 				}
 
 				inline double angle_diff(double a,double b){
-					double dif = fmod(b - a + M_PI,2*M_PI);
+					double dif = fmod(b - a + DUNE::Math::c_pi, 2 * DUNE::Math::c_pi);
 					if (dif < 0)
-						dif += 2*M_PI;
-					return dif - M_PI;
+						dif += 2 * DUNE::Math::c_pi;
+					return dif - DUNE::Math::c_pi;
 				}
 				
 				// Assures that the numerical difference is at most PI

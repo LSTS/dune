@@ -172,10 +172,10 @@ namespace Control
         */
         inline double angle_diff(double a,double b)
         {
-          double dif = fmod(b - a + M_PI,2*M_PI);
+          double dif = fmod(b - a + DUNE::Math::c_pi, 2 * DUNE::Math::c_pi);
           if (dif < 0)
-              dif += 2*M_PI;
-          return dif - M_PI;
+              dif += 2 * DUNE::Math::c_pi;
+          return dif - DUNE::Math::c_pi;
         }
         
 

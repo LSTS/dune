@@ -36,7 +36,7 @@
 
 #include <Eigen/Dense>
 
-inline const double DEG2RAD = M_PI/180.0f;
+inline const double DEG2RAD = DUNE::Math::c_pi / 180.0f;
 
 // Import namespaces.
 using DUNE_NAMESPACES;
@@ -91,7 +91,7 @@ namespace Control
           // LOS guidance dynamics variables and parameters
           double psi_r;                                   // LOS path course correction
           double e = 0, e_integral = 0;                   // cross-track error and its integral
-          double max_integral_corr = M_PI * 20.0 / 180.0; // max integral correction pi*20/180
+          double max_integral_corr = DUNE::Math::c_pi * 20.0 / 180.0; // max integral correction pi*20/180
           Eigen::MatrixXd waypoints(waypoints_.rows(), waypoints_.cols());
           waypoints = waypoints_;
 
@@ -265,7 +265,7 @@ namespace Control
             {
               std::cout << "X INSIDE= " << m_x(i) << std::endl;
               std::cout << "Y INSIDE= " << m_y(i) << std::endl;
-              std::cout << "PSI INSIDE= " << m_psi(i)*180.0f/M_PI << std::endl;
+              std::cout << "PSI INSIDE= " << m_psi(i) * 180.0f / DUNE::Math::c_pi << std::endl;
             }*/
           }
         }
@@ -404,14 +404,14 @@ namespace Control
           if (std::isinf(angle))
             return angle;
 
-          while (angle <= -M_PI)
+          while (angle <= -DUNE::Math::c_pi)
           {
-            angle += 2 * M_PI;
+            angle += 2 * DUNE::Math::c_pi;
           }
 
-          while (angle > M_PI)
+          while (angle > DUNE::Math::c_pi)
           {
-            angle -= 2 * M_PI;
+            angle -= 2 * DUNE::Math::c_pi;
           }
 
           return angle;
@@ -423,7 +423,7 @@ namespace Control
         // const int n_samp_;
         int m_n_samp; // possibility to set from sb_mpc
 
-        const double DEG2RAD = M_PI/180.0f;
+        const double DEG2RAD = DUNE::Math::c_pi / 180.0f;
       };
     }
   }
