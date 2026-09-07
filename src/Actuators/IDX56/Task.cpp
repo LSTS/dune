@@ -86,6 +86,10 @@ namespace Actuators
       int max_rpm;
       //! Actuator Id.
       int id;
+      //! Current controller gains.
+      std::vector<unsigned long long> current_gains;
+      //! Velocity controller gains.
+      std::vector<unsigned long long> velocity_gains;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -169,6 +173,18 @@ namespace Actuators
         .defaultValue("0")
         .description("Actuator Id.");
 
+        param("Current Controller Gains", m_args.current_gains)
+        .editable(false)
+        .defaultValue("0,0")
+        .size(2)
+        .description("Current controller gains.");
+
+        param("Velocity Controller Gains", m_args.velocity_gains)
+        .editable(false)
+        .defaultValue("0,0,0,0")
+        .size(4)
+        .description("Velocity controller gains.");
+
         bind<IMC::PowerChannelState>(this);
       }
 
@@ -240,6 +256,16 @@ namespace Actuators
         }
         else
           debug("device opened successfully");
+
+        if (setCurrentControllerGains(m_args.current_gains) && setVelocityControllerGains(m_args.velocity_gains))
+          debug("controller gains set successfully");
+        else
+        {
+          war("failed to set controller gains");
+          requestDeactivation();
+          setEntityState(EntityState::ESTA_ERROR, "failed to set controller gains");
+          return;
+        }
 
         if (enableDevice() && enabledMode(m_mode))
         {
@@ -493,6 +519,88 @@ namespace Actuators
         m_error = 0;
         debug("setting velocity to %ld", vel);
         return VCS_MoveWithVelocity(m_handle, m_args.node_id, vel, &m_error) != 0 && m_error == 0;
+      }
+
+      bool
+      getControllerGain(unsigned short controller, unsigned short gain, unsigned long long& value)
+      {
+        if (m_handle == nullptr)
+          return false;
+
+        m_error = 0;
+        return VCS_GetControllerGain(m_handle, m_args.node_id, controller, gain, &value, &m_error) != 0 && m_error == 0;
+      }
+
+      bool
+      setControllerGain(unsigned short controller, unsigned short gain, unsigned long long value)
+      {
+        if (m_handle == nullptr)
+          return false;
+
+        m_error = 0;
+        return VCS_SetControllerGain(m_handle, m_args.node_id, controller, gain, value, &m_error) != 0 && m_error == 0;
+      }
+
+      bool
+      getCurrentControllerGains(unsigned long long& p, unsigned long long& i)
+      {
+        return getControllerGain(EC_PI_CURRENT_CONTROLLER, EG_PICC_P_GAIN, p) &&
+               getControllerGain(EC_PI_CURRENT_CONTROLLER, EG_PICC_I_GAIN, i);
+      }
+
+      bool
+      setCurrentControllerGains(std::vector<unsigned long long> gains)
+      {
+        if (gains.size() != 2)
+          return false;
+
+        if (gains[0] == 0 && gains[1] == 0)
+        {
+          unsigned long long p, i;
+          if (getCurrentControllerGains(p, i))
+          {
+            debug("current controller gains: P=%llu, I=%llu", p, i);
+            return true;
+          }
+          else
+            return false;
+        }
+
+        return setControllerGain(EC_PI_CURRENT_CONTROLLER, EG_PICC_P_GAIN, gains[0]) &&
+               setControllerGain(EC_PI_CURRENT_CONTROLLER, EG_PICC_I_GAIN, gains[1]);
+      }
+
+      bool
+      getVelocityControllerGains(unsigned long long& p, unsigned long long& i, unsigned long long& ff_v, unsigned long long& ff_a)
+      {
+        return getControllerGain(EC_PI_VELOCITY_CONTROLLER, EG_PIVC_P_GAIN, p) &&
+               getControllerGain(EC_PI_VELOCITY_CONTROLLER, EG_PIVC_I_GAIN, i) &&
+               getControllerGain(EC_PI_VELOCITY_CONTROLLER, EG_PIVC_FEED_FORWARD_VELOCITY_GAIN, ff_v) &&
+               getControllerGain(EC_PI_VELOCITY_CONTROLLER, EG_PIVC_FEED_FORWARD_ACCELERATION_GAIN, ff_a);
+      }
+
+      bool
+      setVelocityControllerGains(std::vector<unsigned long long> gains)
+      {
+        if (gains.size() != 4)
+          return false;
+
+        if (gains[0] == 0 && gains[1] == 0 && gains[2] == 0 && gains[3] == 0)
+        {
+          unsigned long long p, i, ff_v, ff_a;
+          if (getVelocityControllerGains(p, i, ff_v, ff_a))
+          {
+            debug("current controller gains: P=%llu, I=%llu, FF_V=%llu, FF_A=%llu", p, i, ff_v, ff_a);
+            return true;
+          }
+          else
+            return false;
+        }
+
+        return setControllerGain(EC_PI_VELOCITY_CONTROLLER, EG_PIVC_P_GAIN, gains[0]) &&
+               setControllerGain(EC_PI_VELOCITY_CONTROLLER, EG_PIVC_I_GAIN, gains[1]) &&
+               setControllerGain(EC_PI_VELOCITY_CONTROLLER, EG_PIVC_FEED_FORWARD_VELOCITY_GAIN, gains[2]) &&
+               setControllerGain(EC_PI_VELOCITY_CONTROLLER, EG_PIVC_FEED_FORWARD_ACCELERATION_GAIN, gains[3]);
       }
 
       void
