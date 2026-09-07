@@ -32,7 +32,6 @@
 #include <cstdarg>
 #include <string>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <fstream>
 
 // DUNE headers.
