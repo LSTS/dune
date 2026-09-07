@@ -257,15 +257,15 @@ namespace Actuators
         else
           debug("device opened successfully");
 
-        if (setCurrentControllerGains(m_args.current_gains) && setVelocityControllerGains(m_args.velocity_gains))
-          debug("controller gains set successfully");
-        else
+        if (!setCurrentControllerGains(m_args.current_gains) || !setVelocityControllerGains(m_args.velocity_gains))
         {
           war("failed to set controller gains");
           requestDeactivation();
           setEntityState(EntityState::ESTA_ERROR, "failed to set controller gains");
           return;
         }
+        else
+          debug("controller gains set successfully");
 
         if (enableDevice() && enabledMode(m_mode))
         {
