@@ -1,6 +1,7 @@
 branches:
   only:
   - master
+  - feature/windows-fixes
 
 clone_folder: c:\dev\dune
 
