@@ -91,7 +91,7 @@ namespace Monitors
       //! Set to gather estimated power consumption of certain entities
       EPMap m_epower;
       //! Power model.
-      Power::Model* m_power_model;
+      DUNE::Power::Model* m_power_model;
       //! Label of the operation modes.
       std::vector<std::string> m_op_labels;
       //! Corresponding value of power consumption in these modes.
@@ -106,7 +106,7 @@ namespace Monitors
         m_volt_warning_level(false),
         m_filter_ready(false)
       {
-        m_power_model = new Power::Model(&ctx.config);
+        m_power_model = new DUNE::Power::Model(&ctx.config);
         m_op_labels.push_back("Hotel");
         m_op_values.push_back(m_power_model->getPowerConsumptionHotel());
         m_op_labels.push_back("Full");
