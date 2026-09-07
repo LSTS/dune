@@ -3,7 +3,27 @@
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
-// Author: Pedro Gonçalves (adapted for Linux-only, safe version)            *
+//                                                                          *
+// Commercial Licence Usage                                                 *
+// Licencees holding valid commercial DUNE licences may use this file in    *
+// accordance with the commercial licence agreement provided with the       *
+// Software or, alternatively, in accordance with the terms contained in a  *
+// written agreement between you and Universidade do Porto. For licensing   *
+// terms, conditions, and further information contact lsts@fe.up.pt.        *
+//                                                                          *
+// European Union Public Licence - EUPL v.1.1 Usage                         *
+// Alternatively, this file may be used under the terms of the EUPL,        *
+// Version 1.1 only (the "Licence"), appearing in the file LICENCE.md       *
+// included in the packaging of this file. You may not use this work        *
+// except in compliance with the Licence. Unless required by applicable     *
+// law or agreed to in writing, software distributed under the Licence is   *
+// distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF     *
+// ANY KIND, either express or implied. See the Licence for the specific    *
+// language governing permissions and limitations at                        *
+// http://ec.europa.eu/idabc/eupl.html.                                     *
+//***************************************************************************
+// Author: Pedro Gonçalves                                                  *
+//***************************************************************************
 //***************************************************************************
 //
 // This version now reads:
@@ -12,25 +32,11 @@
 // - Total and free RAM and SWAP for the system (/proc/meminfo)
 //***************************************************************************
 
-#include <array>
-#include <chrono>
-#include <cmath>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <iterator>
-#include <memory>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <thread>
-#include <unistd.h>
-#include <vector>
-#include <inttypes.h>
-
 #include <DUNE/DUNE.hpp>
-
-#define IMC_RAM_USAGE_MESSAGE_EXISTS (true)
+#include <fstream>
+#include <cstdlib>
+#include <vector>
+#include "Proc.hpp"
 
 namespace Monitors
 {
@@ -39,491 +45,224 @@ namespace Monitors
     using DUNE_NAMESPACES;
 
     static const float c_time_between_reads = 2.0f;
-    static const float c_time_between_ram_cache_clean = 3600.0f;  // 1 hour
-    static const int c_max_cpu = 32;
+    static const float c_time_between_ram_cache_clean = 3600.0f;
+    static const unsigned c_max_cpu = 32;
 
-    struct CpuTimes
+    struct Task: public Tasks::Task
     {
-      unsigned long long user = 0;
-      unsigned long long nice = 0;
-      unsigned long long system = 0;
-      unsigned long long idle = 0;
-      unsigned long long iowait = 0;
-      unsigned long long irq = 0;
-      unsigned long long softirq = 0;
-      unsigned long long steal = 0;
-
-      unsigned long long
-      total() const
+      struct CpuMessage
       {
-        return user + nice + system + idle + iowait + irq + softirq + steal;
-      }
+        unsigned id;
+        IMC::CpuUsage message;
+      };
 
-      unsigned long long
-      active() const
-      {
-        return total() - idle - iowait;
-      }
-    };
-
-    typedef struct CPUData
-    {
-      std::string cpu;
-      size_t times[c_max_cpu + 6];
-    } CPUData;
-
-    enum CPUStates
-    {
-      S_USER = 0,
-      S_NICE,
-      S_SYSTEM,
-      S_IDLE,
-      S_IOWAIT,
-      S_IRQ,
-      S_SOFTIRQ,
-      S_STEAL,
-      S_GUEST,
-      S_GUEST_NICE
-    };
-
-    struct Task: public DUNE::Tasks::Task
-    {
-      //! CpuUsage message
-      IMC::CpuUsage m_dune_cpu_usage[c_max_cpu + 1];
-#if IMC_RAM_USAGE_MESSAGE_EXISTS
-      //! RamUsage message
-      IMC::RamUsage m_dune_ram_usage[2];
-#endif
-      //! state time to read data host/dune resources
+      std::vector<CpuMessage> m_cpus;
+      IMC::CpuUsage m_process_cpu;
+      IMC::RamUsage m_ram[2];
       Time::Counter<float> m_reads_check;
-      //! state time to clean cache
       Time::Counter<float> m_ram_cache_clean;
-      //! Read timestamp.
-      double m_tstamp;
-      //! Number of CPUs
-      int m_num_cpus;
-      //! Buffer for entity state
-      std::string m_buffer_cpu_entity;
-      //! Save pid of the process
-      pid_t m_pid;
+      CpuSnapshot m_previous;
+      std::uint64_t m_previous_process = 0;
+      bool m_have_cpu = false;
+      bool m_have_process = false;
 
-      //! Constructor.
-      //! @param[in] name task name.
-      //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
-        DUNE::Tasks::Task(name, ctx),
-        m_tstamp(0)
+        Tasks::Task(name, ctx)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL, Tasks::Parameter::VISIBILITY_USER);
-        m_num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-        if (m_num_cpus <= 0 || m_num_cpus > c_max_cpu)
+      }
+
+      unsigned
+      getEid(const std::string& label)
+      {
+        try
         {
-          war("Invalid number of CPUs detected: %d. Using 1 CPU instead.", m_num_cpus);
-          m_num_cpus = 1;
+          return resolveEntity(label);
         }
+        catch (const Entities::EntityDataBase::NonexistentLabel&)
+        {
+          return reserveEntity(label);
+        }
+      }
+
+      static bool
+      readCpu(CpuSnapshot& sample)
+      {
+        std::ifstream input("/proc/stat");
+        return parseCpu(input, sample);
+      }
+
+      static bool
+      readProcess(std::uint64_t& ticks)
+      {
+        std::ifstream input("/proc/self/stat");
+        return parseProcess(input, ticks);
+      }
+
+      void
+      onEntityReservation(void) override
+      {
+        CpuSnapshot sample;
+        if (!readCpu(sample))
+          throw std::runtime_error("Unable to discover CPUs from /proc/stat");
+        m_cpus.clear();
+        for (const auto& cpu: sample.cpus)
+        {
+          if (m_cpus.size() == c_max_cpu)
+            break;
+          CpuMessage entry;
+          entry.id = cpu.first;
+          entry.message.setSourceEntity(getEid(String::str("CPU%llu",
+            static_cast<unsigned long long>(entry.id) + 1)));
+          m_cpus.push_back(entry);
+        }
+        if (sample.cpus.size() > c_max_cpu)
+          war("Per-CPU reporting limited to %u CPUs; process usage includes all CPUs.", c_max_cpu);
+        m_process_cpu.setSourceEntity(getEid("DUNE-CPU"));
+        m_ram[0].setSourceEntity(getEid("DUNE-RAM"));
+        m_ram[1].setSourceEntity(getEid("DUNE-SWAP"));
+      }
+
+      void
+      onResourceAcquisition(void) override
+      {
+        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
+      }
+
+      void
+      onResourceInitialization(void) override
+      {
+        m_reads_check.setTop(c_time_between_reads);
+        m_ram_cache_clean.setTop(c_time_between_ram_cache_clean);
+        m_reads_check.reset();
+        m_ram_cache_clean.reset();
+        m_have_cpu = readCpu(m_previous);
+        m_have_process = readProcess(m_previous_process);
+        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
       }
 
       void
       onDeactivation(void) override
       {
         Tasks::Task::onDeactivation();
+        m_have_cpu = m_have_process = false;
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
       }
 
       void
-      onEntityReservation(void)
+      sampleResources(void)
       {
-        for (uint8_t i = 1; i <= m_num_cpus; i++)
+        const double timestamp = Clock::getSinceEpoch();
+        CpuSnapshot current;
+        std::uint64_t process = 0;
+        const bool cpu_ok = readCpu(current);
+        const bool process_ok = readProcess(process);
+        unsigned usage = 0;
+        unsigned imc_usage = 0;
+        bool usage_ok = false;
+        long double total = 0, active = 0;
+
+        if (cpu_ok && m_have_cpu)
         {
-          std::string cpu_label = String::str("CPU%u", i);
-          m_dune_cpu_usage[i - 1].setSourceEntity(getEid(cpu_label.c_str()));
-        }
-        m_dune_cpu_usage[m_num_cpus].setSourceEntity(getEid("DUNE-CPU"));
-#if IMC_RAM_USAGE_MESSAGE_EXISTS
-        m_dune_ram_usage[0].setSourceEntity(getEid("DUNE-RAM"));
-        m_dune_ram_usage[1].setSourceEntity(getEid("DUNE-SWAP"));
-#endif
-      }
-
-      unsigned
-      getEid(std::string label)
-      {
-        unsigned eid = 0;
-        try
-        {
-          eid = resolveEntity(label);
-        }
-        catch (...)
-        {
-          eid = reserveEntity(label);
-        }
-        return eid;
-      }
-
-      void
-      onResourceAcquisition(void)
-      {
-        m_buffer_cpu_entity = "active | C:" + std::to_string(m_num_cpus);
-        setEntityState(IMC::EntityState::ESTA_BOOT, Status::CODE_INIT);
-      }
-
-      void
-      onResourceInitialization(void)
-      {
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVATING);
-        m_reads_check.setTop(c_time_between_reads);
-        m_ram_cache_clean.setTop(c_time_between_ram_cache_clean);
-        m_pid = getpid();
-        trace("PID: %d", m_pid);
-      }
-
-      void
-      onResourceRelease(void)
-      { }
-
-      // Reads CPU usage (system-wide), RAM/SWAP usage for this process, and total/free system memory
-      void
-      readCPUAndMemory(uint8_t& cpuUsage, double& procRam, double& procSwap, double& totalRam,
-                       double& freeRam, double& totalSwap, double& freeSwap)
-      {
-        cpuUsage = 0;
-        procRam = 0.0;
-        procSwap = 0.0;
-        totalRam = 0.0;
-        freeRam = 0.0;
-        totalSwap = 0.0;
-        freeSwap = 0.0;
-
-        // CPU usage (system-wide average)
-        // --- CPU (process) robust version, safe for 32/64-bit, single or multi-core ---
-        try
-        {
-          // Helper: read total jiffies from /proc/stat
-          auto readTotalJiffies = []() -> std::uint64_t {
-            std::ifstream statFile("/proc/stat");
-            if (!statFile.is_open())
-              return 0ULL;
-            std::string line;
-            if (!std::getline(statFile, line))
-              return 0ULL;
-            std::istringstream ss(line);
-            std::string cpuLabel;
-            if (!(ss >> cpuLabel))
-              return 0ULL;
-            std::uint64_t val = 0, sum = 0;
-            while (ss >> val)
-              sum += val;
-            return sum;
-          };
-
-          // Helper: read process jiffies (utime+stime) from /proc/self/stat
-          auto readProcJiffies = []() -> std::uint64_t {
-            std::ifstream selfStat("/proc/self/stat");
-            if (!selfStat.is_open())
-              return 0ULL;
-
-            std::string pid, comm, state;
-            // Read first three fields separately
-            selfStat >> pid >> comm >> state;
-
-            // Now read the rest into a vector
-            std::vector<std::string> fields;
-            std::string value;
-            while (selfStat >> value)
-            {
-              fields.push_back(value);
-            }
-
-            if (fields.size() < 15)
-            {
-              return 0ULL;
-            }
-
-            // utime is field 14 overall -> index 11 here
-            // stime is field 15 overall -> index 12 here
-            std::uint64_t utime = std::stoull(fields[11]);
-            std::uint64_t stime = std::stoull(fields[12]);
-
-            return utime + stime;
-          };
-
-          // First read
-          std::uint64_t total1 = readTotalJiffies();
-          debug("Total jiffies 1: %" PRIu64 , total1);
-          std::uint64_t proc1 = readProcJiffies();
-          debug("Proc jiffies 1: %" PRIu64 , proc1);
-
-          // Interval (1000ms, can be tuned)
-          std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-          // Second read
-          std::uint64_t total2 = readTotalJiffies();
-          debug("Total jiffies 2: %" PRIu64 , total2);
-          std::uint64_t proc2 = readProcJiffies();
-          debug("Proc jiffies 2: %" PRIu64 , proc2);
-
-          std::uint64_t deltaTotal = (total2 > total1) ? (total2 - total1) : 0ULL;
-          std::uint64_t deltaProc = (proc2 > proc1) ? (proc2 - proc1) : 0ULL;
-
-          if (deltaTotal > 0)
+          if (process_ok && m_have_process && process >= m_previous_process &&
+              sameCpus(m_previous, current) &&
+              deltaCpu(m_previous.total, current.total, total, active))
           {
-            long numCpus = 1;
-            if (m_num_cpus > 0)
-            {
-              numCpus = m_num_cpus;  // use cached value if available
-            }
-            else
-            {
-              long tmp = sysconf(_SC_NPROCESSORS_ONLN);
-              if (tmp > 0)
-                numCpus = tmp;
-            }
-
-            if (numCpus < 1)
-              numCpus = 1;
-
-            // Result in "top" format: 100% = one core fully used
-            double usage = 100.0
-                           * (static_cast<double>(deltaProc) / static_cast<double>(deltaTotal))
-                           * static_cast<double>(m_num_cpus);
-
-            trace("CPU usage: %.2f%% (proc %" PRIu64 ", total %" PRIu64 ") on %ld CPUs\n", usage, deltaProc, deltaTotal, numCpus);
-            // Allow >100% for multithreaded processes (e.g. 200% = 2 cores fully used)
-            // Clamp only to fit inside uint8_t (0..255)
-            if (std::isnan(usage) || usage < 0.0)
-              usage = 0.0;
-            double maxAllowed = 255.0;
-            if (usage > maxAllowed)
-              usage = maxAllowed;
-
-            cpuUsage = static_cast<uint8_t>(std::lround(usage));
+            usage = percentage(100.0L * (process - m_previous_process) *
+                               current.cpus.size() / total, 255);
+            // CpuUsage::validate requires 0..100 (share of total host CPU).
+            // Keep the original top-style per-core scale in entity text.
+            imc_usage = percentage(100.0L * (process - m_previous_process) / total, 100);
+            usage_ok = true;
           }
-          else
-          {
-            cpuUsage = 0;
-          }
-        }
-        catch (...)
-        {
-          war("CPU read failed (robust)");
-          cpuUsage = 0;
-        }
 
-        // RAM and SWAP usage for this process
-        try
-        {
-          std::ifstream statusFile("/proc/self/status");
-          std::string line;
-          while (std::getline(statusFile, line))
+          for (auto& cpu: m_cpus)
           {
-            if (line.rfind("VmRSS:", 0) == 0)
-            {
-              std::istringstream iss(line.substr(6));
-              double value;
-              std::string unit;
-              iss >> value >> unit;
-              procRam = value / 1024.0;  // kB to MB
-            }
-            else if (line.rfind("VmSwap:", 0) == 0)
-            {
-              std::istringstream iss(line.substr(7));
-              double value;
-              std::string unit;
-              iss >> value >> unit;
-              procSwap = value / 1024.0;  // kB to MB
-            }
-          }
-        }
-        catch (...)
-        {
-          war("Process memory read failed");
-          procRam = 0.0;
-          procSwap = 0.0;
-        }
-
-        // Total and free RAM/SWAP for the system
-        try
-        {
-          std::ifstream meminfo("/proc/meminfo");
-          std::string line;
-          long memTotal = -1, memFree = -1, swapTotal = -1, swapFree = -1;
-          while (std::getline(meminfo, line))
-          {
-            std::istringstream iss(line);
-            std::string key;
-            long value;
-            std::string unit;
-            iss >> key >> value >> unit;
-            if (!iss || unit != "kB")
+            const auto before = m_previous.cpus.find(cpu.id);
+            const auto after = current.cpus.find(cpu.id);
+            if (before == m_previous.cpus.end() || after == current.cpus.end() ||
+                !deltaCpu(before->second, after->second, total, active))
               continue;
-            if (key == "MemTotal:")
-              memTotal = value;
-            else if (key == "MemFree:")
-              memFree = value;
-            else if (key == "SwapTotal:")
-              swapTotal = value;
-            else if (key == "SwapFree:")
-              swapFree = value;
+            cpu.message.value = percentage(100.0L * active / total, 100);
+            cpu.message.setTimeStamp(timestamp);
+            trace("CPU%llu: %u%%", static_cast<unsigned long long>(cpu.id) + 1,
+                  static_cast<unsigned>(cpu.message.value));
+            dispatch(cpu.message, DF_KEEP_TIME | DF_LOOP_BACK);
           }
-          if (memTotal > 0)
-            totalRam = memTotal / 1024.0 / 1024.0;  // GB
-          if (memFree >= 0)
-            freeRam = memFree / 1024.0 / 1024.0;  // GB
-          if (swapTotal > 0)
-            totalSwap = swapTotal / 1024.0 / 1024.0;  // GB
-          if (swapFree >= 0)
-            freeSwap = swapFree / 1024.0 / 1024.0;  // GB
         }
-        catch (...)
+
+        m_have_cpu = cpu_ok;
+        m_have_process = process_ok;
+        if (cpu_ok)
+          m_previous = current;
+        if (process_ok)
+          m_previous_process = process;
+        if (!cpu_ok || !process_ok)
+          war("Unable to read CPU statistics; discarding sample");
+
+        if (usage_ok)
         {
-          war("System memory read failed");
-          totalRam = 0.0;
-          freeRam = 0.0;
-          totalSwap = 0.0;
-          freeSwap = 0.0;
+          m_process_cpu.value = imc_usage;
+          m_process_cpu.setTimeStamp(timestamp);
+          dispatch(m_process_cpu, DF_KEEP_TIME);
         }
-      }
 
-      double
-      calculateUsage(const CpuTimes& prev, const CpuTimes& curr)
-      {
-        unsigned long long activeDiff = curr.active() - prev.active();
-        unsigned long long totalDiff = curr.total() - prev.total();
-        if (totalDiff == 0)
-          return 0.0;
-        return 100.0 * activeDiff / totalDiff;
-      }
-
-      std::vector<CpuTimes>
-      readCpuTimes()
-      {
-        std::ifstream file("/proc/stat");
-        std::string line;
-        std::vector<CpuTimes> cpus;
-
-        while (std::getline(file, line))
+        std::ifstream status("/proc/self/status");
+        std::ifstream meminfo("/proc/meminfo");
+        const auto process_memory = parseMemory(status);
+        const auto memory = parseMemory(meminfo);
+        auto value = [](const std::map<std::string, double>& values, const char* key) {
+          const auto item = values.find(key);
+          return item == values.end() ? -1.0 : item->second;
+        };
+        const double ram = value(process_memory, "VmRSS:");
+        const double swap = value(process_memory, "VmSwap:");
+        const double values[] = {ram, swap};
+        for (unsigned i = 0; i < 2; ++i)
         {
-          if (line.substr(0, 3) != "cpu")
-            break;
-
-          std::istringstream ss(line);
-          std::string cpuLabel;
-          CpuTimes times;
-
-          ss >> cpuLabel >> times.user >> times.nice >> times.system >> times.idle >> times.iowait
-            >> times.irq >> times.softirq >> times.steal;
-
-          cpus.push_back(times);
-        }
-        return cpus;
-      }
-
-      void
-      getDuneUsageResources(double tstamp)
-      {
-        uint8_t cpuUsage;
-        double procRam;
-        double procSwap;
-        double totalRam;
-        double freeRam;
-        double totalSwap;
-        double freeSwap;
-        readCPUAndMemory(cpuUsage, procRam, procSwap, totalRam, freeRam, totalSwap, freeSwap);
-
-        try
-        {
-          m_dune_cpu_usage[m_num_cpus].value = cpuUsage;
-          m_dune_cpu_usage[m_num_cpus].setTimeStamp(tstamp);
-          dispatch(m_dune_cpu_usage[m_num_cpus]);
-        }
-        catch (...)
-        {
-          war("Failed to dispatch CPU usage");
+          if (values[i] < 0)
+            continue;
+          m_ram[i].value = static_cast<float>(values[i]);
+          m_ram[i].setTimeStamp(timestamp);
+          dispatch(m_ram[i], DF_KEEP_TIME);
         }
 
-#if IMC_RAM_USAGE_MESSAGE_EXISTS
-        try
-        {
-          m_dune_ram_usage[0].value = static_cast<float>(procRam * 1024.0f);
-          m_dune_ram_usage[0].setTimeStamp(tstamp);
-          dispatch(m_dune_ram_usage[0]);
-          m_dune_ram_usage[1].value = static_cast<float>(procSwap * 1024.0f);
-          m_dune_ram_usage[1].setTimeStamp(tstamp);
-          dispatch(m_dune_ram_usage[1]);
-        }
-        catch (...)
-        {
-          war("Failed to dispatch RAM/SWAP usage");
-        }
-#endif
-
-        try
-        {
-          std::string entity = m_buffer_cpu_entity.empty() ? "unknown" : m_buffer_cpu_entity;
-          std::string msg = String::str("%s | DC:%u%%, DR:%.1fMB, DS:%.1fMB | HRF:%.1f of %.1f(GB),"
-                                        " HSF:%.1f of %.1f(GB)",
-                                        entity.c_str(), static_cast<unsigned>(cpuUsage), procRam,
-                                        procSwap, freeRam, totalRam, freeSwap, totalSwap);
-          setEntityState(IMC::EntityState::ESTA_NORMAL, msg);
-        }
-        catch (...)
-        {
-          war("Failed to set entity state");
-        }
+        // Missing readings are shown explicitly rather than as valid zeroes.
+        auto format = [](double reading, double divisor) {
+          return reading < 0 ? std::string("n/a") : String::str("%.1f", reading / divisor);
+        };
+        const std::string cpu_text = usage_ok ? String::str("%u%%", usage) : "n/a";
+        const std::string text = String::str(
+          "active | C:%u | DC:%s, DR:%sMB, DS:%sMB | HRF:%s of %s(GB), HSF:%s of %s(GB)",
+          static_cast<unsigned>(cpu_ok ? current.cpus.size() : m_cpus.size()),
+          cpu_text.c_str(), format(ram, 1024).c_str(), format(swap, 1024).c_str(),
+          format(value(memory, "MemFree:"), 1048576).c_str(),
+          format(value(memory, "MemTotal:"), 1048576).c_str(),
+          format(value(memory, "SwapFree:"), 1048576).c_str(),
+          format(value(memory, "SwapTotal:"), 1048576).c_str());
+        setEntityState(IMC::EntityState::ESTA_NORMAL, text);
       }
 
       void
-      getUsageOfCPU(double tstamp)
-      {
-        std::vector<CpuTimes> prev = readCpuTimes();
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        std::vector<CpuTimes> curr = readCpuTimes();
-        for (size_t i = 0; i < prev.size() - 1; ++i)
-        {
-          int usage = static_cast<int>(calculateUsage(prev[i], curr[i]));
-          m_dune_cpu_usage[i].setTimeStamp(tstamp);
-          m_dune_cpu_usage[i].value = usage;
-          trace("CPU%lu: %d%%", (unsigned long)(i + 1), usage);
-          dispatch(m_dune_cpu_usage[i], DF_KEEP_TIME | DF_LOOP_BACK);
-        }
-      }
-
-      void
-      onMain(void)
+      onMain(void) override
       {
         while (!stopping())
         {
-          try
-          {
-            waitForMessages(0.01);
-          }
-          catch (...)
-          {
-            war("waitForMessages error");
-          }
+          waitForMessages(0.1);
           if (!isActive())
             continue;
-
           if (m_reads_check.overflow())
           {
             m_reads_check.reset();
-            m_tstamp = Clock::getSinceEpoch();
-            getDuneUsageResources(m_tstamp);
-            getUsageOfCPU(m_tstamp);
+            sampleResources();
           }
-          else if (m_ram_cache_clean.overflow())
+          if (m_ram_cache_clean.overflow())
           {
             m_ram_cache_clean.reset();
-            try
-            {
-              int ret = std::system("sync; echo 1 > /proc/sys/vm/drop_caches");
-              if (ret != 0)
-                war("RAM cache clean failed with code %d", ret);
-            }
-            catch (...)
-            {
-              war("RAM cache clean unknown error");
-            }
+            // Preserve the existing hourly cache-cleaning feature.
+            const int result = std::system("sync; echo 1 > /proc/sys/vm/drop_caches");
+            if (result != 0)
+              war("RAM cache clean failed with status %d", result);
           }
         }
       }
