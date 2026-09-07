@@ -69,7 +69,7 @@ namespace DUNE
       m_freq_sampl = freq_sampl;
       m_freq_cutoff = freq_cutoff;
       m_num_taps = num_taps;
-      m_lambda = M_PI * freq_cutoff / (freq_sampl/2);
+      m_lambda = Math::c_pi * freq_cutoff / (freq_sampl/2);
       
       //printf("taps:%d\n",m_num_taps);
       //printf("lambda:%f\n",m_lambda);
@@ -106,8 +106,8 @@ namespace DUNE
       m_taps = (double*)malloc( m_num_taps * sizeof(double) );
       m_sr = (double*)malloc( m_num_taps * sizeof(double) );
 
-      m_lambda = M_PI * m_freq_cutoff / (freq_sampl/2);
-      m_phi = M_PI * m_freq_high / (freq_sampl/2);
+      m_lambda = Math::c_pi * m_freq_cutoff / (freq_sampl/2);
+      m_phi = Math::c_pi * m_freq_high / (freq_sampl/2);
 
       if(m_filt_t.compare("BPF") == 0) BPF();
       else if(m_filt_t.compare("BSF") == 0) BSF();
@@ -136,12 +136,12 @@ namespace DUNE
         mm = n - (m_num_taps - 1.0) / 2.0;
         if(mm == 0.0)
         {
-          m_taps[n] = m_lambda / M_PI;
+          m_taps[n] = m_lambda / Math::c_pi;
           //printf("coeff0:%f\n",m_taps[n]);
         }
         else 
         {
-          m_taps[n] = std::sin(mm * m_lambda) / (mm * M_PI);
+          m_taps[n] = std::sin(mm * m_lambda) / (mm * Math::c_pi);
           //printf("coeff_others:%f\n",m_taps[n]);
         }
       }
@@ -159,8 +159,8 @@ namespace DUNE
       for(n = 0; n < m_num_taps; n++)
       {
         mm = n - (m_num_taps - 1.0) / 2.0;
-        if( mm == 0.0 ) m_taps[n] = 1.0 - m_lambda / M_PI;
-        else m_taps[n] = -std::sin(mm * m_lambda) / (mm * M_PI);
+        if( mm == 0.0 ) m_taps[n] = 1.0 - m_lambda / Math::c_pi;
+        else m_taps[n] = -std::sin(mm * m_lambda) / (mm * Math::c_pi);
       }
 
       return;
@@ -176,8 +176,8 @@ namespace DUNE
       for(n = 0; n < m_num_taps; n++)
       {
         mm = n - (m_num_taps - 1.0) / 2.0;
-        if( mm == 0.0 ) m_taps[n] = 1.0 - m_lambda / M_PI;
-        else m_taps[n] = 2*std::sin(mm * m_lambda) / (mm * M_PI);
+        if( mm == 0.0 ) m_taps[n] = 1.0 - m_lambda / Math::c_pi;
+        else m_taps[n] = 2*std::sin(mm * m_lambda) / (mm * Math::c_pi);
       }
 
       return;
@@ -192,8 +192,8 @@ namespace DUNE
       for(n = 0; n < m_num_taps; n++)
       {
         mm = n - (m_num_taps - 1.0) / 2.0;
-        if( mm == 0.0 ) m_taps[n] = (m_phi - m_lambda) / M_PI;
-        else m_taps[n] = (std::sin(mm * m_phi) - std::sin(mm * m_lambda)) / (mm * M_PI);
+        if( mm == 0.0 ) m_taps[n] = (m_phi - m_lambda) / Math::c_pi;
+        else m_taps[n] = (std::sin(mm * m_phi) - std::sin(mm * m_lambda)) / (mm * Math::c_pi);
       }
 
       return;
@@ -208,8 +208,8 @@ namespace DUNE
       for(n = 0; n < m_num_taps; n++)
       {
         mm = n - (m_num_taps - 1.0) / 2.0;
-        if( mm == 0.0 ) m_taps[n] = (1-(m_phi - m_lambda)) / M_PI;
-        else m_taps[n] = (std::sin(mm * m_phi) - std::sin(mm * m_lambda)) / (mm * M_PI);
+        if( mm == 0.0 ) m_taps[n] = (1-(m_phi - m_lambda)) / Math::c_pi;
+        else m_taps[n] = (std::sin(mm * m_phi) - std::sin(mm * m_lambda)) / (mm * Math::c_pi);
       }
 
       return;
