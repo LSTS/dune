@@ -590,7 +590,7 @@ namespace Actuators
           unsigned long long p, i, ff_v, ff_a;
           if (getVelocityControllerGains(p, i, ff_v, ff_a))
           {
-            debug("current controller gains: P=%llu, I=%llu, FF_V=%llu, FF_A=%llu", p, i, ff_v, ff_a);
+            debug("velocity controller gains: P=%llu, I=%llu, FF_V=%llu, FF_A=%llu", p, i, ff_v, ff_a);
             return true;
           }
           else
