@@ -884,7 +884,11 @@ namespace Transports
           tm.tm_year += 100;
           tm.tm_mon -= 1;
 
+#if defined(DUNE_OS_WINDOWS)
+          std::time_t t = _mkgmtime(&tm);
+#else
           std::time_t t = timegm(&tm);
+#endif
           t -= tzOffset * 15 * 60;
           return static_cast<double>(t);
         }

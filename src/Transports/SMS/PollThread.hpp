@@ -35,7 +35,15 @@
 #include <cstdio>
 #include <string>
 #include <regex>
-#include <unistd.h>
+#include <algorithm>
+
+// DUNE configuration.
+#include <DUNE/Config.hpp>
+
+// POSIX headers.
+#if defined(DUNE_OS_POSIX)
+#  include <unistd.h>
+#endif
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -170,7 +178,16 @@ namespace Transports
           
           // For future reference, consider using invalid SerialPort read,
           // instead of access, to check if the device is still available
-          if (access(device.c_str(), F_OK) == 0)
+          bool available = false;
+
+#if defined(DUNE_OS_POSIX)
+          available = access(device.c_str(), F_OK) == 0;
+#elif defined(DUNE_OS_WINDOWS)
+          std::vector<std::string> devices = SerialPort::enumerate();
+          available = std::find(devices.begin(), devices.end(), device) != devices.end();
+#endif
+
+          if (available)
           {
             m_task->debug("[PollThread]: Device exists");
             return true;
@@ -317,5 +334,3 @@ namespace Transports
 }
 
 #endif
-
-
