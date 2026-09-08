@@ -105,6 +105,12 @@ namespace Payload
       bool manual_sto_row1;
       //! Manual storage row 2 valve control.
       bool manual_sto_row2;
+      //! Manual collector control.
+      bool manual_collector;
+      //! Manual storage control.
+      int manual_storage;
+      //! Manual purge control.
+      bool manual_purge;
       //! Restarting is allowed.
       bool restart_allowed;
       //! Pausing is allowed.
@@ -319,6 +325,19 @@ namespace Payload
         .defaultValue("false")
         .description("Manual control for the storage's row 2 valve.");
 
+        param("Manual - Collector", m_args.manual_collector)
+        .defaultValue("false")
+        .description("Manual control for the collector.");
+
+        param("Manual - Storage", m_args.manual_storage)
+        .defaultValue("-1")
+        .values("-1, 0, 1")
+        .description("Manual control for the storage.");
+
+        param("Manual - Purge", m_args.manual_purge)
+        .defaultValue("false")
+        .description("Manual control for the purge.");
+
         m_sta.setDestination(getSystemId());
         m_sa_report.action = IMC::SamplingAction::SA_REPORT;
 
@@ -379,6 +398,15 @@ namespace Payload
 
           if (paramChanged(m_args.manual_sto_row2))
             setStorageRowValve(1, m_args.manual_sto_row2);
+
+          if (paramChanged(m_args.manual_collector))
+            setCollection(m_args.manual_collector);
+
+          if (paramChanged(m_args.manual_storage))
+            setStoreSample(m_args.manual_storage);
+
+          if (paramChanged(m_args.manual_purge))
+            setPurge(m_args.manual_purge);
         }
       }
 
