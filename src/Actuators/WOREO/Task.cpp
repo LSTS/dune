@@ -501,13 +501,11 @@ namespace Actuators
       readInput(void)
       {
         size_t rv = m_handle->readString(m_buffer, sizeof(m_buffer));
-        if (rv > 0)
-        {
-          spew("received: %s", sanitize(m_buffer).c_str());
-          return processInput(m_buffer);
-        }
-        
-        return '\0';
+        if (rv < 7)
+          return '\0';
+
+        spew("received: %s", sanitize(m_buffer).c_str());
+        return processInput(m_buffer);
       }
 
       bool
