@@ -575,7 +575,7 @@ namespace DUNE
       //! @param filter filter method.
       template <typename M, typename T>
       void
-      bind(T* task_obj, bool (T::* filter)(const M*))
+      bind(T* task_obj, bool (*filter)(const M*))
       {
         bind(task_obj, &T::consume, filter);
       }
@@ -587,7 +587,7 @@ namespace DUNE
       template <typename M, typename T>
       void
       bind(T* task_obj, void (T::* consumer)(const M*) = &T::consume, 
-           bool (T::* filter)(const M*) = nullptr)
+           bool (*filter)(const M*) = nullptr)
       {
         if (filter == nullptr)
           bind(M::getIdStatic(), new Consumer<T, M>(*task_obj, consumer));
