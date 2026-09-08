@@ -264,16 +264,6 @@ namespace Actuators
         else
           debug("device opened successfully");
 
-        if (!setCurrentControllerGains(m_args.current_gains) || !setVelocityControllerGains(m_args.velocity_gains))
-        {
-          war("failed to set controller gains");
-          requestDeactivation();
-          setEntityState(EntityState::ESTA_ERROR, "failed to set controller gains");
-          return;
-        }
-        else
-          debug("controller gains set successfully");
-
         if (enableDevice() && enabledMode(m_mode))
         {
           m_enabled = true;
@@ -287,6 +277,16 @@ namespace Actuators
           war("failed to enable device");
           return;
         }
+
+        if (!setCurrentControllerGains(m_args.current_gains) || !setVelocityControllerGains(m_args.velocity_gains))
+        {
+          war("failed to set controller gains");
+          requestDeactivation();
+          setEntityState(EntityState::ESTA_ERROR, "failed to set controller gains");
+          return;
+        }
+        else
+          debug("controller gains set successfully");
 
         requestActivation();
         setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
