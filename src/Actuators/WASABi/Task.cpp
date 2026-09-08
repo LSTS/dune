@@ -539,17 +539,18 @@ namespace Actuators
         while (!stopping() && !waitForCommand(cmd_reply) && persistent);
       }
 
-      void
+      bool
       readInput(void)
       {
         m_in.clear();
 
         size_t rv = m_handle->readString(m_buffer, sizeof(m_buffer));
-        if (rv > 0)
-        {
-          m_in = m_buffer;
-          spew("received: %s", sanitize(m_in).c_str());
-        }
+        if (rv < 7)
+          return false;
+
+        m_in = m_buffer;
+        spew("received: %s", sanitize(m_in).c_str());
+        return true;
       }
 
       bool
@@ -564,9 +565,7 @@ namespace Actuators
         {
           if (Poll::poll(*m_handle, timer.getRemaining()))
           {
-            readInput();
-
-            if (m_in.at(1) == cmd_id)
+            if (readInput() && m_in.at(1) == cmd_id)
             {
               m_no_rpl_cnt = 0;
               m_in.clear();
@@ -603,8 +602,8 @@ namespace Actuators
 
           if (Poll::poll(*m_handle, c_cmd_poll_tmt))
           {
-            readInput();
-            processInput();
+            if (readInput())
+              processInput();
           }
 
           consumeMessages();
