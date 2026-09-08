@@ -111,6 +111,8 @@ namespace Payload
       bool pausing_allowed;
       //! Force state transition.
       bool force_state_transition;
+      //! Collecotor's timeout.
+      double col_timeout;
     };
 
     //! Task to control WhiteX payload. 
@@ -176,6 +178,8 @@ namespace Payload
       Counter<double> m_report_state_timer;
       //! Current selected bottle.
       int m_curr_bottle;
+      //! Collector's timer.
+      Counter<double> m_collector_timer;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -224,6 +228,13 @@ namespace Payload
         param("Collector -- Pumps - Power Channel Names", m_args.col_pumps_pwr_ch_labels)
         .editable(false)
         .description("Names of the power channel that control the collector's pumps.");
+
+        param("Collector -- Timeout", m_args.col_timeout)
+        .minimumValue("0.0")
+        .defaultValue("0.0")
+        .units(Units::Second)
+        .description("Timeout for the collector. "
+                     "If 0, the collector will not timeout.");
 
         param("Storage -- Pumps - Power Channel Names", m_args.sto_pumps_pwr_ch_labels)
         .editable(false)
@@ -814,12 +825,20 @@ namespace Payload
       collect(void)
       {
         setCollection(true);
+        m_collector_timer.setTop(m_args.col_timeout);
+      }
+
+      bool
+      isCollectorFull(void) const
+      {
+        return !m_args.col_max_water_level_gpio.empty() &&
+                m_gpio_states.at(m_args.col_max_water_level_gpio);
       }
 
       bool
       isCollectOver(void)
       {
-        if (1)
+        if (isCollectorFull() || m_collector_timer.overflow())
         {
           setCollection(false);
           debug("collect over");
