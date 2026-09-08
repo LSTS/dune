@@ -121,6 +121,8 @@ namespace Payload
       double col_timeout;
       //! Storage's timeout.
       double sto_timeout;
+      //! Storage's step motor reverse.
+      bool sto_step_reverse;
     };
 
     //! Task to control WhiteX payload. 
@@ -266,6 +268,10 @@ namespace Payload
         param("Storage -- Step Motor - Id", m_args.sto_step_id)
         .editable(false)
         .description("ID of the step motor to control the storage's bottle selector.");
+
+        param("Storage -- Step Motor Reverse", m_args.sto_step_reverse)
+        .defaultValue("false")
+        .description("Indicates if the step motor should be reversed.");
 
         param("Storage -- Row Start - GPIO Label", m_args.sto_start_ep_gpio)
         .editable(false)
@@ -626,7 +632,7 @@ namespace Payload
       void
       setStep(int step)
       {
-        setThrusterActuation(m_args.sto_step_id, static_cast<float>(step));
+        setThrusterActuation(m_args.sto_step_id, static_cast<float>(m_args.sto_step_reverse ? -step : step));
       }
 
       void
