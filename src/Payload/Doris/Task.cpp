@@ -667,85 +667,46 @@ namespace Payload
       }
 
       void
-      startCollectorMotor(void)
+      setCollectorMotor(bool on)
       {
-        setMotor(c_collector_motor_actuation);
+        setMotor(on ? c_collector_motor_actuation : 0.0f);
       }
 
       void
-      stopCollectorMotor(void)
-      {
-        setMotor(0.0f);
-      }
-
-      void
-      startCollectorPumps(void)
+      setCollectorPumps(bool state)
       {
         for (const auto& label : m_args.col_pumps_pwr_ch_labels)
-          setPump(label, true);
+          setPump(label, state);
       }
 
       void
-      stopCollectorPumps(void)
+      setCollection(bool state)
       {
-        for (const auto& label : m_args.col_pumps_pwr_ch_labels)
-          setPump(label, false);
+        setCollectorMotor(state);
+        setCollectorPumps(state);
       }
 
       void
-      startCollection(void)
+      setStorageStep(bool on, bool forward = true)
       {
-        startCollectorMotor();
-        startCollectorPumps();
+        setStep(on ? (forward ? 1 : -1) : 0);
       }
 
       void
-      stopCollection(void)
-      {
-        stopCollectorMotor();
-        stopCollectorPumps();
-      }
-
-      void
-      startStorageStep(bool forward = true)
-      {
-        setStep(forward ? 1 : -1);
-      }
-      
-      void
-      stopStorageStep(void)
-      {
-        setStep(0);
-      }
-
-      void
-      startStoragePumps(void)
+      setStoragePumps(bool state)
       {
         for (const auto& label : m_args.sto_pumps_pwr_ch_labels)
-          setPump(label, true);
+          setPump(label, state);
       }
 
       void
-      stopStoragePumps(void)
+      setStoragePurgeValve(bool state)
       {
-        for (const auto& label : m_args.sto_pumps_pwr_ch_labels)
-          setPump(label, false);
+        setValve(m_args.sto_purge_pwr_ch_label, state);
       }
 
       void
-      openStoragePurgeValve(void)
-      {
-        setValve(m_args.sto_purge_pwr_ch_label, true);
-      }
-
-      void
-      closeStoragePurgeValve(void)
-      {
-        setValve(m_args.sto_purge_pwr_ch_label, false);
-      }
-
-      void
-      openStorageRowValve(size_t row)
+      setStorageRowValve(size_t row, bool state)
       {
         if (row > c_storage_max_rows)
         {
@@ -753,19 +714,7 @@ namespace Payload
           return;
         }
 
-        setValve(m_args.sto_rows_pwr_ch_labels[row], true);
-      }
-
-      void
-      closeStorageRowValve(size_t row)
-      {
-        if (row > c_storage_max_rows)
-        {
-          err("invalid row number: %ld", row);
-          return;
-        }
-
-        setValve(m_args.sto_rows_pwr_ch_labels[row], false);
+        setValve(m_args.sto_rows_pwr_ch_labels[row], state);
       }
 
       void
@@ -784,33 +733,18 @@ namespace Payload
       }
 
       void
-      startStoreSample(int bottle)
+      setStoreSample(int bottle, bool state)
       {
         int row = bottleRow(bottle);
-        startStoragePumps();
-        openStorageRowValve(row);
+        setStoragePumps(state);
+        setStorageRowValve(row, state);
       }
 
       void
-      stopStoreSample(int bottle)
+      setPurge(bool state)
       {
-        int row = bottleRow(bottle);
-        closeStorageRowValve(row);
-        stopStoragePumps();
-      }
-
-      void
-      startPurge(void)
-      {
-        openStoragePurgeValve();
-        startStoragePumps();
-      }
-
-      void
-      stopPurge(void)
-      {
-        closeStoragePurgeValve();
-        stopStoragePumps();
+        setStoragePurgeValve(state);
+        setStoragePumps(state);
       }
 
       void
@@ -834,7 +768,7 @@ namespace Payload
       void
       collect(void)
       {
-        startCollection();
+        setCollection(true);
       }
 
       bool
@@ -842,7 +776,7 @@ namespace Payload
       {
         if (1)
         {
-          stopCollection();
+          setCollection(false);
           debug("collect over");
           return true;
         }
@@ -854,7 +788,7 @@ namespace Payload
       select(void)
       {
         selectBottle();
-        startStorageStep(true);
+        setStorageStep(true);
       }
 
       bool
@@ -872,7 +806,7 @@ namespace Payload
       void
       store(void)
       {
-        startStoreSample(m_curr_bottle);
+        setStoreSample(m_curr_bottle, true);
       }
 
       bool
@@ -881,7 +815,7 @@ namespace Payload
         if (1)
         {
           debug("store over");
-          stopStoreSample(m_curr_bottle);
+          setStoreSample(m_curr_bottle, false);
           return true;
         }
 
