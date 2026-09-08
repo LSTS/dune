@@ -50,9 +50,9 @@ namespace DUNE
       { }
 
       void
-      consume(const IMC::Message* msg)
+      consume(const IMC::Message* msg) override
       {
-        ((m_obj).*(m_fun))(reinterpret_cast<const M*>(msg));
+        ((m_obj).*(m_fun))(static_cast<const M*>(msg));
       }
 
       ~Consumer(void)
