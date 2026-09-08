@@ -95,6 +95,16 @@ namespace Payload
       float manual_motor;
       //! Manual step control.
       int manual_step;
+      //! Manual collector pumps control.
+      bool manual_col_pumps;
+      //! Manual storage pumps control.
+      bool manual_sto_pumps;
+      //! Manual storage purge valve control.
+      bool manual_sto_purge;
+      //! Manual storage row 1 valve control.
+      bool manual_sto_row1;
+      //! Manual storage row 2 valve control.
+      bool manual_sto_row2;
       //! Restarting is allowed.
       bool restart_allowed;
       //! Pausing is allowed.
@@ -259,6 +269,26 @@ namespace Payload
         .values("-1, 0, 1")
         .description("Manual control for the storage's step motor.");
 
+        param("Manual - Collector Pumps", m_args.manual_col_pumps)
+        .defaultValue("false")
+        .description("Manual control for the collector's pumps.");
+
+        param("Manual - Storage Pumps", m_args.manual_sto_pumps)
+        .defaultValue("false")
+        .description("Manual control for the storage's pumps.");
+
+        param("Manual - Storage Purge Valve", m_args.manual_sto_purge)
+        .defaultValue("false")
+        .description("Manual control for the storage's purge.");
+
+        param("Manual - Storage Row 1 Valve", m_args.manual_sto_row1)
+        .defaultValue("false")
+        .description("Manual control for the storage's row 1 valve.");
+
+        param("Manual - Storage Row 2 Valve", m_args.manual_sto_row2)
+        .defaultValue("false")
+        .description("Manual control for the storage's row 2 valve.");
+
         m_sta.setDestination(getSystemId());
         m_sa_report.action = IMC::SamplingAction::SA_REPORT;
 
@@ -304,6 +334,21 @@ namespace Payload
 
           if (paramChanged(m_args.manual_step))
             setStep(m_args.manual_step);
+
+          if (paramChanged(m_args.manual_col_pumps))
+            setCollectorPumps(m_args.manual_col_pumps);
+
+          if (paramChanged(m_args.manual_sto_pumps))
+            setStoragePumps(m_args.manual_sto_pumps);
+          
+          if (paramChanged(m_args.manual_sto_purge))
+            setStoragePurgeValve(m_args.manual_sto_purge);
+
+          if (paramChanged(m_args.manual_sto_row1))
+            setStorageRowValve(0, m_args.manual_sto_row1);
+
+          if (paramChanged(m_args.manual_sto_row2))
+            setStorageRowValve(1, m_args.manual_sto_row2);
         }
       }
 
