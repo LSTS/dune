@@ -42,7 +42,7 @@ namespace DUNE
     {
     public:
       typedef void (T::* Routine)(const M*);
-      typedef bool (T::* Filter)(const M*);
+      typedef bool (*Filter)(const M*);
 
       //! Constructor.
       FilteredConsumer(T& o, Routine f, Filter filter):
@@ -55,7 +55,7 @@ namespace DUNE
       consume(const IMC::Message* msg)
       {
         const M* m = reinterpret_cast<const M*>(msg);
-        if ( !((m_obj).*(m_filter))(m) )
+        if ( !(m_filter)(m) )
           return;
         ((m_obj).*(m_fun))(m);
       }
