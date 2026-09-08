@@ -808,11 +808,11 @@ namespace Payload
       }
 
       void
-      setStoreSample(int bottle, bool state)
+      setStoreSample(int row)
       {
-        int row = bottleRow(bottle);
-        setStoragePumps(state);
-        setStorageRowValve(row, state);
+        setStoragePumps(row >= 0);
+        setStorageRowValve(0, row == 0);
+        setStorageRowValve(1, row == 1);
       }
 
       void
@@ -890,7 +890,7 @@ namespace Payload
       void
       store(void)
       {
-        setStoreSample(m_curr_bottle, true);
+        setStoreSample(bottleRow(m_curr_bottle));
         m_storage_timer.setTop(m_args.sto_timeout);
       }
 
@@ -900,7 +900,7 @@ namespace Payload
         if (m_storage_timer.overflow())
         {
           debug("store over");
-          setStoreSample(m_curr_bottle, false);
+          setStoreSample(-1);
           return true;
         }
 
