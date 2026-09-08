@@ -61,6 +61,8 @@ namespace Actuators
     //! Mode dictionary: string to OperationMode.
     const std::map<std::string, OperationMode> c_mode_dict_rev = {{"Position", MODE_POSITION},
                                                                   {"Velocity", MODE_VELOCITY}};
+    //! Wakeup timeout.
+    constexpr const double c_wakeup_timeout = 10.0;
     //! Timeout for power operation.
     constexpr const double c_power_timeout = 5.0;
     //! Number of retries for power operation.
@@ -247,7 +249,10 @@ namespace Actuators
           return;
         }
         else
+        {
           debug("device powered on successfully");
+          waitForMessages(c_wakeup_timeout, true);
+        }
 
         if (!openDevice())
         {
