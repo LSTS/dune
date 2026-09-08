@@ -31,41 +31,39 @@
 #define DUNE_TASKS_FILTERED_CONSUMER_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/Tasks/AbstractConsumer.hpp>
+#include <DUNE/Tasks/Consumer.hpp>
 
 namespace DUNE
 {
   namespace Tasks
   {
     template <typename T, typename M>
-    class FilteredConsumer: public AbstractConsumer
+    class FilteredConsumer: public Consumer<T, M>
     {
     public:
-      typedef void (T::* Routine)(const M*);
+      typedef typename Consumer<T, M>::Routine Routine;
       typedef bool (*Filter)(const M*);
 
       //! Constructor.
       FilteredConsumer(T& o, Routine f, Filter filter):
-        m_obj(o),
-        m_fun(f),
+        Consumer<T, M>(o, f),
         m_filter(filter)
       { }
 
       void
-      consume(const IMC::Message* msg)
+      consume(const IMC::Message* msg) override
       {
-        const M* m = reinterpret_cast<const M*>(msg);
-        if ( !(m_filter)(m) )
+        const M* m = static_cast<const M*>(msg);
+        if (!m_filter(m))
           return;
-        ((m_obj).*(m_fun))(m);
+
+        Consumer<T, M>::consume(msg);
       }
 
       ~FilteredConsumer(void)
       { }
 
     private:
-      T& m_obj;
-      Routine m_fun;
       Filter m_filter;
     };
   }
