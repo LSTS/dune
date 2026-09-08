@@ -276,6 +276,10 @@ namespace Payload
         .description("Timeout for the storage. "
                      "If 0, the storage will not timeout.");
 
+        param("Restart Allowed", m_args.restart_allowed)
+        .defaultValue("false")
+        .description("Allow restarting the sampling process.");
+
         param("Force State Transition", m_args.force_state_transition)
         .defaultValue("false")
         .description("Manually force state transition.");
