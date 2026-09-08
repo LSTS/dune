@@ -123,6 +123,8 @@ namespace Payload
       double sto_timeout;
       //! Storage's step motor reverse.
       bool sto_step_reverse;
+      //! Storage's purge timeout.
+      double sto_purge_timeout;
     };
 
     //! Task to control WhiteX payload. 
@@ -186,12 +188,20 @@ namespace Payload
       State m_paused_state;
       //! Timer for reporting state
       Counter<double> m_report_state_timer;
+      //! Current step position of the storage's bottle selector.
+      int m_curr_step;
       //! Current selected bottle.
       int m_curr_bottle;
       //! Collector's timer.
       Counter<double> m_collector_timer;
       //! Storage's timer.
       Counter<double> m_storage_timer;
+      //! Storage's purge timer.
+      Counter<double> m_storage_purge_timer;
+      //! Storage's purge complete flag.
+      bool m_storage_purge_complete;
+      //! Storage's step reset flag.
+      bool m_storage_step_reset;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -206,7 +216,10 @@ namespace Payload
         m_recv_req(REQ_NONE),
         m_paused_state(STATE_UNKNOWN),
         m_report_state_timer(c_state_report_tout),
-        m_curr_bottle(-1)
+        m_curr_step(-1),
+        m_curr_bottle(-1),
+        m_storage_purge_complete(false),
+        m_storage_step_reset(false)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER,
@@ -287,6 +300,13 @@ namespace Payload
         .units(Units::Second)
         .description("Timeout for the storage. "
                      "If 0, the storage will not timeout.");
+
+        param("Storage -- Purge Timeout", m_args.sto_purge_timeout)
+        .minimumValue("0.0")
+        .defaultValue("0.0")
+        .units(Units::Second)
+        .description("Timeout for the storage purge. "
+                     "If 0, the storage purge will not timeout.");
 
         param("Restart Allowed", m_args.restart_allowed)
         .defaultValue("false")
@@ -856,22 +876,60 @@ namespace Payload
         setStoragePumps(state);
       }
 
+      int
+      getStepPosition(void)
+      {
+        if (m_gpio_states[m_args.sto_start_ep_gpio])
+          return 0;
+        else if (m_gpio_states[m_args.sto_end_ep_gpio])
+          return 1;
+        else
+          return -1;
+      }
+
       void
       reset(void)
       {
-        //!TODO: Implement actuators reset logic here.
+        setCollection(false);
+        setStorageStep(false);
+        setStoreSample(-1);
+
+        if (!isCollectorEmpty())
+        {
+          setPurge(true);
+          m_storage_purge_timer.setTop(m_args.sto_purge_timeout);
+          m_storage_purge_complete = false;
+        }
+        else
+          m_storage_purge_complete = true;
+
+        if (getStepPosition() != 0)
+        {
+          setStorageStep(true, false);
+          m_storage_step_reset = false;
+        }
+        else
+          m_storage_step_reset = true;
       }
 
       bool
       isResetOver(void)
       {
-        if (1)
+        if ((isCollectorEmpty() || m_storage_purge_timer.overflow()) && !m_storage_purge_complete)
         {
-          debug("reset over");
-          return true;
+          trace("purge complete");
+          m_storage_purge_complete = true;
+          setPurge(false);
         }
 
-        return false;
+        if (getStepPosition() == 0 && !m_storage_step_reset)
+        {
+          trace("step reset complete");
+          m_storage_step_reset = true;
+          setStorageStep(false);
+        }
+
+        return m_storage_purge_complete && m_storage_step_reset;
       }
 
       void
@@ -886,6 +944,13 @@ namespace Payload
       {
         return !m_args.col_max_water_level_gpio.empty() &&
                 m_gpio_states.at(m_args.col_max_water_level_gpio);
+      }
+
+      bool
+      isCollectorEmpty(void) const
+      {
+        return !m_args.col_min_water_level_gpio.empty() &&
+               !m_gpio_states.at(m_args.col_min_water_level_gpio);
       }
 
       bool
