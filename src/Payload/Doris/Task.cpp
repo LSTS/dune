@@ -280,6 +280,10 @@ namespace Payload
         .defaultValue("false")
         .description("Allow restarting the sampling process.");
 
+        param("Pause Allowed", m_args.pausing_allowed)
+        .defaultValue("false")
+        .description("Allow pausing the sampling process.");
+
         param("Force State Transition", m_args.force_state_transition)
         .defaultValue("false")
         .description("Manually force state transition.");
