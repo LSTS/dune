@@ -1462,7 +1462,7 @@ namespace Control
               if (obs_vessel != nullptr)
               {
                 std::vector<IMC::AisInfo>::const_iterator itr = m_dyn_obst_vec.begin();
-                const AisInfo* ais_vessel = itr.base();
+                const AisInfo* ais_vessel = nullptr;
 
                 for(; itr != m_dyn_obst_vec.end(); ++itr)
                 {
@@ -1472,19 +1472,22 @@ namespace Control
 
                   if (mmsi == obs_vessel->id_)
                   {
-                    ais_vessel = itr.base();
+                    ais_vessel = &*itr;
                     break;
                   }
                 }
 
-                TransmissionRequest tr;
-                tr.setDestination(getSystemId());
-                tr.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
-                tr.data_mode = TransmissionRequest::DMODE_INLINEMSG;
-                tr.msg_data.set(*ais_vessel);
-                tr.deadline = Clock::getSinceEpoch() + 60;
+                if (ais_vessel != nullptr)
+                {
+                  TransmissionRequest tr;
+                  tr.setDestination(getSystemId());
+                  tr.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
+                  tr.data_mode = TransmissionRequest::DMODE_INLINEMSG;
+                  tr.msg_data.set(*ais_vessel);
+                  tr.deadline = Clock::getSinceEpoch() + 60;
 
-                dispatch(tr);
+                  dispatch(tr);
+                }
               }
             }
             m_timestamp_prev = m_timestamp_new;
