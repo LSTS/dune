@@ -113,6 +113,8 @@ namespace Payload
       bool force_state_transition;
       //! Collecotor's timeout.
       double col_timeout;
+      //! Storage's timeout.
+      double sto_timeout;
     };
 
     //! Task to control WhiteX payload. 
@@ -180,6 +182,8 @@ namespace Payload
       int m_curr_bottle;
       //! Collector's timer.
       Counter<double> m_collector_timer;
+      //! Storage's timer.
+      Counter<double> m_storage_timer;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -264,6 +268,13 @@ namespace Payload
         param("Storage -- Row End - GPIO Label", m_args.sto_end_ep_gpio)
         .editable(false)
         .description("Name of the GPIO that corresponds to the row end.");
+
+        param("Storage -- Timeout", m_args.sto_timeout)
+        .minimumValue("0.0")
+        .defaultValue("0.0")
+        .units(Units::Second)
+        .description("Timeout for the storage. "
+                     "If 0, the storage will not timeout.");
 
         param("Force State Transition", m_args.force_state_transition)
         .defaultValue("false")
@@ -861,6 +872,7 @@ namespace Payload
         if (1)
         {
           debug("select over");
+          setStorageStep(false);
           return true;
         }
 
@@ -871,12 +883,13 @@ namespace Payload
       store(void)
       {
         setStoreSample(m_curr_bottle, true);
+        m_storage_timer.setTop(m_args.sto_timeout);
       }
 
       bool
       isStoreOver(void)
       {
-        if (1)
+        if (m_storage_timer.overflow())
         {
           debug("store over");
           setStoreSample(m_curr_bottle, false);
