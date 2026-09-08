@@ -63,6 +63,8 @@ namespace Actuators
                                                                   {"Velocity", MODE_VELOCITY}};
     //! Timeout for power operation.
     constexpr const double c_power_timeout = 5.0;
+    //! Number of retries for power operation.
+    constexpr const uint8_t c_power_retries = 10;
 
     struct Arguments
     {
@@ -291,20 +293,26 @@ namespace Actuators
         if (m_args.pwr_ch_label.empty() || (m_powered == state))
           return true;
 
-        trace("trying to power %s device", state ? "on" : "off");
-
-        IMC::PowerChannelControl pcc;
-        pcc.name = m_args.pwr_ch_label;
-        pcc.op = state ? IMC::PowerChannelControl::PCC_OP_TURN_ON : IMC::PowerChannelControl::PCC_OP_TURN_OFF;
-        dispatch(pcc);
-
-        Time::Counter<double> timer(c_power_timeout);
-        while (!timer.overflow() && !stopping())
+        for (uint8_t i = 0; i < c_power_retries; i++)
         {
-          waitForMessages(timer.getRemaining());
+          trace("trying to power %s device (%u/%u)", state ? "on" : "off", i + 1, c_power_retries);
 
-          if (m_powered == state)
-            return true;
+          IMC::PowerChannelControl pcc;
+          pcc.name = m_args.pwr_ch_label;
+          pcc.op = state ? IMC::PowerChannelControl::PCC_OP_TURN_ON : IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+          dispatch(pcc);
+
+          if (stopping())
+            return false;
+
+          Time::Counter<double> timer(c_power_timeout);
+          while (!timer.overflow() && !stopping())
+          {
+            waitForMessages(timer.getRemaining());
+
+            if (m_powered == state)
+              return true;
+          }
         }
 
         return false;
