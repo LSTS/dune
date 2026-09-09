@@ -59,6 +59,8 @@ namespace Payload
     static constexpr float c_collector_motor_actuation = 1.0f;
     //! Storage's max rows.
     static constexpr size_t c_storage_max_rows = 2;
+    //! Storage's reset step position timeout.
+    static constexpr double c_storage_reset_step_tout = 30.0;
 
     //! Task arguments.
     struct Arguments
@@ -111,6 +113,10 @@ namespace Payload
       int manual_storage;
       //! Manual purge control.
       bool manual_purge;
+      //! Manuel reset step position.
+      bool manual_reset;
+      //! Manual move step forward.
+      double manual_step_forward;
       //! Restarting is allowed.
       bool restart_allowed;
       //! Pausing is allowed.
@@ -364,6 +370,16 @@ namespace Payload
         .defaultValue("false")
         .description("Manual control for the purge.");
 
+        param("Manual - Reset Step Position", m_args.manual_reset)
+        .defaultValue("false")
+        .description("Manually reset the step position.");
+
+        param("Manual - Move Step Forward", m_args.manual_step_forward)
+        .defaultValue("0.0")
+        .minimumValue("0.0")
+        .units(Units::Second)
+        .description("Manually move the step forward for this amount of time.");
+
         m_sta.setDestination(getSystemId());
         m_sa_report.action = IMC::SamplingAction::SA_REPORT;
 
@@ -433,6 +449,18 @@ namespace Payload
 
           if (paramChanged(m_args.manual_purge))
             setPurge(m_args.manual_purge);
+
+          if (paramChanged(m_args.manual_reset) && m_args.manual_reset)
+          {
+            waitForStep(false, c_storage_reset_step_tout);
+            applyEntityParameter(&m_args.manual_reset, false);
+          }
+
+          if (paramChanged(m_args.manual_step_forward) && m_args.manual_step_forward > 0.0)
+          {
+            waitForStep(true, m_args.manual_step_forward);
+            applyEntityParameter(&m_args.manual_step_forward, 0.0);
+          }
         }
       }
 
