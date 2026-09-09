@@ -888,6 +888,31 @@ namespace Payload
       }
 
       void
+      waitForStep(bool forward, double timeout)
+      {
+        if ((forward && getStepPosition() == 1) ||
+            (!forward && getStepPosition() == 0))
+          return;
+
+        setStorageStep(true, forward);
+
+        Counter<double> timer(timeout);
+        while (!timer.overflow() && !stopping())
+        {
+          waitForMessages(timer.getRemaining());
+
+          if ((forward && getStepPosition() == 1) ||
+              (!forward && getStepPosition() == 0))
+          {
+            inf("reset took %f seconds", timer.getElapsed());
+            break;
+          }
+        }
+
+        setStorageStep(false);
+      }
+
+      void
       reset(void)
       {
         setCollection(false);
