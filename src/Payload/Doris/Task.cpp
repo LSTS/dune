@@ -57,8 +57,8 @@ namespace Payload
     static constexpr float c_state_report_tout = 1;
     //! Collector's motor moving actuation.
     static constexpr float c_collector_motor_actuation = 1.0f;
-    //! Storage's max rows.
-    static constexpr size_t c_storage_max_rows = 2;
+    //! Storage's number of rows.
+    static constexpr size_t c_storage_rows = 2;
     //! Storage's reset step position timeout.
     static constexpr double c_storage_reset_step_tout = 30.0;
 
@@ -131,6 +131,12 @@ namespace Payload
       bool sto_step_reverse;
       //! Storage's purge timeout.
       double sto_purge_timeout;
+      //! Storage's total bottles.
+      int sto_total_bottles;
+      //! Storage's per position step timeout.
+      double sto_step_timeout;
+      //! Storage's next bottle to use.
+      int sto_next_bottle;
     };
 
     //! Task to control WhiteX payload. 
@@ -194,20 +200,24 @@ namespace Payload
       State m_paused_state;
       //! Timer for reporting state
       Counter<double> m_report_state_timer;
-      //! Current step position of the storage's bottle selector.
-      int m_curr_step;
       //! Current selected bottle.
-      int m_curr_bottle;
+      int m_storage_curr_bottle;
       //! Collector's timer.
       Counter<double> m_collector_timer;
       //! Storage's timer.
       Counter<double> m_storage_timer;
       //! Storage's purge timer.
       Counter<double> m_storage_purge_timer;
+      //! Storage's position timer.
+      Counter<double> m_storage_pos_timer;
       //! Storage's purge complete flag.
       bool m_storage_purge_complete;
       //! Storage's step reset flag.
       bool m_storage_step_reset;
+      //! Storage's max step position.
+      int m_storage_max_step;
+      //! Storage's current step position.
+      int m_storage_curr_step;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -222,10 +232,11 @@ namespace Payload
         m_recv_req(REQ_NONE),
         m_paused_state(STATE_UNKNOWN),
         m_report_state_timer(c_state_report_tout),
-        m_curr_step(-1),
-        m_curr_bottle(-1),
+        m_storage_curr_bottle(-1),
         m_storage_purge_complete(false),
-        m_storage_step_reset(false)
+        m_storage_step_reset(false),
+        m_storage_max_step(-1),
+        m_storage_curr_step(-1)
       {
         paramActive(Tasks::Parameter::SCOPE_GLOBAL,
                     Tasks::Parameter::VISIBILITY_USER,
@@ -313,6 +324,26 @@ namespace Payload
         .units(Units::Second)
         .description("Timeout for the storage purge. "
                      "If 0, the storage purge will not timeout.");
+
+        param("Storage -- Step Timeout", m_args.sto_step_timeout)
+        .minimumValue("0.0")
+        .defaultValue("0.0")
+        .units(Units::Second)
+        .description("Timeout for the storage step motor per position. "
+                     "If 0, the storage step motor will not timeout.");
+
+        param("Storage -- Total Bottles", m_args.sto_total_bottles)
+        .minimumValue("1")
+        .defaultValue("1")
+        .description("Total number of bottles in the storage.");
+
+        param("Storage -- Next Bottle to Use", m_args.sto_next_bottle)
+        .minimumValue("-1")
+        .defaultValue("-1")
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .description("Bottle to use in the next storage. "
+                     "If -1, use the next available bottle.");
 
         param("Restart Allowed", m_args.restart_allowed)
         .defaultValue("false")
@@ -417,6 +448,9 @@ namespace Payload
             inf("force state transition request received");
           }
         }
+
+        if (paramChanged(m_args.sto_total_bottles))
+          m_storage_max_step = bottlePosition(m_args.sto_total_bottles - 1);
 
         if (m_mode == MODE_MANUAL)
         {
@@ -865,7 +899,7 @@ namespace Payload
       void
       setStorageRowValve(size_t row, bool state)
       {
-        if (row > c_storage_max_rows)
+        if (row >= c_storage_rows)
         {
           err("invalid row number: %ld", row);
           return;
@@ -875,18 +909,26 @@ namespace Payload
       }
 
       void
-      selectBottle(void)
+      nextBottle(void)
       {
-        if (m_curr_bottle < 0)
-          m_curr_bottle = 0;
+        if (m_args.sto_next_bottle >= 0 && m_args.sto_next_bottle < m_args.sto_total_bottles)
+          m_storage_curr_bottle = m_args.sto_next_bottle;
+        else if (m_storage_curr_bottle < 0)
+          m_storage_curr_bottle = 0;
         else
-          m_curr_bottle = (m_curr_bottle + 1) % c_storage_max_rows;
+          m_storage_curr_bottle = (m_storage_curr_bottle + 1) % m_args.sto_total_bottles;
       }
 
       int
       bottleRow(int bottle)
       {
         return bottle % 2;
+      }
+
+      int
+      bottlePosition(int bottle)
+      {
+        return bottle / 2;
       }
 
       void
@@ -908,17 +950,17 @@ namespace Payload
       getStepPosition(void)
       {
         if (m_gpio_states[m_args.sto_start_ep_gpio])
-          return 0;
+          m_storage_curr_step = 0;
         else if (m_gpio_states[m_args.sto_end_ep_gpio])
-          return 1;
-        else
-          return -1;
+          m_storage_curr_step = m_storage_max_step;
+
+        return m_storage_curr_step;
       }
 
       void
       waitForStep(bool forward, double timeout)
       {
-        if ((forward && getStepPosition() == 1) ||
+        if ((forward && getStepPosition() == m_storage_max_step) ||
             (!forward && getStepPosition() == 0))
           return;
 
@@ -929,7 +971,7 @@ namespace Payload
         {
           waitForMessages(timer.getRemaining());
 
-          if ((forward && getStepPosition() == 1) ||
+          if ((forward && getStepPosition() == m_storage_max_step) ||
               (!forward && getStepPosition() == 0))
           {
             inf("reset took %f seconds", timer.getElapsed());
@@ -1022,17 +1064,25 @@ namespace Payload
       void
       select(void)
       {
-        selectBottle();
-        setStorageStep(true);
+        nextBottle();
+        int pos = bottlePosition(m_storage_curr_bottle);
+        int pos_diff = pos - getStepPosition();
+
+        if (pos_diff != 0)
+          setStorageStep(true, pos_diff > 0);
+
+        war("pos: %d, %d", pos, pos_diff);
+        m_storage_pos_timer.setTop(m_args.sto_step_timeout * std::fabs(pos_diff));
       }
 
       bool
       isSelectOver(void)
       {
-        if (1)
+        if (m_storage_pos_timer.overflow())
         {
           debug("select over");
           setStorageStep(false);
+          m_storage_curr_step = bottlePosition(m_storage_curr_bottle);
           return true;
         }
 
@@ -1042,7 +1092,7 @@ namespace Payload
       void
       store(void)
       {
-        setStoreSample(bottleRow(m_curr_bottle));
+        setStoreSample(bottleRow(m_storage_curr_bottle));
         m_storage_timer.setTop(m_args.sto_timeout);
       }
 
