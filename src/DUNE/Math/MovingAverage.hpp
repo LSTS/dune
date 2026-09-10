@@ -42,7 +42,7 @@ namespace DUNE
     class MovingAverage
     {
     public:
-      MovingAverage(unsigned window_size):
+      MovingAverage(unsigned window_size = UINT_MAX):
         m_window_size(window_size)
       {
         clear();
