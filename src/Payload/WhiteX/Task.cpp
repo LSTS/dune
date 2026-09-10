@@ -58,52 +58,16 @@ namespace Payload
     {
       //! Operation mode.
       std::string mode;
-      //! Valve 1 power channel label.
-      std::string valve1_pwr_ch_label;
-      //! Valve 2 power channel label.
-      std::string valve2_pwr_ch_label;
-      //! Valve 3 power channel label.
-      std::string valve3_pwr_ch_label;
-      //! Valve 4 power channel label.
-      std::string valve4_pwr_ch_label;
-      //! Valve 5 power channel label.
-      std::string valve5_pwr_ch_label;
-      //! Valve 6 power channel label.
-      std::string valve6_pwr_ch_label;
-      //! Valve 7 power channel label.
-      std::string valve7_pwr_ch_label;
-      //! Valve 8 power channel label.
-      std::string valve8_pwr_ch_label;
-      //! Valve 9 power channel label.
-      std::string valve9_pwr_ch_label;
-      //! Valve 10 power channel label.
-      std::string valve10_pwr_ch_label;
+      //! Pumps power channel labels.
+      std::vector<std::string> pumps_pwr_ch_labels;
       //! Water flow source entity label.
       std::string wf_elabel;
       //! Maximum water level GPIO label.
       std::string max_wl_gpio;
       //! Minimum water level GPIO label.
       std::string min_wl_gpio;
-      //! Manual valve 1 control.
-      bool manual_valve1;
-      //! Manual valve 2 control.
-      bool manual_valve2;
-      //! Manual valve 3 control.
-      bool manual_valve3;
-      //! Manual valve 4 control.
-      bool manual_valve4;
-      //! Manual valve 5 control.
-      bool manual_valve5;
-      //! Manual valve 6 control.
-      bool manual_valve6;
-      //! Manual valve 7 control.
-      bool manual_valve7;
-      //! Manual valve 8 control.
-      bool manual_valve8;
-      //! Manual valve 9 control.
-      bool manual_valve9;
-      //! Manual valve 10 control.
-      bool manual_valve10;
+      //! Manual control of pumps.
+      bool manual_pumps;
     };
 
     //! Task to control WhiteX payload. 
@@ -129,6 +93,10 @@ namespace Payload
       IMC::GpioStateGet m_gsg;
       //! WaterFlow value.
       fp32_t m_wf;
+      //! WaterFlow average.
+      Math::MovingAverage<double> m_wf_avg;
+      //! WaterFlow timer.
+      Counter<double> m_wf_timer;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -146,45 +114,9 @@ namespace Payload
         .values("Automatic, Manual")
         .description("Operation mode.");
 
-        param("Valve 1 - Power Channel Name", m_args.valve1_pwr_ch_label)
+        param("Pumps - Power Channel Names", m_args.pumps_pwr_ch_labels)
         .editable(false)
-        .description("Name of the power channel that controls valve 1.");
-
-        param("Valve 2 - Power Channel Name", m_args.valve2_pwr_ch_label)
-        .editable(false)
-        .description("Name of the power channel that controls valve 2.");
-
-        param("Valve 3 - Power Channel Name", m_args.valve3_pwr_ch_label)
-        .editable(false)
-        .description("Name of the power channel that controls valve 3.");
-
-        param("Valve 4 - Power Channel Name", m_args.valve4_pwr_ch_label)
-        .editable(false)
-        .description("Name of the power channel that controls valve 4.");
-
-        param("Valve 5 - Power Channel Name", m_args.valve5_pwr_ch_label)
-        .editable(false)
-        .description("Name of the power channel that controls valve 5.");
-
-        param("Valve 6 - Power Channel Name", m_args.valve6_pwr_ch_label)
-        .editable(false)
-        .description("Name of the power channel that controls valve 6.");
-
-        param("Valve 7 - Power Channel Name", m_args.valve7_pwr_ch_label)
-        .editable(false)
-        .description("Name of the power channel that controls valve 7.");
-
-        param("Valve 8 - Power Channel Name", m_args.valve8_pwr_ch_label)
-        .editable(false)
-        .description("Name of the power channel that controls valve 8.");
-
-        param("Valve 9 - Power Channel Name", m_args.valve9_pwr_ch_label)
-        .editable(false)
-        .description("Name of the power channel that controls valve 9.");
-
-        param("Valve 10 - Power Channel Name", m_args.valve10_pwr_ch_label)
-        .editable(false)
-        .description("Name of the power channel that controls valve 10.");
+        .description("Names of the power channels that control the pumps.");
 
         param("Water Flow - Entity Label", m_args.wf_elabel)
         .editable(false)
@@ -198,45 +130,9 @@ namespace Payload
         .editable(false)
         .description("Name of the GPIO that indicates the minimum water level.");
 
-        param("Manual - Valve 1", m_args.manual_valve1)
+        param("Manual - Pumps", m_args.manual_pumps)
         .defaultValue("false")
-        .description("Manual control for valve 1.");
-
-        param("Manual - Valve 2", m_args.manual_valve2)
-        .defaultValue("false")
-        .description("Manual control for valve 2.");
-
-        param("Manual - Valve 3", m_args.manual_valve3)
-        .defaultValue("false")
-        .description("Manual control for valve 3.");
-
-        param("Manual - Valve 4", m_args.manual_valve4)
-        .defaultValue("false")
-        .description("Manual control for valve 4.");
-
-        param("Manual - Valve 5", m_args.manual_valve5)
-        .defaultValue("false")
-        .description("Manual control for valve 5.");
-
-        param("Manual - Valve 6", m_args.manual_valve6)
-        .defaultValue("false")
-        .description("Manual control for valve 6.");
-
-        param("Manual - Valve 7", m_args.manual_valve7)
-        .defaultValue("false")
-        .description("Manual control for valve 7.");
-
-        param("Manual - Valve 8", m_args.manual_valve8)
-        .defaultValue("false")
-        .description("Manual control for valve 8.");
-
-        param("Manual - Valve 9", m_args.manual_valve9)
-        .defaultValue("false")
-        .description("Manual control for valve 9.");
-
-        param("Manual - Valve 10", m_args.manual_valve10)
-        .defaultValue("false")
-        .description("Manual control for valve 10.");
+        .description("Manual control for the pumps.");
 
         bind<IMC::WaterFlow>(this);
         bind<IMC::GpioState>(this);
@@ -263,35 +159,8 @@ namespace Payload
 
         if (m_mode == MODE_MANUAL)
         {
-          if (paramChanged(m_args.manual_valve1))
-            setPowerChannel(m_args.valve1_pwr_ch_label, m_args.manual_valve1);
-
-          if (paramChanged(m_args.manual_valve2))
-            setPowerChannel(m_args.valve2_pwr_ch_label, m_args.manual_valve2);
-
-          if (paramChanged(m_args.manual_valve3))
-            setPowerChannel(m_args.valve3_pwr_ch_label, m_args.manual_valve3);
-
-          if (paramChanged(m_args.manual_valve4))
-            setPowerChannel(m_args.valve4_pwr_ch_label, m_args.manual_valve4);
-
-          if (paramChanged(m_args.manual_valve5))
-            setPowerChannel(m_args.valve5_pwr_ch_label, m_args.manual_valve5);
-
-          if (paramChanged(m_args.manual_valve6))
-            setPowerChannel(m_args.valve6_pwr_ch_label, m_args.manual_valve6);
-
-          if (paramChanged(m_args.manual_valve7))
-            setPowerChannel(m_args.valve7_pwr_ch_label, m_args.manual_valve7);
-
-          if (paramChanged(m_args.manual_valve8))
-            setPowerChannel(m_args.valve8_pwr_ch_label, m_args.manual_valve8);
-
-          if (paramChanged(m_args.manual_valve9))
-            setPowerChannel(m_args.valve9_pwr_ch_label, m_args.manual_valve9);
-
-          if (paramChanged(m_args.manual_valve10))
-            setPowerChannel(m_args.valve10_pwr_ch_label, m_args.manual_valve10);
+          if (paramChanged(m_args.manual_pumps))
+            setPumps(m_args.manual_pumps);
         }
       }
 
@@ -335,16 +204,8 @@ namespace Payload
         m_gpio_states[m_args.max_wl_gpio] = false;
 
         m_pwr_ch_states.clear();
-        m_pwr_ch_states[m_args.valve1_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve2_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve3_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve4_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve5_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve6_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve7_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve8_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve9_pwr_ch_label] = false;
-        m_pwr_ch_states[m_args.valve10_pwr_ch_label] = false;
+        for (const auto& label : m_args.pumps_pwr_ch_labels)
+          m_pwr_ch_states[label] = false;
       }
 
       void
@@ -354,6 +215,25 @@ namespace Payload
         m_pcc.op = on ? IMC::PowerChannelControl::PCC_OP_TURN_ON :
                         IMC::PowerChannelControl::PCC_OP_TURN_OFF;
         dispatch(m_pcc);
+      }
+
+      void
+      setPumps(bool state)
+      {
+        for (const auto& label : m_args.pumps_pwr_ch_labels)
+          setPowerChannel(label, state);
+
+        if (state)
+        {
+          m_wf_avg.clear();
+          m_wf_timer.reset();
+        }
+        else
+        {
+          double mean = m_wf_avg.mean() * 1e6;
+          double duration = m_wf_timer.getElapsed();
+          debug("mean: %.2f mL/s | duration: %.2f s | volume: %.2f mL", mean, duration, mean * duration);
+        }
       }
 
       void
@@ -408,6 +288,9 @@ namespace Payload
 
         if (msg->getSourceEntity() != m_wf_eid)
           return;
+
+        if (m_args.manual_pumps)
+          m_wf_avg.update(msg->value);
 
         m_wf = msg->value;
         spew("water flow: %f m*m*m/s", m_wf);
