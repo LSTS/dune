@@ -218,6 +218,10 @@ namespace Payload
       int m_storage_max_step;
       //! Storage's current step position.
       int m_storage_curr_step;
+      //! Colector's water flow average.
+      Math::MovingAverage<double> m_collector_water_flow_avg;
+      //! Storage's water flow average.
+      Math::MovingAverage<double> m_storage_water_flow_avg;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -605,6 +609,11 @@ namespace Payload
         auto flow = m_water_flows.find(msg->getSourceEntity());
         if (flow == m_water_flows.end())
           return;
+
+        if (msg->getSourceEntity() == m_col_water_flow_eid && m_curr_state == STATE_COLLECT)
+          m_collector_water_flow_avg.update(msg->value);
+        else if (msg->getSourceEntity() == m_sto_water_flow_eid && m_curr_state == STATE_STORE)
+          m_storage_water_flow_avg.update(msg->value);
 
         flow->second = msg->value;
         spew("Water Flow from entity %u: %.2f m*m*m/s", flow->first, msg->value);
@@ -1031,6 +1040,7 @@ namespace Payload
       collect(void)
       {
         setCollection(true);
+        m_collector_water_flow_avg.clear();
         m_collector_timer.setTop(m_args.col_timeout);
       }
 
@@ -1053,8 +1063,10 @@ namespace Payload
       {
         if (isCollectorFull() || m_collector_timer.overflow())
         {
+          double mean = m_collector_water_flow_avg.mean() * 1e6;
+          double duration = m_collector_timer.getElapsed();
+          debug("collect over | mean: %.2f mL/s | duration: %.2f s | volume: %.2f mL", mean, duration, mean * duration);
           setCollection(false);
-          debug("collect over");
           return true;
         }
 
@@ -1101,7 +1113,9 @@ namespace Payload
       {
         if (m_storage_timer.overflow())
         {
-          debug("store over");
+          double mean = m_storage_water_flow_avg.mean() * 1e6;
+          double duration = m_storage_timer.getElapsed();
+          debug("store over | mean: %.2f mL/s | duration: %.2f s | volume: %.2f mL", mean, duration, mean * duration);
           setStoreSample(-1);
           return true;
         }
