@@ -206,8 +206,6 @@ namespace Payload
       Counter<double> m_collector_timer;
       //! Storage's timer.
       Counter<double> m_storage_timer;
-      //! Storage's purge timer.
-      Counter<double> m_storage_purge_timer;
       //! Storage's position timer.
       Counter<double> m_storage_pos_timer;
       //! Storage's purge complete flag.
@@ -610,9 +608,11 @@ namespace Payload
         if (flow == m_water_flows.end())
           return;
 
-        if (msg->getSourceEntity() == m_col_water_flow_eid && m_curr_state == STATE_COLLECT)
+        if (msg->getSourceEntity() == m_col_water_flow_eid &&
+            ((m_curr_state == STATE_COLLECT && m_mode == MODE_AUTOMATIC) || (m_args.manual_collector && m_mode == MODE_MANUAL)))
           m_collector_water_flow_avg.update(msg->value);
-        else if (msg->getSourceEntity() == m_sto_water_flow_eid && m_curr_state == STATE_STORE)
+        else if (msg->getSourceEntity() == m_sto_water_flow_eid && m_curr_state == STATE_STORE &&
+                 ((m_curr_state == STATE_STORE && m_mode == MODE_AUTOMATIC) || (m_args.manual_storage && m_mode == MODE_MANUAL)))
           m_storage_water_flow_avg.update(msg->value);
 
         flow->second = msg->value;
@@ -884,6 +884,18 @@ namespace Payload
       {
         setCollectorMotor(state);
         setCollectorPumps(state);
+
+        if (state)
+        {
+          m_collector_timer.reset();
+          m_collector_water_flow_avg.clear();
+        }
+        else
+        {
+          double mean = m_collector_water_flow_avg.mean() * 1e6;
+          double duration = m_collector_timer.getElapsed();
+          debug("collector water flow average: %.2f mL/s | duration: %.2f s | volume: %.2f mL", mean, duration, mean * duration);
+        }
       }
 
       void
@@ -897,6 +909,18 @@ namespace Payload
       {
         for (const auto& label : m_args.sto_pumps_pwr_ch_labels)
           setPump(label, state);
+
+        if (state)
+        {
+          m_storage_timer.reset();
+          m_storage_water_flow_avg.clear();
+        }
+        else
+        {
+          double mean = m_storage_water_flow_avg.mean() * 1e6;
+          double duration = m_storage_timer.getElapsed();
+          debug("storage water flow average: %.2f mL/s | duration: %.2f s | volume: %.2f mL", mean, duration, mean * duration);
+        }
       }
 
       void
@@ -1001,7 +1025,6 @@ namespace Payload
         if (!isCollectorEmpty())
         {
           setPurge(true);
-          m_storage_purge_timer.setTop(m_args.sto_purge_timeout);
           m_storage_purge_complete = false;
         }
         else
@@ -1019,7 +1042,7 @@ namespace Payload
       bool
       isResetOver(void)
       {
-        if ((isCollectorEmpty() || m_storage_purge_timer.overflow()) && !m_storage_purge_complete)
+        if ((isCollectorEmpty() || m_storage_timer.overflow()) && !m_storage_purge_complete)
         {
           trace("purge complete");
           m_storage_purge_complete = true;
@@ -1040,8 +1063,6 @@ namespace Payload
       collect(void)
       {
         setCollection(true);
-        m_collector_water_flow_avg.clear();
-        m_collector_timer.setTop(m_args.col_timeout);
       }
 
       bool
@@ -1063,9 +1084,6 @@ namespace Payload
       {
         if (isCollectorFull() || m_collector_timer.overflow())
         {
-          double mean = m_collector_water_flow_avg.mean() * 1e6;
-          double duration = m_collector_timer.getElapsed();
-          debug("collect over | mean: %.2f mL/s | duration: %.2f s | volume: %.2f mL", mean, duration, mean * duration);
           setCollection(false);
           return true;
         }
@@ -1105,7 +1123,6 @@ namespace Payload
       store(void)
       {
         setStoreSample(bottleRow(m_storage_curr_bottle));
-        m_storage_timer.setTop(m_args.sto_timeout);
       }
 
       bool
