@@ -33,6 +33,7 @@
 // ISO C++ 98 headers.
 #include <vector>
 #include <cmath>
+#include <climits>
 
 namespace DUNE
 {
