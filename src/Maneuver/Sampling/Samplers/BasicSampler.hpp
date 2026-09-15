@@ -98,8 +98,7 @@ namespace Maneuver
       }
 
       virtual bool
-      run(void)
-      { }
+      run(void) = 0;
 
     protected:
       //! Parent task.
