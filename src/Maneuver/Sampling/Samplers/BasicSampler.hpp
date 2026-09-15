@@ -52,7 +52,7 @@ namespace Maneuver
           m_sampler_type(sampler_type)
       { }
 
-      ~BasicSampler() = default;
+      virtual ~BasicSampler() = default;
 
       virtual void
       onReset(void)
