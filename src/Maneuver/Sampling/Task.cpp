@@ -204,10 +204,15 @@ namespace Maneuver
         if (!m_sampler)
           return;
 
-        m_sampler->run();
+        if (!m_sampler->run())
+        {
+          signalError("Sampler reported an error during execution.");
+          return;
+        }
 
-        // The sampler may have requested deactivation after completing or
-        // encountering an error. Do not overwrite its terminal state.
+        signalProgress();
+
+        // Do not overwrite its terminal state.
         if (isDeactivating())
           return;
 

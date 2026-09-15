@@ -197,11 +197,11 @@ namespace Maneuver
         }
       }
 
-      void
+      bool
       run(void)
       {
         if (m_skeep == nullptr)
-          return;
+          throw std::runtime_error("Station keeping maneuver is not initialized.");
 
         switch (m_state)
         {
@@ -219,18 +219,16 @@ namespace Maneuver
           case SK_SETUP:
             if (m_timeout_timer.overflow())
             {
-              debug("Sampling setup timeout, stopping...");
-              m_task->signalError("Sampling setup timed out.");
-              return;
+              err("Sampling setup timeout, stopping...");
+              return false;
             }
             break;
 
           case SK_SAMPLING:
             if (m_timeout_timer.overflow())
             {
-              debug("Sampling timeout, stopping...");
-              m_task->signalError("Sampling timed out.");
-              return;
+              err("Sampling timeout, stopping...");
+              return false;
             }
             break;
         
@@ -238,7 +236,7 @@ namespace Maneuver
             break;
         }
 
-        m_task->signalProgress();
+        return true;
       }
 
     private:

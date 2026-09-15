@@ -267,11 +267,11 @@ namespace Maneuver
         }
       }
 
-      void
+      bool
       run(void) override
       {
         if (m_args.type == TYPE_DRIFT && m_skeep == nullptr)
-          return;
+          throw std::runtime_error("Station keeping maneuver is not initialized.");
 
         if (m_state == STATE_MOVING &&
             m_args.type == TYPE_DRIFT &&
@@ -289,18 +289,17 @@ namespace Maneuver
              m_state == STATE_RESUMING) &&
             m_timeout_timer.overflow())
         {
-          m_task->signalError(String::str("Sampling %s timed out.",
-                                          stateToString(m_state).c_str()));
-          return;
+          err("Sampling %s timed out.", stateToString(m_state).c_str());
+          return false;
         }
 
         if (m_state == STATE_SAMPLING && m_timeout_timer.overflow())
         {
-          m_task->signalError("Sampling timed out.");
-          return;
+          err("Sampling timed out.");
+          return false;
         }
 
-        m_task->signalProgress();
+        return true;
       }
 
       std::string

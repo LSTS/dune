@@ -97,7 +97,7 @@ namespace Maneuver
         return "";
       }
 
-      virtual void
+      virtual bool
       run(void)
       { }
 
