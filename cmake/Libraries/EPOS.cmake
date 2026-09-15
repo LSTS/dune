@@ -27,7 +27,9 @@
 # Author: Bernardo Gabriel                                                 #
 ############################################################################
 
-if (NOT DUNE_OS_LINUX)
+option(DUNE_SYS_USE_EPOS "Enable EPOS support" ON)
+
+if (NOT DUNE_OS_LINUX OR NOT DUNE_SYS_USE_EPOS)
   message(STATUS "EPOS support is disabled.")
   set(DUNE_SYS_HAS_EPOS FALSE)
   return()
