@@ -95,10 +95,10 @@ namespace Supervisors
       void
       onResourceAcquisition(void)
       {
-        m_gpio_heartbeat_pin = new Hardware::GPIO(5);
-        m_gpio_activation_pin = new Hardware::GPIO(6);
-        m_gpio_watchdog_timeout_pin = new Hardware::GPIO(12);
-        m_gpio_watchdog_timeout_answer_pin = new Hardware::GPIO(16);
+        m_gpio_heartbeat_pin = new Hardware::GPIO(512 + 5);
+        m_gpio_activation_pin = new Hardware::GPIO(512 + 6);
+        m_gpio_watchdog_timeout_pin = new Hardware::GPIO(512 + 12);
+        m_gpio_watchdog_timeout_answer_pin = new Hardware::GPIO(512 + 16);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
