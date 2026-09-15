@@ -59,6 +59,8 @@ namespace Actuators
     static constexpr const char* c_cmd_sync = "SYNC";
     //! Heartbeat command id.
     static constexpr const char* c_cmd_hb = "HEART";
+    //! Relay command id.
+    static constexpr const char* c_cmd_relay = "RELAY";
     //! Number of power channels.
     static constexpr uint8_t c_num_pwr_chs = 11;
     //! Maximum voltage for water level low.
@@ -89,6 +91,8 @@ namespace Actuators
       std::string wf_elabels[c_num_wf_sensors];
       //! Warning for water level sensors malfunction.
       bool wl_malfunction_warning;
+      //! Communications relay.
+      bool comms_relay;
     };
 
     struct PowerChannel
@@ -184,6 +188,11 @@ namespace Actuators
         .defaultValue("true")
         .description("Indicates if water level sensors malfunction warning is enabled.");
 
+        param("Comms Relay", m_args.comms_relay)
+        .defaultValue("false")
+        .editable(false)
+        .description("Indicates if the communications relay needs to be activated.");
+
         m_vi.op = VersionInfo::OP_REPLY;
 
         bind<IMC::VersionInfo>(this);
@@ -211,7 +220,13 @@ namespace Actuators
       void
       onResourceRelease(void) override
       {
-        Memory::clear(m_handle);
+        if (m_handle != NULL)
+        {
+          setRelayMode(false);
+          delete m_handle;
+          m_handle = NULL;
+        }
+
         m_pwr_chs.clear();
         m_synced = false;
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
@@ -274,6 +289,9 @@ namespace Actuators
         m_no_rpl_cnt = 0;
         m_handle->setCanonicalInput(true);
         m_handle->flush();
+
+        if (m_args.comms_relay)
+          setRelayMode(true);
 
         m_synced = false;
 
@@ -570,6 +588,21 @@ namespace Actuators
       {
         spew("heartbeat");
         sendCommand<uint8_t>(c_cmd_hb);
+      }
+
+      void
+      setRelayMode(const bool state)
+      {
+        try
+        {
+          debug("trying to set relay mode to %s", state ? "on" : "off");
+          sendCommand(c_cmd_relay, c_cmd_ack[0], true, std::vector<uint8_t>{static_cast<uint8_t>(state)});
+          debug("relay mode set to %s", state ? "on" : "off");
+        }
+        catch(const std::exception& e)
+        {
+          err("failed to set relay mode : %s", e.what());
+        }
       }
 
       bool
