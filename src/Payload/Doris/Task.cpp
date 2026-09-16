@@ -1101,7 +1101,6 @@ namespace Payload
         if (pos_diff != 0)
           setStorageStep(true, pos_diff > 0);
 
-        war("pos: %d, %d", pos, pos_diff);
         m_storage_pos_timer.setTop(m_args.sto_step_timeout * std::fabs(pos_diff));
       }
 
