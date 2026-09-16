@@ -1034,7 +1034,7 @@ namespace Payload
         {
           setStorageStep(true, false);
           m_storage_step_reset = false;
-          m_storage_pos_timer.setTop(m_args.sto_step_timeout * bottlePosition(m_args.sto_total_bottles - 1));
+          m_storage_pos_timer.setTop(c_storage_reset_step_tout);
         }
         else
           m_storage_step_reset = true;
