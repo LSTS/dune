@@ -1034,6 +1034,7 @@ namespace Payload
         {
           setStorageStep(true, false);
           m_storage_step_reset = false;
+          m_storage_pos_timer.setTop(m_args.sto_step_timeout * bottlePosition(m_args.sto_total_bottles - 1));
         }
         else
           m_storage_step_reset = true;
@@ -1049,7 +1050,7 @@ namespace Payload
           setPurge(false);
         }
 
-        if (getStepPosition() == 0 && !m_storage_step_reset)
+        if ((getStepPosition() == 0 || m_storage_pos_timer.overflow()) && !m_storage_step_reset)
         {
           trace("step reset complete");
           m_storage_step_reset = true;
