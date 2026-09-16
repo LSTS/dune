@@ -887,7 +887,7 @@ namespace Payload
 
         if (state)
         {
-          m_collector_timer.reset();
+          m_collector_timer.setTop(m_args.col_timeout);
           m_collector_water_flow_avg.clear();
         }
         else
@@ -912,7 +912,7 @@ namespace Payload
 
         if (state)
         {
-          m_storage_timer.reset();
+          m_storage_timer.setTop(m_args.sto_timeout);
           m_storage_water_flow_avg.clear();
         }
         else
