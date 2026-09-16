@@ -424,6 +424,10 @@ namespace DUNE
           {
             err("%s", ep.what());
           }
+          catch (...)
+          {
+            err("unknown exception while consuming messages during restart");
+          }
         }
         catch (std::exception& e)
         {
@@ -438,6 +442,14 @@ namespace DUNE
           {
             err("%s", ep.what());
           }
+          catch (...)
+          {
+            err("unknown exception while consuming messages during restart");
+          }
+        }
+        catch (...)
+        {
+          err(DTR("task died with unknown exception: restarting"));
         }
       }
     }
