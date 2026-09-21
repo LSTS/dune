@@ -572,7 +572,7 @@ namespace DUNE
 
       //! Bind a message to a default consumer method, with a custom filter.
       //! @param task_obj consumer task.
-      //! @param filter filter method.
+      //! @param filter filter function.
       template <typename M, typename T>
       void
       bind(T* task_obj, bool (*filter)(const M*))
@@ -580,19 +580,25 @@ namespace DUNE
         bind(task_obj, &T::consume, filter);
       }
 
-      //! Bind a message to a consumer method, with an optional filter.
+      //! Bind a message to a consumer method.
       //! @param task_obj consumer task.
       //! @param consumer consumer method.
-      //! @param filter filter method (optional).
       template <typename M, typename T>
       void
-      bind(T* task_obj, void (T::* consumer)(const M*) = &T::consume, 
-           bool (*filter)(const M*) = nullptr)
+      bind(T* task_obj, void (T::* consumer)(const M*) = &T::consume)
       {
-        if (filter == nullptr)
-          bind(M::getIdStatic(), new Consumer<T, M>(*task_obj, consumer));
-        else
-          bind(M::getIdStatic(), new FilteredConsumer<T, M>(*task_obj, consumer, filter));
+        bind(M::getIdStatic(), new Consumer<T, M>(*task_obj, consumer));
+      }
+
+      //! Bind a message to a consumer method with a filter.
+      //! @param task_obj consumer task.
+      //! @param consumer consumer method.
+      //! @param filter non-null filter function.
+      template <typename M, typename T>
+      void
+      bind(T* task_obj, void (T::* consumer)(const M*), bool (*filter)(const M*))
+      {
+        bind(M::getIdStatic(), new FilteredConsumer<T, M>(*task_obj, consumer, filter));
       }
 
       //! Bind multiple messages to a default consumer method.
