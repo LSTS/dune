@@ -662,10 +662,10 @@ namespace DUNE
       //! @param task_obj consumer task.
       //! @param filter filter function.
       template <typename M, typename T>
-      void
+      AbstractConsumer*
       bind(T* task_obj, bool (*filter)(const M*))
       {
-        bind(task_obj, &T::consume, filter);
+        return bind(task_obj, &T::consume, filter);
       }
 
       //! Bind a message to a consumer method.
@@ -686,10 +686,12 @@ namespace DUNE
       //! @param consumer consumer method.
       //! @param filter non-null filter function.
       template <typename M, typename T>
-      void
+      AbstractConsumer*
       bind(T* task_obj, void (T::* consumer)(const M*), bool (*filter)(const M*))
       {
-        bind(M::getIdStatic(), new FilteredConsumer<T, M>(*task_obj, consumer, filter));
+        AbstractConsumer* c = new FilteredConsumer<T, M>(*task_obj, consumer, filter);
+        bind(M::getIdStatic(), c);
+        return c;
       }
 
       //! Bind multiple messages to a consumer method.
