@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2025 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -24,43 +24,47 @@
 // https://github.com/LSTS/dune/blob/master/LICENCE.md and                  *
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
-// Author: Ricardo Martins                                                  *
+// Author: Luis Venâncio (from Consumer)                                    *
 //***************************************************************************
 
-#ifndef DUNE_TASKS_CONSUMER_HPP_INCLUDED_
-#define DUNE_TASKS_CONSUMER_HPP_INCLUDED_
+#ifndef DUNE_TASKS_FILTERED_CONSUMER_HPP_INCLUDED_
+#define DUNE_TASKS_FILTERED_CONSUMER_HPP_INCLUDED_
 
 // DUNE headers.
-#include <DUNE/Tasks/AbstractConsumer.hpp>
+#include <DUNE/Tasks/Consumer.hpp>
 
 namespace DUNE
 {
   namespace Tasks
   {
     template <typename T, typename M>
-    class Consumer: public AbstractConsumer
+    class FilteredConsumer: public Consumer<T, M>
     {
     public:
-      typedef void (T::* Routine)(const M*);
+      typedef typename Consumer<T, M>::Routine Routine;
+      typedef bool (*Filter)(const M*);
 
       //! Constructor.
-      Consumer(T& o, Routine f):
-        m_obj(o),
-        m_fun(f)
+      FilteredConsumer(T& o, Routine f, Filter filter):
+        Consumer<T, M>(o, f),
+        m_filter(filter)
       { }
 
       void
       consume(const IMC::Message* msg) override
       {
-        ((m_obj).*(m_fun))(static_cast<const M*>(msg));
+        const M* m = static_cast<const M*>(msg);
+        if (!m_filter(m))
+          return;
+
+        Consumer<T, M>::consume(msg);
       }
 
-      ~Consumer(void)
+      ~FilteredConsumer(void)
       { }
 
     private:
-      T& m_obj;
-      Routine m_fun;
+      Filter m_filter;
     };
   }
 }
