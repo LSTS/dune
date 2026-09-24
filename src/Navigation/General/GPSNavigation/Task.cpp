@@ -196,6 +196,11 @@ namespace Navigation
 
           if (msg->getSourceEntity() == m_yaw_eid)
             m_estate.psi = msg->psi;
+
+          if (!originIsSet())
+            return;
+
+          dispatch(m_estate);
         }
 
         void
