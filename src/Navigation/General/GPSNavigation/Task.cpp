@@ -58,6 +58,8 @@ namespace Navigation
         bool convert_msl;
         //! Reference change distance
         double ref_distance;
+        //! Update attitude
+        bool update_attitude;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -106,6 +108,10 @@ namespace Navigation
           .minimumValue("500")
           .defaultValue("1000.0")
           .description("Distance needed for reference change.");
+
+          param("Update Attitude", m_args.update_attitude)
+          .defaultValue("false")
+          .description("Dispatch EstimatedState with attitude updates.");
 
           m_estate.clear();
           m_offset = 0.0f;
@@ -197,7 +203,7 @@ namespace Navigation
           if (msg->getSourceEntity() == m_yaw_eid)
             m_estate.psi = msg->psi;
 
-          if (!originIsSet())
+          if (!m_args.update_attitude || !originIsSet())
             return;
 
           dispatch(m_estate);
