@@ -106,6 +106,7 @@ namespace Maneuver
       void
       onReset(void)
       {
+        sendSamplingActionCmd(IMC::SamplingAction::SAT_CMD_STOP);
         DUNE::Memory::clear(m_skeep);
       }
 
