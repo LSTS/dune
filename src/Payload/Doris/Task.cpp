@@ -1016,6 +1016,15 @@ namespace Payload
       }
 
       void
+      stop(void)
+      {
+        setCollection(false);
+        setStorageStep(false);
+        setStoreSample(-1);
+        setPurge(false);
+      }
+
+      void
       reset(void)
       {
         setCollection(false);
@@ -1149,6 +1158,7 @@ namespace Payload
         {
           case STATE_IDLE:
             updateSamplingState(IMC::SamplingAction::SAT_STATE_IDLE, "ready for sampling");
+            stop();
             break;
 
           case STATE_INITIAL:
