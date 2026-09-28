@@ -116,6 +116,7 @@ namespace Maneuver
       void
       onReset(void) override
       {
+        sendSamplingActionCmd(IMC::SamplingAction::SAT_CMD_STOP);
         Memory::clear(m_skeep);
         m_state = STATE_MOVING;
         m_next_point = 0;
