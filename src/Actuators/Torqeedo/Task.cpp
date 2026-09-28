@@ -708,19 +708,22 @@ namespace Actuators
       void
       task(void)
       {
-        if(m_can != NULL) {
-          waitForMessages(0.005);
-          motor_send_counter++;
-          if(motor_send_counter >= m_args.motor_write_divider) {
-            sendSetMotorThrottle(motor0_throttle, motor1_throttle);
-            motor_send_counter = 0;
-          } else if(m_unsent_power_parameters) {
-            sendPowerChannelMessages();
-            m_unsent_power_parameters = false;
-          } else {
-            readCanMessage();
-          }
+        if (m_can == NULL)
+          throw std::runtime_error("CAN not initialized");
+
+        motor_send_counter++;
+        if (motor_send_counter >= m_args.motor_write_divider)
+        {
+          sendSetMotorThrottle(motor0_throttle, motor1_throttle);
+          motor_send_counter = 0;
         }
+        else if (m_unsent_power_parameters)
+        {
+          sendPowerChannelMessages();
+          m_unsent_power_parameters = false;
+        }
+        else
+          readCanMessage();
       }
     };
   }
