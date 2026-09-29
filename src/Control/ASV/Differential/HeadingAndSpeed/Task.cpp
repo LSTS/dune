@@ -127,6 +127,8 @@ namespace Control
           uint16_t m_rpm_eid[2];
           //! Control loops last reference
           uint32_t m_scope_ref;
+          //! Previous yaw error
+          float m_prev_err_yaw;
           //! Task arguments.
           Arguments m_args;
 
@@ -311,6 +313,7 @@ namespace Control
             m_mps_pid.reset();
             m_yaw_pid.reset();
 
+            m_prev_err_yaw = 0;
             m_previous_rpm = 0;
 
             for (uint8_t i = 0; i < 2; i++)
@@ -386,7 +389,8 @@ namespace Control
             float rpm = (m_rpm[0].value + m_rpm[1].value) / 2;
 
             // Yaw controller.
-            float thrust_diff = m_yaw_pid.step(tstep, err_yaw);
+            float thrust_diff = m_yaw_pid.step(tstep, err_yaw, Angles::normalizeRadian(err_yaw - m_prev_err_yaw) / tstep);
+            m_prev_err_yaw = err_yaw;
 
             // Thrust forward.
             if (thrustForward(err_yaw))
