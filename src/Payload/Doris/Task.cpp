@@ -428,16 +428,30 @@ namespace Payload
       {
         if (paramChanged(m_args.mode))
         {
-          auto it = c_mode_map.find(m_args.mode);
-          if (it != c_mode_map.end())
+          if (m_mode == ModeEnum::MODE_AUTOMATIC &&
+              m_args.mode == "Manual" &&
+              m_curr_state != STATE_IDLE)
           {
-            m_mode = it->second;
-            inf("Operation mode set to: %s", c_mode_str_map.at(m_mode).c_str());
+            war("switching from Automatic to Manual mode "
+                "while sampling is in progress isn't allowed | "
+                "reverting to Automatic mode.");
+            applyEntityParameter(&m_args.mode, "Automatic");
           }
           else
           {
-            err("Invalid operation mode: %s", m_args.mode.c_str());
-            m_mode = MODE_INVALID;
+            auto it = c_mode_map.find(m_args.mode);
+            if (it != c_mode_map.end())
+            {
+              m_mode = it->second;
+              inf("operation mode set to: %s", c_mode_str_map.at(m_mode).c_str());
+            }
+            else
+            {
+              err("invalid operation mode: %s", m_args.mode.c_str());
+              m_mode = MODE_INVALID;
+            }
+
+            stop();
           }
         }
 
