@@ -89,6 +89,8 @@ namespace Control
           std::string eid_starboard;
           //! Log the size of each PID parcel
           bool log_parcels;
+          //! Log common and differential thrust
+          bool log_thrust_parcel;
         };
 
         struct Task: public Tasks::Task
@@ -105,6 +107,8 @@ namespace Control
           IMC::ControlParcel m_parcel_rpm;
           //! Control Parcels for yaw controller
           IMC::ControlParcel m_parcel_yaw;
+          //! Control Parcels for common and differential thrust
+          IMC::ControlParcel m_parcel_thrust;
           //! Desired heading.
           float m_desired_yaw;
           //! Desired speed.
@@ -221,6 +225,11 @@ namespace Control
             .defaultValue("false")
             .description("Log the size of each PID parcel");
 
+            param("Log Thrust Parcel", m_args.log_thrust_parcel)
+            .defaultValue("false")
+            .description("Log common and differential thrust. "
+                         "Common logged as p, differential as d.");
+
             m_desired_speed = 0.0;
             m_speed_units = IMC::SUNITS_PERCENTAGE;
 
@@ -265,6 +274,7 @@ namespace Control
               m_parcel_rpm.setSourceEntity(reserveEntity(label + " - RPM Parcel"));
               m_parcel_mps.setSourceEntity(reserveEntity(label + " - MPS Parcel"));
               m_parcel_yaw.setSourceEntity(reserveEntity(label + " - Yaw Parcel"));
+              m_parcel_thrust.setSourceEntity(reserveEntity(label + " - Thrust Parcel"));
             }
           }
 
@@ -315,6 +325,8 @@ namespace Control
 
             m_prev_err_yaw = 0;
             m_previous_rpm = 0;
+
+            m_common = false;
 
             for (uint8_t i = 0; i < 2; i++)
             {
@@ -416,6 +428,8 @@ namespace Control
                                             - m_args.act_diff_max,
                                             m_args.act_diff_max);
             }
+
+            logThrustParcel(thrust_com, thrust_diff);
 
             m_act[0].value = thrust_com + thrust_diff;
             m_act[1].value = thrust_com - thrust_diff;
@@ -600,6 +614,17 @@ namespace Control
                 m_act[(i + 1) % 2].value -= delta;
               }
             }
+          }
+
+          void
+          logThrustParcel(float common, float diff)
+          {
+            if (!m_args.log_thrust_parcel)
+              return;
+
+            m_parcel_thrust.p = common;
+            m_parcel_thrust.d = diff;
+            dispatch(m_parcel_thrust);
           }
 
           void
