@@ -55,7 +55,7 @@ namespace Control
           float act_max;
           //! Maximum Motor differential thrust.
           float act_diff_max;
-          //! Ramp actuation limit when the value is rising in actuation per second
+          //! Ramp actuation limit, in actuation per second
           float act_ramp;
           //! End of scale value for RPM's at 100% of thurst
           float rpm_eos;
@@ -215,7 +215,7 @@ namespace Control
 
             param("Ramp Actuation Limit", m_args.act_ramp)
             .defaultValue("0.0")
-            .description("Ramp actuation limit when the value is rising in actuation per second");
+            .description("Ramp actuation limit, in actuation per second");
 
             param("Log PID Parcels", m_args.log_parcels)
             .defaultValue("false")
@@ -542,10 +542,11 @@ namespace Control
           void
           dispatchThrust(float value, double timestep, uint8_t id)
           {
-            if ((value > m_last_act[id].value) && (m_args.act_ramp > 0.0))
+            if (m_args.act_ramp > 0.0)
             {
-              value = m_last_act[id].value + trimValue((value - m_last_act[id].value) / timestep,
-                                                      0.0, m_args.act_ramp * timestep);
+              double max_delta = timestep <= 0.0 ? 0.0 : m_args.act_ramp * timestep;
+              value = m_last_act[id].value + trimValue(value - m_last_act[id].value,
+                                                      -max_delta, max_delta);
             }
 
             m_act[id].value = trimValue(value, -m_args.act_max, m_args.act_max);
