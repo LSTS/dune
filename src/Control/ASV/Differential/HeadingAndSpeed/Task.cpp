@@ -131,8 +131,8 @@ namespace Control
           uint16_t m_rpm_eid[2];
           //! Control loops last reference
           uint32_t m_scope_ref;
-          //! Previous yaw error
-          float m_prev_err_yaw;
+          //! Previous measured yaw.
+          float m_prev_yaw;
           //! Task arguments.
           Arguments m_args;
 
@@ -305,6 +305,7 @@ namespace Control
           void
           onActivation(void)
           {
+            m_delta.clear();
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
 
@@ -323,7 +324,8 @@ namespace Control
             m_mps_pid.reset();
             m_yaw_pid.reset();
 
-            m_prev_err_yaw = 0;
+            m_prev_yaw = 0;
+            m_delta.clear();
             m_previous_rpm = 0;
 
             m_common = false;
@@ -392,17 +394,21 @@ namespace Control
 
             // Compute time delta.
             double tstep = m_delta.getDelta();
-            // Check if we have a valid time delta.
-            if (tstep < 0.0)
+            // Initialize heading history when timing starts or is invalid.
+            if (tstep <= 0.0)
+            {
+              m_prev_yaw = msg->psi;
               return;
+            }
 
             float thrust_com = 0;
             float err_yaw = Angles::normalizeRadian(m_desired_yaw - msg->psi);
             float rpm = (m_rpm[0].value + m_rpm[1].value) / 2;
 
-            // Yaw controller.
-            float thrust_diff = m_yaw_pid.step(tstep, err_yaw, Angles::normalizeRadian(err_yaw - m_prev_err_yaw) / tstep);
-            m_prev_err_yaw = err_yaw;
+            // Differentiate measured yaw to avoid kicks from heading reference changes.
+            float deriv_yaw = -Angles::normalizeRadian(msg->psi - m_prev_yaw) / tstep;
+            float thrust_diff = m_yaw_pid.step(tstep, err_yaw, deriv_yaw);
+            m_prev_yaw = msg->psi;
 
             // Thrust forward.
             if (thrustForward(err_yaw))
