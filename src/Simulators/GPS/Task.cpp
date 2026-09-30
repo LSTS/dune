@@ -80,6 +80,8 @@ namespace Simulators
       uint16_t n_sat;
       //! Initial position (degrees)
       std::vector<double> position;
+      //! Use simulated heading as cog
+      bool use_heading_as_cog;
     };
 
     //! %GPS simulator task.
@@ -137,6 +139,10 @@ namespace Simulators
         .units(Units::Degree)
         .size(2)
         .description("Initial position of the vehicle");
+
+        param("Use Heading as COG", m_args.use_heading_as_cog)
+        .defaultValue("true")
+        .description("Use simulated heading as course over ground");
 
         m_fix.clear();
         m_euler.clear();
@@ -208,6 +214,19 @@ namespace Simulators
         dispatch(m_fix);
       }
 
+      fp32_t
+      getCOG(void)
+      {
+        if (m_args.use_heading_as_cog)
+          return m_sstate.psi;
+
+        double vx = 0.0, vy = 0.0, vz = 0.0;
+        BodyFixedFrame::toInertialFrame(m_sstate.phi, m_sstate.theta, m_sstate.psi,
+                                        m_sstate.u, m_sstate.v, m_sstate.w,
+                                        &vx, &vy, &vz);
+        return std::atan2(vy, vx);
+      }
+
       void
       task(void)
       {
@@ -222,7 +241,7 @@ namespace Simulators
 
         // Report GpsFix.
         m_fix.sog = std::sqrt(std::pow(m_sstate.u, 2) + std::pow(m_sstate.v, 2));
-        m_fix.cog = m_sstate.psi;
+        m_fix.cog = getCOG();
         m_fix.validity = c_gps_valid;
         m_fix.satellites = m_args.n_sat;
         m_fix.hdop = m_args.hdop;
