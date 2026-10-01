@@ -546,12 +546,14 @@ namespace Control
             m_parcel_mps.a = m_desired_speed * m_args.mps_ffgain;
             rpm += m_parcel_mps.a;
 
+            // Bound the target before ramping so the minimum RPM does not
+            // cause a step when accelerating from zero.
+            rpm = Math::trimValue(rpm, m_args.min_rpm, m_args.max_rpm);
+
             // trim acceleration in rpms
             rpm = Math::trimValue(rpm, m_previous_rpm - m_args.max_accel * timestep,
                                   m_previous_rpm + m_args.max_accel * timestep);
 
-            // trim rpm value
-            rpm = Math::trimValue(rpm, m_args.min_rpm, m_args.max_rpm);
             m_previous_rpm = rpm;
             return rpm;
           }
@@ -593,6 +595,10 @@ namespace Control
               if (std::fabs(yaw_err) < m_args.yaw_max)
                 m_common = true;
             }
+
+            // Restart the MPS acceleration ramp from zero after turning in place.
+            if (!m_common)
+              m_previous_rpm = 0.0;
 
             return m_common;
           }
