@@ -94,6 +94,20 @@ namespace Navigation
         //! Label of the entity producing the inertial/magnetic measurements.
         //! Empty disables source filtering.
         std::string elabel_imu;
+        //! Hard-iron offset subtracted from the body x/y/z field.
+        std::vector<double> hi_offset;
+        //! Apply full-coverage hard-iron fits (otherwise only monitor).
+        bool hi_apply;
+        //! Heading bins needed for a fit.
+        unsigned hi_min_bins;
+        //! Time after which an unused heading bin is forgotten (s).
+        double hi_window;
+        //! Opposite-heading field mismatch that requests a calibration.
+        double hi_threshold;
+        //! Depth beyond which the field is monitored (m).
+        double hi_depth;
+        //! Label of the depth source, empty for any.
+        std::string elabel_depth;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -110,6 +124,13 @@ namespace Navigation
         double m_dtheta[3];
         //! Latest magnetic field sample.
         double m_mag[3];
+        //! Hard-iron monitor: checks the offset in use against the heading
+        //! dependence of the field and requests a calibration when it is wrong.
+        DUNE::Navigation::HardIronEstimator m_hi;
+        //! Latest depth (m), negative until one arrives.
+        double m_depth;
+        //! Entity id of the depth source, UINT_MAX for any.
+        unsigned m_depth_eid;
         //! Time step reported with the latest delta angle (s), 0 if unavailable.
         double m_dt_meas;
         //! Device time of the previous filter step.
@@ -130,6 +151,8 @@ namespace Navigation
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Tasks::Task(name, ctx),
+          m_depth(-1.0),
+          m_depth_eid(std::numeric_limits<unsigned>::max()),
           m_dt_meas(0.0),
           m_last_time(-1.0),
           m_imu_eid(std::numeric_limits<unsigned>::max()),
@@ -173,6 +196,52 @@ namespace Navigation
                          "velocity, delta angle and magnetic field measurements. "
                          "Leave empty to accept measurements from any source");
 
+          param("Hard-Iron Offset", m_args.hi_offset)
+            .defaultValue("0.0, 0.0, 0.0")
+            .size(3)
+            .description("Hard-iron offset (body x, y, z) subtracted from the magnetic "
+                         "field, on top of any calibration the sensor applies (sensors "
+                         "such as the LIMU correct x/y only: put the gyro-aided z of the "
+                         "compass calibration here); the starting point of the monitor");
+
+          param("Hard-Iron Apply Estimate", m_args.hi_apply)
+            .defaultValue("false")
+            .description("Replace the hard-iron offset with the online circle fit once "
+                         "enough headings are covered. Off: only monitor and request a "
+                         "compass calibration (experimental when on)");
+
+          param("Hard-Iron Minimum Heading Bins", m_args.hi_min_bins)
+            .defaultValue("18")
+            .minimumValue("3")
+            .maximumValue("24")
+            .description("Heading bins (of 24, 15 degrees each) needed to fit the "
+                         "hard-iron offset");
+
+          param("Hard-Iron Window", m_args.hi_window)
+            .units(Units::Second)
+            .defaultValue("600")
+            .minimumValue("10")
+            .description("A heading bin not visited for this long is forgotten");
+
+          param("Hard-Iron Calibration Threshold", m_args.hi_threshold)
+            .defaultValue("0.04")
+            .minimumValue("0.0")
+            .description("Relative field magnitude difference between opposite "
+                         "headings above which a compass calibration is requested");
+
+          param("Hard-Iron Monitor Depth", m_args.hi_depth)
+            .units(Units::Meter)
+            .defaultValue("1.0")
+            .minimumValue("0.0")
+            .description("Only samples deeper than this feed the hard-iron monitor: "
+                         "on deck, near the support boat and in surface waves the "
+                         "levelled field is disturbed and raised false requests");
+
+          param("Entity Label - Depth", m_args.elabel_depth)
+            .defaultValue("")
+            .description("Label of the depth source for the hard-iron monitor. "
+                         "Empty: any source");
+
           std::memset(m_spf, 0, sizeof(m_spf));
           std::memset(m_omega, 0, sizeof(m_omega));
           std::memset(m_dtheta, 0, sizeof(m_dtheta));
@@ -190,11 +259,26 @@ namespace Navigation
           bind<IMC::AngularVelocity>(this);
           bind<IMC::EulerAnglesDelta>(this);
           bind<IMC::MagneticField>(this);
+          bind<IMC::Depth>(this);
         }
 
         void
         onEntityResolution(void)
         {
+          m_depth_eid = std::numeric_limits<unsigned>::max();
+          if (!m_args.elabel_depth.empty())
+          {
+            try
+            {
+              m_depth_eid = resolveEntity(m_args.elabel_depth);
+            }
+            catch (...)
+            {
+              war(DTR("failed to resolve depth entity '%s', using any depth source"),
+                  m_args.elabel_depth.c_str());
+            }
+          }
+
           m_imu_eid = std::numeric_limits<unsigned>::max();
           m_filter = false;
 
@@ -217,6 +301,17 @@ namespace Navigation
           {
             err(DTR("failed to resolve entity '%s'"), m_args.elabel_imu.c_str());
           }
+        }
+
+        void
+        onUpdateParameters(void)
+        {
+          DUNE::Navigation::HardIronEstimator::Config cfg;
+          cfg.min_bins = m_args.hi_min_bins;
+          cfg.window = m_args.hi_window;
+          cfg.threshold = m_args.hi_threshold;
+          m_hi = DUNE::Navigation::HardIronEstimator(cfg);
+          m_hi.setOffset(m_args.hi_offset[0], m_args.hi_offset[1]);
         }
 
         void
@@ -273,6 +368,14 @@ namespace Navigation
         }
 
         void
+        consume(const IMC::Depth* msg)
+        {
+          if (m_depth_eid == std::numeric_limits<unsigned>::max()
+              || msg->getSourceEntity() == m_depth_eid)
+            m_depth = msg->value;
+        }
+
+        void
         consume(const IMC::MagneticField* msg)
         {
           if (rejected(msg))
@@ -326,6 +429,57 @@ namespace Navigation
                             m[0] * c_th + m[1] * s_th * s_phi + m[2] * s_th * c_phi);
         }
 
+        //! Magnetic field with the hard-iron offset in use removed.
+        void
+        correctedField(double mc[3]) const
+        {
+          mc[0] = m_mag[0] - m_hi.offsetX();
+          mc[1] = m_mag[1] - m_hi.offsetY();
+          mc[2] = m_mag[2] - m_args.hi_offset[2];
+        }
+
+        //! Feed the hard-iron estimator and report what it concluded.
+        void
+        updateHardIron(double tstamp, double phi, double theta, double psi)
+        {
+          // Only submerged samples: on deck, near the support boat and in surface
+          // waves the levelled field is disturbed (false requests on lab replays).
+          if (m_depth <= m_args.hi_depth)
+            return;
+
+          // The monitor checks x/y; z is the configured one.
+          double mz[3] = {m_mag[0], m_mag[1], m_mag[2] - m_args.hi_offset[2]};
+          double hx, hy;
+          DUNE::Navigation::HardIronEstimator::level(mz, phi, theta, hx, hy);
+          switch (m_hi.process(tstamp, hx, hy, psi, m_args.hi_apply))
+          {
+            case DUNE::Navigation::HardIronEstimator::EV_OFFSET_UPDATED:
+              inf(DTR("hard-iron offset estimated: %.4f, %.4f (%u heading bins, "
+                      "fit residual %.1f%%)"),
+                  m_hi.offsetX(), m_hi.offsetY(), m_hi.lastFit().bins,
+                  100.0 * m_hi.lastFit().rms);
+              break;
+            case DUNE::Navigation::HardIronEstimator::EV_CALIBRATION_NEEDED:
+              if (m_hi.hasFit())
+                war(DTR("magnetometer calibration needed: the field differs by %.1f%% "
+                        "between opposite headings, fitted hard-iron %.4f, %.4f (in use "
+                        "%.4f, %.4f); perform a compass calibration maneuver"),
+                    100.0 * m_hi.lastMismatch(), m_hi.lastFit().x, m_hi.lastFit().y,
+                    m_hi.offsetX(), m_hi.offsetY());
+              else
+                war(DTR("magnetometer calibration needed: the field differs by %.1f%% "
+                        "between opposite headings; perform a compass calibration "
+                        "maneuver"),
+                    100.0 * m_hi.lastMismatch());
+              break;
+            case DUNE::Navigation::HardIronEstimator::EV_CALIBRATION_RESOLVED:
+              inf(DTR("magnetometer calibration consistent again"));
+              break;
+            default:
+              break;
+          }
+        }
+
         //! Seed the filter from the first sample.
         void
         initialize(double dev_time)
@@ -334,7 +488,9 @@ namespace Navigation
           accelAngles(m_spf, phi, theta);
           m_kal.setState(ST_PHI, phi);
           m_kal.setState(ST_THETA, theta);
-          m_kal.setState(ST_PSI, magYaw(m_mag, phi, theta));
+          double mc[3];
+          correctedField(mc);
+          m_kal.setState(ST_PSI, magYaw(mc, phi, theta));
           m_kal.setState(ST_BP, 0.0);
           m_kal.setState(ST_BQ, 0.0);
           m_kal.setState(ST_BR, 0.0);
@@ -440,7 +596,11 @@ namespace Navigation
           double fnorm = std::sqrt(m_spf[0] * m_spf[0] + m_spf[1] * m_spf[1] + m_spf[2] * m_spf[2]);
           double r_a = (std::fabs(fnorm - c_gravity) < m_args.accel_gate) ? m_args.r_acc
                                                                           : m_args.r_acc * 100.0;
-          double psi_m = magYaw(m_mag, m_kal.getState(ST_PHI), m_kal.getState(ST_THETA));
+          updateHardIron(tstamp, m_kal.getState(ST_PHI), m_kal.getState(ST_THETA),
+                         m_kal.getState(ST_PSI));
+          double mc[3];
+          correctedField(mc);
+          double psi_m = magYaw(mc, m_kal.getState(ST_PHI), m_kal.getState(ST_THETA));
 
           m_kal.setMeasurementNoise(OUT_PHI, r_a);
           m_kal.setMeasurementNoise(OUT_THETA, r_a);
