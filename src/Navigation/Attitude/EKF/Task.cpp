@@ -92,6 +92,7 @@ namespace Navigation
         //! Nominal update period (s), used until timestamps provide a delta.
         double dt_nominal;
         //! Label of the entity producing the inertial/magnetic measurements.
+        //! Empty disables source filtering.
         std::string elabel_imu;
       };
 
@@ -111,7 +112,7 @@ namespace Navigation
         double m_mag[3];
         //! Time step reported with the latest delta angle (s), 0 if unavailable.
         double m_dt_meas;
-        //! Time stamp of the previous filter step.
+        //! Device time of the previous filter step.
         double m_last_time;
         //! Entity id of the measurement source, UINT_MAX if unresolved.
         unsigned m_imu_eid;
@@ -241,7 +242,7 @@ namespace Navigation
           m_spf[1] = msg->y;
           m_spf[2] = msg->z;
           m_have_accel = true;
-          trySample(msg->getTimeStamp());
+          trySample(msg->time, msg->getTimeStamp());
         }
 
         void
@@ -254,7 +255,7 @@ namespace Navigation
           m_omega[1] = msg->y;
           m_omega[2] = msg->z;
           m_have_omega = true;
-          trySample(msg->getTimeStamp());
+          trySample(msg->time, msg->getTimeStamp());
         }
 
         void
@@ -268,7 +269,7 @@ namespace Navigation
           m_dtheta[2] = msg->z;
           m_dt_meas = msg->timestep;
           m_have_dtheta = true;
-          trySample(msg->getTimeStamp());
+          trySample(msg->time, msg->getTimeStamp());
         }
 
         void
@@ -281,18 +282,19 @@ namespace Navigation
           m_mag[1] = msg->y;
           m_mag[2] = msg->z;
           m_have_mag = true;
-          trySample(msg->getTimeStamp());
+          trySample(msg->time, msg->getTimeStamp());
         }
 
         //! Run a filter step once a full set of input samples is available,
-        //! regardless of the order in which they arrived.
+        //! regardless of the order in which they arrived. Timing is driven by
+        //! the device clock, the reception stamp only dates the output.
         void
-        trySample(double tstamp)
+        trySample(double dev_time, double tstamp)
         {
           if (!(m_have_accel && m_have_omega && m_have_dtheta && m_have_mag))
             return;
 
-          step(tstamp);
+          step(dev_time, tstamp);
           m_have_accel = m_have_omega = m_have_dtheta = m_have_mag = false;
         }
 
@@ -326,7 +328,7 @@ namespace Navigation
 
         //! Seed the filter from the first sample.
         void
-        initialize(double tstamp)
+        initialize(double dev_time)
         {
           double phi, theta;
           accelAngles(m_spf, phi, theta);
@@ -344,29 +346,29 @@ namespace Navigation
           m_kal.setCovariance(ST_BQ, 1e-4);
           m_kal.setCovariance(ST_BR, 1e-4);
 
-          m_last_time = tstamp;
+          m_last_time = dev_time;
           m_setup = true;
         }
 
         //! Run one EKF predict/update cycle and dispatch the result.
         void
-        step(double tstamp)
+        step(double dev_time, double tstamp)
         {
           if (!m_setup)
           {
-            initialize(tstamp);
-            dispatchEuler(tstamp);
+            initialize(dev_time);
+            dispatchEuler(dev_time, tstamp);
             return;
           }
 
           // Prefer the time step reported with the delta angle; fall back to the
-          // stamp difference and finally to the nominal period.
+          // device clock difference and finally to the nominal period.
           double dt = m_dt_meas;
           if (dt <= 0.0 || dt > 1.0)
-            dt = tstamp - m_last_time;
+            dt = dev_time - m_last_time;
           if (dt <= 0.0 || dt > 1.0)
             dt = m_args.dt_nominal;
-          m_last_time = tstamp;
+          m_last_time = dev_time;
 
           double phi = m_kal.getState(ST_PHI);
           double theta = m_kal.getState(ST_THETA);
@@ -452,14 +454,14 @@ namespace Navigation
           m_kal.update(0.0);
           m_kal.setState(ST_PSI, wrap(m_kal.getState(ST_PSI)));
 
-          dispatchEuler(tstamp);
+          dispatchEuler(dev_time, tstamp);
         }
 
         void
-        dispatchEuler(double tstamp)
+        dispatchEuler(double dev_time, double tstamp)
         {
           m_euler.setTimeStamp(tstamp);
-          m_euler.time = tstamp;
+          m_euler.time = dev_time;
           m_euler.phi = m_kal.getState(ST_PHI);
           m_euler.theta = m_kal.getState(ST_THETA);
           m_euler.psi = m_kal.getState(ST_PSI);
