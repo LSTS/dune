@@ -71,6 +71,8 @@ namespace Maneuver
       IMC::MagneticField mfield;
       //! AHRS entity label.
       std::string label;
+      //! mfield holds a calibration (the fit succeeded).
+      bool valid = false;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -141,6 +143,7 @@ namespace Maneuver
         bind<IMC::EstimatedState>(this);
         bind<IMC::EulerAngles>(this);
         bind<IMC::MagneticField>(this);
+        bind<IMC::AngularVelocity>(this);
       }
 
       void
@@ -212,8 +215,12 @@ namespace Maneuver
           for (const auto& itr : m_channels)
           {
             const CalibrationChannel& channel = itr.second;
-            err(DTR("%s entity not calibrated. Calibration values with %d turns: %f, %f, 0.0"),
-                channel.label.c_str(), turns, channel.mfield.x, channel.mfield.y);
+            if (channel.valid)
+              err(DTR("%s entity not calibrated. Calibration values with %d turns: %f, %f, 0.0"),
+                  channel.label.c_str(), turns, channel.mfield.x, channel.mfield.y);
+            else
+              err(DTR("%s entity not calibrated: too few headings covered"),
+                  channel.label.c_str());
           }
         }
       }
@@ -295,6 +302,15 @@ namespace Maneuver
           return;
 
         yoyoMotion(false);
+      }
+
+      //! Angular rates of each AHRS: enable its gyro-aided calibration.
+      void
+      consume(const IMC::AngularVelocity* msg)
+      {
+        auto itr = m_channels.find(msg->getSourceEntity());
+        if (itr != m_channels.end())
+          itr->second.ccal.updateRates(*msg);
       }
 
       void
@@ -412,15 +428,42 @@ namespace Maneuver
         for (auto& itr : m_channels)
         {
           CalibrationChannel& channel = itr.second;
-          Math::Matrix params = channel.ccal.getCalibrationParams();
-
-          // Fill message and send to bus.
-          channel.mfield.x = params(0);
-          channel.mfield.y = params(1);
-          channel.mfield.z = params(2);
+          Math::Matrix params;
+          if (!channel.ccal.getCalibrationParams(params))
+          {
+            // Keep a calibration a previous call computed.
+            if (!channel.valid)
+              war(DTR("%s: too few headings for a calibration (%u of 24 heading bins)"),
+                  channel.label.c_str(), channel.ccal.binsCovered());
+          }
+          else
+          {
+            // Fill message and send to bus.
+            channel.mfield.x = params(0);
+            channel.mfield.y = params(1);
+            channel.mfield.z = params(2);
+            channel.valid = true;
+            if (channel.ccal.lastMethod() == DUNE::Navigation::CompassCalibration::METHOD_GYRO)
+            {
+              const DUNE::Navigation::GyroAidedMagCalibration::Result& g =
+              channel.ccal.lastGyroResult();
+              inf(DTR("%s: hard-iron %.4f, %.4f, %.4f%s (gyro-aided, sigma %.4f, %.4f, %.4f; "
+                      "gyro bias %.3f, %.3f, %.3f deg/s; %u windows)"),
+                  channel.label.c_str(), params(0), params(1), g.b[2],
+                  channel.ccal.lastZDetermined() ? "" : " (z not determined)",
+                  g.sigma[0], g.sigma[1], g.sigma[2], Angles::degrees(g.bg[0]),
+                  Angles::degrees(g.bg[1]), Angles::degrees(g.bg[2]), g.windows);
+            }
+            else
+            {
+              inf(DTR("%s: hard-iron %.4f, %.4f (%u heading bins, circle fit residual %.1f%%)"),
+                  channel.label.c_str(), params(0), params(1), channel.ccal.lastFit().bins,
+                  100.0 * channel.ccal.lastFit().rms);
+            }
+          }
 
           // Dispatch magnetic data.
-          if (send_magnetic)
+          if (send_magnetic && channel.valid)
             dispatch(channel.mfield);
         }
 
@@ -433,7 +476,10 @@ namespace Maneuver
       clearCalibration(void)
       {
         for (auto& itr : m_channels)
+        {
           itr.second.ccal.clear();
+          itr.second.valid = false;
+        }
       }
 
       //! Yoyo motion update
