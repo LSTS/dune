@@ -27,6 +27,7 @@
 // Author: Bernardo Gabriel                                                 *
 //***************************************************************************
 
+#include <functional>
 #include <unordered_map>
 
 // DUNE headers.
@@ -139,7 +140,7 @@ namespace Payload
       int sto_next_bottle;
     };
 
-    //! Task to control WhiteX payload. 
+    //! Task to control Doris payload.
     //!
     //! @author Bernardo Gabriel
     struct Task: public Tasks::Task
@@ -166,6 +167,39 @@ namespace Payload
         REQ_FORCE_STATE_TRANSITION
       };
 
+      struct ActuatorLimit
+      {
+      private:
+        //! GPIO state.
+        bool m_state;
+        //! GPIO state on action.
+        std::function<void()> m_on_action;
+
+      public:
+        //! Constructor.
+        ActuatorLimit(const std::function<void()>& on_action = nullptr):
+          m_state(false),
+          m_on_action(on_action)
+        { }
+
+        //! Get the GPIO state.
+        bool
+        getState(void) const
+        {
+          return m_state;
+        }
+
+        //! Set the GPIO state.
+        void
+        setState(bool state)
+        {
+          if (m_on_action && state && !m_state)
+            m_on_action();
+        
+          m_state = state;
+        }
+      };
+
       //! Task arguments.
       Arguments m_args;
       //! Operation mode.
@@ -184,8 +218,8 @@ namespace Payload
       unsigned m_col_water_flow_eid;
       //! Storage's water flow source entity id.
       unsigned m_sto_water_flow_eid;
-      //! Map of GPIO states.
-      std::unordered_map<std::string, bool> m_gpio_states;
+      //! Map of Actuator limits.
+      std::unordered_map<std::string, ActuatorLimit> m_act_lims;
       //! Map of Water Flows.
       std::unordered_map<unsigned, fp32_t> m_water_flows;
       //! Map of Power Channel states.
@@ -198,7 +232,7 @@ namespace Payload
       Request m_recv_req;
       //! Paused state.
       State m_paused_state;
-      //! Timer for reporting state
+      //! Timer for reporting state.
       Counter<double> m_report_state_timer;
       //! Current selected bottle.
       int m_storage_curr_bottle;
@@ -212,6 +246,8 @@ namespace Payload
       bool m_storage_purge_complete;
       //! Storage's step reset flag.
       bool m_storage_step_reset;
+      //! Storage's step moving flag.
+      int m_storage_step_moving;
       //! Storage's max step position.
       int m_storage_max_step;
       //! Storage's current step position.
@@ -237,6 +273,7 @@ namespace Payload
         m_storage_curr_bottle(-1),
         m_storage_purge_complete(false),
         m_storage_step_reset(false),
+        m_storage_step_moving(0),
         m_storage_max_step(-1),
         m_storage_curr_step(-1)
       {
@@ -481,7 +518,7 @@ namespace Payload
 
           if (paramChanged(m_args.manual_sto_pumps))
             setStoragePumps(m_args.manual_sto_pumps);
-          
+
           if (paramChanged(m_args.manual_sto_purge))
             setStoragePurgeValve(m_args.manual_sto_purge);
 
@@ -556,11 +593,24 @@ namespace Payload
       void
       onResourceInitialization(void) override
       {
-        m_gpio_states.clear();
-        m_gpio_states[m_args.col_min_water_level_gpio] = false;
-        m_gpio_states[m_args.col_max_water_level_gpio] = false;
-        m_gpio_states[m_args.sto_start_ep_gpio] = false;
-        m_gpio_states[m_args.sto_end_ep_gpio] = false;
+        m_act_lims.clear();
+
+        if (!m_args.col_min_water_level_gpio.empty())
+          m_act_lims.insert({ m_args.col_min_water_level_gpio, ActuatorLimit() });
+
+        if (!m_args.col_max_water_level_gpio.empty())
+          m_act_lims.insert({ m_args.col_max_water_level_gpio,
+                              ActuatorLimit([this]() { setCollectorPumps(false); }) });
+
+        if (!m_args.sto_start_ep_gpio.empty())
+          m_act_lims.insert({ m_args.sto_start_ep_gpio,
+                              ActuatorLimit([this]() { m_storage_curr_step = 0;
+                                                       setStorageStep(false); }) });
+
+        if (!m_args.sto_end_ep_gpio.empty())
+          m_act_lims.insert({ m_args.sto_end_ep_gpio,
+                              ActuatorLimit([this]() { m_storage_curr_step = m_storage_max_step;
+                                                       setStorageStep(false); }) });
 
         m_pwr_ch_states.clear();
         for (const auto& label : m_args.col_pumps_pwr_ch_labels)
@@ -568,6 +618,8 @@ namespace Payload
         m_pwr_ch_states[m_args.sto_purge_pwr_ch_label] = false;
         m_pwr_ch_states[m_args.sto_rows_pwr_ch_labels[0]] = false;
         m_pwr_ch_states[m_args.sto_rows_pwr_ch_labels[1]] = false;
+
+        stop();
 
         setupRemoteActions();
       }
@@ -581,21 +633,21 @@ namespace Payload
 
       void
       onDeactivation(void) override
-      {
-      }
-      
+      { }
+
       void
       consume(const IMC::GpioState* msg)
       {
         if (msg->getSource() != getSystemId())
           return;
 
-        auto gpio = m_gpio_states.find(msg->name);
-        if (gpio == m_gpio_states.end())
+        auto gpio = m_act_lims.find(msg->name);
+        if (gpio == m_act_lims.end())
           return;
 
-        gpio->second = msg->value != 0;
-        spew("GPIO %s state: %s", msg->name.c_str(), gpio->second ? "true" : "false");
+        bool state = msg->value != 0;
+        gpio->second.setState(state);
+        spew("GPIO %s state: %s", msg->name.c_str(), state ? "true" : "false");
       }
 
       void
@@ -678,7 +730,7 @@ namespace Payload
             break;
 
           case IMC::SamplingAction::TypeEnum::SAT_CMD_PAUSE:
-            if(m_args.pausing_allowed)
+            if (m_args.pausing_allowed)
             {
               m_recv_req = REQ_PAUSE_SAMPLING;
               inf("received command to pause sampling action");
@@ -689,7 +741,7 @@ namespace Payload
             break;
 
           case IMC::SamplingAction::TypeEnum::SAT_CMD_RESUME:
-            if(m_args.pausing_allowed)
+            if (m_args.pausing_allowed)
             {
               m_recv_req = REQ_RESUME_SAMPLING;
               inf("received command to resume sampling action");
@@ -717,7 +769,7 @@ namespace Payload
       void
       queryGpios(void)
       {
-        for (const auto& gpio : m_gpio_states)
+        for (const auto& gpio : m_act_lims)
         {
           m_get_gpio_state.name = gpio.first;
           dispatch(m_get_gpio_state);
@@ -738,6 +790,11 @@ namespace Payload
       setStep(int step)
       {
         setThrusterActuation(m_args.sto_step_id, static_cast<float>(m_args.sto_step_reverse ? -step : step));
+
+        m_storage_step_moving = step;
+
+        if (step != 0)
+          m_storage_curr_step = -1;
       }
 
       void
@@ -751,7 +808,8 @@ namespace Payload
       {
         trace("setting power channel %s to %s", name.c_str(), state ? "ON" : "OFF");
         m_pcc.name = name;
-        m_pcc.op = state ? IMC::PowerChannelControl::PCC_OP_TURN_ON : IMC::PowerChannelControl::PCC_OP_TURN_OFF;
+        m_pcc.op = state ? IMC::PowerChannelControl::PCC_OP_TURN_ON
+                         : IMC::PowerChannelControl::PCC_OP_TURN_OFF;
         dispatch(m_pcc);
       }
 
@@ -799,8 +857,8 @@ namespace Payload
         }
 
         m_recv_req = REQ_NONE;
-        setState(STATE_INITIAL);
         trace("start sampling");
+        setState(STATE_INITIAL);
         return true;
       }
 
@@ -818,8 +876,8 @@ namespace Payload
           return false;
         }
 
-        setState(STATE_IDLE);
         trace("stop sampling");
+        setState(STATE_IDLE);
         return true;
       }
 
@@ -844,8 +902,8 @@ namespace Payload
         }
 
         m_paused_state = m_curr_state;
-        setState(STATE_PAUSED);
         trace("pause sampling");
+        setState(STATE_PAUSED);
         return true;
       }
 
@@ -864,8 +922,8 @@ namespace Payload
         }
 
         m_paused_state = STATE_UNKNOWN;
-        setState((m_paused_state != STATE_UNKNOWN) ? m_paused_state : STATE_IDLE);
         trace("resume sampling");
+        setState((m_paused_state != STATE_UNKNOWN) ? m_paused_state : STATE_IDLE);
         return true;
       }
 
@@ -889,6 +947,7 @@ namespace Payload
       void
       setCollectorPumps(bool state)
       {
+        state = state && !isCollectorFull();
         for (const auto& label : m_args.col_pumps_pwr_ch_labels)
           setPump(label, state);
       }
@@ -908,19 +967,22 @@ namespace Payload
         {
           double mean = m_collector_water_flow_avg.mean() * 1e6;
           double duration = m_collector_timer.getElapsed();
-          debug("collector water flow average: %.2f mL/s | duration: %.2f s | volume: %.2f mL", mean, duration, mean * duration);
+          debug("collector water flow average: %.2f mL/s | duration: %.2f s | volume: %.2f mL",
+                mean, duration, mean * duration);
         }
       }
 
       void
       setStorageStep(bool on, bool forward = true)
       {
+        on = on && !stepReachedLimit(forward);
         setStep(on ? (forward ? 1 : -1) : 0);
       }
 
       void
       setStoragePumps(bool state)
       {
+        state = state && !isCollectorEmpty();
         for (const auto& label : m_args.sto_pumps_pwr_ch_labels)
           setPump(label, state);
 
@@ -933,7 +995,8 @@ namespace Payload
         {
           double mean = m_storage_water_flow_avg.mean() * 1e6;
           double duration = m_storage_timer.getElapsed();
-          debug("storage water flow average: %.2f mL/s | duration: %.2f s | volume: %.2f mL", mean, duration, mean * duration);
+          debug("storage water flow average: %.2f mL/s | duration: %.2f s | volume: %.2f mL", mean,
+                duration, mean * duration);
         }
       }
 
@@ -987,29 +1050,42 @@ namespace Payload
       }
 
       void
-      setPurge(bool state)
+      setPurge(bool state, bool with_collection = false)
       {
+        setCollectorMotor(state && with_collection);
+        setCollectorPumps(state && with_collection);
         setStoragePurgeValve(state);
         setStoragePumps(state);
       }
 
-      int
-      getStepPosition(void)
+      bool
+      getGpioState(const std::string& label) const
       {
-        if (m_gpio_states[m_args.sto_start_ep_gpio])
-          m_storage_curr_step = 0;
-        else if (m_gpio_states[m_args.sto_end_ep_gpio])
-          m_storage_curr_step = m_storage_max_step;
+        if (label.empty())
+          return false;
 
-        return m_storage_curr_step;
+        const auto gpio = m_act_lims.find(label);
+        if (gpio == m_act_lims.end())
+          return false;
+
+        return gpio->second.getState();
+      }
+
+      bool
+      stepReachedLimit(bool forward)
+      {
+        return (forward && m_storage_curr_step == m_storage_max_step) ||
+               (!forward && m_storage_curr_step == 0);
       }
 
       void
       waitForStep(bool forward, double timeout)
       {
-        if ((forward && getStepPosition() == m_storage_max_step) ||
-            (!forward && getStepPosition() == 0))
+        if (stepReachedLimit(forward))
+        {
+          trace("step requested to move, but already at limit");
           return;
+        }
 
         setStorageStep(true, forward);
 
@@ -1018,10 +1094,9 @@ namespace Payload
         {
           waitForMessages(timer.getRemaining());
 
-          if ((forward && getStepPosition() == m_storage_max_step) ||
-              (!forward && getStepPosition() == 0))
+          if (stepReachedLimit(forward))
           {
-            inf("reset took %f seconds", timer.getElapsed());
+            trace("step moved for %f seconds", timer.getElapsed());
             break;
           }
         }
@@ -1039,21 +1114,20 @@ namespace Payload
       }
 
       void
-      reset(void)
+      reset(bool with_collection = false)
       {
-        setCollection(false);
         setStorageStep(false);
         setStoreSample(-1);
 
         if (!isCollectorEmpty())
         {
-          setPurge(true);
+          setPurge(true, with_collection);
           m_storage_purge_complete = false;
         }
         else
           m_storage_purge_complete = true;
 
-        if (getStepPosition() != 0)
+        if (m_storage_curr_step != 0)
         {
           setStorageStep(true, false);
           m_storage_step_reset = false;
@@ -1073,7 +1147,7 @@ namespace Payload
           setPurge(false);
         }
 
-        if ((getStepPosition() == 0 || m_storage_pos_timer.overflow()) && !m_storage_step_reset)
+        if ((m_storage_curr_step == 0 || m_storage_pos_timer.overflow()) && !m_storage_step_reset)
         {
           trace("step reset complete");
           m_storage_step_reset = true;
@@ -1092,15 +1166,13 @@ namespace Payload
       bool
       isCollectorFull(void) const
       {
-        return !m_args.col_max_water_level_gpio.empty() &&
-                m_gpio_states.at(m_args.col_max_water_level_gpio);
+        return getGpioState(m_args.col_max_water_level_gpio);
       }
 
       bool
       isCollectorEmpty(void) const
       {
-        return !m_args.col_min_water_level_gpio.empty() &&
-               !m_gpio_states.at(m_args.col_min_water_level_gpio);
+        return getGpioState(m_args.col_min_water_level_gpio);
       }
 
       bool
@@ -1120,7 +1192,7 @@ namespace Payload
       {
         nextBottle();
         int pos = bottlePosition(m_storage_curr_bottle);
-        int pos_diff = pos - getStepPosition();
+        int pos_diff = pos - m_storage_curr_step;
 
         if (pos_diff != 0)
           setStorageStep(true, pos_diff > 0);
@@ -1155,7 +1227,8 @@ namespace Payload
         {
           double mean = m_storage_water_flow_avg.mean() * 1e6;
           double duration = m_storage_timer.getElapsed();
-          debug("store over | mean: %.2f mL/s | duration: %.2f s | volume: %.2f mL", mean, duration, mean * duration);
+          debug("store over | mean: %.2f mL/s | duration: %.2f s | volume: %.2f mL", mean, duration,
+                mean * duration);
           setStoreSample(-1);
           return true;
         }
@@ -1176,8 +1249,9 @@ namespace Payload
             break;
 
           case STATE_INITIAL:
-            updateSamplingState(IMC::SamplingAction::SAT_STATE_STARTING, "initializing sampling action");
-            reset();
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_STARTING,
+                                "initializing sampling action");
+            reset(true);
             break;
 
           case STATE_COLLECT:
@@ -1196,7 +1270,8 @@ namespace Payload
             break;
 
           case STATE_COMPLETED:
-            updateSamplingState(IMC::SamplingAction::SAT_STATE_STOPPING, "sampling action completed");
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_STOPPING,
+                                "sampling action completed");
             reset();
             break;
 
@@ -1208,7 +1283,8 @@ namespace Payload
       void
       updateSamplingState(IMC::SamplingAction::TypeEnum type, const std::string& description = "")
       {
-        debug("updating sampling state report: type %d, description: %s", type, description.c_str());
+        debug("updating sampling state report: type %d, description: %s", type,
+              description.c_str());
         m_sa_report.type = type;
         m_sa_report.description = description;
         dispatch(m_sa_report);
@@ -1238,7 +1314,7 @@ namespace Payload
           case STATE_COLLECT:
             if (startRequested() || stopRequested() || pauseRequested())
               break;
-            
+
             if (forceStateTransition() || isCollectOver())
               setState(STATE_SELECT);
 
@@ -1278,37 +1354,49 @@ namespace Payload
           default:
             setState(STATE_IDLE);
             break;
-        }        
+        }
       }
 
       void
-      updateEntityState(void)
+      onReportEntityState(void) override
       {
         std::ostringstream ss;
         ss << (isActive() ? "active" : "idle");
         ss << " | m: " << c_mode_str_map.at(m_mode).front();
 
-        ss << " | collector: ";
+        ss << " | collector:";
 
-        ss << " wl=" << static_cast<int>(m_gpio_states[m_args.col_min_water_level_gpio])
-                     << static_cast<int>(m_gpio_states[m_args.col_max_water_level_gpio]);
+        if (!m_args.col_min_water_level_gpio.empty())
+          ss << " wl min="
+             << static_cast<int>(m_act_lims[m_args.col_min_water_level_gpio].getState());
 
-        ss << " wf=" << m_water_flows[m_col_water_flow_eid];
+        if (!m_args.col_max_water_level_gpio.empty())
+          ss << " wl max="
+             << static_cast<int>(m_act_lims[m_args.col_max_water_level_gpio].getState());
 
-        ss << " p=";
-        for (const auto& pwr_ch : m_args.col_pumps_pwr_ch_labels)
-          ss << static_cast<int>(m_pwr_ch_states[pwr_ch]);
-        
-        ss << " | storage: ";
-        
-        ss << " wf=" << m_water_flows[m_sto_water_flow_eid];
+        if (m_col_water_flow_eid != UINT_MAX)
+          ss << " wf=" << m_water_flows[m_col_water_flow_eid];
 
         ss << " p=";
         for (const auto& pwr_ch : m_args.col_pumps_pwr_ch_labels)
           ss << static_cast<int>(m_pwr_ch_states[pwr_ch]);
 
-        ss << " e=" << static_cast<int>(m_gpio_states[m_args.sto_start_ep_gpio])
-                    << static_cast<int>(m_gpio_states[m_args.sto_end_ep_gpio]);
+        ss << " | storage:";
+
+        if (m_sto_water_flow_eid != UINT_MAX)
+          ss << " wf=" << m_water_flows[m_sto_water_flow_eid];
+
+        ss << " p=";
+        for (const auto& pwr_ch : m_args.col_pumps_pwr_ch_labels)
+          ss << static_cast<int>(m_pwr_ch_states[pwr_ch]);
+
+        if (!m_args.sto_start_ep_gpio.empty())
+          ss << " ep start="
+             << static_cast<int>(m_act_lims[m_args.sto_start_ep_gpio].getState());
+
+        if (!m_args.sto_end_ep_gpio.empty())
+          ss << " ep end="
+             << static_cast<int>(m_act_lims[m_args.sto_end_ep_gpio].getState());
 
         setEntityState(EntityState::ESTA_NORMAL, ss.str());
       }
@@ -1323,7 +1411,6 @@ namespace Payload
 
           if (m_report_state_timer.overflow())
           {
-            updateEntityState();
             if (isActive() && m_mode == MODE_AUTOMATIC)
               dispatch(m_sa_report);
             m_report_state_timer.reset();
