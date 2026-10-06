@@ -228,7 +228,7 @@ namespace Maneuver
           case STATE_SAMPLING:
             if (msg->type == IMC::SamplingAction::SAT_STATE_IDLE)
             {
-              debug("Stopping sampling...");
+              debug("Sampling completed. Stopping sampling...");
               m_task->signalCompletion();
             }
             else if (msg->type == IMC::SamplingAction::SAT_STATE_SAMPLING ||
@@ -337,21 +337,22 @@ namespace Maneuver
       //! Alignment flag for repositioning.
       bool m_aligned;
 
-      static Arguments
+      Arguments
       parseArguments(const std::string& args)
       {
         TupleList args_list(args);
         const auto args_map = args_list.getMapReversed();
 
         Arguments parsed_args;
-        const std::string type = getRequiredArgument<std::string>(args_map, "Type");
+        std::string type = getRequiredArgument<std::string>(args_map, "Type");
+        String::toLowerCase(type);
 
-        if (type == "Drift")
+        if (type == "drift")
           parsed_args.type = TYPE_DRIFT;
-        else if (type == "Move")
+        else if (type == "move")
           parsed_args.type = TYPE_MOVE;
         else
-          throw std::runtime_error("Invalid Doris type (expected Drift or Move).");
+          throw std::runtime_error("Invalid Doris type (expected drift or move).");
 
         parsed_args.radius = getRequiredArgument<float>(args_map, "Radius");
         if (parsed_args.radius <= 0.0f)
