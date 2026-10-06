@@ -236,6 +236,14 @@ main(void)
       }
     }
     test.boolean("calibration: half a turn refused", !half.getCalibrationParams(p));
+    test.boolean("calibration: rates named missing",
+                 half.failures().find("no angular rates paired") != std::string::npos);
+
+    // No field at all (a simulator without a magnetometer).
+    DUNE::Navigation::CompassCalibration none;
+    test.boolean("calibration: no field refused", !none.getCalibrationParams(p));
+    test.boolean("calibration: field named missing",
+                 none.failures().find("no magnetic field samples") != std::string::npos);
   }
 
   return test.getReturnValue();

@@ -426,9 +426,7 @@ namespace Maneuver
             }
             else if (now >= m_end_time)
             {
-              calibrate(true);
-
-              signalCompletion();
+              complete();
               return;
             }
             else
@@ -445,9 +443,7 @@ namespace Maneuver
           {
             debug("described %.1f turns for calibration", m_args.turns);
 
-            calibrate(true);
-
-            signalCompletion();
+            complete();
             return;
           }
         }
@@ -460,13 +456,27 @@ namespace Maneuver
         }
       }
 
+      //! Dispatch the calibrations and end the maneuver, with an error
+      //! when no AHRS was calibrated.
+      void
+      complete(void)
+      {
+        if (calibrate(true))
+          signalCompletion();
+        else
+          signalError(DTR("no AHRS calibrated"));
+      }
+
       //! Run compass calibration.
       //! @param[in] send_magnetic Send magnetic field parameters.
-      void
+      //! @return true if calibration is off or some AHRS has a calibration.
+      bool
       calibrate(bool send_magnetic)
       {
         if (!m_args.compass_calib)
-          return;
+          return true;
+
+        bool any = false;
 
         for (auto& itr : m_channels)
         {
@@ -476,8 +486,15 @@ namespace Maneuver
           {
             // Keep a calibration a previous call computed.
             if (!channel.valid)
-              war(DTR("%s: no calibration (%s)"), channel.label.c_str(),
-                  channel.ccal.failures().c_str());
+            {
+              // At completion this AHRS keeps its old calibration: an error.
+              if (send_magnetic)
+                err(DTR("%s: no calibration (%s)"), channel.label.c_str(),
+                    channel.ccal.failures().c_str());
+              else
+                war(DTR("%s: no calibration (%s)"), channel.label.c_str(),
+                    channel.ccal.failures().c_str());
+            }
           }
           else
           {
@@ -494,6 +511,8 @@ namespace Maneuver
                 channel.ccal.lastResult().details.c_str());
           }
 
+          any = any || channel.valid;
+
           // Dispatch magnetic data.
           if (send_magnetic && channel.valid)
           {
@@ -504,6 +523,8 @@ namespace Maneuver
 
         if (send_magnetic)
           m_calibrated = true;
+
+        return any;
       }
 
       //! Hand the z of a dispatched calibration to the channel's attitude filter.

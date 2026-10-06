@@ -121,13 +121,19 @@ namespace DUNE
       clear(void) override
       {
         m_gyro.reset();
+        m_fields = 0;
+        m_paired = 0;
       }
 
       void
       update(const CalibrationSample& s) override
       {
+        ++m_fields;
         if (s.rates)
+        {
+          ++m_paired;
           m_gyro.add(s.t, s.m, s.w);
+        }
       }
 
       bool
@@ -136,8 +142,12 @@ namespace DUNE
         GyroAidedMagCalibration::Result g;
         if (m_gyro.windows() < c_min_windows)
         {
-          why = Utils::String::str("%u of %u windows (angular rates missing?)",
-                                   m_gyro.windows(), c_min_windows);
+          if (m_fields == 0)
+            why = "no magnetic field samples";
+          else if (m_paired == 0)
+            why = "no angular rates paired with the field";
+          else
+            why = Utils::String::str("%u of %u windows", m_gyro.windows(), c_min_windows);
           return false;
         }
         if (!m_gyro.solve(g))
@@ -175,6 +185,9 @@ namespace DUNE
       static constexpr double c_max_sigma = 0.002;
 
       GyroAidedMagCalibration m_gyro;
+      //! Field samples, and those paired with angular rates.
+      unsigned m_fields = 0;
+      unsigned m_paired = 0;
     };
 
     //! Midpoint of the extremes of the field levelled with the sensor's
