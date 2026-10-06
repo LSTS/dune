@@ -54,6 +54,10 @@ namespace Maneuver
       double variation;
       //! AHRS entity labels.
       std::vector<std::string> label_ahrs;
+      //! Attitude filter fed by each AHRS (same order; empty: none).
+      std::vector<std::string> label_filter;
+      //! Calibration methods by priority.
+      std::vector<std::string> methods;
       //! Tolerance in cross-track error to consider loiter has started
       float cross_tol;
       //! Number of 360 degree turns until calibration
@@ -71,6 +75,8 @@ namespace Maneuver
       IMC::MagneticField mfield;
       //! AHRS entity label.
       std::string label;
+      //! Label of the attitude filter that takes this AHRS's z (empty: none).
+      std::string filter;
       //! mfield holds a calibration (the fit succeeded).
       bool valid = false;
     };
@@ -126,6 +132,20 @@ namespace Maneuver
         .defaultValue("AHRS")
         .description("Comma-separated list of entity labels of 'AHRS' messages");
 
+        param("Calibration Methods", m_args.methods)
+        .defaultValue("Gyro-Aided, Min-Max")
+        .description("Hard-iron calibration methods by priority: the first that "
+                     "determines a calibration gives it. 'Gyro-Aided' (needs the "
+                     "AHRS's AngularVelocity; x, y and z), 'Min-Max' (midpoint of "
+                     "the levelled field extremes; x, y), 'Circle Fit' (x, y)");
+
+        param("Entity Label - Attitude Filter", m_args.label_filter)
+        .defaultValue("")
+        .description("Attitude filter fed by each AHRS, in the same order as "
+                     "'Entity Label - Compass' (empty: none). When a calibration "
+                     "determines z, the filter's 'Hard-Iron Offset' is set to "
+                     "(0, 0, z) and saved: the AHRS applies the new x/y itself");
+
         param("Cross Track Tolerance", m_args.cross_tol)
         .defaultValue("1.0")
         .units(Units::Meter)
@@ -157,6 +177,9 @@ namespace Maneuver
           if (!isActive())
             clearCalibration();
         }
+
+        if (paramChanged(m_args.methods) && !isActive())
+          setMethods();
       }
 
       void
@@ -170,8 +193,9 @@ namespace Maneuver
       {
         m_channels.clear();
 
-        for (const std::string& label : m_args.label_ahrs)
+        for (size_t i = 0; i < m_args.label_ahrs.size(); ++i)
         {
+          const std::string& label = m_args.label_ahrs[i];
           unsigned eid;
 
           try
@@ -186,8 +210,27 @@ namespace Maneuver
 
           CalibrationChannel& channel = m_channels[eid];
           channel.label = label;
+          if (i < m_args.label_filter.size())
+            channel.filter = m_args.label_filter[i];
           channel.mfield.setDestinationEntity(eid);
         }
+
+        setMethods();
+      }
+
+      //! Configure the calibration methods of every channel.
+      void
+      setMethods(void)
+      {
+        std::vector<std::string> unknown;
+        for (auto& itr : m_channels)
+        {
+          unknown.clear();
+          itr.second.ccal.setMethods(m_args.methods, unknown);
+        }
+
+        for (const std::string& name : unknown)
+          war(DTR("unknown calibration method '%s'"), name.c_str());
       }
 
       void
@@ -219,7 +262,7 @@ namespace Maneuver
               err(DTR("%s entity not calibrated. Calibration values with %d turns: %f, %f, 0.0"),
                   channel.label.c_str(), turns, channel.mfield.x, channel.mfield.y);
             else
-              err(DTR("%s entity not calibrated: too few headings covered"),
+              err(DTR("%s entity not calibrated: no method determined a calibration"),
                   channel.label.c_str());
           }
         }
@@ -433,8 +476,8 @@ namespace Maneuver
           {
             // Keep a calibration a previous call computed.
             if (!channel.valid)
-              war(DTR("%s: too few headings for a calibration (%u of 24 heading bins)"),
-                  channel.label.c_str(), channel.ccal.binsCovered());
+              war(DTR("%s: no calibration (%s)"), channel.label.c_str(),
+                  channel.ccal.failures().c_str());
           }
           else
           {
@@ -443,32 +486,58 @@ namespace Maneuver
             channel.mfield.y = params(1);
             channel.mfield.z = params(2);
             channel.valid = true;
-            if (channel.ccal.lastMethod() == DUNE::Navigation::CompassCalibration::METHOD_GYRO)
-            {
-              const DUNE::Navigation::GyroAidedMagCalibration::Result& g =
-              channel.ccal.lastGyroResult();
-              inf(DTR("%s: hard-iron %.4f, %.4f, %.4f%s (gyro-aided, sigma %.4f, %.4f, %.4f; "
-                      "gyro bias %.3f, %.3f, %.3f deg/s; %u windows)"),
-                  channel.label.c_str(), params(0), params(1), g.b[2],
-                  channel.ccal.lastZDetermined() ? "" : " (z not determined)",
-                  g.sigma[0], g.sigma[1], g.sigma[2], Angles::degrees(g.bg[0]),
-                  Angles::degrees(g.bg[1]), Angles::degrees(g.bg[2]), g.windows);
-            }
-            else
-            {
-              inf(DTR("%s: hard-iron %.4f, %.4f (%u heading bins, circle fit residual %.1f%%)"),
-                  channel.label.c_str(), params(0), params(1), channel.ccal.lastFit().bins,
-                  100.0 * channel.ccal.lastFit().rms);
-            }
+            inf(DTR("%s: hard-iron %.4f, %.4f, %s (%s: %s)"), channel.label.c_str(),
+                params(0), params(1),
+                channel.ccal.lastZDetermined() ? String::str("%.4f", params(2)).c_str()
+                                               : "z not determined",
+                channel.ccal.lastMethod().c_str(),
+                channel.ccal.lastResult().details.c_str());
           }
 
           // Dispatch magnetic data.
           if (send_magnetic && channel.valid)
+          {
             dispatch(channel.mfield);
+            setFilterOffset(channel);
+          }
         }
 
         if (send_magnetic)
           m_calibrated = true;
+      }
+
+      //! Hand the z of a dispatched calibration to the channel's attitude filter.
+      //! @param[in] channel calibration channel.
+      void
+      setFilterOffset(const CalibrationChannel& channel)
+      {
+        if (channel.filter.empty())
+          return;
+
+        if (!channel.ccal.lastZDetermined())
+        {
+          war(DTR("%s: z not determined, '%s' hard-iron offset unchanged"),
+              channel.label.c_str(), channel.filter.c_str());
+          return;
+        }
+
+        IMC::EntityParameter p;
+        p.name = "Hard-Iron Offset";
+        p.value = String::str("0.0, 0.0, %.4f", channel.mfield.z);
+
+        IMC::SetEntityParameters sep;
+        sep.setDestination(getSystemId());
+        sep.name = channel.filter;
+        sep.params.push_back(p);
+        dispatch(sep, DF_LOOP_BACK);
+
+        IMC::SaveEntityParameters sp;
+        sp.setDestination(getSystemId());
+        sp.name = channel.filter;
+        dispatch(sp, DF_LOOP_BACK);
+
+        inf(DTR("%s: '%s' hard-iron offset set to %s"), channel.label.c_str(),
+            channel.filter.c_str(), p.value.c_str());
       }
 
       //! Clear calibration data of all AHRS channels.
