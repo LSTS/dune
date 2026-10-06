@@ -44,6 +44,8 @@ namespace Supervisors
 
     struct Arguments
     {
+      //! GPIO chip character device.
+      std::string gpio_device;
       //! Toggle
       float toggled_time;
     };
@@ -65,6 +67,9 @@ namespace Supervisors
         m_gpio_watchdog_timeout_pin(NULL),
         m_gpio_watchdog_timeout_answer_pin(NULL)
       {
+        param("GPIO Device", m_args.gpio_device)
+        .defaultValue("/dev/gpiochip0")
+        .description("GPIO chip character device for the StratoPi watchdog pins");
 
         param("TimeToggled", m_args.toggled_time)
         .units(Units::Second)
@@ -95,10 +100,10 @@ namespace Supervisors
       void
       onResourceAcquisition(void)
       {
-        m_gpio_heartbeat_pin = new Hardware::GPIO(512 + 5);
-        m_gpio_activation_pin = new Hardware::GPIO(512 + 6);
-        m_gpio_watchdog_timeout_pin = new Hardware::GPIO(512 + 12);
-        m_gpio_watchdog_timeout_answer_pin = new Hardware::GPIO(512 + 16);
+        m_gpio_heartbeat_pin = new Hardware::GPIO(m_args.gpio_device, 5);
+        m_gpio_activation_pin = new Hardware::GPIO(m_args.gpio_device, 6);
+        m_gpio_watchdog_timeout_pin = new Hardware::GPIO(m_args.gpio_device, 12);
+        m_gpio_watchdog_timeout_answer_pin = new Hardware::GPIO(m_args.gpio_device, 16);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
