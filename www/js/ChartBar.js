@@ -32,6 +32,8 @@ function ChartWidget() {
   this.canvas = null;
   this.legend = null;
   this.history = [];
+  this.cpuCount = 0;
+  this.drawTimer = null;
 }
 
 ChartWidget.prototype.create = function (container) {
@@ -65,8 +67,28 @@ ChartWidget.prototype.update = function (values) {
     this.history.push({ time: now, values: sample });
 
   this.history = this.history.filter(point => now - point.time <= 60000);
+  this.cpuCount = sample.length;
   this.updateLegend(sample);
   window.requestAnimationFrame(() => this.draw(now, sample.length));
+  this.scheduleDraw();
+};
+
+ChartWidget.prototype.scheduleDraw = function () {
+  if (this.drawTimer !== null)
+    return;
+
+  const refresh = () => {
+    this.drawTimer = null;
+    if (!this.chart || this.chart.offsetParent === null || this.cpuCount === 0)
+      return;
+
+    const now = Date.now();
+    this.history = this.history.filter(point => now - point.time <= 60000);
+    this.draw(now, this.cpuCount);
+    this.drawTimer = window.setTimeout(refresh, document.hidden ? 1000 : 250);
+  };
+
+  this.drawTimer = window.setTimeout(refresh, 250);
 };
 
 ChartWidget.prototype.updateLegend = function (values) {
