@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 431862f600b4d042b3eff3664dedc132                            *
+// IMC XML MD5: 91b1de5614c2e30b62cbeebf40ed8611                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -154,10 +154,6 @@
 #define DUNE_IMC_LBLBEACON 202
 //! LblConfig identification number.
 #define DUNE_IMC_LBLCONFIG 203
-//! LblBeaconExtended identification number.
-#define DUNE_IMC_LBLBEACONEXTENDED 204
-//! LblConfigExtended identification number.
-#define DUNE_IMC_LBLCONFIGEXTENDED 205
 //! AcousticMessage identification number.
 #define DUNE_IMC_ACOUSTICMESSAGE 206
 //! SimAcousticMessage identification number.
@@ -462,12 +458,10 @@
 #define DUNE_IMC_FOLLOWPOINT 494
 //! Alignment identification number.
 #define DUNE_IMC_ALIGNMENT 495
-//! FollowCommand identification number.
-#define DUNE_IMC_FOLLOWCOMMAND 496
-//! Command identification number.
-#define DUNE_IMC_COMMAND 497
-//! FollowCommandState identification number.
-#define DUNE_IMC_FOLLOWCOMMANDSTATE 498
+//! StationKeepingExtended identification number.
+#define DUNE_IMC_STATIONKEEPINGEXTENDED 496
+//! ManeuverDone identification number.
+#define DUNE_IMC_MANEUVERDONE 497
 //! Magnetometer identification number.
 #define DUNE_IMC_MAGNETOMETER 499
 //! VehicleState identification number.
@@ -580,12 +574,10 @@
 #define DUNE_IMC_COMPRESSEDIMAGE 702
 //! ImageTxSettings identification number.
 #define DUNE_IMC_IMAGETXSETTINGS 703
-//! ImageSnippet identification number.
-#define DUNE_IMC_IMAGESNIPPET 704
-//! ManeuverDone identification number.
-#define DUNE_IMC_MANEUVERDONE 719
-//! StationKeepingExtended identification number.
-#define DUNE_IMC_STATIONKEEPINGEXTENDED 720
+//! Sampling identification number.
+#define DUNE_IMC_SAMPLING 722
+//! SamplingAction identification number.
+#define DUNE_IMC_SAMPLINGACTION 723
 //! RemoteState identification number.
 #define DUNE_IMC_REMOTESTATE 750
 //! Target identification number.
@@ -626,8 +618,6 @@
 #define DUNE_IMC_UAMRXRANGE 817
 //! UamTxRange identification number.
 #define DUNE_IMC_UAMTXRANGE 818
-//! UamJanusPacket identification number.
-#define DUNE_IMC_UAMJANUSPACKET 819
 //! FormCtrlParam identification number.
 #define DUNE_IMC_FORMCTRLPARAM 820
 //! FormationEval identification number.
@@ -692,8 +682,6 @@
 #define DUNE_IMC_DMSDETECTION 908
 //! HomePosition identification number.
 #define DUNE_IMC_HOMEPOSITION 909
-//! ChargingState identification number.
-#define DUNE_IMC_CHARGINGSTATE 910
 //! AbsoluteWind identification number.
 #define DUNE_IMC_ABSOLUTEWIND 911
 //! AisInfo identification number.
@@ -712,12 +700,8 @@
 #define DUNE_IMC_FREQUENCY 1017
 //! WaveSpectrumParameters identification number.
 #define DUNE_IMC_WAVESPECTRUMPARAMETERS 1018
-//! FileSampleEvent identification number.
-#define DUNE_IMC_FILESAMPLEEVENT 1102
-//! QueryGsmCredit identification number.
-#define DUNE_IMC_QUERYGSMCREDIT 1103
-//! FileClassification identification number.
-#define DUNE_IMC_FILECLASSIFICATION 1104
+//! WaterFlow identification number.
+#define DUNE_IMC_WATERFLOW 1019
 //! GpioState identification number.
 #define DUNE_IMC_GPIOSTATE 2000
 //! GpioStateGet identification number.
@@ -728,32 +712,16 @@
 #define DUNE_IMC_COLOREDDISSOLVEDORGANICMATTER 2003
 //! FluorescentDissolvedOrganicMatter identification number.
 #define DUNE_IMC_FLUORESCENTDISSOLVEDORGANICMATTER 2004
-//! IridiumMsgTxExtended identification number.
-#define DUNE_IMC_IRIDIUMMSGTXEXTENDED 2005
 //! TotalMagIntensity identification number.
 #define DUNE_IMC_TOTALMAGINTENSITY 2006
-//! ValidatePlan identification number.
-#define DUNE_IMC_VALIDATEPLAN 2007
 //! CommRestriction identification number.
 #define DUNE_IMC_COMMRESTRICTION 2010
-//! WifiStats identification number.
-#define DUNE_IMC_WIFISTATS 2011
-//! WifiNetwork identification number.
-#define DUNE_IMC_WIFINETWORK 2012
-//! SonarPulse identification number.
-#define DUNE_IMC_SONARPULSE 2013
-//! HealthCheck identification number.
-#define DUNE_IMC_HEALTHCHECK 2015
 //! QueryTypedEntityParameters identification number.
 #define DUNE_IMC_QUERYTYPEDENTITYPARAMETERS 2016
 //! TypedEntityParameter identification number.
 #define DUNE_IMC_TYPEDENTITYPARAMETER 2017
 //! ValuesIf identification number.
 #define DUNE_IMC_VALUESIF 2018
-//! DirSonarData identification number.
-#define DUNE_IMC_DIRSONARDATA 2019
-//! ManeuverResumed identification number.
-#define DUNE_IMC_MANEUVERRESUMED 2020
 //! VersionInfo identification number.
 #define DUNE_IMC_VERSIONINFO 2021
 //! TotalHeading identification number.
