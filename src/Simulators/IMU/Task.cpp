@@ -41,7 +41,8 @@ namespace Simulators
   //! IMC messages and then add a configurable
   //! gaussian noise component before sending
   //! EulerAngles, AngularVelocity and Acceleration
-  //! information to the bus.
+  //! information to the bus, and optionally the
+  //! MagneticField of a magnetometer with a hard-iron offset.
   //!
   //! To conform with existent hardware properties
   //! it is also possible to define a gyro rate bias.
@@ -71,6 +72,14 @@ namespace Simulators
       std::string prng_type;
       //! PRNG seed.
       int prng_seed;
+      //! Simulate a magnetometer.
+      bool magnetometer;
+      //! Earth's magnetic field (north, east, down).
+      std::vector<double> field_ned;
+      //! Hard-iron offset added to the body field.
+      std::vector<double> hard_iron;
+      //! Magnetic field standard deviation.
+      double stdev_field;
     };
 
     //! %IMU simulator task.
@@ -86,6 +95,8 @@ namespace Simulators
       IMC::VelocityDelta m_vdel;
       //! Euler Angles Delta
       IMC::EulerAnglesDelta m_agdel;
+      //! Magnetic field.
+      IMC::MagneticField m_field;
       //! Stored Velocity.
       double m_vel[3];
       //! Pseudo-random generator.
@@ -142,6 +153,25 @@ namespace Simulators
 
         param("PRNG Seed", m_args.prng_seed)
         .defaultValue("-1");
+
+        param("Simulate Magnetometer", m_args.magnetometer)
+        .defaultValue("false")
+        .description("Output the MagneticField of a magnetometer");
+
+        param("Magnetic Field - NED", m_args.field_ned)
+        .size(3)
+        .defaultValue("0.25, 0.0, 0.30")
+        .description("Earth's magnetic field (north, east, down), in the "
+                     "units of the simulated magnetometer");
+
+        param("Hard-Iron Offset", m_args.hard_iron)
+        .size(3)
+        .defaultValue("0.0, 0.0, 0.0")
+        .description("Offset added to the body magnetic field (x, y, z)");
+
+        param("Standard Deviation - Magnetic Field", m_args.stdev_field)
+        .defaultValue("0.001")
+        .description("White noise added to magnetic field readings");
 
         // Register consumers.
         bind<IMC::SimulatedState>(this);
@@ -238,6 +268,20 @@ namespace Simulators
         m_accel.setTimeStamp(msg->getTimeStamp());
         dispatch(m_agvel, DF_KEEP_TIME);
         dispatch(m_accel, DF_KEEP_TIME);
+
+        // Earth's field in the body frame, plus hard iron and noise.
+        if (m_args.magnetometer)
+        {
+          BodyFixedFrame::toBodyFrame(msg->phi, msg->theta, msg->psi,
+                                      m_args.field_ned[0], m_args.field_ned[1],
+                                      m_args.field_ned[2],
+                                      &m_field.x, &m_field.y, &m_field.z);
+          m_field.x += m_args.hard_iron[0] + m_prng->gaussian() * m_args.stdev_field;
+          m_field.y += m_args.hard_iron[1] + m_prng->gaussian() * m_args.stdev_field;
+          m_field.z += m_args.hard_iron[2] + m_prng->gaussian() * m_args.stdev_field;
+          m_field.setTimeStamp(msg->getTimeStamp());
+          dispatch(m_field, DF_KEEP_TIME);
+        }
 
         // Compute deltas
         if (m_args.deltas)
