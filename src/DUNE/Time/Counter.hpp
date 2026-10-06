@@ -101,12 +101,27 @@ namespace DUNE
         return m_top - (Clock::get() - m_last);
       }
 
+      inline double
+      getRemainingRatio(void)
+      {
+        if (overflow())
+          return 0.0;
+
+        return (static_cast<double>(m_top) - (Clock::get() - m_last)) / static_cast<double>(m_top);
+      }
+
       //! Get elapsed time.
       //! @return elapsed time (s).
       inline T
       getElapsed(void) const
       {
         return Clock::get() - m_last;
+      }
+
+      inline double
+      getElapsedRatio(void) const
+      {
+        return (Clock::get() - m_last) / static_cast<double>(m_top);
       }
 
     private:
