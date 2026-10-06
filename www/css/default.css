@@ -529,27 +529,62 @@ select:focus {
 #Main.overview-collapsed #MainOverviewLeft tr:not(.overview-compact-row) {
   display: none
 }
-#Main.overview-collapsed #MainTable,
+#Main.overview-collapsed #MainTable {
+  display: block;
+  width: 90%!important
+}
 #Main.overview-collapsed #MainTable>tbody,
 #Main.overview-collapsed #MainTable>tr,
 #Main.overview-collapsed #MainTable>tbody>tr {
   display: block;
-  width: 90%!important
+  width: 100%!important
 }
-#Main.overview-collapsed #MainTable>tr>td,
-#Main.overview-collapsed #MainTable>tbody>tr>td {
-  display: none
+#Main.overview-collapsed #MainTable>tr>td:not(:first-child),
+#Main.overview-collapsed #MainTable>tbody>tr>td:not(:first-child) {
+  display: none!important;
+  width: 0!important;
+  padding: 0!important
 }
 #Main.overview-collapsed #MainTable>tr>td:first-child,
 #Main.overview-collapsed #MainTable>tbody>tr>td:first-child {
-  display: block;
+  display: block!important;
   width: 100%!important
 }
 #Main.overview-collapsed #MainOverviewLeft {
-  padding: 2px 0
+  display: grid;
+  width: min(100%,738px)!important;
+  margin: 2px auto!important;
+  padding: 0;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 18px
+}
+#Main.overview-collapsed #MainOverviewLeft>tbody {
+  display: contents
+}
+#Main.overview-collapsed #MainOverviewLeft tr.overview-compact-row {
+  display: grid;
+  min-width: 0;
+  padding: 3px 0;
+  grid-template-columns: 58px minmax(0,1fr);
+  align-items: center;
+  gap: 7px
 }
 #Main.overview-collapsed #MainOverviewLeft td {
-  padding: 6px 8px
+  width: auto!important;
+  padding: 0;
+  border: 0!important;
+  text-align: left
+}
+#Main.overview-collapsed #MainOverviewLeft td.entryLeft {
+  font-size: 0;
+  white-space: nowrap
+}
+#Main.overview-collapsed #MainOverviewLeft td.entryLeft:after {
+  content: attr(data-compact-label);
+  font-size: 10px
+}
+#Main.overview-collapsed #MainOverviewLeft td.entryRight {
+  width: 100%
 }
 #Main.overview-collapsed #MainOverviewLeft .overview-compact-row:first-child td,
 #Main.overview-collapsed #MainOverviewLeft .overview-compact-row:last-child td {

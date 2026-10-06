@@ -92,6 +92,7 @@ Main.prototype.m_fields = [
     }),
     "side": "left",
     "compact": true,
+    "compact_label": "Usage:",
     "single_line": false
   },
   {
@@ -127,6 +128,7 @@ Main.prototype.m_fields = [
     }),
     "side": "left",
     "compact": true,
+    "compact_label": "Energy:",
     "single_line": false
   },
   {
@@ -323,6 +325,8 @@ Main.prototype.createTableEntry = function (idx, tbl) {
     tr.style.height = '25px';
     var td_label = document.createElement('td');
     td_label.className = 'entryLeft';
+    if (field.compact_label)
+      td_label.setAttribute('data-compact-label', field.compact_label);
     //td_label.appendChild(document.createTextNode(field.label));
     td_label.innerHTML = field.label;
     tr.appendChild(td_label);
