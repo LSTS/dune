@@ -30,8 +30,9 @@
 
 function Main(root_id) {
   this.create('Main', root_id);
-  this.createHeader('Overview');
+  this.createOverviewHeader();
   this.createTable();
+  this.setOverviewCollapsed(localStorage.getItem('duneOverviewCollapsed') === 'true', false);
   this.createHeader('Tasks');
   this.createTableTasks();
 };
@@ -90,6 +91,7 @@ Main.prototype.m_fields = [
       reverse: true
     }),
     "side": "left",
+    "compact": true,
     "single_line": false
   },
   {
@@ -124,6 +126,7 @@ Main.prototype.m_fields = [
       reverse: false
     }),
     "side": "left",
+    "compact": true,
     "single_line": false
   },
   {
@@ -183,10 +186,46 @@ Main.prototype.m_fields = [
   }
 ];
 
+Main.prototype.createOverviewHeader = function () {
+  var heading = document.createElement('div');
+  heading.className = 'overview-heading';
+
+  var title = document.createElement('h1');
+  title.appendChild(document.createTextNode('Overview'));
+  heading.appendChild(title);
+
+  this.m_overview_toggle = document.createElement('button');
+  this.m_overview_toggle.id = 'OverviewToggle';
+  this.m_overview_toggle.type = 'button';
+  this.m_overview_toggle.onclick = function () {
+    this.setOverviewCollapsed(!this.m_base.classList.contains('overview-collapsed'), true);
+  }.bind(this);
+  heading.appendChild(this.m_overview_toggle);
+  this.m_base.appendChild(heading);
+
+  var rule = document.createElement('hr');
+  this.m_base.appendChild(rule);
+};
+
+Main.prototype.setOverviewCollapsed = function (collapsed, persist) {
+  this.m_base.classList.toggle('overview-collapsed', collapsed);
+  this.m_overview_toggle.textContent = collapsed ? 'Expand overview' : 'Collapse overview';
+  this.m_overview_toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  this.m_overview_toggle.title = this.m_overview_toggle.textContent;
+
+  if (persist)
+    localStorage.setItem('duneOverviewCollapsed', collapsed ? 'true' : 'false');
+
+  if (typeof resizeTasksTable === 'function')
+    window.requestAnimationFrame(resizeTasksTable);
+};
+
 Main.prototype.createTable = function () {
 
   this.sys_name_div = document.createElement('div');
   this.sys_name_div.id = 'systemName';
+  if (typeof g_connected !== 'undefined' && !g_connected)
+    this.sys_name_div.classList.add('system-offline');
   this.m_base.appendChild(this.sys_name_div)
 
   this.m_table = document.createElement('table');
@@ -275,6 +314,8 @@ Main.prototype.createTableEntry = function (idx, tbl) {
   var tr = document.createElement('tr');
   if (field.widget instanceof ChartWidget)
     tr.classList.add('cpu-overview-row');
+  if (field.compact)
+    tr.classList.add('overview-compact-row');
   //check if field.single_line is true, if so, set the height to 25px
   if (!field.single_line) {
     tr.classList.add('overview-data-row');
@@ -307,6 +348,8 @@ Main.prototype.createTableEntry = function (idx, tbl) {
 };
 
 Main.prototype.update = function () {
+  this.updateVehicleState();
+
   for (i in this.m_fields) {
     var value = null;
     var field = this.m_fields[i];
@@ -356,7 +399,6 @@ Main.prototype.update = function () {
   }
 
   this.updateTasks();
-  this.updateVehicleState();
 };
 
 Main.prototype.updateTasks = function () {
@@ -673,6 +715,16 @@ function getSystemType(data, value) {
       return "Unknown";
     }
   }
+}
+
+function resetSystemNameToInitialState() {
+  system_mode = 6;
+
+  var systemNameElement = document.getElementById('systemName');
+  if (!systemNameElement || !systemNameElement.firstChild)
+    return;
+
+  systemNameElement.firstChild.textContent = systemNameElement.firstChild.textContent.replace(/\s+-\s+[^)]*(?=\))/, '');
 }
 
 function convertRadiansToDM(value) {

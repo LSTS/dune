@@ -36,6 +36,7 @@ var g_data = null;
 var g_dune_logs = null;
 var g_dune_logbook = null;
 var g_logbook_timer = null;
+var g_connected = false;
 var g_data_request_pending = false;
 var g_logbook_request_pending = false;
 
@@ -228,7 +229,14 @@ function handleLogs(text) {
 };
 
 function setConnected(value) {
+  g_connected = value;
   var icon = document.getElementById('ConnectionIcon');
+  var systemName = document.getElementById('systemName');
+  if (systemName)
+    systemName.classList.toggle('system-offline', !value);
+  if (!value && typeof resetSystemNameToInitialState === 'function')
+    resetSystemNameToInitialState();
+
   if (value) {
     icon.src = g_icons.path('system-on');
     icon.title = 'Connected';

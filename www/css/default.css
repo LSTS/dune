@@ -323,6 +323,28 @@ h1 {
   text-align: left;
   text-transform: uppercase
 }
+.overview-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px
+}
+.overview-heading h1 {
+  flex: 1;
+  margin-bottom: 5px
+}
+#OverviewToggle {
+  min-height: 28px;
+  padding: 5px 10px;
+  border-color: var(--border);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 10px;
+  white-space: nowrap
+}
+#OverviewToggle:hover {
+  border-color: var(--accent)
+}
 hr {
   margin: 0 0 18px;
   border: 0;
@@ -410,6 +432,12 @@ select:focus {
   font-weight: 750;
   letter-spacing: .02em
 }
+#systemName.system-offline {
+  border-color: rgba(255,255,255,.32);
+  background: #757575!important;
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(0,0,0,.22)
+}
 #MainTable {
   border-collapse: separate;
   border-spacing: 10px 0;
@@ -496,6 +524,36 @@ select:focus {
   background: linear-gradient(135deg,var(--surface),var(--soft));
   box-shadow: 0 8px 24px rgba(20,45,58,.08);
   overflow: auto
+}
+#Main.overview-collapsed #MainOverviewRight,
+#Main.overview-collapsed #MainOverviewLeft tr:not(.overview-compact-row) {
+  display: none
+}
+#Main.overview-collapsed #MainTable,
+#Main.overview-collapsed #MainTable>tbody,
+#Main.overview-collapsed #MainTable>tr,
+#Main.overview-collapsed #MainTable>tbody>tr {
+  display: block;
+  width: 90%!important
+}
+#Main.overview-collapsed #MainTable>tr>td,
+#Main.overview-collapsed #MainTable>tbody>tr>td {
+  display: none
+}
+#Main.overview-collapsed #MainTable>tr>td:first-child,
+#Main.overview-collapsed #MainTable>tbody>tr>td:first-child {
+  display: block;
+  width: 100%!important
+}
+#Main.overview-collapsed #MainOverviewLeft {
+  padding: 2px 0
+}
+#Main.overview-collapsed #MainOverviewLeft td {
+  padding: 6px 8px
+}
+#Main.overview-collapsed #MainOverviewLeft .overview-compact-row:first-child td,
+#Main.overview-collapsed #MainOverviewLeft .overview-compact-row:last-child td {
+  border-bottom: 0
 }
 #MainTaskTable {
   width: 100%;
