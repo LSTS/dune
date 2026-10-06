@@ -120,6 +120,7 @@ dune_option(NO_RTTI "Disable support for RTTI")
 dune_option(UEYE "Enable support for IDS uEye cameras")
 dune_option(H5CPP "Enable support for hdf5 format i/o using the h5cpp library")
 dune_option(DUNELEGACY "Disable compilation of C++17 features")
+dune_option(DCCL "Enable support for DCCL library")
 
 # Internationalization.
 include(${PROJECT_SOURCE_DIR}/cmake/I18N.cmake)
@@ -189,8 +190,8 @@ file(GLOB_RECURSE DUNE_CORE_HEADERS "${PROJECT_SOURCE_DIR}/src/DUNE/*.hpp"
 file(GLOB_RECURSE DUNE_CORE_DEFS    "${PROJECT_SOURCE_DIR}/src/DUNE/*.def")
 string(REPLACE ";" " " DUNE_CORE_HEADERS_STRING "${DUNE_CORE_HEADERS}")
 
-file(GLOB_RECURSE PRIVATE_CORE_SOURCES "${PROJECT_SOURCE_DIR}/private*/src/DUNE/Control/*.cpp")
-file(GLOB_RECURSE PRIVATE_CORE_HEADERS "${PROJECT_SOURCE_DIR}/private*/src/DUNE/Control/*.hpp")
+file(GLOB_RECURSE PRIVATE_CORE_SOURCES "${PROJECT_SOURCE_DIR}/private*/src/DUNE/*.cpp")
+file(GLOB_RECURSE PRIVATE_CORE_HEADERS "${PROJECT_SOURCE_DIR}/private*/src/DUNE/*.hpp")
 string(REPLACE ";" " " PRIVATE_CORE_HEADERS_STRING "${PRIVATE_CORE_HEADERS}")
 
 file(GLOB_RECURSE USER_CORE_SOURCES "${PROJECT_SOURCE_DIR}/user*/src/USER/*.cpp")
@@ -468,7 +469,6 @@ if(TESTS)
     dune_test(${test})
   endforeach(test ${DUNE_TESTS_SOURCES})
 endif(TESTS)
-
 ##########################################################################
 #                                CDash                                   #
 ##########################################################################

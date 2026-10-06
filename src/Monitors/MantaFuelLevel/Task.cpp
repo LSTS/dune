@@ -87,9 +87,12 @@ namespace Monitors
       char m_bufer_entity[64];
       //! WatchDog for warning fuel level
       Counter<float> m_wdog;
+      //! Received voltage message flag
+      bool m_is_voltage_msg_received;
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Periodic(name, ctx)
+        Periodic(name, ctx),
+        m_is_voltage_msg_received(false)
       {
         param("Entity Label - FuelLevel", m_args.elabel_fuel)
         .defaultValue("FuelLevel")
@@ -183,6 +186,7 @@ namespace Monitors
             return;
 
           m_battery_volts = msg->value;
+          m_is_voltage_msg_received = true;
           debug("Consume level (%s): %.2f", m_args.elabel_current_charger.c_str(), m_battery_volts);
         }
         else
@@ -191,6 +195,7 @@ namespace Monitors
             return;
 
           m_battery_volts = msg->value;
+          m_is_voltage_msg_received = true;
           debug("Consume level (%s): %.2f", m_args.elabel_current_charger.c_str(), m_battery_volts);
         }
       }
@@ -305,9 +310,14 @@ namespace Monitors
         }
       }
 
-       void
+      void
       parseVoltageValue(void)
       {
+        if(!m_is_voltage_msg_received)
+        {
+          inf("No voltage message received yet, skipping voltage check");
+          return;
+        }
         debug("Voltage: read %.2f, warning voltage: %.2f, shut down voltage: %.2f", m_battery_volts,
               m_args.warning_level_voltage, m_args.shutdow_level_voltage);
 

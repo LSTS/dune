@@ -37,6 +37,7 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 #include "sb_mpc.hpp"
+#include "ILOS.hpp"
 
 namespace Control
 {
@@ -69,6 +70,22 @@ namespace Control
         double corridor;
         //! Entry angle
         double entry_angle;
+        //! ILOS - Lookahead distance
+        double ilos_lookahead_distance;
+        //! ILOS - Integral gain
+        double ilos_ki;
+        //! ILOS - Integral Limit
+        double ilos_integral_limit;
+        //! ILOS - Maximum Cross Track Heading
+        double ilos_max_cross_track_heading;
+        //! ILOS - Enabled
+        bool ilos_enabled;
+        //! Thrust assistance during turns.
+        double turn_thrust_assist;
+        //! Heading offset threshold to consider.
+        double heading_offset_threshold;
+        //! Force speed reference.
+        double force_speed_ref;
 
         //! Enable anti-grounding.
         // bool en_antiground;
@@ -148,8 +165,15 @@ namespace Control
         int m_avg;
         //! Dynamic obstacles state matrix.
         Math::Matrix m_dyn_obst_state; //Eigen::Matrix<double,-1,10> m_dyn_obst_state; //Math::Matrix m_dyn_obst_state;
-        //! Transmission request id.
-        uint16_t m_tx_req_id;
+
+        //! Previous heading offset.
+        double m_prev_psi_os;
+        //! Track start point when CAS offset changes.
+        TrackingState::Coord m_new_track_start;
+        //! Virtual track end point when CAS offset changes.
+        TrackingState::Coord m_new_track_end;
+        //! Track bearing when CAS offset changes.
+        double m_new_track_bearing;
 
         //! Course offsets for contours.
         // std::vector<double> m_offsets;
@@ -176,6 +200,10 @@ namespace Control
         // int m_es_eid;
         //! Average factor.
         // int m_avg_zero, m_avg_one;
+        //! Integral controller.
+        ILOS* m_integral_controller;
+        //! Overriding desired path speed reference flag.
+        bool m_dpath_speed_override;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::PathController(name, ctx),
@@ -190,7 +218,8 @@ namespace Control
           m_timestamp_obst(0.0),
           m_cost(0.0),
           m_avg(0),
-          m_tx_req_id(0)
+          m_integral_controller(nullptr),
+          m_dpath_speed_override(false)
           // m_wind_dir(0.0),
           // m_wind_speed(0.0),
           // m_heave(0.0),
@@ -421,6 +450,51 @@ namespace Control
           .units(Units::Degree)
           .description("Attack angle when lateral track error equals corridor width");
 
+          param("ILOS -- Enabled", m_args.ilos_enabled)
+          .defaultValue("true")
+          .description("Enable ILOS.");
+
+          param("ILOS -- Lookahead Distance", m_args.ilos_lookahead_distance)
+          .defaultValue("100.0")
+          .units(Units::Meter)
+          .description("ILOS Lookahead Distance.");
+
+          param("ILOS -- Integral Gain", m_args.ilos_ki)
+          .minimumValue("0.0")
+          .defaultValue("0.5")
+          .description("ILOS Integral Gain.");
+
+          param("ILOS -- Maximum Cross Track Heading", m_args.ilos_max_cross_track_heading)
+          .minimumValue("45.0")
+          .maximumValue("85.0")
+          .defaultValue("75.0")
+          .units(Units::Degree)
+          .description("Maximum desired heading possible, relative to track bearing.");
+
+          param("Thrust Assistance During Turns", m_args.turn_thrust_assist)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .units(Units::Percentage)
+          .minimumValue("0.0")
+          .maximumValue("100.0")
+          .defaultValue("0.0")
+          .description("Thrust assistance to be used during speed reference override, if the system is turning.");
+
+          param("Heading Offset Threshold", m_args.heading_offset_threshold)
+          .units(Units::Degree)
+          .minimumValue("0.0")
+          .maximumValue("180.0")
+          .defaultValue("10.0")
+          .description("Heading offset threshold to consider for thrust assistance during turns.");
+
+          param("Force Speed Reference", m_args.force_speed_ref)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .units(Units::MeterPerSecond)
+          .minimumValue("0.0")
+          .defaultValue("0.0")
+          .description("Reference speed to be used when overriding the speed reference. "
+                       "If set to 0, the speed reference will not be overridden by this value. "
+                       "Takes precedence over Thrust Assistance During Turns.");
+
           // param("Entity Label - Wind", m_args.elabel_ws)
           // .description("Entity label of 'AbsoluteWind' message");
           
@@ -473,9 +547,6 @@ namespace Control
           // .defaultValue("10.0, 10.0, 10.0, 10.0, 10.0")
           // .description("Weights on environmental factors.");
 
-          setParameterScope("Bottom Track -- Minimum Depth", Parameter::SCOPE_GLOBAL);
-          setParameterVisibility("Bottom Track -- Minimum Depth", Parameter::VISIBILITY_DEVELOPER);
-
           // Register handler routines.
           bind<IMC::AisInfo>(this);
           // bind<IMC::CurrentProfile>(this);
@@ -513,6 +584,16 @@ namespace Control
 
           // if (paramChanged(m_args.directions))
           //   m_offsets = m_args.directions;
+
+          // ILOS parameters
+          if (paramChanged(m_args.ilos_enabled) && m_integral_controller != nullptr)
+            m_integral_controller->reset();
+          if (paramChanged(m_args.ilos_ki) && m_integral_controller != nullptr)
+            m_integral_controller->setGain(m_args.ilos_ki);
+          if (paramChanged(m_args.ilos_lookahead_distance) && m_integral_controller != nullptr)
+            m_integral_controller->setLookAheadDistance(m_args.ilos_lookahead_distance);
+          if (paramChanged(m_args.ilos_max_cross_track_heading) && m_integral_controller != nullptr)
+            m_integral_controller->setMaxCrossTrackHeading(Angles::radians(m_args.ilos_max_cross_track_heading));
 
           if (m_sb_mpc == nullptr)
             return;
@@ -607,13 +688,18 @@ namespace Control
 
           // m_offsets = m_args.directions;
           // m_static_obst_state.resizeAndFill(m_offsets.size(), 3, 10000.0); //! Large values: initial m_cost is high.
+
+          m_integral_controller = new ILOS(this);
+          m_integral_controller->setGain(m_args.ilos_ki);
+          m_integral_controller->setLookAheadDistance(m_args.ilos_lookahead_distance);
+          m_integral_controller->setMaxCrossTrackHeading(Angles::radians(m_args.ilos_max_cross_track_heading));
         }
 
           //! Release resources.
         void
         onResourceRelease(void)
         {
-
+          Memory::clear(m_integral_controller);
         }
 
         void
@@ -653,17 +739,29 @@ namespace Control
         void
         onPathActivation(void)
         {
-          //! Activate Heading & Speed controller.
+          //! Activate Heading controller.
           enableControlLoops(IMC::CL_YAW);
-          enableControlLoops(IMC::CL_SPEED);
+
+          m_dpath_speed_override = false;
         }
 
         void
         onPathDeactivation(void)
         {
-          //! Deactivate Heading & Speed controller.
+          //! Deactivate Heading controller.
           disableControlLoops(IMC::CL_YAW);
-          disableControlLoops(IMC::CL_SPEED);
+
+          m_dpath_speed_override = false;
+        }
+
+        void
+        onPathStartup(const IMC::EstimatedState& state, const TrackingState& ts)
+        {
+          (void)state;
+          (void)ts;
+
+          if (m_integral_controller != nullptr)
+            m_integral_controller->reset();
         }
 
         // void
@@ -1201,28 +1299,47 @@ namespace Control
         }
 
         void
+        overrideSpeedReference(bool turning)
+        {
+          if (m_args.force_speed_ref > 0.0f)
+          {
+            m_dpath_speed_override = true;
+            setSpeedReference(m_args.force_speed_ref, IMC::SpeedUnits::SUNITS_METERS_PS);
+            return;
+          }
+          else if (m_args.turn_thrust_assist > 0.0f && turning)
+          {
+            m_dpath_speed_override = true;
+            setSpeedReference(m_args.turn_thrust_assist, IMC::SpeedUnits::SUNITS_PERCENTAGE);
+            return;
+          }
+
+          if (m_dpath_speed_override)
+          {
+            resetSpeedReference();
+            m_dpath_speed_override = false;
+          }
+        }
+
+        bool
+        isTurning(double heading_ref, double heading)
+        {
+          double heading_error = Angles::normalizeRadian(heading_ref - heading);
+          return std::fabs(heading_error) > Angles::radians(m_args.heading_offset_threshold);
+        }
+
+        void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
           updateEstimatedState(state);
 
-          //! LOS Navigation Law (called wrongly Pure Pursuit in Dune) - desired course is the LOS angle.
-          m_des_heading.value = ts.los_angle;
-          trace("LOS DESIRED COURSE: %f", Angles::degrees(m_des_heading.value));
-
-          //! Nothing is enabled.
-          if(!m_args.en_cas /* && !m_args.en_antiground */)
-          {
-            dispatch(m_des_heading);
-            return;
-          }
-
           //! Something might be enabled, but no data available.
-          if(m_dyn_obst_vec.size() == 0 /* && m_dangers.rows() == 0 && m_depths.rows() == 0 */)
-          {
-            trace("CAS or anti-grounding are enabled, but their tables are empty!");
-            dispatch(m_des_heading);
-            return;
-          }
+          // if(m_dyn_obst_vec.size() == 0 /* && m_dangers.rows() == 0 && m_depths.rows() == 0 */)
+          // {
+          //   trace("CAS or anti-grounding are enabled, but their tables are empty!");
+          //   dispatch(m_des_heading);
+          //   return;
+          // }
 
           if(m_args.en_cas /* || m_args.en_antiground */)
             createWPs(ts);
@@ -1320,16 +1437,13 @@ namespace Control
             //   debug("Anti-grounding and anti-collision situation!");
 
             obstacle* obs_vessel = nullptr;
-            m_sb_mpc->getBestControlOffset(m_u_os, m_psi_os, m_asv_state[3], m_des_heading.value, m_asv_state, m_waypoints, m_dyn_obst_state, {}/* m_static_obst_state */, m_cost, obs_vessel);
-
-            //! New desired course and course offset.
-            m_des_heading.value += m_psi_os;
+            m_sb_mpc->getBestControlOffset(m_u_os, m_psi_os, m_asv_state[3], ts.los_angle, m_asv_state, m_waypoints, m_dyn_obst_state, {}/* m_static_obst_state */, m_cost, obs_vessel);
 
             if(m_psi_os == 0)
-              debug("Course offset is 0, same desired course %.3f", Angles::degrees(m_des_heading.value));
+              debug("Course offset is 0");
             else
             {
-              debug("Course offset is %.0f, new desired course %.3f", Angles::degrees(m_psi_os), Angles::degrees(m_des_heading.value));
+              debug("Course offset is %.0f", Angles::degrees(m_psi_os));
               
               // Find closest vessel - hypothetically it is the one we try to avoid.
               // std::vector<IMC::AisInfo>::const_iterator itr;
@@ -1365,7 +1479,6 @@ namespace Control
 
                 TransmissionRequest tr;
                 tr.setDestination(getSystemId());
-                tr.req_id = m_tx_req_id++;
                 tr.comm_mean = TransmissionRequest::CMEAN_SATELLITE;
                 tr.data_mode = TransmissionRequest::DMODE_INLINEMSG;
                 tr.msg_data.set(*ais_vessel);
@@ -1374,15 +1487,84 @@ namespace Control
                 dispatch(tr);
               }
             }
-
-            //! Normalize angle
-            m_des_heading.value = Angles::normalizeRadian(m_des_heading.value);
-
-            debug("OFFSET: %.0f - NEW COURSE NORMALIZED %.3f",Angles::degrees(m_psi_os),Angles::degrees(m_des_heading.value));
-
-            dispatch(m_des_heading);
             m_timestamp_prev = m_timestamp_new;
           }
+
+          double ilos_offset = 0.0;
+          // CAS and ILOS off
+          if (!m_args.en_cas && !m_args.ilos_enabled)
+          {
+            m_des_heading.value = ts.los_angle;
+          }
+          // CAS on, ILOS off
+          else if (m_args.en_cas && !m_args.ilos_enabled)
+          {
+            m_des_heading.value = ts.los_angle + m_psi_os;
+          }
+          // CAS off, ILOS on
+          else if (!m_args.en_cas && m_args.ilos_enabled)
+          {
+            if (ts.track_pos.x <= ts.track_length)
+            {
+              ilos_offset = m_integral_controller->update(ts.track_pos.y, ts.los_angle, ts.track_bearing);
+              m_des_heading.value = ts.los_angle + ilos_offset;
+            }
+            else
+              m_des_heading.value = ts.los_angle;
+          }
+          // CAS and ILOS on
+          else
+          {
+            if (ts.track_pos.x <= ts.track_length)
+            {
+              if (m_psi_os == 0.0)
+              {
+                m_prev_psi_os = 0.0;
+                ilos_offset = m_integral_controller->update(ts.track_pos.y, ts.los_angle, ts.track_bearing);
+                m_des_heading.value = ts.los_angle + ilos_offset;
+              }
+              else
+              {
+                if (m_psi_os != m_prev_psi_os)
+                {
+                  // Set virtual new track start.
+                  m_new_track_start.x = state.x;
+                  m_new_track_start.y = state.y;
+                  // Recalculate bearing given the new course offset
+                  m_new_track_bearing = Angles::normalizeRadian(ts.los_angle + m_psi_os);
+                  // Set virtual track end point 2000m ahead in the new direction
+                  setBearingAndRange(m_new_track_start, m_new_track_bearing, 2000, m_new_track_end);
+
+                  m_prev_psi_os = m_psi_os;
+                }
+
+                // Recalculate range and LOS angle to destination
+                double new_range;
+                double new_los_angle;
+                getBearingAndRange(state, m_new_track_end, &new_los_angle, &new_range);
+                // Recalculate track position
+                TrackingState::TrackCoord new_track_pos;
+                Coordinates::getTrackPosition(m_new_track_start, m_new_track_bearing, state, &new_track_pos.x, &new_track_pos.y);
+
+                ilos_offset = m_integral_controller->update(new_track_pos.y, new_los_angle, m_new_track_bearing);
+                m_des_heading.value = new_los_angle + ilos_offset;
+              }
+            }
+            else
+            {
+              m_des_heading.value = ts.los_angle + m_psi_os;
+            }
+          }
+
+          if (ts.cc)
+            m_des_heading.value += state.psi - ts.course;
+
+          //! Normalize angle
+          m_des_heading.value = Angles::normalizeRadian(m_des_heading.value);
+          debug("CAS OFFSET: %.0f | ILOS OFFSET: %.3f | NEW COURSE NORMALIZED: %.3f", Angles::degrees(m_psi_os), Angles::degrees(ilos_offset), Angles::degrees(m_des_heading.value));
+          dispatch(m_des_heading);
+
+          overrideSpeedReference(isTurning(m_des_heading.value, state.psi));
         }
 
         //! Execute a loiter control step
@@ -1400,9 +1582,14 @@ namespace Control
 
           ref += DUNE::Math::c_pi + ts.los_angle;
 
+          if (ts.cc)
+            m_des_heading.value += state.psi - ts.course;
+
           // Dispatch heading reference
           m_des_heading.value = Angles::normalizeRadian(ref);
           dispatch(m_des_heading);
+
+          overrideSpeedReference(isTurning(m_des_heading.value, state.psi));
         }
       };
     }

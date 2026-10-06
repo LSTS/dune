@@ -1,5 +1,5 @@
 //***************************************************************************
-// Copyright 2007-2024 Universidade do Porto - Faculdade de Engenharia      *
+// Copyright 2007-2026 Universidade do Porto - Faculdade de Engenharia      *
 // Laboratório de Sistemas e Tecnologia Subaquática (LSTS)                  *
 //***************************************************************************
 // This file is part of DUNE: Unified Navigation Environment.               *
@@ -27,9 +27,6 @@
 // Author: Pedro Gonçalves                                                  *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <cstddef>
-
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
@@ -45,8 +42,8 @@ namespace UserInterfaces
     {
       //! Gpio Number for buttons
       int gpio_bt[c_number_max_button];
-      //! Work path for gpio manipulation
-      std::string gpio_work_path;
+      //! GPIO character device (Linux 4.8 and newer).
+      std::string gpio_device;
     };
 
     struct Task: public Tasks::Task
@@ -57,9 +54,12 @@ namespace UserInterfaces
       Arguments m_args;
       // Buttons State
       bool isLastStateHigh[c_number_max_button];
+      // GPIO interfaces.
+      Hardware::GPIO* m_gpio[c_number_max_button];
 
       Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx)
+        Tasks::Task(name, ctx),
+        m_gpio{nullptr, nullptr, nullptr}
       {
         for(uint8_t t = 0; t < c_number_max_button; t++)
         {
@@ -68,8 +68,9 @@ namespace UserInterfaces
           .description("User Buttons.");
         }
 
-        param("Gpio Work Path", m_args.gpio_work_path)
-        .description("Work path for Gpio manipulation.");
+        param("GPIO Device", m_args.gpio_device)
+        .defaultValue("")
+        .description("GPIO character device.");
       }
 
       void
@@ -77,23 +78,14 @@ namespace UserInterfaces
       {
         for(uint8_t t = 0; t < c_number_max_button; t++)
         {
-          if(!exportGpio(m_args.gpio_bt[t]))
-          {
-            std::string m_error_text = String::str("Cannot acess to export of pin %d", m_args.gpio_bt[t]);
-            setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
-            throw RestartNeeded(m_error_text, 5);
-          }
+          if (m_args.gpio_device.empty())
+            m_gpio[t] = new Hardware::GPIO(m_args.gpio_bt[t]);
           else
-          {
-            if(!setGpioDirection(m_args.gpio_bt[t], true))
-            {
-              std::string m_error_text = String::str("Cannot set direction of pin %d", m_args.gpio_bt[t]);
-              setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
-              throw RestartNeeded(m_error_text, 5);
-            }
-          }
-          isLastStateHigh[t] = false;
+            m_gpio[t] = new Hardware::GPIO(m_args.gpio_device, m_args.gpio_bt[t]);
+          m_gpio[t]->setDirection(Hardware::GPIO::GPIO_DIR_INPUT);
+          isLastStateHigh[t] = m_gpio[t]->getValue();
         }
+
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -102,97 +94,9 @@ namespace UserInterfaces
       {
         for(uint8_t t = 0; t < c_number_max_button; t++)
         {
-          if(!unexportGpio(m_args.gpio_bt[t]))
-          {
-            std::string m_error_text = String::str("Cannot acess to unexport of pin %d", m_args.gpio_bt[t]);
-            debug("%s", m_error_text.c_str());
-          }
+          delete m_gpio[t];
+          m_gpio[t] = 0;
         }
-      }
-
-      bool
-      exportGpio(int gpio)
-      {
-        std::string path = m_args.gpio_work_path + "/export";
-        int result = open (path.c_str(), O_WRONLY);
-        if (result ==-1)
-        {
-          err("Error open export file for pin %d ", gpio);
-          return false;
-        }
-        char buffer[3];
-        std::snprintf(buffer, 3, "%d", gpio);
-        if(write(result, buffer, 3) == -1)
-        {
-          close(result);
-          return false;
-        }
-        close(result);
-        return true;
-      }
-
-      bool
-      unexportGpio(int gpio)
-      {
-        std::string path = m_args.gpio_work_path + "/unexport";
-        int result = open (path.c_str(), O_WRONLY);
-        if (result==-1)
-        {
-          war("Error open unexport file for pin %d ", gpio);
-          return false;
-        }
-        char buffer[3];
-        std::snprintf(buffer, 3, "%d", gpio);
-        if(write(result, buffer, 3) == -1)
-        {
-          close(result);
-          return false;
-        }
-        return true;
-      }
-
-      bool
-      setGpioDirection(int gpio, bool isInput)
-      {
-        char path[64];
-        std::snprintf(path, 35, "%s/gpio%d/direction", m_args.gpio_work_path.c_str(), gpio);
-        int result = open (path, O_WRONLY);
-        if (result == -1)
-        {
-          err("Error open direction file for pin %d ", gpio);
-          return false;
-        }
-        char buffer[3];
-        std::snprintf(buffer, 3, "%d", gpio);
-        if (write(result, ((isInput == true)?"in":"out"),3 ) ==-1)
-        {
-          close(result);
-          return false;
-        }
-        close(result);
-        return true;
-      }
-
-      bool
-      isGpioHigh(int gpio)
-      {
-        char path[64];
-        std::snprintf(path, 35, "%s/gpio%d/value", m_args.gpio_work_path.c_str(), gpio);
-        int result  = open(path, O_RDONLY);
-        if (result == -1)
-        {
-          spew("Error open file value of pin %d", gpio);
-          return false;
-        }
-        char buffer[3];
-        if (read(result, buffer, 3) == -1)
-        {
-          spew("Error reading value of pin %d", gpio);
-          close(result);
-          return false;
-        }
-        close(result);
-        return ((buffer[0] == '1')?true:false);
       }
 
       void
@@ -200,7 +104,7 @@ namespace UserInterfaces
       {
         for (uint8_t t = 0; t < c_number_max_button; t++)
         {
-          if (isGpioHigh(m_args.gpio_bt[t]))
+          if (m_gpio[t]->getValue())
           {
             if(!isLastStateHigh[t])
             {

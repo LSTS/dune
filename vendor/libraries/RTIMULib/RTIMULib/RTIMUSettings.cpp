@@ -60,7 +60,10 @@ RTIMUSettings::RTIMUSettings(const char *settingsDirectory, const char *productT
         HAL_ERROR("Product name too long or null - using default\n");
         strcpy(m_filename, "RTIMULib.ini");
     } else {
-        sprintf(m_filename, "%s/%s.ini", settingsDirectory, productType);
+        strcpy(m_filename, settingsDirectory);
+        strcat(m_filename, "/");
+        strcat(m_filename, productType);
+        strcat(m_filename, ".ini");
     }
     loadSettings();
 }

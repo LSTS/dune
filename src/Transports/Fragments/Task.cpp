@@ -31,6 +31,9 @@
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Network/FragmentedMessage.hpp>
 
+// Dccl headers.
+#include <dccl/CodecDCCL.hpp>
+
 namespace Transports
 {
   namespace Fragments
@@ -42,8 +45,10 @@ namespace Transports
 
     struct Arguments
     {
-      // Reception timeout.
+      //! Reception timeout.
       float max_age_secs;
+      //! Transmission request time to live.
+      float ttl;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -57,14 +62,21 @@ namespace Transports
       std::map<uint32_t, std::pair<FragmentedMessage, bool>> m_incoming;
       //! Garbage collector counter.
       Time::Counter<float> m_gc_counter;
+      // DCCL
+      IMCDCCL::CodecDCCL m_codec_dccl;
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Tasks::Task(name, ctx),
-        m_gc_counter(c_gc_timeout)
+        m_gc_counter(c_gc_timeout),
+        m_codec_dccl(this)
       {
         param("Reception timeout", m_args.max_age_secs)
         .defaultValue("1800")
         .description("Maximum amount of seconds to wait for missing fragments in incoming messages");
+
+        param("Transmission Request TTL", m_args.ttl)
+        .defaultValue("120")
+        .description("Time to live for transmission requests");
 
         bind<IMC::MessagePart>(this);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
@@ -92,19 +104,59 @@ namespace Transports
           m_incoming[hash].first = incMsg;
         }
 
-        IMC::Message* res = m_incoming[hash].first.setFragment(msg);
+        std::vector<char> data = m_incoming[hash].first.setFragment(msg);
         m_incoming[hash].second = true;
         debug("Incoming message fragment for message %u (system: 0x%x) (%d still missing)",
               msg->uid,
               source,
               m_incoming[hash].first.getFragmentsMissing());
 
-        if (res != NULL)
+        if (data.empty())
+          return;
+
+        // Check if it is an IMC message
+        IMC::Message* res = nullptr;
+        try
         {
-          debug("created message %s", res->getName());
-          res->setSource(msg->getSource());
-          res->setDestination(msg->getDestination());
-          dispatch(res);
+          res = IMC::Packet::deserialize((uint8_t*)&data[0], data.size());
+        
+          if (res != NULL)
+          {
+            debug("created message %s", res->getName());
+            res->setSource(msg->getSource());
+            res->setDestination(msg->getDestination());
+            dispatch(res);
+            m_incoming.erase(hash);
+            return;
+          }
+        }
+        catch(const std::exception& e)
+        {
+          debug("Failed to deserialize message with uid %u (system: 0x%x) as IMC message: %s",
+                msg->uid,
+                source,
+                e.what());
+        }
+
+        if (!m_codec_dccl.isAvailable())
+          return;
+
+        std::string encoded_bytes(data.begin(), data.end());
+
+        //Debug DCCL Msg received
+        war("[DCCL DECODING] Trying to decode a dccl msg with size %zu ", encoded_bytes.size());
+
+        std::unique_ptr<DUNE::IMC::Message> decoded_msg = m_codec_dccl.decodeDCCL(encoded_bytes);
+        if (decoded_msg != nullptr)
+        {
+          //debug("Created DCCL message %s", decoded_msg->getName());
+          //Debug IMC Msg decompressed
+          std::ostringstream ss;
+          decoded_msg->toJSON(ss);
+          war("[DCCL DECODING] Decoded msg %s", decoded_msg->getName());
+          war("[DCCL DECODING] JSON: %s", ss.str().c_str());
+
+          dispatch(decoded_msg.get());
           m_incoming.erase(hash);
         }
       }
@@ -141,7 +193,8 @@ namespace Transports
               it->second.second = false;
               inf(DTR("Incoming message with uid %u (system: 0x%x) is still incomplete (%d fragments missing). "
                       "Requesting retransmission."), mpc.uid, destination, it->second.first.getFragmentsMissing());
-              dispatch(mpc);
+              //! FIXME: This should be sent via the same mean as the original message, but we don't have that information here.
+              dispatchRequest(mpc);
               continue;
             }
 
@@ -166,6 +219,18 @@ namespace Transports
           m_incoming.erase(remove[i]);
 
         return true;
+      }
+
+      void
+      dispatchRequest(const IMC::Message& msg)
+      {
+        IMC::TransmissionRequest tr;
+        tr.setDestination(getSystemId());
+        tr.comm_mean = IMC::TransmissionRequest::CMEAN_SATELLITE;
+        tr.data_mode = IMC::TransmissionRequest::DMODE_INLINEMSG;
+        tr.deadline = Clock::getSinceEpoch() + m_args.ttl;
+        tr.msg_data.set(msg.clone());
+        dispatch(tr);
       }
 
       void

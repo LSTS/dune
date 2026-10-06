@@ -25,72 +25,102 @@
 // http://ec.europa.eu/idabc/eupl.html.                                     *
 //***************************************************************************
 // Author: Ricardo Martins                                                  *
+// Author: Luís Venâncio                                                    *
 //***************************************************************************
-
-// ISO C++ 98 headers.
-#include <cerrno>
 
 // DUNE headers.
 #include <DUNE/System/Error.hpp>
-#include <DUNE/Streams/Terminal.hpp>
 #include <DUNE/Utils/String.hpp>
 #include <DUNE/Hardware/GPIO.hpp>
+#include <DUNE/Hardware/GPIO/GPIOInterface.hpp>
+#include <DUNE/Hardware/GPIO/GPIOCharDevice.hpp>
+#include <DUNE/Hardware/GPIO/GPIOSysfs.hpp>
 
 namespace DUNE
 {
   namespace Hardware
   {
+    using GPIOInternals::GPIOInterfaceUnavailable;
+    using GPIOInternals::GPIOCharDevice;
+    using GPIOInternals::GPIOSysfs;
     using System::Error;
     using Utils::String;
 
     GPIO::GPIO(unsigned int number):
       m_number(number),
-      m_direction(GPIO_DIR_INPUT)
+      m_direction(GPIO_DIR_INPUT),
+      m_interface(0),
+      m_device("/dev/gpiochip0"),
+      m_allow_sysfs(true)
     {
-      // Linux 2.6 implementation.
+      initializeBackend();
+    }
+
+    GPIO::GPIO(const std::string& device, unsigned int offset):
+      m_number(offset),
+      m_direction(GPIO_DIR_INPUT),
+      m_interface(0),
+      m_device(device),
+      m_allow_sysfs(false)
+    {
+      initializeBackend();
+    }
+
+    GPIO::~GPIO(void)
+    {
+      delete m_interface;
+    }
+
+    void
+    GPIO::initializeBackend(void)
+    {
 #if defined(DUNE_OS_LINUX)
-      writeToFile("/sys/class/gpio/export", m_number);
-
-      std::string prefix = std::string("/sys/class/gpio/gpio") +
-                           String::str(m_number);
-      m_file_val = prefix + std::string("/value");
-      m_file_dir = prefix + std::string("/direction");
-
-      // Lacking implementation.
+      try
+      {
+        m_interface = new GPIOCharDevice(m_device, m_number);
+      }
+      catch (const GPIOInterfaceUnavailable& error)
+      {
+        if (!m_allow_sysfs)
+          throw Error(error.getCode(), "GPIO character device is unavailable", m_device);
+        m_interface = new GPIOSysfs(m_number);
+      }
 #else
       throw Error("unimplemented feature", "DUNE::Hardware::GPIO");
 #endif
     }
 
-    GPIO::~GPIO(void)
+    void
+    GPIO::fallbackToSysfs(Direction direction)
     {
-      // Linux 2.6 implementation.
-#if defined(DUNE_OS_LINUX)
+      GPIOSysfs* replacement = 0;
       try
       {
-        writeToFile("/sys/class/gpio/unexport", m_number);
+        replacement = new GPIOSysfs(m_number);
+        replacement->setDirection(direction);
       }
-      catch (std::exception& e)
+      catch (...)
       {
-        DUNE_ERR("DUNE::Hardware::GPIO", e.what());
+        delete replacement;
+        throw;
       }
-#endif
+
+      delete m_interface;
+      m_interface = replacement;
     }
 
     void
     GPIO::setDirection(Direction direction)
     {
-      if (direction == GPIO_DIR_INPUT)
+      try
       {
-#if defined(DUNE_OS_LINUX)
-        writeToFile(m_file_dir, "in");
-#endif
+        m_interface->setDirection(direction);
       }
-      else
+      catch (const GPIOInterfaceUnavailable& error)
       {
-#if defined(DUNE_OS_LINUX)
-        writeToFile(m_file_dir, "out");
-#endif
+        if (!m_allow_sysfs)
+          throw Error(error.getCode(), "GPIO character device is unavailable", m_device);
+        fallbackToSysfs(direction);
       }
 
       m_direction = direction;
@@ -113,11 +143,7 @@ namespace DUNE
       if (m_direction != GPIO_DIR_OUTPUT)
         throw Error("GPIO is not configured as output", String::str(m_number));
 
-#if defined(DUNE_OS_LINUX)
-      writeToFile(m_file_val, value ? "1" : "0");
-#else
-      (void)value;
-#endif
+      m_interface->setValue(value);
     }
 
     bool
@@ -126,35 +152,17 @@ namespace DUNE
       if (m_direction != GPIO_DIR_INPUT)
         throw Error("GPIO is not configured as input", String::str(m_number));
 
-#if defined(DUNE_OS_LINUX)
-      std::FILE* fd = std::fopen(m_file_val.c_str(), "r");
-      if (fd == 0)
-        throw Error(errno, "unable to read GPIO value");
-      unsigned value = std::fgetc(fd);
-      std::fclose(fd);
-      return value == '1';
-#endif
-
-      return false;
+      try
+      {
+        return m_interface->getValue();
+      }
+      catch (const GPIOInterfaceUnavailable& error)
+      {
+        if (!m_allow_sysfs)
+          throw Error(error.getCode(), "GPIO character device is unavailable", m_device);
+        fallbackToSysfs(GPIO_DIR_INPUT);
+        return m_interface->getValue();
+      }
     }
-
-#if defined(DUNE_OS_LINUX)
-    void
-    GPIO::writeToFile(const std::string& file, int value)
-    {
-      writeToFile(file, String::str(value));
-    }
-
-    void
-    GPIO::writeToFile(const std::string& file, const std::string& value)
-    {
-      std::FILE* fd = std::fopen(file.c_str(), "w");
-      if (fd == 0)
-        throw Error(errno, "unable to export GPIO", value);
-      std::fputs(value.c_str(), fd);
-      std::fclose(fd);
-    }
-
-#endif
   }
 }

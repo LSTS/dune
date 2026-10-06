@@ -41,7 +41,8 @@ namespace DUNE
     class Fragments
     {
     public:
-      Fragments(IMC::Message* message, int mtu);
+      Fragments(const IMC::Message* message, int mtu);
+      Fragments(const std::vector<char>& data, int mtu);
 
       IMC::MessagePart*
       getFragment(int frag_number);
@@ -52,6 +53,9 @@ namespace DUNE
       ~Fragments(void);
 
     private:
+      void
+      fragmentBuffer(const uint8_t* buffer, int size, int mtu);
+
       uint8_t
       createId(void);
 

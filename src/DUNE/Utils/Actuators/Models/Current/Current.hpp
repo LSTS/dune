@@ -32,5 +32,6 @@
 
 #include <DUNE/Utils/Actuators/Models/Current/Model.hpp>
 #include <DUNE/Utils/Actuators/Models/Current/T200.hpp>
+#include <DUNE/Utils/Actuators/Models/Current/T500.hpp>
 
 #endif

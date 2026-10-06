@@ -152,11 +152,114 @@ Power.prototype.appendImage = function (root, channel, op, label) {
 
 Power.prototype.appendButton = function (root, channel, op, label) {
   var btn = document.createElement('button');
-  btn.onclick = function (event) { submitPowerForm(channel, op, root.id, event); };
   btn.textContent = label;
   btn.setAttribute('data-op', op);
+
+  if (op == 'on' || op == 'off') {
+    setupPowerLongPress(btn, function () {
+      submitPowerForm(channel, op, root.id, {
+        target: btn,
+        preventDefault: function () { }
+      });
+    });
+  }
+  else {
+    btn.onclick = function (event) { submitPowerForm(channel, op, root.id, event); };
+  }
+
   root.appendChild(btn);
 };
+
+function showPowerHoldInfo(button) {
+  var notice = document.getElementById('PowerHoldNotice');
+  if (!notice) {
+    notice = document.createElement('div');
+    notice.id = 'PowerHoldNotice';
+    notice.setAttribute('role', 'status');
+    notice.setAttribute('aria-live', 'polite');
+    document.body.appendChild(notice);
+  }
+
+  notice.textContent = 'Press and hold to change the power channel state.';
+  notice.className = 'visible';
+  clearTimeout(notice.hideTimer);
+  notice.hideTimer = setTimeout(function () {
+    notice.className = '';
+  }, 2600);
+  button.focus();
+}
+
+function setupPowerLongPress(button, action) {
+  var timer = null;
+  var completed = false;
+  var holding = false;
+
+  function start(event) {
+    if (button.disabled || holding || (event.button !== undefined && event.button !== 0))
+      return;
+
+    event.preventDefault();
+    holding = true;
+    completed = false;
+    button.classList.add('holding');
+    timer = setTimeout(function () {
+      if (button.disabled) {
+        holding = false;
+        button.classList.remove('holding');
+        return;
+      }
+      completed = true;
+      holding = false;
+      button.classList.remove('holding');
+      button.classList.add('hold-complete');
+      action();
+      setTimeout(function () {
+        button.classList.remove('hold-complete');
+      }, 350);
+    }, 1000);
+  }
+
+  function stop(event) {
+    if (!holding)
+      return;
+
+    if (event)
+      event.preventDefault();
+    clearTimeout(timer);
+    holding = false;
+    button.classList.remove('holding');
+    if (!completed)
+      showPowerHoldInfo(button);
+  }
+
+  button.classList.add('power-long-press');
+  button.title = 'Press and hold for 1 second';
+  if (window.PointerEvent) {
+    button.addEventListener('pointerdown', start);
+    button.addEventListener('pointerup', stop);
+    button.addEventListener('pointercancel', stop);
+    button.addEventListener('pointerleave', stop);
+  }
+  else {
+    button.addEventListener('mousedown', start);
+    button.addEventListener('mouseup', stop);
+    button.addEventListener('mouseleave', stop);
+    button.addEventListener('touchstart', start);
+    button.addEventListener('touchend', stop);
+    button.addEventListener('touchcancel', stop);
+  }
+  button.addEventListener('keydown', function (event) {
+    if (event.key == ' ' || event.key == 'Enter')
+      start(event);
+  });
+  button.addEventListener('keyup', function (event) {
+    if (event.key == ' ' || event.key == 'Enter')
+      stop(event);
+  });
+  button.addEventListener('click', function (event) {
+    event.preventDefault();
+  });
+}
 
 Power.prototype.appendInput = function (root, form_id, id, label) {
   var einput = document.createElement('input');

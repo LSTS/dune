@@ -36,6 +36,10 @@ Gauge.prototype.create = function (root) {
   this.m_root = root;
   var gaugeContainer = document.createElement('div');
   gaugeContainer.classList.add('gauge-container');
+  gaugeContainer.setAttribute('role', 'progressbar');
+  gaugeContainer.setAttribute('aria-valuemin', '0');
+  gaugeContainer.setAttribute('aria-valuemax', '100');
+  this.m_container = gaugeContainer;
   this.m_bar = document.createElement('div');
   this.m_bar.classList.add('gauge-bar');
   gaugeContainer.appendChild(this.m_bar);
@@ -46,8 +50,15 @@ Gauge.prototype.create = function (root) {
 };
 
 Gauge.prototype.update = function (value) {
-  this.m_value.textContent = Math.round(value) + '%';
-  this.m_bar.style.width = Math.round(value) + '%';
+  value = Number(value);
+  if (!isFinite(value))
+    value = 0;
+
+  value = Math.max(0, Math.min(100, value));
+  var roundedValue = Math.round(value);
+  this.m_value.textContent = roundedValue + '%';
+  this.m_bar.style.width = roundedValue + '%';
+  this.m_container.setAttribute('aria-valuenow', roundedValue);
 
   let red, green;
 
@@ -69,14 +80,10 @@ Gauge.prototype.update = function (value) {
     }
   }
 
-  // style gradient
-  //const mainColor = `rgb(${red}, ${green}, 0)`;
-  //const lighterColor = this._lightenColor(mainColor, 0.6);
-  //this.m_bar.style.background = `linear-gradient(to right, ${lighterColor}, ${mainColor})`;
-
-  // style solid color
   const color = `rgb(${red}, ${green}, 0)`;
-  this.m_bar.style.backgroundColor = color;
+  const lighterColor = this._lightenColor(color, 0.48);
+  this.m_bar.style.setProperty('--gauge-color', color);
+  this.m_bar.style.setProperty('--gauge-color-soft', lighterColor);
 };
 
 Gauge.prototype._lightenColor = function (rgb, amount) {

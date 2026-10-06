@@ -43,6 +43,7 @@
 #include <DUNE/Concurrency/TSQueue.hpp>
 #include <DUNE/Tasks/Recipient.hpp>
 #include <DUNE/Tasks/Consumer.hpp>
+#include <DUNE/Tasks/FilteredConsumer.hpp>
 #include <DUNE/IMC/Constants.hpp>
 #include <DUNE/IMC/Definitions.hpp>
 #include <DUNE/IMC/Factory.hpp>
@@ -322,11 +323,26 @@ namespace DUNE
       void
       dispatch(IMC::Message* msg, unsigned int flags = 0);
 
+      //! Dispatch transmission request message to the message bus.
+      //! @param[in] msg message pointer.
+      //! @param[in] flags bitfield with flags (see DispatchFlags).
+      void
+      dispatch(IMC::TransmissionRequest* msg, unsigned int flags = 0);
+
       //! Dispatch message to the message bus.
       //! @param[in] msg message reference.
       //! @param[in] flags bitfield with flags (see DispatchFlags).
       void
       dispatch(IMC::Message& msg, unsigned int flags = 0)
+      {
+        dispatch(&msg, flags);
+      }
+
+      //! Dispatch transmission request message to the message bus.
+      //! @param[in] msg message reference.
+      //! @param[in] flags bitfield with flags (see DispatchFlags).
+      void
+      dispatch(IMC::TransmissionRequest& msg, unsigned int flags = 0)
       {
         dispatch(&msg, flags);
       }
@@ -633,6 +649,25 @@ namespace DUNE
         m_param_editor = name;
       }
 
+      //! Default filter method. Only accepts messages from self.
+      //! @param msg message pointer.
+      //! @return true if the message is from self, false otherwise.
+      bool
+      filterSelf(const IMC::Message* msg)
+      {
+        return msg->getSource() == getSystemId();
+      }
+
+      //! Bind a message to a default consumer method, with a custom filter.
+      //! @param task_obj consumer task.
+      //! @param filter filter function.
+      template <typename M, typename T>
+      AbstractConsumer*
+      bind(T* task_obj, bool (*filter)(const M*))
+      {
+        return bind(task_obj, &T::consume, filter);
+      }
+
       //! Bind a message to a consumer method.
       //! @param task_obj consumer task.
       //! @param consumer consumer method, if not specified,
@@ -642,6 +677,19 @@ namespace DUNE
       bind(T* task_obj, void (T::* consumer)(const M*) = &T::consume)
       {
         AbstractConsumer* c = new Consumer<T, M>(*task_obj, consumer);
+        bind(M::getIdStatic(), c);
+        return c;
+      }
+
+      //! Bind a message to a consumer method with a filter.
+      //! @param task_obj consumer task.
+      //! @param consumer consumer method.
+      //! @param filter non-null filter function.
+      template <typename M, typename T>
+      AbstractConsumer*
+      bind(T* task_obj, void (T::* consumer)(const M*), bool (*filter)(const M*))
+      {
+        AbstractConsumer* c = new FilteredConsumer<T, M>(*task_obj, consumer, filter);
         bind(M::getIdStatic(), c);
         return c;
       }

@@ -924,8 +924,9 @@ namespace DUNE
         case SM_ACT_DEV_WAIT:
           if (m_wdog.overflow())
           {
-            std::string msg = "Activation timeout - connect to device: ";
-            msg += m_uri;
+            std::string msg = "Activation timeout - connect to device";
+            if (!m_uri.empty())
+              msg += " : " + m_uri;
             failActivation(DTR(msg.c_str()));
             if(m_restart_needed)
               requestRestart();
@@ -1175,7 +1176,7 @@ namespace DUNE
       
       updateStateMachine();
 
-      if (m_honours_conf_samp && m_state_timer.overflow())
+      if (isActive() && m_honours_conf_samp && m_state_timer.overflow())
       {
         setEntityStateSampling(m_is_sampling);
         m_state_timer.reset();

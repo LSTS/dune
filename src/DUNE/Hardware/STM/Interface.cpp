@@ -36,6 +36,7 @@
 #include <fstream>
 
 // DUNE headers.
+#include <DUNE/DUNE.hpp>
 #include <DUNE/IO/Poll.hpp>
 #include <DUNE/Hardware/STM/Interface.hpp>
 #include <DUNE/Hardware/STM/FirmwareUpdate.hpp>
@@ -109,8 +110,10 @@ namespace DUNE
         title(" Checking System Type");
         if(readReply(c_timeout_reply))
         {
+          Time::Delay::waitMsec(10);
           uint8_t csum_rx = m_frame_rx[m_frame_rx_count - 1];
           uint8_t csum_calc = computeCRC(m_frame_rx, m_frame_rx_count - 1);
+          //printf(" > System Type reply: %s | csum_rx: %d | csum_calc: %d\n", m_frame_rx, csum_rx, csum_calc);
           if(csum_rx == csum_calc)
           {
             uint8_t vector_string_size = 0;
@@ -212,10 +215,20 @@ namespace DUNE
           title(" Checking Bootloader Sync");
           sendCommand(c_jump_to_boot_cmd);
         }
+
+        if(boot_update)
+        {
+          print(" > Waiting for the main system to prepare bootloader for update\n");
+        }
+        else
+        {
+          print(" > Waiting for the system to jump to bootloader\n");
+        }
         if(readReply(c_timeout_reply))
         {
           uint8_t csum_rx = m_frame_rx[m_frame_rx_count - 1];
           uint8_t csum_calc = computeCRC(m_frame_rx, m_frame_rx_count - 1);
+          //printf(" > Bootloader Sync reply: %s | csum_rx: %d | csum_calc: %d\n", m_frame_rx, csum_rx, csum_calc);
           if(csum_rx == csum_calc)
           {
             printf(" > Sync bootloader ok\n");
@@ -224,10 +237,11 @@ namespace DUNE
           }
           else
           {
-            printf(" > Fail sync of bootloader\n");
+            printf(" > Fail sync of bootloader (1)\n");
             return false;
           }
         }
+        printf(" > Fail sync of bootloader (2)\n");
         return false;
       }
 
@@ -259,8 +273,20 @@ namespace DUNE
               {
                 if(m_buffer_rx[i] == '\n')
                 {
-                  m_frame_rx[m_frame_rx_count] = '\0';
-                  new_data_string = true;
+                  if(m_frame_rx_count == 1)
+                  {
+                    //printf(" > Empty message received\n");
+                    new_data_string = false;
+                    m_frame_rx_count = 0;
+                    m_buffer_rx[0] = '\0';
+                  }
+                  else
+                  {
+                    m_frame_rx[m_frame_rx_count] = '\0';
+                    new_data_string = true;
+                    // print the message received for debug
+                    //printf(" > Message received(%d): %s\n", m_frame_rx_count, m_frame_rx);
+                  }
                 }
                 else
                 {

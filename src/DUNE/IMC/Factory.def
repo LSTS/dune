@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 47810ebdc3879861837e89177f26e6aa                            *
+// IMC XML MD5: 91b1de5614c2e30b62cbeebf40ed8611                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -180,6 +180,7 @@ MESSAGE(360, LblEstimate)
 MESSAGE(361, AlignmentState)
 MESSAGE(362, GroupStreamVelocity)
 MESSAGE(363, Airflow)
+MESSAGE(364, Power)
 MESSAGE(400, DesiredHeading)
 MESSAGE(401, DesiredZ)
 MESSAGE(402, DesiredSpeed)
@@ -376,5 +377,11 @@ MESSAGE(2017, TypedEntityParameter)
 MESSAGE(2018, ValuesIf)
 MESSAGE(2021, VersionInfo)
 MESSAGE(2022, TotalHeading)
+MESSAGE(2035, BDI)
 MESSAGE(2036, TypedEntityParameterEditor)
+MESSAGE(2040, AckMsg)
+MESSAGE(2041, QueryBmsData)
+MESSAGE(2042, BmsData)
+MESSAGE(2043, BmsCellVoltage)
+MESSAGE(2044, BmsRegister)
 #undef MESSAGE

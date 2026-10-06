@@ -30,8 +30,9 @@
 
 function Main(root_id) {
   this.create('Main', root_id);
-  this.createHeader('Overview');
+  this.createOverviewHeader();
   this.createTable();
+  this.setOverviewCollapsed(localStorage.getItem('duneOverviewCollapsed') === 'true', false);
   this.createHeader('Tasks');
   this.createTableTasks();
 };
@@ -90,6 +91,8 @@ Main.prototype.m_fields = [
       reverse: true
     }),
     "side": "left",
+    "compact": true,
+    "compact_label": "Usage:",
     "single_line": false
   },
   {
@@ -124,6 +127,8 @@ Main.prototype.m_fields = [
       reverse: false
     }),
     "side": "left",
+    "compact": true,
+    "compact_label": "Energy:",
     "single_line": false
   },
   {
@@ -183,10 +188,46 @@ Main.prototype.m_fields = [
   }
 ];
 
+Main.prototype.createOverviewHeader = function () {
+  var heading = document.createElement('div');
+  heading.className = 'overview-heading';
+
+  var title = document.createElement('h1');
+  title.appendChild(document.createTextNode('Overview'));
+  heading.appendChild(title);
+
+  this.m_overview_toggle = document.createElement('button');
+  this.m_overview_toggle.id = 'OverviewToggle';
+  this.m_overview_toggle.type = 'button';
+  this.m_overview_toggle.onclick = function () {
+    this.setOverviewCollapsed(!this.m_base.classList.contains('overview-collapsed'), true);
+  }.bind(this);
+  heading.appendChild(this.m_overview_toggle);
+  this.m_base.appendChild(heading);
+
+  var rule = document.createElement('hr');
+  this.m_base.appendChild(rule);
+};
+
+Main.prototype.setOverviewCollapsed = function (collapsed, persist) {
+  this.m_base.classList.toggle('overview-collapsed', collapsed);
+  this.m_overview_toggle.textContent = collapsed ? 'Expand overview' : 'Collapse overview';
+  this.m_overview_toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+  this.m_overview_toggle.title = this.m_overview_toggle.textContent;
+
+  if (persist)
+    localStorage.setItem('duneOverviewCollapsed', collapsed ? 'true' : 'false');
+
+  if (typeof resizeTasksTable === 'function')
+    window.requestAnimationFrame(resizeTasksTable);
+};
+
 Main.prototype.createTable = function () {
 
   this.sys_name_div = document.createElement('div');
   this.sys_name_div.id = 'systemName';
+  if (typeof g_connected !== 'undefined' && !g_connected)
+    this.sys_name_div.classList.add('system-offline');
   this.m_base.appendChild(this.sys_name_div)
 
   this.m_table = document.createElement('table');
@@ -273,11 +314,19 @@ Main.prototype.createTableHeader = function (idx, tbl) {
 Main.prototype.createTableEntry = function (idx, tbl) {
   var field = this.m_fields[idx];
   var tr = document.createElement('tr');
+  if (field.widget instanceof ChartWidget)
+    tr.classList.add('cpu-overview-row');
+  if (field.compact)
+    tr.classList.add('overview-compact-row');
   //check if field.single_line is true, if so, set the height to 25px
   if (!field.single_line) {
+    tr.classList.add('overview-data-row');
+    tr.classList.add('overview-data-row-' + field.side);
     tr.style.height = '25px';
     var td_label = document.createElement('td');
     td_label.className = 'entryLeft';
+    if (field.compact_label)
+      td_label.setAttribute('data-compact-label', field.compact_label);
     //td_label.appendChild(document.createTextNode(field.label));
     td_label.innerHTML = field.label;
     tr.appendChild(td_label);
@@ -303,6 +352,8 @@ Main.prototype.createTableEntry = function (idx, tbl) {
 };
 
 Main.prototype.update = function () {
+  this.updateVehicleState();
+
   for (i in this.m_fields) {
     var value = null;
     var field = this.m_fields[i];
@@ -352,7 +403,6 @@ Main.prototype.update = function () {
   }
 
   this.updateTasks();
-  this.updateVehicleState();
 };
 
 Main.prototype.updateTasks = function () {
@@ -403,11 +453,12 @@ Main.prototype.insertTaskNode = function (id, name, desc, status, cpuUsage) {
       item.childNodes[0].firstChild.marginTop = '2px';
       item.childNodes[3].firstChild.data = desc;
       var cpuCell = item.childNodes[2];
-      if (cpuCell && cpuCell.firstChild && cpuCell.firstChild.childNodes.length >= 3) {
+      var cpuValue = cpuCell ? cpuCell.querySelector('.task-cpu-value') : null;
+      if (cpuValue) {
         if (cpuUsage > 0)
-          cpuCell.firstChild.childNodes[2].textContent = ' ' + cpuUsage + '%';
+          cpuValue.textContent = cpuUsage + '%';
         else
-          cpuCell.firstChild.childNodes[2].textContent = '< 1%';
+          cpuValue.textContent = '< 1%';
       }
       item.setAttribute("data-state", status);
       this.updateHeaderBackground(status);
@@ -483,20 +534,18 @@ Main.prototype.createTask = function (id, name, desc, status, cpuUsage) {
   var td_cpu = document.createElement('td');
   td_cpu.style.width = '40px';
   var cpuContainer = document.createElement('div');
+  cpuContainer.className = 'task-cpu-usage';
   cpuContainer.style.display = 'flex';
   cpuContainer.style.alignItems = 'center';
-
-  var bracketOpen = document.createElement('span');
-  bracketOpen.textContent = '[';
-  cpuContainer.appendChild(bracketOpen);
+  cpuContainer.title = 'CPU usage';
 
   var cpuIcon = document.createElement('span');
   cpuIcon.classList.add('cpu-icon');
   cpuContainer.appendChild(cpuIcon);
 
   var cpuText = document.createElement('span');
+  cpuText.className = 'task-cpu-value';
   cpuText.style.display = 'inline-block';
-  cpuText.style.width = '30px';
   cpuText.style.textAlign = 'right';
   if (cpuUsage > 0) {
     cpuText.textContent = cpuUsage + '%';
@@ -504,10 +553,6 @@ Main.prototype.createTask = function (id, name, desc, status, cpuUsage) {
     cpuText.textContent = '< 1%';
   }
   cpuContainer.appendChild(cpuText);
-
-  var bracketClose = document.createElement('span');
-  bracketClose.textContent = ']';
-  cpuContainer.appendChild(bracketClose);
 
   td_cpu.appendChild(cpuContainer);
   tr.appendChild(td_cpu);
@@ -674,6 +719,16 @@ function getSystemType(data, value) {
       return "Unknown";
     }
   }
+}
+
+function resetSystemNameToInitialState() {
+  system_mode = 6;
+
+  var systemNameElement = document.getElementById('systemName');
+  if (!systemNameElement || !systemNameElement.firstChild)
+    return;
+
+  systemNameElement.firstChild.textContent = systemNameElement.firstChild.textContent.replace(/\s+-\s+[^)]*(?=\))/, '');
 }
 
 function convertRadiansToDM(value) {
