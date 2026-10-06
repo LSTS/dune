@@ -94,6 +94,8 @@ namespace Actuators
       std::vector<unsigned long long> current_gains;
       //! Velocity controller gains.
       std::vector<unsigned long long> velocity_gains;
+      //! Maximal acceleration.
+      unsigned int max_acceleration;
     };
 
     struct Task: public DUNE::Tasks::Task
@@ -188,6 +190,13 @@ namespace Actuators
         .defaultValue("0,0,0,0")
         .size(4)
         .description("Velocity controller gains.");
+
+        param("Maximal Acceleration", m_args.max_acceleration)
+        .editable(false)
+        .minimumValue("0")
+        .maximumValue("4294967295")
+        .defaultValue("4294967295")
+        .description("Maximal acceleration of the motor.");
 
         bind<IMC::PowerChannelState>(this);
       }
@@ -287,6 +296,11 @@ namespace Actuators
         }
         else
           debug("controller gains set successfully");
+
+        if (setMaxAcceleration(m_args.max_acceleration))
+          debug("device max acceleration: %u", m_args.max_acceleration);
+        else
+          war("failed to set device max acceleration");
 
         requestActivation();
         setEntityState(EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
