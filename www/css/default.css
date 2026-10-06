@@ -743,8 +743,7 @@ body.theme-dark .gauge-value {
   border-radius: 12px!important;
   background: transparent!important;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
-  overflow-y: auto;
-  scrollbar-color: var(--border) transparent
+  overflow: hidden
 }
 .cpu-history-chart {
   display: block;
@@ -754,8 +753,12 @@ body.theme-dark .gauge-value {
 }
 .cpu-legend {
   display: grid;
+  max-height: 96px;
+  padding-right: 4px;
   grid-template-columns: repeat(auto-fit,minmax(72px,1fr));
-  gap: 4px 9px
+  gap: 4px 9px;
+  overflow-y: auto;
+  scrollbar-color: var(--border) transparent
 }
 .cpu-legend-item {
   display: grid;
