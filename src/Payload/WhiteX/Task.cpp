@@ -53,6 +53,9 @@ namespace Payload
                                                                       { MODE_AUTOMATIC, "Automatic" },
                                                                       { MODE_MANUAL, "Manual" }};
 
+    //! Sampling state report timeout.
+    static constexpr float c_state_report_tout = 1;
+
     //! Task arguments.
     struct Arguments
     {
@@ -68,6 +71,14 @@ namespace Payload
       std::string min_wl_gpio;
       //! Manual control of pumps.
       bool manual_pumps;
+      //! Restarting is allowed.
+      bool restart_allowed;
+      //! Pausing is allowed.
+      bool pausing_allowed;
+      //! Force state transition.
+      bool force_state_transition;
+      //! Sampling timeout.
+      double sampling_timeout;
     };
 
     //! Task to control WhiteX payload. 
@@ -75,6 +86,26 @@ namespace Payload
     //! @author Bernardo Gabriel
     struct Task: public Tasks::Task
     {
+      enum State
+      {
+        STATE_UNKNOWN,
+        STATE_IDLE,
+        STATE_INITIAL,
+        STATE_SAMPLING,
+        STATE_COMPLETED,
+        STATE_PAUSED
+      };
+
+      enum Request
+      {
+        REQ_NONE,
+        REQ_START_SAMPLING,
+        REQ_STOP_SAMPLING,
+        REQ_PAUSE_SAMPLING,
+        REQ_RESUME_SAMPLING,
+        REQ_FORCE_STATE_TRANSITION
+      };
+
       //! Task arguments.
       Arguments m_args;
       //! Operation mode.
@@ -97,6 +128,18 @@ namespace Payload
       Math::MovingAverage<double> m_wf_avg;
       //! WaterFlow timer.
       Counter<double> m_wf_timer;
+      //! Current state of the system.
+      State m_curr_state;
+      //! Last received request.
+      Request m_recv_req;
+      //! Paused state.
+      State m_paused_state;
+      //! Timer for reporting state.
+      Counter<double> m_report_state_timer;
+      //! Sampling state report message.
+      IMC::SamplingAction m_sa_report;
+      //! Timer for sampling.
+      Counter<double> m_sampling_timer;
 
       //! Constructor.
       //! @param[in] name task name.
@@ -104,10 +147,15 @@ namespace Payload
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
         m_mode(MODE_INVALID),
-        m_wf_eid(UINT_MAX)
+        m_wf_eid(UINT_MAX),
+        m_curr_state(STATE_IDLE),
+        m_recv_req(REQ_NONE),
+        m_paused_state(STATE_UNKNOWN),
+        m_report_state_timer(c_state_report_tout)
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
+                    Tasks::Parameter::VISIBILITY_USER,
+                    true);
 
         param("Mode", m_args.mode)
         .defaultValue("Automatic")
@@ -134,9 +182,30 @@ namespace Payload
         .defaultValue("false")
         .description("Manual control for the pumps.");
 
+        param("Restart Allowed", m_args.restart_allowed)
+        .defaultValue("false")
+        .description("Allow restarting the sampling process.");
+
+        param("Pause Allowed", m_args.pausing_allowed)
+        .defaultValue("false")
+        .description("Allow pausing the sampling process.");
+
+        param("Force State Transition", m_args.force_state_transition)
+        .defaultValue("false")
+        .description("Manually force state transition.");
+
+        param("Sampling Timeout", m_args.sampling_timeout)
+        .defaultValue("0.0")
+        .minimumValue("0.0")
+        .units(Units::Second)
+        .description("Timeout for the sampling process in seconds.");
+
+        m_sa_report.action = IMC::SamplingAction::SA_REPORT;
+
         bind<IMC::WaterFlow>(this);
         bind<IMC::GpioState>(this);
         bind<IMC::PowerChannelState>(this);
+        bind<IMC::SamplingAction>(this);
       }
 
       void
@@ -144,16 +213,40 @@ namespace Payload
       {
         if (paramChanged(m_args.mode))
         {
-          auto it = c_mode_map.find(m_args.mode);
-          if (it != c_mode_map.end())
+          if (m_mode == ModeEnum::MODE_AUTOMATIC &&
+              m_args.mode == "Manual" &&
+              m_curr_state != STATE_IDLE)
           {
-            m_mode = it->second;
-            inf("Operation mode set to: %s", c_mode_str_map.at(m_mode).c_str());
+            war("switching from Automatic to Manual mode "
+                "while sampling is in progress isn't allowed | "
+                "reverting to Automatic mode.");
+            applyEntityParameter(&m_args.mode, "Automatic");
           }
           else
           {
-            err("Invalid operation mode: %s", m_args.mode.c_str());
-            m_mode = MODE_INVALID;
+            auto it = c_mode_map.find(m_args.mode);
+            if (it != c_mode_map.end())
+            {
+              m_mode = it->second;
+              inf("operation mode set to: %s", c_mode_str_map.at(m_mode).c_str());
+            }
+            else
+            {
+              err("invalid operation mode: %s", m_args.mode.c_str());
+              m_mode = MODE_INVALID;
+            }
+
+            stop();
+          }
+        }
+
+        if (paramChanged(m_args.force_state_transition) && m_args.force_state_transition)
+        {
+          applyEntityParameter(&m_args.force_state_transition, false);
+          if (isActive() && m_mode == MODE_AUTOMATIC)
+          {
+            m_recv_req = REQ_FORCE_STATE_TRANSITION;
+            inf("force state transition request received");
           }
         }
 
@@ -297,6 +390,66 @@ namespace Payload
       }
 
       void
+      consume(const IMC::SamplingAction* msg)
+      {
+        if (m_mode != MODE_AUTOMATIC)
+          return;
+
+        if (msg->action != IMC::SamplingAction::ActionEnum::SA_COMMAND)
+          return;
+
+        if (!isActive())
+        {
+          inf("received SamplingAction command message with action %d, but the entity is not active", msg->action);
+          return;
+        }
+        else
+          spew("received SamplingAction command message with action %d", msg->action);
+
+        switch (msg->type)
+        {
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_START:
+            inf("received command to start sampling");
+            m_recv_req = REQ_START_SAMPLING;
+            break;
+
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_STOP:
+            inf("received command to stop sampling");
+            m_recv_req = REQ_STOP_SAMPLING;
+            break;
+
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_PAUSE:
+            if (m_args.pausing_allowed)
+            {
+              m_recv_req = REQ_PAUSE_SAMPLING;
+              inf("received command to pause sampling action");
+            }
+            else
+              inf("received command to pause sampling action, but pausing is not allowed");
+
+            break;
+
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_RESUME:
+            if (m_args.pausing_allowed)
+            {
+              m_recv_req = REQ_RESUME_SAMPLING;
+              inf("received command to resume sampling action");
+            }
+            else
+              inf("received command to resume sampling action, but pausing is not allowed");
+
+            break;
+
+          case IMC::SamplingAction::TypeEnum::SAT_CMD_QUERY_STATE:
+            dispatch(m_sa_report);
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      void
       changeMode(ModeEnum mode)
       {
         if (mode == m_mode)
@@ -314,18 +467,199 @@ namespace Payload
         }
       }
 
-      void
-      updateMachineState(void)
+      bool
+      startRequested(bool sampling = true)
       {
-        if (!isActive())
-          return;
+        if (m_recv_req != REQ_START_SAMPLING)
+          return false;
 
-        if (m_mode != MODE_AUTOMATIC)
-          return;
+        m_recv_req = REQ_NONE;
+        if (sampling && !m_args.restart_allowed)
+        {
+          inf("received request to restart sampling, but restarting is not allowed");
+          return false;
+        }
+
+        m_recv_req = REQ_NONE;
+        trace("start sampling");
+        setState(STATE_INITIAL);
+        return true;
+      }
+
+      bool
+      stopRequested(bool sampling = true)
+      {
+        if (m_recv_req != REQ_STOP_SAMPLING)
+          return false;
+
+        m_recv_req = REQ_NONE;
+
+        if (!sampling)
+        {
+          inf("received request to stop sampling, but not sampling");
+          return false;
+        }
+
+        trace("stop sampling");
+        setState(STATE_IDLE);
+        return true;
+      }
+
+      bool
+      pauseRequested(bool sampling = true)
+      {
+        if (!m_args.pausing_allowed || m_recv_req != REQ_PAUSE_SAMPLING)
+          return false;
+
+        m_recv_req = REQ_NONE;
+
+        if (!m_args.pausing_allowed)
+        {
+          inf("received request to pause sampling, but pausing is not allowed");
+          return false;
+        }
+
+        if (!sampling)
+        {
+          inf("received request to pause sampling, but not sampling");
+          return false;
+        }
+
+        m_paused_state = m_curr_state;
+        trace("pause sampling");
+        setState(STATE_PAUSED);
+        return true;
+      }
+
+      bool
+      resumeRequested(void)
+      {
+        if (m_recv_req != REQ_RESUME_SAMPLING)
+          return false;
+
+        m_recv_req = REQ_NONE;
+
+        if (!m_args.pausing_allowed)
+        {
+          inf("received request to resume sampling, but pausing is not allowed");
+          return false;
+        }
+
+        m_paused_state = STATE_UNKNOWN;
+        trace("resume sampling");
+        setState((m_paused_state != STATE_UNKNOWN) ? m_paused_state : STATE_IDLE);
+        return true;
+      }
+
+      bool
+      forceStateTransition(void)
+      {
+        if (m_recv_req != REQ_FORCE_STATE_TRANSITION)
+          return false;
+
+        m_recv_req = REQ_NONE;
+        trace("force state transition");
+        return true;
       }
 
       void
-      updateEntityState(void)
+      sample(bool start = true)
+      {
+        setPumps(start);
+
+        if (start)
+          m_sampling_timer.setTop(m_args.sampling_timeout);
+      }
+
+      bool
+      isSamplingOver(void)
+      {
+        return m_sampling_timer.overflow();
+      }
+
+      void
+      setState(State state)
+      {
+        m_curr_state = state;
+
+        switch (m_curr_state)
+        {
+          case STATE_IDLE:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_IDLE, "ready for sampling");
+            sample(false);
+            break;
+
+          case STATE_INITIAL:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_STARTING, "initializing sampling action");
+            break;
+
+          case STATE_SAMPLING:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_SAMPLING, "sampling");
+            sample();
+            break;
+
+          case STATE_COMPLETED:
+            updateSamplingState(IMC::SamplingAction::SAT_STATE_STOPPING, "sampling action completed");
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      void
+      updateSamplingState(IMC::SamplingAction::TypeEnum type, const std::string& description = "")
+      {
+        debug("updating sampling state report: type %d, description: %s", type, description.c_str());
+        m_sa_report.type = type;
+        m_sa_report.description = description;
+        dispatch(m_sa_report);
+      }
+
+      void
+      updateMachineState(void)
+      {
+        if (!isActive() || m_mode != MODE_AUTOMATIC)
+          return;
+
+        switch (m_curr_state)
+        {
+          case STATE_IDLE:
+            startRequested(false);
+            break;
+
+          case STATE_INITIAL:
+            setState(STATE_SAMPLING);
+            break;
+
+          case STATE_SAMPLING:
+            if (startRequested() || stopRequested() || pauseRequested())
+              break;
+
+            if (forceStateTransition() || isSamplingOver())
+            {
+              sample(false);
+              setState(STATE_COMPLETED);
+            }
+
+            break;
+
+          case STATE_COMPLETED:
+            setState(STATE_IDLE);
+            break;
+
+          case STATE_PAUSED:
+            resumeRequested();
+            break;
+
+          default:
+            setState(STATE_IDLE);
+            break;
+        }        
+      }
+
+      void
+      onReportEntityState(void) override
       {
         std::ostringstream ss;
         ss << (isActive() ? "active" : "idle");
@@ -350,7 +684,14 @@ namespace Payload
         {
           waitForMessages(1.0);
           updateMachineState();
-          updateEntityState();
+
+          if (m_report_state_timer.overflow())
+          {
+            if (isActive() && m_mode == MODE_AUTOMATIC)
+              dispatch(m_sa_report);
+
+            m_report_state_timer.reset();
+          }
         }
       }
     };
