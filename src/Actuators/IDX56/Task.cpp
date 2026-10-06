@@ -616,6 +616,26 @@ namespace Actuators
                setControllerGain(EC_PI_VELOCITY_CONTROLLER, EG_PIVC_FEED_FORWARD_ACCELERATION_GAIN, gains[3]);
       }
 
+      bool
+      getMaxAcceleration(unsigned int& value)
+      {
+        if (m_handle == nullptr)
+          return false;
+
+        m_error = 0;
+        return VCS_GetMaxAcceleration(m_handle, m_args.node_id, &value, &m_error) != 0 && m_error == 0;
+      }
+
+      bool
+      setMaxAcceleration(unsigned int value)
+      {
+        if (m_handle == nullptr)
+          return false;
+
+        m_error = 0;
+        return VCS_SetMaxAcceleration(m_handle, m_args.node_id, value, &m_error) != 0 && m_error == 0;
+      }
+
       void
       consume(const IMC::SetThrusterActuation* msg)
       {
