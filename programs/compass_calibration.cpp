@@ -34,6 +34,8 @@
 #include <fstream>
 #include <cstring>
 #include <cstdlib>
+#include <string>
+#include <vector>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -59,7 +61,14 @@ main(int32_t argc, char** argv)
 
   IMC::Message* msg = NULL;
 
-  DUNE::Navigation::CompassCalibration m_ccal;
+  // One calibration per method, to compare them on the same samples.
+  const std::vector<std::string> methods = {"Gyro-Aided", "Min-Max", "Circle Fit"};
+  std::vector<DUNE::Navigation::CompassCalibration> ccals(methods.size());
+  for (size_t i = 0; i < methods.size(); ++i)
+  {
+    std::vector<std::string> unknown;
+    ccals[i].setMethods({methods[i]}, unknown);
+  }
 
   unsigned ahrs_eid = 0;
   unsigned ccal_eid = 0;
@@ -75,13 +84,15 @@ main(int32_t argc, char** argv)
         if (ea->getSourceEntity() != ahrs_eid)
           continue;
 
-        m_ccal.updateDCM(*ea);
+        for (auto& c : ccals)
+          c.updateDCM(*ea);
       }
       else if (msg->getId() == DUNE_IMC_ANGULARVELOCITY)
       {
         IMC::AngularVelocity* av = static_cast<IMC::AngularVelocity*>(msg);
         if (av->getSourceEntity() == ahrs_eid)
-          m_ccal.updateRates(*av);
+          for (auto& c : ccals)
+            c.updateRates(*av);
       }
       else if (msg->getId() == DUNE_IMC_MAGNETICFIELD)
       {
@@ -95,7 +106,8 @@ main(int32_t argc, char** argv)
         if (mf->getSourceEntity() != ahrs_eid)
           continue;
 
-        m_ccal.updateField(*mf);
+        for (auto& c : ccals)
+          c.updateField(*mf);
       }
       else if (msg->getId() == DUNE_IMC_ENTITYINFO)
       {
@@ -117,28 +129,25 @@ main(int32_t argc, char** argv)
   }
 
   // Compute values.
-  Math::Matrix params;
-  if (m_ccal.getCalibrationParams(params))
+  for (size_t i = 0; i < methods.size(); ++i)
   {
-    std::cout << "New Parameters: " << params(0) << ", " << params(1) << ", " << params(2);
-    if (m_ccal.lastMethod() == DUNE::Navigation::CompassCalibration::METHOD_GYRO)
+    Math::Matrix params;
+    std::cout << methods[i] << ": ";
+    if (ccals[i].getCalibrationParams(params))
     {
-      const DUNE::Navigation::GyroAidedMagCalibration::Result& g = m_ccal.lastGyroResult();
-      std::cout << " (gyro-aided" << (m_ccal.lastZDetermined() ? "" : ", z not determined")
-                << "; sigma " << g.sigma[0] << ", " << g.sigma[1] << ", " << g.sigma[2]
-                << "; gyro bias " << Angles::degrees(g.bg[0]) << ", " << Angles::degrees(g.bg[1])
-                << ", " << Angles::degrees(g.bg[2]) << " deg/s; " << g.windows << " windows)";
+      std::cout << params(0) << ", " << params(1) << ", ";
+      if (ccals[i].lastZDetermined())
+        std::cout << params(2);
+      else
+        std::cout << "z not determined";
+      std::cout << " (" << ccals[i].lastResult().details << ")" << std::endl;
     }
     else
     {
-      std::cout << " (" << m_ccal.lastFit().bins << " heading bins, circle fit residual "
-                << 100.0 * m_ccal.lastFit().rms << "%)";
+      std::cout << "no calibration (" << ccals[i].failures() << ")" << std::endl;
     }
-    std::cout << std::endl;
   }
-  else
-    std::cout << "No calibration: " << m_ccal.binsCovered() << " of 24 heading bins covered"
-              << std::endl;
+
   delete is;
 
   return 0;

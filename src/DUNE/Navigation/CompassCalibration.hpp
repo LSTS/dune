@@ -27,16 +27,23 @@
 // Author: José Braga                                                       *
 //***************************************************************************
 
+
 #ifndef DUNE_NAVIGATION_COMPASS_CALIBRATION_HPP_INCLUDED_
 #define DUNE_NAVIGATION_COMPASS_CALIBRATION_HPP_INCLUDED_
 
 // ISO C++ 98 headers.
-#include <vector>
+#include <algorithm>
 #include <cmath>
 #include <limits>
+#include <memory>
+#include <string>
+#include <vector>
 
+#include <DUNE/Math/Angles.hpp>
+#include <DUNE/Math/Constants.hpp>
 #include <DUNE/Math/Matrix.hpp>
 #include <DUNE/IMC/Definitions.hpp>
+#include <DUNE/Utils/String.hpp>
 #include <DUNE/Navigation/HardIronEstimator.hpp>
 #include <DUNE/Navigation/GyroAidedMagCalibration.hpp>
 
@@ -44,47 +51,325 @@ namespace DUNE
 {
   namespace Navigation
   {
-    //! Hard-iron calibration from a compass calibration maneuver (turns).
-    //!
-    //! Preferred: the attitude-free gyro-aided estimate (GyroAidedMagCalibration),
-    //! fed with the same AHRS's angular rates. It gives x, y and z (z when the
-    //! pitch/roll changed enough) and is not biased by the accelerometer
-    //! attitude errors of a turning, wave-driven loiter, which moved levelled
-    //! calibrations by 1-3.5 % of the field.
-    //!
-    //! Fallback (no rates, or not determined well enough): centre of the circle
-    //! the levelled horizontal field traces as the heading changes, fitted to
-    //! per-heading-bin means; z: the midpoint of the levelled vertical field.
+    //! One magnetic field sample of a compass calibration, with the attitude
+    //! and angular rates of the same sensor at that time.
+    struct CalibrationSample
+    {
+      //! Time (s).
+      double t;
+      //! Body magnetic field.
+      double m[3];
+      //! Roll, pitch and heading (rad).
+      double phi, theta, psi;
+      //! Angular rates (rad/s), valid when rates is true.
+      double w[3];
+      bool rates;
+    };
+
+    //! Hard-iron calibration computed by a method.
+    struct CalibrationResult
+    {
+      //! Hard-iron offset (field units), body x, y, z. z is zero when not determined.
+      double b[3];
+      //! Whether b[2] was determined.
+      bool z_determined;
+      //! Gyro bias (rad/s), when the method estimates it.
+      double gyro_bias[3];
+      bool has_gyro_bias;
+      //! Method-specific quality figures, for the log.
+      std::string details;
+    };
+
+    //! A hard-iron calibration method fed with the samples of a maneuver.
+    class CalibrationMethod
+    {
+    public:
+      virtual
+      ~CalibrationMethod(void)
+      { }
+
+      virtual const char*
+      name(void) const = 0;
+
+      virtual void
+      clear(void) = 0;
+
+      virtual void
+      update(const CalibrationSample& s) = 0;
+
+      //! @param[out] r calibration.
+      //! @param[out] why reason when the calibration is not determined.
+      //! @return true when determined.
+      virtual bool
+      solve(CalibrationResult& r, std::string& why) = 0;
+    };
+
+    //! Attitude-free hard iron and gyro bias from the field kinematics
+    //! (GyroAidedMagCalibration). Not biased by the accelerometer attitude
+    //! errors of a turning, wave-driven loiter, which moved levelled
+    //! calibrations by 1-3.5 % of the field. z when pitch/roll changed enough.
+    class GyroAidedCalibration: public CalibrationMethod
+    {
+    public:
+      const char*
+      name(void) const override
+      {
+        return "Gyro-Aided";
+      }
+
+      void
+      clear(void) override
+      {
+        m_gyro.reset();
+      }
+
+      void
+      update(const CalibrationSample& s) override
+      {
+        if (s.rates)
+          m_gyro.add(s.t, s.m, s.w);
+      }
+
+      bool
+      solve(CalibrationResult& r, std::string& why) override
+      {
+        GyroAidedMagCalibration::Result g;
+        if (m_gyro.windows() < c_min_windows)
+        {
+          why = Utils::String::str("%u of %u windows (angular rates missing?)",
+                                   m_gyro.windows(), c_min_windows);
+          return false;
+        }
+        if (!m_gyro.solve(g))
+        {
+          why = "no solution";
+          return false;
+        }
+        if (g.sigma[0] >= c_max_sigma || g.sigma[1] >= c_max_sigma)
+        {
+          why = Utils::String::str("sigma x/y %.4f/%.4f above %.4f", g.sigma[0],
+                                   g.sigma[1], c_max_sigma);
+          return false;
+        }
+
+        r.z_determined = g.sigma[2] < c_max_sigma;
+        r.b[0] = g.b[0];
+        r.b[1] = g.b[1];
+        r.b[2] = r.z_determined ? g.b[2] : 0.0;
+        r.has_gyro_bias = true;
+        for (unsigned i = 0; i < 3; ++i)
+          r.gyro_bias[i] = g.bg[i];
+        r.details = Utils::String::str("sigma %.4f, %.4f, %.4f; gyro bias %.3f, %.3f, "
+                                       "%.3f deg/s; %u windows", g.sigma[0], g.sigma[1],
+                                       g.sigma[2], Math::Angles::degrees(g.bg[0]),
+                                       Math::Angles::degrees(g.bg[1]),
+                                       Math::Angles::degrees(g.bg[2]), g.windows);
+        return true;
+      }
+
+    private:
+      //! Windows (2 s each) needed.
+      static constexpr unsigned c_min_windows = 60;
+      //! Largest sigma of a component that is used (field units; 0.002 is
+      //! under 1 % of a 0.25 horizontal field).
+      static constexpr double c_max_sigma = 0.002;
+
+      GyroAidedMagCalibration m_gyro;
+    };
+
+    //! Midpoint of the extremes of the field levelled with the sensor's
+    //! roll/pitch (the original maneuver method). x/y only: the levelled
+    //! vertical field is the Earth's field plus z and does not give z.
+    class MinMaxCalibration: public CalibrationMethod
+    {
+    public:
+      const char*
+      name(void) const override
+      {
+        return "Min-Max";
+      }
+
+      void
+      clear(void) override
+      {
+        for (unsigned i = 0; i < 2; ++i)
+        {
+          m_max[i] = -std::numeric_limits<double>::max();
+          m_min[i] = std::numeric_limits<double>::max();
+        }
+        for (unsigned i = 0; i < c_bins; ++i)
+          m_bins[i] = false;
+      }
+
+      void
+      update(const CalibrationSample& s) override
+      {
+        double h[2];
+        HardIronEstimator::level(s.m, s.phi, s.theta, h[0], h[1]);
+        for (unsigned i = 0; i < 2; ++i)
+        {
+          m_max[i] = std::max(m_max[i], h[i]);
+          m_min[i] = std::min(m_min[i], h[i]);
+        }
+        double a = Math::Angles::normalizeRadian(s.psi) + Math::c_pi;
+        m_bins[std::min(c_bins - 1, (unsigned)(a / (Math::c_two_pi / c_bins)))] = true;
+      }
+
+      bool
+      solve(CalibrationResult& r, std::string& why) override
+      {
+        unsigned n = 0;
+        for (unsigned i = 0; i < c_bins; ++i)
+          n += m_bins[i] ? 1 : 0;
+        if (n < c_bins)
+        {
+          why = Utils::String::str("%u of %u heading bins covered", n, c_bins);
+          return false;
+        }
+
+        r.b[0] = (m_max[0] + m_min[0]) / 2;
+        r.b[1] = (m_max[1] + m_min[1]) / 2;
+        r.b[2] = 0.0;
+        r.z_determined = false;
+        r.has_gyro_bias = false;
+        r.details = Utils::String::str("levelled x %.4f..%.4f, y %.4f..%.4f", m_min[0],
+                                       m_max[0], m_min[1], m_max[1]);
+        return true;
+      }
+
+    private:
+      //! Heading bins (15 degrees) that must all be visited: a full turn.
+      static constexpr unsigned c_bins = 24;
+
+      double m_max[2], m_min[2];
+      bool m_bins[c_bins];
+    };
+
+    //! Centre of the circle the levelled horizontal field traces as the
+    //! heading changes, fitted to per-heading-bin means. x/y only.
+    class CircleFitCalibration: public CalibrationMethod
+    {
+    public:
+      CircleFitCalibration(void):
+        m_est(config()),
+        m_last(0.0)
+      { }
+
+      const char*
+      name(void) const override
+      {
+        return "Circle Fit";
+      }
+
+      void
+      clear(void) override
+      {
+        m_est.reset();
+      }
+
+      void
+      update(const CalibrationSample& s) override
+      {
+        double hx, hy;
+        HardIronEstimator::level(s.m, s.phi, s.theta, hx, hy);
+        m_last = s.t;
+        m_est.update(m_last, hx, hy, s.psi);
+      }
+
+      bool
+      solve(CalibrationResult& r, std::string& why) override
+      {
+        HardIronEstimator::Fit f;
+        if (!m_est.fit(m_last, f))
+        {
+          why = Utils::String::str("%u of 24 heading bins covered", f.bins);
+          return false;
+        }
+
+        r.b[0] = f.x;
+        r.b[1] = f.y;
+        r.b[2] = 0.0;
+        r.z_determined = false;
+        r.has_gyro_bias = false;
+        r.details = Utils::String::str("%u heading bins, residual %.1f%%", f.bins,
+                                       100.0 * f.rms);
+        return true;
+      }
+
+    private:
+      static HardIronEstimator::Config
+      config(void)
+      {
+        HardIronEstimator::Config cfg;
+        // A maneuver is one bounded data set: never forget a bin.
+        cfg.window = std::numeric_limits<double>::max();
+        return cfg;
+      }
+
+      HardIronEstimator m_est;
+      double m_last;
+    };
+
+    //! Hard-iron calibration from a compass calibration maneuver: every
+    //! configured method sees every sample, and the first one (in the
+    //! configured order) that determines a calibration gives it.
     class CompassCalibration
     {
     public:
-      //! Method behind the last successful getCalibrationParams().
-      enum Method
-      {
-        //! Gyro-aided (attitude-free).
-        METHOD_GYRO,
-        //! Levelled circle fit.
-        METHOD_CIRCLE
-      };
-
       CompassCalibration(void):
-        m_est(config()),
-        m_bins(0),
-        m_method(METHOD_CIRCLE)
+        m_rate_time(-1.0),
+        m_phi(0.0),
+        m_theta(0.0),
+        m_psi(0.0)
       {
+        std::vector<std::string> unknown;
+        setMethods(defaultMethods(), unknown);
+      }
+
+      //! Methods by priority, as named in configuration.
+      static std::vector<std::string>
+      defaultMethods(void)
+      {
+        return {"Gyro-Aided", "Min-Max"};
+      }
+
+      //! @return new method by name, or null when unknown.
+      static std::unique_ptr<CalibrationMethod>
+      create(const std::string& name)
+      {
+        if (name == "Gyro-Aided")
+          return std::unique_ptr<CalibrationMethod>(new GyroAidedCalibration);
+        if (name == "Min-Max")
+          return std::unique_ptr<CalibrationMethod>(new MinMaxCalibration);
+        if (name == "Circle Fit")
+          return std::unique_ptr<CalibrationMethod>(new CircleFitCalibration);
+        return nullptr;
+      }
+
+      //! Replace the methods (and clear the samples).
+      //! @param[in] names methods by priority.
+      //! @param[out] unknown names that are not methods (skipped).
+      void
+      setMethods(const std::vector<std::string>& names, std::vector<std::string>& unknown)
+      {
+        m_methods.clear();
+        for (const std::string& n : names)
+        {
+          std::unique_ptr<CalibrationMethod> m = create(n);
+          if (m)
+            m_methods.push_back(std::move(m));
+          else
+            unknown.push_back(n);
+        }
         clear();
       }
 
       void
       clear(void)
       {
-        m_est.reset();
-        m_phi = m_theta = m_psi = 0.0;
-        m_last = 0.0;
-        m_gyro.reset();
+        for (auto& m : m_methods)
+          m->clear();
         m_rate_time = -1.0;
-        m_zmax = -std::numeric_limits<double>::max();
-        m_zmin = std::numeric_limits<double>::max();
       }
 
       void
@@ -95,7 +380,7 @@ namespace DUNE
         m_psi = msg.psi;
       }
 
-      //! Angular velocity of the same sensor (enables the gyro-aided estimate).
+      //! Angular velocity of the same sensor.
       void
       updateRates(const IMC::AngularVelocity& msg)
       {
@@ -108,126 +393,89 @@ namespace DUNE
       void
       updateField(const IMC::MagneticField& msg)
       {
-        double m[3] = {msg.x, msg.y, msg.z};
-        double hx, hy;
-        HardIronEstimator::level(m, m_phi, m_theta, hx, hy);
-        m_last = msg.getTimeStamp();
-        m_est.update(m_last, hx, hy, m_psi);
-        if (m_rate_time >= 0.0 && std::fabs(m_last - m_rate_time) < c_rate_age)
-          m_gyro.add(m_last, m, m_rate);
+        CalibrationSample s;
+        s.t = msg.getTimeStamp();
+        s.m[0] = msg.x;
+        s.m[1] = msg.y;
+        s.m[2] = msg.z;
+        s.phi = m_phi;
+        s.theta = m_theta;
+        s.psi = m_psi;
+        s.rates = m_rate_time >= 0.0 && std::fabs(s.t - m_rate_time) < c_rate_age;
+        for (unsigned i = 0; i < 3; ++i)
+          s.w[i] = m_rate[i];
 
-        double hz = -m[0] * std::sin(m_theta)
-                    + m[1] * std::cos(m_theta) * std::sin(m_phi)
-                    + m[2] * std::cos(m_theta) * std::cos(m_phi);
-        if (hz > m_zmax)
-          m_zmax = hz;
-        if (hz < m_zmin)
-          m_zmin = hz;
+        for (auto& m : m_methods)
+          m->update(s);
       }
 
       //! Compute the calibration (1x3: x, y, z) and clear the samples.
-      //! @return false when the headings covered are too few for a fit (the
-      //! samples are kept, so the maneuver can continue).
+      //! @return false when no method determined one (the samples are kept,
+      //! so the maneuver can continue; failures() says why).
       bool
       getCalibrationParams(Math::Matrix& params)
       {
         params.resizeAndFill(1, 3, 0.0);
+        m_failures.clear();
 
-        GyroAidedMagCalibration::Result g;
-        if (m_gyro.windows() >= c_min_windows && m_gyro.solve(g)
-            && g.sigma[0] < c_max_sigma && g.sigma[1] < c_max_sigma)
+        for (auto& m : m_methods)
         {
-          params(0) = g.b[0];
-          params(1) = g.b[1];
-          params(2) = g.sigma[2] < c_max_sigma ? g.b[2] : (m_zmax + m_zmin) / 2;
-          m_gyro_result = g;
-          m_method = METHOD_GYRO;
-          clear();
-          return true;
+          std::string why;
+          if (m->solve(m_result, why))
+          {
+            m_method = m->name();
+            for (unsigned i = 0; i < 3; ++i)
+              params(i) = m_result.b[i];
+            clear();
+            return true;
+          }
+          m_failures += (m_failures.empty() ? "" : "; ") + std::string(m->name()) + ": " + why;
         }
 
-        HardIronEstimator::Fit f;
-        if (!m_est.fit(m_last, f))
-        {
-          m_bins = f.bins;
-          return false;
-        }
-        params(0) = f.x;
-        params(1) = f.y;
-        params(2) = (m_zmax + m_zmin) / 2;
-        m_fit = f;
-        m_method = METHOD_CIRCLE;
-        clear();
-        return true;
+        if (m_methods.empty())
+          m_failures = "no calibration methods";
+        return false;
       }
 
       //! Method behind the last successful getCalibrationParams().
-      Method
+      const std::string&
       lastMethod(void) const
       {
         return m_method;
       }
 
-      //! The gyro-aided result behind the last METHOD_GYRO calibration
-      //! (hard iron, gyro bias, their sigmas).
-      const GyroAidedMagCalibration::Result&
-      lastGyroResult(void) const
+      //! Result of the last successful getCalibrationParams().
+      const CalibrationResult&
+      lastResult(void) const
       {
-        return m_gyro_result;
+        return m_result;
       }
 
-      //! Whether the z of the last METHOD_GYRO calibration was determined.
+      //! Whether the z of the last calibration was determined (zero otherwise).
       bool
       lastZDetermined(void) const
       {
-        return m_method == METHOD_GYRO && m_gyro_result.sigma[2] < c_max_sigma;
+        return m_result.z_determined;
       }
 
-      //! The fit behind the last successful getCalibrationParams().
-      const HardIronEstimator::Fit&
-      lastFit(void) const
+      //! Why each method failed in the last unsuccessful getCalibrationParams().
+      const std::string&
+      failures(void) const
       {
-        return m_fit;
-      }
-
-      //! Heading bins covered when getCalibrationParams() last failed.
-      unsigned
-      binsCovered(void) const
-      {
-        return m_bins;
+        return m_failures;
       }
 
     private:
       //! Largest age of the rate sample paired with a field sample (s).
       static constexpr double c_rate_age = 0.1;
-      //! Windows (2 s each) the gyro-aided estimate needs.
-      static constexpr unsigned c_min_windows = 60;
-      //! Largest sigma of a gyro-aided component that is used (field units;
-      //! 0.002 is under 1 % of a 0.25 horizontal field).
-      static constexpr double c_max_sigma = 0.002;
 
-      static HardIronEstimator::Config
-      config(void)
-      {
-        HardIronEstimator::Config cfg;
-        // A maneuver is one bounded data set: never forget a bin.
-        cfg.window = std::numeric_limits<double>::max();
-        return cfg;
-      }
-
-      HardIronEstimator m_est;
-      double m_phi, m_theta, m_psi;
-      double m_zmin, m_zmax;
-      //! Time of the last field sample.
-      double m_last;
-      HardIronEstimator::Fit m_fit;
-      unsigned m_bins;
-      //! Gyro-aided estimate and the latest rate sample.
-      GyroAidedMagCalibration m_gyro;
-      double m_rate[3];
+      std::vector<std::unique_ptr<CalibrationMethod>> m_methods;
+      CalibrationResult m_result{};
+      std::string m_method;
+      std::string m_failures;
+      double m_rate[3] = {0.0, 0.0, 0.0};
       double m_rate_time;
-      GyroAidedMagCalibration::Result m_gyro_result;
-      Method m_method;
+      double m_phi, m_theta, m_psi;
     };
   }
 }
