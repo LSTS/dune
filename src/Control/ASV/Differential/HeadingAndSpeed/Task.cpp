@@ -55,7 +55,7 @@ namespace Control
           float act_max;
           //! Maximum Motor differential thrust.
           float act_diff_max;
-          //! Ramp actuation limit when the value is rising in actuation per second
+          //! Ramp actuation limit, in actuation per second
           float act_ramp;
           //! End of scale value for RPM's at 100% of thurst
           float rpm_eos;
@@ -89,6 +89,8 @@ namespace Control
           std::string eid_starboard;
           //! Log the size of each PID parcel
           bool log_parcels;
+          //! Log common and differential thrust
+          bool log_thrust_parcel;
         };
 
         struct Task: public Tasks::Task
@@ -105,6 +107,8 @@ namespace Control
           IMC::ControlParcel m_parcel_rpm;
           //! Control Parcels for yaw controller
           IMC::ControlParcel m_parcel_yaw;
+          //! Control Parcels for common and differential thrust
+          IMC::ControlParcel m_parcel_thrust;
           //! Desired heading.
           float m_desired_yaw;
           //! Desired speed.
@@ -127,6 +131,8 @@ namespace Control
           uint16_t m_rpm_eid[2];
           //! Control loops last reference
           uint32_t m_scope_ref;
+          //! Previous measured yaw.
+          float m_prev_yaw;
           //! Task arguments.
           Arguments m_args;
 
@@ -213,11 +219,16 @@ namespace Control
 
             param("Ramp Actuation Limit", m_args.act_ramp)
             .defaultValue("0.0")
-            .description("Ramp actuation limit when the value is rising in actuation per second");
+            .description("Ramp actuation limit, in actuation per second");
 
             param("Log PID Parcels", m_args.log_parcels)
             .defaultValue("false")
             .description("Log the size of each PID parcel");
+
+            param("Log Thrust Parcel", m_args.log_thrust_parcel)
+            .defaultValue("false")
+            .description("Log common and differential thrust. "
+                         "Common logged as p, differential as d.");
 
             m_desired_speed = 0.0;
             m_speed_units = IMC::SUNITS_PERCENTAGE;
@@ -263,6 +274,7 @@ namespace Control
               m_parcel_rpm.setSourceEntity(reserveEntity(label + " - RPM Parcel"));
               m_parcel_mps.setSourceEntity(reserveEntity(label + " - MPS Parcel"));
               m_parcel_yaw.setSourceEntity(reserveEntity(label + " - Yaw Parcel"));
+              m_parcel_thrust.setSourceEntity(reserveEntity(label + " - Thrust Parcel"));
             }
           }
 
@@ -293,6 +305,7 @@ namespace Control
           void
           onActivation(void)
           {
+            m_delta.clear();
             setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
           }
 
@@ -311,7 +324,11 @@ namespace Control
             m_mps_pid.reset();
             m_yaw_pid.reset();
 
+            m_prev_yaw = 0;
+            m_delta.clear();
             m_previous_rpm = 0;
+
+            m_common = false;
 
             for (uint8_t i = 0; i < 2; i++)
             {
@@ -377,16 +394,21 @@ namespace Control
 
             // Compute time delta.
             double tstep = m_delta.getDelta();
-            // Check if we have a valid time delta.
-            if (tstep < 0.0)
+            // Initialize heading history when timing starts or is invalid.
+            if (tstep <= 0.0)
+            {
+              m_prev_yaw = msg->psi;
               return;
+            }
 
             float thrust_com = 0;
             float err_yaw = Angles::normalizeRadian(m_desired_yaw - msg->psi);
             float rpm = (m_rpm[0].value + m_rpm[1].value) / 2;
 
-            // Yaw controller.
-            float thrust_diff = m_yaw_pid.step(tstep, err_yaw);
+            // Differentiate measured yaw to avoid kicks from heading reference changes.
+            float deriv_yaw = -Angles::normalizeRadian(msg->psi - m_prev_yaw) / tstep;
+            float thrust_diff = m_yaw_pid.step(tstep, err_yaw, deriv_yaw);
+            m_prev_yaw = msg->psi;
 
             // Thrust forward.
             if (thrustForward(err_yaw))
@@ -412,6 +434,8 @@ namespace Control
                                             - m_args.act_diff_max,
                                             m_args.act_diff_max);
             }
+
+            logThrustParcel(thrust_com, thrust_diff);
 
             m_act[0].value = thrust_com + thrust_diff;
             m_act[1].value = thrust_com - thrust_diff;
@@ -522,12 +546,14 @@ namespace Control
             m_parcel_mps.a = m_desired_speed * m_args.mps_ffgain;
             rpm += m_parcel_mps.a;
 
+            // Bound the target before ramping so the minimum RPM does not
+            // cause a step when accelerating from zero.
+            rpm = Math::trimValue(rpm, m_args.min_rpm, m_args.max_rpm);
+
             // trim acceleration in rpms
             rpm = Math::trimValue(rpm, m_previous_rpm - m_args.max_accel * timestep,
                                   m_previous_rpm + m_args.max_accel * timestep);
 
-            // trim rpm value
-            rpm = Math::trimValue(rpm, m_args.min_rpm, m_args.max_rpm);
             m_previous_rpm = rpm;
             return rpm;
           }
@@ -538,10 +564,11 @@ namespace Control
           void
           dispatchThrust(float value, double timestep, uint8_t id)
           {
-            if ((value > m_last_act[id].value) && (m_args.act_ramp > 0.0))
+            if (m_args.act_ramp > 0.0)
             {
-              value = m_last_act[id].value + trimValue((value - m_last_act[id].value) / timestep,
-                                                      0.0, m_args.act_ramp * timestep);
+              double max_delta = timestep <= 0.0 ? 0.0 : m_args.act_ramp * timestep;
+              value = m_last_act[id].value + trimValue(value - m_last_act[id].value,
+                                                      -max_delta, max_delta);
             }
 
             m_act[id].value = trimValue(value, -m_args.act_max, m_args.act_max);
@@ -569,6 +596,10 @@ namespace Control
                 m_common = true;
             }
 
+            // Restart the MPS acceleration ramp from zero after turning in place.
+            if (!m_common)
+              m_previous_rpm = 0.0;
+
             return m_common;
           }
 
@@ -595,6 +626,17 @@ namespace Control
                 m_act[(i + 1) % 2].value -= delta;
               }
             }
+          }
+
+          void
+          logThrustParcel(float common, float diff)
+          {
+            if (!m_args.log_thrust_parcel)
+              return;
+
+            m_parcel_thrust.p = common;
+            m_parcel_thrust.d = diff;
+            dispatch(m_parcel_thrust);
           }
 
           void

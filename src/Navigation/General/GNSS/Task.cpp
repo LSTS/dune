@@ -715,9 +715,6 @@ namespace Navigation
             m_gnss_input = input->second;
             sendDistress(String::str("Currently using GNSS input '%s'.", resolveEntity(m_gnss_input->getEntityId()).c_str()));
           }
-
-          if (m_gnss_source == priority)
-            sendFix();
         }
 
         void
@@ -956,6 +953,7 @@ namespace Navigation
         task(void)
         {
           checkInputTimeouts();
+          sendFix();
         }
       };
     }
