@@ -62,43 +62,43 @@ namespace Maneuver
 
         param("Doris -- Setup Timeout", m_sampler_config.doris.setup_timeout)
         .defaultValue("10.0")
-        .minimumValue("0.1")
+        .minimumValue("1.0")
         .units(Units::Second)
         .description("Maximum time allowed for sampling setup");
 
         param("Doris -- Sampling Timeout", m_sampler_config.doris.sampling_timeout)
         .defaultValue("5.0")
-        .minimumValue("0.1")
+        .minimumValue("1.0")
         .units(Units::Second)
         .description("Maximum time without a sampling state update");
 
         param("Doris -- Alignment Threshold", m_sampler_config.doris.alignment_threshold)
         .defaultValue("15.0")
-        .minimumValue("0.1")
+        .minimumValue("5.0")
         .units(Units::Degree)
         .description("Threshold for alignment during sampling repositioning");
 
         param("RedX -- Setup Timeout", m_sampler_config.redx.setup_timeout)
         .defaultValue("10.0")
-        .minimumValue("0.1")
+        .minimumValue("1.0")
         .units(Units::Second)
         .description("Maximum time allowed for sampling setup");
 
         param("RedX -- Sampling Timeout", m_sampler_config.redx.sampling_timeout)
         .defaultValue("5.0")
-        .minimumValue("0.1")
+        .minimumValue("1.0")
         .units(Units::Second)
         .description("Maximum time without a sampling state update");
 
         param("WhiteX -- Setup Timeout", m_sampler_config.whitex.setup_timeout)
         .defaultValue("10.0")
-        .minimumValue("0.1")
+        .minimumValue("1.0")
         .units(Units::Second)
         .description("Maximum time allowed for sampling setup");
 
         param("WhiteX -- Sampling Timeout", m_sampler_config.whitex.sampling_timeout)
         .defaultValue("5.0")
-        .minimumValue("0.1")
+        .minimumValue("1.0")
         .units(Units::Second)
         .description("Maximum time without a sampling state update");
 
