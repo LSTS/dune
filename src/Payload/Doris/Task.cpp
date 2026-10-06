@@ -76,6 +76,11 @@ namespace Payload
       std::string col_motor_elabel;
       //! Collector's disks motor id.
       uint8_t col_motor_id;
+      //! Collector's disks motor actuation settings
+      //! {maximum motor rpm, ratio motor:disks}.
+      std::vector<float> col_disks_settings;
+      //! Collector's disks rpm during sampling.
+      int col_disks_rpm;
       //! Collector's water flow source entity label.
       std::string col_water_flow_elabel;
       //! Collector's pumps power channel labels.
@@ -305,6 +310,21 @@ namespace Payload
         param("Collector -- Motor - Id", m_args.col_motor_id)
         .editable(false)
         .description("Id of the motor to control the collector's disks.");
+
+        param("Collector -- Motor - Settings", m_args.col_disks_settings)
+        .size(2)
+        .defaultValue("1000.0, 1.0")
+        .editable(false)
+        .description("Settings for the collector's disks motor: "
+                     "{maximum motor rpm, ratio motor:disks}.");
+
+        param("Collector -- Disks RPM", m_args.col_disks_rpm)
+        .defaultValue("1000")
+        .minimumValue("0")
+        .units(Units::RPM)
+        .visibility(Tasks::Parameter::VISIBILITY_USER)
+        .scope(Tasks::Parameter::SCOPE_MANEUVER)
+        .description("RPM of the collector's disks during sampling.");
 
         param("Collector -- Pumps - Power Channel Names", m_args.col_pumps_pwr_ch_labels)
         .editable(false)
@@ -939,9 +959,19 @@ namespace Payload
       }
 
       void
-      setCollectorMotor(bool on)
+      setCollectorDisks(bool state)
       {
-        setMotor(on ? c_collector_motor_actuation : 0.0f);
+        setCollectorMotor(state ? m_args.col_disks_rpm * m_args.col_disks_settings[1] : 0);
+      }
+
+      void
+      setCollectorMotor(int value)
+      {
+        float act = 0.0f;
+        if (value > 0 && value <= m_args.col_disks_settings[0])
+          act = static_cast<float>(value) / m_args.col_disks_settings[0];
+
+        setMotor(act);
       }
 
       void
@@ -955,7 +985,7 @@ namespace Payload
       void
       setCollection(bool state)
       {
-        setCollectorMotor(state);
+        setCollectorDisks(state);
         setCollectorPumps(state);
 
         if (state)
@@ -1052,7 +1082,7 @@ namespace Payload
       void
       setPurge(bool state, bool with_collection = false)
       {
-        setCollectorMotor(state && with_collection);
+        setCollectorDisks(state && with_collection);
         setCollectorPumps(state && with_collection);
         setStoragePurgeValve(state);
         setStoragePumps(state);
