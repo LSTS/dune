@@ -527,7 +527,8 @@ namespace Maneuver
         return any;
       }
 
-      //! Hand the z of a dispatched calibration to the channel's attitude filter.
+      //! Hand what a dispatched calibration determined beyond x/y (z, gyro
+      //! bias) to the channel's attitude filter, and save it there.
       //! @param[in] channel calibration channel.
       void
       setFilterOffset(const CalibrationChannel& channel)
@@ -535,21 +536,37 @@ namespace Maneuver
         if (channel.filter.empty())
           return;
 
-        if (!channel.ccal.lastZDetermined())
-        {
-          war(DTR("%s: z not determined, '%s' hard-iron offset unchanged"),
-              channel.label.c_str(), channel.filter.c_str());
-          return;
-        }
-
-        IMC::EntityParameter p;
-        p.name = "Hard-Iron Offset";
-        p.value = String::str("0.0, 0.0, %.4f", channel.mfield.z);
-
         IMC::SetEntityParameters sep;
         sep.setDestination(getSystemId());
         sep.name = channel.filter;
-        sep.params.push_back(p);
+
+        if (channel.ccal.lastZDetermined())
+        {
+          IMC::EntityParameter p;
+          p.name = "Hard-Iron Offset";
+          p.value = String::str("0.0, 0.0, %.4f", channel.mfield.z);
+          sep.params.push_back(p);
+        }
+        else
+        {
+          war(DTR("%s: z not determined, '%s' hard-iron offset unchanged"),
+              channel.label.c_str(), channel.filter.c_str());
+        }
+
+        const DUNE::Navigation::CalibrationResult& r = channel.ccal.lastResult();
+        if (r.has_gyro_bias)
+        {
+          IMC::EntityParameter p;
+          p.name = "Gyro Bias";
+          p.value = String::str("%.3f, %.3f, %.3f", Angles::degrees(r.gyro_bias[0]),
+                                Angles::degrees(r.gyro_bias[1]),
+                                Angles::degrees(r.gyro_bias[2]));
+          sep.params.push_back(p);
+        }
+
+        if (sep.params.empty())
+          return;
+
         dispatch(sep, DF_LOOP_BACK);
 
         IMC::SaveEntityParameters sp;
@@ -557,8 +574,10 @@ namespace Maneuver
         sp.name = channel.filter;
         dispatch(sp, DF_LOOP_BACK);
 
-        inf(DTR("%s: '%s' hard-iron offset set to %s"), channel.label.c_str(),
-            channel.filter.c_str(), p.value.c_str());
+        IMC::MessageList<IMC::EntityParameter>::const_iterator itr = sep.params.begin();
+        for (; itr != sep.params.end(); ++itr)
+          inf(DTR("%s: '%s' %s set to %s"), channel.label.c_str(), channel.filter.c_str(),
+              (*itr)->name.c_str(), (*itr)->value.c_str());
       }
 
       //! Clear calibration data of all AHRS channels.
