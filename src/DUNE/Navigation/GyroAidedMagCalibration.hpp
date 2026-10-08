@@ -33,6 +33,7 @@
 // ISO C++ 98 headers.
 #include <algorithm>
 #include <cmath>
+#include <deque>
 #include <vector>
 
 namespace DUNE
@@ -156,6 +157,15 @@ namespace DUNE
           open(t, m, w);
       }
 
+      //! Forget the windows that ended before t (sliding window).
+      //! @param[in] t time (s).
+      void
+      forget(double t)
+      {
+        while (!m_rows.empty() && m_rows.front().t1 < t)
+          m_rows.pop_front();
+      }
+
       //! Windows collected so far.
       unsigned
       windows(void) const
@@ -247,6 +257,8 @@ namespace DUNE
         double y[3];
         //! Window length (s).
         double T;
+        //! Window end time (s).
+        double t1;
       };
 
       static void
@@ -300,6 +312,7 @@ namespace DUNE
         for (unsigned i = 0; i < 3; ++i)
           r.y[i] = m_m[i] - m_m0[i] + m_int_cross[i];
         r.T = m_t - m_t0;
+        r.t1 = m_t;
         m_rows.push_back(r);
       }
 
@@ -340,7 +353,7 @@ namespace DUNE
       }
 
       Config m_cfg;
-      std::vector<Row> m_rows;
+      std::deque<Row> m_rows;
       //! Window being integrated.
       bool m_open;
       double m_t0, m_t;

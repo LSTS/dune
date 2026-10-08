@@ -42,6 +42,7 @@ namespace DUNE
 #include <DUNE/Navigation/CompassCalibration.hpp>
 #include <DUNE/Navigation/HardIronEstimator.hpp>
 #include <DUNE/Navigation/GyroAidedMagCalibration.hpp>
+#include <DUNE/Navigation/HardIronMonitor.hpp>
 #include <DUNE/Navigation/KalmanFilter.hpp>
 #include <DUNE/Navigation/Ranging.hpp>
 #include <DUNE/Navigation/StreamEstimator.hpp>
