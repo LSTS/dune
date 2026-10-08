@@ -105,6 +105,8 @@ namespace Sensors
       double timeout_failure;
       //! Calibration time stamp
       std::string calib_time;
+      //! Age (days) above which the calibration is reported as old.
+      double calib_age;
       //! Flag not to limit minimum read
       bool min_read_flag;
     };
@@ -144,6 +146,8 @@ namespace Sensors
       double m_tstamp;
       //! Watchdog.
       Counter<double> m_wdog;
+      //! Calibration age checked (once per run).
+      bool m_age_checked = false;
       //! Entity state timer.
       Counter<double> m_state_timer;
       //! Sample count.
@@ -203,6 +207,12 @@ namespace Sensors
         .description("Date of last successful calibration")
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("N/A");
+
+        param("Calibration Age Warning", m_args.calib_age)
+        .defaultValue("30")
+        .minimumValue("0")
+        .description("Warn at start-up when the last compass calibration is older "
+                     "than this many days (or unknown). 0 disables the warning");
 
         param("Set minimum read - Flag", m_args.min_read_flag)
         .description("Flag to limit IO read. Set to false on newer linux versions")
@@ -282,12 +292,31 @@ namespace Sensors
         return false;
       }
 
+      //! Warn (once) when the compass calibration is old or unknown.
+      void
+      checkCalibrationAge(void)
+      {
+        if (m_age_checked || m_args.calib_age <= 0.0)
+          return;
+        m_age_checked = true;
+
+        double days;
+        if (!Navigation::calibrationAge(m_args.calib_time, Clock::getSinceEpoch(), days))
+          war(DTR("compass calibration date unknown ('%s'): perform a compass "
+                  "calibration maneuver"), m_args.calib_time.c_str());
+        else if (days > m_args.calib_age)
+          war(DTR("compass calibrated %.0f days ago (%s): perform a compass "
+                  "calibration maneuver"), days, m_args.calib_time.c_str());
+      }
+
       //! Device may be initialized.
       void
       onInitializeDevice() override
       {
         // Need to reset monitor watchdog
         m_wdog.reset();
+
+        checkCalibrationAge();
 
         // Calibrate sensor.
         runCalibration();

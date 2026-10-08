@@ -246,5 +246,16 @@ main(void)
                  none.failures().find("no magnetic field samples") != std::string::npos);
   }
 
+  {
+    // Calibration age from the drivers' 'Last Calibration Time'.
+    double days = -1.0;
+    // 2022-08-25 12:00 UTC is 90.5 days after 2022-05-27 00:00.
+    bool ok = DUNE::Navigation::calibrationAge("2022-05-27 14:32", 1661428800.0, days);
+    test.boolean("age: 90 days", ok && std::fabs(days - 90.5) < 1e-6);
+    ok = DUNE::Navigation::calibrationAge("2000-03-01 00:00", 951868800.0, days);
+    test.boolean("age: leap year date", ok && std::fabs(days) < 1e-6);
+    test.boolean("age: N/A refused", !DUNE::Navigation::calibrationAge("N/A", 0.0, days));
+  }
+
   return test.getReturnValue();
 }

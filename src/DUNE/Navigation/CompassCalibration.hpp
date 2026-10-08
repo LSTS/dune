@@ -34,6 +34,7 @@
 // ISO C++ 98 headers.
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <limits>
 #include <memory>
 #include <string>
@@ -322,6 +323,32 @@ namespace DUNE
       HardIronEstimator m_est;
       double m_last;
     };
+
+    //! Age of a calibration stamped "YYYY-MM-DD HH:MM" (the sensor drivers'
+    //! 'Last Calibration Time'), at day resolution.
+    //! @param[in] stamp calibration time.
+    //! @param[in] now current time (s since the epoch).
+    //! @param[out] days age.
+    //! @return false when stamp is not a date (e.g. "N/A").
+    inline bool
+    calibrationAge(const std::string& stamp, double now, double& days)
+    {
+      int y, m, d;
+      if (std::sscanf(stamp.c_str(), "%d-%d-%d", &y, &m, &d) != 3
+          || m < 1 || m > 12 || d < 1 || d > 31)
+        return false;
+
+      // Days since 1970-01-01 of a civil date (H. Hinnant's algorithm).
+      y -= m <= 2;
+      int era = (y >= 0 ? y : y - 399) / 400;
+      int yoe = y - era * 400;
+      int doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;
+      int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+      double epoch_days = era * 146097.0 + doe - 719468.0;
+
+      days = now / 86400.0 - epoch_days;
+      return true;
+    }
 
     //! Hard-iron calibration from a compass calibration maneuver: every
     //! configured method sees every sample, and the first one (in the
