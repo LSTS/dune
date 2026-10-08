@@ -80,6 +80,10 @@ namespace Simulators
       std::vector<double> hard_iron;
       //! Magnetic field standard deviation.
       double stdev_field;
+      //! Acceleration is the specific force (gravity included).
+      bool gravity;
+      //! Constant bias added to the angular velocity (deg/s).
+      std::vector<double> agvel_bias;
     };
 
     //! %IMU simulator task.
@@ -173,6 +177,19 @@ namespace Simulators
         .defaultValue("0.001")
         .description("White noise added to magnetic field readings");
 
+        param("Angular Velocity Bias", m_args.agvel_bias)
+        .units(Units::DegreePerSecond)
+        .size(3)
+        .defaultValue("0.0, 0.0, 0.0")
+        .description("Constant bias added to the angular velocity readings (x, y, z), "
+                     "as a MEMS gyro's turn-on bias");
+
+        param("Include Gravity", m_args.gravity)
+        .defaultValue("false")
+        .description("Output the specific force, as a real accelerometer does "
+                     "(needed by the attitude filters). Off: kinematic acceleration "
+                     "only");
+
         // Register consumers.
         bind<IMC::SimulatedState>(this);
       }
@@ -240,6 +257,7 @@ namespace Simulators
           m_heading_offset += Angles::radians(m_args.gyro_bias / 3600) * tstep;
 
           m_euler.setTimeStamp(msg->getTimeStamp());
+          m_euler.time = msg->getTimeStamp();
           dispatch(m_euler, DF_KEEP_TIME);
         }
 
@@ -247,6 +265,9 @@ namespace Simulators
         m_agvel.x = Angles::normalizeRadian(msg->p + m_prng->gaussian() * Angles::radians(m_args.stdev_agvel));
         m_agvel.y = Angles::normalizeRadian(msg->q + m_prng->gaussian() * Angles::radians(m_args.stdev_agvel));
         m_agvel.z = Angles::normalizeRadian(msg->r + m_prng->gaussian() * Angles::radians(m_args.stdev_agvel));
+        m_agvel.x += Angles::radians(m_args.agvel_bias[0]);
+        m_agvel.y += Angles::radians(m_args.agvel_bias[1]);
+        m_agvel.z += Angles::radians(m_args.agvel_bias[2]);
 
         // Compute acceleration values using simulated state velocity fields.
         m_accel.x = (msg->u - m_vel[0]) / tstep;
@@ -258,6 +279,17 @@ namespace Simulators
         m_accel.y = DUNE::Math::trimValue(m_accel.y, -macc, macc);
         m_accel.z = DUNE::Math::trimValue(m_accel.z, -macc, macc);
 
+        // Specific force: at rest the accelerometer reads (0, 0, -g) when level.
+        if (m_args.gravity)
+        {
+          double g[3];
+          BodyFixedFrame::toBodyFrame(msg->phi, msg->theta, msg->psi,
+                                      0.0, 0.0, -Math::c_gravity, &g[0], &g[1], &g[2]);
+          m_accel.x += g[0];
+          m_accel.y += g[1];
+          m_accel.z += g[2];
+        }
+
         // Store velocity for next iteration.
         m_vel[0] = msg->u;
         m_vel[1] = msg->v;
@@ -265,7 +297,9 @@ namespace Simulators
 
         // Define messages timestamp and dispatch them to the bus.
         m_agvel.setTimeStamp(msg->getTimeStamp());
+        m_agvel.time = msg->getTimeStamp();
         m_accel.setTimeStamp(msg->getTimeStamp());
+        m_accel.time = msg->getTimeStamp();
         dispatch(m_agvel, DF_KEEP_TIME);
         dispatch(m_accel, DF_KEEP_TIME);
 
@@ -280,6 +314,7 @@ namespace Simulators
           m_field.y += m_args.hard_iron[1] + m_prng->gaussian() * m_args.stdev_field;
           m_field.z += m_args.hard_iron[2] + m_prng->gaussian() * m_args.stdev_field;
           m_field.setTimeStamp(msg->getTimeStamp());
+          m_field.time = msg->getTimeStamp();
           dispatch(m_field, DF_KEEP_TIME);
         }
 
@@ -297,7 +332,9 @@ namespace Simulators
           m_agdel.timestep = tstep;
 
           m_agdel.setTimeStamp(msg->getTimeStamp());
+          m_agdel.time = msg->getTimeStamp();
           m_vdel.setTimeStamp(msg->getTimeStamp());
+          m_vdel.time = msg->getTimeStamp();
           dispatch(m_agdel, DF_KEEP_TIME);
           dispatch(m_vdel, DF_KEEP_TIME);
         }
