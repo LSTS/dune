@@ -94,15 +94,16 @@ namespace Navigation
         //! Label of the entity producing the inertial/magnetic measurements.
         //! Empty disables source filtering.
         std::string elabel_imu;
+        //! Gyro input: "Delta Angles" or "Angular Velocity".
+        std::string rate_source;
         //! Hard-iron offset subtracted from the body x/y/z field.
         std::vector<double> hi_offset;
-        //! Apply full-coverage hard-iron fits (otherwise only monitor).
-        bool hi_apply;
-        //! Heading bins needed for a fit.
-        unsigned hi_min_bins;
-        //! Time after which an unused heading bin is forgotten (s).
+        //! Initial gyro bias (deg/s), body x, y, z.
+        std::vector<double> gyro_bias;
+        //! Sliding window of the hard-iron monitor (s).
         double hi_window;
-        //! Opposite-heading field mismatch that requests a calibration.
+        //! Residual hard iron, as a fraction of the horizontal field, that
+        //! requests a calibration.
         double hi_threshold;
         //! Depth beyond which the field is monitored (m).
         double hi_depth;
@@ -124,9 +125,9 @@ namespace Navigation
         double m_dtheta[3];
         //! Latest magnetic field sample.
         double m_mag[3];
-        //! Hard-iron monitor: checks the offset in use against the heading
-        //! dependence of the field and requests a calibration when it is wrong.
-        DUNE::Navigation::HardIronEstimator m_hi;
+        //! Hard-iron monitor: gyro-aided estimate of the residual hard iron;
+        //! requests a calibration when it is too large.
+        DUNE::Navigation::HardIronMonitor m_hi;
         //! Latest depth (m), negative until one arrives.
         double m_depth;
         //! Entity id of the depth source, UINT_MAX for any.
@@ -135,6 +136,9 @@ namespace Navigation
         double m_dt_meas;
         //! Device time of the previous filter step.
         double m_last_time;
+        //! Continuous device clock (s): the sum of the filter time steps. The
+        //! device time itself may wrap (the LIMU's counts 0-64 s).
+        double m_clock;
         //! Entity id of the measurement source, UINT_MAX if unresolved.
         unsigned m_imu_eid;
         //! Filter measurements by source entity.
@@ -155,6 +159,7 @@ namespace Navigation
           m_depth_eid(std::numeric_limits<unsigned>::max()),
           m_dt_meas(0.0),
           m_last_time(-1.0),
+          m_clock(0.0),
           m_imu_eid(std::numeric_limits<unsigned>::max()),
           m_filter(false),
           m_setup(false),
@@ -202,32 +207,38 @@ namespace Navigation
             .description("Hard-iron offset (body x, y, z) subtracted from the magnetic "
                          "field, on top of any calibration the sensor applies (sensors "
                          "such as the LIMU correct x/y only: put the gyro-aided z of the "
-                         "compass calibration here); the starting point of the monitor");
+                         "compass calibration here); the monitor checks the field with it "
+                         "removed");
 
-          param("Hard-Iron Apply Estimate", m_args.hi_apply)
-            .defaultValue("false")
-            .description("Replace the hard-iron offset with the online circle fit once "
-                         "enough headings are covered. Off: only monitor and request a "
-                         "compass calibration (experimental when on)");
+          param("Rate Source", m_args.rate_source)
+            .defaultValue("Delta Angles")
+            .values("Delta Angles, Angular Velocity")
+            .description("Gyro input integrated by the filter: the sensor's delta angles, "
+                         "or its angular velocity times the time step. The LIMU's delta "
+                         "angles are truncated to 360/2^14 deg per sample (-0.55 deg/s "
+                         "on every axis); its angular velocity is not");
 
-          param("Hard-Iron Minimum Heading Bins", m_args.hi_min_bins)
-            .defaultValue("18")
-            .minimumValue("3")
-            .maximumValue("24")
-            .description("Heading bins (of 24, 15 degrees each) needed to fit the "
-                         "hard-iron offset");
+          param("Gyro Bias", m_args.gyro_bias)
+            .units(Units::DegreePerSecond)
+            .defaultValue("0.0, 0.0, 0.0")
+            .size(3)
+            .description("Initial gyro bias (body x, y, z) of the bias states, e.g. "
+                         "the gyro-aided estimate of the last compass calibration, "
+                         "which the maneuver sets here");
 
-          param("Hard-Iron Window", m_args.hi_window)
+          param("Hard-Iron Monitor Window", m_args.hi_window)
             .units(Units::Second)
-            .defaultValue("600")
-            .minimumValue("10")
-            .description("A heading bin not visited for this long is forgotten");
+            .defaultValue("1800")
+            .minimumValue("300")
+            .description("Submerged data the hard-iron monitor estimates the residual "
+                         "hard iron from (gyro-aided, sliding window)");
 
-          param("Hard-Iron Calibration Threshold", m_args.hi_threshold)
-            .defaultValue("0.04")
+          param("Hard-Iron Monitor Threshold", m_args.hi_threshold)
+            .defaultValue("0.015")
             .minimumValue("0.0")
-            .description("Relative field magnitude difference between opposite "
-                         "headings above which a compass calibration is requested");
+            .description("Residual horizontal hard iron, as a fraction of the "
+                         "horizontal field, above which a compass calibration is "
+                         "requested (0.01 is about 0.6 degrees of heading)");
 
           param("Hard-Iron Monitor Depth", m_args.hi_depth)
             .units(Units::Meter)
@@ -306,12 +317,10 @@ namespace Navigation
         void
         onUpdateParameters(void)
         {
-          DUNE::Navigation::HardIronEstimator::Config cfg;
-          cfg.min_bins = m_args.hi_min_bins;
+          DUNE::Navigation::HardIronMonitor::Config cfg;
           cfg.window = m_args.hi_window;
           cfg.threshold = m_args.hi_threshold;
-          m_hi = DUNE::Navigation::HardIronEstimator(cfg);
-          m_hi.setOffset(m_args.hi_offset[0], m_args.hi_offset[1]);
+          m_hi = DUNE::Navigation::HardIronMonitor(cfg);
         }
 
         void
@@ -394,11 +403,18 @@ namespace Navigation
         void
         trySample(double dev_time, double tstamp)
         {
-          if (!(m_have_accel && m_have_omega && m_have_dtheta && m_have_mag))
+          if (!(m_have_accel && m_have_omega && (useOmega() || m_have_dtheta) && m_have_mag))
             return;
 
           step(dev_time, tstamp);
           m_have_accel = m_have_omega = m_have_dtheta = m_have_mag = false;
+        }
+
+        //! The filter integrates the angular velocity, not the delta angles.
+        bool
+        useOmega(void) const
+        {
+          return m_args.rate_source == "Angular Velocity";
         }
 
         //! Wrap angle to [-pi, pi].
@@ -433,50 +449,56 @@ namespace Navigation
         void
         correctedField(double mc[3]) const
         {
-          mc[0] = m_mag[0] - m_hi.offsetX();
-          mc[1] = m_mag[1] - m_hi.offsetY();
+          mc[0] = m_mag[0] - m_args.hi_offset[0];
+          mc[1] = m_mag[1] - m_args.hi_offset[1];
           mc[2] = m_mag[2] - m_args.hi_offset[2];
         }
 
-        //! Feed the hard-iron estimator and report what it concluded.
+        //! Feed the hard-iron monitor and report what it concluded.
+        //! @param[in] t time (s).
+        //! @param[in] phi roll (rad).
+        //! @param[in] theta pitch (rad).
+        //! @param[in] w angular velocity (rad/s), as measured.
         void
-        updateHardIron(double tstamp, double phi, double theta, double psi)
+        updateHardIron(double t, double phi, double theta, const double w[3])
         {
           // Only submerged samples: on deck, near the support boat and in surface
-          // waves the levelled field is disturbed (false requests on lab replays).
+          // waves the field is disturbed (false requests on lab replays).
           if (m_depth <= m_args.hi_depth)
             return;
 
-          // The monitor checks x/y; z is the configured one.
-          double mz[3] = {m_mag[0], m_mag[1], m_mag[2] - m_args.hi_offset[2]};
+          double mc[3];
+          correctedField(mc);
           double hx, hy;
-          DUNE::Navigation::HardIronEstimator::level(mz, phi, theta, hx, hy);
-          switch (m_hi.process(tstamp, hx, hy, psi, m_args.hi_apply))
+          DUNE::Navigation::HardIronEstimator::level(mc, phi, theta, hx, hy);
+          DUNE::Navigation::HardIronMonitor::Event ev =
+          m_hi.add(t, mc, w, std::sqrt(hx * hx + hy * hy));
+          const DUNE::Navigation::HardIronMonitor::Status& s = m_hi.status();
+          if (s.t == t)
+            debug("hard-iron monitor: residual %.4f, %.4f, %.4f (%.2f%%, sigma %.4f, "
+                  "%.4f, %.4f, %u windows, %s); gyro bias %.3f, %.3f, %.3f deg/s",
+                  s.b[0], s.b[1], s.b[2], 100.0 * s.residual, s.sigma[0], s.sigma[1],
+                  s.sigma[2], s.windows, s.determined ? "determined" : "undetermined",
+                  Angles::degrees(s.bg[0]), Angles::degrees(s.bg[1]),
+                  Angles::degrees(s.bg[2]));
+
+          if (ev == DUNE::Navigation::HardIronMonitor::EV_NONE)
           {
-            case DUNE::Navigation::HardIronEstimator::EV_OFFSET_UPDATED:
-              inf(DTR("hard-iron offset estimated: %.4f, %.4f (%u heading bins, "
-                      "fit residual %.1f%%)"),
-                  m_hi.offsetX(), m_hi.offsetY(), m_hi.lastFit().bins,
-                  100.0 * m_hi.lastFit().rms);
-              break;
-            case DUNE::Navigation::HardIronEstimator::EV_CALIBRATION_NEEDED:
-              if (m_hi.hasFit())
-                war(DTR("magnetometer calibration needed: the field differs by %.1f%% "
-                        "between opposite headings, fitted hard-iron %.4f, %.4f (in use "
-                        "%.4f, %.4f); perform a compass calibration maneuver"),
-                    100.0 * m_hi.lastMismatch(), m_hi.lastFit().x, m_hi.lastFit().y,
-                    m_hi.offsetX(), m_hi.offsetY());
-              else
-                war(DTR("magnetometer calibration needed: the field differs by %.1f%% "
-                        "between opposite headings; perform a compass calibration "
-                        "maneuver"),
-                    100.0 * m_hi.lastMismatch());
-              break;
-            case DUNE::Navigation::HardIronEstimator::EV_CALIBRATION_RESOLVED:
-              inf(DTR("magnetometer calibration consistent again"));
-              break;
-            default:
-              break;
+            return;
+          }
+          else if (ev == DUNE::Navigation::HardIronMonitor::EV_CALIBRATION_NEEDED)
+          {
+            war(DTR("magnetometer calibration needed: residual hard iron %.1f%% of the "
+                    "horizontal field (%.4f, %.4f, %s; sigma %.4f, %.4f; %u windows); "
+                    "perform a compass calibration maneuver"),
+                100.0 * s.residual, s.b[0], s.b[1],
+                s.z_determined ? String::str("%.4f", s.b[2]).c_str() : "z not determined",
+                s.sigma[0], s.sigma[1], s.windows);
+          }
+          else
+          {
+            inf(DTR("magnetometer calibration consistent again: residual hard iron "
+                    "%.1f%% of the horizontal field"), 100.0 * s.residual);
           }
         }
 
@@ -491,9 +513,9 @@ namespace Navigation
           double mc[3];
           correctedField(mc);
           m_kal.setState(ST_PSI, magYaw(mc, phi, theta));
-          m_kal.setState(ST_BP, 0.0);
-          m_kal.setState(ST_BQ, 0.0);
-          m_kal.setState(ST_BR, 0.0);
+          m_kal.setState(ST_BP, Angles::radians(m_args.gyro_bias[0]));
+          m_kal.setState(ST_BQ, Angles::radians(m_args.gyro_bias[1]));
+          m_kal.setState(ST_BR, Angles::radians(m_args.gyro_bias[2]));
 
           m_kal.setCovariance(ST_PHI, 0.1);
           m_kal.setCovariance(ST_THETA, 0.1);
@@ -525,6 +547,14 @@ namespace Navigation
           if (dt <= 0.0 || dt > 1.0)
             dt = m_args.dt_nominal;
           m_last_time = dev_time;
+          m_clock += dt;
+
+          // Integrate the angular velocity instead of the sensor's delta angles.
+          if (useOmega())
+          {
+            for (unsigned i = 0; i < 3; ++i)
+              m_dtheta[i] = m_omega[i] * dt;
+          }
 
           double phi = m_kal.getState(ST_PHI);
           double theta = m_kal.getState(ST_THETA);
@@ -596,8 +626,8 @@ namespace Navigation
           double fnorm = std::sqrt(m_spf[0] * m_spf[0] + m_spf[1] * m_spf[1] + m_spf[2] * m_spf[2]);
           double r_a = (std::fabs(fnorm - c_gravity) < m_args.accel_gate) ? m_args.r_acc
                                                                           : m_args.r_acc * 100.0;
-          updateHardIron(tstamp, m_kal.getState(ST_PHI), m_kal.getState(ST_THETA),
-                         m_kal.getState(ST_PSI));
+          updateHardIron(m_clock, m_kal.getState(ST_PHI), m_kal.getState(ST_THETA),
+                         m_omega);
           double mc[3];
           correctedField(mc);
           double psi_m = magYaw(mc, m_kal.getState(ST_PHI), m_kal.getState(ST_THETA));
