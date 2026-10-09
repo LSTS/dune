@@ -72,7 +72,7 @@ namespace DUNE
         Config(void):
           window(1800.0),
           period(60.0),
-          threshold(0.015),
+          threshold(0.025),
           resolve(0.75),
           min_windows(120),
           remind_period(300.0)

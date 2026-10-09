@@ -245,7 +245,7 @@ namespace Navigation
                          "hard iron from (gyro-aided, sliding window)");
 
           param("Hard-Iron Monitor Threshold", m_args.hi_threshold)
-            .defaultValue("0.015")
+            .defaultValue("0.025")
             .minimumValue("0.0")
             .description("Residual horizontal hard iron, as a fraction of the "
                          "horizontal field, above which a compass calibration is "

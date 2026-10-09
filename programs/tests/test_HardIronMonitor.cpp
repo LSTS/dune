@@ -110,8 +110,8 @@ main(void)
 {
   Test test("Navigation::HardIronMonitor");
   const double zero[3] = {0.0, 0.0, 0.0};
-  // 2.9 % of the horizontal field (threshold 1.5 %).
-  const double b[3] = {0.006, -0.004, 0.010};
+  // 4.9 % of the horizontal field (threshold 2.5 %).
+  const double b[3] = {0.010, -0.007, 0.010};
 
   {
     // Calibration right: one hour, no request.
