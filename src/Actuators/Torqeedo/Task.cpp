@@ -121,6 +121,8 @@ namespace Actuators
       std::string motor_labels[c_motors];
       //! Rails labels
       std::string rail_labels[c_pwr_rails_count];
+      //! Log raw CAN messages.
+      bool log_raw;
     };
     //! Power Channel data structure.
     struct PowerChannel
@@ -155,6 +157,9 @@ namespace Actuators
       char m_can_bfr[9];
       //! Task arguments.
       Arguments m_args;
+      //! Message to log raw data from CAN bus.
+      IMC::DevDataText m_raw_log;
+
       //! Constructor.
       //! @param[in] name task name.
       //! @param[in] ctx context.
@@ -169,6 +174,10 @@ namespace Actuators
         param("CAN Port - Device", m_args.can_dev)
         .defaultValue("")
         .description("CAN port used to communicate with the Torqeedo board.");
+
+        param("Log Raw Data", m_args.log_raw)
+        .defaultValue("false")
+        .description("Log raw CAN messages.");
 
         param("Motor write divider", m_args.motor_write_divider)
         .defaultValue("20")
@@ -664,6 +673,12 @@ namespace Actuators
             break;
           default:
             inf(DTR("Unknown CAN MSG received: %08X"), id);
+        }
+
+        if (m_args.log_raw)
+        {
+          m_raw_log.value = String::str("%08x>%s", id, m_can_bfr);
+          dispatch(m_raw_log);
         }
       }
 
