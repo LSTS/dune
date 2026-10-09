@@ -211,7 +211,7 @@ namespace Navigation
                          "removed");
 
           param("Rate Source", m_args.rate_source)
-            .defaultValue("Delta Angles")
+            .defaultValue("Angular Velocity")
             .values("Delta Angles, Angular Velocity")
             .description("Gyro input integrated by the filter: the sensor's delta angles, "
                          "or its angular velocity times the time step. The LIMU's delta "
