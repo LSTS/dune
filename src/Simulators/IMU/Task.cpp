@@ -78,6 +78,8 @@ namespace Simulators
       std::vector<double> field_ned;
       //! Hard-iron offset added to the body field.
       std::vector<double> hard_iron;
+      //! Soft-iron correction that recovers the true field (3x3, row-major).
+      std::vector<double> soft_iron;
       //! Magnetic field standard deviation.
       double stdev_field;
       //! Acceleration is the specific force (gravity included).
@@ -101,6 +103,8 @@ namespace Simulators
       IMC::EulerAnglesDelta m_agdel;
       //! Magnetic field.
       IMC::MagneticField m_field;
+      //! Soft-iron distortion C^-1 applied to the true body field.
+      Math::Matrix m_soft_inv;
       //! Stored Velocity.
       double m_vel[3];
       //! Pseudo-random generator.
@@ -173,6 +177,14 @@ namespace Simulators
         .defaultValue("0.0, 0.0, 0.0")
         .description("Offset added to the body magnetic field (x, y, z)");
 
+        param("Soft-Iron Matrix", m_args.soft_iron)
+        .size(9)
+        .defaultValue("1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0")
+        .description("Soft-iron correction C (3x3, row-major) that recovers the "
+                     "true body field h from the reading m: h = C (m - hard iron), "
+                     "so m = C^-1 h + hard iron. The compass calibration should "
+                     "recover it (symmetric, trace 3)");
+
         param("Standard Deviation - Magnetic Field", m_args.stdev_field)
         .defaultValue("0.001")
         .description("White noise added to magnetic field readings");
@@ -195,6 +207,12 @@ namespace Simulators
       }
 
       //! Acquire resources.
+      void
+      onUpdateParameters(void)
+      {
+        m_soft_inv = inverse(Math::Matrix(&m_args.soft_iron[0], 3, 3));
+      }
+
       void
       onResourceAcquisition(void)
       {
@@ -303,13 +321,18 @@ namespace Simulators
         dispatch(m_agvel, DF_KEEP_TIME);
         dispatch(m_accel, DF_KEEP_TIME);
 
-        // Earth's field in the body frame, plus hard iron and noise.
+        // Earth's field in the body frame, distorted by soft iron, plus hard
+        // iron and noise.
         if (m_args.magnetometer)
         {
           BodyFixedFrame::toBodyFrame(msg->phi, msg->theta, msg->psi,
                                       m_args.field_ned[0], m_args.field_ned[1],
                                       m_args.field_ned[2],
                                       &m_field.x, &m_field.y, &m_field.z);
+          double h[3] = {m_field.x, m_field.y, m_field.z};
+          m_field.x = m_soft_inv(0, 0) * h[0] + m_soft_inv(0, 1) * h[1] + m_soft_inv(0, 2) * h[2];
+          m_field.y = m_soft_inv(1, 0) * h[0] + m_soft_inv(1, 1) * h[1] + m_soft_inv(1, 2) * h[2];
+          m_field.z = m_soft_inv(2, 0) * h[0] + m_soft_inv(2, 1) * h[1] + m_soft_inv(2, 2) * h[2];
           m_field.x += m_args.hard_iron[0] + m_prng->gaussian() * m_args.stdev_field;
           m_field.y += m_args.hard_iron[1] + m_prng->gaussian() * m_args.stdev_field;
           m_field.z += m_args.hard_iron[2] + m_prng->gaussian() * m_args.stdev_field;
