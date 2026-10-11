@@ -77,9 +77,23 @@ namespace DUNE
       //! Gyro bias (rad/s), when the method estimates it.
       double gyro_bias[3];
       bool has_gyro_bias;
+      //! Soft-iron correction (true field = C (m - b)); identity when not
+      //! determined. b was estimated with this C, so the two go together.
+      double soft_iron[3][3];
+      //! Whether soft_iron was determined (otherwise identity).
+      bool soft_iron_determined;
       //! Method-specific quality figures, for the log.
       std::string details;
     };
+
+    //! Set a 3x3 matrix to the identity.
+    inline void
+    identity(double m[3][3])
+    {
+      for (unsigned i = 0; i < 3; ++i)
+        for (unsigned j = 0; j < 3; ++j)
+          m[i][j] = i == j ? 1.0 : 0.0;
+    }
 
     //! A hard-iron calibration method fed with the samples of a maneuver.
     class CalibrationMethod
@@ -105,10 +119,11 @@ namespace DUNE
       solve(CalibrationResult& r, std::string& why) = 0;
     };
 
-    //! Attitude-free hard iron and gyro bias from the field kinematics
-    //! (GyroAidedMagCalibration). Not biased by the accelerometer attitude
-    //! errors of a turning, wave-driven loiter, which moved levelled
-    //! calibrations by 1-3.5 % of the field. z when pitch/roll changed enough.
+    //! Attitude-free hard iron, soft iron and gyro bias from the field
+    //! kinematics (GyroAidedMagCalibration). Not biased by the accelerometer
+    //! attitude errors of a turning, wave-driven loiter, which moved levelled
+    //! calibrations by 1-3.5 % of the field. z when pitch/roll changed enough;
+    //! soft iron when every term is determined (else hard iron alone).
     class GyroAidedCalibration: public CalibrationMethod
     {
     public:
@@ -151,11 +166,30 @@ namespace DUNE
             why = Utils::String::str("%u of %u windows", m_gyro.windows(), c_min_windows);
           return false;
         }
-        if (!m_gyro.solve(g))
+
+        // Soft iron first; hard iron alone when a soft-iron term is not
+        // determined (b then assumes no soft iron).
+        std::string soft;
+        if (!m_gyro.solve(g, true))
+        {
+          soft = "no solution";
+        }
+        else
+        {
+          unsigned worst = 6;
+          for (unsigned i = 7; i < GyroAidedMagCalibration::c_max_unknowns; ++i)
+            if (g.sigma[i] > g.sigma[worst])
+              worst = i;
+          if (g.sigma[worst] >= c_max_soft_sigma)
+            soft = Utils::String::str("%s sigma %.2f%% above %.2f%%", c_soft_names[worst - 6],
+                                      100.0 * g.sigma[worst], 100.0 * c_max_soft_sigma);
+        }
+        if (!soft.empty() && !m_gyro.solve(g, false))
         {
           why = "no solution";
           return false;
         }
+
         if (g.sigma[0] >= c_max_sigma || g.sigma[1] >= c_max_sigma)
         {
           why = Utils::String::str("sigma x/y %.4f/%.4f above %.4f", g.sigma[0],
@@ -170,11 +204,24 @@ namespace DUNE
         r.has_gyro_bias = true;
         for (unsigned i = 0; i < 3; ++i)
           r.gyro_bias[i] = g.bg[i];
+        r.soft_iron_determined = g.soft_iron;
+        for (unsigned i = 0; i < 3; ++i)
+          for (unsigned j = 0; j < 3; ++j)
+            r.soft_iron[i][j] = g.C[i][j];
+
         r.details = Utils::String::str("sigma %.4f, %.4f, %.4f; gyro bias %.3f, %.3f, "
-                                       "%.3f deg/s; %u windows", g.sigma[0], g.sigma[1],
+                                       "%.3f deg/s; %u windows; ", g.sigma[0], g.sigma[1],
                                        g.sigma[2], Math::Angles::degrees(g.bg[0]),
                                        Math::Angles::degrees(g.bg[1]),
                                        Math::Angles::degrees(g.bg[2]), g.windows);
+        if (g.soft_iron)
+          r.details += Utils::String::str("soft iron E00 %+.2f%%, E11 %+.2f%%, E01 %+.2f%%, "
+                                          "E02 %+.2f%%, E12 %+.2f%% (largest sigma %.2f%%)",
+                                          100.0 * (g.C[0][0] - 1.0), 100.0 * (g.C[1][1] - 1.0),
+                                          100.0 * g.C[0][1], 100.0 * g.C[0][2],
+                                          100.0 * g.C[1][2], 100.0 * maxSoftSigma(g));
+        else
+          r.details += "soft iron not determined (" + soft + ")";
         return true;
       }
 
@@ -184,6 +231,20 @@ namespace DUNE
       //! Largest sigma of a component that is used (field units; 0.002 is
       //! under 1 % of a 0.25 horizontal field).
       static constexpr double c_max_sigma = 0.002;
+      //! Largest sigma of a soft-iron term that is used (fraction; on surface
+      //! calibration loiters every term was 0.03-0.07 %).
+      static constexpr double c_max_soft_sigma = 0.003;
+      //! Soft-iron terms, as in the result's sigma[6..10].
+      static constexpr const char* c_soft_names[5] = {"E00", "E11", "E01", "E02", "E12"};
+
+      static double
+      maxSoftSigma(const GyroAidedMagCalibration::Result& g)
+      {
+        double s = 0.0;
+        for (unsigned i = 6; i < GyroAidedMagCalibration::c_max_unknowns; ++i)
+          s = std::max(s, g.sigma[i]);
+        return s;
+      }
 
       GyroAidedMagCalibration m_gyro;
       //! Field samples, and those paired with angular rates.
@@ -246,6 +307,8 @@ namespace DUNE
         r.b[2] = 0.0;
         r.z_determined = false;
         r.has_gyro_bias = false;
+        identity(r.soft_iron);
+        r.soft_iron_determined = false;
         r.details = Utils::String::str("levelled x %.4f..%.4f, y %.4f..%.4f", m_min[0],
                                        m_max[0], m_min[1], m_max[1]);
         return true;
@@ -305,6 +368,8 @@ namespace DUNE
         r.b[2] = 0.0;
         r.z_determined = false;
         r.has_gyro_bias = false;
+        identity(r.soft_iron);
+        r.soft_iron_determined = false;
         r.details = Utils::String::str("%u heading bins, residual %.1f%%", f.bins,
                                        100.0 * f.rms);
         return true;
