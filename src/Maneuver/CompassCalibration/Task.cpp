@@ -144,7 +144,9 @@ namespace Maneuver
         .description("Attitude filter fed by each AHRS, in the same order as "
                      "'Entity Label - Compass' (empty: none). When a calibration "
                      "determines z, the filter's 'Hard-Iron Offset' is set to "
-                     "(0, 0, z) and saved: the AHRS applies the new x/y itself");
+                     "(0, 0, z) and saved: the AHRS applies the new x/y itself. Its "
+                     "'Soft-Iron Matrix' is set to the one the calibration estimated "
+                     "the hard iron with (identity when not determined)");
 
         param("Cross Track Tolerance", m_args.cross_tol)
         .defaultValue("1.0")
@@ -527,8 +529,8 @@ namespace Maneuver
         return any;
       }
 
-      //! Hand what a dispatched calibration determined beyond x/y (z, gyro
-      //! bias) to the channel's attitude filter, and save it there.
+      //! Hand what a dispatched calibration determined beyond x/y (z, soft
+      //! iron, gyro bias) to the channel's attitude filter, and save it there.
       //! @param[in] channel calibration channel.
       void
       setFilterOffset(const CalibrationChannel& channel)
@@ -553,7 +555,20 @@ namespace Maneuver
               channel.label.c_str(), channel.filter.c_str());
         }
 
+        // The hard iron was estimated with this soft-iron correction (identity
+        // when not determined): the filter must use the same one.
         const DUNE::Navigation::CalibrationResult& r = channel.ccal.lastResult();
+        {
+          IMC::EntityParameter p;
+          p.name = "Soft-Iron Matrix";
+          for (unsigned i = 0; i < 9; ++i)
+            p.value += String::str(i ? ", %.4f" : "%.4f", r.soft_iron[i / 3][i % 3]);
+          sep.params.push_back(p);
+          if (!r.soft_iron_determined)
+            war(DTR("%s: soft iron not determined, '%s' soft-iron matrix set to identity"),
+                channel.label.c_str(), channel.filter.c_str());
+        }
+
         if (r.has_gyro_bias)
         {
           IMC::EntityParameter p;
