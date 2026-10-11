@@ -100,6 +100,8 @@ namespace Navigation
         std::string rate_source;
         //! Hard-iron offset subtracted from the body x/y/z field.
         std::vector<double> hi_offset;
+        //! Soft-iron correction applied after the offset (3x3, row-major).
+        std::vector<double> soft_iron;
         //! Initial gyro bias (deg/s), body x, y, z.
         std::vector<double> gyro_bias;
         //! Sliding window of the hard-iron monitor (s).
@@ -220,6 +222,14 @@ namespace Navigation
                          "such as the LIMU correct x/y only: put the gyro-aided z of the "
                          "compass calibration here); the monitor checks the field with it "
                          "removed");
+
+          param("Soft-Iron Matrix", m_args.soft_iron)
+            .defaultValue("1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0")
+            .size(9)
+            .description("Soft-iron correction C (3x3, row-major) applied to the field "
+                         "after the hard-iron offset: C (m - offset). Set, with the "
+                         "offset's z, by the compass calibration maneuver (gyro-aided "
+                         "method); identity when not calibrated");
 
           param("Rate Source", m_args.rate_source)
             .defaultValue("Angular Velocity")
@@ -469,13 +479,17 @@ namespace Navigation
           return Math::Quaternion(std::cos(ang / 2.0), s * v[0], s * v[1], s * v[2]);
         }
 
-        //! Magnetic field with the hard-iron offset in use removed.
+        //! Magnetic field with the hard-iron offset in use removed and the
+        //! soft-iron correction applied.
         void
         correctedField(double mc[3]) const
         {
-          mc[0] = m_mag[0] - m_args.hi_offset[0];
-          mc[1] = m_mag[1] - m_args.hi_offset[1];
-          mc[2] = m_mag[2] - m_args.hi_offset[2];
+          double d[3];
+          for (unsigned i = 0; i < 3; ++i)
+            d[i] = m_mag[i] - m_args.hi_offset[i];
+          for (unsigned i = 0; i < 3; ++i)
+            mc[i] = m_args.soft_iron[3 * i] * d[0] + m_args.soft_iron[3 * i + 1] * d[1]
+                    + m_args.soft_iron[3 * i + 2] * d[2];
         }
 
         //! Feed the hard-iron monitor and report what it concluded.
