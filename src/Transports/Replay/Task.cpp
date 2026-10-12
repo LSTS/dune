@@ -31,6 +31,8 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
+#include <algorithm>
 #include <fstream>
 
 // DUNE headers.
@@ -47,6 +49,9 @@ namespace Transports
       std::string startup_file;
       std::vector<std::string> msgs;
       std::vector<std::string> ents;
+      std::vector<std::string> skip_ents;
+      std::string cache_snapshots;
+      double snapshot_age;
       double time_multiplier;
       double initial_log_skip_seconds;
     };
@@ -69,6 +74,20 @@ namespace Transports
       typedef std::map<std::string, bool> ReplayMsg;
       ReplayMsg m_replay;
 
+      // System that wrote the log (source of its first LoggingControl).
+      uint16_t m_log_src;
+      // Log entity ids of the entities in Skip Entities.
+      std::set<uint8_t> m_skip_eids;
+      // Timestamp of the current log's first packet (the LoggingControl
+      // that started it), and whether its cache snapshot is dropped.
+      double m_log_t0;
+      bool m_drop_snapshot;
+      // Number of logs started so far in the replayed stream.
+      unsigned m_logs;
+      // Packets dropped as cache snapshot and from skipped entities.
+      uint64_t m_snapshot_drops;
+      uint64_t m_skip_drops;
+
       double m_ts_delta;
       double m_start_time;
 
@@ -79,7 +98,7 @@ namespace Transports
 
       struct Stats
       {
-        Stats(): count(0), min(10), max(0), sum(0) { }
+        Stats(): count(0), min(10), max(0), sum(0), sumsq(0) { }
 
         uint64_t count;
         double min;
@@ -98,6 +117,12 @@ namespace Transports
 
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
+        m_log_src(IMC::AddressResolver::invalid()),
+        m_log_t0(0),
+        m_drop_snapshot(false),
+        m_logs(0),
+        m_snapshot_drops(0),
+        m_skip_drops(0),
         m_is(0)
       {
         param("Load At Start", m_args.startup_file)
@@ -111,6 +136,29 @@ namespace Transports
         param("Entities", m_args.ents)
         .defaultValue("")
         .description("Entities for which state should be reported");
+
+        param("Skip Entities", m_args.skip_ents)
+        .defaultValue("")
+        .description("Entities of the log whose messages are not replayed, e.g."
+                     " tasks that run live in the replay and publish under the"
+                     " same label");
+
+        param("Cache Snapshots", m_args.cache_snapshots)
+        .values("Keep, Drop, Drop After First Log")
+        .defaultValue("Keep")
+        .description("What to do with the cached messages written at the head of"
+                     " each log with their original timestamps. Only in the log"
+                     " where DUNE booted did they reach the bus (restored by"
+                     " Transports.Cache)");
+
+        param("Cache Snapshot Age", m_args.snapshot_age)
+        .units(Units::Second)
+        .minimumValue("0")
+        .defaultValue("3.0")
+        .description("A packet this much older than its log's first packet is"
+                     " part of the cache snapshot. Packets queued at a log"
+                     " switch are up to ~2.5 s older; cached ones, minutes to"
+                     " hours");
 
         param("Time Multiplier", m_args.time_multiplier)
         .defaultValue("1.0")
@@ -224,6 +272,57 @@ namespace Transports
 
           trace("entity %s %d --> %d", ei->label.c_str(), (int)ei->id, (int)itr->second);
         }
+
+        if (ei->getSource() != m_log_src)
+          return;
+
+        bool skip = std::find(m_args.skip_ents.begin(), m_args.skip_ents.end(),
+                              ei->label) != m_args.skip_ents.end();
+        if (skip)
+          m_skip_eids.insert(ei->id);
+        else
+          m_skip_eids.erase(ei->id);
+      }
+
+      //! Start of a log in the replayed stream (the replayed file may be
+      //! several logs one after the other).
+      void
+      startLog(const IMC::Message* m)
+      {
+        m_log_t0 = m->getTimeStamp();
+        m_drop_snapshot = m_args.cache_snapshots == "Drop"
+          || (m_args.cache_snapshots == "Drop After First Log" && m_logs > 0);
+        ++m_logs;
+      }
+
+      //! True if the packet read from the log is not replayed (and doesn't
+      //! update any state): part of a cache snapshot being dropped, or
+      //! published by a skipped entity.
+      bool
+      dropped(IMC::Message* m)
+      {
+        if (m->getId() == DUNE_IMC_LOGGINGCONTROL
+            && static_cast<IMC::LoggingControl*>(m)->op == IMC::LoggingControl::COP_STARTED
+            && m->getSource() == m_log_src)
+          startLog(m);
+
+        if (m_drop_snapshot && m->getTimeStamp() < m_log_t0 - m_args.snapshot_age)
+        {
+          ++m_snapshot_drops;
+          return true;
+        }
+
+        if (m->getId() == DUNE_IMC_ENTITYINFO)
+          updateEntityMap(m);
+
+        if (m->getSource() == m_log_src
+            && m_skip_eids.find(m->getSourceEntity()) != m_skip_eids.end())
+        {
+          ++m_skip_drops;
+          return true;
+        }
+
+        return false;
       }
 
       void
@@ -283,6 +382,9 @@ namespace Transports
         IMC::LoggingControl* lc = static_cast<IMC::LoggingControl*>(m);
 
         m_ts_delta = lc->getTimeStamp();
+        m_log_src = lc->getSource();
+        m_logs = 0;
+        startLog(lc);
 
         size_t spos = lc->name.find_last_of('/');
         if (spos != std::string::npos)
@@ -325,11 +427,8 @@ namespace Transports
         {
           if (m->getTimeStamp() - time_origin >= time_to_skip)
             return m;
-          // Do not miss information from EntityInfo
-          if (m->getId() == DUNE_IMC_ENTITYINFO)
-          {
-            updateEntityMap(m);
-          }
+          // Do not miss information from EntityInfo (and log starts)
+          dropped(m);
 
           delete m;
           m = IMC::Packet::deserialize(*m_is);
@@ -343,6 +442,10 @@ namespace Transports
       stopReplay(void)
       {
         war(DTR("stopped replay"));
+
+        if (m_snapshot_drops || m_skip_drops)
+          inf("dropped %llu cache snapshot packets, %llu from skipped entities",
+              (unsigned long long)m_snapshot_drops, (unsigned long long)m_skip_drops);
 
         displayStats();
         reset();
@@ -390,6 +493,10 @@ namespace Transports
           m_is = 0;
         }
         m_eid2eid.clear();
+        m_skip_eids.clear();
+        m_drop_snapshot = false;
+        m_snapshot_drops = 0;
+        m_skip_drops = 0;
         m_tstats.clear();
         m_tgstats = Stats();
       }
@@ -411,22 +518,14 @@ namespace Transports
         double now = Clock::getSinceEpoch();
         double delta = new_ts - now;
 
-        double delay;
-
+        // Delay::wait does not behave satisfactorily otherwise
+        // in some systems
         if (delta >= 1e-03)
-        {
-          // Delay::wait does not behave satisfactorily otherwise
-          // in some systems
           Delay::wait(delta);
-          delay = Clock::getSinceEpoch() - new_ts;
-        }
-        else
-        {
-          delay = 0;
-          delta = 0;
-        }
 
-        // Counter for delay before bus delivery
+        // Delay before bus delivery, replay clock: the wait's overshoot, or
+        // how late the message is when the replay has fallen behind.
+        double delay = Clock::getSinceEpoch() - new_ts;
         updateStats(m_tstats[m->getName()], delay);
         updateStats(m_tgstats, delay);
 
@@ -469,15 +568,15 @@ namespace Transports
           {
             consumeMessages();
 
+            if (dropped(m))
+            {
+              delete m;
+              m = 0;
+              continue;
+            }
+
             if (m->getId() == DUNE_IMC_ESTIMATEDSTATE)
-            {
               m_estate = *static_cast<IMC::EstimatedState*>(m);
-            }
-            else if (m->getId() == DUNE_IMC_ENTITYINFO)
-            {
-              // Update entity id map
-              updateEntityMap(m);
-            }
 
             m->setSourceEntity(mapEntity(m->getSourceEntity()));
             m->setDestinationEntity(mapEntity(m->getDestinationEntity()));
@@ -486,6 +585,10 @@ namespace Transports
             {
               dispatchWithNewTime(m);
             }
+
+            // The bus copies what it delivers.
+            delete m;
+            m = 0;
           }
 
           stopReplay();
