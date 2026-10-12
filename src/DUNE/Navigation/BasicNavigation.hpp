@@ -191,6 +191,15 @@ namespace DUNE
       consume(const IMC::WaterVelocity* msg);
 
     protected:
+      //! Check if a velocity message comes from the configured source.
+      //! @param msg GroundVelocity or WaterVelocity message.
+      //! @return true if Entity Label - Velocity is empty or names msg's entity.
+      bool
+      isVelocitySource(const IMC::Message* msg) const
+      {
+        return m_elabel_vel.empty() || msg->getSourceEntity() == m_vel_eid;
+      }
+
       //! Get depth value.
       //! @return depth value.
       inline double
@@ -716,6 +725,10 @@ namespace DUNE
       unsigned m_ahrs_eid;
       unsigned m_alt_eid;
       unsigned m_dvl_eid;
+      //! Velocity entity id (unused when m_elabel_vel is empty).
+      unsigned m_vel_eid;
+      //! Velocity entity label (empty: any entity).
+      std::string m_elabel_vel;
       //! Declination value.
       float m_declination;
       //! Declination variables.

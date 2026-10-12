@@ -216,6 +216,11 @@ namespace DUNE
       param("Entity Label - DVL", m_elabel_dvl)
       .description("Entity label of the DVL device");
 
+      param("Entity Label - Velocity", m_elabel_vel)
+      .defaultValue("")
+      .description("Entity label of the 'GroundVelocity' and 'WaterVelocity'"
+                   " messages to use. Empty: any entity");
+
       param("Entity Label - Altitude - Hardware", m_elabel_alt_hard)
       .description("Entity label of the 'Distance' message for Hardware profile");
 
@@ -342,6 +347,19 @@ namespace DUNE
       catch (...)
       {
         m_dvl_eid = std::numeric_limits<unsigned>::max();
+      }
+
+      m_vel_eid = std::numeric_limits<unsigned>::max();
+      if (!m_elabel_vel.empty())
+      {
+        try
+        {
+          m_vel_eid = resolveEntity(m_elabel_vel);
+        }
+        catch (...)
+        {
+          war(DTR("no entity '%s': ignoring all velocity messages"), m_elabel_vel.c_str());
+        }
       }
 
       try
@@ -659,6 +677,9 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::GroundVelocity* msg)
     {
+      if (!isVelocitySource(msg))
+        return;
+
       m_gvel = *msg;
       // Correct for the distance between center of gravity and dvl.
       m_gvel.y = msg->y - m_dist_dvl_cg * getAngularVelocity(AXIS_Z);
@@ -838,6 +859,9 @@ namespace DUNE
     void
     BasicNavigation::consume(const IMC::WaterVelocity* msg)
     {
+      if (!isVelocitySource(msg))
+        return;
+
       m_wvel = *msg;
       // Correct for the distance between center of gravity and dvl.
       m_wvel.y = msg->y - m_dist_dvl_cg * getAngularVelocity(AXIS_Z);
