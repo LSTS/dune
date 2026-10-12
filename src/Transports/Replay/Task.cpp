@@ -78,8 +78,9 @@ namespace Transports
       uint16_t m_log_src;
       // Log entity ids of the entities in Skip Entities.
       std::set<uint8_t> m_skip_eids;
-      // Timestamp of the current log's first packet (the LoggingControl
+      // Name and timestamp of the current log (from the LoggingControl
       // that started it), and whether its cache snapshot is dropped.
+      std::string m_log_name;
       double m_log_t0;
       bool m_drop_snapshot;
       // Number of logs started so far in the replayed stream.
@@ -287,8 +288,9 @@ namespace Transports
       //! Start of a log in the replayed stream (the replayed file may be
       //! several logs one after the other).
       void
-      startLog(const IMC::Message* m)
+      startLog(const IMC::LoggingControl* m)
       {
+        m_log_name = m->name;
         m_log_t0 = m->getTimeStamp();
         m_drop_snapshot = m_args.cache_snapshots == "Drop"
           || (m_args.cache_snapshots == "Drop After First Log" && m_logs > 0);
@@ -301,10 +303,14 @@ namespace Transports
       bool
       dropped(IMC::Message* m)
       {
-        if (m->getId() == DUNE_IMC_LOGGINGCONTROL
-            && static_cast<IMC::LoggingControl*>(m)->op == IMC::LoggingControl::COP_STARTED
-            && m->getSource() == m_log_src)
-          startLog(m);
+        // A log has two: the one written at its head and the one the logger
+        // dispatched.
+        if (m->getId() == DUNE_IMC_LOGGINGCONTROL && m->getSource() == m_log_src)
+        {
+          const IMC::LoggingControl* lc = static_cast<IMC::LoggingControl*>(m);
+          if (lc->op == IMC::LoggingControl::COP_STARTED && lc->name != m_log_name)
+            startLog(lc);
+        }
 
         if (m_drop_snapshot && m->getTimeStamp() < m_log_t0 - m_args.snapshot_age)
         {
@@ -494,6 +500,7 @@ namespace Transports
         }
         m_eid2eid.clear();
         m_skip_eids.clear();
+        m_log_name.clear();
         m_drop_snapshot = false;
         m_snapshot_drops = 0;
         m_skip_drops = 0;
