@@ -510,15 +510,14 @@ namespace Navigation
           double hx, hy;
           DUNE::Navigation::HardIronEstimator::level(mc, phi, theta, hx, hy);
           DUNE::Navigation::HardIronMonitor::Event ev =
-          m_hi.add(t, mc, w, std::sqrt(hx * hx + hy * hy));
+            m_hi.add(t, mc, w, std::sqrt(hx * hx + hy * hy));
           const DUNE::Navigation::HardIronMonitor::Status& s = m_hi.status();
           if (s.t == t)
             debug("hard-iron monitor: residual %.4f, %.4f, %.4f (%.2f%%, sigma %.4f, "
                   "%.4f, %.4f, %u windows, %s); gyro bias %.3f, %.3f, %.3f deg/s",
-                  s.b[0], s.b[1], s.b[2], 100.0 * s.residual, s.sigma[0], s.sigma[1],
-                  s.sigma[2], s.windows, s.determined ? "determined" : "undetermined",
-                  Angles::degrees(s.bg[0]), Angles::degrees(s.bg[1]),
-                  Angles::degrees(s.bg[2]));
+                  s.b[0], s.b[1], s.b[2], 100.0 * s.residual, s.sigma[0], s.sigma[1], s.sigma[2],
+                  s.windows, s.determined ? "determined" : "undetermined", Angles::degrees(s.bg[0]),
+                  Angles::degrees(s.bg[1]), Angles::degrees(s.bg[2]));
 
           if (ev == DUNE::Navigation::HardIronMonitor::EV_NONE)
           {
@@ -536,7 +535,8 @@ namespace Navigation
           else
           {
             inf(DTR("magnetometer calibration consistent again: residual hard iron "
-                    "%.1f%% of the horizontal field"), 100.0 * s.residual);
+                    "%.1f%% of the horizontal field"),
+                100.0 * s.residual);
           }
         }
 
@@ -593,8 +593,7 @@ namespace Navigation
 
           // Nominal propagation with the bias-corrected delta angle:
           // w * dt == dtheta - bias * dt.
-          double wdt[3] = { m_dtheta[0] - m_bias[0] * dt,
-                            m_dtheta[1] - m_bias[1] * dt,
+          double wdt[3] = { m_dtheta[0] - m_bias[0] * dt, m_dtheta[1] - m_bias[1] * dt,
                             m_dtheta[2] - m_bias[2] * dt };
           Math::Quaternion dq = quatFromRotVec(wdt);
           m_quat = m_quat * dq;
@@ -627,8 +626,7 @@ namespace Navigation
           // Accel rows: h = R^T * down is the predicted gravity direction in
           // the body frame, and the error Jacobian is skew(h).
           Math::Matrix R = m_quat.rotationMatrix();
-          double fnorm = std::sqrt(m_spf[0] * m_spf[0] + m_spf[1] * m_spf[1]
-                                   + m_spf[2] * m_spf[2]);
+          double fnorm = std::sqrt(m_spf[0] * m_spf[0] + m_spf[1] * m_spf[1] + m_spf[2] * m_spf[2]);
           double sig = m_args.sig_acc_dir;
           if (fnorm > 1e-6)
           {
