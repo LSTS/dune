@@ -486,15 +486,14 @@ namespace Navigation
           double hx, hy;
           DUNE::Navigation::HardIronEstimator::level(mc, phi, theta, hx, hy);
           DUNE::Navigation::HardIronMonitor::Event ev =
-          m_hi.add(t, mc, w, std::sqrt(hx * hx + hy * hy));
+            m_hi.add(t, mc, w, std::sqrt(hx * hx + hy * hy));
           const DUNE::Navigation::HardIronMonitor::Status& s = m_hi.status();
           if (s.t == t)
             debug("hard-iron monitor: residual %.4f, %.4f, %.4f (%.2f%%, sigma %.4f, "
                   "%.4f, %.4f, %u windows, %s); gyro bias %.3f, %.3f, %.3f deg/s",
-                  s.b[0], s.b[1], s.b[2], 100.0 * s.residual, s.sigma[0], s.sigma[1],
-                  s.sigma[2], s.windows, s.determined ? "determined" : "undetermined",
-                  Angles::degrees(s.bg[0]), Angles::degrees(s.bg[1]),
-                  Angles::degrees(s.bg[2]));
+                  s.b[0], s.b[1], s.b[2], 100.0 * s.residual, s.sigma[0], s.sigma[1], s.sigma[2],
+                  s.windows, s.determined ? "determined" : "undetermined", Angles::degrees(s.bg[0]),
+                  Angles::degrees(s.bg[1]), Angles::degrees(s.bg[2]));
 
           if (ev == DUNE::Navigation::HardIronMonitor::EV_NONE)
           {
@@ -512,7 +511,8 @@ namespace Navigation
           else
           {
             inf(DTR("magnetometer calibration consistent again: residual hard iron "
-                    "%.1f%% of the horizontal field"), 100.0 * s.residual);
+                    "%.1f%% of the horizontal field"),
+                100.0 * s.residual);
           }
         }
 
@@ -640,8 +640,7 @@ namespace Navigation
           double fnorm = std::sqrt(m_spf[0] * m_spf[0] + m_spf[1] * m_spf[1] + m_spf[2] * m_spf[2]);
           double r_a = (std::fabs(fnorm - c_gravity) < m_args.accel_gate) ? m_args.r_acc
                                                                           : m_args.r_acc * 100.0;
-          updateHardIron(m_clock, m_kal.getState(ST_PHI), m_kal.getState(ST_THETA),
-                         m_omega);
+          updateHardIron(m_clock, m_kal.getState(ST_PHI), m_kal.getState(ST_THETA), m_omega);
           double mc[3];
           correctedField(mc);
           double psi_m = magYaw(mc, m_kal.getState(ST_PHI), m_kal.getState(ST_THETA));
