@@ -800,7 +800,7 @@ namespace Navigation
           m_kal.setObservation(OUT_PSI, STATE_PSI, 1.0);
           m_kal.setObservation(OUT_PSI, STATE_PSI_BIAS, 1.0);
           m_kal.setObservation(OUT_R, STATE_R, 1.0);
-          m_kal.setObservation(OUT_R, STATE_R_BIAS, 0.0);
+          m_kal.setObservation(OUT_R, STATE_R_BIAS, 1.0);
           m_kal.setObservation(OUT_GPS_X, STATE_X, 1.0);
           m_kal.setObservation(OUT_GPS_Y, STATE_Y, 1.0);
         }
