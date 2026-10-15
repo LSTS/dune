@@ -561,12 +561,12 @@ namespace Actuators
       void
       parseMSG_TQ_BATCTL()
       {
-        uint8_t motor_index = m_can_bfr[0]; // MAY need to be masked, only 4 last bits id, rest reserved
+        uint8_t battery_index = m_can_bfr[0]; // MAY need to be masked, only 4 last bits id, rest reserved
         uint8_t master_error = m_can_bfr[1];
         uint8_t error_count = m_can_bfr[2];
         uint8_t firmware_ver = m_can_bfr[3];
-        spew(DTR("MSG_TQ_BATCTL: Motor#%u - Master error: %u; Error count %u; Firmware version: %u"),
-              motor_index, master_error, error_count, firmware_ver);
+        spew(DTR("MSG_TQ_BATCTL: Battery#%u - Master error: %u; Error count %u; Firmware version: %u"),
+              battery_index, master_error, error_count, firmware_ver);
       }
 
       //! Parses a received MSG_OUTPUTS from CAN bus buffer and makes it available for spew debug
