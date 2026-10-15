@@ -33,8 +33,6 @@
 #include <DUNE/DUNE.hpp>
 #include <DUNE/Hardware/SocketCAN.hpp>
 
-#define ADDR_SOURCE 0xfe
-#define ADDR_TQIF 0xab
 namespace Actuators
 {
   //! This task acts as a bridge between the Maritime Robotics(MR) Interface card to Torqeedo motors and batteries, and DUNE with IMC messages
@@ -45,14 +43,20 @@ namespace Actuators
   namespace Torqeedo
   {
     using DUNE_NAMESPACES;
-    //! Maximum number of batteries connected to the Torqeedo board
+
+    //! Maximum number of batteries connected to the Torqeedo board.
     static const unsigned c_num_batteries = 4;
-    //! Number of power channels
+    //! Number of power channels.
     static const unsigned c_pwrs_count = 10;
-    //! Number of power rails
+    //! Number of power rails.
     static const unsigned c_pwr_rails_count = 5;
-    //! Number of motors
+    //! Number of motors.
     static const unsigned c_motors = 2;
+    //! Source address for Torqeedo CAN messages.
+    constexpr uint32_t c_addr_source = 0xfe;
+    //! Target address for Torqeedo CAN messages.
+    constexpr uint32_t c_addr_tqif = 0xab;
+
     enum torqeedo_msg_identifiers_t
     {
       MSG_TEXT = 0,
@@ -92,6 +96,7 @@ namespace Actuators
       R_H_VR1 = 3,
       R_H_5V = 4
     };
+
     enum torqeedo_power_channels_t
     {
       CH_H_MOT0 = 0,
@@ -105,25 +110,27 @@ namespace Actuators
       CH_H_VR1 = 4,
       CH_H_5V = 0
     };
+
     struct Arguments
     {
-      //! CAN bus device name
+      //! CAN bus device name.
       std::string can_dev;
       //! Power channels names.
       std::string pwr_names[c_pwrs_count];
       //! Initial power channels states.
       unsigned pwr_states[c_pwrs_count];
-      //! Write to motor every motor_write_divider times task is run
+      //! Write to motor every motor_write_divider times task is run.
       unsigned int motor_write_divider;
       //! RPM value below which motor direction is considered settled.
       int16_t rpm_direction_deadband;
-      //! Motor labels
+      //! Motor labels.
       std::string motor_labels[c_motors];
-      //! Rails labels
+      //! Rails labels.
       std::string rail_labels[c_pwr_rails_count];
       //! Log raw CAN messages.
       bool log_raw;
     };
+
     //! Power Channel data structure.
     struct PowerChannel
     {
@@ -131,29 +138,30 @@ namespace Actuators
       torqeedo_power_channels_t channel;
       IMC::PowerChannelState::StateEnum state;
     };
+
     struct Task: public DUNE::Tasks::Periodic
     {
-      //! Is there unsent power control messages
+      //! Is there unsent power control messages.
       bool m_unsent_power_parameters;
       //! Most recent throttle values.
       unsigned int motor_send_counter;
-      // Datatype for storing power lines and states
+      // Datatype for storing power lines and states.
       typedef std::map<std::string, PowerChannel> PowerChannelMap;
       //! Power channels by name.
       PowerChannelMap m_pwr_chs;
-      //! Batteries Entities
+      //! Batteries Entities.
       unsigned m_battery_eid[c_num_batteries];
-      //! Motors Entities
+      //! Motors Entities.
       unsigned m_motor_eid[c_motors];
-      //! Power Rail Entities
+      //! Power Rail Entities.
       unsigned m_power_rail_eid[c_pwr_rails_count];
       //! Most recent throttle values.
       int16_t motor0_throttle, motor1_throttle;
       //! Last trusted motor RPM direction.
       int8_t m_motor_rpm_sign[c_motors];
-      //! CAN connection variable
+      //! CAN connection variable.
       Hardware::SocketCAN* m_can;
-      //! CAN buffer used for storing and sending messages
+      //! CAN buffer used for storing and sending messages.
       char m_can_bfr[9];
       //! Task arguments.
       Arguments m_args;
@@ -221,11 +229,12 @@ namespace Actuators
       void
       onUpdateParameters(void)
       {
-        inf(DTR("Update parameters"));
-        if(m_pwr_chs.size() != 0) {
+        if(m_pwr_chs.size() != 0)
+        {
           m_pwr_chs.clear();
           m_unsent_power_parameters = true;
         }
+
         // Set up powerchannels
         PowerChannel pcs[c_pwrs_count];
         pcs[0] = {R_H_MOT0, CH_H_MOT0, IMC::PowerChannelState::PCS_OFF};
@@ -238,14 +247,14 @@ namespace Actuators
         pcs[7] = {R_H_VR0, CH_H_VR0, IMC::PowerChannelState::PCS_OFF};
         pcs[8] = {R_H_VR1, CH_H_VR1, IMC::PowerChannelState::PCS_OFF};
         pcs[9] = {R_H_5V, CH_H_5V, IMC::PowerChannelState::PCS_OFF};
+
         for (unsigned i = 0; i < c_pwrs_count; i++)
         {
-          if(m_args.pwr_states[i]) {
+          if(m_args.pwr_states[i])
             pcs[i].state = IMC::PowerChannelState::PCS_ON;
-          }
-          if(!(m_args.pwr_names[i].empty())) {
+
+          if(!(m_args.pwr_names[i].empty()))
             m_pwr_chs[m_args.pwr_names[i]] = pcs[i];
-          }
         }
       }
 
@@ -291,38 +300,37 @@ namespace Actuators
       //! Resolve entity names.
       void
       onEntityResolution(void)
-      {
-      }
+      { }
 
       //! Acquire resources.
       void
       onResourceAcquisition(void)
       {
-        try {
+        try
+        {
           m_can = new Hardware::SocketCAN(m_args.can_dev, SocketCAN::CAN_BASIC_EFF);
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
         }
-        catch(std::runtime_error& e) {
+        catch(std::runtime_error& e)
+        {
           cri(DTR("Could not open CAN: %s"), e.what());
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_IO_ERROR);
         }
       }
 
-      void sendPowerChannelMessages() {
+      void
+      sendPowerChannelMessages(void)
+      {
         for (PowerChannelMap::iterator itr = m_pwr_chs.begin(); itr != m_pwr_chs.end(); ++itr)
-        {
           sendSetPower(itr->second);
-        }
       }
 
       //! Initialize resources.
       void
       onResourceInitialization(void)
       {
-        spew(DTR("Init resources"));
-        if(m_can != NULL) {
+        if(m_can != NULL)
           sendPowerChannelMessages();
-        }
 
         for (unsigned i = 0; i < c_motors; ++i)
           m_motor_rpm_sign[i] = 0;
@@ -332,10 +340,12 @@ namespace Actuators
       void
       onResourceRelease(void)
       {
-        try {
-         Memory::clear(m_can);
+        try
+        {
+          Memory::clear(m_can);
         }
-        catch(std::runtime_error& e) {
+        catch(std::runtime_error& e)
+        {
           err(DTR("Could not clear CAN: %s"), e.what());
         }
       }
@@ -349,12 +359,12 @@ namespace Actuators
 
         for (PowerChannelMap::iterator itr = m_pwr_chs.begin(); itr != m_pwr_chs.end(); ++itr)
         {
-          if(!(itr->first.empty()))
-          {
-            m_pwr_ch.name = itr->first;
-            m_pwr_ch.state = itr->second.state;
-            dispatch(m_pwr_ch);
-          }
+          if (itr->first.empty())
+            continue;
+
+          m_pwr_ch.name = itr->first;
+          m_pwr_ch.state = itr->second.state;
+          dispatch(m_pwr_ch);
         }
       }
 
@@ -364,12 +374,13 @@ namespace Actuators
       {
         switch (msg->id)
         {
-        case 0:
-          motor0_throttle = int16_t(1000 * msg->value);
-          break;
-        case 1:
-          motor1_throttle = int16_t(1000 * msg->value);
-          break;
+          case 0:
+            motor0_throttle = int16_t(1000 * msg->value);
+            break;
+
+          case 1:
+            motor1_throttle = int16_t(1000 * msg->value);
+            break;
         }
       }
 
@@ -388,6 +399,7 @@ namespace Actuators
           m_pwr_chs[msg->name].state = IMC::PowerChannelState::PCS_OFF;
         else
           war("Chosen power state not implemented.");
+
         sendSetPower(m_pwr_chs[msg->name]);
       }
 
@@ -444,7 +456,7 @@ namespace Actuators
 
       //! Parses a received MSG_TQ_BAT_STATUS from CAN bus buffer and sends relevant data to IMC
       void 
-      parseMSG_TQ_BAT_STATUS() 
+      parseMSG_TQ_BAT_STATUS(void) 
       {
         uint8_t bat_idx = m_can_bfr[0];
         uint8_t temp_C = m_can_bfr[1];
@@ -516,7 +528,7 @@ namespace Actuators
 
       //! Parses a received MSG_TQ_MOTOR_DRIVE from CAN bus buffer and sends relevant data to IMC
       void
-      parseMSG_TQ_MOTOR_DRIVE()
+      parseMSG_TQ_MOTOR_DRIVE(void)
       {
         uint8_t mot_idx = m_can_bfr[0];
 
@@ -552,14 +564,14 @@ namespace Actuators
 
       //! Parses a received MSG_TEXT and displays it
       void
-      parseMSG_TEXT()
+      parseMSG_TEXT(void)
       {
         spew("MSG_TEXT: %s", m_can_bfr);
       }
 
       //! Parses a received MSG_TQ_BATCTL from CAN bus buffer and makes it available for spew debug
       void
-      parseMSG_TQ_BATCTL()
+      parseMSG_TQ_BATCTL(void)
       {
         uint8_t battery_index = m_can_bfr[0]; // MAY need to be masked, only 4 last bits id, rest reserved
         uint8_t master_error = m_can_bfr[1];
@@ -571,7 +583,7 @@ namespace Actuators
 
       //! Parses a received MSG_OUTPUTS from CAN bus buffer and makes it available for spew debug
       void
-      parseMSG_OUTPUTS()
+      parseMSG_OUTPUTS(void)
       {
         uint8_t rail_index = m_can_bfr[0];
         uint32_t states = (m_can_bfr[4] << 24) | (m_can_bfr[3] << 16) | (m_can_bfr[2] << 8) | m_can_bfr[1];
@@ -581,7 +593,7 @@ namespace Actuators
 
       //! Parses a received MSG_UPTIME from CAN bus buffer and makes it available for spew debug
       void
-      parseMSG_UPTIME()
+      parseMSG_UPTIME(void)
       {
         uint32_t uptime_s = (uint32_t)0 | (m_can_bfr[2] << 16) | (m_can_bfr[1] << 8) | m_can_bfr[0];
         uint8_t last_reset_case = m_can_bfr[3];
@@ -591,7 +603,7 @@ namespace Actuators
 
       //! Parses a received MSG_ID_V2 from CAN bus buffer and makes it available for spew debug
       void
-      parseMSG_ID_V2()
+      parseMSG_ID_V2(void)
       {
         uint16_t company = combine2charToUint16(m_can_bfr[1], m_can_bfr[0]);
         uint16_t product = combine2charToUint16(m_can_bfr[3], m_can_bfr[2]);
@@ -603,7 +615,7 @@ namespace Actuators
 
       //! Parses a received MSG_TQ_MOTOR_STATUS_BITS from CAN bus buffer and makes it available for spew debug
       void
-      parseMSG_TQ_MOTOR_STATUS_BITS()
+      parseMSG_TQ_MOTOR_STATUS_BITS(void)
       {
         uint8_t motor_index = m_can_bfr[0];
         uint16_t errors = combine2charToUint16(m_can_bfr[2], m_can_bfr[1]);
@@ -613,48 +625,54 @@ namespace Actuators
       }
       //! Tries to read a message from CAN bus, if successful, call relevant parser
       void
-      readCanMessage() 
+      readCanMessage(void) 
       {
-        // Read message
-        uint32_t id;
-        if (Poll::poll(*m_can, 0.01)) {
-          m_can->readString(m_can_bfr, sizeof(m_can_bfr));
-          id = m_can->getRXID();
-        } else {
+        if (!Poll::poll(*m_can, 0.01))
           return;
-        }
-        
+
+        m_can->readString(m_can_bfr, sizeof(m_can_bfr));
+        uint32_t id = m_can->getRXID();
         // Extract message identifier
         uint8_t msg_id = uint8_t(id >> 20);
         // Parse message
-        switch(msg_id) {
+        switch(msg_id)
+        {
           case MSG_TEXT:
             parseMSG_TEXT();
             break;
+
           case MSG_RAIL:
             parseMSG_RAIL(id);
             break;
+
           case MSG_TQ_MOTOR_DRIVE:
             parseMSG_TQ_MOTOR_DRIVE();
             break;
+
           case MSG_TQ_BAT_STATUS:
             parseMSG_TQ_BAT_STATUS();
             break;
+
           case MSG_TQ_BATCTL:
             parseMSG_TQ_BATCTL();
             break;
+
           case MSG_OUTPUTS:
             parseMSG_OUTPUTS();
             break;
+
           case MSG_UPTIME:
             parseMSG_UPTIME();
             break;
+
           case MSG_ID_V2:
             parseMSG_ID_V2();
             break;
+
           case MSG_TQ_MOTOR_STATUS_BITS:
             parseMSG_TQ_MOTOR_STATUS_BITS();
             break;
+ 
           case MSG_CAP_AMP:
           case MSG_CAP_WATT:
           case MSG_HOUSEKEEPING:
@@ -667,10 +685,10 @@ namespace Actuators
           case MSG_RESET:
           case MSG_WINCH_TELEMETRY:
           case MSG_WINCH_COMMAND:
-          case MSG_WINCH_MOVING:
-          
+          case MSG_WINCH_MOVING:         
             debug(DTR("Known unimplemented MSG type received: %08X"), id);
             break;
+
           default:
             inf(DTR("Unknown CAN MSG received: %08X"), id);
         }
@@ -686,20 +704,22 @@ namespace Actuators
       uint32_t
       prepareTorqeedoCANID(torqeedo_msg_identifiers_t msg_id)
       {
-        return uint32_t(ADDR_TQIF | (ADDR_SOURCE << 8) | (msg_id << 20));
+        return uint32_t(c_addr_tqif | (c_addr_source << 8) | (msg_id << 20));
       }
 
       //! Sends MSG_OUTPUT_SET to CAN bus
       void
       sendSetPower(PowerChannel pc)
-      { // Dont send struct, send pointer or something
+      {
+        // Dont send struct, send pointer or something
         m_can_bfr[0] = pc.rail;
         m_can_bfr[1] = pc.channel;
-        if(pc.state == IMC::PowerChannelState::PCS_OFF) {
+
+        if (pc.state == IMC::PowerChannelState::PCS_OFF)
           m_can_bfr[2] = 0;
-        } else {
+        else
           m_can_bfr[2] = 1;
-        }
+
         m_can->setTXID(prepareTorqeedoCANID(MSG_OUTPUT_SET));
         m_can->write(m_can_bfr, 3);
       }
