@@ -1155,17 +1155,23 @@ namespace DUNE
     double
     PathController::getZ(IMC::ZUnits unit)
     {
-      if (unit == IMC::Z_HEIGHT)
-        return m_estate.height;
-      else if (unit == IMC::Z_ALTITUDE)
-        return m_estate.alt;
-      else if (unit == IMC::Z_DEPTH)
-        return m_estate.depth;
-      else if (unit == IMC::Z_NONE)
-        return m_estate.z;
-        
-      throw std::runtime_error(DTR("Invalid Z unit"));
-      return 0;
+      switch (unit)
+      {
+        case IMC::Z_HEIGHT:
+          return m_estate.height;
+
+        case IMC::Z_ALTITUDE:
+          return m_estate.alt;
+
+        case IMC::Z_DEPTH:
+          return m_estate.depth;
+
+        case IMC::Z_NONE:
+          return m_estate.z;
+
+        default:
+          throw std::runtime_error(DTR("Invalid Z unit"));
+      }
     }
 
     void
