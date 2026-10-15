@@ -95,7 +95,7 @@ namespace Control
         }
 
         double
-        update(const double error, const double los_angle, const double track_bearing)
+        update(const double error, const double track_bearing)
         {
           // Compute new integral term
           const double timestep = m_last_step.getDelta();
@@ -103,7 +103,7 @@ namespace Control
 
           // Compute new heading
           double offset = - std::atan((error + m_gain * new_integral) / m_look_ahead);
-          double new_heading = los_angle + offset;
+          double new_heading = track_bearing + offset;
 
           // Prevent backwards movement
           double heading_diff = Angles::normalizeRadian(new_heading - track_bearing);
@@ -111,7 +111,7 @@ namespace Control
           {
             heading_diff = Math::trimValue(heading_diff, -m_max_ct_heading, m_max_ct_heading);
             new_heading = track_bearing + heading_diff;
-            offset = Angles::normalizeRadian(new_heading - los_angle);
+            offset = Angles::normalizeRadian(new_heading - track_bearing);
             m_task->trace(DTR("[Saturated] Updated ILOS offset: %f | Integral: %f"), Angles::degrees(offset), m_integral);
           }
           // Update integral term only if no saturation occurred
