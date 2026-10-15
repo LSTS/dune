@@ -111,10 +111,15 @@ namespace Control
           // Prevent backwards movement
           if (std::fabs(offset) > m_max_ct_heading)
           {
+            // Allow the integral to unwind if it reduces the saturated correction.
+            const double previous_offset = - std::atan((error + m_gain * m_integral) / m_look_ahead);
+            if (std::fabs(offset) < std::fabs(previous_offset))
+              m_integral = new_integral;
+
             offset = Math::trimValue(offset, -m_max_ct_heading, m_max_ct_heading);
             m_task->trace(DTR("[Saturated] Updated ILOS offset: %f | Integral: %f"), Angles::degrees(offset), m_integral);
           }
-          // Update integral term only if no saturation occurred
+          // Always accept integral updates within the heading limit
           else
           {
             m_integral = new_integral;
