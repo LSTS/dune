@@ -1506,8 +1506,8 @@ namespace Control
           {
             if (ts.track_pos.x <= ts.track_length)
             {
-              ilos_offset = m_integral_controller->update(ts.track_pos.y, ts.track_bearing);
-              m_des_heading.value = ts.track_bearing + ilos_offset;
+              m_des_heading.value = m_integral_controller->updateHeading(ts.track_pos.y, ts.track_bearing);
+              ilos_offset = Angles::normalizeRadian(m_des_heading.value - ts.track_bearing);
             }
             else
               m_des_heading.value = ts.los_angle;
@@ -1520,8 +1520,8 @@ namespace Control
               if (m_psi_os == 0.0)
               {
                 m_prev_psi_os = 0.0;
-                ilos_offset = m_integral_controller->update(ts.track_pos.y, ts.track_bearing);
-                m_des_heading.value = ts.track_bearing + ilos_offset;
+                m_des_heading.value = m_integral_controller->updateHeading(ts.track_pos.y, ts.track_bearing);
+                ilos_offset = Angles::normalizeRadian(m_des_heading.value - ts.track_bearing);
               }
               else
               {
@@ -1546,8 +1546,8 @@ namespace Control
                 TrackingState::TrackCoord new_track_pos;
                 Coordinates::getTrackPosition(m_new_track_start, m_new_track_bearing, state, &new_track_pos.x, &new_track_pos.y);
 
-                ilos_offset = m_integral_controller->update(new_track_pos.y, m_new_track_bearing);
-                m_des_heading.value = m_new_track_bearing + ilos_offset;
+                m_des_heading.value = m_integral_controller->updateHeading(new_track_pos.y, m_new_track_bearing);
+                ilos_offset = Angles::normalizeRadian(m_des_heading.value - m_new_track_bearing);
               }
             }
             else

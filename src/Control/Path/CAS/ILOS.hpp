@@ -94,24 +94,24 @@ namespace Control
           m_max_ct_heading = limit;
         }
 
+        //! Update guidance and return the complete desired heading.
+        //! @param error signed cross-track error (meters)
+        //! @param track_bearing reference track bearing (radians)
+        //! @return normalized desired heading (radians)
         double
-        update(const double error, const double track_bearing)
+        updateHeading(const double error, const double track_bearing)
         {
           // Compute new integral term
           const double timestep = m_last_step.getDelta();
           const double new_integral = m_integral + getIntegralSlope(error, m_integral) * timestep;
 
-          // Compute new heading
+          // Compute heading offset relative to the track bearing
           double offset = - std::atan((error + m_gain * new_integral) / m_look_ahead);
-          double new_heading = track_bearing + offset;
 
           // Prevent backwards movement
-          double heading_diff = Angles::normalizeRadian(new_heading - track_bearing);
-          if (std::fabs(heading_diff) > m_max_ct_heading)
+          if (std::fabs(offset) > m_max_ct_heading)
           {
-            heading_diff = Math::trimValue(heading_diff, -m_max_ct_heading, m_max_ct_heading);
-            new_heading = track_bearing + heading_diff;
-            offset = Angles::normalizeRadian(new_heading - track_bearing);
+            offset = Math::trimValue(offset, -m_max_ct_heading, m_max_ct_heading);
             m_task->trace(DTR("[Saturated] Updated ILOS offset: %f | Integral: %f"), Angles::degrees(offset), m_integral);
           }
           // Update integral term only if no saturation occurred
@@ -125,7 +125,7 @@ namespace Control
           m_debug_parcel.i = m_integral;
           m_task->dispatch(m_debug_parcel);
           
-          return offset;
+          return Angles::normalizeRadian(track_bearing + offset);
         }
 
       private:
