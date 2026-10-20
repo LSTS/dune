@@ -493,6 +493,8 @@ namespace DUNE
       bool m_setup;
       //! In braking procedures
       bool m_braking;
+      //! Use spherical great-circle calculations for the active path.
+      bool m_spherical_path;
       //! Timer with amount of time ignoring monitors when braking.
       Time::Counter<float> m_brake_timer;
       //! True if monitors are being disabled because of navigation jump
@@ -523,6 +525,8 @@ namespace DUNE
       double m_new_ref_timeout;
       //! Time of arrival factor
       float m_time_factor;
+      //! Enable spherical great-circle tracking for straight paths.
+      bool m_spherical_tracking;
       //! Current tracking state
       TrackingState m_ts;
       //! Path control state message
