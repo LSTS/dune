@@ -36,6 +36,8 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Control/PathController.hpp>
+
 #include "sb_mpc.hpp"
 #include "ILOS.hpp"
 

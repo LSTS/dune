@@ -32,6 +32,7 @@
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
+#include <DUNE/Control/PathController.hpp>
 
 namespace Control
 {
