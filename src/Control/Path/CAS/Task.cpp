@@ -78,6 +78,8 @@ namespace Control
         double ilos_integral_limit;
         //! ILOS - Maximum Cross Track Heading
         double ilos_max_cross_track_heading;
+        //! ILOS - Saturation hysteresis margin
+        double ilos_saturation_hysteresis;
         //! ILOS - Enabled
         bool ilos_enabled;
         //! Thrust assistance during turns.
@@ -471,6 +473,13 @@ namespace Control
           .units(Units::Degree)
           .description("Maximum desired heading possible, relative to track bearing.");
 
+          param("ILOS -- Saturation Hysteresis", m_args.ilos_saturation_hysteresis)
+          .minimumValue("0.0")
+          .maximumValue("10.0")
+          .defaultValue("5.0")
+          .units(Units::Degree)
+          .description("Margin below the maximum cross track heading required to leave saturation and reset the integral.");
+
           param("Thrust Assistance During Turns", m_args.turn_thrust_assist)
           .visibility(Tasks::Parameter::VISIBILITY_USER)
           .units(Units::Percentage)
@@ -594,6 +603,8 @@ namespace Control
             m_integral_controller->setLookAheadDistance(m_args.ilos_lookahead_distance);
           if (paramChanged(m_args.ilos_max_cross_track_heading) && m_integral_controller != nullptr)
             m_integral_controller->setMaxCrossTrackHeading(Angles::radians(m_args.ilos_max_cross_track_heading));
+          if (paramChanged(m_args.ilos_saturation_hysteresis) && m_integral_controller != nullptr)
+            m_integral_controller->setSaturationHysteresis(Angles::radians(m_args.ilos_saturation_hysteresis));
 
           if (m_sb_mpc == nullptr)
             return;
@@ -693,6 +704,7 @@ namespace Control
           m_integral_controller->setGain(m_args.ilos_ki);
           m_integral_controller->setLookAheadDistance(m_args.ilos_lookahead_distance);
           m_integral_controller->setMaxCrossTrackHeading(Angles::radians(m_args.ilos_max_cross_track_heading));
+          m_integral_controller->setSaturationHysteresis(Angles::radians(m_args.ilos_saturation_hysteresis));
         }
 
           //! Release resources.
@@ -1490,7 +1502,6 @@ namespace Control
             m_timestamp_prev = m_timestamp_new;
           }
 
-          double ilos_offset = 0.0;
           // CAS and ILOS off
           if (!m_args.en_cas && !m_args.ilos_enabled)
           {
@@ -1507,7 +1518,6 @@ namespace Control
             if (ts.track_pos.x <= ts.track_length)
             {
               m_des_heading.value = m_integral_controller->updateHeading(ts.track_pos.y, ts.track_bearing);
-              ilos_offset = Angles::normalizeRadian(m_des_heading.value - ts.track_bearing);
             }
             else
               m_des_heading.value = ts.los_angle;
@@ -1521,7 +1531,6 @@ namespace Control
               {
                 m_prev_psi_os = 0.0;
                 m_des_heading.value = m_integral_controller->updateHeading(ts.track_pos.y, ts.track_bearing);
-                ilos_offset = Angles::normalizeRadian(m_des_heading.value - ts.track_bearing);
               }
               else
               {
@@ -1547,7 +1556,6 @@ namespace Control
                 Coordinates::getTrackPosition(m_new_track_start, m_new_track_bearing, state, &new_track_pos.x, &new_track_pos.y);
 
                 m_des_heading.value = m_integral_controller->updateHeading(new_track_pos.y, m_new_track_bearing);
-                ilos_offset = Angles::normalizeRadian(m_des_heading.value - m_new_track_bearing);
               }
             }
             else
@@ -1561,7 +1569,7 @@ namespace Control
 
           //! Normalize angle
           m_des_heading.value = Angles::normalizeRadian(m_des_heading.value);
-          debug("CAS OFFSET: %.0f | ILOS OFFSET: %.3f | NEW COURSE NORMALIZED: %.3f", Angles::degrees(m_psi_os), Angles::degrees(ilos_offset), Angles::degrees(m_des_heading.value));
+          // debug("CAS OFFSET: %.0f | ILOS OFFSET: %.3f | NEW COURSE NORMALIZED: %.3f", Angles::degrees(m_psi_os), Angles::degrees(ilos_offset), Angles::degrees(m_des_heading.value));
           dispatch(m_des_heading);
 
           overrideSpeedReference(isTurning(m_des_heading.value, state.psi));
