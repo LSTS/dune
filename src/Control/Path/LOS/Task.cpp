@@ -87,7 +87,12 @@ namespace Control
         void
         step(const IMC::EstimatedState& state, const TrackingState& ts)
         {
-          double ref = ts.track_bearing - std::atan(ts.track_pos.y / m_args.lookahead);
+          double ref;
+          
+          if (ts.track_pos.x > ts.track_length)
+            ref = getBearing(state, ts.end);
+          else
+            ref = ts.track_bearing - std::atan(ts.track_pos.y / m_args.lookahead);
 
           if (ts.cc)
             ref += state.psi - ts.course;
