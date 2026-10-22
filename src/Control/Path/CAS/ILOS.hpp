@@ -56,7 +56,9 @@ namespace Control
           m_gain(gain),
           m_integral(0.0),
           m_look_ahead(look_ahead_distance),
-          m_max_ct_heading(max_ct_heading)
+          m_max_ct_heading(max_ct_heading),
+          m_saturation_hysteresis(Angles::radians(5.0)),
+          m_saturated(false)
         { }
 
         /// Destructor
@@ -67,6 +69,7 @@ namespace Control
         reset()
         {
           m_integral = 0.0;
+          m_saturated = false;
           m_last_step.reset();
         }
 
@@ -94,6 +97,13 @@ namespace Control
           m_max_ct_heading = limit;
         }
 
+        //! Set saturation exit margin below the heading limit (radians).
+        void
+        setSaturationHysteresis(const double margin)
+        {
+          m_saturation_hysteresis = margin;
+        }
+
         //! Update guidance and return the complete desired heading.
         //! @param error signed cross-track error (meters)
         //! @param track_bearing reference track bearing (radians)
@@ -101,31 +111,49 @@ namespace Control
         double
         updateHeading(const double error, const double track_bearing)
         {
-          // Compute new integral term
+          // Invalid timesteps must not change the integral.
           const double timestep = m_last_step.getDelta();
-          const double new_integral = m_integral + getIntegralSlope(error, m_integral) * timestep;
+          double new_integral = m_integral;
+          if (timestep > 0.0)
+            new_integral += getIntegralSlope(error, m_integral) * timestep;
 
           // Compute heading offset relative to the track bearing
           double offset = - std::atan((error + m_gain * new_integral) / m_look_ahead);
 
-          // Prevent backwards movement
-          if (std::fabs(offset) > m_max_ct_heading)
+          if (!m_saturated && std::fabs(offset) > m_max_ct_heading)
           {
-            // Allow the integral to unwind if it reduces the saturated correction.
-            const double previous_offset = - std::atan((error + m_gain * m_integral) / m_look_ahead);
-            if (std::fabs(offset) < std::fabs(previous_offset))
-              m_integral = new_integral;
-
-            offset = Math::trimValue(offset, -m_max_ct_heading, m_max_ct_heading);
-            m_task->trace(DTR("[Saturated] Updated ILOS offset: %f | Integral: %f"), Angles::degrees(offset), m_integral);
+            m_saturated = true;
+            m_task->debug(DTR("ILOS entered saturation"));
           }
-          // Always accept integral updates within the heading limit
+
+          if (m_saturated)
+          {
+            const double exit_limit = m_max_ct_heading - m_saturation_hysteresis;
+            const double reset_offset = - std::atan(error / m_look_ahead);
+            // Both corrections must clear the exit threshold so resetting the
+            // integral cannot immediately put guidance back into saturation.
+            if (std::fabs(offset) <= exit_limit && std::fabs(reset_offset) <= exit_limit)
+            {
+              m_integral = 0.0;
+              m_saturated = false;
+              offset = reset_offset;
+              m_task->debug(DTR("ILOS left saturation: integral reset"));
+            }
+            else
+            {
+              // Retain unwinding while the saturation state is latched.
+              const double previous_offset = - std::atan((error + m_gain * m_integral) / m_look_ahead);
+              if (std::fabs(offset) < std::fabs(previous_offset))
+                m_integral = new_integral;
+            }
+          }
           else
           {
             m_integral = new_integral;
-            m_task->trace(DTR("[Unsaturated] Updated ILOS offset: %f | Integral: %f"), Angles::degrees(offset), m_integral);
           }
 
+          // Hysteresis affects state transitions, never the hard heading limit.
+          offset = Math::trimValue(offset, -m_max_ct_heading, m_max_ct_heading);
           m_debug_parcel.p = Angles::degrees(offset);
           m_debug_parcel.i = m_integral;
           m_task->dispatch(m_debug_parcel);
@@ -147,6 +175,10 @@ namespace Control
         //! Maximum cross track heading 
         //!< (maximum angle possible, relative to track bearing)
         double m_max_ct_heading;
+        //! Margin below the heading limit required to leave saturation.
+        double m_saturation_hysteresis;
+        //! Saturation state, retained within the hysteresis band.
+        bool m_saturated;
         //! Debug parcel
         IMC::ControlParcel m_debug_parcel;
 
