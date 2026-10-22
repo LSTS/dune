@@ -80,6 +80,8 @@ namespace Simulators
       double sinusoidal_period;
       double sinusoidal_phase;
       double sinusoidal_slope;
+
+      double pulse_deadband;
     };
 
     struct Task : public DUNE::Tasks::Periodic
@@ -105,7 +107,7 @@ namespace Simulators
 
         param("Stream Velocity Source", m_args.type)
             .defaultValue("Constant")
-            .values("Constant, Sinusoidal, Gridded 2D Model Data")
+            .values("Constant, Sinusoidal, Gridded 2D Model Data, Pulse")
             .description("Source of the stream speed values.");
 
         param("Default Speed North", m_args.default_wx)
@@ -171,6 +173,12 @@ namespace Simulators
             .defaultValue("0.0")
             .description("Slope onto which the sinusoidal stream velocity is projected "
                          "(deg).");
+
+        param("Pulse -- Deadband", m_args.pulse_deadband)
+            .units(Units::Second)
+            .minimumValue("0.0")
+            .defaultValue("0.0")
+            .description("Deadband duration for the pulse stream velocity (s).");
       }
 
       //! Initialize resources.

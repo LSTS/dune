@@ -37,6 +37,7 @@
 #include "ModelDataStreamGenerator.hpp"
 #include "StreamGenerator.hpp"
 #include "SinusoidalStreamGenerator.hpp"
+#include "PulseStreamGenerator.hpp"
 
 namespace Simulators
 {
@@ -80,6 +81,12 @@ namespace Simulators
         {
           return std::make_unique<SinusoidalStreamGenerator>(
                  config.sinusoidal_amplitude, config.sinusoidal_period, config.sinusoidal_phase, config.sinusoidal_slope);
+        }
+
+        if(config.type == "Pulse")
+        {
+          return std::make_unique<PulseStreamGenerator>(
+                 config.sinusoidal_amplitude, config.sinusoidal_period, config.sinusoidal_phase, config.sinusoidal_slope, config.pulse_deadband);
         }
 
         throw std::runtime_error(DTR("Unknown stream velocity source type."));

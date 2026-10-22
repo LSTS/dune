@@ -69,7 +69,7 @@ namespace Simulators
                     double depth,
                     double time = 0.0) const override;
 
-      private:
+      protected:
         double m_amplitude;
         double m_omega;
         double m_phase;
