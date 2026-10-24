@@ -34,7 +34,9 @@ find_path(STONEFISH_INCLUDE_DIR NAMES core/Console.h PATHS /usr/local/include/St
 if(STONEFISH_LIB AND STONEFISH_INCLUDE_DIR)
   message(STATUS "Found StoneFish: ${STONEFISH_LIB}")
   set(DUNE_SYS_HAS_STONEFISH 1 CACHE INTERNAL "StoneFish library")
-  include_directories(${STONEFISH_INCLUDE_DIR})
+  # Sources include both <core/...> and <Stonefish/core/...>.
+  get_filename_component(STONEFISH_INCLUDE_ROOT ${STONEFISH_INCLUDE_DIR} DIRECTORY)
+  include_directories(${STONEFISH_INCLUDE_DIR} ${STONEFISH_INCLUDE_ROOT})
   dune_add_lib(${STONEFISH_LIB})
   
   # Allow manual override of double precision detection
