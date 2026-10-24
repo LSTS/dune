@@ -13,6 +13,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <cstdint>
 
 using std::bitset;
 using std::ostream;
