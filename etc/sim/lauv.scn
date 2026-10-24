@@ -88,30 +88,67 @@
         <!-- Setpoints from DUNE (SetThrusterActuation) are normalized [-1, 1]. -->
         <actuator name="thruster_surge" type="thruster">
             <!-- max_setpoint is the propeller speed [rad/s] at full action 1.0
-                 (zero_order rotor: omega = setpoint). rpm = omega*30/pi. -->
-            <specs max_setpoint="261.8" inverted_setpoint="false" normalized_setpoint="true"/>
+                 (zero_order rotor: omega = setpoint). rpm = omega*30/pi.
+                 max_omega is a SEPARATE, absolute cap on the achieved rotor
+                 speed (local Stonefish patch: ZeroOrder now honors
+                 RotorDynamics::outputLimit; Thruster::setMaxOmega sets it
+                 independently of max_setpoint/setpointLimit). Without it the
+                 zero_order rotor tracks any commanded rpm exactly, so the
+                 rpm sweep's steady-u vs commanded-rpm curve grows linearly
+                 forever — no propeller thrust-coefficient tuning can bend
+                 that curve over (thrust and quadratic hull drag are both
+                 homogeneous degree-2 in (n,u), so the equilibrium u/n ratio
+                 is scale-invariant for ANY kt(J) shape). The field rpm sweep
+                 shows the real cause is a motor/ESC limit, not hydrodynamics:
+                 telemetry Rpm during xp6_1600rpm/xp6_1800rpm plateaus at the
+                 same ~1300-1400 rpm regardless of the (1600 vs 1800) command,
+                 matching the "1400" top breakpoint every LAUV variant's
+                 'Power Model -- Conversion - RPM' config uses. 146.6 rad/s =
+                 1400 rpm. -->
+            <specs max_setpoint="261.8" max_omega="146.6" inverted_setpoint="false" normalized_setpoint="true"/>
             <propeller diameter="0.113" right="true">
                 <mesh filename="propeller.obj" scale="1.0"/>
                 <material name="Aluminum"/>
                 <look name="gray"/>
             </propeller>
             <rotor_dynamics type="zero_order"/>
-            <!-- TODO: parameterize the thruster against a real LAUV thruster.
-                 - To match a real thruster's rated/bollard thrust, set
-                     kt = T_rated / max_setpoint^2 .
-                 - Do NOT recalibrate by kt_new = kt*(v_target/v_obs)^2: that
-                   assumes v ~ sqrt(kt) (pure quadratic drag). Stonefish drag is
-                   mesh-integrated (quadratic form term + linear skin-friction
-                   term, both attitude-dependent), so the square law overshoots
-                   the target.
-                 - For a physically faithful comparison, switch to
-                   <thrust_model type="fluid_dynamics"> and supply the propeller
-                   open-water coefficients K_T (forward/reverse) and K_Q. That
-                   model uses the real diameter, density and advance ratio
-                   J = u/(n*D), so thrust falls off with vehicle speed like a
-                   real propeller. -->
-            <thrust_model type="quadratic">
-                <thrust_coeff value="0.00177"/>
+            <!-- Advance-ratio ('fluid_dynamics') propeller model: thrust falls
+                 off with vehicle speed like a real propeller —
+                   T = rho * D^3 * ktp * |n| * (D*n - u),  n = omega/(2*pi) [rev/s]
+                 so thrust -> 0 at advance ratio J = u/(n*D) = 1. The previous
+                 'quadratic' model (T = kt*omega^2) was speed-INDEPENDENT, so
+                 StoneFish kept climbing past the field vehicle's ~1.45 m/s
+                 saturation (over-predicted surge by +0.4 m/s at 1600-1800 rpm;
+                 see ~/example-sim-logs/sweep). ktp tuned against the
+                 lauv-xplore-4 field rpm sweep (forward=reverse; torque_coeff is
+                 reaction roll only, the zero_order rotor ignores prop load).
+                 ktp=0.85 minimises steady-u RMS over the 800-1400 rpm band
+                 (the common operating range, ~0.06). NOTE ktp was 1.10 while
+                 the vehicle still weaved through every leg (yaw limit cycle,
+                 fixed 2026-07 via hull body lift + yaw-fin retune) — the
+                 weave added drag, so the straight-line calibration was hot:
+                 once the path was clean the same thrust ran +0.16..+0.46 m/s
+                 over the field sweep. 1600-1800 rpm (rarely commanded) still
+                 over-predict ~0.25-0.31 m/s — the field's flat saturation is
+                 flatter than any single-coeff advance-ratio model.
+                 (ktp=0.418 = old quadratic bollard kt=0.00177 at u=0.) -->
+            <thrust_model type="fluid_dynamics">
+                <!-- alpha/beta decouple the kt(J)/kq(J) slope from the J=0
+                     intercept (local Stonefish patch, ActuatorDynamics.h;
+                     without the attributes the lib falls back to
+                     alpha=-forward). kt0=2.5, alpha=-3.88 keeps the same
+                     steady rpm->u map as the old 0.85/-0.85 pair (fitted to
+                     the lauv-xplore-4 800-1400 rpm band) but raises
+                     off-equilibrium thrust ~3x (bollard 25->74 N at 800 rpm,
+                     zero-thrust advance ratio J0 = kt0/|alpha| = 0.64) so
+                     low-rpm acceleration and in-turn speed recovery are no
+                     longer starved: at 800 rpm Goto2 track-separation RMS
+                     fell 14.3->8.4 m and in-turn u_min rose 0.50->0.64
+                     (field 0.68); at 1200 rpm sep RMS 5.3->2.5 m. A/B swept
+                     kt0 = 0.85/1.5/2.5 along the constant-steady-map valley;
+                     gains were monotonic up to 2.5. -->
+                <thrust_coeff forward="2.5" reverse="2.5" alpha="-3.88"/>
+                <torque_coeff value="0.125" beta="-0.194"/>
             </thrust_model>
             <!-- Propeller mesh (propeller.obj) is extracted from lauv.STL and
                  recentered on its rotation axis, so this origin is the real
@@ -129,8 +166,30 @@
                  about X so local Z -> hull Y (deflection) and local Y ->
                  hull Z (force); the visual mesh is rolled back -90 deg so it
                  still renders as a horizontal fin.. -->
+        <!-- Yaw fins: tuned with the hull body-lift coefficients
+             (Simulators.StoneFish 'Hull Body Lift Coefficients', see
+             etc/stonefish.ini) against the lauv-xplore-4 field sweep.
+             The field's max-rudder yaw rate is nearly SPEED-INDEPENDENT
+             (~0.14 rad/s at u=0.78 and u=1.2), while the bare Rudder model
+             scales lift with u^2 — so the YAW fins carry an 'inflow' term
+             (patched local Stonefish: constant axial flow along hull +X,
+             the propeller race over the tail) and a lower lift_coeff.
+             lift_coeff 8 + inflow 0.6 keeps the ceiling at K_eff ~= 0.33
+             (field 0.31) at BOTH 800 and 1200 rpm. Tuning traps (see
+             tasks/lessons.md 2026-07-19): inflow adds vectorially
+             ((u+p)^2 cross term), suppresses the fin's flow-angle feedback
+             (~1.46x gain per unit moment) and cuts the fin's weathervane
+             yaw DAMPING — larger inflow with smaller lift_coeff makes the
+             yaw rate INSENSITIVE (even inverted) to lift_coeff as the hull
+             Munk moment takes over. 8/0.6 is the stable sweet spot; the
+             body-lift knobs (etc/stonefish.ini) move together with these.
+             drag_coeff IS honored by the patched Rudder (Engelhardtsen drag
+             with its own coefficient): 6 gives L/D ~= 5 at full deflection;
+             the old lib used lift_coeff there (28 -> ~10 N fin drag at full
+             rudder, ~2x hull drag — the cause of the deep in-turn surge
+             loss). -->
         <actuator name="fin_top" type="rudder">
-            <specs area="0.0080" lift_coeff="24.0" drag_coeff="0.9" max_angle="0.45" stall_angle="0.6" max_angular_rate="5.24" inverted="false"/>
+            <specs area="0.0080" lift_coeff="8.0" drag_coeff="6.0" inflow="0.6" max_angle="0.45" stall_angle="0.6" max_angular_rate="5.24" inverted="false"/>
             <visual>
                 <mesh filename="lauv_fin_top.obj" scale="1.0"/>
                 <material name="Hull"/>
@@ -144,10 +203,16 @@
         <actuator name="fin_starboard" type="rudder">
             <!-- inverted: a pitch fin rolled +90 deg produces a nose-up
                  moment for DUNE's nose-down (dive) command, so flip it.
-                 lift_coeff 24 (matches the yaw fins): at 6 the pitch fins
-                 saturate nose-down yet the +0.38 kg buoyant hull pitches only
-                 ~7 deg and never dives; VSIM uses symmetric fin forces. -->
-            <specs area="0.0080" lift_coeff="24.0" drag_coeff="0.9" max_angle="0.45" stall_angle="0.6" max_angular_rate="5.24" inverted="true"/>
+                 lift_coeff 24: at 6 the pitch fins saturate nose-down yet
+                 the +0.38 kg buoyant hull pitches only ~7 deg and never
+                 dives; VSIM uses symmetric fin forces. Pitch fins keep
+                 inflow=0 and drag_coeff=lift_coeff (exact legacy Rudder
+                 behavior): giving them the yaw fins' inflow term triples
+                 their force at low speed, and a stern fin dives by lifting
+                 the TAIL — at the surface at u~0.4 that plows the bow down
+                 instead of flying the vehicle under (u capped ~0.4 at 1600
+                 rpm, never dove; see tasks/todo.md milestone 3d). -->
+            <specs area="0.0080" lift_coeff="24.0" drag_coeff="24.0" inflow="0.0" max_angle="0.45" stall_angle="0.6" max_angular_rate="5.24" inverted="true"/>
             <visual>
                 <mesh filename="lauv_fin_starboard.obj" scale="1.0"/>
                 <material name="Hull"/>
@@ -160,7 +225,7 @@
 
         <actuator name="fin_port" type="rudder">
             <!-- inverted: pitch fin, same as starboard (see above). -->
-            <specs area="0.0080" lift_coeff="24.0" drag_coeff="0.9" max_angle="0.45" stall_angle="0.6" max_angular_rate="5.24" inverted="true"/>
+            <specs area="0.0080" lift_coeff="24.0" drag_coeff="24.0" inflow="0.0" max_angle="0.45" stall_angle="0.6" max_angular_rate="5.24" inverted="true"/>
             <visual>
                 <mesh filename="lauv_fin_port.obj" scale="1.0"/>
                 <material name="Hull"/>
@@ -172,7 +237,7 @@
         </actuator>
 
         <actuator name="fin_bottom" type="rudder">
-            <specs area="0.0080" lift_coeff="24.0" drag_coeff="0.9" max_angle="0.45" stall_angle="0.6" max_angular_rate="5.24" inverted="false"/>
+            <specs area="0.0080" lift_coeff="8.0" drag_coeff="6.0" inflow="0.6" max_angle="0.45" stall_angle="0.6" max_angular_rate="5.24" inverted="false"/>
             <visual>
                 <mesh filename="lauv_fin_bottom.obj" scale="1.0"/>
                 <material name="Hull"/>
