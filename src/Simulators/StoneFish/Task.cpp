@@ -440,13 +440,14 @@ namespace Simulators
 
         std::string model;
         cfg.get("General", "Vehicle Type", "lauv", model);
-        std::string section = "VSIM/Model/" + model;
+        std::string section = "StoneFish/Model/" + model;
 
         bool has_bodylift =
           cfg.getList(section, "Hull Body Lift Coefficients", m_bodylift_coef.data, 8);
         m_bodylift = m_args.body_lift && has_bodylift;
-        if (!m_bodylift)
-          war("'Hull Body Lift Coefficients' needs 8 values, body lift disabled");
+        if (m_args.body_lift && !has_bodylift)
+          war("no 8-value 'Hull Body Lift Coefficients' in [%s], body lift disabled",
+              section.c_str());
       }
 
       //! Update internal state with new parameter values.

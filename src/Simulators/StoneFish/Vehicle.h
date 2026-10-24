@@ -72,8 +72,15 @@ namespace Simulators
         sf::Vector3 angularVelocity;
       };
 
-      //! Hull body-lift coefficients.
-      //! Same formulation and units as Simulators/VSIM (UUV, "Body Lift Coefficients").
+      //! Hull body-lift coefficients. Same 8-term formulation and units as
+      //! Simulators/VSIM (UUV, "Body Lift Coefficients"), configured under
+      //! [StoneFish/Model/<Vehicle Type>] with a StoneFish-specific tuning.
+      //! Lift and cross-flow moments a slender lifting body develops at an
+      //! angle of attack/sideslip, all proportional to the axial speed u.
+      //! Stonefish derives only quadratic drag and added mass from the hull
+      //! mesh, so these (including the sideslip-driven yaw moment Nuv) are
+      //! absent — without them the hull resists yaw and the vehicle skids
+      //! through turns instead of turning.
       struct BodyLift
       {
         union
