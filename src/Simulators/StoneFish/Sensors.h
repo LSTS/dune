@@ -40,6 +40,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Registry.h"
+
 // Stonefish headers.
 #include <Stonefish/core/SimulationManager.h>
 #include <Stonefish/sensors/Sample.h>
@@ -54,20 +57,11 @@ namespace Simulators
 {
   namespace StoneFish
   {
-
-    struct DeviceInfo
-    {
-      uint32_t system_id;
-      uint32_t entity_id;
-    };
-
-    typedef std::map<std::string, DeviceInfo> DeviceMap;
-
     //! Translates Stonefish sensor readings into IMC messages.
     //!
-    //! Every sensor of the simulation is dispatched from its own DUNE
-    //! entity, labelled with the sensor name from the scenario file
-    //! (robot sensors are prefixed with the robot name, e.g. "lauv/imu").
+    //! Every sensor of the simulation is dispatched from the IMC address the
+    //! Registry maps its name to (robot sensors are prefixed with the robot
+    //! name, e.g. "lauv-1/imu"). Sensors without an address are dropped.
     //!
     //! Scalar sensors are polled every simulation step and translated when
     //! a fresh sample is available:
@@ -100,37 +94,23 @@ namespace Simulators
     public:
       //! Constructor.
       //! @param[in] task parent task, used to dispatch IMC messages.
-      explicit SensorBridge(DUNE::Tasks::Task* task);
+      //! @param[in] registry device to IMC address translation.
+      SensorBridge(DUNE::Tasks::Task* task, const Registry& registry);
 
       //! Collect the sensors of a built simulation and install the data
       //! callbacks of vision sensors.
       //! @param[in] sim simulation manager with a built scenario.
-      //! @param[in] entities sensor name to reserved entity id map.
       void
-      bind(sf::SimulationManager& sim, const DeviceMap& entities);
+      bind(sf::SimulationManager& sim);
 
       //! Translate fresh samples of all scalar sensors into IMC messages.
       //! Must be called from the simulation thread, on every step.
       void
       poll(void);
 
-      //! Bind (or rebind) a device name to a system and entity id, replacing
-      //! any previous mapping. Used to apply the ids a simulated vehicle
-      //! announces in its EntityList after the bridge has been bound, so its
-      //! sensor data is dispatched from the vehicle's own system and entity.
-      //! Thread-safe.
-      //! @param[in] dev_name device name (robot/sensor), as in the scenario.
-      //! @param[in] info system and entity id to dispatch the sensor from.
-      void
-      setEntity(const std::string& dev_name, const DeviceInfo& info);
-
     private:
-      //! Resolve device name (robot/sensor) to system and entity id,
-      //! or return the task entity if not found. Thread-safe.
-      DeviceInfo
-      resolveDevice(const std::string& dev_name);
-
-      //! Dispatch a message from the entity reserved for a sensor.
+      //! Dispatch a message from the IMC address of a sensor, or drop it if
+      //! the sensor has none.
       void
       dispatch(DUNE::IMC::Message& msg, const std::string& name);
 
@@ -196,11 +176,8 @@ namespace Simulators
 
       //! Parent task.
       DUNE::Tasks::Task* m_task;
-      //! Sensor name to system and entity id.
-      DeviceMap m_entities;
-      //! Guards m_entities (read on every step and from vision callbacks,
-      //! updated when a vehicle's EntityList is consumed).
-      std::mutex m_entities_mutex;
+      //! Device to IMC address translation.
+      const Registry& m_registry;
       //! Scalar sensors polled every step.
       std::vector<sf::ScalarSensor*> m_scalars;
       //! Water density used to derive depth from pressure [kg/m³].

@@ -41,6 +41,7 @@
 // Local headers.
 #include "Engine.h"
 #include "Recorder.h"
+#include "Registry.h"
 #include "Scenario.h"
 #include "Sensors.h"
 #include "Vehicle.h"
@@ -64,6 +65,9 @@ namespace Simulators
   //! EntityList it announces). Each device of a robot ("lauv-1/imu") is then
   //! dispatched from that vehicle's system id and the entity id the vehicle
   //! reports for it.
+  //!
+  //! A robot whose name is not a known IMC system (see imc-addresses.ini) is
+  //! still simulated, but none of its data is dispatched.
   //!
   //! When no robot is named after this system the task assumes it is running
   //! on a dedicated simulation node, simulating only remote vehicles. If a
@@ -167,51 +171,14 @@ namespace Simulators
                                + "' (expected Disabled/Low/Medium/High)");
     }
 
-    //! A robot of the scenario, exposed to the IMC bus as one system.
-    //!
-    //! Each simulated vehicle is a distinct IMC system: its sensor and state
-    //! messages are dispatched from its own system id (and, for sensors, the
-    //! entity id the vehicle announces in its EntityList), and actuator
-    //! commands are routed to it by their source system id.
-    struct SimVehicle
-    {
-      //! Robot wrapper, valid once the scenario is built.
-      std::shared_ptr<Vehicle> vehicle;
-      //! Ground truth state, stamped with this vehicle's system id.
-      IMC::SimulatedState sstate;
-      //! Scenario robot name (the IMC system name of the represented vehicle).
-      std::string name;
-      //! IMC system id this vehicle's data is dispatched from (0 if unresolved).
-      uint32_t system_id;
-      //! True once this vehicle's EntityList has been translated.
-      bool bound;
-      //! True once this vehicle's state has been flagged as divergent.
-      bool diverged;
-
-      SimVehicle(void):
-        system_id(0),
-        bound(false),
-        diverged(false)
-      { }
-    };
-
     struct Task: public DUNE::Tasks::Task
     {
       //! Resolved path to the scenario file.
       Path m_scenario;
       //! Simulation engine.
       Engine* m_engine;
-      //! Simulated vehicles, one per robot of the scenario.
-      std::vector<std::shared_ptr<SimVehicle>> m_vehicles;
-      //! Robot name to simulated vehicle, for EntityList translation.
-      std::map<std::string, std::shared_ptr<SimVehicle>> m_by_name;
-      //! System id to simulated vehicle, for routing inbound commands.
-      std::map<uint32_t, std::shared_ptr<SimVehicle>> m_by_system;
-      //! Local (or first) vehicle, used for actuator feedback fallback and
-      //! the simulation trace.
-      std::shared_ptr<SimVehicle> m_primary;
-      //! Device name (lauv/imu) to system and entity ids.
-      DeviceMap m_eids;
+      //! Simulated vehicles and the IMC address of each of their devices.
+      Registry m_registry;
       //! Systems whose commands could not be routed, reported once each.
       std::set<uint32_t> m_unrouted;
       //! True once the configuration/scenario name mismatch was reported.
@@ -244,7 +211,7 @@ namespace Simulators
         DUNE::Tasks::Task(name, ctx),
         m_engine(nullptr),
         m_mismatch_warned(false),
-        m_bridge(this),
+        m_bridge(this, m_registry),
         m_origin_lat(0.0),
         m_origin_lon(0.0),
         m_origin_height(0.0),
@@ -493,15 +460,15 @@ namespace Simulators
           throw RestartNeeded("simulation settings changed, rebuilding", 1);
       }
 
-      //! True if a scenario device belongs to the simulator's own vehicle, so
-      //! its entity is reserved locally. Devices of other robots are remote
-      //! systems: their ids are learned from the EntityList they announce.
-      //! The single-robot reference config (where the robot name need not match
-      //! the system name) always counts as local.
+      //! True if a scenario device belongs to this system, so its entity is
+      //! reserved locally: a device of the robot named after this system, or
+      //! a top-level device of the scenario. Devices of other robots are
+      //! remote systems: their ids are learned from the EntityList they
+      //! announce.
       bool
       isLocalDevice(const Scenario::Device& device) const
       {
-        return device.robot == getSystemName();
+        return device.robot.empty() || device.robot == getSystemName();
       }
 
       void
@@ -510,7 +477,7 @@ namespace Simulators
         try
         {
           Entities::StatefulEntity* entity = reserveEntity<Entities::StatefulEntity>(sensor.name);
-          m_eids[sensor.fullName()] = { getSystemId(), entity->getId() };
+          m_registry.setDevice(sensor.fullName(), { getSystemId(), entity->getId() });
 
           // TODO: Simulate state when dispatching data from device
           //? Add option to disable data device -> stop dispatching data -> state go idle
@@ -540,7 +507,7 @@ namespace Simulators
         }
         catch (const std::exception& e)
         {
-          war("scenario scan failed, sensors will use the task entity: %s", e.what());
+          war("scenario scan failed, devices will not be dispatched: %s", e.what());
           return;
         }
 
@@ -558,13 +525,9 @@ namespace Simulators
           // entity id is refined when the vehicle announces its EntityList.
           unsigned id = resolveSystemName(device.robot);
           if (!IMC::AddressResolver::isValid(id))
-          {
-            war("unresolved system '%s' for device '%s'", device.robot.c_str(),
-                device.name.c_str());
-            continue;
-          }
+            continue;  // Reported once per robot, when the scenario is built.
 
-          m_eids[device.fullName()] = { id, DUNE_IMC_CONST_UNK_EID };
+          m_registry.setDevice(device.fullName(), { id, DUNE_IMC_CONST_UNK_EID });
 
           debug("device '%s' belongs to remote vehicle '%s', will translate "
                 "from its EntityList",
@@ -601,38 +564,21 @@ namespace Simulators
         }
       }
 
-      //! Comma-separated list of the scenario robot names, for diagnostics.
-      std::string
-      robotNames(void) const
-      {
-        std::string names;
-        for (const std::shared_ptr<SimVehicle>& sv : m_vehicles)
-          names += (names.empty() ? "'" : ", '") + sv->name + "'";
-        return names;
-      }
-
       //! Resolve the simulated vehicle an inbound command is addressed to,
-      //! from the source system id of the command. With a single simulated
-      //! vehicle the command is always routed to it (a co-located vehicle
-      //! commanding the simulator keeps working); with several vehicles the
-      //! source must match a known system (learned from its EntityList).
-      //! Commands that cannot be routed are dropped; the first drop per
-      //! system is reported, as commands from this very system mean the
-      //! co-located stack expects to be simulated but no scenario robot is
-      //! named after it — a configuration/scenario vehicle name mismatch.
+      //! from the source system id of the command: the robot that represents
+      //! that system. Commands that cannot be routed are dropped; the first
+      //! drop per system is reported, as commands from this very system mean
+      //! the co-located stack expects to be simulated but no scenario robot
+      //! is named after it — a configuration/scenario vehicle name mismatch.
       Vehicle*
       routeVehicle(uint32_t source)
       {
-        std::map<uint32_t, std::shared_ptr<SimVehicle>>::const_iterator itr =
-          m_by_system.find(source);
-        if (itr != m_by_system.end())
-          return itr->second->vehicle.get();
-
-        if (m_vehicles.size() == 1 && m_primary != nullptr)
-          return m_primary->vehicle.get();
+        SimVehicle* sv = m_registry.findBySystem(source);
+        if (sv != nullptr)
+          return sv->vehicle.get();
 
         // Commands queued before the scenario is built cannot be judged yet.
-        if (m_vehicles.empty())
+        if (m_registry.getVehicles().empty())
           return nullptr;
 
         if (m_unrouted.insert(source).second)
@@ -641,7 +587,7 @@ namespace Simulators
             war("dropping actuator commands of this system: '%s' is not a "
                 "robot of the scenario (robots: %s) — vehicle name mismatch "
                 "between the configuration and the scenario file?",
-                getSystemName(), robotNames().c_str());
+                getSystemName(), m_registry.getNames().c_str());
           else
             trace("ignoring actuator commands from '%s': not a robot of the "
                   "scenario",
@@ -679,14 +625,14 @@ namespace Simulators
         if (m_mismatch_warned || msg->getSource() != getSystemId())
           return;
 
-        if (m_vehicles.empty() || m_primary != nullptr)
+        if (m_registry.getVehicles().empty() || m_registry.getLocal() != nullptr)
           return;
 
         m_mismatch_warned = true;
         war("this system '%s' runs a vehicle stack but is not a robot of the "
             "scenario (robots: %s) — vehicle name mismatch between the "
             "configuration and the scenario file?",
-            getSystemName(), robotNames().c_str());
+            getSystemName(), m_registry.getNames().c_str());
       }
 
       //! Translate the ids a simulated vehicle announces into the dispatch
@@ -704,42 +650,20 @@ namespace Simulators
         if (msg->op != IMC::EntityList::OP_REPORT)
           return;
 
-        const uint32_t src = msg->getSource();
-        const std::string sys = resolveSystemId(src);
-
-        std::map<std::string, std::shared_ptr<SimVehicle>>::iterator itr = m_by_name.find(sys);
-        if (itr == m_by_name.end())
-          return;  // Not the EntityList of a simulated robot.
-
-        std::shared_ptr<SimVehicle> sv = itr->second;
-
-        if (sv->system_id != src)
-        {
-          sv->system_id = src;
-          m_by_system[src] = sv;
-          inf("vehicle '%s' bound to system %u", sv->name.c_str(), src);
-        }
+        const SimVehicle* known = m_registry.findBySystem(msg->getSource());
+        const bool first = known == nullptr || !known->bound;
 
         TupleList tuples(msg->list);
-        const std::map<std::string, std::string> entities = tuples.getMap();
-        for (std::map<std::string, std::string>::const_iterator eit = entities.begin();
-             eit != entities.end(); ++eit)
-        {
-          const std::string dev = sv->name + "/" + eit->first;
-          const DeviceInfo info = { src, (uint32_t)std::strtoul(eit->second.c_str(), nullptr, 10) };
-          m_eids[dev] = info;
-          m_bridge.setEntity(dev, info);
-        }
-
-        sv->bound = true;
+        SimVehicle* sv = m_registry.bindEntities(resolveSystemId(msg->getSource()),
+                                                 msg->getSource(), tuples.getMap());
+        if (sv != nullptr && first)
+          inf("vehicle '%s' bound to system %u", sv->name.c_str(), sv->system_id);
       }
 
       //! Query the EntityList of simulated vehicles that have not announced
       //! their entities yet, so vehicles running on other DUNE nodes are
       //! bound without manual action: the Daemon of each vehicle answers
-      //! with a report addressed back to this system. Vehicles whose system
-      //! is still unresolved (not in the address book, no Announce seen) are
-      //! queried with a broadcast.
+      //! with a report addressed back to this system.
       void
       queryEntities(void)
       {
@@ -748,17 +672,10 @@ namespace Simulators
 
         m_equery_timer.reset();
 
-        bool broadcast = false;
-        for (const std::shared_ptr<SimVehicle>& sv : m_vehicles)
+        for (const std::unique_ptr<SimVehicle>& sv : m_registry.getVehicles())
         {
-          if (sv->bound || sv == m_primary)
+          if (sv->bound || !sv->hasSystem())
             continue;
-
-          if (sv->system_id == 0)
-          {
-            broadcast = true;
-            continue;
-          }
 
           IMC::EntityList query;
           query.op = IMC::EntityList::OP_QUERY;
@@ -766,59 +683,31 @@ namespace Simulators
           dispatch(query);
           trace("querying entities of vehicle '%s'", sv->name.c_str());
         }
-
-        if (broadcast)
-        {
-          IMC::EntityList query;
-          query.op = IMC::EntityList::OP_QUERY;
-          dispatch(query);
-        }
       }
 
-      //! Resolve a device (robot/actuator) of a vehicle to the system and
-      //! entity id its feedback is dispatched from. Falls back to the
-      //! vehicle's system (and the task entity) when the device has no
-      //! reserved or announced entity.
-      DeviceInfo
-      resolveDevice(const SimVehicle& sv, const std::string& dev_name)
-      {
-        DeviceMap::const_iterator itr = m_eids.find(dev_name);
-        if (itr != m_eids.end())
-          return itr->second;
-
-        return { sv.system_id != 0 ? sv.system_id : getSystemId(), getEntityId() };
-      }
-
-      //! Wrap a robot of the scenario as a simulated vehicle and register it in
-      //! the lookup maps. The vehicle whose name matches this system (or the
-      //! only robot of the scenario) is the local one and dispatches from this
-      //! system id; the others are remote systems, resolved by name now and
-      //! refined when their EntityList arrives.
+      //! Register a robot of the scenario as a simulated vehicle. The robot
+      //! named after this system is the local one; the others are remote
+      //! systems, resolved by name from the address book and bound to their
+      //! entities once they announce their EntityList. A robot whose name
+      //! does not resolve is simulated, but none of its data is dispatched.
       void
       addVehicle(sf::Robot* robot)
       {
-        std::shared_ptr<SimVehicle> sv = std::make_shared<SimVehicle>();
-        sv->vehicle = std::make_shared<Vehicle>(robot);
-        sv->name = sv->vehicle->getName();
+        const std::string name = robot->getName();
+        const bool local = name == getSystemName();
+        const unsigned id = local ? getSystemId() : resolveSystemName(name);
 
-        sv->sstate.lat = Angles::radians(m_origin_lat);
-        sv->sstate.lon = Angles::radians(m_origin_lon);
-        sv->sstate.height = m_origin_height;
+        SimVehicle& sv = m_registry.addVehicle(robot, id, local);
+        sv.sstate.lat = Angles::radians(m_origin_lat);
+        sv.sstate.lon = Angles::radians(m_origin_lon);
+        sv.sstate.height = m_origin_height;
 
-        unsigned id = resolveSystemName(sv->name);
-        sv->system_id = id;
-
-        m_vehicles.push_back(sv);
-        m_by_name[sv->name] = sv;
-        if (sv->system_id != 0)
-          m_by_system[sv->system_id] = sv;
-
-        if (sv->name == getSystemName())
-          m_primary = sv;
-
-        inf("simulating vehicle '%s'%s%s", sv->name.c_str(),
-            sv->name == getSystemName() ? " (local)" : "",
-            sv->system_id != 0 ? "" : " (awaiting EntityList)");
+        if (sv.hasSystem())
+          inf("simulating vehicle '%s'%s", name.c_str(), local ? " (local)" : "");
+        else
+          war("vehicle '%s' is not a known IMC system (imc-addresses.ini), "
+              "its data will not be dispatched",
+              name.c_str());
       }
 
       //! Collect the resources of the built scenario: the robot to
@@ -843,14 +732,14 @@ namespace Simulators
         for (unsigned i = 0; sim.getRobot(i) != nullptr; i++)
           addVehicle(sim.getRobot(i));
 
-        if (m_vehicles.empty())
+        if (m_registry.getVehicles().empty())
           war("scenario has no robot, only sensors will be dispatched");
-        else if (m_primary == nullptr)
+        else if (m_registry.getLocal() == nullptr)
           inf("this system is not a robot of the scenario (robots: %s); "
               "acting as a dedicated simulation node",
-              robotNames().c_str());
+              m_registry.getNames().c_str());
 
-        for (const std::shared_ptr<SimVehicle>& sv : m_vehicles)
+        for (const std::unique_ptr<SimVehicle>& sv : m_registry.getVehicles())
         {
           if (m_args.dump_dynamics)
           {
@@ -859,7 +748,7 @@ namespace Simulators
           }
         }
 
-        m_bridge.bind(sim, m_eids);
+        m_bridge.bind(sim);
         setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
       }
 
@@ -890,7 +779,7 @@ namespace Simulators
 
         m_bridge.poll();
 
-        if (m_vehicles.empty())
+        if (m_registry.getVehicles().empty())
           return;
 
         queryEntities();
@@ -899,7 +788,7 @@ namespace Simulators
         if (feedback)
           m_feedback_timer.reset();
 
-        for (const std::shared_ptr<SimVehicle>& sv : m_vehicles)
+        for (const std::unique_ptr<SimVehicle>& sv : m_registry.getVehicles())
         {
           sv->vehicle->applySetpoints();
           dispatchState(sim, *sv);
@@ -907,8 +796,9 @@ namespace Simulators
             dispatchFeedback(*sv);
         }
 
-        if (m_recorder.isOpen() && m_primary != nullptr)
-          m_recorder.logStep(sim.getSimulationTime(), *m_primary->vehicle);
+        SimVehicle* local = m_registry.getLocal();
+        if (m_recorder.isOpen() && local != nullptr)
+          m_recorder.logStep(sim.getSimulationTime(), *local->vehicle);
       }
 
       //! Apply the hull body-lift and added-mass (Munk) force/moment for
@@ -918,7 +808,7 @@ namespace Simulators
       void
       onPreTick(sf::SimulationManager&)
       {
-        for (const std::shared_ptr<SimVehicle>& sv : m_vehicles)
+        for (const std::unique_ptr<SimVehicle>& sv : m_registry.getVehicles())
         {
           if (m_bodylift)
             sv->vehicle->applyBodyLift(m_bodylift_coef);
@@ -973,9 +863,8 @@ namespace Simulators
         if (!stateIsSane(sv, state, sim.getSimulationTime()))
           return;
 
-        // Not yet bound to an IMC system (no EntityList / Announce seen);
-        // dispatching with an unknown source would mislabel the data.
-        if (sv.system_id == 0)
+        // Not an IMC system: dispatching would mislabel the data.
+        if (!sv.hasSystem())
           return;
 
         IMC::SimulatedState& ss = sv.sstate;
@@ -1018,9 +907,6 @@ namespace Simulators
       void
       dispatchFeedback(SimVehicle& sv)
       {
-        if (sv.system_id == 0)
-          return;
-
         Vehicle& vehicle = *sv.vehicle;
 
         for (size_t i = 0; i < vehicle.getThrusterCount(); i++)
@@ -1032,7 +918,10 @@ namespace Simulators
           IMC::Rpm msg;
           msg.value = (int16_t)std::lround(rpm);
 
-          DeviceInfo info = resolveDevice(sv, vehicle.getThrusterName(i));
+          DeviceInfo info;
+          if (!m_registry.resolve(vehicle.getThrusterName(i), info))
+            continue;
+
           msg.setSource(info.system_id);
           msg.setSourceEntity(info.entity_id);
           msg.setDestination(info.system_id);
@@ -1045,7 +934,10 @@ namespace Simulators
           msg.id = i;
           msg.value = vehicle.getServoPosition(i);
 
-          DeviceInfo info = resolveDevice(sv, vehicle.getServoName(i));
+          DeviceInfo info;
+          if (!m_registry.resolve(vehicle.getServoName(i), info))
+            continue;
+
           msg.setSource(info.system_id);
           msg.setSourceEntity(info.entity_id);
           msg.setDestination(info.system_id);

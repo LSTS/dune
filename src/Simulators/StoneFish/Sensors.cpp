@@ -56,20 +56,16 @@ namespace Simulators
       msg.data.assign(intensities, intensities + count);
     }
 
-    SensorBridge::SensorBridge(Tasks::Task* task):
+    SensorBridge::SensorBridge(Tasks::Task* task, const Registry& registry):
       m_task(task),
+      m_registry(registry),
       m_water_density(c_water_density),
       m_frameid(0)
     { }
 
     void
-    SensorBridge::bind(sf::SimulationManager& sim, const DeviceMap& entities)
+    SensorBridge::bind(sf::SimulationManager& sim)
     {
-      {
-        std::lock_guard<std::mutex> lock(m_entities_mutex);
-        m_entities = entities;
-      }
-
       sf::Ocean* ocean = sim.getOcean();
       if (ocean != nullptr)
         m_water_density = ocean->getLiquid().density;
@@ -110,30 +106,15 @@ namespace Simulators
     }
 
     void
-    SensorBridge::setEntity(const std::string& dev_name, const DeviceInfo& info)
-    {
-      std::lock_guard<std::mutex> lock(m_entities_mutex);
-      m_entities[dev_name] = info;
-    }
-
-    DeviceInfo
-    SensorBridge::resolveDevice(const std::string& dev_name)
-    {
-      {
-        std::lock_guard<std::mutex> lock(m_entities_mutex);
-        DeviceMap::const_iterator itr = m_entities.find(dev_name);
-        if (itr != m_entities.end())
-          return itr->second;
-      }
-
-      warnOnce(dev_name, "no reserved entity, dispatching from task entity");
-      return { m_task->getSystemId(), m_task->getEntityId() };
-    }
-
-    void
     SensorBridge::dispatch(IMC::Message& msg, const std::string& dev_name)
     {
-      DeviceInfo info = resolveDevice(dev_name);
+      DeviceInfo info;
+      if (!m_registry.resolve(dev_name, info))
+      {
+        warnOnce(dev_name, "no IMC system/entity for this sensor, not dispatched");
+        return;
+      }
+
       msg.setSource(info.system_id);
       msg.setSourceEntity(info.entity_id);
       msg.setDestination(info.system_id);
