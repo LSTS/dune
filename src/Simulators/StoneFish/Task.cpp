@@ -143,6 +143,8 @@ namespace Simulators
       double log_sim_hz;
       //! Apply the hull body-lift force/moment each physics step.
       bool body_lift;
+      //! Apply the added-mass (Munk) coupling each physics step.
+      bool munk;
     };
 
     //! Translate a configuration string to a Stonefish render quality level.
@@ -373,6 +375,14 @@ namespace Simulators
                        "physics step. Adds the sideslip-driven turning moment and "
                        "lateral lift that the mesh hydrodynamics miss; without it "
                        "the hull over-damps yaw and the vehicle skids through turns.");
+
+        param("Hull Munk Moment", m_args.munk)
+          .defaultValue("false")
+          .description("Apply the added-mass (Munk) coupling force and moment each "
+                       "physics step. Stonefish integrates one isotropic added mass, "
+                       "so the destabilising Munk yaw/pitch moments of a slender "
+                       "hull are otherwise absent. When enabled, 'Hull Body Lift "
+                       "Coefficients' should carry only the viscous lift share.");
 
         param("Divergence - Maximum Speed", m_args.max_speed)
           .defaultValue("25.0")
@@ -901,17 +911,20 @@ namespace Simulators
           m_recorder.logStep(sim.getSimulationTime(), *m_primary->vehicle);
       }
 
-      //! Apply the hull body-lift force/moment for the current state.
+      //! Apply the hull body-lift and added-mass (Munk) force/moment for
+      //! the current state.
       //! Runs in the simulation thread, once per physics sub-step, before
       //! Bullet integrates it (see SimManager::PreTickCallback).
       void
       onPreTick(sf::SimulationManager&)
       {
-        if (!m_bodylift)
-          return;
-
         for (const std::shared_ptr<SimVehicle>& sv : m_vehicles)
-          sv->vehicle->applyBodyLift(m_bodylift_coef);
+        {
+          if (m_bodylift)
+            sv->vehicle->applyBodyLift(m_bodylift_coef);
+          if (m_args.munk)
+            sv->vehicle->applyMunk();
+        }
       }
 
       //! Dispatch the ground truth state of the robot.

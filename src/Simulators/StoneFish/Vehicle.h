@@ -196,6 +196,17 @@ namespace Simulators
       void
       applyBodyLift(const BodyLift& c) const;
 
+      //! Apply the added-mass (Munk) coupling the engine leaves out.
+      //! Stonefish integrates the hull with one isotropic augmented mass
+      //! (mass + mean added mass), so the anisotropic Kirchhoff terms
+      //! F = -w x (A v), M = -v x (A v) reduce to their isotropic part:
+      //! no Munk moment at all. This adds the remainder, with A the
+      //! mesh-derived per-axis added mass of the base link: the
+      //! destabilising (A11 - A22) u v yaw and (A33 - A11) u w pitch
+      //! moments plus the matching coupling forces.
+      void
+      applyMunk(void) const;
+
       //! Number of actuators in the thrust bank.
       size_t
       getThrusterCount(void) const
