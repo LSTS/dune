@@ -29,6 +29,7 @@
 
 // ISO C++ 98 headers.
 #include <cstring>
+#include <algorithm>
 #include <fstream>
 
 // DUNE headers.
@@ -127,11 +128,20 @@ namespace Sensors
       FileSystem::Path m_log_path;
       //! Raw logging setting latched when connecting for an activation.
       bool m_log_raw;
+      //! Number of raw records written by this task instance.
+      uint32_t m_ping_number;
+      //! Monotonic acquisition time of the previous logged ping.
+      double m_time_last_ping;
+      //! Whether a previous logged ping time is available.
+      bool m_have_last_ping;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
         m_sock(NULL),
-        m_log_raw(false)
+        m_log_raw(false),
+        m_ping_number(0),
+        m_time_last_ping(0.0),
+        m_have_last_ping(false)
       {
         // Define configuration parameters.
         paramConfigurableSampling();
@@ -305,6 +315,7 @@ namespace Sensors
         if (!m_log_file.is_open() || !m_log_file.good())
           throw std::runtime_error(String::str("failed to open raw sonar log: %s", m_log_path.c_str()));
 
+        m_have_last_ping = false;
         debug("opened raw sonar log: %s", m_log_path.c_str());
       }
 
@@ -423,11 +434,43 @@ namespace Sensors
         ping(SIDE_STARBOARD);
       }
 
+      //! Write one complete paired ping in .872 channel order.
+      void
+      logRawData(double ping_time)
+      {
+        if (!m_log_raw || !m_log_file.is_open())
+          return;
+
+        unsigned interval_ms = 0;
+        if (m_have_last_ping)
+          interval_ms = static_cast<unsigned>(Math::round(
+            Math::trimValue((ping_time - m_time_last_ping) * 1000.0, 0.0, 65535.0)));
+
+        m_frame872.setTimeInfo();
+        m_frame872.setPingNumber(m_ping_number + 1);
+        m_frame872.setRepetitionRate(interval_ms);
+        m_frame872.setFileHeader(m_rdata_hdr);
+
+        // IMC port imagery is reversed; .872 stores both channels near to far.
+        std::vector<char> raw_data(m_ping.data);
+        std::reverse(raw_data.begin(), raw_data.begin() + c_rdata_dat_size);
+        m_frame872.setData(raw_data);
+
+        m_log_file.write(reinterpret_cast<const char*>(m_frame872.getData()), c_ping_size);
+        if (!m_log_file.good())
+          throw std::runtime_error(String::str("failed to write raw sonar log: %s", m_log_path.c_str()));
+
+        ++m_ping_number;
+        m_time_last_ping = ping_time;
+        m_have_last_ping = true;
+      }
+
       //! Get data from device.
       //! @return true if data was received, false otherwise.
       bool
       onReadData() override
       {
+        const double ping_time = Clock::get();
         try
         {
           pingBoth();
@@ -439,7 +482,10 @@ namespace Sensors
           setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_COM_ERROR);
           throw RestartNeeded(DTR(Status::getString(CODE_COM_ERROR)), 5);
         }
-        
+
+        // Keep file errors outside the sonar communication error handler.
+        logRawData(ping_time);
+
         return true;
       }
     };
