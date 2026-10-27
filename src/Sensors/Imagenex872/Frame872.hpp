@@ -154,7 +154,7 @@ namespace Sensors
                 m_data[39] = '\0';
 
                 // Thousandths of seconds
-                char buffer[3];
+                char buffer[4];
                 sprintf(buffer,"%03d",  (int) (epoch_time % 1000));
 
                 m_data[40] = '.';
