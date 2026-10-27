@@ -290,10 +290,10 @@ namespace Sensors
                         index = 0x0d;
                         break;
                     case 150:
-                        index = 0x0f;
+                        index = 0x0e;
                         break;
                     case 200:
-                        index = 0x10;
+                        index = 0x0f;
                         break;
                 }
 
