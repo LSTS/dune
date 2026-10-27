@@ -341,6 +341,8 @@ namespace Sensors
         IMC::EntityParameter hip;
         hip.name = c_hard_iron_param;
         hip.value = String::str("%.4f, %.4f, 0.0", hi_x, hi_y);
+        inf(DTR("hard-iron calibration %.4f, %.4f -> %.4f, %.4f"), m_args.hard_iron[0],
+            m_args.hard_iron[1], hi_x, hi_y);
 
         IMC::EntityParameter calt;
         Time::BrokenDown bdt(Time::Clock::getSinceEpochMsec() / 1000);

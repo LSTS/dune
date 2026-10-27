@@ -84,6 +84,8 @@ namespace DUNE
       bool soft_iron_determined;
       //! Method-specific quality figures, for the log.
       std::string details;
+      //! Mean levelled horizontal field over the samples (field units).
+      double horizontal;
     };
 
     //! Set a 3x3 matrix to the identity.
@@ -475,6 +477,8 @@ namespace DUNE
         for (auto& m : m_methods)
           m->clear();
         m_rate_time = -1.0;
+        m_h_sum = 0.0;
+        m_h_count = 0;
       }
 
       void
@@ -512,6 +516,11 @@ namespace DUNE
 
         for (auto& m : m_methods)
           m->update(s);
+
+        double hx, hy;
+        HardIronEstimator::level(s.m, s.phi, s.theta, hx, hy);
+        m_h_sum += std::sqrt(hx * hx + hy * hy);
+        ++m_h_count;
       }
 
       //! Compute the calibration (1x3: x, y, z) and clear the samples.
@@ -529,6 +538,7 @@ namespace DUNE
           if (m->solve(m_result, why))
           {
             m_method = m->name();
+            m_result.horizontal = m_h_count ? m_h_sum / m_h_count : 0.0;
             for (unsigned i = 0; i < 3; ++i)
               params(i) = m_result.b[i];
             clear();
@@ -581,6 +591,9 @@ namespace DUNE
       double m_rate[3] = {0.0, 0.0, 0.0};
       double m_rate_time;
       double m_phi, m_theta, m_psi;
+      //! Sum and count of the levelled horizontal field magnitudes.
+      double m_h_sum = 0.0;
+      unsigned m_h_count = 0;
     };
   }
 }

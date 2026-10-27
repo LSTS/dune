@@ -337,6 +337,16 @@ namespace Navigation
         void
         onUpdateParameters(void)
         {
+          // Logged so a calibration's change shows next to the previous values.
+          if (paramChanged(m_args.hi_offset) || paramChanged(m_args.soft_iron))
+          {
+            const std::vector<double>& c = m_args.soft_iron;
+            inf(DTR("hard-iron offset %.4f, %.4f, %.4f; soft-iron matrix %.4f, %.4f, %.4f, "
+                    "%.4f, %.4f, %.4f, %.4f, %.4f, %.4f"),
+                m_args.hi_offset[0], m_args.hi_offset[1], m_args.hi_offset[2], c[0], c[1],
+                c[2], c[3], c[4], c[5], c[6], c[7], c[8]);
+          }
+
           DUNE::Navigation::HardIronMonitor::Config cfg;
           cfg.window = m_args.hi_window;
           cfg.threshold = m_args.hi_threshold;

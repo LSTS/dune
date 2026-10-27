@@ -505,12 +505,18 @@ namespace Maneuver
             channel.mfield.y = params(1);
             channel.mfield.z = params(2);
             channel.valid = true;
-            inf(DTR("%s: hard-iron %.4f, %.4f, %s (%s: %s)"), channel.label.c_str(),
-                params(0), params(1),
+            // The AHRS's field already has its x/y calibration removed: x/y
+            // are the change from it (drift, or payload since the last one).
+            const double h = channel.ccal.lastResult().horizontal;
+            inf(DTR("%s: hard-iron %.4f, %.4f, %s (%s: %s); x/y change from the "
+                    "calibration in use %.1f%% of the horizontal field"),
+                channel.label.c_str(), params(0), params(1),
                 channel.ccal.lastZDetermined() ? String::str("%.4f", params(2)).c_str()
                                                : "z not determined",
                 channel.ccal.lastMethod().c_str(),
-                channel.ccal.lastResult().details.c_str());
+                channel.ccal.lastResult().details.c_str(),
+                h > 0.0 ? 100.0 * std::sqrt(params(0) * params(0) + params(1) * params(1)) / h
+                        : 0.0);
           }
 
           any = any || channel.valid;
