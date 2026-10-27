@@ -189,6 +189,7 @@ namespace Sensors
 
         // Frame sound speed is expressed in tenths of meters per second.
         m_frame872.setSoundSpeed(15000);
+        m_frame872.clearGpsString();
       }
 
       void
@@ -257,7 +258,30 @@ namespace Sensors
       //! Device may be initialized.
       void
       onInitializeDevice() override
-      { }
+      {
+        // Do not reuse navigation or sound speed from a previous activation.
+        m_frame872.clearGpsString();
+        m_frame872.setSoundSpeed(15000);
+      }
+
+      //! Update navigation from the local vehicle's estimated state.
+      void
+      onEstimatedState(const IMC::EstimatedState& msg) override
+      {
+        if (m_log_raw)
+          m_frame872.setGpsString(msg);
+      }
+
+      //! Update sound speed, encoded in tenths of meters per second.
+      void
+      onSoundSpeed(double value) override
+      {
+        // This comparison also rejects NaN and values that cannot be encoded.
+        if (!(value >= 0.1 && value <= 6553.5))
+          return;
+
+        m_frame872.setSoundSpeed(static_cast<uint16_t>(Math::round(value * 10.0)));
+      }
 
       bool
       enableLogControl(void) override
