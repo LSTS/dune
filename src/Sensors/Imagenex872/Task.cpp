@@ -34,6 +34,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "Frame872.hpp"
+
 namespace Sensors
 {
   //! Device driver for the Imagenex 872 "YellowFin" Sidescan Sonar.
@@ -114,6 +117,8 @@ namespace Sensors
       uint8_t m_rdata_ftr[c_rdata_ftr_size];
       // Single sidescan ping.
       IMC::SonarData m_ping;
+      //! Raw sonar record encoder.
+      Frame872 m_frame872;
       // Configuration parameters.
       Arguments m_args;
       //! Raw sonar log file.
@@ -181,6 +186,9 @@ namespace Sensors
         m_ping.type = IMC::SonarData::ST_SIDESCAN;
         m_ping.bits_per_point = 8;
         m_ping.scale_factor = 1.0f;
+
+        // Frame sound speed is expressed in tenths of meters per second.
+        m_frame872.setSoundSpeed(15000);
       }
 
       void
@@ -309,6 +317,7 @@ namespace Sensors
         unsigned idx = getIndex(value, c_freqs, c_freqs_size);
         m_sdata[SD_MODE_FREQ] = (uint8_t)idx;
         m_ping.frequency = c_freqs[idx] * 1000;
+        m_frame872.setOperationFrequency(idx);
 
         m_ping.beam_config.clear();
         IMC::BeamConfig bc;
@@ -333,6 +342,8 @@ namespace Sensors
         m_sdata[SD_RANGE] = (uint8_t)c_ranges[idx];
         m_ping.min_range = 0;
         m_ping.max_range = c_ranges[idx];
+        m_frame872.setRangeIndex(m_sdata[SD_RANGE]);
+        m_frame872.setRealRange(m_sdata[SD_RANGE]);
         setPeriodicity(c_range_rates[idx] / 1000.0);
       }
 
@@ -340,12 +351,14 @@ namespace Sensors
       setDataGain(unsigned value)
       {
         m_sdata[SD_DAT_GAIN] = (uint8_t) Math::trimValue(value, 0u, 100u);
+        m_frame872.setDataGain(m_sdata[SD_DAT_GAIN]);
       }
 
       void
       setBalanceGain(unsigned value)
       {
         m_sdata[SD_BAL_GAIN] = (uint8_t) Math::trimValue(value, 0u, 60u);
+        m_frame872.setBalanceGain(m_sdata[SD_BAL_GAIN]);
       }
 
       void
