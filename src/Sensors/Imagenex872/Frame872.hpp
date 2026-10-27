@@ -46,7 +46,9 @@ namespace Sensors
         //! Data points channel
         static const uint16_t c_data_points_channel = 1000;
         //! GPS string file offset
-        static const uint16_t c_gps_string_file_offset = 3200;
+        static const uint16_t c_gps_string_file_offset = 3000;
+        //! RMC string offset relative to the GPS string area.
+        static const uint16_t c_rmc_string_offset = 200;
         //! Number of bytes to previous ping
         static const uint16_t c_bytes_previous_ping = 8192;
 
@@ -80,7 +82,7 @@ namespace Sensors
                 //Gps type (GPRMC) and number of strings (1)  - 00100001
                 m_data[14] = 0x21;
 
-                //GPS string file offset - 3200
+                //GPS string file offset - 3000
                 m_data[15] = c_gps_string_file_offset >> 8;
                 m_data[16] = c_gps_string_file_offset & 0xff;
 
@@ -212,12 +214,20 @@ namespace Sensors
 
             // GPS Strings
             void
+            clearGpsString(void) {
+                // RMC selected, but no navigation string available.
+                m_data[14] = 0x20;
+                std::memset(&m_data[c_gps_string_file_offset + c_rmc_string_offset], 0, 100);
+            }
+
+            void
             setGpsString(const IMC::EstimatedState state) {
                 char gpsString[100];
                 memset(gpsString, 0, 100);
                 std::string sentence = createRMC(state);
                 sprintf(gpsString, "%s", sentence.c_str());
-                std::memcpy(&m_data[3000], &gpsString, 100);
+                std::memcpy(&m_data[c_gps_string_file_offset + c_rmc_string_offset], &gpsString, 100);
+                m_data[14] = 0x21;
             }
 
             std::string
