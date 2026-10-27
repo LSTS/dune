@@ -29,6 +29,7 @@
 
 // ISO C++ 98 headers.
 #include <cstring>
+#include <fstream>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -72,6 +73,8 @@ namespace Sensors
       unsigned frequency;
       // Default range.
       unsigned range;
+      // Log Raw data.
+      bool log_raw;
     };
 
     // List of available ranges.
@@ -113,10 +116,17 @@ namespace Sensors
       IMC::SonarData m_ping;
       // Configuration parameters.
       Arguments m_args;
+      //! Raw sonar log file.
+      std::ofstream m_log_file;
+      //! Path of the raw sonar log file.
+      FileSystem::Path m_log_path;
+      //! Raw logging setting latched when connecting for an activation.
+      bool m_log_raw;
 
       Task(const std::string& name, Tasks::Context& ctx):
         Hardware::BasicDeviceDriver(name, ctx),
-        m_sock(NULL)
+        m_sock(NULL),
+        m_log_raw(false)
       {
         // Define configuration parameters.
         paramConfigurableSampling();
@@ -155,6 +165,10 @@ namespace Sensors
         .valuesIf("Frequency", "330", "10, 20, 30, 40, 50, 60, 80, 100, 150, 200")
         .valuesIf("Frequency", "770", "10, 20, 30, 40, 50")
         .description(DTR("Operating range"));
+
+        param(DTR_RT("Log Raw Data"), m_args.log_raw)
+        .defaultValue("false")
+        .description(DTR("Log raw sonar data in .872 format."));
 
         // Initialize switch data.
         std::memset(m_sdata, 0, sizeof(m_sdata));
@@ -198,6 +212,7 @@ namespace Sensors
         try
         {
           m_sock = static_cast<TCPSocket*>(openSocketTCP(m_args.io_dev));
+          m_log_raw = m_args.log_raw;
           return true;
         }
         catch (...)
@@ -235,6 +250,46 @@ namespace Sensors
       void
       onInitializeDevice() override
       { }
+
+      bool
+      enableLogControl(void) override
+      {
+        return m_log_raw;
+      }
+
+      bool
+      discardLoggingControl(const IMC::LoggingControl* msg) override
+      {
+        return msg->getSource() != getSystemId();
+      }
+
+      //! Open the raw sonar log in the current logging session.
+      void
+      onOpenLog(const DUNE::FileSystem::Path& path) override
+      {
+        m_log_path = m_ctx.dir_log / path / "Data.872";
+        m_log_file.clear();
+        m_log_file.open(m_log_path.c_str(), std::ios::app | std::ios::binary);
+        if (!m_log_file.is_open() || !m_log_file.good())
+          throw std::runtime_error(String::str("failed to open raw sonar log: %s", m_log_path.c_str()));
+
+        debug("opened raw sonar log: %s", m_log_path.c_str());
+      }
+
+      //! Close the raw sonar log, flushing any buffered records.
+      void
+      onCloseLog(void) override
+      {
+        if (m_log_file.is_open())
+        {
+          m_log_file.close();
+          if (m_log_file.fail())
+            err("failed to close raw sonar log: %s", m_log_path.c_str());
+        }
+
+        m_log_file.clear();
+        m_log_path = FileSystem::Path();
+      }
 
       unsigned
       getIndex(unsigned value, const unsigned* table, unsigned table_size)
