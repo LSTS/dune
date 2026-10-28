@@ -543,15 +543,6 @@ namespace Simulators
       }
 
       void
-      stopImpl(void)
-      {
-        Thread::stopImpl();
-
-        if (m_engine != nullptr)
-          m_engine->exit();
-      }
-
-      void
       consume(const IMC::LoggingControl* msg)
       {
         if (msg->getSource() != getSystemId())
@@ -993,9 +984,12 @@ namespace Simulators
         simCallback onStepCb = std::bind(&Task::onStep, this, std::placeholders::_1);
         simCallback onBuildCb = std::bind(&Task::onBuild, this, std::placeholders::_1);
         simCallback onPreTickCb = std::bind(&Task::onPreTick, this, std::placeholders::_1);
+        // A stop that arrives while the scenario loads is honoured as soon
+        // as the application loop starts.
+        quitPredicate quit = [this](void) { return stopping(); };
 
         m_engine = new Engine(mode, m_scenario, m_args.frequency, renderSettings(),
-                              helperSettings(), onStepCb, onBuildCb, onPreTickCb);
+                              helperSettings(), onStepCb, onBuildCb, onPreTickCb, quit);
         m_engine->start(m_args.auto_step, m_args.time_step, m_args.auto_start);
       }
 

@@ -35,10 +35,15 @@
 #include <Stonefish/core/SimulationApp.h>
 #include <Stonefish/core/SimulationManager.h>
 
+#include <functional>
+
 namespace Simulators
 {
   namespace StoneFish
   {
+    //! Polled by the application loop: true to end the simulation.
+    using quitPredicate = std::function<bool(void)>;
+
     // Interface for the simulator
     class SimulatorInterface
     {
@@ -57,8 +62,10 @@ namespace Simulators
     class ConsoleSim: public sf::ConsoleSimulationApp, public SimulatorInterface
     {
     public:
-      ConsoleSim(const std::string& title, const std::string& dir, sf::SimulationManager* sim):
-        sf::ConsoleSimulationApp(title, dir, sim)
+      ConsoleSim(const std::string& title, const std::string& dir, sf::SimulationManager* sim,
+                 quitPredicate quit):
+        sf::ConsoleSimulationApp(title, dir, sim),
+        m_quit(quit)
       { }
 
       void
@@ -79,14 +86,30 @@ namespace Simulators
       {
         sf::ConsoleSimulationApp::StepSimulation();
       }
+
+    protected:
+      //! Runs in the thread that called start(), so the simulation is
+      //! stopped from the thread that owns it.
+      void
+      LoopInternal(void) override
+      {
+        if (m_quit())
+          exit();
+        else
+          sf::ConsoleSimulationApp::LoopInternal();
+      }
+
+    private:
+      quitPredicate m_quit;
     };
 
     class GraphicalSim: public sf::GraphicalSimulationApp, public SimulatorInterface
     {
     public:
       GraphicalSim(const std::string& title, const std::string& dir, sf::RenderSettings r,
-                   sf::HelperSettings h, sf::SimulationManager* sim):
-        sf::GraphicalSimulationApp(title, dir, r, h, sim)
+                   sf::HelperSettings h, sf::SimulationManager* sim, quitPredicate quit):
+        sf::GraphicalSimulationApp(title, dir, r, h, sim),
+        m_quit(quit)
       { }
 
       void
@@ -101,6 +124,21 @@ namespace Simulators
         sf::GraphicalSimulationApp::StopSimulation();
         sf::GraphicalSimulationApp::Quit();
       }
+
+    protected:
+      //! Runs in the thread that called start(), which also owns the
+      //! rendering context.
+      void
+      LoopInternal(void) override
+      {
+        if (m_quit())
+          exit();
+        else
+          sf::GraphicalSimulationApp::LoopInternal();
+      }
+
+    private:
+      quitPredicate m_quit;
     };
 
   }

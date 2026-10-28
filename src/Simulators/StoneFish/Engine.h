@@ -48,7 +48,7 @@ namespace Simulators
     public:
       Engine(SimMode mode, const DUNE::FileSystem::Path& scn_fd, double freq,
              const sf::RenderSettings& render, const sf::HelperSettings& helper, simCallback onStep,
-             simCallback onBuild, simCallback onPreTick):
+             simCallback onBuild, simCallback onPreTick, quitPredicate quit):
         m_manager(nullptr),
         m_sim(nullptr)
       {
@@ -59,11 +59,11 @@ namespace Simulators
         switch (mode)
         {
           case SimMode::CONSOLE:
-            m_sim = new ConsoleSim("DUNE sim", data_dir, m_manager);
+            m_sim = new ConsoleSim("DUNE sim", data_dir, m_manager, quit);
             break;
 
           case SimMode::GRAPHICAL:
-            m_sim = new GraphicalSim("DUNE sim", data_dir, render, helper, m_manager);
+            m_sim = new GraphicalSim("DUNE sim", data_dir, render, helper, m_manager, quit);
             break;
         }
       }
@@ -80,17 +80,11 @@ namespace Simulators
       /// @param time_step Time step to be used for each simulation update instead of real time (0
       /// means real time)
       /// @param start Automatically start the simulation after initialization?
+      /// Returns once the quit predicate holds or the simulation is closed.
       void
       start(bool auto_step = true, double time_step = 0.0, bool start = true)
       {
         m_sim->start(auto_step, time_step, start);
-      }
-
-      /// Force the simulation to exit
-      void
-      exit(void)
-      {
-        m_sim->exit();
       }
 
     private:
