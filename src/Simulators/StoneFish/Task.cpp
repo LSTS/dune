@@ -70,6 +70,16 @@ namespace Simulators
   //! A robot whose name is not a known IMC system (see imc-addresses.ini) is
   //! still simulated, but none of its data is dispatched.
   //!
+  //! Each simulated vehicle has its own DUNE node, so the data of different
+  //! vehicles is never merged on one bus. Two layouts are supported:
+  //! - dedicated simulation node: no robot is named after this system and
+  //!   every robot is a remote vehicle running its own node;
+  //! - co-located vehicle: the scenario has exactly one robot, named after
+  //!   this system.
+  //!
+  //! A robot named after this system alongside other robots is a
+  //! configuration error: the task reports it and dispatches nothing.
+  //!
   //! When no robot is named after this system the task assumes it is running
   //! on a dedicated simulation node, simulating only remote vehicles. If a
   //! vehicle stack turns out to be co-located (this system reports a
@@ -77,6 +87,10 @@ namespace Simulators
   //! the vehicle name mismatch between the configuration and the scenario
   //! file; actuator commands that cannot be routed to a robot are likewise
   //! reported once per source system.
+  //!
+  //! Vehicle nodes synthesise their sensor data from SimulatedState with
+  //! the classic sensor simulators; the sensors of the scenario are only
+  //! dispatched on the simulation node.
   //!
   //! Per simulated vehicle the task dispatches:
   //! - SimulatedState with the ground truth state of the robot;
@@ -184,6 +198,8 @@ namespace Simulators
       std::set<uint32_t> m_unrouted;
       //! True once the configuration/scenario name mismatch was reported.
       bool m_mismatch_warned;
+      //! True if the scenario layout is refused: nothing is dispatched.
+      bool m_refused;
       //! Translates Stonefish sensors into IMC messages.
       SensorBridge m_bridge;
       //! Geodetic origin of the scenario NED frame, set when it is built.
@@ -216,6 +232,7 @@ namespace Simulators
         DUNE::Tasks::Task(name, ctx),
         m_engine(nullptr),
         m_mismatch_warned(false),
+        m_refused(false),
         m_bridge(this, m_registry),
         m_origin_lat(0.0),
         m_origin_lon(0.0),
@@ -547,6 +564,17 @@ namespace Simulators
           return;
         }
 
+        // Refused when the scenario is built: reserve nothing for it.
+        std::set<std::string> robots;
+        for (const Scenario::Device& device : devices)
+        {
+          if (!device.robot.empty())
+            robots.insert(device.robot);
+        }
+
+        if (robots.size() > 1 && robots.count(getSystemName()) > 0)
+          return;
+
         for (const Scenario::Device& device : devices)
         {
           if (isLocalDevice(device))
@@ -600,6 +628,9 @@ namespace Simulators
       Vehicle*
       routeVehicle(uint32_t source)
       {
+        if (m_refused)
+          return nullptr;
+
         SimVehicle* sv = m_registry.findBySystem(source);
         if (sv != nullptr)
           return sv->vehicle.get();
@@ -712,6 +743,27 @@ namespace Simulators
         }
       }
 
+      //! Check the robots of the scenario form a supported layout: a
+      //! dedicated simulation node (no robot is this system) or a single
+      //! co-located vehicle (the only robot is this system). This system's
+      //! robot alongside others would put several vehicles' data on this
+      //! node's bus, so it is refused.
+      //! @return true if the layout is supported.
+      bool
+      checkLayout(void)
+      {
+        if (m_registry.getLocal() == nullptr || m_registry.getVehicles().size() == 1)
+          return true;
+
+        err("this system '%s' is a robot of the scenario alongside other robots "
+            "(%s): simulate it alone or on a dedicated simulation node, one DUNE "
+            "node per vehicle — nothing will be dispatched",
+            getSystemName(), m_registry.getNames().c_str());
+        setEntityState(IMC::EntityState::ESTA_ERROR,
+                       "local and remote vehicles in one scenario: " + m_registry.getNames());
+        return false;
+      }
+
       //! Register a robot of the scenario as a simulated vehicle. The robot
       //! named after this system is the local one; the others are remote
       //! systems, resolved by name from the address book and bound to their
@@ -760,6 +812,10 @@ namespace Simulators
         for (unsigned i = 0; sim.getRobot(i) != nullptr; i++)
           addVehicle(sim.getRobot(i));
 
+        m_refused = !checkLayout();
+        if (m_refused)
+          return;
+
         if (m_registry.getVehicles().empty())
           war("scenario has no robot, only sensors will be dispatched");
         else if (m_registry.getLocal() == nullptr)
@@ -804,6 +860,9 @@ namespace Simulators
         // The task thread is blocked running the simulation, so incoming
         // messages are consumed here, in the simulation thread.
         consumeMessages();
+
+        if (m_refused)
+          return;
 
         m_bridge.poll();
 
