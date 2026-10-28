@@ -230,6 +230,10 @@ namespace Simulators
       std::atomic<bool> m_restart;
       //! Why the engine must be rebuilt.
       std::string m_restart_reason;
+      //! Graphics mode the engine runs in, fixed at start-up.
+      bool m_graphics;
+      //! True once m_graphics is fixed.
+      bool m_graphics_fixed;
       //! Task arguments.
       Arguments m_args;
 
@@ -246,7 +250,9 @@ namespace Simulators
         m_origin_lon(0.0),
         m_origin_height(0.0),
         m_bodylift(false),
-        m_restart(false)
+        m_restart(false),
+        m_graphics(false),
+        m_graphics_fixed(false)
       {
         param("Scenario Path", m_args.scenario)
           .description("Relative path from the configuration directory to the scenario file to be "
@@ -254,7 +260,8 @@ namespace Simulators
 
         param("Enable Graphics", m_args.graphics)
           .defaultValue("true")
-          .description("Enable graphical interface for the simulator.");
+          .description("Enable graphical interface for the simulator. Read once at "
+                       "start-up: changing it requires restarting DUNE.");
 
         param("Simulation Frequency", m_args.frequency)
           .defaultValue("100.0")
@@ -483,6 +490,20 @@ namespace Simulators
         if (!m_recorder.isOpen())
           m_recorder.open(m_current_log, m_args.log_sim_hz);
 
+        // Stonefish cannot switch between the console and graphical
+        // applications in one process (the graphical teardown crashes).
+        if (!m_graphics_fixed)
+        {
+          m_graphics = m_args.graphics;
+          m_graphics_fixed = true;
+        }
+        else if (paramChanged(m_args.graphics) && m_args.graphics != m_graphics)
+        {
+          war("'Enable Graphics' cannot change at runtime: keeping graphics %s, "
+              "restart DUNE to apply",
+              m_graphics ? "enabled" : "disabled");
+        }
+
         if (m_engine == nullptr)
         {
           validateGraphics();
@@ -509,9 +530,8 @@ namespace Simulators
         // Stonefish consumes these once, at SimulationApp construction, and the
         // running simulation cannot be reconfigured (the GL window in
         // particular). Rebuild the engine cleanly if any of them changes.
-        if (paramChanged(m_args.scenario) || paramChanged(m_args.graphics)
-            || paramChanged(m_args.frequency) || paramChanged(m_args.time_step)
-            || paramChanged(m_args.auto_start) || paramChanged(m_args.auto_step)
+        if (paramChanged(m_args.scenario) || paramChanged(m_args.frequency)
+            || paramChanged(m_args.time_step) || paramChanged(m_args.auto_start) || paramChanged(m_args.auto_step)
             || paramChanged(m_args.graphics_resolution) || paramChanged(m_args.vsync)
             || paramChanged(m_args.rq_shadows) || paramChanged(m_args.rq_ao)
             || paramChanged(m_args.rq_atmosphere) || paramChanged(m_args.rq_ocean)
@@ -1203,9 +1223,9 @@ namespace Simulators
       runSim(void)
       {
         inf("using scenario file: %s", m_scenario.c_str());
-        inf("graphics %s", m_args.graphics ? "enabled" : "disabled");
+        inf("graphics %s", m_graphics ? "enabled" : "disabled");
 
-        SimMode mode = m_args.graphics ? SimMode::GRAPHICAL : SimMode::CONSOLE;
+        SimMode mode = m_graphics ? SimMode::GRAPHICAL : SimMode::CONSOLE;
         simCallback onStepCb = std::bind(&Task::onStep, this, std::placeholders::_1);
         simCallback onBuildCb = std::bind(&Task::onBuild, this, std::placeholders::_1);
         simCallback onPreTickCb = std::bind(&Task::onPreTick, this, std::placeholders::_1);
