@@ -28,15 +28,15 @@
 //***************************************************************************
 
 // ISO C++ 98 headers.
-#include <csignal>
-#include <cstdio>
-#include <cstdlib>
-#include <cxxabi.h>
-#include <execinfo.h>
 #include <iostream>
-#include <stack>
 #include <stdexcept>
 #include <string>
+#include <cstdlib>
+#include <cstdio>
+#include <stack>
+#include <csignal>
+#include <cxxabi.h>
+#include <execinfo.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -46,28 +46,28 @@
 
 // POSIX headers.
 #if defined(DUNE_SYS_HAS_UNISTD_H)
-#include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #if defined(DUNE_SYS_HAS_SIGNAL_H)
-#include <signal.h>
+#  include <signal.h>
 #endif
 
 #if defined(DUNE_SYS_HAS_SYS_WAIT_H)
-#include <sys/wait.h>
+#  include <sys/wait.h>
 #endif
 
 #if defined(DUNE_SYS_HAS_SYS_RESOURCE_H)
-#include <sys/resource.h>
+#  include <sys/resource.h>
 #endif
 
 // Microsoft Windows headers.
 #if defined(DUNE_SYS_HAS_WINDOWS_H)
-#include <windows.h>
+#  include <windows.h>
 #endif
 
 #if defined(DUNE_SYS_HAS_SYS_REBOOT_H)
-#include <sys/reboot.h>
+#  include <sys/reboot.h>
 #endif
 
 void
@@ -242,7 +242,7 @@ runDaemon(DUNE::Daemon& daemon)
     return 1;
   }
 
-  if (call_reboot)
+  if(call_reboot)
   {
     DUNE_WRN("Daemon", "Rebooting");
 
@@ -267,19 +267,26 @@ main(int argc, char** argv)
 
   OptionParser options;
   options.executable("dune")
-    .program(DUNE_SHORT_NAME)
-    .copyright(DUNE_COPYRIGHT)
-    .email(DUNE_CONTACT)
-    .version(versions.c_str())
-    .date(getCompileDate())
-    .arch(DUNE_SYSTEM_NAME)
-    .add("-d", "--config-dir", "Configuration directory", "DIR")
-    .add("-w", "--www-dir", "HTTP server base directory", "DIR")
-    .add("-c", "--config-file", "Load configuration file CONFIG", "CONFIG")
-    .add("-m", "--lock-memory", "Lock memory")
-    .add("-p", "--profiles", "Execution Profiles", "PROFILES")
-    .add("-V", "--vehicle", "Vehicle name override", "VEHICLE")
-    .add("-X", "--dump-params-xml", "Dump parameters XML to folder DIR", "DIR");
+  .program(DUNE_SHORT_NAME)
+  .copyright(DUNE_COPYRIGHT)
+  .email(DUNE_CONTACT)
+  .version(versions.c_str())
+  .date(getCompileDate())
+  .arch(DUNE_SYSTEM_NAME)
+  .add("-d", "--config-dir",
+       "Configuration directory", "DIR")
+  .add("-w", "--www-dir",
+       "HTTP server base directory", "DIR")
+  .add("-c", "--config-file",
+       "Load configuration file CONFIG", "CONFIG")
+  .add("-m", "--lock-memory",
+       "Lock memory")
+  .add("-p", "--profiles",
+       "Execution Profiles", "PROFILES")
+  .add("-V", "--vehicle",
+       "Vehicle name override", "VEHICLE")
+  .add("-X", "--dump-params-xml",
+       "Dump parameters XML to folder DIR", "DIR");
 
   // Parse command line arguments.
   if (!options.parse(argc, argv))
