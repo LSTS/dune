@@ -35,8 +35,6 @@
 #include <cstdio>
 #include <stack>
 #include <csignal>
-#include <cxxabi.h>
-#include <execinfo.h>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -68,6 +66,10 @@
 
 #if defined(DUNE_SYS_HAS_SYS_REBOOT_H)
 #  include <sys/reboot.h>
+#endif
+
+#if defined(DUNE_SYS_HAS_EXECINFO_H)
+#  include <execinfo.h>
 #endif
 
 void
@@ -111,46 +113,29 @@ handleTerminate(DWORD type)
 
 #endif
 
+#if defined(DUNE_SYS_HAS_EXECINFO_H)
+//! Print the backtrace of the crashing thread, then re-raise the signal
+//! with its default action so the process still dumps core. Runs in
+//! signal context: async-signal-safe calls only.
 static void
 onCrash(int sig)
 {
-  dune_term.lock();
+  static const char c_segv[] = "Crash signal received (SIGSEGV), backtrace:\n";
+  static const char c_abrt[] = "Crash signal received (SIGABRT), backtrace:\n";
+
+  if (sig == SIGSEGV)
+    (void)!write(STDERR_FILENO, c_segv, sizeof(c_segv) - 1);
+  else
+    (void)!write(STDERR_FILENO, c_abrt, sizeof(c_abrt) - 1);
 
   void* frames[64];
   int n = backtrace(frames, 64);
-  std::fprintf(stderr, "Crash signal received (%d)\n", sig);
+  backtrace_symbols_fd(frames, n, STDERR_FILENO);
 
-  char** symbols = backtrace_symbols(frames, n);
-  if (symbols == NULL)
-  {
-    backtrace_symbols_fd(frames, n, STDERR_FILENO);
-    _Exit(128 + sig);
-  }
-
-  for (int i = 0; i < n; ++i)
-  {
-    std::string line = symbols[i];
-    std::string::size_type begin = line.find('(');
-    std::string::size_type plus = line.find('+', begin);
-
-    if (begin != std::string::npos && plus != std::string::npos && plus > begin + 1)
-    {
-      std::string mangled = line.substr(begin + 1, plus - begin - 1);
-      int status = 0;
-      char* demangled = abi::__cxa_demangle(mangled.c_str(), 0, 0, &status);
-      if (status == 0 && demangled != 0)
-      {
-        line.replace(begin + 1, plus - begin - 1, demangled);
-      }
-      std::free(demangled);
-    }
-
-    std::fprintf(stderr, "%s\n", line.c_str());
-  }
-
-  std::free(symbols);
-  _Exit(128 + sig);  // avoid unsafe cleanup in signal context
+  std::signal(sig, SIG_DFL);
+  std::raise(sig);
 }
+#endif
 
 void
 setDaemonSignalHandlers(void)
@@ -175,8 +160,14 @@ setDaemonSignalHandlers(void)
   sigaction(SIGCONT, &actions, 0);
   sigaction(SIGPIPE, &actions, 0);
 
+#if defined(DUNE_SYS_HAS_EXECINFO_H)
+  // Load the unwinder now: its first use may allocate, unsafe in onCrash.
+  void* frame;
+  backtrace(&frame, 1);
+
   std::signal(SIGSEGV, onCrash);
   std::signal(SIGABRT, onCrash);
+#endif
 
   // Enable core dumps.
   struct rlimit rlim;
