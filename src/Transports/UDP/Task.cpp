@@ -86,6 +86,8 @@ namespace Transports
       std::string custom_service;
       // Ignore the UDP source message filter
       bool ign_filter;
+      // Send messages with a destination only to that dynamic node
+      bool unicast_addressed;
     };
 
     // Internal buffer size.
@@ -191,6 +193,13 @@ namespace Transports
         param("Ignore Filter", m_args.ign_filter)
         .defaultValue("false")
         .description("Ignore the UDP source message filter.");
+
+        param("Unicast Addressed Messages", m_args.unicast_addressed)
+        .defaultValue("false")
+        .description("Send messages with a destination system only to the dynamic "
+                     "node of that system, and drop them while that node is unknown "
+                     "or inactive. Other dynamic nodes never receive them. Static "
+                     "destinations still receive every message.");
 
         // Allocate space for internal buffer.
         m_bfr = new uint8_t[c_bfr_size];
@@ -382,9 +391,6 @@ namespace Transports
         if (m_filter.filter(msg))
           return;
 
-        const uint16_t dst = msg->getDestination();
-        const bool routed = dst != IMC::AddressResolver::invalid() && dst != getSystemId();
-
         if (m_args.trace_out)
           DUNE_MSG(getName(), "outgoing: " + std::string(msg->getName()));
 
@@ -414,15 +420,18 @@ namespace Transports
         if (!m_args.dynamic_nodes)
           return;
 
-        // Send to all dynamic nodes.
-        if (!routed) {
-          m_node_table.send(m_sock, m_bfr, rv, msg->getId());
+        // Send to the addressed dynamic node only.
+        const uint16_t dst = msg->getDestination();
+        if (m_args.unicast_addressed && dst != IMC::AddressResolver::invalid()
+            && dst != getSystemId())
+        {
+          if (!m_node_table.sendTo(m_sock, m_bfr, rv, msg->getId(), dst))
+            trace("no active node for destination %u of %s", dst, msg->getName());
           return;
         }
 
-        // Send to a specific dynamic node.
-        if (!m_node_table.sendTo(m_sock, m_bfr, rv, msg->getId(), dst))
-          trace("no node for destination %u of %s", dst, msg->getName());
+        // Send to all dynamic nodes.
+        m_node_table.send(m_sock, m_bfr, rv, msg->getId());
       }
 
       void
