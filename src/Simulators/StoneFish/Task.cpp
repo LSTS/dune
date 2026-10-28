@@ -80,13 +80,14 @@ namespace Simulators
   //! A robot named after this system alongside other robots is a
   //! configuration error: the task reports it and dispatches nothing.
   //!
-  //! When no robot is named after this system the task assumes it is running
-  //! on a dedicated simulation node, simulating only remote vehicles. If a
-  //! vehicle stack turns out to be co-located (this system reports a
-  //! VehicleState), this node expected to be simulated and a warning flags
-  //! the vehicle name mismatch between the configuration and the scenario
-  //! file; actuator commands that cannot be routed to a robot are likewise
-  //! reported once per source system.
+  //! On a dedicated simulation node each vehicle is reported as waiting
+  //! until it announces its EntityList, the simulation can be held until
+  //! every vehicle is bound ('Wait For Vehicles'), and a bound vehicle that
+  //! stops announcing itself is reported. If a vehicle stack turns out to
+  //! be co-located (this system reports a VehicleState), this node expected
+  //! to be simulated and a warning flags the vehicle name mismatch between
+  //! the configuration and the scenario file; actuator commands that cannot
+  //! be routed to a robot are likewise reported once per source system.
   //!
   //! Vehicle nodes synthesise their sensor data from SimulatedState with
   //! the classic sensor simulators; the sensors of the scenario are only
@@ -105,6 +106,7 @@ namespace Simulators
   //!   scenario;
   //! - EntityList, to learn the system and entity ids of each simulated
   //!   vehicle;
+  //! - Announce, to detect a vehicle node that went silent;
   //! - VehicleState, to detect a co-located vehicle stack absent from the
   //!   scenario.
   //!
@@ -152,6 +154,10 @@ namespace Simulators
       double feedback_frequency;
       //! Period of the EntityList query sent to unbound vehicles [s].
       double equery_period;
+      //! Hold the simulation until every vehicle is bound.
+      bool wait_vehicles;
+      //! Time without announcements after which a vehicle is silent [s].
+      double vehicle_timeout;
       //! Dump per-link dynamics once, when the scenario is built.
       bool dump_dynamics;
       //! Linear speed above which the state is flagged as divergent (0 off).
@@ -210,6 +216,8 @@ namespace Simulators
       Time::Counter<double> m_feedback_timer;
       //! EntityList query timer.
       Time::Counter<double> m_equery_timer;
+      //! Vehicle announcement check timer.
+      Time::Counter<double> m_announce_timer;
       //! Resolved directory for the trace files.
       Path m_current_log;
       //! Writes the build snapshot and step trace.
@@ -354,6 +362,18 @@ namespace Simulators
                        "running on other DUNE nodes are bound without manual "
                        "action. 0 disables the query.");
 
+        param("Wait For Vehicles", m_args.wait_vehicles)
+          .defaultValue("false")
+          .description("Hold the simulation, before it starts, until every "
+                       "simulated vehicle has announced its entities, so it does "
+                       "not run ahead of vehicle nodes that are still booting.");
+
+        param("Vehicle Timeout", m_args.vehicle_timeout)
+          .defaultValue("30.0")
+          .units(Units::Second)
+          .description("Time without announcements after which a bound remote "
+                       "vehicle is reported as silent. 0 disables the check.");
+
         param("Dump Dynamics", m_args.dump_dynamics)
           .defaultValue("true")
           .description("Log the per-link mass, inertia, added mass, volume and "
@@ -397,7 +417,9 @@ namespace Simulators
         bind<IMC::LoggingControl>(this);
         bind<IMC::EntityList>(this);
         bind<IMC::VehicleState>(this);
+        bind<IMC::Announce>(this);
 
+        m_announce_timer.setTop(1.0);
         m_current_log = m_ctx.dir_log / getSystemName();
       }
 
@@ -714,8 +736,127 @@ namespace Simulators
         TupleList tuples(msg->list);
         SimVehicle* sv = m_registry.bindEntities(resolveSystemId(msg->getSource()),
                                                  msg->getSource(), tuples.getMap());
-        if (sv != nullptr && first)
-          inf("vehicle '%s' bound to system %u", sv->name.c_str(), sv->system_id);
+        if (sv == nullptr || !first)
+          return;
+
+        sv->announce_time = Clock::get();
+        inf("vehicle '%s' bound to system %u", sv->name.c_str(), sv->system_id);
+        reportBinding();
+      }
+
+      //! Keep track of the announcements of each bound remote vehicle.
+      void
+      consume(const IMC::Announce* msg)
+      {
+        SimVehicle* sv = m_registry.findBySystem(msg->getSource());
+        if (sv == nullptr || sv->local || !sv->bound)
+          return;
+
+        sv->announce_time = Clock::get();
+        if (!sv->silent)
+          return;
+
+        sv->silent = false;
+        inf("vehicle '%s' is announcing again", sv->name.c_str());
+      }
+
+      //! Report, once, each bound remote vehicle that stopped announcing
+      //! itself: its node is likely down, so the simulated vehicle drifts
+      //! uncontrolled.
+      void
+      checkAnnouncements(void)
+      {
+        if (m_args.vehicle_timeout <= 0.0 || !m_announce_timer.overflow())
+          return;
+
+        m_announce_timer.reset();
+
+        const double now = Clock::get();
+        for (const std::unique_ptr<SimVehicle>& sv : m_registry.getVehicles())
+        {
+          if (sv->local || !sv->bound || sv->silent)
+            continue;
+
+          if (now - sv->announce_time < m_args.vehicle_timeout)
+            continue;
+
+          sv->silent = true;
+          war("vehicle '%s' stopped announcing itself %.0f s ago: is its node "
+              "down?",
+              sv->name.c_str(), now - sv->announce_time);
+        }
+      }
+
+      //! Comma-separated quoted names of the vehicles not bound yet.
+      std::string
+      getUnbound(void) const
+      {
+        std::string names;
+        for (const std::unique_ptr<SimVehicle>& sv : m_registry.getVehicles())
+        {
+          if (sv->hasSystem() && !sv->bound)
+            names += (names.empty() ? "'" : ", '") + sv->name + "'";
+        }
+        return names;
+      }
+
+      //! Report the vehicles still waiting to bind in the entity state.
+      void
+      reportBinding(void)
+      {
+        // A divergence error outranks the binding status.
+        for (const std::unique_ptr<SimVehicle>& sv : m_registry.getVehicles())
+        {
+          if (sv->diverged)
+            return;
+        }
+
+        const std::string unbound = getUnbound();
+        if (unbound.empty())
+          setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+        else
+          setEntityState(IMC::EntityState::ESTA_NORMAL, "waiting for " + unbound);
+      }
+
+      //! Hold the scenario build until every simulated vehicle is bound.
+      //! Runs in the task thread, inside the initialization of the engine:
+      //! the simulation clock has not started yet.
+      void
+      waitForVehicles(void)
+      {
+        if (!m_args.wait_vehicles || getUnbound().empty())
+          return;
+
+        inf("holding the simulation until every vehicle is bound");
+        while (!stopping() && !m_restart && !getUnbound().empty())
+        {
+          queryEntities();
+          waitForMessages(0.5);
+        }
+
+        if (getUnbound().empty())
+          inf("every vehicle is bound, starting the simulation");
+      }
+
+      //! Check the robots of the scenario form a supported layout: a
+      //! dedicated simulation node (no robot is this system) or a single
+      //! co-located vehicle (the only robot is this system). This system's
+      //! robot alongside others would put several vehicles' data on this
+      //! node's bus, so it is refused.
+      //! @return true if the layout is supported.
+      bool
+      checkLayout(void)
+      {
+        if (m_registry.getLocal() == nullptr || m_registry.getVehicles().size() == 1)
+          return true;
+
+        err("this system '%s' is a robot of the scenario alongside other robots "
+            "(%s): simulate it alone or on a dedicated simulation node, one DUNE "
+            "node per vehicle — nothing will be dispatched",
+            getSystemName(), m_registry.getNames().c_str());
+        setEntityState(IMC::EntityState::ESTA_ERROR,
+                       "local and remote vehicles in one scenario: " + m_registry.getNames());
+        return false;
       }
 
       //! Query the EntityList of simulated vehicles that have not announced
@@ -741,27 +882,6 @@ namespace Simulators
           dispatch(query);
           trace("querying entities of vehicle '%s'", sv->name.c_str());
         }
-      }
-
-      //! Check the robots of the scenario form a supported layout: a
-      //! dedicated simulation node (no robot is this system) or a single
-      //! co-located vehicle (the only robot is this system). This system's
-      //! robot alongside others would put several vehicles' data on this
-      //! node's bus, so it is refused.
-      //! @return true if the layout is supported.
-      bool
-      checkLayout(void)
-      {
-        if (m_registry.getLocal() == nullptr || m_registry.getVehicles().size() == 1)
-          return true;
-
-        err("this system '%s' is a robot of the scenario alongside other robots "
-            "(%s): simulate it alone or on a dedicated simulation node, one DUNE "
-            "node per vehicle — nothing will be dispatched",
-            getSystemName(), m_registry.getNames().c_str());
-        setEntityState(IMC::EntityState::ESTA_ERROR,
-                       "local and remote vehicles in one scenario: " + m_registry.getNames());
-        return false;
       }
 
       //! Register a robot of the scenario as a simulated vehicle. The robot
@@ -833,7 +953,15 @@ namespace Simulators
         }
 
         m_bridge.bind(sim);
-        setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_ACTIVE);
+
+        for (const std::unique_ptr<SimVehicle>& sv : m_registry.getVehicles())
+        {
+          if (sv->hasSystem() && !sv->bound)
+            inf("waiting for vehicle '%s' to announce its entities", sv->name.c_str());
+        }
+
+        reportBinding();
+        waitForVehicles();
       }
 
       void
@@ -870,6 +998,7 @@ namespace Simulators
           return;
 
         queryEntities();
+        checkAnnouncements();
 
         const bool feedback = m_feedback_timer.overflow();
         if (feedback)

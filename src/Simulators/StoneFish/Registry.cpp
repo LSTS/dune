@@ -66,6 +66,8 @@ namespace Simulators
       sv->local = local;
       sv->bound = local;
       sv->diverged = false;
+      sv->announce_time = 0.0;
+      sv->silent = false;
 
       SimVehicle* ptr = sv.get();
       m_vehicles.push_back(std::move(sv));

@@ -75,6 +75,10 @@ namespace Simulators
       bool bound;
       //! True once the vehicle's state has been flagged as divergent.
       bool diverged;
+      //! Time the remote vehicle last announced itself (or bound).
+      double announce_time;
+      //! True while the remote vehicle is not announcing itself.
+      bool silent;
 
       //! True if the vehicle has an IMC system to dispatch from.
       bool
