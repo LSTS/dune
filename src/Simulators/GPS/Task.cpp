@@ -49,15 +49,20 @@ namespace Simulators
     using DUNE_NAMESPACES;
 
     //! GpsFix required validity flags.
-    static const uint16_t c_gps_valid =
-      (IMC::GpsFix::GFV_VALID_DATE | IMC::GpsFix::GFV_VALID_TIME | IMC::GpsFix::GFV_VALID_POS
-       | IMC::GpsFix::GFV_VALID_COG | IMC::GpsFix::GFV_VALID_SOG | IMC::GpsFix::GFV_VALID_HACC
-       | IMC::GpsFix::GFV_VALID_VACC | IMC::GpsFix::GFV_VALID_HDOP | IMC::GpsFix::GFV_VALID_VDOP);
+    static const uint16_t c_gps_valid = (IMC::GpsFix::GFV_VALID_DATE |
+                                         IMC::GpsFix::GFV_VALID_TIME |
+                                         IMC::GpsFix::GFV_VALID_POS |
+                                         IMC::GpsFix::GFV_VALID_COG |
+                                         IMC::GpsFix::GFV_VALID_SOG |
+                                         IMC::GpsFix::GFV_VALID_HACC |
+                                         IMC::GpsFix::GFV_VALID_VACC |
+                                         IMC::GpsFix::GFV_VALID_HDOP |
+                                         IMC::GpsFix::GFV_VALID_VDOP);
 
     //! GroundVelocity required validity flags.
-    static const uint8_t c_dvl_valid =
-      (IMC::GroundVelocity::VAL_VEL_X | IMC::GroundVelocity::VAL_VEL_Y
-       | IMC::GroundVelocity::VAL_VEL_Z);
+    static const uint8_t c_dvl_valid = (IMC::GroundVelocity::VAL_VEL_X |
+                                        IMC::GroundVelocity::VAL_VEL_Y |
+                                        IMC::GroundVelocity::VAL_VEL_Z);
     //! %Task arguments.
     struct Arguments
     {
@@ -102,45 +107,45 @@ namespace Simulators
       {
         // Retrieve configuration parameters.
         param("Report Ground Velocity", m_args.report_gv)
-          .defaultValue("false")
-          .description("Activate output of Ground Velocity messages");
+        .defaultValue("false")
+        .description("Activate output of Ground Velocity messages");
 
         param("Report Yaw", m_args.report_yaw)
-          .defaultValue("false")
-          .description("Activate output of Euler Angles messages");
+        .defaultValue("false")
+        .description("Activate output of Euler Angles messages");
 
         param("Activation Depth", m_args.act_depth)
-          .units(Units::Meter)
-          .minimumValue("0.0")
-          .maximumValue("1.0")
-          .defaultValue("0.20")
-          .description("Minimum depth at which the GPS is unable to produce accurate fixes");
+        .units(Units::Meter)
+        .minimumValue("0.0")
+        .maximumValue("1.0")
+        .defaultValue("0.20")
+        .description("Minimum depth at which the GPS is unable to produce accurate fixes");
 
         param("HDOP", m_args.hdop)
-          .minimumValue("0.0")
-          .defaultValue("0.9")
-          .description("Horizontal Dilution of Position index");
+        .minimumValue("0.0")
+        .defaultValue("0.9")
+        .description("Horizontal Dilution of Position index");
 
         param("HACC", m_args.hacc)
-          .minimumValue("0.0")
-          .defaultValue("2.0")
-          .description("Horizontal Accuracy index");
+        .minimumValue("0.0")
+        .defaultValue("2.0")
+        .description("Horizontal Accuracy index");
 
         param("Number of Satellites", m_args.n_sat)
-          .defaultValue("8")
-          .description("Number of available satellites");
+        .defaultValue("8")
+        .description("Number of available satellites");
 
         param("Initial Position", m_args.position)
-          .units(Units::Degree)
-          .size(2)
-          .description("Initial position of the vehicle");
+        .units(Units::Degree)
+        .size(2)
+        .description("Initial position of the vehicle");
 
         param("Initial Heading", m_args.heading)
-          .units(Units::Degree)
-          .defaultValue("0.0")
-          .description("Initial heading of the vehicle, carried in the origin fix's "
-                       "course-over-ground and consumed by the simulation engine as "
-                       "the initial yaw");
+        .units(Units::Degree)
+        .defaultValue("0.0")
+        .description("Initial heading of the vehicle, carried in the origin fix's "
+                     "course-over-ground and consumed by the simulation engine as "
+                     "the initial yaw");
 
         m_fix.clear();
         m_euler.clear();
@@ -241,7 +246,8 @@ namespace Simulators
         m_fix.utc_time = ((uint32_t)now) % 86400;
 
         trace("fix: %0.6f %0.6f | yaw %0.1f | ground velocity %0.1f %0.1f %0.1f",
-              Angles::degrees(m_fix.lat), Angles::degrees(m_fix.lon), Angles::degrees(m_euler.psi),
+              Angles::degrees(m_fix.lat), Angles::degrees(m_fix.lon),
+              Angles::degrees(m_euler.psi),
               m_gv.x, m_gv.y, m_gv.z);
 
         m_fix.setTimeStamp(now);
