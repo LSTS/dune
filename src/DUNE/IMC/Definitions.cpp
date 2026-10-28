@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 91b1de5614c2e30b62cbeebf40ed8611                            *
+// IMC XML MD5: 770042c876bc0258e511138cd9930fba                            *
 //***************************************************************************
 
 // ISO C++ 98 headers.
@@ -28094,6 +28094,268 @@ namespace DUNE
       IMC::toJSON(os__, "x", x, nindent__);
       IMC::toJSON(os__, "y", y, nindent__);
       IMC::toJSON(os__, "z", z, nindent__);
+    }
+
+    FollowCommand::FollowCommand(void)
+    {
+      m_header.mgid = 996;
+      clear();
+    }
+
+    void
+    FollowCommand::clear(void)
+    {
+      control_src = 0;
+      control_ent = 0;
+      timeout = 0;
+    }
+
+    bool
+    FollowCommand::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FollowCommand& other__ = static_cast<const FollowCommand&>(msg__);
+      if (control_src != other__.control_src) return false;
+      if (control_ent != other__.control_ent) return false;
+      if (timeout != other__.timeout) return false;
+      return true;
+    }
+
+    int
+    FollowCommand::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    FollowCommand::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(control_src, ptr__);
+      ptr__ += IMC::serialize(control_ent, ptr__);
+      ptr__ += IMC::serialize(timeout, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FollowCommand::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(control_src, bfr__, size__);
+      bfr__ += IMC::deserialize(control_ent, bfr__, size__);
+      bfr__ += IMC::deserialize(timeout, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FollowCommand::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(control_src, bfr__, size__);
+      bfr__ += IMC::deserialize(control_ent, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(timeout, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FollowCommand::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "control_src", control_src, nindent__);
+      IMC::toJSON(os__, "control_ent", control_ent, nindent__);
+      IMC::toJSON(os__, "timeout", timeout, nindent__);
+    }
+
+    Command::Command(void)
+    {
+      m_header.mgid = 997;
+      clear();
+    }
+
+    void
+    Command::clear(void)
+    {
+      flags = 0;
+      speed = 0;
+      z = 0;
+      heading = 0;
+    }
+
+    bool
+    Command::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::Command& other__ = static_cast<const Command&>(msg__);
+      if (flags != other__.flags) return false;
+      if (speed != other__.speed) return false;
+      if (z != other__.z) return false;
+      if (heading != other__.heading) return false;
+      return true;
+    }
+
+    int
+    Command::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    Command::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(flags, ptr__);
+      ptr__ += IMC::serialize(speed, ptr__);
+      ptr__ += IMC::serialize(z, ptr__);
+      ptr__ += IMC::serialize(heading, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    Command::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(flags, bfr__, size__);
+      bfr__ += IMC::deserialize(speed, bfr__, size__);
+      bfr__ += IMC::deserialize(z, bfr__, size__);
+      bfr__ += IMC::deserialize(heading, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    Command::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(flags, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(speed, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(z, bfr__, size__);
+      bfr__ += IMC::reverseDeserialize(heading, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    Command::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "flags", flags, nindent__);
+      IMC::toJSON(os__, "speed", speed, nindent__);
+      IMC::toJSON(os__, "z", z, nindent__);
+      IMC::toJSON(os__, "heading", heading, nindent__);
+    }
+
+    FollowCommandState::FollowCommandState(void)
+    {
+      m_header.mgid = 998;
+      clear();
+      command.setParent(this);
+    }
+
+    void
+    FollowCommandState::clear(void)
+    {
+      control_src = 0;
+      control_ent = 0;
+      command.clear();
+      state = 0;
+    }
+
+    bool
+    FollowCommandState::fieldsEqual(const Message& msg__) const
+    {
+      const IMC::FollowCommandState& other__ = static_cast<const FollowCommandState&>(msg__);
+      if (control_src != other__.control_src) return false;
+      if (control_ent != other__.control_ent) return false;
+      if (command != other__.command) return false;
+      if (state != other__.state) return false;
+      return true;
+    }
+
+    int
+    FollowCommandState::validate(void) const
+    {
+      return true;
+    }
+
+    uint8_t*
+    FollowCommandState::serializeFields(uint8_t* bfr__) const
+    {
+      uint8_t* ptr__ = bfr__;
+      ptr__ += IMC::serialize(control_src, ptr__);
+      ptr__ += IMC::serialize(control_ent, ptr__);
+      ptr__ += command.serialize(ptr__);
+      ptr__ += IMC::serialize(state, ptr__);
+      return ptr__;
+    }
+
+    uint16_t
+    FollowCommandState::deserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::deserialize(control_src, bfr__, size__);
+      bfr__ += IMC::deserialize(control_ent, bfr__, size__);
+      bfr__ += command.deserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    uint16_t
+    FollowCommandState::reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__)
+    {
+      const uint8_t* start__ = bfr__;
+      bfr__ += IMC::reverseDeserialize(control_src, bfr__, size__);
+      bfr__ += IMC::deserialize(control_ent, bfr__, size__);
+      bfr__ += command.reverseDeserialize(bfr__, size__);
+      bfr__ += IMC::deserialize(state, bfr__, size__);
+      return bfr__ - start__;
+    }
+
+    void
+    FollowCommandState::fieldsToJSON(std::ostream& os__, unsigned nindent__) const
+    {
+      IMC::toJSON(os__, "control_src", control_src, nindent__);
+      IMC::toJSON(os__, "control_ent", control_ent, nindent__);
+      command.toJSON(os__, "command", nindent__);
+      IMC::toJSON(os__, "state", state, nindent__);
+    }
+
+    void
+    FollowCommandState::setTimeStampNested(double value__)
+    {
+      if (!command.isNull())
+      {
+        command.get()->setTimeStamp(value__);
+      }
+    }
+
+    void
+    FollowCommandState::setSourceNested(uint16_t value__)
+    {
+      if (!command.isNull())
+      {
+        command.get()->setSource(value__);
+      }
+    }
+
+    void
+    FollowCommandState::setSourceEntityNested(uint8_t value__)
+    {
+      if (!command.isNull())
+      {
+        command.get()->setSourceEntity(value__);
+      }
+    }
+
+    void
+    FollowCommandState::setDestinationNested(uint16_t value__)
+    {
+      if (!command.isNull())
+      {
+        command.get()->setDestination(value__);
+      }
+    }
+
+    void
+    FollowCommandState::setDestinationEntityNested(uint8_t value__)
+    {
+      if (!command.isNull())
+      {
+        command.get()->setDestinationEntity(value__);
+      }
     }
 
     ADCPBeam::ADCPBeam(void)

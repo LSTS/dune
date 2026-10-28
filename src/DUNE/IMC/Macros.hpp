@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 91b1de5614c2e30b62cbeebf40ed8611                            *
+// IMC XML MD5: 770042c876bc0258e511138cd9930fba                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -690,6 +690,12 @@
 #define DUNE_IMC_ENCAWARENESS 913
 //! Displacement identification number.
 #define DUNE_IMC_DISPLACEMENT 915
+//! FollowCommand identification number.
+#define DUNE_IMC_FOLLOWCOMMAND 996
+//! Command identification number.
+#define DUNE_IMC_COMMAND 997
+//! FollowCommandState identification number.
+#define DUNE_IMC_FOLLOWCOMMANDSTATE 998
 //! CurrentProfile identification number.
 #define DUNE_IMC_CURRENTPROFILE 1014
 //! CurrentProfileCell identification number.

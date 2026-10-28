@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 91b1de5614c2e30b62cbeebf40ed8611                            *
+// IMC XML MD5: 770042c876bc0258e511138cd9930fba                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -359,6 +359,9 @@ MESSAGE(911, AbsoluteWind)
 MESSAGE(912, AisInfo)
 MESSAGE(913, ENCAwareness)
 MESSAGE(915, Displacement)
+MESSAGE(996, FollowCommand)
+MESSAGE(997, Command)
+MESSAGE(998, FollowCommandState)
 MESSAGE(1014, CurrentProfile)
 MESSAGE(1015, CurrentProfileCell)
 MESSAGE(1016, ADCPBeam)

@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 91b1de5614c2e30b62cbeebf40ed8611                            *
+// IMC XML MD5: 770042c876bc0258e511138cd9930fba                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -26627,6 +26627,263 @@ namespace DUNE
 
       void
       fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Follow Command Maneuver.
+    class FollowCommand: public Maneuver
+    {
+    public:
+      //! Controlling Source.
+      uint16_t control_src;
+      //! Controlling Entity.
+      uint8_t control_ent;
+      //! Reference Update Timeout.
+      fp32_t timeout;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 996;
+      }
+
+      FollowCommand(void);
+
+      FollowCommand*
+      clone(void) const
+      {
+        return new FollowCommand(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FollowCommand::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FollowCommand";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 7;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Command To Follow.
+    class Command: public Message
+    {
+    public:
+      //! Flags.
+      enum FlagsBits
+      {
+        //! Use Speed Reference in meters per second.
+        FLAG_SPEED_METERS_PS = 0x01,
+        //! Use Speed Reference in revolutions per minute.
+        FLAG_SPEED_RPM = 0x02,
+        //! Use Z Reference as depth.
+        FLAG_DEPTH = 0x04,
+        //! Use Z Reference as altitude.
+        FLAG_ALTITUDE = 0x08,
+        //! Use Heading Reference.
+        FLAG_HEADING = 0x10,
+        //! Use Heading Rate Reference.
+        FLAG_HEADING_RATE = 0x20,
+        //! Use Speed Reference in percentage.
+        FLAG_SPEED_PERCENT = 0x40,
+        //! Flag Maneuver Completion.
+        FLAG_MANDONE = 0x80
+      };
+
+      //! Flags.
+      uint8_t flags;
+      //! Speed Reference.
+      fp32_t speed;
+      //! Z Reference.
+      fp32_t z;
+      //! Heading Reference.
+      fp32_t heading;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 997;
+      }
+
+      Command(void);
+
+      Command*
+      clone(void) const
+      {
+        return new Command(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return Command::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "Command";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 13;
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+    };
+
+    //! Follow Command State.
+    class FollowCommandState: public Message
+    {
+    public:
+      //! State.
+      enum StateEnum
+      {
+        //! Waiting for first command.
+        FC_WAIT = 1,
+        //! Moving towards received command.
+        FC_MOVING = 2,
+        //! Speed command is zero.
+        FC_STOPPED = 3,
+        //! Command is out of safe bounds.
+        FC_BAD_COMMAND = 4,
+        //! Controlling system timed out.
+        FC_TIMEOUT = 5
+      };
+
+      //! Controlling Source.
+      uint16_t control_src;
+      //! Controlling Entity.
+      uint8_t control_ent;
+      //! Command.
+      InlineMessage<Command> command;
+      //! State.
+      uint8_t state;
+
+      static uint16_t
+      getIdStatic(void)
+      {
+        return 998;
+      }
+
+      FollowCommandState(void);
+
+      FollowCommandState*
+      clone(void) const
+      {
+        return new FollowCommandState(*this);
+      }
+
+      void
+      clear(void);
+
+      bool
+      fieldsEqual(const Message& msg__) const;
+
+      int
+      validate(void) const;
+
+      uint8_t*
+      serializeFields(uint8_t* bfr__) const;
+
+      uint16_t
+      deserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      reverseDeserializeFields(const uint8_t* bfr__, uint16_t size__);
+
+      uint16_t
+      getId(void) const
+      {
+        return FollowCommandState::getIdStatic();
+      }
+
+      const char*
+      getName(void) const
+      {
+        return "FollowCommandState";
+      }
+
+      unsigned
+      getFixedSerializationSize(void) const
+      {
+        return 4;
+      }
+
+      unsigned
+      getVariableSerializationSize(void) const
+      {
+        return command.getSerializationSize();
+      }
+
+      void
+      fieldsToJSON(std::ostream& os__, unsigned nindent__) const;
+
+    protected:
+      void
+      setTimeStampNested(double value__);
+
+      void
+      setSourceNested(uint16_t value__);
+
+      void
+      setSourceEntityNested(uint8_t value__);
+
+      void
+      setDestinationNested(uint16_t value__);
+
+      void
+      setDestinationEntityNested(uint8_t value__);
     };
 
     //! ADCP Beam Measurements.
