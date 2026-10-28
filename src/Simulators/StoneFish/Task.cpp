@@ -28,6 +28,7 @@
 //***************************************************************************
 
 // C++ headers.
+#include <atomic>
 #include <cstdlib>
 #include <map>
 #include <memory>
@@ -201,6 +202,10 @@ namespace Simulators
       bool m_bodylift;
       //! Hull body-lift coefficients, resolved from m_args.body_lift_coef.
       Vehicle::BodyLift m_bodylift_coef;
+      //! Set when a parameter change requires rebuilding the running engine.
+      std::atomic<bool> m_restart;
+      //! Why the engine must be rebuilt.
+      std::string m_restart_reason;
       //! Task arguments.
       Arguments m_args;
 
@@ -215,7 +220,8 @@ namespace Simulators
         m_origin_lat(0.0),
         m_origin_lon(0.0),
         m_origin_height(0.0),
-        m_bodylift(false)
+        m_bodylift(false),
+        m_restart(false)
       {
         param("Scenario Path", m_args.scenario)
           .description("Relative path from the configuration directory to the scenario file to be "
@@ -438,26 +444,56 @@ namespace Simulators
         if (!m_recorder.isOpen())
           m_recorder.open(m_current_log, m_args.log_sim_hz);
 
-        validateGraphics();
-        validateBodyLift();
-        validateScenario();
+        if (m_engine == nullptr)
+        {
+          validateGraphics();
+          validateBodyLift();
+          validateScenario();
+          return;
+        }
+
+        // The engine runs: this is called from consumeMessages() in the
+        // simulation thread, where throwing would terminate the process.
+        // Defer the rebuild to the task thread instead.
+        try
+        {
+          validateGraphics();
+          validateBodyLift();
+          validateScenario();
+        }
+        catch (const std::exception& e)
+        {
+          requestRestart(e.what());
+          return;
+        }
 
         // Stonefish consumes these once, at SimulationApp construction, and the
         // running simulation cannot be reconfigured (the GL window in
         // particular). Rebuild the engine cleanly if any of them changes.
-        if (m_engine != nullptr
-            && (paramChanged(m_args.graphics) || paramChanged(m_args.frequency)
-                || paramChanged(m_args.time_step) || paramChanged(m_args.auto_start)
-                || paramChanged(m_args.auto_step) || paramChanged(m_args.graphics_resolution)
-                || paramChanged(m_args.vsync) || paramChanged(m_args.rq_shadows)
-                || paramChanged(m_args.rq_ao) || paramChanged(m_args.rq_atmosphere)
-                || paramChanged(m_args.rq_ocean) || paramChanged(m_args.rq_aa)
-                || paramChanged(m_args.rq_ssr) || paramChanged(m_args.show_coord_sys)
-                || paramChanged(m_args.show_joints) || paramChanged(m_args.show_actuators)
-                || paramChanged(m_args.show_sensors) || paramChanged(m_args.show_fluid_dynamics)
-                || paramChanged(m_args.show_ocean_velocity) || paramChanged(m_args.show_forces)
-                || paramChanged(m_args.show_bullet_debug)))
-          throw RestartNeeded("simulation settings changed, rebuilding", 1);
+        if (paramChanged(m_args.scenario) || paramChanged(m_args.graphics)
+            || paramChanged(m_args.frequency) || paramChanged(m_args.time_step)
+            || paramChanged(m_args.auto_start) || paramChanged(m_args.auto_step)
+            || paramChanged(m_args.graphics_resolution) || paramChanged(m_args.vsync)
+            || paramChanged(m_args.rq_shadows) || paramChanged(m_args.rq_ao)
+            || paramChanged(m_args.rq_atmosphere) || paramChanged(m_args.rq_ocean)
+            || paramChanged(m_args.rq_aa) || paramChanged(m_args.rq_ssr)
+            || paramChanged(m_args.show_coord_sys) || paramChanged(m_args.show_joints)
+            || paramChanged(m_args.show_actuators) || paramChanged(m_args.show_sensors)
+            || paramChanged(m_args.show_fluid_dynamics) || paramChanged(m_args.show_ocean_velocity)
+            || paramChanged(m_args.show_forces) || paramChanged(m_args.show_bullet_debug))
+          requestRestart("simulation settings changed, rebuilding");
+      }
+
+      //! Ask the task thread to rebuild the engine: the application loop
+      //! quits and onMain() restarts the task.
+      void
+      requestRestart(const std::string& reason)
+      {
+        if (m_restart)
+          return;
+
+        m_restart_reason = reason;
+        m_restart = true;
       }
 
       //! True if a scenario device belongs to this system, so its entity is
@@ -707,6 +743,7 @@ namespace Simulators
       void
       onBuild(sf::SimulationManager& sim)
       {
+        m_registry.clearVehicles();
         consumeMessages();
 
         // The scenario NED origin is the geodetic reference of all
@@ -984,9 +1021,9 @@ namespace Simulators
         simCallback onStepCb = std::bind(&Task::onStep, this, std::placeholders::_1);
         simCallback onBuildCb = std::bind(&Task::onBuild, this, std::placeholders::_1);
         simCallback onPreTickCb = std::bind(&Task::onPreTick, this, std::placeholders::_1);
-        // A stop that arrives while the scenario loads is honoured as soon
-        // as the application loop starts.
-        quitPredicate quit = [this](void) { return stopping(); };
+        // A stop or rebuild requested while the scenario loads is honoured
+        // as soon as the application loop starts.
+        quitPredicate quit = [this](void) { return stopping() || m_restart; };
 
         m_engine = new Engine(mode, m_scenario, m_args.frequency, renderSettings(),
                               helperSettings(), onStepCb, onBuildCb, onPreTickCb, quit);
@@ -997,14 +1034,24 @@ namespace Simulators
       void
       onMain(void)
       {
+        m_restart = false;
+
         try
         {
           runSim();
         }
         catch (const std::exception& e)
         {
+          Memory::clear(m_engine);
           throw RestartNeeded(e.what(), 10);
         }
+
+        // Released before restarting: the restart path updates the
+        // parameters again, which must not see a running engine.
+        Memory::clear(m_engine);
+
+        if (m_restart)
+          throw RestartNeeded(m_restart_reason, 1, false);
 
         if (!stopping())
         {

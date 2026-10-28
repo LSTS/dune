@@ -122,6 +122,11 @@ namespace Simulators
       SimVehicle&
       addVehicle(sf::Robot* robot, uint32_t system_id, bool local);
 
+      //! Forget every registered vehicle, before the scenario is rebuilt.
+      //! Device addresses are kept: entities are reserved once per task.
+      void
+      clearVehicles(void);
+
       //! Translate the EntityList a simulated vehicle announces: each of its
       //! entities is mapped as the vehicle's device of the same label, so the
       //! device is dispatched as coming from the vehicle itself.

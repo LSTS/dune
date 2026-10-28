@@ -78,6 +78,15 @@ namespace Simulators
       return *ptr;
     }
 
+    void
+    Registry::clearVehicles(void)
+    {
+      m_by_name.clear();
+      m_by_system.clear();
+      m_local = nullptr;
+      m_vehicles.clear();
+    }
+
     SimVehicle*
     Registry::bindEntities(const std::string& name, uint32_t system_id,
                            const std::map<std::string, std::string>& entities)

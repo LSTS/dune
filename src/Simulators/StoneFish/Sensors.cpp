@@ -70,6 +70,9 @@ namespace Simulators
       if (ocean != nullptr)
         m_water_density = ocean->getLiquid().density;
 
+      // A rebuilt simulation replaces the sensors of the previous one.
+      m_scalars.clear();
+
       sf::Sensor* sensor;
       for (unsigned i = 0; (sensor = sim.getSensor(i)) != nullptr; i++)
       {
