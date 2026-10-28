@@ -3,19 +3,22 @@
     Two-LAUV fleet scenario.
 
     Demonstrates a multi-vehicle Stonefish simulation: two LAUVs in the same
-    world, each named after the DUNE system it represents (lauv-1, lauv-2).
+    world, each named after the DUNE system it represents (lauv-xplore-1,
+    lauv-xplore-2).
 
     Simulators.StoneFish builds one simulated vehicle per robot and translates
     IMC ids per vehicle: each vehicle's sensor and state messages are
     dispatched from that vehicle's own system id (and the entity ids it
-    announces in its EntityList, e.g. "lauv-1/imu" -> source lauv-1), and
-    actuator commands are routed to a robot by the source system id of the
-    command.
+    announces in its EntityList, e.g. "lauv-xplore-1/IMU" -> source
+    lauv-xplore-1), and actuator commands are routed to a robot by the source
+    system id of the command.
 
-    Run one DUNE node per vehicle, each with [General] Vehicle set to the
-    matching robot name. The node that hosts Simulators.StoneFish builds the
-    shared world; the other vehicles only need to announce themselves (Announce
-    + EntityList) so the simulator can bind their ids.
+    Run it on a dedicated simulation node (etc/stonefish-sim.ini), named after
+    none of the robots, plus one DUNE node per vehicle
+    (etc/stonefish-vehicle.ini) with [General] Vehicle set to the matching
+    robot name; each vehicle announces itself (Announce + EntityList) so the
+    simulator can bind its ids. A vehicle node must not host the simulator:
+    a robot named after the hosting system alongside other robots is refused.
 
     The robots are spawned 10 m apart (pos_e) so they do not start on top of
     each other. mass/cg_* are the trimmed LAUV values (see etc/sim/README.md).
