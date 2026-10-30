@@ -25,248 +25,93 @@
 // Author: Pedro Gonçalves                                                  *
 //***************************************************************************
 
-// ISO C++ 98 headers.
-#include <queue>
-#include <cstring>
-#include <string>
-#include <iostream>
-#include <cassert>
-#include <stdexcept>
-#include <cstdio>
-
-// DUNE headers.
-#include <DUNE/DUNE.hpp>
-
-#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-//FlyCapture headers
-#include <flycapture/FlyCapture2.h>
-//Exiv2 headers
-#include <exiv2/exiv2.hpp>
-//Local header
-#include "SaveImage.hpp"
-#endif
+// Local headers.
+#include "Task.hpp"
 
 namespace Vision
 {
   namespace PointGrey
   {
-    //! Command types.
-    enum CommandType
+    Task::Task(const std::string& name, Tasks::Context& ctx):
+      Tasks::Task(name, ctx),
+      m_log_dir(ctx.dir_log)
     {
-      //! Set GPIO LOW (on).
-      GPIO_HIGH = 1,
-      //! Set GPIO HIGH (off).
-      GPIO_LOW = 0
-    };
+      m_isCapturing = m_is_to_capture = false;
+      m_is_strobe = m_is_on = m_strobe_fallback = false;
+      m_read_path = true;
+      m_storage_low = false;
+      m_resources_ready = false;
+      m_gpio_drive_power = NULL;
+      m_gpio_strobe = NULL;
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+      for (int i = 0; i < c_number_max_thread; ++i)
+        m_save[i] = NULL;
+#endif
+      paramActive(Tasks::Parameter::SCOPE_MANEUVER, Tasks::Parameter::VISIBILITY_USER);
 
-    using DUNE_NAMESPACES;
-
-    static const int c_number_max_thread = 25;
-    static const int c_max_number_attempts_bus = 5;
-    static const float c_time_to_release_cached_ram = 300.0;
-    static const float c_time_to_release_camera = 3.0;
-    static const float c_time_to_update_cnt_info = 10.0;
-    static const std::string c_log_path = "/opt/lsts/dune/log/";
-    static const std::string c_camera_log_folder = "CameraLog/";
-    static const float c_timeout_reading = 15.0;
-
-    //! %Task arguments.
-    struct Arguments
-    {
-      //! Master Name.
-      std::string system_name;
-      //! Power channel of strobe
-      std::string channel_strobe;
-      //! LED scheme.
-      std::string led_type;
-      //! Copyright Image
-      std::string copyright;
-      //! Lens Model
-      std::string lens_model;
-      //! Lens Maker
-      std::string lens_maker;
-      //! Saved Image Dir
-      std::string save_image_dir;
-      //! Number of frames/s
-      int number_fs;
-      //! Split photos by folder
-      bool split_photos;
-      //! Number of photos to folder
-      unsigned int number_photos;
-      //! Gpio Number for driver power
-      int gpio_drive_power;
-      //! Gpio Number for strobe
-      int gpio_strobe;
-      //! Delay before capture image
-      int delay_capture;
-      //! shutter value for image
-      float shutter_value;
-      //! flag o control statistics of disk use
-      bool disk_statistics;
-    };
-
-    //! Device driver task.
-    struct Task: public DUNE::Tasks::Task
-    {
-      //! Configuration parameters
-      Arguments m_args;
-      #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-      //! Camera object
-      FlyCapture2::Camera m_camera;
-      //! Structure of Camera object
-      FlyCapture2::CameraInfo m_camInfo;
-      //! The Error object of error that is returned
-      FlyCapture2::Error m_error;
-      //! Buffer raw image from a camera
-      FlyCapture2::Image m_rawImage;
-      //! Buffer for rgb image;
-      FlyCapture2::Image m_rgbImage;
-      //! Identifier of camera
-      FlyCapture2::PGRGuid m_guid;
-      #endif
-      //! Latitude deg
-      int m_lat_deg;
-      //! Latitude min
-      int m_lat_min;
-      //! Latitude sec
-      double m_lat_sec;
-      //! Longitude deg
-      int m_lon_deg;
-      //! Longitude min
-      int m_lon_min;
-      //! Longitude sec
-      double m_lon_sec;
-      //! Buffer for exif timestamp
-      char m_text_exif_timestamp[16];
-      //! Buffer to backup path log
-      std::string m_back_path_log;
-      //! Buffer to backup path to main system log
-      std::string m_back_path_main_log;
-      //! Buffer to backup epoch
-      std::string m_back_epoch;
-      //! Buffer to backup time
-      std::string m_back_time;
-      //! Buffer for path to save image
-      std::string m_path_image;
-      //! Buffer for backup of path to save image
-      std::string m_back_path_image;
-      //! Path to save image
-      Path m_log_dir;
-      //! Timer to control fps
-      Time::Counter<float> m_cnt_fps;
-      //! Timer to control the cached ram
-      Time::Counter<float> m_clean_cached_ram;
-      //! Timer to control the refresh of captured frames
-      Time::Counter<float> m_update_cnt_frames;
-      //! Id thread
-      int m_thread_cnt;
-      //! Number of frames captured
-      long unsigned int m_frame_cnt;
-      //! Number of frames lost
-      long unsigned int m_frame_lost_cnt;
-      #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-      //! Clase/thread to save image/exif data
-      SaveImage *m_save[c_number_max_thread];
-      #endif
-      //! Buffer for the note comment of user
-      std::string m_note_comment;
-      //! Number of photos in folder
-      unsigned int m_cnt_photos_by_folder;
-      //! Number of folder
-      unsigned m_folder_number;
-      //! Bufer for name log
-      std::string m_log_name;
-      //! Flag to control capture of image
-      bool m_is_to_capture;
-      //! flag to control led - strobe
-      bool m_is_strobe;
-      //! flag to control led - on
-      bool m_is_on;
-      //! Strobe delay
-      float m_strobe_delay;
-      //! Flag to control init state
-      bool m_isStartTask;
-      //! Control state of capture
-      bool m_isCapturing;
-      //! buffer for path to get storage usage of logs
-      char m_buffer[64];
-      //! Storage usage value
-      std::string m_storage;
-      //! Timer to control reading of storage
-      Time::Counter<float> m_timeout_reading;
-      //! string for result output
-      std::string m_result;
-      //! Flag to control reading of used storage
-      bool m_read_storage;
-      //! Flag to control read of path from LoggingControl
-      bool m_read_path;
-
-      Task(const std::string& name, Tasks::Context& ctx):
-        Tasks::Task(name, ctx),
-        m_log_dir(ctx.dir_log)
-      {
-        paramActive(Tasks::Parameter::SCOPE_MANEUVER,
-                    Tasks::Parameter::VISIBILITY_USER);
-
-        param("Power Channel - Strobe", m_args.channel_strobe)
+      param("Power Channel - Strobe", m_args.channel_strobe)
         .description("Power Channel of Strobe.");
 
-        param("System Name", m_args.system_name)
+      param("System Name", m_args.system_name)
         .description("Main system name.");
 
-        param("Led Mode", m_args.led_type)
+      param("Led Mode", m_args.led_type)
         .values("Strobe, On, Off")
-    	.description("Led type mode.");
+        .description("Led type mode.");
 
-        param("Copyright", m_args.copyright)
+      param("Copyright", m_args.copyright)
         .description("Copyright of Image.");
 
-        param("Lens Model", m_args.lens_model)
+      param("Lens Model", m_args.lens_model)
         .description("Lens Model of camera.");
 
-        param("Lens Make", m_args.lens_maker)
+      param("Lens Make", m_args.lens_maker)
         .description("Lens builder/maker.");
 
-        param("Saved Images Dir", m_args.save_image_dir)
+      param("Saved Images Dir", m_args.save_image_dir)
         .defaultValue("Photos")
         .description("Saved Images Dir.");
 
-        param("Number Frames/s", m_args.number_fs)
+      param("Number Frames/s", m_args.number_fs)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .defaultValue("4")
         .minimumValue("1")
-        .maximumValue("5")
+        .maximumValue("60")
         .description("Number Frames/s.");
 
-        param("Split Photos", m_args.split_photos)
+      param("Split Photos", m_args.split_photos)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("true")
         .description("Split photos by folder.");
 
-        param("Number of photos to divide", m_args.number_photos)
+      param("Number of photos to divide", m_args.number_photos)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("1000")
         .minimumValue("500")
         .maximumValue("3000")
         .description("Split photos by folder.");
 
-        param("GPIO Driver Power", m_args.gpio_drive_power)
+      param("GPIO Driver Power", m_args.gpio_drive_power)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("17")
+        .minimumValue("0")
         .description("GPIO of RPI2 for driver power.");
 
-        param("GPIO Strobe", m_args.gpio_strobe)
+      param("GPIO Strobe", m_args.gpio_strobe)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("27")
+        .minimumValue("0")
         .description("GPIO of RPI2 for strobe.");
 
-        param("Strobe Delay (us)", m_args.delay_capture)
+      param("Strobe Delay (us)", m_args.delay_capture)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .defaultValue("1000")
+        .minimumValue("0")
+        .maximumValue("1000000")
         .description("Strobe Delay in us.");
 
-        param("Shutter Value (ms)", m_args.shutter_value)
+      param("Shutter Value (ms)", m_args.shutter_value)
         .visibility(Tasks::Parameter::VISIBILITY_USER)
         .scope(Tasks::Parameter::SCOPE_MANEUVER)
         .defaultValue("8")
@@ -274,960 +119,782 @@ namespace Vision
         .maximumValue("300")
         .description("Shutter Value time in ms.");
 
-        param("No Disk Statistics", m_args.disk_statistics)
+      param("No Disk Statistics", m_args.disk_statistics)
         .visibility(Tasks::Parameter::VISIBILITY_DEVELOPER)
         .defaultValue("false")
         .description("Set dispatch of Disk Statistics use.");
 
-        bind<IMC::EstimatedState>(this);
-        bind<IMC::LoggingControl>(this);
-      }
+      param("JPEG Quality", m_args.jpeg_quality)
+        .defaultValue("65")
+        .minimumValue("1")
+        .maximumValue("100")
+        .description("JPEG quality. Lower values reduce CPU and storage use.");
 
-      void
-      onUpdateParameters(void)
+      param("Save Workers", m_args.save_workers)
+        .defaultValue("2")
+        .minimumValue("1")
+        .maximumValue("8")
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .description("Independent JPEG writers; applied at task initialization.");
+
+      param("Image Queue Size", m_args.queue_images)
+        .defaultValue("25")
+        .minimumValue("1")
+        .maximumValue("1000")
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .description("Maximum admitted images, including writes in progress.");
+
+      param("Image Queue Memory (MiB)", m_args.queue_memory)
+        .defaultValue("128")
+        .minimumValue("8")
+        .maximumValue("1024")
+        .scope(Tasks::Parameter::SCOPE_GLOBAL)
+        .description("Maximum RGB and EXIF payload memory; SDK and JPEG buffers are additional.");
+
+      param("Capture Timeout (ms)", m_args.capture_timeout)
+        .defaultValue("2000")
+        .minimumValue("100")
+        .maximumValue("10000")
+        .description("Timeout for trigger readiness and camera retrieval; applied at activation.");
+
+      param("Minimum Free Space (MiB)", m_args.minimum_free_space)
+        .defaultValue("256")
+        .minimumValue("0")
+        .description("Pause acquisition below this free-space threshold; zero disables check.");
+
+      param("Durable Writes", m_args.durable_writes)
+        .defaultValue("false")
+        .description("Synchronize each JPEG to storage. Improves durability at a throughput cost.");
+
+      bind<IMC::EstimatedState>(this);
+      bind<IMC::LoggingControl>(this);
+    }
+
+    Task::~Task(void)
+    { }
+
+    void
+    Task::onUpdateParameters(void)
+    {
+      if (paramChanged(m_args.number_fs))
+        m_cnt_fps.setTop(1.0 / m_args.number_fs);
+
+      if (paramChanged(m_args.shutter_value) && m_is_to_capture
+          && !set_shutter_value(m_args.shutter_value))
+        throw RestartNeeded("Cannot update camera shutter", 10);
+
+      if (m_is_to_capture
+          && (paramChanged(m_args.delay_capture) || paramChanged(m_args.shutter_value)
+              || paramChanged(m_args.number_fs)))
+        checkCaptureTiming();
+    }
+
+    void
+    Task::checkCaptureTiming(void)
+    {
+      const bool strobe_requested = m_args.led_type == "Strobe" || m_args.led_type == "STROBE";
+      if (!strobe_requested)
+        return;
+
+      const double frame_time = m_args.shutter_value / 1000.0 + m_args.delay_capture / 1000000.0;
+      const bool must_fallback = frame_time * m_args.number_fs >= 1.0;
+      if (must_fallback && !m_strobe_fallback)
       {
-        if (paramChanged(m_args.shutter_value) && m_isStartTask)
-          inf("shutter: %f", m_args.shutter_value);
+        if (!setGpio(m_gpio_strobe, GPIO_HIGH, "strobe"))
+          throw std::runtime_error("Cannot enable continuous camera lighting");
 
-        if (paramChanged(m_args.delay_capture) && m_isStartTask)
-          inf("strobe delay: %d", m_args.delay_capture);
-
-        if (paramChanged(m_args.number_fs) && !m_isCapturing)
-        {
-          inf("Fps: %d", m_args.number_fs);
-          m_cnt_fps.setTop((1.0/m_args.number_fs));
-        }
-        else if (paramChanged(m_args.number_fs) && m_isCapturing)
-        {
-          inf("Cannot change frames in capturing mode");
-        }
-      }
-
-      void
-      onResourceInitialization(void)
-      {
-        m_read_path = true;
-        m_read_storage = true;
-        m_isStartTask = false;
-        m_isCapturing = false;
-        set_cpu_governor();
-        init_gpio_driver();
-        init_gpio_strobe();
-
-        if(m_args.number_photos < 500 && m_args.split_photos)
-        {
-          war("Number of photos by folder is to small (mim: 500)");
-          war("Setting Number of photos by folder to default (1000)");
-          m_args.number_photos = 1000;
-        }
-        else if(m_args.number_photos > 3000 && m_args.split_photos)
-        {
-          war("Number of photos by folder is to high (max: 3000)");
-          war("Setting Number of photos by folder to default (1000)");
-          m_args.number_photos = 1000;
-        }
-
-        m_thread_cnt = 0;
-        m_frame_cnt = 0;
-        m_frame_lost_cnt = 0;
-        m_cnt_photos_by_folder = 0;
-        m_folder_number = 0;
-        m_is_to_capture = false;
-        m_strobe_delay = m_args.delay_capture;
-
-        char text[8];
-        for(int i = 0; i < c_number_max_thread; i++)
-        {
-          sprintf(text, "thr%d", i);
-          #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-          m_save[i] = new SaveImage(this, text);
-          m_save[i]->start();
-          #endif
-        }
-
-        m_clean_cached_ram.setTop(c_time_to_release_cached_ram);
-        m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
-
-        if(m_args.disk_statistics)
-          setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
-        else
-          setEntityState(IMC::EntityState::ESTA_BOOT, "idle");
-
-        m_isStartTask = true;
-      }
-
-      #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-      void
-      onResourceRelease(void)
-      {
-        m_is_to_capture = false;
-        if(m_isStartTask)
-        {
-          Delay::wait(c_time_to_release_camera);
-          setGpio(GPIO_LOW, m_args.gpio_strobe);
-          setGpio(GPIO_LOW, m_args.gpio_drive_power);
-
-          for(int i = 0; i < c_number_max_thread; i++)
-          {
-            if (m_save[i] != NULL)
-            {
-              m_save[i]->stopAndJoin();
-              delete m_save[i];
-              m_save[i] = NULL;
-            }
-          }
-
-          if(m_camera.IsConnected())
-          {
-            m_error = m_camera.StopCapture();
-            if ( m_error != FlyCapture2::PGRERROR_OK )
-              inf("Error stopping camera capture: %s , already stop?", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-
-            m_error = m_camera.Disconnect();
-            if ( m_error != FlyCapture2::PGRERROR_OK )
-              inf("Error disconnecting camera: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-          }
-        }
-      }
-      #endif
-
-      void
-      consume(const IMC::LoggingControl* msg)
-      {
-        std::string sysNameMsg = resolveSystemId(msg->getSource());
-        std::string sysLocalName = getSystemName();
-
-        if(sysNameMsg != m_args.system_name && sysNameMsg != sysLocalName)
-          return;
-
-        if(sysNameMsg != sysLocalName)
-        {
-          debug("Camera FLAG: %u", msg->op);
-          if (msg->op == IMC::LoggingControl::COP_STARTED || msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
-          {
-            if (m_read_path && msg->op == IMC::LoggingControl::COP_CURRENT_NAME)
-            {
-              return; // Already know log folder
-            }
-
-            if (msg->op == IMC::LoggingControl::COP_STARTED && m_read_path)
-            {
-                m_isCapturing = false;
-            }
-
-            m_read_path = true;
-            m_frame_cnt = 0;
-            m_frame_lost_cnt = 0;
-            m_cnt_photos_by_folder = 0;
-            m_folder_number = 0;
-            debug("LoggingControl: reset count m_frame_cnt: %d", msg->op);
-            std::string m_path = c_log_path + m_args.system_name;
-            m_back_path_main_log = m_path + "/" + msg->name;
-
-            if(m_args.split_photos)
-              m_log_dir = m_path / msg->name / m_args.save_image_dir / String::str("%06u", m_folder_number);
-            else
-              m_log_dir = m_path / msg->name / m_args.save_image_dir;
-
-            inf("Camera photos stored: %s", m_back_path_main_log.c_str());
-            m_back_path_image = m_log_dir.c_str();
-            m_log_dir.create();
-            m_log_name = msg->name;
-            m_thread_cnt = 0;
-            m_cnt_fps.reset();
-            m_isCapturing = true;
-          }
-        }
-
-        std::string m_base_path = m_ctx.dir_log.c_str();
-        m_back_path_log = m_base_path + "/" + msg->name;
-      }
-
-      void
-      consume(const IMC::EstimatedState* msg)
-      {
-        std::string sysName = resolveSystemId(msg->getSource());
-        if(sysName != m_args.system_name)
-          return;
-
-        Angles::convertDecimalToDMS(Angles::degrees(msg->lat), m_lat_deg, m_lat_min, m_lat_sec);
-        Angles::convertDecimalToDMS(Angles::degrees(msg->lon), m_lon_deg, m_lon_min, m_lon_sec);
-        m_note_comment = "Depth: "+to_string(msg->depth)+" m # Altitude: "+to_string(msg->alt)+" m";
-
-        IMC::GpsFix pos;
-        pos.lat = msg->lat;
-        pos.lon = msg->lon;
-        dispatch(pos);
-      }
-
-      void
-      onRequestActivation(void)
-      {
-        inf("received activation request");
-        activate();
-      }
-
-      void
-      onRequestDeactivation(void)
-      {
-        inf("received deactivation request");
-        deactivate();
-      }
-
-      void
-      onActivation(void)
-      {
-        inf("on Activation");
-        m_read_path = false;
-        releaseRamCached();
-        updateStrobe();
-
-        IMC::LoggingControl logcontrol;
-        logcontrol.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
-        dispatch(logcontrol);
-        Delay::wait(0.2);
-
-        try
-        {
-          if(!setUpCamera())
-            throw RestartNeeded("Cannot detect camera", 10);
-
-          setEntityState(IMC::EntityState::ESTA_NORMAL, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs));
-          set_shutter_value(m_args.shutter_value);
-        }
-        catch(...)
-        {
-          throw RestartNeeded("Error Flycapture API", 10);
-        }
-        m_is_to_capture = true;
-        inf("Starting Capture.");
-      }
-
-      void
-      onDeactivation(void)
-      {
-        m_read_path = true;
-        inf("on Deactivation");
-        m_is_to_capture = false;
-        m_isCapturing = false;
-        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-        m_error = m_camera.StopCapture();
-        if ( m_error != FlyCapture2::PGRERROR_OK )
-          war("Error stopping camera capture: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-
-        setGpio(GPIO_LOW, m_args.gpio_strobe);
-        #endif
-
-        moveLogFiles();
-        if(m_args.disk_statistics)
-          setEntityState(IMC::EntityState::ESTA_NORMAL, "idle | " + getStorageUsageLogs());
-        else
-          setEntityState(IMC::EntityState::ESTA_NORMAL, "idle");
-      }
-
-      int
-      moveLogFiles(void)
-      {
-        std::string path_log_dune_cam = m_back_path_main_log + "/" + c_camera_log_folder;
-        std::string system_command = "mkdir " + path_log_dune_cam;
-        inf("Camera dune log stored: %s", m_back_path_main_log.c_str());
-        int result = std::system(system_command.c_str());
-        debug("Path of dune log running in camara: %s", m_back_path_log.c_str());
-
-        std::string file_name_old = m_back_path_log + "/Output.txt ";
-        std::string file_name_new = path_log_dune_cam + "/camera_Output.txt";
-        system_command = "mv " + file_name_old + file_name_new;
-        result = std::system(system_command.c_str());
-
-        file_name_old = m_back_path_log + "/Config.ini ";
-        file_name_new = path_log_dune_cam + "/camera_Config.ini";
-        system_command = "mv " + file_name_old + file_name_new;
-        result = std::system(system_command.c_str());
-
-        file_name_old = m_back_path_log + "/Data.lsf.gz ";
-        file_name_new = path_log_dune_cam + "/camera_Data.lsf.gz";
-        system_command = "mv " + file_name_old + file_name_new;
-        result = std::system(system_command.c_str());
-
-        file_name_old = m_back_path_log + "/IMC.xml.gz ";
-        file_name_new = path_log_dune_cam + "/camera_IMC.xml.gz";
-        system_command = "mv " + file_name_old + file_name_new;
-        result = std::system(system_command.c_str());
-
-        return result;
-      }
-
-      std::string
-      getStorageUsageLogs(void)
-      {
-        m_timeout_reading.setTop(c_timeout_reading);
-        std::memset(&m_buffer, '\0', sizeof(m_buffer));
-        std::sprintf(m_buffer, "du -hs /opt/lsts/dune/log");
-        FILE* pipe = std::fopen(m_buffer, "r");
-        if (!pipe)
-        {
-          war("timeout - error reading storage usage");
-          m_read_storage = true;
-          m_storage = "0";
-        }
-        else
-        {
-          std::memset(&m_buffer, '\0', sizeof(m_buffer));
-          m_timeout_reading.reset();
-          try
-          {
-            while (!std::feof(pipe) && !m_timeout_reading.overflow())
-            {
-              #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-              (void)std::fgets(m_buffer, sizeof(m_buffer), pipe);
-              #endif
-            }
-
-            if(m_timeout_reading.overflow())
-            {
-              std::fclose(pipe);
-              war("timeout - error reading storage usage");
-              m_read_storage = true;
-              return "0";
-            }
-          }
-          catch (...)
-          {
-            std::fclose(pipe);
-            m_read_storage = true;
-            return "0";
-          }
-          std::fclose(pipe);
-          try
-          {
-            std::vector<std::string> parts;
-            Utils::String::split(m_buffer, "/", parts);
-            if(parts.size() > 1)
-              m_storage = parts[0] + " used space";
-            else
-              m_storage = "Fail get size info";
-          }
-          catch (...)
-          {
-            m_read_storage = true;
-            return "0";
-          }
-        }
-        return m_storage;
-      }
-
-      int
-      set_cpu_governor(void)
-      {
-        char buffer[16];
-        char governor[16];
-        std::string result = "";
-        FILE* pipe;
-        #ifdef _WIN32
-        if ((pipe = _popen("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r")) == NULL)
-        #else
-        if ((pipe = popen("cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor", "r")) == NULL)
-        #endif
-        {
-          war("popen() failed - set_cpu_governor!");
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
-        }
-        else
-        {
-          std::memset(&buffer, '\0', sizeof(buffer));
-          try
-          {
-            while (!std::feof(pipe))
-            {
-              if (std::fgets(buffer, sizeof(buffer), pipe) != NULL)
-                result += buffer;
-            }
-          }
-          catch (...)
-          {
-            #ifdef _WIN32
-            _pclose(pipe);
-            #else
-            pclose(pipe);
-            #endif
-            throw;
-          }
-          #ifdef _WIN32
-          _pclose(pipe);
-          #else
-          pclose(pipe);
-          #endif
-          std::sscanf(buffer, "%s", governor);
-          if( std::strcmp(governor, "ondemand") == 0)
-          {
-            inf("CPU governor is already ondemand");
-          }
-          else
-          {
-            war("CPU governor is not in ondemand, setting to ondemand");
-            return std::system("echo ondemand > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor");
-          }
-        }
-
-        return -1;
-      }
-
-      bool
-      init_gpio_strobe(void)
-      {
-        FILE* pipe;
-        if ((pipe = fopen("/sys/class/gpio/export", "ab")) == NULL)
-        {
-          err("Unable to export GPIO pin (%d)", m_args.gpio_strobe);
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
-          return false;
-        }
-        else
-        {
-          std::fwrite(to_string(m_args.gpio_strobe).c_str(), sizeof(char), 2, pipe);
-          std::fclose(pipe);
-          setGpioDirection(m_args.gpio_strobe, true);
-          return setGpio(GPIO_LOW, m_args.gpio_strobe);
-        }
-        return false;
-      }
-
-      bool
-      init_gpio_driver(void)
-      {
-        FILE* pipe;
-        if ((pipe = fopen("/sys/class/gpio/export", "ab")) == NULL)
-        {
-          err("Unable to export GPIO pin (%d)", m_args.gpio_drive_power);
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
-          return false;
-        }
-        else
-        {
-          std::fwrite(to_string(m_args.gpio_drive_power).c_str(), sizeof(char), 2, pipe);
-          std::fclose(pipe);
-          setGpioDirection(m_args.gpio_drive_power, true);
-          return setGpio(GPIO_HIGH, m_args.gpio_drive_power);
-        }
-        return false;
-      }
-
-      bool
-      setGpioDirection(int gpio, bool isOut)
-      {
-        char buffer[64];
-        FILE* pipe;
-        std::sprintf(buffer, "/sys/class/gpio/gpio%d/direction", gpio);
-        if ((pipe = fopen(buffer, "rb+")) == NULL)
-        {
-          err("Unable to open direction handle (%d)", gpio);
-          setEntityState(IMC::EntityState::ESTA_ERROR, Status::CODE_INTERNAL_ERROR);
-          return false;
-        }
-        else
-        {
-          if(isOut)
-            std::fwrite("out", sizeof(char), 3, pipe);
-          else
-            std::fwrite("in", sizeof(char), 3, pipe);
-          std::fclose(pipe);
-          Delay::wait(1);
-          return true;
-        }
-      }
-
-      bool
-      setGpio(CommandType mode, int gpio)
-      {
-        char buffer[64];
-        std::sprintf(buffer, "/sys/class/gpio/gpio%d/value", gpio);
-        FILE* pipe;
-        if ((pipe = std::fopen(buffer, "rb+")) == NULL)
-        {
-          err("Unable to open value handle (%d)", gpio);
-          return false;
-        }
-        else
-        {
-          switch (mode)
-          {
-            case GPIO_LOW:
-              std::fwrite("0", sizeof(char), 1, pipe);
-              std::fclose(pipe);
-              break;
-
-            case GPIO_HIGH:
-              std::fwrite("1", sizeof(char), 1, pipe);
-              std::fclose(pipe);
-              break;
-
-            default:
-              std::fclose(pipe);
-              break;
-          }
-        }
-
-        return true;
-      }
-
-      void
-      updateStrobe(void)
-      {
         m_is_strobe = false;
+        m_is_on = true;
+        m_strobe_fallback = true;
+        war("Requested %d FPS needs %.1f ms/frame; strobe delay is disabled and LED is kept on "
+            "continuously",
+            m_args.number_fs, frame_time * 1000);
+      }
+      else if (!must_fallback && m_strobe_fallback)
+      {
+        if (!setGpio(m_gpio_strobe, GPIO_LOW, "strobe"))
+          throw std::runtime_error("Cannot restore strobe output");
+
+        m_is_strobe = true;
         m_is_on = false;
-        init_gpio_strobe();
-        if (m_args.led_type == "Strobe" || m_args.led_type == "STROBE")
-        {
-          war("enabling strobe output");
-          m_is_strobe = true;
-        }
-        else if (m_args.led_type == "On" || m_args.led_type == "ON")
-        {
-          setGpio(GPIO_HIGH, m_args.gpio_strobe);
-          m_is_on = true;
-          war("leds always on");
-        }
-        else
-        {
-          war("leds always off");
-        }
+        m_strobe_fallback = false;
+        inf("Strobe timing now fits %d FPS; restored pulsed LED mode", m_args.number_fs);
+      }
+    }
+
+    void
+    Task::onResourceAcquisition(void)
+    {
+      try
+      {
+        m_gpio_drive_power = new Hardware::GPIO(m_args.gpio_drive_power);
+        m_gpio_drive_power->setDirection(Hardware::GPIO::GPIO_DIR_OUTPUT);
+        m_gpio_drive_power->setValue(true);
+
+        m_gpio_strobe = new Hardware::GPIO(m_args.gpio_strobe);
+        m_gpio_strobe->setDirection(Hardware::GPIO::GPIO_DIR_OUTPUT);
+        m_gpio_strobe->setValue(false);
+        m_resources_ready = true;
+      }
+      catch (...)
+      {
+        delete m_gpio_strobe;
+        m_gpio_strobe = NULL;
+        delete m_gpio_drive_power;
+        m_gpio_drive_power = NULL;
+        throw;
+      }
+    }
+
+    void
+    Task::onResourceInitialization(void)
+    {
+      m_read_path = true;
+      m_isCapturing = false;
+      m_cnt_fps.setTop(1.0 / m_args.number_fs);
+      m_storage_timer.setTop(1.0);
+      m_log_request_timer.setTop(2.0);
+      if (m_args.number_photos < 500 && m_args.split_photos)
+      {
+        war("Number of photos by folder is to small (mim: 500)");
+        war("Setting Number of photos by folder to default (1000)");
+        m_args.number_photos = 1000;
+      }
+      else if (m_args.number_photos > 3000 && m_args.split_photos)
+      {
+        war("Number of photos by folder is to high (max: 3000)");
+        war("Setting Number of photos by folder to default (1000)");
+        m_args.number_photos = 1000;
       }
 
-      void
-      getInfoCamera(void)
+      m_frame_cnt = 0;
+      m_frame_lost_cnt = 0;
+      m_cnt_photos_by_folder = 0;
+      m_folder_number = 0;
+      m_is_to_capture = false;
+      m_latitude = 0;
+      m_longitude = 0;
+      m_position_time = 0;
+      m_sequence = 0;
+      m_backpressure = 0;
+      m_last_saved = 0;
+      m_last_report_time = Clock::get();
+      m_last_image_bytes = 1;
+      m_storage_low = false;
+      m_queue_memory_bytes = 0;
+      m_capture_timeout = 2000;
+
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+      // DUNE can retry initialization after an exception.
+      releaseWriters();
+      m_queue_memory_bytes = size_t(m_args.queue_memory) * 1024 * 1024;
+      m_image_queue.configure(m_args.queue_images, m_queue_memory_bytes);
+      try
       {
-        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-        debug("Vendor Name: %s", m_camInfo.vendorName);
-        debug("Model Name: %s", m_camInfo.modelName);
-        debug("Serial Number: %d", m_camInfo.serialNumber);
-        debug("Sensor Info: %s", m_camInfo.sensorInfo);
-        debug("Sensor Resolution: %s", m_camInfo.sensorResolution);
-        debug("Firmware Version: %s", m_camInfo.firmwareVersion);
-        debug("copyright: %s", m_args.copyright.c_str());
-        debug("Lens Model: %s", m_args.lens_model.c_str());
-        debug("Lens Maker: %s", m_args.lens_maker.c_str());
-        IMC::VersionInfo vi;
-        vi.version = m_camInfo.firmwareVersion;
-        vi.op = IMC::VersionInfo::OP_REPLY;
-        dispatch(vi);
-        #endif
+        for (unsigned i = 0; i < m_args.save_workers; ++i)
+        {
+          m_save[i] = new SaveImage(this, m_image_queue);
+          m_save[i]->start();
+        }
       }
-
-      bool
-      setUpCamera(void)
+      catch (...)
       {
-        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-        unsigned int nb_cameras;
-        int bus_attempts = 1;
-        while (bus_attempts <= c_max_number_attempts_bus)
-        {
-          FlyCapture2::BusManager m_busMgr;
-          m_error = m_busMgr.GetNumOfCameras(&nb_cameras);
-          if (m_error != FlyCapture2::PGRERROR_OK)
-          {
-            err("Failed to create bus manager (attempt: %d): %s",bus_attempts, m_save[m_thread_cnt]->getNameError(m_error).c_str());
-          }
-          else
-          {
-            if (nb_cameras < 1 && nb_cameras > 2)
-            {
-              err("No cameras found at bus manager attempt %d (%d)", bus_attempts, nb_cameras);
-            }
-            else
-            {
-              inf("Number of cameras found in bus manager attempt %d is %d", bus_attempts, nb_cameras);
-              inf("Initialization of Camera");
-              // Get Flea2 camera
-              m_error = m_busMgr.GetCameraFromIndex( 0, &m_guid );
-              if ( m_error != FlyCapture2::PGRERROR_OK )
-              {
-                err("Failed to get camera index at bus manager attempt %d: %s", bus_attempts, m_save[m_thread_cnt]->getNameError(m_error).c_str());
-              }
-              else
-              {
-                break;
-              }
-            }
-          }
-          bus_attempts++;
-          Delay::wait(2);
-        }
-
-        if (bus_attempts > c_max_number_attempts_bus)
-        {
-          err("No cameras found in attempt %d", bus_attempts);
-          return false;
-        }
-
-        // Connect the camera
-        m_error = m_camera.Connect( &m_guid );
-        if ( m_error != FlyCapture2::PGRERROR_OK )
-        {
-          err("Failed to connect to camera: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-          return false;
-        }
-        // Get the camera info and print it out
-        m_error = m_camera.GetCameraInfo( &m_camInfo );
-        if ( m_error != FlyCapture2::PGRERROR_OK )
-        {
-          err("Failed to get camera info from camera: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-          return false;
-        }
-        // Get the camera info and print it out
-        m_error = m_camera.RestoreFromMemoryChannel( 1 );
-        if ( m_error != FlyCapture2::PGRERROR_OK )
-        {
-          err("Failed to restore config %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-          return false;
-        }
-
-        set_shutter_value(m_args.shutter_value);
-
-        m_error = m_camera.StartCapture();
-        if ( m_error != FlyCapture2::PGRERROR_OK )
-        {
-          err("Failed to start image capture: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-          return false;
-        }
-
-        getInfoCamera();
-        inf("Camera ready.");
-        #endif
-        return true;
+        releaseWriters();
+        throw;
       }
+#endif
 
-      // Start polling for trigger ready
-      bool
-      pollForTriggerReady(void)
+      m_update_cnt_frames.setTop(c_time_to_update_cnt_info);
+
+      if (m_args.disk_statistics)
+        setEntityState(IMC::EntityState::ESTA_BOOT, "idle | " + getStorageUsageLogs());
+      else
+        setEntityState(IMC::EntityState::ESTA_BOOT, "idle");
+    }
+
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+    void
+    Task::releaseWriters(void)
+    {
+      m_image_queue.close();
+      for (int i = 0; i < c_number_max_thread; ++i)
       {
-        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-        unsigned int k_softwareTrigger = 0x62C;
-        unsigned int regVal = 0;
-
-        do
+        if (m_save[i])
         {
-          m_error = m_camera.ReadRegister( k_softwareTrigger, &regVal );
-          if ( m_error != FlyCapture2::PGRERROR_OK )
-          {
-            err("Failed of PollForTriggerReady: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-            return false;
-          }
-        } while ( (regVal >> 31) != 0  && !stopping());
-        #endif
-        return true;
+          if (m_save[i]->isCreated())
+            m_save[i]->join();
+          delete m_save[i];
+          m_save[i] = NULL;
+        }
       }
+    }
+#endif
 
-      bool
-      set_shutter_value(float value)
+    void
+    Task::onResourceRelease(void)
+    {
+      m_is_to_capture = m_isCapturing = false;
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+      if (m_camera.IsConnected())
       {
-        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-        //Declare a Property struct.
-        FlyCapture2::Property prop;
-        //Define the property to adjust.
-        prop.type = FlyCapture2::SHUTTER;
-        //Ensure the property is on.
-        prop.onOff = true;
-        //Ensure auto-adjust mode is off.
-        prop.autoManualMode = false;
-        //Ensure the property is set up to use absolute value control.
-        prop.absControl = true;
-        //Set the absolute value of shutter to x ms.
-        prop.absValue = value;
-        //Set the property.
-        m_error = m_camera.SetProperty( &prop );
-        if ( m_error != FlyCapture2::PGRERROR_OK )
-        {
-          err("Failed to set shutter value: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-          m_error.PrintErrorTrace();
-          return false;
-        }
-        #else
-        (void)value;
-        #endif
-        return true;
+        m_camera.StopCapture();
+        m_camera.Disconnect();
       }
-
-      // Launch the software trigger event
-      bool
-      fireSoftwareTrigger(void)
+      releaseWriters();
+#endif
+      if (m_resources_ready)
       {
-        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-        const unsigned int k_softwareTrigger = 0x62C;
-        const unsigned int k_fireVal = 0x80000000;
-        m_error = m_camera.WriteRegister( k_softwareTrigger, k_fireVal );
-        if ( m_error != FlyCapture2::PGRERROR_OK )
-        {
-          err("Failed to FireSoftwareTrigger: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-          return false;
-        }
-        #endif
-        return true;
+        setGpio(m_gpio_strobe, GPIO_LOW, "strobe");
+        setGpio(m_gpio_drive_power, GPIO_LOW, "camera power");
       }
+      delete m_gpio_strobe;
+      m_gpio_strobe = NULL;
+      delete m_gpio_drive_power;
+      m_gpio_drive_power = NULL;
+      m_resources_ready = false;
+    }
 
-      bool
-      getImage(void)
-      {
-        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-        bool result = false;
-        saveInfoExif();
-        if(m_is_strobe)
-        {
-          setGpio(GPIO_HIGH, m_args.gpio_strobe);
-          Delay::waitUsec(m_args.delay_capture);
-        }
-        else if(m_is_on)
-        {
-          setGpio(GPIO_HIGH, m_args.gpio_strobe);
-        }
-
-        // Check that the trigger is ready
-        pollForTriggerReady();
-        // Fire software trigger
-        fireSoftwareTrigger();
-
-        try
-        {
-          m_error = m_camera.RetrieveBuffer( &m_rawImage );
-        }
-        catch (...)
-        {
-          war("error RetrieveBuffer");
-          return false;
-        }
-
-        if ( m_error != FlyCapture2::PGRERROR_OK)
-        {
-          if(m_is_to_capture)
-            war("capture error: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-
-          return false;
-        }
-
-        if(m_is_strobe)
-          setGpio(GPIO_LOW, m_args.gpio_strobe);
-        else if(m_is_on)
-          setGpio(GPIO_HIGH, m_args.gpio_strobe);
-
-        // convert to rgb
-        try
-        {
-          m_error = m_rawImage.Convert( FlyCapture2::PIXEL_FORMAT_BGR, &m_rgbImage );
-        }
-        catch(...)
-        {
-          war("error Convert");
-          return false;
-        }
-
-        if ( m_error != FlyCapture2::PGRERROR_OK )
-        {
-          war("convert error: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-          return false;
-        }
-
-        m_path_image = m_back_path_image.c_str();
-        m_path_image.append("/");
-        m_path_image.append(m_back_epoch);
-        m_path_image.append(".jpg");
-
-        debug("Size Image Capture: %u x %u", m_rgbImage.GetCols(), m_rgbImage.GetRows());
-        debug("Path: %s", m_path_image.c_str());
-
-        m_thread_cnt = sendImageThread(m_thread_cnt);
-        result = true;
-
-        if(m_thread_cnt >= c_number_max_thread)
-          m_thread_cnt = 0;
-
-        m_rgbImage.ReleaseBuffer();
-        m_rawImage.ReleaseBuffer();
-
-        return result;
-        #else
+    //! Log names can contain date directories, but never shell/path traversal.
+    bool
+    Task::validLogName(const std::string& name)
+    {
+      if (name.empty() || name[0] == '/')
         return false;
-        #endif
+      std::vector<std::string> parts;
+      String::split(name, "/", parts);
+      for (size_t i = 0; i < parts.size(); ++i)
+      {
+        if (parts[i].empty() || parts[i] == "." || parts[i] == "..")
+          return false;
       }
 
-      int
-      sendImageThread(int cnt_thread)
+      return name.find_first_not_of(
+               "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-/ .")
+             == std::string::npos;
+    }
+
+    void
+    Task::consume(const IMC::LoggingControl* msg)
+    {
+      const std::string source = resolveSystemId(msg->getSource());
+      if (source != m_args.system_name && source != getSystemName())
+        return;
+
+      if (source == m_args.system_name && msg->op == IMC::LoggingControl::COP_STOPPED)
       {
-        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-        int pointer_cnt_thread = cnt_thread;
-        bool jump_over = false;
-        bool result_thread;
-        while(!jump_over && !stopping())
+        m_isCapturing = false;
+        m_read_path = false;
+        setGpio(m_gpio_strobe, GPIO_LOW, "strobe");
+        return;
+      }
+
+      if (msg->op != IMC::LoggingControl::COP_STARTED
+          && msg->op != IMC::LoggingControl::COP_CURRENT_NAME)
+        return;
+
+      if (!validLogName(msg->name))
+      {
+        war("Ignoring invalid log name");
+        return;
+      }
+
+      if (source == getSystemName())
+        m_back_path_log = (m_ctx.dir_log / msg->name).str();
+
+      if (source != m_args.system_name || !isActive())
+        return;
+
+      // COP_CURRENT_NAME is only the answer to our request. Once a path is
+      // selected, a delayed reply from the previous log must not move the
+      // camera back to it. COP_STARTED remains valid for log rollover.
+      if (msg->op == IMC::LoggingControl::COP_CURRENT_NAME && m_read_path)
+        return;
+
+      if (msg->op == IMC::LoggingControl::COP_STARTED && m_read_path && msg->name == m_log_name)
+        return;
+
+      m_isCapturing = false;
+      m_read_path = false;
+      m_cnt_photos_by_folder = 0;
+      m_folder_number = 0;
+      m_log_name = msg->name;
+      // Use the configured log root, also when the master is remote.
+      Path base = m_ctx.dir_log;
+      if (source != getSystemName())
+        base = base.dirname() / m_args.system_name;
+
+      m_back_path_main_log = (base / msg->name).str();
+      m_log_dir = Path(m_back_path_main_log) / m_args.save_image_dir;
+      if (m_args.split_photos)
+        m_log_dir = m_log_dir / String::str("%06u", m_folder_number);
+
+      m_log_dir.create();
+      m_back_path_image = m_log_dir.str();
+      m_read_path = true;
+      m_isCapturing = m_is_to_capture;
+      if (m_isCapturing && m_is_on && !setGpio(m_gpio_strobe, GPIO_HIGH, "strobe"))
+        throw RestartNeeded("Cannot enable camera lighting", 10);
+
+      m_cnt_fps.reset();
+      m_storage_timer.setTop(0);
+      inf("Camera photos stored: %s", m_back_path_image.c_str());
+    }
+
+    void
+    Task::consume(const IMC::EstimatedState* msg)
+    {
+      std::string sysName = resolveSystemId(msg->getSource());
+      if (sysName != m_args.system_name)
+        return;
+
+      if (!std::isfinite(msg->lat) || !std::isfinite(msg->lon) || !std::isfinite(msg->x)
+          || !std::isfinite(msg->y) || std::fabs(msg->lat) > Math::c_pi / 2
+          || std::fabs(msg->lon) > Math::c_pi)
+        return;
+
+      m_latitude = msg->lat;
+      m_longitude = msg->lon;
+      Coordinates::WGS84::displace(msg->x, msg->y, &m_latitude, &m_longitude);
+      m_position_time = Clock::get();
+      m_note_comment =
+        "Depth: " + to_string(msg->depth) + " m # Altitude: " + to_string(msg->alt) + " m";
+
+      IMC::GpsFix pos;
+      pos.lat = m_latitude;
+      pos.lon = m_longitude;
+      dispatch(pos);
+    }
+
+    void
+    Task::onRequestActivation(void)
+    {
+      inf("received activation request");
+      activate();
+    }
+
+    void
+    Task::onRequestDeactivation(void)
+    {
+      inf("received deactivation request");
+      deactivate();
+    }
+
+    void
+    Task::onActivation(void)
+    {
+      inf("on Activation");
+      m_read_path = false;
+      m_isCapturing = false;
+      try
+      {
+        m_capture_timeout = m_args.capture_timeout;
+        updateStrobe();
+        checkCaptureTiming();
+        if (!setUpCamera())
+          throw RestartNeeded("Cannot detect camera", 10);
+
+        setEntityState(IMC::EntityState::ESTA_NORMAL,
+                       "Led Mode: " + m_args.led_type + " # Fps: " + to_string(m_args.number_fs));
+      }
+      catch (const std::exception& e)
+      {
+        setGpio(m_gpio_strobe, GPIO_LOW, "strobe");
+        err("Camera activation failed: %s", e.what());
+        throw RestartNeeded("Error Flycapture API", 10);
+      }
+      m_is_to_capture = true;
+      m_last_report_time = Clock::get();
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+      m_last_saved = m_image_queue.statistics().saved;
+#endif
+      IMC::LoggingControl logcontrol;
+      logcontrol.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
+      dispatch(logcontrol);
+      m_log_request_timer.reset();
+      inf("Camera ready; waiting for master log name.");
+    }
+
+    void
+    Task::onDeactivation(void)
+    {
+      m_read_path = true;
+      inf("on Deactivation");
+      m_is_to_capture = false;
+      m_isCapturing = false;
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+      if (m_camera.IsConnected())
+      {
+        m_error = m_camera.StopCapture();
+        if (m_error != FlyCapture2::PGRERROR_OK)
+          war("Error stopping camera capture: %s", m_error.GetDescription());
+      }
+
+      setGpio(m_gpio_strobe, GPIO_LOW, "strobe");
+#endif
+
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+      m_image_queue.drain();
+      if (m_camera.IsConnected())
+        m_camera.Disconnect();
+
+      reportCapture();
+#endif
+      moveLogFiles();
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+      if (m_image_queue.statistics().failed)
+        return;
+
+#endif
+      if (m_args.disk_statistics)
+        setEntityState(IMC::EntityState::ESTA_NORMAL, "idle | " + getStorageUsageLogs());
+      else
+        setEntityState(IMC::EntityState::ESTA_NORMAL, "idle");
+    }
+
+    int
+    Task::moveLogFiles(void)
+    {
+      if (m_back_path_log.empty() || m_back_path_main_log.empty())
+        return 0;
+      try
+      {
+        Path destination = Path(m_back_path_main_log) / c_camera_log_folder;
+        destination.create();
+        const char* names[] = { "Output.txt", "Config.ini", "Data.lsf.gz", "IMC.xml.gz" };
+        // These can still be open in Transports.Logging. Copy snapshots; never
+        // move files out from under the local logger.
+        for (unsigned i = 0; i < 4; ++i)
         {
+          Path source = Path(m_back_path_log) / names[i];
+          if (source.isFile())
+            copyLogSnapshot(source, destination / (std::string("camera_") + names[i]));
+        }
+        return 0;
+      }
+      catch (const std::exception& e)
+      {
+        war("Cannot copy camera log snapshot: %s", e.what());
+        return -1;
+      }
+    }
+
+    void
+    Task::copyLogSnapshot(const Path& source, const Path& destination)
+    {
+      // Limit the copy to the initial size: the local logger may keep appending.
+      int64_t remaining = source.size();
+      if (remaining < 0)
+        throw std::runtime_error("Cannot size camera log");
+
+      std::ifstream input(source.c_str(), std::ios::binary);
+      const std::string temporary = destination.str() + ".part";
+      std::ofstream output(temporary.c_str(), std::ios::binary | std::ios::trunc);
+      try
+      {
+        if (!input || !output)
+          throw std::runtime_error("Cannot open camera log snapshot");
+
+        char buffer[65536];
+        while (remaining)
+        {
+          const std::streamsize count = std::min<int64_t>(remaining, sizeof(buffer));
+          if (!input.read(buffer, count) || !output.write(buffer, count))
+            throw std::runtime_error("Camera log snapshot read/write failed");
+
+          remaining -= count;
+        }
+        output.close();
+        if (!output)
+          throw std::runtime_error("Camera log snapshot flush failed");
+
+        if (std::rename(temporary.c_str(), destination.c_str()) != 0)
+          throw std::runtime_error(std::strerror(errno));
+      }
+      catch (...)
+      {
+        output.close();
+        std::remove(temporary.c_str());
+        throw;
+      }
+    }
+
+    std::string
+    Task::getStorageUsageLogs(void)
+    {
+      try
+      {
+        return String::str("%.1f MiB free", Path::storageAvailable(m_ctx.dir_log) / 1048576.0);
+      }
+      catch (const std::exception& e)
+      {
+        war("Cannot read storage usage: %s", e.what());
+        return "storage unavailable";
+      }
+    }
+
+    bool
+    Task::setGpio(Hardware::GPIO* gpio, CommandType mode, const char* name)
+    {
+      if (!gpio)
+      {
+        err("GPIO '%s' is unavailable", name);
+        return false;
+      }
+      try
+      {
+        gpio->setValue(mode == GPIO_HIGH);
+        return true;
+      }
+      catch (const std::exception& e)
+      {
+        err("Cannot set GPIO '%s': %s", name, e.what());
+        return false;
+      }
+    }
+
+    void
+    Task::updateStrobe(void)
+    {
+      m_is_strobe = false;
+      m_is_on = false;
+      m_strobe_fallback = false;
+      if (m_args.led_type == "Strobe" || m_args.led_type == "STROBE")
+      {
+        war("enabling strobe output");
+        m_is_strobe = true;
+      }
+      else if (m_args.led_type == "On" || m_args.led_type == "ON")
+      {
+        if (!setGpio(m_gpio_strobe, GPIO_HIGH, "strobe"))
+          throw std::runtime_error("Cannot enable camera lighting");
+
+        m_is_on = true;
+        war("leds always on");
+      }
+      else
+      {
+        war("leds always off");
+      }
+    }
+
+    bool
+    Task::getImage(void)
+    {
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+      if (!pollForTriggerReady())
+        return false;
+
+      struct StrobeGuard
+      {
+        Task* task;
+        bool enabled;
+        ~StrobeGuard()
+        {
+          if (enabled)
+            task->setGpio(task->m_gpio_strobe, GPIO_LOW, "strobe");
+        }
+      } guard = { this, m_is_strobe };
+
+      if (m_is_strobe)
+      {
+        if (!setGpio(m_gpio_strobe, GPIO_HIGH, "strobe"))
+          return false;
+
+        Delay::waitUsec(m_args.delay_capture);
+      }
+
+      const double timestamp = Clock::getSinceEpoch();
+      if (!fireSoftwareTrigger())
+        return false;
+
+      m_error = m_camera.RetrieveBuffer(&m_rawImage);
+      if (m_is_strobe)
+      {
+        bool off = setGpio(m_gpio_strobe, GPIO_LOW, "strobe");
+        guard.enabled = !off;
+        if (!off)
+          return false;
+      }
+      if (m_error != FlyCapture2::PGRERROR_OK)
+      {
+        war("Capture failed: %s", m_error.GetDescription());
+        return false;
+      }
+      saveInfoExif(timestamp);
+      m_error = m_rawImage.Convert(FlyCapture2::PIXEL_FORMAT_RGB, &m_rgbImage);
+      if (m_error != FlyCapture2::PGRERROR_OK)
+      {
+        war("RGB conversion failed: %s", m_error.GetDescription());
+        return false;
+      }
+      const unsigned width = m_rgbImage.GetCols();
+      const unsigned height = m_rgbImage.GetRows();
+      const size_t stride = m_rgbImage.GetStride();
+      if (!width || !height || width > c_jpeg_max_dimension || height > c_jpeg_max_dimension
+          || stride < size_t(width) * 3 || !m_rgbImage.GetData()
+          || uint64_t(stride) * (height - 1) + uint64_t(width) * 3 > m_rgbImage.GetDataSize())
+        throw std::runtime_error("Invalid RGB frame dimensions or buffer");
+
+      const uint64_t payload = uint64_t(width) * height * 3 + m_frame_exif.size();
+      if (payload > m_queue_memory_bytes)
+      {
+        ++m_frame_lost_cnt;
+        // Do not retry a frame that cannot fit the configured memory budget.
+        m_isCapturing = false;
+        setEntityState(IMC::EntityState::ESTA_ERROR,
+                       "Image exceeds queue memory; increase Image Queue Memory (MiB)");
+        return true;
+      }
+      m_last_image_bytes = size_t(payload);
+      if (!m_image_queue.hasCapacity(m_last_image_bytes))
+      {
+        ++m_frame_lost_cnt;
+        war("Image queue memory limit reached; frame dropped");
+        return true;
+      }
+      std::unique_ptr<ImageJob> job(new ImageJob());
+      job->width = width;
+      job->height = height;
+      job->quality = m_args.jpeg_quality;
+      job->durable = m_args.durable_writes;
+      job->path = (Path(m_back_path_image) / (m_back_epoch + ".jpg")).str();
+      job->exif.assign(m_frame_exif.begin(), m_frame_exif.end());
+      job->pixels.resize(size_t(width) * height * 3);
+      for (unsigned row = 0; row < height; ++row)
+      {
+        std::memcpy(&job->pixels[size_t(row) * width * 3],
+                    m_rgbImage.GetData() + size_t(row) * stride, size_t(width) * 3);
+      }
+      if (!m_image_queue.push(job))
+      {
+        ++m_frame_lost_cnt;
+        war("Image queue full; frame dropped");
+        return true;
+      }
+      ++m_frame_cnt;
+      if (m_args.split_photos && ++m_cnt_photos_by_folder >= m_args.number_photos)
+      {
+        m_cnt_photos_by_folder = 0;
+        ++m_folder_number;
+        m_log_dir =
+          Path(m_back_path_main_log) / m_args.save_image_dir / String::str("%06u", m_folder_number);
+        m_log_dir.create();
+        m_back_path_image = m_log_dir.str();
+      }
+      // Retain SDK conversion buffers for reuse; queued pixels are independent.
+      return true;
+#else
+      return false;
+#endif
+    }
+
+    void
+    Task::triggerFrame(void)
+    {
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+      bool success = false;
+      try
+      {
+        success = getImage();
+      }
+      catch (const std::exception& e)
+      {
+        war("Capture failed: %s", e.what());
+      }
+      catch (...)
+      {
+        war("Capture failed: unknown error");
+      }
+      if (!success && m_is_to_capture && !stopping())
+      {
+        ++m_frame_lost_cnt;
+        setGpio(m_gpio_strobe, GPIO_LOW, "strobe");
+        if (!setUpCamera())
+          throw RestartNeeded("Cannot recover camera", 10);
+
+        if (m_is_on)
+          setGpio(m_gpio_strobe, GPIO_HIGH, "strobe");
+      }
+#endif
+    }
+
+    void
+    Task::reportCapture(void)
+    {
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+      ImageQueue::Statistics stats = m_image_queue.statistics();
+      const double now = Clock::get();
+      const double saved_fps = now > m_last_report_time ? (stats.saved - m_last_saved) / (now - m_last_report_time) : 0;
+      m_last_saved = stats.saved;
+      m_last_report_time = now;
+      const std::string led_mode =
+        m_strobe_fallback ? "continuous (strobe fallback)" : m_args.led_type;
+      std::string state =
+        "Led: " + led_mode + " | target FPS: " + to_string(m_args.number_fs)
+        + String::str(" | saved FPS: %.1f", saved_fps) + " | saved: " + to_string(stats.saved)
+        + " | pending: " + to_string(stats.pending) + " | failed: " + to_string(stats.failed)
+        + " | lost: " + to_string(m_frame_lost_cnt) + " | throttled: " + to_string(m_backpressure);
+      if (m_storage_low)
+        state = "low disk space | " + state;
+
+      setEntityState(m_storage_low || stats.failed ? IMC::EntityState::ESTA_ERROR
+                                                   : IMC::EntityState::ESTA_NORMAL,
+                     state);
+#endif
+    }
+
+    void
+    Task::onMain(void)
+    {
+      while (!stopping())
+      {
+        consumeMessages();
+        if (!isActive() || !m_isCapturing)
+        {
+          if (isActive() && !m_read_path && m_log_request_timer.overflow())
+          {
+            IMC::LoggingControl request;
+            request.op = IMC::LoggingControl::COP_REQUEST_CURRENT_NAME;
+            dispatch(request);
+            m_log_request_timer.reset();
+          }
+          waitForMessages(0.1);
+          continue;
+        }
+#if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
+        if (m_storage_timer.overflow())
+        {
+          m_storage_timer.setTop(1.0);
           try
           {
-            result_thread = m_save[pointer_cnt_thread]->saveNewImage(m_rgbImage, m_path_image);
+            m_storage_low = m_args.minimum_free_space
+                            && Path::storageAvailable(m_log_dir)
+                                 < uint64_t(m_args.minimum_free_space) * 1024 * 1024;
           }
-          catch(...)
+          catch (const std::exception& e)
           {
-            war("error thread");
+            m_storage_low = true;
+            war("Cannot check photo storage: %s", e.what());
           }
-
-          if(result_thread)
-          {
-            pointer_cnt_thread++;
-            jump_over = true;
-            m_frame_cnt++;
-            return pointer_cnt_thread;
-          }
+        }
+        if (m_update_cnt_frames.overflow())
+        {
+          m_update_cnt_frames.reset();
+          reportCapture();
+        }
+        if (m_cnt_fps.overflow())
+        {
+          m_cnt_fps.reset();
+          if (m_storage_low || !m_image_queue.hasCapacity(m_last_image_bytes))
+            ++m_backpressure;
           else
-          {
-            debug("thread %d is working, jump to other", pointer_cnt_thread);
-            pointer_cnt_thread++;
-            if(pointer_cnt_thread >= c_number_max_thread)
-              pointer_cnt_thread = 0;
-
-            if(cnt_thread == pointer_cnt_thread)
-            {
-              pointer_cnt_thread++;
-              inf("Error saving image, all thread working");
-              m_frame_lost_cnt++;
-              jump_over = true;
-              return pointer_cnt_thread;
-            }
-          }
+            triggerFrame();
         }
-
-        return pointer_cnt_thread;
-        #else
-        (void)cnt_thread;
-        return -1;
-        #endif
+#endif
+        // Sleep until the next frame, but keep control messages responsive.
+        waitForMessages(std::min(0.05, double(m_cnt_fps.getRemaining())));
       }
-
-      void
-      releaseRamCached(void)
-      {
-        debug("Releasing cache ram.");
-        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-        (void)std::system("sync");
-        (void)std::system("echo 1 > /proc/sys/vm/drop_caches");
-        (void)std::system("sync");
-        #endif
-      }
-
-      void
-      saveInfoExif(void)
-      {
-        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-        std::memset(&m_text_exif_timestamp, '\0', sizeof(m_text_exif_timestamp));
-        std::sprintf(m_text_exif_timestamp, "%0.4f", Clock::getSinceEpoch());
-        m_back_epoch = m_text_exif_timestamp;
-
-        m_save[m_thread_cnt]->m_exif_data.lat_deg = m_lat_deg;
-        m_save[m_thread_cnt]->m_exif_data.lat_min = m_lat_min;
-        m_save[m_thread_cnt]->m_exif_data.lat_sec = m_lat_sec;
-        m_save[m_thread_cnt]->m_exif_data.lon_deg = m_lon_deg;
-        m_save[m_thread_cnt]->m_exif_data.lon_min = m_lon_min;
-        m_save[m_thread_cnt]->m_exif_data.lon_sec = m_lon_sec;
-        m_save[m_thread_cnt]->m_exif_data.date_time_original = Time::Format::getTimeDate().c_str();
-        m_save[m_thread_cnt]->m_exif_data.date_time_digitized = m_back_epoch.c_str();
-        m_save[m_thread_cnt]->m_exif_data.make = m_camInfo.vendorName;
-        m_save[m_thread_cnt]->m_exif_data.model = m_camInfo.modelName;
-        m_save[m_thread_cnt]->m_exif_data.lens_make = m_args.lens_maker.c_str();
-        m_save[m_thread_cnt]->m_exif_data.lens_model = m_args.lens_model.c_str();
-        m_save[m_thread_cnt]->m_exif_data.copyright = m_args.copyright.c_str();
-        m_save[m_thread_cnt]->m_exif_data.artist = getSystemName();
-        m_save[m_thread_cnt]->m_exif_data.notes = m_note_comment.c_str();
-        #endif
-      }
-
-      template <class T>
-      inline std::string to_string (const T& t)
-      {
-          std::stringstream ss;
-          ss << t;
-          return ss.str();
-      }
-
-      void
-      triggerFrame(void)
-      {
-        #if defined(DUNE_CPU_ARMV7) || defined(DUNE_CPU_ARMV8)
-        if(!getImage() && m_is_to_capture)
-        {
-          war("Restarting camera...");
-          if(m_camera.IsConnected())
-          {
-            m_error = m_camera.StopCapture();
-            if ( m_error != FlyCapture2::PGRERROR_OK )
-              war("Error stopping camera capture: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-
-            m_error = m_camera.Disconnect();
-            if ( m_error != FlyCapture2::PGRERROR_OK )
-              war("Error disconnecting camera: %s", m_save[m_thread_cnt]->getNameError(m_error).c_str());
-          }
-          if (isActive())
-            setUpCamera();
-        }
-        else
-        {
-          if(m_args.split_photos)
-          {
-            m_cnt_photos_by_folder++;
-            if(m_cnt_photos_by_folder >= m_args.number_photos)
-            {
-              std::string m_path = c_log_path + m_args.system_name;
-              m_cnt_photos_by_folder = 0;
-              m_folder_number++;
-              m_log_dir = m_path / m_log_name / m_args.save_image_dir / String::str("%06u", m_folder_number);
-              m_back_path_image = m_log_dir.c_str();
-              m_log_dir.create();
-            }
-          }
-        }
-
-        debug("Capture: thr %d", m_thread_cnt);
-        #endif
-      }
-
-      void
-      onMain(void)
-      {
-        while (!stopping())
-        {
-          if (isActive())
-          {
-            consumeMessages();
-            if(m_isCapturing)
-            {
-              if(m_cnt_fps.overflow())
-              {
-                m_cnt_fps.reset();
-                triggerFrame();
-              }
-              else if(m_clean_cached_ram.overflow())
-              {
-                m_clean_cached_ram.reset();
-                releaseRamCached();
-              }
-              else if(m_update_cnt_frames.overflow())
-              {
-                debug("Count Frames: %ld", m_frame_cnt);
-                m_update_cnt_frames.reset();
-                setEntityState(IMC::EntityState::ESTA_NORMAL, "Led Mode: "+m_args.led_type+" # Fps: "+to_string(m_args.number_fs)+" # "+to_string(m_frame_cnt)+" - "+to_string(m_frame_lost_cnt));
-              }
-            }
-          }
-          else
-          {
-            waitForMessages(1.0);
-            setGpio(GPIO_LOW, m_args.gpio_strobe);
-            if(m_args.disk_statistics)
-            {
-              if(m_read_storage)
-              {
-                m_read_storage = false;
-                setEntityState(IMC::EntityState::ESTA_NORMAL, "idle | " + getStorageUsageLogs());
-              }
-            }
-          }
-        }
-      }
-    };
+    }
   }
 }
 
