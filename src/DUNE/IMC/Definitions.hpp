@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: ad14f56ab70a8164942f60e224b54dc4                            *
+// IMC XML MD5: 67ee39ab1bcb8977b105ea4f18ffb7c6                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_DEFINITIONS_HPP_INCLUDED_
@@ -18753,7 +18753,9 @@ namespace DUNE
         //! Any.
         CMEAN_ANY = 4,
         //! All.
-        CMEAN_ALL = 5
+        CMEAN_ALL = 5,
+        //! UHF.
+        CMEAN_UHF = 6
       };
 
       //! Data Mode.
