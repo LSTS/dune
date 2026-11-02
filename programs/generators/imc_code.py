@@ -125,7 +125,7 @@ class Message:
             f.add_body('return true;')
             public.append(f)
 
-        # validate() / fixme
+        # validate()
         f = Function('validate', 'int', const = True)
         if self.has_fields():
             for field in node.findall('field'):
@@ -133,8 +133,12 @@ class Message:
                 ftype = field.get('type')
                 fmin = field.get('min')
                 fmax = field.get('max')
-                fmin_val = int(fmin) if fmin is not None and ftype.startswith("uint") else None
-                if fmax is not None and fmin is not None and fmin_val is not None and fmin_val > 0:
+
+                if fmin is not None and float(fmin) < 0.0:
+                    if ftype is not None and ftype.startswith("uint"):
+                        raise ValueError(f"{node.get('abbrev')}.{fabbrev} sets a lower bound {fmin} on an unsiged type {ftype} which it cannot hold.")
+                fmin_val = int(fmin) if fmin is not None and ftype.startswith("uint") else None 
+                if fmax is not None and fmin is not None:
                     f.add_body('if (%s < %s || %s > %s) return false;' % (fabbrev, fmin, fabbrev, fmax))
                 elif fmin is not None and fmin_val is not None and fmin_val > 0:
                     f.add_body('if (%s < %s) return false;' % (fabbrev, fmin))
