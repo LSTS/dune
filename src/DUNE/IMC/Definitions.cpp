@@ -854,7 +854,21 @@ namespace DUNE
     int
     VehicleOperationalLimits::validate(void) const
     {
+      if (speed_min < 0) return false;
+      if (speed_max < 0) return false;
+      if (long_accel < 0) return false;
+      if (alt_max_msl < 0) return false;
+      if (dive_fraction_max < 0) return false;
+      if (climb_fraction_max < 0) return false;
+      if (bank_max < 0) return false;
+      if (p_max < 0) return false;
+      if (q_max < 0) return false;
       if (g_min > 0) return false;
+      if (g_max < 0) return false;
+      if (g_lat_max < 0) return false;
+      if (rpm_min < 0) return false;
+      if (rpm_max < 0) return false;
+      if (rpm_rate_max < 0) return false;
       return true;
     }
 
@@ -1168,14 +1182,14 @@ namespace DUNE
     int
     SimulatedState::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (phi > 3.141592653589793) return false;
-      if (theta > 1.57079632679490) return false;
-      if (psi > 3.141592653589793) return false;
-      if (p > 3.141592653589793) return false;
-      if (q > 3.141592653589793) return false;
-      if (r > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (p < -3.141592653589793 || p > 3.141592653589793) return false;
+      if (q < -3.141592653589793 || q > 3.141592653589793) return false;
+      if (r < -3.141592653589793 || r > 3.141592653589793) return false;
       return true;
     }
 
@@ -1988,7 +2002,7 @@ namespace DUNE
     int
     ClockControl::validate(void) const
     {
-      if (tz > 23) return false;
+      if (tz < -23 || tz > 23) return false;
       return true;
     }
 
@@ -2579,8 +2593,8 @@ namespace DUNE
     int
     Announce::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -3616,6 +3630,7 @@ namespace DUNE
     int
     LinkLatency::validate(void) const
     {
+      if (value < 0) return false;
       return true;
     }
 
@@ -4583,8 +4598,8 @@ namespace DUNE
     int
     LblBeacon::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -5767,8 +5782,8 @@ namespace DUNE
     int
     GpsFix::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -5893,10 +5908,10 @@ namespace DUNE
     int
     EulerAngles::validate(void) const
     {
-      if (phi > 3.141592653589793) return false;
-      if (theta > 1.57079632679490) return false;
-      if (psi > 3.141592653589793) return false;
-      if (psi_magnetic > 3.141592653589793) return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (psi_magnetic < -3.141592653589793 || psi_magnetic > 3.141592653589793) return false;
       return true;
     }
 
@@ -6581,8 +6596,8 @@ namespace DUNE
     int
     BeamConfig::validate(void) const
     {
-      if (beam_width > 3.141592653589793) return false;
-      if (beam_height > 3.141592653589793) return false;
+      if (beam_width < 0 || beam_width > 3.141592653589793) return false;
+      if (beam_height < 0 || beam_height > 3.141592653589793) return false;
       return true;
     }
 
@@ -7383,7 +7398,7 @@ namespace DUNE
     int
     RelativeHumidity::validate(void) const
     {
-      if (value > 100) return false;
+      if (value < 0 || value > 100) return false;
       return true;
     }
 
@@ -7860,8 +7875,8 @@ namespace DUNE
     int
     FuelLevel::validate(void) const
     {
-      if (value > 100) return false;
-      if (confidence > 100) return false;
+      if (value < 0 || value > 100) return false;
+      if (confidence < 0 || confidence > 100) return false;
       return true;
     }
 
@@ -8080,7 +8095,7 @@ namespace DUNE
     int
     ServoPosition::validate(void) const
     {
-      if (value > 1.5707963267948966) return false;
+      if (value < -1.5707963267948966 || value > 1.5707963267948966) return false;
       return true;
     }
 
@@ -8793,8 +8808,8 @@ namespace DUNE
     int
     GpsFixRtk::validate(void) const
     {
-      if (base_lat > 1.5707963267948966) return false;
-      if (base_lon > 3.141592653589793) return false;
+      if (base_lat < -1.5707963267948966 || base_lat > 1.5707963267948966) return false;
+      if (base_lon < -3.141592653589793 || base_lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -8945,14 +8960,14 @@ namespace DUNE
     int
     EstimatedState::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (phi > 3.141592653589793) return false;
-      if (theta > 1.57079632679490) return false;
-      if (psi > 3.141592653589793) return false;
-      if (p > 3.141592653589793) return false;
-      if (q > 3.141592653589793) return false;
-      if (r > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (p < -3.141592653589793 || p > 3.141592653589793) return false;
+      if (q < -3.141592653589793 || q > 3.141592653589793) return false;
+      if (r < -3.141592653589793 || r > 3.141592653589793) return false;
       return true;
     }
 
@@ -9615,7 +9630,7 @@ namespace DUNE
     int
     SetThrusterActuation::validate(void) const
     {
-      if (value > 1) return false;
+      if (value < -1 || value > 1) return false;
       return true;
     }
 
@@ -9702,7 +9717,7 @@ namespace DUNE
     int
     SetServoPosition::validate(void) const
     {
-      if (value > 1.5707963267948966) return false;
+      if (value < -1.5707963267948966 || value > 1.5707963267948966) return false;
       return true;
     }
 
@@ -12223,10 +12238,10 @@ namespace DUNE
     int
     DesiredPath::validate(void) const
     {
-      if (start_lat > 1.5707963267948966) return false;
-      if (start_lon > 3.141592653589793) return false;
-      if (end_lat > 1.5707963267948966) return false;
-      if (end_lon > 3.141592653589793) return false;
+      if (start_lat < -1.5707963267948966 || start_lat > 1.5707963267948966) return false;
+      if (start_lon < -3.141592653589793 || start_lon > 3.141592653589793) return false;
+      if (end_lat < -1.5707963267948966 || end_lat > 1.5707963267948966) return false;
+      if (end_lon < -3.141592653589793 || end_lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -12619,10 +12634,10 @@ namespace DUNE
     int
     PathControlState::validate(void) const
     {
-      if (start_lat > 1.5707963267948966) return false;
-      if (start_lon > 3.141592653589793) return false;
-      if (end_lat > 1.5707963267948966) return false;
-      if (end_lon > 3.141592653589793) return false;
+      if (start_lat < -1.5707963267948966 || start_lat > 1.5707963267948966) return false;
+      if (start_lon < -3.141592653589793 || start_lon > 3.141592653589793) return false;
+      if (end_lat < -1.5707963267948966 || end_lat > 1.5707963267948966) return false;
+      if (end_lon < -3.141592653589793 || end_lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -13147,11 +13162,11 @@ namespace DUNE
     int
     Goto::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (roll > 6.283185307179586) return false;
-      if (pitch > 6.283185307179586) return false;
-      if (yaw > 6.283185307179586) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (roll < -1 || roll > 6.283185307179586) return false;
+      if (pitch < -1 || pitch > 6.283185307179586) return false;
+      if (yaw < -1 || yaw > 6.283185307179586) return false;
       return true;
     }
 
@@ -13268,9 +13283,9 @@ namespace DUNE
     int
     PopUp::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (radius > 100000) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (radius < 1 || radius > 100000) return false;
       return true;
     }
 
@@ -13449,12 +13464,12 @@ namespace DUNE
     int
     Loiter::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       if (type > 4) return false;
-      if (radius > 100000) return false;
-      if (length > 100000) return false;
-      if (bearing > 6.283185307179586) return false;
+      if (radius < 1 || radius > 100000) return false;
+      if (length < 1 || length > 100000) return false;
+      if (bearing < 0 || bearing > 6.283185307179586) return false;
       if (direction > 3) return false;
       return true;
     }
@@ -13770,10 +13785,13 @@ namespace DUNE
     int
     Rows::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (bearing > 6.283185307179586) return false;
-      if (cross_angle > 1.047197551197) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (bearing < 0 || bearing > 6.283185307179586) return false;
+      if (cross_angle < -1.047197551197 || cross_angle > 1.047197551197) return false;
+      if (width < 0) return false;
+      if (length < 0) return false;
+      if (hstep < 0) return false;
       if (alternation > 100) return false;
       return true;
     }
@@ -13976,8 +13994,8 @@ namespace DUNE
     int
     FollowPath::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -14114,9 +14132,9 @@ namespace DUNE
     int
     YoYo::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (pitch > 0.78539816) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (pitch < 0 || pitch > 0.78539816) return false;
       return true;
     }
 
@@ -14264,8 +14282,8 @@ namespace DUNE
     int
     StationKeeping::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -14376,8 +14394,9 @@ namespace DUNE
     int
     Elevator::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (radius < 0) return false;
       return true;
     }
 
@@ -14569,8 +14588,8 @@ namespace DUNE
     int
     FollowTrajectory::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -14851,8 +14870,8 @@ namespace DUNE
     int
     VehicleFormation::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -15260,8 +15279,8 @@ namespace DUNE
     int
     CommsRelay::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -15348,8 +15367,8 @@ namespace DUNE
     int
     PolygonVertex::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -15425,8 +15444,8 @@ namespace DUNE
     int
     CoverArea::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -15565,10 +15584,10 @@ namespace DUNE
     int
     CompassCalibration::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (pitch > 1.5707963267948966) return false;
-      if (radius > 100000) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (pitch < -1.5707963267948966 || pitch > 1.5707963267948966) return false;
+      if (radius < 1 || radius > 100000) return false;
       if (direction > 3) return false;
       return true;
     }
@@ -16949,8 +16968,8 @@ namespace DUNE
     int
     Launch::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -17049,8 +17068,8 @@ namespace DUNE
     int
     Drop::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -17149,8 +17168,8 @@ namespace DUNE
     int
     ScheduledGoto::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -17265,11 +17284,13 @@ namespace DUNE
     int
     RowsCoverage::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (bearing > 6.283185307179586) return false;
-      if (cross_angle > 1.047197551197) return false;
-      if (angaperture > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (bearing < 0 || bearing > 6.283185307179586) return false;
+      if (cross_angle < -1.047197551197 || cross_angle > 1.047197551197) return false;
+      if (width < 0) return false;
+      if (length < 0) return false;
+      if (angaperture < -3.141592653589793 || angaperture > 3.141592653589793) return false;
       if (overlap > 100) return false;
       return true;
     }
@@ -17407,8 +17428,8 @@ namespace DUNE
     int
     Sample::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -17558,9 +17579,9 @@ namespace DUNE
     int
     Takeoff::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (takeoff_pitch > 1.57079632679490) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (takeoff_pitch < 0 || takeoff_pitch > 1.57079632679490) return false;
       return true;
     }
 
@@ -17665,9 +17686,9 @@ namespace DUNE
     int
     Land::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (bearing > 6.283185307179586) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (bearing < 0 || bearing > 6.283185307179586) return false;
       if (glide_slope > 10) return false;
       return true;
     }
@@ -17786,8 +17807,8 @@ namespace DUNE
     int
     AutonomousSection::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -17928,8 +17949,9 @@ namespace DUNE
     int
     FollowPoint::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (max_speed < 0) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -18024,8 +18046,8 @@ namespace DUNE
     int
     Alignment::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -18124,8 +18146,8 @@ namespace DUNE
     int
     StationKeepingExtended::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -18285,9 +18307,10 @@ namespace DUNE
     int
     Magnetometer::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (bearing > 6.283185307179586) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (bearing < 0 || bearing > 6.283185307179586) return false;
+      if (width < 50) return false;
       if (direction > 1) return false;
       return true;
     }
@@ -18809,8 +18832,14 @@ namespace DUNE
     int
     OperationalLimits::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (max_depth < 0) return false;
+      if (min_altitude < 0) return false;
+      if (max_altitude < 0) return false;
+      if (min_speed < 0) return false;
+      if (max_speed < 0) return false;
+      if (max_vrate < 0) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -21846,14 +21875,14 @@ namespace DUNE
     int
     LeaderState::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
-      if (phi > 3.141592653589793) return false;
-      if (theta > 1.57079632679490) return false;
-      if (psi > 3.141592653589793) return false;
-      if (p > 3.141592653589793) return false;
-      if (q > 3.141592653589793) return false;
-      if (r > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (p < -3.141592653589793 || p > 3.141592653589793) return false;
+      if (q < -3.141592653589793 || q > 3.141592653589793) return false;
+      if (r < -3.141592653589793 || r > 3.141592653589793) return false;
       return true;
     }
 
@@ -23489,8 +23518,8 @@ namespace DUNE
     int
     Sampling::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -23655,8 +23684,8 @@ namespace DUNE
     int
     RemoteState::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -23741,8 +23770,8 @@ namespace DUNE
     int
     Target::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -26211,8 +26240,8 @@ namespace DUNE
     int
     UsblFix::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -26624,10 +26653,10 @@ namespace DUNE
     int
     UsblAnglesExtended::validate(void) const
     {
-      if (phi > 3.141592653589793) return false;
-      if (theta > 1.57079632679490) return false;
-      if (psi > 3.141592653589793) return false;
-      if (accuracy > 3.141592653589793) return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (accuracy < 0 || accuracy > 3.141592653589793) return false;
       return true;
     }
 
@@ -26736,9 +26765,10 @@ namespace DUNE
     int
     UsblPositionExtended::validate(void) const
     {
-      if (phi > 3.141592653589793) return false;
-      if (theta > 1.57079632679490) return false;
-      if (psi > 3.141592653589793) return false;
+      if (phi < -3.141592653589793 || phi > 3.141592653589793) return false;
+      if (theta < -1.57079632679490 || theta > 1.57079632679490) return false;
+      if (psi < -3.141592653589793 || psi > 3.141592653589793) return false;
+      if (accuracy < 0) return false;
       return true;
     }
 
@@ -26845,8 +26875,9 @@ namespace DUNE
     int
     UsblFixExtended::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
+      if (accuracy < 0) return false;
       return true;
     }
 
@@ -26931,8 +26962,8 @@ namespace DUNE
     int
     UsblModem::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
@@ -27452,7 +27483,7 @@ namespace DUNE
     int
     SadcReadings::validate(void) const
     {
-      if (channel > 4) return false;
+      if (channel < 1 || channel > 4) return false;
       return true;
     }
 
@@ -27685,8 +27716,8 @@ namespace DUNE
     int
     HomePosition::validate(void) const
     {
-      if (lat > 1.5707963267948966) return false;
-      if (lon > 3.141592653589793) return false;
+      if (lat < -1.5707963267948966 || lat > 1.5707963267948966) return false;
+      if (lon < -3.141592653589793 || lon > 3.141592653589793) return false;
       return true;
     }
 
