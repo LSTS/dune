@@ -29,7 +29,6 @@
 
 // ISO C++ 98 headers.
 #include <cstring>
-#include <algorithm>
 #include <fstream>
 
 // DUNE headers.
@@ -451,10 +450,10 @@ namespace Sensors
         m_frame872.setRepetitionRate(interval_ms);
         m_frame872.setFileHeader(m_rdata_hdr);
 
-        // IMC port imagery is reversed; .872 stores both channels near to far.
-        std::vector<char> raw_data(m_ping.data);
-        std::reverse(raw_data.begin(), raw_data.begin() + c_rdata_dat_size);
-        m_frame872.setData(raw_data);
+        // Preserve the corrected channel ordering used by SonarData.
+        // Imagenex872 manual indicates that port channel data is "near to far" 
+        // but the data is actually "far to near" and needs to be reversed.
+        m_frame872.setData(m_ping.data);
 
         m_log_file.write(reinterpret_cast<const char*>(m_frame872.getData()), c_ping_size);
         if (!m_log_file.good())
