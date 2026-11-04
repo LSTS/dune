@@ -125,7 +125,7 @@ class Message:
             f.add_body('return true;')
             public.append(f)
 
-        # validate() / fixme
+        # validate()
         f = Function('validate', 'int', const = True)
         if self.has_fields():
             for field in node.findall('field'):
@@ -133,13 +133,46 @@ class Message:
                 ftype = field.get('type')
                 fmin = field.get('min')
                 fmax = field.get('max')
-                fmin_val = int(fmin) if fmin is not None and ftype.startswith("uint") else None
-                if fmax is not None and fmin is not None and fmin_val is not None and fmin_val > 0:
-                    f.add_body('if (%s < %s || %s > %s) return false;' % (fabbrev, fmin, fabbrev, fmax))
-                elif fmin is not None and fmin_val is not None and fmin_val > 0:
-                    f.add_body('if (%s < %s) return false;' % (fabbrev, fmin))
-                elif fmax is not None:
-                    f.add_body('if (%s > %s) return false;' % (fabbrev, fmax))
+                is_unsigned = ftype is not None and ftype.startswith('uint')
+                prefix = f"{node.get('abbrev')}.{fabbrev}"
+
+                if fmin is not None:
+                    fmin_val = int(fmin) if is_unsigned else float(fmin)
+
+                    if is_unsigned and fmin_val < 0:
+                        raise ValueError(
+                            f"{prefix} sets a lower bound {fmin} "
+                            f"on an unsigned type {ftype} which it cannot hold."
+                        )
+
+                    if is_unsigned and fmin_val == 0:
+                        fmin = None
+
+                if fmax is not None:
+                    fmax_val = int(fmax) if is_unsigned else float(fmax)
+
+                    if is_unsigned and fmax_val <= 0:
+                        raise ValueError(
+                            f"{prefix} sets an upper bound {fmax} "
+                            f"on an unsigned type {ftype} which it cannot hold."
+                        )
+
+                if fmin is not None and fmax is not None and float(fmin) > float(fmax):
+                    raise ValueError(
+                        f"{prefix} sets a lower bound {fmin} "
+                        f"which is greater than the upper bound {fmax}."
+                    )
+
+                conditions = []
+
+                if fmin is not None:
+                    conditions.append(f'{fabbrev} < {fmin}')
+
+                if fmax is not None:
+                    conditions.append(f'{fabbrev} > {fmax}')
+
+                if conditions:
+                    f.add_body(f'if ({" || ".join(conditions)}) return false;')
         f.add_body('return true;')
         public.append(f);
 
