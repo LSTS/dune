@@ -40,6 +40,7 @@ namespace Maneuver
   namespace CompassCalibration
   {
     using DUNE_NAMESPACES;
+    using DUNE::Navigation::AhrsCrossCheck;
 
     //! Minimum radius admissible for loitering
     static const float c_min_radius = 5.0f;
@@ -64,6 +65,8 @@ namespace Maneuver
       float turns;
       //! Perform compass calibration if true
       bool compass_calib;
+      //! Largest first harmonic of a heading difference between AHRS (rad).
+      double harmonic_limit;
     };
 
     //! Calibration channel of a single AHRS entity.
@@ -79,6 +82,8 @@ namespace Maneuver
       std::string filter;
       //! mfield holds a calibration (the fit succeeded).
       bool valid = false;
+      //! Comparison with the reference AHRS (unused on the reference).
+      AhrsCrossCheck check;
     };
 
     struct Task: public DUNE::Maneuvers::Maneuver
@@ -91,6 +96,8 @@ namespace Maneuver
       IMC::EstimatedState m_estate;
       //! Calibration channels indexed by AHRS entity id.
       std::map<unsigned, CalibrationChannel> m_channels;
+      //! Entity id of the reference AHRS (the first listed that resolves).
+      unsigned m_ref_eid;
       //! Yoyo motion controller.
       DUNE::Control::YoYoMotion* m_yoyo;
       //! Z units for the maneuver.
@@ -118,6 +125,7 @@ namespace Maneuver
 
       Task(const std::string& name, Tasks::Context& ctx):
         DUNE::Maneuvers::Maneuver(name, ctx),
+        m_ref_eid(DUNE_IMC_CONST_UNK_EID),
         m_yoyo(NULL),
         m_calibrating(false),
         m_calibrated(false),
@@ -161,6 +169,16 @@ namespace Maneuver
         .defaultValue("true")
         .description("Perform compass calibration if true");
 
+        param("Cross-Check Harmonic Limit", m_args.harmonic_limit)
+        .defaultValue("1.5")
+        .units(Units::Degree)
+        .description("With more than one AHRS, each is compared with the first: "
+                     "the difference of their headings, once each applies its new "
+                     "x/y hard iron, must not vary with heading by more than this "
+                     "(first harmonic), or a warning says a hard iron is wrong. The "
+                     "mounting rotation between them, from their angular rates, is "
+                     "logged too");
+
         bindToManeuver<Task, IMC::CompassCalibration>();
         bind<IMC::EstimatedState>(this);
         bind<IMC::EulerAngles>(this);
@@ -173,6 +191,9 @@ namespace Maneuver
       {
         if (paramChanged(m_args.variation))
           m_args.variation = Angles::radians(m_args.variation);
+
+        if (paramChanged(m_args.harmonic_limit))
+          m_args.harmonic_limit = Angles::radians(m_args.harmonic_limit);
 
         if (paramChanged(m_args.compass_calib))
         {
@@ -194,6 +215,7 @@ namespace Maneuver
       onEntityResolution(void)
       {
         m_channels.clear();
+        m_ref_eid = DUNE_IMC_CONST_UNK_EID;
 
         for (size_t i = 0; i < m_args.label_ahrs.size(); ++i)
         {
@@ -209,6 +231,9 @@ namespace Maneuver
             war(DTR("failed to resolve entity '%s'"), label.c_str());
             continue;
           }
+
+          if (m_channels.empty())
+            m_ref_eid = eid;
 
           CalibrationChannel& channel = m_channels[eid];
           channel.label = label;
@@ -356,6 +381,13 @@ namespace Maneuver
         auto itr = m_channels.find(msg->getSourceEntity());
         if (itr != m_channels.end())
           itr->second.ccal.updateRates(*msg);
+
+        if (m_args.compass_calib && m_calibrating)
+        {
+          const double w[3] = {msg->x, msg->y, msg->z};
+          feedChecks(msg->getSourceEntity(), [&](AhrsCrossCheck& c, unsigned k)
+                     { c.addRates(k, msg->getTimeStamp(), w); });
+        }
       }
 
       void
@@ -367,6 +399,9 @@ namespace Maneuver
           auto itr = m_channels.find(msg->getSourceEntity());
           if (itr != m_channels.end())
             itr->second.ccal.updateDCM(*msg);
+
+          feedChecks(msg->getSourceEntity(), [&](AhrsCrossCheck& c, unsigned k)
+                     { c.addAttitude(k, msg->getTimeStamp(), msg->phi, msg->theta, msg->psi); });
         }
       }
 
@@ -379,6 +414,7 @@ namespace Maneuver
           auto itr = m_channels.find(msg->getSourceEntity());
           if (itr != m_channels.end())
             itr->second.ccal.updateField(*msg);
+
         }
       }
 
@@ -530,9 +566,104 @@ namespace Maneuver
         }
 
         if (send_magnetic)
+        {
+          crossCheck();
           m_calibrated = true;
+        }
 
         return any;
+      }
+
+      //! Feed the AHRS comparisons with a sample of an AHRS: the reference is
+      //! A of every comparison, any other AHRS is B of its own.
+      //! @param[in] eid entity of the sample.
+      //! @param[in] feed called with each comparison and the AHRS's index in it.
+      template <typename Feed>
+      void
+      feedChecks(unsigned eid, Feed feed)
+      {
+        if (eid == m_ref_eid)
+        {
+          for (auto& itr : m_channels)
+            if (itr.first != m_ref_eid)
+              feed(itr.second.check, 0);
+          return;
+        }
+
+        auto itr = m_channels.find(eid);
+        if (itr != m_channels.end())
+          feed(itr->second.check, 1);
+      }
+
+      //! Heading correction the x/y a channel dispatches implies for its
+      //! AHRS (none when it has no calibration).
+      static AhrsCrossCheck::Correction
+      correction(const CalibrationChannel& channel)
+      {
+        AhrsCrossCheck::Correction c = AhrsCrossCheck::none();
+        if (!channel.valid || channel.ccal.lastResult().horizontal <= 0.0)
+          return c;
+
+        c.b[0] = channel.mfield.x;
+        c.b[1] = channel.mfield.y;
+        c.horizontal = channel.ccal.lastResult().horizontal;
+        return c;
+      }
+
+      //! Compare every AHRS with the reference one: mounting rotation from
+      //! the angular rates, and difference of their headings once each
+      //! applies its new x/y.
+      void
+      crossCheck(void)
+      {
+        auto ref = m_channels.find(m_ref_eid);
+        if (ref == m_channels.end())
+          return;
+
+        const CalibrationChannel& a = ref->second;
+        for (const auto& itr : m_channels)
+        {
+          if (itr.first == m_ref_eid)
+            continue;
+
+          const CalibrationChannel& b = itr.second;
+          std::string why;
+
+          AhrsCrossCheck::Mounting mount;
+          if (b.check.mounting(mount, why))
+            inf(DTR("%s vs %s: mounting roll %.2f, pitch %.2f, yaw %.2f deg (sigma %.2f, "
+                    "%.2f, %.2f; rate residual %.3f deg/s; %u s); their roll/pitch "
+                    "differ by %+.2f, %+.2f deg beyond it"),
+                b.label.c_str(), a.label.c_str(), Angles::degrees(mount.rpy[0]),
+                Angles::degrees(mount.rpy[1]), Angles::degrees(mount.rpy[2]),
+                Angles::degrees(mount.sigma[0]), Angles::degrees(mount.sigma[1]),
+                Angles::degrees(mount.sigma[2]), Angles::degrees(mount.residual),
+                mount.bins, Angles::degrees(mount.tilt[0]), Angles::degrees(mount.tilt[1]));
+          else
+            war(DTR("%s vs %s: mounting not determined (%s)"), b.label.c_str(),
+                a.label.c_str(), why.c_str());
+
+          AhrsCrossCheck::Heading given, cal;
+          if (!b.check.heading(AhrsCrossCheck::none(), AhrsCrossCheck::none(), given, why)
+              || !b.check.heading(correction(a), correction(b), cal, why))
+          {
+            war(DTR("%s vs %s: heading not compared (%s)"), b.label.c_str(),
+                a.label.c_str(), why.c_str());
+            continue;
+          }
+
+          std::string text =
+          String::str(DTR("%s vs %s: heading difference %+.2f deg, first harmonic %.2f "
+                          "deg (as received: %+.2f, %.2f)"),
+                      b.label.c_str(), a.label.c_str(), Angles::degrees(cal.offset),
+                      Angles::degrees(cal.harmonic), Angles::degrees(given.offset),
+                      Angles::degrees(given.harmonic));
+          if (cal.harmonic > m_args.harmonic_limit)
+            war(DTR("%s; above %.2f deg: a hard iron is wrong"), text.c_str(),
+                Angles::degrees(m_args.harmonic_limit));
+          else
+            inf("%s", text.c_str());
+        }
       }
 
       //! Hand what a dispatched calibration determined beyond x/y (z, soft
@@ -608,6 +739,7 @@ namespace Maneuver
         for (auto& itr : m_channels)
         {
           itr.second.ccal.clear();
+          itr.second.check.clear();
           itr.second.valid = false;
         }
       }

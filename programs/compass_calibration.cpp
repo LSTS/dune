@@ -36,19 +36,35 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <map>
+#include <functional>
+#include <cstdio>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
 using DUNE_NAMESPACES;
 
+//! Heading correction of a calibration result: the x/y an AHRS applies.
+static AhrsCrossCheck::Correction
+correction(const CalibrationResult& r)
+{
+  AhrsCrossCheck::Correction c;
+  c.b[0] = r.b[0];
+  c.b[1] = r.b[1];
+  c.horizontal = r.horizontal;
+  return c;
+}
+
 int
 main(int32_t argc, char** argv)
 {
   if (argc <= 1)
   {
-    std::cerr << "Usage: " << argv[0] << " <path_to_log/Data.lsf[.gz]>"
-              << std::endl;
+    std::cerr << "Usage: " << argv[0] << " <path_to_log/Data.lsf[.gz]> [AHRS labels]"
+              << std::endl
+              << "  AHRS labels: comma-separated (default AHRS); with more than one,"
+              << " each is compared with the first." << std::endl;
     return 1;
   }
 
@@ -59,40 +75,70 @@ main(int32_t argc, char** argv)
   else
     is = new Compression::FileInput(argv[1], method);
 
+  std::vector<std::string> labels;
+  Utils::String::split(argc > 2 ? argv[2] : "AHRS", ",", labels);
+  for (auto& l : labels)
+    l = Utils::String::trim(l);
+
   IMC::Message* msg = NULL;
 
-  // One calibration per method, to compare them on the same samples.
+  // One calibration per AHRS and method, to compare methods on the same samples.
   const std::vector<std::string> methods = {"Gyro-Aided", "Min-Max", "Circle Fit"};
-  std::vector<DUNE::Navigation::CompassCalibration> ccals(methods.size());
-  for (size_t i = 0; i < methods.size(); ++i)
+  std::vector<std::vector<DUNE::Navigation::CompassCalibration>> ccals(labels.size());
+  for (auto& per_ahrs : ccals)
   {
-    std::vector<std::string> unknown;
-    ccals[i].setMethods({methods[i]}, unknown);
+    per_ahrs.resize(methods.size());
+    for (size_t i = 0; i < methods.size(); ++i)
+    {
+      std::vector<std::string> unknown;
+      per_ahrs[i].setMethods({methods[i]}, unknown);
+    }
   }
 
-  unsigned ahrs_eid = 0;
-  unsigned ccal_eid = 0;
+  // Comparison of each other AHRS with the first.
+  std::vector<DUNE::Navigation::AhrsCrossCheck> checks(labels.size());
+
+  std::map<unsigned, size_t> ahrs;  // entity id -> label index
+  unsigned ccal_eid = DUNE_IMC_CONST_UNK_EID;
+
+  // Feed the comparisons with a sample of AHRS k.
+  auto feed = [&](size_t k, std::function<void(DUNE::Navigation::AhrsCrossCheck&, unsigned)> f)
+  {
+    if (k == 0)
+    {
+      for (size_t j = 1; j < labels.size(); ++j)
+        f(checks[j], 0);
+    }
+    else
+    {
+      f(checks[k], 1);
+    }
+  };
 
   try
   {
     while ((msg = IMC::Packet::deserialize(*is)) != 0)
     {
-      if (msg->getId() == DUNE_IMC_EULERANGLES)
+      auto itr = ahrs.find(msg->getSourceEntity());
+      bool from_ahrs = itr != ahrs.end();
+      size_t k = from_ahrs ? itr->second : 0;
+
+      if (msg->getId() == DUNE_IMC_EULERANGLES && from_ahrs)
       {
         IMC::EulerAngles* ea = static_cast<IMC::EulerAngles*>(msg);
-
-        if (ea->getSourceEntity() != ahrs_eid)
-          continue;
-
-        for (auto& c : ccals)
+        for (auto& c : ccals[k])
           c.updateDCM(*ea);
+        feed(k, [&](DUNE::Navigation::AhrsCrossCheck& c, unsigned i)
+             { c.addAttitude(i, ea->getTimeStamp(), ea->phi, ea->theta, ea->psi); });
       }
-      else if (msg->getId() == DUNE_IMC_ANGULARVELOCITY)
+      else if (msg->getId() == DUNE_IMC_ANGULARVELOCITY && from_ahrs)
       {
         IMC::AngularVelocity* av = static_cast<IMC::AngularVelocity*>(msg);
-        if (av->getSourceEntity() == ahrs_eid)
-          for (auto& c : ccals)
-            c.updateRates(*av);
+        for (auto& c : ccals[k])
+          c.updateRates(*av);
+        const double w[3] = {av->x, av->y, av->z};
+        feed(k, [&](DUNE::Navigation::AhrsCrossCheck& c, unsigned i)
+             { c.addRates(i, av->getTimeStamp(), w); });
       }
       else if (msg->getId() == DUNE_IMC_MAGNETICFIELD)
       {
@@ -100,21 +146,22 @@ main(int32_t argc, char** argv)
 
         if (mf->getSourceEntity() == ccal_eid)
         {
-          std::cout << "Log Parameters: " << mf->x << ", " << mf->y << ", " << mf->z << std::endl;
+          std::cout << "Log Parameters (entity " << mf->getDestinationEntity()
+                    << "): " << mf->x << ", " << mf->y << ", " << mf->z << std::endl;
         }
-
-        if (mf->getSourceEntity() != ahrs_eid)
-          continue;
-
-        for (auto& c : ccals)
-          c.updateField(*mf);
+        else if (from_ahrs)
+        {
+          for (auto& c : ccals[k])
+            c.updateField(*mf);
+        }
       }
       else if (msg->getId() == DUNE_IMC_ENTITYINFO)
       {
         IMC::EntityInfo* ei = static_cast<IMC::EntityInfo*>(msg);
 
-        if (!std::strcmp(ei->label.c_str(), "AHRS"))
-          ahrs_eid = ei->id;
+        for (size_t i = 0; i < labels.size(); ++i)
+          if (ei->label == labels[i])
+            ahrs[ei->id] = i;
 
         if (!std::strcmp(ei->label.c_str(), "Compass Calibration Maneuver"))
           ccal_eid = ei->id;
@@ -128,24 +175,64 @@ main(int32_t argc, char** argv)
     std::cerr << "ERROR: " << e.what() << std::endl;
   }
 
-  // Compute values.
-  for (size_t i = 0; i < methods.size(); ++i)
+  // Compute values; the first method that succeeds gives each AHRS's
+  // correction for the comparisons (the maneuver's default order).
+  std::vector<DUNE::Navigation::AhrsCrossCheck::Correction> corr(labels.size());
+  for (size_t k = 0; k < labels.size(); ++k)
   {
-    Math::Matrix params;
-    std::cout << methods[i] << ": ";
-    if (ccals[i].getCalibrationParams(params))
+    corr[k] = DUNE::Navigation::AhrsCrossCheck::none();
+    bool found = false;
+    for (size_t i = 0; i < methods.size(); ++i)
     {
-      std::cout << params(0) << ", " << params(1) << ", ";
-      if (ccals[i].lastZDetermined())
-        std::cout << params(2);
+      Math::Matrix params;
+      std::cout << labels[k] << ": " << methods[i] << ": ";
+      if (ccals[k][i].getCalibrationParams(params))
+      {
+        std::cout << params(0) << ", " << params(1) << ", ";
+        if (ccals[k][i].lastZDetermined())
+          std::cout << params(2);
+        else
+          std::cout << "z not determined";
+        std::cout << " (" << ccals[k][i].lastResult().details << ")" << std::endl;
+        if (!found)
+          corr[k] = correction(ccals[k][i].lastResult());
+        found = true;
+      }
       else
-        std::cout << "z not determined";
-      std::cout << " (" << ccals[i].lastResult().details << ")" << std::endl;
+      {
+        std::cout << "no calibration (" << ccals[k][i].failures() << ")" << std::endl;
+      }
     }
+  }
+
+  for (size_t k = 1; k < labels.size(); ++k)
+  {
+    std::string why;
+    DUNE::Navigation::AhrsCrossCheck::Mounting mount;
+    std::printf("%s vs %s: ", labels[k].c_str(), labels[0].c_str());
+    if (checks[k].mounting(mount, why))
+      std::printf("mounting roll %.2f, pitch %.2f, yaw %.2f deg (sigma %.2f, %.2f, %.2f; "
+                  "rate residual %.3f deg/s; %u s); their roll/pitch differ by %+.2f, "
+                  "%+.2f deg beyond it\n",
+                  Angles::degrees(mount.rpy[0]), Angles::degrees(mount.rpy[1]),
+                  Angles::degrees(mount.rpy[2]), Angles::degrees(mount.sigma[0]),
+                  Angles::degrees(mount.sigma[1]), Angles::degrees(mount.sigma[2]),
+                  Angles::degrees(mount.residual), mount.bins, Angles::degrees(mount.tilt[0]),
+                  Angles::degrees(mount.tilt[1]));
     else
-    {
-      std::cout << "no calibration (" << ccals[i].failures() << ")" << std::endl;
-    }
+      std::printf("mounting not determined (%s)\n", why.c_str());
+
+    DUNE::Navigation::AhrsCrossCheck::Heading given, cal;
+    std::printf("%s vs %s: ", labels[k].c_str(), labels[0].c_str());
+    if (checks[k].heading(DUNE::Navigation::AhrsCrossCheck::none(),
+                          DUNE::Navigation::AhrsCrossCheck::none(), given, why)
+        && checks[k].heading(corr[0], corr[k], cal, why))
+      std::printf("heading difference %+.2f deg, first harmonic %.2f deg (as received: "
+                  "%+.2f, %.2f)\n",
+                  Angles::degrees(cal.offset), Angles::degrees(cal.harmonic),
+                  Angles::degrees(given.offset), Angles::degrees(given.harmonic));
+    else
+      std::printf("heading not compared (%s)\n", why.c_str());
   }
 
   delete is;
