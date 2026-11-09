@@ -40,43 +40,11 @@ namespace Navigation
   //! %Attitude estimation.
   namespace Attitude
   {
+    //! Quaternion error-state Kalman filter for attitude and gyro bias
+    //! (DUNE::Navigation::AttitudeEskf), fed by one IMU with a magnetometer.
     namespace ESKF
     {
       using DUNE_NAMESPACES;
-
-      //! Error-state indexes: [dtheta, db] (attitude and gyro-bias errors).
-      enum StateIndexes
-      {
-        //! Attitude error about body x (rad).
-        ES_DTX = 0,
-        //! Attitude error about body y (rad).
-        ES_DTY = 1,
-        //! Attitude error about body z (rad).
-        ES_DTZ = 2,
-        //! Gyro-bias error about x (rad/s).
-        ES_DBX = 3,
-        //! Gyro-bias error about y (rad/s).
-        ES_DBY = 4,
-        //! Gyro-bias error about z (rad/s).
-        ES_DBZ = 5,
-        //! Number of states.
-        NUM_STATE = 6
-      };
-
-      //! Filter output (measurement) indexes.
-      enum OutputIndexes
-      {
-        //! Gravity direction along body x.
-        OUT_GX = 0,
-        //! Gravity direction along body y.
-        OUT_GY = 1,
-        //! Gravity direction along body z.
-        OUT_GZ = 2,
-        //! Magnetometer yaw.
-        OUT_PSI = 3,
-        //! Number of outputs.
-        NUM_OUT = 4
-      };
 
       //! %Task arguments.
       struct Arguments
@@ -91,6 +59,10 @@ namespace Navigation
         double r_mag;
         //! Specific force gate: |‖f‖ - g| above this inflates accel noise.
         double accel_gate;
+        //! Reset guard angle (deg).
+        double reset_angle;
+        //! Reset guard hold time (s).
+        double reset_hold;
         //! Nominal update period (s), used until timestamps provide a delta.
         double dt_nominal;
         //! Label of the entity producing the inertial/magnetic measurements.
@@ -119,12 +91,8 @@ namespace Navigation
       {
         //! Estimated Euler angles output.
         IMC::EulerAngles m_euler;
-        //! Error-state Kalman filter (error state is zero outside update).
-        DUNE::Navigation::KalmanFilter m_kal;
-        //! Nominal attitude quaternion (body to NED).
-        Math::Quaternion m_quat;
-        //! Nominal gyro bias (rad/s).
-        double m_bias[3];
+        //! The filter.
+        AttitudeEskf m_eskf;
         //! Latest specific force (accelerometer) sample.
         double m_spf[3];
         //! Latest integrated delta angle sample.
@@ -135,7 +103,7 @@ namespace Navigation
         double m_mag[3];
         //! Hard-iron monitor: gyro-aided estimate of the residual hard iron;
         //! requests a calibration when it is too large.
-        DUNE::Navigation::HardIronMonitor m_hi;
+        HardIronMonitor m_hi;
         //! Latest depth (m), negative until one arrives.
         double m_depth;
         //! Entity id of the depth source, UINT_MAX for any.
@@ -190,8 +158,10 @@ namespace Navigation
 
           param("Accelerometer Direction Noise", m_args.sig_acc_dir)
             .defaultValue("0.02")
-            .description("Standard deviation of the measured gravity unit "
-                         "vector components");
+            .description("Standard deviation of the measured gravity direction, "
+                         "about an angle in rad (0.35 is a weak 20 degree anchor). "
+                         "The update is on the specific force, with noise "
+                         "(g times this)^2");
 
           param("Magnetometer Noise", m_args.r_mag)
             .defaultValue("0.0076")
@@ -200,7 +170,22 @@ namespace Navigation
           param("Accelerometer Gate", m_args.accel_gate)
             .defaultValue("0.5")
             .description("Specific-force deviation from gravity above which the "
-                         "accelerometer noise is inflated (m/s^2)");
+                         "accelerometer noise variance is inflated 100 times (m/s^2)");
+
+          param("Reset Angle", m_args.reset_angle)
+            .units(Units::Degree)
+            .defaultValue("60")
+            .description("Angle between the predicted and the measured gravity "
+                         "direction, with the specific force inside the gate, that "
+                         "arms the reset guard: the filter is re-initialised, tilt "
+                         "from the accelerometer, yaw from the magnetometer, gyro "
+                         "bias as before the guard armed");
+
+          param("Reset Hold Time", m_args.reset_hold)
+            .units(Units::Second)
+            .defaultValue("2")
+            .description("Time the reset angle must be exceeded before a reset. "
+                         "0 disables the guard");
 
           param("Nominal Update Period", m_args.dt_nominal)
             .units(Units::Second)
@@ -274,17 +259,10 @@ namespace Navigation
             .description("Label of the depth source for the hard-iron monitor. "
                          "Empty: any source");
 
-          std::memset(m_bias, 0, sizeof(m_bias));
           std::memset(m_spf, 0, sizeof(m_spf));
           std::memset(m_dtheta, 0, sizeof(m_dtheta));
           std::memset(m_omega, 0, sizeof(m_omega));
           std::memset(m_mag, 0, sizeof(m_mag));
-
-          // The filter carries only the 6-state error, whose mean is zero
-          // outside the update. reset() leaves the state transition as
-          // identity, so predict() propagates the covariance alone; the
-          // observation model is time-varying and rebuilt every step.
-          m_kal.reset(NUM_STATE, NUM_OUT);
 
           bind<IMC::Acceleration>(this);
           bind<IMC::EulerAnglesDelta>(this);
@@ -343,14 +321,24 @@ namespace Navigation
             const std::vector<double>& c = m_args.soft_iron;
             inf(DTR("hard-iron offset %.4f, %.4f, %.4f; soft-iron matrix %.4f, %.4f, %.4f, "
                     "%.4f, %.4f, %.4f, %.4f, %.4f, %.4f"),
-                m_args.hi_offset[0], m_args.hi_offset[1], m_args.hi_offset[2], c[0], c[1],
-                c[2], c[3], c[4], c[5], c[6], c[7], c[8]);
+                m_args.hi_offset[0], m_args.hi_offset[1], m_args.hi_offset[2], c[0], c[1], c[2],
+                c[3], c[4], c[5], c[6], c[7], c[8]);
           }
 
-          DUNE::Navigation::HardIronMonitor::Config cfg;
+          AttitudeEskf::Config ecfg;
+          ecfg.sig_gyro = m_args.sig_gyro;
+          ecfg.sig_bias = m_args.sig_bias;
+          ecfg.sig_acc_dir = m_args.sig_acc_dir;
+          ecfg.r_mag = m_args.r_mag;
+          ecfg.accel_gate = m_args.accel_gate;
+          ecfg.reset_angle = Angles::radians(m_args.reset_angle);
+          ecfg.reset_hold = m_args.reset_hold;
+          m_eskf.setConfig(ecfg);
+
+          HardIronMonitor::Config cfg;
           cfg.window = m_args.hi_window;
           cfg.threshold = m_args.hi_threshold;
-          m_hi = DUNE::Navigation::HardIronMonitor(cfg);
+          m_hi = HardIronMonitor(cfg);
         }
 
         void
@@ -449,46 +437,6 @@ namespace Navigation
           return m_args.rate_source == "Angular Velocity";
         }
 
-        //! Wrap angle to [-pi, pi].
-        static double
-        wrap(double a)
-        {
-          return Angles::normalizeRadian(a);
-        }
-
-        //! Roll/pitch from specific force (notebook convention: a = -f).
-        static void
-        accelAngles(const double f[3], double& phi, double& theta)
-        {
-          double ax = -f[0], ay = -f[1], az = -f[2];
-          phi = std::atan2(ay, std::sqrt(ax * ax + az * az));
-          theta = std::atan2(-ax, az);
-        }
-
-        //! Tilt-compensated magnetic heading.
-        static double
-        magYaw(const double m[3], double phi, double theta)
-        {
-          double c_phi = std::cos(phi);
-          double s_phi = std::sin(phi);
-          double c_th = std::cos(theta);
-          double s_th = std::sin(theta);
-          return std::atan2(m[2] * s_phi - m[1] * c_phi,
-                            m[0] * c_th + m[1] * s_th * s_phi + m[2] * s_th * c_phi);
-        }
-
-        //! Quaternion from a rotation vector (axis-angle in vector form).
-        static Math::Quaternion
-        quatFromRotVec(const double v[3])
-        {
-          double ang = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-          if (ang < 1e-12)
-            return Math::Quaternion(1.0, 0.5 * v[0], 0.5 * v[1], 0.5 * v[2]);
-
-          double s = std::sin(ang / 2.0) / ang;
-          return Math::Quaternion(std::cos(ang / 2.0), s * v[0], s * v[1], s * v[2]);
-        }
-
         //! Magnetic field with the hard-iron offset in use removed and the
         //! soft-iron correction applied.
         void
@@ -518,10 +466,9 @@ namespace Navigation
           double mc[3];
           correctedField(mc);
           double hx, hy;
-          DUNE::Navigation::HardIronEstimator::level(mc, phi, theta, hx, hy);
-          DUNE::Navigation::HardIronMonitor::Event ev =
-            m_hi.add(t, mc, w, std::sqrt(hx * hx + hy * hy));
-          const DUNE::Navigation::HardIronMonitor::Status& s = m_hi.status();
+          HardIronEstimator::level(mc, phi, theta, hx, hy);
+          HardIronMonitor::Event ev = m_hi.add(t, mc, w, std::sqrt(hx * hx + hy * hy));
+          const HardIronMonitor::Status& s = m_hi.status();
           if (s.t == t)
             debug("hard-iron monitor: residual %.4f, %.4f, %.4f (%.2f%%, sigma %.4f, "
                   "%.4f, %.4f, %u windows, %s); gyro bias %.3f, %.3f, %.3f deg/s",
@@ -529,11 +476,11 @@ namespace Navigation
                   s.windows, s.determined ? "determined" : "undetermined", Angles::degrees(s.bg[0]),
                   Angles::degrees(s.bg[1]), Angles::degrees(s.bg[2]));
 
-          if (ev == DUNE::Navigation::HardIronMonitor::EV_NONE)
+          if (ev == HardIronMonitor::EV_NONE)
           {
             return;
           }
-          else if (ev == DUNE::Navigation::HardIronMonitor::EV_CALIBRATION_NEEDED)
+          else if (ev == HardIronMonitor::EV_CALIBRATION_NEEDED)
           {
             war(DTR("magnetometer calibration needed: residual hard iron %.1f%% of the "
                     "horizontal field (%.4f, %.4f, %s; sigma %.4f, %.4f; %u windows); "
@@ -550,30 +497,22 @@ namespace Navigation
           }
         }
 
-        //! Seed the nominal state from the first sample.
+        //! Seed the filter from the first sample.
         void
         initialize(double dev_time)
         {
-          double phi, theta;
-          accelAngles(m_spf, phi, theta);
           double mc[3];
           correctedField(mc);
-          m_quat = Math::Quaternion(Math::EulerAnglesZyx(phi, theta, magYaw(mc, phi, theta)));
+          double bias[3];
           for (unsigned i = 0; i < 3; ++i)
-            m_bias[i] = Angles::radians(m_args.gyro_bias[i]);
-
-          m_kal.setCovariance(ES_DTX, 0.1);
-          m_kal.setCovariance(ES_DTY, 0.1);
-          m_kal.setCovariance(ES_DTZ, 0.3);
-          m_kal.setCovariance(ES_DBX, 1e-4);
-          m_kal.setCovariance(ES_DBY, 1e-4);
-          m_kal.setCovariance(ES_DBZ, 1e-4);
+            bias[i] = Angles::radians(m_args.gyro_bias[i]);
+          m_eskf.initialize(m_spf, mc, bias);
 
           m_last_time = dev_time;
           m_setup = true;
         }
 
-        //! Run one ESKF predict/update/inject cycle and dispatch the result.
+        //! Run one filter cycle and dispatch the result.
         void
         step(double dev_time, double tstamp)
         {
@@ -601,93 +540,22 @@ namespace Navigation
               m_dtheta[i] = m_omega[i] * dt;
           }
 
-          // Nominal propagation with the bias-corrected delta angle:
-          // w * dt == dtheta - bias * dt.
-          double wdt[3] = { m_dtheta[0] - m_bias[0] * dt, m_dtheta[1] - m_bias[1] * dt,
-                            m_dtheta[2] - m_bias[2] * dt };
-          Math::Quaternion dq = quatFromRotVec(wdt);
-          m_quat = m_quat * dq;
-          m_quat.normalize();
+          double mc[3];
+          correctedField(mc);
+          if (m_eskf.step(dt, m_dtheta, m_spf, mc))
+            war(DTR("attitude reset: predicted gravity more than %.0f deg from the "
+                    "accelerometer for %.1f s, re-initialised from the accelerometer and "
+                    "magnetometer (%u so far)"),
+                m_args.reset_angle, m_args.reset_hold, m_eskf.resets());
 
-          // Error covariance transition: attitude errors rotate with the body
-          // (R(w dt)^T) and integrate the bias error (-I dt).
-          Math::Matrix F(NUM_STATE);
-          F.put(0, 0, transpose(dq.rotationMatrix()));
-          for (unsigned i = 0; i < 3; ++i)
-            F(i, ES_DBX + i) = -dt;
-          m_kal.setCovarianceTransition(F);
-
-          // Process noise (continuous densities integrated over dt).
-          m_kal.setProcessNoise(ES_DTX, m_args.sig_gyro * m_args.sig_gyro * dt);
-          m_kal.setProcessNoise(ES_DTY, m_args.sig_gyro * m_args.sig_gyro * dt);
-          m_kal.setProcessNoise(ES_DTZ, m_args.sig_gyro * m_args.sig_gyro * dt);
-          m_kal.setProcessNoise(ES_DBX, m_args.sig_bias * m_args.sig_bias * dt);
-          m_kal.setProcessNoise(ES_DBY, m_args.sig_bias * m_args.sig_bias * dt);
-          m_kal.setProcessNoise(ES_DBZ, m_args.sig_bias * m_args.sig_bias * dt);
-
-          // Propagate covariance (error mean stays zero since Ax = I).
-          m_kal.predict();
-
-          // Joint measurement update: accel gravity direction (gated) plus
-          // tilt-compensated mag yaw. The observation matrix is rebuilt from
-          // the predicted nominal attitude every step.
-          m_kal.resetOutputs();
-
-          // Accel rows: h = R^T * down is the predicted gravity direction in
-          // the body frame, and the error Jacobian is skew(h).
-          Math::Matrix R = m_quat.rotationMatrix();
-          double fnorm = std::sqrt(m_spf[0] * m_spf[0] + m_spf[1] * m_spf[1] + m_spf[2] * m_spf[2]);
-          double sig = m_args.sig_acc_dir;
-          if (fnorm > 1e-6)
-          {
-            if (std::fabs(fnorm - c_gravity) >= m_args.accel_gate)
-              sig *= 10.0;
-
-            double h[3] = { -R(2, 0), -R(2, 1), -R(2, 2) };
-            m_kal.setObservation(OUT_GX, ES_DTY, -h[2]);
-            m_kal.setObservation(OUT_GX, ES_DTZ, h[1]);
-            m_kal.setObservation(OUT_GY, ES_DTX, h[2]);
-            m_kal.setObservation(OUT_GY, ES_DTZ, -h[0]);
-            m_kal.setObservation(OUT_GZ, ES_DTX, -h[1]);
-            m_kal.setObservation(OUT_GZ, ES_DTY, h[0]);
-
-            for (unsigned i = 0; i < 3; ++i)
-              m_kal.setInnovation(OUT_GX + i, m_spf[i] / fnorm - h[i]);
-          }
-          m_kal.setMeasurementNoise(OUT_GX, sig * sig);
-          m_kal.setMeasurementNoise(OUT_GY, sig * sig);
-          m_kal.setMeasurementNoise(OUT_GZ, sig * sig);
-
-          // Mag row: scalar yaw with Jacobian dpsi/d(dtheta_body).
-          Math::EulerAnglesZyx euler(m_quat);
-          double s_phi = std::sin(euler.roll);
-          double c_phi = std::cos(euler.roll);
-          double c_th = std::cos(euler.pitch);
-          if (c_th < 1e-3)
-            c_th = 1e-3;
-          m_kal.setObservation(OUT_PSI, ES_DTY, s_phi / c_th);
-          m_kal.setObservation(OUT_PSI, ES_DTZ, c_phi / c_th);
           // The monitor takes the angular velocity when the sensor sends it:
           // truncated delta angles (the LIMU's) bias its fit.
+          double phi, theta, psi;
+          m_eskf.euler(phi, theta, psi);
           double w[3];
           for (unsigned i = 0; i < 3; ++i)
             w[i] = m_omega_seen ? m_omega[i] : m_dtheta[i] / dt;
-          updateHardIron(m_clock, euler.roll, euler.pitch, w);
-          double mc[3];
-          correctedField(mc);
-          m_kal.setInnovation(OUT_PSI, wrap(magYaw(mc, euler.roll, euler.pitch) - euler.yaw));
-          m_kal.setMeasurementNoise(OUT_PSI, m_args.r_mag);
-
-          m_kal.update(0.0);
-
-          // Inject the error estimate into the nominal state and reset it.
-          double dth[3] = { m_kal.getState(ES_DTX), m_kal.getState(ES_DTY),
-                            m_kal.getState(ES_DTZ) };
-          m_quat = m_quat * quatFromRotVec(dth);
-          m_quat.normalize();
-          for (unsigned i = 0; i < 3; ++i)
-            m_bias[i] += m_kal.getState(ES_DBX + i);
-          m_kal.resetState();
+          updateHardIron(m_clock, phi, theta, w);
 
           dispatchEuler(dev_time, tstamp);
         }
@@ -695,13 +563,14 @@ namespace Navigation
         void
         dispatchEuler(double dev_time, double tstamp)
         {
-          Math::EulerAnglesZyx euler(m_quat);
+          double phi, theta, psi;
+          m_eskf.euler(phi, theta, psi);
           m_euler.setTimeStamp(tstamp);
           m_euler.time = dev_time;
-          m_euler.phi = euler.roll;
-          m_euler.theta = euler.pitch;
-          m_euler.psi = euler.yaw;
-          m_euler.psi_magnetic = euler.yaw;
+          m_euler.phi = phi;
+          m_euler.theta = theta;
+          m_euler.psi = psi;
+          m_euler.psi_magnetic = psi;
           dispatch(m_euler, DF_KEEP_TIME);
         }
 
