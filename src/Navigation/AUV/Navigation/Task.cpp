@@ -588,14 +588,27 @@ namespace Navigation
           double hrate = getHeadingRate();
           m_kal.setOutput(OUT_R, hrate);
 
+          // The heading rate divides by cos(theta): its error grows as
+          // 1 / cos(theta) towards +-90 deg pitch.
+          double c_th = std::cos(getEuler(AXIS_Y));
+          m_kal.setMeasurementNoise(OUT_R, m_measure_noise[MN_YAWRATE] / std::max(c_th * c_th, 1e-6));
+
           if (m_dead_reckoning)
             m_heading += tstep * hrate;
           else
             m_heading += Angles::minSignedAngle(m_heading, Angles::normalizeRadian(getEuler(AXIS_Z)));
 
-          // Update heading in Kalman filter.
+          // Update heading in Kalman filter. Past +-90 deg pitch the Euler
+          // heading flips by pi (with the roll), faster than the filter can
+          // follow: move the state with it instead.
           m_kal.setOutput(OUT_PSI, m_heading);
-          m_kal.setInnovation(OUT_PSI, m_kal.getOutput(OUT_PSI) - getBiasedHeading());
+          double innov = m_kal.getOutput(OUT_PSI) - getBiasedHeading();
+          if (std::fabs(innov) > Math::c_half_pi)
+          {
+            m_kal.setState(STATE_PSI, m_kal.getState(STATE_PSI) + innov);
+            innov = 0.0;
+          }
+          m_kal.setInnovation(OUT_PSI, innov);
 
           double r = m_kal.getState(STATE_R) + m_kal.getState(STATE_R_BIAS);
           m_kal.setInnovation(OUT_R,  m_kal.getOutput(OUT_R) - r);
