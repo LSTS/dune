@@ -515,15 +515,16 @@ namespace DUNE
         return;
       }
 
-      m_euler_bfr[AXIS_X] += msg->phi;
-      m_euler_bfr[AXIS_Y] += msg->theta;
-
-      // Heading buffer maintains sign.
-      m_euler_bfr[AXIS_Z] += getEuler(AXIS_Z) + Math::Angles::minSignedAngle(getEuler(AXIS_Z), msg->psi);
+      // The attitude source filters the attitude: keep its latest sample.
+      // Averaging Euler angles breaks where they wrap (+-pi) or flip
+      // (past +-90 deg pitch).
+      m_euler[AXIS_X] = msg->phi;
+      m_euler[AXIS_Y] = msg->theta;
+      m_euler[AXIS_Z] = msg->psi;
       ++m_euler_readings;
 
       if (m_declination_defined && m_use_declination)
-        m_euler_bfr[AXIS_Z] += m_declination;
+        m_euler[AXIS_Z] += m_declination;
 
       m_time_without_euler.reset();
     }
@@ -1217,9 +1218,9 @@ namespace DUNE
     void
     BasicNavigation::resetEulerAngles(void)
     {
-      m_euler_bfr[AXIS_X] = 0.0;
-      m_euler_bfr[AXIS_Y] = 0.0;
-      m_euler_bfr[AXIS_Z] = 0.0;
+      m_euler[AXIS_X] = 0.0;
+      m_euler[AXIS_Y] = 0.0;
+      m_euler[AXIS_Z] = 0.0;
       m_euler_readings = 0.0;
     }
 

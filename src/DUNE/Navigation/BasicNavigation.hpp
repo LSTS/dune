@@ -287,7 +287,7 @@ namespace DUNE
       inline double
       getEuler(unsigned axis) const
       {
-        return m_euler_readings ? (m_euler_bfr[axis] / m_euler_readings) : 0.0;
+        return m_euler_readings ? m_euler[axis] : 0.0;
       }
 
       //! Get Euler Angles increment value along a specific axis.
@@ -371,14 +371,12 @@ namespace DUNE
         return m_delta.getDelta();
       }
 
-      //! Routine to clear euler angles buffer.
+      //! Routine to clear euler angles buffer: the latest sample is kept,
+      //! with weight filter.
       //! @param[in] filter filter value.
       inline void
       updateEuler(float filter)
       {
-        for (unsigned i = 0; i < 3; ++i)
-          m_euler_bfr[i] = getEuler(i) * filter;
-
         m_euler_readings = filter;
       }
 
@@ -693,7 +691,8 @@ namespace DUNE
       float m_accel_readings;
       //! "Buffers" for sensors readings.
       double m_depth_bfr;
-      double m_euler_bfr[3];
+      //! Latest Euler angles (heading with declination when in use).
+      double m_euler[3];
       double m_agvel_bfr[3];
       double m_accel_bfr[3];
       //! Euler Angles Delta.
