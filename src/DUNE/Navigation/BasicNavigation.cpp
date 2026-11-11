@@ -37,6 +37,10 @@ namespace DUNE
   {
     using Tasks::DF_KEEP_TIME;
 
+    //! Minimum cos(theta) cos(phi) to compute the body-fixed
+    //! vertical velocity from the depth rate.
+    static const double c_min_cos_tilt = 0.1;
+
     static std::string
     getUncertaintyMessage(double hpos_var)
     {
@@ -1091,12 +1095,30 @@ namespace DUNE
       m_estate.q = getAngularVelocity(AXIS_Y);
       m_estate.alt = getAltitude();
       m_estate.depth = getDepth();
-      m_estate.w = m_avg_heave->update(m_deriv_heave.update(m_estate.depth));
+
+      // The derivative of the depth is the vertical velocity in the navigation
+      // frame (positive down), not the body-fixed velocity w. Body-fixed w is
+      // obtained from the third row of the body to navigation rotation,
+      //   vz = -sin(theta) u + cos(theta) sin(phi) v + cos(theta) cos(phi) w,
+      // so that the rotation below returns the measured depth rate.
+      double depth_rate = m_avg_heave->update(m_deriv_heave.update(m_estate.depth));
+      double sphi = std::sin(m_estate.phi);
+      double stheta = std::sin(m_estate.theta);
+      double ctheta = std::cos(m_estate.theta);
+      double cw = ctheta * std::cos(m_estate.phi);
+
+      // Near +-90 degrees of roll or pitch the third body axis is horizontal
+      // and w cannot be recovered from the depth rate.
+      if (std::fabs(cw) > c_min_cos_tilt)
+        m_estate.w = (depth_rate + stheta * m_estate.u - ctheta * sphi * m_estate.v) / cw;
+      else
+        m_estate.w = 0.0;
 
       // Velocity in the navigation frame.
       Coordinates::BodyFixedFrame::toInertialFrame(m_estate.phi, m_estate.theta, m_estate.psi,
                                                    m_estate.u, m_estate.v, m_estate.w,
                                                    &m_estate.vx, &m_estate.vy, &m_estate.vz);
+      m_estate.vz = depth_rate;
 
       m_uncertainty.x = m_kal.getCovariance(STATE_X, STATE_X);
       m_uncertainty.y = m_kal.getCovariance(STATE_Y, STATE_Y);
