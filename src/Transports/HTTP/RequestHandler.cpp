@@ -51,6 +51,7 @@
 #define STATUS_LINE_206 "HTTP/1.0 206 Partial Content\r\n"
 #define STATUS_LINE_403 "HTTP/1.0 403 Forbidden\r\n"
 #define STATUS_LINE_404 "HTTP/1.0 404 Not Found\r\n"
+#define STATUS_LINE_414 "HTTP/1.0 414 Request-URI Too Long\r\n"
 #define STATUS_LINE_416 "HTTP/1.0 416 Requested Range Not Satisfiable\r\n"
 #define STATUS_LINE_500 "HTTP/1.0 500 Internal Server Error\r\n"
 #define STATUS_LINE_503 "HTTP/1.0 503 Service Unavailable\r\n"
@@ -125,6 +126,13 @@ namespace Transports
     {
       sendHeader(sock, STATUS_LINE_404, message.size());
       sock->write(message.c_str(), message.size());
+    }
+
+    void
+    RequestHandler::sendResponse414(TCPSocket* sock)
+    {
+      sendHeader(sock, STATUS_LINE_414, 20);
+      sock->write("Request-URI Too Long", 20);
     }
 
     void
@@ -290,9 +298,17 @@ namespace Transports
 
       Utils::TupleList headers(hdr, ":", "\r\n", true);
 
-      // Parse request line.
-      if (std::sscanf(hdr, "%s %s %*s", mtd, uri) == 2)
+      // Parse request line (field widths match the size of the buffers).
+      if (std::sscanf(hdr, "%15s %511s %*s", mtd, uri) == 2)
       {
+        // A method or URI that fills its buffer is too long.
+        if ((std::strlen(mtd) >= sizeof(mtd) - 1) || (std::strlen(uri) >= sizeof(uri) - 1))
+        {
+          delete[] hdr;
+          sendResponse414(sock);
+          return;
+        }
+
         std::string uri_dec = URL::decode(uri);
         const char* uri_clean = uri_dec.c_str();
 

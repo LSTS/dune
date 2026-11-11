@@ -90,6 +90,9 @@ namespace Transports
       }
 
       void
+      sendResponse414(TCPSocket* sock);
+
+      void
       sendResponse416(TCPSocket* sock);
 
       void
