@@ -39,7 +39,7 @@ namespace DUNE
 
     //! Minimum cos(theta) cos(phi) to compute the body-fixed
     //! vertical velocity from the depth rate.
-    static const double c_min_cos_tilt = 0.1;
+    static const double c_min_cos_tilt = 0.5;
 
     static std::string
     getUncertaintyMessage(double hpos_var)
