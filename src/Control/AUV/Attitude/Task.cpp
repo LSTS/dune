@@ -135,6 +135,8 @@ namespace Control
         bool error_attitude;
         //! Log PID gain parcels.
         bool log_parcels;
+        //! Samples of the lag-free depth rate (0 to disable).
+        unsigned lag_free_samples;
         //! Altitude value below which altitude from DVL will be ignored.
         float min_dvl_alt;
         //! Depth value below which altitude from DVL will be ignored.
@@ -198,6 +200,10 @@ namespace Control
         float m_ext_pitch;
         //! Time since the last pitch reference.
         Time::Counter<float> m_ext_timer;
+        //! Average of the depth rate caused by pitch.
+        std::unique_ptr<Math::MovingAverage<float>> m_pitch_rate_avg;
+        //! Pitch part of the depth rate minus its average.
+        float m_pitch_rate_lag;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::BasicAutopilot(name, ctx, c_controllable, c_required),
@@ -210,7 +216,8 @@ namespace Control
           m_ext_depth_ref(false),
           m_ext_active(false),
           m_ext_seen(false),
-          m_ext_pitch(0.0f)
+          m_ext_pitch(0.0f),
+          m_pitch_rate_lag(0.0f)
         {
           // Load controller gains and integral limits.
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
@@ -370,6 +377,13 @@ namespace Control
           .defaultValue("false")
           .description("Enable dedicated altitude controller.");
 
+          param("Depth Rate -- Lag-free Samples", m_args.lag_free_samples)
+          .defaultValue("0")
+          .description("When above zero, the depth rate of the depth and altitude loops "
+                       "takes the part caused by pitch, -u sin(theta), without lag and "
+                       "only the remainder from the averaged depth rate of the navigation. "
+                       "Set to the heave moving average samples of the navigation");
+
           param("External Depth Controller", m_args.ext_depth)
           .defaultValue("false")
           .scope(Tasks::Parameter::SCOPE_PLAN)
@@ -454,6 +468,13 @@ namespace Control
           {
             m_ext_seen = false;
             m_ext_timer.setTop(m_args.ext_depth_timeout);
+          }
+
+          if (paramChanged(m_args.lag_free_samples))
+          {
+            m_pitch_rate_avg.reset();
+            if (m_args.lag_free_samples > 0)
+              m_pitch_rate_avg = std::make_unique<Math::MovingAverage<float>>(m_args.lag_free_samples);
           }
 
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
@@ -612,6 +633,15 @@ namespace Control
         {
           // Desired actuation torque vector.
           IMC::DesiredControl torques;
+
+          // Lag of the averaged depth rate in its part caused by pitch. The
+          // average runs on every estimated state, as in the navigation.
+          m_pitch_rate_lag = 0.0f;
+          if (m_pitch_rate_avg)
+          {
+            const float pitch_part = -sin(msg->theta) * msg->u;
+            m_pitch_rate_lag = pitch_part - m_pitch_rate_avg->update(pitch_part);
+          }
 
           if (!m_args.error_attitude)
           {
@@ -776,10 +806,14 @@ namespace Control
                   }
                 }
 
-                const float z_rate
+                float z_rate
                 = -sin(msg->theta) * msg->u
                   + cos(msg->theta)
                     * (sin(msg->phi) * msg->v + cos(msg->phi) * msg->w);
+
+                // The navigation averages the depth rate. Take the part
+                // caused by pitch without that lag.
+                z_rate += m_pitch_rate_lag;
 
                 // Positive depth rate implies negative pitch, so the PID output
                 // is inverted.
