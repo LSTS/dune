@@ -149,6 +149,10 @@ namespace Control
         std::vector<float> vref_filt_weights;
         //! Enable dedicated altitude controller.
         bool altitude_control;
+        //! Depth is controlled by another task through pitch references.
+        bool ext_depth;
+        //! Time without external pitch references to report an error.
+        float ext_depth_timeout;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -180,6 +184,20 @@ namespace Control
         Math::Derivative<float> m_vref_d;
         //! Derivative of the pitch reference.
         Math::Derivative<float> m_pref_d;
+        //! Depth loop enabled (external depth controller).
+        bool m_ext_loop;
+        //! The vertical reference is a depth (external depth controller).
+        bool m_ext_depth_ref;
+        //! Depth loop enabled with a depth reference: the external depth
+        //! controller commands pitch.
+        bool m_ext_active;
+        //! A pitch reference was received since the external depth
+        //! controller became active.
+        bool m_ext_seen;
+        //! Last pitch reference of the external depth controller.
+        float m_ext_pitch;
+        //! Time since the last pitch reference.
+        Time::Counter<float> m_ext_timer;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::BasicAutopilot(name, ctx, c_controllable, c_required),
@@ -187,7 +205,12 @@ namespace Control
           m_extra_pitch(false),
           m_vref(nullptr),
           m_vref_d(),
-          m_pref_d()
+          m_pref_d(),
+          m_ext_loop(false),
+          m_ext_depth_ref(false),
+          m_ext_active(false),
+          m_ext_seen(false),
+          m_ext_pitch(0.0f)
         {
           // Load controller gains and integral limits.
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
@@ -347,7 +370,30 @@ namespace Control
           .defaultValue("false")
           .description("Enable dedicated altitude controller.");
 
+          param("External Depth Controller", m_args.ext_depth)
+          .defaultValue("false")
+          .scope(Tasks::Parameter::SCOPE_PLAN)
+          .visibility(Tasks::Parameter::VISIBILITY_USER)
+          .description("Depth is controlled by another task that sends pitch references "
+                       "(Control.AUV.Depth.Cascade, Control.AUV.Depth.MPC or "
+                       "Control.AUV.Depth.Nonlinear; activate exactly one). "
+                       "While the depth loop is enabled with a depth reference, this task "
+                       "tracks those references and neither runs its depth loop nor "
+                       "dispatches pitch references. Plan scope: set by the start actions of a "
+                       "plan, it returns to its value when the plan ends");
+
+          param("External Depth Controller -- Timeout", m_args.ext_depth_timeout)
+          .defaultValue("1.0")
+          .minimumValue("0.1")
+          .units(Units::Second)
+          .description("Time without pitch references from the external depth controller "
+                       "after which the autopilot reports an error");
+
           m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
+
+          bind<IMC::ControlLoops>(this);
+          bind<IMC::DesiredZ>(this);
+          bind<IMC::DesiredPitch>(this);
         }
 
         //! Initialize resources.
@@ -401,6 +447,14 @@ namespace Control
         onUpdateParameters(void)
         {
           reset();
+
+          // Wait for the first pitch reference of the external depth
+          // controller when it is switched on during depth control.
+          if (paramChanged(m_args.ext_depth))
+          {
+            m_ext_seen = false;
+            m_ext_timer.setTop(m_args.ext_depth_timeout);
+          }
 
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
           {
@@ -502,6 +556,54 @@ namespace Control
           }
         }
 
+        //! Track the depth loop state for the external depth controller.
+        //! The autopilot itself handles the message in BasicAutopilot.
+        void
+        consume(const IMC::ControlLoops* msg)
+        {
+          if (!(msg->mask & IMC::CL_DEPTH))
+            return;
+
+          m_ext_loop = (msg->enable == IMC::ControlLoops::CL_ENABLE);
+          updateExternalDepth();
+        }
+
+        //! Track the kind of vertical reference for the external depth
+        //! controller.
+        void
+        consume(const IMC::DesiredZ* msg)
+        {
+          m_ext_depth_ref = (msg->z_units == IMC::Z_DEPTH);
+          updateExternalDepth();
+        }
+
+        //! Keep the pitch reference of the external depth controller.
+        //! Maneuvers that command pitch disable the depth loop, so while the
+        //! depth loop is enabled the only sender is the depth controller.
+        void
+        consume(const IMC::DesiredPitch* msg)
+        {
+          m_ext_pitch = msg->value;
+          m_ext_seen = true;
+          m_ext_timer.setTop(m_args.ext_depth_timeout);
+        }
+
+        //! Start waiting for pitch references when the depth loop becomes
+        //! enabled with a depth reference.
+        void
+        updateExternalDepth(void)
+        {
+          const bool active = m_ext_loop && m_ext_depth_ref;
+
+          if (active && !m_ext_active)
+          {
+            m_ext_seen = false;
+            m_ext_timer.setTop(m_args.ext_depth_timeout);
+          }
+
+          m_ext_active = active;
+        }
+
         //! Computes control values when receiving EstimatedState.
         //! @param[in] timestep time interval to use in pid controller.
         //! @param[in] msg pointer to EstimatedState message.
@@ -561,17 +663,34 @@ namespace Control
           bool use_offset = m_args.use_depth_offset;
           bool surface = false;
 
-          if (getVerticalMode() == VERTICAL_MODE_PITCH)
+          VerticalMode vmode = getVerticalMode();
+          float vref = getVerticalRef();
+
+          // The external depth controller commands pitch: hold the current
+          // pitch until its first reference arrives.
+          if (m_args.ext_depth && m_ext_active)
           {
-            cmd = getVerticalRef();
+            if (m_ext_timer.overflow())
+            {
+              signalBadVertical(DTR("no pitch reference from the external depth controller"));
+              m_ext_timer.setTop(m_args.ext_depth_timeout);
+            }
+
+            vmode = VERTICAL_MODE_PITCH;
+            vref = m_ext_seen ? m_ext_pitch : msg->theta;
+          }
+
+          if (vmode == VERTICAL_MODE_PITCH)
+          {
+            cmd = vref;
           }
           else
           {
-            switch (getVerticalMode())
+            switch (vmode)
             {
               case VERTICAL_MODE_DEPTH:
-                z_error = getVerticalRef() - msg->depth;
-                if (getVerticalRef() < m_args.depth_threshold)
+                z_error = vref - msg->depth;
+                if (vref < m_args.depth_threshold)
                 {
                   if (m_args.force_pitch && std::fabs(z_error) < m_args.depth_threshold)
                     surface = true;
@@ -664,7 +783,7 @@ namespace Control
 
                 // Positive depth rate implies negative pitch, so the PID output
                 // is inverted.
-                if (getVerticalMode() == VERTICAL_MODE_DEPTH
+                if (vmode == VERTICAL_MODE_DEPTH
                     || !m_args.altitude_control)
                 {
                   cmd = -m_pid[LP_DEPTH].step(timestep, z_error, -z_rate);
