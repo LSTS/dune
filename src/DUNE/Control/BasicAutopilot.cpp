@@ -113,6 +113,10 @@ namespace DUNE
       m_surge_ref = 0.0;
       m_sway_ref = 0.0;
 
+      // Forget the last estimated state time stamp, otherwise the first
+      // time step after a (re)activation is the idle time.
+      m_last_estate.clear();
+
       m_btrack_wrn.setTop(c_btrack_wrn_cooldown);
       m_bottom_follow_depth = 0.0;
     }

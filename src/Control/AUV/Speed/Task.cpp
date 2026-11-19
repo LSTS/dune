@@ -263,6 +263,11 @@ namespace Control
 
           m_previous_rpm = 0;
 
+          // Forget the last time stamps, otherwise the first time step after
+          // a (re)activation is the idle time.
+          m_last_mps.clear();
+          m_last_rpm.clear();
+
           m_braking = false;
 
           // Stop thruster.
