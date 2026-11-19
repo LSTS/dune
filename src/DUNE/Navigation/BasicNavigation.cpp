@@ -38,8 +38,10 @@ namespace DUNE
     using Tasks::DF_KEEP_TIME;
 
     //! Minimum cos(theta) cos(phi) to compute the body-fixed
-    //! vertical velocity from the depth rate.
-    static const double c_min_cos_tilt = 0.1;
+    //! vertical velocity from the depth rate. Errors in the depth rate,
+    //! u and v are divided by this value; 0.5 (60 degrees between the
+    //! third body axis and the vertical) bounds the amplification to 2.
+    static const double c_min_cos_tilt = 0.5;
 
     static std::string
     getUncertaintyMessage(double hpos_var)
@@ -1107,18 +1109,21 @@ namespace DUNE
       double ctheta = std::cos(m_estate.theta);
       double cw = ctheta * std::cos(m_estate.phi);
 
-      // Near +-90 degrees of roll or pitch the third body axis is horizontal
-      // and w cannot be recovered from the depth rate.
-      if (std::fabs(cw) > c_min_cos_tilt)
+      // With a large tilt the third body axis is close to horizontal and
+      // w is poorly conditioned by the depth rate: it is set to zero.
+      bool solve_w = std::fabs(cw) > c_min_cos_tilt;
+      if (solve_w)
         m_estate.w = (depth_rate + stheta * m_estate.u - ctheta * sphi * m_estate.v) / cw;
       else
         m_estate.w = 0.0;
 
-      // Velocity in the navigation frame.
+      // Velocity in the navigation frame. When w is solved, the rotation
+      // already returns the depth rate as vz.
       Coordinates::BodyFixedFrame::toInertialFrame(m_estate.phi, m_estate.theta, m_estate.psi,
                                                    m_estate.u, m_estate.v, m_estate.w,
                                                    &m_estate.vx, &m_estate.vy, &m_estate.vz);
-      m_estate.vz = depth_rate;
+      if (!solve_w)
+        m_estate.vz = depth_rate;
 
       m_uncertainty.x = m_kal.getCovariance(STATE_X, STATE_X);
       m_uncertainty.y = m_kal.getCovariance(STATE_Y, STATE_Y);
