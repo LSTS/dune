@@ -37,6 +37,12 @@ namespace DUNE
   {
     using Tasks::DF_KEEP_TIME;
 
+    //! Minimum cos(theta) cos(phi) to compute the body-fixed
+    //! vertical velocity from the depth rate. Errors in the depth rate,
+    //! u and v are divided by this value; 0.5 (60 degrees between the
+    //! third body axis and the vertical) bounds the amplification to 2.
+    static const double c_min_cos_tilt = 0.5;
+
     static std::string
     getUncertaintyMessage(double hpos_var)
     {
@@ -1091,12 +1097,33 @@ namespace DUNE
       m_estate.q = getAngularVelocity(AXIS_Y);
       m_estate.alt = getAltitude();
       m_estate.depth = getDepth();
-      m_estate.w = m_avg_heave->update(m_deriv_heave.update(m_estate.depth));
 
-      // Velocity in the navigation frame.
+      // The derivative of the depth is the vertical velocity in the navigation
+      // frame (positive down), not the body-fixed velocity w. Body-fixed w is
+      // obtained from the third row of the body to navigation rotation,
+      //   vz = -sin(theta) u + cos(theta) sin(phi) v + cos(theta) cos(phi) w,
+      // so that the rotation below returns the measured depth rate.
+      double depth_rate = m_avg_heave->update(m_deriv_heave.update(m_estate.depth));
+      double sphi = std::sin(m_estate.phi);
+      double stheta = std::sin(m_estate.theta);
+      double ctheta = std::cos(m_estate.theta);
+      double cw = ctheta * std::cos(m_estate.phi);
+
+      // With a large tilt the third body axis is close to horizontal and
+      // w is poorly conditioned by the depth rate: it is set to zero.
+      bool solve_w = std::fabs(cw) > c_min_cos_tilt;
+      if (solve_w)
+        m_estate.w = (depth_rate + stheta * m_estate.u - ctheta * sphi * m_estate.v) / cw;
+      else
+        m_estate.w = 0.0;
+
+      // Velocity in the navigation frame. When w is solved, the rotation
+      // already returns the depth rate as vz.
       Coordinates::BodyFixedFrame::toInertialFrame(m_estate.phi, m_estate.theta, m_estate.psi,
                                                    m_estate.u, m_estate.v, m_estate.w,
                                                    &m_estate.vx, &m_estate.vy, &m_estate.vz);
+      if (!solve_w)
+        m_estate.vz = depth_rate;
 
       m_uncertainty.x = m_kal.getCovariance(STATE_X, STATE_X);
       m_uncertainty.y = m_kal.getCovariance(STATE_Y, STATE_Y);
