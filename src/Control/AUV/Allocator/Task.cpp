@@ -641,13 +641,15 @@ namespace Control
           m_fins[1].value -= ang;
           m_fins[2].value -= ang;
 
-          // recalculate horizontal margin
-          h_margin_left = m_args.max_fin_rot - std::abs(ang);
-
-          // Allocate K
+          // Allocate K with the room left on each horizontal fin after the
+          // braking position and the pitch part (fin 1 gets +ang, fin 2
+          // gets -ang), so that pitch keeps priority and no fin leaves
+          // its range.
           ang = (k / m_args.conv[0]) / c_fins;
 
-          ang = trimValue(ang, -h_margin_left, h_margin_left);
+          float k_min = std::max(-m_args.max_fin_rot - m_fins[1].value, m_fins[2].value - m_args.max_fin_rot);
+          float k_max = std::min(m_args.max_fin_rot - m_fins[1].value, m_fins[2].value + m_args.max_fin_rot);
+          ang = trimValue(ang, k_min, k_max);
 
           m_fins[1].value += ang;
           m_fins[2].value -= ang;
