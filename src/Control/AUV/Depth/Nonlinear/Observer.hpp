@@ -71,6 +71,16 @@ namespace Control
         //! w_o (double) and w_h, pitch poles w_po (double) and w_p (rad/s).
         //! H and p are frozen near the surface.
         //!
+        //! With a depth noise sigma_z > 0 the heave observer is a Kalman
+        //! filter instead: measurement noise sigma_z^2 per depth sample,
+        //! process noise q dt on w (q: power spectral density of the
+        //! unmodelled heave acceleration), none on H. H is learned from its
+        //! initial variance sigma_H^2 and then stays: its variance only
+        //! shrinks, and it is kept between activations (the trim is set at
+        //! the start of a deployment). It corrects only on new depth samples
+        //! (the depth changed), so the noise model matches the sensor rate
+        //! and not the control rate.
+        //!
         //! Predictor: both observers are run tau ahead with the pitch
         //! references already sent, so the control laws act on the state
         //! at the time their output reaches the fins.
@@ -119,6 +129,15 @@ namespace Control
             double speed_step;
             //! Heave observer pole of the depth and depth rate, double (rad/s).
             double depth_pole;
+            //! Heave Kalman filter: standard deviation of a depth sample (m);
+            //! 0 selects pole placement.
+            double depth_noise;
+            //! Heave Kalman filter: square root of the power spectral density
+            //! of the unmodelled heave acceleration (m/s^2/sqrt(Hz)).
+            double heave_noise;
+            //! Heave Kalman filter: initial standard deviation of the trim
+            //! estimate (m^2/s^2).
+            double trim_sd;
             //! Heave observer pole of the trim (rad/s).
             double trim_pole;
             //! Pitch observer pole of the pitch and pitch rate, double (rad/s).
@@ -165,12 +184,18 @@ namespace Control
             m_mx(0),
             m_sm(0.0),
             m_u(0.0),
-            m_uf(0.0)
+            m_uf(0.0),
+            m_trim_var(0.0),
+            m_last_depth(0.0),
+            m_have_depth(false)
           {
             for (unsigned i = 0; i < 3; ++i)
             {
               m_xh[i] = 0.0;
               m_xp[i] = 0.0;
+
+              for (unsigned j = 0; j < 3; ++j)
+                m_ph[i][j] = 0.0;
             }
           }
 
@@ -187,6 +212,9 @@ namespace Control
 
             if (!(m_args.timestep > 0.0) || !(m_args.speed_step > 0.0) || !(m_args.speed_min > 0.0)
                 || !(m_args.speed_max >= m_args.speed_min) || !(m_args.heave_lag > 0.0) || !(m_args.pitch_delay >= 0.0))
+              return false;
+
+            if (!(m_args.depth_noise >= 0.0) || (kalman() && (!(m_args.heave_noise > 0.0) || !(m_args.trim_sd >= 0.0))))
               return false;
 
             m_nd = static_cast<unsigned>(roundEven(m_args.pitch_delay / m_args.timestep));
@@ -225,12 +253,35 @@ namespace Control
             m_xp[1] = 0.0;
             m_xp[2] = offset;
             m_mx = &select(speed);
+            resetCovariance();
             const double u0 = (theta - offset) / m_mx->k;
             std::fill(m_buf.begin(), m_buf.end(), u0);
             m_u = u0;
             m_uf = u0;
             // r = theta' - beta u with theta' = 0.
             m_xp[1] = -m_mx->beta * u0;
+          }
+
+          //! Restart the variance of the trim estimate at its initial value
+          //! (with a new initial trim).
+          void
+          resetTrimVariance(void)
+          {
+            m_trim_var = m_args.trim_sd * m_args.trim_sd;
+            m_ph[2][2] = m_trim_var;
+          }
+
+          //! True when the heave observer is a Kalman filter.
+          bool
+          kalman(void) const
+          {
+            return m_args.depth_noise > 0.0;
+          }
+
+          //! Heave Kalman filter covariance.
+          const double (&covariance(void) const)[3][3]
+          {
+            return m_ph;
           }
 
           //! Matrices of the scheduled speed nearest to the given one.
@@ -261,13 +312,27 @@ namespace Control
             const Matrices& mx = *m_mx;
             const double ih = depth - m_xh[0];
             const double ip = theta - m_xp[0];
-            const unsigned n = (depth < m_args.surface_depth) ? 2 : 3;
+            const bool surface = depth < m_args.surface_depth;
+            const unsigned n = surface ? 2 : 3;
+
+            if (kalman())
+            {
+              // New depth samples only: the depth is held between them.
+              if (!m_have_depth || std::fabs(depth - m_last_depth) > c_same_depth)
+              {
+                correctHeave(ih, !surface);
+                m_last_depth = depth;
+                m_have_depth = true;
+              }
+            }
+            else
+            {
+              for (unsigned i = 0; i < n; ++i)
+                m_xh[i] = m_xh[i] + mx.lh[i] * ih;
+            }
 
             for (unsigned i = 0; i < n; ++i)
-            {
-              m_xh[i] = m_xh[i] + mx.lh[i] * ih;
               m_xp[i] = m_xp[i] + mx.lp[i] * ip;
-            }
 
             m_sm = std::sin(theta);
           }
@@ -333,6 +398,9 @@ namespace Control
             const double ud = (m_nd > 0) ? m_buf[0] : u;
             propagate(mx.ah, mx.bh, m_sm, m_xh);
             propagate(mx.ap, mx.bp, ud, m_xp);
+
+            if (kalman())
+              propagateCovariance(mx.ah);
 
             if (m_nd > 0)
             {
@@ -679,6 +747,72 @@ namespace Control
             return true;
           }
 
+          //! Two depths closer than this are the same sample (m).
+          static constexpr double c_same_depth = 1e-9;
+          //! Kalman filter: initial standard deviation of the depth rate (m/s).
+          static constexpr double c_rate_sd = 0.5;
+
+          //! Kalman filter: restart the covariance (depth from one sample,
+          //! depth rate unknown, the trim variance kept).
+          void
+          resetCovariance(void)
+          {
+            for (unsigned i = 0; i < 3; ++i)
+              for (unsigned j = 0; j < 3; ++j)
+                m_ph[i][j] = 0.0;
+
+            m_ph[0][0] = m_args.depth_noise * m_args.depth_noise;
+            m_ph[1][1] = c_rate_sd * c_rate_sd;
+            m_ph[2][2] = m_trim_var;
+            m_have_depth = false;
+          }
+
+          //! Kalman filter: correction of the heave state with the depth
+          //! innovation (Joseph form, also valid with the trim gain at 0).
+          //! @param[in] innovation measured minus estimated depth (m).
+          //! @param[in] trim true to correct the trim.
+          void
+          correctHeave(double innovation, bool trim)
+          {
+            const double r = m_args.depth_noise * m_args.depth_noise;
+            const double s = m_ph[0][0] + r;
+            double k[3] = {m_ph[0][0] / s, m_ph[1][0] / s, trim ? m_ph[2][0] / s : 0.0};
+
+            for (unsigned i = 0; i < 3; ++i)
+              m_xh[i] += k[i] * innovation;
+
+            // P = M P M' + k r k', M = I - k [1 0 0].
+            double mp[3][3];
+            for (unsigned i = 0; i < 3; ++i)
+              for (unsigned j = 0; j < 3; ++j)
+                mp[i][j] = m_ph[i][j] - k[i] * m_ph[0][j];
+
+            for (unsigned i = 0; i < 3; ++i)
+              for (unsigned j = 0; j < 3; ++j)
+                m_ph[i][j] = mp[i][j] - mp[i][0] * k[j] + k[i] * r * k[j];
+
+            m_trim_var = m_ph[2][2];
+          }
+
+          //! Kalman filter: covariance over one control period,
+          //! P = A P A' + diag(0, q dt, 0).
+          //! @param[in] a state matrix.
+          void
+          propagateCovariance(const double (&a)[3][3])
+          {
+            double ap[3][3];
+            for (unsigned i = 0; i < 3; ++i)
+              for (unsigned j = 0; j < 3; ++j)
+                ap[i][j] = a[i][0] * m_ph[0][j] + a[i][1] * m_ph[1][j] + a[i][2] * m_ph[2][j];
+
+            for (unsigned i = 0; i < 3; ++i)
+              for (unsigned j = 0; j < 3; ++j)
+                m_ph[i][j] = ap[i][0] * a[j][0] + ap[i][1] * a[j][1] + ap[i][2] * a[j][2];
+
+            m_ph[1][1] += m_args.heave_noise * m_args.heave_noise * m_args.timestep;
+            m_trim_var = m_ph[2][2];
+          }
+
           //! Parameters.
           Arguments m_args;
           //! True if the parameters are valid.
@@ -704,6 +838,15 @@ namespace Control
           double m_u;
           //! Filtered pitch reference of the pitch interface.
           double m_uf;
+          //! Kalman filter: covariance of the heave state.
+          double m_ph[3][3];
+          //! Kalman filter: variance of the trim estimate, kept between
+          //! activations.
+          double m_trim_var;
+          //! Kalman filter: last depth sample used.
+          double m_last_depth;
+          //! Kalman filter: true after the first depth sample.
+          bool m_have_depth;
         };
       }
     }

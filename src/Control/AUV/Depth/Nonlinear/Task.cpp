@@ -209,6 +209,26 @@ namespace Control
             .minimumValue("0.01")
             .description("Double pole of the depth and depth rate of the heave observer, in rad/s");
 
+            param("Observer -- Depth Noise", m_args.ctl.obs.depth_noise)
+            .defaultValue("0.0")
+            .minimumValue("0.0")
+            .units(Units::Meter)
+            .description("Standard deviation of a depth sample. Above 0 the heave observer is a "
+                         "Kalman filter (its bandwidth follows the depth noise) instead of the "
+                         "poles of the depth and the trim");
+
+            param("Observer -- Heave Disturbance", m_args.ctl.obs.heave_noise)
+            .defaultValue("0.0045")
+            .minimumValue("0.0")
+            .description("Kalman filter: square root of the power spectral density of the "
+                         "unmodelled heave acceleration, in m/s^2/sqrt(Hz)");
+
+            param("Observer -- Initial Trim Uncertainty", m_args.ctl.obs.trim_sd)
+            .defaultValue("0.1")
+            .minimumValue("0.0")
+            .description("Kalman filter: standard deviation of the initial trim estimate, in m^2/s^2. "
+                         "The trim is learned from it and then kept (no trim drift)");
+
             param("Observer -- Trim Bandwidth", m_args.ctl.obs.trim_pole)
             .defaultValue("0.3357")
             .minimumValue("0.001")
@@ -414,7 +434,7 @@ namespace Control
             m_args.mpc.obs = m_args.ctl.obs;
             m_args.mpc.initial_trim = m_args.ctl.initial_trim;
 
-            const bool reset_trim = m_first || paramChanged(m_args.ctl.initial_trim);
+            const bool reset_trim = m_first || paramChanged(m_args.ctl.initial_trim) || paramChanged(m_args.ctl.obs.trim_sd);
             const bool valid = m_ctl.setup(m_args.ctl, reset_trim);
             const bool valid_mpc = m_mpc.setup(m_args.mpc, reset_trim);
             m_first = false;

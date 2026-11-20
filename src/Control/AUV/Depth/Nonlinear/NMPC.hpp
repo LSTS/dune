@@ -173,6 +173,9 @@ namespace Control
             if (!m_obs.setup(m_args.obs))
               return false;
 
+            if (reset_trim)
+              m_obs.resetTrimVariance();
+
             m_ns = static_cast<unsigned>(
               std::max(Solver::roundEven(m_args.solve_period / m_args.obs.timestep), 1L));
             m_np = static_cast<unsigned>(

@@ -163,6 +163,10 @@ namespace Control
             }
 
             m_valid = m_obs.setup(m_args.obs);
+
+            if (m_valid && reset_trim)
+              m_obs.resetTrimVariance();
+
             return m_valid;
           }
 
