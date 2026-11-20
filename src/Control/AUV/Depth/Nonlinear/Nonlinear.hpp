@@ -75,6 +75,10 @@ namespace Control
         //! pitch theta_c and its derivatives, and the pitch interface of the
         //! Observer turns them into the pitch reference.
         //!
+        //! Above the surface depth with a deeper reference, every law commands
+        //! sin(lo) instead: the model has no surface forces and the trim and
+        //! the super-twisting integral are frozen there.
+        //!
         //! Units: rad, m, s. Only setup() allocates memory.
         class Nonlinear
         {
@@ -262,6 +266,13 @@ namespace Control
                 m_debug.integral = m_v;
               }
             }
+
+            // Leaving the surface: the heave model has no surface forces and
+            // the trim and the super-twisting integral are frozen above the
+            // surface depth, so a law can stall there. Command the nose-down
+            // pitch the pitch loop reaches until the vehicle is below it.
+            if (depth < m_args.obs.surface_depth && zref > m_args.obs.surface_depth)
+              s = slo;
 
             const double sdd = filter(s, slo, shi, m_args.filter_rate * std::cos(th));
             const double sc = Observer::clamp(m_cf[0], -0.99, 0.99);
