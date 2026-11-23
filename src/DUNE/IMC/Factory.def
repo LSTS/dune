@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 770042c876bc0258e511138cd9930fba                            *
+// IMC XML MD5: 75cf3a2d0eb5ee1d05d4db3197eb610c                            *
 //***************************************************************************
 
 MESSAGE(1, EntityState)
@@ -269,6 +269,8 @@ MESSAGE(519, VtolState)
 MESSAGE(520, ArmingState)
 MESSAGE(521, TCPRequest)
 MESSAGE(522, TCPStatus)
+MESSAGE(523, FTPTransmissionRequest)
+MESSAGE(524, FTPTransmissionStatus)
 MESSAGE(525, AssetReport)
 MESSAGE(550, Abort)
 MESSAGE(551, PlanSpecification)

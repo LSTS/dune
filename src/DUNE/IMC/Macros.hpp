@@ -28,7 +28,7 @@
 //***************************************************************************
 // Automatically generated.                                                 *
 //***************************************************************************
-// IMC XML MD5: 770042c876bc0258e511138cd9930fba                            *
+// IMC XML MD5: 75cf3a2d0eb5ee1d05d4db3197eb610c                            *
 //***************************************************************************
 
 #ifndef DUNE_IMC_MACROS_HPP_INCLUDED_
@@ -510,6 +510,10 @@
 #define DUNE_IMC_TCPREQUEST 521
 //! TCPStatus identification number.
 #define DUNE_IMC_TCPSTATUS 522
+//! FTPTransmissionRequest identification number.
+#define DUNE_IMC_FTPTRANSMISSIONREQUEST 523
+//! FTPTransmissionStatus identification number.
+#define DUNE_IMC_FTPTRANSMISSIONSTATUS 524
 //! AssetReport identification number.
 #define DUNE_IMC_ASSETREPORT 525
 //! Abort identification number.
