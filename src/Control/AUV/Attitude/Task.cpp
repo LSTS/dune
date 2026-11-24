@@ -38,6 +38,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "DisturbanceObserver.hpp"
+
 namespace Control
 {
   namespace AUV
@@ -55,6 +58,8 @@ namespace Control
       static const float c_depth_hyst = 0.5f;
       //! Heading rate limit to apply extra pitch.
       static const float c_max_hrate = 10.0f;
+      //! Allocated torques older than this stop the pitch disturbance observer (s).
+      static const double c_allocated_timeout = 1.0;
 
       //! Controllable loops.
       static const uint32_t c_controllable = IMC::CL_YAW | IMC::CL_YAW_RATE | IMC::CL_DEPTH | IMC::CL_PITCH;
@@ -155,6 +160,18 @@ namespace Control
         bool ext_depth;
         //! Time without external pitch references to report an error.
         float ext_depth_timeout;
+        //! Pitch disturbance observer.
+        bool dob_enabled;
+        //! Pitch acceleration per unit of pitch actuation.
+        float dob_gain;
+        //! Pitch damping of the disturbance observer model.
+        float dob_damping;
+        //! Bandwidth of the pitch disturbance observer.
+        float dob_bandwidth;
+        //! Largest pitch actuation the observer adds.
+        float dob_limit;
+        //! Depth below which the observer runs.
+        float dob_min_depth;
       };
 
       struct Task: public DUNE::Control::BasicAutopilot
@@ -204,6 +221,12 @@ namespace Control
         std::unique_ptr<Math::MovingAverage<float>> m_pitch_rate_avg;
         //! Pitch part of the depth rate minus its average.
         float m_pitch_rate_lag;
+        //! Pitch disturbance observer.
+        DisturbanceObserver m_dob;
+        //! Last pitch actuation delivered by the allocator.
+        float m_allocated_m;
+        //! Time of the last allocated torques.
+        double m_allocated_time;
 
         Task(const std::string& name, Tasks::Context& ctx):
           DUNE::Control::BasicAutopilot(name, ctx, c_controllable, c_required),
@@ -217,7 +240,9 @@ namespace Control
           m_ext_active(false),
           m_ext_seen(false),
           m_ext_pitch(0.0f),
-          m_pitch_rate_lag(0.0f)
+          m_pitch_rate_lag(0.0f),
+          m_allocated_m(0.0f),
+          m_allocated_time(-1.0)
         {
           // Load controller gains and integral limits.
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
@@ -403,8 +428,49 @@ namespace Control
           .description("Time without pitch references from the external depth controller "
                        "after which the autopilot reports an error");
 
+          param("Pitch Disturbance Observer -- Enabled", m_args.dob_enabled)
+          .defaultValue("false")
+          .description("Estimate the pitch moment the pitch loop does not model (trim,"
+                       " restoring, lift) from the pitch rate and the actuation the"
+                       " allocator delivered, and add the actuation that cancels it");
+
+          param("Pitch Disturbance Observer -- Control Gain", m_args.dob_gain)
+          .defaultValue("1.6")
+          .minimumValue("0.01")
+          .description("Pitch acceleration (rad/s^2) per unit of pitch actuation. With the"
+                       " allocator fin effect velocity dependent, this is the value at the"
+                       " speed where the fin effect equals its configured value");
+
+          param("Pitch Disturbance Observer -- Damping", m_args.dob_damping)
+          .defaultValue("0.0")
+          .minimumValue("0.0")
+          .description("Pitch damping of the observer model: pitch acceleration (rad/s^2)"
+                       " per unit of pitch rate (rad/s) and of speed (m/s). Damping in the"
+                       " model is kept. Damping left out of it is estimated as part of the"
+                       " disturbance and cancelled, so the pitch loop loses that damping");
+
+          param("Pitch Disturbance Observer -- Bandwidth", m_args.dob_bandwidth)
+          .defaultValue("1.0")
+          .minimumValue("0.05")
+          .units(Units::RadianPerSecond)
+          .description("Bandwidth of the observer. Keep it below the pitch loop bandwidth");
+
+          param("Pitch Disturbance Observer -- Limit", m_args.dob_limit)
+          .defaultValue("10.0")
+          .minimumValue("0.0")
+          .units(Units::Degree)
+          .description("Largest pitch actuation the observer adds");
+
+          param("Pitch Disturbance Observer -- Minimum Depth", m_args.dob_min_depth)
+          .defaultValue("1.0")
+          .minimumValue("0.0")
+          .units(Units::Meter)
+          .description("The observer runs deeper than this. Shallower, its estimate is"
+                       " discarded");
+
           m_ctx.config.get("General", "Underwater Depth Threshold", "0.3", m_args.depth_threshold);
 
+          bind<IMC::AllocatedControlTorques>(this);
           bind<IMC::ControlLoops>(this);
           bind<IMC::DesiredZ>(this);
           bind<IMC::DesiredPitch>(this);
@@ -487,6 +553,11 @@ namespace Control
           if (paramChanged(m_args.max_pitch_act))
             m_args.max_pitch_act = Angles::radians(m_args.max_pitch_act);
 
+          if (paramChanged(m_args.dob_limit))
+            m_args.dob_limit = Angles::radians(m_args.dob_limit);
+
+          m_dob.setParameters(m_args.dob_gain, m_args.dob_damping, m_args.dob_bandwidth);
+
           // Depth control parameters.
           if (paramChanged(m_args.max_pitch))
             m_args.max_pitch = Angles::radians(m_args.max_pitch);
@@ -562,6 +633,8 @@ namespace Control
 
           for (unsigned i = 0; i < LP_MAX_LOOPS; ++i)
             m_pid[i].reset();
+
+          m_dob.reset();
         }
 
         //! Reserve entities for messages.
@@ -575,6 +648,15 @@ namespace Control
 
             m_ca_parcel.setSourceEntity(reserveEntity("Coarse Altitude"));
           }
+        }
+
+        //! Keep the pitch actuation the allocator delivered, after the fin
+        //! angle and rate limits.
+        void
+        consume(const IMC::AllocatedControlTorques* msg)
+        {
+          m_allocated_m = msg->m;
+          m_allocated_time = Clock::get();
         }
 
         //! Track the depth loop state for the external depth controller.
@@ -860,7 +942,34 @@ namespace Control
                 m_pid[LP_PITCH].step(timestep, pitch_err, ref_rate - pitch_rate) :
                 m_pid[LP_PITCH].step(timestep, pitch_err, -pitch_rate);
 
-          return cmd;
+          cmd += pitchCompensation(timestep, msg, pitch_rate, surface);
+          return trimValue(cmd, -m_args.max_pitch_act, m_args.max_pitch_act);
+        }
+
+        //! Pitch actuation that cancels the moment estimated by the pitch
+        //! disturbance observer. The observer runs underwater, while the
+        //! allocator reports what it delivered.
+        //! @param[in] timestep time interval since the last update.
+        //! @param[in] msg pointer to EstimatedState message.
+        //! @param[in] pitch_rate pitch rate.
+        //! @param[in] surface true while the pitch is forced at the surface.
+        //! @return pitch actuation to add to the pitch loop output.
+        float
+        pitchCompensation(const double timestep, const IMC::EstimatedState* msg,
+                          float pitch_rate, bool surface)
+        {
+          const bool fresh = m_allocated_time >= 0
+                             && Clock::get() - m_allocated_time < c_allocated_timeout;
+
+          if (!m_args.dob_enabled || surface || !fresh
+              || msg->depth < m_args.dob_min_depth)
+          {
+            m_dob.reset();
+            return 0.0f;
+          }
+
+          m_dob.update(timestep, pitch_rate, m_allocated_m, std::max(0.0f, msg->u));
+          return trimValue(m_dob.compensation(), -m_args.dob_limit, m_args.dob_limit);
         }
 
         //! Control the roll angle.
