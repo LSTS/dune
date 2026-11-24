@@ -53,6 +53,9 @@ namespace DUNE
     //! - Predict: q <- q (x) exp(dtheta_gyro - b dt).
     //! - Accelerometer: 3-vector update on the specific force, predicted
     //!   h = -g R^T e3, noise (g sig_acc_dir)^2, inflated when |f| is far from g.
+    //!   It sees tilt only, so its correction is projected off the gravity
+    //!   axis: through the covariance between the angles the full gain also
+    //!   turned the filter about gravity, i.e. moved yaw.
     //! - Magnetometer: scalar update on yaw, Jacobian R row 2 (rotation about
     //!   NED down), no 1/cos(theta).
     //! - Joseph-form covariance updates, symmetrised every step.
@@ -504,6 +507,20 @@ namespace DUNE
         for (unsigned i = 0; i < 6; ++i)
           for (unsigned j = 0; j < 3; ++j)
             k[i][j] = pht[i][0] * si[0][j] + pht[i][1] * si[1][j] + pht[i][2] * si[2][j];
+
+        // No rotation about gravity (yaw): remove the gain's component along
+        // the gravity direction. The Joseph form below keeps P right for any gain.
+        double hn = std::sqrt(dot(h, h));
+        if (hn > 0.0)
+        {
+          double n[3] = { h[0] / hn, h[1] / hn, h[2] / hn };
+          for (unsigned j = 0; j < 3; ++j)
+          {
+            double c = n[0] * k[0][j] + n[1] * k[1][j] + n[2] * k[2][j];
+            for (unsigned i = 0; i < 3; ++i)
+              k[i][j] -= c * n[i];
+          }
+        }
 
         double y[3] = { f[0] - h[0], f[1] - h[1], f[2] - h[2] };
         double dx[6];
