@@ -33,6 +33,9 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+// Local headers.
+#include "WeightedLeastSquares.hpp"
+
 #define RPM_AVG_SIZE 15
 
 namespace Control
@@ -80,6 +83,11 @@ namespace Control
         double k_yaw;
         //!  
         bool roll_not_velocity_dependent;
+        //! Allocation method.
+        std::string method;
+        //! Weights of the torque errors (K, M, N) in the weighted least
+        //! squares allocation, per unit of each axis' torque range.
+        std::vector<double> wls_weights;
       };
 
       struct Task: public DUNE::Tasks::Task
@@ -197,6 +205,21 @@ namespace Control
           param("Roll not velocity dependent", m_args.roll_not_velocity_dependent)
           .defaultValue("false")
           .description("Roll not velocity dependent");
+
+          param("Allocation Method", m_args.method)
+          .defaultValue("Daisy Chain")
+          .values("Daisy Chain, Weighted Least Squares")
+          .description("Daisy Chain: yaw on the vertical fins, pitch on the horizontal"
+                       " fins, roll on the margin left. Weighted Least Squares: the fin"
+                       " angles that minimise the weighted torque error within the fin"
+                       " angle and rate limits");
+
+          param("Weighted Least Squares -- Torque Weights", m_args.wls_weights)
+          .defaultValue("1.0, 1.0, 1.0")
+          .size(3)
+          .description("Weights of the roll, pitch and yaw torque errors, per unit of"
+                       " each axis' torque range. Used when the fins cannot deliver"
+                       " every torque");
 
           param("Entity Label - Servo Position", m_args.spos_label)
           .defaultValue("")
@@ -442,6 +465,12 @@ namespace Control
           for (int i = 0; i < 3; ++i)
             e[i] = finEffect(i, s);
 
+          if (m_args.method == "Weighted Least Squares")
+          {
+            allocateWeightedLeastSquares(k, m, n, e);
+            return;
+          }
+
           float ang;
           float roll_margin_vfins;
           float roll_margin_hfins;
@@ -505,6 +534,51 @@ namespace Control
           }
 
           dispatchAllocation(m_delta.getDelta(), e);
+        }
+
+        //! Allocate desired control torques by weighted least squares, within
+        //! the fin angle and rate limits.
+        //! @param[in] e torque per unit angle of one fin (K, M, N).
+        void
+        allocateWeightedLeastSquares(float k, float m, float n, const double e[3])
+        {
+          typedef WeightedLeastSquares WLS;
+          const double b[WLS::c_torques][WLS::c_fins] = {{-e[0], e[0], -e[0], e[0]},
+                                                         {0.0, -e[1], -e[1], 0.0},
+                                                         {-e[2], 0.0, 0.0, -e[2]}};
+          const double v[WLS::c_torques] = {k, m, n};
+
+          double w[WLS::c_torques];
+          for (int i = 0; i < WLS::c_torques; ++i)
+          {
+            double range = 0.0;
+            for (int j = 0; j < WLS::c_fins; ++j)
+              range += std::abs(b[i][j]) * m_args.max_fin_rot;
+            w[i] = (range > 0.0) ? m_args.wls_weights[i] / range : 0.0;
+          }
+
+          double delta = m_delta.getDelta();
+          double lo[WLS::c_fins];
+          double hi[WLS::c_fins];
+          for (int j = 0; j < WLS::c_fins; ++j)
+          {
+            lo[j] = -m_args.max_fin_rot;
+            hi[j] = m_args.max_fin_rot;
+            if (delta > 0)
+            {
+              double step = m_args.max_fin_rate * delta;
+              lo[j] = std::max(lo[j], m_last[j].value - step);
+              hi[j] = std::min(hi[j], m_last[j].value + step);
+            }
+          }
+
+          double d[WLS::c_fins];
+          WLS::solve(b, w, v, lo, hi, 1e-6, d);
+
+          for (int j = 0; j < WLS::c_fins; ++j)
+            m_fins[j].value = d[j];
+
+          dispatchAllocation(delta, e);
         }
 
         //! Dispatch the fin commands and the torques they deliver.
