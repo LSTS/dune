@@ -53,6 +53,8 @@ namespace Navigation
         double sig_gyro;
         //! Gyro-bias random walk (rad/s/sqrt(s)).
         double sig_bias;
+        //! Initial gyro-bias standard deviation (deg/s).
+        double sig_bias0;
         //! Accelerometer gravity-direction noise (unit-vector sigma).
         double sig_acc_dir;
         //! Magnetometer yaw measurement noise (rad^2).
@@ -155,6 +157,16 @@ namespace Navigation
           param("Gyro Bias Random Walk", m_args.sig_bias)
             .defaultValue("1e-5")
             .description("Gyro-bias random-walk density (rad/s/sqrt(s))");
+
+          param("Gyro Bias Uncertainty", m_args.sig_bias0)
+            .units(Units::DegreePerSecond)
+            .defaultValue("0.573")
+            .minimumValue("0")
+            .description("Initial standard deviation of the gyro-bias states (0.573 is "
+                         "0.01 rad/s, a MEMS turn-on bias). A fibre-optic gyro wants about "
+                         "1 deg/h (0.0003): without a yaw reference the z bias is seen only "
+                         "through tilt, and a wide prior lets it absorb the tilt errors of "
+                         "handling and launch");
 
           param("Accelerometer Direction Noise", m_args.sig_acc_dir)
             .defaultValue("0.02")
@@ -328,6 +340,7 @@ namespace Navigation
           AttitudeEskf::Config ecfg;
           ecfg.sig_gyro = m_args.sig_gyro;
           ecfg.sig_bias = m_args.sig_bias;
+          ecfg.sig_bias0 = Angles::radians(m_args.sig_bias0);
           ecfg.sig_acc_dir = m_args.sig_acc_dir;
           ecfg.r_mag = m_args.r_mag;
           ecfg.accel_gate = m_args.accel_gate;

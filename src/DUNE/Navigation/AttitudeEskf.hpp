@@ -71,6 +71,8 @@ namespace DUNE
         double sig_gyro;
         //! Gyro-bias random-walk density (rad/s/sqrt(s)).
         double sig_bias;
+        //! Initial gyro-bias standard deviation (rad/s).
+        double sig_bias0;
         //! Standard deviation of the measured gravity direction (about rad).
         double sig_acc_dir;
         //! Magnetometer yaw noise variance (rad^2).
@@ -96,6 +98,7 @@ namespace DUNE
         Config(void):
           sig_gyro(0.005),
           sig_bias(1e-5),
+          sig_bias0(0.01),
           sig_acc_dir(0.02),
           r_mag(0.0076),
           accel_gate(0.5),
@@ -145,7 +148,7 @@ namespace DUNE
         std::memset(m_p, 0, sizeof(m_p));
         m_p[0][0] = m_p[1][1] = 0.1;
         m_p[2][2] = 0.3;
-        m_p[3][3] = m_p[4][4] = m_p[5][5] = 1e-4;
+        m_p[3][3] = m_p[4][4] = m_p[5][5] = m_cfg.sig_bias0 * m_cfg.sig_bias0;
         m_off_for = 0.0;
         m_resets = 0;
       }
