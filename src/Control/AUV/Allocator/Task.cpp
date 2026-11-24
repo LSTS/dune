@@ -33,7 +33,6 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
-#define MS_AVG_SIZE 150
 #define RPM_AVG_SIZE 15
 
 namespace Control
@@ -107,7 +106,6 @@ namespace Control
         Time::Delta m_delta;
         //! Task arguments.
         Arguments m_args;
-        Math::MovingAverage<double>* m_avg_ms ;
         Math::MovingAverage<double>* m_avg_rpm; 
 
         Task(const std::string& name, Tasks::Context& ctx):
@@ -144,7 +142,8 @@ namespace Control
           param("Fin effect Velocity dependent unit", m_args.velocity_dependent_unit)
           .defaultValue("RPM")
           .values("RPM, MeterPerSecond")
-          .description("Fin effect Velocity dependent unit");
+          .description("Speed that scales the fin effect: averaged rpm / 1000, or the"
+                       " surge speed of the estimated state (m/s)");
 
           param("Fin effect Rpm minimum value", m_args.rpm_minimum)
           .defaultValue("200")
@@ -155,6 +154,12 @@ namespace Control
           .defaultValue("0.2")
           .units(Units::MeterPerSecond)
           .description("Fin effect Meter Per Second minimum value");
+
+          param("Fin effect maximum Meter Per Second value", m_args.max_ms)
+          .defaultValue("2.0")
+          .units(Units::MeterPerSecond)
+          .description("Surge speed above which the fin effect stops growing. Set it to"
+                       " the fastest speed the propeller can drive the vehicle");
 
           param("Pitch Up Brake", m_args.pitch_brake)
           .defaultValue("false")
@@ -174,33 +179,32 @@ namespace Control
           param("k roll", m_args.k_roll)
           .defaultValue("1.0")
           .minimumValue("0.0")
-          .description("k roll - Velocity dependent pitch fin effect ");
+          .description("Square of the speed, in the velocity dependent unit, at which"
+                       " the roll fin effect equals its Fin effect value");
 
           param("k pitch", m_args.k_pitch)
           .defaultValue("1.0")
           .minimumValue("0.0")
-          .description("k pitch - Velocity dependent pitch fin effect ");
+          .description("Square of the speed, in the velocity dependent unit, at which"
+                       " the pitch fin effect equals its Fin effect value");
 
           param("k yaw", m_args.k_yaw)
           .defaultValue("1.0")
           .minimumValue("0.0")
-          .description("k yaw - Velocity dependent pitch fin effect ");
+          .description("Square of the speed, in the velocity dependent unit, at which"
+                       " the yaw fin effect equals its Fin effect value");
 
           param("Roll not velocity dependent", m_args.roll_not_velocity_dependent)
           .defaultValue("false")
           .description("Roll not velocity dependent");
 
-
-
           param("Entity Label - Servo Position", m_args.spos_label)
           .defaultValue("")
           .description("Label of the servo position message to compute produced torque");
           m_ctx.config.get("General", "Maximum Underwater RPMs", "1700.0", m_args.max_rpm);
-          m_ctx.config.get("General","Maximum Absolute Speed" , "2.0", m_args.max_ms);
 
           // Initialize main entity state.
           setEntityState(IMC::EntityState::ESTA_NORMAL, Status::CODE_IDLE);
-          m_avg_ms = new Math::MovingAverage<double>(150);
           m_avg_rpm = new Math::MovingAverage<double>(10);
           // Register handler routines.
           bind<IMC::Brake>(this);
@@ -246,7 +250,6 @@ namespace Control
         {
             Memory::clear(m_last_estimated_state);
             Memory::clear(m_last_rpm);
-            Memory::clear(m_avg_ms);
             Memory::clear(m_avg_rpm);
           
         }
@@ -262,16 +265,11 @@ namespace Control
             m_last[i].id = i;
             m_servo_pos[i] = 0.0;
           }
-          m_avg_ms = new Math::MovingAverage<double>(MS_AVG_SIZE);
           m_avg_rpm = new Math::MovingAverage<double>(RPM_AVG_SIZE);
 
           for (int i = 0; i < RPM_AVG_SIZE; i++)
           {
             m_avg_rpm->update(m_args.rpm_minimum/1000);
-          }
-          for (int i = 0; i < MS_AVG_SIZE; i++)
-          {
-            m_avg_ms->update(m_args.ms_minimum);
           }
 
         }
@@ -391,6 +389,47 @@ namespace Control
           Memory::clear(m_last_rpm);
           m_last_rpm = static_cast<IMC::Rpm*>(msg->clone());
         }
+
+        //! Speed that scales the fin effect, within its minimum and maximum.
+        //! @return averaged rpm / 1000, or the surge speed of the last
+        //! estimated state (m/s), depending on the velocity dependent unit.
+        double
+        scalingSpeed(void)
+        {
+          if (m_args.velocity_dependent_unit == "RPM")
+          {
+            double rpm = m_args.rpm_minimum / 1000;
+
+            if (m_last_rpm != NULL)
+            {
+              double rpm_m = (double)m_last_rpm->value;
+              trimValueMod(rpm_m, m_args.rpm_minimum, m_args.max_rpm);
+              m_avg_rpm->update(rpm_m / 1000);
+              rpm = m_avg_rpm->mean();
+            }
+
+            return rpm;
+          }
+
+          if (m_last_estimated_state == NULL)
+            return m_args.ms_minimum;
+
+          return trimValue((double)m_last_estimated_state->u, m_args.ms_minimum, m_args.max_ms);
+        }
+
+        //! Torque per unit angle of one fin on one axis.
+        //! @param[in] axis 0 roll, 1 pitch, 2 yaw.
+        //! @param[in] s speed that scales the fin effect.
+        double
+        finEffect(int axis, double s) const
+        {
+          if (!m_args.velocity_dependent || (axis == 0 && m_args.roll_not_velocity_dependent))
+            return m_args.conv[axis];
+
+          double kv = (axis == 0) ? m_args.k_roll : ((axis == 1) ? m_args.k_pitch : m_args.k_yaw);
+          return m_args.conv[axis] * s * s / kv;
+        }
+
         //! Allocate desired control torques on the fins
         //! @param[in] k desired control torque in roll
         //! @param[in] m desired control torque in pitch
@@ -398,141 +437,40 @@ namespace Control
         void
         allocate(float k, float m, float n)
         {
+          const double s = scalingSpeed();
+          double e[3];
+          for (int i = 0; i < 3; ++i)
+            e[i] = finEffect(i, s);
+
           float ang;
           float roll_margin_vfins;
           float roll_margin_hfins;
-          double rpm_m = m_args.rpm_minimum ; 
-          double m_s = m_args.ms_minimum;
-          double rpm = rpm_m/1000, m_s_m = m_s;
-          float angroll = 0 ;
-          if(m_last_rpm!=NULL)
-          {
-            rpm_m = (double)m_last_rpm->value;
-            trimValueMod( rpm_m , m_args.rpm_minimum, m_args.max_rpm);
-            rpm_m =rpm_m /1000;
-            m_avg_rpm->update(rpm_m);
-            rpm = m_avg_rpm->mean();
-          }
-
-          if(m_last_estimated_state!=NULL)
-          {
-            m_s_m = (double) m_last_estimated_state->u;
-            trimValueMod( m_s_m , m_args.ms_minimum, m_args.max_ms);
-            m_avg_ms->update(m_s_m);
-            m_s = m_avg_ms->mean();   
-          }
 
           // Allocate N
-          if(!m_args.velocity_dependent)
-          {
-            ang = (n / m_args.conv[2]) * 0.5;
-          }
-          else
-          {
-            if(m_args.velocity_dependent_unit == "RPM")
-            {  
-             ang = m_args.k_yaw * (n / (m_args.conv[2]* rpm *rpm)) * 0.5;
-            }
-            else
-            {
-              ang = m_args.k_yaw * (n / (m_args.conv[2]* m_s *m_s)) * 0.5;
-            }
-          }
+          ang = (n / e[2]) * 0.5;
 
           if (trimValueMod(ang, -m_args.max_fin_rot, m_args.max_fin_rot))
-          {
             roll_margin_vfins = 0;
-          }
           else
-          {
-            // Calculate the control margins for roll on the N fins
             roll_margin_vfins = m_args.max_fin_rot - std::abs(ang);
-          }
 
           m_fins[0].value = -ang;
           m_fins[3].value = -ang;
 
-          if(m_args.velocity_dependent)
-          {
-             if(m_args.velocity_dependent_unit == "RPM")
-            {
-               m_allocated.n = m_args.k_yaw * m_args.conv[2]* rpm *rpm * 2.0;
-            }
-            else
-            {
-               m_allocated.n = m_args.k_yaw * m_args.conv[2]* m_s * m_s * 2.0;
-            }
-          }
-          else
-          {
-            m_allocated.n = ang * m_args.conv[2] * 2.0;
-          }
-
           // Allocate M
-          if(m_args.velocity_dependent)
-          {
-            if(m_args.velocity_dependent_unit == "RPM")
-            {
-                ang = m_args.k_pitch * (m / (m_args.conv[1]* rpm *rpm)) * 0.5;
-            }
-            else
-            {
-                ang = m_args.k_pitch * (m /(m_args.conv[1]* m_s *m_s)) * 0.5;
-            }
-          }
-          else
-          {
-            ang = (m / m_args.conv[1]) * 0.5;
-          }
+          ang = (m / e[1]) * 0.5;
 
           if (trimValueMod(ang, -m_args.max_fin_rot, m_args.max_fin_rot))
-          {
             roll_margin_hfins = 0;
-          }
           else
-          {
-            // Calculate the control margins for roll on the N fins
             roll_margin_hfins = m_args.max_fin_rot - std::abs(ang);
-          }
 
           m_fins[1].value = -ang;
           m_fins[2].value = -ang;
 
-          if(m_args.velocity_dependent)
-          {
-             if(m_args.velocity_dependent_unit == "RPM")
-            {
-               m_allocated.m = m_args.k_pitch * m_args.conv[1]* rpm *rpm * 2.0;
-            }
-            else
-            {
-               m_allocated.m = m_args.k_pitch * m_args.conv[1]* m_s * m_s * 2.0;
-            }
-          }
-          else
-          {
-          m_allocated.m = ang * m_args.conv[1] * 2.0;
-          }
-
           // Allocate K
           // Attempt to distribute evenly by the four fins
-          if(m_args.velocity_dependent &&  m_args.roll_not_velocity_dependent == false)
-          {
-            if(m_args.velocity_dependent_unit == "RPM")
-            {
-             ang = m_args.k_roll * (k / (m_args.conv[0] * rpm *rpm)) / c_fins;
-             angroll = ang;
-            }
-            else
-            {
-               ang = m_args.k_roll * (k / (m_args.conv[0] * m_s * m_s)) / c_fins;
-               angroll = ang;
-            }
-          }
-          else
-          {
-            ang = (k / m_args.conv[0]) / c_fins;
-          }
+          ang = (k / e[0]) / c_fins;
 
           // Determine the maximum angle for even distribution
           ang = trimValue(ang, -roll_margin_hfins, roll_margin_hfins);
@@ -543,76 +481,43 @@ namespace Control
           m_fins[0].value -= ang;
           m_fins[3].value += ang;
 
-            // Remove the used up margin from the avaliable margins
-            roll_margin_hfins -= std::abs(ang);
-            roll_margin_vfins -= std::abs(ang);
+          // Remove the used up margin from the avaliable margins
+          roll_margin_hfins -= std::abs(ang);
+          roll_margin_vfins -= std::abs(ang);
 
-          if(m_args.velocity_dependent  &&  m_args.roll_not_velocity_dependent == false)
+          // Place the remaining roll torque on the pair with margin left
+          float allocated_k = ang * e[0] * c_fins;
+          ang = ((k - allocated_k) / e[0]) * 0.5;
+
+          if (roll_margin_hfins > 0)
           {
-            ang = angroll - ang;
-              
-            if(m_args.velocity_dependent_unit == "RPM")
-            {
-              if (roll_margin_hfins > 0)
-              {
-                ang = trimValue(ang, -roll_margin_hfins, roll_margin_hfins);
-  
-                m_fins[1].value += ang;
-                m_fins[2].value -= ang;
-              }
-              else if (roll_margin_vfins > 0)
-              {
-                ang = trimValue(ang, -roll_margin_vfins, roll_margin_vfins);
-  
-                m_fins[0].value -= ang;
-                m_fins[3].value += ang;
-              }
-              m_allocated.k = m_args.conv[0]* rpm * rpm * c_fins;
-            }
-            else
-            {
-              if (roll_margin_hfins > 0)
-              {
-                ang = trimValue(ang, -roll_margin_hfins, roll_margin_hfins);
-  
-                m_fins[1].value += ang;
-                m_fins[2].value -= ang;
-              }
-              else if (roll_margin_vfins > 0)
-              {
-                ang = trimValue(ang, -roll_margin_vfins, roll_margin_vfins);
-  
-                m_fins[0].value -= ang;
-                m_fins[3].value += ang;
-              } 
-              m_allocated.k = m_args.conv[0]* m_s * m_s * c_fins;
-            }
+            ang = trimValue(ang, -roll_margin_hfins, roll_margin_hfins);
+
+            m_fins[1].value += ang;
+            m_fins[2].value -= ang;
           }
-          else
+          else if (roll_margin_vfins > 0)
           {
-            m_allocated.k = ang * m_args.conv[0] * c_fins;
+            ang = trimValue(ang, -roll_margin_vfins, roll_margin_vfins);
 
-            // Check where to place the remaining roll torque
-            ang = ((k - m_allocated.k) / m_args.conv[0]) * 0.5;
-            if (roll_margin_hfins > 0)
-            {
-              ang = trimValue(ang, -roll_margin_hfins, roll_margin_hfins);
-
-              m_fins[1].value += ang;
-              m_fins[2].value -= ang;
-              m_allocated.k += ang * m_args.conv[0] * 2.0;
-            }
-            else if (roll_margin_vfins > 0)
-            {
-              ang = trimValue(ang, -roll_margin_vfins, roll_margin_vfins);
-
-              m_fins[0].value -= ang;
-              m_fins[3].value += ang;
-              m_allocated.k += ang * m_args.conv[0] * 2.0;
-            }
+            m_fins[0].value -= ang;
+            m_fins[3].value += ang;
           }
-          dispatchAllFins();
 
+          dispatchAllocation(m_delta.getDelta(), e);
+        }
+
+        //! Dispatch the fin commands and the torques they deliver.
+        //! @param[in] delta time since the last fin commands (s).
+        //! @param[in] e torque per unit angle of one fin (K, M, N).
+        void
+        dispatchAllocation(double delta, const double e[3])
+        {
+          dispatchFins(delta);
+
+          m_allocated.k = e[0] * (-m_fins[0].value + m_fins[1].value - m_fins[2].value + m_fins[3].value);
+          m_allocated.m = -e[1] * (m_fins[1].value + m_fins[2].value);
+          m_allocated.n = -e[2] * (m_fins[0].value + m_fins[3].value);
           dispatch(m_allocated);
         }
 
@@ -706,8 +611,13 @@ namespace Control
         inline void
         dispatchAllFins(void)
         {
-          double delta = m_delta.getDelta();
+          dispatchFins(m_delta.getDelta());
+        }
 
+        //! Dispatch all fins desired positions, rate limited over delta seconds
+        inline void
+        dispatchFins(double delta)
+        {
           for (int i = 0; i < c_fins; i++)
           {
             if (delta > 0)
