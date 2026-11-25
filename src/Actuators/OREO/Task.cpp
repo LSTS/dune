@@ -30,6 +30,8 @@
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
 
+#include <DUNE/Optional.hpp>
+
 namespace Actuators
 {
   //! @author Bernardo Gabriel
@@ -351,15 +353,26 @@ namespace Actuators
       void
       interpretData(NMEAReader& reader)
       {
-        float voltage;
-        float current;
+        Optional::optional<float> voltage;
+        Optional::optional<float> current;
         reader >> voltage >> current;
-        m_voltage.value = voltage;
-        m_current.value = current;
+
         //! TODO: add timestamp.
-        dispatch(m_voltage, DF_KEEP_SRC_EID);
-        dispatch(m_current, DF_KEEP_SRC_EID);
-        spew("v: %.3f V i: %.3f A", voltage, current);
+
+        if (voltage.has_value())
+        {
+          m_voltage.value = voltage.value();
+          dispatch(m_voltage, DF_KEEP_SRC_EID);
+          spew("voltage: %.2f V", m_voltage.value);
+        }
+
+        if (current.has_value())
+        {
+          m_current.value = current.value();
+          dispatch(m_current, DF_KEEP_SRC_EID);
+          spew("current: %.2f A", m_current.value);
+        }
+
         m_inp_tmt.reset();
       }
 
