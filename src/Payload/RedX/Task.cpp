@@ -32,6 +32,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 
 // DUNE headers.
 #include <DUNE/DUNE.hpp>
@@ -42,6 +43,21 @@ namespace Payload
   {
     using DUNE_NAMESPACES;
 
+    enum ModeEnum
+    {
+      MODE_INVALID = 0,
+      MODE_AUTOMATIC = 1,
+      MODE_MANUAL = 2
+    };
+
+    const std::unordered_map<std::string, ModeEnum> c_mode_map = {{ "Invalid", MODE_INVALID },
+                                                                  { "Automatic", MODE_AUTOMATIC },
+                                                                  { "Manual", MODE_MANUAL }};
+
+    const std::unordered_map<ModeEnum, std::string> c_mode_str_map = {{ MODE_INVALID, "Invalid" },
+                                                                      { MODE_AUTOMATIC, "Automatic" },
+                                                                      { MODE_MANUAL, "Manual" }};
+
     //! Maximum number of filters supported by the system.
     static constexpr uint8_t c_max_filters = 9;
     //! Sampling state report timeout.
@@ -50,6 +66,8 @@ namespace Payload
     //! Task arguments.
     struct Arguments
     {
+      //! Operation mode.
+      std::string mode;
       //! ID of motor to control pump descending/asceding.
       int motor_id;
       //! Motor actuation value.
@@ -98,6 +116,34 @@ namespace Payload
       std::string extra_press_pump_name;
       //! Force state transition.
       bool force_state_transition;
+      //! Manual motor actuation.
+      int manual_motor;
+      //! Manual water pump actuation.
+      int manual_wp;
+      //! Manual press pump actuation.
+      bool manual_press_pump;
+      //! Manual purge valve actuation.
+      bool manual_purge_valve;
+      //! Manual filter 0 valve actuation.
+      bool manual_filter_0_valve;
+      //! Manual filter 1 valve actuation.
+      bool manual_filter_1_valve;
+      //! Manual filter 2 valve actuation.
+      bool manual_filter_2_valve;
+      //! Manual filter 3 valve actuation.
+      bool manual_filter_3_valve;
+      //! Manual filter 4 valve actuation.
+      bool manual_filter_4_valve;
+      //! Manual filter 5 valve actuation.
+      bool manual_filter_5_valve;
+      //! Manual filter 6 valve actuation.
+      bool manual_filter_6_valve;
+      //! Manual filter 7 valve actuation.
+      bool manual_filter_7_valve;
+      //! Manual filter 8 valve actuation.
+      bool manual_filter_8_valve;
+      //! Manual filter 9 valve actuation.
+      bool manual_filter_9_valve;
     };
 
     //! Task to control RedX payload. 
@@ -132,6 +178,8 @@ namespace Payload
 
       //! Task arguments.
       Arguments m_args;
+      //! Operation mode.
+      ModeEnum m_mode;
       //! Timer for reporting state
       Counter<double> m_report_state_timer;
       //! Water pump depth source entity id.
@@ -180,6 +228,7 @@ namespace Payload
       //! @param[in] ctx context.
       Task(const std::string& name, Tasks::Context& ctx):
         Tasks::Task(name, ctx),
+        m_mode(MODE_INVALID),
         m_report_state_timer(c_state_report_tout),
         m_curr_wp_depth(0.0),
         m_max_wl(false),
@@ -192,6 +241,11 @@ namespace Payload
       {
         paramActive(Tasks::Parameter::SCOPE_MANEUVER,
                     Tasks::Parameter::VISIBILITY_USER);
+
+        param("Mode", m_args.mode)
+        .defaultValue("Automatic")
+        .values("Automatic, Manual")
+        .description("Operation mode.");
 
         param("Motor - Id", m_args.motor_id)
         .defaultValue("-1")
@@ -329,6 +383,66 @@ namespace Payload
         .defaultValue("false")
         .description("Manually force state transition.");
 
+        param("Manual - Motor", m_args.manual_motor)
+        .defaultValue("0")
+        .minimumValue("0")
+        .maximumValue("100")
+        .description("Manual control for motor actuation.");
+
+        param("Manual - Water Pump", m_args.manual_wp)
+        .defaultValue("0")
+        .minimumValue("0")
+        .maximumValue("100")
+        .description("Manual control for water pump actuation.");
+
+        param("Manual - Press Pump", m_args.manual_press_pump)
+        .defaultValue("false")
+        .description("Manual control for press pump actuation.");
+
+        param("Manual - Purge Valve", m_args.manual_purge_valve)
+        .defaultValue("false")
+        .description("Manual control for purge valve actuation.");
+
+        param("Manual - Filter 0 Valve", m_args.manual_filter_0_valve)
+        .defaultValue("false")
+        .description("Manual control for filter 0 valve actuation.");
+
+        param("Manual - Filter 1 Valve", m_args.manual_filter_1_valve)
+        .defaultValue("false")
+        .description("Manual control for filter 1 valve actuation.");
+
+        param("Manual - Filter 2 Valve", m_args.manual_filter_2_valve)
+        .defaultValue("false")
+        .description("Manual control for filter 2 valve actuation.");
+
+        param("Manual - Filter 3 Valve", m_args.manual_filter_3_valve)
+        .defaultValue("false")
+        .description("Manual control for filter 3 valve actuation.");
+
+        param("Manual - Filter 4 Valve", m_args.manual_filter_4_valve)
+        .defaultValue("false")
+        .description("Manual control for filter 4 valve actuation.");
+
+        param("Manual - Filter 5 Valve", m_args.manual_filter_5_valve)
+        .defaultValue("false")
+        .description("Manual control for filter 5 valve actuation.");
+
+        param("Manual - Filter 6 Valve", m_args.manual_filter_6_valve)
+        .defaultValue("false")
+        .description("Manual control for filter 6 valve actuation.");
+
+        param("Manual - Filter 7 Valve", m_args.manual_filter_7_valve)
+        .defaultValue("false")
+        .description("Manual control for filter 7 valve actuation.");
+
+        param("Manual - Filter 8 Valve", m_args.manual_filter_8_valve)
+        .defaultValue("false")
+        .description("Manual control for filter 8 valve actuation.");
+
+        param("Manual - Filter 9 Valve", m_args.manual_filter_9_valve)
+        .defaultValue("false")
+        .description("Manual control for filter 9 valve actuation.");
+
         m_sa_report.action = IMC::SamplingAction::SA_REPORT;
 
         bind<IMC::Depth>(this);
@@ -352,6 +466,33 @@ namespace Payload
       void
       onUpdateParameters(void) override
       {
+        if (paramChanged(m_args.mode))
+        {
+          if (m_mode == ModeEnum::MODE_AUTOMATIC &&
+              m_args.mode == "Manual" &&
+              m_curr_state != STATE_IDLE)
+          {
+            war("switching from Automatic to Manual mode "
+                "while sampling is in progress isn't allowed | "
+                "reverting to Automatic mode.");
+            applyEntityParameter(&m_args.mode, "Automatic");
+          }
+          else
+          {
+            auto it = c_mode_map.find(m_args.mode);
+            if (it != c_mode_map.end())
+            {
+              m_mode = it->second;
+              inf("operation mode set to: %s", c_mode_str_map.at(m_mode).c_str());
+            }
+            else
+            {
+              err("invalid operation mode: %s", m_args.mode.c_str());
+              m_mode = MODE_INVALID;
+            }
+          }
+        }
+
         if (paramChanged(m_args.wp_depth))
           spew("payload settings : water pump depth set to : %.2f meters", m_args.wp_depth);
 
@@ -378,6 +519,51 @@ namespace Payload
             m_recv_req = REQ_FORCE_STATE_TRANSITION;
             inf("force state transition request received");
           }
+        }
+
+        if (m_mode == MODE_MANUAL)
+        {
+          if (paramChanged(m_args.manual_motor))
+            setMotor(m_args.manual_motor / 100.0f);
+
+          if (paramChanged(m_args.manual_wp))
+            setWaterPump(m_args.manual_wp / 100.0f);
+
+          if (paramChanged(m_args.manual_press_pump))
+            setPressPump(m_args.manual_press_pump);
+
+          if (paramChanged(m_args.manual_purge_valve))
+            setPurgeValve(m_args.manual_purge_valve);
+
+          if (paramChanged(m_args.manual_filter_0_valve))
+            setFilterValve(0, m_args.manual_filter_0_valve);
+
+          if (paramChanged(m_args.manual_filter_1_valve))
+            setFilterValve(1, m_args.manual_filter_1_valve);
+
+          if (paramChanged(m_args.manual_filter_2_valve))
+            setFilterValve(2, m_args.manual_filter_2_valve);
+
+          if (paramChanged(m_args.manual_filter_3_valve))
+            setFilterValve(3, m_args.manual_filter_3_valve);
+
+          if (paramChanged(m_args.manual_filter_4_valve))
+            setFilterValve(4, m_args.manual_filter_4_valve);
+
+          if (paramChanged(m_args.manual_filter_5_valve))
+            setFilterValve(5, m_args.manual_filter_5_valve);
+
+          if (paramChanged(m_args.manual_filter_6_valve))
+            setFilterValve(6, m_args.manual_filter_6_valve);
+
+          if (paramChanged(m_args.manual_filter_7_valve))
+            setFilterValve(7, m_args.manual_filter_7_valve);
+
+          if (paramChanged(m_args.manual_filter_8_valve))
+            setFilterValve(8, m_args.manual_filter_8_valve);
+
+          if (paramChanged(m_args.manual_filter_9_valve))
+            setFilterValve(9, m_args.manual_filter_9_valve);
         }
       }
 
@@ -539,67 +725,95 @@ namespace Payload
       }
 
       void
+      setMotor(float value)
+      {
+        setActuation(m_args.motor_id, value);
+      }
+
+      void
       startMotor(bool reverse = false)
       {
-        setActuation(m_args.motor_id, reverse ? -m_args.motor_actuation / 100.0f : m_args.motor_actuation / 100.0f);
+        setMotor(reverse ? -m_args.motor_actuation / 100.0f : m_args.motor_actuation / 100.0f);
       }
 
       void
       stopMotor(void)
       {
-        setActuation(m_args.motor_id, 0.0f);
+        setMotor(0.0f);
+      }
+
+      void
+      setWaterPump(float value)
+      {
+        setActuation(m_args.wp_id, value);
       }
 
       void
       startWaterPump(void)
       {
-        setActuation(m_args.wp_id, m_args.wp_actuation / 100.0f);
+        setWaterPump(m_args.wp_actuation / 100.0f);
       }
 
       void
       stopWaterPump(void)
       {
-        setActuation(m_args.wp_id, 0.0f);
+        setWaterPump(0.0f);
+      }
+
+      void
+      setPressPump(bool operation)
+      {
+        setPowerChannel(m_args.press_pump_name, operation);
+        if (!m_args.extra_press_pump_name.empty())
+          setPowerChannel(m_args.extra_press_pump_name, operation);
       }
 
       void
       startPressPump(void)
       {
-        setPowerChannel(m_args.press_pump_name, true);
-        if (!m_args.extra_press_pump_name.empty())
-          setPowerChannel(m_args.extra_press_pump_name, true);
+        setPressPump(true);
       }
 
       void
       stopPressPump(void)
       {
-        setPowerChannel(m_args.press_pump_name, false);
-        if (!m_args.extra_press_pump_name.empty())
-          setPowerChannel(m_args.extra_press_pump_name, false);
+        setPressPump(false);
+      }
+
+      void
+      setPurgeValve(bool operation)
+      {
+        setPowerChannel(m_args.purge_valve_name, operation);
       }
 
       void
       openPurge(void)
       {
-        setPowerChannel(m_args.purge_valve_name, true);
+        setPurgeValve(true);
       }
 
       void
       closePurge(void)
       {
-        setPowerChannel(m_args.purge_valve_name, false);
+        setPurgeValve(false);
+      }
+
+      void
+      setFilterValve(unsigned int filter_id, bool operation)
+      {
+        setPowerChannel(m_args.filters_names[filter_id], operation);
       }
 
       void
       openValve(unsigned int filter_id)
       {
-        setPowerChannel(m_args.filters_names[filter_id], true);
+        setFilterValve(filter_id, true);
       }
 
       void
       closeValve(unsigned int filter_id)
       {
-        setPowerChannel(m_args.filters_names[filter_id], false);
+        setFilterValve(filter_id, false);
       }
 
       bool
@@ -790,6 +1004,9 @@ namespace Payload
       void
       updateMachineState(void)
       {
+        if (!isActive() || m_mode != MODE_AUTOMATIC)
+          return;
+
         switch (m_curr_state)
         {
           case STATE_IDLE:
@@ -988,13 +1205,6 @@ namespace Payload
             setState(STATE_IDLE);
             break;
         }
-
-        if (m_report_state_timer.overflow())
-        {
-          updateEntityState();
-          dispatch(m_sa_report);
-          m_report_state_timer.reset();
-        }
       }
 
       void
@@ -1047,7 +1257,7 @@ namespace Payload
       }
 
       void
-      updateEntityState(void)
+      onReportEntityState(void) override
       {
         produceEntityStateDescription(m_es_desc);
         setEntityState(IMC::EntityState::ESTA_NORMAL, m_es_desc.c_str());
@@ -1068,9 +1278,7 @@ namespace Payload
         while (!stopping())
         {
           waitForMessages(1.0);
-
-          if (isActive())
-            updateMachineState();
+          updateMachineState();
         }
       }
     };
